@@ -289,7 +289,11 @@
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(function (records) {
-          var viewerModeChanged = records.some(function (record) { return record.target === html; });
+          // A theme switch changes paint, not the stage geometry. Reprobing
+          // drops the bottom rail for several frames and makes the diagram jump.
+          var viewerModeChanged = records.some(function (record) {
+            return record.target === html && record.attributeName !== 'data-theme';
+          });
           if (viewerModeChanged) reprobe();
           else schedule();
         });

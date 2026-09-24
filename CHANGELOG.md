@@ -19,6 +19,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 - **Japanese entry point under the same maintenance contract.** `README_JA.md` joins the language switcher and every README parity check: brand mark and demo-section placement, the animated proof and demo deep links, share-card and real-repository proofs, the update-awareness disclosure, the Hermes Agent and DSH installation rows, the self-hosted Star History ending, and release-identity validation of the version badge, the Japanese development marker, and the Raven manual-ZIP boundary. The switcher check is now driven by one per-language table, so a future language is added in one place.
 
 ### Fixed
+- **Lifecycle transition notes (#549).** Notes render when the transition label is omitted or empty, with matching route-space reservations and collision checks; existing label-only and label-plus-note layouts retain their behavior.
 - **Brand content-encoding negotiation (#514).** Capture and pinned re-fetches request identity encoding and reject unexpected encoded response bodies before parsing or hashing, with the coding error preserved if favicon fallback also fails.
 - **Escaped brand icon URLs (#454).** Favicon discovery decodes basic named and numeric HTML character references once before URL resolution, preserving percent escapes and the existing network and digest checks.
 - **Brand HTML head boundaries.** Favicon capture ignores apparent head endings inside comments, raw text and quoted attributes while retaining bounded, streaming head reads.

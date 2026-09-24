@@ -589,10 +589,9 @@ function pointLiesOnSegment(point, start, end) {
     && point[1] <= Math.max(start[1], end[1]) + epsilon;
 }
 
-// Reject only a proper interior X between relationships that share no semantic
-// endpoint. Endpoint touches, branch/merge ports, and collinear shared
-// corridors are intentionally outside this contract because geometry alone
-// cannot tell whether those are authored junctions.
+// Authored shared endpoints retain their junction interpretation by default.
+// Renderers can opt their automatic routes into proper interior X checks;
+// endpoint touches and collinear trunks still are not proper crossings.
 export function cleanCrossingProblems({
   relations,
   endpointIds,
@@ -602,10 +601,14 @@ export function cleanCrossingProblems({
   profile = 'standard',
   profileIsAuthoritative = false,
   mergeForwardCollinearWaypoints = false,
+  includeSharedEndpoints = () => false,
   crossingResolved = () => false,
+  warnInStandard = false,
+  onDiagnostic = recordDiagnostic,
   routeHint = 'adjust route/via or channel coordinates so the relationships use separate corridors'
 }) {
-  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  const severity = qualityProfileForGate(profile, profileIsAuthoritative) === 'showcase' ? 'error' : 'warning';
+  if (severity === 'warning' && !warnInStandard) return [];
   const routed = asArray(relations).map((relation, index) => {
     if (!relation || !endpointIds.has(relation.from) || !endpointIds.has(relation.to)) return null;
     const points = pathFor(relation)?.points;
@@ -626,7 +629,8 @@ export function cleanCrossingProblems({
     const left = routed[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < routed.length; rightIndex += 1) {
       const right = routed[rightIndex];
-      if ([left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to)) continue;
+      if ([left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to)
+          && !includeSharedEndpoints(left.relation, right.relation)) continue;
 
       let hit = null;
       for (const leftSegment of left.analysisSegments) {
@@ -657,10 +661,10 @@ export function cleanCrossingProblems({
       };
       const point = hit.point.map((value) => Math.round(value * 10) / 10).join(', ');
       const hint = rePlanHint([left.relation, right.relation], routeHint);
-      const message = `[composition/proper-crossing] showcase ${diagramType} ${describe(left)} crosses ${describe(right)} at [${point}] (segments ${hit.leftSegment} and ${hit.rightSegment}) — ${hint}.`;
-      recordDiagnostic({
+      const message = `[composition/proper-crossing] ${severity === 'error' ? 'showcase' : 'standard'} ${diagramType} ${describe(left)} crosses ${describe(right)} at [${point}] (segments ${hit.leftSegment} and ${hit.rightSegment}) — ${hint}.`;
+      onDiagnostic({
         code: 'composition/proper-crossing',
-        severity: 'error',
+        severity,
         message,
         subject: relationshipSubject(diagramType, relationCollection, left.index, left.relation),
         evidence: {
@@ -671,7 +675,7 @@ export function cleanCrossingProblems({
         },
         supportedFixes: [hint],
       });
-      problems.push(message);
+      if (severity === 'error') problems.push(message);
     }
   }
   return problems;
@@ -681,12 +685,18 @@ export function cleanCrossingProblems({
 // as one authored branch or merge even when neither relationship crosses a
 // node or forms a proper X. Keep authored shared endpoints exempt by default;
 // automatic architecture routes opt in because they promise separate ports.
+// Workflow v2 opts into shared-endpoint checks with a bounded terminal-trunk
+// exception. Other callers keep their existing authored-junction contract.
+// The counterflow-only opt-in serves older workflow exports without a root
+// readable-v2 contract; full shared-endpoint checking takes precedence.
 // Tiny overlaps below the route rhythm
 // floor are ignored to avoid turning sub-pixel rounding into a quality debt.
 export function collectAmbiguousCorridors({
   routedRelations,
   minOverlapPx = 8,
   includeSharedEndpoints = () => false,
+  includeSharedEndpointCounterflow = () => false,
+  allowShortWorkflowTrunks = false,
 }) {
   const routed = asArray(routedRelations).map((entry, fallbackIndex) => {
     const relation = entry?.relation;
@@ -705,8 +715,9 @@ export function collectAmbiguousCorridors({
     const left = routed[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < routed.length; rightIndex += 1) {
       const right = routed[rightIndex];
-      if ([left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to)
-          && !includeSharedEndpoints(left.relation, right.relation)) continue;
+      const sharedEndpoint = [left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to);
+      const counterflowOnly = sharedEndpoint && !includeSharedEndpoints(left.relation, right.relation);
+      if (counterflowOnly && !includeSharedEndpointCounterflow(left.relation, right.relation)) continue;
 
       let longest = null;
       for (let leftSegment = 0; leftSegment < left.points.length - 1; leftSegment += 1) {
@@ -718,6 +729,12 @@ export function collectAmbiguousCorridors({
             right.points[rightSegment + 1],
           );
           if (!overlap || overlap.length + 0.0001 < minOverlapPx) continue;
+          if (allowShortWorkflowTrunks && shortWorkflowTrunk(left, right, leftSegment, rightSegment, overlap.length)) continue;
+          if (counterflowOnly) {
+            const leftDelta = left.points[leftSegment + 1].map((value, axis) => value - left.points[leftSegment][axis]);
+            const rightDelta = right.points[rightSegment + 1].map((value, axis) => value - right.points[rightSegment][axis]);
+            if (leftDelta[0] * rightDelta[0] + leftDelta[1] * rightDelta[1] >= 0) continue;
+          }
           if (!longest || overlap.length > longest.overlapLength + 0.0001) {
             longest = {
               left,
@@ -737,9 +754,26 @@ export function collectAmbiguousCorridors({
   return hits;
 }
 
+function shortWorkflowTrunk(left, right, leftSegment, rightSegment, length) {
+  if (length > 24 + 0.0001) return false;
+  const a = left.relation, b = right.relation;
+  const variant = (edge) => edge.variant || 'default';
+  const width = (edge) => edge.width || (variant(edge) === 'emphasis' ? 1.8 : 1.4);
+  if (variant(a) !== variant(b) || width(a) !== width(b) || (a.role || '') !== (b.role || '')) return false;
+  const same = (p, q) => Math.abs(p[0] - q[0]) < 0.0001 && Math.abs(p[1] - q[1]) < 0.0001;
+  const source = a.from === b.from && leftSegment === 0 && rightSegment === 0
+    && same(left.points[0], right.points[0]);
+  const target = a.to === b.to && leftSegment === left.points.length - 2 && rightSegment === right.points.length - 2
+    && same(left.points.at(-1), right.points.at(-1));
+  if (!source && !target) return false;
+  const p = left.points[leftSegment], q = left.points[leftSegment + 1];
+  const r = right.points[rightSegment], s = right.points[rightSegment + 1];
+  return (q[0] - p[0]) * (s[0] - r[0]) + (q[1] - p[1]) * (s[1] - r[1]) > 0;
+}
+
 // Bundled arrow markers are 7 stroke-widths across the direction of travel.
 // Callers select the automatic routes they own; explicit junctions are preserved.
-export function collectArrowheadCollisions({ routedRelations }) {
+export function collectArrowheadCollisions({ routedRelations, allowShortWorkflowTrunks = false }) {
   const incoming = new Map();
   const hits = [];
   for (const entry of asArray(routedRelations)) {
@@ -758,6 +792,12 @@ export function collectArrowheadCollisions({ routedRelations }) {
       if (Math.abs(tip[1 - axis] - sibling.tip[1 - axis]) > 0.0001) continue;
       const distance = Math.abs(tip[axis] - sibling.tip[axis]);
       const minimum = halfWidth + sibling.halfWidth;
+      if (allowShortWorkflowTrunks) {
+        const left = { ...sibling, points: normalizeRoutePoints(sibling.points) };
+        const right = { ...entry, points };
+        const overlap = collinearAxisOverlap(left.points.at(-2), left.points.at(-1), points.at(-2), tip);
+        if (overlap && shortWorkflowTrunk(left, right, left.points.length - 2, points.length - 2, overlap.length)) continue;
+      }
       if (distance < minimum - 0.0001) hits.push({ left: sibling, right: current, distance, minimum });
     }
     siblings.push(current);
@@ -820,11 +860,15 @@ export function cleanAmbiguousCorridorProblems({
   routeHint = 'adjust route/via or channel coordinates so the relationships use separate corridors',
   minOverlapPx = 8,
   includeSharedEndpoints = () => false,
+  includeSharedEndpointCounterflow = () => false,
+  allowShortWorkflowTrunks = false,
+  onDiagnostic = recordDiagnostic,
 }) {
-  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  const severity = qualityProfileForGate(profile, profileIsAuthoritative) === 'showcase' ? 'error' : 'warning';
+  if (severity === 'warning' && !allowShortWorkflowTrunks) return [];
   const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
 
-  return collectAmbiguousCorridors({ routedRelations, minOverlapPx, includeSharedEndpoints }).map((hit) => {
+  return collectAmbiguousCorridors({ routedRelations, minOverlapPx, includeSharedEndpoints, includeSharedEndpointCounterflow, allowShortWorkflowTrunks }).map((hit) => {
     const describe = ({ relation, relationIndex }) => {
       const id = relation.id ? ` id "${relation.id}"` : '';
       return `${relationCollection}[${relationIndex}]${id} "${relation.from}" -> "${relation.to}"`;
@@ -833,11 +877,12 @@ export function cleanAmbiguousCorridorProblems({
     const from = hit.overlapStart.map((value) => Math.round(value * 10) / 10).join(', ');
     const to = hit.overlapEnd.map((value) => Math.round(value * 10) / 10).join(', ');
     const shared = sharedEndpointHint(hit);
-    const hint = shared ? `${shared}; ${rePlanHint([hit.left.relation, hit.right.relation], routeHint)}` : rePlanHint([hit.left.relation, hit.right.relation], routeHint);
-    const message = `[composition/ambiguous-corridor] showcase ${diagramType} ${describe(hit.left)} shares a ${length}px corridor with ${describe(hit.right)} at [${from}] -> [${to}] (segments ${hit.leftSegment} and ${hit.rightSegment}; minimum ${minOverlapPx}px) — ${hint}.`;
-    recordDiagnostic({
+    const replan = rePlanHint([hit.left.relation, hit.right.relation], routeHint);
+    const hint = shared ? `${shared}; ${replan}` : replan;
+    const message = `[composition/ambiguous-corridor] ${severity === 'error' ? 'showcase' : 'standard'} ${diagramType} ${describe(hit.left)} shares a ${length}px corridor with ${describe(hit.right)} at [${from}] -> [${to}] (segments ${hit.leftSegment} and ${hit.rightSegment}; minimum ${minOverlapPx}px) — ${hint}.`;
+    onDiagnostic({
       code: 'composition/ambiguous-corridor',
-      severity: 'error',
+      severity,
       message,
       subject: relationshipSubject(diagramType, relationCollection, hit.left.relationIndex, hit.left.relation),
       evidence: {
@@ -851,8 +896,8 @@ export function cleanAmbiguousCorridorProblems({
       },
       supportedFixes: [hint],
     });
-    return message;
-  });
+    return severity === 'error' ? message : null;
+  }).filter(Boolean);
 }
 
 // Relationship paths may cross a structural frame, but they must not borrow a
