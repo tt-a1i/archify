@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research-manifest.schema.json",
+  "type": "object",
+  "required": ["schema_version", "kind", "revision", "datasets", "code", "runs", "assets", "claims"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "research-evidence-manifest" },
+    "revision": { "$ref": "#/$defs/revision" },
+    "datasets": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+    "code": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+    "runs": { "type": "array", "items": { "$ref": "#/$defs/run" } },
+    "assets": { "type": "array", "items": { "$ref": "#/$defs/asset" } },
+    "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "status": { "enum": ["planned", "observed", "supported", "unknown"] },
+    "revision": { "type": "object", "required": ["id", "commit", "sha256"], "additionalProperties": false, "properties": { "id": { "$ref": "#/$defs/id" }, "commit": { "type": "string", "minLength": 7 }, "sha256": { "$ref": "#/$defs/hash" } } },
+    "source": { "type": "object", "required": ["id", "path", "sha256", "status"], "additionalProperties": false, "properties": { "id": { "$ref": "#/$defs/id" }, "path": { "type": "string", "minLength": 1 }, "sha256": { "$ref": "#/$defs/hash" }, "status": { "$ref": "#/$defs/status" } } },
+    "run": { "type": "object", "required": ["id", "revision", "dataset", "code", "status"], "additionalProperties": false, "properties": { "id": { "$ref": "#/$defs/id" }, "revision": { "$ref": "#/$defs/id" }, "dataset": { "$ref": "#/$defs/id" }, "code": { "$ref": "#/$defs/id" }, "status": { "$ref": "#/$defs/status" } } },
+    "asset": { "type": "object", "required": ["id", "path", "sha256", "run", "status"], "additionalProperties": false, "properties": { "id": { "$ref": "#/$defs/id" }, "path": { "type": "string", "minLength": 1 }, "sha256": { "$ref": "#/$defs/hash" }, "run": { "$ref": "#/$defs/id" }, "status": { "$ref": "#/$defs/status" } } },
+    "claim": { "type": "object", "required": ["id", "statement", "status", "evidence"], "additionalProperties": false, "properties": { "id": { "$ref": "#/$defs/id" }, "statement": { "type": "string", "minLength": 1 }, "status": { "$ref": "#/$defs/status" }, "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } } } }
+  }
+}
