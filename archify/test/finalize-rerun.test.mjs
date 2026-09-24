@@ -34,4 +34,8 @@ test('browser evidence ownership survives finalize runs that fail before browser
   assert.deepEqual(recordedBrowserEvidence(finalizeReceipt, output), recorded);
   fs.writeFileSync(finalizeReceipt, JSON.stringify({ stages: {} }));
   assert.equal(recordedBrowserEvidence(finalizeReceipt, output), null);
+  // A malformed sidecar is not owned evidence; it must not abort finalize.
+  fs.writeFileSync(finalizeReceipt, JSON.stringify({ retainedBrowserEvidence: recorded }));
+  fs.writeFileSync(path.join(dir, 'diagram.browser-check.json'), '{not json');
+  assert.equal(recordedBrowserEvidence(finalizeReceipt, output), null);
 });

@@ -446,13 +446,13 @@ export function recordedBrowserEvidence(finalizeReceiptPath, output, outDir) {
   let current;
   try {
     previous = JSON.parse(fs.readFileSync(finalizeReceiptPath, 'utf8'));
-    current = fs.readFileSync(browserCheckSidecarPaths(output, { outDir }).receipt, 'utf8');
+    current = JSON.parse(fs.readFileSync(browserCheckSidecarPaths(output, { outDir }).receipt, 'utf8'));
   } catch {
     return null;
   }
   const candidates = [previous?.stages?.['browser-check']?.receipt, previous?.retainedBrowserEvidence];
   return candidates.find((recorded) => recorded?.command === 'browser-check'
-    && JSON.stringify(recorded) === JSON.stringify(JSON.parse(current))) || null;
+    && JSON.stringify(recorded) === JSON.stringify(current)) || null;
 }
 
 export function retirePreviousBrowserEvidence(recorded, output, outDir) {
@@ -911,10 +911,17 @@ export async function runFinalize({
         }
         routeRepair = repaired ? { originalBytes, record: repaired.record } : { none: true };
         if (repaired) {
-          fs.writeFileSync(resolvedInput, `${JSON.stringify(repaired.candidate, null, 2)}
+          // Route repair is optional: if the candidate cannot be republished,
+          // restore the passing draft and continue to the browser gate.
+          try {
+            fs.writeFileSync(resolvedInput, `${JSON.stringify(repaired.candidate, null, 2)}
 `);
-          restartForRoutes = true;
-          break;
+            restartForRoutes = true;
+            break;
+          } catch {
+            try { fs.writeFileSync(resolvedInput, originalBytes); } catch {}
+            routeRepair = { none: true };
+          }
         }
       }
     }

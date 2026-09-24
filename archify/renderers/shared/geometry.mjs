@@ -324,7 +324,8 @@ const ENDPOINT_SIDE_RULES = {
 // a misaligned via in one edit instead of guessing a perpendicular segment.
 function endpointAlignmentHint(issue) {
   const port = issue.endpoint === 'source' ? issue.start : issue.end;
-  const round = (value) => Math.round(value * 10) / 10;
+  // Keep the precision the endpoint check compares (0.0001px).
+  const round = (value) => Math.round(value * 1e4) / 1e4;
   const beyond = { top: 'above', bottom: 'below', left: 'left of', right: 'right of' }[issue.side];
   const adjacent = issue.endpoint === 'source' ? 'next' : 'previous';
   return issue.expectedAxis === 'vertical'
@@ -786,12 +787,12 @@ function sharedEndpointHint(hit) {
     const points = (routed) => normalizeRoutePoints(routed.points || []);
     const left = points(hit.left);
     const right = points(hit.right);
-    if (left.length < 2 || right.length < 2) return null;
+    if (left.length < 2 || right.length < 2) continue;
     const sideOf = (route) => (endpoint === 'source'
       ? segmentSide(route[0], route[1], 'source')
       : segmentSide(route[route.length - 2], route[route.length - 1], 'target'));
     const crowded = sideOf(left);
-    if (crowded !== sideOf(right)) return null;
+    if (crowded !== sideOf(right)) continue;
     const move = hit.right;
     const route = points(move);
     const port = endpoint === 'source' ? route[0] : route[route.length - 1];

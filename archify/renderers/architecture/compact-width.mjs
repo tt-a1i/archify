@@ -49,8 +49,6 @@ function constraints(nodes, candidate) {
     if (!members.length) return null;
     return {
       members: new Set(members.map((m) => m.id)),
-      left: Math.min(...members.map((m) => m.c - m.w / 2)) - BOUNDARY_PAD_PX,
-      right: Math.max(...members.map((m) => m.c + m.w / 2)) + BOUNDARY_PAD_PX,
       top: Math.min(...members.map((m) => m.top)) - BOUNDARY_PAD_PX - BOUNDARY_TITLE_PX,
       bottom: Math.max(...members.map((m) => m.bottom)) + BOUNDARY_PAD_PX,
     };
@@ -64,7 +62,7 @@ function constraints(nodes, candidate) {
   const pairs = [];
   for (const l of nodes) {
     for (const r of nodes) {
-      if (l === r || l.c + l.w / 2 > r.c - r.w / 2) continue;
+      if (l === r || l.col + l.w / 2 > r.col - r.w / 2) continue;
       let gap = 0;
       if (overlaps(l, r)) gap = linked.get(`${l.id}\u0000${r.id}`) || MIN_GAP_PX;
       // A boundary edge between them adds its padding and clearance.
