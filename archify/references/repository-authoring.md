@@ -44,7 +44,9 @@ Authoring defaults and the example as SKILL.md step 2 describes.
      primary path reads, writes, or calls (a database, a state or data file
      another step consumes, a repository, model weights) gets its own
      component even when one module owns it, and so does a process boundary;
-     `datastore` channels point at these stores.
+     `datastore` channels point at these stores: read each one's anchor
+     line to name the store it opens, and draw it unless it is outside the
+     requested scope.
    - `questions` are optional leads; answer only those that could change a
      boundary, from their anchors.
    - `crossLanguage.routeReferences` are candidate links for a component in
