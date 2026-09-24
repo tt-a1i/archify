@@ -2187,7 +2187,7 @@ function usage() {
   archify browser-check <output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]
   archify visual-check <output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]
   archify guide [scenario or question] [--json] [--lang en|zh]
-  archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--evidence-pack] [--json]
+  archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--evidence-pack [--source-excerpts]] [--json]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
   archify examples
@@ -5930,6 +5930,7 @@ async function commandInspectRepo(args) {
   let snapshotFile;
   let json = false;
   let evidencePack = false;
+  let sourceExcerpts = false;
   let batchOptionProvided = false;
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -5948,10 +5949,12 @@ async function commandInspectRepo(args) {
       json = true;
     } else if (arg === '--evidence-pack') {
       evidencePack = true;
+    } else if (arg === '--source-excerpts') {
+      sourceExcerpts = true;
     } else if (arg.startsWith('--')) {
       rejectCliArgument(`Unknown inspect-repo option "${arg}".`, {
         subject: { option: arg },
-        supportedFixes: ['use --batch-size, --batch, --snapshot, --evidence-pack, or --json'],
+        supportedFixes: ['use --batch-size, --batch, --snapshot, --evidence-pack, --source-excerpts, or --json'],
       });
     } else if (root === undefined) {
       root = arg;
@@ -5963,7 +5966,13 @@ async function commandInspectRepo(args) {
     }
   }
   if (!root) {
-    rejectCliArgument('Usage: archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--evidence-pack] [--json]');
+    rejectCliArgument('Usage: archify inspect-repo <repository-root> [--batch-size 1..100] [--batch number] [--snapshot file] [--evidence-pack [--source-excerpts]] [--json]');
+  }
+  if (sourceExcerpts && !evidencePack) {
+    rejectCliArgument('--source-excerpts only applies to --evidence-pack.', {
+      subject: { option: '--source-excerpts' },
+      supportedFixes: ['add --evidence-pack, or drop --source-excerpts'],
+    });
   }
   if (evidencePack && batchOptionProvided) {
     rejectCliArgument('--evidence-pack summarises the whole repository in one call and does not combine with --batch or --batch-size.', {
@@ -6005,6 +6014,7 @@ async function commandInspectRepo(args) {
       ? repositoryIndex.buildRepositoryEvidence(root, {
         snapshot,
         snapshotReused,
+        sourceExcerpts,
         detailDirectory: snapshotFile ? path.dirname(snapshotFile) : undefined,
       })
       : repositoryIndex.buildRepositoryIndex(root, {

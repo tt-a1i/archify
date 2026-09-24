@@ -618,7 +618,8 @@ export function buildEvidencePack({ repositoryState, summary, records, boundarie
     channelExcerpts: true,
     outlineFiles: limits.maximumOutlineFiles,
     outlineDefinitions: limits.maximumOutlineDefinitions,
-    excerptLines: limits.maximumExcerptLines,
+    // Question excerpts are copied source text: only on explicit request.
+    excerptLines: options.sourceExcerpts ? limits.maximumExcerptLines : 0,
   };
   const trimmed = [];
   // Outlines are read once; each assembly only slices them.

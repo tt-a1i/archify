@@ -138,7 +138,7 @@ test('Source excerpts redact URL userinfo and report that source lines are inclu
   write(root, 'native/CMakeLists.txt', 'add_library(native SHARED kernel.cu) # postgres://alice:samplepassword@db.example/app\n');
   for (let index = 0; index < 6; index += 1) write(root, `native/kernel${index}.cu`, '__global__ void k() {}\n');
   write(root, 'native/host.py', 'VALUE = 1\n');
-  const result = buildRepositoryEvidence(root);
+  const result = buildRepositoryEvidence(root, { sourceExcerpts: true });
   const serialized = JSON.stringify(result.pack);
   assert.equal(result.policy.sourceBodiesIncluded, true);
   assert.ok(serialized.includes('postgres://[redacted]@db.example/app'));
@@ -398,7 +398,7 @@ test('Console scripts resolve onto files without a question, and anchors carry n
   for (let index = 0; index < 6; index += 1) {
     write(root, `gateway/src/r${index}.rs`, `fn call() {\n  let token = "x";\n  client.post("/generate");\n  client.get("/get_server_info");\n}\n`);
   }
-  const pack = buildRepositoryEvidence(root).pack;
+  const pack = buildRepositoryEvidence(root, { sourceExcerpts: true }).pack;
 
   const script = pack.boundaries.entrypoints.items.find((entry) => entry.name === 'svc-cli');
   assert.deepEqual(script.files, ['svc/cli.py']);

@@ -573,7 +573,8 @@ export function buildRepositoryEvidence(root, options = {}) {
   const records = snapshot.records;
   const level1 = buildAggregatedConfiguration(absoluteRoot, records, options.level1Limits, rootIdentity);
   timingsMs.level1 = lap();
-  const level2 = buildSourceLevel2(absoluteRoot, records, { limits: options.level2Limits, rootIdentity });
+  const sourceExcerpts = Boolean(options.sourceExcerpts);
+  const level2 = buildSourceLevel2(absoluteRoot, records, { limits: options.level2Limits, rootIdentity, sourceExcerpts });
   timingsMs.level2 = lap();
 
   let detailPath = null;
@@ -630,7 +631,7 @@ export function buildRepositoryEvidence(root, options = {}) {
     detailPath,
     declaredDependencies,
     root: absoluteRoot,
-  }, { limits: options.packLimits, rootIdentity });
+  }, { limits: options.packLimits, rootIdentity, sourceExcerpts });
   timingsMs.level3 = lap();
 
   if (createdSnapshot && snapshot.repositoryState.reusable) assertRepositorySnapshotCurrent(snapshot);
@@ -646,7 +647,7 @@ export function buildRepositoryEvidence(root, options = {}) {
       mode: 'evidence-pack-v1',
       scoring: false,
       ast: false,
-      sourceBodiesIncluded: true,
+      sourceBodiesIncluded: sourceExcerpts,
       snapshotReuse: Boolean(options.snapshotReused),
     },
     summary: { ...summary, durationMs: elapsedMs, timingsMs },

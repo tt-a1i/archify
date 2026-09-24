@@ -614,6 +614,21 @@ export function compactFinalizeReceipt(receipt) {
   return compact;
 }
 
+// Replaces the candidate through a verified sibling file and one rename, so a
+// failed or interrupted write never leaves a partial candidate: the file holds
+// either its previous bytes or the new ones.
+export function replaceCandidate(file, contents, { writeFile = fs.writeFileSync, rename = fs.renameSync } = {}) {
+  const bytes = Buffer.isBuffer(contents) ? contents : Buffer.from(contents);
+  const staged = path.join(path.dirname(file), `.archify-candidate-${randomUUID()}.json`);
+  try {
+    writeFile(staged, bytes, { flag: 'wx' });
+    if (!fs.readFileSync(staged).equals(bytes)) throw new Error('The staged candidate does not match the prepared bytes.');
+    rename(staged, file);
+  } finally {
+    fs.rmSync(staged, { force: true });
+  }
+}
+
 // A draft whose only failure is desktop width is compacted in place once, so
 // the common "first draft slightly too wide" case needs no authoring turn.
 function compactOverwideCandidate(candidatePath, diagnostics) {
@@ -641,7 +656,11 @@ function compactOverwideCandidate(candidatePath, diagnostics) {
   }
   const compacted = compactArchitectureWidth(candidate, removePx);
   if (!compacted) return null;
-  fs.writeFileSync(candidatePath, `${JSON.stringify(compacted, null, 2)}\n`);
+  try {
+    replaceCandidate(candidatePath, `${JSON.stringify(compacted, null, 2)}\n`);
+  } catch {
+    return null;
+  }
   return {
     originalBytes,
     record: { reason: 'composition/desktop-readability', viewBoxWidth, maximumViewBoxWidth, removedPx: removePx, originalSha256: sha256(originalBytes) },
@@ -911,15 +930,13 @@ export async function runFinalize({
         }
         routeRepair = repaired ? { originalBytes, record: repaired.record } : { none: true };
         if (repaired) {
-          // Route repair is optional: if the candidate cannot be republished,
-          // restore the passing draft and continue to the browser gate.
+          // Route repair is optional: if the candidate cannot be replaced, the
+          // passing draft is untouched and the run continues to the browser gate.
           try {
-            fs.writeFileSync(resolvedInput, `${JSON.stringify(repaired.candidate, null, 2)}
-`);
+            replaceCandidate(resolvedInput, `${JSON.stringify(repaired.candidate, null, 2)}\n`);
             restartForRoutes = true;
             break;
           } catch {
-            try { fs.writeFileSync(resolvedInput, originalBytes); } catch {}
             routeRepair = { none: true };
           }
         }
@@ -934,7 +951,13 @@ export async function runFinalize({
       if (exitCode !== 0) {
         // The searched sides broke another gate: restore the passing draft.
         const retryDiagnostics = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
-        fs.writeFileSync(resolvedInput, routeRepair.originalBytes);
+        try {
+          replaceCandidate(resolvedInput, routeRepair.originalBytes);
+        } catch {
+          // The repaired candidate stays complete on disk; report its failure.
+          receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'restore-failed', retryDiagnostics };
+          break;
+        }
         receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'reverted', retryDiagnostics };
         restart();
         continue;
@@ -946,7 +969,13 @@ export async function runFinalize({
         // Compaction introduced a new authoring defect: restore the draft and
         // report its original width failure instead.
         const retryCodes = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
-        fs.writeFileSync(resolvedInput, compaction.originalBytes);
+        try {
+          replaceCandidate(resolvedInput, compaction.originalBytes);
+        } catch {
+          // The compacted candidate stays complete on disk; report its failure.
+          receipt.autoCompaction = { ...compaction.record, outcome: 'restore-failed', retryDiagnostics: retryCodes };
+          break;
+        }
         Object.assign(receipt, compaction.firstAttempt);
         specification = receipt.specification;
         receipt.autoCompaction = { ...compaction.record, outcome: 'reverted', retryDiagnostics: retryCodes };

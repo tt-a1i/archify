@@ -39,3 +39,35 @@ test('browser evidence ownership survives finalize runs that fail before browser
   fs.writeFileSync(path.join(dir, 'diagram.browser-check.json'), '{not json');
   assert.equal(recordedBrowserEvidence(finalizeReceipt, output), null);
 });
+
+test('a failed candidate replacement leaves the previous candidate complete', async (t) => {
+  const { replaceCandidate } = await import('../bin/finalize.mjs');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-replace-candidate-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const candidate = path.join(dir, 'candidate.json');
+  const original = '{"components":[{"id":"a","pos":[40,40]}]}\n';
+  fs.writeFileSync(candidate, original);
+  const next = '{"components":[{"id":"a","pos":[20,40]}]}\n';
+
+  // The write stops half way through.
+  const partialWrite = (file, bytes) => {
+    fs.writeFileSync(file, bytes.subarray(0, 10));
+    throw new Error('disk full');
+  };
+  assert.throws(() => replaceCandidate(candidate, next, { writeFile: partialWrite }), /disk full/);
+  assert.equal(fs.readFileSync(candidate, 'utf8'), original);
+
+  // The staged bytes do not match what was prepared.
+  const truncatedWrite = (file, bytes) => fs.writeFileSync(file, bytes.subarray(0, 10));
+  assert.throws(() => replaceCandidate(candidate, next, { writeFile: truncatedWrite }), /does not match/);
+  assert.equal(fs.readFileSync(candidate, 'utf8'), original);
+
+  // The final rename fails.
+  assert.throws(() => replaceCandidate(candidate, next, { rename: () => { throw new Error('locked'); } }), /locked/);
+  assert.equal(fs.readFileSync(candidate, 'utf8'), original);
+  assert.deepEqual(fs.readdirSync(dir), ['candidate.json'], 'no staged file is left behind');
+
+  replaceCandidate(candidate, next);
+  assert.equal(fs.readFileSync(candidate, 'utf8'), next);
+  assert.deepEqual(fs.readdirSync(dir), ['candidate.json']);
+});

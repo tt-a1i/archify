@@ -468,7 +468,9 @@ const MAXIMUM_CHANNEL_LINE = 120;
 const CHANNEL_EXCERPT_LINES = 3;
 const CHANNEL_TARGETS = 4;
 
-function runtimeChannels(text, language) {
+// Excerpts and peer names are copied source text; they are kept only when the
+// caller opts into source excerpts.
+function runtimeChannels(text, language, includeSource = false) {
   const family = language === 'python' ? 'python' : 'javascript';
   const found = [];
   const lines = text.split(/\r?\n/);
@@ -481,13 +483,16 @@ function runtimeChannels(text, language) {
       // The call and the lines right after it usually name the peer: the
       // command, URL or path an argument list carries on the next lines.
       const excerpt = [];
-      for (let next = number; next < lines.length && excerpt.length < CHANNEL_EXCERPT_LINES; next += 1) {
+      const safeLines = [];
+      for (let next = number; next < lines.length && next <= number + CHANNEL_EXCERPT_LINES; next += 1) {
         const text = lines[next].trim();
         const safe = safeSourceLine(text);
         if (!text || /^(?:#|\/\/|\*|\/\*)/.test(text) || safe === null) continue;
-        excerpt.push(`${next + 1}: ${safe.length > MAXIMUM_CHANNEL_LINE ? `${safe.slice(0, MAXIMUM_CHANNEL_LINE)}...` : safe}`);
+        safeLines.push(safe);
+        if (excerpt.length < CHANNEL_EXCERPT_LINES) excerpt.push(`${next + 1}: ${safe.length > MAXIMUM_CHANNEL_LINE ? `${safe.slice(0, MAXIMUM_CHANNEL_LINE)}...` : safe}`);
       }
-      const window = lines.slice(number, number + CHANNEL_EXCERPT_LINES + 1).join(' ');
+      // Peer names come only from lines that passed the credential filter.
+      const window = safeLines.join(' ');
       const processTarget = kind === 'process-spawn' ? /\btarget\s*=\s*([\w.]+)/.exec(window) : null;
       const target = (kind === 'process-spawn' && (processTarget
           || /(?:spawn\w*|fork|execFile\w*|exec\w*|Popen|run|check_output|check_call|call)\s*\(\s*\[?\s*['"\x60]([^'"\x60\s]{1,80})/.exec(window)))
@@ -496,7 +501,13 @@ function runtimeChannels(text, language) {
         || (kind === 'grpc-client' && /_channel\s*\(\s*([^),]{1,80})/.exec(window));
       const named = target ? target.slice(1).filter(Boolean).join(' ') : null;
       const safeTarget = named ? safeSourceLine(named) : null;
-      found.push({ kind, line: number + 1, excerpt, ...(safeTarget ? { target: safeTarget } : {}), ...(processTarget ? { processTarget: true } : {}) });
+      found.push({
+        kind,
+        line: number + 1,
+        ...(includeSource ? { excerpt } : {}),
+        ...(includeSource && safeTarget ? { target: safeTarget } : {}),
+        ...(processTarget ? { processTarget: true } : {}),
+      });
     }
   }
   return found;
@@ -553,6 +564,7 @@ function roundRobinByModule(records) {
 }
 
 export function buildSourceLevel2(root, records, options = {}) {
+  const includeSource = Boolean(options.sourceExcerpts);
   const rootIdentity = options.rootIdentity || captureRepositoryRoot(root);
   const limits = { ...LEVEL2_DEFAULT_LIMITS, ...(options.limits || {}) };
   const sourceRecords = records.filter((record) => record.role === 'source');
@@ -660,7 +672,7 @@ export function buildSourceLevel2(root, records, options = {}) {
       routeProviders.push({ ...declaration, file: record.path, module: moduleOf.get(record.path) || record.modulePath });
     }
     routeLiteralSites.push(...routeLiterals(content.text).map((site) => ({ ...site, file: record.path })));
-    for (const channel of record.role === 'test' || record.role === 'documentation' ? [] : runtimeChannels(content.text, record.language)) {
+    for (const channel of record.role === 'test' || record.role === 'documentation' ? [] : runtimeChannels(content.text, record.language, includeSource)) {
       channelSites.push({ ...channel, file: record.path, module: moduleOf.get(record.path) || record.modulePath });
     }
     const scan = record.language === 'python' ? scanPython(content.text) : scanJs(content.text);
@@ -817,7 +829,7 @@ export function buildSourceLevel2(root, records, options = {}) {
 
   return {
     name: 'source-import-graph',
-    sourceBodiesIncluded: true,
+    sourceBodiesIncluded: includeSource,
     limits,
     scannedFiles,
     scannedBytes,

@@ -45,7 +45,7 @@ test('Level 2 resolves Python imports through a nested python/<package> source l
 
   const graph = level2(root);
   assert.equal(graph.name, 'source-import-graph');
-  assert.equal(graph.sourceBodiesIncluded, true, 'runtime channel excerpts contain source lines');
+  assert.equal(graph.sourceBodiesIncluded, false, 'source excerpts are opt-in');
   assert.equal(graph.truncated, false);
 
   const edge = graph.edges.find((entry) => entry.from === 'scripts' && entry.to === 'python/pkg');
@@ -283,7 +283,7 @@ test('Level 2 records channel candidates while the pack excludes support modules
   write(root, 'worker/job.py', 'import subprocess\nsubprocess.run(["git", "status"])\n');
   write(root, 'scripts/check.js', "spawn('node', ['check']);\n");
 
-  const channels = level2(root).runtimeChannels;
+  const channels = level2(root, { sourceExcerpts: true }).runtimeChannels;
   const kinds = channels.map((entry) => `${entry.module}:${entry.kind}`);
   for (const expected of ['server:http-server', 'server:websocket-server', 'server:process-spawn', 'web:websocket-client', 'web:http-client', 'worker:process-spawn']) {
     assert.ok(kinds.includes(expected), `${expected} in ${kinds.join(', ')}`);
@@ -359,7 +359,7 @@ test('Level 2 records inter-process channels and what they reach', (t) => {
     'channel = grpc.insecure_channel(address)',
   ].join('\n'));
 
-  const channels = level2(root).runtimeChannels;
+  const channels = level2(root, { sourceExcerpts: true }).runtimeChannels;
   const find = (module, kind) => channels.find((entry) => entry.module === module && entry.kind === kind);
   const spawn = find('engine', 'process-spawn');
   assert.deepEqual(spawn.targets.sort(), ['nvidia-smi', 'run_scheduler_process']);
@@ -382,7 +382,7 @@ test('Level 2 records datastores with the database or file they name', (t) => {
     '    json.dump(facts, f)',
   ].join('\n'));
 
-  const channels = level2(root).runtimeChannels;
+  const channels = level2(root, { sourceExcerpts: true }).runtimeChannels;
   const server = channels.find((entry) => entry.module === 'server' && entry.kind === 'datastore');
   assert.deepEqual(server.targets, ['runtime.sqlite']);
   const memory = channels.find((entry) => entry.module === 'memory' && entry.kind === 'datastore');

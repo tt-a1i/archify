@@ -35,8 +35,8 @@ Authoring defaults and the example as SKILL.md step 2 describes.
      components; draw one only when no runtime channel explains it, labelled
      `imports`.
    - `runtimeChannels` are where runtime modules spawn processes, use queues,
-     open stores, or serve or call HTTP, gRPC or WebSocket; `targets` name the
-     peer. Draw a channel only after tracing both caller and peer.
+     open stores, or serve or call HTTP, gRPC or WebSocket; each `anchor` is
+     the call line. Draw a channel only after tracing both caller and peer.
    - `modules` are candidates, not one node each; `supportModules` (tests,
      scripts, docs) stay out unless requested. Console scripts mapped onto a
      file (`boundaries.entrypoints[].files`) are separate processes.
@@ -44,15 +44,16 @@ Authoring defaults and the example as SKILL.md step 2 describes.
      primary path reads, writes, or calls (a database, a state or data file
      another step consumes, a repository, model weights) gets its own
      component even when one module owns it, and so does a process boundary;
-     `datastore` channels and their `targets` point at these stores.
+     `datastore` channels point at these stores.
    - `questions` are optional leads; answer only those that could change a
-     boundary, from their `excerpts` first.
+     boundary, from their anchors.
    - `crossLanguage.routeReferences` are candidate links for a component in
      another language; read the one anchor before drawing it.
    - `unscanned` languages and `dynamic` imports are boundaries to confirm,
      not absence.
-   When `repository.dirty` is false, cite pack line numbers (excerpts,
-   anchors, outlines) directly; `outlines` give file lengths and definitions
+   The pack carries paths, line numbers and definition names, not source
+   text. When `repository.dirty` is false, cite pack line numbers (anchors,
+   outlines) directly; `outlines` give file lengths and definitions
    so you read ranges, not whole files. Batch the reads you still need into one
    command. Draw the primary request path end to end first, then side paths.
    Finalize rejects an isolated component or disconnected group: attach a
