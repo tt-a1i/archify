@@ -84,6 +84,7 @@
           "tag": { "type": "string" },
           "icon": { "$ref": "common.schema.json#/$defs/nodeIcon" },
           "brand": { "$ref": "common.schema.json#/$defs/brandMark" },
+          "iconStyle": { "enum": ["badge", "icon-first"] },
           "sources": { "$ref": "common.schema.json#/$defs/sourceReferences" },
           "row": { "type": "integer", "minimum": 0 },
           "col": { "type": "integer", "minimum": 0 },

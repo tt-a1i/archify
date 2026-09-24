@@ -648,19 +648,29 @@ function markAttrs(mark) {
   ].filter(Boolean).join(' ');
 }
 
-export function renderBrandMark(node, { x, y, size = 16 } = {}) {
+export function renderBrandMark(node, { x, y, size = 16, mode = 'badge' } = {}) {
   const mark = brandMarkFor(node);
   if (!mark) return '';
   const inset = 3;
   let content;
   if (mark.kind === 'preset') {
     const scale = (size - inset * 2) / mark.viewBox;
-    content = `<path d="${esc(mark.path)}" transform="translate(${inset} ${inset}) scale(${scale})" fill="#${esc(mark.hex)}"/>`;
+    const channels = mark.hex.match(/../g).map((value) => Number.parseInt(value, 16));
+    const neutral = Math.max(...channels) - Math.min(...channels) <= 4
+      && (Math.max(...channels) <= 32 || Math.min(...channels) >= 224);
+    const fill = mode === 'icon-first' && neutral
+      ? 'var(--text)' : `#${esc(mark.hex)}`;
+    content = `<path d="${esc(mark.path)}" transform="translate(${inset} ${inset}) scale(${scale})" fill="${fill}"/>`;
   } else if (mark.kind === 'remote') {
     content = `<image href="${esc(mark.dataUrl)}" x="${inset}" y="${inset}" width="${size - inset * 2}" height="${size - inset * 2}" preserveAspectRatio="xMidYMid meet"/>`;
   } else {
     const scale = size / 20;
     content = `<g transform="scale(${scale})" class="brand-mark-fallback"><circle cx="10" cy="10" r="5.2"/><path d="M4.8 10h10.4M10 4.8c1.6 1.6 2.4 3.3 2.4 5.2s-.8 3.6-2.4 5.2M10 4.8C8.4 6.4 7.6 8.1 7.6 10s.8 3.6 2.4 5.2"/></g>`;
+  }
+  if (mode === 'icon-first') {
+    return `<g aria-hidden="true" ${markAttrs(mark)} class="brand-mark brand-mark-icon-first" transform="translate(${x} ${y})">
+            ${content}
+          </g>`;
   }
   return `<g aria-hidden="true" ${markAttrs(mark)} class="brand-mark" transform="translate(${x} ${y})">
             <rect width="${size}" height="${size}" rx="4" class="brand-mark-badge"/>

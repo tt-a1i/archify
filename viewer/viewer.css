@@ -3939,6 +3939,7 @@ html[data-preset="editorial"] .share-chapter-cue {
    ========================================================== */
 .c-grid       { stroke: var(--grid); fill: none; }
 .c-mask       { fill: var(--mask); stroke: none; }
+.c-icon-first { fill: transparent; stroke: var(--text-muted); }
 
 .c-frontend   { fill: var(--frontend-fill);   stroke: var(--frontend-stroke); }
 .c-backend    { fill: var(--backend-fill);    stroke: var(--backend-stroke); }
