@@ -121,7 +121,7 @@ function messageRouteBox(message) {
   };
 }
 
-function segmentLabelBox(segment) {
+function initialSegmentLabelBox(segment) {
   const labelW = Math.max(42, textUnits(segment.label) * 5.2 + 14);
   const occupied = asArray(sequence.messages)
     .flatMap((message) => [messageLabelBox(message), messageRouteBox(message)])
@@ -132,6 +132,27 @@ function segmentLabelBox(segment) {
     label.y -= 22;
   }
   return label;
+}
+
+const segmentLabelBoxes = new Map(asArray(sequence.segments).map((segment) => [
+  segment, initialSegmentLabelBox(segment)
+]));
+const participantHeaders = [...participants.values()];
+for (const label of segmentLabelBoxes.values()) {
+  if (!participantHeaders.some((header) => rectsOverlap(label, header, 2))) continue;
+  // Labels are compiler-owned; preserve the authored band and any clear titles.
+  // Reserve all other titles before moving, including ones not yet processed.
+  const occupied = [...participantHeaders, ...segmentLabelBoxes.values()].filter((rect) => rect !== label);
+  for (let y = label.y - 22; y >= 0; y -= 22) {
+    const candidate = { ...label, y };
+    if (occupied.some((rect) => rectsOverlap(candidate, rect, 2))) continue;
+    label.y = y;
+    break;
+  }
+}
+
+function segmentLabelBox(segment) {
+  return segmentLabelBoxes.get(segment);
 }
 
 const compositionFrames = asArray(sequence.segments).map((segment, index) => ({
