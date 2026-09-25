@@ -7,7 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
 ### Added
-- **Sequence self-messages.** Messages whose `from` and `to` name the same participant now render as loop-back arrows, turn inward at the right edge, retain stable edge identity and viewer interactions, and fail closed on label-space or timeline overflow.
+- **Sequence self-messages.** Messages whose `from` and `to` name the same participant now render as loop-back arrows, turn inward at the right edge, retain stable edge identity and viewer interactions, and fail closed on label-space, overlapping-loop, note-space, or timeline overflow.
 
 ### Fixed
 - **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.

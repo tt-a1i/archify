@@ -112,3 +112,22 @@ test('a self-message reserves its full loop height inside the readable timeline'
   assert.notEqual(outcome.code, 0);
   assert.match(outcome.stderr, /so its self-call loop stays inside the lifeline/);
 });
+
+test('self-messages on the same participant reject overlapping loop spans', () => {
+  const outcome = renderOutcome(sequence([
+    { id: 'first-loop', from: 'middle', to: 'middle', y: 220, label: 'first' },
+    { id: 'second-loop', from: 'middle', to: 'middle', y: 250, label: 'second' },
+  ]));
+  assert.notEqual(outcome.code, 0);
+  assert.match(outcome.stderr, /Self-messages "first" and "second" overlap vertically/);
+  assert.match(outcome.stderr, /at least 42px/);
+});
+
+test('a self-message note reserves space inside the readable timeline', () => {
+  const outcome = renderOutcome(sequence([
+    { id: 'late-note', from: 'middle', to: 'middle', y: 569, label: 'late', note: 'cleanup' },
+  ]));
+  assert.notEqual(outcome.code, 0);
+  assert.match(outcome.stderr, /keep y between 160 and 555/);
+  assert.match(outcome.stderr, /so its self-call loop stays inside the lifeline/);
+});

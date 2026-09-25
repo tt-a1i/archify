@@ -210,7 +210,7 @@ function validateSequence() {
     if (typeof message.y !== 'number') problems.push(`Message "${message.label}" must provide a numeric y.`);
     const geometry = messageGeometry(message);
     const maximumY = geometry?.self
-      ? layout.lifelineBottom - selfMessageLayout.height - 4
+      ? layout.lifelineBottom - selfMessageLayout.height - (message.note ? 18 : 4)
       : layout.lifelineBottom - 18;
     if (message.y < layout.lifelineTop + 18 || message.y > maximumY) {
       problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${maximumY}${geometry?.self ? ' so its self-call loop stays inside the lifeline' : ''}.`);
@@ -299,6 +299,23 @@ function validateSequence() {
       if (placed[i].x1 < placed[j].x2 && placed[j].x1 < placed[i].x2) {
         problems.push(`Messages "${placed[i].label}" and "${placed[j].label}" are less than 28px apart and share horizontal space — spread their y values.`);
       }
+    }
+  }
+
+  const selfMessagesByParticipant = new Map();
+  for (const message of asArray(sequence.messages)) {
+    if (message.from !== message.to || !participants.has(message.from) || typeof message.y !== 'number') continue;
+    const messages = selfMessagesByParticipant.get(message.from) || [];
+    messages.push(message);
+    selfMessagesByParticipant.set(message.from, messages);
+  }
+  for (const messages of selfMessagesByParticipant.values()) {
+    messages.sort((left, right) => left.y - right.y);
+    for (let index = 0; index < messages.length - 1; index += 1) {
+      const current = messages[index];
+      const next = messages[index + 1];
+      if (next.y - current.y >= selfMessageLayout.height) continue;
+      problems.push(`Self-messages "${current.label}" and "${next.label}" overlap vertically — spread their y values by at least ${selfMessageLayout.height}px.`);
     }
   }
 
