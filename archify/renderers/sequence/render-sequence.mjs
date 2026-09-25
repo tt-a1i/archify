@@ -4,7 +4,7 @@ import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../share
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
+import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, polylinePath, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
@@ -77,20 +77,53 @@ const participants = new Map(asArray(sequence.participants).map((participant, in
   }
 ]));
 
+const selfMessageLayout = {
+  minimumWidth: 56,
+  labelPadding: 15,
+  height: 42,
+  canvasMargin: 40,
+  lifelineClearance: 18,
+};
+
+function messageLabelWidth(message) {
+  return Math.max(34, textUnits(message.label) * 5.2 + 12);
+}
+
 function messageGeometry(message) {
   const from = participants.get(message.from);
   const to = participants.get(message.to);
   if (!from || !to || typeof message.y !== 'number') return null;
+  if (message.from === message.to) {
+    const labelWidth = messageLabelWidth(message);
+    const loopWidth = Math.max(selfMessageLayout.minimumWidth, labelWidth + selfMessageLayout.labelPadding);
+    const direction = participantCount > 1 && from.index === participantCount - 1 ? -1 : 1;
+    const start = from.cx + direction * 7;
+    const outer = from.cx + direction * loopWidth;
+    const end = start;
+    const points = [
+      [start, message.y],
+      [outer, message.y],
+      [outer, message.y + selfMessageLayout.height],
+      [end, message.y + selfMessageLayout.height],
+    ];
+    return {
+      self: true,
+      direction,
+      outer,
+      center: (start + outer) / 2,
+      points,
+    };
+  }
   const direction = to.cx > from.cx ? 1 : -1;
   const start = from.cx + direction * 7;
   const end = to.cx - direction * 7;
-  return { start, end, center: (start + end) / 2 };
+  return { self: false, center: (start + end) / 2, points: [[start, message.y], [end, message.y]] };
 }
 
 function messageLabelBox(message, relationIndex = null) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
-  const width = Math.max(34, textUnits(message.label) * 5.2 + 12);
+  const width = messageLabelWidth(message);
   return {
     relation: message,
     relationIndex,
@@ -105,11 +138,13 @@ function messageLabelBox(message, relationIndex = null) {
 function messageRouteBox(message) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
+  const xs = geometry.points.map(([x]) => x);
+  const ys = geometry.points.map(([, y]) => y);
   return {
-    x: Math.min(geometry.start, geometry.end),
-    y: message.y - 2,
-    width: Math.abs(geometry.end - geometry.start),
-    height: 4,
+    x: Math.min(...xs) - (geometry.self ? 2 : 0),
+    y: Math.min(...ys) - 2,
+    width: Math.max(...xs) - Math.min(...xs) + (geometry.self ? 4 : 0),
+    height: Math.max(4, Math.max(...ys) - Math.min(...ys) + 4),
   };
 }
 
@@ -139,9 +174,7 @@ const compositionFrames = asArray(sequence.segments).map((segment, index) => ({
 
 function messagePath(message) {
   return {
-    points: participants.has(message.from) && participants.has(message.to)
-      ? [[participants.get(message.from).cx, message.y], [participants.get(message.to).cx, message.y]]
-      : []
+    points: messageGeometry(message)?.points || []
   };
 }
 
@@ -175,12 +208,28 @@ function validateSequence() {
     if (!participants.has(message.from)) problems.push(`Message "${message.label}" references unknown source "${message.from}".`);
     if (!participants.has(message.to)) problems.push(`Message "${message.label}" references unknown target "${message.to}".`);
     if (typeof message.y !== 'number') problems.push(`Message "${message.label}" must provide a numeric y.`);
-    if (message.y < layout.lifelineTop + 18 || message.y > layout.lifelineBottom - 18) {
-      problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${layout.lifelineBottom - 18}.`);
+    const geometry = messageGeometry(message);
+    const maximumY = geometry?.self
+      ? layout.lifelineBottom - selfMessageLayout.height - (message.note ? 18 : 4)
+      : layout.lifelineBottom - 18;
+    if (message.y < layout.lifelineTop + 18 || message.y > maximumY) {
+      problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${maximumY}${geometry?.self ? ' so its self-call loop stays inside the lifeline' : ''}.`);
     }
     if (participants.has(message.from) && participants.has(message.to)) {
       const distance = Math.abs(participants.get(message.to).cx - participants.get(message.from).cx);
-      if (distance < 60) problems.push(`Message "${message.label}" spans ${Math.round(distance)}px (minimum 60px) — give its participants more column distance.`);
+      if (message.from !== message.to && distance < 60) problems.push(`Message "${message.label}" spans ${Math.round(distance)}px (minimum 60px) — give its participants more column distance.`);
+      if (geometry?.self) {
+        const participant = participants.get(message.from);
+        const neighbourSpec = asArray(sequence.participants)[participant.index + geometry.direction];
+        const neighbour = neighbourSpec ? participants.get(neighbourSpec.id) : null;
+        const boundary = geometry.direction > 0
+          ? (neighbour?.cx ?? viewBox[0] - selfMessageLayout.canvasMargin) - selfMessageLayout.lifelineClearance
+          : (neighbour?.cx ?? selfMessageLayout.canvasMargin) + selfMessageLayout.lifelineClearance;
+        const exceedsBoundary = geometry.direction > 0 ? geometry.outer > boundary : geometry.outer < boundary;
+        if (exceedsBoundary) {
+          problems.push(`Self-message "${message.label}" does not fit beside participant "${message.from}" — increase meta.viewBox[0], use meta.column_fit "spread", shorten the label, or reorder participants.`);
+        }
+      }
     }
   }
 
@@ -250,6 +299,23 @@ function validateSequence() {
       if (placed[i].x1 < placed[j].x2 && placed[j].x1 < placed[i].x2) {
         problems.push(`Messages "${placed[i].label}" and "${placed[j].label}" are less than 28px apart and share horizontal space — spread their y values.`);
       }
+    }
+  }
+
+  const selfMessagesByParticipant = new Map();
+  for (const message of asArray(sequence.messages)) {
+    if (message.from !== message.to || !participants.has(message.from) || typeof message.y !== 'number') continue;
+    const messages = selfMessagesByParticipant.get(message.from) || [];
+    messages.push(message);
+    selfMessagesByParticipant.set(message.from, messages);
+  }
+  for (const messages of selfMessagesByParticipant.values()) {
+    messages.sort((left, right) => left.y - right.y);
+    for (let index = 0; index < messages.length - 1; index += 1) {
+      const current = messages[index];
+      const next = messages[index + 1];
+      if (next.y - current.y >= selfMessageLayout.height) continue;
+      problems.push(`Self-messages "${current.label}" and "${next.label}" overlap vertically — spread their y values by at least ${selfMessageLayout.height}px.`);
     }
   }
 
@@ -357,11 +423,11 @@ function renderActivation(activation) {
         <rect x="${x}" y="${activation.from}" width="10" height="${height}" rx="3" class="${fill}" stroke-width="1"/>`;
 }
 
-function messageLabel(message, x1, x2) {
+function messageLabel(message) {
   const box = messageLabelBox(message);
-  const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
+  const center = box.x + box.width / 2;
   const y = message.y - 10;
-  const labelW = box?.width || Math.max(34, textUnits(message.label) * 5.2 + 12);
+  const labelW = box.width;
   const accent = message.variant === 'security'
     ? 't-security'
     : message.variant === 'dashed'
@@ -376,16 +442,17 @@ function messageLabel(message, x1, x2) {
 }
 
 function renderMessage(message, index) {
-  const { start, end } = messageGeometry(message);
+  const geometry = messageGeometry(message);
+  const { points } = geometry;
   const [cls, marker] = arrowClass[message.variant || 'default'] || arrowClass.default;
   const strokeWidth = message.variant === 'emphasis' ? 1.8 : 1.4;
   const dash = message.variant === 'return' ? ' stroke-dasharray="3,5"' : '';
   const note = message.note
-    ? `\n        <text data-detail="fine" x="${Math.min(start, end) + 12}" y="${message.y + 18}" class="t-dim" font-size="7">${esc(message.note)}</text>`
+    ? `\n        <text data-detail="fine" x="${Math.min(...points.map(([x]) => x)) + 12}" y="${message.y + (geometry.self ? selfMessageLayout.height + 18 : 18)}" class="t-dim" font-size="7">${esc(message.note)}</text>`
     : '';
   return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}>
-          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
-${messageLabel(message, start, end)}${note}
+          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue(points)}" d="${polylinePath(points)}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
+${messageLabel(message)}${note}
         </g>`;
 }
 

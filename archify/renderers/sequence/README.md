@@ -64,6 +64,7 @@ not create edge facts.
 | Message `y` range | `[160, height − 83]` |
 | Message spacing | ≥28px vertical between messages that share horizontal space |
 | Arrow span | ≥60px horizontal between the two participants |
+| Self-message | Set `from` and `to` to the same participant; a 42px-high loop turns right by default and left at the right edge; `y` ends at `height − 111`, or `height − 125` when `note` is present |
 | Segments | y pixel ranges with `to > from`, inside `[72, lifeline bottom + 20]` |
 | Legend row | y = height − 54 |
 
@@ -84,6 +85,9 @@ lifelines, and message semantics.
 - Put participants across the top, ordered by the story the reader should
   follow.
 - Time moves downward.
+- Use `from === to` when work happens inside one participant. Keep enough
+  horizontal room for the complete label; the renderer fails closed instead of
+  clipping a loop into the next lifeline or canvas edge.
 - Use `emphasis` for the main request path.
 - Use `security` for auth, consent, permission, and policy calls.
 - Use `return` for quiet response messages.
