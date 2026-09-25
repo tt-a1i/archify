@@ -1067,12 +1067,12 @@ try {
         };
         HTMLAnchorElement.prototype.click = function () { downloads.push(this.download); };
         CanvasRenderingContext2D.prototype.fillText = function (text, x, y) {
-          if (headerMetrics.length < 2 && (y === 62 || y === 87)) {
+          if (headerMetrics.length < 2 && (y === 74 || y === 99)) {
             headerMetrics.push({
               y: y,
               text: String(text),
               width: this.measureText(String(text)).width,
-              maxWidth: y === 62 ? 798 : 848
+              maxWidth: y === 74 ? 860 : 1120
             });
           }
           return originalFillText.apply(this, arguments);
@@ -1353,7 +1353,7 @@ try {
     assert.ok(routePayload.imageDecodeError);
     assert.match(routePayload.unknownVariantError, /Unknown Share Card variant: unknown/);
     assert.equal(routePayload.routeLabelExecuted, false);
-    assert.deepEqual(routePayload.headerMetrics.map((metric) => metric.y), [62, 87]);
+    assert.deepEqual(routePayload.headerMetrics.map((metric) => metric.y), [74, 99]);
     assert.ok(routePayload.headerMetrics.every((metric) => metric.width <= metric.maxWidth + 0.5), `${label} title/subtitle overflowed the Share Card header`);
     assert.deepEqual(routePayload.svgReceipt, { format: 'svg', variant: null, canonical: 'true' });
     assert.deepEqual(routePayload.pngReceipt, { format: 'png', variant: null, canonical: 'true' });

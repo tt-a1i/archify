@@ -5685,8 +5685,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var MOTION_FPS = 30;
       var SHARE_CARD_WIDTH = 1200;
       var SHARE_CARD_HEIGHT = 630;
-      var SHARE_CARD_PADDING = 36;
-      var SHARE_CARD_HEADER = 112;
+      var SHARE_CARD_PADDING = 40;
+      var SHARE_CARD_HEADER = 124;
 
       function exportError(key, values) {
         var error = new Error(viewerText(key, values));
@@ -6141,8 +6141,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
         var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bgRect.setAttribute('width', '100%');
-        bgRect.setAttribute('height', '100%');
+        // Cover the real viewBox: auto-cropped canvases start below y=0, and a
+        // 100% rect anchored at the origin left an unpainted band at the bottom.
+        bgRect.setAttribute('x', vb.x);
+        bgRect.setAttribute('y', vb.y);
+        bgRect.setAttribute('width', vb.width);
+        bgRect.setAttribute('height', vb.height);
 
         if (autoTheme) {
           // Dual-theme SVG. Dark is the default (so hosts without
@@ -6207,6 +6211,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
         }
 
+        if (opts.figure && (document.documentElement.getAttribute('data-preset') || 'classic') !== 'blueprint') {
+          // Framed figures sit on a margin; a grid that stops at the canvas edge
+          // reads as a stray box. Blueprint keeps it because the grid is its style.
+          style.textContent += "\nrect[fill=\"url(#grid)\"] { display: none; }\n";
+        }
+
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
 
@@ -6248,6 +6258,31 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return 1;
       }
 
+      // Raster exports read as a finished figure: a margin around the canvas
+      // and the diagram title (plus subtitle) above it, set in the Viewer's
+      // own heading face. Values are CSS pixels before the raster scale.
+      var FRAME_PADDING = 44;
+      var FRAME_TITLE_SIZE = 24;
+      var FRAME_SUBTITLE_SIZE = 13;
+
+      function rasterFrame() {
+        var titleNode = document.querySelector('.header h1');
+        var subtitleNode = document.querySelector('.header .subtitle');
+        var title = titleNode ? titleNode.textContent.trim() : '';
+        var subtitle = subtitleNode ? subtitleNode.textContent.trim() : '';
+        var titleStyle = titleNode ? getComputedStyle(titleNode) : null;
+        var computed = getComputedStyle(document.documentElement);
+        var header = title ? FRAME_TITLE_SIZE + (subtitle ? 10 + FRAME_SUBTITLE_SIZE : 0) + 12 : 0;
+        return {
+          title: title,
+          subtitle: subtitle,
+          family: (titleStyle && titleStyle.fontFamily) || 'sans-serif',
+          text: computed.getPropertyValue('--text').trim() || '#0f172a',
+          muted: computed.getPropertyValue('--text-muted').trim() || '#64748b',
+          header: header
+        };
+      }
+
       function rasterize(format) {
         // Serialize at a safe scale (RASTER_SCALE=4 by default, reduced if the
         // resulting canvas would exceed MAX_CANVAS_PIXELS). The SVG itself is
@@ -6255,8 +6290,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // size — no upsampling blur.
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
-        var scale = pickSafeScale(vb.width, vb.height);
-        var data = serializeSvg(scale);
+        var frame = rasterFrame();
+        var frameWidth = vb.width + FRAME_PADDING * 2;
+        var frameHeight = vb.height + FRAME_PADDING * 2 + frame.header;
+        var scale = pickSafeScale(frameWidth, frameHeight);
+        var data = serializeSvg(scale, { figure: true });
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -6265,15 +6303,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           img.onload = function () {
             try {
               var canvas = document.createElement('canvas');
-              canvas.width = data.width;
-              canvas.height = data.height;
+              canvas.width = Math.round(frameWidth * scale);
+              canvas.height = Math.round(frameHeight * scale);
               var ctx = canvas2dOrThrow(canvas, format);
-              if (format === 'jpeg') {
-                ctx.fillStyle = currentBg();
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || currentBg();
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              if (frame.title) {
+                var textWidth = (frameWidth - FRAME_PADDING * 2) * scale;
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = frame.text;
+                var titleBaseline = (FRAME_PADDING + FRAME_TITLE_SIZE * 0.82) * scale;
+                ctx.fillText(fitCanvasText(ctx, frame.title, textWidth, FRAME_TITLE_SIZE * scale, 14 * scale, '650', frame.family),
+                  FRAME_PADDING * scale, titleBaseline);
+                if (frame.subtitle) {
+                  ctx.fillStyle = frame.muted;
+                  ctx.fillText(fitCanvasText(ctx, frame.subtitle, textWidth, FRAME_SUBTITLE_SIZE * scale, 10 * scale, '400', frame.family),
+                    FRAME_PADDING * scale, titleBaseline + (10 + FRAME_SUBTITLE_SIZE) * scale);
+                }
               }
               // Draw at natural size — SVG was already rasterized at target res.
-              ctx.drawImage(img, 0, 0);
+              ctx.drawImage(img, FRAME_PADDING * scale, (FRAME_PADDING + frame.header) * scale);
               URL.revokeObjectURL(svgUrl);
               var mime = format === 'jpeg' ? 'image/jpeg' :
                          format === 'webp' ? 'image/webp' : 'image/png';
@@ -6295,10 +6344,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
       }
 
-      function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight) {
+      function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight, fontFamily) {
         var value = String(text || '').trim();
         var size = startSize;
-        var family = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        var family = fontFamily || "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
         while (size > minSize) {
           ctx.font = (weight || '600') + ' ' + size + 'px ' + family;
           if (ctx.measureText(value).width <= maxWidth) return value;
@@ -6331,7 +6380,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
+        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot, figure: true });
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
         if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
@@ -6390,38 +6439,52 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
                   ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
                   : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
 
+              var family = titleNode ? getComputedStyle(titleNode).fontFamily : 'sans-serif';
+              var panelFill = bg;
+
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
 
+              // Header: a short accent rule and badge over the title and summary.
               ctx.fillStyle = accent;
-              ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
-
+              ctx.fillRect(SHARE_CARD_PADDING, 34, 28, 3);
               ctx.textBaseline = 'alphabetic';
-              ctx.fillStyle = text;
-              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
-              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
-
-              ctx.fillStyle = muted;
-              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
-
-              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.font = '600 12px ' + family;
               ctx.textAlign = 'right';
-              ctx.fillStyle = accent;
-              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
+              ctx.fillStyle = muted;
+              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 40);
               ctx.textAlign = 'left';
 
-              var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-              var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+              ctx.fillStyle = text;
+              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 260, 30, 18, '650', family);
+              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 74);
+
+              ctx.fillStyle = muted;
+              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2, 15, 12, '400', family);
+              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 99);
+
+              // The diagram sits on one soft rounded panel with an even inset.
+              var panelX = SHARE_CARD_PADDING;
+              var panelY = SHARE_CARD_HEADER;
+              var panelWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
+              var panelHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+              var inset = 18;
+              ctx.beginPath();
+              if (typeof ctx.roundRect === 'function') ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 14);
+              else ctx.rect(panelX, panelY, panelWidth, panelHeight);
+              ctx.fillStyle = panelFill;
+              ctx.fill();
+              ctx.strokeStyle = border;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+
+              var availableWidth = panelWidth - inset * 2;
+              var availableHeight = panelHeight - inset * 2;
               var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
               var drawWidth = data.width * fit;
               var drawHeight = data.height * fit;
-              var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
-              var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
-
-              ctx.strokeStyle = border;
-              ctx.lineWidth = 1;
-              ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
+              var drawX = panelX + inset + (availableWidth - drawWidth) / 2;
+              var drawY = panelY + inset + (availableHeight - drawHeight) / 2;
               ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
               URL.revokeObjectURL(svgUrl);
 

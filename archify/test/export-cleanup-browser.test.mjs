@@ -140,7 +140,7 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
               ${JSON.stringify(text)}.replace(/^<\\?xml[^>]*>\\s*/, '');
           });
           const root = frame.contentDocument.documentElement;
-          const background = root.querySelector('svg > rect[width="100%"][height="100%"]');
+          const background = root.querySelector('svg > style + rect');
           return {
             theme: root.querySelector('svg').getAttribute('data-theme'),
             background: frame.contentWindow.getComputedStyle(background).fill,
@@ -210,7 +210,10 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
           const dimensions = [bitmap.width, bitmap.height];
           bitmap.close();
           const svg = document.querySelector('.diagram-container > svg');
-          const expected = format === 'share-card' ? [1200, 630] : [svg.viewBox.baseVal.width * 4, svg.viewBox.baseVal.height * 4];
+          // Raster figures add a 44px margin and the title header (24px title, 23px subtitle line, 12px gap) at 4x.
+          const subtitle = (document.querySelector('.header .subtitle') || {}).textContent;
+          const header = document.querySelector('.header h1') ? 24 + (subtitle && subtitle.trim() ? 23 : 0) + 12 : 0;
+          const expected = format === 'share-card' ? [1200, 630] : [(svg.viewBox.baseVal.width + 88) * 4, (svg.viewBox.baseVal.height + 88 + header) * 4];
           const data = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result.split(',')[1]);
