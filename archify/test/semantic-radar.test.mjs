@@ -472,12 +472,14 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
       var passport = document.getElementById('focus-chip').getBoundingClientRect();
       var active = document.querySelector('[data-focus-selected]');
       var nearestLeft = passport.right + 16;
+      // Aim inside the Passport's vertical band so the request must snap clear.
+      var targetTop = Math.max(radar.top, passport.top);
       active.getBoundingClientRect = function () {
         return {
           left: nearestLeft,
-          top: radar.top,
+          top: targetTop,
           right: nearestLeft + radar.width,
-          bottom: radar.top + radar.height,
+          bottom: targetTop + radar.height,
           width: radar.width,
           height: radar.height
         };
@@ -485,8 +487,8 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
       return {
         radar: { left: radar.left, top: radar.top },
         head: { left: head.left, top: head.top, height: head.height },
-        requested: { left: passport.right + 8, top: radar.top },
-        nearest: { left: nearestLeft, top: radar.top }
+        requested: { left: passport.right + 8, top: targetTop },
+        nearest: { left: nearestLeft, top: targetTop }
       };
     })()`);
     await dragMouse(browser, sessionId, {

@@ -146,15 +146,29 @@
           railCollapse.setAttribute('aria-expanded', String(mode === 'true' || mode === 'overlay'));
         }
         if (railPlacement) {
-          railPlacement.hidden = !mode || mode === 'collapsed';
+          railPlacement.hidden = !mode || mode === 'collapsed' || (mode === 'bottom' && window.innerWidth < RAIL_MIN_VIEWPORT);
           railPlacement.setAttribute('data-placement', mode === 'bottom' ? 'bottom' : 'right');
           railPlacement.setAttribute('aria-label', viewerText(mode === 'bottom' ? 'viewer.rail.right' : 'viewer.rail.bottom'));
           railPlacement.title = railPlacement.getAttribute('aria-label');
         }
       }
+      var outline = document.getElementById('node-outline');
       function hasCards() {
-        var outline = document.getElementById('node-outline');
         return Boolean((cards && cards.children.length && !cards.hidden) || (outline && !outline.hidden));
+      }
+      // Bottom notes and index are reading material below the fold: the first
+      // screen belongs to the interactive diagram and its controls.
+      function belowFold() {
+        return html.getAttribute('data-reader-rail') === 'bottom' ? outerHeight(railPanel) : 0;
+      }
+      // A docked rail may run past a short diagram down to the viewport floor,
+      // so the index uses that space instead of scrolling inside the diagram's
+      // height; it never pushes the page into overflow.
+      function fitDockedRail() {
+        if (html.getAttribute('data-reader-rail') !== 'true' || !railPanel) return;
+        var top = railPanel.getBoundingClientRect().top + window.scrollY;
+        var floor = window.innerHeight - number(window.getComputedStyle(body).paddingBottom) - top;
+        html.style.setProperty('--archify-rail-max', Math.max(diagram.getBoundingClientRect().height, floor) + 'px');
       }
       function chromeMetrics() {
         var bodyStyle = window.getComputedStyle(body);
@@ -181,10 +195,11 @@
         settleFrame = requestAnimationFrame(function () {
           settleFrame = 0;
           if (!eligible() || !lastWidth) return;
+          fitDockedRail();
           var overflow = Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight
-          ) - window.innerHeight;
+          ) - window.innerHeight - belowFold();
           if (overflow > 1 && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
@@ -222,23 +237,30 @@
           minWidth = Math.min(readableMinimumWidth, viewportCap);
         }
         var primaryWidth = primaryReadingWidth();
-        if (primaryWidth > 0) minWidth = Math.max(minWidth, Math.min(maxWidth, primaryWidth + chrome.diagramX));
         var railExtra = RAIL_WIDTH + RAIL_GAP;
         var mode = null;
-        if (hasCards() && window.innerWidth >= RAIL_MIN_VIEWPORT) {
+        // Notes default below the diagram; the right rail is the reader's
+        // opt-in and needs a wide viewport.
+        if (hasCards() && (readPreference(RAIL_PLACEMENT_KEY) !== 'right' || window.innerWidth < RAIL_MIN_VIEWPORT)) {
+          mode = 'bottom';
+        } else if (hasCards()) {
           var fitsReadable = readableMinimumWidth + railExtra <= maxWidth;
           var comfortWidth = labelWidth(RAIL_COMFORT_PRIMARY_PX);
           var comfortable = fitsReadable && (!comfortWidth || comfortWidth + chrome.diagramX + railExtra <= maxWidth);
           var collapsedPreference = readPreference(RAIL_COLLAPSED_KEY);
-          if (readPreference(RAIL_PLACEMENT_KEY) === 'bottom') mode = 'bottom';
-          else if (collapsedPreference === '1' || (collapsedPreference !== '0' && !comfortable)) mode = 'collapsed';
+          if (collapsedPreference === '1' || (collapsedPreference !== '0' && !comfortable)) mode = 'collapsed';
           else mode = fitsReadable ? 'true' : 'overlay';
         }
+        // With notes below the fold, the diagram may trade the renderer's
+        // comfortable primary size down to the rail's 12px floor so it and its
+        // controls fit the first screen; taller graphs still scroll.
+        if (mode === 'bottom' && primaryWidth > 0) primaryWidth = labelWidth(Math.min(RAIL_COMFORT_PRIMARY_PX, declaredPrimaryText));
+        if (primaryWidth > 0) minWidth = Math.max(minWidth, Math.min(maxWidth, primaryWidth + chrome.diagramX));
         var docked = mode === 'true';
         setRail(mode);
         chrome = chromeMetrics();
         if (docked) minWidth = Math.min(maxWidth, minWidth + railExtra);
-        var stackedBelow = mode === 'bottom' ? outerHeight(railPanel) : docked ? 0 : outerHeight(cards);
+        var stackedBelow = mode === 'bottom' ? 0 : docked ? 0 : outerHeight(cards);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);

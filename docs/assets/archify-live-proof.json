@@ -7,13 +7,13 @@
   "fps": 10,
   "frameCount": 54,
   "durationSeconds": 5.4,
-  "bytes": 814327,
-  "sha256": "65d8fd54105e0448f66fea1f24e34169b2ed3e3c6e5349d422977a019199f8d4",
+  "bytes": 818216,
+  "sha256": "76393a564a6f2308f5b43dbb45abb3b5c30d4769d7bd7e652f0cafc77ff3888f",
   "scenes": [
     {
       "id": "signal-flow",
       "artifact": "docs/gallery/artifacts/agent-tool-call.workflow.html",
-      "artifactSha256": "9579b8ed5bffb0c70d8089cc9c897a0de2e99083b9f31354fd725373655be273",
+      "artifactSha256": "e1980c11f0aaad6b0239cfd4a58f5de28d98fe94356399983c0c1de0800d9320",
       "hash": "#focus=planner&reach=downstream",
       "eyebrow": "WORKFLOW · SIGNAL FLOW",
       "title": "Agent Tool Call",
@@ -22,7 +22,7 @@
     {
       "id": "blueprint",
       "artifact": "docs/gallery/artifacts/production-deployment.architecture.html",
-      "artifactSha256": "665b80ecd3c2ce1e6e4581af1df13047f583ff9b1f628dad237bad03289e6f3b",
+      "artifactSha256": "fc675641c60b732dab2b27a1259f824cf95f88eeb4dddd7e0406b762f2eefb32",
       "hash": "#lens=backend~database",
       "eyebrow": "ARCHITECTURE · BLUEPRINT",
       "title": "Production Deployment",
@@ -31,29 +31,11 @@
     {
       "id": "classic",
       "artifact": "docs/gallery/artifacts/cache-miss.sequence.html",
-      "artifactSha256": "8d0875d5488bff11cfb59e73e98bdf394d35297295708e95c49700e2f0b69632",
+      "artifactSha256": "bd6e6b655553ba41eaa8cc8e25c96d1ee4859c6f46dee82a27f8be5eec416f9c",
       "hash": "#route=web~db",
       "eyebrow": "SEQUENCE · CLASSIC",
       "title": "Cache Miss Request",
       "receipt": "7 participants · 12 messages · 9/9 checks"
     }
-  ],
-  "reusedCapture": {
-    "sourceRevision": "397b28a4cfd39a8ca1a3bd95160b499515cb05ff",
-    "reason": "Only the node-outline selection callback changed in these artifacts. The embedded GIF scenes use initial focus, reach, and lens URL state and never invoke the hidden node index. Their SVG, styles, animation, and other Viewer bytes are unchanged. The existing GIF is reused, not recaptured.",
-    "artifacts": [
-      {
-        "artifact": "docs/gallery/artifacts/agent-tool-call.workflow.html",
-        "sha256": "f12f4f8e02a6371d0e12da2ad351ace8411cb732ec5280393fa3ce8087551cb8"
-      },
-      {
-        "artifact": "docs/gallery/artifacts/production-deployment.architecture.html",
-        "sha256": "5977192e7ebf717dc5e31713768dd08a84145ecfc170acec94a626616b7ca644"
-      },
-      {
-        "artifact": "docs/gallery/artifacts/cache-miss.sequence.html",
-        "sha256": "4ffc766a6fc8399199113cfe498d11c3a00c422c8040937d2bd1aaad5331cefa"
-      }
-    ]
-  }
+  ]
 }
