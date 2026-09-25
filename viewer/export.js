@@ -226,7 +226,7 @@
       }
 
       function serializeSvg(scale, opts) {
-        // scale: integer multiplier for intrinsic SVG pixel dimensions used by
+        // scale: multiplier (integer unless the figure is oversized) for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
         scale = scale || 1;
         opts = opts || {};
@@ -439,14 +439,15 @@
       // silently produces a blank canvas above ~16 Mpx; Chrome / Firefox /
       // desktop Safari are far higher but start failing on memory-constrained
       // devices. We pick the largest integer scale in {4,3,2,1} whose target
-      // pixel count fits under this cap.
+      // pixel count fits under this cap; a figure too large even at 1x is
+      // downscaled to fit rather than allocating an oversized canvas.
       var MAX_CANVAS_PIXELS = 16 * 1024 * 1024;
 
       function pickSafeScale(vbW, vbH) {
         for (var s = RASTER_SCALE; s >= 1; s--) {
           if (vbW * s * vbH * s <= MAX_CANVAS_PIXELS) return s;
         }
-        return 1;
+        return Math.sqrt(MAX_CANVAS_PIXELS / (vbW * vbH)) * 0.999;
       }
 
       // Raster exports reproduce the Viewer page without its controls: the

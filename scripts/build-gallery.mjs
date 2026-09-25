@@ -97,7 +97,6 @@ const manifest = {
     input: `gallery/sources/${entry.input}`,
     artifact: `gallery/artifacts/${entry.output}`,
     focus: entry.focus,
-    view: entry.view || null,
     schemaVersion: entry.schemaVersion,
     visualPreset: entry.visualPreset,
     animation: entry.animation,

@@ -4551,9 +4551,8 @@ svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
   animation-name: archify-editorial-node-pulse;
   animation-duration: 3.5s;
 }
-/* Embedded proofs are static until a named Story Trail chapter is played.
-   This keeps proof grids calm and ensures ?play=1 stops all viewer motion
-   after one 3.2 second chapter instead of leaving ambient trace loops on. */
+/* Embedded proofs stay static so proof grids are calm instead of leaving
+   ambient trace loops on. */
 html[data-embed="true"] svg[data-animation="trace"] [data-animate],
 html[data-share-playback="true"] svg[data-animation="trace"] [data-animate] {
   animation: none !important;

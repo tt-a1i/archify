@@ -29,7 +29,12 @@
       }
       function select(id) {
         clearPreview();
-        if (Archify.finder && typeof Archify.finder.select === 'function' && Archify.finder.select(id)) return;
+        var finder = Archify.finder;
+        if (finder && typeof finder.select === 'function') {
+          var kind = typeof finder.context === 'function' ? finder.context() : '';
+          // A refused Route pick keeps the route; focusing would clear it.
+          if (finder.select(id) || kind === 'route-source' || kind === 'route-target') return;
+        }
         if (Archify.focus && typeof Archify.focus.set === 'function') Archify.focus.set(id, { toggle: false });
       }
 

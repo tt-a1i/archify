@@ -205,6 +205,8 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     assert.match(state.results.find(item => item.id === 'db').badge, /4/);
     assert.equal(await run(`Archify.finder.select('auth')`), false);
     assert.equal(await run('Archify.finder.isOpen()'), true);
+    await run(`Archify.outline.select('auth')`);
+    assert.equal(await run('Archify.routeProbe.active()'), 'target');
     await key('Escape', 'Escape', 27);
     assert.equal((await snapshot('route-target-cancel')).activeId, 'route-probe-find');
     await click('#route-probe-find'); await opened(); await search('PostgreSQL');

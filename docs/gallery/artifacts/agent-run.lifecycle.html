@@ -4720,9 +4720,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       animation-name: archify-editorial-node-pulse;
       animation-duration: 3.5s;
     }
-    /* Embedded proofs are static until a named Story Trail chapter is played.
-       This keeps proof grids calm and ensures ?play=1 stops all viewer motion
-       after one 3.2 second chapter instead of leaving ambient trace loops on. */
+    /* Embedded proofs stay static so proof grids are calm instead of leaving
+       ambient trace loops on. */
     html[data-embed="true"] svg[data-animation="trace"] [data-animate],
     html[data-share-playback="true"] svg[data-animation="trace"] [data-animate] {
       animation: none !important;
@@ -6001,7 +6000,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function serializeSvg(scale, opts) {
-        // scale: integer multiplier for intrinsic SVG pixel dimensions used by
+        // scale: multiplier (integer unless the figure is oversized) for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
         scale = scale || 1;
         opts = opts || {};
@@ -6214,14 +6213,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       // silently produces a blank canvas above ~16 Mpx; Chrome / Firefox /
       // desktop Safari are far higher but start failing on memory-constrained
       // devices. We pick the largest integer scale in {4,3,2,1} whose target
-      // pixel count fits under this cap.
+      // pixel count fits under this cap; a figure too large even at 1x is
+      // downscaled to fit rather than allocating an oversized canvas.
       var MAX_CANVAS_PIXELS = 16 * 1024 * 1024;
 
       function pickSafeScale(vbW, vbH) {
         for (var s = RASTER_SCALE; s >= 1; s--) {
           if (vbW * s * vbH * s <= MAX_CANVAS_PIXELS) return s;
         }
-        return 1;
+        return Math.sqrt(MAX_CANVAS_PIXELS / (vbW * vbH)) * 0.999;
       }
 
       // Raster exports reproduce the Viewer page without its controls: the
@@ -9442,10 +9442,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var railPlacement = document.getElementById('rail-placement');
       var RAIL_COLLAPSED_KEY = 'archify-rail-collapsed';
       var RAIL_PLACEMENT_KEY = 'archify-rail-placement';
+      // Memory is the page's source of truth; storage only carries the choice
+      // to later artifacts, so a blocked or full localStorage cannot freeze it.
+      var preferences = Object.create(null);
       function readPreference(key) {
+        if (key in preferences) return preferences[key];
         try { return localStorage.getItem(key); } catch (_) { return null; }
       }
       function writePreference(key, value) {
+        preferences[key] = value;
         try { localStorage.setItem(key, value); } catch (_) {}
       }
 
@@ -9485,19 +9490,25 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ? Math.min(1, requestedMinimumText / sourceMinimum)
           : 1;
       }
-      function primaryReadingWidth(targetPx) {
+      var sourcePrimary = null;
+      if (svg) Array.from(svg.querySelectorAll('text[data-node-label]')).forEach(function (text) {
+        var size = parseFloat(text.getAttribute('font-size') || '');
+        if (Number.isFinite(size) && size > 0) sourcePrimary = sourcePrimary == null ? size : Math.max(sourcePrimary, size);
+      });
+      // SVG width at which the largest node label renders at targetPx. Every
+      // renderer writes label font sizes, so the rail comfort check works for
+      // all diagram types; only the renderer-declared floor needs metadata.
+      function labelWidth(targetPx) {
+        return sourcePrimary == null || !viewBox ? 0 : viewBox.width * targetPx / sourcePrimary;
+      }
+      function primaryReadingWidth() {
         if (!measuredHeightFit || !Number.isFinite(declaredPrimaryText) || declaredPrimaryText <= 0) return 0;
-        var sourcePrimary = null;
-        Array.from(svg.querySelectorAll('text[data-node-label]')).forEach(function (text) {
-          var size = parseFloat(text.getAttribute('font-size') || '');
-          if (Number.isFinite(size) && size > 0) sourcePrimary = sourcePrimary == null ? size : Math.max(sourcePrimary, size);
-        });
         // Primary labels should remain comfortable to read when cards or
         // auxiliary rows make a one-screen fit too small. Ordinary page
         // scroll preserves that reading size; viewport width still caps it.
         // A long title may already use a smaller fitted font. Preserve that
         // hierarchy rather than enlarging every other node to compensate.
-        return sourcePrimary == null ? 0 : viewBox.width * (targetPx || declaredPrimaryText) / sourcePrimary;
+        return labelWidth(declaredPrimaryText);
       }
       function eligible() {
         return Boolean(
@@ -9616,7 +9627,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var mode = null;
         if (hasCards() && window.innerWidth >= RAIL_MIN_VIEWPORT) {
           var fitsReadable = readableMinimumWidth + railExtra <= maxWidth;
-          var comfortWidth = primaryReadingWidth(RAIL_COMFORT_PRIMARY_PX);
+          var comfortWidth = labelWidth(RAIL_COMFORT_PRIMARY_PX);
           var comfortable = fitsReadable && (!comfortWidth || comfortWidth + chrome.diagramX + railExtra <= maxWidth);
           var collapsedPreference = readPreference(RAIL_COLLAPSED_KEY);
           if (readPreference(RAIL_PLACEMENT_KEY) === 'bottom') mode = 'bottom';
@@ -9696,18 +9707,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         settledCap = 0;
         schedule();
       }
-      if (railReveal) railReveal.addEventListener('click', function () { chooseRail(RAIL_COLLAPSED_KEY, '0'); });
-      if (railCollapse) railCollapse.addEventListener('click', function () {
+      function collapseRail() {
         chooseRail(RAIL_COLLAPSED_KEY, '1');
         if (railReveal) requestAnimationFrame(function () { try { railReveal.focus({ preventScroll: true }); } catch (_) {} });
-      });
+      }
+      if (railReveal) railReveal.addEventListener('click', function () { chooseRail(RAIL_COLLAPSED_KEY, '0'); });
+      if (railCollapse) railCollapse.addEventListener('click', collapseRail);
       if (railPlacement) railPlacement.addEventListener('click', function () {
         var toBottom = html.getAttribute('data-reader-rail') !== 'bottom';
         if (!toBottom) writePreference(RAIL_COLLAPSED_KEY, '0');
         chooseRail(RAIL_PLACEMENT_KEY, toBottom ? 'bottom' : 'right');
       });
       document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && html.getAttribute('data-reader-rail') === 'overlay') chooseRail(RAIL_COLLAPSED_KEY, '1');
+        if (event.key === 'Escape' && html.getAttribute('data-reader-rail') === 'overlay') collapseRail();
       });
       document.addEventListener('pointerdown', function (event) {
         if (html.getAttribute('data-reader-rail') !== 'overlay' || !railPanel) return;
@@ -11599,7 +11611,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function select(id) {
         clearPreview();
-        if (Archify.finder && typeof Archify.finder.select === 'function' && Archify.finder.select(id)) return;
+        var finder = Archify.finder;
+        if (finder && typeof finder.select === 'function') {
+          var kind = typeof finder.context === 'function' ? finder.context() : '';
+          // A refused Route pick keeps the route; focusing would clear it.
+          if (finder.select(id) || kind === 'route-source' || kind === 'route-target') return;
+        }
         if (Archify.focus && typeof Archify.focus.set === 'function') Archify.focus.set(id, { toggle: false });
       }
 

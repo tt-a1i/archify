@@ -42,10 +42,15 @@
       var railPlacement = document.getElementById('rail-placement');
       var RAIL_COLLAPSED_KEY = 'archify-rail-collapsed';
       var RAIL_PLACEMENT_KEY = 'archify-rail-placement';
+      // Memory is the page's source of truth; storage only carries the choice
+      // to later artifacts, so a blocked or full localStorage cannot freeze it.
+      var preferences = Object.create(null);
       function readPreference(key) {
+        if (key in preferences) return preferences[key];
         try { return localStorage.getItem(key); } catch (_) { return null; }
       }
       function writePreference(key, value) {
+        preferences[key] = value;
         try { localStorage.setItem(key, value); } catch (_) {}
       }
 
@@ -85,19 +90,25 @@
           ? Math.min(1, requestedMinimumText / sourceMinimum)
           : 1;
       }
-      function primaryReadingWidth(targetPx) {
+      var sourcePrimary = null;
+      if (svg) Array.from(svg.querySelectorAll('text[data-node-label]')).forEach(function (text) {
+        var size = parseFloat(text.getAttribute('font-size') || '');
+        if (Number.isFinite(size) && size > 0) sourcePrimary = sourcePrimary == null ? size : Math.max(sourcePrimary, size);
+      });
+      // SVG width at which the largest node label renders at targetPx. Every
+      // renderer writes label font sizes, so the rail comfort check works for
+      // all diagram types; only the renderer-declared floor needs metadata.
+      function labelWidth(targetPx) {
+        return sourcePrimary == null || !viewBox ? 0 : viewBox.width * targetPx / sourcePrimary;
+      }
+      function primaryReadingWidth() {
         if (!measuredHeightFit || !Number.isFinite(declaredPrimaryText) || declaredPrimaryText <= 0) return 0;
-        var sourcePrimary = null;
-        Array.from(svg.querySelectorAll('text[data-node-label]')).forEach(function (text) {
-          var size = parseFloat(text.getAttribute('font-size') || '');
-          if (Number.isFinite(size) && size > 0) sourcePrimary = sourcePrimary == null ? size : Math.max(sourcePrimary, size);
-        });
         // Primary labels should remain comfortable to read when cards or
         // auxiliary rows make a one-screen fit too small. Ordinary page
         // scroll preserves that reading size; viewport width still caps it.
         // A long title may already use a smaller fitted font. Preserve that
         // hierarchy rather than enlarging every other node to compensate.
-        return sourcePrimary == null ? 0 : viewBox.width * (targetPx || declaredPrimaryText) / sourcePrimary;
+        return labelWidth(declaredPrimaryText);
       }
       function eligible() {
         return Boolean(
@@ -216,7 +227,7 @@
         var mode = null;
         if (hasCards() && window.innerWidth >= RAIL_MIN_VIEWPORT) {
           var fitsReadable = readableMinimumWidth + railExtra <= maxWidth;
-          var comfortWidth = primaryReadingWidth(RAIL_COMFORT_PRIMARY_PX);
+          var comfortWidth = labelWidth(RAIL_COMFORT_PRIMARY_PX);
           var comfortable = fitsReadable && (!comfortWidth || comfortWidth + chrome.diagramX + railExtra <= maxWidth);
           var collapsedPreference = readPreference(RAIL_COLLAPSED_KEY);
           if (readPreference(RAIL_PLACEMENT_KEY) === 'bottom') mode = 'bottom';
@@ -296,18 +307,19 @@
         settledCap = 0;
         schedule();
       }
-      if (railReveal) railReveal.addEventListener('click', function () { chooseRail(RAIL_COLLAPSED_KEY, '0'); });
-      if (railCollapse) railCollapse.addEventListener('click', function () {
+      function collapseRail() {
         chooseRail(RAIL_COLLAPSED_KEY, '1');
         if (railReveal) requestAnimationFrame(function () { try { railReveal.focus({ preventScroll: true }); } catch (_) {} });
-      });
+      }
+      if (railReveal) railReveal.addEventListener('click', function () { chooseRail(RAIL_COLLAPSED_KEY, '0'); });
+      if (railCollapse) railCollapse.addEventListener('click', collapseRail);
       if (railPlacement) railPlacement.addEventListener('click', function () {
         var toBottom = html.getAttribute('data-reader-rail') !== 'bottom';
         if (!toBottom) writePreference(RAIL_COLLAPSED_KEY, '0');
         chooseRail(RAIL_PLACEMENT_KEY, toBottom ? 'bottom' : 'right');
       });
       document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && html.getAttribute('data-reader-rail') === 'overlay') chooseRail(RAIL_COLLAPSED_KEY, '1');
+        if (event.key === 'Escape' && html.getAttribute('data-reader-rail') === 'overlay') collapseRail();
       });
       document.addEventListener('pointerdown', function (event) {
         if (html.getAttribute('data-reader-rail') !== 'overlay' || !railPanel) return;

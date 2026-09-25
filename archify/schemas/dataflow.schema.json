@@ -52,6 +52,9 @@
         "repository": {
           "$ref": "common.schema.json#/$defs/repository"
         },
+        "views": {
+          "$ref": "common.schema.json#/$defs/guidedViews"
+        },
         "legend": {
           "type": "object",
           "additionalProperties": false,
