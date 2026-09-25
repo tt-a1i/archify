@@ -600,7 +600,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button id="btn-overview-map" type="button" aria-label="{{i18n:viewer.nav.radar}}" aria-expanded="false" aria-controls="overview-map" title="{{i18n:viewer.nav.radar.title}}">{{i18n:viewer.nav.radar.short}}</button>
         <button id="btn-semantic-lens" type="button" aria-label="{{i18n:viewer.nav.lens}}" aria-haspopup="dialog" aria-expanded="false" aria-pressed="false" aria-controls="semantic-lens" title="{{i18n:viewer.nav.lens.title}}">{{i18n:viewer.nav.lens.short}}</button>
         <button id="btn-node-finder" type="button" aria-label="{{i18n:viewer.nav.find}}" aria-haspopup="dialog" aria-expanded="false" aria-controls="node-finder" title="{{i18n:viewer.nav.find.title}}" data-node-finder-trigger><span class="diagram-nav-icon find" aria-hidden="true"></span></button>
-        <button id="btn-diagram-guide" type="button" aria-label="{{i18n:viewer.nav.guide}}" aria-haspopup="dialog" aria-expanded="false" aria-controls="diagram-guide" title="{{i18n:viewer.nav.guide.title}}"><span class="diagram-nav-icon guide" aria-hidden="true"></span></button>
+        <button id="btn-diagram-guide" type="button" hidden aria-label="{{i18n:viewer.nav.guide}}" aria-haspopup="dialog" aria-expanded="false" aria-controls="diagram-guide" title="{{i18n:viewer.nav.guide.title}}"><span class="diagram-nav-icon guide" aria-hidden="true"></span></button>
         <button data-view="out" type="button" aria-label="{{i18n:viewer.nav.zoomOut}}" title="{{i18n:viewer.nav.zoomOut.title}}"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
         <button data-view="reset" type="button" aria-label="{{i18n:viewer.nav.reset}}" title="{{i18n:viewer.nav.reset.title}}"><span class="diagram-nav-detail" data-view-detail hidden>{{i18n:viewer.nav.read}}</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
         <button data-view="in" type="button" aria-label="{{i18n:viewer.nav.zoomIn}}" title="{{i18n:viewer.nav.zoomIn.title}}"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
@@ -1177,6 +1177,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var actions = document.getElementById('diagram-guide-actions');
       var feedback = document.getElementById('diagram-guide-feedback');
       var routePanel = document.getElementById('route-probe');
+      var returnFocus = null;
 
       function relationshipCount() {
         var seen = {};
@@ -1209,7 +1210,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         trigger.setAttribute('aria-expanded', 'false');
         trigger.setAttribute('aria-label', viewerText('viewer.guide.open'));
         feedback.textContent = '';
-        if (options.restoreFocus !== false) trigger.focus();
+        if (options.restoreFocus !== false) {
+          var target = trigger.hidden ? returnFocus : trigger;
+          if (target && typeof target.focus === 'function') target.focus();
+        }
         return false;
       }
       function open() {
@@ -1222,6 +1226,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (Archify.routeProbe && Archify.routeProbe.isJourneyPlaying && Archify.routeProbe.isJourneyPlaying()) {
           Archify.routeProbe.pauseJourney({ preserveElapsed: true, reason: 'guide' });
         }
+        returnFocus = document.activeElement;
         renderFacts();
         panel.hidden = false;
         html.setAttribute('data-guide-open', 'true');

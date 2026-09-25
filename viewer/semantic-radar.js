@@ -404,6 +404,7 @@
         if (next) {
           clearSpaceRetry();
           spaceRetryCount = 0;
+          trigger.setAttribute('data-radar-requested', 'true');
           build();
           attemptRequestedOpen(options);
         } else {
@@ -416,11 +417,13 @@
           resetDockingStyles();
           restorePassport();
           feedback.hidden = true;
+          // Focus before collapsing: the dock hides this trigger at 100% unless it holds focus.
+          if (options.restoreFocus === true) trigger.focus();
           trigger.setAttribute('aria-expanded', 'false');
+          trigger.removeAttribute('data-radar-requested');
           trigger.removeAttribute('data-radar-space-limited');
           trigger.setAttribute('aria-label', viewerText('viewer.nav.radar'));
           trigger.title = viewerText('viewer.nav.radar.title');
-          if (options.restoreFocus === true) trigger.focus();
         }
         return next;
       }

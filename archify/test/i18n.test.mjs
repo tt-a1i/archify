@@ -259,7 +259,7 @@ const BROWSER_LOCALES = {
     title: (type) => `浏览器本地化-${type}`,
     toolbarLabel: '图表视图控制',
     finder: { hidden: false, title: '查找节点', searchLabel: '搜索图表节点' },
-    route: { hidden: false, title: '选择起点节点', label: '清除已追踪路径' },
+    route: { hidden: false, title: '点击路径的起点', label: '清除已追踪路径' },
     exportLabel: '导出图表',
     exportMenuLabel: '导出',
     exportMenuText: /分享卡片/,
@@ -274,7 +274,7 @@ const BROWSER_LOCALES = {
     title: (type) => `Localización del navegador-${type}`,
     toolbarLabel: 'Controles de vista del diagrama',
     finder: { hidden: false, title: 'Buscar un nodo', searchLabel: 'Buscar nodos del diagrama' },
-    route: { hidden: false, title: 'Elegir un nodo de inicio', label: 'Borrar la ruta trazada' },
+    route: { hidden: false, title: 'Haz clic donde empieza la ruta', label: 'Borrar la ruta trazada' },
     exportLabel: 'Exportar diagrama',
     exportMenuLabel: 'Exportar',
     exportMenuText: /Tarjeta para compartir/,
@@ -459,7 +459,7 @@ test('runtime labels stay localized after composition', () => {
   const enNode = translateCount('en', 'viewer.route.overview.node', 2);
   assert.equal(
     translateMessage('en', 'viewer.route.overview.status', { nodes: enNode, hops: enHop }),
-    '2 nodes · 1 directed hop · shortest authored route',
+    '2 nodes · 1 step · shortest path',
   );
 
 });
@@ -467,7 +467,7 @@ test('runtime labels stay localized after composition', () => {
 test('Share Card and export failures use catalog messages instead of fixed English', () => {
   assert.equal(
     translateCount('zh-CN', 'viewer.export.card.routeSummary', 2, { source: '来源', target: '目标' }),
-    '路径：来源 → 目标 · 2 个有向跳转',
+    '路径：来源 → 目标 · 2 步',
   );
   assert.equal(
     translateMessage('zh-CN', 'viewer.export.error.toBlobNull', { label: '分享卡片' }),
