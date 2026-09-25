@@ -43,8 +43,6 @@ After the first candidate exists, run the packaged checker `scripts/check-update
 
 The notice is information, not permission. Keep the installed version unchanged; this v0.1 workflow never downloads, installs, or executes an update, and silence is never consent.
 
-For a large unfamiliar repository, `node bin/archify.mjs scan <folder> --json` writes a validated import-graph draft; treat it as evidence to refine, not as final topology (see `references/authoring-contract.md`).
-
 Do not read `renderers/shared/geometry.mjs`, renderer source, validator source, tests, or benchmarks before the first candidate. Inspect implementation only for an unsupported internal diagnostic or after two focused repairs fail.
 
 Workflow note: use schema v2 for new workflows; preserve schema v1 when an
@@ -131,6 +129,8 @@ No install is required inside the skill package. Verify with:
 node bin/archify.mjs doctor
 node bin/archify.mjs demo <output-directory>
 ```
+
+For a large unfamiliar repository, `node bin/archify.mjs scan <folder> --json` writes a validated import-graph draft; treat it as evidence to refine, not as final topology (see Repository scan drafts in `references/authoring-contract.md`).
 
 When shell access is unavailable, hand-place architecture SVG into `assets/template.html`, use CSS semantic classes rather than inline colors, and follow the visual review contract in `references/delivery-contract.md`.
 
