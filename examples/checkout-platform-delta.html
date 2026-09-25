@@ -10767,6 +10767,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               var sel = rule.selectorText || &#39;&#39;;
               if (/(^|,)\s*(svg|:root|\[data-theme|\[data-preset|\.c-|\.t-|\.a-|\.m-)/.test(sel)) {
                 out.push(rule.cssText);
+              } else if (opts.figure &amp;&amp; sel.indexOf(&#39;.diagram-container &gt; svg&#39;) !== -1) {
+                // Figures look like the Viewer canvas: keep its preset/theme paint
+                // (quiet grid, lifted nodes) by rescoping matching rules to svg.
+                var scoped = sel.split(&#39;,&#39;).map(function (part) {
+                  var at = part.indexOf(&#39;.diagram-container &gt; svg&#39;);
+                  if (at === -1) return null;
+                  var prefix = part.slice(0, at).trim();
+                  try { if (prefix &amp;&amp; !document.documentElement.matches(prefix)) return null; } catch (_) { return null; }
+                  return &#39;svg&#39; + part.slice(at + &#39;.diagram-container &gt; svg&#39;.length);
+                }).filter(Boolean);
+                if (scoped.length) out.push(scoped.join(&#39;, &#39;) + &#39; { &#39; + rule.style.cssText + &#39; }&#39;);
               }
             });
           });
@@ -10882,11 +10893,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             &quot;svg[data-preset=\&quot;blueprint\&quot;][data-share-reach] [data-share-reach-origin], svg[data-preset=\&quot;blueprint\&quot;][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n&quot;;
         }
 
-        if (opts.figure &amp;&amp; (document.documentElement.getAttribute(&#39;data-preset&#39;) || &#39;classic&#39;) !== &#39;blueprint&#39;) {
-          // Framed figures sit on a margin; a grid that stops at the canvas edge
-          // reads as a stray box. Blueprint keeps it because the grid is its style.
-          style.textContent += &quot;\nrect[fill=\&quot;url(#grid)\&quot;] { display: none; }\n&quot;;
-        }
+        // Figures draw the diagram on a painted canvas card, like the Viewer.
+        if (opts.figure) bgRect.setAttribute(&#39;fill&#39;, &#39;none&#39;);
 
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
@@ -10929,29 +10937,103 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return 1;
       }
 
-      // Raster exports read as a finished figure: a margin around the canvas
-      // and the diagram title (plus subtitle) above it, set in the Viewer&#39;s
-      // own heading face. Values are CSS pixels before the raster scale.
-      var FRAME_PADDING = 44;
-      var FRAME_TITLE_SIZE = 24;
-      var FRAME_SUBTITLE_SIZE = 13;
+      // Raster exports reproduce the Viewer page without its controls: the
+      // title row with its accent dot, then the diagram on the same rounded
+      // canvas card (fill, hairline, shadow, dot field). CSS pixels.
+      var FIGURE_MARGIN = 28;
+      var FIGURE_CARD_PADDING = 24;
+      var FIGURE_TITLE_SIZE = 24;
+      var FIGURE_SUBTITLE_SIZE = 14;
 
-      function rasterFrame() {
+      function figureLayout(vb) {
         var titleNode = document.querySelector(&#39;.header h1&#39;);
         var subtitleNode = document.querySelector(&#39;.header .subtitle&#39;);
+        var container = document.querySelector(&#39;.diagram-container&#39;);
+        var root = getComputedStyle(document.documentElement);
+        var card = container ? getComputedStyle(container) : null;
         var title = titleNode ? titleNode.textContent.trim() : &#39;&#39;;
         var subtitle = subtitleNode ? subtitleNode.textContent.trim() : &#39;&#39;;
-        var titleStyle = titleNode ? getComputedStyle(titleNode) : null;
-        var computed = getComputedStyle(document.documentElement);
-        var header = title ? FRAME_TITLE_SIZE + (subtitle ? 10 + FRAME_SUBTITLE_SIZE : 0) + 12 : 0;
+        var header = title ? 32 + (subtitle ? 24 : 0) + 18 : 0;
+        var cardWidth = vb.width + FIGURE_CARD_PADDING * 2;
+        var cardHeight = vb.height + FIGURE_CARD_PADDING * 2;
+        var cardFill = card &amp;&amp; card.backgroundColor &amp;&amp; !/rgba\(0, 0, 0, 0\)|transparent/.test(card.backgroundColor)
+          ? card.backgroundColor : (root.getPropertyValue(&#39;--panel&#39;).trim() || &#39;transparent&#39;);
         return {
           title: title,
           subtitle: subtitle,
-          family: (titleStyle &amp;&amp; titleStyle.fontFamily) || &#39;sans-serif&#39;,
-          text: computed.getPropertyValue(&#39;--text&#39;).trim() || &#39;#0f172a&#39;,
-          muted: computed.getPropertyValue(&#39;--text-muted&#39;).trim() || &#39;#64748b&#39;,
-          header: header
+          family: titleNode ? getComputedStyle(titleNode).fontFamily : &#39;sans-serif&#39;,
+          text: root.getPropertyValue(&#39;--text&#39;).trim() || &#39;#111827&#39;,
+          muted: root.getPropertyValue(&#39;--text-muted&#39;).trim() || &#39;#64748b&#39;,
+          accent: root.getPropertyValue(&#39;--frontend-stroke&#39;).trim() || &#39;#0891b2&#39;,
+          bg: root.getPropertyValue(&#39;--bg&#39;).trim() || currentBg(),
+          cardFill: cardFill,
+          cardBorder: root.getPropertyValue(&#39;--panel-border&#39;).trim() || &#39;transparent&#39;,
+          dot: card &amp;&amp; /radial-gradient/.test(card.backgroundImage) ? (root.getPropertyValue(&#39;--canvas-dot&#39;).trim() || &#39;&#39;) : &#39;&#39;,
+          light: (document.documentElement.getAttribute(&#39;data-theme&#39;) || &#39;dark&#39;) === &#39;light&#39;,
+          header: header,
+          cardWidth: cardWidth,
+          cardHeight: cardHeight,
+          width: cardWidth + FIGURE_MARGIN * 2,
+          height: cardHeight + FIGURE_MARGIN * 2 + header
         };
+      }
+
+      function paintFigure(ctx, layout) {
+        var m = FIGURE_MARGIN;
+        ctx.fillStyle = layout.bg;
+        ctx.fillRect(0, 0, layout.width, layout.height);
+        if (layout.title) {
+          var titleMid = m + 16;
+          ctx.fillStyle = layout.accent;
+          ctx.globalAlpha = 0.16;
+          ctx.beginPath(); ctx.arc(m + 5, titleMid, 9, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.arc(m + 5, titleMid, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.textBaseline = &#39;middle&#39;;
+          ctx.fillStyle = layout.text;
+          ctx.fillText(fitCanvasText(ctx, layout.title, layout.width - m * 2 - 22, FIGURE_TITLE_SIZE, 14, &#39;650&#39;, layout.family), m + 22, titleMid + 1);
+          if (layout.subtitle) {
+            ctx.fillStyle = layout.muted;
+            ctx.fillText(fitCanvasText(ctx, layout.subtitle, layout.width - m * 2, FIGURE_SUBTITLE_SIZE, 11, &#39;400&#39;, layout.family), m, titleMid + 30);
+          }
+          ctx.textBaseline = &#39;alphabetic&#39;;
+        }
+        var x = m, y = m + layout.header, w = layout.cardWidth, h = layout.cardHeight, r = 16;
+        function cardPath() {
+          ctx.beginPath();
+          if (typeof ctx.roundRect === &#39;function&#39;) ctx.roundRect(x, y, w, h, r);
+          else ctx.rect(x, y, w, h);
+        }
+        ctx.save();
+        if (layout.light) {
+          ctx.shadowColor = &#39;rgba(15, 23, 42, 0.08)&#39;;
+          ctx.shadowBlur = 28;
+          ctx.shadowOffsetY = 10;
+        }
+        cardPath();
+        ctx.fillStyle = layout.bg;
+        ctx.fill();
+        ctx.restore();
+        cardPath();
+        ctx.fillStyle = layout.cardFill;
+        ctx.fill();
+        if (layout.dot) {
+          ctx.save();
+          cardPath();
+          ctx.clip();
+          ctx.fillStyle = layout.dot;
+          for (var dy = y + 1; dy &lt; y + h; dy += 20) {
+            for (var dx = x + 1; dx &lt; x + w; dx += 20) {
+              ctx.beginPath(); ctx.arc(dx, dy, 1, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+          ctx.restore();
+        }
+        cardPath();
+        ctx.strokeStyle = layout.cardBorder;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        return { x: x + FIGURE_CARD_PADDING, y: y + FIGURE_CARD_PADDING };
       }
 
       function rasterize(format) {
@@ -10961,10 +11043,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // size — no upsampling blur.
         var svg = document.querySelector(&#39;.diagram-container svg&#39;);
         var vb = svg.viewBox.baseVal;
-        var frame = rasterFrame();
-        var frameWidth = vb.width + FRAME_PADDING * 2;
-        var frameHeight = vb.height + FRAME_PADDING * 2 + frame.header;
-        var scale = pickSafeScale(frameWidth, frameHeight);
+        var layout = figureLayout(vb);
+        var scale = pickSafeScale(layout.width, layout.height);
         var data = serializeSvg(scale, { figure: true });
         var svgBlob = new Blob([data.svgString], { type: &#39;image/svg+xml;charset=utf-8&#39; });
         var svgUrl = URL.createObjectURL(svgBlob);
@@ -10974,26 +11054,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           img.onload = function () {
             try {
               var canvas = document.createElement(&#39;canvas&#39;);
-              canvas.width = Math.round(frameWidth * scale);
-              canvas.height = Math.round(frameHeight * scale);
+              canvas.width = Math.round(layout.width * scale);
+              canvas.height = Math.round(layout.height * scale);
               var ctx = canvas2dOrThrow(canvas, format);
-              ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(&#39;--bg&#39;).trim() || currentBg();
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              if (frame.title) {
-                var textWidth = (frameWidth - FRAME_PADDING * 2) * scale;
-                ctx.textBaseline = &#39;alphabetic&#39;;
-                ctx.fillStyle = frame.text;
-                var titleBaseline = (FRAME_PADDING + FRAME_TITLE_SIZE * 0.82) * scale;
-                ctx.fillText(fitCanvasText(ctx, frame.title, textWidth, FRAME_TITLE_SIZE * scale, 14 * scale, &#39;650&#39;, frame.family),
-                  FRAME_PADDING * scale, titleBaseline);
-                if (frame.subtitle) {
-                  ctx.fillStyle = frame.muted;
-                  ctx.fillText(fitCanvasText(ctx, frame.subtitle, textWidth, FRAME_SUBTITLE_SIZE * scale, 10 * scale, &#39;400&#39;, frame.family),
-                    FRAME_PADDING * scale, titleBaseline + (10 + FRAME_SUBTITLE_SIZE) * scale);
-                }
-              }
-              // Draw at natural size — SVG was already rasterized at target res.
-              ctx.drawImage(img, FRAME_PADDING * scale, (FRAME_PADDING + frame.header) * scale);
+              // Paint in CSS pixels; the SVG image is already rendered at scale,
+              // so drawing it at CSS size under this transform stays 1:1.
+              ctx.setTransform(scale, 0, 0, scale, 0, 0);
+              var origin = paintFigure(ctx, layout);
+              ctx.drawImage(img, origin.x, origin.y, vb.width, vb.height);
+              ctx.setTransform(1, 0, 0, 1, 0, 0);
               URL.revokeObjectURL(svgUrl);
               var mime = format === &#39;jpeg&#39; ? &#39;image/jpeg&#39; :
                          format === &#39;webp&#39; ? &#39;image/webp&#39; : &#39;image/png&#39;;
@@ -24681,6 +24750,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               var sel = rule.selectorText || &#39;&#39;;
               if (/(^|,)\s*(svg|:root|\[data-theme|\[data-preset|\.c-|\.t-|\.a-|\.m-)/.test(sel)) {
                 out.push(rule.cssText);
+              } else if (opts.figure &amp;&amp; sel.indexOf(&#39;.diagram-container &gt; svg&#39;) !== -1) {
+                // Figures look like the Viewer canvas: keep its preset/theme paint
+                // (quiet grid, lifted nodes) by rescoping matching rules to svg.
+                var scoped = sel.split(&#39;,&#39;).map(function (part) {
+                  var at = part.indexOf(&#39;.diagram-container &gt; svg&#39;);
+                  if (at === -1) return null;
+                  var prefix = part.slice(0, at).trim();
+                  try { if (prefix &amp;&amp; !document.documentElement.matches(prefix)) return null; } catch (_) { return null; }
+                  return &#39;svg&#39; + part.slice(at + &#39;.diagram-container &gt; svg&#39;.length);
+                }).filter(Boolean);
+                if (scoped.length) out.push(scoped.join(&#39;, &#39;) + &#39; { &#39; + rule.style.cssText + &#39; }&#39;);
               }
             });
           });
@@ -24796,11 +24876,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             &quot;svg[data-preset=\&quot;blueprint\&quot;][data-share-reach] [data-share-reach-origin], svg[data-preset=\&quot;blueprint\&quot;][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n&quot;;
         }
 
-        if (opts.figure &amp;&amp; (document.documentElement.getAttribute(&#39;data-preset&#39;) || &#39;classic&#39;) !== &#39;blueprint&#39;) {
-          // Framed figures sit on a margin; a grid that stops at the canvas edge
-          // reads as a stray box. Blueprint keeps it because the grid is its style.
-          style.textContent += &quot;\nrect[fill=\&quot;url(#grid)\&quot;] { display: none; }\n&quot;;
-        }
+        // Figures draw the diagram on a painted canvas card, like the Viewer.
+        if (opts.figure) bgRect.setAttribute(&#39;fill&#39;, &#39;none&#39;);
 
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
@@ -24843,29 +24920,103 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return 1;
       }
 
-      // Raster exports read as a finished figure: a margin around the canvas
-      // and the diagram title (plus subtitle) above it, set in the Viewer&#39;s
-      // own heading face. Values are CSS pixels before the raster scale.
-      var FRAME_PADDING = 44;
-      var FRAME_TITLE_SIZE = 24;
-      var FRAME_SUBTITLE_SIZE = 13;
+      // Raster exports reproduce the Viewer page without its controls: the
+      // title row with its accent dot, then the diagram on the same rounded
+      // canvas card (fill, hairline, shadow, dot field). CSS pixels.
+      var FIGURE_MARGIN = 28;
+      var FIGURE_CARD_PADDING = 24;
+      var FIGURE_TITLE_SIZE = 24;
+      var FIGURE_SUBTITLE_SIZE = 14;
 
-      function rasterFrame() {
+      function figureLayout(vb) {
         var titleNode = document.querySelector(&#39;.header h1&#39;);
         var subtitleNode = document.querySelector(&#39;.header .subtitle&#39;);
+        var container = document.querySelector(&#39;.diagram-container&#39;);
+        var root = getComputedStyle(document.documentElement);
+        var card = container ? getComputedStyle(container) : null;
         var title = titleNode ? titleNode.textContent.trim() : &#39;&#39;;
         var subtitle = subtitleNode ? subtitleNode.textContent.trim() : &#39;&#39;;
-        var titleStyle = titleNode ? getComputedStyle(titleNode) : null;
-        var computed = getComputedStyle(document.documentElement);
-        var header = title ? FRAME_TITLE_SIZE + (subtitle ? 10 + FRAME_SUBTITLE_SIZE : 0) + 12 : 0;
+        var header = title ? 32 + (subtitle ? 24 : 0) + 18 : 0;
+        var cardWidth = vb.width + FIGURE_CARD_PADDING * 2;
+        var cardHeight = vb.height + FIGURE_CARD_PADDING * 2;
+        var cardFill = card &amp;&amp; card.backgroundColor &amp;&amp; !/rgba\(0, 0, 0, 0\)|transparent/.test(card.backgroundColor)
+          ? card.backgroundColor : (root.getPropertyValue(&#39;--panel&#39;).trim() || &#39;transparent&#39;);
         return {
           title: title,
           subtitle: subtitle,
-          family: (titleStyle &amp;&amp; titleStyle.fontFamily) || &#39;sans-serif&#39;,
-          text: computed.getPropertyValue(&#39;--text&#39;).trim() || &#39;#0f172a&#39;,
-          muted: computed.getPropertyValue(&#39;--text-muted&#39;).trim() || &#39;#64748b&#39;,
-          header: header
+          family: titleNode ? getComputedStyle(titleNode).fontFamily : &#39;sans-serif&#39;,
+          text: root.getPropertyValue(&#39;--text&#39;).trim() || &#39;#111827&#39;,
+          muted: root.getPropertyValue(&#39;--text-muted&#39;).trim() || &#39;#64748b&#39;,
+          accent: root.getPropertyValue(&#39;--frontend-stroke&#39;).trim() || &#39;#0891b2&#39;,
+          bg: root.getPropertyValue(&#39;--bg&#39;).trim() || currentBg(),
+          cardFill: cardFill,
+          cardBorder: root.getPropertyValue(&#39;--panel-border&#39;).trim() || &#39;transparent&#39;,
+          dot: card &amp;&amp; /radial-gradient/.test(card.backgroundImage) ? (root.getPropertyValue(&#39;--canvas-dot&#39;).trim() || &#39;&#39;) : &#39;&#39;,
+          light: (document.documentElement.getAttribute(&#39;data-theme&#39;) || &#39;dark&#39;) === &#39;light&#39;,
+          header: header,
+          cardWidth: cardWidth,
+          cardHeight: cardHeight,
+          width: cardWidth + FIGURE_MARGIN * 2,
+          height: cardHeight + FIGURE_MARGIN * 2 + header
         };
+      }
+
+      function paintFigure(ctx, layout) {
+        var m = FIGURE_MARGIN;
+        ctx.fillStyle = layout.bg;
+        ctx.fillRect(0, 0, layout.width, layout.height);
+        if (layout.title) {
+          var titleMid = m + 16;
+          ctx.fillStyle = layout.accent;
+          ctx.globalAlpha = 0.16;
+          ctx.beginPath(); ctx.arc(m + 5, titleMid, 9, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.arc(m + 5, titleMid, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.textBaseline = &#39;middle&#39;;
+          ctx.fillStyle = layout.text;
+          ctx.fillText(fitCanvasText(ctx, layout.title, layout.width - m * 2 - 22, FIGURE_TITLE_SIZE, 14, &#39;650&#39;, layout.family), m + 22, titleMid + 1);
+          if (layout.subtitle) {
+            ctx.fillStyle = layout.muted;
+            ctx.fillText(fitCanvasText(ctx, layout.subtitle, layout.width - m * 2, FIGURE_SUBTITLE_SIZE, 11, &#39;400&#39;, layout.family), m, titleMid + 30);
+          }
+          ctx.textBaseline = &#39;alphabetic&#39;;
+        }
+        var x = m, y = m + layout.header, w = layout.cardWidth, h = layout.cardHeight, r = 16;
+        function cardPath() {
+          ctx.beginPath();
+          if (typeof ctx.roundRect === &#39;function&#39;) ctx.roundRect(x, y, w, h, r);
+          else ctx.rect(x, y, w, h);
+        }
+        ctx.save();
+        if (layout.light) {
+          ctx.shadowColor = &#39;rgba(15, 23, 42, 0.08)&#39;;
+          ctx.shadowBlur = 28;
+          ctx.shadowOffsetY = 10;
+        }
+        cardPath();
+        ctx.fillStyle = layout.bg;
+        ctx.fill();
+        ctx.restore();
+        cardPath();
+        ctx.fillStyle = layout.cardFill;
+        ctx.fill();
+        if (layout.dot) {
+          ctx.save();
+          cardPath();
+          ctx.clip();
+          ctx.fillStyle = layout.dot;
+          for (var dy = y + 1; dy &lt; y + h; dy += 20) {
+            for (var dx = x + 1; dx &lt; x + w; dx += 20) {
+              ctx.beginPath(); ctx.arc(dx, dy, 1, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+          ctx.restore();
+        }
+        cardPath();
+        ctx.strokeStyle = layout.cardBorder;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        return { x: x + FIGURE_CARD_PADDING, y: y + FIGURE_CARD_PADDING };
       }
 
       function rasterize(format) {
@@ -24875,10 +25026,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // size — no upsampling blur.
         var svg = document.querySelector(&#39;.diagram-container svg&#39;);
         var vb = svg.viewBox.baseVal;
-        var frame = rasterFrame();
-        var frameWidth = vb.width + FRAME_PADDING * 2;
-        var frameHeight = vb.height + FRAME_PADDING * 2 + frame.header;
-        var scale = pickSafeScale(frameWidth, frameHeight);
+        var layout = figureLayout(vb);
+        var scale = pickSafeScale(layout.width, layout.height);
         var data = serializeSvg(scale, { figure: true });
         var svgBlob = new Blob([data.svgString], { type: &#39;image/svg+xml;charset=utf-8&#39; });
         var svgUrl = URL.createObjectURL(svgBlob);
@@ -24888,26 +25037,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           img.onload = function () {
             try {
               var canvas = document.createElement(&#39;canvas&#39;);
-              canvas.width = Math.round(frameWidth * scale);
-              canvas.height = Math.round(frameHeight * scale);
+              canvas.width = Math.round(layout.width * scale);
+              canvas.height = Math.round(layout.height * scale);
               var ctx = canvas2dOrThrow(canvas, format);
-              ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(&#39;--bg&#39;).trim() || currentBg();
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              if (frame.title) {
-                var textWidth = (frameWidth - FRAME_PADDING * 2) * scale;
-                ctx.textBaseline = &#39;alphabetic&#39;;
-                ctx.fillStyle = frame.text;
-                var titleBaseline = (FRAME_PADDING + FRAME_TITLE_SIZE * 0.82) * scale;
-                ctx.fillText(fitCanvasText(ctx, frame.title, textWidth, FRAME_TITLE_SIZE * scale, 14 * scale, &#39;650&#39;, frame.family),
-                  FRAME_PADDING * scale, titleBaseline);
-                if (frame.subtitle) {
-                  ctx.fillStyle = frame.muted;
-                  ctx.fillText(fitCanvasText(ctx, frame.subtitle, textWidth, FRAME_SUBTITLE_SIZE * scale, 10 * scale, &#39;400&#39;, frame.family),
-                    FRAME_PADDING * scale, titleBaseline + (10 + FRAME_SUBTITLE_SIZE) * scale);
-                }
-              }
-              // Draw at natural size — SVG was already rasterized at target res.
-              ctx.drawImage(img, FRAME_PADDING * scale, (FRAME_PADDING + frame.header) * scale);
+              // Paint in CSS pixels; the SVG image is already rendered at scale,
+              // so drawing it at CSS size under this transform stays 1:1.
+              ctx.setTransform(scale, 0, 0, scale, 0, 0);
+              var origin = paintFigure(ctx, layout);
+              ctx.drawImage(img, origin.x, origin.y, vb.width, vb.height);
+              ctx.setTransform(1, 0, 0, 1, 0, 0);
               URL.revokeObjectURL(svgUrl);
               var mime = format === &#39;jpeg&#39; ? &#39;image/jpeg&#39; :
                          format === &#39;webp&#39; ? &#39;image/webp&#39; : &#39;image/png&#39;;

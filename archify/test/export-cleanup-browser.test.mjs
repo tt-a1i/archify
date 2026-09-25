@@ -210,10 +210,11 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
           const dimensions = [bitmap.width, bitmap.height];
           bitmap.close();
           const svg = document.querySelector('.diagram-container > svg');
-          // Raster figures add a 44px margin and the title header (24px title, 23px subtitle line, 12px gap) at 4x.
+          // Raster figures reproduce the Viewer page: 28px margins, a 24px card
+          // padding, and the title row (32px, +24px subtitle, 18px gap) at 4x.
           const subtitle = (document.querySelector('.header .subtitle') || {}).textContent;
-          const header = document.querySelector('.header h1') ? 24 + (subtitle && subtitle.trim() ? 23 : 0) + 12 : 0;
-          const expected = format === 'share-card' ? [1200, 630] : [(svg.viewBox.baseVal.width + 88) * 4, (svg.viewBox.baseVal.height + 88 + header) * 4];
+          const header = document.querySelector('.header h1') ? 32 + (subtitle && subtitle.trim() ? 24 : 0) + 18 : 0;
+          const expected = format === 'share-card' ? [1200, 630] : [(svg.viewBox.baseVal.width + 104) * 4, (svg.viewBox.baseVal.height + 104 + header) * 4];
           const data = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result.split(',')[1]);
