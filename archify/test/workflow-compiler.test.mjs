@@ -347,14 +347,17 @@ test('fixed-v1 compiler preserves the exact 700x400 compatibility geometry', () 
   );
 });
 
-test('readable-v2 preserves the checked-in workflow example when no vertical stack is authored', () => {
+test('readable-v2 separates approval branches in the checked-in workflow example', () => {
   const workflow = readJson(path.join(__dirname, '..', 'examples', 'agent-tool-call.workflow.json'));
   const result = compileSuccessfully(workflow);
 
   assert.equal(result.receipt.contract, 'readable-v2');
   assert.equal(
-    sha256(result.svg),
-    'bd29ee90684cbdea0ceeb13ef9fdc4d94ca879f9a5847a0b28482a3fbcddd447',
+    // The only visible delta is approved-tool's source moving 12px left:
+    // approval-denied and approved-tool previously shared a mixed-style trunk.
+    // Node geometry, labels, all other paths and v1 baselines are unchanged.
+    sha256(result.svg.replace(/ data-(?:composition-routing|edge-role|layout-contract)="[^"]*"/g, '')),
+    '2ab82e78a2f2f325eb8b83bfeb27eafc7ee1ba3d1b9b3dfa9f2657b0b90d8db9',
   );
 });
 

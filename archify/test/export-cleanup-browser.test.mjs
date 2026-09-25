@@ -63,7 +63,7 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
     await evaluate('(async () => { await document.fonts.ready; await Archify.readerLayout.whenStable(); await Archify.viewerChromeLayout.whenStable(); })()', true);
     assert.deepEqual(await evaluate('exportTestErrors'), []);
   }
-  async function exported(label, action = '') {
+  async function exported(label, action = '', format = 'svg') {
     // Capture the SVG synchronously at the public export call. Timers and
     // animation frames cannot explain away a live-DOM mutation by cleanup.
     const value = await evaluate(`(async () => {
@@ -78,7 +78,7 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
       };
       let after;
       try {
-        const pending = Archify.exportMenu.run('svg');
+        const pending = Archify.exportMenu.run(${JSON.stringify(format)});
         after = svg.outerHTML;
         await pending;
       } finally { URL.createObjectURL = original; }
@@ -109,6 +109,61 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
         await load(file, theme, theme === 'light');
         await exported(`${mode}-${theme}`);
       }
+    }
+  });
+
+  await t.test('explicit light and dark SVG exports stay fixed under the opposite OS theme', async () => {
+    const cases = [
+      { authorTheme: 'dark', hostTheme: 'dark', format: 'svg-light', theme: 'light', background: 'rgb(244, 245, 247)' },
+      { authorTheme: 'light', hostTheme: 'light', format: 'svg-dark', theme: 'dark', background: 'rgb(2, 6, 23)' },
+    ];
+    for (const item of cases) {
+      await load(files.architecture, item.authorTheme);
+      const text = await exported(`fixed-${item.theme}`, '', item.format);
+      assert.match(text, new RegExp(`<svg[^>]*data-theme="${item.theme}"`));
+      assert.doesNotMatch(text, /@media \(prefers-color-scheme: light\)/);
+
+      await send('Emulation.setEmulatedMedia', { features: [
+        { name: 'prefers-color-scheme', value: item.hostTheme },
+        { name: 'prefers-reduced-motion', value: 'no-preference' },
+      ] });
+      const rendered = await evaluate(`(async () => {
+        const frame = document.createElement('iframe');
+        frame.setAttribute('aria-hidden', 'true');
+        frame.style.cssText = 'position:fixed;left:-10000px;width:320px;height:180px;border:0';
+        document.body.appendChild(frame);
+        try {
+          await new Promise((resolve, reject) => {
+            frame.onload = resolve;
+            frame.onerror = reject;
+            frame.srcdoc = '<!doctype html><html><body style="margin:0">' +
+              ${JSON.stringify(text)}.replace(/^<\\?xml[^>]*>\\s*/, '');
+          });
+          const root = frame.contentDocument.documentElement;
+          const background = root.querySelector('svg > rect[width="100%"][height="100%"]');
+          return {
+            theme: root.querySelector('svg').getAttribute('data-theme'),
+            background: frame.contentWindow.getComputedStyle(background).fill,
+          };
+        } finally {
+          frame.remove();
+        }
+      })()`, true);
+      assert.deepEqual(rendered, { theme: item.theme, background: item.background }, item.format);
+    }
+  });
+
+  await t.test('fixed SVG options do not depend on WebP encoding', async () => {
+    const script = await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+      HTMLCanvasElement.prototype.toDataURL = function () { return 'data:image/png;base64,'; };
+    ` });
+    try {
+      await load(files.architecture);
+      for (const format of ['svg', 'svg-light', 'svg-dark']) {
+        assert.equal(await evaluate(`document.querySelector('[data-format="${format}"]').disabled`), false, format);
+      }
+    } finally {
+      await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: script.identifier });
     }
   });
 

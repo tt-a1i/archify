@@ -449,6 +449,25 @@ test('cleanCrossingProblems exempts shared endpoints', () => {
   assert.deepEqual(problems, []);
 });
 
+test('cleanCrossingProblems selectively checks automatic shared-endpoint interior crossings', () => {
+  const relations = [{ from: 'a', to: 'hub', automatic: true }, { from: 'b', to: 'hub', automatic: true }];
+  const paths = [
+    [[20, 20], [80, 20], [80, 80], [140, 80]],
+    [[20, 100], [120, 100], [120, 40], [140, 40]],
+  ];
+  const options = {
+    relations,
+    endpointIds: new Set(['a', 'b', 'hub']),
+    pathFor: (relation) => ({ points: paths[relations.indexOf(relation)] }),
+    diagramType: 'workflow', relationCollection: 'edges', profile: 'showcase',
+    includeSharedEndpoints: (left, right) => left.automatic && right.automatic,
+  };
+  assert.equal(cleanCrossingProblems(options).length, 1);
+  assert.deepEqual(cleanCrossingProblems({ ...options, profile: 'standard' }), []);
+  relations[1].automatic = false;
+  assert.deepEqual(cleanCrossingProblems(options), [], 'one authored route preserves the legacy exemption');
+});
+
 test('cleanCrossingProblems exempts endpoint touches and collinear corridors', () => {
   const relations = [
     { from: 'a', to: 'b' },
@@ -514,6 +533,36 @@ test('ambiguous corridor gate exempts shared endpoints, point touches, and overl
     { relation: { from: 'h', to: 'i' }, relationIndex: 4, points: [[98, 60], [110, 60]] },
   ];
   assert.deepEqual(collectAmbiguousCorridors({ routedRelations }), []);
+});
+
+test('shared-endpoint counterflow opt-in detects reverse trunks while preserving same-direction branches', () => {
+  const first = { from: 'a', to: 'hub', automatic: true };
+  const second = { from: 'hub', to: 'b', automatic: true };
+  const paths = [ [[60, 20], [60, 100]], [[60, 100], [60, 49], [140, 49]] ];
+  const options = {
+    routedRelations: [first, second].map((relation, index) => ({ relation, points: paths[index] })),
+    includeSharedEndpointCounterflow: (left, right) => left.automatic && right.automatic,
+  };
+  const hits = collectAmbiguousCorridors(options);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].overlapLength, 51);
+  assert.deepEqual(hits[0].overlapStart, [60, 49]);
+  assert.deepEqual(hits[0].overlapEnd, [60, 100]);
+  assert.equal(cleanAmbiguousCorridorProblems({
+    relations: [first, second], endpointIds: new Set(['a', 'hub', 'b']),
+    pathFor: (relation) => ({ points: paths[relation === first ? 0 : 1] }),
+    diagramType: 'workflow', relationCollection: 'edges', profile: 'showcase',
+    includeSharedEndpointCounterflow: options.includeSharedEndpointCounterflow,
+  }).length, 1, 'compiler wrapper forwards the selective policy');
+  second.automatic = false;
+  assert.deepEqual(collectAmbiguousCorridors(options), [], 'mixed automatic and authored routes retain compatibility');
+  second.automatic = true;
+  options.routedRelations[1].points = [[60, 49], [60, 100], [140, 100]];
+  assert.deepEqual(collectAmbiguousCorridors(options), [], 'same-direction trunks are permitted');
+  assert.equal(collectAmbiguousCorridors({ ...options, includeSharedEndpoints: () => true }).length, 1,
+    'existing independent-port policy remains stricter');
+  options.routedRelations[1].points = [[60, 100], [60, 93], [140, 93]];
+  assert.deepEqual(collectAmbiguousCorridors(options), [], 'less than 8px remains below the overlap floor');
 });
 
 test('ambiguous corridor gate keeps standard renderable', () => {

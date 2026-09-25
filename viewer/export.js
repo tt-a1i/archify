@@ -56,10 +56,12 @@
        *   (PNG/JPEG/WebP/clipboard) because canvas rasterization needs
        *   deterministic colors; a raster cannot react to
        *   prefers-color-scheme after encoding.
-       * - autoTheme=true — emits BOTH dark and light variable sets plus a
+       * - theme=auto — emits BOTH dark and light variable sets plus a
        *   `@media (prefers-color-scheme)` rule so the resulting SVG
        *   self-themes when embedded in GitHub READMEs or other hosts that
-       *   expose a color scheme. Used for "Download SVG".
+       *   expose a color scheme. Used for the default "Download SVG".
+       * - theme=light|dark — locks the standalone SVG to the requested
+       *   theme, independently of its source Viewer and host OS themes.
        */
       function applyRouteSnapshot(clone, snapshot) {
         if (!snapshot || !Array.isArray(snapshot.nodeIds) || !Array.isArray(snapshot.edges) ||
@@ -228,7 +230,11 @@
         // the raster path. Defaults to 1 (natural size) for SVG download.
         scale = scale || 1;
         opts = opts || {};
-        var autoTheme = opts.autoTheme === true;
+        var requestedTheme = opts.theme || (opts.autoTheme === true ? 'auto' : null);
+        if (requestedTheme && requestedTheme !== 'auto' && requestedTheme !== 'light' && requestedTheme !== 'dark') {
+          throw new Error('Unsupported SVG theme: ' + requestedTheme);
+        }
+        var autoTheme = requestedTheme === 'auto';
         var svg = document.querySelector('.diagram-container svg');
         var clone = svg.cloneNode(true);
 
@@ -301,9 +307,12 @@
           document.body.appendChild(probe);
           try {
             var c = getComputedStyle(probe);
-            return varNames.map(function (n) {
-              return n + ': ' + c.getPropertyValue(n).trim() + ';';
-            }).join(' ');
+            return {
+              background: c.getPropertyValue('--bg').trim(),
+              vars: varNames.map(function (n) {
+                return n + ': ' + c.getPropertyValue(n).trim() + ';';
+              }).join(' ')
+            };
           } finally {
             document.body.removeChild(probe);
           }
@@ -323,17 +332,17 @@
           // prefers-color-scheme still render), light swaps in via media
           // query, and svg[data-theme="..."] still lets downstream
           // consumers force a specific theme.
-          var darkVars = resolveVars('dark');
-          var lightVars = resolveVars('light');
+          var darkTheme = resolveVars('dark');
+          var lightTheme = resolveVars('light');
 
           style.textContent =
             fontCss + "\n" +
             "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
             hostStyle + "\n" +
-            ":root, svg { " + darkVars + " }\n" +
-            "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
-            "svg[data-theme=\"light\"] { " + lightVars + " }\n" +
-            "svg[data-theme=\"dark\"] { " + darkVars + " }\n" +
+            ":root, svg { " + darkTheme.vars + " }\n" +
+            "@media (prefers-color-scheme: light) { :root, svg { " + lightTheme.vars + " } }\n" +
+            "svg[data-theme=\"light\"] { " + lightTheme.vars + " }\n" +
+            "svg[data-theme=\"dark\"] { " + darkTheme.vars + " }\n" +
             "rect.c-bg-rect { fill: var(--bg); }\n";
 
           // Don't lock the serialized SVG to the viewer's current theme.
@@ -342,11 +351,12 @@
           // swaps with the media query.
           bgRect.setAttribute('class', 'c-bg-rect');
         } else {
-          // Raster path: lock to the viewer's current theme.
-          var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-          var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
-          var computed = getComputedStyle(themeHost);
-          var vars = varNames.map(function (n) {
+          // Raster exports keep the viewer's current theme. Explicit SVG
+          // exports instead select their own stable light/dark source.
+          var lockedTheme = requestedTheme || document.documentElement.getAttribute('data-theme') || 'dark';
+          var resolvedTheme = requestedTheme && resolveVars(lockedTheme);
+          var computed = getComputedStyle(document.documentElement);
+          var vars = resolvedTheme ? resolvedTheme.vars : varNames.map(function (n) {
             return n + ': ' + computed.getPropertyValue(n).trim() + ';';
           }).join(' ');
 
@@ -360,7 +370,8 @@
             hostStyle + "\n" +
             ":root, svg { " + vars + " }\n";
 
-          bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+          if (requestedTheme) clone.setAttribute('data-theme', lockedTheme);
+          bgRect.setAttribute('fill', (resolvedTheme ? resolvedTheme.background : computed.getPropertyValue('--bg').trim()) || '#ffffff');
         }
 
         if (opts.routeSnapshot) {
@@ -930,7 +941,7 @@
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
         if (format === 'share-card') return true;
-        if (format === 'svg' || format === 'png') return true;
+        if (format === 'svg' || format === 'svg-light' || format === 'svg-dark' || format === 'png') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
         try {
@@ -1037,6 +1048,9 @@
 
       function runExport(format) {
         var base = diagramFilename();
+        var svgTheme = format === 'svg' ? 'auto' :
+          format === 'svg-light' ? 'light' :
+          format === 'svg-dark' ? 'dark' : null;
         close(true);
         clearExportReceipt();
         if (format === 'webm') toast(viewerText('viewer.export.recording'));
@@ -1046,11 +1060,11 @@
               download(blob, base + '-share-card.png');
               toast(viewerText('viewer.export.downloadedShare'));
             })
-          : format === 'svg'
-          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
+          : svgTheme
+          ? Promise.resolve(serializeSvg(1, { theme: svgTheme })).then(function (d) {
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
-              download(blob, base + '.svg');
+              download(blob, base + (svgTheme === 'auto' ? '' : '-' + svgTheme) + '.svg');
             })
           : format === 'webm'
             ? recordWebm().then(function (blob) {
