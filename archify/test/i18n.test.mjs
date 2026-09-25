@@ -134,7 +134,7 @@ async function loadArtifact(browser, artifactPath) {
 }
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'ko']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -152,6 +152,28 @@ test('zh-CN localizes renderer-owned output across all five modes without transl
     assert.match(result.html, new RegExp(`<desc id="archify-diagram-description">\u7531 Archify \u751f\u6210\u7684`));
     assert.match(result.html, /"locale":"zh-CN"/);
     assert.match(result.html, />\u5bfc\u51fa\u56fe\u8868</);
+    assert.doesNotMatch(result.html, /\{\{i18n:/);
+  }
+});
+
+test('ko localizes renderer-owned output across all five modes without translating authored content', () => {
+  for (const type of Object.keys(EXAMPLES)) {
+    const document = example(type);
+    const authoredTitle = document.meta.title;
+    document.meta.locale = 'ko';
+    delete document.meta.subtitle;
+
+    const result = run(type, document);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="ko"/);
+    assert.match(result.html, /<svg\b[^>]*\blang="ko"/);
+    assert.ok(result.html.includes(`<title>${authoredTitle}</title>`), `${type}: authored title changed`);
+    assert.ok(result.html.includes(`<h1>${authoredTitle}</h1>`), `${type}: authored heading changed`);
+    assert.match(result.html, /<text\b[^>]*>범례<\/text>/);
+    assert.match(result.html, /aria-label="[^"]*포커스/);
+    assert.match(result.html, /<desc id="archify-diagram-description">Archify로 생성한/);
+    assert.match(result.html, /"locale":"ko"/);
+    assert.match(result.html, />다이어그램 내보내기</);
     assert.doesNotMatch(result.html, /\{\{i18n:/);
   }
 });
@@ -227,6 +249,58 @@ test('unsupported locale values fail schema validation in every mode', () => {
       assert.equal(payload.ok, false);
       assert.ok(payload.diagnostics.some((entry) => entry.subject?.path === '/meta/locale'), `${type}: ${locale}`);
     }
+  }
+});
+
+test('real Chrome keeps ko Finder, Route, Export, and preset badges localized in all five modes', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
+}, async () => {
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    for (const type of Object.keys(EXAMPLES)) {
+      const document = example(type);
+      document.meta.locale = 'ko';
+      document.meta.title = `브라우저 현지화-${type}`;
+      const result = run(type, document);
+      assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+
+      const sessionId = await loadArtifact(browser, result.output);
+      const state = await evaluate(browser, sessionId, `(function () {
+        var routeButton = document.getElementById('btn-route-probe');
+        var exportButton = document.getElementById('btn-export');
+        document.getElementById('btn-node-finder').click();
+        var finderTitle = document.getElementById('node-finder-title').textContent.trim();
+        document.getElementById('node-finder-close').click();
+        routeButton.click();
+        var routeTitle = document.getElementById('route-probe-title').textContent.trim();
+        routeButton.click();
+        exportButton.click();
+        document.documentElement.setAttribute('data-preset', 'blueprint');
+        var badge = (getComputedStyle(document.querySelector('.header-row'), '::after').content || '')
+          .replace(/^["']|["']$/g, '');
+        return {
+          htmlLang: document.documentElement.lang,
+          svgLang: document.querySelector('.diagram-container svg').getAttribute('lang'),
+          toolbarLabel: document.querySelector('.diagram-nav').getAttribute('aria-label'),
+          finderTitle: finderTitle,
+          routeTitle: routeTitle,
+          exportLabel: exportButton.getAttribute('aria-label'),
+          exportMenuText: document.getElementById('export-menu').textContent,
+          blueprintBadge: badge
+        };
+      })()`);
+
+      assert.equal(state.htmlLang, 'ko', type);
+      assert.equal(state.svgLang, 'ko', type);
+      assert.equal(state.toolbarLabel, '다이어그램 보기 조작', type);
+      assert.equal(state.finderTitle, '노드 찾기', type);
+      assert.equal(state.routeTitle, '출발 노드를 선택하세요', type);
+      assert.equal(state.exportLabel, '다이어그램 내보내기', type);
+      assert.match(state.exportMenuText, /공유 카드/, type);
+      assert.equal(state.blueprintBadge, '블루프린트 / 개정 01', type);
+    }
+  } finally {
+    await browser.close();
   }
 });
 
@@ -384,6 +458,13 @@ test('runtime labels stay localized after composition', () => {
   assert.equal(translateMessage('zh-CN', 'viewer.kind.decision'), '决策');
   assert.equal(translateMessage('zh-CN', 'viewer.passport.relationship.connectsFrom'), '连接自');
   assert.equal(translateMessage('zh-CN', 'viewer.nav.level.auto'), '自动');
+
+  assert.equal(translateMessage('ko', 'viewer.kind.backend'), '백엔드');
+  assert.equal(translateMessage('ko', 'viewer.nav.level.auto'), '자동');
+  assert.equal(
+    translateMessage('ko', 'viewer.finder.result.routeTarget', { label: '종점', links: translateCount('ko', 'viewer.route.hop', 2) }),
+    '종점을(를) 경로 도착점으로 선택, 2홉',
+  );
 
   const zhHops = translateCount('zh-CN', 'viewer.route.hop', 2);
   assert.equal(

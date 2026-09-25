@@ -24,6 +24,7 @@ function usage() {
   archify check <output.html>
   archify visual-check <output.html> [--json]
   archify guide [scenario or question] [--json] [--lang en|zh]
+  archify scan <folder> [--output draft.architecture.json] [--title text] [--evidence] [--json]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
   archify examples
@@ -1525,6 +1526,119 @@ async function commandGuide(args) {
   console.log(json ? JSON.stringify(result, null, 2) : guide.formatScenarioRecommendation(result));
 }
 
+function scanFailure(json, message, code, status = 2, details = {}) {
+  if (json) {
+    console.log(JSON.stringify({
+      schemaVersion: 1,
+      ok: false,
+      command: 'scan',
+      error: message,
+      diagnostics: [diagnostic({ code, message, ...details })],
+    }, null, 2));
+    process.exit(status);
+  }
+  fail(message, status);
+}
+
+async function commandScan(args) {
+  const json = args.includes('--json');
+  let folder;
+  let output;
+  let title;
+  let evidence = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--json') continue;
+    if (arg === '--evidence') {
+      evidence = true;
+    } else if (arg === '--output' || arg === '-o' || arg === '--title') {
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) scanFailure(json, `${arg} needs a value.`, 'cli/missing-option-value');
+      if (arg === '--title') title = value;
+      else output = value;
+      index += 1;
+    } else if (arg.startsWith('-')) {
+      scanFailure(json, `Unknown scan option "${arg}".`, 'cli/unknown-option', 2, { subject: { option: arg } });
+    } else if (!folder) {
+      folder = arg;
+    } else {
+      scanFailure(json, `Unexpected argument "${arg}".`, 'cli/unexpected-argument', 2, { subject: { argument: arg } });
+    }
+  }
+  if (!folder) scanFailure(json, 'scan needs a folder to analyze.', 'cli/missing-argument');
+  const root = path.resolve(folder);
+  if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
+    scanFailure(json, `scan folder does not exist: ${folder}`, 'scan/folder-not-found', 1, { subject: { folder: root } });
+  }
+  const outputPath = path.resolve(output || `${path.basename(root) || 'repository'}.architecture.json`);
+  if (!outputPath.endsWith('.json')) {
+    scanFailure(json, 'scan output must be a .json file.', 'cli/invalid-output', 2, { subject: { output: outputPath } });
+  }
+
+  const scanner = await import(pathToFileURL(path.join(skillRoot, 'scan/scan.mjs')).href);
+  let repositoryRoot = null;
+  let options = { title };
+  if (evidence) {
+    const top = spawnSync('git', ['-C', root, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' });
+    const remote = spawnSync('git', ['-C', root, 'remote', 'get-url', 'origin'], { encoding: 'utf8' });
+    const head = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' });
+    const url = scanner.normalizeRemote(remote.stdout);
+    if (top.status !== 0 || head.status !== 0 || !url) {
+      scanFailure(json, '--evidence needs a Git checkout whose origin is a GitHub or Gitee HTTPS/SSH URL.', 'scan/evidence-unavailable', 1, {
+        supportedFixes: ['run scan without --evidence', 'scan a clone whose origin points at github.com or gitee.com'],
+      });
+    }
+    repositoryRoot = fs.realpathSync(top.stdout.trim());
+    const prefix = scanner.toPosixPath(path.relative(repositoryRoot, fs.realpathSync(root)));
+    options = { ...options, evidence: { url, revision: head.stdout.trim() }, sourcePrefix: prefix ? `${prefix}/` : '' };
+  }
+
+  let scanned;
+  try {
+    scanned = scanner.scanRepository(root, options);
+  } catch (error) {
+    scanFailure(json, error.message, 'scan/no-modules', 1, { subject: { folder: root } });
+  }
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, `${JSON.stringify(scanned.document, null, 2)}\n`);
+
+  const validateArgs = [path.join(__dirname, 'archify.mjs'), 'validate', 'architecture', outputPath, '--json'];
+  if (repositoryRoot) validateArgs.push('--repo-root', repositoryRoot);
+  const validation = spawnSync(process.execPath, validateArgs, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  let validationReceipt = null;
+  try {
+    validationReceipt = JSON.parse(validation.stdout);
+  } catch {
+    validationReceipt = null;
+  }
+  const ok = validation.status === 0 && validationReceipt?.ok === true;
+  const receipt = {
+    schemaVersion: 1,
+    ok,
+    command: 'scan',
+    folder: root,
+    output: outputPath,
+    draft: true,
+    ...scanned.stats,
+    validation: {
+      ok,
+      errors: validationReceipt?.composition?.summary?.errors ?? (ok ? 0 : null),
+      warnings: validationReceipt?.composition?.summary?.warnings ?? null,
+      ...(ok ? {} : { error: validationReceipt?.error || validation.stderr.trim() }),
+    },
+  };
+  if (json) {
+    console.log(JSON.stringify(receipt, null, 2));
+  } else {
+    console.log(`${ok ? 'Draft written' : 'Draft written but failed validation'}: ${outputPath}`);
+    console.log(`  ${scanned.stats.components} components · ${scanned.stats.connections} connections · services: ${scanned.stats.services.join(', ') || 'none'}`);
+    if (scanned.stats.hiddenModules.length) console.log(`  hidden shared modules: ${scanned.stats.hiddenModules.join(', ')}`);
+    if (!ok) console.error(receipt.validation.error);
+    else console.log(`Next: node bin/archify.mjs deliver architecture ${path.relative(process.cwd(), outputPath)} out.html`);
+  }
+  if (!ok) process.exitCode = 1;
+}
+
 async function commandBrands(args) {
   const json = args.includes('--json');
   const unknown = args.filter((arg) => arg.startsWith('--') && arg !== '--json');
@@ -2116,6 +2230,9 @@ try {
       break;
     case 'brands':
       await commandBrands(args);
+      break;
+    case 'scan':
+      await commandScan(args);
       break;
     case 'examples':
       commandExamples(args);
