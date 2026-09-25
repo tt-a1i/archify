@@ -561,7 +561,17 @@ export function compactFinalizeReceipt(receipt) {
       repair: 'Check whether that leading space is intentional. If not, reposition the connected scene nearer the canvas origin while retaining room for its actual boundaries, labels and return routes. Preserve all meaning and user-fixed geometry, then rerun finalize. No screenshot is required.',
     };
   }
-  if (!receipt.ok && receipt.status === 'fail' && receipt.failedStage === 'validate') {
+  if (!receipt.ok && receipt.status === 'fail' && receipt.failedStage === 'validate' && receipt.autoroute) {
+    compact.autoroute = receipt.autoroute;
+    compact.nextAction = {
+      action: 'adopt-autoroute',
+      candidate: receipt.autoroute.candidate,
+      replaces: receipt.specification?.path,
+      removedRouting: receipt.autoroute.removed,
+      constraint: 'This variant only drops authored route/side/label placement from the listed connections and already passes validation. Adopt it by replacing the candidate unless the user required that routing; nodes, labels and meaning are unchanged.',
+      then: 'finalize-once',
+    };
+  } else if (!receipt.ok && receipt.status === 'fail' && receipt.failedStage === 'validate') {
     compact.nextAction = {
       action: 'edit-in-place',
       candidate: receipt.specification?.path,
@@ -572,6 +582,68 @@ export function compactFinalizeReceipt(receipt) {
     };
   }
   return compact;
+}
+
+// Authored routing is the most common cause of first-draft composition
+// failures: automatic routes and sides usually clear the same scene.
+const AUTOROUTE_FIELDS = Object.freeze(['via', 'route', 'fromSide', 'toSide', 'labelAt', 'labelDx', 'labelDy', 'labelSegment']);
+
+function autorouteCandidatePath(input) {
+  return input.replace(/(\.json)?$/i, '.autoroute.json');
+}
+
+function stripAuthoredRouting(document, indices) {
+  const copy = JSON.parse(JSON.stringify(document));
+  const removed = [];
+  (copy.connections || []).forEach((connection, index) => {
+    if (indices && !indices.has(index)) return;
+    const fields = AUTOROUTE_FIELDS.filter((field) => Object.hasOwn(connection, field));
+    if (!fields.length) return;
+    fields.forEach((field) => { delete connection[field]; });
+    removed.push({ index, from: connection.from, to: connection.to, ...(connection.label ? { label: connection.label } : {}), fields });
+  });
+  return { copy, removed };
+}
+
+// After a composition failure, try the same candidate with authored routing
+// removed — first on the implicated connections, then on all of them. A
+// passing variant is written beside the candidate for the author to adopt;
+// the candidate itself is never changed.
+async function tryAutoroute({ type, input, quality, repoRoot, diagnostics, cliPath, cwd, env, runCommand }) {
+  if (type !== 'architecture') return null;
+  if (!diagnostics.some((diagnostic) => /^composition\//.test(diagnostic?.code || ''))) return null;
+  let document;
+  try { document = JSON.parse(fs.readFileSync(input, 'utf8')); } catch { return null; }
+  if (!Array.isArray(document?.connections)) return null;
+  const implicated = new Set();
+  for (const diagnostic of diagnostics) {
+    for (const subject of [diagnostic?.subject, diagnostic?.evidence?.otherRelationship]) {
+      if (subject?.collection === 'connections' && Number.isInteger(subject.index)) implicated.add(subject.index);
+    }
+  }
+  const target = autorouteCandidatePath(input);
+  const attempts = implicated.size ? [implicated, null] : [null];
+  let previous = '';
+  for (const indices of attempts) {
+    const { copy, removed } = stripAuthoredRouting(document, indices);
+    if (!removed.length) continue;
+    const serialized = `${JSON.stringify(copy, null, 2)}\n`;
+    if (serialized === previous) continue;
+    previous = serialized;
+    fs.writeFileSync(target, serialized);
+    const result = await runCommand({
+      stage: 'validate', cliPath, cwd, env,
+      args: stageArguments({ stage: 'validate', type, input: target, quality, repoRoot }),
+    });
+    const validation = parsedReceipt(result.stdout);
+    const summary = validation?.composition?.summary;
+    if ((result.status ?? 1) === 0 && validStageReceipt('validate', validation, quality)
+        && summary?.errors === 0 && (quality !== 'showcase' || summary?.warnings === 0)) {
+      return { candidate: target, scope: indices ? 'implicated' : 'all', removed, validation: 'pass' };
+    }
+  }
+  fs.rmSync(target, { force: true });
+  return null;
 }
 
 export async function runFinalize({
@@ -806,6 +878,13 @@ export async function runFinalize({
       persistReceipts();
     }
 
+    if (exitCode !== 0 && receipt.failedStage === 'validate') {
+      const autoroute = await tryAutoroute({
+        type, input: resolvedInput, quality, repoRoot, diagnostics: receipt.diagnostics,
+        cliPath, cwd, env, runCommand,
+      }).catch(() => null);
+      if (autoroute) receipt.autoroute = autoroute;
+    }
     receipt.ok = exitCode === 0;
     receipt.status = receipt.ok ? 'pass' : receipt.status === 'running' ? 'fail' : receipt.status;
     if (receipt.ok) {

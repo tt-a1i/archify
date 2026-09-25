@@ -1,0 +1,310 @@
+{
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "本机: 127.0.0.1 常驻 daemon + 工作区",
+      "wraps": [
+        "webui",
+        "daemon",
+        "agentmgr",
+        "orch",
+        "workers",
+        "workflow",
+        "store",
+        "tasksfile"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "云端: 可选 gateway 中继 (仅路由)",
+      "wraps": [
+        "gateway"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "items": [
+        "桌面浏览器直连本机 daemon: REST /api + WS /ws/terminal",
+        "xterm.js 多终端并行, SQLite 持久化工作区与成员"
+      ],
+      "title": "主链路"
+    },
+    {
+      "dot": "emerald",
+      "items": [
+        "Orchestrator 与 Worker 都是 PTY 子进程, 差异只在角色 prompt",
+        "team send 按 worker 名派单, team report 回灌 orch stdin",
+        "状态机仅 working / idle / stopped, 由协议事件驱动"
+      ],
+      "title": "协作协议"
+    },
+    {
+      "dot": "amber",
+      "items": [
+        "远程默认关: daemon 出站 wss 连 gateway, 手机 E2E 加密",
+        "gateway 只见密文 opaque relay, 不可用时本地照常",
+        "任务图即工作区 .hive/tasks.md, 文件 watch 同步 UI"
+      ],
+      "title": "远程与任务图"
+    }
+  ],
+  "components": [
+    {
+      "id": "user",
+      "label": "用户",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "sublabel": "桌面 / 手机浏览器",
+      "type": "external"
+    },
+    {
+      "id": "webui",
+      "label": "Web UI",
+      "pos": [
+        270,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sublabel": "React + xterm.js",
+      "type": "frontend"
+    },
+    {
+      "id": "daemon",
+      "label": "Hive Daemon",
+      "pos": [
+        510,
+        60
+      ],
+      "size": [
+        170,
+        68
+      ],
+      "sublabel": "Node 常驻 :127.0.0.1",
+      "type": "backend"
+    },
+    {
+      "id": "orch",
+      "label": "Orchestrator",
+      "pos": [
+        770,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sublabel": "PTY CLI agent",
+      "type": "external"
+    },
+    {
+      "id": "workflow",
+      "label": "Workflow Runner",
+      "pos": [
+        270,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sublabel": "脚本 + 定时调度",
+      "type": "backend"
+    },
+    {
+      "id": "agentmgr",
+      "label": "Agent Manager",
+      "pos": [
+        510,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "node-pty 生命周期",
+      "type": "backend"
+    },
+    {
+      "id": "workers",
+      "label": "Workers",
+      "pos": [
+        770,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sublabel": "PTY CLI agents",
+      "type": "external"
+    },
+    {
+      "id": "gateway",
+      "label": "Cloud Gateway",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        130,
+        60
+      ],
+      "sublabel": "CF Workers 中继",
+      "type": "cloud"
+    },
+    {
+      "id": "store",
+      "label": "SQLite",
+      "pos": [
+        510,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "工作区 / 成员 / 消息",
+      "type": "database"
+    },
+    {
+      "id": "tasksfile",
+      "label": "tasks.md",
+      "pos": [
+        770,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sublabel": ".hive/tasks.md",
+      "type": "database"
+    }
+  ],
+  "connections": [
+    {
+      "from": "user",
+      "label": "HTTPS 本地",
+      "to": "webui"
+    },
+    {
+      "from": "user",
+      "label": "E2E 加密",
+      "to": "gateway"
+    },
+    {
+      "from": "webui",
+      "label": "REST + WS",
+      "to": "daemon"
+    },
+    {
+      "from": "daemon",
+      "label": "spawn / write",
+      "to": "agentmgr"
+    },
+    {
+      "from": "agentmgr",
+      "label": "PTY 输入输出",
+      "to": "orch"
+    },
+    {
+      "from": "agentmgr",
+      "label": "PTY 输入输出",
+      "to": "workers"
+    },
+    {
+      "from": "orch",
+      "label": "team send",
+      "to": "daemon"
+    },
+    {
+      "from": "workers",
+      "label": "team report",
+      "to": "daemon"
+    },
+    {
+      "from": "daemon",
+      "label": "run 脚本",
+      "to": "workflow"
+    },
+    {
+      "from": "workflow",
+      "label": "起 agent",
+      "to": "agentmgr"
+    },
+    {
+      "from": "daemon",
+      "fromSide": "left",
+      "label": "SQL 读写",
+      "to": "store",
+      "toSide": "left",
+      "via": [
+        [
+          475,
+          94
+        ],
+        [
+          475,
+          450
+        ]
+      ]
+    },
+    {
+      "from": "daemon",
+      "fromSide": "right",
+      "label": "watch 任务图",
+      "to": "tasksfile",
+      "toSide": "left",
+      "via": [
+        [
+          725,
+          94
+        ],
+        [
+          725,
+          450
+        ]
+      ]
+    },
+    {
+      "from": "daemon",
+      "fromSide": "left",
+      "label": "出站 wss",
+      "to": "gateway",
+      "toSide": "bottom",
+      "via": [
+        [
+          455,
+          94
+        ],
+        [
+          455,
+          490
+        ],
+        [
+          105,
+          490
+        ]
+      ]
+    }
+  ],
+  "diagram_type": "architecture",
+  "meta": {
+    "locale": "zh-CN",
+    "output": "hive.html",
+    "quality_profile": "showcase",
+    "title": "Hive 浏览器多 Agent 协作工作台"
+  },
+  "schema_version": 1
+}
