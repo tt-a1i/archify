@@ -171,6 +171,9 @@ test('Semantic Lens preserves selection, legend preview and panel contracts', {
     await run(`Archify.semanticLens.clear({closePanel:true})`);
     s = await snapshot('clear-default'); assert.equal(s.open, false); assert.equal(s.hash, ''); assert.equal(s.overlays, 0);
     assert.equal(await run('Archify.view.state().scale'), 1);
+    // The reset above animates the camera; measure the legend only once it settles.
+    await run(`lensWait(()=>!document.querySelector('.diagram-container').hasAttribute('data-camera-transaction'))`);
+    await run('Archify.viewerChromeLayout.whenStable()');
     await move(legend('backend')); assert.equal((await snapshot('preview-only')).preview, 'backend');
     assert.equal(await run(`Archify.semanticLens.clear({preserveView:true});document.querySelector('.diagram-container > svg').getAttribute('data-legend-preview-active')`), 'backend');
     assert.equal(await run('Archify.semanticLens.clearPreview()===undefined'), true);
