@@ -16295,9 +16295,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clearPreview();
         var finder = Archify.finder;
         if (finder &amp;&amp; typeof finder.select === &#39;function&#39;) {
-          var kind = typeof finder.context === &#39;function&#39; ? finder.context() : &#39;&#39;;
-          // A refused Route pick keeps the route; focusing would clear it.
-          if (finder.select(id) || kind === &#39;route-source&#39; || kind === &#39;route-target&#39;) return;
+          if (finder.select(id)) return;
+          var routeMode = Archify.routeProbe &amp;&amp; typeof Archify.routeProbe.active === &#39;function&#39; ? Archify.routeProbe.active() : &#39;idle&#39;;
+          // Only an active endpoint picker owns a refused selection.
+          if (routeMode === &#39;source&#39; || routeMode === &#39;target&#39;) return;
         }
         if (Archify.focus &amp;&amp; typeof Archify.focus.set === &#39;function&#39;) Archify.focus.set(id, { toggle: false });
       }
@@ -30280,9 +30281,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clearPreview();
         var finder = Archify.finder;
         if (finder &amp;&amp; typeof finder.select === &#39;function&#39;) {
-          var kind = typeof finder.context === &#39;function&#39; ? finder.context() : &#39;&#39;;
-          // A refused Route pick keeps the route; focusing would clear it.
-          if (finder.select(id) || kind === &#39;route-source&#39; || kind === &#39;route-target&#39;) return;
+          if (finder.select(id)) return;
+          var routeMode = Archify.routeProbe &amp;&amp; typeof Archify.routeProbe.active === &#39;function&#39; ? Archify.routeProbe.active() : &#39;idle&#39;;
+          // Only an active endpoint picker owns a refused selection.
+          if (routeMode === &#39;source&#39; || routeMode === &#39;target&#39;) return;
         }
         if (Archify.focus &amp;&amp; typeof Archify.focus.set === &#39;function&#39;) Archify.focus.set(id, { toggle: false });
       }

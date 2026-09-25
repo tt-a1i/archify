@@ -11567,9 +11567,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clearPreview();
         var finder = Archify.finder;
         if (finder && typeof finder.select === 'function') {
-          var kind = typeof finder.context === 'function' ? finder.context() : '';
-          // A refused Route pick keeps the route; focusing would clear it.
-          if (finder.select(id) || kind === 'route-source' || kind === 'route-target') return;
+          if (finder.select(id)) return;
+          var routeMode = Archify.routeProbe && typeof Archify.routeProbe.active === 'function' ? Archify.routeProbe.active() : 'idle';
+          // Only an active endpoint picker owns a refused selection.
+          if (routeMode === 'source' || routeMode === 'target') return;
         }
         if (Archify.focus && typeof Archify.focus.set === 'function') Archify.focus.set(id, { toggle: false });
       }

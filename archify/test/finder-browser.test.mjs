@@ -214,6 +214,10 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     state = await snapshot('route-result'); assert.equal(state.route, 'result'); assert.equal(state.routeFinder, null); assert.equal(state.open, false);
     const result = await run('Archify.routeProbe.result()');
     assert.deepEqual(result.nodes, ['users', 'cdn', 'lb', 'api', 'db']); assert.equal(result.hops, 4);
+    assert.equal(await run('Archify.finder.context()'), 'route-target');
+    await run(`Archify.outline.select('auth')`);
+    assert.equal(await run('Archify.focus.active()'), 'auth', 'the index must focus nodes after a completed Route');
+    assert.equal(await run('Archify.routeProbe.active()'), 'idle');
     // A sink is allowed by Route's public API even though the source picker
     // filters it out. Its actual target context must render an empty list.
     await run(`Archify.routeProbe.begin({source:'db'})`);
@@ -222,7 +226,12 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     assert.equal(state.context, 'route-target'); assert.deepEqual(ids(state), []); assert.equal(state.empty, false);
     await key('Enter', 'Enter', 13); assert.equal(await run('Archify.routeProbe.active()'), 'target');
     await key('Escape', 'Escape', 27);
-    await click('#route-probe-clear'); await key('/', 'Slash', 191); await opened();
+    await click('#route-probe-clear');
+    assert.equal(await run('Archify.finder.context()'), 'route-target');
+    await run(`Archify.outline.select('api')`);
+    assert.equal(await run('Archify.focus.active()'), 'api', 'the index must focus nodes after clearing Route selection');
+    assert.equal(await run('Archify.routeProbe.active()'), 'idle');
+    await key('/', 'Slash', 191); await opened();
     assert.equal((await snapshot('route-cleared-default')).context, 'focus');
   });
 
