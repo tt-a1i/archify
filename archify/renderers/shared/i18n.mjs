@@ -375,7 +375,7 @@ const MESSAGE_PAIRS = {
   'viewer.passport.relationship.connectsTo': ['connects to', '连接到', '연결 대상'],
   'viewer.passport.relationship.connectsFrom': ['connects from', '连接自', '연결 출발'],
   'viewer.passport.relationship.pinned': ['Pinned relationship · {from} → {to} · {label}', '已固定关系 · {from} → {to} · {label}', '고정한 관계 · {from} → {to} · {label}'],
-  'viewer.passport.relationship.inspect': ['Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.', '检查第 {index}/{total} 条关系：{from} 到 {to}，{label}。按 Enter 查看详情。', '관계 {index}/{total} 살펴보기: {from}에서 {to}로, {label}. Enter를 누르면 세부 정보가 열립니다.'],
+  'viewer.passport.relationship.inspect': ['Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.', '检查第 {index}/{total} 条关系：{from} 到 {to}，{label}。按 Enter 查看详情。', '관계 {index}/{total} 살펴보기: {from}에서 {to}(으)로, {label}. Enter를 누르면 세부 정보가 열립니다.'],
   'viewer.passport.relationship.group.out': ['Outgoing', '出向', '나가는 연결'],
   'viewer.passport.relationship.group.in': ['Incoming', '入向', '들어오는 연결'],
   'viewer.passport.relationship.group.loop': ['Self loops', '自环', '자기 순환'],
