@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-test('compact stage rail keeps the diagram below the fixed toolbar', async (t) => {
+test('compact stage rail keeps the diagram below the toolbar', async (t) => {
   if (!Object.hasOwn(process.env, 'ARCHIFY_CHROME')) return t.skip('Set ARCHIFY_CHROME for real browser checks');
   const chrome = findChrome();
   assert.ok(chrome);

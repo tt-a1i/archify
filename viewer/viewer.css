@@ -2822,11 +2822,11 @@ html[data-reader-rail] .header { min-height: 0; margin-bottom: 1.125rem; }
 /* ==========================================================
    TOOLBAR (theme toggle + export menu)
    ========================================================== */
-/* The fixed toolbar tracks the centered reader column and the title row, so
+/* The toolbar tracks the centered reader column and the title row, so
    an adaptive narrow reader does not leave its controls stranded at the
    viewport edge. */
 .toolbar {
-  position: fixed;
+  position: absolute;
   top: var(--archify-page-top);
   right: max(1rem, calc((100vw - min(100vw - 4rem, var(--archify-reader-width, 1440px))) / 2));
   display: flex;
