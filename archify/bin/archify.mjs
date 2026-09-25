@@ -4274,6 +4274,61 @@ function engineeringProfileFromArtifact(artifact) {
   return match ? match[1] : null;
 }
 
+async function viewportProjectionFromArtifact(artifact, specification, type) {
+  const html = artifact.toString('utf8');
+  const svgTag = html.match(/<svg\b(?=[^>]*\bviewBox="[^"]+")(?=[^>]*\baria-labelledby="archify-diagram-title archify-diagram-description")[^>]*>/i)?.[0];
+  if (!svgTag) return null;
+
+  const viewBoxValue = svgTag.match(/\bviewBox="([^"]+)"/i)?.[1];
+  const viewBox = viewBoxValue?.trim().split(/\s+/).map(Number);
+  if (!Array.isArray(viewBox) || viewBox.length !== 4 || !viewBox.every(Number.isFinite)
+      || viewBox[2] <= 0 || viewBox[3] <= 0) return null;
+
+  const readerFit = svgTag.match(/\bdata-reader-fit="([^"]+)"/i)?.[1] || null;
+  const document = JSON.parse(specification.toString('utf8'));
+  const hasGuidedViews = Array.isArray(document?.meta?.views) && document.meta.views.length > 0;
+  const {
+    DESKTOP_READABILITY_VIEWPORT,
+    describeFixedWidthOverflow,
+    predictedFixedWidthOverflow,
+  } = await import('../renderers/shared/desktop-readability.mjs');
+
+  const issue = predictedFixedWidthOverflow({
+    viewBoxWidth: viewBox[2],
+    viewBoxHeight: viewBox[3],
+    readerFit,
+    diagramType: type,
+    hasGuidedViews,
+  });
+  const common = {
+    targetViewport: { ...DESKTOP_READABILITY_VIEWPORT },
+    viewBox: { width: viewBox[2], height: viewBox[3] },
+    readerFit,
+    browserMeasured: false,
+    cardsIncluded: false,
+    guidedViewsIncluded: hasGuidedViews,
+  };
+
+  if (!issue) {
+    return {
+      status: 'undetermined',
+      ...common,
+      guidance: 'Static validation does not prove whole-page fit because adaptive Reader sizing, card wrapping, and browser layout can change the result. Finalize the frozen candidate and run visual-check at the target viewport.',
+    };
+  }
+
+  return {
+    status: 'certain-overflow',
+    ...common,
+    svgWidthPx: issue.svgWidthPx,
+    svgHeightPx: issue.svgHeightPx,
+    fixedChromePx: issue.fixedChromePx,
+    pageHeightLowerBoundPx: issue.pageHeightPx,
+    overflowLowerBoundPx: issue.overflowPx,
+    guidance: describeFixedWidthOverflow(issue),
+  };
+}
+
 async function commandDeliver(args) {
   await loadSidecarPathRuntime();
   const qualityArgs = extractQualityArgs(args);
@@ -6796,7 +6851,9 @@ async function commandValidate(args) {
         exitCode = check.status ?? 1;
       } else {
         const result = JSON.parse(check.stdout);
-        const engineeringProfile = engineeringProfileFromArtifact(fs.readFileSync(out));
+        const artifact = fs.readFileSync(out);
+        const engineeringProfile = engineeringProfileFromArtifact(artifact);
+        const viewportProjection = await viewportProjectionFromArtifact(artifact, specification, type);
         if (json) {
           const candidate = {
             path: path.resolve(input),
@@ -6827,6 +6884,7 @@ async function commandValidate(args) {
             },
             checks: result.checks,
             composition: result.composition,
+            ...(viewportProjection ? { viewportProjection } : {}),
             ...(engineeringProfile ? { engineeringProfile } : {}),
           }, null, 2));
         } else {

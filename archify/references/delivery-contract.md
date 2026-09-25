@@ -10,6 +10,8 @@ After the edit, rerun the complete `finalize` command with `--quality showcase` 
 
 Use standalone `validate` only for focused diagnosis, passing `--repo-root` for repository-backed work. Its passing receipt marks `candidateFrozen: true`; run `nextAction.arguments`, replacing only `<output.html>`, without editing, revalidating, or rereading the candidate. Retry later environmental or evidence failures against those frozen bytes. A measured reason to edit creates a new candidate and calls for the complete `finalize` without the old hash.
 
+A passing `validate --json` receipt may also include `viewportProjection`. This field is informational and never changes validation success, candidate freezing, or the next action. `status: "certain-overflow"` means the static Reader contract proves that the page already exceeds the 1440x900 desktop reference viewport before card height is counted; the receipt records the viewBox, projected SVG size, fixed chrome, and lower-bound overflow. `status: "undetermined"` means static rules cannot prove either fit or overflow because adaptive Reader sizing, card wrapping, and browser layout still matter. It is not a pass claim. In both cases `browserMeasured: false` is explicit; use `finalize` and `visual-check` for delivered browser evidence.
+
 ## Validate and deliver
 
 `render` and direct renderer entry points print classified authoring failures

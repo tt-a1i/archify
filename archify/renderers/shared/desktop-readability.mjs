@@ -115,6 +115,8 @@ export function predictedFixedWidthOverflow({
   const pageHeightPx = svgHeightPx + fixedChromePx;
   if (pageHeightPx <= viewport.height) return null;
   return {
+    viewBoxWidth,
+    viewBoxHeight,
     viewportWidth: viewport.width,
     viewportHeight: viewport.height,
     ratio: Math.round(ratio * 100) / 100,
