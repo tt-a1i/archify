@@ -391,14 +391,30 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     }
   }
 
+  const laneOrder = new Map(asArray(workflow.lanes).map((lane, index) => [lane.id, index]));
   const unpinnedTopEndpointIds = new Set();
+  const canInferHeaderClearance = !hasAbsoluteWorkflowPins(workflow);
   for (const edge of asArray(workflow.edges)) {
     const preservesHorizontalPins = Array.isArray(edge.via) || edge.channelX !== undefined;
     if (preservesHorizontalPins) continue;
     if (edge.fromSide === 'top') unpinnedTopEndpointIds.add(edge.from);
     if (edge.toSide === 'top') unpinnedTopEndpointIds.add(edge.to);
+    // A same-column straight route between lanes forces the facing vertical
+    // ports even when their sides are omitted. Reserve the same heading space
+    // as explicit ports, before route feasibility checks the resulting scene.
+    // Keep absolute coordinate pins in their existing layout coordinate system.
+    if (!canInferHeaderClearance || edge.route !== 'straight') continue;
+    const from = nodesById.get(edge.from);
+    const to = nodesById.get(edge.to);
+    if (!from || !to || from.col !== to.col || from.lane === to.lane) continue;
+    const fromLane = laneOrder.get(from.lane);
+    const toLane = laneOrder.get(to.lane);
+    if (fromLane === undefined || toLane === undefined) continue;
+    const down = fromLane < toLane;
+    if (edge.fromSide && edge.fromSide !== (down ? 'bottom' : 'top')) continue;
+    if (edge.toSide && edge.toSide !== (down ? 'top' : 'bottom')) continue;
+    unpinnedTopEndpointIds.add(down ? edge.to : edge.from);
   }
-  const laneOrder = new Map(asArray(workflow.lanes).map((lane, index) => [lane.id, index]));
   let laneHeaderShift = 0;
   const laneHeaderShiftContributors = new Set();
   for (const nodeId of unpinnedTopEndpointIds) {
