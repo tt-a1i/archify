@@ -1,0 +1,107 @@
+name: Archify
+description: Validate and deliver Archify diagrams in CI, review architecture changes on pull requests, or draft a diagram from repository code.
+author: tt-a1i
+branding:
+  icon: git-pull-request
+  color: blue
+
+inputs:
+  mode:
+    description: "deliver (validate + render sources), compare (pull request Architecture Delta), or scan (draft from code, then deliver)"
+    required: false
+    default: deliver
+  files:
+    description: "Newline- or comma-separated globs of typed JSON sources, relative to the workspace. compare defaults to **/*.architecture.json"
+    required: false
+    default: ""
+  type:
+    description: "Force one diagram type instead of reading diagram_type from each source"
+    required: false
+    default: ""
+  quality:
+    description: "standard or showcase"
+    required: false
+    default: standard
+  output-dir:
+    description: "Directory for HTML artifacts, receipts, and summary.md"
+    required: false
+    default: archify-artifacts
+  repo-root:
+    description: "Repository root for architecture source evidence. Defaults to the workspace when a source declares meta.repository"
+    required: false
+    default: ""
+  base-ref:
+    description: "compare: base revision. Defaults to the pull request base commit"
+    required: false
+    default: ""
+  comment:
+    description: "compare: create or update one pull request comment with the summary"
+    required: false
+    default: "false"
+  github-token:
+    description: "compare: token for the pull request comment (needs pull-requests: write)"
+    required: false
+    default: ${{ github.token }}
+  scan-path:
+    description: "scan: folder to analyze"
+    required: false
+    default: ""
+  scan-title:
+    description: "scan: diagram title"
+    required: false
+    default: ""
+  fail-on-error:
+    description: "Fail the step when any source fails validation or comparison"
+    required: false
+    default: "true"
+  setup-node:
+    description: "Install Node.js 22 before running (set false when the job already provides Node 18+)"
+    required: false
+    default: "true"
+
+outputs:
+  ok:
+    description: "true when every source passed"
+    value: ${{ steps.archify.outputs.ok }}
+  delivered:
+    description: "deliver/scan: number of delivered artifacts"
+    value: ${{ steps.archify.outputs.delivered }}
+  failed:
+    description: "deliver/scan: number of failed sources"
+    value: ${{ steps.archify.outputs.failed }}
+  changes:
+    description: "compare: number of authored changes found"
+    value: ${{ steps.archify.outputs.changes }}
+  comment:
+    description: "compare: created, updated, or skipped"
+    value: ${{ steps.archify.outputs.comment }}
+  summary-path:
+    description: "Path of the Markdown summary"
+    value: ${{ steps.archify.outputs.summary-path }}
+  output-dir:
+    description: "Absolute output directory"
+    value: ${{ steps.archify.outputs.output-dir }}
+
+runs:
+  using: composite
+  steps:
+    - if: inputs.setup-node == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - id: archify
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/integrations/github-action/action.mjs"
+      env:
+        ARCHIFY_MODE: ${{ inputs.mode }}
+        ARCHIFY_FILES: ${{ inputs.files }}
+        ARCHIFY_TYPE: ${{ inputs.type }}
+        ARCHIFY_QUALITY: ${{ inputs.quality }}
+        ARCHIFY_OUTPUT_DIR: ${{ inputs.output-dir }}
+        ARCHIFY_REPO_ROOT: ${{ inputs.repo-root }}
+        ARCHIFY_BASE_REF: ${{ inputs.base-ref }}
+        ARCHIFY_COMMENT: ${{ inputs.comment }}
+        ARCHIFY_GITHUB_TOKEN: ${{ inputs.github-token }}
+        ARCHIFY_SCAN_PATH: ${{ inputs.scan-path }}
+        ARCHIFY_SCAN_TITLE: ${{ inputs.scan-title }}
+        ARCHIFY_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}

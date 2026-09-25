@@ -242,6 +242,33 @@ GitLab/Gitea/Forgejo/Bitbucket web links are not implemented in this version;
 use local-only until a tested link provider is available. Unknown web providers
 fail with a diagnostic rather than emitting a guessed link.
 
+## Repository scan drafts
+
+`archify scan <folder> [--output draft.architecture.json] [--title text] [--evidence] [--json]`
+reads static imports from Python and JavaScript/TypeScript files and writes a
+draft architecture document, then validates it at the `standard` profile. It
+never executes project code. The draft records only "module A imports module
+B" and library-to-service matches (for example `chromadb` → Chroma, `pg` →
+PostgreSQL, `openai` → an OpenAI-compatible API); it does not establish runtime
+causality, request order, or deployment boundaries.
+
+Detection rules: test files, `node_modules`, virtual environments, and build
+output are skipped. Shared leaf modules imported by three or more modules (such
+as configuration) are hidden and listed in a card. A service edge is omitted when
+the module already reaches that service through another module. More than 20
+visible modules collapse into folder nodes. Files under `static/`, `public/`,
+`templates/`, `frontend/`, `web/`, or `client/` with `fetch`, `axios`,
+`EventSource`, or `WebSocket` calls become one Web UI node linked to detected
+web entrypoints (FastAPI, Flask, Django, Starlette, Express, Fastify, Koa,
+Hono, NestJS). `--evidence` pins each node to its file at the checked-out
+revision when `origin` is a GitHub or Gitee URL.
+
+Treat a scan draft as repository evidence to refine, not as finished authored
+topology: confirm the main path against the code, rename nodes for the reader,
+remove noise, and then apply the ordinary authoring and validation rules. The
+same input tree always produces the same JSON, so drafts from two revisions can
+be compared with `archify compare architecture`.
+
 ## Hand-placed fallback
 
 Use only when no renderer can run. Start from `assets/template.html`, keep semantic CSS classes, preserve the inline SVG/accessibility structure, and run the delivery visual checklist. Never introduce inline literal colors that break dark/light parity.

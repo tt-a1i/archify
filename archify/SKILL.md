@@ -43,6 +43,8 @@ After the first candidate exists, run the packaged checker `scripts/check-update
 
 The notice is information, not permission. Keep the installed version unchanged; this v0.1 workflow never downloads, installs, or executes an update, and silence is never consent.
 
+For a large unfamiliar repository, `node bin/archify.mjs scan <folder> --json` writes a validated import-graph draft; treat it as evidence to refine, not as final topology (see `references/authoring-contract.md`).
+
 Do not read `renderers/shared/geometry.mjs`, renderer source, validator source, tests, or benchmarks before the first candidate. Inspect implementation only for an unsupported internal diagnostic or after two focused repairs fail.
 
 Workflow note: use schema v2 for new workflows; preserve schema v1 when an

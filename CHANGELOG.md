@@ -6,6 +6,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added
+- **Korean Viewer locale.** `meta.locale: "ko"` localizes every renderer-owned message (519 catalog entries) across all five modes: Viewer controls, statuses, accessibility names, errors, default legends, preset badges, and `<html lang>`. Authored content is never translated, and the page title keeps the authored title unchanged, as with `zh-CN`. Static and real-Chrome regressions cover Finder, Route, Export, and preset badges.
+- **GitHub Action.** The repository-root `action.yml` runs Archify in CI with three modes: `deliver` validates and renders matching typed JSON sources, `compare` runs Architecture Delta for each architecture source against the pull request base and can create or update one summary comment, and `scan` drafts and delivers a diagram from code. Results go to HTML artifacts, receipts, the job summary, and step outputs; commands run without a shell, and the runtime lives outside the packaged Skill in `integrations/github-action/`.
+- **`archify scan` repository drafts.** A new command reads static Python and JavaScript/TypeScript imports and writes a deterministic, validated architecture draft: library-to-service matches, web-framework entrypoints with route counts, a Web UI node for front-end request sites, hidden shared configuration leaves, transitive service-edge reduction, folder aggregation for large repositories, gap-routed long edges, and optional `--evidence` source pins. Failures return versioned JSON receipts with stable diagnostic codes.
+
 ### Fixed
 - **Architecture Delta baseline arrowheads (#433).** Removed and rerouted baseline relationships retain their marker definitions in the composed Delta SVG, preserving their authored direction alongside current relationships.
 - **Compare rollback recovery (#438).** If restoring a previous output fails, compare preserves its recovery directory and reports backup-to-target paths instead of deleting the remaining backups during cleanup.
