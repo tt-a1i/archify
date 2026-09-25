@@ -122,7 +122,7 @@ Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解
 
 ### ダウンロードして、開いて、探索する
 
-出力は単体で完結する HTML ファイルです。ダウンロードしてブラウザで開けば、その成果物に含まれるノードの詳細、経路の探索、ガイド付きチャプターをそのまま使えます。閲覧に Archify のインストールは必要ありません。HTML を誰かに送れば操作性もそのまま届きます。外部サイトや地図のリンクにはネットワーク接続が必要です。
+出力は単体で完結する HTML ファイルです。ダウンロードしてブラウザで開けば、その成果物に含まれるノードの詳細と経路の探索をそのまま使えます。閲覧に Archify のインストールは必要ありません。HTML を誰かに送れば操作性もそのまま届きます。外部サイトや地図のリンクにはネットワーク接続が必要です。
 
 **[上海 CityWalk を見る ↗](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · **[HTML をダウンロード ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
 
@@ -347,7 +347,6 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 有向ルートを調べて経路を確認 | <kbd>R</kbd> または `PATH` |
 | 1〜2 個のセマンティックロールを比較 | <kbd>L</kbd> または `LENS` |
 | ライブの全体レーダーを開く | <kbd>M</kbd> または `MAP` |
-| ガイド付きストーリーの再生 / チャプター切り替え | <kbd>P</kbd> / <kbd>[</kbd> <kbd>]</kbd> |
 | プレゼンテーションステージに入る | <kbd>F</kbd> |
 | ビジュアルスタイルを選択（`S` で循環）/ テーマ切り替え / Export を開く | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | ズーム / リセット | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |

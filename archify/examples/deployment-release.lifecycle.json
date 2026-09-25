@@ -7,12 +7,7 @@
     "viewBox": [980, 680],
     "animation": "trace",
     "visual_preset": "signal-flow",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "promotion-rail", "label": "Promotion rail", "focus": ["queued", "building", "verifying", "ready", "live"], "note": "Follow the deployment object from accepted change to healthy production." },
-      { "id": "approval-gate", "label": "Approval gate", "focus": ["verifying", "approval", "cancelled", "ready"], "note": "Approval pauses promotion and can terminate the release cleanly." },
-      { "id": "rollback-outcomes", "label": "Rollback outcomes", "focus": ["ready", "rollback", "failed", "live", "paused", "rolled_back"], "note": "Separate pre-promotion failure from post-promotion health regression." }
-    ]
+    "quality_profile": "showcase"
   },
   "lanes": [
     { "id": "main", "label": "Release phases" },

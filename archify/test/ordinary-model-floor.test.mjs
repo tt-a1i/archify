@@ -46,9 +46,6 @@ function renameCandidateIds(candidate, mapping) {
   for (const boundary of candidate.boundaries || []) {
     boundary.wraps = boundary.wraps.map((id) => mapping.get(id) || id);
   }
-  for (const view of candidate.meta?.views || []) {
-    view.focus = view.focus.map((id) => mapping.get(id) || id);
-  }
   return candidate;
 }
 
@@ -483,9 +480,6 @@ test('benchmark semantic requirements bind by accepted technical labels instead 
   source.connections.find(
     (connection) => connection.from === 'service-api-v1' && connection.to === 'redis-cache-v1',
   ).label = 'cache read-through GET / SET';
-  for (const view of source.meta.views || []) {
-    view.focus = view.focus.map((id) => rename.get(id) || id);
-  }
   for (const boundary of source.boundaries || []) {
     boundary.wraps = boundary.wraps.map((id) => rename.get(id) || id);
   }
@@ -922,7 +916,7 @@ test('packaged skill keeps first-draft rules inline and repair contracts behind 
   assert.match(repair, /all nine checks, zero composition errors, and zero warnings/);
   assert.match(repair, /two focused repairs[\s\S]*one evidence-based retry/);
   assert.match(defaults, /default to a system overview/);
-  assert.match(defaults, /There is no node, edge, source, view, card, or boundary quota/);
+  assert.match(defaults, /There is no node, edge, source, card, or boundary quota/);
   assert.match(defaults, /Start with automatic routes and endpoint sides/);
   assert.match(defaults, /Pin a side only for a necessary branch, return, or supplied geometry/);
   assert.match(defaults, /Before writing positions[\s\S]*6\.5px × ASCII units \+ 21px/);

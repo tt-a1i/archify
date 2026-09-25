@@ -104,7 +104,6 @@ test('blueprint preset reaches every visual surface without changing the default
   assert.match(html, /data-preset-badge-blueprint="BLUEPRINT \/ REV 01"/);
   assert.match(html, /\[data-preset="blueprint"\]\[data-theme="dark"\]/);
   assert.match(html, /svg\[data-preset="blueprint"\] \.c-grid/);
-  assert.match(html, /html\[data-preset="blueprint"\] \.guided-views/);
   assert.match(html, /html\[data-preset="blueprint"\] \.card/);
 });
 
@@ -127,7 +126,6 @@ test('editorial preset reaches every visual surface and all five typed renderers
     assert.match(html, /data-preset-badge-editorial-plate="ARCHIFY \/ PLATE 04"/, mode);
     assert.match(html, /\[data-preset="editorial"\]\[data-theme="dark"\]/, mode);
     assert.match(html, /html\[data-preset="editorial"\] \.diagram-container/, mode);
-    assert.match(html, /svg\[data-preset="editorial"\] \.story-trail-flow/, mode);
   }
 });
 

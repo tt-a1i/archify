@@ -1734,7 +1734,6 @@ export class ChromeVisualBrowser {
       var pageComposition = {
         bodyPaddingPx: Math.round((parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)),
         headerPx: Math.round(outerHeight(reader && reader.querySelector('.header'))),
-        guidedViewsPx: Math.round(outerHeight(reader && reader.querySelector('.guided-views'))),
         diagramChromePx: Math.round(outerHeight(diagram) - svgHeight),
         svgPx: Math.round(svgHeight),
         cardsPx: Math.round(outerHeight(reader && reader.querySelector('.cards'))),
@@ -2054,7 +2053,7 @@ export function verticalBudgetFixes(entry) {
   if (!entry.overflowY || !page) return [];
   const excess = entry.scrollHeight - entry.innerHeight;
   const fixes = [];
-  const stacked = `${page.bodyPaddingPx}px body padding + ${page.headerPx}px header + ${page.guidedViewsPx}px guided views + ${page.diagramChromePx}px diagram chrome + ${page.svgPx}px SVG + ${page.cardsPx}px cards = ${entry.scrollHeight}px against ${entry.innerHeight}px`;
+  const stacked = `${page.bodyPaddingPx}px body padding + ${page.headerPx}px header + ${page.diagramChromePx}px diagram chrome + ${page.svgPx}px SVG + ${page.cardsPx}px cards = ${entry.scrollHeight}px against ${entry.innerHeight}px`;
   if (page.svgPx > 0 && page.viewBoxHeight > 0) {
     const targetSvg = page.svgPx - excess;
     const targetViewBoxHeight = Math.floor(page.viewBoxHeight * targetSvg / page.svgPx);
@@ -2115,7 +2114,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
           ...(authoredClipped ? { documentScrollUnclipped: false } : {}),
           ...(entry.overflowY && entry.pageComposition ? {
             pageComposition: entry.pageComposition,
-            pageCompositionMeasurement: 'CSS pixels at this viewport; body padding, header, guided-views strip, diagram chrome, SVG and cards stack vertically and sum to scrollHeight',
+            pageCompositionMeasurement: 'CSS pixels at this viewport; body padding, header, diagram chrome, SVG and cards stack vertically and sum to scrollHeight',
           } : {}),
           ...(entry.overflowY && entry.workflowLanes?.length ? {
             workflowLanes: entry.workflowLanes,

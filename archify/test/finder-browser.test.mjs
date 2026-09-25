@@ -178,8 +178,6 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     await key('End', 'End', 35); assert.equal((await snapshot('keyboard-end')).activeNode, first.results.at(-1).id);
     await key('Escape', 'Escape', 27);
     assert.equal((await snapshot('keyboard-escape')).activeId, 'btn-node-finder');
-    await run(`Archify.guidedViews.activate('request-path')`);
-    await run(`finderWait(() => !Archify.guidedViews.handoff())`);
     await key('/', 'Slash', 191); await opened(); await search('API Server');
     // Slash in an input must not reopen the panel and erase the query.
     await key('/', 'Slash', 191); assert.equal(await run(`document.getElementById('node-finder-input').value`), 'API Server');
@@ -187,7 +185,6 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     await run(`finderWait(() => !document.querySelector('.diagram-container').hasAttribute('data-camera-transaction'))`);
     const selected = await snapshot('normal-selection');
     assert.equal(selected.open, false); assert.equal(selected.focus, 'api'); assert.equal(selected.activeNode, 'api');
-    assert.equal(await run('Archify.guidedViews.active()'), null);
     assert.match(await run('location.hash'), /focus=api/);
     assert.equal(await run(`(() => {const n=document.querySelector('.diagram-container svg [data-node-id="api"]').getBoundingClientRect(),s=Archify.viewerChromeLayout.stageRect();return n.right>s.left&&n.left<s.right&&n.bottom>s.top&&n.top<s.bottom;})()`), true);
   });

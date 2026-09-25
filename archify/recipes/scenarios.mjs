@@ -1,7 +1,7 @@
 const RAW_RECIPES = [
   {
     id: 'system-overview', type: 'architecture', proof: 'web-app',
-    presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    presentation: { preset: 'classic', motion: 'static' },
     start: {
       en: { descriptionPrompt: 'Use Archify to turn this plain-language system description into a high-level architecture diagram: [describe the users, core components, primary path, external dependencies, and boundaries]. No repository is required. Ask only for missing facts that would materially change the diagram, mark any remaining unknowns instead of inventing them, and keep one obvious primary path across 8–12 core components.' },
       zh: { descriptionPrompt: '用 Archify 把下面这段自然语言系统描述画成高层架构图：[在这里描述用户、核心组件、主要路径、外部依赖和边界]。不需要代码库。只追问会实质影响图的缺失信息，其余不确定内容要标明而不是编造；保留 8–12 个核心组件和一条一眼可见的主路径。' },
@@ -26,7 +26,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'deployment-ownership', type: 'architecture', proof: 'deployment-ownership',
-    presentation: { preset: 'blueprint', motion: 'trace', views: 'recommended' },
+    presentation: { preset: 'blueprint', motion: 'trace' },
     signals: [['deployment topology', 14], ['region', 7], ['vpc', 9], ['cluster', 6], ['availability zone', 8], ['ownership', 7], ['cloud deployment', 12], ['部署拓扑', 14], ['区域', 6], ['集群', 6], ['可用区', 8], ['资源归属', 9], ['跨区', 8]],
     en: {
       title: 'Deployment ownership', question: 'Where does each workload run, and what crosses a boundary?',
@@ -47,7 +47,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'agent-tool-call', type: 'workflow', proof: 'agent-tool-call',
-    presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
+    presentation: { preset: 'signal-flow', motion: 'trace' },
     start: {
       en: { descriptionPrompt: 'Use Archify workflow mode to turn this description into a diagram: [paste the actors, main steps, decisions, approvals, and exception paths]. Use lanes for distinct owners, keep one unmistakable happy path, and mark missing ownership or unresolved branches instead of inventing them.' },
       zh: { descriptionPrompt: '用 Archify 工作流模式把下面的描述画成图：[粘贴参与者、主要步骤、决策、审批和异常路径]。不同负责方使用独立泳道，保留一条明确的成功主路径，缺失的负责人或未定分支要标明而不是编造。' },
@@ -72,7 +72,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'delivery-workflow', type: 'workflow', proof: 'delivery-workflow',
-    presentation: { preset: 'classic', motion: 'trace', views: 'optional' },
+    presentation: { preset: 'classic', motion: 'trace' },
     signals: [['ci/cd', 14], ['release workflow', 14], ['deployment pipeline', 11], ['pull request', 7], ['staging', 7], ['rollback', 8], ['发布流程', 14], ['流水线', 9], ['上线', 7], ['预发', 7], ['回滚', 8], ['审批发布', 10]],
     en: {
       title: 'Delivery workflow', question: 'How does a change move safely from commit to production?',
@@ -93,7 +93,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'incident-runbook', type: 'workflow', proof: 'incident-runbook',
-    presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
+    presentation: { preset: 'signal-flow', motion: 'trace' },
     signals: [['incident response', 15], ['runbook', 12], ['outage', 9], ['triage', 8], ['mitigation', 8], ['escalation', 7], ['事故处置', 15], ['故障', 9], ['应急预案', 12], ['排障', 9], ['缓解', 7], ['升级响应', 8]],
     en: {
       title: 'Incident runbook', question: 'How do responders detect, triage, mitigate, verify, and escalate?',
@@ -114,7 +114,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'api-request', type: 'sequence', proof: 'cache-miss',
-    presentation: { preset: 'classic', motion: 'trace', views: 'optional' },
+    presentation: { preset: 'classic', motion: 'trace' },
     start: {
       en: { descriptionPrompt: 'Use Archify sequence mode to draw this interaction: [paste the participants, calls, returns, fallback, and asynchronous side effects]. Keep message order unambiguous, labels short, and unknown behavior explicit. No repository is required.' },
       zh: { descriptionPrompt: '用 Archify 时序模式绘制下面的交互：[粘贴参与者、调用、返回、回退和异步副作用]。确保消息顺序无歧义、标签简短，并明确标注未知行为。不需要代码库。' },
@@ -139,7 +139,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'async-roundtrip', type: 'sequence', proof: 'async-roundtrip',
-    presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
+    presentation: { preset: 'signal-flow', motion: 'trace' },
     signals: [['async roundtrip', 14], ['webhook', 10], ['callback', 10], ['acknowledgement', 8], ['timeout', 7], ['retry message', 8], ['异步回调', 14], ['回调', 10], ['确认消息', 8], ['超时', 7], ['消息重试', 9], ['webhook', 10]],
     en: {
       title: 'Async roundtrip', question: 'What happens after the initial request returns?',
@@ -160,7 +160,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'data-lineage', type: 'dataflow', proof: 'product-analytics',
-    presentation: { preset: 'classic', motion: 'trace', views: 'recommended' },
+    presentation: { preset: 'classic', motion: 'trace' },
     signals: [['data lineage', 15], ['etl', 12], ['warehouse', 9], ['pii', 11], ['governance', 9], ['analytics pipeline', 12], ['数据血缘', 15], ['数据管道', 11], ['数仓', 9], ['治理', 9], ['隐私数据', 10], ['用户同意', 9]],
     en: {
       title: 'Data lineage', question: 'Where does data come from, how does it change, and who consumes it?',
@@ -181,7 +181,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'event-stream', type: 'dataflow', proof: 'event-stream',
-    presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
+    presentation: { preset: 'signal-flow', motion: 'trace' },
     start: {
       en: { descriptionPrompt: 'Use Archify dataflow mode to map this data journey: [paste the sources, data assets, transforms, stores, boundaries, and consumers]. Label every flow, distinguish streaming from batch where relevant, and mark unknown classifications or ownership instead of inventing them.' },
       zh: { descriptionPrompt: '用 Archify 数据流模式梳理下面的数据路径：[粘贴来源、数据资产、转换、存储、边界和消费者]。为每条数据流标注名称，在有意义时区分流式与批处理，未知的分类或归属要标明而不是编造。' },
@@ -206,7 +206,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'object-lifecycle', type: 'lifecycle', proof: 'agent-run',
-    presentation: { preset: 'classic', motion: 'trace', views: 'optional' },
+    presentation: { preset: 'classic', motion: 'trace' },
     start: {
       en: { descriptionPrompt: 'Use Archify lifecycle mode to model this object: [paste its states, transition events, waits, retries, cancellation, and terminal outcomes]. Separate active, waiting, recoverable-failure, and terminal states, and never hide an ending. No repository is required.' },
       zh: { descriptionPrompt: '用 Archify 生命周期模式建模这个对象：[粘贴它的状态、转换事件、等待、重试、取消和终态]。分开执行、等待、可恢复失败和终态，不要隐藏任何结束方式。不需要代码库。' },
@@ -231,7 +231,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'deployment-lifecycle', type: 'lifecycle', proof: 'deployment-lifecycle',
-    presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
+    presentation: { preset: 'signal-flow', motion: 'trace' },
     signals: [['deployment lifecycle', 15], ['release state', 10], ['promotion state', 9], ['approval status', 8], ['rollback state', 10], ['部署生命周期', 15], ['发布状态', 10], ['晋级', 7], ['审批状态', 8], ['回滚状态', 10]],
     en: {
       title: 'Deployment lifecycle', question: 'What state is a release in, and what can happen next?',
@@ -252,7 +252,7 @@ const RAW_RECIPES = [
   },
   {
     id: 'layout-repair', type: 'architecture', proof: 'web-app',
-    presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    presentation: { preset: 'classic', motion: 'static' },
     signals: [
       ['layout repair', 20], ['repair order', 20], ['fix order', 20],
       ['viewport overflow', 20], ['overflow', 16], ['scrollheight', 16], ['scrollwidth', 16],
@@ -409,7 +409,7 @@ export function formatScenarioRecommendation(result) {
     `${labels.use}: ${recipe.useWhen}`,
     `${labels.avoid}: ${recipe.avoidWhen}`,
     `${labels.include}: ${recipe.include.join(isZh ? '、' : '; ')}`,
-    `${labels.presentation}: ${recipe.presentation.preset} · ${recipe.presentation.motion} · views ${recipe.presentation.views}`,
+    `${labels.presentation}: ${recipe.presentation.preset} · ${recipe.presentation.motion}`,
     '',
     `${labels.prompt}:`,
     recipe.prompt,

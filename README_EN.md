@@ -122,7 +122,7 @@ Another user turned a Shanghai CityWalk guide into a four-day itinerary: switch 
 
 ### Download it. Open it. Explore it.
 
-The output is a self-contained HTML file. Download it and open it in your browser to use the node details, path exploration, and guided chapters included in that artifact. No Archify installation is needed to view it. Send the HTML to someone else and the interactions go with it; external websites and map links need a network connection.
+The output is a self-contained HTML file. Download it and open it in your browser to use the node details and path exploration included in that artifact. No Archify installation is needed to view it. Send the HTML to someone else and the interactions go with it; external websites and map links need a network connection.
 
 **[Explore the Shanghai CityWalk ↗](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · **[Download HTML ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
 
@@ -347,7 +347,6 @@ Settings:
 | Probe a directed route and inspect its journey | <kbd>R</kbd> or `PATH` |
 | Compare one or two semantic roles | <kbd>L</kbd> or `LENS` |
 | Open the live overview radar | <kbd>M</kbd> or `MAP` |
-| Play a guided story / change chapter | <kbd>P</kbd> / <kbd>[</kbd> <kbd>]</kbd> |
 | Enter Presentation Stage | <kbd>F</kbd> |
 | Choose visual style (`S` cycles) / toggle theme / open Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | Zoom or reset | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |

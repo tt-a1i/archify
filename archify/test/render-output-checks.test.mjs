@@ -75,14 +75,11 @@ test('render output check: predicts the certain 1440x900 overflow of a fixed-wid
   assert.equal(issue?.severity, 'warning', 'new rule surfaces as evidence first');
   assert.equal(portrait.code, 0);
   assert.equal(issue.svgHeightPx, 972);
-  assert.equal(issue.fixedChromePx, 126, 'no guided-views strip in this fixture');
+  assert.equal(issue.fixedChromePx, 126);
   assert.equal(issue.pageHeightPx, 1098);
   assert.match(issue.detail, /meta\.viewBox height is at most 696 at this width/);
   assert.match(issue.detail, /width is at least 1209 at this height/);
   assert.equal(portrait.result.composition.summary.warnings, 1);
-
-  const withViews = checkHtml('viewport-height-views', node, 'showcase', '0 0 1080 780', '<div class="guided-views"></div>');
-  assert.equal(withViews.result.composition.issues.find((item) => item.code === 'composition/viewport-height')?.pageHeightPx, 1159);
 
   const declaredFit = checkHtml('viewport-height-fit', node, 'showcase', '0 0 1080 780', '', ' data-reader-fit="intrinsic-height"');
   assert.equal(declaredFit.result.composition.issues.some((item) => item.code === 'composition/viewport-height'), false, 'a Reader-declared fit can scroll readably');

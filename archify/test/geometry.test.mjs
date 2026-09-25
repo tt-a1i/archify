@@ -1186,7 +1186,7 @@ test('applyTemplate preserves dollar sequences in titles', () => {
 <title>[PROJECT NAME] Architecture Diagram</title>
 <h1>[PROJECT NAME] Architecture</h1>
 <p class="subtitle">[Subtitle description]</p>
-<!-- ARCHIFY:GUIDED_VIEWS_DATA -->
+    <!-- ARCHIFY:I18N_DATA -->
       <!-- ARCHIFY:SVG_SLOT_START --><svg></svg>      <!-- ARCHIFY:SVG_SLOT_END -->
     <!-- ARCHIFY:CARDS_SLOT_START --><div></div>    <!-- ARCHIFY:CARDS_SLOT_END -->`;
   const html = applyTemplate(template, {
@@ -1204,7 +1204,7 @@ test('applyTemplate omits the subtitle row when no subtitle is authored', () => 
 <title>[PROJECT NAME] Architecture Diagram</title>
 <h1>[PROJECT NAME] Architecture</h1>
 <p class="subtitle">[Subtitle description]</p>
-<!-- ARCHIFY:GUIDED_VIEWS_DATA -->
+    <!-- ARCHIFY:I18N_DATA -->
       <!-- ARCHIFY:SVG_SLOT_START --><svg></svg>      <!-- ARCHIFY:SVG_SLOT_END -->
     <!-- ARCHIFY:CARDS_SLOT_START --><div></div>    <!-- ARCHIFY:CARDS_SLOT_END -->`;
   const html = applyTemplate(template, {
@@ -1222,7 +1222,7 @@ test('applyTemplate requires the new evidence slot only when evidence is present
 <title>[PROJECT NAME] Architecture Diagram</title>
 <h1>[PROJECT NAME] Architecture</h1>
 <p class="subtitle">[Subtitle description]</p>
-<!-- ARCHIFY:GUIDED_VIEWS_DATA -->
+    <!-- ARCHIFY:I18N_DATA -->
       <!-- ARCHIFY:SVG_SLOT_START --><svg></svg>      <!-- ARCHIFY:SVG_SLOT_END -->
     <!-- ARCHIFY:CARDS_SLOT_START --><div></div>    <!-- ARCHIFY:CARDS_SLOT_END -->`;
   assert.doesNotThrow(() => applyTemplate(legacyTemplate, {

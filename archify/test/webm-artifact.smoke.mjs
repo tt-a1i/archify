@@ -138,7 +138,6 @@ const legendOutputs = {
           external: { label: 'Future integration', visible: true },
         },
       },
-      views: [{ id: 'main', label: 'Main', focus: ['ui', 'store'] }],
     },
     components: [
       { id: 'ui', type: 'frontend', label: 'UI', pos: [60, 90] },
@@ -463,8 +462,6 @@ try {
       var arrowMoved = document.activeElement === second;
       second.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       var selected = Archify.semanticLens.active();
-      var guidedActivated = Archify.guidedViews.activate('main', { updateUrl: false });
-      var guidedActive = Archify.guidedViews.active();
       var visualMatrix = [];
       for (var preset of ['classic', 'signal-flow', 'blueprint', 'editorial']) {
         if (!Archify.preset.apply(preset)) throw new Error('could not apply preset ' + preset);
@@ -499,8 +496,6 @@ try {
           arrowMoved: arrowMoved,
           selected: selected,
           lensOpen: Archify.semanticLens.isOpen(),
-          guidedActivated: guidedActivated,
-          guidedActive: guidedActive,
           visualMatrix: visualMatrix,
           forcedUnusedInteractive: entries.at(-1).hasAttribute('data-legend-kind'),
           exportedKinds: Array.from(exported.querySelectorAll('[data-legend-semantic-kind]')).map(function (entry) { return entry.getAttribute('data-legend-semantic-kind'); }),
@@ -518,9 +513,7 @@ try {
     assert.equal(runtime.tabStops, 1);
     assert.equal(runtime.arrowMoved, true);
     assert.deepEqual(runtime.selected, ['database']);
-    assert.equal(runtime.lensOpen, false);
-    assert.equal(runtime.guidedActivated, true);
-    assert.equal(runtime.guidedActive, 'main');
+    assert.equal(runtime.lensOpen, true);
     assert.equal(runtime.visualMatrix.length, 8);
     for (const entry of runtime.visualMatrix) {
       assert.deepEqual(entry.kinds, ['frontend', 'database', 'external']);
@@ -842,7 +835,7 @@ try {
       var frames = Array.from(document.querySelectorAll('.snapshot-frame'));
       var explorers = frames.map(function (frame) {
         var child = frame.contentWindow;
-        return Boolean(child && child.Archify && child.Archify.focus && child.Archify.routeProbe && child.document.querySelector('#btn-node-finder') && child.document.querySelector('#guided-view-play'));
+        return Boolean(child && child.Archify && child.Archify.focus && child.Archify.routeProbe && child.document.querySelector('#btn-node-finder'));
       });
       var svgA = Archify.deltaExport.canonicalSvg();
       document.querySelector('#theme').click();
@@ -1074,12 +1067,12 @@ try {
         };
         HTMLAnchorElement.prototype.click = function () { downloads.push(this.download); };
         CanvasRenderingContext2D.prototype.fillText = function (text, x, y) {
-          if (headerMetrics.length < 2 && (y === 62 || y === 87)) {
+          if (headerMetrics.length < 2 && (y === 74 || y === 99)) {
             headerMetrics.push({
               y: y,
               text: String(text),
               width: this.measureText(String(text)).width,
-              maxWidth: y === 62 ? 798 : 848
+              maxWidth: y === 74 ? 860 : 1120
             });
           }
           return originalFillText.apply(this, arguments);
@@ -1360,7 +1353,7 @@ try {
     assert.ok(routePayload.imageDecodeError);
     assert.match(routePayload.unknownVariantError, /Unknown Share Card variant: unknown/);
     assert.equal(routePayload.routeLabelExecuted, false);
-    assert.deepEqual(routePayload.headerMetrics.map((metric) => metric.y), [62, 87]);
+    assert.deepEqual(routePayload.headerMetrics.map((metric) => metric.y), [74, 99]);
     assert.ok(routePayload.headerMetrics.every((metric) => metric.width <= metric.maxWidth + 0.5), `${label} title/subtitle overflowed the Share Card header`);
     assert.deepEqual(routePayload.svgReceipt, { format: 'svg', variant: null, canonical: 'true' });
     assert.deepEqual(routePayload.pngReceipt, { format: 'png', variant: null, canonical: 'true' });

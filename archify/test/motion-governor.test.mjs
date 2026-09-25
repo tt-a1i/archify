@@ -68,17 +68,11 @@ test('reader pause is persistent, explicit, and reduced-motion aware', () => {
   assert.match(html, /Motion paused by reduced-motion preference/);
   assert.match(html, /motionQuery\.addEventListener\('change', render\)/);
   assert.match(html, /document\.addEventListener\('visibilitychange', syncVisibility\)/);
-  assert.match(html, /Archify\.guidedViews\.isPlaying\(\)[\s\S]*?Archify\.guidedViews\.pause\(\)/);
-  assert.match(html, /play\.disabled = !playing && !automaticPlaybackAllowed/);
-  assert.match(html, /Story playback unavailable while motion is Still/);
   assert.match(html, /\.pulse-dot \{ animation: none !important; \}/);
-  assert.match(html, /html\[data-motion="still"\] \.story-trail-flow/);
 });
 
 test('strong semantic intent receives the single motion budget', () => {
   const html = render('workflow', CASES.workflow);
-  assert.match(html, /if \(svg\.hasAttribute\('data-story-playing'\) \|\| svg\.hasAttribute\('data-story-follow'\)\) return 'story'/);
-  assert.match(html, /if \(svg\.hasAttribute\('data-story-active'\)\) return 'chapter'/);
   assert.match(html, /data-route-picking'[\s\S]*?return 'route'/);
   assert.match(html, /data-lens-active'\)\) return 'lens'/);
   assert.match(html, /data-relationship-preview-active'\)\) return 'relationship'/);

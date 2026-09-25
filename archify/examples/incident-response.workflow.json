@@ -6,12 +6,7 @@
     "output": "examples/incident-response.html",
     "animation": "trace",
     "visual_preset": "signal-flow",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "detect-and-triage", "label": "Detect and establish command", "focus": ["alert", "page", "triage", "declare"], "note": "Follow the first minutes from signal to an owned incident." },
-      { "id": "mitigate-and-verify", "label": "Mitigate and prove recovery", "focus": ["triage", "contain", "recover", "verify", "close"], "note": "Keep mitigation separate from the evidence required to close." },
-      { "id": "escalate-and-communicate", "label": "Escalation and communication", "focus": ["declare", "escalate", "update", "rollback"], "note": "See who is paged, what stakeholders hear, and when rollback begins." }
-    ]
+    "quality_profile": "showcase"
   },
   "lanes": [
     { "id": "signals", "label": "Signals" },

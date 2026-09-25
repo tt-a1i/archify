@@ -89,7 +89,7 @@ test('style picker follows the accessible menu-button interaction contract', () 
   assert.match(
     html,
     /@media \(max-width: 720px\)[\s\S]*?\.toolbar \{[\s\S]*?position: relative;/,
-    'the mobile toolbar must preserve its stacking context so the fixed preset menu stays above guided views',
+    'the mobile toolbar must preserve its stacking context so the fixed preset menu stays above the diagram',
   );
 });
 
