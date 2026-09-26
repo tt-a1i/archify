@@ -8,7 +8,8 @@
     "subtitle": "How a conditional-knowledge router answered one question",
     "question": "What is the sum of the interior angles of a triangle?",
     "verdict": "resolved",
-    "animation": "trace"
+    "animation": "trace",
+    "output": "examples/cognition-knowledge-route.html"
   },
   "lanes": [
     {

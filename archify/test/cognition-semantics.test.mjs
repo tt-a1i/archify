@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -91,4 +91,50 @@ test('card_hit renders exactly one deterministic-hit badge per hit node', () => 
     hitNodes.length,
     'one badge circle per card_hit node — no duplicates',
   );
+});
+
+test('cognition is registered in the preview runtime and verifies end to end', { timeout: 30000 }, async () => {
+  const output = path.join(tmp, 'preview.html');
+  // Windows child.kill() terminates immediately, bypassing the signal handler.
+  const signalRelay = process.platform === 'win32'
+    ? ['--import', 'data:text/javascript,process.once("message", () => { process.disconnect(); process.emit("SIGTERM"); });']
+    : [];
+  const child = spawn(process.execPath, [
+    ...signalRelay,
+    path.join(skillRoot, 'bin/archify.mjs'),
+    'preview', 'cognition', examplePath, output, '--no-open',
+  ], {
+    cwd: skillRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe', ...(process.platform === 'win32' ? ['ipc'] : [])],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stdout.on('data', (chunk) => { stdout += chunk; });
+  child.stderr.on('data', (chunk) => { stderr += chunk; });
+
+  let previewUrl;
+  const started = Date.now();
+  while (!previewUrl && Date.now() - started < 8000) {
+    previewUrl = stdout.match(/preview (http:\/\/127\.0\.0\.1:\d+\/)/)?.[1];
+    if (!previewUrl) await new Promise((resolve) => setTimeout(resolve, 40));
+  }
+  assert.ok(previewUrl, `preview URL missing; stdout=${stdout}; stderr=${stderr}`);
+
+  let state;
+  while (Date.now() - started < 15000) {
+    state = await fetch(new URL('/state', previewUrl)).then((response) => response.json());
+    if (state.status === 'verified') break;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  assert.equal(state?.status, 'verified', `preview did not verify; stdout=${stdout}; stderr=${stderr}`);
+  assert.equal(state.revision, 1);
+  assert.equal(fs.existsSync(output), true);
+
+  if (process.platform === 'win32') child.send('stop');
+  else child.kill('SIGTERM');
+  const exit = await new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
+  assert.deepEqual(exit, { code: 0, signal: null });
 });
