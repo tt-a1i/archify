@@ -219,7 +219,7 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 ## Choose the right diagram
 
 <details>
-<summary>Five diagram types, architecture comparisons, and examples</summary>
+<summary>Six diagram types, architecture comparisons, and examples</summary>
 
 
 | Type | Best for | Include in your prompt |

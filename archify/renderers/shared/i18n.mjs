@@ -25,6 +25,7 @@ const MESSAGE_PAIRS = {
   'node.context.sequence': ['Sequence participant', '时序参与者', 'Participante de secuencia'],
   'node.context.dataflow': ['Data-flow node', '数据流节点', 'Nodo de flujo de datos'],
   'node.context.lifecycle': ['Lifecycle state', '生命周期状态', 'Estado del ciclo de vida'],
+  'node.context.cognition': ['Knowledge card', '知识卡', 'Tarjeta de conocimiento'],
   'legend.title': ['Legend', '图例', 'Leyenda'],
 
   'legend.architecture.frontend': ['Frontend', '前端', 'Frontend'],
@@ -55,6 +56,13 @@ const MESSAGE_PAIRS = {
   'legend.lifecycle.active': ['active state', '活动状态', 'estado activo'],
   'legend.lifecycle.waiting': ['waiting', '等待', 'en espera'],
   'legend.lifecycle.decision': ['decision', '决策', 'decisión'],
+
+  // Cognition routing legend (verdict-driven; keys consumed by render-cognition.mjs)
+  'legend.cognition.accept': ['Accepted card', '命中的知识卡', 'Tarjeta aceptada'],
+  'legend.cognition.branch': ['Lower-score branch', '低分分支', 'Rama de menor puntuación'],
+  'legend.cognition.defer': ['Condition not closed', '条件未闭合', 'Condición no cerrada'],
+  'legend.cognition.reject': ['Negative route', '负路由', 'Ruta negativa'],
+  'legend.cognition.blindspot': ['Blindspot', '盲区', 'Punto ciego'],
   'legend.lifecycle.success': ['terminal success', '成功终态', 'éxito terminal'],
   'legend.lifecycle.failure': ['failure / exit', '失败 / 退出', 'fallo / salida'],
   'legend.lifecycle.neutral': ['neutral', '中性状态', 'neutral'],
