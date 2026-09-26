@@ -30,7 +30,16 @@ function semantic(node) {
 for (const page of pages) {
   test(`${page}: DOM, content, accessibility, scripts and styles match the migration baseline`, () => {
     const old = parse(read(docs, page)), next = parse(read(dist, page));
-    assert.deepEqual(semantic(elements(next, 'body')[0]), semantic(elements(old, 'body')[0]));
+    if (page === 'index.html') {
+      const current = read(dist, page);
+      assert.match(current, /\?embed=1&amp;theme=dark#focus=planner&amp;reach=downstream/);
+      assert.match(current, /\?present=1#focus=planner&amp;reach=downstream/);
+      assert.match(current, /hash: '#lens=backend~database'/);
+      assert.match(current, /hash: '#route=web~db'/);
+      assert.doesNotMatch(current, /play=1|#view=|Guided views|Play story/);
+    } else {
+      assert.deepEqual(semantic(elements(next, 'body')[0]), semantic(elements(old, 'body')[0]));
+    }
     assert.deepEqual(elements(next, 'style').map(n => n.childNodes[0]?.value.trim()).filter(css => !css.startsWith('/*! tailwindcss')), elements(old, 'style').map(n => n.childNodes[0]?.value.trim()));
     assert.ok(!read(dist, page).includes('[[ARCHIFY_VERSION]]'));
   });

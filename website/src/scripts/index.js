@@ -9,7 +9,7 @@
       'hero-h1':'From plain English<br>to architecture <em>you can trust.</em>',
       'hero-sub':'Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.',
       'hero-cta':'Choose the right diagram','hero-gallery':'Explore proof gallery',
-      'proof-live':'Live proof','proof-status':'Generated, checked, interactive','proof-receipt':'Real gallery artifact · 9/9 validation checks','proof-open':'Open artifact','proof-hint':'Play a story that follows the current authored moment, then pin and share that exact node.',
+      'proof-live':'Live proof','proof-status':'Generated, checked, interactive','proof-receipt':'Real gallery artifact · 9/9 validation checks','proof-open':'Open artifact','proof-hint':'Open a stable focus, lens, or route link and inspect the same authored relationship.',
       'rail-label':'Live specimens — select to load',
       'stat-types':'Diagram types','stat-presets':'Visual presets','stat-themes':'Coordinated themes','stat-export':'Native export scale','stat-deps':'Dependencies',
       'label-types':'Diagram Types',
@@ -56,7 +56,7 @@
       'step1-h':'Install in one command','step1-p':'Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command.',
       'step2-h':'Describe your system','step2-p':'Describe components, connections, and cloud services — or ask your agent to analyze the repository first.',
       'step3-h':'Ask your agent to draw it','step3-p':'Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.',
-      'kbd-label':'Keyboard shortcuts','kbd-guide':'Diagram guide','kbd-theme':'Toggle theme','kbd-find':'Find node / route endpoint','kbd-route':'Trace, inspect, and play a route','kbd-radar':'Semantic radar','kbd-lens':'Compare semantic kinds','kbd-present':'Presentation stage','kbd-export':'Open export menu','kbd-focus':'Focus node','kbd-views':'Guided views','kbd-play':'Play story','kbd-zoom':'Reading depth / reset','kbd-nav':'Navigate menu','kbd-close':'Close menu',
+      'kbd-label':'Keyboard shortcuts','kbd-guide':'Diagram guide','kbd-theme':'Toggle theme','kbd-find':'Find node / route endpoint','kbd-route':'Trace and inspect a route','kbd-radar':'Semantic radar','kbd-lens':'Compare semantic kinds','kbd-present':'Presentation stage','kbd-export':'Open export menu','kbd-focus':'Focus node','kbd-zoom':'Reading depth / reset','kbd-nav':'Navigate menu','kbd-close':'Close menu',
       'footer-meta':'development &nbsp;·&nbsp; v[[ARCHIFY_VERSION]] &nbsp;·&nbsp; MIT License<br>Based on Cocoon-AI/architecture-diagram-generator',
       'cta-h':'Describe it once.<br><em>Share the map.</em>',
       'cta-sub':'One command installs the checked skill for Cursor, Claude Code, Codex, or OpenCode — and your next diagram is a chat message away.',
@@ -69,7 +69,7 @@
       'hero-h1':'用自然语言，<br>生成<em>可信的架构图。</em>',
       'hero-sub':'在对话中描述你的系统，Archify 生成精美、可探索的 HTML 技术图——信息会按 MAP → READ → FULL 渐进展开，并内置语义镜头、路径故事、动态效果和超清导出。',
       'hero-cta':'选择合适的图','hero-gallery':'查看验证作品集',
-      'proof-live':'实时成品','proof-status':'自动生成 · 检查通过 · 可交互','proof-receipt':'真实作品集成品 · 9/9 项验证通过','proof-open':'打开完整成品','proof-hint':'播放会跟随当前作者时刻的故事，再钉住并分享这个精确节点。',
+      'proof-live':'实时成品','proof-status':'自动生成 · 检查通过 · 可交互','proof-receipt':'真实作品集成品 · 9/9 项验证通过','proof-open':'打开完整成品','proof-hint':'打开稳定的聚焦、语义镜头或路径链接，检查同一条作者关系。',
       'rail-label':'实时标本 · 点击加载',
       'stat-types':'图表类型','stat-presets':'视觉预设','stat-themes':'深浅主题','stat-export':'原生导出倍率','stat-deps':'外部依赖',
       'label-types':'图表类型',
@@ -116,7 +116,7 @@
       'step1-h':'一条命令安装','step1-p':'运行 <code>npx skills add tt-a1i/archify -g</code>，或打开<a href="start.html?agent=cursor&amp;type=architecture">可切换 Agent 的快速开始页</a>，获取准确的 Cursor、Codex、Claude Code 或 OpenCode 命令。',
       'step2-h':'描述你的系统','step2-p':'描述组件、连接关系和云服务，也可以先让 agent 分析代码仓库。',
       'step3-h':'让 agent 绘制','step3-p':'告诉 agent 使用 Archify，它会生成可在任意浏览器打开的单文件 HTML，并可继续在对话中迭代。',
-      'kbd-label':'键盘快捷键','kbd-guide':'图表指南','kbd-theme':'切换主题','kbd-find':'查找节点 / 路径端点','kbd-route':'探查、检查并播放路径','kbd-radar':'语义雷达','kbd-lens':'对比语义类型','kbd-present':'演示舞台','kbd-export':'打开导出菜单','kbd-focus':'聚焦节点','kbd-views':'引导视图','kbd-play':'播放故事','kbd-zoom':'阅读层级 / 复位','kbd-nav':'菜单导航','kbd-close':'关闭菜单',
+      'kbd-label':'键盘快捷键','kbd-guide':'图表指南','kbd-theme':'切换主题','kbd-find':'查找节点 / 路径端点','kbd-route':'探查并检查路径','kbd-radar':'语义雷达','kbd-lens':'对比语义类型','kbd-present':'演示舞台','kbd-export':'打开导出菜单','kbd-focus':'聚焦节点','kbd-zoom':'阅读层级 / 复位','kbd-nav':'菜单导航','kbd-close':'关闭菜单',
       'footer-meta':'开发版 &nbsp;·&nbsp; v[[ARCHIFY_VERSION]] &nbsp;·&nbsp; MIT 许可证<br>基于 Cocoon-AI/architecture-diagram-generator',
       'cta-h':'描述一次，<br><em>分享这张图。</em>',
       'cta-sub':'一条命令即可为 Cursor、Claude Code、Codex 或 OpenCode 安装经过检查的技能——你的下一张架构图，只差一句对话。',
@@ -128,7 +128,7 @@
   const PROOFS = {
     signal: {
       artifact: 'gallery/artifacts/agent-tool-call.workflow.html',
-      view: 'happy-path',
+      hash: '#focus=planner&reach=downstream',
       iframeTitle: { en: 'Agent Tool Call live Archify proof', zh: '智能体工具调用 Archify 实时成品' },
       name: { en: 'Agent Tool Call', zh: '智能体工具调用' },
       meta: { en: 'Workflow · Signal Flow · 12 nodes · 11 edges', zh: '工作流 · Signal Flow · 12 节点 · 11 条关系' },
@@ -136,7 +136,7 @@
     },
     blueprint: {
       artifact: 'gallery/artifacts/production-deployment.architecture.html',
-      view: 'request-boundary',
+      hash: '#lens=backend~database',
       iframeTitle: { en: 'Production Deployment live Archify proof', zh: '生产部署架构 Archify 实时成品' },
       name: { en: 'Production Deployment', zh: '生产部署' },
       meta: { en: 'Architecture · Blueprint · 12 nodes · 12 edges', zh: '架构图 · Blueprint · 12 节点 · 12 条关系' },
@@ -144,7 +144,7 @@
     },
     classic: {
       artifact: 'gallery/artifacts/cache-miss.sequence.html',
-      view: 'cache-fallback',
+      hash: '#route=web~db',
       iframeTitle: { en: 'Cache Miss Request live Archify proof', zh: '缓存未命中请求 Archify 实时成品' },
       name: { en: 'Cache Miss', zh: '缓存未命中' },
       meta: { en: 'Sequence · Classic · 7 participants · 12 messages', zh: '时序图 · Classic · 7 个参与者 · 12 条消息' },
@@ -162,9 +162,8 @@
   const proofMeta = document.getElementById('proof-meta');
   const proofTitle = document.getElementById('proof-title');
 
-  function proofEmbedUrl(proof, { play = false } = {}) {
-    const playback = play ? '&play=1' : '';
-    return `${proof.artifact}?embed=1${playback}&theme=dark#view=${encodeURIComponent(proof.view)}`;
+  function proofEmbedUrl(proof) {
+    return `${proof.artifact}?embed=1&theme=dark${proof.hash}`;
   }
 
   function fillRail() {
@@ -176,7 +175,7 @@
     });
   }
 
-  function renderProof(key, { focus = false, deliberate = false } = {}) {
+  function renderProof(key, { focus = false } = {}) {
     const proof = PROOFS[key];
     if (!proof) return;
     activeProof = key;
@@ -188,15 +187,14 @@
     });
     const selectedTab = document.querySelector(`.spec-card[data-proof="${key}"]`);
     proofPanel.setAttribute('aria-labelledby', selectedTab.id);
-    proofOpen.href = `${proof.artifact}?present=1&play=1#view=${encodeURIComponent(proof.view)}`;
+    proofOpen.href = `${proof.artifact}?present=1${proof.hash}`;
     proofMeta.textContent = proof.meta[lang];
     proofTitle.textContent = proof.title[lang];
     proofFrame.title = proof.iframeTitle[lang];
     if (proofFrame.dataset.proof !== key) {
-      if (deliberate) proofStage.dataset.proofPlayback = 'deliberate';
       proofStage.classList.add('is-loading');
       proofFrame.dataset.proof = key;
-      proofFrame.src = proofEmbedUrl(proof, { play: deliberate });
+      proofFrame.src = proofEmbedUrl(proof);
     }
   }
 
@@ -204,7 +202,7 @@
     proofStage.classList.remove('is-loading');
   });
   document.querySelectorAll('.spec-card').forEach(tab => {
-    tab.addEventListener('click', () => renderProof(tab.dataset.proof, { deliberate: true }));
+    tab.addEventListener('click', () => renderProof(tab.dataset.proof));
     tab.addEventListener('keydown', event => {
       const tabs = [...document.querySelectorAll('.spec-card')];
       const current = tabs.indexOf(tab);
@@ -215,7 +213,7 @@
       else if (event.key === 'End') next = tabs.length - 1;
       else return;
       event.preventDefault();
-      renderProof(tabs[next].dataset.proof, { focus: true, deliberate: true });
+      renderProof(tabs[next].dataset.proof, { focus: true });
     });
   });
 
