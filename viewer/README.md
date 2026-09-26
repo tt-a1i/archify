@@ -43,9 +43,9 @@ loader or a second runtime initialization step.
 
 ### Interface and dependencies
 
-The interface includes all ten `Archify.exportMenu` methods: open, close, isOpen,
+The interface includes all nine `Archify.exportMenu` methods: open, close, isOpen,
 run, shareCard, downloadRouteShareCard, downloadReachShareCard, syncRouteShare,
-syncReachShare and copyShareCard. The same closure installs
+and syncReachShare. The same closure installs
 `Archify.motion.canRecord` and `recordWebm`; this recording capability is distinct
 from Motion Governor. Return values and synchronous/asynchronous failure modes
 are part of the interface, not normalized by the extraction.
@@ -74,8 +74,9 @@ are part of the interface, not normalized by the extraction.
 - The query openExport=1 waits for fonts and two animation frames; without the
   Font Loading API it retains the 200ms fallback. No new readiness coordinator
   is introduced. Toast reuses role=status, a frame callback and a 1500ms timer.
-- shareCard returns a PNG Blob and does not download or write a receipt. Semantic
-  variants re-read their current provider, reject unavailable/invalid snapshots,
+- shareCard requires an explicit route/reach variant, returns a PNG Blob and
+  does not download or write a receipt. Semantic variants re-read their current
+  provider, reject unavailable/invalid snapshots,
   and retain the existing clone geometry/identity checks. Menu visibility does
   not grant a stale snapshot permission to export after Route/Reach is cleared.
 - Downloaded SVG embeds both themes. Raster/card/recording serialization locks
@@ -90,13 +91,13 @@ are part of the interface, not normalized by the extraction.
 - Raster scale chooses the largest fitting member of 4/3/2/1, falling back to 1
   even when that size exceeds the advisory pixel cap. Cards remain 1200x630.
   File names, MIME probes, quality and background choices remain unchanged.
-- run clears old export receipts before starting. Success writes format/bytes/
-  canonical and optional dimensions/variant/clean flags. Route/Reach downloads
+- run rejects unsupported formats, including the removed ordinary share-card
+  format, before starting. Supported exports clear old export receipts. Success
+  writes format/bytes/canonical and optional dimensions/variant/clean flags. Route/Reach downloads
   return their Blob and mark canonical=false. Their failures report share-card
   errors and alert. Regular run resolves through its existing handlers; failures
   record an error and alert, except WebM disables its item and shows a toast.
-- Ordinary PNG copy only toasts on success; card copy also writes a card receipt.
-  Their failure receipt behavior differs. Unsupported copy can return undefined.
+- Ordinary PNG copy only toasts on success. Unsupported copy can return undefined.
   ClipboardItem construction with a Promise stays inside the user gesture;
   synchronous rejection falls back to a Blob, asynchronous write rejection does
   not take that fallback. SVG serialization can throw before run constructs its

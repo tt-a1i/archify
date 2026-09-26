@@ -262,7 +262,7 @@ const BROWSER_LOCALES = {
     route: { hidden: false, title: '点击路径的起点', label: '清除已追踪路径' },
     exportLabel: '导出图表',
     exportMenuLabel: '导出',
-    exportMenuText: /分享卡片/,
+    exportMenuText: /复制图表/,
     presetBadges: {
       'signal-flow': { header: '信号流', plate: 'none' },
       blueprint: { header: '蓝图 / 修订 01', plate: '' },
@@ -277,7 +277,7 @@ const BROWSER_LOCALES = {
     route: { hidden: false, title: 'Haz clic donde empieza la ruta', label: 'Borrar la ruta trazada' },
     exportLabel: 'Exportar diagrama',
     exportMenuLabel: 'Exportar',
-    exportMenuText: /Tarjeta para compartir/,
+    exportMenuText: /Copiar diagrama/,
     presetBadges: {
       'signal-flow': { header: 'FLUJO DE SEÑAL', plate: 'none' },
       blueprint: { header: 'PLANO / REV 01', plate: '' },
@@ -361,7 +361,10 @@ async function assertLocalizedViewer(browser, locale, expected) {
       var originalGetContext = HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext = function () { return null; };
       try {
-        await Archify.exportMenu.shareCard();
+        var edge = document.querySelector('.diagram-container svg [data-edge-from][data-edge-to]');
+        Archify.routeProbe.begin({ source: edge.getAttribute('data-edge-from'), focusNode: false });
+        Archify.routeProbe.choose(edge.getAttribute('data-edge-to'), { updateUrl: false });
+        await Archify.exportMenu.shareCard({ variant: 'route' });
         return { rejected: false, message: '' };
       } catch (error) {
         return { rejected: true, message: String(error && error.message || error) };

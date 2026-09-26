@@ -108,10 +108,23 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
   const route = `Archify.routeProbe.begin({source:'users',focusNode:false});if(!Archify.routeProbe.choose('db',{updateUrl:false}))throw new Error('route fixture failed');`;
   const reach = `Archify.focus.set('api',{toggle:false,updateUrl:false});if(!Archify.focus.reach('downstream',{toggle:false,updateUrl:false,reveal:false}))throw new Error('reach fixture failed');`;
 
+  await t.test('removed share actions cannot be invoked through the menu or old API', async () => {
+    await load();
+    assert.equal(await run(`document.querySelector('[data-format="share-card"], [data-action="copy-share-card"]') === null`), true);
+    assert.equal(await run(`typeof Archify.exportMenu.copyShareCard`), 'undefined');
+    assert.equal(await run(`Archify.exportMenu.shareCard().then(()=>false,()=>true)`), true);
+    assert.equal(await run(`Archify.exportMenu.run('share-card').then(()=>false,()=>true)`), true);
+    const state = await record('removed-share-actions');
+    assert.deepEqual(state.downloads, []);
+    assert.deepEqual(state.urls, []);
+    assert.deepEqual(state.receipt, {});
+    assert.deepEqual(state.console, []);
+  });
+
   await t.test('native menu input skips unavailable entries and preserves focus and mutual exclusion', async () => {
     for (const width of [390, 720, 1440]) {
       await load({ width, extra: '&fault=unsupported' });
-      assert.deepEqual(await run('Object.keys(Archify.exportMenu).sort()'), ['close','copyShareCard','downloadReachShareCard','downloadRouteShareCard','isOpen','open','run','shareCard','syncReachShare','syncRouteShare'].sort());
+      assert.deepEqual(await run('Object.keys(Archify.exportMenu).sort()'), ['close','downloadReachShareCard','downloadRouteShareCard','isOpen','open','run','shareCard','syncReachShare','syncRouteShare'].sort());
       assert.deepEqual(await run('Object.keys(Archify.motion).sort()'), ['canRecord','recordWebm']);
       assert.deepEqual(await run(`[...document.querySelectorAll('#export-menu [data-format="jpeg"],#export-menu [data-format="webp"],#export-menu [data-format="webm"],#export-menu [data-action="copy"]')].map(e=>e.disabled)`), [true,true,true,true]);
       await run(`document.getElementById('btn-export').focus()`);
@@ -190,14 +203,15 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
   });
 
   await t.test('clipboard keeps promise construction in the click and distinct fallback/error receipts', async () => {
-    for (const action of ['copy','copy-share-card']) for (const mode of ['promise','fallback','reject']) {
+    for (const mode of ['promise','fallback','reject']) {
+      const action = 'copy';
       await load();
       await run(`window.copyCalls=[];window.copyDone=false;window.copyBlob=null;
         window.ClipboardItem=class {constructor(data){const value=data['image/png'];copyCalls.push({promise:value instanceof Promise,gesture:navigator.userActivation.isActive,inClickHandler:copyInClickHandler});if(${JSON.stringify(mode)}==='fallback'&&value instanceof Promise)throw new Error('promise unsupported');this.value=value;}};
         Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write(items){copyCalls.push({write:true});if(${JSON.stringify(mode)}==='reject'){copyDone=true;return Promise.reject(new Error('clipboard denied'));}return Promise.resolve(items[0].value).then(blob=>{copyBlob=blob;copyDone=true;});}}});
         document.querySelector('[data-action="${action}"]').disabled=false;Archify.exportMenu.open();`);
       await click(`[data-action="${action}"]`);
-      await run(`exportWait(()=>copyDone&&(${JSON.stringify(mode)}==='reject'?exportAlerts.length>0:${JSON.stringify(action)}==='copy-share-card'?document.documentElement.hasAttribute('data-last-export-format'):document.querySelector('.archify-toast').textContent.length>0))`);
+      await run(`exportWait(()=>copyDone&&(${JSON.stringify(mode)}==='reject'?exportAlerts.length>0:document.querySelector('.archify-toast').textContent.length>0))`);
       const calls = await run('copyCalls');
       assert.deepEqual(calls[0], { promise: true, gesture: true, inClickHandler: true });
       if (mode === 'fallback') assert.equal(calls[1].inClickHandler, false, 'Blob fallback remains asynchronous');
@@ -207,18 +221,17 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
       if (mode !== 'reject') {
         assert.equal(await run('copyBlob.type'), 'image/png');
         const dims = await run('(async()=>{const b=await createImageBitmap(copyBlob);const size=[b.width,b.height];b.close();return size;})()');
-        if (action === 'copy-share-card') assert.deepEqual(dims,[1200,630]);
-        else assert.ok(dims[0] > 1200);
-        assert.equal(state.receipt['data-last-export-format'], action === 'copy-share-card' ? 'share-card' : undefined);
+        assert.ok(dims[0] > 1200);
+        assert.equal(state.receipt['data-last-export-format'], undefined);
       } else {
         assert.equal(state.alerts.length,1);
-        assert.equal(state.receipt['data-last-export-error-format'], action === 'copy-share-card' ? 'share-card' : undefined);
+        assert.equal(state.receipt['data-last-export-error-format'], undefined);
       }
       await run('exportWait(()=>[...exportUrls.values()].every(u=>u.revoked))');
     }
     await load({extra:'&fault=unsupported'});
-    assert.equal(await run('Archify.exportMenu.copyShareCard() === undefined'), true);
-    assert.equal((await record('clipboard-unavailable')).alerts.length, 1);
+    assert.equal(await run(`document.querySelector('[data-action="copy"]').disabled`), true);
+    assert.equal((await record('clipboard-unavailable')).alerts.length, 0);
   });
 
   await t.test('raster failures release sources and retain retry and synchronous SVG behavior', async () => {

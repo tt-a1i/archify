@@ -626,7 +626,6 @@
       }
 
       function renderShareCard(options) {
-        options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
         if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
@@ -658,7 +657,6 @@
                 : '--frontend-stroke';
               var accent = computed.getPropertyValue(accentProperty).trim() || '#22d3ee';
               var titleNode = document.querySelector('.header h1');
-              var subtitleNode = document.querySelector('.header .subtitle');
               var title = titleNode ? titleNode.textContent : document.title;
               var directionLabel = reachSnapshot
                 ? viewerText('viewer.export.direction.' + reachSnapshot.direction)
@@ -668,29 +666,18 @@
                     source: routeSnapshot.source.label,
                     target: routeSnapshot.target.label
                   })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachSummary', {
-                      direction: directionLabel,
-                      origin: reachSnapshot.origin.label,
-                      nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
-                      links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
-                      hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
-                    })
-                  : subtitleNode ? subtitleNode.textContent : '';
-              var preset = document.documentElement.getAttribute('data-preset') || 'classic';
-              var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-              var presetKey = preset === 'signal-flow'
-                ? 'viewer.preset.flow.short'
-                : 'viewer.preset.' + preset;
-              var presetLabel = viewerText(presetKey).toUpperCase();
-              var themeLabel = viewerText('viewer.theme.' + theme).toUpperCase();
+                : viewerText('viewer.export.card.reachSummary', {
+                    direction: directionLabel,
+                    origin: reachSnapshot.origin.label,
+                    nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
+                    links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
+                    hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
+                  });
               var cardLabel = routeSnapshot
                 ? viewerText('viewer.export.card.routeBadge', {
                     hops: viewerCount('viewer.export.card.hop', routeSnapshot.hops).toUpperCase()
                   })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
-                  : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
+                : viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() });
 
               var family = titleNode ? getComputedStyle(titleNode).fontFamily : 'sans-serif';
               var panelFill = bg;
@@ -760,7 +747,6 @@
 
       function rasterizeShareCard(options) {
         options = options || {};
-        if (!options.variant) return renderShareCard();
         if (options.variant !== 'route' && options.variant !== 'reach') {
           return Promise.reject(exportError('viewer.export.unknownVariant', { variant: options.variant }));
         }
@@ -1073,7 +1059,6 @@
       // canvas.toBlob('image/webp') silently returns a PNG on browsers without
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
-        if (format === 'share-card') return true;
         if (format === 'svg' || format === 'svg-light' || format === 'svg-dark' || format === 'png') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
@@ -1090,7 +1075,7 @@
           it.disabled = true;
           it.title = viewerText('viewer.export.unsupported');
         }
-        if ((it.dataset.action === 'copy' || it.dataset.action === 'copy-share-card') && !canCopyImage()) {
+        if (it.dataset.action === 'copy' && !canCopyImage()) {
           it.disabled = true;
           it.title = viewerText('viewer.export.clipboardUnsupported');
         }
@@ -1180,6 +1165,9 @@
       });
 
       function runExport(format) {
+        if (['svg', 'svg-light', 'svg-dark', 'png', 'jpeg', 'webp', 'webm'].indexOf(format) === -1) {
+          return Promise.reject(exportError('viewer.export.unsupported'));
+        }
         var base = diagramFilename();
         var svgTheme = format === 'svg' ? 'auto' :
           format === 'svg-light' ? 'light' :
@@ -1187,13 +1175,7 @@
         close(true);
         clearExportReceipt();
         if (format === 'webm') toast(viewerText('viewer.export.recording'));
-        return (format === 'share-card'
-          ? rasterizeShareCard().then(function (blob) {
-              recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-              download(blob, base + '-share-card.png');
-              toast(viewerText('viewer.export.downloadedShare'));
-            })
-          : svgTheme
+        return (svgTheme
           ? Promise.resolve(serializeSvg(1, { theme: svgTheme })).then(function (d) {
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
@@ -1333,29 +1315,6 @@
         }
       }
 
-      function runCopyShareCard() {
-        close(true);
-        clearExportReceipt();
-        if (!canCopyImage()) {
-          alert(viewerText('viewer.export.clipboardUnsupported.period'));
-          return;
-        }
-        var blobPromise = rasterizeShareCard();
-        return writePngToClipboard(blobPromise).then(function () {
-          return blobPromise.then(function (blob) {
-            recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-            toast(viewerText('viewer.export.copiedShare'));
-          });
-        }).catch(function (err) {
-          console.error(err);
-          var technicalMessage = err && err.message ? err.message : 'share-card';
-          var message = exportMessage(err);
-          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
-          alert(viewerText('viewer.export.copyFailed', { message: message }));
-        });
-      }
-
       function runCopy() {
         close(true);
         clearExportReceipt();
@@ -1381,9 +1340,6 @@
         var reachShareCardBtn = e.target.closest('button[data-action="reach-share-card"]');
         if (reachShareCardBtn && !reachShareCardBtn.disabled && !reachShareCardBtn.hidden) { runReachShareCard(); return; }
 
-        var copyShareCardBtn = e.target.closest('button[data-action="copy-share-card"]');
-        if (copyShareCardBtn && !copyShareCardBtn.disabled) { runCopyShareCard(); return; }
-
         var copyBtn = e.target.closest('button[data-action="copy"]');
         if (copyBtn && !copyBtn.disabled) { runCopy(); return; }
 
@@ -1401,8 +1357,7 @@
         downloadRouteShareCard: runRouteShareCard,
         downloadReachShareCard: runReachShareCard,
         syncRouteShare: syncRouteShareItem,
-        syncReachShare: syncReachShareItem,
-        copyShareCard: runCopyShareCard
+        syncReachShare: syncReachShareItem
       };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1

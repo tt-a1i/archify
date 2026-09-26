@@ -3460,7 +3460,6 @@ html[data-preset="editorial"] .node-finder {
   mask-repeat: no-repeat;
   mask-size: contain;
 }
-.toolbar .export-menu button[data-format="share-card"]::before,
 .toolbar .export-menu button[data-action="route-share-card"]::before,
 .toolbar .export-menu button[data-action="reach-share-card"]::before {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='black' stroke-width='1.7' d='M3 4.5h14v11H3zM6 12l2.5-2.5 2 2 1.5-1.5 2 2'/%3E%3Ccircle cx='13.8' cy='7.3' r='1.2' fill='black'/%3E%3C/svg%3E");
@@ -3481,17 +3480,14 @@ html[data-preset="editorial"] .node-finder {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 2.5l7 4v7l-7 4-7-4v-7zM3 6.5l7 4 7-4M10 10.5v7' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E");
 }
-.toolbar .export-menu button[data-format="share-card"],
 .toolbar .export-menu button[data-action="route-share-card"],
 .toolbar .export-menu button[data-action="reach-share-card"] {
   color: var(--text);
   background: color-mix(in srgb, var(--frontend-stroke) 7%, transparent);
 }
-.toolbar .export-menu button[data-format="share-card"]::before,
 .toolbar .export-menu button[data-action="route-share-card"]::before,
 .toolbar .export-menu button[data-action="reach-share-card"]::before { color: var(--frontend-stroke); opacity: 1; }
 .toolbar .export-menu button[hidden] { display: none; }
-.toolbar .export-menu button[data-format="share-card"]:hover,
 .toolbar .export-menu button[data-action="route-share-card"]:hover,
 .toolbar .export-menu button[data-action="reach-share-card"]:hover {
   background: color-mix(in srgb, var(--frontend-stroke) 12%, transparent);
@@ -3804,7 +3800,6 @@ html[data-preset="editorial"] .node-finder {
 @media (max-width: 420px) {
   .export-menu-section { grid-template-columns: 1fr; }
   .export-menu-heading,
-  .toolbar .export-menu button[data-format="share-card"],
   .toolbar .export-menu button[data-action="route-share-card"],
   .toolbar .export-menu button[data-action="reach-share-card"] { grid-column: 1; }
 }

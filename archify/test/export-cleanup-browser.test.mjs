@@ -202,7 +202,11 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
             return original.call(URL, value);
           };
           try {
-            if (format === 'share-card') blob = await Archify.exportMenu.shareCard();
+            if (format === 'share-card') {
+              Archify.routeProbe.begin({ source: 'users', focusNode: false });
+              Archify.routeProbe.choose('api', { updateUrl: false });
+              blob = await Archify.exportMenu.shareCard({ variant: 'route' });
+            }
             else await Archify.exportMenu.run(format);
           } finally { URL.createObjectURL = original; }
           if (!blob) throw new Error('Missing raster export');

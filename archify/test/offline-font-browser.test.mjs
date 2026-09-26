@@ -68,7 +68,9 @@ const exportCapture = `(() => {
 async function exported(browser, format) {
   return evaluate(browser, `(async () => {
     window.__download = null; window.__svgBlob = null;
-    document.querySelector('[data-format="${format}"]').click();
+    ${format === 'route-share-card' ? `Archify.routeProbe.begin({ source: 'users', focusNode: false });
+    Archify.routeProbe.choose('api', { updateUrl: false });
+    document.querySelector('[data-action="route-share-card"]').click();` : `document.querySelector('[data-format="${format}"]').click();`}
     for (let i = 0; i < 1000 && !window.__download; i++) await new Promise(r => setTimeout(r, 10));
     if (!window.__download) throw new Error('Export did not finish: ' + document.documentElement.dataset.lastExportError);
     const blob = window.__download;
@@ -137,12 +139,12 @@ test('SVG and raster exports preserve the viewer font with local fonts and netwo
     assert.equal(svg.canonical, 'true');
     assertFontCss(inspectDocuments(svg.svg)[0].styles.join('\n'), 'exported SVG');
     fs.writeFileSync(path.join(tmp, 'export.svg'), svg.svg);
-    for (const format of ['png', 'jpeg', 'webp', 'share-card']) {
+    for (const format of ['png', 'jpeg', 'webp', 'route-share-card']) {
       const result = await exported(browser, format);
       assert.ok(result.bytes > 1000, format);
-      assert.equal(result.type, `image/${format === 'share-card' ? 'png' : format}`);
+      assert.equal(result.type, `image/${format === 'route-share-card' ? 'png' : format}`);
       assertFontCss(inspectDocuments(result.svg)[0].styles.join('\n'), format);
-      if (format === 'share-card') assert.deepEqual([result.width, result.height], ['1200', '630']);
+      if (format === 'route-share-card') assert.deepEqual([result.width, result.height], ['1200', '630']);
     }
     // A negative control proves the font bytes affect actual Image/Canvas
     // rendering, rather than merely surviving serialization as inert text.
@@ -170,7 +172,7 @@ test('SVG and raster exports preserve the viewer font with local fonts and netwo
   } finally { await browser.close(); fs.rmSync(tmp, { recursive: true, force: true }); }
 });
 
-for (const format of ['png', 'share-card']) test(`${format} requested at DOMContentLoaded matches a font-settled repeat`, options, async (t) => {
+for (const format of ['png', 'route-share-card']) test(`${format} requested at DOMContentLoaded matches a font-settled repeat`, options, async (t) => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-font-early-export-'));
   const browser = new ChromeVisualBrowser(chrome);
   try {
@@ -187,7 +189,9 @@ for (const format of ['png', 'share-card']) test(`${format} requested at DOMCont
       };
       document.addEventListener('DOMContentLoaded', () => {
         window.__fontStatusAtClick = document.fonts.status;
-        document.querySelector('[data-format="${format}"]').click();
+        ${format === 'route-share-card' ? `Archify.routeProbe.begin({ source: 'users', focusNode: false });
+    Archify.routeProbe.choose('api', { updateUrl: false });
+    document.querySelector('[data-action="route-share-card"]').click();` : `document.querySelector('[data-format="${format}"]').click();`}
       }, { once: true });
     ` }, session);
     await browser.inspect({ artifactPath: artifact, width: 1440, height: 900, theme: 'light' });
@@ -197,7 +201,7 @@ for (const format of ['png', 'share-card']) test(`${format} requested at DOMCont
       window.__firstCardBytes = Array.from(new Uint8Array(await window.__download.arrayBuffer()));
       return { statusAtClick: window.__fontStatusAtClick, readyAtDraw: window.__fontDraws };
     })()`);
-    if (format === 'share-card') assert.ok(early.readyAtDraw.length > 0);
+    if (format === 'route-share-card') assert.ok(early.readyAtDraw.length > 0);
     assert.ok(early.readyAtDraw.every(Boolean), JSON.stringify(early));
     await exported(browser, format);
     assert.equal(await evaluate(browser, `(async () => {

@@ -151,8 +151,6 @@ Export メニューから PNG をクリップボードにコピーしたり、�
 
 ![Export メニュー](docs/assets/archify-menu.png)
 
-README やリリースノート、SNS 投稿向けに正規の 1200×630 画像が欲しいときは **Copy Share Card** を使ってください。
-
 ルートをトレースしたあと、**Export → Route Share Card** を選ぶと、その記述済みパスを 1200×630 の PNG としてダウンロードできます。図全体も文脈として保持されます。
 
 ![Users から API Server への正確な経路を、アーキテクチャ全体を文脈として保持したまま示す Route Share Card](docs/assets/archify-route-share-card.png)
