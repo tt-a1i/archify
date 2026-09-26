@@ -5,7 +5,6 @@
       var diagram = document.querySelector('.diagram-container');
       var svg = diagram && diagram.querySelector(':scope > svg');
       var header = shell && shell.querySelector('.header');
-      var guided = shell && shell.querySelector('.guided-views');
       var cards = shell && shell.querySelector('.cards');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
@@ -29,6 +28,31 @@
         : MIN_PROJECTED_NODE_TEXT_PX;
       var declaredPrimaryText = svg ? parseFloat(svg.getAttribute('data-reader-primary-text') || '') : null;
       var SAFE_BOTTOM_GAP = 12;
+      // Wide viewports move summary cards beside the diagram, so the height
+      // budget belongs to the diagram and spare width holds the notes.
+      var RAIL_MIN_VIEWPORT = 1280;
+      var RAIL_WIDTH = 288;
+      var RAIL_GAP = 20;
+      // A default rail must leave primary node labels comfortably readable;
+      // otherwise it starts collapsed and the reader can still open it.
+      var RAIL_COMFORT_PRIMARY_PX = 12;
+      var railPanel = shell && shell.querySelector('.reader-rail');
+      var railReveal = document.getElementById('rail-reveal');
+      var railCollapse = document.getElementById('rail-collapse');
+      var railPlacement = document.getElementById('rail-placement');
+      var RAIL_COLLAPSED_KEY = 'archify-rail-collapsed';
+      var RAIL_PLACEMENT_KEY = 'archify-rail-placement';
+      // Memory is the page's source of truth; storage only carries the choice
+      // to later artifacts, so a blocked or full localStorage cannot freeze it.
+      var preferences = Object.create(null);
+      function readPreference(key) {
+        if (key in preferences) return preferences[key];
+        try { return localStorage.getItem(key); } catch (_) { return null; }
+      }
+      function writePreference(key, value) {
+        preferences[key] = value;
+        try { localStorage.setItem(key, value); } catch (_) {}
+      }
 
       if (diagram && ratio >= WIDE_RATIO) {
         diagram.setAttribute('data-wide-diagram', 'true');
@@ -66,19 +90,25 @@
           ? Math.min(1, requestedMinimumText / sourceMinimum)
           : 1;
       }
+      var sourcePrimary = null;
+      if (svg) Array.from(svg.querySelectorAll('text[data-node-label]')).forEach(function (text) {
+        var size = parseFloat(text.getAttribute('font-size') || '');
+        if (Number.isFinite(size) && size > 0) sourcePrimary = sourcePrimary == null ? size : Math.max(sourcePrimary, size);
+      });
+      // SVG width at which the largest node label renders at targetPx. Every
+      // renderer writes label font sizes, so the rail comfort check works for
+      // all diagram types; only the renderer-declared floor needs metadata.
+      function labelWidth(targetPx) {
+        return sourcePrimary == null || !viewBox ? 0 : viewBox.width * targetPx / sourcePrimary;
+      }
       function primaryReadingWidth() {
         if (!measuredHeightFit || !Number.isFinite(declaredPrimaryText) || declaredPrimaryText <= 0) return 0;
-        var sourcePrimary = null;
-        Array.from(svg.querySelectorAll('text[data-node-label]')).forEach(function (text) {
-          var size = parseFloat(text.getAttribute('font-size') || '');
-          if (Number.isFinite(size) && size > 0) sourcePrimary = sourcePrimary == null ? size : Math.max(sourcePrimary, size);
-        });
         // Primary labels should remain comfortable to read when cards or
         // auxiliary rows make a one-screen fit too small. Ordinary page
         // scroll preserves that reading size; viewport width still caps it.
         // A long title may already use a smaller fitted font. Preserve that
         // hierarchy rather than enlarging every other node to compensate.
-        return sourcePrimary == null ? 0 : viewBox.width * declaredPrimaryText / sourcePrimary;
+        return labelWidth(declaredPrimaryText);
       }
       function eligible() {
         return Boolean(
@@ -93,8 +123,52 @@
         html.style.removeProperty('--archify-reader-width');
         html.removeAttribute('data-reader-layout');
         html.removeAttribute('data-reader-overflow');
+        setRail(false);
         lastWidth = 0;
         settledCap = 0;
+      }
+      // Rail modes: "true" docks beside the diagram, "collapsed" leaves only the
+      // reveal control, "overlay" opens a drawer when docking would break the
+      // readable floor, and "bottom" stacks notes and index below the diagram.
+      function setRail(mode) {
+        if (mode) {
+          html.setAttribute('data-reader-rail', mode);
+          html.style.setProperty('--archify-rail-width', RAIL_WIDTH + 'px');
+          html.style.setProperty('--archify-rail-gap', RAIL_GAP + 'px');
+        } else {
+          html.removeAttribute('data-reader-rail');
+          html.style.removeProperty('--archify-rail-width');
+          html.style.removeProperty('--archify-rail-gap');
+        }
+        if (railReveal) railReveal.hidden = mode !== 'collapsed';
+        if (railCollapse) {
+          railCollapse.hidden = mode !== 'true' && mode !== 'overlay';
+          railCollapse.setAttribute('aria-expanded', String(mode === 'true' || mode === 'overlay'));
+        }
+        if (railPlacement) {
+          railPlacement.hidden = !mode || mode === 'collapsed' || (mode === 'bottom' && window.innerWidth < RAIL_MIN_VIEWPORT);
+          railPlacement.setAttribute('data-placement', mode === 'bottom' ? 'bottom' : 'right');
+          railPlacement.setAttribute('aria-label', viewerText(mode === 'bottom' ? 'viewer.rail.right' : 'viewer.rail.bottom'));
+          railPlacement.title = railPlacement.getAttribute('aria-label');
+        }
+      }
+      var outline = document.getElementById('node-outline');
+      function hasCards() {
+        return Boolean((cards && cards.children.length && !cards.hidden) || (outline && !outline.hidden));
+      }
+      // Bottom notes and index are reading material below the fold: the first
+      // screen belongs to the interactive diagram and its controls.
+      function belowFold() {
+        return html.getAttribute('data-reader-rail') === 'bottom' ? outerHeight(railPanel) : 0;
+      }
+      // A docked rail may run past a short diagram down to the viewport floor,
+      // so the index uses that space instead of scrolling inside the diagram's
+      // height; it never pushes the page into overflow.
+      function fitDockedRail() {
+        if (html.getAttribute('data-reader-rail') !== 'true' || !railPanel) return;
+        var top = railPanel.getBoundingClientRect().top + window.scrollY;
+        var floor = window.innerHeight - number(window.getComputedStyle(body).paddingBottom) - top;
+        html.style.setProperty('--archify-rail-max', Math.max(diagram.getBoundingClientRect().height, floor) + 'px');
       }
       function chromeMetrics() {
         var bodyStyle = window.getComputedStyle(body);
@@ -121,10 +195,11 @@
         settleFrame = requestAnimationFrame(function () {
           settleFrame = 0;
           if (!eligible() || !lastWidth) return;
+          fitDockedRail();
           var overflow = Math.max(
             document.documentElement.scrollHeight,
             document.body.scrollHeight
-          ) - window.innerHeight;
+          ) - window.innerHeight - belowFold();
           if (overflow > 1 && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
@@ -162,11 +237,34 @@
           minWidth = Math.min(readableMinimumWidth, viewportCap);
         }
         var primaryWidth = primaryReadingWidth();
+        var railExtra = RAIL_WIDTH + RAIL_GAP;
+        var mode = null;
+        // Notes default below the diagram; the right rail is the reader's
+        // opt-in and needs a wide viewport.
+        if (hasCards() && (readPreference(RAIL_PLACEMENT_KEY) !== 'right' || window.innerWidth < RAIL_MIN_VIEWPORT)) {
+          mode = 'bottom';
+        } else if (hasCards()) {
+          var fitsReadable = readableMinimumWidth + railExtra <= maxWidth;
+          var comfortWidth = labelWidth(RAIL_COMFORT_PRIMARY_PX);
+          var comfortable = fitsReadable && (!comfortWidth || comfortWidth + chrome.diagramX + railExtra <= maxWidth);
+          var collapsedPreference = readPreference(RAIL_COLLAPSED_KEY);
+          if (collapsedPreference === '1' || (collapsedPreference !== '0' && !comfortable)) mode = 'collapsed';
+          else mode = fitsReadable ? 'true' : 'overlay';
+        }
+        // With notes below the fold, the diagram may trade the renderer's
+        // comfortable primary size down to the rail's 12px floor so it and its
+        // controls fit the first screen; taller graphs still scroll.
+        if (mode === 'bottom' && primaryWidth > 0) primaryWidth = labelWidth(Math.min(RAIL_COMFORT_PRIMARY_PX, declaredPrimaryText));
         if (primaryWidth > 0) minWidth = Math.max(minWidth, Math.min(maxWidth, primaryWidth + chrome.diagramX));
+        var docked = mode === 'true';
+        setRail(mode);
+        chrome = chromeMetrics();
+        if (docked) minWidth = Math.min(maxWidth, minWidth + railExtra);
+        var stackedBelow = mode === 'bottom' ? 0 : docked ? 0 : outerHeight(cards);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + outerHeight(guided) + outerHeight(cards);
+          outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
-        var desiredWidth = availableSvgHeight * ratio + chrome.diagramX;
+        var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));
         applyWidth(width, minWidth);
         settleOverflow(minWidth);
@@ -217,14 +315,39 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [header, guided, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [header, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(schedule);
-        if (guided) contentObserver.observe(guided, { attributes: true, childList: true, subtree: true });
         if (cards) contentObserver.observe(cards, { attributes: true, childList: true, subtree: true });
         contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present'] });
       }
+      // Reader choices persist across artifacts; a resize-style remeasure
+      // applies them without reloading.
+      function chooseRail(key, value) {
+        writePreference(key, value);
+        settledCap = 0;
+        schedule();
+      }
+      function collapseRail() {
+        chooseRail(RAIL_COLLAPSED_KEY, '1');
+        if (railReveal) requestAnimationFrame(function () { try { railReveal.focus({ preventScroll: true }); } catch (_) {} });
+      }
+      if (railReveal) railReveal.addEventListener('click', function () { chooseRail(RAIL_COLLAPSED_KEY, '0'); });
+      if (railCollapse) railCollapse.addEventListener('click', collapseRail);
+      if (railPlacement) railPlacement.addEventListener('click', function () {
+        var toBottom = html.getAttribute('data-reader-rail') !== 'bottom';
+        if (!toBottom) writePreference(RAIL_COLLAPSED_KEY, '0');
+        chooseRail(RAIL_PLACEMENT_KEY, toBottom ? 'bottom' : 'right');
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && html.getAttribute('data-reader-rail') === 'overlay') collapseRail();
+      });
+      document.addEventListener('pointerdown', function (event) {
+        if (html.getAttribute('data-reader-rail') !== 'overlay' || !railPanel) return;
+        if (!railPanel.contains(event.target) && !(railReveal && railReveal.contains(event.target))) chooseRail(RAIL_COLLAPSED_KEY, '1');
+      });
+      if (typeof ResizeObserver === 'function' && railPanel) new ResizeObserver(schedule).observe(railPanel);
       schedule();
 
       return {

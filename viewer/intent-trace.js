@@ -35,7 +35,6 @@
           html.getAttribute('data-guide-open') === 'true' ||
           container.classList.contains('is-panning') ||
           svg.hasAttribute('data-lens-active') ||
-          svg.hasAttribute('data-story-active') ||
           svg.hasAttribute('data-relationship-preview-active') ||
           !!(Archify.routeProbe && typeof Archify.routeProbe.active === 'function' && Archify.routeProbe.active()) ||
           !!(Archify.focus && typeof Archify.focus.active === 'function' && Archify.focus.active());

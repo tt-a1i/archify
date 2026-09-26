@@ -279,8 +279,9 @@ test('route-expanded intrinsic architecture preserves reading size with ordinary
       && height === DESKTOP_READABILITY_VIEWPORT.height
     ));
     assert.ok(desktop);
+    // Reading size holds; with notes below the fold the diagram itself fits,
+    // and any remaining overflow must be accepted scroll (checked above).
     assert.ok(desktop.diagramWidth >= desktop.viewBoxWidth, JSON.stringify(desktop, null, 2));
-    assert.equal(desktop.verticalScrollAccepted, true, JSON.stringify(desktop, null, 2));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

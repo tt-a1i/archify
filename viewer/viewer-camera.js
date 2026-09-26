@@ -219,18 +219,12 @@
         container.removeAttribute('data-camera-transaction');
       }
       function interruptCamera(reason) {
-        if (Archify.guidedViews && Archify.guidedViews.cancelHandoff) {
-          Archify.guidedViews.cancelHandoff(reason || 'manual');
-        }
         var rendered = sampleRenderedState();
         stopCameraMotion(reason || 'manual', false);
         state = rendered;
         state.mode = 'manual';
         apply();
         renderControls();
-        if (Archify.guidedViews && Archify.guidedViews.isPlaying && Archify.guidedViews.isPlaying()) {
-          Archify.guidedViews.pause();
-        }
         if (Archify.routeProbe && Archify.routeProbe.isJourneyPlaying && Archify.routeProbe.isJourneyPlaying()) {
           Archify.routeProbe.pauseJourney({ preserveElapsed: true, reason: reason || 'manual' });
         }
@@ -325,8 +319,8 @@
         var maxX = Math.max.apply(Math, boxes.map(function (box) { return box.x + box.width; }));
         var maxY = Math.max.apply(Math, boxes.map(function (box) { return box.y + box.height; }));
         var bounds = {
-          x: contentOffsetX + minX * contentScale,
-          y: contentOffsetY + minY * contentScale,
+          x: contentOffsetX + (minX - viewBox.x) * contentScale,
+          y: contentOffsetY + (minY - viewBox.y) * contentScale,
           width: Math.max(1, (maxX - minX) * contentScale),
           height: Math.max(1, (maxY - minY) * contentScale)
         };
@@ -430,7 +424,7 @@
         if (!boxes.length || !viewBox || viewBox.width <= 0) return false;
         var minX = Math.min.apply(Math, boxes.map(function (box) { return box.x; }));
         var maxX = Math.max.apply(Math, boxes.map(function (box) { return box.x + box.width; }));
-        var center = ((minX + maxX) / 2 / viewBox.width) * (svg.clientWidth || 1);
+        var center = (((minX + maxX) / 2 - viewBox.x) / viewBox.width) * (svg.clientWidth || 1);
         var target = Math.max(0, Math.min(svg.clientWidth - container.clientWidth, center - container.clientWidth / 2));
         var transaction = cameraReceipt({ scrollLeft: target }, options);
         cameraTransaction = transaction;
@@ -448,9 +442,6 @@
         return transaction;
       }
       function syncSemantic() {
-        var guided = Archify.guidedViews && typeof Archify.guidedViews.focus === 'function'
-          ? Archify.guidedViews.focus() : [];
-        if (guided && guided.length) return reveal(guided, { reason: 'guided-sync' });
         var active = Archify.focus && typeof Archify.focus.active === 'function' ? Archify.focus.active() : null;
         if (typeof active === 'string') return reveal([active], { includeNeighbors: true, reason: 'focus-sync' });
         if (Array.isArray(active) && active.length) return reveal(active, { reason: 'selection-sync' });

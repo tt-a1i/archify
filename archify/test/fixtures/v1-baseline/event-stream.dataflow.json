@@ -7,12 +7,7 @@
     "viewBox": [1080, 780],
     "animation": "trace",
     "visual_preset": "signal-flow",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "order-transit", "label": "Order event transit", "focus": ["checkout", "orders", "validate", "state", "fulfillment"], "note": "Follow an order from producer through ordered processing to fulfillment." },
-      { "id": "payment-transit", "label": "Payment event transit", "focus": ["billing", "payments", "enrich", "state", "analytics"], "note": "Track payment facts into the shared materialized state and analytics." },
-      { "id": "failure-and-replay", "label": "Failure and replay", "focus": ["validate", "enrich", "dlq", "replay", "ops"], "note": "Isolate dead letters, operator review, and controlled replay ownership." }
-    ]
+    "quality_profile": "showcase"
   },
   "stages": [
     { "label": "Producers" },

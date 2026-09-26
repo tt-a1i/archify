@@ -105,7 +105,10 @@ test('declared wide synthetic reader preserves geometry and reaches edge/node re
             edgeFinite: edge.length > 0 && edge.every(Number.isFinite),
             nodeFinite: node.length > 0 && node.every(Number.isFinite),
             overflowX: Math.max(html.scrollWidth, document.body.scrollWidth) > innerWidth,
-            overflowY: Math.max(html.scrollHeight, document.body.scrollHeight) > innerHeight + 1,
+            // Bottom notes and index sit below the fold by design.
+            overflowY: Math.max(html.scrollHeight, document.body.scrollHeight) - (html.getAttribute('data-reader-rail') === 'bottom'
+              ? document.getElementById('reader-rail').getBoundingClientRect().height + parseFloat(getComputedStyle(document.getElementById('reader-rail')).marginTop)
+              : 0) > innerHeight + 1,
             theme: html.getAttribute('data-theme'), motion: html.getAttribute('data-motion'),
             motionMode: Archify.motionGovernor.mode(), detailLevel: container.getAttribute('data-detail-level'),
             cameraScale: camera.scale, cameraMode: camera.mode,

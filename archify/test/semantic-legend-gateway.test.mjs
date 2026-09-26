@@ -117,7 +117,7 @@ test('preview is soft, input-aware, and yields to stronger exploration owners', 
   assert.doesNotMatch(preview, /renderFlowOverlay|data-semantic-lens-overlay/);
   assert.match(html, /selectedKinds\.length > 0 \|\| !panel\.hidden \|\| html\.getAttribute\('data-present'\) === 'true'/);
   assert.match(html, /data-focus-active.*data-intent-trace-active/s);
-  assert.match(html, /data-route-picking.*data-story-active.*data-relationship-preview-active/s);
+  assert.match(html, /data-route-picking.*data-relationship-preview-active/s);
   assert.match(html, /svg\[data-legend-preview-active\] \[data-node-id\]/);
 });
 

@@ -53,12 +53,10 @@ test('all typed renderers ship the same geometry-neutral semantic camera', () =>
 
 test('semantic camera follows reader intent but yields to manual navigation', () => {
   const html = render('workflow', CASES.workflow);
-  assert.match(html, /beginHandoff\(previousIndex, index, previous, view, outgoingBeatIndex, options\.playback === true \? 'playback' : 'guided'\)/);
   assert.match(html, /reveal\(\[id\], \{ includeNeighbors: true, reason: 'focus' \}\)/);
   assert.match(html, /reveal\(\[id\], \{ includeNeighbors: true, reason: 'relationship' \}\)/);
   assert.match(html, /reveal\(\[id\], \{ includeNeighbors: true, reason: 'finder' \}\)/);
   assert.match(html, /function interruptCamera\(reason\)/);
-  assert.match(html, /Archify\.guidedViews\.pause\(\)/);
   assert.match(html, /container\.addEventListener\('pointerdown',[\s\S]+interruptCamera\(\)/);
   assert.match(html, /\.overview-map, \.route-probe, \.semantic-lens/);
   assert.match(html, /window\.innerWidth <= 720 && container\.hasAttribute\('data-wide-diagram'\) && Date\.now\(\) > autoScrollUntil/);

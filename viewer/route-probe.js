@@ -794,9 +794,6 @@
         if (Array.isArray(focused)) focused = null;
         clear({ updateUrl: false, preserveView: true, restoreFocus: false });
         if (Archify.intentTrace && typeof Archify.intentTrace.clear === 'function') Archify.intentTrace.clear({ announce: false });
-        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false });
-        }
         if (Archify.focus && typeof Archify.focus.clear === 'function') {
           Archify.focus.clear({ updateUrl: false, preserveView: true });
         }

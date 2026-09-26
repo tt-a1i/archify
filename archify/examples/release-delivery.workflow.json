@@ -5,12 +5,7 @@
     "title": "Release Delivery Workflow",
     "output": "examples/release-delivery.html",
     "animation": "trace",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "commit-to-checks", "label": "Commit to green build", "focus": ["commit", "pull_request", "build", "checks"], "note": "Follow the change through reproducible build and blocking quality gates." },
-      { "id": "approval-to-production", "label": "Approve and promote", "focus": ["checks", "approval", "deploy", "verify_prod", "announce"], "note": "See who authorizes production and how success is verified." },
-      { "id": "rollback-path", "label": "Failure and rollback", "focus": ["checks", "failed", "verify_prod", "rollback", "deploy"], "note": "Isolate the two places where delivery stops or reverses safely." }
-    ]
+    "quality_profile": "showcase"
   },
   "lanes": [
     { "id": "dev", "label": "Developer" },

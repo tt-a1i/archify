@@ -110,7 +110,7 @@ ${list.map((card) => `      <div class="card">
           <h3>${esc(card.title)}</h3>
         </div>
         <ul>
-${card.items.map((item) => `          <li>&bull; ${esc(item)}</li>`).join('\n')}
+${card.items.map((item) => `          <li>${esc(item)}</li>`).join('\n')}
         </ul>
       </div>`).join('\n\n')}
     </div>`;
@@ -119,7 +119,6 @@ ${card.items.map((item) => `          <li>&bull; ${esc(item)}</li>`).join('\n')}
 const SVG_SLOT_RE = /      <!-- ARCHIFY:SVG_SLOT_START -->[\s\S]*?      <!-- ARCHIFY:SVG_SLOT_END -->/;
 const CARDS_SLOT_RE = /    <!-- ARCHIFY:CARDS_SLOT_START -->[\s\S]*?    <!-- ARCHIFY:CARDS_SLOT_END -->/;
 const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<\/p>[ \t]*(\r?\n)?/m;
-const GUIDED_VIEWS_PLACEHOLDER = '<!-- ARCHIFY:GUIDED_VIEWS_DATA -->';
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
 
@@ -134,7 +133,7 @@ const TEMPLATE_PLACEHOLDERS = [
   '<html lang="en" data-theme="dark" data-preset="[VISUAL PRESET]">',
   '<title>[PROJECT NAME] Architecture Diagram</title>',
   '<h1>[PROJECT NAME] Architecture</h1>',
-  GUIDED_VIEWS_PLACEHOLDER,
+  I18N_PLACEHOLDER,
 ];
 
 export function applyTemplate(template, {
@@ -144,7 +143,6 @@ export function applyTemplate(template, {
   cards,
   locale,
   visualPreset = 'classic',
-  guidedViews = [],
   sourceEvidence = null,
 }) {
   if (!SVG_SLOT_RE.test(template)) {
@@ -169,7 +167,6 @@ export function applyTemplate(template, {
   }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.
-  const guidedViewsJson = serializeScriptJson(guidedViews);
   const sourceEvidenceJson = serializeScriptJson(sourceEvidence);
   const resolvedLocale = resolveLocale(locale);
   const i18nJson = serializeScriptJson({ locale: resolvedLocale, messages: viewerCatalog(resolvedLocale) });
@@ -177,11 +174,8 @@ export function applyTemplate(template, {
     ? `<p class="subtitle">${esc(subtitle)}</p>`
     : '';
   const i18nData = `    <script id="archify-i18n-data" type="application/json">${i18nJson}</script>`;
-  const localizedTemplate = localizeTemplate(template, resolvedLocale);
-  const templateWithI18n = localizedTemplate.includes(I18N_PLACEHOLDER)
-    ? localizedTemplate.replace(I18N_PLACEHOLDER, () => i18nData)
-    : localizedTemplate.replace(GUIDED_VIEWS_PLACEHOLDER, () => `${i18nData}\n    ${GUIDED_VIEWS_PLACEHOLDER}`);
-  return templateWithI18n
+  return localizeTemplate(template, resolvedLocale)
+    .replace(I18N_PLACEHOLDER, () => i18nData)
     .replace(TEMPLATE_PLACEHOLDERS[0], () => `<html lang="${esc(resolvedLocale)}" data-theme="dark" data-preset="${esc(visualPreset)}">`)
     .replace(TEMPLATE_PLACEHOLDERS[1], () => `<title>${esc(translateMessage(resolvedLocale, 'page.title', { title }))}</title>`)
     .replace(TEMPLATE_PLACEHOLDERS[2], () => `<h1>${esc(title)}</h1>`)
@@ -190,7 +184,6 @@ export function applyTemplate(template, {
       : '')
     .replace(SVG_SLOT_RE, () => svg)
     .replace(CARDS_SLOT_RE, () => cards)
-    .replace(GUIDED_VIEWS_PLACEHOLDER, () => `<script id="archify-guided-views-data" type="application/json">${guidedViewsJson}</script>`)
     .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence
       ? `    <script id="archify-source-evidence-data" type="application/json">${sourceEvidenceJson}</script>`
       : '');

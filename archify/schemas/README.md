@@ -38,9 +38,8 @@ diagram renders at the same coordinates no matter how wide its viewBox is.
 wide canvas into column distance and label room rather than empty space on the
 right. Lane order, IDs, and message semantics are unchanged either way.
 
-It may also include up to five guided `views`. Each view has a unique `id`, a
-reader-facing `label`, a non-empty `focus` list of existing semantic node IDs,
-and an optional short `note`.
+`meta.views` is retired. The schemas still accept the old guided-view shape so
+existing files keep validating, but renderers ignore it; do not author it.
 
 ### Legend presentation contract
 
@@ -158,7 +157,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   extend this list locally with `return`)
 - `legendMode` and `legendEntry` — the shared strict mode and label/visibility
   override shapes used by each renderer-owned key map
-- `guidedViews` — the bounded, read-only reader paths accepted by `meta.views`
+- `guidedViews` — the retired `meta.views` shape, still accepted and ignored
 - `cards` — the summary-card blocks rendered below the SVG
 
 Lifecycle state `type` is mode-specific (`start`/`active`/`waiting`/...) and

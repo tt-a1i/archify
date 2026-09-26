@@ -20,7 +20,7 @@ Read both the mode schema and `schemas/common.schema.json`. The mode schemas use
 - `variant`: `default`, `emphasis`, `security`, `dashed`
 - Relationship IDs use the shared identifier pattern and must be unique in their collection.
 
-Do not invent fields. Before writing any new field, enum, or constrained text, read its schema definition, including common `$ref` targets. In particular, check boundary kinds, guided-view note lengths, repository identity, and source-reference shapes. An example demonstrates structure; it does not enumerate every valid value. Author fresh IDs, wording, facts, and layout.
+Do not invent fields. Before writing any new field, enum, or constrained text, read its schema definition, including common `$ref` targets. In particular, check boundary kinds, repository identity, and source-reference shapes. An example demonstrates structure; it does not enumerate every valid value. Author fresh IDs, wording, facts, and layout.
 
 ## Workflow layout contracts
 
@@ -70,7 +70,7 @@ document-title suffix, default SVG description and focus labels, default legend
 labels, and fixed Viewer controls, statuses, accessibility names, and errors.
 It never translates authored content. Apply the primary language separately to
 titles, subtitles, node and relationship copy, boundaries, lanes, groups,
-guided views, legend label overrides, and cards. A bilingual diagram still
+legend label overrides, and cards. A bilingual diagram still
 chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
@@ -294,7 +294,7 @@ Stages express transformation or custody. Rows separate parallel streams. Label 
 Main phases use columns `0..4`; event and terminal bands use columns `0..2`.
 Event/terminal column `N` aligns to the same x coordinate as main column
 `N + 2`. A recoverable failure needs a real transition back to an active state.
-A card or guided view saying “retry” is not topology.
+A card saying “retry” is not topology.
 Every lane other than `main` and `terminal` shares one middle band; states in
 the same column there need distinct `yOffset` values.
 

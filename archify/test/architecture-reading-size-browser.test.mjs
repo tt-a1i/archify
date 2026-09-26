@@ -41,9 +41,9 @@ test('automatic architectures preserve primary reading size when fitting the ful
           if (document.documentElement.dataset.theme !== '${theme}') document.getElementById('btn-theme').click();
           await Archify.layoutStability.whenStable();
           const toolbar = document.querySelector('.toolbar').getBoundingClientRect();
-          const guide = document.querySelector('.guided-views').getBoundingClientRect();
+          const guide = document.querySelector('.diagram-container').getBoundingClientRect();
           const svg = document.querySelector('.diagram-container > svg');
-          return { rail: document.documentElement.dataset.navStageRail,
+          return { rail: document.documentElement.dataset.navStageRail, summaryRail: document.documentElement.dataset.readerRail || null,
             toolbarBottom: toolbar.bottom, guideTop: guide.top, guideWidth: guide.width,
             primaryFont: Math.min(...Array.from(svg.querySelectorAll('text[data-node-label]')).map(text => parseFloat(text.getAttribute('font-size')) * svg.getBoundingClientRect().width / svg.viewBox.baseVal.width)),
             scrollWidth: document.documentElement.scrollWidth,
@@ -52,10 +52,13 @@ test('automatic architectures preserve primary reading size when fitting the ful
         })()`);
         const label = `${width}x${height}/${theme}`;
         assert.equal(observed.rail, 'true', label + ': fixture must exercise the compact rail');
-        assert.ok(observed.guideWidth > 0, label + ': guide must be visible');
-        assert.ok(observed.guideTop >= observed.toolbarBottom + 4, label + ': toolbar overlaps guide ' + JSON.stringify(observed));
+        assert.ok(observed.guideWidth > 0, label + ': diagram must be visible');
+        assert.ok(observed.guideTop >= observed.toolbarBottom + 4, label + ': toolbar overlaps diagram ' + JSON.stringify(observed));
         assert.ok(observed.scrollWidth <= width, label + ': horizontal overflow');
-        assert.ok(observed.primaryFont >= 13.5, label + ': full-page fitting made primary text too small: ' + observed.primaryFont);
+        // A docked or bottom summary rail may trade comfort down to its 12px
+        // floor; without one (collapsed or unavailable) the 13.5px comfort holds.
+        const primaryFloor = observed.summaryRail === 'true' || observed.summaryRail === 'bottom' ? 12 : 13.5;
+        assert.ok(observed.primaryFont >= primaryFloor, label + ': full-page fitting made primary text too small: ' + observed.primaryFont + ' (rail ' + observed.summaryRail + ')');
         if (geometry) assert.deepEqual(observed.geometry, geometry, label + ': authored node geometry/font changed');
         else geometry = observed.geometry;
       }
@@ -95,7 +98,8 @@ test('one long label does not enlarge the other titles in a narrow tall architec
     assert.equal(result.exceptionDetails, undefined);
     const sizes = result.result.value;
     assert.ok(sizes[0].source < sizes[1].source, 'fixture must contain a fitted long title');
-    assert.ok(sizes[1].projected >= 13.5 && sizes[1].projected <= 14.2, JSON.stringify(sizes));
+    // The bottom rail may trade comfort down to 12px; hierarchy still holds.
+    assert.ok(sizes[1].projected >= 12 - 0.01 && sizes[1].projected <= 14.2, JSON.stringify(sizes));
     assert.ok(metrics.scrollWidth <= 1440);
     assert.ok(metrics.scrollHeight > 900, 'preserve ordinary scroll instead of shrinking the tall graph');
   } finally {

@@ -89,18 +89,18 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 | 讲清 Agent 如何调用工具 | 跟随一次缓存回源请求 | 看清服务与数据库的关系 |
 |---|---|---|
-| [![Agent 工作流正在播放一个作者章节](docs/assets/archify-demo-story.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path) | [![缓存未命中时从 Web App 到 Postgres 的路径](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![生产架构中后端与数据库角色的真实关系](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
-| 按章节讲解图中定义的步骤。 | 点亮 Web App 到数据库的路径。 | 聚焦后端与数据库之间已定义的连接。 |
+| [![Agent 工作流中 Planner 驱动的全部下游](docs/assets/archify-demo-reach.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1#focus=planner&reach=downstream) | [![缓存未命中时从 Web App 到 Postgres 的路径](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![生产架构中后端与数据库角色的真实关系](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
+| 追踪一个步骤影响到的全部下游。 | 点亮 Web App 到数据库的路径。 | 聚焦后端与数据库之间已定义的连接。 |
 
-[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) 收录全部 11 个仓库内场景、JSON 源、命名视图和校验回执。
+[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) 收录全部 11 个仓库内场景、JSON 源和校验回执。
 
 ### 看懂一个真实代码仓库
 
 <sub>CODE → DIAGRAM · 有源码依据的系统地图</sub>
 
-[![根据公开仓库 mco-org/mco 生成的 MCO 运行时架构图](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
+[![根据公开仓库 mco-org/mco 生成的 MCO 运行时架构图](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1)
 
-Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本并生成这张校验地图。**[打开成品 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [追踪下游 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [Typed Source](docs/cases/mco-runtime.architecture.json)
+Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本并生成这张校验地图。**[打开成品 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [追踪下游 ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [Typed Source](docs/cases/mco-runtime.architecture.json)
 
 ### 易于扩展，社区还在不断创造新用法
 
@@ -122,7 +122,7 @@ Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版
 
 ### 下载下来，亲手点一点
 
-成品是一个独立的 HTML 文件。下载后用浏览器打开，即可使用该作品包含的节点详情、路径探索和章节演示，无需安装 Archify。把 HTML 文件发给别人，交互也会一起保留；外部网站和地图链接需要网络。
+成品是一个独立的 HTML 文件。下载后用浏览器打开，即可使用该作品包含的节点详情和路径探索，无需安装 Archify。把 HTML 文件发给别人，交互也会一起保留；外部网站和地图链接需要网络。
 
 **[打开上海 CityWalk 交互版 ↗](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · **[下载 HTML ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
 
@@ -270,7 +270,7 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 
 | 读懂结构 | 边看边讲 |
 |---|---|
-| 从代码或描述出发，整理关键组件、流程和关系。 | 点击节点、追踪路径、按章节展开复杂流程。 |
+| 从代码或描述出发，整理关键组件、流程和关系。 | 点击节点、追踪路径、把任意视图分享成链接。 |
 | **易于扩展** | **方便交付** |
 | 保留可编辑源文件，也可基于开源代码和 HTML 成品扩展自己的交互与用途。 | 分享独立 HTML，或导出图片、视频与分享卡片。 |
 
@@ -334,7 +334,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 }
 ```
 
-不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为 `en` 或 `zh-CN`，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。作者编写的标题、节点、关系、章节和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于其他任何创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
+不设置 `animation` 时结果完全静态；`classic` 始终是默认视觉预设。设计评审、发布说明和技术文档可以显式选择 `editorial`，获得暖纸张与深墨色的编辑风格，同时保持几何完全不变。将 `meta.locale` 设为 `en` 或 `zh-CN`，可选择 `<html lang>`、默认图例、无障碍文案和所有固定 Viewer UI。作者编写的标题、节点、关系和卡片不会被机器翻译。未带该字段的旧文件仍然有效，并默认使用英文。对于其他任何创作语言，应省略 `meta.locale`、保持 authored content 使用用户要求的语言，并主动告知用户固定 Viewer UI 与 `<html lang>` 回退为英文，因此该成品不属于完整本地化。
 
 </details>
 
@@ -348,12 +348,11 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 探查有向路径并逐站检查 | <kbd>R</kbd> 或“路径” |
 | 对比一种或两种语义角色 | <kbd>L</kbd> 或“透镜” |
 | 打开实时全局雷达 | <kbd>M</kbd> 或“地图” |
-| 播放故事 / 切换章节 | <kbd>P</kbd> / <kbd>[</kbd> <kbd>]</kbd> |
 | 进入 Presentation Stage | <kbd>F</kbd> |
 | 选择视觉风格（<kbd>S</kbd> 循环）/ 切换主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
-稳定链接可以恢复 `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>` 和 `#view=<view-id>`。读者触发的动态有限运行、遵守 `prefers-reduced-motion`，并且不会进入标准导出。
+稳定链接可以恢复 `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>` 和 `#lens=<kind>~<kind>`。读者触发的动态有限运行、遵守 `prefers-reduced-motion`，并且不会进入标准导出。
 
 完整生成与 Viewer 契约请查看 [`archify/SKILL.md`](archify/SKILL.md)。
 

@@ -48,7 +48,6 @@ test('finder searches semantic ids and labels, then delegates to focus and revea
   const html = render('architecture', CASES.architecture);
   assert.match(html, /search: \(id \+ ' ' \+ label \+ ' ' \+ type \+ ' ' \+ sublabel \+ ' ' \+ context \+ ' ' \+ tag \+ ' ' \+ sourceSearch \+ ' ' \+ text\)\.toLowerCase\(\)/);
   assert.match(html, /item\.search\.indexOf\(query\) !== -1/);
-  assert.match(html, /Archify\.guidedViews\.showAll\(\{ clearFocus: false, updateUrl: false \}\)/);
   assert.match(html, /Archify\.view\.reset\(\{ automatic: true \}\)/);
   assert.match(html, /Archify\.focus\.set\(id, \{ toggle: false \}\)/);
   assert.match(html, /Archify\.view\.reveal\(\[id\], \{ includeNeighbors: true, reason: 'finder' \}\)/);

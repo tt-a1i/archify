@@ -1690,7 +1690,12 @@ export class ChromeVisualBrowser {
         && typeof Archify.viewerChromeLayout.stageRect === 'function'
         ? Archify.viewerChromeLayout.stageRect()
         : (stage ? stage.getBoundingClientRect() : null);
-      var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
+      // The dock may lift to the viewport floor while the page scrolls; the
+      // stage contract is about its resting position.
+      var navigationDockRect = !navigationDock ? null
+        : window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.dockRect === 'function'
+          ? Archify.viewerChromeLayout.dockRect()
+          : navigationDock.getBoundingClientRect();
       var stageDockIntersectionArea = intersectionArea(stageRect, navigationDockRect);
       var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
         && typeof Archify.viewerChromeLayout.receipt === 'function'
@@ -1731,13 +1736,13 @@ export class ChromeVisualBrowser {
       var bodyStyle = window.getComputedStyle(document.body);
       var diagramStyle = diagram ? window.getComputedStyle(diagram) : null;
       var svgHeight = svg ? svg.getBoundingClientRect().height : 0;
+      var notesBelowFold = Boolean(reader) && document.documentElement.getAttribute('data-reader-rail') === 'bottom';
       var pageComposition = {
         bodyPaddingPx: Math.round((parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)),
         headerPx: Math.round(outerHeight(reader && reader.querySelector('.header'))),
-        guidedViewsPx: Math.round(outerHeight(reader && reader.querySelector('.guided-views'))),
         diagramChromePx: Math.round(outerHeight(diagram) - svgHeight),
         svgPx: Math.round(svgHeight),
-        cardsPx: Math.round(outerHeight(reader && reader.querySelector('.cards'))),
+        cardsPx: notesBelowFold ? 0 : Math.round(outerHeight(reader && reader.querySelector('.cards'))),
         viewBoxHeight: viewBox ? viewBox.height : 0
       };
       var svgRect = svg && svg.getBoundingClientRect();
@@ -1755,7 +1760,10 @@ export class ChromeVisualBrowser {
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight,
         scrollWidth: Math.ceil(document.documentElement.scrollWidth),
-        scrollHeight: Math.ceil(document.documentElement.scrollHeight),
+        // Bottom notes and index are reading material below the fold; the
+        // Reader excludes them from the one-screen fit, and so does this check.
+        scrollHeight: Math.max(window.innerHeight, Math.ceil(document.documentElement.scrollHeight - (
+          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0))),
         resolvedTheme: document.documentElement.getAttribute('data-theme') || '',
         readerLayout: document.documentElement.getAttribute('data-reader-layout') || null,
         readerOverflow: document.documentElement.getAttribute('data-reader-overflow') || null,
@@ -2054,7 +2062,7 @@ export function verticalBudgetFixes(entry) {
   if (!entry.overflowY || !page) return [];
   const excess = entry.scrollHeight - entry.innerHeight;
   const fixes = [];
-  const stacked = `${page.bodyPaddingPx}px body padding + ${page.headerPx}px header + ${page.guidedViewsPx}px guided views + ${page.diagramChromePx}px diagram chrome + ${page.svgPx}px SVG + ${page.cardsPx}px cards = ${entry.scrollHeight}px against ${entry.innerHeight}px`;
+  const stacked = `${page.bodyPaddingPx}px body padding + ${page.headerPx}px header + ${page.diagramChromePx}px diagram chrome + ${page.svgPx}px SVG + ${page.cardsPx}px cards = ${entry.scrollHeight}px against ${entry.innerHeight}px`;
   if (page.svgPx > 0 && page.viewBoxHeight > 0) {
     const targetSvg = page.svgPx - excess;
     const targetViewBoxHeight = Math.floor(page.viewBoxHeight * targetSvg / page.svgPx);
@@ -2115,7 +2123,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
           ...(authoredClipped ? { documentScrollUnclipped: false } : {}),
           ...(entry.overflowY && entry.pageComposition ? {
             pageComposition: entry.pageComposition,
-            pageCompositionMeasurement: 'CSS pixels at this viewport; body padding, header, guided-views strip, diagram chrome, SVG and cards stack vertically and sum to scrollHeight',
+            pageCompositionMeasurement: 'CSS pixels at this viewport; body padding, header, diagram chrome, SVG and cards stack vertically and sum to scrollHeight',
           } : {}),
           ...(entry.overflowY && entry.workflowLanes?.length ? {
             workflowLanes: entry.workflowLanes,

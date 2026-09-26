@@ -28,11 +28,14 @@ const pageHelpers = `(() => {
     const svg = panel.querySelector(':scope > svg');
     const nav = panel.querySelector('.diagram-nav');
     const stage = svg.getBoundingClientRect();
-    const dock = nav.getBoundingClientRect();
+    // The dock may lift to the viewport floor; layout contracts use its resting box.
+    const dock = Archify.viewerChromeLayout.dockRect();
     return {
       boxes: ['.container', '.header', '.guided-views', '.cards', '.diagram-container',
         '.diagram-container > svg', '.diagram-nav', '[data-legend]']
-        .map(selector => [selector, rect(document.querySelector(selector))]),
+        .map(selector => [selector, selector === '.diagram-nav'
+          ? ['left', 'top', 'right', 'bottom', 'width', 'height'].map(key => rounded(dock[key]))
+          : rect(document.querySelector(selector))]),
       reserve: parseFloat(getComputedStyle(panel).getPropertyValue('--archify-nav-reserve')) || 0,
       rail: panel.getAttribute('data-nav-stage-rail'), rootRail: html.getAttribute('data-nav-stage-rail'),
       readerWidth: html.style.getPropertyValue('--archify-reader-width'),
@@ -460,11 +463,11 @@ test('one joint wait preserves real Reader/Chrome convergence at the CLI boundar
       assert.equal(before.readerFit, 'intrinsic-height');
       const exportedBefore = await canonicalExport();
       assert.equal(exportedBefore.canonical, 'true');
-      const overflow = await joint('intrinsic-overflow', `document.querySelector('.cards').style.minHeight = '1200px';`);
+      const overflow = await joint('intrinsic-overflow', `document.querySelector('.header').style.minHeight = '1200px';`);
       assert.equal(overflow.overflow, 'authored');
       clearStage(overflow, 'intrinsic overflow');
       unchanged(before, overflow, 'intrinsic overflow');
-      await joint('intrinsic-content-restored', `document.querySelector('.cards').style.minHeight = '';`);
+      await joint('intrinsic-content-restored', `document.querySelector('.header').style.minHeight = '';`);
       for (const mode of ['embed', 'present', 'print']) {
         if (mode === 'print') {
           await send('Emulation.setEmulatedMedia', { media: 'print' });

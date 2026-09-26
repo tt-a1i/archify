@@ -89,18 +89,18 @@ the API checks Redis, and a cache miss queries PostgreSQL and fills the cache.
 
 | エージェントのワークフローを説明する | キャッシュミスを追う | サービス間の関係を調べる |
 |---|---|---|
-| [![記述された 1 つのチャプターを再生するエージェントワークフロー](docs/assets/archify-demo-story.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path) | [![Web アプリから Postgres への経路を示すキャッシュミスのシーケンス](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![バックエンドとデータベースのロールを比較する本番アーキテクチャ](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
-| 図に記述された手順をたどります。 | Web アプリからデータベースまでの経路を強調します。 | 記述されたバックエンドとデータベースの接続に絞って見ます。 |
+| [![プランナーから下流をすべてたどるエージェントワークフロー](docs/assets/archify-demo-reach.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1#focus=planner&reach=downstream) | [![Web アプリから Postgres への経路を示すキャッシュミスのシーケンス](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![バックエンドとデータベースのロールを比較する本番アーキテクチャ](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
+| 1 つのステップから下流をすべてたどります。 | Web アプリからデータベースまでの経路を強調します。 | 記述されたバックエンドとデータベースの接続に絞って見ます。 |
 
-[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) には、チェックイン済みの 11 シナリオすべてと、その JSON ソース、名前付きビュー、検証レシートが含まれています。
+[Proof Lab](https://tt-a1i.github.io/archify/gallery.html) には、チェックイン済みの 11 シナリオすべてと、その JSON ソース、検証レシートが含まれています。
 
 ### 実際のリポジトリを理解する
 
 <sub>CODE → DIAGRAM · ソースに基づくシステムマップ</sub>
 
-[![公開リポジトリ mco-org/mco から生成した MCO ランタイムアーキテクチャ](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
+[![公開リポジトリ mco-org/mco から生成した MCO ランタイムアーキテクチャ](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1)
 
-Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解析し、この検証済みマップを生成しました。**[開く ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [到達範囲をトレース ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [型付きソース](docs/cases/mco-runtime.architecture.json)
+Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解析し、この検証済みマップを生成しました。**[開く ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [到達範囲をトレース ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [型付きソース](docs/cases/mco-runtime.architecture.json)
 
 ### 拡張しやすい。自分のものにする方法はいくつもある。
 
@@ -122,7 +122,7 @@ Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解
 
 ### ダウンロードして、開いて、探索する
 
-出力は単体で完結する HTML ファイルです。ダウンロードしてブラウザで開けば、その成果物に含まれるノードの詳細、経路の探索、ガイド付きチャプターをそのまま使えます。閲覧に Archify のインストールは必要ありません。HTML を誰かに送れば操作性もそのまま届きます。外部サイトや地図のリンクにはネットワーク接続が必要です。
+出力は単体で完結する HTML ファイルです。ダウンロードしてブラウザで開けば、その成果物に含まれるノードの詳細と経路の探索をそのまま使えます。閲覧に Archify のインストールは必要ありません。HTML を誰かに送れば操作性もそのまま届きます。外部サイトや地図のリンクにはネットワーク接続が必要です。
 
 **[上海 CityWalk を見る ↗](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · **[HTML をダウンロード ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
 
@@ -269,7 +269,7 @@ Architecture の例: [`web-app`](examples/web-app.html) · [`Archify pipeline`](
 
 | 構造を理解する | ストーリーをたどる |
 |---|---|
-| コードや説明から、コンポーネント、ワークフロー、関係を整理します。 | ノードを探索し、経路をたどり、プロセスをチャプターごとに説明します。 |
+| コードや説明から、コンポーネント、ワークフロー、関係を整理します。 | ノードを探索し、経路をたどり、任意のビューをリンクで共有します。 |
 | **自分のやり方で拡張する** | **結果を共有する** |
 | 編集可能なソースを保持したまま、オープンソースのコードや生成された HTML に独自のインタラクションやユースケースを積み上げられます。 | 単体で完結する HTML ファイルを共有するか、画像・動画・シェアカードとして書き出せます。 |
 
@@ -347,12 +347,11 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 有向ルートを調べて経路を確認 | <kbd>R</kbd> または `PATH` |
 | 1〜2 個のセマンティックロールを比較 | <kbd>L</kbd> または `LENS` |
 | ライブの全体レーダーを開く | <kbd>M</kbd> または `MAP` |
-| ガイド付きストーリーの再生 / チャプター切り替え | <kbd>P</kbd> / <kbd>[</kbd> <kbd>]</kbd> |
 | プレゼンテーションステージに入る | <kbd>F</kbd> |
 | ビジュアルスタイルを選択（`S` で循環）/ テーマ切り替え / Export を開く | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | ズーム / リセット | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
-安定したリンクで `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>`、`#view=<view-id>` を復元できます。読み手が起動するモーションは有限で、`prefers-reduced-motion` を尊重し、正規のエクスポートには含まれません。
+安定したリンクで `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>` を復元できます。読み手が起動するモーションは有限で、`prefers-reduced-motion` を尊重し、正規のエクスポートには含まれません。
 
 生成とビューアの完全な仕様は [`archify/SKILL.md`](archify/SKILL.md) にあります。
 

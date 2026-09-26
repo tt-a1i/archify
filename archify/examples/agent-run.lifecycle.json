@@ -6,12 +6,7 @@
     "output": "examples/lifecycle-agent-run.html",
     "viewBox": [1030, 630],
     "animation": "trace",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "main-lifecycle", "label": "Main lifecycle", "focus": ["queued", "planning", "executing", "reviewing", "completed"], "note": "Follow the ordered phases from accepted request to completed response." },
-      { "id": "human-waits", "label": "Human and input waits", "focus": ["executing", "approval", "reviewing", "blocked"], "note": "See where the run pauses without becoming terminal." },
-      { "id": "recovery-and-exits", "label": "Recovery and terminal exits", "focus": ["executing", "failed", "blocked", "cancelled", "expired"], "note": "Separate retryable failure from cancellation and expiry." }
-    ]
+    "quality_profile": "showcase"
   },
   "lanes": [
     { "id": "main", "label": "Lifecycle phases" },

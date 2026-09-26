@@ -49,6 +49,16 @@ async function evaluate(browser, sessionId, expression, awaitPromise = false) {
   return response.result?.value;
 }
 
+// Mobile radar scenarios measure placement against a specific canvas height.
+// Pin the authored-canvas form so automatic top cropping does not change it.
+function pinnedArchitectureInput(name) {
+  const input = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', CASES.architecture), 'utf8'));
+  input.meta = { ...input.meta, viewBox: [1080, 588] };
+  const file = path.join(tmp, name);
+  fs.writeFileSync(file, JSON.stringify(input));
+  return file;
+}
+
 async function loadArtifact(browser, artifactPath, { width = 1440, height = 900 } = {}) {
   const sessionId = await browser.sessionPromise;
   await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -245,7 +255,7 @@ test('Semantic Radar avoids an expanded mobile Passport without hiding a collisi
   const artifact = path.join(tmp, 'radar-mobile-passport.html');
   execFileSync(process.execPath, [
     path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'),
-    path.join(skillRoot, 'examples', CASES.architecture),
+    pinnedArchitectureInput('radar-mobile-passport.json'),
     artifact,
   ]);
   const browser = new ChromeVisualBrowser(chromePath);
@@ -344,7 +354,7 @@ test('Semantic Radar reports a consistent unavailable state and recovers when sp
   const artifact = path.join(tmp, 'radar-unavailable.html');
   execFileSync(process.execPath, [
     path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'),
-    path.join(skillRoot, 'examples', CASES.architecture),
+    pinnedArchitectureInput('radar-unavailable.json'),
     artifact,
   ]);
   const browser = new ChromeVisualBrowser(chromePath);
@@ -462,12 +472,14 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
       var passport = document.getElementById('focus-chip').getBoundingClientRect();
       var active = document.querySelector('[data-focus-selected]');
       var nearestLeft = passport.right + 16;
+      // Aim inside the Passport's vertical band so the request must snap clear.
+      var targetTop = Math.max(radar.top, passport.top);
       active.getBoundingClientRect = function () {
         return {
           left: nearestLeft,
-          top: radar.top,
+          top: targetTop,
           right: nearestLeft + radar.width,
-          bottom: radar.top + radar.height,
+          bottom: targetTop + radar.height,
           width: radar.width,
           height: radar.height
         };
@@ -475,8 +487,8 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
       return {
         radar: { left: radar.left, top: radar.top },
         head: { left: head.left, top: head.top, height: head.height },
-        requested: { left: passport.right + 8, top: radar.top },
-        nearest: { left: nearestLeft, top: radar.top }
+        requested: { left: passport.right + 8, top: targetTop },
+        nearest: { left: nearestLeft, top: targetTop }
       };
     })()`);
     await dragMouse(browser, sessionId, {
@@ -680,7 +692,7 @@ test('closing a pending Radar request prevents retry and reflow from reopening i
   }
 });
 
-test('Radar reflects camera viewport, status and Focus/Story activity through normal callers', {
+test('Radar reflects camera viewport, status and Focus activity through normal callers', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   render('architecture', CASES.architecture);
@@ -702,8 +714,7 @@ test('Radar reflects camera viewport, status and Focus/Story activity through no
           const expected = [logical.x,logical.y,logical.width,logical.height];
           const active = Array.from(document.querySelectorAll('[data-radar-active]'), node => node.getAttribute('data-radar-node-id')).sort();
           const status = document.getElementById('overview-map-status').textContent;
-          const state = { actual, expected, active, status, count: Archify.radar.count(), scale: logical.scale,
-            beat: Archify.guidedViews.beat()?.nodeId || null };
+          const state = { actual, expected, active, status, count: Archify.radar.count(), scale: logical.scale };
           const value = JSON.stringify(state);
           equal = value === previous ? equal + 1 : 0; previous = value;
           if (equal >= 8) return state;
@@ -722,15 +733,6 @@ test('Radar reflects camera viewport, status and Focus/Story activity through no
     assert.deepEqual((await observe(`Archify.focus.set('lb', { toggle:false });`)).active, ['lb']);
     assert.deepEqual((await observe(`Archify.focus.set('db', { toggle:false });`)).active, ['db']);
     assert.deepEqual((await observe(`Archify.focus.clear();`)).active, []);
-    await observe(`Archify.guidedViews.activate('request-path');`);
-    const first = await observe(`document.querySelector('[data-story-index="0"]').click(); Archify.focus.clear({ updateUrl:false });`);
-    assert.ok(first.beat);
-    assert.deepEqual(first.active, [first.beat]);
-    const second = await observe(`document.querySelector('[data-story-index="1"]').click(); Archify.focus.clear({ updateUrl:false });`);
-    assert.ok(second.beat);
-    assert.notEqual(second.beat, first.beat);
-    assert.deepEqual(second.active, [second.beat]);
-    assert.deepEqual((await observe(`Archify.guidedViews.showAll();`)).active, []);
   } finally {
     await browser.close();
   }

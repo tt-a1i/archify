@@ -119,7 +119,7 @@ function fakeBrowser({
         resolvedTheme: resolvedThemeAt?.({ width, height, theme }) ?? theme,
         ...(tall ? {
           pageComposition: {
-            bodyPaddingPx: 12, headerPx: 40, guidedViewsPx: 60, diagramChromePx: 76,
+            bodyPaddingPx: 12, headerPx: 100, diagramChromePx: 76,
             svgPx: 800, cardsPx: 212, viewBoxHeight: 1000,
           },
         } : {}),
@@ -2636,12 +2636,12 @@ test('visual-check returns 1 and preserves evidence when any viewport overflows'
 });
 
 test('vertical overflow fixes state the stacked page budget and the actionable target', () => {
-  const page = { bodyPaddingPx: 12, headerPx: 40, guidedViewsPx: 60, diagramChromePx: 76, svgPx: 800, cardsPx: 212, viewBoxHeight: 1000 };
+  const page = { bodyPaddingPx: 12, headerPx: 100, diagramChromePx: 76, svgPx: 800, cardsPx: 212, viewBoxHeight: 1000 };
   const base = { overflowY: true, innerHeight: 900, scrollHeight: 1200, diagramWidth: 930, pageComposition: page };
 
   const atMinimum = verticalBudgetFixes({ ...base, readerLayout: 'adaptive', readerOverflow: 'authored' });
   assert.match(atMinimum[0], /300px too tall/);
-  assert.match(atMinimum[0], /12px body padding \+ 40px header \+ 60px guided views \+ 76px diagram chrome \+ 800px SVG \+ 212px cards = 1200px against 900px/);
+  assert.match(atMinimum[0], /12px body padding \+ 100px header \+ 76px diagram chrome \+ 800px SVG \+ 212px cards = 1200px against 900px/);
   assert.match(atMinimum[0], /reduce the viewBox height to at most 625 \(from 1000\)/, 'SVG height follows viewBox height at the fixed minimum width: 1000 * 500 / 800');
   assert.equal(atMinimum.length, 1, 'cards (212px) cannot absorb a 300px excess, so no card alternative is offered');
 

@@ -222,7 +222,6 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     cards: renderCards(cards),
     locale: meta.locale,
     visualPreset: meta.visual_preset || 'classic',
-    guidedViews: meta.views || [],
     sourceEvidence,
   });
   let candidatePath;
@@ -326,44 +325,9 @@ export function validateRelationshipIds(diagramType, diagram) {
   }
 }
 
-// JSON Schema keeps the view object bounded; this pass checks facts that span
-// collections. Keeping it here makes the same contract apply to all five
-// renderers, including the zero-install standalone-validator path.
-export function validateGuidedViews(diagramType, diagram) {
-  const views = diagram.meta?.views;
-  if (!Array.isArray(views) || views.length === 0) return;
-  const collection = SEMANTIC_COLLECTIONS[diagramType];
-  const semanticIds = new Set((diagram[collection] || []).map((item) => item.id));
-  const seen = new Set();
-  const problems = [];
-
-  views.forEach((view, index) => {
-    if (seen.has(view.id)) problems.push(`/meta/views/${index}/id duplicates view id ${JSON.stringify(view.id)}`);
-    seen.add(view.id);
-    const seenFocus = new Set();
-    (view.focus || []).forEach((id, focusIndex) => {
-      if (seenFocus.has(id)) {
-        problems.push(`/meta/views/${index}/focus/${focusIndex} duplicates semantic id ${JSON.stringify(id)}`);
-      }
-      seenFocus.add(id);
-      if (!semanticIds.has(id)) {
-        problems.push(`/meta/views/${index}/focus/${focusIndex} references unknown semantic id ${JSON.stringify(id)}`);
-      }
-    });
-  });
-
-  if (problems.length) {
-    throwDiagnosticProblems('Guided view validation failed', problems, {
-      code: 'guided-view/invalid',
-      subject: { diagramType, collection: 'meta.views' },
-    });
-  }
-}
-
-// Share relationship-ID and guided-view semantic checks between the loader
+// Share relationship-ID semantic checks between the loader
 // and workflow compiler without performing filesystem operations (see #429).
 export function validateCrossCollectionContracts(diagramType, diagram) {
-  validateGuidedViews(diagramType, diagram);
   validateRelationshipIds(diagramType, diagram);
 }
 
@@ -392,7 +356,7 @@ export function animateAttr(meta, kind, step) {
   if (meta.animation !== 'trace') return '';
   // Ambient trace must finish inside the fixed six-second WebM capture. The
   // cap affects visual delay only; authored order and semantic identity stay
-  // untouched in the JSON, DOM, Story, and relationship contracts.
+  // untouched in the JSON, DOM, and relationship contracts.
   const safeStep = Number.isFinite(step) && step >= 0 ? Math.min(12, Math.floor(step)) : 0;
   return ` data-animate="${kind}" style="--step:${safeStep}"`;
 }

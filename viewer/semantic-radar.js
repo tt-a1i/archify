@@ -380,8 +380,7 @@
             : viewerText('viewer.radar.viewport.scale', { percent: Math.round(visible.scale * 100) }));
         status.textContent = viewerText('viewer.radar.status', { count: nodes.length, viewport: viewportCopy });
         nodes.forEach(function (item) {
-          var active = item.node.hasAttribute('data-focus-selected') ||
-            item.node.getAttribute('data-story-beat-state') === 'active';
+          var active = item.node.hasAttribute('data-focus-selected');
           if (active) item.rect.setAttribute('data-radar-active', 'true');
           else item.rect.removeAttribute('data-radar-active');
         });
@@ -405,6 +404,7 @@
         if (next) {
           clearSpaceRetry();
           spaceRetryCount = 0;
+          trigger.setAttribute('data-radar-requested', 'true');
           build();
           attemptRequestedOpen(options);
         } else {
@@ -417,11 +417,13 @@
           resetDockingStyles();
           restorePassport();
           feedback.hidden = true;
+          // Focus before collapsing: the dock hides this trigger at 100% unless it holds focus.
+          if (options.restoreFocus === true) trigger.focus();
           trigger.setAttribute('aria-expanded', 'false');
+          trigger.removeAttribute('data-radar-requested');
           trigger.removeAttribute('data-radar-space-limited');
           trigger.setAttribute('aria-label', viewerText('viewer.nav.radar'));
           trigger.title = viewerText('viewer.nav.radar.title');
-          if (options.restoreFocus === true) trigger.focus();
         }
         return next;
       }
@@ -442,9 +444,6 @@
       function focusNode(id) {
         var main = diagram.querySelector('[data-node-id="' + id + '"]');
         if (!main) return false;
-        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false });
-        }
         if (Archify.focus && typeof Archify.focus.set === 'function') {
           Archify.focus.set(id, { toggle: false });
         }
