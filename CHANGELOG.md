@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 ### Improved reading
 
 - Showcase sequence message names use larger primary type and matching label plates; real browser readability checks now include message labels.
+- **Clearer Architecture layouts.** Authoring defaults now classify each relationship (main path, branch or store, return, second entrance, fan-out) before placement, with a measured side length for fan-out ports. A passing `finalize` receipt with crossings adds node-move `hints`, backed by new `routeReview` evidence (`sharedNode` on crossings, `crowdedSides` when a side faces more neighbours than it has ports); the Skill allows one bounded, position-only repair for crossings. Automatic routing steps fan-out siblings into free parallel channels and reaches a blocked row of neighbours through one vertical side instead of wrapping around it.
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 

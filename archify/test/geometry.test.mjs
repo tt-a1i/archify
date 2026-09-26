@@ -171,6 +171,14 @@ test('label-route clearance locks tangent, sub-threshold, boundary, and reversed
   }
 });
 
+test('near-zero segments preserve the existing label clearance threshold', () => {
+  const q = 100 - 3.999899999 / Math.sqrt(2);
+  const segment = { start: [q - 0.0001, q + 0.0001], end: [q + 0.0001, q - 0.0001] };
+  const box = rect(100, 100, 20, 20);
+  assert.ok(segmentRectClearance(segment, box) + 0.0001 >= 4);
+  assert.ok(segmentRectClearance({ start: segment.end, end: segment.start }, box) + 0.0001 >= 4);
+});
+
 test('collectLabelRouteClearance exempts only the owning relationship at an exact threshold', () => {
   const owner = { id: 'owner', from: 'a', to: 'b' };
   const sharedSource = { id: 'other', from: 'a', to: 'c' };
