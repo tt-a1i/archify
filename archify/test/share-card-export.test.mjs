@@ -44,6 +44,14 @@ test('all five renderers remove ordinary share cards while retaining other expor
   }
 });
 
+test('README architecture examples do not retain ordinary share-card entries', () => {
+  for (const file of ['archify-repo.html', 'archify-repo-grid.html', 'maka-architecture.html']) {
+    const html = fs.readFileSync(path.join(skillRoot, '..', 'examples', file), 'utf8');
+    assert.equal(/data-format="share-card"|data-action="copy-share-card"/.test(html), false,
+      `${file}: regenerate this README example to remove the old share-card entries`);
+  }
+});
+
 test('Share Card uses contain-only canonical geometry with fixed safe areas', () => {
   const html = render('architecture');
   assert.match(html, /var panelWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING \* 2;[\s\S]*?var availableWidth = panelWidth - inset \* 2;/);
