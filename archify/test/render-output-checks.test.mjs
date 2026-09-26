@@ -701,6 +701,8 @@ test('render output check: independent shared-endpoint crossings still recommend
   assert.equal(affected.crossings[0].left.id, 'first');
   assert.equal(affected.crossings[0].right.id, 'second');
   assert.deepEqual(affected.crossings[0].point, [120, 80]);
+  assert.equal(affected.crossings[0].sharedNode, 'hub');
+  assert.match(summary.visualReviewRecommendation.hints[0], /move node a or b so the two reach hub from different sides/);
   assert.deepEqual(affected.detours, []);
   assert.equal(affected.truncated, false);
   assert.equal(summary.visualReview, 'not-requested');
