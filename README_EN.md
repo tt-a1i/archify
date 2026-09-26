@@ -151,8 +151,6 @@ The Export menu copies PNG to the clipboard and downloads static or motion forma
 
 ![Export menu](docs/assets/archify-menu.png)
 
-Use **Copy Share Card** when you want a canonical 1200×630 image for a README, release, or social post.
-
 After tracing a route, **Export → Route Share Card** downloads that authored path as a 1200×630 PNG with the full diagram retained for context.
 
 ![Route Share Card showing the exact Users to API Server path with the full architecture retained as context](docs/assets/archify-route-share-card.png)

@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, '..');
-const repoRoot = path.resolve(skillRoot, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-share-card-'));
 
 const CASES = {
@@ -33,15 +32,15 @@ function svgBlock(html) {
   return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
 }
 
-test('all five renderers expose one explicit 1200x630 Share Card export', () => {
+test('all five renderers remove ordinary share cards while retaining other export entries', () => {
   for (const mode of Object.keys(CASES)) {
     const html = render(mode);
-    assert.match(html, /data-format="share-card"/, mode);
-    assert.match(html, /Share Card[\s\S]*?1200(?:&times;|×)630 PNG/, mode);
-    assert.match(html, /var SHARE_CARD_WIDTH = 1200;/, mode);
-    assert.match(html, /var SHARE_CARD_HEIGHT = 630;/, mode);
-    assert.match(html, /function rasterizeShareCard\(options\)/, mode);
-    assert.match(html, /format === 'share-card'/, mode);
+    assert.doesNotMatch(html, /data-format="share-card"|data-action="copy-share-card"|copyShareCard|runCopyShareCard/, mode);
+    assert.deepEqual([...html.matchAll(/<button data-format="([^"]+)"/g)].map(match => match[1]),
+      ['png', 'jpeg', 'webp', 'svg', 'svg-light', 'svg-dark', 'webm'], mode);
+    for (const action of ['copy', 'route-share-card', 'reach-share-card']) {
+      assert.ok(html.includes('data-action="' + action + '"'), mode);
+    }
   }
 });
 
@@ -55,45 +54,9 @@ test('Share Card uses contain-only canonical geometry with fixed safe areas', ()
   assert.match(html, /throw exportError\('viewer\.export\.error\.contextUnavailable'/);
   assert.match(html, /throw exportError\('viewer\.export\.error\.toBlobUnavailable'/);
   assert.match(html, /img\.onload = function \(\) \{\s*try \{/);
-  assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
   assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot, figure: true \}\)/);
   assert.match(html, /fitCanvasText\(ctx, title, [^)]+\)/);
-  assert.match(html, /ARCHIFY ·/);
   assert.doesNotMatch(svgBlock(html), /share-card|Share Card|ARCHIFY ·/);
-});
-
-test('Share Card is a canonical PNG with exact receipt dimensions and filename', () => {
-  const html = render('workflow');
-  assert.match(html, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
-  assert.match(html, /base \+ '-share-card\.png'/);
-  assert.match(html, /data-last-export-width/);
-  assert.match(html, /data-last-export-height/);
-  assert.match(html, /shareCard: rasterizeShareCard/);
-  assert.match(html, /if \(format === 'share-card'\) return true;/);
-});
-
-test('Copy Share Card reuses one canonical card blob and writes only PNG to the clipboard', () => {
-  const html = render('architecture');
-  assert.match(html, /data-action="copy-share-card"/);
-  assert.match(html, /Copy Share Card[\s\S]*?<small class="hint">PNG to clipboard<\/small>/);
-  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?var blobPromise = rasterizeShareCard\(\);/);
-  const copyBlock = html.match(/function runCopyShareCard\(\) \{[\s\S]*?\n      \}/)?.[0] || '';
-  assert.equal((copyBlock.match(/rasterizeShareCard\(\)/g) || []).length, 1);
-  assert.match(copyBlock, /writePngToClipboard\(blobPromise\)/);
-  assert.match(html, /new ClipboardItem\(\{ 'image\/png': blobPromise \}\)/);
-  assert.match(copyBlock, /recordExportReceipt\('share-card', blob, true, \{ width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT \}\)/);
-  assert.match(copyBlock, /toast\(viewerText\('viewer\.export\.copiedShare'\)\)/);
-  assert.match(html, /copyShareCard: runCopyShareCard/);
-});
-
-test('Copy Share Card fails closed when image clipboard writing is unavailable', () => {
-  const html = render('workflow');
-  assert.match(html, /it\.dataset\.action === 'copy-share-card'[\s\S]*?!canCopyImage\(\)/);
-  assert.match(html, /function runCopyShareCard\(\)[\s\S]*?if \(!canCopyImage\(\)\)/);
-  assert.match(html, /Clipboard image write not supported by this browser/);
-  assert.match(html, /button\[data-action="copy-share-card"\]/);
-  assert.match(html, /document\.documentElement\.removeAttribute\('data-last-export-format'\)/);
-  assert.match(html, /data-last-export-error-format', 'share-card'/);
 });
 
 test('ordinary Copy PNG keeps its existing full-diagram raster path', () => {
@@ -107,26 +70,10 @@ test('Share Card stays viewer-only and reuses export cleanup instead of source s
   const html = render('sequence');
   assert.match(html, /html\[data-embed="true"\] \.toolbar/);
   assert.match(html, /@media print[\s\S]*?\.toolbar/);
-  assert.match(html, /function rasterizeShareCard\(options\)[\s\S]*?if \(!options\.variant\) return renderShareCard\(\);/);
   assert.match(html, /function renderShareCard\(options\)[\s\S]*?serializeSvg\(sourceScale, \{ routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot, figure: true \}\)/);
   assert.match(html, /if \(!data\.canonicalStateClean\) return Promise\.reject\(exportError\('viewer\.export\.error\.viewerState'\)\);/);
   assert.match(html, /canonicalStateClean/);
   assert.doesNotMatch(svgBlock(html), /data-last-export-|data-format="share-card"/);
-});
-
-test('the skill and every README make the optional Share Card discoverable', () => {
-  const viewer = fs.readFileSync(path.join(skillRoot, 'references', 'viewer-runtime.md'), 'utf8');
-  assert.match(viewer, /optional 1200(?:×|x)630 Share Card PNG/i);
-  assert.match(viewer, /current theme and visual preset/i);
-  assert.match(viewer, /never claim(?:s|ing)? validation/i);
-  assert.match(viewer, /Copy Share Card/i);
-
-  for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md']) {
-    const text = fs.readFileSync(path.join(repoRoot, readme), 'utf8');
-    assert.match(text, /Share Card/i, readme);
-    assert.match(text, /1200(?:×|x)630/, readme);
-    assert.match(text, /copy|复制/i, readme);
-  }
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));

@@ -151,8 +151,6 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ![导出菜单](docs/assets/archify-menu.png)
 
-需要用于 README、Release 或社交平台的标准 1200×630 图片时，使用 **Copy Share Card**。
-
 路径解析后，**Export → Route Share Card** 会把真实路径下载为 1200×630 PNG，并保留完整拓扑上下文。
 
 ![Route Share Card：突出 Users 到 API Server 的精确路径，同时保留完整架构作为上下文](docs/assets/archify-route-share-card.png)
