@@ -38,13 +38,6 @@ import {
   edgeLabelAccent,
 } from '../shared/geometry.mjs';
 
-const componentTextFit = {
-  sublabelPreferred: 9,
-  sublabelMinimum: 6,
-  tagPreferred: 7,
-  tagMinimum: 6,
-};
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
 const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
@@ -54,6 +47,24 @@ const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWi
   defaultExample: 'web-app.architecture.json',
   argv: cliArgs,
 });
+
+const typographyScale = arch.meta?.typography_scale ?? 1;
+const typography = (size) => size * typographyScale;
+const componentTextFit = {
+  sublabelPreferred: typography(9),
+  sublabelMinimum: typography(6),
+  tagPreferred: typography(7),
+  tagMinimum: typography(6),
+};
+const connectionLabelFontSize = typography(8);
+const legendLayout = {
+  fontSize: typography(8),
+  itemGap: typography(22),
+  lineGap: typography(22),
+  swatchGap: typography(8),
+  titleFontSize: typography(12),
+  renderedFontSize: typography(10),
+};
 
 const grid = gridLayout(arch);
 
@@ -65,14 +76,14 @@ const layout = {
   // (CHANGELOG v2.2.1): 30px on top/left/right, plus 20px extra at the bottom.
   boundaryPad: 30,
   boundaryExtraBottom: 20,
-  boundaryLabelBaseline: 18,
-  boundaryLabelClearance: 4,
-  boundaryLabelFontPreferred: 9,
-  boundaryLabelFontMinimum: 6,
-  boundaryLabelMaskHeight: 16,
-  boundaryLabelRailGap: 2,
+  boundaryLabelBaseline: typography(18),
+  boundaryLabelClearance: typography(4),
+  boundaryLabelFontPreferred: typography(9),
+  boundaryLabelFontMinimum: typography(6),
+  boundaryLabelMaskHeight: typography(16),
+  boundaryLabelRailGap: typography(2),
   boundaryLabelFrameInset: 4,
-  legendH: 28,
+  legendH: typography(28),
 };
 
 const LEGEND_CATALOG = [
@@ -160,8 +171,16 @@ function connectionLabelBox(conn) {
 }
 
 function connectionLabelBoxAt(conn, [lx, ly]) {
-  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-  return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
+  const width = Math.max(30, textUnits(conn.label) * typography(4.8) + 10);
+  const topInset = connectionLabelFontSize + 2;
+  return {
+    x: lx - width / 2,
+    y: ly - topInset,
+    width,
+    height: Math.ceil(connectionLabelFontSize + 6),
+    lx,
+    ly,
+  };
 }
 
 function connectionLabelRects() {
@@ -186,12 +205,12 @@ function autoViewBoxFor(candidateBoundaries, extraRects = []) {
   }
   let width = Math.ceil(maxX + layout.margin);
   let footprint = legendFootprint(architectureLegendEntries, {
-    width: Math.max(1, width - layout.margin * 2),
+    width: Math.max(1, width - layout.margin * 2), ...legendLayout,
   });
   if (footprint.minWidth > width - layout.margin * 2) {
     width = Math.ceil(footprint.minWidth + layout.margin * 2);
     footprint = legendFootprint(architectureLegendEntries, {
-      width: width - layout.margin * 2,
+      width: width - layout.margin * 2, ...legendLayout,
     });
   }
   return [
@@ -420,7 +439,9 @@ if (arch.meta?.quality_profile === 'showcase') {
     // Leave the resolved legend band available; moving a label must not hide
     // an otherwise visible legend. Existing labels keep their placement.
     placementBottom: architectureLegendEntries.length
-      ? legendY() - 32 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
+      ? legendY() - typography(32) - legendFootprint(architectureLegendEntries, {
+        width: viewBox[0] - layout.margin * 2, ...legendLayout,
+      }).extraHeight
       : viewBox[1],
   });
   for (const rect of connectionLabels) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
@@ -457,7 +478,7 @@ function validateArchitecture() {
     if (c.x < 0 || c.y < 0 || c.x + c.width > viewBox[0] || c.y + c.height > viewBox[1]) {
       problems.push(`Component "${c.id}" falls outside the viewBox ${viewBox[0]}x${viewBox[1]} — adjust pos/size or set a larger meta.viewBox.`);
     }
-    const estLabelW = textUnits(c.label) * 6.6;
+    const estLabelW = textUnits(c.label) * typography(6.6);
     if (estLabelW > c.width + 8) {
       problems.push(`Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`);
     }
@@ -816,7 +837,7 @@ function buildLayoutReport() {
     x: Math.round(rect.x),
     y: Math.round(rect.y),
     width: Math.round(rect.width),
-    height: 14,
+    height: Math.round(rect.height),
     labelAt: [Math.round(rect.lx), Math.round(rect.ly)],
   }));
   return {
@@ -874,7 +895,7 @@ function renderConnectionLabel(conn, index) {
   if (!box) return '';
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="${connectionLabelFontSize}" text-anchor="middle">${esc(conn.label)}</text>
         </g>`;
 }
 
@@ -891,7 +912,7 @@ function renderComponent(c) {
     ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
-  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
+  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), typography(11), typography(8));
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
   return `        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
           ${focusNodeTitle(c.label, passport)}
@@ -922,12 +943,13 @@ function renderLegend() {
       x: layout.margin,
       baselineY: legendY(),
       width: viewBox[0] - layout.margin * 2,
+      ...legendLayout,
       minTitleY: contentBottom + 8,
       obstacles: relationshipObstacles,
       unfit: arch.meta?.legend === undefined ? 'hide' : 'error',
       diagramType: 'architecture',
     },
-    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
+    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - typography(9)}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
   });
 }
 

@@ -20,6 +20,7 @@
         "animation": { "$ref": "common.schema.json#/$defs/animation" },
         "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
         "quality_profile": { "$ref": "common.schema.json#/$defs/qualityProfile" },
+        "typography_scale": { "type": "number", "minimum": 1, "maximum": 1.25 },
         "engineering_profile": { "enum": ["deployment-ownership"] },
         "repository": { "$ref": "common.schema.json#/$defs/repository" },
         "views": { "$ref": "common.schema.json#/$defs/guidedViews" },
