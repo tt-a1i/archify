@@ -48,12 +48,29 @@ does; `brand` explains whose product it is.
    URL or silently assign a visually similar company.
 
 Known-brand URLs resolve to the bundled vector instead of using the network.
+For discovered icon `href` attributes, capture decodes the basic named references
+`amp`, `quot`, `apos`, `lt`, `gt` (and their defined uppercase aliases), plus
+decimal and hexadecimal numeric references, once before URL resolution. Thus
+`/icon.png?v=1&amp;size=32` requests `/icon.png?v=1&size=32`. URL percent escapes
+remain intact; nested escapes are not decoded recursively. This bounded decoder
+does not add a general HTML parser or support every named HTML entity.
+HTML reads stop at an explicit head ending outside comments, raw-text elements
+and quoted attributes, including when those tokens span network chunks. The
+256 KiB head limit and capture deadline still apply; a larger body after the
+head is not read for icon discovery.
 Unknown URL capture accepts only bounded raster image formats, blocks
 credentials, nonstandard public ports, and private or link-local destinations,
 uses bounded concurrency and one total deadline, and returns the captured
 content digest. Later render and validate operations require that exact digest;
 blocked, unavailable, changed, oversized, or unsafe content fails closed instead
 of silently changing the artifact.
+
+Page, icon and redirect requests send `Accept-Encoding: identity`. Capture does
+not decompress response bodies: a successful response declaring another content
+coding is closed and rejected explicitly. This keeps the existing byte limits
+and pinned digest tied to the unencoded representation. A later usable icon may
+still succeed; otherwise an encoding error is retained instead of being hidden
+by an unrelated favicon 404.
 
 The final artifact never fetches a brand asset when opened. Preset vectors and
 digest-verified captured site icons remain embedded in SVG, PNG, WebP, JPEG,

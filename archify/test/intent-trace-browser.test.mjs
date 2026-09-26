@@ -173,6 +173,46 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
     assert.equal((await snapshot('outside-pointerdown')).active, null);
   });
 
+  await t.test('hover dimming keeps node masks opaque over underlying arrows', async () => {
+    await load('workflow', { theme: 'light' });
+    await run(`(()=>{
+      const svg=document.querySelector('.diagram-container > svg');
+      const node=svg.querySelector('[data-node-id="final"]');
+      const mask=node.querySelector(':scope > .c-mask');
+      const x=Number(mask.getAttribute('x')),y=Number(mask.getAttribute('y'));
+      const w=Number(mask.getAttribute('width')),h=Number(mask.getAttribute('height'));
+      const arrow=document.createElementNS('http://www.w3.org/2000/svg','path');
+      arrow.setAttribute('d','M '+(x-20)+' '+(y+h/2)+' L '+(x+w/2)+' '+(y+h/2));
+      arrow.setAttribute('stroke','#00b060');arrow.setAttribute('stroke-width','4');
+      arrow.setAttribute('marker-end','url(#arrowhead-emphasis)');
+      arrow.setAttribute('data-under-node-arrow','');
+      node.parentNode.insertBefore(arrow,node);
+    })()`);
+    await move('user');
+    await run(`intentWait(()=>Archify.intentTrace.active()==='user'&&
+      getComputedStyle(document.querySelector('[data-node-id="final"]')).fillOpacity==='0.2')`);
+    const covered = await run(`(()=>{
+      const node=document.querySelector('.diagram-container svg [data-node-id="final"]');
+      const mask=node.querySelector(':scope > .c-mask');
+      const ink=node.querySelector(':scope > text[data-node-label]');
+      return {group:getComputedStyle(node).opacity,mask:getComputedStyle(mask).fillOpacity,
+        ink:getComputedStyle(ink).fillOpacity,selected:getComputedStyle(document.querySelector('.diagram-container svg [data-node-id="user"]')).fillOpacity,
+        arrow:!!document.querySelector('[data-under-node-arrow]')};
+    })()`);
+    assert.deepEqual(covered, { group: '1', mask: '1', ink: '0.2', selected: '1', arrow: true });
+    await move();
+    const exit = await run(`new Promise(resolve=>{
+      const node=document.querySelector('.diagram-container svg [data-node-id="final"]');
+      const mask=node.querySelector(':scope > .c-mask');
+      const samples=[];
+      function sample(){samples.push({group:getComputedStyle(node).opacity,mask:getComputedStyle(mask).fillOpacity});
+        if(samples.length<6)requestAnimationFrame(sample);else resolve(samples);}
+      requestAnimationFrame(sample);
+    })`);
+    assert.ok(exit.every(frame => frame.group === '1' && frame.mask === '1'), JSON.stringify(exit));
+    assert.equal((await snapshot('hover-mask-opaque')).active, null);
+  });
+
   await t.test('controlled timers preserve repeated-show, retained-input and input-filter semantics', async () => {
     await load();
     const result = await run(`intentTimerFixture(({node,over,out,queue,delays,fire})=>{

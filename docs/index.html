@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Archify — Technical Diagrams from Plain English</title>
-  <meta name="description" content="An agent skill for Cursor, Claude Code, Codex CLI, and OpenCode that turns plain-English descriptions into polished, explorable, self-contained technical diagrams with semantic focus, motion, and crisp export.">
+  <meta name="description" content="An agent skill for Cursor, Claude Code, Codex CLI, OpenCode, and GitHub Copilot that turns plain-English descriptions into polished, explorable, self-contained technical diagrams with semantic focus, motion, and crisp export.">
   <meta name="theme-color" content="#eff2f1">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8 26,20 14,26 2,20 2,8' fill='%23083344' stroke='%2322d3ee' stroke-width='1.5'/><circle cx='14' cy='15' r='2.5' fill='%2322d3ee'/></svg>">
+  <link rel="icon" type="image/svg+xml" href="assets/archify-mark.svg">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Archify — Technical Diagrams from Plain English">
@@ -374,7 +374,7 @@
   <!-- NAV -->
   <nav class="site-nav" aria-label="Primary navigation">
     <a class="nav-logo" href="#">
-      <span class="nav-logo-text">Archify</span>
+      <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32">
     </a>
     <div class="nav-right">
       <a class="nav-link" href="guide.html" data-i18n="nav-guide">Guide</a>
@@ -733,7 +733,7 @@
       <div class="fade-up" style="margin-bottom:2.75rem">
         <div class="section-label" data-i18n="label-qs">Quick Start</div>
         <h2 class="section-heading" data-i18n="qs-h2">Up and running<br>in three steps.</h2>
-        <p class="section-body" data-i18n="qs-body">One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Their switcher generates exact commands; for Raven, extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify.</p>
+        <p class="section-body" data-i18n="qs-body">One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Their switcher generates exact commands.</p>
       </div>
       <div class="quickstart-layout">
         <div class="qs-card fade-up d1">
@@ -742,7 +742,7 @@
               <div class="step-num">1</div>
               <div class="step-content">
                 <h4 data-i18n="step1-h">Install in one command</h4>
-                <p data-i18n="step1-p">Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command. Raven is not a switcher target; for a manual ZIP install, extract archify.zip into <code>~/.raven/workspace/skills</code>, which yields <code>~/.raven/workspace/skills/archify</code>.</p>
+                <p data-i18n="step1-p">Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command.</p>
               </div>
             </div>
             <div class="step">
@@ -823,7 +823,7 @@
     <div class="footer-inner">
       <div class="footer-left">
         <a class="nav-logo" href="#">
-          <span style="font-size:.8125rem;font-weight:700;color:var(--muted)">Archify</span>
+          <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32">
         </a>
         <p class="footer-meta" data-i18n="footer-meta">development &nbsp;·&nbsp; v2.17.0-dev.1 &nbsp;·&nbsp; MIT License<br>Based on Cocoon-AI/architecture-diagram-generator</p>
       </div>
@@ -890,8 +890,8 @@
       'chip-external':'External','chip-external-use':'Users, 3rd parties, generic',
       'label-qs':'Quick Start',
       'qs-h2':'Up and running<br>in three steps.',
-      'qs-body':'One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Their switcher generates exact commands; for Raven, extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify.',
-      'step1-h':'Install in one command','step1-p':'Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command. Raven is not a switcher target; for a manual ZIP install, extract archify.zip into <code>~/.raven/workspace/skills</code>, which yields <code>~/.raven/workspace/skills/archify</code>.',
+      'qs-body':'One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Their switcher generates exact commands.',
+      'step1-h':'Install in one command','step1-p':'Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command.',
       'step2-h':'Describe your system','step2-p':'Describe components, connections, and cloud services — or ask your agent to analyze the repository first.',
       'step3-h':'Ask your agent to draw it','step3-p':'Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.',
       'kbd-label':'Keyboard shortcuts','kbd-guide':'Diagram guide','kbd-theme':'Toggle theme','kbd-find':'Find node / route endpoint','kbd-route':'Trace, inspect, and play a route','kbd-radar':'Semantic radar','kbd-lens':'Compare semantic kinds','kbd-present':'Presentation stage','kbd-export':'Open export menu','kbd-focus':'Focus node','kbd-views':'Guided views','kbd-play':'Play story','kbd-zoom':'Reading depth / reset','kbd-nav':'Navigate menu','kbd-close':'Close menu',
@@ -950,8 +950,8 @@
       'chip-external':'外部系统','chip-external-use':'用户、第三方、通用外部',
       'label-qs':'快速开始',
       'qs-h2':'三步上手，<br>即刻运行。',
-      'qs-body':'同一份经过检查的 Skill 可用于 Cursor、Claude Code、Codex 和 OpenCode，切换器会生成准确命令；Raven 采用 ZIP 手动安装：将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify。',
-      'step1-h':'一条命令安装','step1-p':'运行 <code>npx skills add tt-a1i/archify -g</code>，或打开<a href="start.html?agent=cursor&amp;type=architecture">可切换 Agent 的快速开始页</a>，获取准确的 Cursor、Codex、Claude Code 或 OpenCode 命令。Raven 不属于切换器目标；请将 archify.zip 解压到 <code>~/.raven/workspace/skills</code>，解压后会得到 <code>~/.raven/workspace/skills/archify</code>。',
+      'qs-body':'同一份经过检查的 Skill 可用于 Cursor、Claude Code、Codex 和 OpenCode，切换器会生成准确命令。',
+      'step1-h':'一条命令安装','step1-p':'运行 <code>npx skills add tt-a1i/archify -g</code>，或打开<a href="start.html?agent=cursor&amp;type=architecture">可切换 Agent 的快速开始页</a>，获取准确的 Cursor、Codex、Claude Code 或 OpenCode 命令。',
       'step2-h':'描述你的系统','step2-p':'描述组件、连接关系和云服务，也可以先让 agent 分析代码仓库。',
       'step3-h':'让 agent 绘制','step3-p':'告诉 agent 使用 Archify，它会生成可在任意浏览器打开的单文件 HTML，并可继续在对话中迭代。',
       'kbd-label':'键盘快捷键','kbd-guide':'图表指南','kbd-theme':'切换主题','kbd-find':'查找节点 / 路径端点','kbd-route':'探查、检查并播放路径','kbd-radar':'语义雷达','kbd-lens':'对比语义类型','kbd-present':'演示舞台','kbd-export':'打开导出菜单','kbd-focus':'聚焦节点','kbd-views':'引导视图','kbd-play':'播放故事','kbd-zoom':'阅读层级 / 复位','kbd-nav':'菜单导航','kbd-close':'关闭菜单',

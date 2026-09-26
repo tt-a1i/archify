@@ -198,7 +198,7 @@ test('MCO public proof is source-backed, valid, and linked from every README', (
 
   const repositorySlug = new URL(source.meta.repository.url).pathname.replace(/^\/|\/$/g, '');
   const shortRevision = source.meta.repository.revision.slice(0, 7);
-  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     assert.match(readme, /docs\/assets\/mco-runtime-share-card\.png/);
     assert.match(readme, /cases\/mco-runtime\.architecture\.html\?theme=dark&present=1#view=dispatch-path/);

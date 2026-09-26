@@ -31,7 +31,7 @@ for (const profile of ['standard', 'showcase']) {
       `<path data-edge-id="edge-${index}" data-edge-from="source-${index}" data-edge-to="target-${index}" d="M 20 40 L 220 40" class="a-default" marker-end="url(#arrowhead)"/>`
     )).join('\n');
     const html = path.join(tmp, `${profile}.html`);
-    fs.writeFileSync(html, `<svg viewBox="0 0 240 160" data-quality-profile="${profile}">${arrows}</svg>`);
+    fs.writeFileSync(html, `<svg viewBox="0 0 240 154" data-quality-profile="${profile}">${arrows}</svg>`);
 
     // A regular file is the synchronous-output control. The pipe must carry
     // exactly the same bytes, including the final diagnostic and closing JSON.
@@ -87,7 +87,11 @@ function denseArchitecture() {
   return {
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Large receipt regression', quality_profile: 'standard' },
+    meta: {
+      title: 'Large receipt regression',
+      output: 'large-receipt-regression.html',
+      quality_profile: 'standard',
+    },
     components,
     connections,
   };

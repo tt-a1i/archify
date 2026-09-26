@@ -27,8 +27,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 11,
-      "artifactBytes": 818979,
-      "artifactSha256": "3ad7b10452fc1afe61008c2dd6eebf6348c7e694227f0b03f217bd1bac1fe046",
+      "artifactBytes": 847856,
+      "artifactSha256": "fd06613cbbe75095a7d58592372cf964c2fecf4a46b2e752a0ec2d329d586636",
       "sourceBytes": 5687,
       "sourceSha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
       "checks": [
@@ -79,12 +79,16 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 29,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 6.788321167883212,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
           "maxStretch": 1.225,
@@ -101,6 +105,45 @@
           "stretch": 1.35,
           "segmentPx": 16,
           "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": [
+            {
+              "relationship": {
+                "id": "approval-check",
+                "from": "router",
+                "to": "approval",
+                "label": "needs approval?",
+                "collectionIndex": 0,
+                "artifactIndex": 1
+              },
+              "bends": 3,
+              "stretch": 1.184
+            }
+          ]
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "user"
+          },
+          "minimumSourceTextPx": 8,
+          "minimumProjectedTextPx": 6.788321167883212,
+          "semanticTextCount": 29
         },
         "issues": []
       }
@@ -127,8 +170,8 @@
       "engineeringProfile": "deployment-ownership",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 820813,
-      "artifactSha256": "e2b4168de0170e58a04a72966438770e3dade7e62bf57dc8b108dc33d65cfa58",
+      "artifactBytes": 850612,
+      "artifactSha256": "755bd070c6d3f022dcbcc114bba2e2f278a8abf125a75acef4f1984c86bc53af",
       "sourceBytes": 5476,
       "sourceSha256": "ec484aa8576664fdb207b543fa49486b23273faccb7a5071e1a0becfb48c22eb",
       "checks": [
@@ -179,12 +222,16 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 36,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 7.5,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1.098,
@@ -201,6 +248,43 @@
           "stretch": 1.35,
           "segmentPx": 16,
           "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": true,
+          "emptyTopPx": 85,
+          "emptyTopRatio": 0.117,
+          "occupiedTop": 85,
+          "viewBoxTop": 0,
+          "canvasHeight": 728,
+          "typicalNodeHeight": 62,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 1290,
+          "actualBudgetPx": 1290,
+          "actualReaderWidth": 1320,
+          "desiredReaderWidth": 1320,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "edge",
+            "id": null,
+            "from": "clients",
+            "to": "edge"
+          },
+          "minimumSourceTextPx": 8,
+          "minimumProjectedTextPx": 7.5,
+          "semanticTextCount": 38
         },
         "issues": []
       }
@@ -227,8 +311,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 12,
-      "artifactBytes": 814102,
-      "artifactSha256": "1a38f34911db256a86962512fbd744ed6ec894750b91256a0ca41ca543921d0b",
+      "artifactBytes": 842322,
+      "artifactSha256": "5154b6c744f091fbf52230ac9ce6eada3319c103dbc7f36dbfcaf5663739ffdd",
       "sourceBytes": 4374,
       "sourceSha256": "9a799a3661c16cd6ab4f6373ff6a04da95a9ab70d93b0a349b668466f4912fd7",
       "checks": [
@@ -279,12 +363,16 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 8,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 6.027777777777779,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1,
@@ -301,6 +389,32 @@
           "stretch": 1.35,
           "segmentPx": 16,
           "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "user"
+          },
+          "minimumSourceTextPx": 7,
+          "minimumProjectedTextPx": 6.027777777777779,
+          "semanticTextCount": 26
         },
         "issues": []
       }
@@ -327,8 +441,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 815179,
-      "artifactSha256": "75cdfb37ec8803c1c90738e76f2a7b64ba99db4d43cacb6d1f4e60b0948778d8",
+      "artifactBytes": 843426,
+      "artifactSha256": "f73e0b031937196c1021108bfa877a54d151c9d22fb14df4fddba34dd8aea6a3",
       "sourceBytes": 5164,
       "sourceSha256": "e5c880417eac1623923c3dd5461e0c78acd762e1621a28bd53fc14a84cad6a91",
       "checks": [
@@ -375,16 +489,20 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 0
+          "warnings": 1
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 36.3,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 1,
+          "minProjectedNodeTextPx": 6.2,
           "maxBends": 2,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1.214,
@@ -402,7 +520,51 @@
           "segmentPx": 16,
           "microSegmentPx": 8
         },
-        "issues": []
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "rollback"
+          },
+          "minimumSourceTextPx": 6.2,
+          "minimumProjectedTextPx": 6.2,
+          "semanticTextCount": 24
+        },
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "composition/viewport-height",
+            "readerFit": null,
+            "viewBoxWidth": 720,
+            "viewBoxHeight": 900,
+            "viewportWidth": 1440,
+            "viewportHeight": 900,
+            "ratio": 0.8,
+            "wideRatio": 1.55,
+            "svgWidthPx": 1346,
+            "svgHeightPx": 1683,
+            "fixedChromePx": 187,
+            "pageHeightPx": 1870,
+            "overflowPx": 970,
+            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 720x900 canvas (ratio 0.8) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 1683px tall at the full 1346px width and the page reaches 1870px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 464 at this width, or spread content sideways so the width is at least 1395 at this height; for architecture, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
+          }
+        ]
       }
     },
     {
@@ -427,8 +589,8 @@
       "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 10,
-      "artifactBytes": 812508,
-      "artifactSha256": "61ae407a326474dbf1f02b1d46509d68a0b9e3faa3ec2138c67f86e72635cf5b",
+      "artifactBytes": 840745,
+      "artifactSha256": "129871f15f594f9f08951f784a120c539f4d1e79e36eab71b2839dd01443b688",
       "sourceBytes": 5375,
       "sourceSha256": "5c760c82eee545dfb7da38a4e628059d7891af4cfbfc13c8a7009ea64f69aa1b",
       "checks": [
@@ -475,16 +637,20 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 0
+          "warnings": 1
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 119,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 1,
+          "minProjectedNodeTextPx": 7.7,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
           "maxStretch": 3.465,
@@ -502,7 +668,97 @@
           "segmentPx": 16,
           "microSegmentPx": 8
         },
-        "issues": []
+        "routeReview": {
+          "crossings": [],
+          "detours": [
+            {
+              "relationship": {
+                "from": "page",
+                "to": "triage",
+                "label": "",
+                "collectionIndex": 1,
+                "artifactIndex": 2
+              },
+              "bends": 2,
+              "stretch": 1.8
+            },
+            {
+              "relationship": {
+                "from": "contain",
+                "to": "recover",
+                "label": "",
+                "collectionIndex": 3,
+                "artifactIndex": 4
+              },
+              "bends": 2,
+              "stretch": 1.914
+            },
+            {
+              "relationship": {
+                "from": "declare",
+                "to": "update",
+                "label": "",
+                "collectionIndex": 7,
+                "artifactIndex": 8
+              },
+              "bends": 3,
+              "stretch": 3.465,
+              "directCorridorBlockers": [
+                {
+                  "id": "contain",
+                  "label": "Contain",
+                  "box": [
+                    394,
+                    341,
+                    72,
+                    52
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "triage"
+          },
+          "minimumSourceTextPx": 7.7,
+          "minimumProjectedTextPx": 7.7,
+          "semanticTextCount": 23
+        },
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "composition/viewport-height",
+            "readerFit": null,
+            "viewBoxWidth": 720,
+            "viewBoxHeight": 900,
+            "viewportWidth": 1440,
+            "viewportHeight": 900,
+            "ratio": 0.8,
+            "wideRatio": 1.55,
+            "svgWidthPx": 1346,
+            "svgHeightPx": 1683,
+            "fixedChromePx": 187,
+            "pageHeightPx": 1870,
+            "overflowPx": 970,
+            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 720x900 canvas (ratio 0.8) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 1683px tall at the full 1346px width and the page reaches 1870px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 464 at this width, or spread content sideways so the width is at least 1395 at this height; for architecture, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
+          }
+        ]
       }
     },
     {
@@ -527,8 +783,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 816419,
-      "artifactSha256": "c401af2063084329198bc915c0c3caec1c5156668dfd12c7f599f0573cb74814",
+      "artifactBytes": 844677,
+      "artifactSha256": "b5de17a1686fb98205c876956cf9edf56ba0dadf530cb4449dcb0fbcac647355",
       "sourceBytes": 5618,
       "sourceSha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
       "checks": [
@@ -579,12 +835,16 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 44.3,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 6.027777777777779,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
           "maxStretch": 1.369,
@@ -601,6 +861,45 @@
           "stretch": 1.35,
           "segmentPx": 16,
           "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": [
+            {
+              "relationship": {
+                "id": "consent-enrichment",
+                "from": "edge",
+                "to": "consent",
+                "label": "identity + consent",
+                "collectionIndex": 2,
+                "artifactIndex": 3
+              },
+              "bends": 3,
+              "stretch": 1.369
+            }
+          ]
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "web"
+          },
+          "minimumSourceTextPx": 7,
+          "minimumProjectedTextPx": 6.027777777777779,
+          "semanticTextCount": 30
         },
         "issues": []
       }
@@ -627,8 +926,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 14,
-      "artifactBytes": 813193,
-      "artifactSha256": "33bf7ef66adc0a3e9bb40d4269c6cb3976445c44b3284e2763a68035ccfb9013",
+      "artifactBytes": 841440,
+      "artifactSha256": "f5417db926ca0c6c9ce3fbc7771d6d80fa09916a4a7b086cb15a6c7c70ac4f13",
       "sourceBytes": 4370,
       "sourceSha256": "545f20920c89b69c2bb1f15508d5543fddbeb15cffba61e102206e04bd5a5cd9",
       "checks": [
@@ -675,16 +974,20 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 0
+          "warnings": 1
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 22,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 1,
+          "minProjectedNodeTextPx": 7,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1,
@@ -702,7 +1005,51 @@
           "segmentPx": 16,
           "microSegmentPx": 8
         },
-        "issues": []
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "client"
+          },
+          "minimumSourceTextPx": 7,
+          "minimumProjectedTextPx": 7,
+          "semanticTextCount": 28
+        },
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "composition/viewport-height",
+            "readerFit": null,
+            "viewBoxWidth": 820,
+            "viewBoxHeight": 920,
+            "viewportWidth": 1440,
+            "viewportHeight": 900,
+            "ratio": 0.89,
+            "wideRatio": 1.55,
+            "svgWidthPx": 1346,
+            "svgHeightPx": 1510,
+            "fixedChromePx": 187,
+            "pageHeightPx": 1697,
+            "overflowPx": 797,
+            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 820x920 canvas (ratio 0.89) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 1510px tall at the full 1346px width and the page reaches 1697px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 529 at this width, or spread content sideways so the width is at least 1426 at this height; for architecture, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
+          }
+        ]
       }
     },
     {
@@ -727,8 +1074,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 820400,
-      "artifactSha256": "d8ddc6a43617e37ae514b187f1aba723f2bfe8b8cb080be0fb8479bded0ec0d4",
+      "artifactBytes": 848675,
+      "artifactSha256": "148319e31e6dfdd95287569ca9d88a8cc7038e0c3d081955efe0a078d213e635",
       "sourceBytes": 5433,
       "sourceSha256": "a92d6597ddbe164f395da32a7d4b33cfae08edd7d9600a6fb45a2058e5bbb43e",
       "checks": [
@@ -775,16 +1122,20 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 0
+          "warnings": 1
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 9,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 1,
+          "minProjectedNodeTextPx": 6.027777777777779,
           "maxBends": 4,
           "routesOverSuggestedBends": 1,
           "maxStretch": 2.663,
@@ -802,7 +1153,63 @@
           "segmentPx": 16,
           "microSegmentPx": 8
         },
-        "issues": []
+        "routeReview": {
+          "crossings": [],
+          "detours": [
+            {
+              "relationship": {
+                "from": "validate",
+                "to": "dlq",
+                "label": "invalid event",
+                "collectionIndex": 8,
+                "artifactIndex": 9
+              },
+              "bends": 4,
+              "stretch": 2.663
+            }
+          ]
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "checkout"
+          },
+          "minimumSourceTextPx": 7,
+          "minimumProjectedTextPx": 6.027777777777779,
+          "semanticTextCount": 36
+        },
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "composition/viewport-height",
+            "readerFit": null,
+            "viewBoxWidth": 1080,
+            "viewBoxHeight": 780,
+            "viewportWidth": 1440,
+            "viewportHeight": 900,
+            "ratio": 1.38,
+            "wideRatio": 1.55,
+            "svgWidthPx": 1346,
+            "svgHeightPx": 972,
+            "fixedChromePx": 187,
+            "pageHeightPx": 1159,
+            "overflowPx": 259,
+            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 1080x780 canvas (ratio 1.38) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 972px tall at the full 1346px width and the page reaches 1159px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 696 at this width, or spread content sideways so the width is at least 1209 at this height; for architecture, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
+          }
+        ]
       }
     },
     {
@@ -827,8 +1234,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 6,
-      "artifactBytes": 809522,
-      "artifactSha256": "e11f2b1db9bb0c9659516f33a139c6c0e4f68c7a8ff264daf941e8bf4347f8bd",
+      "artifactBytes": 837754,
+      "artifactSha256": "7a6b40a30bbc51ee83787b1edfa0f2acb8c04958ff8f3f4f1bca99348b9af170",
       "sourceBytes": 4044,
       "sourceSha256": "7c0ad72ee7affbd6c6e4758b7520d61ddd4508c917acf36beabcad3ee7ca3ba7",
       "checks": [
@@ -879,12 +1286,16 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": null,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 6.320388349514563,
           "maxBends": 3,
           "routesOverSuggestedBends": 2,
           "maxStretch": 3.267,
@@ -901,6 +1312,81 @@
           "stretch": 1.35,
           "segmentPx": 16,
           "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": [
+            {
+              "relationship": {
+                "id": "failed-retry",
+                "from": "failed",
+                "to": "executing",
+                "label": "",
+                "collectionIndex": 3,
+                "artifactIndex": 5
+              },
+              "bends": 3,
+              "stretch": 3.267,
+              "directCorridorBlockers": [
+                {
+                  "id": "approval",
+                  "label": "Needs Approval",
+                  "box": [
+                    339,
+                    278,
+                    126,
+                    58
+                  ]
+                }
+              ]
+            },
+            {
+              "relationship": {
+                "id": "approval-cancelled",
+                "from": "approval",
+                "to": "cancelled",
+                "label": "",
+                "collectionIndex": 5,
+                "artifactIndex": 7
+              },
+              "bends": 3,
+              "stretch": 2.368,
+              "directCorridorBlockers": [
+                {
+                  "id": "failed",
+                  "label": "Failed",
+                  "box": [
+                    339,
+                    356,
+                    126,
+                    58
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "queued"
+          },
+          "minimumSourceTextPx": 7,
+          "minimumProjectedTextPx": 6.320388349514563,
+          "semanticTextCount": 20
         },
         "issues": []
       }
@@ -927,8 +1413,8 @@
       "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 6,
-      "artifactBytes": 811064,
-      "artifactSha256": "a812754ab6358777fed0154da55222986873ed077f6197b700957b97d3c569bd",
+      "artifactBytes": 839296,
+      "artifactSha256": "f58d003a14a095b414590f17529540acb12b70ae652a05f4b91f639ff650b19f",
       "sourceBytes": 4274,
       "sourceSha256": "735c2c5819266e6ea2a71775b6eefce98b53030ce90cb721dc8e1d022ce5be71",
       "checks": [
@@ -975,16 +1461,20 @@
         "status": "pass",
         "summary": {
           "errors": 0,
-          "warnings": 0
+          "warnings": 1
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": null,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 1,
+          "minProjectedNodeTextPx": 6.642857142857143,
           "maxBends": 0,
           "routesOverSuggestedBends": 0,
           "maxStretch": 1,
@@ -1002,7 +1492,51 @@
           "segmentPx": 16,
           "microSegmentPx": 8
         },
-        "issues": []
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "legacy-930",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "limit": "legacy",
+          "requestedTargetPx": null,
+          "requestedTargetMet": null,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "queued"
+          },
+          "minimumSourceTextPx": 7,
+          "minimumProjectedTextPx": 6.642857142857143,
+          "semanticTextCount": 22
+        },
+        "issues": [
+          {
+            "severity": "warning",
+            "code": "composition/viewport-height",
+            "readerFit": null,
+            "viewBoxWidth": 980,
+            "viewBoxHeight": 680,
+            "viewportWidth": 1440,
+            "viewportHeight": 900,
+            "ratio": 1.44,
+            "wideRatio": 1.55,
+            "svgWidthPx": 1346,
+            "svgHeightPx": 934,
+            "fixedChromePx": 187,
+            "pageHeightPx": 1121,
+            "overflowPx": 221,
+            "detail": "[composition/viewport-height] Preserve every node, relationship, and label. This 980x680 canvas (ratio 1.44) declares no intrinsic-height fit and is below the 1.55 wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders 934px tall at the full 1346px width and the page reaches 1121px before cards against 900px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most 632 at this width, or spread content sideways so the width is at least 1054 at this height; for architecture, omitting meta.viewBox lets the renderer size the canvas and declare the fit."
+          }
+        ]
       }
     },
     {
@@ -1027,8 +1561,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 811157,
-      "artifactSha256": "3b6576e29920ce22343b48ab6ee8cb3c98aa1febc583b569e4af30543e37be96",
+      "artifactBytes": 842381,
+      "artifactSha256": "f606669ad2e635d41e2c65f34aefe552618a016bf8be5ec831dce55aa4f0f329",
       "sourceBytes": 3793,
       "sourceSha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
       "checks": [
@@ -1079,12 +1613,16 @@
         },
         "metrics": {
           "properCrossings": 0,
+          "resolvedCrossovers": 0,
           "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
           "containerBorderRuns": 0,
           "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
           "minLabelRouteClearance": 20,
           "desktopReadabilityIssues": 0,
-          "minProjectedNodeTextPx": null,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 7.5,
           "maxBends": 3,
           "routesOverSuggestedBends": 1,
           "maxStretch": 1,
@@ -1101,6 +1639,56 @@
           "stretch": 1.35,
           "segmentPx": 16,
           "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": [
+            {
+              "relationship": {
+                "id": "jwt-verification",
+                "from": "auth",
+                "to": "api",
+                "label": "verify JWT",
+                "collectionIndex": 1,
+                "artifactIndex": 2
+              },
+              "bends": 3,
+              "stretch": 1
+            }
+          ]
+        },
+        "leadingSpace": {
+          "measured": true,
+          "emptyTopPx": 110,
+          "emptyTopRatio": 0.187,
+          "occupiedTop": 110,
+          "viewBoxTop": 0,
+          "canvasHeight": 588,
+          "typicalNodeHeight": 60,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 1012.5,
+          "actualBudgetPx": 1012.5,
+          "actualReaderWidth": 1042.5,
+          "desiredReaderWidth": 1042.5,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "edge",
+            "id": "users-to-cdn",
+            "from": "users",
+            "to": "cdn"
+          },
+          "minimumSourceTextPx": 8,
+          "minimumProjectedTextPx": 7.5,
+          "semanticTextCount": 28
         },
         "issues": []
       }

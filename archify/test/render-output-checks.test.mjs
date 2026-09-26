@@ -1,19 +1,41 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { parseFragment } from 'parse5';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { compactFinalizeReceipt } from '../bin/finalize.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-output-checks-'));
 const checker = path.join(skillRoot, 'scripts/check-render-output.mjs');
 
-function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 160') {
+test('render output check: finite_svg preserves slashes in unquoted HTML attribute values', () => {
+  for (const [markup, expected] of [
+    ['<line x1=NaN/>', 'NaN/'],
+    ['<line x1=NaN />', 'NaN'],
+    ['<line x1="NaN"/>', 'NaN'],
+    ['<line x1=NaN/ x2=10 />', 'NaN/'],
+    ['<line x1=NaN/></line>', 'NaN/'],
+  ]) {
+    const svg = parseFragment(`<svg>${markup}</svg>`).childNodes[0];
+    const value = svg.childNodes[0].attrs.find((attr) => attr.name === 'x1').value;
+    assert.equal(value, expected, markup);
+    const { result } = checkHtml('unquoted-attribute-slash', markup);
+    const check = result.checks.find((entry) => entry.name === 'finite_svg');
+    assert.equal(check.ok, false, markup);
+    assert.deepEqual(check.details, [`line x1="${value}"`], markup);
+  }
+});
+
+// 240x154 keeps the default fixture at the 1.55 wide ratio, so the fixed-width
+// viewport-height rule stays out of tests that target other composition rules.
+function checkHtml(name, svgBody, profile = 'standard', viewBox = '0 0 240 154', head = '', svgAttributes = '') {
   const htmlPath = path.join(tmp, `${name}.html`);
-  fs.writeFileSync(htmlPath, `<!doctype html><html><body><svg viewBox="${viewBox}" data-quality-profile="${profile}">${svgBody}</svg></body></html>`);
+  fs.writeFileSync(htmlPath, `<!doctype html><html><head>${head}</head><body><svg viewBox="${viewBox}" data-quality-profile="${profile}"${svgAttributes}>${svgBody}</svg></body></html>`);
   try {
     const stdout = execFileSync('node', [checker, htmlPath], { encoding: 'utf8' });
     return { code: 0, result: JSON.parse(stdout) };
@@ -38,6 +60,42 @@ test('render output check: showcase rejects node copy that becomes illegible at 
   assert.equal(issue?.severity, 'error');
   assert.equal(issue?.viewportWidth, 1440);
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
+
+test('render output check: predicts the certain 1440x900 overflow of a fixed-width portrait canvas', () => {
+  const node = `
+    <g data-node-id="a">
+      <rect x="20" y="20" width="200" height="60" rx="6" class="c-mask"/>
+      <text data-node-label x="120" y="55" class="t-primary" font-size="12">Node</text>
+    </g>
+  `;
+  // 1080x780 dataflow: measured in Chrome at 972px SVG / 1159px page before cards.
+  const portrait = checkHtml('viewport-height-portrait', node, 'showcase', '0 0 1080 780', '', '');
+  const issue = portrait.result.composition.issues.find((item) => item.code === 'composition/viewport-height');
+  assert.equal(issue?.severity, 'warning', 'new rule surfaces as evidence first');
+  assert.equal(portrait.code, 0);
+  assert.equal(issue.svgHeightPx, 972);
+  assert.equal(issue.fixedChromePx, 126, 'no guided-views strip in this fixture');
+  assert.equal(issue.pageHeightPx, 1098);
+  assert.match(issue.detail, /meta\.viewBox height is at most 696 at this width/);
+  assert.match(issue.detail, /width is at least 1209 at this height/);
+  assert.equal(portrait.result.composition.summary.warnings, 1);
+
+  const withViews = checkHtml('viewport-height-views', node, 'showcase', '0 0 1080 780', '<div class="guided-views"></div>');
+  assert.equal(withViews.result.composition.issues.find((item) => item.code === 'composition/viewport-height')?.pageHeightPx, 1159);
+
+  const declaredFit = checkHtml('viewport-height-fit', node, 'showcase', '0 0 1080 780', '', ' data-reader-fit="intrinsic-height"');
+  assert.equal(declaredFit.result.composition.issues.some((item) => item.code === 'composition/viewport-height'), false, 'a Reader-declared fit can scroll readably');
+
+  for (const type of ['architecture', 'workflow', '']) {
+    const fixed = checkHtml(`viewport-authored-${type}`, node, 'showcase', '0 0 1080 780', '',
+      ` data-reader-fit="authored-height" data-diagram-type="${type}"`);
+    assert.equal(fixed.result.composition.issues.some(item => item.code === 'composition/viewport-height'), type !== 'architecture');
+  }
+
+  const wide = checkHtml('viewport-height-wide', node, 'showcase', '0 0 1600 900');
+  assert.equal(wide.result.composition.issues.some((item) => item.code === 'composition/viewport-height'), false, 'a wide canvas is narrowed by the Reader instead');
+  assert.equal(wide.result.composition.metrics.viewportHeightIssues, 0);
 });
 
 test('render output check: compares exact projected size before rounding diagnostics', () => {
@@ -93,6 +151,107 @@ test('render output check: includes semantic boundary labels in desktop readabil
   assert.equal(issue?.text, 'Disaster recovery boundary');
   assert.equal(issue?.detail, 'boundary');
   assert.ok(issue?.projectedFontPx < issue?.minimumProjectedFontPx);
+});
+
+test('render output check: recognized declared-wide Reader admits the hard floor but records an unmet 7.5 target', () => {
+  const { code, result } = checkHtml('recognized-declared-wide-edge', `
+    <g data-edge-from="listener" data-edge-to="handler" data-detail="context">
+      <text x="120" y="160" class="t-muted" font-size="8">method path body</text>
+      <text data-detail="fine" x="120" y="172" class="t-dim" font-size="1">fine annotation</text>
+    </g>
+  `, 'showcase', '0 0 1438 800', '<meta name="archify-reader-contract" content="declared-wide-v1">', ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"');
+
+  assert.equal(code, 0, JSON.stringify(result, null, 2));
+  assert.equal(result.composition.desktopReadability.budgetBasis, 'recognized-declared-wide');
+  assert.equal(result.composition.desktopReadability.availableDiagramWidth, 1346);
+  assert.equal(result.composition.desktopReadability.minimumOwner.kind, 'edge');
+  assert.equal(result.composition.desktopReadability.minimumOwner.id, null);
+  assert.equal(result.composition.desktopReadability.semanticTextCount, 1);
+  assert.equal(result.composition.desktopReadability.hardFloorMet, true);
+  assert.equal(result.composition.desktopReadability.requestedTargetPx, 7.5);
+  assert.equal(result.composition.desktopReadability.requestedTargetMet, false);
+  assert.ok(result.composition.desktopReadability.minimumProjectedTextPx < 7.5);
+});
+
+test('render output check: ordinary metadata preserves legacy readability and bare semantic markers', () => {
+  const { code, result } = checkHtml('ordinary-meta-legacy-primary', `
+    <g data-node-id="compact-node">
+      <text data-node-label x="160" y="126" class="t-primary" font-size="8">Compact node</text>
+    </g>
+  `, 'showcase', '0 0 1300 700', '<meta name="viewport" content="width=device-width">');
+  assert.notEqual(code, 0);
+  assert.equal(result.composition.desktopReadability.budgetBasis, 'legacy-930');
+  const issue = result.composition.issues.find((item) => item.code === 'composition/desktop-readability');
+  assert.equal(issue?.detail, 'primary');
+  assert.equal(issue?.owner.kind, 'node');
+});
+
+test('render output check: marker recognition is exact and old fit/min-only HTML keeps the 930px floor', () => {
+  const body = `
+    <g data-edge-from="listener" data-edge-to="handler" data-detail="context">
+      <text x="120" y="160" class="t-muted" font-size="8">method path body</text>
+    </g>
+  `;
+  const svgAttributes = ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"';
+  for (const [name, head, attributes] of [
+    ['old-fit-min-only', '', svgAttributes],
+    ['unknown-reader-contract', '<meta name="archify-reader-contract" content="declared-wide-v2">', svgAttributes],
+    ['duplicate-reader-contract', '<meta name="archify-reader-contract" content="declared-wide-v1"><meta name="archify-reader-contract" content="declared-wide-v1">', svgAttributes],
+    ['invalid-reader-minimum', '<meta name="archify-reader-contract" content="declared-wide-v1">', ' data-reader-fit="intrinsic-height" data-reader-min-text="NaN"'],
+    ['explicit-viewbox-geometry', '<meta name="archify-reader-contract" content="declared-wide-v1">', ' data-reader-min-text="7.5"'],
+  ]) {
+    const { code, result } = checkHtml(name, body, 'showcase', '0 0 1438 800', head, attributes);
+    assert.notEqual(code, 0, name);
+    assert.equal(result.composition.desktopReadability.budgetBasis, 'legacy-930', name);
+    assert.equal(result.composition.issues.find((item) => item.code === 'composition/desktop-readability')?.detail, 'edge', name);
+  }
+});
+
+test('render output check: an edge below 6 remains warning in standard and error in showcase', () => {
+  const body = `
+    <g data-edge-from="listener" data-edge-to="handler" data-detail="context">
+      <text x="120" y="160" class="t-muted" font-size="5">short semantic edge label</text>
+    </g>
+  `;
+  const head = '<meta name="archify-reader-contract" content="declared-wide-v1">';
+  const svgAttributes = ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"';
+  const standard = checkHtml('declared-wide-standard-edge', body, 'standard', '0 0 1438 800', head, svgAttributes);
+  const showcase = checkHtml('declared-wide-showcase-edge', body, 'showcase', '0 0 1438 800', head, svgAttributes);
+  assert.equal(standard.code, 0);
+  assert.equal(standard.result.composition.issues.find((item) => item.code === 'composition/desktop-readability')?.severity, 'warning');
+  assert.notEqual(showcase.code, 0);
+  assert.equal(showcase.result.composition.issues.find((item) => item.code === 'composition/desktop-readability')?.severity, 'error');
+});
+
+test('render output check: finite non-positive semantic text remains below the 6px floor', () => {
+  const contract = '<meta name="archify-reader-contract" content="declared-wide-v1">';
+  const attributes = ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"';
+  for (const [name, body] of [
+    ['zero-only', '<g data-edge-from="a" data-edge-to="b" data-detail="context"><text x="1" y="1" font-size="0">zero</text></g>'],
+    ['negative-only', '<g data-edge-from="a" data-edge-to="b" data-detail="context"><text x="1" y="1" font-size="-1">negative</text></g>'],
+    ['zero-with-normal', '<g data-edge-from="a" data-edge-to="b" data-detail="context"><text x="1" y="1" font-size="8">ordinary</text><text x="1" y="2" font-size="0">zero</text></g>'],
+  ]) {
+    const showcase = checkHtml(`${name}-showcase`, body, 'showcase', '0 0 1438 800', contract, attributes);
+    const standard = checkHtml(`${name}-standard`, body, 'standard', '0 0 1438 800', contract, attributes);
+    assert.notEqual(showcase.code, 0, name);
+    assert.equal(showcase.result.composition.desktopReadability.budgetBasis, 'legacy-930', name);
+    assert.equal(showcase.result.composition.issues.find((item) => item.code === 'composition/desktop-readability')?.severity, 'error', name);
+    assert.equal(standard.code, 0, name);
+    assert.equal(standard.result.composition.issues.find((item) => item.code === 'composition/desktop-readability')?.severity, 'warning', name);
+  }
+});
+
+test('render output check: fine detail on a context edge is excluded before ownership classification', () => {
+  const { code, result } = checkHtml('fine-context-edge', `
+    <g data-edge-from="a" data-edge-to="b" data-detail="context">
+      <text x="1" y="1" font-size="8">ordinary relationship label</text>
+      <g data-detail="fine"><text x="1" y="2" font-size="1">fine nested note</text></g>
+    </g>
+  `, 'showcase', '0 0 1438 800', '<meta name="archify-reader-contract" content="declared-wide-v1">', ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"');
+  assert.equal(code, 0, JSON.stringify(result, null, 2));
+  assert.equal(result.composition.desktopReadability.minimumOwner.kind, 'edge');
+  assert.equal(result.composition.desktopReadability.semanticTextCount, 1);
+  assert.ok(result.composition.desktopReadability.minimumProjectedTextPx >= 6);
 });
 
 test('render output check: accepts orthogonal arrows away from legend', () => {
@@ -184,6 +343,56 @@ test('render output check: showcase rejects a proper X with semantic identities'
   assert.deepEqual(result.composition.summary, { errors: 1, warnings: 0 });
 });
 
+test('render output check: verified automatic crossover halos resolve a proper X', () => {
+  const { code, result } = checkHtml('showcase-verified-crossover-halo', `
+    <path data-graph-role="automatic-crossover-underlay" d="M 20 60 L 200 60" fill="none" stroke="var(--mask)" stroke-width="5.5" pointer-events="none"/>
+    <path data-edge-id="left" data-edge-from="a" data-edge-to="b" data-composition-crossover="halo" d="M 20 60 L 200 60" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+    <path data-graph-role="automatic-crossover-underlay" d="M 100 20 L 100 120" fill="none" stroke="var(--mask)" stroke-width="5.5" pointer-events="none"/>
+    <path data-edge-id="right" data-edge-from="c" data-edge-to="d" data-composition-crossover="halo" d="M 100 20 L 100 120" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+  `, 'showcase');
+  assert.equal(code, 0, JSON.stringify(result.composition.issues));
+  assert.equal(result.composition.metrics.properCrossings, 0);
+  assert.equal(result.composition.metrics.resolvedCrossovers, 1);
+  assert.deepEqual(result.composition.summary, { errors: 0, warnings: 0 });
+});
+
+test('render output check: crossover halos fail closed when sibling adjacency is interrupted', () => {
+  const underlay = '<path data-graph-role="automatic-crossover-underlay" d="M 20 60 L 200 60" fill="none" stroke="var(--mask)" stroke-width="5.5" pointer-events="none"/>';
+  const route = '<path data-edge-id="left" data-edge-from="a" data-edge-to="b" data-composition-crossover="halo" d="M 20 60 L 200 60" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>';
+  const rightUnderlay = '<path data-graph-role="automatic-crossover-underlay" d="M 100 20 L 100 120" fill="none" stroke="var(--mask)" stroke-width="5.5" pointer-events="none"/>';
+  const rightRoute = '<path data-edge-id="right" data-edge-from="c" data-edge-to="d" data-composition-crossover="halo" d="M 100 20 L 100 120" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>';
+  for (const [name, separator] of [
+    ['comment', '<!-- an intervening comment -->'],
+    ['element', '<path d="M 1 1 L 2 2"/>'],
+    ['group', '<g></g>'],
+  ]) {
+    const { code, result } = checkHtml(`showcase-crossover-nonadjacent-${name}`, `
+      ${underlay}
+      ${separator}
+      ${route}
+      ${rightUnderlay}
+      ${rightRoute}
+    `, 'showcase');
+    assert.notEqual(code, 0, name);
+    assert.equal(result.composition.metrics.properCrossings, 1, name);
+    assert.equal(result.composition.metrics.resolvedCrossovers, 0, name);
+  }
+});
+
+test('render output check: a crossover marker without a matching underlay fails closed', () => {
+  const { code, result } = checkHtml('showcase-unverified-crossover-halo', `
+    <path data-graph-role="automatic-crossover-underlay" d="M 20 61 L 200 61" fill="none" stroke="var(--mask)" stroke-width="5.5" pointer-events="none"/>
+    <path data-edge-id="left" data-edge-from="a" data-edge-to="b" data-composition-crossover="halo" d="M 20 60 L 200 60" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+    <path data-graph-role="automatic-crossover-underlay" d="M 100 20 L 100 120" fill="none" stroke="var(--mask)" stroke-width="5.5" pointer-events="none"/>
+    <path data-edge-id="right" data-edge-from="c" data-edge-to="d" data-composition-crossover="halo" d="M 100 20 L 100 120" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+  `, 'showcase');
+  assert.notEqual(code, 0);
+  assert.equal(result.composition.metrics.properCrossings, 1);
+  assert.equal(result.composition.metrics.resolvedCrossovers, 0);
+  const crossing = result.composition.issues.find((item) => item.code === 'composition/proper-crossing');
+  assert.equal(crossing?.severity, 'error');
+});
+
 test('render output check: shared endpoints and endpoint touches pass showcase', () => {
   const { code, result } = checkHtml('showcase-exemptions', `
     <path data-edge-from="a" data-edge-to="b" d="M 20 60 L 200 60" class="a-default" marker-end="url(#arrowhead)"/>
@@ -232,6 +441,99 @@ test('render output check: relationship labels cannot hide another shared-source
       assert.deepEqual(result.composition.summary, { errors: 1, warnings: 0 });
     }
   }
+});
+
+// `check` also runs against artifacts it did not produce, so a label the SVG
+// canvas clips has to be measurable from the emitted markup alone.
+test('render output check: a relationship label cannot leave the canvas', () => {
+  for (const profile of ['standard', 'showcase']) {
+    const { code, result } = checkHtml(`label-canvas-${profile}`, `
+      <path data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-composition-points="20,60;200,60" d="M 20 60 L 200 60" class="a-default" marker-end="url(#arrowhead)"/>
+      <g data-detail="context" data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-edge-label="approved replay">
+        <rect x="200" y="48" width="60" height="14" rx="3" class="c-mask"/>
+        <text x="230" y="58">approved replay</text>
+      </g>
+    `, profile);
+
+    assert.equal(result.composition.metrics.labelCanvasOverflowIssues, 1);
+    const issue = result.composition.issues.find((item) => item.code === 'composition/label-canvas-containment');
+    assert.equal(issue.label, 'approved replay');
+    assert.deepEqual(issue.labelRect, { x: 200, y: 48, width: 60, height: 14 });
+    assert.deepEqual(issue.viewBox, [240, 154]);
+    assert.deepEqual(issue.overflowPx, { right: 20 });
+    assert.match(issue.detail, /extends past the right edge by 20px/);
+    // The rule owns no named check: it fails the receipt through composition,
+    // exactly like composition/desktop-readability.
+    assert.equal(result.checks.length, 9);
+    assert.ok(result.checks.every((check) => check.ok));
+    if (profile === 'standard') {
+      assert.equal(code, 0);
+      assert.equal(issue.severity, 'warning');
+      assert.deepEqual(result.composition.summary, { errors: 0, warnings: 1 });
+    } else {
+      assert.notEqual(code, 0);
+      assert.equal(issue.severity, 'error');
+      assert.deepEqual(result.composition.summary, { errors: 1, warnings: 0 });
+      assert.equal(result.ok, false);
+    }
+  }
+});
+
+test('render output check: a contained relationship label reports no overflow', () => {
+  const { code, result } = checkHtml('label-canvas-contained', `
+    <path data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-composition-points="20,60;200,60" d="M 20 60 L 200 60" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-detail="context" data-edge-key="0" data-edge-id="approved" data-edge-from="dlq" data-edge-to="replay" data-edge-label="approved replay">
+      <rect x="170" y="48" width="60" height="14" rx="3" class="c-mask"/>
+      <text x="200" y="58">approved replay</text>
+    </g>
+  `, 'showcase');
+  assert.equal(code, 0);
+  assert.equal(result.composition.metrics.labelCanvasOverflowIssues, 0);
+});
+
+// A foreign artifact may author a legal non-zero viewBox origin, so containment
+// is measured against [min-x, min-x + width], not [0, width]: measuring from
+// zero passed a label the canvas clips and rejected a contained one.
+test('render output check: label containment respects a positive viewBox origin', () => {
+  const svgFor = (rect) => `
+    <path data-edge-key="0" data-edge-from="a" data-edge-to="b" data-composition-points="110,80;330,80" d="M 110 80 L 330 80" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-edge-key="0" data-edge-from="a" data-edge-to="b" data-edge-label="ship">
+      <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="3" class="c-mask"/>
+      <text x="${rect.x + rect.width / 2}" y="${rect.y + 10}">ship</text>
+    </g>
+  `;
+
+  const contained = checkHtml('origin-positive-contained', svgFor({ x: 280, y: 48, width: 40, height: 14 }), 'showcase', '100 0 240 160');
+  assert.equal(contained.code, 0, JSON.stringify(contained.result.composition.issues));
+  assert.equal(contained.result.composition.metrics.labelCanvasOverflowIssues, 0);
+
+  const clipped = checkHtml('origin-positive-clipped', svgFor({ x: 80, y: 48, width: 60, height: 14 }), 'showcase', '100 0 240 160');
+  assert.notEqual(clipped.code, 0);
+  const issue = clipped.result.composition.issues.find((item) => item.code === 'composition/label-canvas-containment');
+  assert.deepEqual(issue.overflowPx, { left: 20 });
+  assert.deepEqual(issue.viewBoxOrigin, [100, 0]);
+  assert.match(issue.detail, /extends past the left edge by 20px \(label rect \[80, 48, 60, 14\]; viewBox 240x160 at 100,0\)/);
+});
+
+test('render output check: label containment respects a negative viewBox origin', () => {
+  const svgFor = (rect) => `
+    <path data-edge-key="0" data-edge-from="a" data-edge-to="b" data-composition-points="-40,80;170,80" d="M -40 80 L 170 80" class="a-default" marker-end="url(#arrowhead)"/>
+    <g data-edge-key="0" data-edge-from="a" data-edge-to="b" data-edge-label="ship">
+      <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="3" class="c-mask"/>
+      <text x="${rect.x + rect.width / 2}" y="${rect.y + 10}">ship</text>
+    </g>
+  `;
+
+  const contained = checkHtml('origin-negative-contained', svgFor({ x: -50, y: -30, width: 40, height: 14 }), 'showcase', '-60 -40 240 160');
+  assert.equal(contained.code, 0, JSON.stringify(contained.result.composition.issues));
+  assert.equal(contained.result.composition.metrics.labelCanvasOverflowIssues, 0);
+
+  const clipped = checkHtml('origin-negative-clipped', svgFor({ x: 150, y: 48, width: 60, height: 14 }), 'showcase', '-60 -40 240 160');
+  assert.notEqual(clipped.code, 0);
+  const issue = clipped.result.composition.issues.find((item) => item.code === 'composition/label-canvas-containment');
+  assert.deepEqual(issue.overflowPx, { right: 30 });
+  assert.deepEqual(issue.viewBoxOrigin, [-60, -40]);
+  assert.match(issue.detail, /extends past the right edge by 30px \(label rect \[150, 48, 60, 14\]; viewBox 240x160 at -60,-40\)/);
 });
 
 test('render output check: repeated endpoint messages keep their own stable owner identity', () => {
@@ -314,6 +616,130 @@ test('render output check: label-route thresholds include exact 2px and 4px boun
   assert.notEqual(showcaseBelowFour.code, 0);
   assert.equal(showcaseBelowFour.result.composition.metrics.labelRouteClearanceIssues, 1);
   assert.equal(showcaseBelowFour.result.composition.summary.errors, 1);
+});
+
+function automaticArrow(id, from, to, points, width = 1.5) {
+  const d = points.map(([x, y], index) => `${index ? 'L' : 'M'} ${x} ${y}`).join(' ');
+  return `<path data-graph-role="automatic-crossover-underlay" d="${d}" fill="none" stroke="var(--mask)" stroke-width="${width + 4}" pointer-events="none"/>
+    <path data-edge-id="${id}" data-edge-from="${from}" data-edge-to="${to}" data-composition-points="${points.map((point) => point.join(',')).join(';')}" data-composition-crossover="halo" data-composition-independent="true" d="${d}" class="a-default" stroke-width="${width}" marker-end="url(#arrowhead)"/>`;
+}
+
+function automaticWorkflowArrow(id, from, to, points) {
+  const d = points.map(([x, y], index) => `${index ? 'L' : 'M'} ${x} ${y}`).join(' ');
+  return `<path data-edge-id="${id}" data-edge-from="${from}" data-edge-to="${to}" data-composition-routing="workflow-v2-auto" data-composition-points="${points.map((point) => point.join(',')).join(';')}" d="${d}" class="a-default" marker-end="url(#arrowhead)"/>`;
+}
+
+test('render output check: automatic workflow counterflow warns in standard and fails showcase without a halo', () => {
+  const markup = automaticWorkflowArrow('admission', 'a', 'hub', [[60, 20], [60, 100]])
+    + automaticWorkflowArrow('dispatch', 'hub', 'b', [[60, 100], [60, 49], [140, 49]]);
+  for (const profile of ['standard', 'showcase']) {
+    const { code, result } = checkHtml(`workflow-counterflow-${profile}`, markup, profile);
+    assert.equal(code, profile === 'showcase' ? 1 : 0);
+    const issue = result.composition.issues.find((entry) => entry.code === 'composition/ambiguous-corridor');
+    assert.equal(issue?.severity, profile === 'showcase' ? 'error' : 'warning');
+    assert.equal(issue?.overlapLength, 51);
+    assert.deepEqual([issue?.relationship.id, issue?.otherRelationship.id], ['admission', 'dispatch']);
+    assert.deepEqual(result.composition.summary, profile === 'showcase'
+      ? { errors: 1, warnings: 0 } : { errors: 0, warnings: 1 });
+  }
+  for (const preserved of [
+    markup.replaceAll(' data-composition-routing="workflow-v2-auto"', ''),
+    markup.replace(' data-composition-routing="workflow-v2-auto"', ''),
+    markup.replaceAll('workflow-v2-auto', 'workflow-v1'),
+  ]) {
+    const { code, result } = checkHtml('workflow-authored-counterflow', preserved, 'showcase');
+    assert.equal(code, 0, JSON.stringify(result));
+    assert.equal(result.composition.metrics.ambiguousCorridors, 0);
+  }
+  const sharedTrunk = automaticWorkflowArrow('first', 'hub', 'a', [[60, 20], [60, 100]])
+    + automaticWorkflowArrow('second', 'hub', 'b', [[60, 20], [60, 70], [140, 70]]);
+  const sameDirection = checkHtml('workflow-shared-trunk', sharedTrunk, 'showcase');
+  assert.equal(sameDirection.code, 0, JSON.stringify(sameDirection.result));
+  assert.equal(sameDirection.result.composition.metrics.ambiguousCorridors, 0);
+});
+
+test('render output check: automatic workflow shared-endpoint X is checked independently of halo claims', () => {
+  const markup = automaticWorkflowArrow('first', 'a', 'hub', [[20, 20], [80, 20], [80, 80], [140, 80]])
+    + automaticWorkflowArrow('second', 'b', 'hub', [[20, 100], [120, 100], [120, 40], [140, 40]]);
+  for (const profile of ['standard', 'showcase']) {
+    const { code, result } = checkHtml(`workflow-shared-crossing-${profile}`, markup, profile);
+    assert.equal(code, profile === 'showcase' ? 1 : 0);
+    assert.equal(result.composition.metrics.properCrossings, 1);
+    assert.equal(result.composition.metrics.resolvedCrossovers, 0);
+    const issue = result.composition.issues.find((entry) => entry.code === 'composition/proper-crossing');
+    assert.equal(issue?.severity, profile === 'showcase' ? 'error' : 'warning');
+    assert.deepEqual(issue?.point, [120, 80]);
+  }
+  const mixed = checkHtml('workflow-mixed-shared-crossing', markup.replace(' data-composition-routing="workflow-v2-auto"', ''), 'showcase');
+  assert.equal(mixed.code, 0, JSON.stringify(mixed.result));
+  const falseHalo = markup.replaceAll('data-composition-routing=', 'data-composition-crossover="halo" data-composition-independent="true" data-composition-routing=');
+  const forged = checkHtml('workflow-false-halo', falseHalo, 'showcase');
+  assert.equal(forged.code, 1, 'routing provenance cannot certify an absent crossover halo');
+  assert.equal(forged.result.composition.metrics.properCrossings, 1);
+  assert.equal(forged.result.composition.metrics.resolvedCrossovers, 0);
+
+  const unrelated = markup.replace('data-edge-to="hub"', 'data-edge-to="other"');
+  const marked = checkHtml('workflow-marked-unrelated-crossing', unrelated, 'showcase');
+  const unmarked = checkHtml('workflow-unmarked-unrelated-crossing', unrelated.replaceAll(' data-composition-routing="workflow-v2-auto"', ''), 'showcase');
+  assert.equal(marked.code, 1);
+  assert.equal(unmarked.code, 1, 'an automatic marker only tightens existing crossing acceptance');
+});
+
+test('render output check: independent shared-endpoint crossings still recommend visual review', () => {
+  const markup = automaticArrow('first', 'a', 'hub', [[20, 20], [80, 20], [80, 80], [140, 80]])
+    + automaticArrow('second', 'b', 'hub', [[20, 100], [120, 100], [120, 40], [140, 40]]);
+  const { code, result } = checkHtml('independent-shared-crossing', markup, 'showcase');
+  assert.equal(code, 0, JSON.stringify(result));
+  assert.equal(result.composition.metrics.resolvedCrossovers, 1);
+  assert.equal(result.composition.metrics.properCrossings, 0);
+  assert.equal(result.composition.metrics.routesOverSuggestedBends, 0);
+  assert.equal(result.composition.metrics.routesOverSuggestedStretch, 0);
+  const summary = compactFinalizeReceipt({ ok: true, stages: { check: { receipt: result } } });
+  assert.deepEqual(summary.visualReviewRecommendation.signals, { resolvedCrossovers: 1 });
+  const affected = summary.visualReviewRecommendation.affectedRoutes;
+  assert.equal(affected.crossings.length, 1);
+  assert.equal(affected.crossings[0].left.id, 'first');
+  assert.equal(affected.crossings[0].right.id, 'second');
+  assert.deepEqual(affected.crossings[0].point, [120, 80]);
+  assert.deepEqual(affected.detours, []);
+  assert.equal(affected.truncated, false);
+  assert.equal(summary.visualReview, 'not-requested');
+  // A legacy/authored shared junction must keep its existing interpretation.
+  for (const preserved of [
+    markup.replaceAll(' data-composition-independent="true"', ''),
+    markup.replace(' data-composition-independent="true"', ''),
+  ]) {
+    const legacy = checkHtml('legacy-shared-crossing', preserved, 'showcase');
+    assert.equal(legacy.code, 0, JSON.stringify(legacy.result));
+    assert.equal(legacy.result.composition.metrics.resolvedCrossovers, 0);
+  }
+});
+
+test('render output check: automatic shared destinations do not excuse long merged corridors', () => {
+  const markup = automaticArrow('first', 'a', 'hub', [[20, 20], [100, 20], [100, 140]])
+    + automaticArrow('second', 'b', 'hub', [[180, 60], [100, 60], [100, 120], [140, 120], [140, 140]]);
+  const { code, result } = checkHtml('automatic-shared-corridor', markup, 'showcase');
+  assert.equal(code, 1);
+  const issue = result.composition.issues.find((entry) => entry.code === 'composition/ambiguous-corridor');
+  assert.equal(issue?.overlapLength, 60);
+  // Explicit junctions retain their historical compatibility contract.
+  const authored = checkHtml('authored-shared-corridor', markup.replaceAll('data-composition-crossover="halo"', ''), 'showcase');
+  assert.equal(authored.code, 0, JSON.stringify(authored.result));
+});
+
+test('render output check: incoming automatic markers must fit their actual stroke width', () => {
+  for (const [spacing, width, collision] of [[7, 1.5, true], [14, 1.5, false], [14, 4, true], [32, 4, false]]) {
+    const markup = automaticArrow('first', 'a', 'hub', [[100, 40], [100, 120]], width)
+      + automaticArrow('second', 'b', 'hub', [[100 + spacing, 40], [100 + spacing, 120]], width);
+    const { code, result } = checkHtml(`markers-${spacing}-${width}`, markup, 'showcase');
+    assert.equal(code, collision ? 1 : 0, JSON.stringify(result));
+    const issue = result.composition.issues.find((entry) => entry.code === 'composition/arrowhead-collision');
+    assert.equal(Boolean(issue), collision);
+    if (issue) {
+      assert.equal(issue.distancePx, spacing);
+      assert.equal(issue.minimumPx, width * 7);
+    }
+  }
 });
 
 test('render output check: unrelated shared corridors warn in standard and fail showcase', () => {
@@ -406,6 +832,30 @@ test('render output check: composition receipt records neutral normalized route 
   assert.deepEqual(result.composition.suggestedLimits, { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 });
 });
 
+test('render output check: detours identify intervening nodes without failing valid routing', () => {
+  for (const vertical of [false, true]) {
+    const point = (x, y) => vertical ? [y, x] : [x, y];
+    const rect = (id, x, y, extra = '') => {
+      const [left, top] = point(x, y);
+      return `<g data-node-id="${id}" data-node-label="${id} role" ${extra}><rect class="c-mask" x="${left}" y="${top}" width="40" height="40"/></g>`;
+    };
+    const points = [[50, 70], [70, 70], [70, 20], [190, 20], [190, 70], [210, 70]].map(([x, y]) => point(x, y));
+    const edge = `<path data-edge-from="a" data-edge-to="b" data-composition-points="${points.map(p => p.join(',')).join(';')}" d="M ${points.map(p => p.join(' ')).join(' L ')}" class="a-default" marker-end="url(#arrowhead)"/>`;
+    const endpoints = rect('a', 10, 50) + rect('b', 210, 50);
+    const { code, result } = checkHtml(`blocked-direct-${vertical}`, endpoints + rect('blocker', 110, 50) + rect('off-row', 110, 100) + edge, 'showcase', '0 0 560 280');
+    assert.equal(code, 0, 'a legal route around an intervening node is still valid');
+    assert.deepEqual(result.composition.summary, { errors: 0, warnings: 0 });
+    assert.deepEqual(result.composition.routeReview.detours[0].directCorridorBlockers, [{
+      id: 'blocker', label: 'blocker role', box: [...point(110, 50), 40, 40],
+    }]);
+
+    const transformed = checkHtml(`transformed-blocker-${vertical}`, endpoints + `<g transform="translate(100 100)">${rect('blocker', 110, 50)}</g>` + edge, 'showcase', '0 0 560 280');
+    assert.equal(transformed.result.composition.routeReview.detours[0].directCorridorBlockers, undefined, 'unresolved coordinate spaces are not guessed');
+    const offset = checkHtml(`offset-endpoints-${vertical}`, rect('a', 10, 40) + rect('b', 210, 50) + rect('blocker', 110, 50) + edge, 'showcase', '0 0 560 280');
+    assert.equal(offset.result.composition.routeReview.detours[0].directCorridorBlockers, undefined, 'different rows have no single direct corridor');
+  }
+});
+
 test('render output check: endpoint stubs from 8px pass while cramped interior turns are profile-aware', () => {
   const clean = checkHtml('endpoint-stubs', `
     <path data-edge-id="lane-hop" data-edge-from="a" data-edge-to="b" data-composition-points="0,20;13,20;13,60;80,60;80,73" d="M 0 20 L 13 20 L 13 60 L 80 60 L 80 73" class="a-default" marker-end="url(#arrowhead)"/>
@@ -433,3 +883,184 @@ test('render output check: endpoint stubs from 8px pass while cramped interior t
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+test('readability node ownership survives nested groups and does not leak after closing', () => {
+  const nested = checkHtml('nested-owner', `
+    <g data-node-id="outer"><g/><g><text data-detail="context" font-size="7">Repeated</text></g></g>
+  `, 'showcase', '0 0 1200 400');
+  assert.equal(nested.result.composition.issues[0].nodeId, 'outer');
+  const loose = checkHtml('closed-owner', `
+    <g data-node-id="outer"><g><text data-node-label font-size="12">Readable</text></g></g>
+    <text data-boundary-label font-size="7">Repeated</text>
+  `, 'showcase', '0 0 1200 400');
+  assert.equal(loose.result.composition.issues[0].nodeId, undefined);
+});
+
+for (const position of ['before', 'after']) {
+  test(`render output check: finite_svg ignores HTML numeric attributes ${position} SVG`, () => {
+    const htmlPath = path.join(tmp, `finite-html-${position}.html`);
+    const html = '<div x="NaN" width="Infinity"><input width="NaN"><br></div>';
+    const svg = '<svg viewBox="0 0 240 160"><rect x="10" y="10" width="20" height="20"/></svg>';
+    fs.writeFileSync(htmlPath, `<!doctype html><html><body>${position === 'before' ? html + svg : svg + html}</body></html>`);
+    const result = JSON.parse(execFileSync('node', [checker, htmlPath], { encoding: 'utf8' }));
+    const check = result.checks.find(item => item.name === 'finite_svg');
+    assert.equal(check.ok, true);
+    assert.deepEqual(check.details, []);
+  });
+}
+
+test('render output check: finite_svg ignores comments and CDATA but still checks real elements', () => {
+  const { result } = checkHtml('finite-non-elements', `
+    <!-- <rect x="NaN"/> -->
+    <![CDATA[<path d="Infinity"/>]]>
+    <rect x="12" y="20" width="50" height="40"/>
+    <circle cx="NaN" cy="20" r="5"/>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, ['circle cx="NaN"']);
+});
+
+test('render output check: finite_svg decodes numeric references once and reports raw evidence', () => {
+  const { result } = checkHtml('finite-encoded-values', `
+    <rect x="&#78;aN" y="&#x49;&#110;&#102;&#105;&#110;&#105;&#116;&#121;"/>
+    <circle cx="&#x4eaN" cy="&amp;#78;aN" r="10"/>
+    <path d="M 0 0 L &#x4e;aN 12"/>
+    <text x="10" y="10" data-note="&#78;aN">&#78;aN</text>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="&#78;aN"',
+    'rect y="&#x49;&#110;&#102;&#105;&#110;&#105;&#116;&#121;"',
+    'path d="M 0 0 L &#x4e;aN 12"',
+  ]);
+});
+
+test('render output check: finite_svg separates foreignObject HTML from SVG geometry', () => {
+  const { result } = checkHtml('finite-foreign-object', `
+    <foreignObject x="NaN" y="0" width="100" height="100">
+      <div xmlns="http://www.w3.org/1999/xhtml" x="NaN" width="Infinity">
+        <input width="NaN"><br><div y="Infinity">HTML content</div>
+      </div>
+    </foreignObject>
+    <rect x="Infinity"/>
+  `);
+  const check = result.checks.find(item => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, ['foreignObject x="NaN"', 'rect x="Infinity"']);
+  const nested = checkHtml('finite-foreign-nested-svg', `
+    <foreignObject><div x="NaN"><svg><rect x="NaN"/></svg></div></foreignObject>
+  `).result.checks.find(item => item.name === 'finite_svg');
+  assert.deepEqual(nested.details, ['rect x="NaN"']);
+});
+
+test('render output check: finite_svg ignores prose that mentions NaN or Infinity', () => {
+  const { result } = checkHtml('finite-prose', `
+    <g data-node-id="solver" data-node-tag="returns a NaN leaf" aria-label="Focus Solver">
+      <title>Solver · returns a NaN leaf · Infinity guard</title>
+      <rect x="40" y="40" width="200" height="74" rx="6" class="c-mask"/>
+      <text x="140" y="70" class="t-primary" font-size="11" text-anchor="middle">Solver</text>
+      <text data-detail="fine" x="140" y="106" class="t-backend" font-size="7">returns a NaN leaf</text>
+    </g>
+    <!-- Legend -->
+    <text x="40" y="140" class="t-primary" font-size="10">Legend</text>
+  `);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, true);
+  assert.deepEqual(check.details, []);
+});
+
+test('render output check: finite_svg reports the attribute carrying a non-finite value', () => {
+  const { code, result } = checkHtml('finite-attr', `
+    <rect x="NaN" y="40" width="200" height="74" rx="6" class="c-mask"/>
+    <path d="M 20 20 L undefined 20" class="a-default" stroke-width="1.4"/>
+    <text x="140" y="Infinity" class="t-primary" font-size="11">Solver</text>
+    <!-- Legend -->
+    <text x="40" y="140" class="t-primary" font-size="10">Legend</text>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="NaN"',
+    'path d="M 20 20 L undefined 20"',
+    'text y="Infinity"',
+  ]);
+});
+
+test('render output check: finite_svg parses quoted angle brackets and HTML attribute quoting', () => {
+  const { code, result } = checkHtml('finite-attr-syntax', `
+    <rect aria-label="greater > lesser" x="NaN" y="40" width="200" height="74"/>
+    <circle cx='Infinity' cy='40' r='6'/>
+    <line x1=undefined y1=10 x2=20 y2=10/>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'rect x="NaN"',
+    'circle cx="Infinity"',
+    'line x1="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg covers extended SVG numeric attributes', () => {
+  const { code, result } = checkHtml('finite-extended-attrs', `
+    <path d="M 0 0 L 10 0" pathLength="NaN"/>
+    <radialGradient fr="-Infinity"/>
+    <feGaussianBlur stdDeviation="undefined"/>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'path pathLength="NaN"',
+    'radialGradient fr="-Infinity"',
+    'feGaussianBlur stdDeviation="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg covers element-specific filter numeric attributes', () => {
+  const { code, result } = checkHtml('finite-element-specific-filter-attrs', `
+    <filter id="lighting">
+      <feDiffuseLighting><fePointLight x="10" y="10" z="NaN"/></feDiffuseLighting>
+      <feSpecularLighting><feSpotLight x="10" y="10" z="-Infinity"/></feSpecularLighting>
+      <feColorMatrix type="saturate" values="undefined"/>
+    </filter>
+  `);
+  assert.notEqual(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, false);
+  assert.deepEqual(check.details, [
+    'fePointLight z="NaN"',
+    'feSpotLight z="-Infinity"',
+    'feColorMatrix values="undefined"',
+  ]);
+});
+
+test('render output check: finite_svg keeps context-sensitive values attributes scoped', () => {
+  const { code, result } = checkHtml('finite-context-sensitive-values', `
+    <animate attributeName="data-node-tag" values="NaN;Infinity" dur="1s"/>
+  `);
+  assert.equal(code, 0);
+  const check = result.checks.find((item) => item.name === 'finite_svg');
+  assert.equal(check.ok, true);
+  assert.deepEqual(check.details, []);
+});
+
+for (const [name, markup] of [
+  ['comment-open', '<!-- <g data-node-id="other"> -->'],
+  ['comment-close', '<!-- </g> -->'],
+  ['cdata', '<![CDATA[<g data-node-id="other"></g></g>]]>'],
+]) {
+  test(`readability node ownership ignores ${name}`, () => {
+    const { result } = checkHtml(`owner-${name}`, `
+      <g data-node-id="actual">${markup}<text data-detail="context" font-size="7">Repeated</text></g>
+    `, 'showcase', '0 0 1200 400');
+    const issue = result.composition.issues.find(item => item.code === 'composition/desktop-readability');
+    assert.equal(issue.nodeId, 'actual');
+    assert.equal(issue.text, 'Repeated');
+    assert.equal(issue.projectedFontPx, 5.425);
+  });
+}

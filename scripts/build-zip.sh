@@ -5,14 +5,11 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 out="${1:-$repo_root/archify.zip}"
-# Git Bash callers may pass Windows-style absolute paths: drive paths (C:\...
-# or C:/...) and \\-prefixed forms such as UNC shares or the \\?\ extended-length
-# prefix. Node resolves those natively, so only genuinely relative paths get the
-# cwd prefix; prefixing a Windows path would send MSYS a malformed mixed path.
-windows_absolute='^([A-Za-z]:[/\\]|\\\\)'
-if [[ "$out" != /* && ! "$out" =~ $windows_absolute ]]; then
-  out="$(pwd)/$out"
-fi
+
+# Reject unsafe raw output spellings before the canonical-toolchain gate so
+# every maintained Node lane exercises the same shared native path grammar.
+# This validation-only mode is read-only and does not create parent paths.
+node "$repo_root/scripts/write-deterministic-zip.mjs" --validate-output "$out"
 
 # Runtime consumers support every Node version declared by archify/package.json,
 # but canonical ZIP bytes depend on the Node/zlib toolchain. CI and releases use

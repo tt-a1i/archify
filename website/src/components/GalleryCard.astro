@@ -1,0 +1,7 @@
+---
+import { renderCard } from '../data/gallery-presentation.mjs';
+import type { cards } from '../data/site';
+interface Props { entry: (typeof cards)[number]; index: number }
+const { entry, index } = Astro.props;
+---
+<Fragment set:html={renderCard(entry, index)} />

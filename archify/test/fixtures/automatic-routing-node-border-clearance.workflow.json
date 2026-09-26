@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "自动连线节点边框避让回归",
+    "output": "automatic-routing-node-border-clearance.html",
     "quality_profile": "showcase",
     "viewBox": [720, 360]
   },

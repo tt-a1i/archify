@@ -36,7 +36,7 @@ test('showcase intake requires reproducible proof, redaction, and explicit publi
   assert.match(template, /required:\s*true/g);
 
   const submissionUrl = 'https://github.com/tt-a1i/archify/issues/new?template=showcase.yml';
-  for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md']) {
     assert.match(read(readme), new RegExp(submissionUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${readme}: direct showcase link`);
   }
 });
@@ -87,7 +87,7 @@ test('contributor and pull-request guides keep proof changes reproducible and st
     'Do not include secrets',
     'Agent-first',
     'diagnostics[]',
-    'Start from the latest `main`',
+    'Start from the latest `dev`',
     'tracked-only, symlink-safe',
     'is **skipped**, not passed',
   ]) {
@@ -111,7 +111,6 @@ test('contributor and pull-request guides keep proof changes reproducible and st
     'Evidence provided:',
     'Automated or browser checks:',
     'Perceptual visual review: passed / failed / skipped / Not applicable',
-    'No unrelated changes',
   ]) {
     assert.match(pullRequest, new RegExp(required), required);
   }
@@ -119,7 +118,6 @@ test('contributor and pull-request guides keep proof changes reproducible and st
   assert.match(contributing, /screenshots, recordings, or reproducible steps/i);
   assert.match(contributing, /same input/i);
   assert.match(contributing, /automated or browser evidence separately from perceptual review/i);
-  assert.match(contributing, /non-visual pull request must write `Not applicable`/i);
   assert.match(pullRequest, /screenshots, recordings, or reproducible steps/i);
   assert.match(pullRequest, /automated or browser evidence separately from perceptual review/i);
   assert.doesNotMatch(contributing, /must reach `passed` before final review or merge/i);

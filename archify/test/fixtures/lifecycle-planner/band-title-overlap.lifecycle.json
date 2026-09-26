@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "线上书店订单生命周期",
+    "locale": "zh-CN",
+    "output": "diagram.html",
+    "animation": "none",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "main", "label": "下单与履约" },
+    { "id": "refund", "label": "退款申请" },
+    { "id": "retry", "label": "可恢复失败" },
+    { "id": "terminal", "label": "终态" }
+  ],
+  "states": [
+    { "id": "created", "type": "start", "label": "已创建", "sublabel": "订单生成", "lane": "main", "col": 0, "step": "01" },
+    { "id": "pending_payment", "type": "waiting", "label": "待支付", "sublabel": "等待付款事件", "lane": "main", "col": 1, "step": "02" },
+    { "id": "paid", "type": "active", "label": "已支付", "sublabel": "付款成功", "lane": "main", "col": 2, "step": "03" },
+    { "id": "preparing", "type": "active", "label": "备货中", "sublabel": "准备商品", "lane": "main", "col": 3, "step": "04" },
+    { "id": "shipped", "type": "waiting", "label": "已发货", "sublabel": "等待确认收货", "lane": "main", "col": 4, "step": "05" },
+    { "id": "refunding", "type": "active", "label": "退款处理中", "sublabel": "已申请退款", "lane": "refund", "col": 1 },
+    { "id": "refund_failed", "type": "failure", "label": "退款失败", "sublabel": "保留失败状态·可重试", "lane": "retry", "col": 0, "yOffset": 85 },
+    { "id": "cancelled", "type": "failure", "label": "已取消", "sublabel": "支付超时·释放库存", "lane": "terminal", "col": 0, "tag": "终态" },
+    { "id": "refunded", "type": "success", "label": "已退款", "sublabel": "退款成功", "lane": "terminal", "col": 1, "tag": "终态" },
+    { "id": "completed", "type": "success", "label": "已完成", "sublabel": "用户确认收货", "lane": "terminal", "col": 2, "tag": "终态" }
+  ],
+  "transitions": [
+    { "from": "created", "to": "pending_payment", "label": "订单创建", "variant": "emphasis" },
+    { "from": "pending_payment", "to": "paid", "label": "付款成功事件", "variant": "emphasis" },
+    { "from": "pending_payment", "to": "pending_payment", "label": "付款失败·重试支付", "variant": "dashed" },
+    { "from": "pending_payment", "to": "cancelled", "label": "超过付款期限·释放库存", "variant": "security" },
+    { "from": "paid", "to": "preparing", "label": "开始备货" },
+    { "from": "preparing", "to": "shipped", "label": "完成备货·发货", "variant": "emphasis" },
+    { "from": "shipped", "to": "completed", "label": "用户确认收货", "variant": "emphasis" },
+    { "from": "paid", "to": "refunding", "label": "申请退款" },
+    { "from": "preparing", "to": "refunding", "label": "申请退款" },
+    { "from": "refunding", "to": "refunded", "label": "退款成功" },
+    { "from": "refunding", "to": "refund_failed", "label": "退款失败" },
+    { "from": "refund_failed", "to": "refunding", "label": "重试退款", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "主流程", "items": ["付款成功触发已支付；随后备货、发货", "用户确认收货后，订单进入已完成"] },
+    { "dot": "amber", "title": "可恢复失败", "items": ["待支付时付款失败，可重试支付", "退款失败保留失败状态，可重试退款"] },
+    { "dot": "rose", "title": "终态与限制", "items": ["待支付超时才取消，并释放库存", "已取消、已退款、已完成是终态", "已发货不能直接取消"] }
+  ]
+}

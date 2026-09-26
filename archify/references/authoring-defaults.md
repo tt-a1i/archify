@@ -1,0 +1,33 @@
+# Authoring defaults
+
+Read once before writing a fresh candidate. An existing frozen candidate going straight to `finalize` needs this only if repair changes its authorship.
+
+## Composition and meaning
+
+For Architecture, default to a system overview led by the main user journey unless the user asks for a narrower mechanism, module map, or deployment topology. Group cooperating roles in accurately named subsystems when that still explains the requested interaction. Separate roles when grouping would hide control ownership, a trust or persistence boundary, lifecycle behavior, or another distinction the reader asked about. Keep secondary and opt-in capabilities in concise sourced notes unless their path matters to the requested question. Name a deliberately narrower scope in the title.
+
+Preserve every requested responsibility, relationship direction, protocol, and behavior-changing condition. Show approval, authorization, and state-transition gates on the affected node or relationship; a card alone cannot qualify an otherwise unconditional arrow. Keep source evidence with each asserted claim. Boundaries express real isolation, ownership, runtime, or persistence facts. Guided views and cards answer additional reader questions; they do not replace required topology. There is no node, edge, source, view, card, or boundary quota. If an authored overview needs regrouping after failure, use [Composition repair](authoring-contract.md#composition-repair); user-supplied or agreed topology remains fixed.
+
+Relationship labels carry meaning. Give them clear space and preserve action, protocol, direction, async behavior, or cross-boundary meaning. A label may start absent only when both endpoints already fully imply it; a collision calls for spacing or routing repair. See [Label repair](authoring-contract.md#label-repair) when measured evidence reports a collision.
+
+## Layout and routing
+
+Place Architecture nodes by their actual connections before assigning coordinates. Keep main-path neighbors adjacent, put each branch beside its owner and shared stores near their readers and writers, and reserve an outside corridor for real returns. Trace every relationship against that placement before writing positions; the router cannot rearrange boxes. Let a medium main path step through meaningful rows instead of making a shallow horizontal strip. Start the main actor and its first connected step together near the canvas origin; use content rows for vertical rhythm. Omit `meta.viewBox` for a fresh Architecture so the Reader measures intrinsic height. Keep supplied fixed geometry authoritative.
+
+Start with automatic routes and endpoint sides. Pin a side only for a necessary branch, return, or supplied geometry. Reserve `via`, `channelX`, `channelY`, and label coordinates for measured defects. Before writing positions, budget each labeled main-path edge at `6.5px × ASCII units + 21px` of clear gap, counting CJK as two units; use its own label length, not a row-wide fixed gap. Size Architecture sublabels for their preferred 9px text at `5.4px × text units + 8px`, with CJK counting twice; keep supporting copy concise without dropping required facts. Do not trade readability or meaning for fewer crossings. The [Geometry reference](authoring-contract.md#executable-geometry-rules) has measured spacing, port, canvas, and route rules for a diagnosed layout problem.
+
+## Evidence and schema
+
+For a real repository, follow [Repository authoring](repository-authoring.md) while inspecting source. Freeze its credential-free origin and 40-character commit in `meta.repository`, attach inspected repository-relative `sources` to each key semantic node, and pass `--repo-root` to the first `finalize`. Each reference proves only the fact visible at that location. Follow material relationships and conditions to their actual source; do not reuse a startup citation as protocol or persistence evidence.
+
+Examples show field shape, not legal values or source facts. Read the mode schema and shared definition before adding a field, enum, or constrained text. In particular, inspect Architecture boundary kinds and common guided-view note limits. Keep longer evidence in a card while retaining the fact. See [Schema lookup](authoring-contract.md#schema-lookup) for details.
+
+## Presentation and modes
+
+Use one primary authored language from the user's choice or the request/conversation. Set `meta.locale` for supported English (`en`), Simplified Chinese (`zh-CN`), or Spanish (`es`); otherwise omit it and disclose the fixed Viewer UI and `<html lang>` English fallback. Keep exact product, code, protocol, command, API, and environment names while localizing surrounding explanation. See [Language consistency](authoring-contract.md#language-consistency) for bilingual cases.
+
+Omit `meta.visual_preset` for classic, `meta.subtitle` for a title-only header, `meta.legend` for truthful auto, and `meta.engineering_profile` for an ordinary system overview. Explicit styles and a subtitle require a user request. Use legend or deployment ownership under the [legend](authoring-contract.md#legend-contract) or [engineering profile](authoring-contract.md#engineering-profile-default) contracts. Branding is optional and explicit when a node names a real product; [Brand marks](brand-marks.md) gives lookup and capture rules for that branch. Never let a badge replace semantic type, label, or relationship facts. Set required `meta.output` to a portable POSIX-relative `.html` path within the working directory; see [Output path contracts](delivery-contract.md#output-path-contracts) for native path exceptions.
+
+For new Workflow use schema v2, preserving v1 for a fixed legacy source; use its [layout contracts](../renderers/workflow/README.md#layout-contracts) when lane or group geometry needs detail. For Sequence start with fixed columns; use `spread` when a wide viewBox leaves unused horizontal space or meaningful labels need width. For Lifecycle, main phases use columns `0..4`, event and terminal bands use `0..2` aligned beneath main `N + 2`; a recoverable failure needs a real transition back. Read [Mode placement](authoring-contract.md#mode-placement) when a mode-specific placement or viewport problem needs more detail.
+
+`finalize` performs the browser gate. Keep the complete drawing comfortably readable on desktop, with zero horizontal overflow. Use meaningful vertical rows and intrinsic-height page scroll when necessary. The 6px projected-text check is a failure floor; at 1440px, aim for ordinary context text around 7.5px or larger. See [Automated browser evidence](delivery-contract.md#automated-browser-evidence) when viewport evidence fails.

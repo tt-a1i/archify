@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectLabelRouteClearance, collectRouteRhythmIssues, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
+  DECLARED_WIDE_READER_CONTRACT,
+  declaredWideReadabilityBudget,
   MIN_PROJECTED_NODE_TEXT_PX,
+  describeFixedWidthOverflow,
+  predictedFixedWidthOverflow,
   projectedNodeTextPx,
 } from '../renderers/shared/desktop-readability.mjs';
 
@@ -19,8 +24,11 @@ if (!input || input === '-h' || input === '--help') {
 
 const htmlPath = path.resolve(input);
 let html;
+let artifact;
 try {
-  html = fs.readFileSync(htmlPath, 'utf8');
+  const bytes = fs.readFileSync(htmlPath);
+  html = bytes.toString('utf8');
+  artifact = { sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.byteLength };
 } catch (err) {
   console.error(JSON.stringify({
     ok: false,
@@ -38,10 +46,12 @@ let composition = {
   summary: { errors: 0, warnings: 0 },
   metrics: {
     properCrossings: 0,
+    resolvedCrossovers: 0,
     ambiguousCorridors: 0,
     containerBorderRuns: 0,
     labelRouteClearanceIssues: 0,
     minLabelRouteClearance: null,
+    labelCanvasOverflowIssues: 0,
     maxBends: 0,
     routesOverSuggestedBends: 0,
     maxStretch: null,
@@ -59,6 +69,34 @@ let composition = {
   issues: [],
 };
 
+const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
+// Consume comments/CDATA as whole tokens, including any tag-like prose.
+const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+const AUTOMATIC_CROSSOVER_UNDERLAY_TAG = /<path\b[^>]*\bdata-graph-role="automatic-crossover-underlay"[^>]*\/>/i;
+const HTML_VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+const SVG_HTML_INTEGRATION_POINTS = new Set(['foreignobject', 'desc', 'title']);
+const HTML_ATTRIBUTE = /([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g;
+const readerContract = readerContractFromHtml(html);
+const NUMERIC_ATTRS = new Set([
+  'x', 'y', 'x1', 'y1', 'x2', 'y2', 'dx', 'dy', 'cx', 'cy', 'r', 'rx', 'ry', 'fx', 'fy',
+  'fr', 'width', 'height', 'd', 'points', 'pathlength', 'transform', 'viewbox', 'offset',
+  'opacity', 'fill-opacity', 'flood-opacity', 'stop-opacity', 'stroke-opacity', 'font-size',
+  'font-size-adjust', 'font-weight', 'letter-spacing', 'word-spacing', 'kerning', 'stroke-width',
+  'stroke-dasharray', 'stroke-dashoffset', 'stroke-miterlimit', 'textlength', 'startoffset',
+  'rotate', 'markerwidth', 'markerheight', 'refx', 'refy', 'orient', 'patterntransform',
+  'gradienttransform', 'filterres', 'stddeviation', 'basefrequency', 'numoctaves', 'seed',
+  'surfacescale', 'diffuseconstant', 'specularconstant', 'specularexponent',
+  'limitingconeangle', 'azimuth', 'elevation', 'pointsatx', 'pointsaty', 'pointsatz',
+  'kernelmatrix', 'order', 'divisor', 'bias', 'targetx', 'targety', 'kernelunitlength',
+  'scale', 'radius', 'k1', 'k2', 'k3', 'k4', 'tablevalues', 'slope', 'intercept',
+  'amplitude', 'exponent',
+]);
+const ELEMENT_NUMERIC_ATTRS = new Map([
+  ['fecolormatrix', new Set(['values'])],
+  ['fepointlight', new Set(['z'])],
+  ['fespotlight', new Set(['z'])],
+]);
+
 function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
@@ -71,19 +109,36 @@ if (svgMatches.length === 1) {
   const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
+  const workflowV2 = svgAttrs['data-layout-contract'] === 'readable-v2';
   const qualityGatesEnforced = svgAttrs['data-quality-gates'] !== 'advisory';
-  addCheck('finite_svg', !/\b(?:NaN|undefined|Infinity|-Infinity)\b/.test(svg));
+  const nonFiniteAttrs = collectNonFiniteAttrs(svg);
+  addCheck('finite_svg', nonFiniteAttrs.length === 0, nonFiniteAttrs);
   const legendStart = svg.indexOf('<!-- Legend -->');
   const beforeLegend = legendStart >= 0 ? svg.slice(0, legendStart) : svg;
-  const desktopReadabilityIssue = collectDesktopReadability(svgAttrs, beforeLegend);
-  const arrows = collectArrows(beforeLegend);
+  const desktopReadability = collectDesktopReadability(svgAttrs, beforeLegend, readerContract);
+  const desktopReadabilityIssue = desktopReadability.issue;
+  // The browser gate measures this later; the geometry is already certain here.
+  const viewportHeightIssue = predictedFixedWidthOverflow({
+    viewBoxWidth: viewBoxSize(svgAttrs)[0],
+    viewBoxHeight: viewBoxSize(svgAttrs)[1],
+    readerFit: svgAttrs['data-reader-fit'] || null,
+    diagramType: svgAttrs['data-diagram-type'] || null,
+    hasGuidedViews: /class="guided-views/.test(html),
+  });
+  const arrows = collectArrows(beforeLegend, workflowV2);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
     'orthogonal_arrows',
     diagonal.length === 0,
-    diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: ${arrow.raw}`),
+    diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: expected an orthogonal segment or an explicitly authored direct straight route; ${arrow.raw}`),
   );
-  const relationshipCrossings = collectRelationshipCrossings(arrows);
+  const measuredRelationshipCrossings = collectRelationshipCrossings(arrows, workflowV2);
+  const resolvedCrossovers = measuredRelationshipCrossings.filter((hit) => (
+    hit.left.crossoverHalo && hit.right.crossoverHalo
+  ));
+  const relationshipCrossings = measuredRelationshipCrossings.filter((hit) => (
+    !hit.left.crossoverHalo || !hit.right.crossoverHalo
+  ));
   const compositionFrames = collectCompositionFrames(beforeLegend);
   const containerBorderRuns = collectBorderRuns({
     routedRelations: arrows
@@ -98,10 +153,24 @@ if (svgMatches.length === 1) {
   const routedRelationships = arrows
     .filter((arrow) => arrow.from && arrow.to && arrow.routePoints.length)
     .map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints }));
+  const nodeRects = svgAttrs.transform ? [] : collectUntransformedNodeRects(beforeLegend);
   const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
-  const ambiguousCorridors = collectAmbiguousCorridors({ routedRelations: routedRelationships });
+  const ambiguousCorridors = collectAmbiguousCorridors({
+    routedRelations: routedRelationships,
+    includeSharedEndpoints: (left, right) => workflowV2 || (left.independentPorts && right.independentPorts),
+    allowShortWorkflowTrunks: workflowV2,
+    includeSharedEndpointCounterflow: (left, right) => left.automaticWorkflowRoute && right.automaticWorkflowRoute,
+  });
+  const arrowheadCollisions = collectArrowheadCollisions({
+    routedRelations: routedRelationships.filter((entry) => workflowV2 || entry.relation.independentPorts),
+    allowShortWorkflowTrunks: workflowV2,
+  });
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
+  const leadingSpace = collectArchitectureLeadingSpace({
+    svgAttrs, fragment: beforeLegend, nodeRects, frames: compositionFrames,
+    arrows, labels: relationshipLabels,
+  });
   const labelClearanceThreshold = qualityProfile === 'showcase' ? 4 : 2;
   const labelRouteMeasurements = collectLabelRouteClearance({
     labels: relationshipLabels,
@@ -113,23 +182,37 @@ if (svgMatches.length === 1) {
     routedRelations: arrows.map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints })),
     threshold: labelClearanceThreshold,
   });
+  // The renderers bound their own label rects, but `check` also re-measures an
+  // artifact it did not produce; see collectLabelCanvasOverflow in
+  // shared/geometry.mjs.
+  const labelCanvasOverflow = collectLabelCanvasOverflow({
+    labels: relationshipLabels,
+    viewBox: viewBoxRect(svgAttrs),
+  });
   const crossingIsError = qualityProfile === 'showcase';
   const corridorIsError = qualityProfile === 'showcase';
   const rhythmIsError = qualityProfile === 'showcase';
   const labelClearanceIsError = qualityProfile === 'showcase';
+  const labelContainmentIsError = qualityProfile === 'showcase';
   const desktopReadabilityIsError = qualityProfile === 'showcase';
+  // Certain geometry, but new: surface it as evidence first (CONTRIBUTING.md#product-and-compatibility-contracts).
+  const viewportHeightIsError = false;
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
-    + (corridorIsError ? ambiguousCorridors.length : 0)
+    + (corridorIsError ? ambiguousCorridors.length + arrowheadCollisions.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
+    + (labelContainmentIsError ? labelCanvasOverflow.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
-    + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0);
+    + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0)
+    + (viewportHeightIsError && viewportHeightIssue ? 1 : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
-    + (corridorIsError ? 0 : ambiguousCorridors.length)
+    + (corridorIsError ? 0 : ambiguousCorridors.length + arrowheadCollisions.length)
     + (labelClearanceIsError ? 0 : labelRouteClearance.length)
+    + (labelContainmentIsError ? 0 : labelCanvasOverflow.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
-    + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1);
+    + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1)
+    + (viewportHeightIsError || !viewportHeightIssue ? 0 : 1);
   composition = {
     schemaVersion: 1,
     profile: qualityProfile,
@@ -140,17 +223,41 @@ if (svgMatches.length === 1) {
     },
     metrics: {
       properCrossings: relationshipCrossings.length,
+      resolvedCrossovers: resolvedCrossovers.length,
       ambiguousCorridors: ambiguousCorridors.length,
+      arrowheadCollisions: arrowheadCollisions.length,
       containerBorderRuns: containerBorderRuns.length,
       labelRouteClearanceIssues: labelRouteClearance.length,
-      minLabelRouteClearance: labelRouteMeasurements.length
-        ? Math.round(Math.min(...labelRouteMeasurements.map((hit) => hit.clearance)) * 10) / 10
-        : null,
+      labelCanvasOverflowIssues: labelCanvasOverflow.length,
+      minLabelRouteClearance: minimumLabelRouteClearance(labelRouteMeasurements),
       desktopReadabilityIssues: desktopReadabilityIssue ? 1 : 0,
-      minProjectedNodeTextPx: desktopReadabilityIssue?.projectedFontPx ?? null,
+      viewportHeightIssues: viewportHeightIssue ? 1 : 0,
+      minProjectedNodeTextPx: desktopReadability.evidence.minimumProjectedTextPx,
       ...roundedRouteMetrics(routeMetrics),
     },
     suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
+    // Perceptual review needs the affected relationships, not just a total.
+    // These are review evidence, not new pass/fail thresholds: a short, clear
+    // crossover can be preferable to a long crossing-free detour.
+    routeReview: {
+      crossings: resolvedCrossovers.map((hit) => ({
+        left: relationshipRecord(hit.left),
+        right: relationshipRecord(hit.right),
+        point: hit.point,
+      })),
+      detours: routedRelationships.flatMap((entry) => {
+        const metrics = routeBudgetMetrics({ routedRelations: [entry] });
+        const blockers = directCorridorBlockers(entry.relation, nodeRects);
+        return metrics.routesOverSuggestedBends || metrics.routesOverSuggestedStretch ? [{
+          relationship: relationshipRecord(entry.relation),
+          bends: metrics.maxBends,
+          stretch: metrics.maxStretch == null ? null : Math.round(metrics.maxStretch * 1000) / 1000,
+          ...(blockers.length ? { directCorridorBlockers: blockers } : {}),
+        }] : [];
+      }),
+    },
+    leadingSpace,
+    desktopReadability: desktopReadability.evidence,
     issues: [
       ...containerBorderRuns.map((hit) => ({
         severity: qualityGatesEnforced ? 'error' : 'warning',
@@ -177,6 +284,20 @@ if (svgMatches.length === 1) {
         from: hit.start.map((value) => Math.round(value * 10) / 10),
         to: hit.end.map((value) => Math.round(value * 10) / 10),
       })),
+      ...labelCanvasOverflow.map((hit) => {
+        const label = hit.label?.label || hit.relation?.label || '';
+        return {
+          severity: labelContainmentIsError ? 'error' : 'warning',
+          code: 'composition/label-canvas-containment',
+          label,
+          relationship: relationshipRecord(hit.relation),
+          labelRect: roundedRect(hit.rect),
+          viewBox: hit.viewBox,
+          viewBoxOrigin: hit.viewBoxOrigin,
+          overflowPx: hit.overflowPx,
+          detail: `[composition/label-canvas-containment] ${qualityProfile} label "${label}" on ${relationshipName(hit.relation)} extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRect(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}${hit.viewBoxOrigin.some(Boolean) ? ` at ${hit.viewBoxOrigin[0]},${hit.viewBoxOrigin[1]}` : ''}) — use renderer-supported label controls (shorten the label or reorder participants for sequence; otherwise labelAt, labelDx, labelDy, or labelSegment), or enlarge meta.viewBox.`,
+        };
+      }),
       ...relationshipCrossings.map((hit) => ({
         severity: crossingIsError ? 'error' : 'warning',
         code: 'composition/proper-crossing',
@@ -195,6 +316,15 @@ if (svgMatches.length === 1) {
         from: hit.overlapStart.map((value) => Math.round(value * 10) / 10),
         to: hit.overlapEnd.map((value) => Math.round(value * 10) / 10),
       })),
+      ...arrowheadCollisions.map((hit) => ({
+        severity: corridorIsError ? 'error' : 'warning',
+        code: 'composition/arrowhead-collision',
+        relationship: relationshipRecord(hit.left.relation),
+        otherRelationship: relationshipRecord(hit.right.relation),
+        distancePx: hit.distance,
+        minimumPx: hit.minimum,
+        endpoints: [hit.left.tip, hit.right.tip],
+      })),
       ...routeRhythmIssues.map((hit) => ({
         severity: rhythmIsError ? 'error' : 'warning',
         code: hit.code,
@@ -208,9 +338,16 @@ if (svgMatches.length === 1) {
       ...(desktopReadabilityIssue ? [{
         severity: desktopReadabilityIsError ? 'error' : 'warning',
         code: 'composition/desktop-readability',
+        ...(desktopReadabilityIssue.nodeId ? { nodeId: desktopReadabilityIssue.nodeId } : {}),
+        owner: desktopReadabilityIssue.owner,
         viewportWidth: DESKTOP_READABILITY_VIEWPORT.width,
         viewportHeight: DESKTOP_READABILITY_VIEWPORT.height,
-        availableDiagramWidth: DESKTOP_READER_DIAGRAM_WIDTH,
+        availableDiagramWidth: desktopReadability.evidence.availableDiagramWidth,
+        budgetBasis: desktopReadability.evidence.budgetBasis,
+        readerContract: desktopReadability.evidence.readerContract,
+        requestedTargetPx: desktopReadability.evidence.requestedTargetPx,
+        requestedTargetMet: desktopReadability.evidence.requestedTargetMet,
+        budgetLimit: desktopReadability.evidence.limit,
         viewBoxWidth: desktopReadabilityIssue.viewBoxWidth,
         scale: desktopReadabilityIssue.scale,
         text: desktopReadabilityIssue.text,
@@ -218,6 +355,15 @@ if (svgMatches.length === 1) {
         sourceFontPx: desktopReadabilityIssue.sourceFontPx,
         projectedFontPx: desktopReadabilityIssue.projectedFontPx,
         minimumProjectedFontPx: MIN_PROJECTED_NODE_TEXT_PX,
+      }] : []),
+      ...(viewportHeightIssue ? [{
+        severity: viewportHeightIsError ? 'error' : 'warning',
+        code: 'composition/viewport-height',
+        readerFit: svgAttrs['data-reader-fit'] || null,
+        viewBoxWidth: viewBoxSize(svgAttrs)[0],
+        viewBoxHeight: viewBoxSize(svgAttrs)[1],
+        ...viewportHeightIssue,
+        detail: `[composition/viewport-height] ${describeFixedWidthOverflow({ ...viewportHeightIssue, viewBoxWidth: viewBoxSize(svgAttrs)[0], viewBoxHeight: viewBoxSize(svgAttrs)[1] })}`,
       }] : []),
     ],
   };
@@ -237,10 +383,12 @@ if (svgMatches.length === 1) {
   );
   addCheck(
     'relationship_corridors',
-    !corridorIsError || ambiguousCorridors.length === 0,
-    ambiguousCorridors.map((hit) => (
+    !corridorIsError || ambiguousCorridors.length + arrowheadCollisions.length === 0,
+    [...ambiguousCorridors.map((hit) => (
       `[composition/ambiguous-corridor] ${qualityProfile} ${relationshipName(hit.left.relation)} shares a ${Math.round(hit.overlapLength * 10) / 10}px corridor with ${relationshipName(hit.right.relation)} at [${formatPoint(hit.overlapStart)}] -> [${formatPoint(hit.overlapEnd)}]`
-    )),
+    )), ...arrowheadCollisions.map((hit) => (
+      `[composition/arrowhead-collision] ${qualityProfile} ${relationshipName(hit.left.relation)} and ${relationshipName(hit.right.relation)} have incoming arrowheads ${hit.distance}px apart (minimum ${hit.minimum}px) — enlarge or reposition the destination, or choose separate toSide ports.`
+    ))],
   );
   addCheck(
     'container_border_runs',
@@ -272,19 +420,44 @@ if (svgMatches.length === 1) {
 }
 
 const ok = checks.every((check) => check.ok) && composition.status !== 'fail';
-console.log(JSON.stringify({ ok, file: htmlPath, checks, composition }, null, 2));
+console.log(JSON.stringify({ ok, file: htmlPath, artifact, checks, composition }, null, 2));
 // Let pending stdout writes drain: large receipts are asynchronous when piped.
 process.exitCode = ok ? 0 : 1;
 
-function collectArrows(fragment) {
+function collectArrows(fragment, useActualPoints = false) {
   const arrows = [];
   let index = 0;
+  let previousTag = null;
+  let previousTagEnd = 0;
 
   for (const tag of fragment.matchAll(/<(path|line)\b[^>]*>/gi)) {
+    const tagStart = tag.index;
     const raw = tag[0];
+    const gap = previousTag ? fragment.slice(previousTagEnd, tagStart) : '';
+    const precedingUnderlay = previousTag
+      && /^\s*$/.test(gap)
+      && previousTag.name === 'path'
+      && previousTag.underlayAttrs;
+    previousTag = {
+      name: tag[1].toLowerCase(),
+      underlayAttrs: tag[1].toLowerCase() === 'path' && AUTOMATIC_CROSSOVER_UNDERLAY_TAG.test(raw)
+        ? parseAttrs(raw)
+        : null,
+    };
+    previousTagEnd = tagStart + raw.length;
     if (!/\bclass="[^"]*\ba-(?:default|emphasis|security|dashed)\b/.test(raw)) continue;
     if (!/\bmarker-end=/.test(raw)) continue;
     const attrs = parseAttrs(raw);
+    const routeStrokeWidth = numberAttr(attrs, 'stroke-width');
+    const underlayStrokeWidth = precedingUnderlay ? numberAttr(precedingUnderlay, 'stroke-width') : NaN;
+    const verifiedCrossoverHalo = attrs['data-composition-crossover'] === 'halo'
+      && precedingUnderlay?.d === attrs.d
+      && precedingUnderlay?.fill === 'none'
+      && precedingUnderlay?.stroke === 'var(--mask)'
+      && precedingUnderlay?.['pointer-events'] === 'none'
+      && Number.isFinite(routeStrokeWidth)
+      && Number.isFinite(underlayStrokeWidth)
+      && underlayStrokeWidth >= routeStrokeWidth + 3;
     const segments = tag[1].toLowerCase() === 'line'
       ? lineSegments(attrs)
       : pathSegments(attrs.d || '');
@@ -295,9 +468,24 @@ function collectArrows(fragment) {
       kind: tag[1].toLowerCase(),
       index: index += 1,
       raw,
+      // Trust route intent only for a semantic edge with one visible direct
+      // segment. A stale marker on bent/curved geometry cannot waive the gate.
+      authoredStraight: attrs['data-composition-route'] === 'straight'
+        && Boolean(attrs['data-edge-from'] && attrs['data-edge-to'])
+        && segments.length === 1 && borderSegments.length === 1
+        && (tag[1].toLowerCase() === 'line' || /^\s*M\s+[-+\d.eE]+\s+[-+\d.eE]+\s+L\s+[-+\d.eE]+\s+[-+\d.eE]+\s*$/.test(attrs.d || '')),
+      crossoverHalo: verifiedCrossoverHalo,
+      independentPorts: verifiedCrossoverHalo && attrs['data-composition-independent'] === 'true',
+      // Compatibility with first-round exports lacking a root layout contract.
+      // Readable-v2's root contract supersedes this narrower automatic-pair rule.
+      // This marker never certifies a crossover halo or waives a quality rule.
+      automaticWorkflowRoute: attrs['data-composition-routing'] === 'workflow-v2-auto',
+      width: routeStrokeWidth,
+      variant: raw.match(/\ba-(default|emphasis|security|dashed)\b/)?.[1] || 'default',
+      role: attrs['data-edge-role'],
       segments,
       borderSegments,
-      routePoints: parseRoutePoints(attrs['data-composition-points']) || (
+      routePoints: (!useActualPoints && parseRoutePoints(attrs['data-composition-points'])) || (
         borderSegments.length ? [borderSegments[0].start, ...borderSegments.map((segment) => segment.end)] : []
       ),
       from: attrs['data-edge-from'] || attrs['data-composition-edge-from'],
@@ -378,14 +566,24 @@ function parseRoutePoints(value) {
   return points.length >= 2 && points.every(isPoint) ? points : null;
 }
 
-function collectRelationshipCrossings(arrows) {
-  const relationships = arrows.filter((arrow) => arrow.from && arrow.to && arrow.segments.length);
+function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
+  const relationships = arrows.filter((arrow) => arrow.from && arrow.to && arrow.segments.length).map(arrow => ({
+    ...arrow,
+    // Readable-v2 routePoints come from the visible path, never its metadata.
+    // A straight-through via is not a visual endpoint; preserve real bends.
+    segments: includeSharedEndpoints ? forwardCollinearAnalysisSegments(arrow.routePoints) : arrow.segments,
+  }));
   const crossings = [];
   for (let leftIndex = 0; leftIndex < relationships.length; leftIndex += 1) {
     const left = relationships[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
       const right = relationships[rightIndex];
-      if ([left.from, left.to].some((id) => id === right.from || id === right.to)) continue;
+      // A shared semantic endpoint does not make an interior X a junction
+      // when both paths opt into automatic workflow or independent-port checks.
+      if ([left.from, left.to].some((id) => id === right.from || id === right.to)
+          && !includeSharedEndpoints
+          && !(left.independentPorts && right.independentPorts)
+          && !(left.automaticWorkflowRoute && right.automaticWorkflowRoute)) continue;
       let point = null;
       for (const leftSegment of left.segments) {
         for (const rightSegment of right.segments) {
@@ -404,6 +602,53 @@ function relationshipName(arrow) {
   return arrow.id
     ? `relationship id "${arrow.id}" ("${arrow.from}" -> "${arrow.to}")`
     : `relationship "${arrow.from}" -> "${arrow.to}"`;
+}
+
+// Review evidence only. Mask rectangles are the visible node bounds emitted by
+// our renderers. Skip transformed ancestry rather than mixing coordinate spaces.
+function collectUntransformedNodeRects(fragment) {
+  const groups = [];
+  const nodes = new Map();
+  for (const token of fragment.matchAll(SVG_TAG_TOKEN)) {
+    if (!token[2]) continue;
+    const name = token[2].toLowerCase();
+    if (name === 'g') {
+      if (token[1]) groups.pop();
+      else if (!/\/\s*>$/.test(token[0])) groups.push(parseAttrs(token[0]));
+      continue;
+    }
+    if (name !== 'rect' || token[1] || groups.some((group) => group.transform)) continue;
+    const attrs = parseAttrs(token[0]);
+    const owner = [...groups].reverse().find((group) => group['data-node-id']);
+    if (!owner || attrs.transform || !String(attrs.class || '').split(/\s+/).includes('c-mask')) continue;
+    const box = ['x', 'y', 'width', 'height'].map((key) => numberAttr(attrs, key));
+    if (!box.every(Number.isFinite) || box[2] <= 0 || box[3] <= 0) continue;
+    const id = owner['data-node-id'];
+    // Ambiguous ownership is not reliable evidence for moving a node.
+    nodes.set(id, nodes.has(id) ? null : { id, label: owner['data-node-label'] || id, box });
+  }
+  return [...nodes.values()].filter(Boolean);
+}
+
+function directCorridorBlockers(relation, nodes) {
+  const from = nodes.find((node) => node.id === relation.from);
+  const to = nodes.find((node) => node.id === relation.to);
+  if (!from || !to || from === to) return [];
+  const center = ({ box: [x, y, w, h] }) => [x + w / 2, y + h / 2];
+  const a = center(from);
+  const b = center(to);
+  const horizontal = Math.abs(a[1] - b[1]) < 0.01;
+  const vertical = Math.abs(a[0] - b[0]) < 0.01;
+  if (horizontal === vertical) return [];
+  const axis = horizontal ? 0 : 1;
+  const cross = 1 - axis;
+  const [first, last] = a[axis] < b[axis] ? [from, to] : [to, from];
+  const low = first.box[axis] + first.box[axis + 2];
+  const high = last.box[axis];
+  if (high <= low) return [];
+  return nodes.filter((node) => node !== from && node !== to
+    && node.box[axis] < high && node.box[axis] + node.box[axis + 2] > low
+    && node.box[cross] < a[cross] && node.box[cross] + node.box[cross + 2] > a[cross]);
 }
 
 function relationshipRecord(arrow) {
@@ -452,6 +697,59 @@ function collectCompositionFrames(fragment) {
     }
   }
   return frames;
+}
+
+// Evidence for author review only. Automatic Architecture is identifiable by
+// its intrinsic Reader contract; authored canvases must retain their geometry.
+function collectArchitectureLeadingSpace({ svgAttrs, fragment, nodeRects, frames, arrows, labels }) {
+  const evidence = { measured: false, reviewSuggested: false };
+  if (svgAttrs['data-reader-fit'] !== 'intrinsic-height'
+      || svgAttrs['data-reader-primary-text'] !== '14'
+      || svgAttrs.transform
+      || [...fragment.matchAll(/<g\b[^>]*\btransform\s*=[^>]*>/gi)]
+        .some((match) => !/\bdata-semantic-sigil=/.test(match[0]))
+      || /<(?:path|line|rect|text)\b[^>]*\btransform\s*=/i.test(fragment)) return evidence;
+  const [originX, originY, width, height] = viewBoxRect(svgAttrs);
+  if (![originX, originY, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return evidence;
+  const nodeCount = [...fragment.matchAll(/<g\b[^>]*\bdata-node-id=/gi)].length;
+  if (!nodeRects.length || nodeRects.length !== nodeCount) return evidence;
+  const semanticArrows = arrows.filter((arrow) => arrow.from && arrow.to);
+  if (semanticArrows.some((arrow) => !arrow.routePoints.length)) return evidence;
+
+  const occupied = nodeRects.map((node) => node.box[1]);
+  for (const frame of frames) {
+    const top = frame.shape === 'line'
+      ? Math.min(frame.start[1], frame.end[1]) : frame.y;
+    if (!Number.isFinite(top)) return evidence;
+    occupied.push(top);
+  }
+  // Boundary titles can protrude above their structural frame.
+  for (const match of fragment.matchAll(/<g\b[^>]*\bdata-graph-role="structural-frame-label"[^>]*>[\s\S]*?<rect\b[^>]*\bdata-graph-role="structural-frame-label-mask"[^>]*>/gi)) {
+    const rect = parseAttrs(match[0].match(/<rect\b[^>]*>/i)?.[0] || '');
+    const y = numberAttr(rect, 'y');
+    if (!Number.isFinite(y)) return evidence;
+    occupied.push(y);
+  }
+  for (const arrow of semanticArrows) {
+    for (const point of arrow.routePoints) occupied.push(point[1]);
+  }
+  for (const label of labels) occupied.push(label.rect.y);
+  if (!occupied.every(Number.isFinite)) return evidence;
+  const occupiedTop = Math.min(...occupied);
+  const gap = Math.max(0, occupiedTop - originY);
+  const heights = nodeRects.map((node) => node.box[3]).sort((a, b) => a - b);
+  const typicalNodeHeight = heights[Math.floor(heights.length / 2)];
+  const ratio = gap / height;
+  return {
+    measured: true,
+    emptyTopPx: Math.round(gap * 10) / 10,
+    emptyTopRatio: Math.round(ratio * 1000) / 1000,
+    occupiedTop: Math.round(occupiedTop * 10) / 10,
+    viewBoxTop: originY,
+    canvasHeight: height,
+    typicalNodeHeight,
+    reviewSuggested: gap > 2 * typicalNodeHeight && ratio > 0.2,
+  };
 }
 
 function frameName(frame) {
@@ -556,6 +854,7 @@ function straightPathSegments(d) {
 }
 
 function diagonalStraightSegments(arrow) {
+  if (arrow.authoredStraight) return [];
   return arrow.borderSegments.flatMap(({ start, end }, segmentIndex) => (
     Math.abs(start[0] - end[0]) > 0.01 && Math.abs(start[1] - end[1]) > 0.01
       ? [{ segmentIndex, start, end }]
@@ -619,35 +918,128 @@ function textBox(attrs, text) {
   };
 }
 
-function collectDesktopReadability(svgAttrs, fragment) {
+// A foreign artifact may author a legal non-zero viewBox origin, so containment
+// needs all four numbers; sizing checks read the trailing pair.
+function viewBoxRect(svgAttrs) {
   const viewBox = String(svgAttrs.viewBox || '').trim().split(/[\s,]+/).map(Number);
-  const viewBoxWidth = viewBox.length === 4 ? viewBox[2] : Number.NaN;
-  if (!Number.isFinite(viewBoxWidth) || viewBoxWidth <= 0) return null;
-  const scale = Math.min(1, DESKTOP_READER_DIAGRAM_WIDTH / viewBoxWidth);
-  let worst = null;
-  for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
-    const primary = /\bdata-node-label(?:\s*=|\s|$)/i.test(match[1]);
-    const boundary = /\bdata-boundary-label(?:\s*=|\s|$)/i.test(match[1]);
-    const context = /\bdata-detail\s*=\s*"context"/i.test(match[1]);
-    if (!primary && !boundary && !context) continue;
+  return viewBox.length === 4 ? viewBox : [Number.NaN, Number.NaN, Number.NaN, Number.NaN];
+}
+
+function viewBoxSize(svgAttrs) {
+  return viewBoxRect(svgAttrs).slice(2);
+}
+
+function hasAttribute(attrs, name) {
+  return new RegExp('(?:^|\\s)' + name + '(?:\\s*=|\\s|$)', 'i').test(attrs);
+}
+
+function readerContractFromHtml(source) {
+  const markers = [...source.matchAll(/<meta\b[^>]*>/gi)]
+    .map((match) => parseAttrs(match[0]))
+    .filter((attrs) => attrs.name === 'archify-reader-contract');
+  return markers.length === 1 && markers[0].content === DECLARED_WIDE_READER_CONTRACT
+    ? DECLARED_WIDE_READER_CONTRACT
+    : null;
+}
+
+function collectDesktopReadability(svgAttrs, fragment, contract) {
+  const [viewBoxWidth, viewBoxHeight] = viewBoxSize(svgAttrs);
+  const requestedMinimumTextPx = Number.parseFloat(svgAttrs['data-reader-min-text'] || '');
+  const entries = [];
+  let invalidSemanticText = false;
+  const groups = [];
+  // Keep the complete ancestry, rather than a node-only stack: an edge can
+  // share its context group with its label or nest that group (Sequence).
+  for (const match of fragment.matchAll(/<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<text\b([^>]*)>([\s\S]*?)<\/text>|<g\b[^>]*>|<\/g\s*>/gi)) {
+    if (match[0].startsWith('<!')) continue;
+    if (match[1] === undefined) {
+      if (/^<\/g/i.test(match[0])) groups.pop();
+      else if (!/\/\s*>$/.test(match[0])) groups.push(parseAttrs(match[0]));
+      continue;
+    }
     const attrs = parseAttrs(match[1]);
+    if (attrs['data-detail'] === 'fine' || groups.some((group) => group['data-detail'] === 'fine')) continue;
+    const primary = hasAttribute(match[1], 'data-node-label');
+    const boundary = hasAttribute(match[1], 'data-boundary-label');
+    const context = attrs['data-detail'] === 'context'
+      || groups.some((group) => group['data-detail'] === 'context');
+    const nodeOwner = [...groups].reverse().find((group) => group['data-node-id']);
+    const edgeOwner = [...groups].reverse().find((group) => group['data-edge-from'] && group['data-edge-to']);
+    const owner = primary
+      ? { kind: 'node', id: nodeOwner?.['data-node-id'] || null }
+      : boundary ? { kind: 'boundary', id: null }
+        : context && edgeOwner ? {
+          kind: 'edge', id: edgeOwner['data-edge-id'] || null,
+          from: edgeOwner['data-edge-from'], to: edgeOwner['data-edge-to'],
+        }
+          : context && nodeOwner ? { kind: 'node', id: nodeOwner['data-node-id'] }
+            : null;
+    // A context text with neither semantic owner is legend/fine/loose copy.
+    if (!owner) continue;
     const fontSize = Number.parseFloat(attrs['font-size'] || '');
-    if (!Number.isFinite(fontSize)) continue;
-    const projected = projectedNodeTextPx(fontSize, viewBoxWidth);
-    if (projected >= MIN_PROJECTED_NODE_TEXT_PX) continue;
-    const candidate = {
-      viewBoxWidth,
-      scale,
+    if (!Number.isFinite(fontSize)) {
+      invalidSemanticText = true;
+      continue;
+    }
+    if (fontSize <= 0) invalidSemanticText = true;
+    entries.push({
+      ...(owner.kind === 'node' && owner.id ? { nodeId: owner.id } : {}),
+      owner,
       text: stripTags(match[2]).trim(),
-      detail: primary
-        ? 'primary'
-        : boundary ? 'boundary' : 'context',
+      detail: primary ? 'primary' : boundary ? 'boundary' : owner.kind === 'edge' ? 'edge' : 'context',
       sourceFontPx: fontSize,
-      projectedFontPx: projected,
-    };
-    if (!worst || candidate.projectedFontPx < worst.projectedFontPx) worst = candidate;
+    });
   }
-  return worst;
+  const minimumSourceTextPx = entries.length ? Math.min(...entries.map((entry) => entry.sourceFontPx)) : Number.NaN;
+  const eligible = contract === DECLARED_WIDE_READER_CONTRACT
+    && svgAttrs['data-reader-fit'] === 'intrinsic-height'
+    && Number.isFinite(requestedMinimumTextPx) && requestedMinimumTextPx > 0
+    && !invalidSemanticText && entries.length > 0;
+  const declared = eligible ? declaredWideReadabilityBudget({
+    viewBoxWidth,
+    viewBoxHeight,
+    minimumSourceTextPx,
+    requestedMinimumTextPx,
+  }) : null;
+  const availableDiagramWidth = declared?.guaranteedSvgWidth ?? DESKTOP_READER_DIAGRAM_WIDTH;
+  const budgetBasis = declared ? 'recognized-declared-wide' : 'legacy-930';
+  const scale = Number.isFinite(viewBoxWidth) && viewBoxWidth > 0
+    ? Math.min(1, availableDiagramWidth / viewBoxWidth) : Number.NaN;
+  const projected = entries.map((entry) => ({
+    ...entry,
+    viewBoxWidth,
+    scale,
+    projectedFontPx: projectedNodeTextPx(entry.sourceFontPx, viewBoxWidth, availableDiagramWidth),
+  }));
+  const worst = projected.reduce((current, entry) => (
+    !current || entry.projectedFontPx < current.projectedFontPx ? entry : current
+  ), null);
+  const projectedMinimumTextPx = Number.isFinite(worst?.projectedFontPx) ? worst.projectedFontPx : null;
+  const hardFloorMet = Number.isFinite(worst?.projectedFontPx)
+    ? worst.projectedFontPx >= MIN_PROJECTED_NODE_TEXT_PX : null;
+  const requestedTargetMet = worst && Number.isFinite(requestedMinimumTextPx)
+    ? worst.projectedFontPx >= requestedMinimumTextPx : null;
+  const evidence = {
+    budgetBasis,
+    readerContract: contract,
+    availableDiagramWidth,
+    actualBudgetPx: availableDiagramWidth,
+    ...(declared ? {
+      actualReaderWidth: declared.actualReaderWidth,
+      desiredReaderWidth: declared.desiredReaderWidth,
+      viewportCap: declared.viewportCap,
+      limit: declared.limit,
+    } : { limit: 'legacy' }),
+    requestedTargetPx: Number.isFinite(requestedMinimumTextPx) ? requestedMinimumTextPx : null,
+    requestedTargetMet,
+    hardFloorPx: MIN_PROJECTED_NODE_TEXT_PX,
+    hardFloorMet,
+    minimumOwner: worst?.owner || null,
+    minimumSourceTextPx: worst?.sourceFontPx ?? null,
+    minimumProjectedTextPx: projectedMinimumTextPx,
+    semanticTextCount: entries.length,
+  };
+  return { evidence, issue: worst && hardFloorMet === false ? worst : null };
 }
 
 function estimatedTextWidth(text, fontSize) {
@@ -813,10 +1205,63 @@ function padBox(box, padding) {
   };
 }
 
+// Only geometry/numeric attributes are scanned: authored prose such as node
+// tags, <title> text, aria-labels, or data-* attributes may legitimately
+// mention "NaN" or "Infinity" without any coordinate being non-finite.
+function collectNonFiniteAttrs(svg) {
+  const details = [];
+  const stack = [];
+  for (const match of svg.matchAll(SVG_TAG_TOKEN)) {
+    if (!match[2]) continue;
+    const element = match[2].toLowerCase();
+    if (match[1]) {
+      const index = stack.map(entry => entry.element).lastIndexOf(element);
+      if (index >= 0) stack.length = index;
+      continue;
+    }
+    const parent = stack[stack.length - 1];
+    const inSvg = element === 'svg'
+      || Boolean(parent?.inSvg && !SVG_HTML_INTEGRATION_POINTS.has(parent.element));
+    if (inSvg) {
+      for (const [name, value] of attrEntries(match[0])) {
+        if (!isNumericAttr(element, name) || !NON_FINITE_TOKEN.test(decodeNumericReferences(value))) continue;
+        details.push(`${match[2]} ${name}="${value}"`);
+      }
+    }
+    // HTML void elements do not open a context; SVG self-closing tags do not
+    // either. A nested <svg> inside foreignObject restores SVG checking.
+    if (!(inSvg ? /\/\s*>$/.test(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
+      stack.push({ element, inSvg });
+    }
+  }
+  return details;
+}
+
+function decodeNumericReferences(value) {
+  // Numeric references can encode every letter of NaN/Infinity/undefined.
+  // Decode once, locally: other checks and diagnostic evidence keep raw values.
+  return value.replace(/&#(?:x([0-9a-f]+)|([0-9]+));?/gi, (_, hex, decimal) => {
+    const point = Number.parseInt(hex || decimal, hex ? 16 : 10);
+    return point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
+      ? String.fromCodePoint(point) : '\uFFFD';
+  });
+}
+
+function isNumericAttr(elementName, attrName) {
+  const normalizedAttr = attrName.toLowerCase();
+  return NUMERIC_ATTRS.has(normalizedAttr)
+    || ELEMENT_NUMERIC_ATTRS.get(elementName.toLowerCase())?.has(normalizedAttr);
+}
+
+function attrEntries(tag) {
+  return [...tag.matchAll(HTML_ATTRIBUTE)].map((match) => [
+    match[1],
+    match[2] ?? match[3] ?? match[4],
+  ]);
+}
+
 function parseAttrs(tag) {
-  const attrs = {};
-  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*"([^"]*)"/g)) attrs[match[1]] = match[2];
-  return attrs;
+  return Object.fromEntries(attrEntries(tag));
 }
 
 function numberAttr(attrs, name) {

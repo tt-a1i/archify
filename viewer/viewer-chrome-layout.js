@@ -267,14 +267,16 @@
           lastReceipt ? lastReceipt.stageGap : ''
         ].join('|');
       }
+      function layoutPending() { return Boolean(frame || settleFrame || probingBaseline); }
       function whenStable() {
         return Archify.waitForStableLayout({
           schedule: schedule,
-          pending: function () { return Boolean(frame || settleFrame || probingBaseline); },
+          pending: layoutPending,
           snapshot: stableSnapshot,
           timeoutMessage: 'Viewer chrome layout did not reach stable dimensions.'
         });
       }
+      archifyLayoutOwners.viewerChrome = { schedule: schedule, pending: layoutPending, snapshot: stableSnapshot };
 
       window.addEventListener('resize', reprobe, { passive: true });
       window.addEventListener('load', schedule, { once: true });
@@ -287,7 +289,11 @@
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(function (records) {
-          var viewerModeChanged = records.some(function (record) { return record.target === html; });
+          // A theme switch changes paint, not the stage geometry. Reprobing
+          // drops the bottom rail for several frames and makes the diagram jump.
+          var viewerModeChanged = records.some(function (record) {
+            return record.target === html && record.attributeName !== 'data-theme';
+          });
           if (viewerModeChanged) reprobe();
           else schedule();
         });

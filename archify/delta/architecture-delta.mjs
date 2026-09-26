@@ -45,6 +45,32 @@ function normalizeRepository(repository) {
   };
 }
 
+const PROVENANCE_FIELDS = ['url', 'revision', 'provider', 'link_mode'];
+
+function provenanceSide(repository) {
+  if (!repository) return null;
+  return {
+    revision: repository.revision,
+    ...(repository.provider !== undefined ? { provider: repository.provider } : {}),
+    ...(repository.link_mode !== undefined ? { linkMode: repository.link_mode } : {}),
+  };
+}
+
+function provenanceChange(base, head) {
+  if (equal(base, head)) return undefined;
+  const changedFields = !base || !head
+    ? ['/repository']
+    : PROVENANCE_FIELDS
+      .filter((field) => !equal(base[field], head[field]))
+      .map((field) => `/${field}`)
+      .sort(codepointOrder);
+  return {
+    changedFields,
+    base: provenanceSide(base),
+    head: provenanceSide(head),
+  };
+}
+
 function normalizeComponent(component) {
   return {
     ...component,
@@ -155,7 +181,7 @@ function fieldChanges(before, after, groups) {
 }
 
 const COMPONENT_FIELDS = {
-  semantic: ['type', 'label', 'sublabel', 'tag'],
+  semantic: ['type', 'label', 'sublabel', 'tag', 'brand', 'icon'],
   evidence: ['sources'],
   geometry: ['row', 'col', 'pos', 'size'],
 };
@@ -202,6 +228,7 @@ function summaryFor(changes, shape) {
 function presentationChanged(base, head) {
   const basePresentation = {
     title: base.meta?.title,
+    locale: base.meta?.locale,
     subtitle: base.meta?.subtitle,
     animation: base.meta?.animation,
     visual_preset: base.meta?.visual_preset,
@@ -215,6 +242,7 @@ function presentationChanged(base, head) {
   };
   const headPresentation = {
     title: head.meta?.title,
+    locale: head.meta?.locale,
     subtitle: head.meta?.subtitle,
     animation: head.meta?.animation,
     visual_preset: head.meta?.visual_preset,
@@ -278,7 +306,8 @@ export function compareArchitecture(base, head, evidence = {}) {
     kind: (after || before).kind,
     label: (after || before).label,
   }));
-  const provenanceChanged = !equal(baseRepository, headRepository);
+  const provenance = provenanceChange(baseRepository, headRepository);
+  const provenanceChanged = Boolean(provenance);
 
   return {
     schemaVersion: 1,
@@ -311,6 +340,7 @@ export function compareArchitecture(base, head, evidence = {}) {
       provenanceChanged,
     },
     changes: { components, connections, boundaries },
+    ...(provenance ? { provenance } : {}),
     identity: {
       components: 'components[].id',
       connections: 'connections[].id (required)',
@@ -462,11 +492,11 @@ export function annotateArchitectureSideSvg(svg, receipt, side) {
     if (!change) return markup;
     if (part === 'frame') {
       return addState(markup, change, side)
-        .replace(/\/>$/, ` data-delta-boundary-key="${esc(change.key)}"/>`);
+        .replace(/\/>$/, () => ` data-delta-boundary-key="${esc(change.key)}"/>`);
     }
     return markup.replace(
       /<text[^>]*>/,
-      (tag) => tag.replace(/>$/, ` data-delta-state="${change.status}" data-delta-boundary-state="${change.status}" data-delta-boundary-key="${esc(change.key)}">`),
+      (tag) => tag.replace(/>$/, () => ` data-delta-state="${change.status}" data-delta-boundary-state="${change.status}" data-delta-boundary-key="${esc(change.key)}">`),
     );
   });
   result = transformNodeGroups(result, (group, id) => {
@@ -519,13 +549,13 @@ function boundaryMarkupParts(markup) {
 
 function forceBoundaryState(markup, state, key, classifications = []) {
   return markup
-    .replace(/^<rect[^>]+\/>/, (tag) => addState(tag, { classifications }, 'delta', state).replace(/\/>$/, ` data-delta-boundary-key="${esc(key)}"/>`))
+    .replace(/^<rect[^>]+\/>/, (tag) => addState(tag, { classifications }, 'delta', state).replace(/\/>$/, () => ` data-delta-boundary-key="${esc(key)}"/>`))
     .replace(
       /<rect data-graph-role="structural-frame-label-mask"[^>]*\/>/,
       (tag) => addState(tag, { classifications }, 'delta', state)
-        .replace(/\/>$/, ` data-delta-boundary-state="${state}" data-delta-boundary-mask-key="${esc(key)}"/>`),
+        .replace(/\/>$/, () => ` data-delta-boundary-state="${state}" data-delta-boundary-mask-key="${esc(key)}"/>`),
     )
-    .replace(/<text[^>]*>/, (tag) => tag.replace(/>$/, ` data-delta-state="${state}" data-delta-boundary-state="${state}" data-delta-boundary-key="${esc(key)}">`));
+    .replace(/<text[^>]*>/, (tag) => tag.replace(/>$/, () => ` data-delta-state="${state}" data-delta-boundary-state="${state}" data-delta-boundary-key="${esc(key)}">`));
 }
 
 function viewBoxSize(svg) {
@@ -553,6 +583,9 @@ function boundarySymbolMarkup(markup, state) {
 export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   const [baseW, baseH] = viewBoxSize(baseSvg);
   const [headW, headH] = viewBoxSize(headSvg);
+  // Baseline paths and their definitions must travel together in a namespace
+  // distinct from the current snapshot before the final Delta prefix is added.
+  const baseRelationshipsSvg = prefixSvgIds(baseSvg, 'base');
   const nodes = changeMap(receipt.changes.components);
   const edges = changeMap(receipt.changes.connections);
   const boundaries = boundaryChangeMap(receipt.changes.boundaries);
@@ -569,11 +602,11 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
   }
   for (const change of edges.values()) {
     if (change.status === 'removed' || change.classifications.includes('topology')) {
-      const phantom = forceElementState(elementById(baseSvg, 'edge', change.id), 'removed', change.classifications);
+      const phantom = forceElementState(elementById(baseRelationshipsSvg, 'edge', change.id), 'removed', change.classifications);
       baseEdgePhantoms.push(phantom);
       edgeMarkers.push(edgeSymbolMarkup(phantom, 'removed'));
     } else if (change.classifications.includes('geometry')) {
-      const phantom = forceElementState(elementById(baseSvg, 'edge', change.id), 'moved-from', change.classifications);
+      const phantom = forceElementState(elementById(baseRelationshipsSvg, 'edge', change.id), 'moved-from', change.classifications);
       baseEdgePhantoms.push(phantom);
       edgeMarkers.push(edgeSymbolMarkup(phantom, 'moved-from'));
     }
@@ -595,11 +628,17 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
     }
   }
 
+  // Insert generated markup literally: authored labels can contain replacement
+  // tokens such as $$, $&, and $` that string replacements would interpret.
   let delta = annotateArchitectureSideSvg(headSvg, receipt, 'head');
+  if (baseEdgePhantoms.length) {
+    const baseDefinitions = baseRelationshipsSvg.match(/<defs>([\s\S]*?)<\/defs>/)?.[1] || '';
+    delta = delta.replace('</defs>', () => `${baseDefinitions}</defs>`);
+  }
   delta = delta.replace(/^<svg[^>]+>/, (tag) => tag.replace(/viewBox="[^"]+"/, `viewBox="0 0 ${Math.max(baseW, headW) + 24} ${Math.max(baseH, headH) + 24}"`));
-  delta = delta.replace('        <!-- Boundaries (behind everything) -->', `        <!-- Baseline boundary frame phantoms -->\n${baseBoundaryFramePhantoms.filter(Boolean).join('\n')}\n\n        <!-- Boundaries (behind everything) -->`);
-  delta = delta.replace('        <!-- Connection paths (before components for correct z-order) -->', `        <!-- Baseline relationship phantoms -->\n${baseEdgePhantoms.join('\n')}\n\n        <!-- Connection paths (before components for correct z-order) -->`);
-  delta = delta.replace('        <!-- Components -->', `        <!-- Baseline boundary label phantoms (below current components) -->\n${baseBoundaryLabelPhantoms.filter(Boolean).join('\n')}\n\n        <!-- Baseline removed and move-from component phantoms -->\n${baseNodePhantoms.join('\n')}\n\n        <!-- Components -->`);
+  delta = delta.replace('        <!-- Boundaries (behind everything) -->', () => `        <!-- Baseline boundary frame phantoms -->\n${baseBoundaryFramePhantoms.filter(Boolean).join('\n')}\n\n        <!-- Boundaries (behind everything) -->`);
+  delta = delta.replace('        <!-- Connection paths (before components for correct z-order) -->', () => `        <!-- Baseline relationship phantoms -->\n${baseEdgePhantoms.join('\n')}\n\n        <!-- Connection paths (before components for correct z-order) -->`);
+  delta = delta.replace('        <!-- Components -->', () => `        <!-- Baseline boundary label phantoms (below current components) -->\n${baseBoundaryLabelPhantoms.filter(Boolean).join('\n')}\n\n        <!-- Baseline removed and move-from component phantoms -->\n${baseNodePhantoms.join('\n')}\n\n        <!-- Components -->`);
 
   for (const change of edges.values()) {
     if (change.status === 'added' || change.status === 'changed' || change.status === 'rerouted') {
@@ -612,7 +651,7 @@ export function buildDeltaSvg(baseSvg, headSvg, receipt) {
     const renderedKey = `${change.kind}:${esc(change.label)}`;
     boundaryMarkers.push(boundarySymbolMarkup(boundaryMarkupByKey(delta, renderedKey), change.status));
   }
-  delta = delta.replace('        <!-- Legend -->', `        <!-- Delta relationship symbols -->\n${edgeMarkers.filter(Boolean).join('\n')}\n\n        <!-- Delta boundary symbols -->\n${boundaryMarkers.filter(Boolean).join('\n')}\n\n        <!-- Legend -->`);
+  delta = delta.replace('        <!-- Legend -->', () => `        <!-- Delta relationship symbols -->\n${edgeMarkers.filter(Boolean).join('\n')}\n\n        <!-- Delta boundary symbols -->\n${boundaryMarkers.filter(Boolean).join('\n')}\n\n        <!-- Legend -->`);
   return prefixSvgIds(staticize(delta), 'delta');
 }
 
@@ -694,15 +733,39 @@ function expectedReviewTargetSignature(row) {
 
 const total = (summary, key) => summary.components[key] + summary.connections[key] + summary.boundaries[key];
 
+function provenanceDetail(provenance) {
+  if (provenance === undefined) return 'Repository metadata changed; field details are unavailable in this receipt.';
+  const value = (side, field) => {
+    if (!side) return 'undeclared';
+    if (field === '/revision') return side.revision?.slice(0, 8) || 'none';
+    if (field === '/provider') return side.provider ?? 'automatic';
+    if (field === '/link_mode') return side.linkMode ?? 'default';
+    if (field === '/repository') return 'declared';
+    return 'changed';
+  };
+  return provenance.changedFields.map((field) => {
+    if (field === '/url') return '/url: repository location changed';
+    return `${field}: ${value(provenance.base, field)} → ${value(provenance.head, field)}`;
+  }).join(' · ');
+}
+
 export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSvg, baseHtml = '', headHtml = '', artifactCss }) {
   const rows = architectureDeltaChangeRows(receipt);
   const changed = total(receipt.summary, 'changed');
   const proof = receipt.proofLevel === 'revision-pinned' ? 'REVISION-PINNED INPUTS' : 'AUTHORED SNAPSHOTS';
+  const provenanceChanged = receipt.summary.provenanceChanged === true;
+  const provenanceFields = receipt.provenance?.changedFields?.join(', ') || 'repository metadata';
+  const provenanceDescription = provenanceChanged ? provenanceDetail(receipt.provenance) : '';
+  const provenanceNotice = provenanceChanged
+    ? `<aside class="provenance-change" data-provenance-changed="true" data-provenance-fields="${esc(provenanceFields)}"><strong>Repository provenance changed</strong><span>${esc(provenanceDescription)}</span></aside>`
+    : '';
   const rowHtml = rows.length ? rows.map((row, index) => {
     const label = row.headLabel || row.baseLabel || row.head?.label || row.base?.label || row.label || row.id;
     const targetSignature = expectedReviewTargetSignature(row);
     return `<li data-change-status="${esc(row.status)}"><button class="change-row" type="button" data-change-index="${index}" data-change-key="${esc(row.key)}" data-change-kind="${esc(row.kindKey)}" data-change-id="${esc(row.id)}" data-change-label="${esc(label)}" data-change-status="${esc(row.status)}" data-change-classifications="${esc(row.classifications.join(', '))}" data-change-target-signature="${esc(targetSignature)}"><span class="token">${esc(markerFor(row.status) || '~')}</span><span>${esc(row.kind)}</span><strong>${esc(label)}</strong><code>${esc(row.id)}</code><span>${esc(row.classifications.join(', '))}</span><span>${esc(row.changedFields.join(', ') || 'identity')}</span></button></li>`;
-  }).join('\n') : '<li class="empty">No authored architecture changes.</li>';
+  }).join('\n') : provenanceChanged
+    ? '<li class="empty">No component, relationship, or boundary changes; repository provenance changed.</li>'
+    : '<li class="empty">No authored architecture changes.</li>';
   const baseView = baseHtml
     ? `<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="${esc(baseHtml)}"></iframe>`
     : baseSvg;
@@ -717,17 +780,18 @@ ${artifactCss}
 :root{color-scheme:dark;--d-add:#34d399;--d-remove:#fb7185;--d-change:#fbbf24;--d-move:#7dd3fc;--d-focus:#7dd3fc;--d-ink:#e6edf5;--d-muted:#8aa0b5;--d-line:#25384a}
 *{box-sizing:border-box}body{margin:0;overflow-x:hidden;background:#071019;color:var(--d-ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}.proof-page{width:min(1600px,calc(100vw - 64px));margin:auto;padding:30px 0 42px}.proof-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--d-line)}.eyebrow{margin:0 0 8px;color:#7dd3fc;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.proof-head h1{margin:0;font-size:clamp(32px,4vw,56px);line-height:.96;letter-spacing:-.04em}.subtitle{margin:12px 0 0;color:var(--d-muted);font-size:14px}.metrics{display:flex;gap:9px}.metric{min-width:86px;padding:11px 13px;border:1px solid var(--d-line);border-radius:8px;background:#0b1722}.metric strong{display:block;font:700 23px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric span{display:block;margin-top:6px;color:var(--d-muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em}.add strong{color:var(--d-add)}.remove strong{color:var(--d-remove)}.change strong{color:var(--d-change)}
 .proof-tools{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0 10px}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--d-line);border-radius:8px;background:#0a141e}.view-switch button,.utility,.review-step{border:0;border-radius:6px;background:transparent;color:var(--d-muted);padding:8px 14px;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}.view-switch button[aria-selected="true"]{background:#173047;color:#fff}.utility{border:1px solid var(--d-line)}.view-switch button:focus-visible,.utility:focus-visible,.review-step:focus-visible,.change-row:focus-visible{outline:2px solid var(--d-focus);outline-offset:2px}.utility:disabled,.review-step:disabled{cursor:not-allowed;opacity:.45}.legend{display:flex;gap:16px;color:var(--d-muted);font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:22px;border-top:3px solid currentColor}.legend .add{color:var(--d-add)}.legend .remove{color:var(--d-remove)}.legend .remove i{border-top-style:dashed}.legend .change{color:var(--d-change)}.legend .change i{border-top-style:dotted}.legend .move{color:var(--d-move)}.legend .move i{border-top-style:double}
+.provenance-change{display:flex;align-items:center;gap:12px;margin:14px 0 0;padding:10px 13px;border:1px solid rgba(125,211,252,.45);border-radius:8px;background:rgba(125,211,252,.07);color:var(--d-muted);font:650 11px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}.provenance-change strong{color:var(--d-focus)}.provenance-change span{margin-left:auto;color:var(--d-muted)}
 .review-strip{display:grid;grid-template-columns:auto auto auto auto minmax(0,1fr);align-items:center;gap:5px;margin:0 0 10px;padding:7px 8px;border-block:1px solid var(--d-line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.review-step{min-height:34px;border:1px solid var(--d-line);padding-inline:11px}.review-step[aria-pressed="true"]{border-color:var(--d-focus);color:var(--d-ink)}.review-status{min-width:0;padding-left:9px;color:var(--d-muted);font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.review-status strong{color:var(--d-ink);font-weight:750}.review-status[data-state="unavailable"]{color:var(--d-remove)}
 .canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.snapshot-frame{display:block;width:100%;height:min(76vh,920px);min-height:620px;border:0;border-radius:6px;background:#071019}.canvas[data-view="base"],.canvas[data-view="head"]{padding:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}.canvas[data-delta-review-active]{--review-same-opacity:.14;--review-change-opacity:.28}.canvas[data-delta-review-active] [data-delta-state="same"]{opacity:var(--review-same-opacity)!important}.canvas[data-delta-review-active] [data-delta-state]:not([data-delta-state="same"]):not([data-delta-review-current]){opacity:var(--review-change-opacity)!important}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:opacity .16s ease-out}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"],.delta-boundary-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"],.delta-boundary-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"],.delta-boundary-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"],.delta-boundary-marker[data-delta-state="geometry-changed"]{color:var(--d-move)}.delta-edge-marker,.delta-boundary-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
 rect[data-graph-role="structural-frame"][data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:2.5!important}rect[data-graph-role="structural-frame"][data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:2.5!important;stroke-dasharray:7 5!important}rect[data-graph-role="structural-frame"][data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:2.5!important;stroke-dasharray:2 3!important}rect[data-graph-role="structural-frame"][data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2!important;stroke-dasharray:8 3 2 3!important;opacity:.42}text[data-delta-boundary-state="added"]{fill:var(--d-add)!important}text[data-delta-boundary-state="removed"]{fill:var(--d-remove)!important}text[data-delta-boundary-state="changed"]{fill:var(--d-change)!important}text[data-delta-boundary-state="moved-from"]{fill:var(--d-move)!important;opacity:.55}
 details{margin-top:12px;border:1px solid var(--d-line);border-radius:9px;background:#0a141e}summary{padding:13px 15px;cursor:pointer;font-weight:700}.changes{list-style:none;margin:0;padding:0 8px 8px}.changes li{border-top:1px solid rgba(138,160,181,.16)}.change-row{display:grid;grid-template-columns:30px 90px minmax(140px,1fr) minmax(100px,.7fr) minmax(120px,.8fr) minmax(140px,1.2fr);gap:10px;width:100%;margin:0;padding:9px 7px;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;font-size:11px;text-align:left;align-items:baseline;cursor:pointer}.change-row:hover{background:rgba(125,211,252,.06)}.change-row[aria-current="step"]{background:rgba(125,211,252,.1);box-shadow:inset 0 0 0 1px var(--d-focus)}.change-row:disabled{cursor:default}.token{font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.changes code,.change-row>span:last-child{color:var(--d-muted)}.proof-foot{display:flex;justify-content:space-between;gap:24px;margin-top:14px;color:var(--d-muted);font:650 10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
 html[data-theme="dark"] body{background:#071019!important;background-image:none!important}html[data-theme="light"]{color-scheme:light;--d-ink:#10283c;--d-muted:#587187;--d-line:#c8d6e2;--d-focus:#006b8f}html[data-theme="light"] body{background:#eef3f7!important;background-image:none!important;color:var(--d-ink)}html[data-theme="light"] .metric,html[data-theme="light"] .view-switch,html[data-theme="light"] details{background:#fff}html[data-theme="light"] .canvas{background:#f8fbfd}html[data-theme="light"] .view-switch button[aria-selected="true"]{background:#dbeaf5;color:#10283c}html[data-theme="light"] .delta-node-marker circle{fill:#fff}html[data-preset="blueprint"] body{background-image:none!important}
-@media(max-width:760px){.proof-page{width:100%;padding:12px}.proof-head{grid-template-columns:1fr;gap:14px;align-items:start}.proof-head h1{font-size:32px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.metric{min-width:0}.proof-tools{align-items:stretch;flex-wrap:wrap;gap:8px}.view-switch{display:flex;flex:1 1 100%}.view-switch button{flex:1;padding-inline:8px}.legend{flex-wrap:wrap;gap:8px}.proof-tools>div:last-child{margin-left:auto}.review-strip{grid-template-columns:auto auto auto auto}.review-status{grid-column:1/-1;padding:4px 2px 0}.canvas{min-height:0;padding:6px;overflow:auto}.canvas svg{min-width:720px;max-height:none}.snapshot-frame{min-width:720px}.changes{overflow-x:auto}.change-row{min-width:820px}.proof-foot{flex-direction:column;gap:4px}}
+@media(max-width:760px){.proof-page{width:100%;padding:12px}.proof-head{grid-template-columns:1fr;gap:14px;align-items:start}.proof-head h1{font-size:32px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.metric{min-width:0}.provenance-change{align-items:flex-start;flex-wrap:wrap}.provenance-change span{width:100%;margin-left:0}.proof-tools{align-items:stretch;flex-wrap:wrap;gap:8px}.view-switch{display:flex;flex:1 1 100%}.view-switch button{flex:1;padding-inline:8px}.legend{flex-wrap:wrap;gap:8px}.proof-tools>div:last-child{margin-left:auto}.review-strip{grid-template-columns:auto auto auto auto}.review-status{grid-column:1/-1;padding:4px 2px 0}.canvas{min-height:0;padding:6px;overflow:auto}.canvas svg{min-width:720px;max-height:none}.snapshot-frame{min-width:720px}.changes{overflow-x:auto}.change-row{min-width:820px}.proof-foot{flex-direction:column;gap:4px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:1!important;transition:none!important}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
-<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · ${proof}</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">${esc(receipt.base.title)} → ${esc(receipt.head.title)}</p></div><div class="metrics"><div class="metric add"><strong>${total(receipt.summary, 'added')}</strong><span>ADDED</span></div><div class="metric remove"><strong>${total(receipt.summary, 'removed')}</strong><span>REMOVED</span></div><div class="metric change"><strong>${changed}</strong><span>CHANGED</span></div></div></header>
+<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · ${proof}</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">${esc(receipt.base.title)} → ${esc(receipt.head.title)}</p></div><div class="metrics"><div class="metric add"><strong>${total(receipt.summary, 'added')}</strong><span>ADDED</span></div><div class="metric remove"><strong>${total(receipt.summary, 'removed')}</strong><span>REMOVED</span></div><div class="metric change"><strong>${changed}</strong><span>CHANGED</span></div></div></header>${provenanceNotice}
 <div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
-<nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false"${rows.length ? '' : ' disabled'}>Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · ${rows.length} authored changes</div></nav>
+<nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false"${rows.length ? '' : ' disabled'}>Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · ${rows.length} authored ${provenanceChanged ? 'graph changes · provenance changed' : 'changes'}</div></nav>
 <section class="canvas" data-view="base" hidden>${baseView}</section><section class="canvas" data-view="delta">${deltaSvg}</section><section class="canvas" data-view="head" hidden>${headView}</section>
 <details${rows.length <= 10 ? ' open' : ''}><summary>Exact authored changes · ${rows.length}</summary><ul class="changes">${rowHtml}</ul></details>
 <footer class="proof-foot"><span>Stable IDs only · completeness: complete · ${proof}</span><span>Authored IR only · no risk or mergeability inference</span></footer></main>
@@ -957,7 +1021,9 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       'text[data-delta-boundary-state="added"]{fill:#34d399!important}text[data-delta-boundary-state="removed"]{fill:#fb7185!important}text[data-delta-boundary-state="changed"]{fill:#fbbf24!important}text[data-delta-boundary-state="moved-from"]{fill:#7dd3fc!important;opacity:.55}' +
       '.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}';
     clone.insertBefore(style, clone.firstChild);
-    return new XMLSerializer().serializeToString(clone);
+    // The XML declaration pins UTF-8: without it, consumers that guess an
+    // encoding instead of defaulting to UTF-8 mangle non-ASCII text.
+    return '<?xml version="1.0" encoding="UTF-8"?>\\n' + new XMLSerializer().serializeToString(clone);
   }
 
   function artifactName(suffix) {
@@ -1041,18 +1107,31 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     ctx.fillText(connectionLine, 420, 151);
     ctx.fillText(boundaryLine, 786, 151);
     ctx.font = '650 14px ui-monospace, SFMono-Regular, Menlo, monospace';
-    const authoredChanges = ['components', 'connections', 'boundaries'].reduce((sum, collection) => {
-      const summary = receipt.summary[collection];
-      return sum + summary.added + summary.changed + summary.removed;
-    }, 0);
+    const graphChanges = ['components', 'connections', 'boundaries'].reduce((sum, collection) => sum + (receipt.changes[collection] || []).length, 0);
+    const provenanceSummary = ${safeJson(provenanceChanged ? `provenance changed · ${provenanceFields}` : '')};
     const movementSummary = '↔ moved ' + receipt.summary.components.moved + ' · rerouted ' + receipt.summary.connections.rerouted + ' · presentation ' + (receipt.summary.presentationChanged ? 'changed' : 'unchanged');
-    const secondary = authoredChanges === 0
-      ? 'No authored architecture changes · ' + movementSummary
-      : movementSummary;
-    ctx.fillText(secondary, 66, 181);
+    const secondary = graphChanges === 0
+      ? receipt.summary.provenanceChanged
+        ? 'No graph changes · ' + provenanceSummary
+        : 'No authored architecture changes · ' + movementSummary
+      : movementSummary + (provenanceSummary ? ' · ' + provenanceSummary : '');
     const proofLine = receipt.proofLevel === 'revision-pinned'
       ? 'REV ' + String(receipt.base.revision).slice(0, 8) + ' → ' + String(receipt.head.revision).slice(0, 8) + ' · REVISION-PINNED INPUTS'
       : 'AUTHORED SNAPSHOTS';
+    function fitCanvasLine(text, maxWidth) {
+      if (ctx.measureText(text).width <= maxWidth) return text;
+      let low = 0;
+      let high = text.length;
+      while (low < high) {
+        const middle = Math.ceil((low + high) / 2);
+        if (ctx.measureText(text.slice(0, middle) + '…').width <= maxWidth) low = middle;
+        else high = middle - 1;
+      }
+      return text.slice(0, low).trimEnd() + '…';
+    }
+    const proofWidth = ctx.measureText(proofLine).width;
+    const secondaryWidth = Math.max(0, 1044 - proofWidth);
+    ctx.fillText(fitCanvasLine(secondary, secondaryWidth), 66, 181);
     ctx.textAlign = 'right';
     ctx.fillText(proofLine, 1134, 181);
     ctx.textAlign = 'left';
@@ -1185,6 +1264,21 @@ export function validateArchitectureDeltaHtml(html, receipt) {
   }
   if (!svgBalanced || svgDepth !== 0 || svgRoots !== 1 || deltaMarkup.slice(0, rootStart).trim() || deltaMarkup.slice(rootEnd).trim()) failures.push('expected exactly one root SVG in the Delta canvas');
   if ((html.match(/id="archify-compare-receipt"/g) || []).length !== 1) failures.push('expected exactly one embedded compare receipt');
+  const provenanceChanged = receipt.summary?.provenanceChanged === true;
+  const provenanceNotices = (html.match(/data-provenance-changed="true"/g) || []).length;
+  const provenanceFields = receipt.provenance?.changedFields;
+  const legacyProvenance = receipt.provenance === undefined;
+  const validProvenanceFields = Array.isArray(provenanceFields) && provenanceFields.length > 0;
+  const provenanceDescription = provenanceChanged && (legacyProvenance || validProvenanceFields) ? provenanceDetail(receipt.provenance) : '';
+  const provenanceFieldLabel = legacyProvenance ? 'repository metadata' : validProvenanceFields ? provenanceFields.join(', ') : '';
+  if (provenanceNotices !== (provenanceChanged ? 1 : 0)
+    || (!provenanceChanged && !legacyProvenance)
+    || (provenanceChanged && !legacyProvenance && !validProvenanceFields)
+    || (provenanceChanged && !html.includes(`data-provenance-fields="${esc(provenanceFieldLabel)}"`))
+    || (provenanceChanged && !html.includes(`<span>${esc(provenanceDescription)}</span>`))) {
+    failures.push('provenance change notice does not match the receipt');
+  }
+  if (provenanceChanged && rows.length === 0 && html.includes('No authored architecture changes.')) failures.push('provenance-only delta claims no authored changes');
   if (!html.includes('aria-label="Authored change review"')) failures.push('missing exact-ID change navigator');
   if ((html.match(/class="change-row"/g) || []).length !== rows.length) failures.push('change navigator row count does not match the receipt');
   if (!html.includes('id="export-svg"') || !html.includes('id="share-card"')

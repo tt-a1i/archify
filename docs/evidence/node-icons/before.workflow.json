@@ -1,0 +1,125 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "2026年剩余假期安排",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "holiday-planning.html"
+  },
+  "lanes": [
+    {
+      "id": "calendar",
+      "label": "时间线"
+    },
+    {
+      "id": "makeup",
+      "label": "调休"
+    }
+  ],
+  "mainPath": [
+    "today",
+    "mid_autumn",
+    "national_day",
+    "year_end"
+  ],
+  "nodes": [
+    {
+      "id": "today",
+      "lane": "calendar",
+      "col": 0,
+      "type": "external",
+      "label": "今天 9月22日",
+      "sublabel": "周二 · 距中秋3天"
+    },
+    {
+      "id": "mid_autumn",
+      "lane": "calendar",
+      "col": 1,
+      "type": "backend",
+      "label": "中秋节",
+      "sublabel": "9月25日–27日 · 3天",
+      "tag": "无需调休"
+    },
+    {
+      "id": "national_day",
+      "lane": "calendar",
+      "col": 3,
+      "type": "backend",
+      "label": "国庆节",
+      "sublabel": "10月1日–7日 · 7天",
+      "tag": "连休"
+    },
+    {
+      "id": "year_end",
+      "lane": "calendar",
+      "col": 5,
+      "type": "external",
+      "label": "此后至年底",
+      "sublabel": "无法定节假日"
+    },
+    {
+      "id": "makeup_work",
+      "lane": "makeup",
+      "col": 3,
+      "type": "security",
+      "label": "调休上班",
+      "sublabel": "10月10日（周六）",
+      "tag": "补班"
+    }
+  ],
+  "edges": [
+    {
+      "id": "to_mid_autumn",
+      "from": "today",
+      "to": "mid_autumn",
+      "label": "3天后连休"
+    },
+    {
+      "id": "mid_to_national",
+      "from": "mid_autumn",
+      "to": "national_day",
+      "label": "节后上班3天"
+    },
+    {
+      "id": "to_year_end",
+      "from": "national_day",
+      "to": "year_end",
+      "label": "假期结束"
+    },
+    {
+      "id": "makeup_branch",
+      "from": "national_day",
+      "to": "makeup_work",
+      "label": "国庆调休",
+      "role": "branch",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "中秋节",
+      "items": [
+        "9月25日（周五）至27日（周日）放假，共3天",
+        "与周末自然相连，无需额外调休上班"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "国庆节",
+      "items": [
+        "10月1日（周四）至7日（周三）放假调休，共7天",
+        "9月20日（周日）上班日已过",
+        "10月10日（周六）需补班"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "年底前",
+      "items": [
+        "国庆假期结束后，到2026年底不再有法定节假日安排"
+      ]
+    }
+  ]
+}

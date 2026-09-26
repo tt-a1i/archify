@@ -1,0 +1,108 @@
+---
+import { version, versioned, jsonScript, gallery, cards } from '../data/site';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import GalleryCard from '../components/GalleryCard.astro';
+import Navigation from '../components/Navigation.astro';
+import head from '../data/gallery-head.html?raw';
+import css from '../styles/gallery.css?raw';
+import pageScript from '../scripts/gallery.js?raw';
+---
+<SiteLayout head={versioned(head)} css={css}>
+
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <Navigation page="gallery" />
+
+  <main>
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <div class="lead-label" data-en="Generated showcase / verified artifacts" data-zh="自动生成作品集 / 真实验证成品">Generated showcase / verified artifacts</div>
+          <h1 data-en="Proof,<br><em>not promises.</em>" data-zh="先看成品，<br><em>再谈能力。</em>">Proof,<br><em>not promises.</em></h1>
+          <p class="hero-copy" data-en="Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it." data-zh="下面每一帧都是可运行的 Archify 成品，不是效果图。它们全部由版本化 JSON IR 重新生成、经过结构检查，并链接到产生它的精确源数据。">Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it.</p>
+        </div>
+        <div class="proof-board" aria-label="Gallery quality summary">
+          <div class="proof-row"><span class="proof-value">{gallery.entryCount}</span><span class="proof-label" data-en="scenario proofs<br>from real IR" data-zh="个场景成品<br>来自真实 IR">scenario proofs<br>from real IR</span></div>
+          <div class="proof-row"><span class="proof-value">{gallery.checkCount}</span><span class="proof-label" data-en="structural checks<br>passed" data-zh="项结构检查<br>全部通过">structural checks<br>passed</span></div>
+          <div class="proof-row"><span class="proof-value proof-status">PASS</span><span class="proof-label" data-en="generated from<br>source of truth" data-zh="从源数据<br>自动生成">generated from<br>source of truth</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Gallery controls">
+      <div class="shell controls-inner">
+        <div class="filter-group" role="group" aria-label="Filter diagrams by type">
+          <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en="All / 11" data-zh="全部配方 / 11">All / 11</button>
+          <button class="filter-button" type="button" data-filter="architecture" aria-pressed="false" data-en="Architecture" data-zh="架构图">Architecture</button>
+          <button class="filter-button" type="button" data-filter="workflow" aria-pressed="false" data-en="Workflow" data-zh="工作流">Workflow</button>
+          <button class="filter-button" type="button" data-filter="sequence" aria-pressed="false" data-en="Sequence" data-zh="时序图">Sequence</button>
+          <button class="filter-button" type="button" data-filter="dataflow" aria-pressed="false" data-en="Data flow" data-zh="数据流">Data flow</button>
+          <button class="filter-button" type="button" data-filter="lifecycle" aria-pressed="false" data-en="Lifecycle" data-zh="生命周期">Lifecycle</button>
+        </div>
+        <div class="controls-actions">
+          <button class="filter-button" id="preview-theme" type="button">Preview: dark</button>
+          <div class="controls-note" data-en="Live HTML previews · open any artifact to explore" data-zh="实时 HTML 预览 · 打开任意成品继续探索">Live HTML previews · open any artifact to explore</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery-section" id="gallery">
+      <div class="shell">
+        <div class="section-intro">
+          <h2 data-en="Five lenses. Eleven real stories." data-zh="五种视角，十一个真实故事。">Five lenses. Eleven real stories.</h2>
+          <p data-en="Every scenario has named reader views with a path-aware Story Trail, shareable navigation, dark/light rendering, self-contained export, and a machine-readable quality receipt." data-zh="每个场景都有能辨别真实方向的 Story Trail 命名视图、可分享导航、深浅主题、自包含导出和机器可读质量凭证。">Every scenario has named reader views with a path-aware Story Trail, shareable navigation, dark/light rendering, self-contained export, and a machine-readable quality receipt.</p>
+        </div>
+        <div class="gallery-grid" id="gallery-grid">
+          {cards.map((entry, index) => <GalleryCard entry={entry} index={index} />)}
+        </div>
+        <div class="empty-state" id="empty-state" data-en="No proof cards match this filter." data-zh="当前筛选条件下没有成品。">No proof cards match this filter.</div>
+        <div class="community-callout">
+          <div class="community-callout-copy">
+            <strong class="community-callout-title" data-en="Built something real?" data-zh="做出了真实成品？">Built something real?</strong>
+            <p data-en="Share the redacted source, verified artifact, validation receipt, and visual-review result. Approved work can join the community Proof Lab with attribution." data-zh="提交脱敏源数据、已验证成品、验证凭证和视觉审查结果。通过审核的作品可署名加入社区 Proof Lab。">Share the redacted source, verified artifact, validation receipt, and visual-review result. Approved work can join the community Proof Lab with attribution.</p>
+          </div>
+          <a class="card-link" href="https://github.com/tt-a1i/archify/issues/new?template=showcase.yml" target="_blank" rel="noopener noreferrer" data-en="Share a verified diagram ↗" data-zh="提交已验证成品 ↗">Share a verified diagram ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="method">
+      <div class="shell method-grid">
+        <div>
+          <div class="lead-label" data-en="Build receipt" data-zh="生成凭证">Build receipt</div>
+          <h2 data-en="The gallery cannot drift from the product." data-zh="画廊不会和产品事实分叉。">The gallery cannot drift from the product.</h2>
+          <div class="pipeline" aria-label="Gallery generation pipeline">
+            <div class="pipeline-step"><span class="pipeline-num">01</span><span class="pipeline-label" data-en="Read versioned JSON IR" data-zh="读取版本化 JSON IR">Read versioned JSON IR</span><span class="pipeline-state">PASS</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">02</span><span class="pipeline-label" data-en="Run the typed renderer" data-zh="执行类型化 renderer">Run the typed renderer</span><span class="pipeline-state">PASS</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">03</span><span class="pipeline-label" data-en="Check HTML and SVG structure" data-zh="检查 HTML 与 SVG 结构">Check HTML and SVG structure</span><span class="pipeline-state">PASS</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">04</span><span class="pipeline-label" data-en="Publish artifact, source, and digest" data-zh="发布成品、源数据与摘要">Publish artifact, source, and digest</span><span class="pipeline-state">PASS</span></div>
+          </div>
+        </div>
+        <div class="method-code">
+          <div class="method-code-bar"><span>reproduce locally</span><span>zero runtime deps</span></div>
+          <pre><span class="accent">$ node scripts/build-gallery.mjs</span>
+
+render  workflow      ✓
+render  sequence      ✓
+render  dataflow      ✓
+render  lifecycle     ✓
+render  architecture  ✓
+
+receipt 99 checks / 11 artifacts / deterministic hashes</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <span data-en="Generated from Archify's checked-in examples. No hand-authored capability claims." data-zh="由 Archify 仓库内示例自动生成，不手写可能过期的能力声明。">Generated from Archify's checked-in examples. No hand-authored capability claims.</span>
+      <span data-en={`Archify v${version} · development · MIT`} data-zh={`Archify v${version} · 开发版 · MIT`}>Archify v{version} · development · MIT</span>
+    </div>
+  </footer>
+
+  <script is:inline id="gallery-manifest" type="application/json" set:html={jsonScript(gallery, true)}></script>
+  <script is:inline src="assets/site-language.js"></script>
+  <script is:inline set:html={versioned(pageScript)}></script>
+
+</SiteLayout>

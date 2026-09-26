@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": { "title": "Review hub fan-out", "output": "review-hub.html", "quality_profile": "showcase" },
+  "lanes": [
+    { "id": "main", "label": "Main" },
+    { "id": "side", "label": "Side" },
+    { "id": "terminal", "label": "Terminal" }
+  ],
+  "states": [
+    { "id": "draft", "lane": "main", "col": 0, "type": "start", "label": "Draft" },
+    { "id": "submitted", "lane": "main", "col": 1, "type": "active", "label": "Submitted" },
+    { "id": "review", "lane": "main", "col": 2, "type": "active", "label": "Under review" },
+    { "id": "approved", "lane": "main", "col": 3, "type": "success", "label": "Approved" },
+    { "id": "sla", "lane": "side", "col": 0, "type": "waiting", "label": "SLA wait", "yOffset": -6 },
+    { "id": "changes", "lane": "side", "col": 0, "type": "decision", "label": "Changes requested", "yOffset": 72 },
+    { "id": "rejected", "lane": "terminal", "col": 1, "type": "failure", "label": "Rejected" }
+  ],
+  "transitions": [
+    { "id": "submit", "from": "draft", "to": "submitted", "label": "submit" },
+    { "id": "assign", "from": "submitted", "to": "review", "label": "assign" },
+    { "id": "approve", "from": "review", "to": "approved", "label": "approve" },
+    { "id": "wait", "from": "review", "to": "sla", "label": "clock" },
+    { "id": "request", "from": "review", "to": "changes", "label": "request changes" },
+    { "id": "reject", "from": "review", "to": "rejected", "label": "reject" },
+    { "id": "reopen", "from": "changes", "to": "draft", "label": "reopen", "variant": "dashed" }
+  ]
+}

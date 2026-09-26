@@ -10,8 +10,8 @@ node archify/renderers/dataflow/render-dataflow.mjs input.dataflow.json output.h
 The renderer validates input against `archify/schemas/dataflow.schema.json`
 with the bundled standalone validator. No dependency installation is required.
 
-If `output.html` is omitted, the renderer uses `meta.output` from the JSON file
-or falls back to `dataflow.html` in the current working directory.
+If `output.html` is omitted, the renderer uses the required `meta.output` value
+from the JSON file.
 
 ## Input
 
@@ -23,6 +23,7 @@ Data-flow JSON files must set:
   "diagram_type": "dataflow",
   "meta": {
     "title": "Product Analytics Data Flow",
+    "output": "product-analytics-dataflow.html",
     "viewBox": [940, 720]
   },
   "stages": [],

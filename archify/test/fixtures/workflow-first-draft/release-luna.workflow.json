@@ -1,0 +1,379 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "一次生产发布审批工作流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "release-luna.html"
+  },
+  "lanes": [
+    {
+      "id": "developer",
+      "label": "开发者"
+    },
+    {
+      "id": "ci",
+      "label": "CI 与发布平台"
+    },
+    {
+      "id": "oncall",
+      "label": "值班负责人"
+    },
+    {
+      "id": "audit",
+      "label": "审计旁路"
+    }
+  ],
+  "phases": [
+    {
+      "id": "build_phase",
+      "label": "提交与验证",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "approval_phase",
+      "label": "预发布与审批",
+      "fromCol": 2,
+      "toCol": 4
+    },
+    {
+      "id": "release_phase",
+      "label": "灰度与全量",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "groups": [
+    {
+      "id": "parallel_checks",
+      "label": "并行检查，全部通过才汇合",
+      "lane": "ci",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "submit_release",
+    "test_join",
+    "staging_deploy",
+    "smoke_test",
+    "duty_approval",
+    "canary_5",
+    "metric_gate",
+    "full_release",
+    "publish_success"
+  ],
+  "nodes": [
+    {
+      "id": "submit_release",
+      "lane": "developer",
+      "col": 0,
+      "type": "frontend",
+      "label": "提交版本",
+      "sublabel": "开发者发起发布"
+    },
+    {
+      "id": "unit_tests",
+      "lane": "ci",
+      "col": 1,
+      "type": "backend",
+      "label": "单元测试",
+      "sublabel": "并行执行",
+      "yOffset": -68
+    },
+    {
+      "id": "security_scan",
+      "lane": "ci",
+      "col": 1,
+      "type": "security",
+      "label": "安全扫描",
+      "sublabel": "并行执行",
+      "yOffset": 68
+    },
+    {
+      "id": "test_join",
+      "lane": "ci",
+      "col": 2,
+      "type": "backend",
+      "label": "检查汇合",
+      "sublabel": "两项均通过"
+    },
+    {
+      "id": "staging_deploy",
+      "lane": "ci",
+      "col": 2,
+      "type": "cloud",
+      "label": "预发布部署",
+      "sublabel": "部署候选版本"
+    },
+    {
+      "id": "smoke_test",
+      "lane": "ci",
+      "col": 3,
+      "type": "backend",
+      "label": "冒烟测试",
+      "sublabel": "验证预发布环境"
+    },
+    {
+      "id": "duty_approval",
+      "lane": "oncall",
+      "col": 4,
+      "type": "security",
+      "label": "值班负责人审批",
+      "sublabel": "批准或拒绝"
+    },
+    {
+      "id": "canary_5",
+      "lane": "ci",
+      "col": 4,
+      "type": "cloud",
+      "label": "5% 灰度",
+      "sublabel": "观察生产指标"
+    },
+    {
+      "id": "metric_gate",
+      "lane": "ci",
+      "col": 5,
+      "type": "security",
+      "label": "指标达标？",
+      "sublabel": "灰度结果分支"
+    },
+    {
+      "id": "rollback_stable",
+      "lane": "ci",
+      "col": 5,
+      "type": "backend",
+      "label": "回滚上一稳定版本",
+      "sublabel": "指标不达标"
+    },
+    {
+      "id": "rollback_end",
+      "lane": "ci",
+      "col": 5,
+      "type": "external",
+      "label": "终止本次发布",
+      "sublabel": "通知负责人；不自动重试"
+    },
+    {
+      "id": "full_release",
+      "lane": "ci",
+      "col": 5,
+      "type": "cloud",
+      "label": "全量发布",
+      "sublabel": "指标达标"
+    },
+    {
+      "id": "publish_success",
+      "lane": "developer",
+      "col": 5,
+      "type": "external",
+      "label": "通知开发者成功"
+    },
+    {
+      "id": "revise_version",
+      "lane": "developer",
+      "col": 1,
+      "type": "frontend",
+      "label": "修改版本",
+      "sublabel": "修复后重新提交",
+      "yOffset": 175
+    },
+    {
+      "id": "audit_log",
+      "lane": "audit",
+      "col": 3,
+      "type": "database",
+      "label": "审计日志",
+      "sublabel": "旁路记录：测试、审批、灰度、回滚",
+      "yOffset": 112
+    }
+  ],
+  "edges": [
+    {
+      "id": "submit_to_unit",
+      "from": "submit_release",
+      "to": "unit_tests",
+      "label": "提交后触发",
+      "role": "main"
+    },
+    {
+      "id": "submit_to_scan",
+      "from": "submit_release",
+      "to": "security_scan",
+      "label": "提交后触发",
+      "role": "branch",
+      "variant": "security"
+    },
+    {
+      "id": "unit_pass",
+      "from": "unit_tests",
+      "to": "test_join",
+      "label": "通过"
+    },
+    {
+      "id": "scan_pass",
+      "from": "security_scan",
+      "to": "test_join",
+      "label": "通过",
+      "variant": "security"
+    },
+    {
+      "id": "join_to_staging",
+      "from": "test_join",
+      "to": "staging_deploy",
+      "label": "两项均通过",
+      "role": "main"
+    },
+    {
+      "id": "staging_to_smoke",
+      "from": "staging_deploy",
+      "to": "smoke_test",
+      "label": "部署完成",
+      "role": "main"
+    },
+    {
+      "id": "smoke_to_approval",
+      "from": "smoke_test",
+      "to": "duty_approval",
+      "label": "冒烟通过",
+      "role": "main"
+    },
+    {
+      "id": "approval_to_canary",
+      "from": "duty_approval",
+      "to": "canary_5",
+      "label": "批准",
+      "role": "main"
+    },
+    {
+      "id": "canary_to_gate",
+      "from": "canary_5",
+      "to": "metric_gate",
+      "label": "观察完成",
+      "role": "main"
+    },
+    {
+      "id": "gate_to_full",
+      "from": "metric_gate",
+      "to": "full_release",
+      "label": "达标",
+      "role": "main"
+    },
+    {
+      "id": "full_to_success",
+      "from": "full_release",
+      "to": "publish_success",
+      "label": "发布完成",
+      "role": "main"
+    },
+    {
+      "id": "tests_fail_to_revise",
+      "from": "unit_tests",
+      "to": "revise_version",
+      "label": "失败，修改",
+      "role": "error",
+      "variant": "dashed"
+    },
+    {
+      "id": "scan_fail_to_revise",
+      "from": "security_scan",
+      "to": "revise_version",
+      "label": "失败，修改",
+      "role": "error",
+      "variant": "dashed"
+    },
+    {
+      "id": "smoke_fail_to_revise",
+      "from": "smoke_test",
+      "to": "revise_version",
+      "label": "失败，修改",
+      "role": "error",
+      "variant": "dashed"
+    },
+    {
+      "id": "approval_reject_to_revise",
+      "from": "duty_approval",
+      "to": "revise_version",
+      "label": "拒绝，修改",
+      "role": "error",
+      "variant": "dashed"
+    },
+    {
+      "id": "revise_to_submit",
+      "from": "revise_version",
+      "to": "submit_release",
+      "label": "重新提交",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "id": "gate_to_rollback",
+      "from": "metric_gate",
+      "to": "rollback_stable",
+      "label": "不达标，回滚",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "rollback_to_end",
+      "from": "rollback_stable",
+      "to": "rollback_end",
+      "label": "回滚完成",
+      "role": "error",
+      "variant": "dashed"
+    },
+    {
+      "id": "test_audit",
+      "from": "test_join",
+      "to": "audit_log",
+      "label": "记录测试结果",
+      "role": "async",
+      "variant": "dashed"
+    },
+    {
+      "id": "approval_audit",
+      "from": "duty_approval",
+      "to": "audit_log",
+      "label": "记录审批决定",
+      "role": "async",
+      "variant": "dashed"
+    },
+    {
+      "id": "canary_audit",
+      "from": "metric_gate",
+      "to": "audit_log",
+      "label": "记录灰度结果",
+      "role": "async",
+      "variant": "dashed"
+    },
+    {
+      "id": "rollback_audit",
+      "from": "rollback_end",
+      "to": "audit_log",
+      "label": "记录回滚结果",
+      "role": "async",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "控制条件",
+      "items": [
+        "单元测试与安全扫描并行，只有全部通过才进入预发布。",
+        "审计日志是旁路记录，不决定成功或重试。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "失败路径",
+      "items": [
+        "测试、冒烟或审批拒绝都回到开发者修改并重新提交。",
+        "灰度指标不达标时回滚并终止本次发布，不自动重新灰度。"
+      ]
+    }
+  ]
+}

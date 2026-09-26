@@ -48,7 +48,39 @@ validatorCode = validatorCode.replaceAll(ajvUcs2Import, inlineUcs2Length);
 if (validatorCode.includes('require(')) {
   throw new Error('AJV standalone output contains an unexpected runtime dependency');
 }
-const generated = `${banner}${validatorCode}\n`;
+for (const type of diagramTypes) {
+  const exportPattern = new RegExp(`export const ${type} = (validate\\d+);`);
+  const match = validatorCode.match(exportPattern);
+  if (!match) throw new Error(`AJV standalone output no longer exports the ${type} validator as expected`);
+  validatorCode = validatorCode.replace(exportPattern, `const ${type}Schema = ${match[1]};`);
+}
+
+const portableOutputWrappers = diagramTypes.map((type) => `export function ${type}(data, context = undefined) {
+  if (!${type}Schema(data, context)) {
+    ${type}.errors = ${type}Schema.errors;
+    return false;
+  }
+  const output = data?.meta?.output;
+  if (typeof output === 'string') {
+    try {
+      validatePortablePath(output, { profile: 'output' });
+    } catch (error) {
+      ${type}.errors = [{
+        instancePath: \`${'${context?.instancePath || \'\'}'}/meta/output\`,
+        schemaPath: 'common.schema.json#/$defs/portableOutputPath',
+        keyword: 'portablePath',
+        params: { reason: error?.reason || 'invalid' },
+        message: 'must satisfy the portable output path contract',
+      }];
+      return false;
+    }
+  }
+  ${type}.errors = null;
+  return true;
+}
+${type}.evaluated = ${type}Schema.evaluated;`).join('\n');
+
+const generated = `${banner}import { validatePortablePath } from './portable-path.mjs';\n${validatorCode}\n${portableOutputWrappers}\n`;
 
 if (process.argv.includes('--check')) {
   const current = fs.existsSync(output)

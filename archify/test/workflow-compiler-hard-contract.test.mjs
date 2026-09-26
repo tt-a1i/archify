@@ -2,6 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { compileWorkflow } from '../renderers/workflow/workflow-compiler.mjs';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -13,6 +18,7 @@ function workflow({ lanes, nodes, edges }) {
     diagram_type: 'workflow',
     meta: {
       title: 'Workflow compiler hard-contract fixture',
+      output: 'workflow-hard-contract.html',
       legend: { mode: 'hidden' },
     },
     lanes,
@@ -1463,7 +1469,13 @@ test('readable-v2 reports conflicts between two absolute label pins without dele
       { edge: 'one', field: 'labelAt' },
       { edge: 'two', field: 'labelAt' },
     ]);
-    assertSupportedFixesNameChangedEdge(diagnostic, ['one', 'two']);
+    if (qualityProfile === 'standard') {
+      assertSupportedFixesNameChangedEdge(diagnostic, ['one', 'two']);
+    } else {
+      // Moving either label alone still leaves two fully coincident fixed
+      // routes. The stricter v2 contract must not advertise that as a repair.
+      assert.deepEqual(diagnostic.supportedFixes, []);
+    }
     assert.doesNotMatch(diagnostic.supportedFixes.join('\n'), /remove (?:one |the )?label(?!At)/i);
   }
 });
@@ -1820,6 +1832,7 @@ test('an explicit standard profile overrides an ambient showcase profile', () =>
       true,
       `the explicit standard profile must win:\n${JSON.stringify(result.diagnostics, null, 2)}`,
     );
+    assert.match(result.svg, /data-quality-profile="standard"/);
   } finally {
     if (previousProfile === undefined) delete process.env.ARCHIFY_QUALITY_PROFILE;
     else process.env.ARCHIFY_QUALITY_PROFILE = previousProfile;
@@ -1955,6 +1968,65 @@ test('compileWorkflow enforces the canonical workflow schema at its public bound
   }
 });
 
+function validationParityWorkflow() {
+  return workflow({
+    lanes: [{ id: 'main', label: 'Main' }],
+    nodes: ['a', 'b', 'c'].map((id, index) => ({
+      id, lane: 'main', col: index * 2, type: 'backend', label: id,
+    })),
+    edges: [
+      { id: 'first', from: 'a', to: 'b' },
+      { id: 'second', from: 'b', to: 'c' },
+    ],
+  });
+}
+
+test('compileWorkflow applies the shared cross-collection contracts the renderer enforces', (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-compiler-parity-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  for (const { expectedCode, mutate } of [
+    {
+      expectedCode: 'relationship/duplicate-id',
+      mutate: (document) => { document.edges[1].id = document.edges[0].id; },
+    },
+    {
+      expectedCode: 'guided-view/invalid',
+      mutate: (document) => {
+        document.meta.views = [{ id: 'view', label: 'View', focus: ['missing'] }];
+      },
+    },
+  ]) {
+    const document = validationParityWorkflow();
+    mutate(document);
+    const input = path.join(directory, 'input.json');
+    fs.writeFileSync(input, JSON.stringify(document));
+    const rendered = spawnSync(process.execPath, [
+      fileURLToPath(new URL('../renderers/workflow/render-workflow.mjs', import.meta.url)),
+      input, path.join(directory, 'output.html'),
+    ], {
+      encoding: 'utf8',
+      env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json', ARCHIFY_QUALITY_PROFILE: 'standard' },
+    });
+    assert.equal(rendered.status, 1, rendered.stderr);
+    assert.deepEqual(JSON.parse(rendered.stderr).diagnostics.map(({ code }) => code), [expectedCode]);
+
+    const result = compileWorkflow({ workflow: document, qualityProfile: 'standard' });
+    assert.equal(result.ok, false);
+    assert.equal(result.svg, undefined);
+    assert.equal(result.receipt.contract, 'readable-v2');
+    assert.deepEqual(
+      result.diagnostics.map(({ code }) => code),
+      [expectedCode],
+      JSON.stringify(result.diagnostics, null, 2),
+    );
+    assert.ok(result.diagnostics.every(({ code }) => code !== 'internal/unclassified'));
+    assert.ok(result.diagnostics.every(({ supportedFixes }) => (
+      Array.isArray(supportedFixes) && supportedFixes.length === 0
+    )));
+    assert.deepEqual(result.receipt.diagnostics, result.diagnostics);
+  }
+});
+
 test('readable-v2 rejects a negative absolute label pin without an explicit viewBox', () => {
   const document = oneLaneWorkflow([{
     id: 'ab', from: 'a', to: 'b', label: 'pinned', labelAt: [-20, 80],
@@ -2063,7 +2135,9 @@ test('fixed-v1 publishes only repairs that survive complete replanning', () => {
   const document = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Verified fixes', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Verified fixes', output: 'verified-fixes.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'Main' }],
     groups: [{ id: 'target-only', label: 'Target', lane: 'main', fromCol: 2, toCol: 2 }],
     nodes: [
@@ -2087,7 +2161,9 @@ test('fixed-v1 verifies the exact serialized values in every rounded-width repai
   const document = {
     schema_version: 1,
     diagram_type: 'workflow',
-    meta: { title: 'Rounded verified widths', legend: { mode: 'hidden' } },
+    meta: {
+      title: 'Rounded verified widths', output: 'rounded-verified-widths.html', legend: { mode: 'hidden' },
+    },
     lanes: [{ id: 'main', label: 'M' }],
     nodes: [
       { id: 'a', lane: 'main', col: 1, type: 'backend', label: 'A', width: 52.006 },

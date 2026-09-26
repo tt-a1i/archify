@@ -22,7 +22,8 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "title"
+        "title",
+        "output"
       ],
       "properties": {
         "title": {
@@ -36,7 +37,7 @@
           "type": "string"
         },
         "output": {
-          "type": "string"
+          "$ref": "common.schema.json#/$defs/portableOutputPath"
         },
         "animation": {
           "$ref": "common.schema.json#/$defs/animation"
@@ -50,6 +51,9 @@
         "column_fit": {
           "description": "Horizontal participant layout. Omit this field or use fixed for the stable 86px boxes and 108px gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives wider boxes and gaps from the viewBox without changing participant order or message semantics.",
           "enum": ["fixed", "spread"]
+        },
+        "repository": {
+          "$ref": "common.schema.json#/$defs/repository"
         },
         "views": {
           "$ref": "common.schema.json#/$defs/guidedViews"
@@ -115,8 +119,12 @@
           "sublabel": {
             "type": "string"
           },
+          "icon": { "$ref": "common.schema.json#/$defs/nodeIcon" },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
+          },
+          "sources": {
+            "$ref": "common.schema.json#/$defs/sourceReferences"
           }
         }
       }

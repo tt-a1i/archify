@@ -63,12 +63,12 @@
 
       try { views = JSON.parse(data.textContent || '[]'); } catch (_) { views = []; }
       if (!views.length) return { count: 0, active: function () { return null; } };
-      var canonicalNodeIds = {};
+      var canonicalNodeIds = Object.create(null);
       Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
         canonicalNodeIds[node.getAttribute('data-node-id')] = true;
       });
       views.forEach(function (view) {
-        var seen = {};
+        var seen = Object.create(null);
         view.focus = (view.focus || []).filter(function (id) {
           if (!canonicalNodeIds[id] || seen[id]) return false;
           seen[id] = true;
@@ -97,8 +97,8 @@
       function chapterDelta(previous, destination) {
         var previousFocus = previous ? previous.focus : [];
         var destinationFocus = destination ? destination.focus : [];
-        var previousIds = {};
-        var destinationIds = {};
+        var previousIds = Object.create(null);
+        var destinationIds = Object.create(null);
         previousFocus.forEach(function (id) { previousIds[id] = true; });
         destinationFocus.forEach(function (id) { destinationIds[id] = true; });
         return {
@@ -110,7 +110,7 @@
 
       function chapterAnchor(previous, destination, outgoingBeatIndex, delta) {
         if (!previous || !destination) return '';
-        var stayIds = {};
+        var stayIds = Object.create(null);
         delta.stay.forEach(function (id) { stayIds[id] = true; });
         var activeBeat = outgoingBeatIndex >= 0 ? previous.focus[outgoingBeatIndex] : '';
         if (activeBeat && stayIds[activeBeat]) return activeBeat;
@@ -128,7 +128,7 @@
       }
 
       function classifyHandoff(delta, anchor) {
-        var roles = {};
+        var roles = Object.create(null);
         delta.stay.forEach(function (id) { roles[id] = 'stay'; });
         delta.enter.forEach(function (id) { roles[id] = 'enter'; });
         delta.leave.forEach(function (id) { roles[id] = 'leave'; });
@@ -445,7 +445,7 @@
         if (activePreviewIndex === index && svg.getAttribute('data-chapter-preview') === views[index].id) return true;
         clearChapterPreviewPresentation();
         var delta = chapterDelta(activeIndex >= 0 ? views[activeIndex] : null, views[index]);
-        var roles = {};
+        var roles = Object.create(null);
         delta.stay.forEach(function (id) { roles[id] = 'stay'; });
         delta.enter.forEach(function (id) { roles[id] = 'enter'; });
         delta.leave.forEach(function (id) { roles[id] = 'leave'; });
@@ -1099,7 +1099,7 @@
 
         var nodeList = Array.prototype.slice.call(svg.querySelectorAll('[data-node-id]'));
         var edgeList = Array.prototype.slice.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'));
-        var byId = {};
+        var byId = Object.create(null);
         nodeList.forEach(function (node) { byId[node.getAttribute('data-node-id')] = node; });
         storySteps = view.focus.map(function (_, index) { return storyStep(view, index, edgeList, byId); });
         var labels = [];

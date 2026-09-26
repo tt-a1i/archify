@@ -4,8 +4,8 @@ import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../share
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
-import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
+import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
   asArray,
@@ -18,20 +18,22 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  cleanLabelCanvasContainmentProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
   automaticPortSpread,
-  defaultFromSide,
-  defaultToSide,
+  legacyDefaultFromSide as defaultFromSide,
+  legacyDefaultToSide as defaultToSide,
   chosenSide,
   polylinePath,
   routePointsValue,
+  authoredStraightRouteAttrs,
   labelPoint,
   componentFill,
   componentText,
   arrowClassMap,
-  variantAccent
+  edgeLabelAccent
 } from '../shared/geometry.mjs';
 
 const nodeTextFit = {
@@ -42,7 +44,7 @@ const nodeTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: dataflow, template, outPath } = await loadDiagramWithBrandMarks({
+const { diagram: dataflow, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'dataflow',
   defaultExample: 'product-analytics.dataflow.json'
@@ -259,7 +261,7 @@ function validateDataflow() {
   for (const rect of labelRects) {
     for (const node of nodes.values()) {
       if (rectsOverlap(rect, node, -2)) {
-        problems.push(`Label "${rect.label}" overlaps node "${node.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, node, 'node')}`);
+        problems.push(`Label "${rect.label}" overlaps node "${node.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, node, 'node', viewBox, nodes.values())}`);
       }
     }
   }
@@ -279,6 +281,13 @@ function validateDataflow() {
     relationCollection: 'flows',
     profile: dataflow.meta?.quality_profile,
     routeHint: 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other flow route/via/channelX/channelY'
+  }));
+  problems.push(...cleanLabelCanvasContainmentProblems({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'dataflow',
+    relationCollection: 'flows',
+    profile: dataflow.meta?.quality_profile,
   }));
 
   const lastStageX = stageX(asArray(dataflow.stages).length - 1);
@@ -362,36 +371,83 @@ function pathFor(flow) {
   return routed;
 }
 
+// Header measurement follows 276970789's #257, including the ordinal.
+// Long titles wrap at the same legible floor instead of becoming invalid input.
+function stageHeaderText(stage, index) {
+  return `${String(index + 1).padStart(2, '0')} / ${stage.label}`;
+}
+
+function renderStageHeader(stage, index, cx) {
+  const text = stageHeaderText(stage, index);
+  const font = fittedNodeFontSize(text, layout.stageW, 9, 7);
+  const available = availableNodeTextWidth(layout.stageW);
+  const open = `<text x="${cx}" y="${layout.stageY + 22}" class="t-dim" font-size="${font}" font-weight="600" text-anchor="middle">`;
+  if (minimumNodeTextWidth(text, font) <= available) return `${open}${esc(text)}</text>`;
+  const lines = [];
+  let line = '';
+  // Prefer word boundaries; split oversized words and CJK by grapheme, without
+  // dropping whitespace or splitting a combining character/emoji sequence.
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  for (const word of text.match(/\s+|\S+/gu) || []) {
+    if (line && minimumNodeTextWidth(line + word, font) > available) {
+      lines.push(line); line = '';
+    }
+    for (const { segment } of segmenter.segment(word)) {
+      if (line && minimumNodeTextWidth(line + segment, font) > available) {
+        lines.push(line); line = '';
+      }
+      line += segment;
+    }
+  }
+  if (line) lines.push(line);
+  // Explicit node geometry is authoritative. Do not turn an old horizontal
+  // overflow into a new collision with nodes when the header area is packed.
+  const firstNodeY = Math.min(...[...nodes.values()].filter(node => node.stage === index).map(node => node.y),
+    viewBox[1] - layout.stageBottomPad);
+  const lastLineBottom = layout.stageY + 22 + (lines.length - 1) * (font + 4) + font * 0.3;
+  if (lastLineBottom > firstNodeY - 4) return `${open}${esc(text)}</text>`;
+  const content = lines.length === 1 ? esc(text) : lines.map((line, i) =>
+    `<tspan x="${cx}" dy="${i ? font + 4 : 0}">${esc(line)}</tspan>`).join('');
+  return `${open}${content}</text>`;
+}
+
 function renderStage(stage, index) {
   const frame = compositionFrames[index];
   const cx = stageX(index);
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="stage" data-composition-frame-id="${index}" x="${frame.x}" y="${frame.y}" width="${frame.width}" height="${frame.height}" rx="${frame.radius}" class="c-lane" stroke-width="1"/>
-        <text x="${cx}" y="${layout.stageY + 22}" class="t-dim" font-size="9" font-weight="600" text-anchor="middle">${String(index + 1).padStart(2, '0')} / ${esc(stage.label)}</text>`;
+        ${renderStageHeader(stage, index, cx)}`;
 }
 
 function renderNode(node) {
   const fill = componentFill[node.type] || 'c-external';
   const accent = componentText[node.type] || 't-muted';
   const hasSub = node.sublabel != null && node.sublabel !== '';
+  const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), 10, 8);
+  const sublabelFontSize = fittedNodeFontSize(node.sublabel, node.width, nodeTextFit.sublabelPreferred, nodeTextFit.sublabelMinimum);
+  const tagFontSize = fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum);
+  const textRows = [{ text: node.label, font: labelFontSize, y: 21 }];
+  if (hasSub) textRows.push({ text: node.sublabel, font: sublabelFontSize, y: 37 });
+  if (node.tag) textRows.push({ text: node.tag, font: tagFontSize, y: node.height - 11 });
+  const labelLayout = nodeLabelLayout({ width: node.width, height: node.height, rows: textRows,
+    brand: Boolean(brandMarkFor(node)) });
   const sub = hasSub
-    ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + 37}" class="t-muted" font-size="${fittedNodeFontSize(node.sublabel, node.width, nodeTextFit.sublabelPreferred, nodeTextFit.sublabelMinimum)}" text-anchor="middle">${esc(node.sublabel)}</text>`
+    ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + labelLayout.ys[1]}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(node.sublabel)}</text>`
     : '';
   const tag = node.tag
-    ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + node.height - 11}" class="${accent}" font-size="${fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum)}" text-anchor="middle">${esc(node.tag)}</text>`
+    ? `\n        <text data-detail="fine" x="${node.cx}" y="${node.y + labelLayout.ys[hasSub ? 2 : 1]}" class="${accent}" font-size="${tagFontSize}" text-anchor="middle">${esc(node.tag)}</text>`
     : '';
   const stage = asArray(dataflow.stages)[node.stage];
   const context = stage
     ? `${String(node.stage + 1).padStart(2, '0')} / ${stage.label}`
     : i18nText(dataflow.meta.locale, 'node.context.dataflow');
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
-  const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), 10, 8);
   const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, ...brandMetadataFor(node) };
   return `        <g ${focusNodeAttrs(node.id, node.label, passport, dataflow.meta.locale)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6" class="${fill}"${animateAttr(dataflow.meta, 'node', nodeSteps.get(node.id))} stroke-width="1.5"/>
-          ${renderSemanticSigil(node.type, { x: node.x + 6, y: node.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.cx}" y="${node.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
+          ${renderSemanticSigil(node.type, { icon: node.icon, x: node.x + 6, y: node.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.x + labelLayout.x}" y="${node.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}
         </g>`;
 }
 
@@ -399,7 +455,7 @@ function renderFlowPath(flow, index) {
   const [cls, marker] = arrowClassMap[flow.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(flow);
   const strokeWidth = flow.width || (flow.variant === 'emphasis' ? 1.8 : 1.4);
-  return `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)} data-composition-points="${routePointsValue(routed.points)}"${authoredStraightRouteAttrs(flow, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(dataflow.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
 function renderFlowLabel(flow, index) {
@@ -411,7 +467,7 @@ function renderFlowLabel(flow, index) {
     : '';
   return `        <g data-detail="context" ${focusEdgeAttrs(flow.from, flow.to, flow.label, index, flow.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}
+          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(flow.variant)}" font-size="8" text-anchor="middle">${esc(flow.label)}</text>${classification}
         </g>`;
 }
 
@@ -448,7 +504,11 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(dataflow.meta)}>
+  // Same default-canvas contract as lifecycle: 940x720 is below the 1.55 wide
+  // ratio, so without intrinsic-height the desktop Reader can neither narrow
+  // nor scroll it and every default dataflow fails the browser gate.
+  const readerFit = dataflow.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(dataflow.meta)}>
 ${svgAccessibleText(dataflow.meta, 'dataflow')}
 ${renderDefinitions()}
 
@@ -480,4 +540,5 @@ writeDiagram({
   meta: dataflow.meta,
   svg: renderSvg(),
   cards: dataflow.cards,
+  sourceEvidence,
 });

@@ -1,0 +1,38 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": { "title": "分支与回流", "locale": "zh-CN", "output": "workflow.html" },
+  "lanes": [
+    { "id": "parent", "label": "会话入口与用户反馈" },
+    { "id": "ordinary", "label": "普通工具路径" },
+    { "id": "execution", "label": "主会话调度与独立委派" },
+    { "id": "orchestration", "label": "多阶段编排路径" },
+    { "id": "process", "label": "后台进程路径" }
+  ],
+  "nodes": [
+    { "id": "submit", "lane": "parent", "col": 0, "type": "frontend", "label": "提交任务", "width": 156 },
+    { "id": "capabilities", "lane": "parent", "col": 1, "type": "security", "label": "加载能力", "width": 172 },
+    { "id": "decide", "lane": "execution", "col": 2, "type": "backend", "label": "执行决策", "width": 156 },
+    { "id": "native", "lane": "ordinary", "col": 3, "type": "backend", "label": "普通工具", "width": 172 },
+    { "id": "child", "lane": "execution", "col": 3, "type": "backend", "label": "独立执行", "width": 172 },
+    { "id": "workflow", "lane": "orchestration", "col": 3, "type": "messagebus", "label": "任务编排", "width": 172 },
+    { "id": "background", "lane": "process", "col": 3, "type": "external", "label": "后台进程", "width": 172 },
+    { "id": "collect", "lane": "execution", "col": 4, "type": "messagebus", "label": "接收结果", "width": 156 },
+    { "id": "reply", "lane": "parent", "col": 5, "type": "frontend", "label": "回复结果", "width": 172 }
+  ],
+  "edges": [
+    { "id": "prepare", "from": "submit", "to": "capabilities", "label": "回合启动前", "role": "main", "variant": "emphasis" },
+    { "id": "model-turn", "from": "capabilities", "to": "decide", "label": "可用工具面", "role": "main", "variant": "emphasis" },
+    { "id": "ordinary-work", "from": "decide", "to": "native", "label": "普通工作", "role": "main", "variant": "emphasis" },
+    { "id": "delegate-work", "from": "decide", "to": "child", "label": "独立执行", "role": "branch" },
+    { "id": "orchestrate-work", "from": "decide", "to": "workflow", "label": "编排执行", "role": "branch" },
+    { "id": "launch-process", "from": "decide", "to": "background", "label": "后台执行", "role": "branch" },
+    { "id": "native-result", "from": "native", "to": "collect", "label": "工具结果", "role": "main", "variant": "emphasis" },
+    { "id": "child-result", "from": "child", "to": "collect", "label": "完成后跟进", "role": "async", "variant": "dashed" },
+    { "id": "workflow-result", "from": "workflow", "to": "collect", "label": "等待返回／稍后投递", "role": "async", "variant": "dashed" },
+    { "id": "process-result", "from": "background", "to": "collect", "label": "状态／完成通知", "role": "async", "variant": "dashed" },
+    { "id": "continue-work", "from": "collect", "to": "decide", "label": "仍需后续工作", "role": "return", "variant": "dashed", "channelY": 180 },
+    { "id": "finish", "from": "collect", "to": "reply", "label": "综合结果", "role": "main", "variant": "emphasis" },
+    { "id": "direct-answer", "from": "decide", "to": "reply", "label": "无需工具时直接回答", "role": "branch" }
+  ]
+}

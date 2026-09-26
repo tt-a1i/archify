@@ -95,6 +95,8 @@ node bin/archify.mjs compare architecture base.json head.json \
   architecture-delta.html --quality showcase --json
 ```
 
+Repository revision, provider, link mode, or location representation changes are reported separately from component, relationship, and boundary changes. The Delta page never marks a graph entity as changed for provenance alone, and it does not expose repository URLs in the provenance summary.
+
 ## 6. Inspect the exact final file
 
 The deterministic checks do not exercise the Viewer in a browser. Collect automated browser evidence from the exact delivered HTML when Chrome or Chromium is available:

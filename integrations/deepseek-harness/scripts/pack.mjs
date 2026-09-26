@@ -24,7 +24,7 @@ try {
   stageCleanSkill({ repoRoot: snapshot, destination: path.join(stage, 'skills', 'archify') });
   fs.copyFileSync(path.join(snapshot, 'LICENSE'), path.join(stage, 'LICENSE'));
 
-  const packed = spawnCliSync('npm', ['pack', '--json', '--pack-destination', stage], {
+  const packed = spawnCliSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', stage], {
     cwd: stage,
     encoding: 'utf8',
   });

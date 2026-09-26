@@ -1,0 +1,11 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 394,
+  "author": "tt-a1i",
+  "title": "chore(review): reduce repeated CodeRabbit evidence requests",
+  "mergedAt": "2026-09-12T02:23:34Z",
+  "mergeCommit": "6db72a9aea3d0f67a6a034e41f8a5491476a11c1",
+  "url": "https://github.com/tt-a1i/archify/pull/394",
+  "pngSha256": "8a37e5f6c9324af6b7db793a91f83f9e7bf6460b82ca5756b2ab113a14372d96"
+}

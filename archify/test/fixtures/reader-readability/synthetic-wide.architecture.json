@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Synthetic wide reader fixture",
+    "output": "synthetic-wide-reader.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "admission",
+        "label": "Admission",
+        "focus": [
+          "caller",
+          "listener",
+          "handler",
+          "parser",
+          "coordinator",
+          "store",
+          "queue"
+        ],
+        "note": "Trace request admission through queued state."
+      },
+      {
+        "id": "execution",
+        "label": "Execution",
+        "focus": [
+          "coordinator",
+          "queue",
+          "scheduler",
+          "worker",
+          "formatter",
+          "store"
+        ],
+        "note": "Follow one queued item through worker completion."
+      },
+      {
+        "id": "polling",
+        "label": "Polling",
+        "focus": [
+          "caller",
+          "listener",
+          "handler",
+          "coordinator",
+          "store",
+          "scheduler"
+        ],
+        "note": "Follow polling across the process boundary."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "Client caller",
+      "sublabel": "external request",
+      "pos": [
+        10,
+        270
+      ],
+      "size": [
+        160,
+        78
+      ]
+    },
+    {
+      "id": "listener",
+      "type": "backend",
+      "label": "HTTP listener",
+      "sublabel": "request bridge",
+      "pos": [
+        260,
+        270
+      ],
+      "size": [
+        170,
+        78
+      ]
+    },
+    {
+      "id": "handler",
+      "type": "backend",
+      "label": "Request handler",
+      "sublabel": "route and validation",
+      "pos": [
+        530,
+        270
+      ],
+      "size": [
+        180,
+        84
+      ]
+    },
+    {
+      "id": "parser",
+      "type": "backend",
+      "label": "Input parser",
+      "sublabel": "structured payload",
+      "pos": [
+        740,
+        110
+      ],
+      "size": [
+        180,
+        78
+      ]
+    },
+    {
+      "id": "coordinator",
+      "type": "backend",
+      "label": "Work coordinator",
+      "sublabel": "admit and poll",
+      "pos": [
+        740,
+        300
+      ],
+      "size": [
+        160,
+        84
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "State store",
+      "sublabel": "in-memory records",
+      "pos": [
+        930,
+        170
+      ],
+      "size": [
+        170,
+        82
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "FIFO queue",
+      "sublabel": "in-memory ids",
+      "pos": [
+        920,
+        370
+      ],
+      "size": [
+        170,
+        82
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Tick scheduler",
+      "sublabel": "periodic worker tick",
+      "pos": [
+        720,
+        540
+      ],
+      "size": [
+        180,
+        78
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Work worker",
+      "sublabel": "queued to complete",
+      "pos": [
+        1195,
+        370
+      ],
+      "size": [
+        165,
+        84
+      ]
+    },
+    {
+      "id": "formatter",
+      "type": "backend",
+      "label": "Result formatter",
+      "sublabel": "text transform",
+      "pos": [
+        1195,
+        170
+      ],
+      "size": [
+        165,
+        78
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application process",
+      "wraps": [
+        "listener",
+        "handler",
+        "parser",
+        "coordinator",
+        "store",
+        "queue",
+        "scheduler",
+        "worker",
+        "formatter"
+      ],
+      "pad": 28
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-request",
+      "from": "caller",
+      "to": "listener",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "request-envelope",
+      "from": "listener",
+      "to": "handler",
+      "label": "method and body"
+    },
+    {
+      "id": "post-body",
+      "from": "handler",
+      "to": "parser",
+      "label": "parse payload"
+    },
+    {
+      "id": "validated-job",
+      "from": "parser",
+      "to": "coordinator",
+      "label": "validated work"
+    },
+    {
+      "id": "poll-request",
+      "from": "handler",
+      "to": "coordinator",
+      "label": "poll status"
+    },
+    {
+      "id": "state-admission",
+      "from": "coordinator",
+      "to": "store",
+      "label": "read or write state"
+    },
+    {
+      "id": "enqueue-id",
+      "from": "coordinator",
+      "to": "queue",
+      "label": "enqueue id",
+      "variant": "dashed"
+    },
+    {
+      "id": "coordinator-result",
+      "from": "coordinator",
+      "to": "handler",
+      "label": "status result"
+    },
+    {
+      "id": "json-response",
+      "from": "handler",
+      "to": "listener",
+      "label": "response body"
+    },
+    {
+      "id": "server-response",
+      "from": "listener",
+      "to": "caller",
+      "label": "HTTP response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "timer-tick",
+      "from": "scheduler",
+      "to": "worker",
+      "label": "tick every interval",
+      "variant": "dashed"
+    },
+    {
+      "id": "dequeue-id",
+      "from": "queue",
+      "to": "worker",
+      "label": "dequeue next id"
+    },
+    {
+      "id": "worker-state",
+      "from": "worker",
+      "to": "store",
+      "label": "update state"
+    },
+    {
+      "id": "format-call",
+      "from": "worker",
+      "to": "formatter",
+      "label": "format text"
+    },
+    {
+      "id": "format-result",
+      "from": "formatter",
+      "to": "worker",
+      "label": "formatted result"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Admission",
+      "items": [
+        "The handler validates a request before coordinator work.",
+        "Malformed input stops before state changes.",
+        "Repeated ids are rejected without a second enqueue."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Execution",
+      "items": [
+        "Accepted work enters the FIFO queue.",
+        "The worker advances one item through completion.",
+        "Formatting runs before the completed result is stored."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Polling",
+      "items": [
+        "Polling reads a cloned record.",
+        "Missing ids return a not-found result.",
+        "The runtime keeps state inside one process."
+      ]
+    }
+  ]
+}

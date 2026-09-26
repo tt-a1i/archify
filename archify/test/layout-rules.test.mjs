@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { minimumReadableSourceTextPx } from '../renderers/shared/desktop-readability.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -38,7 +39,9 @@ function load(mode) {
 function render(mode, doc) {
   const input = path.join(tmp, `${mode}-${Math.abs(hash(JSON.stringify(doc)))}.json`);
   const outPath = path.join(tmp, `${mode}-${Math.abs(hash(JSON.stringify(doc)))}.html`);
-  fs.writeFileSync(input, JSON.stringify(doc));
+  const renderDoc = structuredClone(doc);
+  renderDoc.meta = { ...renderDoc.meta, output: `${mode}-layout-rules.html` };
+  fs.writeFileSync(input, JSON.stringify(renderDoc));
   try {
     execFileSync('node', [
       path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`),
@@ -53,7 +56,9 @@ function render(mode, doc) {
 
 function validateCli(mode, doc, quality = 'showcase') {
   const input = path.join(tmp, `${mode}-cli-${Math.abs(hash(JSON.stringify(doc)))}.json`);
-  fs.writeFileSync(input, JSON.stringify(doc));
+  const cliDoc = structuredClone(doc);
+  cliDoc.meta = { ...cliDoc.meta, output: `${mode}-validation.html` };
+  fs.writeFileSync(input, JSON.stringify(cliDoc));
   try {
     const stdout = execFileSync('node', [
       path.join(skillRoot, 'bin', 'archify.mjs'),
@@ -69,6 +74,33 @@ function validateCli(mode, doc, quality = 'showcase') {
     return {
       code: err.status ?? 1,
       result: JSON.parse(String(err.stdout || '{}')),
+    };
+  }
+}
+
+function deliverCli(mode, doc, quality = 'showcase') {
+  const input = path.join(tmp, `${mode}-deliver-${Math.abs(hash(JSON.stringify(doc)))}.json`);
+  const outPath = path.join(tmp, `${mode}-deliver-${Math.abs(hash(JSON.stringify(doc)))}.html`);
+  const cliDoc = structuredClone(doc);
+  cliDoc.meta = { ...cliDoc.meta, output: `${mode}-delivery.html` };
+  fs.writeFileSync(input, JSON.stringify(cliDoc));
+  try {
+    const stdout = execFileSync('node', [
+      path.join(skillRoot, 'bin', 'archify.mjs'),
+      'deliver',
+      mode,
+      input,
+      outPath,
+      '--quality',
+      quality,
+      '--json',
+    ], { encoding: 'utf8' });
+    return { code: 0, result: JSON.parse(stdout), outPath };
+  } catch (err) {
+    return {
+      code: err.status ?? 1,
+      result: JSON.parse(String(err.stdout || '{}')),
+      outPath,
     };
   }
 }
@@ -1073,6 +1105,408 @@ test('sequence: showcase rejects a message label that hides an adjacent route', 
   assert.match(stderr, /customer authorization context.*dashboard-request/);
 });
 
+// A label rect that leaves the viewBox is clipped by the SVG canvas, so the
+// artifact ships truncated text while every post-render check still passes.
+function offCanvasLabelDocument() {
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Off-canvas label', quality_profile: 'showcase', viewBox: [720, 400] },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [60, 160], size: [120, 54] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [420, 160], size: [120, 54] },
+    ],
+    connections: [{
+      id: 'left-to-right',
+      from: 'left',
+      to: 'right',
+      label: 'a very long edge label that runs off the canvas',
+      labelAt: [640, 140],
+    }],
+  };
+}
+
+test('architecture: showcase rejects a connection label that leaves the canvas', () => {
+  const { code, stderr } = render('architecture', offCanvasLabelDocument());
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase architecture label "a very long edge label that runs off the canvas" on connections\[0\] id "left-to-right"/);
+  assert.match(stderr, /extends past the right edge by 37\.8px/);
+  assert.match(stderr, /viewBox 720x400/);
+  assert.match(stderr, /labelAt.*labelDx.*labelDy.*labelSegment/);
+});
+
+test('architecture: standard keeps a label that leaves the canvas renderable', () => {
+  const d = offCanvasLabelDocument();
+  d.meta.quality_profile = 'standard';
+  const { code, stderr } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+});
+
+// The same pin is a defect on the fixed-v1 canvas and a legitimate layout on
+// readable-v2; see collectLabelCanvasOverflow in renderers/shared/geometry.mjs.
+function offCanvasWorkflowLabelDocument(schemaVersion) {
+  return {
+    schema_version: schemaVersion,
+    diagram_type: 'workflow',
+    meta: {
+      title: 'Workflow label off canvas',
+      quality_profile: 'showcase',
+      viewBox: [720, 400],
+      legend: { mode: 'hidden' },
+    },
+    lanes: [{ id: 'main', label: 'Main flow' }],
+    nodes: [
+      { id: 'a', lane: 'main', col: 0, type: 'backend', label: 'A' },
+      { id: 'b', lane: 'main', col: 2, type: 'backend', label: 'B' },
+    ],
+    edges: [{ id: 'a-to-b', from: 'a', to: 'b', label: 'dispatch the planned tool call', labelAt: [700, 240] }],
+  };
+}
+
+test('workflow: showcase rejects a v1 edge label that leaves the canvas', () => {
+  const { code, stderr } = render('workflow', offCanvasWorkflowLabelDocument(1));
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase workflow label "dispatch the planned tool call" on edges\[0\] id "a-to-b"/);
+  assert.match(stderr, /extends past the right edge by 57px \(label rect \[623, 230, 154, 14\]; viewBox 720x400\)/);
+});
+
+test('workflow: readable-v2 contains the same pinned label without this rule', () => {
+  const grown = offCanvasWorkflowLabelDocument(2);
+  delete grown.meta.viewBox;
+  const { code, stderr, outPath } = render('workflow', grown);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const [, width] = html.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
+  assert.ok(width >= 777, `expected the v2 canvas to contain the label rect, got width ${width}`);
+
+  // An authored v2 viewBox that cannot hold the layout is already rejected by
+  // the compiler's own contract, with its own minimum in the message.
+  const pinned = render('workflow', offCanvasWorkflowLabelDocument(2));
+  assert.notEqual(pinned.code, 0, `expected non-zero exit; stderr:\n${pinned.stderr}`);
+  assert.match(pinned.stderr, /cannot contain the readable-v2 layout; minimum \d+×\d+/);
+  assert.doesNotMatch(pinned.stderr, /label-canvas-containment/);
+});
+
+test('dataflow: showcase rejects a flow label that leaves the canvas', () => {
+  const d = load('dataflow');
+  d.flows[0].label = 'clickstream ingest with enrichment';
+  d.flows[0].labelAt = [1070, 400];
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase dataflow label "clickstream ingest with enrichment" on flows\[0\]/);
+  assert.match(stderr, /extends past the right edge by 79\.3px .*viewBox 1080x520/);
+});
+
+test('lifecycle: showcase rejects a transition label that leaves the canvas', () => {
+  const d = load('lifecycle');
+  d.transitions[0].label = 'operator approves the escalation';
+  d.transitions[0].labelAt = [960, 300];
+  const { code, stderr } = render('lifecycle', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase lifecycle label "operator approves the escalation" on transitions\[0\]/);
+  assert.match(stderr, /extends past the right edge by 14\.4px .*viewBox 1030x630/);
+});
+
+// The repair side of the same contract: a suggested labelAt, applied verbatim,
+// must clear the obstacle the message names. Both 27px two-line forms used to
+// get an "above" hint that landed the rect back on the obstacle, so the
+// validator answered its own fix with the identical message.
+function suggestedLabelAts(stderr) {
+  return [...new Set(stderr.match(/set labelAt \[-?\d+, -?\d+\]/g) || [])]
+    .map((match) => match.match(/\[(-?\d+), (-?\d+)\]/).slice(1, 3).map(Number));
+}
+
+test('dataflow: obstacle hints for a two-line classification label survive being applied', () => {
+  const d = load('dataflow');
+  d.flows[0].labelAt = [100, 150];
+  const { code, stderr } = render('dataflow', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /Label "clickstream" overlaps node "web"/);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.equal(suggestions.length, 2, stderr);
+  for (const labelAt of suggestions) {
+    const applied = load('dataflow');
+    applied.flows[0].labelAt = labelAt;
+    const result = render('dataflow', applied);
+    assert.equal(result.code, 0, `labelAt [${labelAt}]: ${result.stderr}`);
+  }
+});
+
+test('lifecycle: obstacle hints for a two-line note label survive being applied', () => {
+  const withLabel = (labelAt) => {
+    const d = load('lifecycle');
+    d.transitions[0].label = 'needs approval';
+    d.transitions[0].note = 'security gate';
+    d.transitions[0].labelAt = labelAt;
+    return d;
+  };
+  const { code, stderr } = render('lifecycle', withLabel([400, 180]));
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /Label "needs approval" overlaps state "executing"/);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.equal(suggestions.length, 2, stderr);
+  for (const labelAt of suggestions) {
+    const result = render('lifecycle', withLabel(labelAt));
+    // The hint's contract covers the named obstacle and the canvas; a residual
+    // route-clearance issue at the new spot is that rule's own report.
+    assert.doesNotMatch(result.stderr, /overlaps state "executing"/, `labelAt [${labelAt}]: ${result.stderr}`);
+  }
+});
+
+test('sequence: showcase rejects a message label that leaves the canvas', () => {
+  const d = load('sequence');
+  d.messages = d.messages.slice(0, 1);
+  d.messages[0].label = 'request the cached dashboard payload for the current reporting window and retry budget';
+  d.segments = [];
+  d.activations = [];
+  const { code, stderr } = render('sequence', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /\[composition\/label-canvas-containment\] showcase sequence label ".*" on messages\[0\]/);
+  assert.match(stderr, /extends past the left edge by 99\.2px .*viewBox 1080x560/);
+  assert.match(stderr, /shorten the label, reorder participants, or enlarge meta\.viewBox/);
+});
+
+// An auto canvas is derived geometry, so it has to cover the label rects the
+// containment rule measures. An authored viewBox is the author's decision and
+// is never resized; there the rule reports the clipping instead.
+test('architecture: an auto viewBox grows to contain a wide connection label', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Auto canvas with a wide label', quality_profile: 'showcase' },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [60, 160], size: [120, 54] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [420, 160], size: [120, 54] },
+    ],
+    connections: [{
+      id: 'left-to-right',
+      from: 'left',
+      to: 'right',
+      label: 'a very long edge label that runs off the canvas',
+      labelAt: [640, 140],
+    }],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const [, width] = html.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
+  const mask = html.match(/<g data-detail="context"[^>]*>\s*<rect x="([\d.-]+)"[^>]*width="([\d.]+)"/);
+  const labelRight = Number(mask[1]) + Number(mask[2]);
+  assert.ok(labelRight <= width, `label right edge ${labelRight} exceeds the ${width}px auto canvas`);
+
+  const authored = structuredClone(d);
+  authored.meta.viewBox = [720, 400];
+  const pinned = render('architecture', authored);
+  assert.notEqual(pinned.code, 0, `expected non-zero exit; stderr:\n${pinned.stderr}`);
+  assert.match(pinned.stderr, /\[composition\/label-canvas-containment\]/);
+});
+
+test('architecture: measured auto canvases opt into height-aware reader fitting', () => {
+  const automatic = load('architecture');
+  delete automatic.meta.viewBox;
+  const rendered = render('architecture', automatic);
+  assert.equal(rendered.code, 0, rendered.stderr);
+  const automaticSvg = fs.readFileSync(rendered.outPath, 'utf8').match(/<svg\b[^>]*>/)?.[0];
+  assert.ok(automaticSvg, 'expected an SVG root for the automatic canvas');
+  assert.match(automaticSvg, /data-reader-fit="intrinsic-height"/);
+  assert.match(automaticSvg, /data-reader-min-text="7\.5"/);
+
+  const authored = structuredClone(automatic);
+  authored.meta.viewBox = [1080, 620];
+  const pinned = render('architecture', authored);
+  assert.equal(pinned.code, 0, pinned.stderr);
+  const authoredSvg = fs.readFileSync(pinned.outPath, 'utf8').match(/<svg\b[^>]*>/)?.[0];
+  assert.ok(authoredSvg, 'expected an SVG root for the authored canvas');
+  assert.match(authoredSvg, /data-reader-fit="authored-height"/);
+  assert.match(authoredSvg, /data-diagram-type="architecture"/);
+  assert.doesNotMatch(authoredSvg, /data-reader-min-text=/);
+});
+
+// Sequence and dataflow share the lifecycle/architecture contract: the default
+// canvas is below the wide ratio, so omitting meta.viewBox must declare the
+// intrinsic-height fit or every default canvas certainly overflows 1440x900.
+for (const [mode, doc, authoredViewBox] of [
+  ['sequence', {
+    schema_version: 1, diagram_type: 'sequence',
+    meta: { title: 'Ping', output: 'seq.html' },
+    participants: [{ id: 'a', type: 'external', label: 'Client' }, { id: 'b', type: 'backend', label: 'Server' }],
+    messages: [{ from: 'a', to: 'b', y: 160, label: 'ping' }],
+  }, [1080, 560]],
+  ['dataflow', {
+    schema_version: 1, diagram_type: 'dataflow',
+    meta: { title: 'Pipe', output: 'df.html' },
+    stages: [{ label: 'In' }, { label: 'Out' }],
+    nodes: [
+      { id: 'a', type: 'frontend', label: 'Client', stage: 0, row: 0 },
+      { id: 'b', type: 'database', label: 'Store', stage: 1, row: 0 },
+    ],
+    flows: [{ from: 'a', to: 'b', label: 'write' }],
+  }, [1080, 520]],
+]) {
+  test(`${mode}: default canvas declares intrinsic-height fit, authored viewBox does not`, () => {
+    const automatic = render(mode, doc);
+    assert.equal(automatic.code, 0, automatic.stderr);
+    const automaticSvg = fs.readFileSync(automatic.outPath, 'utf8').match(/<svg\b[^>]*>/)?.[0];
+    assert.ok(automaticSvg, `expected an SVG root for the default ${mode} canvas`);
+    assert.match(automaticSvg, /data-reader-fit="intrinsic-height"/);
+
+    const authored = structuredClone(doc);
+    authored.meta.viewBox = authoredViewBox;
+    const pinned = render(mode, authored);
+    assert.equal(pinned.code, 0, pinned.stderr);
+    const authoredSvg = fs.readFileSync(pinned.outPath, 'utf8').match(/<svg\b[^>]*>/)?.[0];
+    assert.ok(authoredSvg, `expected an SVG root for the authored ${mode} canvas`);
+    assert.doesNotMatch(authoredSvg, /data-reader-fit=/);
+  });
+}
+
+// Boundary-title fonts are resolved against the same width the canvas actually
+// renders into. When a connection label alone widens the auto canvas past the
+// desktop reader width, the title font must rise with it — otherwise validate
+// would pass an artifact the desktop-readability check rejects.
+test('architecture: label-driven canvas growth keeps boundary titles at the readability floor', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Label-grown canvas', quality_profile: 'showcase' },
+    boundaries: [{
+      kind: 'region',
+      label: 'Shared production tenant isolation and compliance perimeter for the primary region',
+      wraps: ['a', 'b', 'c'],
+    }],
+    components: [
+      { id: 'a', type: 'frontend', label: 'A', pos: [60, 160], size: [140, 54] },
+      { id: 'b', type: 'backend', label: 'B', pos: [480, 160], size: [140, 54] },
+      { id: 'c', type: 'backend', label: 'C', pos: [860, 160], size: [140, 54] },
+      { id: 'd', type: 'database', label: 'D', pos: [860, 320], size: [140, 54] },
+    ],
+    connections: [{
+      id: 'c-to-d',
+      from: 'c',
+      to: 'd',
+      label: 'streaming replication of the full transaction journal with retries',
+      labelAt: [1310, 300],
+    }],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const [, width] = html.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
+  assert.ok(width > 1395, `expected the label to grow the canvas past 1395px, got ${width}`);
+  const floor = minimumReadableSourceTextPx(width);
+  const fonts = [...html.matchAll(/data-boundary-label=""[^>]*font-size="([\d.]+)"/g)]
+    .map(([, size]) => Number(size));
+  assert.equal(fonts.length, 1, 'expected exactly one boundary title');
+  assert.ok(
+    fonts[0] + 1e-6 >= floor,
+    `boundary title font ${fonts[0]} is below the ${floor}px floor for the ${width}px canvas`,
+  );
+});
+
+// The validator must not answer an off-canvas defect with another off-canvas
+// coordinate: every suggested labelAt has to keep the whole label rect inside.
+test('architecture: label obstacle fixes stay inside the viewBox', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Label on a component near the edge', quality_profile: 'showcase', viewBox: [720, 400] },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [40, 180], size: [120, 54] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [540, 336], size: [160, 54] },
+    ],
+    connections: [{
+      id: 'left-to-right',
+      from: 'left',
+      to: 'right',
+      label: 'synchronous call with retries and backoff',
+      labelAt: [660, 360],
+    }],
+  };
+  const { code, stderr } = render('architecture', d);
+  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+  assert.match(stderr, /overlaps component "right"/);
+  const rect = stderr.match(/label rect: \[(-?\d+), (-?\d+), (\d+), (\d+)\]/);
+  assert.ok(rect, `expected a label rect in stderr:\n${stderr}`);
+  const width = Number(rect[3]);
+  const height = Number(rect[4]);
+  const suggestions = suggestedLabelAts(stderr);
+  assert.ok(suggestions.length > 0, `expected at least one labelAt suggestion:\n${stderr}`);
+  for (const [x, y] of suggestions) {
+    assert.ok(x - width / 2 >= 0 && x + width / 2 <= 720, `labelAt [${x}, ${y}] leaves the 720px canvas width (label width ${width})`);
+    assert.ok(y - 10 >= 0 && y - 10 + height <= 400, `labelAt [${x}, ${y}] leaves the 400px canvas height (label height ${height})`);
+  }
+});
+
+// Reading the coordinates is not enough: a hint is only executable if applying
+// it to the document actually clears both the obstacle and the canvas edge.
+// The relative form is where that breaks — its delta has to be measured from
+// the document's own labelDx/labelDy, and it means nothing at all while an
+// authored labelAt is present, because labelPoint returns labelAt unchanged.
+function pinnedLabelDocument(labelControls) {
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Label pinned to the right edge', quality_profile: 'showcase', viewBox: [720, 400] },
+    components: [
+      { id: 'edge', type: 'cloud', label: 'Edge', pos: [560, 60], size: [140, 54] },
+      { id: 'sink', type: 'database', label: 'Sink', pos: [560, 240], size: [140, 54] },
+    ],
+    connections: [{
+      id: 'edge-to-sink',
+      from: 'edge',
+      to: 'sink',
+      label: 'batched telemetry upload with retry and backoff',
+      ...labelControls,
+    }],
+  };
+}
+
+function suggestedLabelFixes(stderr) {
+  const unique = new Map();
+  for (const [hint, x, y] of stderr.matchAll(/set labelAt \[(-?\d+), (-?\d+)\]/g)) {
+    unique.set(hint, { labelAt: [Number(x), Number(y)] });
+  }
+  for (const [hint, dx, dy] of stderr.matchAll(/set labelDx (-?\d+) with labelDy (-?\d+)/g)) {
+    unique.set(hint, { labelDx: Number(dx), labelDy: Number(dy) });
+  }
+  for (const [hint, dy] of stderr.matchAll(/or set (labelDy (-?\d+))/g)) {
+    unique.set(hint, { labelDy: Number(dy) });
+  }
+  return [...unique];
+}
+
+test('architecture: an automatic label clears its source and authored canvas edge without manual controls', () => {
+  const { code, stderr } = render('architecture', pinnedLabelDocument({}));
+  assert.equal(code, 0, stderr);
+});
+
+for (const [name, labelControls, expectedFixes] of [
+  ['an authored zero labelDy', { labelDy: 0 }, 4],
+  ['an authored labelDx', { labelDx: 120 }, 4],
+  ['an authored labelAt', { labelAt: [660, 104] }, 2],
+]) {
+  test(`architecture: every label obstacle fix renders clean when applied to a document with ${name}`, () => {
+    const source = pinnedLabelDocument(labelControls);
+    const { code, stderr } = render('architecture', source);
+    assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
+    assert.match(stderr, /overlaps component "edge"/);
+    assert.match(stderr, /\[composition\/label-canvas-containment\]/);
+
+    const fixes = suggestedLabelFixes(stderr);
+    assert.equal(fixes.length, expectedFixes, `unexpected suggestion set:\n${stderr}`);
+    // An authored labelAt outranks labelDx/labelDy, so a relative suggestion
+    // there would be a fix that changes nothing.
+    if (Array.isArray(labelControls.labelAt)) assert.doesNotMatch(stderr, /set labelD[xy] /);
+
+    for (const [hint, patch] of fixes) {
+      const repaired = structuredClone(source);
+      Object.assign(repaired.connections[0], patch);
+      const result = render('architecture', repaired);
+      assert.equal(result.code, 0, `applying "${hint}" still fails:\n${result.stderr}`);
+    }
+  });
+}
+
 function autoRoutePassThroughDocument(connection) {
   return {
     schema_version: 1,
@@ -1093,6 +1527,26 @@ test('architecture: default auto route selects a safe orthogonal candidate aroun
   assert.equal(code, 0, stderr);
   const html = fs.readFileSync(outPath, 'utf8');
   assert.match(html, /data-composition-points="560,318;856,318;856,160;880,160"/);
+});
+
+test('architecture: aligned automatic endpoints still route around an unrelated component', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Aligned obstacle regression', quality_profile: 'showcase' },
+    components: [
+      { id: 'source', type: 'backend', label: 'Source', pos: [40, 120], size: [140, 60] },
+      { id: 'blocker', type: 'security', label: 'Blocker', pos: [240, 120], size: [140, 60] },
+      { id: 'target', type: 'database', label: 'Target', pos: [440, 120], size: [140, 60] },
+    ],
+    connections: [{ id: 'source-target', from: 'source', to: 'target' }],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, `aligned automatic route must avoid the blocker: ${stderr}`);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const encoded = html.match(/data-edge-id="source-target" data-composition-points="([^"]+)"/)?.[1];
+  assert.ok(encoded, 'expected rendered composition points for source-target');
+  assert.ok(encoded.split(';').length >= 6, `expected obstacle-avoiding bends, found ${encoded}`);
 });
 
 test('architecture: auto route enters explicit top and bottom ports perpendicularly', () => {
@@ -1136,6 +1590,34 @@ test('architecture: auto route preserves inferred side normals when the primary 
   assert.doesNotMatch(html, /data-composition-points="700,130;700,230;160,230;160,330"/);
 });
 
+test('architecture: auto route finds a multi-bend path when both side-safe doglegs are blocked', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Multi-bend automatic route regression', quality_profile: 'showcase' },
+    components: [
+      { id: 'server', type: 'backend', label: 'Server', pos: [280, 240], size: [180, 64] },
+      { id: 'upper-blocker', type: 'backend', label: 'Upper blocker', pos: [530, 240], size: [180, 64] },
+      { id: 'lower-blocker', type: 'backend', label: 'Lower blocker', pos: [530, 360], size: [180, 64] },
+      { id: 'client', type: 'external', label: 'Client', pos: [780, 360], size: [190, 64] },
+    ],
+    connections: [
+      { id: 'client-server', from: 'client', to: 'server' },
+    ],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, `automatic multi-bend route must render cleanly: ${stderr}`);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const encoded = html.match(/data-edge-id="client-server" data-composition-points="([^"]+)"/)?.[1];
+  assert.ok(encoded, 'expected rendered composition points for client-server');
+  const points = encoded.split(';').map((point) => point.split(',').map(Number));
+  assert.ok(points.length >= 6, `expected a multi-bend route, found ${encoded}`);
+  assert.equal(points[0][1], points[1][1], 'route must leave the inferred left port horizontally');
+  assert.ok(points[1][0] < points[0][0], 'route must leave the inferred left port leftward');
+  assert.equal(points.at(-2)[1], points.at(-1)[1], 'route must enter the inferred right port horizontally');
+  assert.ok(points.at(-2)[0] > points.at(-1)[0], 'route must enter the inferred right port leftward');
+});
+
 test('architecture: explicit via cannot run tangentially into an authored top port', () => {
   const d = {
     schema_version: 1,
@@ -1176,12 +1658,23 @@ test('architecture: explicit orthogonal route remains authoritative when it cros
   assert.match(stderr, /connections\[0\] "api" -> "queue" crosses component "cache"/);
 });
 
-test('architecture: auto route still fails closed when doglegs and side-aware bridges are blocked', () => {
-  const d = autoRoutePassThroughDocument({ from: 'api', to: 'queue', variant: 'dashed' });
+test('architecture: auto route clears stacked blockers after doglegs and side-aware bridges are blocked', () => {
+  const d = autoRoutePassThroughDocument({ id: 'api-queue', from: 'api', to: 'queue', variant: 'dashed' });
   d.components.push({ id: 'guard', type: 'security', label: 'Guard', pos: [825, 215], size: [70, 50] });
-  const { code, stderr } = render('architecture', d);
-  assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
-  assert.match(stderr, /connections\[0\] "api" -> "queue" crosses component "cache"/);
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, `automatic multi-bend route must clear both blockers: ${stderr}`);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const encoded = html.match(/data-edge-id="api-queue" data-composition-points="([^"]+)"/)?.[1];
+  assert.ok(encoded, 'expected rendered composition points for api-queue');
+  const points = encoded.split(';').map((point) => point.split(',').map(Number));
+  // The bend-penalised planner takes the 50px gap between the two blockers in
+  // two turns; the pure shortest path used to staircase around them.
+  assert.ok(points.length >= 4, `expected a routed detour, found ${encoded}`);
+  assert.ok(points.slice(1, -1).some(([x]) => x > 775 && x < 825), `route must pass between the blockers, found ${encoded}`);
+  assert.equal(points[0][1], points[1][1], 'route must leave the inferred right port horizontally');
+  assert.ok(points[1][0] > points[0][0], 'route must leave the inferred right port rightward');
+  assert.equal(points.at(-2)[1], points.at(-1)[1], 'route must enter the inferred left port horizontally');
+  assert.ok(points.at(-2)[0] < points.at(-1)[0], 'route must enter the inferred left port rightward');
 });
 
 test('architecture: explicit waypoints around an obstacle remain valid by default', () => {
@@ -1221,6 +1714,41 @@ test('architecture: showcase rejects an unrelated proper edge crossing', () => {
   assert.match(stderr, /at \[240, 190\]/);
   assert.match(stderr, /segments 1 and 1/);
   assert.match(stderr, /route\/via|fromSide\/toSide/);
+});
+
+test('architecture: unavoidable automatic crossing renders as a verified crossover', () => {
+  const d = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Automatic crossover', quality_profile: 'showcase' },
+    components: [
+      { id: 'left', type: 'frontend', label: 'Left', pos: [40, 170], size: [80, 60] },
+      { id: 'right', type: 'backend', label: 'Right', pos: [480, 170], size: [80, 60] },
+      { id: 'top', type: 'database', label: 'Top', pos: [260, 20], size: [80, 60] },
+      { id: 'bottom', type: 'external', label: 'Bottom', pos: [260, 320], size: [80, 60] },
+    ],
+    connections: [
+      { id: 'horizontal', from: 'left', to: 'right', fromSide: 'right', toSide: 'left' },
+      { id: 'vertical', from: 'top', to: 'bottom', fromSide: 'bottom', toSide: 'top' },
+    ],
+  };
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const svg = html.match(/<svg\b[\s\S]*?<\/svg>/i)?.[0] || '';
+  assert.equal((svg.match(/data-graph-role="automatic-crossover-underlay"/g) || []).length, 2);
+  assert.equal((svg.match(/data-graph-role="automatic-crossover"/g) || []).length, 2);
+  assert.equal((svg.match(/data-composition-crossover="halo"/g) || []).length, 2);
+  assert.equal((svg.match(/data-edge-from=/g) || []).length, 2);
+  assert.doesNotMatch(svg, /automatic-crossover-underlay"[^>]*data-edge-/);
+
+  const receipt = JSON.parse(execFileSync('node', [
+    path.join(skillRoot, 'scripts', 'check-render-output.mjs'),
+    outPath,
+  ], { encoding: 'utf8' }));
+  assert.equal(receipt.ok, true, JSON.stringify(receipt.composition.issues));
+  assert.equal(receipt.composition.metrics.properCrossings, 0);
+  assert.equal(receipt.composition.metrics.resolvedCrossovers, 1);
 });
 
 test('architecture: showcase preserves a straight-through explicit waypoint as an authored touch', () => {
@@ -1327,6 +1855,51 @@ test('architecture: route rhythm warns in standard and blocks a showcase micro s
   assert.match(stderr, /wider corridor|move the component/);
 });
 
+test('architecture: automatic reciprocal adjacent routes keep the showcase interior floor', () => {
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Automatic adjacent request and response', quality_profile: 'showcase' },
+    components: [
+      { id: 'listener', type: 'backend', label: 'Node HTTP listener', pos: [260, 270], size: [170, 78] },
+      { id: 'handler', type: 'backend', label: 'HTTP request handler', pos: [490, 270], size: [180, 84] },
+    ],
+    connections: [
+      { id: 'request-envelope', from: 'listener', to: 'handler', label: 'method · path · body' },
+      { id: 'json-response', from: 'handler', to: 'listener', label: '401 / 400 / 404 / 409 / 202 / 200' },
+    ],
+  };
+  assert.ok(doc.connections.every((connection) => (
+    !('route' in connection) && !('via' in connection) && !('fromSide' in connection) && !('toSide' in connection)
+  )));
+
+  // The route remains valid, but these full labels do not fit a 60px gap.
+  // Inspect geometry even on failure instead of accepting detached labels.
+  const input = path.join(tmp, 'reciprocal-label-gap.json');
+  fs.writeFileSync(input, JSON.stringify({ ...doc, meta: { ...doc.meta, output: 'reciprocal.html' } }));
+  let report;
+  try {
+    execFileSync('node', [path.join(skillRoot, 'bin/archify.mjs'), 'validate', 'architecture', input, '--layout-json'], { encoding: 'utf8' });
+    assert.fail('crowded labels must be rejected');
+  } catch (error) {
+    assert.equal(error.status, 1);
+    report = JSON.parse(error.stdout);
+  }
+  assert.ok(report.diagnostics.length > 0);
+  assert.ok(report.diagnostics.every(issue => issue.code === 'composition/label-gap'
+    || issue.code === 'composition/label-route-clearance'
+    || /^Label ".*" overlaps component /.test(issue.message)), JSON.stringify(report.diagnostics));
+  for (const [index, { id }] of doc.connections.entries()) {
+    const points = report.connections[index]?.points;
+    assert.ok(points, `expected composition points for ${id}`);
+    const encoded = JSON.stringify(points);
+    const interiorLengths = points.slice(1, -2).map((point, index) => (
+      Math.abs(point[0] - points[index + 2][0]) + Math.abs(point[1] - points[index + 2][1])
+    ));
+    assert.ok(interiorLengths.every((length) => length >= 16), `${id} has cramped interior: ${encoded}`);
+  }
+});
+
 test('architecture: container border run is blocking in standard and showcase', () => {
   for (const profile of ['standard', 'showcase']) {
     const d = load('architecture');
@@ -1337,6 +1910,57 @@ test('architecture: container border run is blocking in standard and showcase', 
     assert.match(stderr, /\[composition\/container-border-run\] architecture connections\[1\] id "jwt-verification"/);
     assert.match(stderr, /security-group "sg-api :443\/:8000" top border/);
   }
+});
+
+test('architecture: an inferred side follows the dominant axis for a hub above an offset spoke', () => {
+  // Regression for issue #376. The hub sits above the spoke with a horizontal
+  // offset (dx = -164, dy = +200). The router draws a vertical dogleg out of
+  // the hub's bottom into the spoke's top, so the INFERRED sides must be
+  // bottom/top. Inferring left/right from the bare sign of dx made the
+  // Clean Flow Gate reject the very route the router had just drawn.
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Hub above an offset spoke',
+      output: 'hub-spoke.html',
+      quality_profile: 'standard',
+      viewBox: [640, 360],
+    },
+    components: [
+      { id: 'hub', type: 'cloud', label: 'Hub', pos: [200, 40], size: [176, 52] },
+      { id: 'spoke', type: 'cloud', label: 'Spoke', pos: [40, 240], size: [168, 52] },
+    ],
+    connections: [{ id: 'hub-spoke', from: 'hub', to: 'spoke' }],
+  };
+
+  const { code, stderr, outPath } = render('architecture', doc);
+  assert.equal(code, 0, `inferred vertical route must render cleanly: ${stderr}`);
+  assert.doesNotMatch(stderr, /clean-flow\/endpoint-side-direction/);
+
+  // The route leaves the hub's bottom edge and enters the spoke's top edge,
+  // so every composition point stays inside that column band.
+  const html = fs.readFileSync(outPath, 'utf8');
+  const points = html
+    .match(/data-edge-id="hub-spoke" data-composition-points="([^"]+)"/)?.[1];
+  assert.ok(points, 'expected rendered composition points for hub-spoke');
+  const route = points.split(';').map((point) => point.split(',').map(Number));
+  const hubCx = 200 + 176 / 2; // 288
+  assert.equal(route[0][0], hubCx, 'route must leave the hub centre column');
+  assert.equal(route.at(-1)[0], 40 + 168 / 2, 'route must enter the spoke centre column');
+  assert.equal(route[0][1], 40 + 52, 'route must leave the hub bottom edge');
+  assert.equal(route.at(-1)[1], 240, 'route must enter the spoke top edge');
+
+  // The CLI validation surface agrees with the renderer.
+  const cli = validateCli('architecture', doc, 'standard');
+  assert.equal(cli.code, 0, `validate must accept the inferred vertical route: ${JSON.stringify(cli.result)}`);
+
+  // The public delivery path must accept the same inferred route and verify
+  // the committed artifact, without authored side, route, or via fields.
+  const delivery = deliverCli('architecture', doc, 'standard');
+  assert.equal(delivery.code, 0, `deliver must accept the inferred vertical route: ${JSON.stringify(delivery.result)}`);
+  assert.equal(delivery.result.ok, true);
+  assert.equal(fs.existsSync(delivery.outPath), true);
 });
 
 test('dataflow: stage border run is blocking and the inter-stage gutter passes', () => {

@@ -96,7 +96,7 @@ export function legendFootprint(entries, {
     measured,
     rows,
     rowCount: rows.length,
-    minWidth: Math.max(...measured.map((entry) => entry.width)),
+    minWidth: measured.reduce((width, entry) => Math.max(width, entry.width), 0),
     extraHeight: (rows.length - 1) * lineGap,
   };
 }

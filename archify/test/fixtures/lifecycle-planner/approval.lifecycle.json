@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Document Approval Lifecycle",
+    "output": "approval.lifecycle.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Happy path",
+        "focus": [
+          "draft",
+          "submitted",
+          "under_review",
+          "approved",
+          "scheduled",
+          "published",
+          "archived"
+        ],
+        "note": "The document moves from Draft through review and scheduling to Published and finally Archived."
+      },
+      {
+        "id": "review-gate",
+        "label": "Review gate",
+        "focus": [
+          "submitted",
+          "under_review",
+          "changes_requested",
+          "draft"
+        ],
+        "note": "Submitted waits under a 72h SLA; requested changes loop the document back to Draft."
+      },
+      {
+        "id": "publish-retry",
+        "label": "Publish retry",
+        "focus": [
+          "approved",
+          "scheduled",
+          "publish_failed",
+          "published"
+        ],
+        "note": "A failed publish job gets exactly one automatic retry back into Scheduled."
+      },
+      {
+        "id": "exits",
+        "label": "Terminal exits",
+        "focus": [
+          "submitted",
+          "under_review",
+          "rejected",
+          "withdrawn",
+          "published",
+          "archived"
+        ],
+        "note": "Rejected, Withdrawn and Archived are final; no transition leaves them."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Approval phases"
+    },
+    {
+      "id": "held",
+      "label": "Held states"
+    },
+    {
+      "id": "terminal",
+      "label": "Exits + retry"
+    }
+  ],
+  "states": [
+    {
+      "id": "draft",
+      "type": "start",
+      "label": "Draft",
+      "sublabel": "author editing",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "editable"
+    },
+    {
+      "id": "submitted",
+      "type": "waiting",
+      "label": "Submitted",
+      "sublabel": "awaiting reviewer, SLA 72h",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "timer"
+    },
+    {
+      "id": "under_review",
+      "type": "decision",
+      "label": "Under Review",
+      "sublabel": "reviewer decides",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "gate"
+    },
+    {
+      "id": "approved",
+      "type": "active",
+      "label": "Approved",
+      "sublabel": "ready to schedule",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "signed off"
+    },
+    {
+      "id": "published",
+      "type": "success",
+      "label": "Published",
+      "sublabel": "publicly visible",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "live"
+    },
+    {
+      "id": "changes_requested",
+      "type": "failure",
+      "label": "Changes Requested",
+      "sublabel": "reviewer feedback",
+      "lane": "held",
+      "col": 0,
+      "tag": "rework"
+    },
+    {
+      "id": "scheduled",
+      "type": "waiting",
+      "label": "Scheduled",
+      "sublabel": "publish date set",
+      "lane": "held",
+      "col": 1,
+      "tag": "timer"
+    },
+    {
+      "id": "archived",
+      "type": "neutral",
+      "label": "Archived",
+      "sublabel": "read-only record",
+      "lane": "held",
+      "col": 2,
+      "tag": "terminal"
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "Rejected",
+      "sublabel": "reviewer declined",
+      "lane": "terminal",
+      "col": 0,
+      "tag": "terminal"
+    },
+    {
+      "id": "withdrawn",
+      "type": "neutral",
+      "label": "Withdrawn",
+      "sublabel": "author pulled back",
+      "lane": "terminal",
+      "col": 1,
+      "tag": "terminal"
+    },
+    {
+      "id": "publish_failed",
+      "type": "failure",
+      "label": "Publish Failed",
+      "sublabel": "one automatic retry",
+      "lane": "terminal",
+      "col": 2,
+      "tag": "retry"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-submit",
+      "from": "draft",
+      "to": "submitted",
+      "label": "author submits"
+    },
+    {
+      "id": "t-claim",
+      "from": "submitted",
+      "to": "under_review",
+      "label": "reviewer claims within 72h"
+    },
+    {
+      "id": "t-approve",
+      "from": "under_review",
+      "to": "approved",
+      "label": "reviewer approves"
+    },
+    {
+      "id": "t-schedule",
+      "from": "approved",
+      "to": "scheduled",
+      "label": "publish date set"
+    },
+    {
+      "id": "t-publish",
+      "from": "scheduled",
+      "to": "published",
+      "label": "publish time reached"
+    },
+    {
+      "id": "t-archive",
+      "from": "published",
+      "to": "archived",
+      "label": "retention period ends"
+    },
+    {
+      "id": "t-changes",
+      "from": "under_review",
+      "to": "changes_requested",
+      "label": "reviewer requests changes",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-rework",
+      "from": "changes_requested",
+      "to": "draft",
+      "label": "author reopens draft",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-fail",
+      "from": "scheduled",
+      "to": "publish_failed",
+      "label": "publish job errors",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-retry",
+      "from": "publish_failed",
+      "to": "scheduled",
+      "label": "automatic retry (1x)",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-reject",
+      "from": "under_review",
+      "to": "rejected",
+      "label": "reviewer rejects",
+      "variant": "security"
+    },
+    {
+      "id": "t-withdraw-submitted",
+      "from": "submitted",
+      "to": "withdrawn",
+      "label": "author withdraws",
+      "variant": "security"
+    },
+    {
+      "id": "t-withdraw-review",
+      "from": "under_review",
+      "to": "withdrawn",
+      "label": "author withdraws",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Main Rail",
+      "items": [
+        "Five ordered phases from Draft to Published",
+        "Under Review is the only decision point",
+        "Archived closes the record after the retention period"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Wait States",
+      "items": [
+        "Submitted waits for a reviewer under a 72h SLA",
+        "Scheduled holds an approved document until its publish time",
+        "A failed publish job gets exactly one automatic retry"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Loops and Exits",
+      "items": [
+        "Changes Requested returns the document to Draft for rework",
+        "Rejected is a reviewer decision; Withdrawn is an author decision",
+        "Withdrawn is reachable from Submitted or Under Review"
+      ]
+    }
+  ]
+}

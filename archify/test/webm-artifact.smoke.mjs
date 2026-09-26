@@ -101,7 +101,7 @@ const legendOutputs = {
   dataflow: renderLegendFixture('dataflow', 'issue-52-default-flow', {
     schema_version: 1,
     diagram_type: 'dataflow',
-    meta: { title: 'Default Flow With Store' },
+    meta: { title: 'Default Flow With Store', output: 'issue-52-default-flow.dataflow.html' },
     stages: [{ label: 'Input' }, { label: 'Output' }],
     nodes: [
       { id: 'input', type: 'backend', label: 'Input', stage: 0, row: 0 },
@@ -112,7 +112,11 @@ const legendOutputs = {
   lifecycle: renderLegendFixture('lifecycle', 'issue-52-no-waiting', {
     schema_version: 1,
     diagram_type: 'lifecycle',
-    meta: { title: 'No Waiting or Failure', viewBox: [720, 566] },
+    meta: {
+      title: 'No Waiting or Failure',
+      output: 'issue-52-no-waiting.lifecycle.html',
+      viewBox: [720, 566],
+    },
     lanes: [{ id: 'main', label: 'Lifecycle' }],
     states: [
       { id: 'started', type: 'start', label: 'Started', lane: 'main', col: 0 },
@@ -126,6 +130,7 @@ const legendOutputs = {
     diagram_type: 'architecture',
     meta: {
       title: 'Custom Legend Label',
+      output: 'issue-52-custom-label.architecture.html',
       viewBox: [720, 420],
       legend: {
         entries: {
@@ -144,7 +149,11 @@ const legendOutputs = {
   hidden: renderLegendFixture('dataflow', 'issue-52-hidden', {
     schema_version: 1,
     diagram_type: 'dataflow',
-    meta: { title: 'Hidden Legend', legend: { mode: 'hidden', entries: { database: { visible: true } } } },
+    meta: {
+      title: 'Hidden Legend',
+      output: 'issue-52-hidden.dataflow.html',
+      legend: { mode: 'hidden', entries: { database: { visible: true } } },
+    },
     stages: [{ label: 'Input' }, { label: 'Output' }],
     nodes: [
       { id: 'input', type: 'backend', label: 'Input', stage: 0, row: 0 },
@@ -188,6 +197,7 @@ const specialRouteSource = {
   meta: {
     title: '多语言 Route Share Card 🚀 with a deliberately long original diagram title that must fit safely',
     subtitle: 'Ten exact authored hops',
+    output: 'special-route.architecture.html',
     animation: 'trace',
   },
   components: specialComponents,
@@ -840,12 +850,22 @@ try {
       document.querySelector('.change-row').click();
       var svgB = Archify.deltaExport.canonicalSvg();
       var parsed = new DOMParser().parseFromString(svgB, 'image/svg+xml');
+      var baselineMarkers = Array.from(parsed.querySelectorAll('path[data-edge-id][data-delta-state="removed"], path[data-edge-id][data-delta-state="moved-from"]')).map(function (edge) {
+        var markerId = (edge.getAttribute('marker-end') || '').match(/^url\(#([^)]+)\)$/)?.[1];
+        var marker = markerId ? parsed.getElementById(markerId) : null;
+        return {
+          edge: edge.getAttribute('data-edge-id'),
+          resolved: marker?.localName === 'marker',
+          tone: marker?.querySelector('polygon')?.getAttribute('class') || null
+        };
+      }).sort(function (a, b) { return a.edge.localeCompare(b.edge); });
       var exportStyle = parsed.querySelector('style')?.textContent || '';
       var blob = await Archify.deltaExport.shareCard();
       var bytes = new Uint8Array(await blob.arrayBuffer());
       return {
         explorers: explorers,
         stable: svgA === svgB,
+        baselineMarkers: baselineMarkers,
         reviewResidue: parsed.querySelectorAll('[data-delta-review-current]').length,
         boundaryStyle: exportStyle.includes('text[data-delta-boundary-state="added"]{fill:#34d399!important}'),
         markerStyle: exportStyle.includes('.delta-edge-marker[data-delta-state],.delta-boundary-marker[data-delta-state]{color:var(--delta)}'),
@@ -858,6 +878,11 @@ try {
     })()`, true), 15_000, 'Architecture Delta export');
     assert.deepEqual(exportProof.explorers, [true, true]);
     assert.equal(exportProof.stable, true);
+    assert.deepEqual(exportProof.baselineMarkers, [
+      { edge: 'authorize-payment', resolved: true, tone: 'm-security' },
+      { edge: 'publish-order', resolved: true, tone: 'm-dashed' },
+      { edge: 'session-read', resolved: true, tone: 'm-default' },
+    ]);
     assert.equal(exportProof.reviewResidue, 0);
     assert.equal(exportProof.boundaryStyle, true);
     assert.equal(exportProof.markerStyle, true);

@@ -9,7 +9,11 @@ import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 import { createViewerClick } from './helpers/viewer-click.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
+const chromeConfigured = Object.prototype.hasOwnProperty.call(process.env, 'ARCHIFY_CHROME');
+const chrome = chromeConfigured ? findChrome() : null;
+if (chromeConfigured && !chrome) {
+  throw new Error(`ARCHIFY_CHROME does not resolve to an executable browser: ${process.env.ARCHIFY_CHROME}`);
+}
 
 test('Finder preserves search, keyboard, contextual Route selection and cleanup', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser Finder checks.',

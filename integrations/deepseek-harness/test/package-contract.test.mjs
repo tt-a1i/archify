@@ -17,7 +17,7 @@ const DEPENDENCY_FIELDS = [
   'bundledDependencies',
   'bundleDependencies',
 ];
-const LIFECYCLE_SCRIPTS = ['prepare', 'install', 'postinstall', 'preinstall'];
+
 
 test('adapter source lives only under integrations/deepseek-harness with no root workspace', () => {
   assert.equal(fs.existsSync(path.join(repoRoot, 'package.json')), false);
@@ -43,9 +43,7 @@ test('publishable manifest is @tt-a1i/archify-dsh@0.2.0 with a DSH bundle patch 
   for (const field of DEPENDENCY_FIELDS) {
     assert.equal(Object.prototype.hasOwnProperty.call(pkg, field), false, field);
   }
-  for (const script of LIFECYCLE_SCRIPTS) {
-    assert.equal(pkg.scripts?.[script], undefined, script);
-  }
+  assert.equal(Object.keys(pkg.scripts || {}).length, 0, 'adapter manifest must not declare npm scripts');
   assert.match(pkg.exports?.['./package.json'] || '', /package\.json/);
 });
 
@@ -82,6 +80,30 @@ test('distribution acceptance reserves stdout for its machine-readable JSON rece
   assert.match(source, /stdio:\s*\['ignore',\s*2,\s*2\]/);
   assert.doesNotMatch(source, /stdio:\s*['"]inherit['"]/);
   assert.equal([...source.matchAll(/process\.stdout\.write/g)].length, 2);
+});
+
+test('pack and acceptance enforce the pinned-runtime contract before executing it', () => {
+  const releaseSource = fs.readFileSync(
+    path.join(integrationRoot, 'scripts', 'release-source.mjs'),
+    'utf8',
+  );
+  assert.match(releaseSource, /dshVersion must be an exact SemVer version/);
+  assert.match(releaseSource, /manifest\.scripts/);
+  const packSource = fs.readFileSync(
+    path.join(integrationRoot, 'scripts', 'pack.mjs'),
+    'utf8',
+  );
+  assert.match(packSource, /--ignore-scripts/);
+  const acceptance = fs.readFileSync(
+    path.join(integrationRoot, 'scripts', 'distribution-acceptance.mjs'),
+    'utf8',
+  );
+  assert.match(acceptance, /dshManifest\.name !== DSH_PACKAGE_NAME/);
+  assert.match(acceptance, /dshManifest\.version !== release\.dshVersion/);
+  const identityCheck = acceptance.indexOf('dshManifest.name !== DSH_PACKAGE_NAME');
+  const entryExec = acceptance.indexOf('[dshBin, ...args]');
+  assert.ok(identityCheck !== -1 && entryExec !== -1 && identityCheck < entryExec,
+    'installed identity must be verified before the DSH entry runs');
 });
 
 test('distribution receipt separates canonical ZIP bytes from cross-platform content checks', () => {

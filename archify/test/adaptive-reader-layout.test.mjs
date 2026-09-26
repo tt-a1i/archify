@@ -8,6 +8,9 @@ import {
   DESKTOP_READER_DIAGRAM_WIDTH,
   DESKTOP_READER_HORIZONTAL_CHROME,
   DESKTOP_READER_MIN_WIDTH,
+  DECLARED_WIDE_READER_CONTRACT,
+  DECLARED_WIDE_READER_RATIO,
+  declaredWideReadabilityBudget,
   MIN_PROJECTED_NODE_TEXT_PX,
   minimumReadableSourceTextPx,
   projectedNodeTextPx,
@@ -16,7 +19,8 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 const template = fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8');
-const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
+const skill = fs.readFileSync(path.join(skillRoot, 'references/authoring-defaults.md'), 'utf8');
+const architectureRenderer = fs.readFileSync(path.join(skillRoot, 'renderers', 'architecture', 'render-architecture.mjs'), 'utf8');
 const reader = template.slice(
   template.indexOf('Adaptive Reader Shell'),
   template.indexOf('Archify.view = (function ()'),
@@ -31,6 +35,31 @@ test('wide desktop diagrams use one height-budgeted reader shell instead of brea
   assert.match(reader, /var availableSvgHeight = Math\.max\(1, window\.innerHeight - fixedHeight\)/);
   assert.match(reader, /var desiredWidth = availableSvgHeight \* ratio \+ chrome\.diagramX/);
   assert.match(reader, /html\.style\.setProperty\('--archify-reader-width', rounded \+ 'px'\)/);
+  assert.equal((template.match(/<meta name="archify-reader-contract" content="declared-wide-v1">/g) || []).length, 1);
+});
+
+test('compiler-measured intrinsic tall workflows reuse the height budget without widening eligibility', () => {
+  assert.match(reader, /svg\.getAttribute\('data-reader-fit'\) === 'intrinsic-height'/);
+  assert.match(reader, /ratio >= WIDE_RATIO \|\| measuredHeightFit/);
+  assert.match(reader, /var MIN_PROJECTED_NODE_TEXT_PX = 6/);
+  assert.match(reader, /viewBox\.width \* minimumReadableScale\(\) \+ chrome\.diagramX/);
+  assert.match(reader, /measuredHeightFit &&[\s\S]{0,100}ratio < WIDE_RATIO[\s\S]{0,120}readableWidth/);
+  assert.match(reader, /Math\.max\(Math\.ceil\(minWidth \|\| 0\), Math\.round\(width\)\)/);
+  assert.match(reader, /lastWidth > Math\.ceil\(minWidth\)/);
+  assert.doesNotMatch(reader, /function eligible\(\)[\s\S]{0,240}ratio > 0/);
+});
+
+test('declared wide intrinsic readers include semantic edge labels in the readable floor', () => {
+  assert.match(reader, /g\[data-detail="context"\]\[data-edge-from\]\[data-edge-to\] > text/);
+  assert.match(reader, /measuredHeightFit && ratio >= WIDE_RATIO && Number\.isFinite\(declaredMinimumText\)/);
+  assert.match(reader, /measuredHeightFit && ratio < WIDE_RATIO[\s\S]{0,60}\? readableWidth/);
+  assert.match(reader, /Math\.max\(MIN_READER_WIDTH, readableWidth\)/);
+  assert.match(reader, /if \(measuredHeightFit && ratio < WIDE_RATIO\)[\s\S]{0,120}minWidth = Math\.min\(readableMinimumWidth, viewportCap\)/);
+  assert.match(reader, /else if \(measuredHeightFit && ratio >= WIDE_RATIO && Number\.isFinite\(declaredMinimumText\)\)[\s\S]{0,140}minWidth = Math\.min\(readableMinimumWidth, maxWidth\)/);
+  assert.match(reader, /var maxWidth = Math\.min\(MAX_READER_WIDTH, viewportCap\)/);
+  assert.match(reader, /ratio >= WIDE_RATIO && Number\.isFinite\(declaredMinimumText\)/);
+  assert.equal(DESKTOP_READER_MIN_WIDTH, 960);
+  assert.equal(MIN_PROJECTED_NODE_TEXT_PX, 6);
 });
 
 test('desktop readability budget matches the minimum adaptive reader at 1440 by 900', () => {
@@ -54,6 +83,34 @@ test('desktop readability source floor is the inverse of the projected-size gate
   assert.ok(Number.isNaN(minimumReadableSourceTextPx(0)));
 });
 
+test('declared-wide budget is additive and reports a cap without changing the legacy 930px floor', () => {
+  assert.equal(DECLARED_WIDE_READER_CONTRACT, 'declared-wide-v1');
+  assert.equal(DECLARED_WIDE_READER_RATIO, 1.55);
+  const first = declaredWideReadabilityBudget({
+    viewBoxWidth: 1438,
+    viewBoxHeight: 800,
+    minimumSourceTextPx: 8,
+    requestedMinimumTextPx: 7.5,
+  });
+  assert.ok(first);
+  assert.equal(first.actualReaderWidth, 1376);
+  assert.equal(first.guaranteedSvgWidth, 1346);
+  assert.equal(first.limit, 'viewport-cap');
+  assert.ok(first.projectedMinimumTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
+  assert.ok(first.projectedMinimumTextPx < 7.5, 'do not round 7.488px into a met 7.5px target');
+  assert.equal(first.requestedTargetMet, false);
+  assert.equal(DESKTOP_READER_DIAGRAM_WIDTH, 930);
+  assert.equal(declaredWideReadabilityBudget({
+    viewBoxWidth: 1000,
+    viewBoxHeight: 800,
+    minimumSourceTextPx: 8,
+    requestedMinimumTextPx: 7.5,
+  }), null, 'narrow diagrams remain on the legacy checker path');
+  assert.match(architectureRenderer, /minimumReadableSourceTextPx\(budgetViewBoxWidth\) \+ 1e-6/);
+  assert.match(architectureRenderer, /minimumReadableSourceTextPx\(finalViewBoxWidth\)/);
+  assert.doesNotMatch(architectureRenderer, /declaredWideReadabilityBudget/);
+});
+
 test('adaptive width preserves canonical SVG geometry and yields to specialized viewer modes', () => {
   assert.match(reader, /window\.innerWidth >= MIN_DESKTOP_WIDTH/);
   assert.match(reader, /html\.getAttribute\('data-embed'\) !== 'true'/);
@@ -70,10 +127,14 @@ test('reader remeasures real content and reduces width before allowing desktop p
   assert.match(reader, /new MutationObserver\(schedule\)/);
   assert.match(reader, /document\.documentElement\.scrollHeight/);
   assert.match(reader, /lastWidth - overflow \* ratio - 4/);
-  assert.match(skill, /1440×900, 1600×1000, and 1920×1080/);
-  assert.match(skill, /2048×1320/);
-  assert.match(skill, /Generate one responsive artifact for laptops and external displays/);
-  assert.match(skill, /preserve the authored SVG\/viewBox, proportions, semantic geometry/);
+  assert.match(skill, /Automated browser evidence\]\(delivery-contract\.md#automated-browser-evidence\)/);
+  assert.match(skill, /intrinsic-height page scroll/);
+  const delivery = fs.readFileSync(path.join(skillRoot, 'references/delivery-contract.md'), 'utf8');
+  const authoring = fs.readFileSync(path.join(skillRoot, 'references/authoring-contract.md'), 'utf8');
+  assert.match(delivery, /1440×900, 1600×1000, 1920×1080, and\s+2048×1320/);
+  assert.match(delivery, /Reader-declared readable exception/);
+  assert.match(authoring, /Generate one responsive artifact for laptops and external displays/);
+  assert.match(authoring, /preserv(?:e|ing) the authored SVG\/viewBox, proportions, semantic geometry/);
 });
 
 test('reader exposes an explicit stable-dimensions contract for browser evidence', () => {

@@ -34,7 +34,9 @@ export function connectionPath(conn, routed, labelAt) {
     label: conn.label ?? null,
     variant: conn.variant ?? 'default',
     route: conn.route ?? 'auto',
-    points: routed.points.map(([x, y]) => [Math.round(x), Math.round(y)]),
+    // These points are repair inputs: rounding a fractional port makes a
+    // reused waypoint diagonal relative to the actual endpoint.
+    points: routed.points.map(([x, y]) => [x, y]),
     ...(labelAt ? { labelAt: labelAt.map(Math.round) } : {}),
   };
 }

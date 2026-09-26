@@ -48,14 +48,18 @@ function writeValidDevelopmentFixture(root, overrides = {}) {
     '',
     `Current development version: \`v${version}\``,
     '',
-    'Raven uses manual ZIP installation: extract archify.zip into `~/.raven/workspace/skills`, which yields `~/.raven/workspace/skills/archify`; Raven is not an agent-switcher target.',
   ].join('\n');
   const chinese = [
     '![开发版本](https://img.shields.io/badge/version-2.13.0--dev.0-blue)',
     '',
     `当前开发版本：\`v${version}\``,
     '',
-    'Raven 使用 ZIP 手动安装：将 archify.zip 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于 Agent 切换器目标。',
+  ].join('\n');
+  const japanese = [
+    '![開発版](https://img.shields.io/badge/version-2.13.0--dev.0-blue)',
+    '',
+    `現在の開発版: \`v${version}\``,
+    '',
   ].join('\n');
   const files = {
     'archify/package.json': JSON.stringify({ version }),
@@ -87,11 +91,12 @@ function writeValidDevelopmentFixture(root, overrides = {}) {
     'README.md': english,
     'README_EN.md': english,
     'README_ZH.md': chinese,
+    'README_JA.md': japanese,
     'scripts/start-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
     'scripts/guide-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
     'scripts/gallery-template.html': 'development · 开发版 · [[ARCHIFY_VERSION]]',
-    'docs/index.html': `<span>development · v${version} · 开发版 · 9/9 checks</span><p>Raven manual ZIP / ZIP 手动安装: extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify; 将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify; not an agent-switcher target.</p>`,
-    'docs/start.html': `<span>development · v${version} · 开发版</span><p>Raven manual ZIP / ZIP 手动安装: extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify; 将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify; not an agent-switcher target.</p>`,
+    'docs/index.html': `<span>development · v${version} · 开发版 · 9/9 checks</span>`,
+    'docs/start.html': `<span>development · v${version} · 开发版</span>`,
     'ROADMAP.md': `The current development line is \`v${version}\`; it contains the work under Changelog Unreleased and is not a stable release.`,
   };
   for (const [relativePath, content] of Object.entries({ ...files, ...overrides })) {
@@ -106,14 +111,18 @@ function writeValidStableFixture(root, overrides = {}) {
     '',
     `Current stable version: \`v${version}\``,
     '',
-    'Raven uses manual ZIP installation: extract archify.zip into `~/.raven/workspace/skills`, which yields `~/.raven/workspace/skills/archify`; Raven is not an agent-switcher target.',
   ].join('\n');
   const chinese = [
     '![稳定版本](https://img.shields.io/badge/version-2.13.0-blue)',
     '',
     `当前稳定版本：\`v${version}\``,
     '',
-    'Raven 使用 ZIP 手动安装：将 archify.zip 解压到 `~/.raven/workspace/skills`，解压后会得到 `~/.raven/workspace/skills/archify`；Raven 不属于 Agent 切换器目标。',
+  ].join('\n');
+  const japanese = [
+    '![安定版](https://img.shields.io/badge/version-2.13.0-blue)',
+    '',
+    `現在の安定版: \`v${version}\``,
+    '',
   ].join('\n');
   const files = {
     'archify/package.json': JSON.stringify({ version }),
@@ -141,11 +150,12 @@ function writeValidStableFixture(root, overrides = {}) {
     'README.md': english,
     'README_EN.md': english,
     'README_ZH.md': chinese,
+    'README_JA.md': japanese,
     'scripts/start-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
     'scripts/guide-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
     'scripts/gallery-template.html': 'stable · 稳定版 · [[ARCHIFY_VERSION]]',
-    'docs/index.html': `<span>stable · v${version} · 稳定版 · 9/9 checks</span><p>Raven manual ZIP / ZIP 手动安装: extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify; 将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify; not an agent-switcher target.</p>`,
-    'docs/start.html': `<span>stable · v${version} · 稳定版</span><p>Raven manual ZIP / ZIP 手动安装: extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify; 将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify; not an agent-switcher target.</p>`,
+    'docs/index.html': `<span>stable · v${version} · 稳定版 · 9/9 checks</span>`,
+    'docs/start.html': `<span>stable · v${version} · 稳定版</span>`,
     'ROADMAP.md': `The current stable version is \`v${version}\`.`,
   };
   for (const [relativePath, content] of Object.entries({ ...files, ...overrides })) {
@@ -348,6 +358,7 @@ test('package, lockfile, Skill metadata, escaped Shields badge, and public docs 
     writeFile(fixture, 'README.md', staleEnglish);
     writeFile(fixture, 'README_EN.md', staleEnglish);
     writeFile(fixture, 'README_ZH.md', '![Version](https://img.shields.io/badge/version-2.13.0-blue)\n\nArchify 2.12 包含未发布能力。\n');
+    writeFile(fixture, 'README_JA.md', '![Version](https://img.shields.io/badge/version-2.13.0-blue)\n\nArchify 2.12 は未リリース機能を含みます。\n');
     writeFile(fixture, 'docs/index.html', '<span>Agent Skill · v2.12.0</span>');
     writeFile(fixture, 'docs/start.html', '<span>Archify v2.12.0</span>');
 
@@ -356,6 +367,7 @@ test('package, lockfile, Skill metadata, escaped Shields badge, and public docs 
     assert.match(result.stderr, /package-lock\.json must match 2\.13\.0-dev\.0/);
     assert.match(result.stderr, /SKILL\.md metadata version 2\.12 must map to package 2\.13\.0-dev\.0/);
     assert.match(result.stderr, /README\.md must advertise development identity v2\.13\.0-dev\.0/);
+    assert.match(result.stderr, /README_JA\.md must advertise development identity v2\.13\.0-dev\.0/);
     assert.match(result.stderr, /docs\/index\.html must advertise development identity v2\.13\.0-dev\.0/);
     assert.match(result.stderr, /docs\/start\.html must advertise development identity v2\.13\.0-dev\.0/);
   } finally {
@@ -367,7 +379,7 @@ test('landing proof receipt matches the current nine-check artifact contract', (
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
   try {
     writeValidDevelopmentFixture(fixture, {
-      'docs/index.html': '<span>development · v2.13.0-dev.0 · 开发版 · 8/8 checks</span><p>Raven manual ZIP / ZIP 手动安装: extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify; 将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify; not an agent-switcher target.</p>',
+      'docs/index.html': '<span>development · v2.13.0-dev.0 · 开发版 · 8/8 checks</span>',
     });
 
     const result = runCheck(fixture);
@@ -385,7 +397,6 @@ test('landing rejects every stale N/N contract count even when 9/9 is also prese
       'docs/index.html': [
         '<span>development · v2.13.0-dev.0 · 开发版 · 9/9 checks</span>',
         '<span>legacy receipt · 7/7 checks</span>',
-        '<p>Raven manual ZIP / ZIP 手动安装: extract archify.zip into ~/.raven/workspace/skills, which yields ~/.raven/workspace/skills/archify; 将 archify.zip 解压到 ~/.raven/workspace/skills，解压后会得到 ~/.raven/workspace/skills/archify; not an agent-switcher target.</p>',
       ].join('\n'),
     });
 
@@ -397,7 +408,7 @@ test('landing rejects every stale N/N contract count even when 9/9 is also prese
   }
 });
 
-test('Raven stays a truthful manual ZIP install and never becomes a generated agent-switcher command', () => {
+test('Raven is not a generated agent-switcher target', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
   try {
     writeValidDevelopmentFixture(fixture, {
@@ -410,30 +421,27 @@ test('Raven stays a truthful manual ZIP install and never becomes a generated ag
 
     const result = runCheck(fixture);
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Raven must remain a manual ZIP installation outside the agent switcher/);
+    assert.match(result.stderr, /docs\/start\.html: Raven is not an agent-switcher target/);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
 });
 
-test('Raven instructions reject extracting the archive into the final Skill directory', () => {
+test('the Japanese README must carry its own development marker, not the English one', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-release-identity-'));
   try {
-    const nestedEnglish = [
-      '![Development Version](https://img.shields.io/badge/version-2.13.0--dev.0-blue)',
-      '',
-      'Current development version: `v2.13.0-dev.0`',
-      '',
-      'Raven is manual ZIP only: extract archify.zip into `~/.raven/workspace/skills/archify`; Raven is not an agent-switcher target.',
-    ].join('\n');
     writeValidDevelopmentFixture(fixture, {
-      'README.md': nestedEnglish,
-      'README_EN.md': nestedEnglish,
+      'README_JA.md': [
+        '![開発版](https://img.shields.io/badge/version-2.13.0--dev.0-blue)',
+        '',
+        'Current development version: `v2.13.0-dev.0`',
+        '',
+      ].join('\n'),
     });
 
     const result = runCheck(fixture);
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /extract archify\.zip into ~\/\.raven\/workspace\/skills, yielding ~\/\.raven\/workspace\/skills\/archify/);
+    assert.match(result.stderr, /README_JA\.md must advertise development identity v2\.13\.0-dev\.0/);
   } finally {
     fs.rmSync(fixture, { recursive: true, force: true });
   }

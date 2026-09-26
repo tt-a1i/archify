@@ -1,0 +1,13 @@
+---
+import '../styles/utilities.css';
+interface Props { head: string; css: string }
+const { head, css } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <Fragment set:html={head} />
+  <style is:inline set:html={css}></style>
+</head>
+<body><slot /></body>
+</html>

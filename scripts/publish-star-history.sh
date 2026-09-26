@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Maintainer-only POSIX/GitHub Actions helper; it is not part of Archify's
+# supported Windows CLI or package-consumer surface.
 
 set -euo pipefail
 

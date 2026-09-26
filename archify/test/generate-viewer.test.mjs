@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const marker = '/* ARCHIFY:READER_LAYOUT */';
+const viewerCssMarker = '/* ARCHIFY:VIEWER_CSS */';
 const exportMarker = '/* ARCHIFY:EXPORT */';
 const cleanupMarker = '/* ARCHIFY:EXPORT_CLEANUP */';
 const chromeMarker = '/* ARCHIFY:CHROME_LAYOUT */';
@@ -20,7 +21,7 @@ const lensMarker = '/* ARCHIFY:SEMANTIC_LENS */';
 const routeMarker = '/* ARCHIFY:ROUTE_PROBE */';
 const focusMarker = '/* ARCHIFY:FOCUS */';
 const guidedMarker = '/* ARCHIFY:GUIDED_VIEWS */';
-const fragments = { export: exportMarker, reader: marker, cleanup: cleanupMarker, chrome: chromeMarker, camera: cameraMarker, radar: radarMarker, motion: motionMarker, finder: finderMarker, intent: intentMarker, lens: lensMarker, route: routeMarker, guided: guidedMarker, focus: focusMarker };
+const fragments = { viewerCss: viewerCssMarker, export: exportMarker, reader: marker, cleanup: cleanupMarker, chrome: chromeMarker, camera: cameraMarker, radar: radarMarker, motion: motionMarker, finder: finderMarker, intent: intentMarker, lens: lensMarker, route: routeMarker, guided: guidedMarker, focus: focusMarker };
 
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-viewer-build-'));
@@ -34,6 +35,7 @@ function fixture(t) {
   return {
     root, output,
     shell: path.join(root, 'viewer/template.source.html'),
+    viewerCss: path.join(root, 'viewer/viewer.css'),
     export: path.join(root, 'viewer/export.js'),
     reader: path.join(root, 'viewer/reader-layout.js'),
     cleanup: path.join(root, 'viewer/export-cleanup.js'),
@@ -69,7 +71,7 @@ test('the committed Viewer rebuilds deterministically outside the repository wor
 
 test('editing any authoritative source requires explicit regeneration', (t) => {
   const f = fixture(t);
-  for (const input of [f.shell, f.export, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.intent, f.lens, f.route, f.guided, f.focus]) {
+  for (const input of [f.shell, f.viewerCss, f.export, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.intent, f.lens, f.route, f.guided, f.focus]) {
     const previous = fs.readFileSync(f.output);
     fs.appendFileSync(input, '\n/* source change */\n');
     const stale = f.run('--check');
@@ -89,6 +91,19 @@ test('a missing generated template is stale and can be regenerated', (t) => {
   assert.equal(fs.existsSync(f.output), false);
   assert.equal(f.run().status, 0);
   assert.equal(f.run('--check').status, 0);
+});
+
+test('viewer.css owns the complete main style block', (t) => {
+  const f = fixture(t);
+  const shell = fs.readFileSync(f.shell, 'utf8');
+  const markerIndex = shell.indexOf(viewerCssMarker);
+  assert.notEqual(markerIndex, -1);
+  const afterMarker = shell.slice(markerIndex + viewerCssMarker.length);
+  assert.match(afterMarker, /^\n\s*<\/style>/);
+  const css = fs.readFileSync(f.viewerCss, 'utf8');
+  assert.match(css, /@media print \{/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{/);
+  assert.match(css, /\n\}\n$/);
 });
 
 for (const [fragment, slot] of Object.entries(fragments)) {
@@ -118,7 +133,9 @@ for (const [fragment, slot] of Object.entries(fragments)) {
 test('assembly preserves literal replacement tokens, Unicode and source line endings', (t) => {
   const f = fixture(t);
   const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
-  fs.writeFileSync(f.shell, `<script>\r\n${focusMarker}${guidedMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
+  const css = '/* === TOKENS === */\r\n:root { --x: 1; }\r\n';
+  fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><script>\r\n${focusMarker}${guidedMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
+  fs.writeFileSync(f.viewerCss, css);
   fs.writeFileSync(f.export, reader + cleanupMarker);
   fs.writeFileSync(f.cleanup, reader);
   fs.writeFileSync(f.chrome, reader);
@@ -133,7 +150,17 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   fs.writeFileSync(f.focus, reader);
   fs.writeFileSync(f.reader, reader);
   assert.equal(f.run().status, 0);
-  assert.equal(fs.readFileSync(f.output, 'utf8'), `<script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`);
+  // The viewer.css file is inlined inside the <style> block. The marker sits
+  // at column 0 inside the shell so every line of the CSS gets a 4-space
+  // reindent, including the first. The <script> block then contains the JS
+  // fragments unchanged. Both the leading `\n` after the marker and the
+  // marker line itself are stripped from `parts[1]` so the reindented CSS
+  // ends flush with the closing </style> tag.
+  const indentedCss = css.split('\n').map((line) => line.length === 0 ? line : '    ' + line).join('\n');
+  assert.equal(
+    fs.readFileSync(f.output, 'utf8'),
+    `<style>${indentedCss}</style><script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
+  );
   assert.equal(f.run('--check').status, 0);
 });
 

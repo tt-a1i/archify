@@ -1,0 +1,98 @@
+---
+import { version, versioned, jsonScript, starts } from '../data/site';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import head from '../data/start-head.html?raw';
+import css from '../styles/start.css?raw';
+import pageScript from '../scripts/start.js?raw';
+---
+<SiteLayout head={versioned(head)} css={css}>
+
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <Navigation page="start" />
+
+  <main>
+    <header class="lead">
+      <div>
+        <p class="lead-label" data-en="Start with words, Mermaid, or code" data-zh="从描述、Mermaid 或代码开始">Start with words, Mermaid, or code</p>
+        <h1><span data-en="Describe it." data-zh="直接说，">Describe it.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="Archify maps it." data-zh="Archify 就能画。">Archify maps it.</em></h1>
+      </div>
+      <div>
+        <p class="lead-copy" data-en="No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence." data-zh="不需要绑定代码库。在任意 Agent 对话里用自然语言描述系统或流程，Archify 就会把它变成经过校验的交互图；如果有代码，也可以再让它读取仓库作为证据。">No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence.</p>
+        <div class="trust-line" data-en="Your description is enough to make the first diagram." data-zh="只有一段描述，也足够画出第一张图。">Your description is enough to make the first diagram.</div>
+      </div>
+    </header>
+
+    <section class="type-shell" aria-labelledby="type-label">
+      <p class="type-label"><span data-en="Choose how to start" data-zh="选择如何开始">Choose how to start</span><strong data-en="Repository optional" data-zh="代码库可选">Repository optional</strong></p>
+      <div class="input-paths" role="tablist" aria-label="Input source">
+        <button class="input-path" type="button" role="tab" data-input="description"><strong data-en="Just describe it" data-zh="直接描述">直接描述</strong><span data-en="Start in any chat. No files or repository needed." data-zh="在任意对话里开始，不需要文件或代码库。">Start in any chat. No files or repository needed.</span></button>
+        <button class="input-path" type="button" role="tab" data-input="repository"><strong data-en="Use a repository" data-zh="从代码库开始">Use a repository</strong><span data-en="Let the agent inspect code when source evidence matters." data-zh="需要源码证据时，再让 Agent 检查代码。">Let the agent inspect code when source evidence matters.</span></button>
+      </div>
+      <p class="type-label" id="type-label"><span data-en="Choose the question shape" data-zh="选择问题形态">Choose the question shape</span><strong data-en="5 typed renderers" data-zh="5 种类型化渲染器">5 typed renderers</strong></p>
+      <div class="type-tabs" role="tablist" aria-label="Diagram type">
+        <button class="type-tab" type="button" role="tab" data-type="architecture" data-en="Architecture" data-zh="架构图">Architecture</button>
+        <button class="type-tab" type="button" role="tab" data-type="workflow" data-en="Workflow" data-zh="工作流">Workflow</button>
+        <button class="type-tab" type="button" role="tab" data-type="sequence" data-en="Sequence" data-zh="时序图">Sequence</button>
+        <button class="type-tab" type="button" role="tab" data-type="dataflow" data-en="Data flow" data-zh="数据流">Data flow</button>
+        <button class="type-tab" type="button" role="tab" data-type="lifecycle" data-en="Lifecycle" data-zh="生命周期">Lifecycle</button>
+      </div>
+    </section>
+
+    <section class="workbench" aria-label="Archify quick start">
+      <article class="panel" id="install">
+        <div class="panel-kicker"><b>01</b><span data-en="Install the skill" data-zh="安装 Skill">Install the skill</span></div>
+        <h2 data-en="Keep the tool local." data-zh="让工具留在本地。">Keep the tool local.</h2>
+        <p class="panel-intro" data-en="Choose Cursor, Codex, Claude Code, OpenCode, or GitHub Copilot. The switcher gives each one the same checked Skill and zero-dependency renderers—no vendor-specific fork." data-zh="选择 Cursor、Codex、Claude Code、OpenCode 或 GitHub Copilot。切换器为每个 Agent 提供同一份经过检查的 Skill 与零依赖渲染器，不维护厂商专属分叉。">Choose Cursor, Codex, Claude Code, OpenCode, or GitHub Copilot. The switcher gives each one the same checked Skill and zero-dependency renderers—no vendor-specific fork.</p>
+
+        <div class="agent-picker">
+          <p class="agent-picker-head"><span data-en="Choose your coding agent" data-zh="选择你的编码 Agent">Choose your coding agent</span><strong id="agent-state">Codex · same Skill</strong></p>
+          <div class="agent-tabs" role="tablist" aria-label="Coding agent">
+            <button class="agent-tab" type="button" role="tab" data-agent="cursor">Cursor</button>
+            <button class="agent-tab" type="button" role="tab" data-agent="codex">Codex</button>
+            <button class="agent-tab" type="button" role="tab" data-agent="claude-code">Claude Code</button>
+            <button class="agent-tab" type="button" role="tab" data-agent="opencode">OpenCode</button>
+            <button class="agent-tab" type="button" role="tab" data-agent="github-copilot">GitHub Copilot</button>
+          </div>
+        </div>
+
+        <div class="command-block">
+          <div class="command-bar"><span data-en="Global install" data-zh="全局安装">Global install</span><button class="copy-button" type="button" data-copy-source="install-command" data-en="Copy" data-zh="复制">Copy</button></div>
+          <pre id="install-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --global --copy --yes</pre>
+        </div>
+        <div class="command-block">
+          <div class="command-bar"><span data-en="This repository only" data-zh="仅安装到当前仓库">This repository only</span><button class="copy-button" type="button" data-copy-source="project-command" data-en="Copy" data-zh="复制">Copy</button></div>
+          <pre id="project-command">npx -y skills add tt-a1i/archify --skill archify --agent codex --copy --yes</pre>
+        </div>
+        <p class="secondary-note" data-en="The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded." data-zh="Start 链接只携带 Agent、语言、图表类型、输入模式和粗粒度来源标签。转化步骤只保存在当前浏览器会话中，Archify 不会发送这些数据，也不会记录仓库路径、标题、节点、关系或源 JSON。">The Start link carries only your agent, language, diagram type, input mode, and a coarse source label. Journey events stay in this browser session and are never sent by Archify. No repository path, title, node, relationship, or source JSON is recorded.</p>
+      </article>
+
+      <article class="panel" aria-live="polite">
+        <div class="panel-kicker"><b>02</b><span data-en="Ask one bounded question" data-zh="只问一个有边界的问题">Ask one bounded question</span></div>
+        <h2 id="recipe-title">System overview</h2>
+        <p class="question" id="recipe-question"></p>
+        <ul class="include-list" id="include-list" aria-label="Required evidence"></ul>
+        <p class="prompt-box" id="recipe-prompt"></p>
+        <div class="actions">
+          <button class="action action-primary" id="copy-starter" type="button" data-en="Copy install + prompt" data-zh="复制安装命令 + 提示词">Copy install + prompt</button>
+          <button class="action" id="copy-prompt" type="button" data-en="Prompt only" data-zh="仅复制提示词">Prompt only</button>
+          <a class="action" id="proof-link" href="gallery.html" data-en="Open verified proof ↗" data-zh="打开验证成品 ↗">Open verified proof ↗</a>
+          <a class="action" href="guide.html" data-en="Need another recipe?" data-zh="需要其他配方？">Need another recipe?</a>
+        </div>
+        <p class="proof-meta" id="proof-meta"></p>
+      </article>
+    </section>
+
+    <footer class="page-footer">
+      <span data-en={`Archify v${version} · development · self-contained HTML · typed JSON source`} data-zh={`Archify v${version} · 开发版 · 独立 HTML · 类型化 JSON 源`}>Archify v{version} · development · self-contained HTML · typed JSON source</span>
+      <span id="copy-status" role="status" aria-live="polite"></span>
+      <a href="https://github.com/tt-a1i/archify" data-en="View source on GitHub ↗" data-zh="在 GitHub 查看源码 ↗">View source on GitHub ↗</a>
+    </footer>
+  </main>
+
+  <script is:inline id="start-data" type="application/json" set:html={jsonScript(starts)}></script>
+  <script is:inline src="assets/site-language.js"></script>
+  <script is:inline set:html={versioned(pageScript)}></script>
+
+</SiteLayout>

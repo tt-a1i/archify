@@ -1,39 +1,77 @@
 <p align="center">
-  <strong>English</strong> · <a href="./README_ZH.md">简体中文</a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/archify-lockup-dark.svg" />
+    <img src="docs/assets/archify-lockup-light.svg" alt="Archify" width="440" height="121" />
+  </picture>
+</p>
+<h3 align="center">Turn anything you want to understand, plan, or share into an interactive visual.</h3>
+
+<p align="center"><img src="docs/assets/archify-readme-hero.png" alt="Archify — interactive diagrams" width="960" /></p>
+
+<p align="center">Start with an idea, a question, or a plan. Describe it to your AI agent, and Archify turns it into an interactive HTML you can explore, customize, and share. From travel itineraries and learning maps to complex systems—make it your own.</p>
+
+<p align="center">See what the community is creating—and imagine what you could make next.</p>
+
+<p align="center">
+  <a href="https://tt-a1i.github.io/archify/gallery.html"><strong>Live demos</strong></a> &nbsp;·&nbsp;
+  <a href="#start"><strong>Get started</strong></a> &nbsp;·&nbsp;
+  <a href="https://tt-a1i.github.io/archify/guide.html"><strong>Scenario guide</strong></a> &nbsp;·&nbsp;
+  <a href="#community"><strong>Community</strong></a> &nbsp;·&nbsp;
+  <a href="./README_ZH.md"><strong>简体中文</strong></a> &nbsp;·&nbsp;
+  <a href="./README_JA.md"><strong>日本語</strong></a>
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/31352?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-31352" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/31352" alt="Archify on Trendshift" width="250" height="55"/></a>
+  <a href="https://trendshift.io/repositories/31352?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-31352" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/31352" alt="tt-a1i/archify | Trendshift" width="250" height="55" /></a>
 </p>
 
-![Archify product preview](docs/assets/archify-readme-hero.png)
+<p align="center">
+  <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-2.17.0--dev.1-0891b2?style=flat-square" alt="Development version 2.17.0-dev.1" /></a>
+</p>
 
-# Archify
+<p align="center">
+  <a href="https://tt-a1i.github.io/archify/"><img src="https://img.shields.io/badge/Website-0891B2?style=for-the-badge" alt="Archify website" /></a>
+  <a href="https://discord.gg/6xWMjgCeUq"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&amp;logo=discord&amp;logoColor=white" alt="Join Archify on Discord" /></a>
+  <a href="#community"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
+  <a href="#community"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
+  <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
+</p>
 
-**Turn a codebase or system description into a polished, interactive system map — directly in chat.**
+## See Archify in action
 
-Archify is a Node.js rendering and validation system for Cursor, Claude Code, Codex CLI, and OpenCode. Agents produce typed JSON IR; Archify deterministically compiles it into HTML/SVG.
+<p align="center">
+  <a href="https://tt-a1i.github.io/archify/gallery.html"><img src="docs/assets/archify-live-proof.gif" alt="Three verified Archify artifacts moving through Signal Flow, Blueprint, and Classic presets" width="960"/></a>
+  <br/>
+  <sub><strong>Three real generated artifacts.</strong> Signal Flow · Blueprint · Classic · <a href="https://tt-a1i.github.io/archify/gallery.html">open the interactive Proof Lab ↗</a></sub>
+</p>
 
-- **Open it and present** — six diagram types, four presets, dark/light themes, built-in brand marks, and finite motion
-- **Review architecture changes before merge** — compare two validated snapshots as Before / Delta / After, with exact added, removed, changed, moved, and rerouted facts
-- **Every interaction stays grounded** — search nodes, optionally open revision-verified source, trace upstream/downstream authored reach and exact routes, compare roles, and play guided stories without inventing topology
-- **One file, ready to trust and share** — typed JSON IR and deterministic checks produce self-contained HTML plus PNG, SVG, WebM, and 1200×630 share cards
+**Click the preview to open real interactive artifacts.** The GIF shows the motion; the HTML lets you explore it yourself.
 
-![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
-![Agent Skill](https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square)
-![Development Version](https://img.shields.io/badge/version-2.17.0--dev.1-0891b2?style=flat-square)
+<a id="start"></a>
 
-**Current development version:** `v2.17.0-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
+### Install, then describe your idea
 
-**[Project page](https://tt-a1i.github.io/archify/)** · **[Scenario guide](https://tt-a1i.github.io/archify/guide.html)** · **[Proof Lab](https://tt-a1i.github.io/archify/gallery.html)**
+Works with Cursor, Claude Code, Codex CLI, and OpenCode. See installation options below for additional integrations.
 
 ```bash
 npx skills add tt-a1i/archify -g
 ```
 
-Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) for exact global and project commands.
+Send this to your agent:
 
-**No repository is required:** describe the system in any agent chat.
+```text
+Use Archify to diagram a web request: Browser calls the API,
+the API checks Redis, and a cache miss queries PostgreSQL and fills the cache.
+```
+
+Then continue: “Add authentication”, “Highlight the cache-miss path”, or “Switch to the light theme”.
+
+**No repository is required:** start with a description, or ask your agent to read a repository for a source-backed architecture diagram.
+
+[Choose your agent](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) · [Installation details and update checks](#quick-start)
 
 ## ❤️ Sponsors
 
@@ -42,34 +80,66 @@ Using Cursor? Open the [agent-aware quick start](https://tt-a1i.github.io/archif
   <td align="center" width="240"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="200"/></a><br/><strong><a href="https://supercode.sh/?utm_source=archify">supercode.sh</a></strong></td>
 <td><a href="https://supercode.sh/?utm_source=archify">Supercode</a> sponsors Archify and enhances Codex and Cursor with token optimization, curated Skills, and spec-driven development. Archify is featured as a <a href="https://supercode.sh/en/skills/tt-a1i/archify/archify">Supercode Editor’s Choice</a> skill.<br/><br/><a href="https://supercode.sh/en/skills/tt-a1i/archify/archify"><img src="https://supercode.sh/badges/editors-choice.svg" alt="Supercode Editor’s Choice — Archify" width="240" height="55"/></a></td>
 </tr>
+<tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>EverMind sponsors Archify and builds memory infrastructure for agents. Its <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> harness supports Archify as a Skill for verified, interactive system maps.</td></tr>
 </table>
 
 > Want to sponsor Archify? [Contact us by email.](mailto:2801884530@qq.com)
 
-## See Archify in action
+## Show what matters
 
-These are generated Archify artifacts, not product mockups. Click a frame to open its live, shareable state.
-
-<p align="center">
-  <a href="https://tt-a1i.github.io/archify/gallery.html"><img src="docs/assets/archify-live-proof.gif" alt="Three verified Archify artifacts moving through Signal Flow, Blueprint, and Classic presets" width="960"/></a>
-  <br/>
-  <sub><strong>Three real generated artifacts.</strong> Signal Flow · Blueprint · Classic · <a href="https://tt-a1i.github.io/archify/gallery.html">open the interactive Proof Lab ↗</a></sub>
-</p>
-
-| Guided story | Route probe | Semantic lens |
+| Explain an agent workflow | Follow a cache miss | Explore service relationships |
 |---|---|---|
 | [![Agent workflow playing one authored chapter](docs/assets/archify-demo-story.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path) | [![Cache-miss sequence showing the Web App to Postgres route](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![Production architecture comparing backend and database roles](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
-| Play one finite named chapter. | Inspect the shortest authored directed path. | Compare real traffic between semantic roles. |
+| Walk through the steps defined in the diagram. | Highlight the path from web app to database. | Focus on authored backend and database connections. |
 
 The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains all 11 checked-in scenarios, their JSON sources, named views, and validation receipts.
 
-### A real repository, mapped from source
+### Understand a real repository
+
+<sub>CODE → DIAGRAM · A source-backed system map</sub>
 
 [![MCO runtime architecture generated from the public mco-org/mco repository](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)
 
 Archify traced [`mco-org/mco`](https://github.com/mco-org/mco) at `9f1a1cf` and produced this checked map. **[Open it ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1#view=dispatch-path)** · [trace reach ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [typed source](docs/cases/mco-runtime.architecture.json)
 
+### Easy to extend. More ways to make it yours.
+
+<sub>COMMUNITY STORIES · Selected examples shared by users</sub>
+
+**Keep building after the diagram is generated.** Archify is open source and its output is standalone HTML. Ask your agent to adapt it, connect useful links, or add interactions for your own workflow. Community creations already span team collaboration, travel planning, legal citation checks, contract review, and incident retrospectives. These are just a few examples.
+
+One user started with a hand-drawn multi-agent architecture, turned it into an interactive diagram, then added a Kimi execution pool through conversation. Others asked their agent to read a project and brought the resulting architecture into Feishu or DingTalk for team discussion.
+
+Another user turned a Shanghai CityWalk guide into a four-day itinerary: switch between days, inspect a stop, and jump to Amap, Xiaohongshu, or Dianping. The author also added arrival check-ins and stop notes, turning the itinerary into a small tool to use during the trip. These extensions were added by the community author for this particular artifact.
+
+**[▶ Explore the interactive Shanghai CityWalk](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)**
+
+[![A community-created four-day Shanghai CityWalk itinerary](docs/assets/community/shanghai-citywalk.png)](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)
+
+**[▶ Try the interactive version](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · Switch between D1–D4 and click a place to explore.
+
+<sub>Community artifact · Shanghai CityWalk · Four days of routes and place links</sub>
+
+### Download it. Open it. Explore it.
+
+The output is a self-contained HTML file. Download it and open it in your browser to use the node details, path exploration, and guided chapters included in that artifact. No Archify installation is needed to view it. Send the HTML to someone else and the interactions go with it; external websites and map links need a network connection.
+
+**[Explore the Shanghai CityWalk ↗](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · **[Download HTML ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
+
+<sub>Try switching between D1–D4, opening a place card, or following a map link. Times and place information reflect the author's original itinerary.</sub>
+
+## Community and recognition
+
+- **#1 on GitHub Trending's weekly, all-language repository list.** [Ranking screenshot published by the creator on September 1, 2026](https://x.com/t20000622yy/status/2094656813576880285), with all languages and “This week” selected.
+- **Featured and interviewed by QbitAI.** [Project feature](https://www.qbitai.com/2026/09/482469.html) · [The developer's story](https://www.qbitai.com/2026/09/488519.html).
+- **Shared with developer communities.** [midudev's post](https://x.com/midudev/status/2094425974406320207).
+
+<sub>A selection of public coverage, community shares, and historical milestones. Follow the links for dates and sources.</sub>
+
 ## Preview
+
+<details>
+<summary>Themes, exports, and share cards</summary>
 
 Same diagram, two themes, one click to switch:
 
@@ -93,13 +163,20 @@ After tracing authored `Upstream` or `Downstream` reach, **Export → Reach Shar
 
 Open [`examples/web-app.html`](examples/web-app.html) locally to try the complete viewer.
 
+</details>
+
 ## Quick start
+
+**Current development version:** `v2.17.0-dev.1`. See [Changelog](CHANGELOG.md#unreleased).
 
 ### 1. Install
 
 ```bash
 npx skills add tt-a1i/archify -g
 ```
+
+<details>
+<summary>More installation options and update-check details</summary>
 
 For an explicit, non-interactive Cursor install:
 
@@ -115,9 +192,11 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 [DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`
 
-The [agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`. For Raven's manual ZIP install, extract [`archify.zip`](archify.zip) into `~/.raven/workspace/skills`; it yields `~/.raven/workspace/skills/archify`. Raven is not a switcher target.
+The [agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`.
 
 Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 72 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes.
+
+</details>
 
 ### 2. Start from a description — no repository required
 
@@ -138,6 +217,10 @@ Put supporting detail in cards instead of adding more edges.
 Continue with focused requests such as `add Redis`, `move auth to the left`, or `highlight the rollback path`. Archify keeps the typed source available for targeted iteration.
 
 ## Choose the right diagram
+
+<details>
+<summary>Six diagram types, architecture comparisons, and examples</summary>
+
 
 | Type | Best for | Include in your prompt |
 |---|---|---|
@@ -180,7 +263,19 @@ Lifecycle separates progress, waits, retries, and terminal outcomes:
 
 Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`](examples/archify-repo.html) · [`grid placement`](examples/archify-repo-grid.html) · [`desktop agent`](examples/maka-architecture.html)
 
+</details>
+
 ## Why Archify
+
+| Understand the structure | Walk through the story |
+|---|---|
+| Map components, workflows, and relationships from code or a description. | Explore nodes, follow paths, and explain a process chapter by chapter. |
+| **Extend it your way** | **Share the result** |
+| Keep an editable source and build on the open-source code or generated HTML with your own interactions and use cases. | Share a self-contained HTML file or export images, video, and share cards. |
+
+<details>
+<summary>The engineering behind the experience</summary>
+
 
 - **Layout judgment over generic auto-layout** — the agent chooses hierarchy, spacing, routes, and emphasis; shared automatic endpoints spread deterministically instead of piling arrows on one midpoint.
 - **Typed JSON IR** — every renderer-backed mode has a schema and reproducible source.
@@ -193,7 +288,12 @@ Architecture examples: [`web-app`](examples/web-app.html) · [`Archify pipeline`
 
 Archify is not a general-purpose drawing editor or a Mermaid theme. It turns technical intent into a communication artifact.
 
+</details>
+
 ## How it works
+
+<details>
+<summary>Generation, validation, preview, and delivery details</summary>
 
 | Step | What happens |
 |---|---|
@@ -235,6 +335,8 @@ Settings:
 
 `meta.locale=en|zh-CN` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. Otherwise omit; preserve requested-language copy; disclose English fallback. Static omits `animation`; `classic` defaults.
 
+</details>
+
 ## Explore and share the output
 
 | Action | Control |
@@ -258,12 +360,12 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 
 | Surface | Install location or method | Capability |
 |---|---|---|
-| **Raven** | Manual ZIP into `~/.raven/workspace/skills` → `~/.raven/workspace/skills/archify` | Full renderer + validation workflow |
 | **Claude Code** | `~/.claude/skills/` or `.claude/skills/` | Full renderer + validation workflow |
 | **Codex CLI** | `~/.agents/skills/` or `.agents/skills/` | Full renderer + validation workflow |
 | **opencode** | `~/.config/opencode/skills/`, `.opencode/skills/`, or `.agents/skills/` | Full renderer + validation workflow |
 | **Claude.ai** | Upload `archify.zip` under Settings → Capabilities → Skills | Depends on Node.js access in the sandbox |
 | **Project Knowledge** | Upload `archify.zip` to the project | Prompt-driven architecture fallback |
+| **Hermes Agent** | Opt-in: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | Community Skill-only integration; Node `>=18`; not a Nous official product. No telemetry. It is not a switcher target. [Details](integrations/hermes-agent/README.md). |
 | **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.1.0-rc.6`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
 
 ## Reference and scope
@@ -274,6 +376,23 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 - [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
+
+## Community
+
+👋 **Welcome to the Archify Community!**
+
+Connect with other users and developers, share ideas, request features, report bugs, discuss development, and help make Archify better together.
+
+- <img src="docs/assets/community/discord.svg" alt="" width="18" /> [Discord](https://discord.gg/6xWMjgCeUq)
+- <img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat: scan the QR code below. WeChat group codes expire periodically; if this one has expired, ask for the current code through Discord or QQ.
+- <img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ group: `1121948602`
+
+<table>
+<tr>
+  <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official WeChat group QR code" width="300" height="300" /></td>
+  <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ</strong><br/><img src="docs/assets/community/qq-qr.png" alt="Archify Official QQ group QR code" width="300" height="300" /></td>
+</tr>
+</table>
 
 ## License
 

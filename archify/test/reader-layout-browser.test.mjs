@@ -8,7 +8,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../bin/visual-check.mjs';
 
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
+const chromeConfigured = Object.prototype.hasOwnProperty.call(process.env, 'ARCHIFY_CHROME');
+const chromePath = chromeConfigured ? findChrome() : null;
+if (chromeConfigured && !chromePath) {
+  throw new Error(`ARCHIFY_CHROME does not resolve to an executable browser: ${process.env.ARCHIFY_CHROME}`);
+}
 const cases = {
   architecture: 'web-app.architecture.json',
   workflow: 'agent-tool-call.workflow.json',
@@ -79,6 +83,7 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
           width: html.style.getPropertyValue('--archify-reader-width'),
           layout: html.getAttribute('data-reader-layout'), overflow: html.getAttribute('data-reader-overflow'),
           wide: diagram.getAttribute('data-wide-diagram'), shape: html.getAttribute('data-diagram-shape'),
+          readerFit: svg.getAttribute('data-reader-fit'),
           geometry: ['viewBox', 'width', 'height'].map(function (name) { return svg.getAttribute(name); }),
           shellWidth: document.querySelector('.container').getBoundingClientRect().width,
           scrollHeight: Math.max(html.scrollHeight, document.body.scrollHeight),
@@ -103,11 +108,16 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
       assert.deepEqual(await evaluate('window.readerTestErrors'), [], 'Viewer initialization');
       if (waitForLayout) await stable();
     }
-    function variant(name, { ratio, beforeViewer = '' } = {}) {
+    function variant(name, { ratio, undeclaredFit = false, beforeViewer = '' } = {}) {
       let html = fs.readFileSync(artifacts.architecture, 'utf8');
       if (ratio !== undefined) assert.match(html, /<svg\b[^>]*\bviewBox="[^"]+"/, 'Reader viewBox fixture anchor');
       if (beforeViewer) assert.ok(html.includes('  <script>\n    var Archify = {};'), 'Reader setup fixture anchor');
       if (ratio !== undefined) html = html.replace(/(<svg\b[^>]*\bviewBox=")[^"]+(")/, (_, start, end) => `${start}0 0 ${ratio * 1000} 1000${end}`);
+      if (undeclaredFit) {
+        // Ratio-only cases must not inherit the compiler's independent
+        // intrinsic-height eligibility declaration from the source fixture.
+        html = html.replace(/<svg\b[^>]*>/, root => root.replace(' data-reader-fit="intrinsic-height"', ''));
+      }
       if (beforeViewer) html = html.replace('  <script>\n    var Archify = {};', () => `  <script>${beforeViewer}</script>\n  <script>\n    var Archify = {};`);
       const file = path.join(scratch, `${name}.html`);
       fs.writeFileSync(file, html);
@@ -166,9 +176,17 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
     });
 
     await t.test('ratio and desktop thresholds preserve shape while clearing temporary state', async () => {
+      await load(variant('intrinsic-ratio-1.549', { ratio: 1.549 }));
+      const intrinsic = await snapshot('intrinsic-ratio-1.549');
+      assert.equal(intrinsic.readerFit, 'intrinsic-height');
+      assert.equal(intrinsic.receipt.ratio, 1.549);
+      assert.equal(intrinsic.active, true, 'intrinsic-height remains eligible below the wide-ratio threshold');
+      assert.equal(intrinsic.wide, null);
+      assert.equal(intrinsic.shape, null);
       for (const ratio of [1.549, 1.55, 1.551]) {
-        await load(variant(`ratio-${ratio}`, { ratio }));
+        await load(variant(`ratio-${ratio}`, { ratio, undeclaredFit: true }));
         const before = await snapshot(`ratio-${ratio}`);
+        assert.equal(before.readerFit, null, 'legacy ratio fixture declares no intrinsic fit');
         assert.equal(before.active, ratio >= 1.55);
         if (ratio < 1.55) inactive(before, false);
         for (const width of [1023, 1024, 1025, 1023, 1440]) {
@@ -182,7 +200,7 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
       }
     });
 
-    const wide = variant('wide', { ratio: 3 });
+    const wide = variant('wide', { ratio: 3, undeclaredFit: true });
     await t.test('desktop budgets, extreme content and limited horizontal space preserve geometry', async () => {
       for (const [width, height] of [[1440, 900], [1600, 1000], [1920, 1080], [2048, 1320]]) {
         await load(wide, { width, height });

@@ -3,6 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Sanitized explicit route",
+    "output": "issue-126-explicit-route.html",
     "viewBox": [900, 420],
     "legend": { "mode": "hidden" }
   },

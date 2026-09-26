@@ -1,0 +1,1471 @@
+{
+  "base": "9b3d3f0cb930d8d2e93c66eb00f74db4974965b2",
+  "perceptualReview": {
+    "status": "pass",
+    "scope": "1440x900 light and dark; appropriate icons/legend labels, preserved dev label clearance and unchanged node placement/routes"
+  },
+  "arms": {
+    "before": {
+      "ok": true,
+      "status": "pass",
+      "artifact": {
+        "path": "/tmp/pr507-dev-proof/verified/before.html",
+        "sha256": "9be49afa2083503be7fb39ca7a4dd18bd80de75abe23ff32dbe4c8db5c6b05c3",
+        "bytes": 812459
+      },
+      "containment": {
+        "status": "pass",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 900,
+            "theme": "light",
+            "innerWidth": 1440,
+            "innerHeight": 900,
+            "scrollWidth": 1440,
+            "scrollHeight": 900,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1247,
+            "diagramWidth": 1217,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 161,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 161,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1600,
+            "height": 1000,
+            "theme": "light",
+            "innerWidth": 1600,
+            "innerHeight": 1000,
+            "scrollWidth": 1600,
+            "scrollHeight": 1000,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1294,
+            "diagramWidth": 1264,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 167,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 167,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "theme": "light",
+            "innerWidth": 1920,
+            "innerHeight": 1080,
+            "scrollWidth": 1920,
+            "scrollHeight": 1080,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1451,
+            "diagramWidth": 1421,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 188,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 188,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 2048,
+            "height": 1320,
+            "theme": "light",
+            "innerWidth": 2048,
+            "innerHeight": 1320,
+            "scrollWidth": 2048,
+            "scrollHeight": 1320,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1860,
+            "diagramWidth": 1810,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 239,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 239,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 41,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          }
+        ]
+      },
+      "readability": {
+        "status": "pass",
+        "minimumProjectedNodeTextPx": 6,
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 900,
+            "theme": "light",
+            "innerWidth": 1440,
+            "innerHeight": 900,
+            "scrollWidth": 1440,
+            "scrollHeight": 900,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1247,
+            "diagramWidth": 1217,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 161,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 161,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1600,
+            "height": 1000,
+            "theme": "light",
+            "innerWidth": 1600,
+            "innerHeight": 1000,
+            "scrollWidth": 1600,
+            "scrollHeight": 1000,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1294,
+            "diagramWidth": 1264,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 167,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 167,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "theme": "light",
+            "innerWidth": 1920,
+            "innerHeight": 1080,
+            "scrollWidth": 1920,
+            "scrollHeight": 1080,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1451,
+            "diagramWidth": 1421,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 188,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 188,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 2048,
+            "height": 1320,
+            "theme": "light",
+            "innerWidth": 2048,
+            "innerHeight": 1320,
+            "scrollWidth": 2048,
+            "scrollHeight": 1320,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1860,
+            "diagramWidth": 1810,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 239,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 239,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 41,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          }
+        ]
+      },
+      "viewerChrome": {
+        "status": "pass",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 900,
+            "theme": "light",
+            "innerWidth": 1440,
+            "innerHeight": 900,
+            "scrollWidth": 1440,
+            "scrollHeight": 900,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1247,
+            "diagramWidth": 1217,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 161,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 161,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1600,
+            "height": 1000,
+            "theme": "light",
+            "innerWidth": 1600,
+            "innerHeight": 1000,
+            "scrollWidth": 1600,
+            "scrollHeight": 1000,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1294,
+            "diagramWidth": 1264,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 167,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 167,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "theme": "light",
+            "innerWidth": 1920,
+            "innerHeight": 1080,
+            "scrollWidth": 1920,
+            "scrollHeight": 1080,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1451,
+            "diagramWidth": 1421,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 188,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 188,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 2048,
+            "height": 1320,
+            "theme": "light",
+            "innerWidth": 2048,
+            "innerHeight": 1320,
+            "scrollWidth": 2048,
+            "scrollHeight": 1320,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1860,
+            "diagramWidth": 1810,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 239,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 239,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 41,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          }
+        ]
+      },
+      "screenshots": [
+        {
+          "path": "before.1440x900.light.png",
+          "sha256": "b81b758cc71b5ba66a9c35ca9aefc241680e8be6b2939aa570c0ef191c3a4484"
+        },
+        {
+          "path": "before.1440x900.dark.png",
+          "sha256": "1462f9a6fefb0d7c793c30389077344a9cd8853c075ecaa8aeea4f142dd2dca4"
+        }
+      ]
+    },
+    "after": {
+      "ok": true,
+      "status": "pass",
+      "artifact": {
+        "path": "/tmp/pr507-dev-proof/verified/after.html",
+        "sha256": "81f1830b2dce950cec86dbecda59ac5621cd437340314cde9927ec6a6baed276",
+        "bytes": 812361
+      },
+      "containment": {
+        "status": "pass",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 900,
+            "theme": "light",
+            "innerWidth": 1440,
+            "innerHeight": 900,
+            "scrollWidth": 1440,
+            "scrollHeight": 900,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1247,
+            "diagramWidth": 1217,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 161,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 161,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1600,
+            "height": 1000,
+            "theme": "light",
+            "innerWidth": 1600,
+            "innerHeight": 1000,
+            "scrollWidth": 1600,
+            "scrollHeight": 1000,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1294,
+            "diagramWidth": 1264,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 167,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 167,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "theme": "light",
+            "innerWidth": 1920,
+            "innerHeight": 1080,
+            "scrollWidth": 1920,
+            "scrollHeight": 1080,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1451,
+            "diagramWidth": 1421,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 188,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 188,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 2048,
+            "height": 1320,
+            "theme": "light",
+            "innerWidth": 2048,
+            "innerHeight": 1320,
+            "scrollWidth": 2048,
+            "scrollHeight": 1320,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1860,
+            "diagramWidth": 1810,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 239,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 239,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 41,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          }
+        ]
+      },
+      "readability": {
+        "status": "pass",
+        "minimumProjectedNodeTextPx": 6,
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 900,
+            "theme": "light",
+            "innerWidth": 1440,
+            "innerHeight": 900,
+            "scrollWidth": 1440,
+            "scrollHeight": 900,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1247,
+            "diagramWidth": 1217,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 161,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 161,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1600,
+            "height": 1000,
+            "theme": "light",
+            "innerWidth": 1600,
+            "innerHeight": 1000,
+            "scrollWidth": 1600,
+            "scrollHeight": 1000,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1294,
+            "diagramWidth": 1264,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 167,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 167,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "theme": "light",
+            "innerWidth": 1920,
+            "innerHeight": 1080,
+            "scrollWidth": 1920,
+            "scrollHeight": 1080,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1451,
+            "diagramWidth": 1421,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 188,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 188,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 2048,
+            "height": 1320,
+            "theme": "light",
+            "innerWidth": 2048,
+            "innerHeight": 1320,
+            "scrollWidth": 2048,
+            "scrollHeight": 1320,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1860,
+            "diagramWidth": 1810,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 239,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 239,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 41,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          }
+        ]
+      },
+      "viewerChrome": {
+        "status": "pass",
+        "viewports": [
+          {
+            "width": 1440,
+            "height": 900,
+            "theme": "light",
+            "innerWidth": 1440,
+            "innerHeight": 900,
+            "scrollWidth": 1440,
+            "scrollHeight": 900,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1247,
+            "diagramWidth": 1217,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 161,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 161,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 103,
+                "spaceAboveNodesPx": 52,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1600,
+            "height": 1000,
+            "theme": "light",
+            "innerWidth": 1600,
+            "innerHeight": 1000,
+            "scrollWidth": 1600,
+            "scrollHeight": 1000,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1294,
+            "diagramWidth": 1264,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 167,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 167,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 107,
+                "spaceAboveNodesPx": 54,
+                "spaceBelowNodesPx": 6
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "theme": "light",
+            "innerWidth": 1920,
+            "innerHeight": 1080,
+            "scrollWidth": 1920,
+            "scrollHeight": 1080,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1451,
+            "diagramWidth": 1421,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 188,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 188,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 120,
+                "spaceAboveNodesPx": 60,
+                "spaceBelowNodesPx": 7
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 51,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          },
+          {
+            "width": 2048,
+            "height": 1320,
+            "theme": "light",
+            "innerWidth": 2048,
+            "innerHeight": 1320,
+            "scrollWidth": 2048,
+            "scrollHeight": 1320,
+            "overflowX": false,
+            "overflowY": false,
+            "ok": true,
+            "readerWidth": 1860,
+            "diagramWidth": 1810,
+            "viewBoxWidth": 802,
+            "workflowLanes": [
+              {
+                "frameId": "lane-0",
+                "heightPx": 239,
+                "nodeCount": 4,
+                "nodeIds": [
+                  "today",
+                  "mid_autumn",
+                  "national_day",
+                  "year_end"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              },
+              {
+                "frameId": "lane-1",
+                "heightPx": 239,
+                "nodeCount": 1,
+                "nodeIds": [
+                  "makeup_work"
+                ],
+                "nodeSpanPx": 153,
+                "spaceAboveNodesPx": 77,
+                "spaceBelowNodesPx": 9
+              }
+            ],
+            "minimumProjectedNodeTextPx": 7.7,
+            "minimumProjectedNodeText": "9\u670825\u65e5\u201327\u65e5 \u00b7 3\u5929",
+            "minimumProjectedNodeTextDetail": "context",
+            "minimumRequiredNodeTextPx": 6,
+            "readabilityOk": true,
+            "hasLegend": true,
+            "hasNavigationDock": true,
+            "legendDockIntersectionArea": 0,
+            "dockStageIntersectionArea": 0,
+            "dockStageGap": 10.21875,
+            "requiredDockStageGap": 10,
+            "viewerChromeStageOk": true,
+            "viewerChromeReserve": 41,
+            "viewerChromeActive": true,
+            "viewerChromeOk": true,
+            "resolvedTheme": "light"
+          }
+        ]
+      },
+      "screenshots": [
+        {
+          "path": "after.1440x900.light.png",
+          "sha256": "2211d99cd9dcf6863748fa6d1557a57650bcd9341e9d503d331f241a1d20d28e"
+        },
+        {
+          "path": "after.1440x900.dark.png",
+          "sha256": "1e69826e1a01ba0c39852d86aba3872693b1b374e0582d52a13e82e01e118536"
+        }
+      ]
+    }
+  }
+}

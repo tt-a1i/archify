@@ -3,43 +3,39 @@ import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { componentBox, boundaryBox, connectionPath } from '../shared/layout-report.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { rendererFailure, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
+import { createRouter } from './routing.mjs';
+import { placeAutomaticLabels, reservedLabelRect } from './labels.mjs';
+import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
-  segmentIntersectsRect,
   cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
+  collectArrowheadCollisions,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  cleanLabelCanvasContainmentProblems,
   suggestLabelObstacleFix,
   suggestComponentSeparation,
-  anchor,
-  automaticPortSpread,
-  automaticPortRhythmBridge,
-  defaultFromSide,
-  defaultToSide,
-  chosenSide,
-  routeHonorsEndpointSides,
-  normalizeRoutePoints,
   polylinePath,
   routePointsValue,
-  roundedPath,
+  authoredStraightRouteAttrs,
   labelPoint,
   componentFill,
   componentText,
   arrowClassMap,
-  variantAccent,
+  edgeLabelAccent,
 } from '../shared/geometry.mjs';
 
 const componentTextFit = {
@@ -111,10 +107,16 @@ for (const [index, c] of asArray(arch.components).entries()) {
 function boundaryRect(boundary) {
   const members = asArray(boundary.wraps).map((id) => components.get(id)).filter(Boolean);
   if (!members.length) return null;
-  const minX = Math.min(...members.map((m) => m.x));
-  const minY = Math.min(...members.map((m) => m.y));
-  const maxX = Math.max(...members.map((m) => m.x + m.width));
-  const maxY = Math.max(...members.map((m) => m.y + m.height));
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const member of members) {
+    minX = Math.min(minX, member.x);
+    minY = Math.min(minY, member.y);
+    maxX = Math.max(maxX, member.x + member.width);
+    maxY = Math.max(maxY, member.y + member.height);
+  }
   const pad = boundary.pad ?? layout.boundaryPad;
   const topPad = Math.max(
     pad,
@@ -148,17 +150,40 @@ const architectureLegendEntries = resolveLegend(
   new Set([...components.values()].map((component) => component.type)),
 );
 
-function autoViewBoxFor(candidateBoundaries) {
-  const maxX = Math.max(
-    0,
-    ...[...components.values()].map((component) => component.x + component.width),
-    ...candidateBoundaries.map((boundary) => boundary.x + boundary.width),
-  );
-  const maxY = Math.max(
-    0,
-    ...[...components.values()].map((component) => component.y + component.height),
-    ...candidateBoundaries.map((boundary) => boundary.y + boundary.height),
-  );
+// One source for connection label geometry: the rect the containment rule
+// measures is the rect the SVG mask draws, the auto canvas covers, the legend
+// avoids, and the layout report publishes.
+const resolvedLabelPoints = new Map();
+function connectionLabelBox(conn) {
+  if (!conn.label) return null;
+  return connectionLabelBoxAt(conn, resolvedLabelPoints.get(conn) || labelPoint(conn, pathFor(conn).points));
+}
+
+function connectionLabelBoxAt(conn, [lx, ly]) {
+  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
+}
+
+function connectionLabelRects() {
+  const rects = [];
+  for (const [relationIndex, conn] of asArray(arch.connections).entries()) {
+    if (!components.has(conn.from) || !components.has(conn.to)) continue;
+    const box = connectionLabelBox(conn);
+    if (!box) continue;
+    rects.push({ relation: conn, relationIndex, label: conn.label, ...box });
+  }
+  return rects;
+}
+
+function autoViewBoxFor(candidateBoundaries, extraRects = []) {
+  let maxX = 0;
+  let maxY = 0;
+  for (const rects of [components.values(), candidateBoundaries, extraRects]) {
+    for (const rect of rects) {
+      maxX = Math.max(maxX, rect.x + rect.width);
+      maxY = Math.max(maxY, rect.y + rect.height);
+    }
+  }
   let width = Math.ceil(maxX + layout.margin);
   let footprint = legendFootprint(architectureLegendEntries, {
     width: Math.max(1, width - layout.margin * 2),
@@ -179,7 +204,7 @@ function resolvedViewBoxWidth(candidateBoundaries) {
   if (Array.isArray(arch.meta?.viewBox) && Number.isFinite(arch.meta.viewBox[0])) {
     return arch.meta.viewBox[0];
   }
-  return autoViewBoxFor(candidateBoundaries)[0];
+  return autoViewBoxFor(candidateBoundaries, connectionGeometry)[0];
 }
 
 function expandBoundaryForReadableTitle(boundary, minimumFontSize) {
@@ -250,8 +275,9 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
         ...components.values(),
       ].filter((candidate) => horizontalOverlap(title, candidate) && rectsOverlap(title, candidate));
       if (!blockers.length) break;
-      title.y = Math.min(
-        ...blockers.map((blocker) => blocker.y - layout.boundaryLabelRailGap - title.height),
+      title.y = blockers.reduce(
+        (min, blocker) => Math.min(min, blocker.y - layout.boundaryLabelRailGap - title.height),
+        Infinity,
       );
     }
     placedTitles.push(title);
@@ -276,7 +302,48 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
   });
 }
 
+// ---- Routing state ----------------------------------------------------------
+// Initialized before the boundary-title work below: connection label rects are
+// part of the derived canvas, so the title convergence must measure the same
+// width the diagram actually renders into (a title sized for a narrower canvas
+// would fall below the desktop-readability floor once labels grow it). Routing
+// reads components, connections and the member-derived boundary frames (so an
+// automatic route never borrows a frame border as its corridor), never the
+// title-expanded frames or the viewBox.
 const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections, {
+  distinctAutomaticPorts: true,
+  preferReadableRoutes: true,
+  frames: rawBoundaries.map((boundary) => ({
+    ...boundary,
+    radius: boundary.kind === 'security-group' ? 8 : 12,
+  })),
+  labelRectFor: (conn, points, { routes, labels }) => (conn.label ? reservedLabelRect({
+    label: { relation: conn, label: conn.label, ...connectionLabelBoxAt(conn, labelPoint(conn, points)) },
+    points,
+    routes: routes.map((route, index) => ({ relationIndex: index, points: route })),
+    labels,
+    components: [...components.values()],
+  }) : null),
+});
+function hasAutomaticRouteGeometry(connection) {
+  return !Array.isArray(connection?.via)
+    && (!connection?.route || connection.route === 'auto')
+    && connection?.channelX === undefined
+    && connection?.channelY === undefined;
+}
+// The auto canvas has to cover these rects; an authored viewBox is never
+// resized to fit them — there the containment rule reports the clipping.
+let connectionLabels = connectionLabelRects();
+// Unlabelled outer corridors are geometry too. Fitting only nodes and labels
+// can clip a valid explicit via route while every browser overflow check passes.
+const connectionGeometry = [
+  ...connectionLabels,
+  ...asArray(arch.connections)
+    .filter((conn) => components.has(conn.from) && components.has(conn.to))
+    .flatMap((conn) => pathFor(conn).points.map(([x, y]) => ({ x, y, width: 0, height: 0 }))),
+];
+
 function resolveBoundaryTitles() {
   if (!enforcesBoundaryTitleComposition || rawBoundaries.length === 0) {
     return {
@@ -330,12 +397,39 @@ function componentContext(component) {
 }
 
 // ---- Auto viewBox: fit all geometry + the measured resolved legend ----------
-const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries);
+// Connection labels are diagram content, so an auto canvas that stopped at the
+// component/boundary bbox would clip them; the label rects join the fit here
+// and in the title convergence above, which sizes fonts for this same width.
+const viewBox = arch.meta?.viewBox || autoViewBoxFor(boundaries, connectionGeometry);
 const legendY = () => viewBox[1] - 16;
+
+// Fit titles and canvas from the original geometry first. Fallback labels must
+// fit inside that canvas, so moving a label cannot trigger title reflow or a
+// canvas/label feedback loop. Keep standard and every authored label control.
+if (arch.meta?.quality_profile === 'showcase') {
+  connectionLabels = placeAutomaticLabels({
+    keepFallbackNearRoute: true,
+    labels: connectionLabels,
+    routes: asArray(arch.connections).flatMap((conn, relationIndex) => (
+      components.has(conn.from) && components.has(conn.to)
+        ? [{ relationIndex, points: pathFor(conn).points }] : []
+    )),
+    components: [...components.values()],
+    titles: boundaries.map(boundary => boundary.title),
+    viewBox,
+    // Leave the resolved legend band available; moving a label must not hide
+    // an otherwise visible legend. Existing labels keep their placement.
+    placementBottom: architectureLegendEntries.length
+      ? legendY() - 32 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
+      : viewBox[1],
+  });
+  for (const rect of connectionLabels) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
+}
 
 // ---- Validation: mechanical correctness, never layout taste -----------------
 function validateArchitecture() {
   const problems = [];
+  const diagnostics = [];
   if (resolvedBoundaryTitles.readabilityProblem) {
     problems.push(resolvedBoundaryTitles.readabilityProblem);
   }
@@ -491,7 +585,36 @@ function validateArchitecture() {
   }
   for (const b of boundaries) {
     if (b.x < 0 || b.y < 0 || b.x + b.width > viewBox[0] || b.y + b.height > viewBox[1]) {
-      problems.push(`Boundary "${b.label}" extends outside the viewBox — its members sit too close to the canvas edge; add margin or enlarge meta.viewBox.`);
+      const overflow = {
+        left: Math.max(0, -b.x),
+        top: Math.max(0, -b.y),
+        right: Math.max(0, b.x + b.width - viewBox[0]),
+        bottom: Math.max(0, b.y + b.height - viewBox[1]),
+      };
+      const sides = Object.entries(overflow).filter(([, pixels]) => pixels > 0)
+        .map(([side, pixels]) => `${side} by ${Math.ceil(pixels)}px`).join(', ');
+      const supportedFixes = [];
+      if (overflow.left || overflow.top) {
+        supportedFixes.push(`move the wrapped components right by at least ${Math.ceil(overflow.left)}px and down by at least ${Math.ceil(overflow.top)}px, then revalidate connected routes and the opposite canvas sides; enlarging meta.viewBox cannot fix left/top overflow`);
+      }
+      if (overflow.right || overflow.bottom) {
+        supportedFixes.push(`increase meta.viewBox to at least [${Math.ceil(Math.max(viewBox[0], b.x + b.width))}, ${Math.ceil(Math.max(viewBox[1], b.y + b.height))}] for right/bottom overflow, or move the wrapped components inward; revalidate desktop readability`);
+      }
+      const message = `Boundary "${b.label}" extends outside the viewBox (${sides}) — preserve wraps membership and repair the measured canvas side.`;
+      diagnostics.push({
+        code: 'layout/boundary-out-of-bounds',
+        severity: 'error',
+        message,
+        subject: { diagramType: 'architecture', boundary: { kind: b.kind, label: b.label, wraps: b.wraps } },
+        evidence: {
+          bounds: { x: b.x, y: b.y, width: b.width, height: b.height },
+          viewBox: [...viewBox],
+          overflow,
+          members: asArray(b.wraps).map((id) => components.get(id)).filter(Boolean).map(componentBox),
+        },
+        supportedFixes,
+      });
+      problems.push(message);
     }
   }
 
@@ -500,9 +623,33 @@ function validateArchitecture() {
     if (!components.has(conn.to)) problems.push(`Connection "${conn.label || conn.to}" references unknown target "${conn.to}".`);
     if (components.has(conn.from) && components.has(conn.to)) {
       const routed = pathFor(conn);
+      const outsidePoints = routed.points.filter(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1]);
+      if (arch.meta?.quality_profile === 'showcase' && outsidePoints.length) {
+        const message = `Connection "${conn.id || `${conn.from}->${conn.to}`}" extends outside the viewBox — move the measured outside route points inward or enlarge an authored viewBox for right/bottom overflow.`;
+        diagnostics.push({
+          code: 'layout/route-out-of-bounds', severity: 'error', message,
+          subject: { diagramType: 'architecture', collection: 'connections', index: asArray(arch.connections).indexOf(conn), ...(conn.id ? { id: conn.id } : {}), from: conn.from, to: conn.to },
+          evidence: { viewBox: [...viewBox], outsidePoints, points: routed.points },
+          supportedFixes: ['move negative route coordinates inside the canvas; for right/bottom overflow, enlarge meta.viewBox or reroute inward; preserve endpoints, direction and labels, then revalidate'],
+        });
+        problems.push(message);
+      }
       const [start, end] = [routed.points[0], routed.points[routed.points.length - 1]];
       const distance = Math.hypot(end[0] - start[0], end[1] - start[1]);
-      if (distance < 24) problems.push(`Connection "${conn.label || `${conn.from}->${conn.to}`}" is too short (${Math.round(distance)}px; minimum 24px) — place its components farther apart.`);
+      if (distance < 24 && conn.from === conn.to) {
+        // "Move the components apart" cannot be executed for a self-loop; the
+        // ports sit on one component and the sides decide how far apart.
+        const message = `Self-loop "${conn.id || conn.label || conn.from}" on component "${conn.from}" has its two ports only ${Math.round(distance)}px apart (minimum 24px) — remove fromSide/toSide so the renderer can choose the loop's sides, or set fromSide and toSide to different sides.`;
+        diagnostics.push({
+          code: 'layout/self-loop-ports', severity: 'error', message,
+          subject: { diagramType: 'architecture', collection: 'connections', index: asArray(arch.connections).indexOf(conn), ...(conn.id ? { id: conn.id } : {}), from: conn.from, to: conn.to },
+          evidence: { distancePx: Math.round(distance), minimumPx: 24, fromSide: connectionEndpointSide(conn, 'source'), toSide: connectionEndpointSide(conn, 'target'), points: routed.points },
+          supportedFixes: ['remove fromSide/toSide from the self-loop', 'set fromSide and toSide to different sides of the component'],
+        });
+        problems.push(message);
+      } else if (distance < 24) {
+        problems.push(`Connection "${conn.label || `${conn.from}->${conn.to}`}" is too short (${Math.round(distance)}px; minimum 24px) — place its components farther apart.`);
+      }
     }
   }
 
@@ -532,6 +679,12 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
+    // Automatic architecture routes render with an opaque crossover halo.
+    // That makes a proper X visually unambiguous while explicit authored
+    // crossings remain a blocking composition error.
+    crossingResolved: (left, right) => (
+      hasAutomaticRouteGeometry(left) && hasAutomaticRouteGeometry(right)
+    ),
     routeHint: 'adjust route/via or fromSide/toSide so the connections use separate corridors'
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
@@ -541,8 +694,29 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
-    routeHint: 'adjust route/via or fromSide/toSide so unrelated connections do not visually merge'
+    includeSharedEndpoints: (left, right) => hasAutomaticRouteGeometry(left) && !left.labelAt
+      && hasAutomaticRouteGeometry(right) && !right.labelAt,
+    routeHint: 'adjust route/via or fromSide/toSide so distinct connections do not visually merge'
   }));
+  if ((process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile) === 'showcase') {
+    const collisions = collectArrowheadCollisions({
+      routedRelations: asArray(arch.connections)
+        .filter((conn) => components.has(conn.from) && components.has(conn.to) && hasAutomaticRouteGeometry(conn) && !conn.labelAt)
+        .map((relation) => ({ relation, points: pathFor(relation).points })),
+    });
+    for (const hit of collisions) {
+      const left = hit.left.relation;
+      const right = hit.right.relation;
+      const message = `[composition/arrowhead-collision] automatic connections "${left.id || left.from}" and "${right.id || right.from}" into "${left.to}" have arrowheads ${hit.distance}px apart (minimum ${hit.minimum}px) — enlarge or reposition the destination, or choose separate toSide ports.`;
+      problems.push(message);
+      diagnostics.push({
+        code: 'composition/arrowhead-collision', severity: 'error', message,
+        subject: { diagramType: 'architecture', collection: 'connections', id: left.id, from: left.from, to: left.to },
+        evidence: { otherId: right.id, distancePx: hit.distance, minimumPx: hit.minimum, endpoints: [hit.left.tip, hit.right.tip] },
+        supportedFixes: ['enlarge or reposition the destination', 'choose separate toSide ports'],
+      });
+    }
+  }
   problems.push(...cleanBorderRunProblems({
     relations: arch.connections,
     endpointIds: new Set(components.keys()),
@@ -562,19 +736,41 @@ function validateArchitecture() {
     profile: arch.meta?.quality_profile,
     routeHint: 'move route/via points into a wider corridor or move the component so every turn has room to read'
   }));
+  problems.push(...cleanRouteDetourProblems({
+    relations: arch.connections,
+    obstacles: components.values(),
+    contentRects: [...components.values(), ...boundaries],
+    endpointIds: new Set(components.keys()),
+    pathFor,
+    fromSideFor: (conn) => connectionEndpointSide(conn, 'source'),
+    toSideFor: (conn) => connectionEndpointSide(conn, 'target'),
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+  }));
 
   // Connection labels must not land on top of components.
-  const labelRects = [];
-  for (const [connectionIndex, conn] of asArray(arch.connections).entries()) {
-    if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
-    const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-    const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    labelRects.push({ relation: conn, relationIndex: connectionIndex, label: conn.label, x: lx - w / 2, y: ly - 10, width: w, height: 14, lx, ly });
-  }
+  const labelRects = connectionLabels;
   for (const rect of labelRects) {
-    for (const c of components.values()) {
-      if (rectsOverlap(rect, c, -2)) {
-        problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c)}`);
+    const blockedComponents = [...components.values()].filter(c => rectsOverlap(rect, c, -2));
+    const labelPinned = ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(key => rect.relation[key] !== undefined);
+    const points = pathFor(rect.relation).points;
+    const shortHorizontalGap = points.length === 2 && Math.abs(points[0][1] - points[1][1]) < 0.0001
+      ? Math.abs(points[1][0] - points[0][0]) : null;
+    const requiredGap = Math.ceil(rect.width + 16);
+    if (arch.meta?.quality_profile === 'showcase' && !labelPinned && blockedComponents.length
+        && shortHorizontalGap != null && shortHorizontalGap < requiredGap) {
+      const message = `Label "${rect.label}" has only ${Math.round(shortHorizontalGap)}px between "${rect.relation.from}" and "${rect.relation.to}"; it needs at least ${requiredGap}px to stay beside its route — increase that clear gap or place the connected nodes on another readable row, preserving the label.`;
+      problems.push(message);
+      diagnostics.push({
+        code: 'composition/label-gap', severity: 'error', message,
+        subject: { diagramType: 'architecture', collection: 'connections', id: rect.relation.id, from: rect.relation.from, to: rect.relation.to },
+        evidence: { clearGapPx: shortHorizontalGap, minimumGapPx: requiredGap, labelWidthPx: rect.width, obstacles: blockedComponents.map(c => c.id) },
+        supportedFixes: [`increase the clear gap between the connected nodes to at least ${requiredGap}px`, 'reposition the connected nodes together while preserving the full relationship label'],
+      });
+    } else {
+      for (const c of blockedComponents) {
+        problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c, 'component', viewBox, components.values())}`);
       }
     }
     if (enforcesBoundaryTitleComposition) {
@@ -595,29 +791,34 @@ function validateArchitecture() {
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
   }));
+  // See collectLabelCanvasOverflow in shared/geometry.mjs. An auto canvas now
+  // covers these rects, so this reports authored viewBoxes and the origin side,
+  // which growth cannot reach.
+  problems.push(...cleanLabelCanvasContainmentProblems({
+    labels: labelRects,
+    viewBox,
+    diagramType: 'architecture',
+    relationCollection: 'connections',
+    profile: arch.meta?.quality_profile,
+  }));
 
   if (problems.length) {
     throwDiagnosticProblems('Architecture layout validation failed', problems, {
       subject: { diagramType: 'architecture' },
+      diagnostics,
     });
   }
 }
 
 function buildLayoutReport() {
-  const labels = [];
-  for (const conn of asArray(arch.connections)) {
-    if (!conn.label || !components.has(conn.from) || !components.has(conn.to)) continue;
-    const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-    const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-    labels.push({
-      text: conn.label,
-      x: Math.round(lx - w / 2),
-      y: Math.round(ly - 10),
-      width: Math.round(w),
-      height: 14,
-      labelAt: [Math.round(lx), Math.round(ly)],
-    });
-  }
+  const labels = connectionLabels.map((rect) => ({
+    text: rect.label,
+    x: Math.round(rect.x),
+    y: Math.round(rect.y),
+    width: Math.round(rect.width),
+    height: 14,
+    labelAt: [Math.round(rect.lx), Math.round(rect.ly)],
+  }));
   return {
     ok: true,
     diagram_type: 'architecture',
@@ -629,321 +830,11 @@ function buildLayoutReport() {
       .filter((conn) => components.has(conn.from) && components.has(conn.to))
       .map((conn) => {
         const routed = pathFor(conn);
-        const labelAt = conn.label ? labelPoint(conn, routed.points) : null;
+        const labelAt = conn.label ? resolvedLabelPoints.get(conn) || labelPoint(conn, routed.points) : null;
         return connectionPath(conn, routed, labelAt);
       }),
     labels,
   };
-}
-
-// ---- Connection routing ------------------------------------------------------
-function routeClearsComponents(conn, points, clearance = 2) {
-  const endpointIds = new Set([conn.from, conn.to]);
-  for (const component of components.values()) {
-    if (endpointIds.has(component.id)) continue;
-    for (let index = 0; index < points.length - 1; index += 1) {
-      if (segmentIntersectsRect({ start: points[index], end: points[index + 1] }, component, clearance)) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-function routeClearsEndpointComponents(points, from, to) {
-  const lastSegment = points.length - 2;
-  for (let index = 0; index <= lastSegment; index += 1) {
-    const segment = { start: points[index], end: points[index + 1] };
-    if (index > 0 && segmentIntersectsRect(segment, from)) return false;
-    if (index < lastSegment && segmentIntersectsRect(segment, to)) return false;
-  }
-  return true;
-}
-
-const OUTWARD_SIDE_VECTOR = {
-  left: [-1, 0],
-  right: [1, 0],
-  top: [0, -1],
-  bottom: [0, 1],
-};
-
-function outwardStub(point, side, distance = 24) {
-  const [dx, dy] = OUTWARD_SIDE_VECTOR[side] || [0, 0];
-  return [point[0] + dx * distance, point[1] + dy * distance];
-}
-
-function collinearBacktrack(a, b, c) {
-  const first = [b[0] - a[0], b[1] - a[1]];
-  const second = [c[0] - b[0], c[1] - b[1]];
-  const cross = first[0] * second[1] - first[1] * second[0];
-  const dot = first[0] * second[0] + first[1] * second[1];
-  return Math.abs(cross) <= 0.0001 && dot < -0.0001;
-}
-
-function sideAwareBridgeCandidates(start, end, fromSide, toSide) {
-  const startStub = outwardStub(start, fromSide);
-  const endStub = outwardStub(end, toSide);
-  const rawCandidates = [];
-  const minimumBridge = 16;
-  const verticalSides = new Set(['top', 'bottom']);
-  const horizontalSides = new Set(['left', 'right']);
-
-  // Port spreading can leave parallel-side anchors only a few pixels apart.
-  // Route through a bounded outside channel so we keep both endpoint normals
-  // without introducing a tiny, noisy connector between the two stubs.
-  if (verticalSides.has(fromSide) && verticalSides.has(toSide)
-      && Math.abs(start[0] - end[0]) < minimumBridge) {
-    for (const channelX of [
-      Math.max(start[0], end[0]) + minimumBridge,
-      Math.min(start[0], end[0]) - minimumBridge,
-    ]) {
-      rawCandidates.push([
-        startStub,
-        [channelX, startStub[1]],
-        [channelX, endStub[1]],
-        endStub,
-      ]);
-    }
-  }
-  if (horizontalSides.has(fromSide) && horizontalSides.has(toSide)
-      && Math.abs(start[1] - end[1]) < minimumBridge) {
-    for (const channelY of [
-      Math.max(start[1], end[1]) + minimumBridge,
-      Math.min(start[1], end[1]) - minimumBridge,
-    ]) {
-      rawCandidates.push([
-        startStub,
-        [startStub[0], channelY],
-        [endStub[0], channelY],
-        endStub,
-      ]);
-    }
-  }
-
-  rawCandidates.push(
-    [startStub, [endStub[0], startStub[1]], endStub],
-    [startStub, [startStub[0], endStub[1]], endStub],
-  );
-  return rawCandidates.map((candidate) => normalizeRoutePoints([start, ...candidate, end]))
-    .filter((points) => points.length >= 2)
-    .filter((points) => !collinearBacktrack(points[0], points[1], points[2] || points[1]))
-    .filter((points) => !collinearBacktrack(points.at(-3) || points.at(-2), points.at(-2), points.at(-1)))
-    .filter((points) => routeHonorsEndpointSides(points, fromSide, toSide))
-    .map((points) => points.slice(1, -1));
-}
-
-const AUTOMATIC_PORT_CORNER_GUTTER = 16;
-const AUTOMATIC_PORT_ALIGNMENT_DELTA = 16;
-
-function portHasCornerClearance(rect, side, point) {
-  if (side === 'left' || side === 'right') {
-    const inset = Math.min(AUTOMATIC_PORT_CORNER_GUTTER, rect.height / 2);
-    return point[1] >= rect.y + inset && point[1] <= rect.y + rect.height - inset;
-  }
-  if (side === 'top' || side === 'bottom') {
-    const inset = Math.min(AUTOMATIC_PORT_CORNER_GUTTER, rect.width / 2);
-    return point[0] >= rect.x + inset && point[0] <= rect.x + rect.width - inset;
-  }
-  return false;
-}
-
-function alignFacingPorts(conn, from, to, start, end, fromSide, toSide, ports) {
-  const hasExplicitGeometry = (
-    conn.via
-    || (conn.route && conn.route !== 'auto')
-    || conn.channelX !== undefined
-    || conn.channelY !== undefined
-    || conn.labelAt
-  );
-  const horizontallyFacing = (
-    (fromSide === 'right' && toSide === 'left')
-    || (fromSide === 'left' && toSide === 'right')
-  );
-  const verticallyFacing = (
-    (fromSide === 'bottom' && toSide === 'top')
-    || (fromSide === 'top' && toSide === 'bottom')
-  );
-  if (hasExplicitGeometry || (!horizontallyFacing && !verticallyFacing)) return { start, end };
-
-  const fromSpread = Boolean(ports?.from);
-  const toSpread = Boolean(ports?.to);
-  if (fromSpread && toSpread) return { start, end };
-  const hasExplicitSides = (
-    (conn.fromSide && conn.fromSide !== 'auto')
-    || (conn.toSide && conn.toSide !== 'auto')
-  );
-  if (!fromSpread && !toSpread && hasExplicitSides) return { start, end };
-
-  const alignmentDelta = horizontallyFacing
-    ? Math.abs(start[1] - end[1])
-    : Math.abs(start[0] - end[0]);
-  if (alignmentDelta >= AUTOMATIC_PORT_ALIGNMENT_DELTA) return { start, end };
-
-  // Keep the shared endpoint's distinct spread slot and move only the
-  // relationship's unshared endpoint onto that axis. With no spread endpoint,
-  // retain the existing least-movement choice between the two facing sides.
-  // If both endpoints are shared, preserve the outside bridge so no competing
-  // port is silently collapsed.
-  const alignEndToStart = horizontallyFacing
-    ? { start, end: [end[0], start[1]] }
-    : { start, end: [start[0], end[1]] };
-  const alignStartToEnd = horizontallyFacing
-    ? { start: [start[0], end[1]], end }
-    : { start: [end[0], start[1]], end };
-  const candidates = fromSpread
-    ? [alignEndToStart]
-    : toSpread
-      ? [alignStartToEnd]
-      : [alignEndToStart, alignStartToEnd];
-  for (const candidate of candidates) {
-    const points = [candidate.start, candidate.end];
-    if (portHasCornerClearance(from, fromSide, candidate.start)
-        && portHasCornerClearance(to, toSide, candidate.end)
-        && routeHonorsEndpointSides(points, fromSide, toSide)
-        && routeClearsEndpointComponents(points, from, to)
-        && routeClearsComponents(conn, points)) {
-      return candidate;
-    }
-  }
-  return { start, end };
-}
-
-function routeVia(conn, from, to, start, end, fromSide, toSide) {
-  if (conn.via) return conn.via;
-  switch (conn.route || 'auto') {
-    case 'straight':
-      return [];
-    case 'orthogonal-h': {
-      const midX = (start[0] + end[0]) / 2;
-      return [[midX, start[1]], [midX, end[1]]];
-    }
-    case 'orthogonal-v': {
-      const midY = (start[1] + end[1]) / 2;
-      return [[start[0], midY], [end[0], midY]];
-    }
-    case 'auto':
-    default: {
-      // Direct line unless the anchors are clearly orthogonal-friendly.
-      const deltaX = Math.abs(start[0] - end[0]);
-      const deltaY = Math.abs(start[1] - end[1]);
-      if ((deltaX < 4 || deltaY < 4) && routeHonorsEndpointSides([start, end], fromSide, toSide)) return [];
-
-      const rhythmBridge = automaticPortRhythmBridge(start, end, fromSide, toSide, {
-        accept: (points) => (
-          routeClearsEndpointComponents(points, from, to)
-          && routeClearsComponents(conn, points)
-        ),
-      });
-      if (rhythmBridge) return rhythmBridge.slice(1, -1);
-
-      // Automatic port spreading can leave otherwise aligned endpoints only a
-      // few pixels apart. A midpoint route would split that tiny difference
-      // into two unreadable endpoint stubs, so take a bounded outside channel
-      // when both anchors sit on parallel component sides.
-      const minimumStub = 8;
-      const fromVerticalSide = start[1] === from.y || start[1] === from.y + from.height;
-      const toVerticalSide = end[1] === to.y || end[1] === to.y + to.height;
-      if (fromVerticalSide && toVerticalSide && deltaX < minimumStub * 2) {
-        const outsideChannels = [
-          Math.max(start[0], end[0]) + minimumStub * 2,
-          Math.min(start[0], end[0]) - minimumStub * 2,
-        ];
-        for (const channelX of outsideChannels) {
-          const candidate = [[channelX, start[1]], [channelX, end[1]]];
-          const points = [start, ...candidate, end];
-          if (routeHonorsEndpointSides(points, fromSide, toSide) && routeClearsComponents(conn, points)) return candidate;
-        }
-      }
-
-      const fromHorizontalSide = start[0] === from.x || start[0] === from.x + from.width;
-      const toHorizontalSide = end[0] === to.x || end[0] === to.x + to.width;
-      if (fromHorizontalSide && toHorizontalSide && deltaY < minimumStub * 2) {
-        const outsideChannels = [
-          Math.max(start[1], end[1]) + minimumStub * 2,
-          Math.min(start[1], end[1]) - minimumStub * 2,
-        ];
-        for (const channelY of outsideChannels) {
-          const candidate = [[start[0], channelY], [end[0], channelY]];
-          const points = [start, ...candidate, end];
-          if (routeHonorsEndpointSides(points, fromSide, toSide) && routeClearsComponents(conn, points)) return candidate;
-        }
-      }
-
-      const midX = (start[0] + end[0]) / 2;
-      const horizontalFirst = [[midX, start[1]], [midX, end[1]]];
-      const midY = (start[1] + end[1]) / 2;
-      const verticalFirst = [[start[0], midY], [end[0], midY]];
-      const candidates = [horizontalFirst, verticalFirst];
-      const sideSafe = candidates.filter((candidate) => (
-        routeHonorsEndpointSides([start, ...candidate, end], fromSide, toSide)
-      ));
-      const sideAware = sideAwareBridgeCandidates(start, end, fromSide, toSide);
-      const nearParallelPorts = (
-        ((fromSide === 'top' || fromSide === 'bottom')
-          && (toSide === 'top' || toSide === 'bottom')
-          && deltaX < minimumStub * 2)
-        || ((fromSide === 'left' || fromSide === 'right')
-          && (toSide === 'left' || toSide === 'right')
-          && deltaY < minimumStub * 2)
-      );
-      const ordered = [
-        ...(nearParallelPorts ? sideAware : sideSafe),
-        ...(nearParallelPorts ? sideSafe : sideAware),
-        ...candidates.filter((candidate) => !sideSafe.includes(candidate)),
-      ];
-      for (const candidate of ordered) {
-        const points = [start, ...candidate, end];
-        if (routeClearsEndpointComponents(points, from, to) && routeClearsComponents(conn, points)) return candidate;
-      }
-
-      // Both bounded doglegs are blocked. Keep the best endpoint-safe route
-      // when one exists so the universal Clean Flow gate reports the actual
-      // obstacle; otherwise preserve the historical deterministic fallback
-      // and let the endpoint-direction gate explain the side mismatch.
-      return sideSafe[0] || sideAware[0] || horizontalFirst;
-    }
-  }
-}
-
-const pathCache = new Map();
-const automaticPorts = automaticPortSpread(arch.connections, components);
-function connectionSides(conn) {
-  const from = components.get(conn.from);
-  const to = components.get(conn.to);
-  return {
-    fromSide: chosenSide(conn.fromSide, defaultFromSide(from, to)),
-    toSide: chosenSide(conn.toSide, defaultToSide(from, to)),
-  };
-}
-
-function connectionEndpointSide(conn, endpoint) {
-  const field = endpoint === 'source' ? 'fromSide' : 'toSide';
-  if (conn[field] && conn[field] !== 'auto') return conn[field];
-  return connectionSides(conn)[field];
-}
-
-function pathFor(conn) {
-  if (pathCache.has(conn)) return pathCache.get(conn);
-  const from = components.get(conn.from);
-  const to = components.get(conn.to);
-  const ports = automaticPorts.get(conn);
-  const { fromSide, toSide } = connectionSides(conn);
-  const baseStart = ports?.from || anchor(from, fromSide);
-  const baseEnd = ports?.to || anchor(to, toSide);
-  const { start, end } = alignFacingPorts(
-    conn,
-    from,
-    to,
-    baseStart,
-    baseEnd,
-    fromSide,
-    toSide,
-    ports,
-  );
-  const points = [start, ...routeVia(conn, from, to, start, end, fromSide, toSide), end];
-  const routed = { d: roundedPath(points, 8), points };
-  pathCache.set(conn, routed);
-  return routed;
 }
 
 // ---- Rendering ---------------------------------------------------------------
@@ -965,16 +856,25 @@ function renderConnectionPath(conn, index) {
   const [cls, marker] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(conn);
   const strokeWidth = conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5);
-  return `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const automaticRoute = hasAutomaticRouteGeometry(conn);
+  const underlay = automaticRoute
+    ? `          <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>\n`
+    : '';
+  const crossover = automaticRoute
+    ? ` data-composition-crossover="halo"${conn.labelAt ? '' : ' data-composition-independent="true"'}` : '';
+  const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  if (!automaticRoute) return edge;
+  // The wrapper is presentation-only: viewer state remains on the one semantic
+  // edge, while CSS can keep its preceding mask underlay at the same opacity.
+  return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}${edge.replace(/^        /, '          ')}\n        </g>`;
 }
 
 function renderConnectionLabel(conn, index) {
-  if (!conn.label) return '';
-  const [lx, ly] = labelPoint(conn, pathFor(conn).points);
-  const w = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  const box = connectionLabelBox(conn);
+  if (!box) return '';
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
-          <rect x="${lx - w / 2}" y="${ly - 10}" width="${w}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
         </g>`;
 }
 
@@ -997,7 +897,7 @@ function renderComponent(c) {
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
-          ${renderSemanticSigil(c.type, { x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
+          ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
           <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
         </g>`;
 }
@@ -1006,18 +906,15 @@ function renderLegend() {
   const entries = architectureLegendEntries;
   const relationshipObstacles = relationshipLegendObstacles(arch.connections, {
     pointsFor: (connection) => pathFor(connection).points,
-    labelRectFor: (connection) => {
-      if (!connection.label) return null;
-      const [x, y] = labelPoint(connection, pathFor(connection).points);
-      const width = Math.max(30, textUnits(connection.label) * 4.8 + 10);
-      return { x: x - width / 2, y: y - 10, width, height: 14 };
-    },
+    labelRectFor: connectionLabelBox,
   });
-  const contentBottom = Math.max(
-    0,
-    ...[...components.values()].map((component) => component.y + component.height),
-    ...boundaries.map((boundary) => boundary.y + boundary.height),
-  );
+  let contentBottom = 0;
+  for (const component of components.values()) {
+    contentBottom = Math.max(contentBottom, component.y + component.height);
+  }
+  for (const boundary of boundaries) {
+    contentBottom = Math.max(contentBottom, boundary.y + boundary.height);
+  }
   return renderResolvedLegend({
     entries,
     locale: arch.meta.locale,
@@ -1035,7 +932,20 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}>
+  // An automatic architecture canvas is compiler-measured geometry. Let the
+  // Reader spend the real desktop height budget on it, including when an
+  // outer route makes the canvas taller than the ordinary wide-diagram
+  // threshold. Authored viewBoxes keep their geometry and existing Reader width policy;
+  // their declared height may use readable document scrolling without reflow.
+  const readerFit = arch.meta?.viewBox
+    ? ' data-diagram-type="architecture" data-reader-fit="authored-height"'
+    : ' data-reader-fit="intrinsic-height"';
+  // A complete repository architecture is allowed to use normal page scroll;
+  // keep its common-desktop text at a comfortable reading size instead of
+  // shrinking a semantically rich graph to the universal emergency floor.
+  const readerMinimumText = arch.meta?.viewBox ? '' : ' data-reader-min-text="7.5"';
+  const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
 
@@ -1062,17 +972,30 @@ ${renderLegend()}
       </svg>`;
 }
 
-validateArchitecture();
 if (layoutJsonMode) {
-  console.log(JSON.stringify(buildLayoutReport(), null, 2));
-  process.exit(0);
+  try {
+    validateArchitecture();
+  } catch (error) {
+    // A rejected layout is still useful repair evidence. Input/implementation
+    // failures must retain their existing failure boundary, not partial geometry.
+    if (!error.archifyDiagnostics?.length) throw error;
+    console.log(JSON.stringify({
+      ...buildLayoutReport(),
+      ...rendererFailure(error),
+      contract: 'archify-architecture-layout-v1',
+    }, null, 2));
+    process.exitCode = 1;
+  }
+  if (!process.exitCode) console.log(JSON.stringify(buildLayoutReport(), null, 2));
+} else {
+  validateArchitecture();
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'architecture',
+    meta: arch.meta,
+    svg: renderSvg(),
+    cards: arch.cards,
+    sourceEvidence,
+  });
 }
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'architecture',
-  meta: arch.meta,
-  svg: renderSvg(),
-  cards: arch.cards,
-  sourceEvidence,
-});

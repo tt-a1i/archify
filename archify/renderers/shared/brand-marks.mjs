@@ -181,7 +181,7 @@ function requestPinned(url, accept, target, deadline) {
     const request = transport.request(url, {
       method: 'GET',
       signal: timeoutSignal(Math.max(1, Math.min(4500, deadline - Date.now()))),
-      headers: { accept, 'user-agent': USER_AGENT },
+      headers: { accept, 'accept-encoding': 'identity', 'user-agent': USER_AGENT },
       // Reuse the exact public address that passed validation. This closes the
       // DNS-rebinding gap between checking a hostname and opening its socket.
       lookup(_hostname, options, callback) {
@@ -223,6 +223,13 @@ async function checkedFetch(input, accept, deadline) {
     if (!response.ok) {
       response.body.resume();
       throw new Error(`brand link returned HTTP ${response.status}`);
+    }
+    // Raw HTTP responses are not decompressed. Check successful bodies before
+    // HTML discovery or image validation so byte limits and digests stay valid.
+    const contentEncoding = (response.headers.get('content-encoding') || '').trim().toLowerCase();
+    if (contentEncoding && contentEncoding !== 'identity') {
+      response.body.destroy();
+      throw new Error(`unsupported brand content encoding ${contentEncoding}`);
     }
     return { response, finalUrl: current };
   }
@@ -269,9 +276,109 @@ async function readLimited(response, maximum) {
   return Buffer.concat(chunks, total);
 }
 
+// Read only the bounded head, independent of network chunk boundaries. Scan
+// bytes once so many tiny chunks cannot cause repeated concatenation/rescanning.
+// This is a boundary scanner, not a DOM parser: comments, quoted attributes and
+// raw-text elements must not turn a literal </head> into an early stop.
+async function readHtmlHead(response, maximum) {
+  const chunks = response.body && typeof response.body[Symbol.asyncIterator] === 'function'
+    ? response.body : [await readLimited(response, maximum)];
+  const buffer = Buffer.alloc(maximum);
+  let total = 0;
+  let tagStart = -1;
+  let quote = 0;
+  let comment = false;
+  let rawClosing = '';
+  let matched = 0;
+  for await (const value of chunks) {
+    const chunk = Buffer.from(value);
+    const length = Math.min(chunk.length, maximum - total);
+    chunk.copy(buffer, total, 0, length);
+    for (let offset = 0; offset < length; offset++) {
+      const byte = chunk[offset];
+      const position = total + offset;
+      if (comment) {
+        if (byte === 0x3e && buffer[position - 1] === 0x2d && buffer[position - 2] === 0x2d) comment = false;
+        continue;
+      }
+      if (rawClosing) {
+        const lower = byte >= 65 && byte <= 90 ? byte + 32 : byte;
+        if (matched === rawClosing.length && [9, 10, 12, 13, 32, 47, 62].includes(byte)) {
+          tagStart = position - matched;
+          rawClosing = '';
+          matched = 0;
+        } else {
+          matched = lower === rawClosing.charCodeAt(matched) ? matched + 1 : (byte === 0x3c ? 1 : 0);
+          continue;
+        }
+      }
+      if (tagStart < 0) {
+        if (byte === 0x3c) tagStart = position;
+        continue;
+      }
+      if (position === tagStart + 1 && !((byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122) || [33, 47, 63].includes(byte))) {
+        tagStart = byte === 0x3c ? position : -1;
+        continue;
+      }
+      if (position === tagStart + 3 && buffer[tagStart + 1] === 0x21 && buffer[tagStart + 2] === 0x2d && byte === 0x2d) {
+        comment = true;
+        tagStart = -1;
+        continue;
+      }
+      if (quote) {
+        if (byte === quote) quote = 0;
+        continue;
+      }
+      if (byte === 0x22 || byte === 0x27) {
+        quote = byte;
+        continue;
+      }
+      if (byte === 0x3e) {
+        const tag = buffer.toString('utf8', tagStart, position + 1);
+        if (/^<\/head[\t\n\f\r ]*>$/i.test(tag)) {
+          response.body?.destroy?.();
+          return buffer.toString('utf8', 0, position + 1);
+        }
+        const raw = /^<(script|style|title|textarea|xmp|iframe|noembed|noframes)(?=[\t\n\f\r />])/i.exec(tag);
+        if (raw) rawClosing = `</${raw[1].toLowerCase()}`;
+        tagStart = -1;
+      }
+    }
+    total += length;
+    if (chunk.length > length) {
+      response.body?.destroy?.();
+      throw new Error('brand asset is too large');
+    }
+  }
+  return buffer.toString('utf8', 0, total);
+}
+
 function attribute(tag, name) {
   const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
   return match ? (match[1] ?? match[2] ?? match[3] ?? '') : '';
+}
+
+// HTML numeric references in the C1 range use the legacy Windows-1252 mapping.
+// https://html.spec.whatwg.org/multipage/parsing.html#numeric-character-reference-end-state
+const HTML_C1_REFERENCES = [
+  0x20ac, 0x81, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021,
+  0x2c6, 0x2030, 0x160, 0x2039, 0x152, 0x8d, 0x17d, 0x8f,
+  0x90, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+  0x2dc, 0x2122, 0x161, 0x203a, 0x153, 0x9d, 0x17e, 0x178,
+];
+const BASIC_HTML_REFERENCES = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
+
+function decodeIconHref(value) {
+  // Decode only after extracting the attribute, in one pass. Leave percent
+  // escapes to URL parsing and do not reinterpret decoded quotes as markup.
+  return value.replace(/&#(?:[xX]([0-9a-fA-F]+)|([0-9]+));?|&(amp|AMP|quot|QUOT|lt|LT|gt|GT)(?:;|(?![A-Za-z0-9=]))|&(apos);/g,
+    (_match, hex, decimal, named, apostrophe) => {
+      if (named || apostrophe) return BASIC_HTML_REFERENCES[(named || apostrophe).toLowerCase()];
+      let point = Number.parseInt(hex || decimal, hex ? 16 : 10);
+      if (point === 0 || point > 0x10ffff || (point >= 0xd800 && point <= 0xdfff)) return '\uFFFD';
+      if (point >= 0x80 && point <= 0x9f) point = HTML_C1_REFERENCES[point - 0x80];
+      return String.fromCodePoint(point);
+    });
 }
 
 function iconCandidates(html, pageUrl) {
@@ -280,7 +387,7 @@ function iconCandidates(html, pageUrl) {
     const tag = match[0];
     const rel = attribute(tag, 'rel').toLocaleLowerCase('en-US').split(/\s+/);
     if (!rel.some((value) => value === 'icon' || value === 'apple-touch-icon' || value === 'mask-icon')) continue;
-    const href = attribute(tag, 'href');
+    const href = decodeIconHref(attribute(tag, 'href'));
     if (!href) continue;
     try {
       const url = new URL(href, pageUrl);
@@ -378,7 +485,7 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
       page.response.body?.destroy?.();
       return fallback('linked page is not HTML');
     }
-    const html = (await readLimited(page.response, MAX_HTML_BYTES)).toString('utf8');
+    const html = await readHtmlHead(page.response, MAX_HTML_BYTES);
     const iconErrors = [];
     for (const candidate of iconCandidates(html, page.finalUrl)) {
       try {
@@ -399,7 +506,7 @@ async function captureRemoteBrand(value, deadline = Date.now() + captureTimeoutM
         // Try the next declared favicon before using the generic link mark.
       }
     }
-    const usefulError = iconErrors.find((error) => /unsupported brand image type/i.test(error?.message))
+    const usefulError = iconErrors.find((error) => /unsupported brand (?:image type|content encoding)/i.test(error?.message))
       || iconErrors.at(-1);
     return fallback(usefulError?.message || 'no usable site icon was found');
   } catch (error) {

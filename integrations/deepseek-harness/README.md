@@ -24,6 +24,10 @@ Run the same exact-version install command above in each profile that uses Archi
 
 Do **not** use `dsh plugin add tt-a1i/archify`: the repository root is not a DSH package and has no bundle metadata (see [#341](https://github.com/tt-a1i/archify/issues/341)). For an npm download problem, a locally downloaded, integrity-verified `.tgz` can be passed to `dsh plugin --profile web add /absolute/path/to/package.tgz`.
 
+## Host activation configuration
+
+The bundle's `cordis.patch.yml` contains a `!!js` expression that DSH evaluates during host activation. Its current purpose is limited to resolving the installed `@tt-a1i/archify-dsh` package from the profile `baseUrl` and locating its packaged `skills` directory. The expression does not itself make network requests or handle credentials, but it is evaluated host-process code rather than entirely declarative data. Review the patch when upgrading, and keep the exact-version install guidance above.
+
 ## Release maintenance
 
 On a release branch, bump `package.json`, update `release.json` with the full source commit and matching Skill/DSH versions, and prepare the package README. The pack command reads adapter files and release metadata from the current adapter Git HEAD blob: commit those changes before packing; working-tree edits are not package inputs. Run:

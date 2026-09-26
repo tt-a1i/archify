@@ -157,6 +157,15 @@ function evaluateSemantic(benchmarkCase, candidate) {
         });
       }
     }
+    if (Array.isArray(required.labels)
+        && !required.labels.some((label) => technicalLabelMatches(actual.label, label))) {
+      mismatchedNodes.push({
+        id: identity,
+        field: 'label',
+        expected: required.labels,
+        actual: actual.label ?? null,
+      });
+    }
     if (Array.isArray(required.types) && !required.types.includes(actual.type)) {
       mismatchedNodes.push({
         id: identity,
@@ -247,6 +256,13 @@ function verify(args) {
       status: 'invalid',
       reviewer: null,
       reason: 'passed visual review requires a non-empty reviewer identity',
+    };
+  }
+  if (visualReview.status === 'passed' && !Array.isArray(run.visual_review?.defects)) {
+    visualReview = {
+      ...visualReview,
+      status: 'invalid',
+      reason: 'passed visual review requires an explicit defects array',
     };
   }
   const firstPassUsable = run.attempt === 1

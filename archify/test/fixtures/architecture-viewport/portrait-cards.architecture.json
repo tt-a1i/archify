@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tall showcase fixture",
+    "output": "portrait-cards.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "v0",
+        "label": "View 0",
+        "focus": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "id": "v1",
+        "label": "View 1",
+        "focus": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "id": "v2",
+        "label": "View 2",
+        "focus": [
+          "n6",
+          "n7"
+        ]
+      },
+      {
+        "id": "v3",
+        "label": "View 3",
+        "focus": [
+          "n9",
+          "n10"
+        ]
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "n0",
+      "type": "frontend",
+      "label": "Service 0",
+      "sublabel": "owns step 0",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "frontend",
+      "label": "Service 1",
+      "sublabel": "owns step 1",
+      "pos": [
+        360,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "frontend",
+      "label": "Service 2",
+      "sublabel": "owns step 2",
+      "pos": [
+        660,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Service 3",
+      "sublabel": "owns step 3",
+      "pos": [
+        60,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "backend",
+      "label": "Service 4",
+      "sublabel": "owns step 4",
+      "pos": [
+        360,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n5",
+      "type": "backend",
+      "label": "Service 5",
+      "sublabel": "owns step 5",
+      "pos": [
+        660,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n6",
+      "type": "database",
+      "label": "Service 6",
+      "sublabel": "owns step 6",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n7",
+      "type": "database",
+      "label": "Service 7",
+      "sublabel": "owns step 7",
+      "pos": [
+        360,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n8",
+      "type": "database",
+      "label": "Service 8",
+      "sublabel": "owns step 8",
+      "pos": [
+        660,
+        360
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n9",
+      "type": "cloud",
+      "label": "Service 9",
+      "sublabel": "owns step 9",
+      "pos": [
+        60,
+        510
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n10",
+      "type": "cloud",
+      "label": "Service 10",
+      "sublabel": "owns step 10",
+      "pos": [
+        360,
+        510
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n11",
+      "type": "cloud",
+      "label": "Service 11",
+      "sublabel": "owns step 11",
+      "pos": [
+        660,
+        510
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n12",
+      "type": "security",
+      "label": "Service 12",
+      "sublabel": "owns step 12",
+      "pos": [
+        60,
+        660
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n13",
+      "type": "security",
+      "label": "Service 13",
+      "sublabel": "owns step 13",
+      "pos": [
+        360,
+        660
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "n14",
+      "type": "security",
+      "label": "Service 14",
+      "sublabel": "owns step 14",
+      "pos": [
+        660,
+        660
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "n0",
+      "to": "n1",
+      "label": "call 0"
+    },
+    {
+      "from": "n1",
+      "to": "n2",
+      "label": "call 1"
+    },
+    {
+      "from": "n0",
+      "to": "n3",
+      "label": "next row 0"
+    },
+    {
+      "from": "n3",
+      "to": "n4",
+      "label": "call 3"
+    },
+    {
+      "from": "n4",
+      "to": "n5",
+      "label": "call 4"
+    },
+    {
+      "from": "n3",
+      "to": "n6",
+      "label": "next row 1"
+    },
+    {
+      "from": "n6",
+      "to": "n7",
+      "label": "call 6"
+    },
+    {
+      "from": "n7",
+      "to": "n8",
+      "label": "call 7"
+    },
+    {
+      "from": "n6",
+      "to": "n9",
+      "label": "next row 2"
+    },
+    {
+      "from": "n9",
+      "to": "n10",
+      "label": "call 9"
+    },
+    {
+      "from": "n10",
+      "to": "n11",
+      "label": "call 10"
+    },
+    {
+      "from": "n9",
+      "to": "n12",
+      "label": "next row 3"
+    },
+    {
+      "from": "n12",
+      "to": "n13",
+      "label": "call 12"
+    },
+    {
+      "from": "n13",
+      "to": "n14",
+      "label": "call 13"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Card 0",
+      "items": [
+        "Statement 0.1 about the system",
+        "Statement 0.2 with a bit more copy to wrap lines"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Card 1",
+      "items": [
+        "Statement 1.1 about the system",
+        "Statement 1.2 with a bit more copy to wrap lines"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Card 2",
+      "items": [
+        "Statement 2.1 about the system",
+        "Statement 2.2 with a bit more copy to wrap lines"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Card 3",
+      "items": [
+        "Statement 3.1 about the system",
+        "Statement 3.2 with a bit more copy to wrap lines"
+      ]
+    }
+  ]
+}

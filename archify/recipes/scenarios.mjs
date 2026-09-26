@@ -250,6 +250,45 @@ const RAW_RECIPES = [
       prompt: '用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。',
     },
   },
+  {
+    id: 'layout-repair', type: 'architecture', proof: 'web-app',
+    presentation: { preset: 'classic', motion: 'static', views: 'optional' },
+    signals: [
+      ['layout repair', 20], ['repair order', 20], ['fix order', 20],
+      ['viewport overflow', 20], ['overflow', 16], ['scrollheight', 16], ['scrollwidth', 16],
+      ['overlap', 16], ['label overlap', 20], ['edge through node', 20], ['crossing', 8],
+      ['via', 7], ['waypoint', 14],
+      ['布局修复', 20], ['修复顺序', 20], ['视口溢出', 20], ['溢出', 16], ['滚动高度', 16], ['滚动宽度', 16],
+      ['重叠', 16], ['标签重叠', 20], ['连线穿过节点', 20], ['连线穿节点', 20], ['交叉', 8],
+      ['途经点', 14], ['路径点', 14], ['拐点', 14],
+    ],
+    en: {
+      title: 'Layout repair', question: 'Why does the existing diagram overflow, overlap, or route through nodes, and what should be fixed first?',
+      summary: 'Repair an existing diagram in its current mode using validation diagnostics, explicit waypoint semantics, and a measured desktop viewport budget.',
+      useWhen: 'An existing architecture, workflow, sequence, dataflow, or lifecycle diagram needs layout repair; keep its diagram type and presentation settings.',
+      avoidWhen: 'The task is choosing a new diagram type. Do not change topology, delete meaningful labels, or hide overflow just to pass checks.',
+      include: [
+        'repair order: schema → overlap → direction → crossings → labels',
+        'via contract: absolute [x, y] intermediate points; route = [start, ...via, end]',
+        'desktop viewport budget for the complete page, including header and necessary cards',
+        'validate after each edit, then inspect the final HTML in a browser',
+      ],
+      prompt: 'Use Archify to repair this existing diagram while preserving its diagram type, topology, meaningful labels, and presentation settings. Follow references/authoring-contract.md in this order: (1) schema and missing/invalid meta.quality_profile; (2) node overlap or out-of-range placement; (3) edge-through-node and endpoint-direction errors; (4) crossings, ambiguous corridors, border runs, excessive detours, and route rhythm; (5) labels: label-to-node, label-to-label, then label-to-route clearance. Run validate after every edit and use diagnostics[] code, subject, evidence, and supportedFixes; apply one diagnosed geometry control at a time. Where the current schema supports via, it is an ordered array of absolute SVG [x, y] intermediate points: the route is [start, ...via, end], with start/end supplied by the node anchors. Explicit via points override automatic routing; they are not offsets or a request for automatic obstacle avoidance. For an orthogonal repair, align adjacent points on the same x or y and make the first/final segment respect fromSide/toSide; use only controls supported by the current diagram mode. Follow references/delivery-contract.md for the viewport budget: check 1440×900, 1600×1000, 1920×1080, and 2048×1320; require document.documentElement.scrollWidth <= window.innerWidth. Prefer document.documentElement.scrollHeight <= window.innerHeight, but preserve a Reader-declared readable vertical page scroll when browser-check explicitly accepts it after reaching the projected-text floor. Budget the entire page, including header, diagram, and necessary cards. Repair every other overflow by removing only redundant content or compacting spacing first; do not hide overflow, clip content, introduce an internal diagram scroller, stretch the SVG, or shrink typography to force a pass. Let finalize run the required browser evidence; run perceptual visual review only when requested or escalated by the delivery contract.',
+    },
+    zh: {
+      title: '布局修复', question: '现有图为什么仍然溢出、重叠或连线穿过节点，应该先修什么？',
+      summary: '保留现有图表模式，依据验证诊断、途经点语义和实测桌面视口预算修复布局。',
+      useWhen: '已有架构图、工作流、时序图、数据流或生命周期图需要修复布局；保留原来的图表类型和表现设置。',
+      avoidWhen: '任务是为新图选择类型时不要使用。不要为了通过检查改变拓扑、删除有意义的标签或隐藏溢出。',
+      include: [
+        '修复顺序：schema → 重叠 → 方向 → 交叉 → 标签',
+        'via 契约：绝对 [x, y] 中间点；路径 = [start, ...via, end]',
+        '包含标题和必要卡片的整页桌面视口预算',
+        '每次修改后 validate，最终在浏览器中检查 HTML',
+      ],
+      prompt: '用 Archify 修复这张现有图，保留图表类型、拓扑、有意义的标签和表现设置。遵循 references/authoring-contract.md 的顺序：(1) schema 错误及缺失或无效的 meta.quality_profile；(2) 节点重叠或越界；(3) 连线穿过节点及端点方向错误；(4) 交叉、含混的共享通道、贴边走线、过度绕行和转弯节奏；(5) 标签与节点、标签与标签、标签与连线的间距。每次修改后运行 validate，依据 diagnostics[] 的 code、subject、evidence 和 supportedFixes，每次只应用一项有诊断依据的几何控制。当前 schema 支持 via 时，它是按顺序排列的绝对 SVG [x, y] 中间点数组：路径为 [start, ...via, end]，起终点由节点锚点提供。显式 via 会覆盖自动路由，不是偏移量，也不会请求自动绕障。修复正交走线时，相邻点应共享 x 或 y，首尾线段应遵守 fromSide/toSide；只使用当前模式支持的控制字段。视口预算遵循 references/delivery-contract.md：检查 1440×900、1600×1000、1920×1080 和 2048×1320，要求 document.documentElement.scrollWidth <= window.innerWidth。优先满足 document.documentElement.scrollHeight <= window.innerHeight；如果 browser-check 明确确认 Reader 已达到投影文字下限并接受可读的页面纵向滚动，则保留该滚动。预算覆盖整页，包括标题、主图和必要卡片。其他溢出先通过移除冗余内容或压缩间距修复，不得靠隐藏溢出、裁切、内部滚动区、拉伸 SVG 或缩小字体强行通过。让 finalize 执行必需的浏览器证据；只在用户要求或 delivery contract 规定的升级条件下进行感知视觉审阅。',
+    },
+  },
 ];
 
 export const SCENARIO_RECIPES = Object.freeze(RAW_RECIPES.map((recipe) => Object.freeze({

@@ -46,9 +46,12 @@ test('guide page: ships bilingual recipes and syntactically valid interaction co
   const dataMatch = html.match(/<script id="guide-data" type="application\/json">([\s\S]*?)<\/script>/);
   assert.ok(dataMatch);
   const data = JSON.parse(dataMatch[1]);
-  assert.equal(data.length, 11);
+  assert.equal(data.length, 12);
   assert.equal(data.filter((recipe) => recipe.type === 'workflow').length, 3);
   assert.ok(data.every((recipe) => recipe.en.prompt && recipe.zh.prompt && recipe.proof));
+  assert.ok(data.some((recipe) => recipe.id === 'layout-repair'));
+  assert.match(html, /12 small, opinionated starting points\./);
+  assert.match(html, /12 个小而专的起点。/);
   assert.match(html, /gallery\.html#proof-/);
   assert.match(html, /Open verified example/);
   assert.match(html, /打开验证成品/);
@@ -56,4 +59,30 @@ test('guide page: ships bilingual recipes and syntactically valid interaction co
   const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
   assert.ok(scriptMatch);
   assert.doesNotThrow(() => new vm.Script(scriptMatch[1]));
+});
+
+test('guide search: preserves s in recipe IDs and matches whitespace-separated signals', () => {
+  const html = fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8');
+  const recipes = JSON.parse(html.match(/<script id="guide-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  for (const file of ['docs/guide.html', 'website/src/scripts/guide.js']) {
+    const source = fs.readFileSync(path.join(repoRoot, file), 'utf8');
+    const functions = source.slice(source.indexOf('function normalize('), source.indexOf('function recommendation('));
+    const context = vm.createContext({ recipes });
+    vm.runInContext(functions, context);
+    for (const recipe of recipes) {
+      for (const query of [recipe.id, recipe.id.replaceAll('-', '  \n\t')]) {
+        const winner = context.rank(query)[0];
+        assert.equal(winner.recipe.id, recipe.id, `${file}: ${query}`);
+        assert.equal(winner.score, 100, `${file}: exact ID match`);
+      }
+    }
+    assert.equal(context.normalize('  Ｓystem_STATE\t\n status  '), 'system state status');
+    for (const recipe of recipes) {
+      for (const [signal] of recipe.signals.filter(([signal]) => signal.includes(' '))) {
+        const spaced = signal.replaceAll(' ', '  \n\t');
+        const scores = query => JSON.stringify(context.rank(query).map(({ recipe, score }) => [recipe.id, score]));
+        assert.equal(scores(spaced), scores(signal), `${file}: ${signal}`);
+      }
+    }
+  }
 });

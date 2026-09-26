@@ -159,6 +159,38 @@ test('benchmark rejects a renderer-valid candidate that changes required technic
   assert.equal(receipt.firstPassUsable, false);
 });
 
+test('benchmark checks accepted node labels even when an authored identity matches', () => {
+  for (const identityField of ['key', 'id']) {
+    const caseData = JSON.parse(fs.readFileSync(path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json'), 'utf8'));
+    const requirement = caseData.requirements.nodes.find((node) => node.key === 'cache');
+    delete requirement.key;
+    requirement[identityField] = 'cache';
+    const caseFile = writeJson(`node-label-${identityField}.case.json`, caseData);
+    for (const label of ['Redis Cache', 'MySQL']) {
+      const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+      source.components.find((node) => node.id === 'cache').label = label;
+      const candidate = writeJson(`node-label-${identityField}.architecture.json`, source);
+      const runFile = writeJson(`node-label-${identityField}.run.json`, {
+        schema_version: 1, case_id: caseData.id,
+        agent: 'fixture-agent', model: 'fixture-model', attempt: 1,
+        visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects: [] },
+      });
+      const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+      const accepted = label === 'Redis Cache';
+      assert.equal(result.status, accepted ? 0 : 1, result.stderr || result.stdout);
+      const receipt = JSON.parse(result.stdout);
+      assert.equal(receipt.gates.validation.ok, true);
+      assert.equal(receipt.gates.semantic.ok, accepted);
+      assert.deepEqual(receipt.gates.semantic.missingNodeIds, []);
+      assert.deepEqual(receipt.gates.semantic.missingRelationships, []);
+      assert.deepEqual(receipt.gates.semantic.mismatchedNodes, accepted ? [] : [
+        { id: 'cache', field: 'label', expected: requirement.labels, actual: 'MySQL' },
+      ]);
+      assert.equal(receipt.firstPassUsable, accepted);
+    }
+  }
+});
+
 test('benchmark never accepts a visual pass without an identified reviewer', () => {
   const caseFile = writeJson('unreviewed.case.json', {
     schema_version: 1,
@@ -198,6 +230,34 @@ test('benchmark never accepts a visual pass without an identified reviewer', () 
     reason: 'passed visual review requires a non-empty reviewer identity',
   });
   assert.equal(receipt.firstPassUsable, false);
+});
+
+test('benchmark never upgrades missing or malformed visual defects to a clean pass', () => {
+  const caseFile = path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json');
+  const candidate = path.join(skillRoot, 'examples/web-app.architecture.json');
+  for (const [index, defects] of [undefined, null, 'clipping', { clipping: true }, false, 0, [], ['clipping']].entries()) {
+    const runFile = writeJson(`visual-defects-${index}.run.json`, {
+      schema_version: 1,
+      case_id: 'web-runtime-architecture',
+      agent: 'fixture-agent',
+      model: 'fixture-model',
+      attempt: 1,
+      visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects },
+    });
+    const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+    const clean = Array.isArray(defects) && defects.length === 0;
+    assert.equal(result.status, clean ? 0 : 1, result.stderr || result.stdout);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.gates.semantic.ok, true);
+    assert.equal(receipt.gates.validation.ok, true);
+    assert.equal(receipt.firstPassUsable, clean);
+    assert.equal(receipt.gates.visualReview.status, Array.isArray(defects) ? 'passed' : 'invalid');
+    if (Array.isArray(defects)) {
+      assert.deepEqual(receipt.gates.visualReview.defects, defects);
+    } else {
+      assert.equal(receipt.gates.visualReview.reason, 'passed visual review requires an explicit defects array');
+    }
+  }
 });
 
 test('benchmark applies the same semantic and delivery seam to workflow, sequence, data-flow, and lifecycle candidates', () => {
@@ -834,49 +894,49 @@ test('benchmark documentation locks the fair-run and truthful-evidence contract'
   }
 });
 
-test('packaged skill puts a bounded ordinary-model path before progressive feature references', () => {
-  const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
-  const authoring = fs.readFileSync(path.join(skillRoot, 'references', 'authoring-contract.md'), 'utf8');
-  const viewer = fs.readFileSync(path.join(skillRoot, 'references', 'viewer-runtime.md'), 'utf8');
-  const fastPath = skill.indexOf('## Fast authoring path');
-  const progressiveReferences = skill.indexOf('references/authoring-contract.md');
-
-  assert.ok(fastPath > 0, 'fast authoring path must exist');
-  assert.ok(fastPath < progressiveReferences, 'fast authoring path must precede progressive references');
-  assert.ok(skill.trimEnd().split('\n').length <= 160, 'ordinary authors must not ingest the viewer catalogue');
-  for (const required of [
-    'one matching schema',
-    'one matching JSON example',
-    'the next tool action must write the candidate',
-    'Do not plan exact coordinates in prose',
-    'Fresh authorship means new stable IDs, domain wording, and layout',
-    'Write the candidate before inspecting renderer internals',
-    'Start with automatic routes and labels',
-    'Do not add `via`, `channelX`, `channelY`, or `labelAt` before a diagnostic',
-    'Set `meta.quality_profile` to `"showcase"`',
-    'A recoverable state uses `type: "failure"` plus a real transition back to the active state',
-    'after every candidate edit',
-    'A passing final validation freezes the candidate: never edit it afterward',
-    'A receipt with only 4 artifact checks is basic validation, never showcase acceptance',
-    'a showcase pass must report all 9 artifact checks with 0 composition errors and 0 warnings',
-    'If the candidate omits or misspells the exact `meta.quality_profile` field',
-    '`deliver` is the final acceptance command',
-    'deliver <type> <candidate.json> <output.html> --quality showcase --json',
-    'A non-zero exit can never be described as success',
-    'Continue focused correction while the objective error count reaches a new minimum',
-    'If two consecutive rounds do not improve that best count',
-    'Do not read `renderers/shared/geometry.mjs`',
-    'validate <type>',
-    'supportedFixes',
-  ]) {
-    assert.match(
-      skill.slice(fastPath, progressiveReferences),
-      new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
-    );
+test('packaged skill keeps first-draft rules inline and repair contracts behind reachable triggers', () => {
+  const read = (file) => fs.readFileSync(path.join(skillRoot, file), 'utf8');
+  const skill = read('SKILL.md');
+  const defaults = read('references/authoring-defaults.md');
+  const authoring = read('references/authoring-contract.md');
+  const delivery = read('references/delivery-contract.md');
+  const repository = read('references/repository-authoring.md');
+  const fastPath = skill.slice(skill.indexOf('## Fast authoring path'), skill.indexOf('## Update awareness'));
+  assert.match(skill, /## Existing candidate handoff[\s\S]*run `finalize` first as one CLI invocation/);
+  assert.match(fastPath, /exact schema and example paths in the Type router without listing their directories/);
+  assert.match(fastPath, /references\/authoring-defaults\.md/);
+  assert.match(fastPath, /bounded batch separate from project documents and complete schemas/);
+  assert.match(fastPath, /recover any missing section before writing/);
+  assert.match(fastPath, /write the complete candidate directly without planning coordinates in prose/);
+  assert.match(fastPath, /Set `meta\.quality_profile` to `"showcase"`/);
+  assert.match(fastPath, /successful first drafts need no separate pre-validation/);
+  assert.match(fastPath, /Keep the candidate unchanged while the command runs/);
+  assert.match(fastPath, /finalize <type> <candidate\.json> <output\.html> --repo-root <repo-root> --quality showcase --json/);
+  assert.match(fastPath, /standalone commands only for a separate request or focused failure diagnosis/);
+  assert.match(fastPath, /A non-zero exit is never success/);
+  assert.match(fastPath, /references\/delivery-contract\.md#failed-finalize-and-candidate-repair/);
+  const repair = delivery.match(/## Failed finalize and candidate repair[\s\S]*?(?=\n## |$)/)?.[0] ?? '';
+  assert.match(repair, /candidateFrozen: true/);
+  assert.match(repair, /--candidate-sha256/);
+  assert.match(repair, /fresh `--out-dir/);
+  assert.match(repair, /all nine checks, zero composition errors, and zero warnings/);
+  assert.match(repair, /two focused repairs[\s\S]*one evidence-based retry/);
+  assert.match(defaults, /default to a system overview/);
+  assert.match(defaults, /There is no node, edge, source, view, card, or boundary quota/);
+  assert.match(defaults, /Start with automatic routes and endpoint sides/);
+  assert.match(defaults, /Pin a side only for a necessary branch, return, or supplied geometry/);
+  assert.match(defaults, /Before writing positions[\s\S]*6\.5px × ASCII units \+ 21px/);
+  assert.match(defaults, /9px[\s\S]*5\.4px × text units \+ 8px/);
+  assert.match(defaults, /card alone cannot qualify an otherwise unconditional arrow/);
+  assert.match(repository, /local-only[\s\S]*SSH origin, unsupported forge/);
+  assert.match(repository, /actual write or execution\s+site and the conditions/);
+  for (const instructions of [skill, defaults]) {
+    assert.doesNotMatch(instructions, /(?:at most|no more than|maximum of|cap(?:ped)? at|limit(?:ed)? to)\s+\d+\s+(?:nodes?|components?|relationships?)/i);
   }
+  assert.match(defaults, /recoverable failure needs a real transition back/);
   assert.match(authoring, /componentType/);
   assert.match(authoring, /clear gap between boxes, not center distance/i);
-  assert.match(viewer, /Direct Relationship Pin/);
+  assert.match(read('references/viewer-runtime.md'), /Direct Relationship Pin/);
 });
 
 test('dated three-model evidence retains every frozen attempt-1 candidate and truthful gate result', () => {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "diagram_type": "dataflow",
-  "meta": { "title": "Default Flow Only" },
+  "meta": { "title": "Default Flow Only", "output": "docs/issue-52-visual-evidence/dataflow-repro.html" },
   "stages": [{ "label": "Input" }, { "label": "Output" }],
   "nodes": [
     { "id": "input", "type": "backend", "label": "Input", "stage": 0, "row": 0 },

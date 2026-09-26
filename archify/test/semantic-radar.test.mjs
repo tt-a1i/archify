@@ -423,7 +423,7 @@ test('Semantic Radar automatically avoids a tall Semantic Passport', {
   fs.writeFileSync(input, JSON.stringify({
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Tall Passport Radar Regression', output: artifact },
+    meta: { title: 'Tall Passport Radar Regression', output: 'tall-passport.html' },
     components: [
       ...peers,
       { id: 'hub', type: 'security', label: 'Relationship Hub', sublabel: 'Many authored links', pos: [900, 500], size: [150, 70] },
@@ -507,10 +507,14 @@ test('Semantic Radar titlebar drag persists while surface drag still pans the di
   const browser = new ChromeVisualBrowser(chromePath);
   try {
     const sessionId = await loadArtifact(browser, artifact, { width: 1440, height: 900 });
-    const geometry = await evaluate(browser, sessionId, `(function () {
+    const geometry = await evaluate(browser, sessionId, `(async function () {
       var container = document.querySelector('.diagram-container');
       window.scrollTo(0, Math.max(0, container.offsetTop + container.offsetHeight - window.innerHeight + 8));
       Archify.radar.open();
+      // Opening the panel can still schedule Reader/Chrome layout. Measure the
+      // titlebar only after those pending updates settle, before sending input.
+      await Archify.readerLayout.whenStable();
+      await Archify.viewerChromeLayout.whenStable();
       var radar = document.getElementById('overview-map').getBoundingClientRect();
       var head = document.querySelector('.overview-map-head').getBoundingClientRect();
       var containerRect = container.getBoundingClientRect();
@@ -523,7 +527,7 @@ test('Semantic Radar titlebar drag persists while surface drag still pans the di
           top: Math.max(24, containerRect.top + 20)
         }
       };
-    })()`);
+    })()`, true);
     const titleStart = {
       x: geometry.head.left + 48,
       y: geometry.head.top + geometry.head.height / 2,

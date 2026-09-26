@@ -2,9 +2,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { recordDiagnostic, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { createRouter } from '../architecture/routing.mjs';
+import { placeAutomaticLabels, reservedLabelRect } from '../architecture/labels.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import {
@@ -18,18 +20,20 @@ import {
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
+  cleanLabelCanvasContainmentProblems,
   suggestLabelObstacleFix,
   suggestLabelPairFix,
   anchor,
   automaticPortSpread,
-  defaultFromSide,
-  defaultToSide,
+  legacyDefaultFromSide as defaultFromSide,
+  legacyDefaultToSide as defaultToSide,
   chosenSide,
   roundedPath,
   routePointsValue,
+  authoredStraightRouteAttrs,
   labelPoint,
   arrowClassMap,
-  variantAccent
+  edgeLabelAccent
 } from '../shared/geometry.mjs';
 
 const stateTextFit = {
@@ -40,7 +44,7 @@ const stateTextFit = {
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { diagram: lifecycle, template, outPath } = await loadDiagramWithBrandMarks({
+const { diagram: lifecycle, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'lifecycle',
   defaultExample: 'agent-run.lifecycle.json'
@@ -253,6 +257,8 @@ function validateLifecycle() {
     diagramType: 'lifecycle',
     relationCollection: 'transitions',
     profile: lifecycle.meta?.quality_profile,
+    // Planner routes render with the opaque crossover halo, like architecture.
+    crossingResolved: (left, right) => plannerRouted(left) && plannerRouted(right),
     routeHint: 'adjust route/via or channelX/channelY so the transitions use separate lifecycle corridors'
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
@@ -286,19 +292,26 @@ function validateLifecycle() {
     routeHint: 'move route/via or channel coordinates so each lifecycle turn has a readable run-up'
   }));
 
-  const labelRects = [];
-  for (const [transitionIndex, transition] of asArray(lifecycle.transitions).entries()) {
-    if (!transition.label || !states.has(transition.from) || !states.has(transition.to)) continue;
-    const [lx, ly] = labelPoint(transition, pathFor(transition).points);
-    const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
-    const width = Math.max(32, longestLine * 4.9 + 12);
-    const height = transition.note ? 27 : 16;
-    labelRects.push({ relation: transition, relationIndex: transitionIndex, label: transition.label, x: lx - width / 2, y: ly - 11, width, height, lx, ly });
+  const labelRects = transitionLabelRects();
+  if (lifecycle.meta?.quality_profile === 'showcase') {
+    for (const rect of labelRects) {
+      for (const title of bandGeometry()) {
+        if (!rectsOverlap(rect, title)) continue;
+        const message = `Transition ${rect.relationIndex} label "${rect.label}" overlaps lifecycle band title "${title.label}" — move the label with labelAt/labelDx/labelDy/labelSegment or provide more space.`;
+        recordDiagnostic({
+          code: 'composition/label-band-title-overlap', severity: 'error', message,
+          subject: { diagramType: 'lifecycle', collection: 'transitions', index: rect.relationIndex, from: rect.relation.from, to: rect.relation.to },
+          evidence: { labelRect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }, bandTitle: title },
+          supportedFixes: ['move the transition label with labelAt/labelDx/labelDy/labelSegment while preserving its text'],
+        });
+        problems.push(message);
+      }
+    }
   }
   for (const rect of labelRects) {
     for (const state of states.values()) {
       if (rectsOverlap(rect, state, -2)) {
-        problems.push(`Label "${rect.label}" overlaps state "${state.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, state, 'state')}`);
+        problems.push(`Label "${rect.label}" overlaps state "${state.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, state, 'state', viewBox, states.values())}`);
       }
     }
   }
@@ -314,6 +327,13 @@ function validateLifecycle() {
     labels: labelRects,
     endpointIds: new Set(states.keys()),
     pathFor,
+    diagramType: 'lifecycle',
+    relationCollection: 'transitions',
+    profile: lifecycle.meta?.quality_profile,
+  }));
+  problems.push(...cleanLabelCanvasContainmentProblems({
+    labels: labelRects,
+    viewBox,
     diagramType: 'lifecycle',
     relationCollection: 'transitions',
     profile: lifecycle.meta?.quality_profile,
@@ -371,7 +391,32 @@ function routeVia(transition, from, to, start, end, fromSide, toSide) {
 
 const pathCache = new Map();
 
+// A transition without via, channel, or a lifecycle route preset is routed by
+// the obstacle-aware planner shared with architecture, so a first draft that
+// leaves routing to the renderer does not cross unrelated states or produce
+// micro jogs. Authored via/route/channel geometry keeps the lifecycle presets.
+function plannerRouted(transition) {
+  return !transition.via
+    && (!transition.route || transition.route === 'auto')
+    && transition.channelX === undefined
+    && transition.channelY === undefined;
+}
+
+const plannedTransitions = asArray(lifecycle.transitions).filter(plannerRouted);
+const planner = createRouter(states, plannedTransitions, {
+  labelRectFor: (transition, points, { routes, labels }) => ((transition.label || transition.note) ? reservedLabelRect({
+    label: { relation: transition, label: transition.label || transition.note, ...transitionLabelBoxAt(transition, labelPoint(transition, points)) },
+    points,
+    routes: routes.map((route, index) => ({ relationIndex: index, points: route })),
+    labels,
+    components: [...states.values()],
+    viewBox,
+    placementBottom: lifecycleAreaBottom(),
+  }) : null),
+});
+
 function transitionSides(transition) {
+  if (plannerRouted(transition)) return planner.connectionSides(transition);
   const from = states.get(transition.from);
   const to = states.get(transition.to);
   return {
@@ -380,12 +425,19 @@ function transitionSides(transition) {
   };
 }
 
-const automaticPorts = automaticPortSpread(lifecycle.transitions, states, {
-  sideFor: (transition, endpoint) => transitionSides(transition)[endpoint === 'source' ? 'fromSide' : 'toSide'],
-});
+const automaticPorts = automaticPortSpread(
+  asArray(lifecycle.transitions).filter((transition) => !plannerRouted(transition)),
+  states,
+  { sideFor: (transition, endpoint) => transitionSides(transition)[endpoint === 'source' ? 'fromSide' : 'toSide'] },
+);
 
 function pathFor(transition) {
   if (pathCache.has(transition)) return pathCache.get(transition);
+  if (plannerRouted(transition)) {
+    const routed = planner.pathFor(transition);
+    pathCache.set(transition, routed);
+    return routed;
+  }
   const from = states.get(transition.from);
   const to = states.get(transition.to);
   const ports = automaticPorts.get(transition);
@@ -406,6 +458,48 @@ function pathFor(transition) {
   return routed;
 }
 
+const resolvedLabelPoints = new Map();
+
+function transitionLabelBox(transition) {
+  return transitionLabelBoxAt(
+    transition,
+    resolvedLabelPoints.get(transition) || labelPoint(transition, pathFor(transition).points),
+  );
+}
+
+function transitionLabelBoxAt(transition, [lx, ly]) {
+  const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
+  const width = Math.max(32, longestLine * 4.9 + 12);
+  const height = transition.label && transition.note ? 27 : 16;
+  return { x: lx - width / 2, y: ly - 11, width, height, lx, ly };
+}
+
+function transitionLabelRects() {
+  const rects = [];
+  for (const [relationIndex, transition] of asArray(lifecycle.transitions).entries()) {
+    if (!(transition.label || transition.note) || !states.has(transition.from) || !states.has(transition.to)) continue;
+    rects.push({ relation: transition, relationIndex, label: transition.label || transition.note, ...transitionLabelBox(transition) });
+  }
+  return rects;
+}
+
+// Showcase drafts leave label positions to the renderer too: move an unpinned
+// label off other routes and states instead of reporting a clearance defect.
+if (lifecycle.meta?.quality_profile === 'showcase') {
+  const placed = placeAutomaticLabels({
+    labels: transitionLabelRects(),
+    routes: asArray(lifecycle.transitions).flatMap((transition, relationIndex) => (
+      states.has(transition.from) && states.has(transition.to)
+        ? [{ relationIndex, points: pathFor(transition).points }] : []
+    )),
+    components: [...states.values()],
+    titles: bandGeometry(),
+    viewBox,
+    placementBottom: lifecycleAreaBottom(),
+  });
+  for (const rect of placed) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
+}
+
 function bandTitles() {
   const lanes = asArray(lifecycle.lanes);
   const mainLane = lanes.find((lane) => lane.id === 'main');
@@ -418,33 +512,43 @@ function bandTitles() {
   ];
 }
 
+function bandGeometry() {
+  return bandTitles().map((title, index) => {
+    const baseline = [100, 252, 424][index];
+    const label = `${String(index + 1).padStart(2, '0')} / ${title}`;
+    return { index, label, x: 72, y: baseline - 11, width: textUnits(label) * 6.2, height: 14, baseline };
+  });
+}
+
 function renderBands() {
   const right = viewBox[0] - 72;
-  const titles = bandTitles();
-  return `        <path d="M 72 112 L ${right} 112" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="72" y="100" class="t-dim" font-size="10" font-weight="600">01 / ${esc(titles[0])}</text>
-        <path d="M 72 264 L ${right} 264" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="72" y="252" class="t-dim" font-size="10" font-weight="600">02 / ${esc(titles[1])}</text>
-        <path d="M 72 436 L ${right} 436" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="72" y="424" class="t-dim" font-size="10" font-weight="600">03 / ${esc(titles[2])}</text>`;
+  return bandGeometry().map((band) => `        <path d="M 72 ${band.baseline + 12} L ${right} ${band.baseline + 12}" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="${band.x}" y="${band.baseline}" class="t-dim" font-size="10" font-weight="600">${esc(band.label)}</text>`).join('\n');
 }
 
 function renderState(state) {
   const fill = typeClass[state.type] || typeClass.neutral;
   const accent = textClass[state.type] || 't-muted';
   const hasSub = state.sublabel != null && state.sublabel !== '';
+  const labelFontSize = fittedNodeFontSize(state.label, brandLabelFitWidth(state, state.width), 10, 8);
+  const sublabelFontSize = fittedNodeFontSize(state.sublabel, state.width, stateTextFit.sublabelPreferred, stateTextFit.sublabelMinimum);
+  const tagFontSize = fittedNodeFontSize(state.tag, state.width, stateTextFit.tagPreferred, stateTextFit.tagMinimum);
+  const textRows = [{ text: state.label, font: labelFontSize, y: 21 }];
+  if (hasSub) textRows.push({ text: state.sublabel, font: sublabelFontSize, y: 37 });
+  if (state.tag) textRows.push({ text: state.tag, font: tagFontSize, y: state.height - 11 });
+  const labelLayout = nodeLabelLayout({ width: state.width, height: state.height, rows: textRows,
+    brand: Boolean(brandMarkFor(state)), side: brandMarkFor(state) ? 'left' : 'right', step: state.step });
   const sub = hasSub
-    ? `\n          <text data-detail="context" x="${state.cx}" y="${state.y + 37}" class="t-muted" font-size="${fittedNodeFontSize(state.sublabel, state.width, stateTextFit.sublabelPreferred, stateTextFit.sublabelMinimum)}" text-anchor="middle">${esc(state.sublabel)}</text>`
+    ? `\n          <text data-detail="context" x="${state.cx}" y="${state.y + labelLayout.ys[1]}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(state.sublabel)}</text>`
     : '';
   const tag = state.tag
-    ? `\n        <text data-detail="fine" x="${state.cx}" y="${state.y + state.height - 11}" class="${accent}" font-size="${fittedNodeFontSize(state.tag, state.width, stateTextFit.tagPreferred, stateTextFit.tagMinimum)}" text-anchor="middle">${esc(state.tag)}</text>`
+    ? `\n        <text data-detail="fine" x="${state.cx}" y="${state.y + labelLayout.ys[hasSub ? 2 : 1]}" class="${accent}" font-size="${tagFontSize}" text-anchor="middle">${esc(state.tag)}</text>`
     : '';
   const hasBrand = Boolean(brandMarkFor(state));
   const step = state.step
     ? `\n        <text data-detail="fine" x="${state.x + (hasBrand ? 23 : 10)}" y="${state.y + 14}" class="${accent}" font-size="7" font-weight="700">${esc(state.step)}</text>`
     : '';
   const brand = renderBrandMark(state, { x: state.x + state.width - 22, y: state.y + 6 });
-  const labelFontSize = fittedNodeFontSize(state.label, brandLabelFitWidth(state, state.width), 10, 8);
   const passport = {
     kind: state.type,
     sublabel: state.sublabel,
@@ -456,8 +560,8 @@ function renderState(state) {
           ${focusNodeTitle(state.label, passport)}
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>
-          ${renderSemanticSigil(state.type, { x: hasBrand ? state.x + 6 : state.x + state.width - 17, y: state.y + 6 })}${brand ? `\n          ${brand}` : ''}${step}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.cx}" y="${state.y + 21}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
+          ${renderSemanticSigil(state.type, { icon: state.icon, x: hasBrand ? state.x + 6 : state.x + state.width - 17, y: state.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}${step}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
         </g>`;
 }
 
@@ -465,22 +569,27 @@ function renderTransitionPath(transition, index) {
   const [cls, marker] = arrowClassMap[transition.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(transition);
   const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 2 : 1.1);
-  return `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}" d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const automaticRoute = plannerRouted(transition);
+  const crossover = automaticRoute ? ' data-composition-crossover="halo"' : '';
+  const edge = `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(transition, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  if (!automaticRoute) return edge;
+  // Same presentation-only wrapper as architecture: the mask underlay lets two
+  // planner routes cross legibly while the viewer still sees one semantic edge.
+  const underlay = `          <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>\n`;
+  return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}${edge.replace(/^        /, '          ')}\n        </g>`;
 }
 
 function renderTransitionLabel(transition, index) {
-  if (!transition.label) return '';
-  const routed = pathFor(transition);
-  const [lx, ly] = labelPoint(transition, routed.points);
-  const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
-  const labelW = Math.max(32, longestLine * 4.9 + 12);
-  const labelH = transition.note ? 27 : 16;
-  const note = transition.note
-    ? `\n        <text data-detail="fine" x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
+  if (!(transition.label || transition.note)) return '';
+  const { lx, ly, width: labelW, height: labelH } = transitionLabelBox(transition);
+  const label = transition.label
+    ? `\n          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>`
     : '';
-  return `        <g data-detail="context" ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)}>
-          <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${variantAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>${note}
+  const note = transition.note
+    ? `\n        <text data-detail="fine" x="${lx}" y="${ly + (transition.label ? 11 : 0)}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
+    : '';
+  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}>
+          <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>${label}${note}
         </g>`;
 }
 
@@ -518,12 +627,17 @@ function renderLifecycleRail() {
     .filter((state) => bandFor(state.lane) === 'phase')
     .map((state) => state.col);
   if (!mainCols.length) return '';
-  const railEnd = layout.phaseXs[Math.max(...mainCols)] + 38;
-  return `        <path d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
+  const railEnd = layout.phaseXs[mainCols.reduce((max, col) => Math.max(max, col))] + 38;
+  return `        <path data-lifecycle-rail="" d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
 }
 
 function renderSvg() {
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(lifecycle.meta)}>
+  // A renderer-sized canvas declares the intrinsic-height fit exactly like
+  // architecture: the default 980x660 band layout is below the 1.55 wide
+  // ratio, so without this the desktop Reader could neither narrow it nor
+  // scroll it and every default lifecycle failed the browser gate.
+  const readerFit = lifecycle.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(lifecycle.meta)}>
 ${svgAccessibleText(lifecycle.meta, 'lifecycle')}
 ${renderDefinitions()}
 
@@ -558,4 +672,5 @@ writeDiagram({
   meta: lifecycle.meta,
   svg: renderSvg(),
   cards: lifecycle.cards,
+  sourceEvidence,
 });

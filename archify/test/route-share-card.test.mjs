@@ -111,8 +111,8 @@ test('Route variant decorates only a finite canonical clone with dedicated stati
 
 test('clone-only Route styling retains context and distinguishes start, middle, and end without motion', () => {
   const html = render('dataflow', CASES.dataflow);
-  assert.match(html, /svg\[data-share-route\] \[data-node-id\], svg\[data-share-route\] \[data-edge-from\] \{ opacity: 0\.18; \}/);
-  assert.match(html, /svg\[data-share-route\] \[data-share-route-match\] \{ opacity: 1; \}/);
+  assert.match(html, /svg\[data-share-route\] \[data-node-id\], svg\[data-share-route\] \[data-edge-from\], svg\[data-share-route\] \[data-graph-role=\\?"automatic-crossover-underlay\\?"\] \{ opacity: 0\.18; \}/);
+  assert.match(html, /svg\[data-share-route\] \[data-share-route-match\], svg\[data-share-route\] \[data-graph-role=\\?"automatic-crossover\\?"\]:has\(> \[data-share-route-match\]\) > \[data-graph-role=\\?"automatic-crossover-underlay\\?"\] \{ opacity: 1; \}/);
   assert.match(html, /data-share-route-start[\s\S]*?stroke-dasharray: 5 3/);
   assert.match(html, /data-share-route-middle[\s\S]*?stroke-width: 2\.2/);
   assert.match(html, /data-share-route-end[\s\S]*?stroke-width: 3\.4/);
@@ -147,7 +147,7 @@ test('skill and READMEs describe the optional Export variant and show one real c
   assert.match(viewer, /data-share-route-\*/);
   assert.match(viewer, /download-only/i);
 
-  for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md']) {
+  for (const readme of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md']) {
     const text = fs.readFileSync(path.join(repoRoot, readme), 'utf8');
     assert.match(text, /Export → Route Share Card/, readme);
     assert.match(text, /docs\/assets\/archify-route-share-card\.png/, readme);
