@@ -61,6 +61,31 @@ and is distributed under the SIL Open Font License 1.1. The complete license
 text is preserved in `assets/JetBrainsMono-OFL.txt` in the packaged Skill and
 in the font CSS carried by standalone HTML and SVG exports.
 
+## D2Coding
+
+Delivered Archify viewer artifacts also embed D2Coding subsets (Regular and
+Bold) bundled next to JetBrains Mono in the font stack so Hangul (which
+JetBrains Mono lacks) in authored content renders at the same monospace cell
+width as the surrounding Latin text, without a network request or a locally
+installed copy. Uncovered characters still use the system fallback stack.
+D2Coding is maintained at
+[github.com/naver/d2-coding-font](https://github.com/naver/d2-coding-font)
+and is distributed under the SIL Open Font License 1.1. The complete license
+text is preserved in `assets/D2Coding-OFL.txt` in the packaged Skill and in
+the font CSS carried by standalone HTML exports.
+
+## Pretendard
+
+Delivered Archify viewer artifacts also embed one weight (SemiBold, subset)
+of Pretendard, used only by the "editorial" preset's serif headings
+(`h1`, `.card h3`), which fall back through a CJK serif stack before the
+generic `serif` keyword. Everywhere else in the Viewer chrome is monospace
+by design and uses D2Coding instead (see above). Pretendard is maintained at
+[github.com/orioncactus/pretendard](https://github.com/orioncactus/pretendard)
+and is distributed under the SIL Open Font License 1.1. The complete license
+text is preserved in `assets/Pretendard-OFL.txt` in the packaged Skill and in
+the font CSS carried by standalone HTML exports.
+
 ## No additional rights granted
 
 Brand names, logos, and trademarks remain the property of their respective

@@ -21,12 +21,23 @@ level, so unknown fields are rejected rather than silently ignored.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.
-It also accepts `locale: "en" | "zh-CN"`. The field selects the fixed Viewer
-UI, renderer-owned default legend and accessibility copy, document-title
-suffix, and `<html lang>` value; it does not translate authored strings.
-Omitting it preserves legacy behavior and resolves to English. Unsupported
-locale values fail schema validation instead of being guessed or silently
-rewritten.
+It also accepts `locale`, any well-formed language tag (schema pattern
+`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`). The field selects the fixed Viewer UI,
+renderer-owned default legend and accessibility copy, document-title suffix,
+and `<html lang>` value; it does not translate authored strings. `en`,
+`zh-CN`, and `es` are built-in catalogs; any other tag needs a matching `translations`
+object (see below) or the renderer falls back to English and discloses it.
+Omitting `locale` preserves legacy behavior and resolves to English.
+Malformed locale tags fail schema validation instead of being guessed or
+silently rewritten.
+
+`meta.translations` supplies the Viewer message catalog for a `locale` with no
+built-in catalog, as data: an object mapping canonical message keys (see
+`catalogKeys()` in `renderers/shared/i18n.mjs`) to translated strings whose
+`{placeholder}` tokens match the English source. A key that is missing,
+unrecognized, or has mismatched placeholders falls back to English rather than
+failing the render; `validate`/`render`/`deliver` report the resulting
+coverage to stderr.
 `visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
 motion-forward presentation), `blueprint` (high-contrast engineering review),
 or `editorial` (warm publication-style design review and documentation).
@@ -138,7 +149,10 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
-- `locale` — the bounded renderer locale, `en` or `zh-CN`
+- `locale` — a well-formed renderer locale tag (`en`, `zh-CN`, and `es` are built in;
+  any other tag needs a matching `translations` object)
+- `translations` — canonical message key → translated string, for a `locale`
+  with no built-in catalog
 - `brandMark` — one optional built-in brand ID or explicit HTTP(S) site URL
 - `variant` — `default`, `emphasis`, `security`, `dashed` (sequence messages
   extend this list locally with `return`)

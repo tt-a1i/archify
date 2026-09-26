@@ -712,12 +712,14 @@ export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSv
     const targetSignature = expectedReviewTargetSignature(row);
     return `<li data-change-status="${esc(row.status)}"><button class="change-row" type="button" data-change-index="${index}" data-change-key="${esc(row.key)}" data-change-kind="${esc(row.kindKey)}" data-change-id="${esc(row.id)}" data-change-label="${esc(label)}" data-change-status="${esc(row.status)}" data-change-classifications="${esc(row.classifications.join(', '))}" data-change-target-signature="${esc(targetSignature)}"><span class="token">${esc(markerFor(row.status) || '~')}</span><span>${esc(row.kind)}</span><strong>${esc(label)}</strong><code>${esc(row.id)}</code><span>${esc(row.classifications.join(', '))}</span><span>${esc(row.changedFields.join(', ') || 'identity')}</span></button></li>`;
   }).join('\n') : '<li class="empty">No authored architecture changes.</li>';
-  const baseView = baseHtml
-    ? `<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="${esc(baseHtml)}"></iframe>`
-    : baseSvg;
-  const headView = headHtml
-    ? `<iframe class="snapshot-frame" title="After architecture explorer" srcdoc="${esc(headHtml)}"></iframe>`
-    : headSvg;
+  // Trailing-whitespace cleanup runs against the delta shell only. Nested
+  // explorer documents go into srcdoc after that trim, by slot index rather
+  // than a global token replace, so authored copy cannot collide with a
+  // placeholder and the trim cannot touch font licenses inside the frames.
+  const BASE_VIEW_SLOT = '<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc=""></iframe>';
+  const HEAD_VIEW_SLOT = '<iframe class="snapshot-frame" title="After architecture explorer" srcdoc=""></iframe>';
+  const baseView = baseHtml ? BASE_VIEW_SLOT : baseSvg;
+  const headView = headHtml ? HEAD_VIEW_SLOT : headSvg;
   const html = `<!doctype html>
 <html lang="en" data-theme="dark" data-preset="${esc(receipt.view.visualPreset)}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(receipt.head.title)} Architecture Delta</title>
@@ -1163,7 +1165,35 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     updateControls();
   }
 })();</script></body></html>`;
-  return html.replace(/[ \t]+$/gm, '');
+  return fillDeltaSrcdoc(html.replace(/[ \t]+$/gm, ''), [
+    ['base', BASE_VIEW_SLOT, baseHtml],
+    ['head', HEAD_VIEW_SLOT, headHtml],
+  ]);
+}
+
+function fillDeltaSrcdoc(html, slots) {
+  const fills = [];
+  const bodyStart = html.lastIndexOf('<body>');
+  const from = bodyStart === -1 ? 0 : bodyStart;
+  for (const [view, token, nested] of slots) {
+    if (!nested) continue;
+    const open = html.indexOf(`<section class="canvas" data-view="${view}"`, from);
+    if (open === -1) continue;
+    const regionStart = html.indexOf('>', open) + 1;
+    const regionEnd = html.indexOf('</section>', regionStart);
+    if (regionStart <= 0 || regionEnd === -1) continue;
+    const localIndex = html.slice(regionStart, regionEnd).indexOf(token);
+    if (localIndex === -1) continue;
+    fills.push({ index: regionStart + localIndex, token, nested: esc(nested) });
+  }
+  fills.sort((left, right) => right.index - left.index);
+  let result = html;
+  for (const fill of fills) {
+    result = result.slice(0, fill.index)
+      + fill.token.replace('srcdoc=""', `srcdoc="${fill.nested}"`)
+      + result.slice(fill.index + fill.token.length);
+  }
+  return result;
 }
 
 export function validateArchitectureDeltaHtml(html, receipt) {

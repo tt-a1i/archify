@@ -46,10 +46,11 @@ them, or widen the viewBox using the emitted diagnostic.
 Choose one primary authored language. An explicit user choice wins; otherwise
 use the language of the request, or the conversation's dominant language when
 the request itself is language-neutral. Separately choose the Viewer locale.
-For supported languages, always write the matching `meta.locale`: `"en"` for
-English or `"zh-CN"` for Simplified Chinese. The renderer consumes the authored
-locale without inferring language from diagram strings. Documents that omit it
-remain valid and default to English.
+Always write the matching `meta.locale` as a well-formed language tag: `"en"`
+for English, `"zh-CN"` for Simplified Chinese, `"es"` for Spanish, or any
+other tag for another language. The renderer consumes the authored locale without inferring language
+from diagram strings. Documents that omit it remain valid and default to
+English.
 
 `meta.locale` controls only renderer-owned reader surfaces: `<html lang>`, the
 document-title suffix, default SVG description and focus labels, default legend
@@ -60,13 +61,25 @@ guided views, legend label overrides, and cards. A bilingual diagram still
 chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
-For a requested language outside `en` and `zh-CN`, do not write an unsupported
-locale. Keep every reader-facing authored string in the requested language,
-omit `meta.locale` so the renderer safely uses English, and explicitly tell the
-user that fixed Viewer UI and `<html lang>` remain English and the artifact is
-not fully localized. The fallback applies only to renderer-owned surfaces; it
-never permits authored copy to fall back to English. Do not silently substitute
-`zh-CN` for another language or Chinese locale.
+`en`, `zh-CN`, and `es` are built-in Viewer catalogs and need nothing further. For
+every other `meta.locale`, also set `meta.translations`: an object mapping the
+renderer's canonical message keys (`catalogKeys()` in
+`renderers/shared/i18n.mjs`) to translated strings whose `{placeholder}` tokens
+match the English source exactly. Translate from the English source for each
+diagram; do not look up, copy, or adapt any checked-in translation file. A key that is missing, unrecognized, or has mismatched
+placeholders falls back to its English string — `validate`/`render`/`deliver`
+report the resulting coverage to stderr — rather than breaking the render or
+silently shipping an untranslated string as if it were translated.
+
+For a requested language you cannot supply `meta.translations` for, do not
+write a `meta.locale` with no built-in catalog and no translations. Keep every
+reader-facing authored string in the requested language, omit `meta.locale` so
+the renderer safely uses English, and explicitly tell the user that fixed
+Viewer UI and `<html lang>` remain English and the artifact is not fully localized.
+The fallback applies only to renderer-owned surfaces; it never
+permits authored copy to fall back to English. Do not silently substitute
+`zh-CN` for another language or Chinese locale, and do not machine-translate
+`meta.translations` values without disclosing that they are unreviewed.
 
 Keep exact product names, code identifiers, commands, protocols, API paths, and
 environment names intact. Those terms may remain English inside localized copy,
