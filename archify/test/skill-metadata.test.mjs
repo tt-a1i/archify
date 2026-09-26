@@ -69,8 +69,11 @@ test('language behavior stays within the bounded locale contract', () => {
   assert.match(skill, /renderer never translates authored content/i);
   assert.match(skill, /product names.*code identifiers.*protocols.*API paths.*environment names/);
   assert.match(skill, /catalogKeys\(\)/);
-  assert.match(skill, /examples\/locales\/ko\.json/);
-  assert.match(skill, /examples\/locales\/fr\.partial\.json/);
+  // examples/locales/ are translation examples only; the agent translates from
+  // the English source per diagram, so the skill must not point at them.
+  assert.doesNotMatch(skill, /examples\/locales/);
+  assert.doesNotMatch(authoringContract, /examples\/locales/);
+  assert.match(skill, /do not look up, copy, or adapt any checked-in translation file/);
   assert.match(authoringContract, /`meta\.locale` controls only renderer-owned reader surfaces/);
   assert.match(authoringContract, /every other `meta\.locale`, also set `meta\.translations`/);
   assert.match(authoringContract, /artifact is\s+not fully localized/);

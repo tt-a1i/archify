@@ -64,9 +64,9 @@ request, then prompt order or conversation dominance.
 `en`, `zh-CN`, and `es` are built-in Viewer catalogs and need nothing further. For
 every other `meta.locale`, also set `meta.translations`: an object mapping the
 renderer's canonical message keys (`catalogKeys()` in
-`renderers/shared/i18n.mjs`; `examples/locales/ko.json` is a complete worked
-example) to translated strings whose `{placeholder}` tokens match the English
-source exactly. A key that is missing, unrecognized, or has mismatched
+`renderers/shared/i18n.mjs`) to translated strings whose `{placeholder}` tokens
+match the English source exactly. Translate from the English source for each
+diagram; do not look up, copy, or adapt any checked-in translation file. A key that is missing, unrecognized, or has mismatched
 placeholders falls back to its English string — `validate`/`render`/`deliver`
 report the resulting coverage to stderr — rather than breaking the render or
 silently shipping an untranslated string as if it were translated.

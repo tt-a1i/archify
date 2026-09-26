@@ -37,8 +37,7 @@ built-in catalog, as data: an object mapping canonical message keys (see
 `{placeholder}` tokens match the English source. A key that is missing,
 unrecognized, or has mismatched placeholders falls back to English rather than
 failing the render; `validate`/`render`/`deliver` report the resulting
-coverage to stderr. `examples/locales/ko.json` is a complete worked example;
-`examples/locales/fr.partial.json` demonstrates partial coverage.
+coverage to stderr.
 `visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
 motion-forward presentation), `blueprint` (high-contrast engineering review),
 or `editorial` (warm publication-style design review and documentation).
