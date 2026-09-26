@@ -55,21 +55,39 @@ export function segmentRectClearance(segment, rect) {
   if (!segment || !rect) return null;
   const { start, end } = segment;
   if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) return null;
-  if (!isFinitePoint(...start, ...end, rect.x, rect.y, rect.width, rect.height)) return null;
+  if (!isFinitePoint(start[0], start[1], end[0], end[1], rect.x, rect.y, rect.width, rect.height)) return null;
   if (rect.width < 0 || rect.height < 0) return null;
   if (segmentIntersectsRect(segment, rect)) return 0;
 
-  const corners = [
-    [rect.x, rect.y],
-    [rect.x + rect.width, rect.y],
-    [rect.x + rect.width, rect.y + rect.height],
-    [rect.x, rect.y + rect.height],
-  ];
-  return Math.min(
-    pointRectDistance(start, rect),
-    pointRectDistance(end, rect),
-    ...corners.map((corner) => pointSegmentDistance(corner, start, end)),
-  );
+  const right = rect.x + rect.width;
+  const bottom = rect.y + rect.height;
+  let clearance = Math.min(pointRectDistance(start, rect), pointRectDistance(end, rect));
+  const corners = [rect.x, rect.y, right, rect.y, right, bottom, rect.x, bottom];
+  for (let index = 0; index < 8; index += 2) {
+    const distance = pointSegmentDistanceXY(corners[index], corners[index + 1], start, end);
+    if (distance < clearance) clearance = distance;
+  }
+  return clearance;
+}
+
+// The same clearance, but the caller already knows the threshold it compares
+// against: when an axis gap alone proves the distance cannot be smaller, the
+// exact distance is never computed and Infinity is returned.
+export function segmentRectClearanceWithin(segment, rect, limit) {
+  if (!segment || !rect) return segmentRectClearance(segment, rect);
+  const { start, end } = segment;
+  if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) return null;
+  if (!isFinitePoint(start[0], start[1], end[0], end[1], rect.x, rect.y, rect.width, rect.height)) return null;
+  if (rect.width < 0 || rect.height < 0) return null;
+  if (segmentIntersectsRect(segment, rect)) return 0;
+  const minX = Math.min(start[0], end[0]);
+  const maxX = Math.max(start[0], end[0]);
+  const minY = Math.min(start[1], end[1]);
+  const maxY = Math.max(start[1], end[1]);
+  const gapX = Math.max(rect.x - maxX, minX - (rect.x + rect.width));
+  const gapY = Math.max(rect.y - maxY, minY - (rect.y + rect.height));
+  if (Math.max(gapX, gapY) > limit) return Number.POSITIVE_INFINITY;
+  return segmentRectClearance(segment, rect);
 }
 
 export function segmentRectIntersectionLength(segment, rect) {
@@ -352,7 +370,6 @@ export function routeHonorsEndpointSides(points, fromSide, toSide) {
   return !endpointSideIssue(points, 'source', fromSide)
     && !endpointSideIssue(points, 'target', toSide);
 }
-
 // Explicit fromSide/toSide are authored geometry, so a tangent or backwards
 // endpoint segment changes their meaning. Fail this universally instead of
 // leaving a malformed arrow for visual review to discover. Named routes and
@@ -1252,17 +1269,53 @@ function segmentPosition(index, segmentCount) {
   return 'interior';
 }
 
-export function normalizeRoutePoints(points) {
-  const finite = asArray(points).filter((point) => Array.isArray(point) && point.length === 2 && isFinitePoint(...point));
-  const deduped = [];
-  for (const point of finite) {
-    const previous = deduped.at(-1);
-    if (!previous || Math.abs(point[0] - previous[0]) > 0.0001 || Math.abs(point[1] - previous[1]) > 0.0001) deduped.push(point);
-  }
+// Normalizing a route is pure, and the same route array is normalized again by
+// every predicate that inspects it. Keyed by the array itself, so a rebuilt
+// route simply gets a new entry. The result's outer array is frozen. Callers
+// must also treat input arrays and their coordinate pairs as immutable, since
+// edits in place cannot invalidate this identity-based cache.
+const NORMALIZED_ROUTE_POINTS = new WeakMap();
+
+// Assembling a route from an anchor, corridor points and an anchor is the same
+// normalization without the intermediate array, and the result is seeded in the
+// cache so later predicates do not normalize it again.
+export function joinRoutePoints(start, via, end) {
   const normalized = [];
-  for (const point of deduped) {
+  const accept = (point) => {
+    if (!Array.isArray(point) || point.length !== 2 || !isFinitePoint(point[0], point[1])) return;
+    const previous = normalized.at(-1);
+    if (previous
+      && Math.abs(point[0] - previous[0]) <= 0.0001
+      && Math.abs(point[1] - previous[1]) <= 0.0001) return;
     while (normalized.length >= 2 && collinearForward(normalized.at(-2), normalized.at(-1), point)) normalized.pop();
     normalized.push(point);
+  };
+  accept(start);
+  for (const point of Array.isArray(via) ? via : []) accept(point);
+  accept(end);
+  Object.freeze(normalized);
+  NORMALIZED_ROUTE_POINTS.set(normalized, normalized);
+  return normalized;
+}
+
+export function normalizeRoutePoints(points) {
+  if (Array.isArray(points)) {
+    const cached = NORMALIZED_ROUTE_POINTS.get(points);
+    if (cached) return cached;
+  }
+  const normalized = [];
+  for (const point of Array.isArray(points) ? points : []) {
+    if (!Array.isArray(point) || point.length !== 2 || !isFinitePoint(point[0], point[1])) continue;
+    const previous = normalized.at(-1);
+    if (previous
+      && Math.abs(point[0] - previous[0]) <= 0.0001
+      && Math.abs(point[1] - previous[1]) <= 0.0001) continue;
+    while (normalized.length >= 2 && collinearForward(normalized.at(-2), normalized.at(-1), point)) normalized.pop();
+    normalized.push(point);
+  }
+  if (Array.isArray(points)) {
+    Object.freeze(normalized);
+    NORMALIZED_ROUTE_POINTS.set(points, normalized);
   }
   return normalized;
 }
@@ -1273,13 +1326,17 @@ function pointRectDistance(point, rect) {
   return Math.hypot(dx, dy);
 }
 
-function pointSegmentDistance(point, start, end) {
+function pointSegmentDistanceXY(px, py, start, end) {
   const dx = end[0] - start[0];
   const dy = end[1] - start[1];
   const lengthSquared = dx * dx + dy * dy;
-  if (lengthSquared <= 0.0000001) return Math.hypot(point[0] - start[0], point[1] - start[1]);
-  const projection = Math.max(0, Math.min(1, ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / lengthSquared));
-  return Math.hypot(point[0] - (start[0] + projection * dx), point[1] - (start[1] + projection * dy));
+  if (lengthSquared <= 0.0000001) return Math.hypot(px - start[0], py - start[1]);
+  const t = Math.max(0, Math.min(1, ((px - start[0]) * dx + (py - start[1]) * dy) / lengthSquared));
+  return Math.hypot(px - (start[0] + t * dx), py - (start[1] + t * dy));
+}
+
+function pointSegmentDistance(point, start, end) {
+  return pointSegmentDistanceXY(point[0], point[1], start, end);
 }
 
 function collinearForward(a, b, c) {
