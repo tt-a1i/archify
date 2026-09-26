@@ -12,7 +12,15 @@ Relationship labels carry meaning. Give them clear space and preserve action, pr
 
 ## Layout and routing
 
-Place Architecture nodes by their actual connections before assigning coordinates. Keep main-path neighbors adjacent, put each branch beside its owner and shared stores near their readers and writers, and reserve an outside corridor for real returns. Trace every relationship against that placement before writing positions; the router cannot rearrange boxes. Let a medium main path step through meaningful rows instead of making a shallow horizontal strip. Start the main actor and its first connected step together near the canvas origin; use content rows for vertical rhythm. Omit `meta.viewBox` for a fresh Architecture so the Reader measures intrinsic height. Keep supplied fixed geometry authoritative.
+Place Architecture nodes by their actual connections before assigning coordinates; the router cannot rearrange boxes, so placement decides whether lines stay straight. Classify each relationship first, then place:
+
+- **Main path**: the reader's main journey, neighbors adjacent in reading order. Let a medium path step through meaningful rows instead of making a shallow horizontal strip.
+- **Branch or store**: directly above or below the node that owns, reads, or writes it, centered on that node so the edge is one straight segment. Keep all stores and branches of one row on the same side of it.
+- **Return** (back to an earlier main-path node): put its source on the side of the main path with no branches or stores, so it runs through an empty corridor instead of crossing them.
+- **Second entrance** into a node that already has an incoming edge: place the new source so it reaches that node from another side, usually directly below or above it.
+- **Fan-out**: a side with k relationships needs at least `32 + 14 × (k − 1)`px (four need 74px). Spread a hub's counterparts over two or three sides, or enlarge the hub. Center a parent on its children and align a child with its only parent.
+
+Before writing positions, trace each non-main relationship: its straight or one-bend corridor must not pass another node or cross another relationship. If it does, move the endpoint that is off the main path. Start the main actor and its first connected step together near the canvas origin; use content rows for vertical rhythm. Omit `meta.viewBox` for a fresh Architecture so the Reader measures intrinsic height. Keep supplied fixed geometry authoritative.
 
 Start with automatic routes and endpoint sides. Pin a side only for a necessary branch, return, or supplied geometry. Reserve `via`, `channelX`, `channelY`, and label coordinates for measured defects. Before writing positions, budget each labeled main-path edge at `6.5px × ASCII units + 21px` of clear gap, counting CJK as two units; use its own label length, not a row-wide fixed gap. Size Architecture sublabels for their preferred 9px text at `5.4px × text units + 8px`, with CJK counting twice; keep supporting copy concise without dropping required facts. Do not trade readability or meaning for fewer crossings. The [Geometry reference](authoring-contract.md#executable-geometry-rules) has measured spacing, port, canvas, and route rules for a diagnosed layout problem.
 

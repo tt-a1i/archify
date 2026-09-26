@@ -155,6 +155,9 @@ if (svgMatches.length === 1) {
     .map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints }));
   const nodeRects = svgAttrs.transform ? [] : collectUntransformedNodeRects(beforeLegend);
   const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
+  // Architecture marks only one of its two Reader fits with its type.
+  const crowdedSides = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14'
+    ? crowdedNodeSides(arrows, nodeRects) : [];
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
   const ambiguousCorridors = collectAmbiguousCorridors({
     routedRelations: routedRelationships,
@@ -240,11 +243,16 @@ if (svgMatches.length === 1) {
     // These are review evidence, not new pass/fail thresholds: a short, clear
     // crossover can be preferable to a long crossing-free detour.
     routeReview: {
-      crossings: resolvedCrossovers.map((hit) => ({
-        left: relationshipRecord(hit.left),
-        right: relationshipRecord(hit.right),
-        point: hit.point,
-      })),
+      crossings: resolvedCrossovers.map((hit) => {
+        const shared = [hit.left.from, hit.left.to].find((id) => id && (id === hit.right.from || id === hit.right.to));
+        return {
+          left: relationshipRecord(hit.left),
+          right: relationshipRecord(hit.right),
+          point: hit.point,
+          ...(shared ? { sharedNode: shared } : {}),
+        };
+      }),
+      ...(crowdedSides.length ? { crowdedSides } : {}),
       detours: routedRelationships.flatMap((entry) => {
         const metrics = routeBudgetMetrics({ routedRelations: [entry] });
         const blockers = directCorridorBlockers(entry.relation, nodeRects);
@@ -649,6 +657,34 @@ function directCorridorBlockers(relation, nodes) {
   return nodes.filter((node) => node !== from && node !== to
     && node.box[axis] < high && node.box[axis] + node.box[axis + 2] > low
     && node.box[cross] < a[cross] && node.box[cross] + node.box[cross + 2] > a[cross]);
+}
+
+// Automatic ports need a 16px corner gutter and 14px between neighbours, so a
+// side facing more counterparts than that fits pushes routes onto other sides.
+function crowdedNodeSides(arrows, nodes) {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const demand = new Map();
+  for (const arrow of arrows) {
+    const from = byId.get(arrow.from);
+    const to = byId.get(arrow.to);
+    if (!from || !to || from === to) continue;
+    for (const [node, other] of [[from, to], [to, from]]) {
+      const [x, y, w, h] = node.box;
+      const dx = other.box[0] + other.box[2] / 2 - (x + w / 2);
+      const dy = other.box[1] + other.box[3] / 2 - (y + h / 2);
+      const side = dx !== 0 && Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy > 0 ? 'bottom' : 'top');
+      const key = `${node.id}\u0000${side}`;
+      const entry = demand.get(key) || { node, side, relationships: 0 };
+      entry.relationships += 1;
+      demand.set(key, entry);
+    }
+  }
+  return [...demand.values()].flatMap(({ node, side, relationships }) => {
+    const sidePx = side === 'left' || side === 'right' ? node.box[3] : node.box[2];
+    const neededPx = 32 + 14 * (relationships - 1);
+    return relationships > 1 && sidePx < neededPx
+      ? [{ node: node.id, label: node.label, side, relationships, sidePx, neededPx }] : [];
+  });
 }
 
 function relationshipRecord(arrow) {

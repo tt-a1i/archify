@@ -466,6 +466,28 @@ function reservedFinalizePaths({ input, output, outDir, deliveryPaths }) {
   return [path.resolve(input), path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
 }
 
+// Node moves that remove the measured crossings and detours, most specific
+// first. Only positions and sizes change; every relationship keeps its endpoints.
+function placementHints({ crossings = [], detours = [], crowdedSides = [] }) {
+  const name = (relation) => `${relation.from} → ${relation.to}`;
+  const other = (relation, shared) => (relation.from === shared ? relation.to : relation.from);
+  const hints = [];
+  for (const side of crowdedSides) {
+    hints.push(`${side.node} has ${side.relationships} relationships facing its ${side.side} side, which fits ${Math.max(1, Math.floor((side.sidePx - 32) / 14) + 1)} ports: make that side at least ${side.neededPx}px, or move some of those neighbours so they face another side of ${side.node}.`);
+  }
+  for (const crossing of crossings) {
+    const shared = crossing.sharedNode;
+    hints.push(shared
+      ? `${name(crossing.left)} and ${name(crossing.right)} cross next to ${shared}: move node ${other(crossing.left, shared)} or ${other(crossing.right, shared)} so the two reach ${shared} from different sides (for example one level with it, one directly above or below it).`
+      : `${name(crossing.left)} crosses ${name(crossing.right)}: move the node of whichever is a branch, return, or second entrance to the other side of the main path, so that relationship runs through an empty corridor.`);
+  }
+  for (const detour of detours) {
+    if (detour.directCorridorBlockers?.length) continue;
+    hints.push(`${name(detour.relationship)} needs ${detour.bends} bends: move node ${detour.relationship.from} or ${detour.relationship.to} so they share a row or column with matching centers, or sit diagonally with a clear corner.`);
+  }
+  return [...new Set(hints)].slice(0, 8);
+}
+
 export function compactFinalizeReceipt(receipt) {
   const gates = {};
   for (const stage of FINALIZE_STAGES) gates[stage] = receipt.stages?.[stage]?.status || 'not-run';
@@ -538,6 +560,7 @@ export function compactFinalizeReceipt(receipt) {
     .map((key) => [key, metrics[key]]));
   if (receipt.ok && Object.keys(reviewSignals).length) {
     const routeReview = receipt.stages?.check?.receipt?.composition?.routeReview;
+    const hints = routeReview ? placementHints(routeReview) : [];
     compact.visualReviewRecommendation = {
       action: 'inspect-route-readability',
       signals: reviewSignals,
@@ -548,6 +571,7 @@ export function compactFinalizeReceipt(receipt) {
           detours: routeReview.detours.slice(0, 8),
           truncated: routeReview.crossings.length > 8 || routeReview.detours.length > 8,
         },
+        ...(hints.length ? { hints } : {}),
         repair: 'Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit.',
       } : {}),
     };
