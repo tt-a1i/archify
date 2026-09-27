@@ -126,6 +126,66 @@ fail-closed deployment review and the source facts are known. Once enabled,
 do not remove the engineering profile merely to pass validation; repair the
 authored facts or report the diagnostics truthfully.
 
+## Nested boundaries
+
+A boundary's `wraps` list may reference either a component id or another
+boundary's own `id`, nesting that boundary inside this one. Nesting is
+capped at 2 levels (outer boundary -> inner boundary -> components); an id
+chain longer than that, or one that cycles back on itself, is a validation
+error, not a silently wrong layout. A boundary can only be nested inside
+another when it does not itself nest a further boundary. Only a boundary
+with an explicit `id` can be referenced this way — an anonymous boundary
+cannot be nested into. Boundary ids and component ids must not collide.
+`meta.engineering_profile: "deployment-ownership"` does not yet support
+nested boundaries; list components directly in `wraps` for that profile.
+
+A component's hover/focus context reports the full scope chain, outermost
+first — a component wrapped only by the innermost boundary still shows
+every ancestor boundary's label, not just its direct one.
+
+Worked example — a "Platform" region containing a "Checkout Subsystem"
+security-group, plus a "Shared Cache" component that sits inside Platform
+but outside the inner subsystem:
+
+```json
+{
+  "components": [
+    { "id": "cart-svc", "type": "backend", "label": "Cart Service" },
+    { "id": "payment-svc", "type": "backend", "label": "Payment Service" },
+    { "id": "inventory-svc", "type": "backend", "label": "Inventory Service" },
+    { "id": "shared-cache", "type": "database", "label": "Shared Cache" },
+    { "id": "notifications", "type": "external", "label": "Notifications" }
+  ],
+  "boundaries": [
+    {
+      "id": "checkout-subsystem",
+      "kind": "security-group",
+      "label": "Checkout Subsystem",
+      "wraps": ["cart-svc", "payment-svc", "inventory-svc"]
+    },
+    {
+      "id": "platform",
+      "kind": "region",
+      "label": "Platform",
+      "wraps": ["checkout-subsystem", "shared-cache"]
+    }
+  ]
+}
+```
+
+`checkout-subsystem`'s frame is computed first, from its own three
+components. `platform`'s frame is then the bounding box of
+(`checkout-subsystem`'s frame ∪ `shared-cache`), plus platform's own pad
+ring — so the outer frame visibly contains the inner one, and grows to
+also cover the directly-wrapped `shared-cache` sitting alongside it.
+`cart-svc`'s reported scope chain is `"Platform › Checkout Subsystem"`
+even though `cart-svc` is not listed in `platform.wraps` directly.
+
+Boundary endpoints are not supported by the current renderer. Until that
+capability is implemented, `from` and `to` must reference component IDs.
+Boundary IDs such as `checkout-subsystem` and `platform` produce validation
+errors when used as connection endpoints.
+
 ## Title hierarchy
 
 Use one concise title and let the diagram carry the explanation. Omit

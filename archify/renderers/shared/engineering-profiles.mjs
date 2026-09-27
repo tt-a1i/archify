@@ -27,6 +27,26 @@ export function deploymentOwnershipDiagnostics(diagram) {
   const connections = Array.isArray(diagram.connections) ? diagram.connections : [];
   const diagnostics = [];
 
+  // This profile's owner/scope/crossing rules below assume every `wraps`
+  // entry is a component id. A `wraps` entry that instead nests another
+  // boundary (checked against ids declared on other boundaries) hasn't had
+  // its ownership-inheritance semantics designed yet, so it's rejected
+  // explicitly rather than silently treated as an unknown/missing component.
+  const boundaryIds = new Set(boundaries.map((b) => b.id).filter(Boolean));
+  boundaries.forEach((boundary, index) => {
+    for (const id of boundary.wraps) {
+      if (!boundaryIds.has(id)) continue;
+      diagnostics.push({
+        code: 'engineering/deployment-nested-boundary-unsupported',
+        severity: 'error',
+        message: `Boundary ${JSON.stringify(boundary.label)} nests boundary id ${JSON.stringify(id)} via wraps, which deployment-ownership does not yet support.`,
+        subject: subject('boundaries', index, boundary),
+        evidence: { nestedBoundaryId: id },
+        supportedFixes: ['list components directly in wraps for this profile instead of nesting another boundary'],
+      });
+    }
+  });
+
   for (const kind of DEPLOYMENT_BOUNDARY_KINDS) {
     const count = boundaries.filter((boundary) => boundary.kind === kind).length;
     if (count > 0) continue;
