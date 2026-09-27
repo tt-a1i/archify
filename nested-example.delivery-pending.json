@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "command": "deliver",
+  "status": "pending",
+  "receiptId": "ae8d89ec-38bf-4cd4-9846-30bdd1993e18",
+  "input": "C:\\Users\\NAV VARDHAN\\Desktop\\archify\\nested-example.architecture.json",
+  "output": "C:\\Users\\NAV VARDHAN\\Desktop\\archify\\nested-example.html"
+}
