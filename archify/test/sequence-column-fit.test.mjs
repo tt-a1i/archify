@@ -133,7 +133,7 @@ test('the fast authoring path explains when to opt into spread', () => {
 
   assert.match(description, /wide viewBox/);
   assert.match(description, /meaningful participant labels/);
-  assert.match(skill, /do not shorten semantic labels before trying `spread`/);
+  assert.match(skill, /use `spread` when a wide viewBox leaves unused horizontal space or meaningful labels need width/);
   assert.match(rendererReadme, /Use `"spread"` when a wide/);
   assert.match(rendererReadme, /try `meta\.column_fit: "spread"` before shortening/);
 });

@@ -22,7 +22,6 @@ test('automatic crossover masks follow live relationship state without becoming 
     diagram_type: 'architecture',
     meta: {
       title: 'Crossover reader state', output: 'crossing.architecture.html', quality_profile: 'showcase', animation: 'trace',
-      views: [{ id: 'horizontal', label: 'Horizontal path', focus: ['left', 'right'] }],
     },
     components: [
       { id: 'left', type: 'frontend', label: 'Left', pos: [40, 170], size: [80, 60] },
@@ -66,7 +65,7 @@ test('automatic crossover masks follow live relationship state without becoming 
       const edge = wrapper.querySelector('[data-edge-from]');
       const underlay = wrapper.querySelector('[data-graph-role="automatic-crossover-underlay"]');
       return { id: edge.getAttribute('data-edge-id'), wrapper: Number(getComputedStyle(wrapper).opacity), edge: Number(getComputedStyle(edge).opacity), underlay: Number(getComputedStyle(underlay).opacity),
-        matched: edge.hasAttribute('data-focus-match'), preview: edge.hasAttribute('data-relationship-preview'), beat: edge.getAttribute('data-story-beat-state') };
+        matched: edge.hasAttribute('data-focus-match'), preview: edge.hasAttribute('data-relationship-preview') };
     }))()`);
   }
   function assertPaired(state, expected = {}) {
@@ -139,20 +138,6 @@ test('automatic crossover masks follow live relationship state without becoming 
   const preview = await pairedOpacity();
   assertPaired(preview, { horizontal: 1, vertical: 0.13 });
   assert.equal(preview.find((relation) => relation.id === 'horizontal').preview, true);
-
-  await run(`Archify.guidedViews.activate('horizontal', { updateUrl: false }); Archify.guidedViews.playCurrent()`);
-  await run(`new Promise((resolve, reject) => {
-    const start = performance.now();
-    (function waitForBeat() {
-      if (document.querySelector('[data-edge-id="horizontal"][data-story-beat-state="active"]')) return resolve();
-      if (performance.now() - start > 3500) return reject(new Error('Story beat did not become active'));
-      requestAnimationFrame(waitForBeat);
-    })();
-  })`, true);
-  await run(`new Promise(resolve => setTimeout(resolve, 220))`, true);
-  const story = await pairedOpacity();
-  assertPaired(story, { horizontal: 1 });
-  assert.equal(story.some((relation) => relation.beat === 'active'), true);
 
   await load();
   await run(`Archify.routeProbe.begin({ source: 'left', focusNode: false }); Archify.routeProbe.choose('right', { updateUrl: false })`);

@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
-import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
+import { recordDiagnostic, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { createRouter } from '../architecture/routing.mjs';
 import { placeAutomaticLabels, reservedLabelRect } from '../architecture/labels.mjs';
 import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
@@ -293,6 +293,21 @@ function validateLifecycle() {
   }));
 
   const labelRects = transitionLabelRects();
+  if (lifecycle.meta?.quality_profile === 'showcase') {
+    for (const rect of labelRects) {
+      for (const title of bandGeometry()) {
+        if (!rectsOverlap(rect, title)) continue;
+        const message = `Transition ${rect.relationIndex} label "${rect.label}" overlaps lifecycle band title "${title.label}" — move the label with labelAt/labelDx/labelDy/labelSegment or provide more space.`;
+        recordDiagnostic({
+          code: 'composition/label-band-title-overlap', severity: 'error', message,
+          subject: { diagramType: 'lifecycle', collection: 'transitions', index: rect.relationIndex, from: rect.relation.from, to: rect.relation.to },
+          evidence: { labelRect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }, bandTitle: title },
+          supportedFixes: ['move the transition label with labelAt/labelDx/labelDy/labelSegment while preserving its text'],
+        });
+        problems.push(message);
+      }
+    }
+  }
   for (const rect of labelRects) {
     for (const state of states.values()) {
       if (rectsOverlap(rect, state, -2)) {
@@ -389,8 +404,8 @@ function plannerRouted(transition) {
 
 const plannedTransitions = asArray(lifecycle.transitions).filter(plannerRouted);
 const planner = createRouter(states, plannedTransitions, {
-  labelRectFor: (transition, points, { routes, labels }) => (transition.label ? reservedLabelRect({
-    label: { relation: transition, label: transition.label, ...transitionLabelBoxAt(transition, labelPoint(transition, points)) },
+  labelRectFor: (transition, points, { routes, labels }) => ((transition.label || transition.note) ? reservedLabelRect({
+    label: { relation: transition, label: transition.label || transition.note, ...transitionLabelBoxAt(transition, labelPoint(transition, points)) },
     points,
     routes: routes.map((route, index) => ({ relationIndex: index, points: route })),
     labels,
@@ -455,15 +470,15 @@ function transitionLabelBox(transition) {
 function transitionLabelBoxAt(transition, [lx, ly]) {
   const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
   const width = Math.max(32, longestLine * 4.9 + 12);
-  const height = transition.note ? 27 : 16;
+  const height = transition.label && transition.note ? 27 : 16;
   return { x: lx - width / 2, y: ly - 11, width, height, lx, ly };
 }
 
 function transitionLabelRects() {
   const rects = [];
   for (const [relationIndex, transition] of asArray(lifecycle.transitions).entries()) {
-    if (!transition.label || !states.has(transition.from) || !states.has(transition.to)) continue;
-    rects.push({ relation: transition, relationIndex, label: transition.label, ...transitionLabelBox(transition) });
+    if (!(transition.label || transition.note) || !states.has(transition.from) || !states.has(transition.to)) continue;
+    rects.push({ relation: transition, relationIndex, label: transition.label || transition.note, ...transitionLabelBox(transition) });
   }
   return rects;
 }
@@ -478,7 +493,7 @@ if (lifecycle.meta?.quality_profile === 'showcase') {
         ? [{ relationIndex, points: pathFor(transition).points }] : []
     )),
     components: [...states.values()],
-    titles: [],
+    titles: bandGeometry(),
     viewBox,
     placementBottom: lifecycleAreaBottom(),
   });
@@ -497,15 +512,18 @@ function bandTitles() {
   ];
 }
 
+function bandGeometry() {
+  return bandTitles().map((title, index) => {
+    const baseline = [100, 252, 424][index];
+    const label = `${String(index + 1).padStart(2, '0')} / ${title}`;
+    return { index, label, x: 72, y: baseline - 11, width: textUnits(label) * 6.2, height: 14, baseline };
+  });
+}
+
 function renderBands() {
   const right = viewBox[0] - 72;
-  const titles = bandTitles();
-  return `        <path d="M 72 112 L ${right} 112" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="72" y="100" class="t-dim" font-size="10" font-weight="600">01 / ${esc(titles[0])}</text>
-        <path d="M 72 264 L ${right} 264" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="72" y="252" class="t-dim" font-size="10" font-weight="600">02 / ${esc(titles[1])}</text>
-        <path d="M 72 436 L ${right} 436" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="72" y="424" class="t-dim" font-size="10" font-weight="600">03 / ${esc(titles[2])}</text>`;
+  return bandGeometry().map((band) => `        <path d="M 72 ${band.baseline + 12} L ${right} ${band.baseline + 12}" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="${band.x}" y="${band.baseline}" class="t-dim" font-size="10" font-weight="600">${esc(band.label)}</text>`).join('\n');
 }
 
 function renderState(state) {
@@ -553,7 +571,7 @@ function renderTransitionPath(transition, index) {
   const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 2 : 1.1);
   const automaticRoute = plannerRouted(transition);
   const crossover = automaticRoute ? ' data-composition-crossover="halo"' : '';
-  const edge = `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(transition, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const edge = `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(transition, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
   if (!automaticRoute) return edge;
   // Same presentation-only wrapper as architecture: the mask underlay lets two
   // planner routes cross legibly while the viewer still sees one semantic edge.
@@ -562,14 +580,16 @@ function renderTransitionPath(transition, index) {
 }
 
 function renderTransitionLabel(transition, index) {
-  if (!transition.label) return '';
+  if (!(transition.label || transition.note)) return '';
   const { lx, ly, width: labelW, height: labelH } = transitionLabelBox(transition);
-  const note = transition.note
-    ? `\n        <text data-detail="fine" x="${lx}" y="${ly + 11}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
+  const label = transition.label
+    ? `\n          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>`
     : '';
-  return `        <g data-detail="context" ${focusEdgeAttrs(transition.from, transition.to, transition.label, index, transition.id)}>
-          <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>${note}
+  const note = transition.note
+    ? `\n        <text data-detail="fine" x="${lx}" y="${ly + (transition.label ? 11 : 0)}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
+    : '';
+  return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}>
+          <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>${label}${note}
         </g>`;
 }
 

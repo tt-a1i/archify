@@ -35,6 +35,12 @@ function connectionPoints(html, id) {
   return match[1].split(';').map((point) => point.split(',').map(Number));
 }
 
+function connectionLabelPoint(html, id) {
+  const match = html.match(new RegExp(`data-detail="context"[^>]+data-edge-id="${id}"[^>]*>\\s*<rect[^>]*>\\s*<text x="([^"]+)" y="([^"]+)"`));
+  assert.ok(match, `missing rendered connection label ${id}`);
+  return [Number(match[1]), Number(match[2])];
+}
+
 function fanOutArchitecture(connections) {
   return {
     schema_version: 1,
@@ -49,6 +55,99 @@ function fanOutArchitecture(connections) {
     connections,
   };
 }
+
+function reciprocalArchitecture(connections, transpose = false) {
+  const position = ([x, y]) => transpose ? [y, x] : [x, y];
+  const size = ([width, height]) => transpose ? [height, width] : [width, height];
+  return {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: { title: 'Reciprocal automatic channels' },
+    components: [
+      { id: 'sender', type: 'backend', label: 'Sender', pos: position([125, 250]), size: size([192, 76]) },
+      { id: 'receiver', type: 'backend', label: 'Receiver', pos: position([445, 250]), size: size([182, 76]) },
+      { id: 'store', type: 'database', label: 'Store', pos: position([445, 435]), size: size([182, 76]) },
+    ],
+    connections,
+  };
+}
+
+test('architecture: reciprocal automatic relationships with a third inferred port use separate straight channels', () => {
+  for (const transpose of [false, true]) {
+    const connections = [
+      { id: 'send', from: 'sender', to: 'receiver', ...(!transpose ? { label: 'request' } : {}) },
+      { id: 'reply', from: 'receiver', to: 'sender', ...(!transpose ? { label: 'response' } : {}) },
+      { id: 'persist', from: 'sender', to: 'store', ...(!transpose ? { label: 'persist' } : {}) },
+    ];
+    for (const ordered of [connections, [...connections].reverse()]) {
+      const html = render('architecture', reciprocalArchitecture(ordered, transpose));
+      const send = connectionPoints(html, 'send');
+      const reply = connectionPoints(html, 'reply');
+      const persist = connectionPoints(html, 'persist');
+      assert.equal(send.length, 2, JSON.stringify({ transpose, send, reply }));
+      assert.equal(reply.length, 2, JSON.stringify({ transpose, send, reply }));
+      const axis = transpose ? 0 : 1;
+      assert.equal(send[0][axis], send[1][axis]);
+      assert.equal(reply[0][axis], reply[1][axis]);
+      assert.notEqual(send[0][axis], reply[0][axis]);
+      assert.notDeepEqual(send[0], reply[1]);
+      assert.notDeepEqual(send[1], reply[0]);
+      const travel = transpose ? 1 : 0;
+      assert.ok(send[0][travel] < send[1][travel], 'forward arrow still points to receiver');
+      assert.ok(reply[0][travel] > reply[1][travel], 'reverse arrow still points to sender');
+      assert.notDeepEqual(persist[0], send[0]);
+      assert.notDeepEqual(persist[0], reply.at(-1));
+      if (persist[0][travel] === send[0][travel]) {
+        assert.ok(Math.abs(persist[0][axis] - send[0][axis]) >= 14);
+        assert.ok(Math.abs(persist[0][axis] - reply.at(-1)[axis]) >= 14);
+      }
+    }
+  }
+});
+
+test('architecture: reciprocal repair preserves an authored side and via geometry', () => {
+  const connections = [
+    { id: 'send', from: 'sender', to: 'receiver', fromSide: 'right', toSide: 'left' },
+    { id: 'reply', from: 'receiver', to: 'sender', via: [[400, 230], [355, 230]] },
+    { id: 'persist', from: 'sender', to: 'store' },
+  ];
+  const html = render('architecture', reciprocalArchitecture(connections));
+  const send = connectionPoints(html, 'send');
+  const reply = connectionPoints(html, 'reply');
+  assert.deepEqual(send[0][0], 317);
+  assert.deepEqual(send.at(-1)[0], 445);
+  assert.deepEqual(reply.slice(1, -1), [[400, 230], [355, 230]]);
+
+  const preset = render('architecture', reciprocalArchitecture([
+    { id: 'send', from: 'sender', to: 'receiver' },
+    { id: 'reply', from: 'receiver', to: 'sender', route: 'orthogonal-h' },
+    { id: 'persist', from: 'sender', to: 'store' },
+  ]));
+  const presetReply = connectionPoints(preset, 'reply');
+  assert.ok(presetReply.length > 2, 'authored route preset keeps its bend');
+  assert.deepEqual(presetReply[1], [381, 288]);
+});
+
+test('architecture: reciprocal repair preserves explicit relationship label placement controls', () => {
+  for (const placement of [
+    { labelSegment: 1, labelDy: -30 },
+    { labelDx: 0 },
+    { labelDy: 0 },
+  ]) {
+    const connections = [
+      { id: 'send', from: 'sender', to: 'receiver', label: 'request', ...placement },
+      { id: 'reply', from: 'receiver', to: 'sender', label: 'response' },
+      { id: 'persist', from: 'sender', to: 'store', label: 'persist' },
+    ];
+    const html = render('architecture', reciprocalArchitecture(connections));
+    assert.ok(connectionPoints(html, 'send').length > 2,
+      `explicit ${JSON.stringify(placement)} keeps its authored label segment meaningful`);
+    if (placement.labelSegment !== undefined) {
+      assert.deepEqual(connectionLabelPoint(html, 'send'), [341, 259.5],
+        'labelSegment: 1 remains on the second segment with the authored vertical offset');
+    }
+  }
+});
 
 test('architecture: automatic fan-out uses distinct symmetric ports with corner clearance', () => {
   const html = render('architecture', fanOutArchitecture([
@@ -360,14 +459,14 @@ test('lifecycle: same-band port spread remains orthogonal', () => {
   ]);
 });
 
-test('skill and READMEs describe automatic port spread as bounded default behavior', () => {
-  const skill = fs.readFileSync(path.join(skillRoot, 'references/authoring-defaults.md'), 'utf8');
-  assert.match(skill, /Automatic Port Spread is a default renderer behavior/);
-  assert.match(skill, /single relationship|single relationships/);
-  assert.match(skill, /explicit `via`.*`channelX`.*`channelY`.*`labelAt`/);
-  assert.match(skill, /facing automatic ports \(`left`\/`right` or `top`\/`bottom`\).*one shared axis/);
-
+test('authoring defaults point to the bounded automatic port rules and READMEs describe the default', () => {
+  const defaults = fs.readFileSync(path.join(skillRoot, 'references/authoring-defaults.md'), 'utf8');
+  assert.match(defaults, /Start with automatic routes and endpoint sides/);
+  assert.match(defaults, /Geometry reference.*measured spacing, port, canvas, and route rules/);
   const authoringContract = fs.readFileSync(path.join(skillRoot, 'references/authoring-contract.md'), 'utf8');
+  assert.match(authoringContract, /Automatic Port Spread is a default renderer behavior/);
+  assert.match(authoringContract, /single relationships/);
+  assert.match(authoringContract, /explicit `via`, `channelX`, `channelY`, `labelAt`/);
   assert.match(authoringContract, /unobstructed facing ports.*may share one horizontal or vertical axis/);
 
   const repoRoot = path.resolve(skillRoot, '..');

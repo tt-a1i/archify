@@ -15,7 +15,12 @@ const authoringContract = fs.readFileSync(
 const schemaReadme = fs.readFileSync(path.join(skillRoot, 'schemas', 'README.md'), 'utf8');
 
 test('semantic relationship labels are preserved and deletion is not a geometry repair', () => {
-  for (const [name, source] of [['authoring defaults', authoringDefaults], ['authoring contract', authoringContract]]) {
+  assert.match(authoringDefaults, /Relationship labels carry meaning/);
+  assert.match(authoringDefaults, /preserve action, protocol, direction, async behavior, or cross-boundary meaning/);
+  assert.match(authoringDefaults, /both endpoints already fully imply it/);
+  assert.match(authoringDefaults, /Label repair\]\(authoring-contract\.md#label-repair\)/);
+  assert.match(authoringContract, /## Label repair/);
+  for (const [name, source] of [['authoring contract', authoringContract]]) {
     assert.match(source, /Relationship labels are semantic data/i, name);
     assert.match(source, /move the label[\s\S]*adjust the route or spacing[\s\S]*shorten/i, name);
     assert.match(source, /protocol[\s\S]*action[\s\S]*direction[\s\S]*synchronous[\s\S]*asynchronous[\s\S]*cross-boundary mechanism/i, name);
@@ -32,10 +37,11 @@ test('schema policy documents the workflow v1/v2 compatibility boundary', () => 
 });
 
 test('deployment ownership stays explicit, fact-backed, and cannot be removed to pass', () => {
-  assert.match(authoringDefaults, /Omit `meta\.engineering_profile` by default/);
-  assert.match(authoringDefaults, /Region.*cluster.*security boundar.*do not.*enable/i);
-  assert.match(authoringDefaults, /production deployment topology.*ownership.*fail-closed deployment review/i);
-  assert.match(authoringDefaults, /must not remove.*engineering profile.*pass validation/i);
+  assert.match(authoringDefaults, /`meta\.engineering_profile` for an ordinary system overview/);
+  assert.match(authoringDefaults, /engineering profile\]\(authoring-contract\.md#engineering-profile-default\)/);
+  assert.match(authoringContract, /Region,[\s\S]*cluster,[\s\S]*security boundary[\s\S]*do not[\s\S]*engineering profile/i);
+  assert.match(authoringContract, /production deployment topology, ownership handoff, or\s+fail-closed deployment review/i);
+  assert.match(authoringContract, /do not remove the engineering profile merely to pass validation/i);
 });
 
 test('visual-check stays a pending sidecar receipt instead of a polish claim', () => {
@@ -43,12 +49,12 @@ test('visual-check stays a pending sidecar receipt instead of a polish claim', (
     path.join(skillRoot, 'references', 'delivery-contract.md'),
     'utf8',
   );
-  assert.match(skill, /Run `visual-check` on the finalized artifact/);
-  assert.match(skill, /machine-readable browser evidence[\s\S]*perceptual review/i);
+  assert.match(skill, /Optional capture evidence\]\(references\/delivery-contract\.md#optional-capture-evidence\)/);
+  assert.match(skill, /Inspect captures before claiming visual quality; otherwise report automated checks only/);
   assert.match(skill, /references\/delivery-contract\.md/);
-  assert.match(skill, /without (?:rerendering or )?modifying/i);
+  assert.match(deliveryContract, /Both browser commands inspect the exact delivered HTML without modifying or rerendering it/);
 
-  assert.match(deliveryContract, /visual-check <output\.html> --json/);
+  assert.match(deliveryContract, /visual-check <output\.html> --summary/);
   assert.match(deliveryContract, /1440×900[\s\S]*1600×1000[\s\S]*1920×1080[\s\S]*2048×1320/);
   assert.match(deliveryContract, /visualReview: "pending"/);
   assert.match(deliveryContract, /never changes.*delivered|without (?:rerendering or )?modifying/i);

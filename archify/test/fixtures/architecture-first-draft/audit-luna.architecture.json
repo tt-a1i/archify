@@ -5,44 +5,6 @@
     "title": "跨租户审计日志导出与脱敏编排服务（含异步导出、留存策略和人工复核边界）",
     "locale": "zh-CN",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "request-execution",
-        "label": "请求到导出",
-        "focus": [
-          "caller",
-          "entry",
-          "scheduler",
-          "query",
-          "redactor",
-          "writer"
-        ],
-        "note": "沿入口、排队、分段查询、脱敏与对象写出的实际调用路径阅读。"
-      },
-      {
-        "id": "policy-boundary",
-        "label": "策略与边界",
-        "focus": [
-          "policy",
-          "scheduler",
-          "redactor",
-          "writer",
-          "review"
-        ],
-        "note": "区分代码执行的策略使用、配置声明的存储与留存，以及人工复核的可选接口。"
-      },
-      {
-        "id": "outputs-notice",
-        "label": "输出与通知",
-        "focus": [
-          "writer",
-          "notifier",
-          "topic",
-          "review"
-        ],
-        "note": "查看文件结果、完成事件和人工复核请求各自的职责与实现状态。"
-      }
-    ],
     "output": "audit-luna.html"
   },
   "components": [

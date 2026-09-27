@@ -67,7 +67,6 @@ test('Semantic Lens is shareable and yields cleanly to stronger reader intent', 
   assert.match(html, /Archify\.semanticLens\.clear\(\{ updateUrl: false/);
   assert.match(html, /Archify\.focus\.clear\(\{ updateUrl: false, preserveView: true \}\)/);
   assert.match(html, /Archify\.routeProbe\.clear\(\{ updateUrl: false, restoreFocus: false \}\)/);
-  assert.match(html, /Archify\.guidedViews\.showAll\(\{ clearFocus: false, updateUrl: false \}\)/);
   assert.match(html, /if \(action === 'lens'\) return Archify\.semanticLens\.open\(\)/);
   assert.match(html, /e\.key === 'l' \|\| e\.key === 'L'/);
   assert.match(html, /e\.key === 'Escape' && Archify\.semanticLens\.isOpen\(\)/);

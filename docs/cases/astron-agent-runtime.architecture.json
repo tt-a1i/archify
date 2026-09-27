@@ -9,27 +9,7 @@
     "repository": {
       "url": "https://github.com/iflytek/astron-agent",
       "revision": "a77c92a9dcd15dc55f5c2b19f778e643cb2e41f1"
-    },
-    "views": [
-      {
-        "id": "chat-path",
-        "label": "对话与工具路径",
-        "focus": ["users", "console_ui", "console_api", "agent_service", "plugin_services", "external_ai"],
-        "note": "从控制台请求进入 Agent 执行，再通过插件访问外部模型、讯飞能力与 RPA 执行器。"
-      },
-      {
-        "id": "workflow-path",
-        "label": "工作流执行路径",
-        "focus": ["console_api", "workflow_service", "knowledge_service", "plugin_services", "event_bus"],
-        "note": "管理 API 调用工作流服务；知识节点、插件节点与 Kafka 事件承担分支能力。"
-      },
-      {
-        "id": "state-boundary",
-        "label": "租户与状态边界",
-        "focus": ["tenant_service", "console_api", "agent_service", "workflow_service", "knowledge_service", "state_storage"],
-        "note": "租户服务提供空间隔离；核心服务通过数据库、Redis 与 MinIO 保存结构化状态、会话和文件。"
-      }
-    ]
+    }
   },
   "components": [
     {

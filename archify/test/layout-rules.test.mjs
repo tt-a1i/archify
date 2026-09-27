@@ -1317,7 +1317,8 @@ test('architecture: measured auto canvases opt into height-aware reader fitting'
   assert.equal(pinned.code, 0, pinned.stderr);
   const authoredSvg = fs.readFileSync(pinned.outPath, 'utf8').match(/<svg\b[^>]*>/)?.[0];
   assert.ok(authoredSvg, 'expected an SVG root for the authored canvas');
-  assert.doesNotMatch(authoredSvg, /data-reader-fit=/);
+  assert.match(authoredSvg, /data-reader-fit="authored-height"/);
+  assert.match(authoredSvg, /data-diagram-type="architecture"/);
   assert.doesNotMatch(authoredSvg, /data-reader-min-text=/);
 });
 
@@ -1872,15 +1873,26 @@ test('architecture: automatic reciprocal adjacent routes keep the showcase inter
     !('route' in connection) && !('via' in connection) && !('fromSide' in connection) && !('toSide' in connection)
   )));
 
-  const { code, stderr, outPath } = render('architecture', doc);
-  assert.equal(code, 0, stderr);
-  const html = fs.readFileSync(outPath, 'utf8');
-  for (const id of ['request-envelope', 'json-response']) {
-    const encoded = html.match(new RegExp(
-      `data-edge-id="${id}" data-composition-points="([^"]+)"`,
-    ))?.[1];
-    assert.ok(encoded, `expected rendered composition points for ${id}`);
-    const points = encoded.split(';').map((point) => point.split(',').map(Number));
+  // The route remains valid, but these full labels do not fit a 60px gap.
+  // Inspect geometry even on failure instead of accepting detached labels.
+  const input = path.join(tmp, 'reciprocal-label-gap.json');
+  fs.writeFileSync(input, JSON.stringify({ ...doc, meta: { ...doc.meta, output: 'reciprocal.html' } }));
+  let report;
+  try {
+    execFileSync('node', [path.join(skillRoot, 'bin/archify.mjs'), 'validate', 'architecture', input, '--layout-json'], { encoding: 'utf8' });
+    assert.fail('crowded labels must be rejected');
+  } catch (error) {
+    assert.equal(error.status, 1);
+    report = JSON.parse(error.stdout);
+  }
+  assert.ok(report.diagnostics.length > 0);
+  assert.ok(report.diagnostics.every(issue => issue.code === 'composition/label-gap'
+    || issue.code === 'composition/label-route-clearance'
+    || /^Label ".*" overlaps component /.test(issue.message)), JSON.stringify(report.diagnostics));
+  for (const [index, { id }] of doc.connections.entries()) {
+    const points = report.connections[index]?.points;
+    assert.ok(points, `expected composition points for ${id}`);
+    const encoded = JSON.stringify(points);
     const interiorLengths = points.slice(1, -2).map((point, index) => (
       Math.abs(point[0] - points[index + 2][0]) + Math.abs(point[1] - points[index + 2][1])
     ));

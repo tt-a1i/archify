@@ -13,6 +13,8 @@ const chromePath = chromeConfigured ? findChrome() : null;
 if (chromeConfigured && !chromePath) {
   throw new Error(`ARCHIFY_CHROME does not resolve to an executable browser: ${process.env.ARCHIFY_CHROME}`);
 }
+// Full edge labels have real room: caller/listener gap 90px and
+// queue/worker gap 105px. Readability must not rely on detached label masks.
 const fixtureJson = path.join(root, 'test/fixtures/reader-readability/synthetic-wide.architecture.json');
 
 test('declared wide synthetic reader preserves geometry and reaches edge/node readability', {
@@ -31,12 +33,12 @@ test('declared wide synthetic reader preserves geometry and reaches edge/node re
     const svgEnd = artifactSource.indexOf('</svg>', svgStart) + '</svg>'.length;
     assert.ok(svgStart >= 0 && svgEnd > svgStart, 'generated artifact must contain a canonical SVG');
     const canonicalSvg = artifactSource.slice(svgStart, svgEnd);
-    assert.match(canonicalSvg, /viewBox="0 0 1348 706"/);
+    assert.match(canonicalSvg, /viewBox="0 0 1428 706"/);
     const tallArtifact = path.join(scratch, 'synthetic-wide-tall.html');
     // With the fixture's 9px minimum label, 2300x1600 yields 1946.67px of
     // reader width, below the 1984px viewport reserve but above the 1920px
     // new-wide cap. This keeps the explicit legacy-width guard meaningful.
-    fs.writeFileSync(tallArtifact, artifactSource.replace('viewBox="0 0 1348 706"', 'viewBox="0 0 2300 1600"'));
+    fs.writeFileSync(tallArtifact, artifactSource.replace('viewBox="0 0 1428 706"', 'viewBox="0 0 2300 1600"'));
 
     const browser = new ChromeVisualBrowser(chromePath);
     try {
@@ -103,7 +105,10 @@ test('declared wide synthetic reader preserves geometry and reaches edge/node re
             edgeFinite: edge.length > 0 && edge.every(Number.isFinite),
             nodeFinite: node.length > 0 && node.every(Number.isFinite),
             overflowX: Math.max(html.scrollWidth, document.body.scrollWidth) > innerWidth,
-            overflowY: Math.max(html.scrollHeight, document.body.scrollHeight) > innerHeight + 1,
+            // Bottom notes and index sit below the fold by design.
+            overflowY: Math.max(html.scrollHeight, document.body.scrollHeight) - (html.getAttribute('data-reader-rail') === 'bottom'
+              ? document.getElementById('reader-rail').getBoundingClientRect().height + parseFloat(getComputedStyle(document.getElementById('reader-rail')).marginTop)
+              : 0) > innerHeight + 1,
             theme: html.getAttribute('data-theme'), motion: html.getAttribute('data-motion'),
             motionMode: Archify.motionGovernor.mode(), detailLevel: container.getAttribute('data-detail-level'),
             cameraScale: camera.scale, cameraMode: camera.mode,
@@ -141,7 +146,7 @@ test('declared wide synthetic reader preserves geometry and reaches edge/node re
           assert.ok(Number.isFinite(state.chromeIntersectionArea));
           assert.ok(state.chromeStageIntersectionArea <= 0, JSON.stringify(state));
           assert.ok(state.chromeIntersectionArea <= 0, JSON.stringify(state));
-          assert.equal(state.geometry[0], '0 0 1348 706');
+          assert.equal(state.geometry[0], '0 0 1428 706');
           if (state.overflowY) assert.equal(state.overflow, 'authored', JSON.stringify(state));
           if (width === 1440) assert.ok(state.receipt.width >= 1294, JSON.stringify(state));
           await stable();

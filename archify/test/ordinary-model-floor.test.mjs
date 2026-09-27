@@ -46,9 +46,6 @@ function renameCandidateIds(candidate, mapping) {
   for (const boundary of candidate.boundaries || []) {
     boundary.wraps = boundary.wraps.map((id) => mapping.get(id) || id);
   }
-  for (const view of candidate.meta?.views || []) {
-    view.focus = view.focus.map((id) => mapping.get(id) || id);
-  }
   return candidate;
 }
 
@@ -483,9 +480,6 @@ test('benchmark semantic requirements bind by accepted technical labels instead 
   source.connections.find(
     (connection) => connection.from === 'service-api-v1' && connection.to === 'redis-cache-v1',
   ).label = 'cache read-through GET / SET';
-  for (const view of source.meta.views || []) {
-    view.focus = view.focus.map((id) => rename.get(id) || id);
-  }
   for (const boundary of source.boundaries || []) {
     boundary.wraps = boundary.wraps.map((id) => rename.get(id) || id);
   }
@@ -894,67 +888,49 @@ test('benchmark documentation locks the fair-run and truthful-evidence contract'
   }
 });
 
-test('packaged skill puts a bounded ordinary-model path before progressive feature references', () => {
-  const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');
-  const authoringDefaults = fs.readFileSync(path.join(skillRoot, 'references', 'authoring-defaults.md'), 'utf8');
-  const authoring = fs.readFileSync(path.join(skillRoot, 'references', 'authoring-contract.md'), 'utf8');
-  const viewer = fs.readFileSync(path.join(skillRoot, 'references', 'viewer-runtime.md'), 'utf8');
+test('packaged skill keeps first-draft rules inline and repair contracts behind reachable triggers', () => {
+  const read = (file) => fs.readFileSync(path.join(skillRoot, file), 'utf8');
+  const skill = read('SKILL.md');
+  const defaults = read('references/authoring-defaults.md');
+  const authoring = read('references/authoring-contract.md');
+  const delivery = read('references/delivery-contract.md');
+  const repository = read('references/repository-authoring.md');
+  const fastPath = skill.slice(skill.indexOf('## Fast authoring path'), skill.indexOf('## Update awareness'));
   assert.match(skill, /## Existing candidate handoff[\s\S]*run `finalize` first as one CLI invocation/);
-  assert.match(skill, /After editing, omit any earlier `--candidate-sha256`/);
-  const fastPath = skill.indexOf('## Fast authoring path');
-  // A diagnosed repair may link to a reference inside the fast path. Bound
-  // the contract by its next section, not by the first inline link.
-  const fastPathEnd = skill.indexOf('## Type router', fastPath);
-
-  assert.ok(fastPath > 0, 'fast authoring path must exist');
-  assert.ok(fastPathEnd > fastPath, 'fast authoring path must precede the type router');
-  assert.ok(skill.trimEnd().split('\n').length <= 160, 'ordinary authors must not ingest the viewer catalogue');
-  for (const required of [
-    'exact paths in the Type router',
-    'do not list `schemas/` or `examples/` first',
-    'once requested scope and source evidence are covered, write the candidate directly',
-    'do not plan coordinates in prose',
-    'Fresh authorship means new IDs, domain wording, and layout',
-    'let the renderer route every connection',
-    'omit `via`, `route`, `fromSide`, `toSide`, `channelX`, `channelY`, `labelAt`, `labelDx`, `labelDy`, and `labelSegment`',
-    'Add the smallest control only after a measured diagnostic',
-    'Set `meta.quality_profile` to `"showcase"`',
-    'Once the complete first candidate is written, run `finalize` directly',
-    'Keep the candidate unchanged while the command runs',
-    'A passing validation returns `candidateFrozen: true`',
-    'A receipt with only 4 artifact checks is basic validation',
-    'require all 9 checks with 0 composition errors and 0 warnings',
-    'Fix `meta.quality_profile` before geometry',
-    'finalize <type> <candidate.json> <output.html> --quality showcase --json',
-    'successful first drafts need no separate pre-validation',
-    'Do not read its full sidecar or rerun individual commands afterward',
-    'A non-zero exit is never success',
-    'Do not read `bin/` implementation',
-    'not prose coordinate exploration or whole-candidate replacement',
-    'After the edit, rerun the complete `finalize` command from step 4 once',
-  ]) {
-    assert.match(
-      skill.slice(fastPath, fastPathEnd),
-      new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
-    );
+  assert.match(fastPath, /exact schema and example paths in the Type router without listing their directories/);
+  assert.match(fastPath, /references\/authoring-defaults\.md/);
+  assert.match(fastPath, /bounded batch separate from project documents and complete schemas/);
+  assert.match(fastPath, /recover any missing section before writing/);
+  assert.match(fastPath, /write the complete candidate directly without planning coordinates in prose/);
+  assert.match(fastPath, /Set `meta\.quality_profile` to `"showcase"`/);
+  assert.match(fastPath, /successful first drafts need no separate pre-validation/);
+  assert.match(fastPath, /Keep the candidate unchanged while the command runs/);
+  assert.match(fastPath, /finalize <type> <candidate\.json> <output\.html> --repo-root <repo-root> --quality showcase --json/);
+  assert.match(fastPath, /standalone commands only for a separate request or focused failure diagnosis/);
+  assert.match(fastPath, /A non-zero exit is never success/);
+  assert.match(fastPath, /references\/delivery-contract\.md#failed-finalize-and-candidate-repair/);
+  const repair = delivery.match(/## Failed finalize and candidate repair[\s\S]*?(?=\n## |$)/)?.[0] ?? '';
+  assert.match(repair, /candidateFrozen: true/);
+  assert.match(repair, /--candidate-sha256/);
+  assert.match(repair, /fresh `--out-dir/);
+  assert.match(repair, /all nine checks, zero composition errors, and zero warnings/);
+  assert.match(repair, /two focused repairs[\s\S]*one evidence-based retry/);
+  assert.match(defaults, /default to a system overview/);
+  assert.match(defaults, /There is no node, edge, source, card, or boundary quota/);
+  assert.match(defaults, /Start with automatic routes and endpoint sides/);
+  assert.match(defaults, /Pin a side only for a necessary branch, return, or supplied geometry/);
+  assert.match(defaults, /Before writing positions[\s\S]*6\.5px × ASCII units \+ 21px/);
+  assert.match(defaults, /9px[\s\S]*5\.4px × text units \+ 8px/);
+  assert.match(defaults, /card alone cannot qualify an otherwise unconditional arrow/);
+  assert.match(repository, /local-only[\s\S]*SSH origin, unsupported forge/);
+  assert.match(repository, /actual write or execution\s+site and the conditions/);
+  for (const instructions of [skill, defaults]) {
+    assert.doesNotMatch(instructions, /(?:at most|no more than|maximum of|cap(?:ped)? at|limit(?:ed)? to)\s+\d+\s+(?:nodes?|components?|relationships?)/i);
   }
-  assert.doesNotMatch(skill.slice(fastPath, fastPathEnd), /Then run exactly one `validate/);
-  assert.match(skill.slice(fastPath, fastPathEnd), /references\/authoring-defaults\.md/);
-  assert.match(skill, /real system determine the number of nodes and relationships/i);
-  assert.match(skill, /Never use node, relationship, source-reference, view, card, or boundary counts as an authoring target/i);
-  assert.match(authoringDefaults, /Let the real system determine node and relationship counts/i);
-  assert.match(authoringDefaults, /never target a total reference count/i);
-  for (const instructions of [skill, authoringDefaults]) {
-    assert.doesNotMatch(
-      instructions,
-      /(?:at most|no more than|maximum of|cap(?:ped)? at|limit(?:ed)? to)\s+\d+\s+(?:nodes?|components?|relationships?)/i,
-      'authoring instructions must not impose a fixed topology quota',
-    );
-  }
-  assert.match(authoringDefaults, /A recoverable state uses `type: "failure"` plus a real transition back to the active state/);
+  assert.match(defaults, /recoverable failure needs a real transition back/);
   assert.match(authoring, /componentType/);
   assert.match(authoring, /clear gap between boxes, not center distance/i);
-  assert.match(viewer, /Direct Relationship Pin/);
+  assert.match(read('references/viewer-runtime.md'), /Direct Relationship Pin/);
 });
 
 test('dated three-model evidence retains every frozen attempt-1 candidate and truthful gate result', () => {

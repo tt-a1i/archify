@@ -159,7 +159,7 @@ function validBrowserEvidence(receipt) {
         && entry.resolvedTheme === expected.theme);
 }
 
-function validDeliveryValidation(receipt, quality) {
+function validDeliveryValidation(receipt, quality, { allowShowcaseWarnings = false } = {}) {
   const validation = receipt?.validation;
   return isReceiptObject(validation)
     && Number.isInteger(validation.checkCount)
@@ -168,10 +168,10 @@ function validDeliveryValidation(receipt, quality) {
     && validation.compositionStatus === 'pass'
     && validation.errors === 0
     && validation.compositionProfile === quality
-    && (quality !== 'showcase' || validation.warnings === 0);
+    && (quality !== 'showcase' || allowShowcaseWarnings || validation.warnings === 0);
 }
 
-function validStageReceipt(stage, receipt, quality) {
+function validStageReceipt(stage, receipt, quality, options) {
   if (!isReceiptObject(receipt) || receipt.ok !== true) return false;
   if (receipt.status && receipt.status !== 'pass') return false;
   if (stage === 'validate') return receipt.command === 'validate' && Array.isArray(receipt.checks);
@@ -182,7 +182,7 @@ function validStageReceipt(stage, receipt, quality) {
       && isReceiptObject(receipt.specification)
       && validIdentity(receipt.specification)
       && validIdentity(receipt.artifact)
-      && validDeliveryValidation(receipt, quality);
+      && validDeliveryValidation(receipt, quality, options);
   }
   if (stage === 'check') {
     return validIdentity(receipt.artifact)
@@ -219,6 +219,35 @@ function identityMismatchDiagnostic({ stage, expected, actual, expectedReceiptId
     },
     supportedFixes: ['finish other delivery attempts for this output, then rerun finalize from the frozen candidate'],
   };
+}
+
+function showcaseWarningDiagnostics(receipt) {
+  const issues = receipt.validation.compositionIssues;
+  const warnings = receipt.validation.warnings;
+  if (!Array.isArray(issues) || issues.length !== warnings
+      || !issues.every((issue) => isReceiptObject(issue)
+        && issue.severity === 'warning'
+        && typeof issue.code === 'string'
+        && issue.code.startsWith('composition/')
+        && typeof issue.detail === 'string' && issue.detail.trim())) {
+    return [{
+      code: 'finalize/showcase-warnings', severity: 'error',
+      message: `Showcase delivery reported ${warnings} composition warning(s), but did not provide matching issue details.`,
+      subject: { stage: 'deliver', check: 'composition' },
+      evidence: { warnings, reportedIssues: Array.isArray(issues) ? issues.length : null },
+      supportedFixes: ['run validate on the frozen candidate to inspect the composition warnings, repair them, then rerun finalize'],
+    }];
+  }
+  return issues.map((issue) => {
+    const { code, severity, detail, ...evidence } = issue;
+    return {
+      code, severity: 'error',
+      message: `Showcase delivery reported ${code}; zero warnings are required.`,
+      subject: { stage: 'deliver', check: 'composition', ...(issue.nodeId ? { nodeId: issue.nodeId } : {}) },
+      evidence: { reportedSeverity: severity, ...evidence },
+      supportedFixes: [detail.replace(/^\[[^\]]+\]\s*/, '')],
+    };
+  });
 }
 
 function stageBindingDiagnostic({ stage, receipt, expectedArtifact, expectedReceiptId, output, specification, type, deliveryValidation }) {
@@ -437,6 +466,28 @@ function reservedFinalizePaths({ input, output, outDir, deliveryPaths }) {
   return [path.resolve(input), path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
 }
 
+// Node moves that remove the measured crossings and detours, most specific
+// first. Only positions and sizes change; every relationship keeps its endpoints.
+function placementHints({ crossings = [], detours = [], crowdedSides = [] }) {
+  const name = (relation) => `${relation.from} → ${relation.to}`;
+  const other = (relation, shared) => (relation.from === shared ? relation.to : relation.from);
+  const hints = [];
+  for (const side of crowdedSides) {
+    hints.push(`${side.node} has ${side.relationships} relationships facing its ${side.side} side, which fits ${Math.max(1, Math.floor((side.sidePx - 32) / 14) + 1)} ports: make that side at least ${side.neededPx}px, or move some of those neighbours so they face another side of ${side.node}.`);
+  }
+  for (const crossing of crossings) {
+    const shared = crossing.sharedNode;
+    hints.push(shared
+      ? `${name(crossing.left)} and ${name(crossing.right)} cross next to ${shared}: move node ${other(crossing.left, shared)} or ${other(crossing.right, shared)} so the two reach ${shared} from different sides (for example one level with it, one directly above or below it).`
+      : `${name(crossing.left)} crosses ${name(crossing.right)}: move the node of whichever is a branch, return, or second entrance to the other side of the main path, so that relationship runs through an empty corridor.`);
+  }
+  for (const detour of detours) {
+    if (detour.directCorridorBlockers?.length) continue;
+    hints.push(`${name(detour.relationship)} needs ${detour.bends} bends: move node ${detour.relationship.from} or ${detour.relationship.to} so they share a row or column with matching centers, or sit diagonally with a clear corner.`);
+  }
+  return [...new Set(hints)].slice(0, 8);
+}
+
 export function compactFinalizeReceipt(receipt) {
   const gates = {};
   for (const stage of FINALIZE_STAGES) gates[stage] = receipt.stages?.[stage]?.status || 'not-run';
@@ -502,11 +553,45 @@ export function compactFinalizeReceipt(receipt) {
     visualReview: receipt.visualReview || 'not-requested',
     durationMs: receipt.durationMs,
   };
+  const metrics = receipt.stages?.check?.receipt?.composition?.metrics;
+  const reviewSignals = Object.fromEntries([
+    'resolvedCrossovers', 'routesOverSuggestedBends', 'routesOverSuggestedStretch',
+  ].filter((key) => Number.isFinite(metrics?.[key]) && metrics[key] > 0)
+    .map((key) => [key, metrics[key]]));
+  if (receipt.ok && Object.keys(reviewSignals).length) {
+    const routeReview = receipt.stages?.check?.receipt?.composition?.routeReview;
+    const hints = routeReview ? placementHints(routeReview) : [];
+    compact.visualReviewRecommendation = {
+      action: 'inspect-route-readability',
+      signals: reviewSignals,
+      reason: 'Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.',
+      ...(routeReview ? {
+        affectedRoutes: {
+          crossings: routeReview.crossings.slice(0, 8),
+          detours: routeReview.detours.slice(0, 8),
+          truncated: routeReview.crossings.length > 8 || routeReview.detours.length > 8,
+        },
+        ...(hints.length ? { hints } : {}),
+        repair: 'Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit.',
+      } : {}),
+    };
+  }
+  const leadingSpace = receipt.stages?.check?.receipt?.composition?.leadingSpace;
+  if (receipt.ok && leadingSpace?.reviewSuggested === true) {
+    compact.layoutReviewRecommendation = {
+      action: 'inspect-leading-space',
+      evidence: leadingSpace,
+      reason: 'Measured content, including routes and labels, leaves a large empty area above the diagram. This is a composition suggestion, not a failed gate.',
+      repair: 'Check whether that leading space is intentional. If not, reposition the connected scene nearer the canvas origin while retaining room for its actual boundaries, labels and return routes. Preserve all meaning and user-fixed geometry, then rerun finalize. No screenshot is required.',
+    };
+  }
   if (!receipt.ok && receipt.status === 'fail' && receipt.failedStage === 'validate') {
     compact.nextAction = {
       action: 'edit-in-place',
       candidate: receipt.specification?.path,
-      constraint: 'Preserve unaffected semantics and geometry; do not replace the whole candidate.',
+      constraint: receipt.type === 'architecture'
+        ? 'Preserve all semantics and user-fixed geometry. Use references/architecture-layout-repair.md to choose a local repair or connected-scene reflow; edit the existing candidate.'
+        : 'Preserve unaffected semantics and geometry; do not replace the whole candidate.',
       then: 'finalize-once',
     };
   }
@@ -666,6 +751,14 @@ export async function runFinalize({
           deliveryValidation: deliveryReceipt?.validation,
         });
         if (bindingDiagnostic) stageDiagnostics = [bindingDiagnostic];
+      } else if (stage === 'deliver' && code === 0 && quality === 'showcase'
+          && Number.isSafeInteger(stageReceipt?.validation?.warnings)
+          && stageReceipt.validation.warnings > 0
+          && validStageReceipt(stage, stageReceipt, quality, { allowShowcaseWarnings: true })) {
+        const bindingDiagnostic = stageBindingDiagnostic({
+          stage, receipt: stageReceipt, output: resolvedOutput, specification, type,
+        });
+        stageDiagnostics = bindingDiagnostic ? [bindingDiagnostic] : showcaseWarningDiagnostics(stageReceipt);
       }
       if (stageDiagnostics) {
         status = 'fail';

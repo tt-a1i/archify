@@ -39,6 +39,7 @@
       var relationshipHitTargets = [];
       var directPreviewTimer = null;
       var lensDrag = null;
+      var lensDragClickPointer = null;
       var manualLensPosition = null;
       var reachabilityMode = null;
       var activeReachability = null;
@@ -178,9 +179,6 @@
         }
         var result = reachabilityFor(activeIds[0], direction);
         if (!result || result.nodeIds.length <= 1) return false;
-        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false, resetView: false });
-        }
         clearRelationshipPreview({ clearPin: true });
         clearReachability({ updateUrl: false });
         reachabilityMode = direction;
@@ -753,11 +751,9 @@
           html.getAttribute('data-guide-open') === 'true' ||
           container.classList.contains('is-panning') ||
           (activeIds.length > 0 && !pinnedRelationshipKey) ||
-          svg.hasAttribute('data-story-active') ||
           svg.hasAttribute('data-route-picking') ||
           svg.hasAttribute('data-route-active') ||
-          svg.hasAttribute('data-lens-active') ||
-          svg.hasAttribute('data-chapter-preview');
+          svg.hasAttribute('data-lens-active');
       }
       function scheduleDirectRelationshipPreview(target) {
         if (directPreviewTimer) window.clearTimeout(directPreviewTimer);
@@ -796,9 +792,6 @@
         }
         var record = relationshipRecordForKey(key);
         if (!record) return false;
-        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false });
-        }
         set(record.from, { toggle: false, updateUrl: false });
         var row = Array.prototype.slice.call(relationshipList.querySelectorAll('[data-relationship-key]')).find(function (candidate) {
           return candidate.getAttribute('data-relationship-key') === key;
@@ -1116,6 +1109,7 @@
         event.stopPropagation();
         var activeDrag = lensDrag;
         lensDrag = null;
+        if (activeDrag.moved) lensDragClickPointer = activeDrag.pointerId;
         chip.removeAttribute('data-panel-dragging');
         try { moveBtn.releasePointerCapture(event.pointerId); } catch (_) {}
         if (!cancel) return;
@@ -1370,7 +1364,7 @@
         svg.setAttribute('data-focus-active', normalized.join(' '));
         var defaultLabel = normalized.length === 1
           ? nodeLabel(byId[normalized[0]], normalized[0])
-          : viewerText('viewer.guided.chapter.selectedNodes', { count: normalized.length });
+          : viewerText('viewer.focus.selectedNodes', { count: normalized.length });
         label.textContent = options.label || defaultLabel;
         chip.hidden = options.hideChip === true || normalized.length !== 1 || selectionMode;
         if (!chip.hidden) {
@@ -1478,9 +1472,6 @@
         var button = event.target.closest('[data-relationship-target]');
         if (!button) return;
         var id = button.getAttribute('data-relationship-target');
-        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false });
-        }
         set(id, { toggle: false });
         if (Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal([id], { includeNeighbors: true, reason: 'relationship' });
@@ -1529,7 +1520,20 @@
         event.preventDefault();
         buttons[index].focus();
       });
+      document.addEventListener('pointerdown', function () {
+        lensDragClickPointer = null;
+      }, true);
       document.addEventListener('click', function (event) {
+        // Losing capture (for example when a resize hides the handle) can
+        // retarget this drag's final click to the page. It is not dismissal.
+        // A new pointerdown releases the guard; keyboard clicks remain live.
+        if (lensDragClickPointer != null && event.detail > 0 &&
+            (event.pointerId == null || event.pointerId === lensDragClickPointer)) {
+          lensDragClickPointer = null;
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
@@ -1571,7 +1575,7 @@
               applyReachability(reach, { updateUrl: false, toggle: false, reveal: false });
             }
           }
-          else if (!params.get('view')) clear({ updateUrl: false });
+          else clear({ updateUrl: false });
         } catch (_) {}
       }
 

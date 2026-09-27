@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   FINALIZE_STAGES,
@@ -262,6 +264,86 @@ test('compact finalize receipts preserve the acceptance boundary', () => {
   assert.equal('nextAction' in compact, false);
 });
 
+test('compact success retains route-quality review signals without claiming perceptual approval', () => {
+  const compact = compactFinalizeReceipt({
+    ok: true, status: 'pass', diagnostics: [],
+    stages: { check: { status: 'pass', receipt: { composition: { metrics: {
+      resolvedCrossovers: 12, routesOverSuggestedBends: 11, routesOverSuggestedStretch: 0,
+    } } } } },
+  });
+  assert.equal(compact.ok, true);
+  assert.equal(compact.visualReview, 'not-requested');
+  assert.deepEqual(compact.visualReviewRecommendation.signals, { resolvedCrossovers: 12, routesOverSuggestedBends: 11 });
+  assert.equal(compact.visualReviewRecommendation.action, 'inspect-route-readability');
+  const uncomplicated = compactFinalizeReceipt({ ok: true, stages: { check: { receipt: { composition: { metrics: {
+    resolvedCrossovers: 0, routesOverSuggestedBends: 0, routesOverSuggestedStretch: 0,
+  } } } } } });
+  assert.equal('visualReviewRecommendation' in uncomplicated, false);
+});
+
+test('compact leading-space advice preserves successful gates and optional visual review', () => {
+  const leadingSpace = { occupiedTop: 181, emptyTopPx: 181, canvasHeight: 576,
+    emptyTopRatio: 181 / 576, reviewSuggested: true };
+  const receipt = { ok: true, status: 'pass', diagnostics: [], stages: {
+    check: { status: 'pass', receipt: { composition: { leadingSpace } } },
+  } };
+  const compact = compactFinalizeReceipt(receipt);
+  assert.equal(compact.status, 'pass');
+  assert.equal(compact.gates.check, 'pass');
+  assert.deepEqual(compact.diagnostics, []);
+  assert.equal(compact.visualReview, 'not-requested');
+  assert.equal(compact.layoutReviewRecommendation.action, 'inspect-leading-space');
+  assert.deepEqual(compact.layoutReviewRecommendation.evidence, leadingSpace);
+  assert.match(compact.layoutReviewRecommendation.repair, /user-fixed geometry/);
+  assert.match(compact.layoutReviewRecommendation.repair, /No screenshot is required/);
+  leadingSpace.reviewSuggested = false;
+  assert.equal('layoutReviewRecommendation' in compactFinalizeReceipt(receipt), false);
+  leadingSpace.reviewSuggested = true;
+  assert.equal('layoutReviewRecommendation' in compactFinalizeReceipt({ ...receipt, ok: false, status: 'fail' }), false);
+});
+
+test('compact success bounds review context and preserves relationship identity', () => {
+  const crossings = Array.from({ length: 10 }, (_, index) => ({ left: { id: `edge-${index}` }, right: { id: 'hub' }, point: [index, 50] }));
+  const detours = [{ relationship: { id: 'return', from: 'worker', to: 'api' }, bends: 4, stretch: 1.5,
+    directCorridorBlockers: [{ id: 'store', label: 'Shared store', box: [100, 40, 80, 50] }],
+  }];
+  const compact = compactFinalizeReceipt({ ok: true, stages: { check: { receipt: { composition: {
+    metrics: { resolvedCrossovers: 10, routesOverSuggestedBends: 1 }, routeReview: { crossings, detours },
+  } } } } });
+  assert.deepEqual(compact.visualReviewRecommendation.affectedRoutes, {
+    crossings: crossings.slice(0, 8), detours, truncated: true,
+  });
+  assert.equal(crossings.length, 10, 'compaction does not truncate the full evidence');
+  assert.equal(compact.visualReview, 'not-requested');
+  assert.match(compact.visualReviewRecommendation.repair, /architecture-layout-repair\.md/);
+});
+
+test('compact success turns route evidence into node-move hints that keep relationships', () => {
+  const routeReview = {
+    crossings: [
+      { left: { from: 'desktop', to: 'http' }, right: { from: 'tunnel', to: 'http' }, sharedNode: 'http' },
+      { left: { from: 'teamcli', to: 'http' }, right: { from: 'runtime', to: 'sqlite' } },
+    ],
+    crowdedSides: [{ node: 'app', side: 'right', relationships: 4, sidePx: 70, neededPx: 74 }],
+    detours: [
+      { relationship: { from: 'registry', to: 'shim' }, bends: 3 },
+      { relationship: { from: 'worker', to: 'api' }, bends: 4, directCorridorBlockers: [{ id: 'store' }] },
+    ],
+  };
+  const { hints } = compactFinalizeReceipt({ ok: true, stages: { check: { receipt: { composition: {
+    metrics: { resolvedCrossovers: 2, routesOverSuggestedBends: 2 }, routeReview,
+  } } } } }).visualReviewRecommendation;
+  assert.equal(hints.length, 4, 'a detour with named corridor blockers keeps its existing repair path');
+  assert.match(hints[0], /app has 4 relationships facing its right side, which fits 3 ports: make that side at least 74px/);
+  assert.match(hints[1], /move node desktop or tunnel so the two reach http from different sides/);
+  assert.match(hints[2], /teamcli → http crosses runtime → sqlite/);
+  assert.match(hints[3], /move node registry or shim/);
+  assert.ok(hints.every((hint) => !/endpoint/.test(hint)), 'hints move nodes, never re-attach relationships');
+  assert.equal('hints' in compactFinalizeReceipt({ ok: true, stages: { check: { receipt: { composition: {
+    metrics: { resolvedCrossovers: 1 }, routeReview: { crossings: [], detours: [] },
+  } } } } }).visualReviewRecommendation, false);
+});
+
 test('compact failure receipts retain diverse actionable subjects without embedding full stage evidence', () => {
   const diagnostics = Array.from({ length: 20 }, (_, index) => ({
     code: 'composition/proper-crossing',
@@ -292,6 +374,8 @@ test('compact failure receipts retain diverse actionable subjects without embedd
   assert.equal(new Set(compact.diagnostics.map(({ subject }) => subject.id)).size, 8);
   assert.deepEqual(compact.diagnosticSummary, { total: 20, shown: 8, truncated: true });
   assert.equal(compact.nextAction.action, 'edit-in-place');
+  assert.match(compact.nextAction.constraint, /Preserve all semantics and user-fixed geometry/);
+  assert.match(compact.nextAction.constraint, /local repair or connected-scene reflow/);
   assert.equal('stages' in compact, false);
   assert.ok(JSON.stringify(compact).length < JSON.stringify(receipt).length / 4);
 });
@@ -391,6 +475,137 @@ test('finalize fails closed when a stage exits zero without a valid passing rece
     assert.equal(finalized.receipt.failedStage, 'deliver');
     assert.equal(finalized.summary.diagnostics[0].code, 'finalize/invalid-stage-receipt');
   }
+});
+
+test('showcase delivery warnings name the checker issue without advancing to later gates', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'diagram.json');
+  const output = path.join(directory, 'diagram.html');
+  const source = '{"meta":{"quality_profile":"showcase"}}';
+  fs.writeFileSync(input, source);
+  const calls = [];
+  const issue = {
+    severity: 'warning', code: 'composition/viewport-height',
+    viewBoxHeight: 700, overflowPx: 193,
+    detail: '[composition/viewport-height] Preserve every node and compact vertical spacing to fit the Reader.',
+  };
+  const finalized = await runFinalize({
+    cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+    runCommand: ({ stage }) => {
+      calls.push(stage);
+      const delivery = passingDelivery({ input, output, source });
+      delivery.validation.warnings = 1;
+      delivery.validation.compositionIssues = [issue];
+      return result(delivery);
+    },
+  });
+
+  assert.equal(finalized.exitCode, 1);
+  assert.deepEqual(calls, ['deliver']);
+  assert.equal(finalized.receipt.failedStage, 'deliver');
+  assert.equal(finalized.summary.gates.deliver, 'fail');
+  assert.equal(finalized.summary.gates.check, 'not-run');
+  assert.equal(finalized.summary.diagnostics[0].code, issue.code);
+  assert.equal(finalized.summary.diagnostics[0].evidence.overflowPx, 193);
+  assert.match(finalized.summary.diagnostics[0].supportedFixes[0], /compact vertical spacing/);
+  assert.equal(finalized.summary.diagnostics[0].evidence.reportedSeverity, 'warning');
+  assert.equal(JSON.parse(fs.readFileSync(finalized.summary.evidence.receipt)).diagnostics[0].code, issue.code);
+});
+
+test('showcase warning diagnostic never masks a mismatched delivery artifact', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'diagram.json');
+  const output = path.join(directory, 'diagram.html');
+  const source = '{}';
+  fs.writeFileSync(input, source);
+  const finalized = await runFinalize({
+    cliPath: '/fake/archify.mjs', type: 'architecture', input, output,
+    runCommand: () => {
+      const delivery = passingDelivery({ input, output, source });
+      delivery.validation.warnings = 1;
+      delivery.validation.compositionIssues = [{
+        severity: 'warning', code: 'composition/viewport-height', detail: 'Reduce height.',
+      }];
+      delivery.artifact = artifactIdentity('another artifact');
+      return result(delivery);
+    },
+  });
+  assert.equal(finalized.exitCode, 1);
+  assert.equal(finalized.summary.diagnostics[0].code, 'finalize/artifact-binding-mismatch');
+});
+
+test('showcase warning count without matching issue details still fails with a quality diagnostic', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'diagram.json');
+  const output = path.join(directory, 'diagram.html');
+  const source = '{}';
+  fs.writeFileSync(input, source);
+  const calls = [];
+  const finalized = await runFinalize({
+    cliPath: '/fake/archify.mjs', type: 'workflow', input, output,
+    runCommand: ({ stage }) => {
+      calls.push(stage);
+      const delivery = passingDelivery({ input, output, source, type: 'workflow' });
+      delivery.validation.warnings = 1;
+      delivery.validation.compositionIssues = [{ severity: 'warning', code: 'composition/viewport-height' }];
+      return result(delivery);
+    },
+  });
+  assert.equal(finalized.exitCode, 1);
+  assert.deepEqual(calls, ['deliver']);
+  assert.equal(finalized.summary.diagnostics[0].code, 'finalize/showcase-warnings');
+  assert.equal(finalized.summary.diagnostics[0].evidence.warnings, 1);
+});
+
+test('public deliver and finalize CLI propagate a real workflow viewport warning', t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'warning.workflow.json');
+  const output = path.join(directory, 'warning.html');
+  const cli = fileURLToPath(new URL('../bin/archify.mjs', import.meta.url));
+  fs.writeFileSync(input, `${JSON.stringify({
+    schema_version: 1,
+    diagram_type: 'workflow',
+    meta: {
+      title: 'Viewport warning fixture', output: 'warning.html',
+      quality_profile: 'showcase', viewBox: [1080, 780], legend: { mode: 'hidden' },
+    },
+    lanes: [{ id: 'work', label: 'Work' }],
+    nodes: [
+      { id: 'start', lane: 'work', col: 0, type: 'frontend', label: 'Start' },
+      { id: 'finish', lane: 'work', col: 2, type: 'backend', label: 'Finish' },
+    ],
+    edges: [{ id: 'flow', from: 'start', to: 'finish' }],
+  }, null, 2)}\n`);
+  const run = (command) => spawnSync(process.execPath, [
+    cli, command, 'workflow', input, ...(command === 'validate' ? [] : [output]),
+    '--quality', 'showcase', '--json',
+  ], { encoding: 'utf8', timeout: 30000 });
+
+  const validated = run('validate');
+  assert.equal(validated.status, 0, validated.stderr || validated.stdout);
+  const validation = JSON.parse(validated.stdout);
+  assert.equal(validation.checks.length, 9);
+  assert.equal(validation.checks.every((check) => check.ok), true);
+  assert.deepEqual(validation.composition.summary, { errors: 0, warnings: 1 });
+
+  const delivered = run('deliver');
+  assert.equal(delivered.status, 0, delivered.stderr || delivered.stdout);
+  const delivery = JSON.parse(delivered.stdout);
+  assert.equal(delivery.validation.checksPassed, 9);
+  assert.equal(delivery.validation.errors, 0);
+  assert.equal(delivery.validation.warnings, 1);
+  assert.equal(delivery.validation.compositionIssues.length, 1);
+  assert.equal(delivery.validation.compositionIssues[0].code, 'composition/viewport-height');
+
+  const finalized = run('finalize');
+  assert.equal(finalized.status, 1, finalized.stderr || finalized.stdout);
+  const summary = JSON.parse(finalized.stdout);
+  assert.equal(summary.failedStage, 'deliver');
+  assert.equal(summary.gates.check, 'not-run');
+  assert.equal(summary.diagnostics[0].code, 'composition/viewport-height');
+  assert.equal(summary.diagnostics[0].evidence.overflowPx, validation.composition.issues[0].overflowPx);
+  assert.match(summary.diagnostics[0].supportedFixes[0], /meta\.viewBox height/);
+  assert.equal(JSON.parse(fs.readFileSync(summary.evidence.receipt)).diagnostics[0].code, 'composition/viewport-height');
 });
 
 test('finalize rejects an interleaved delivery whose check proves another artifact and receipt', async t => {

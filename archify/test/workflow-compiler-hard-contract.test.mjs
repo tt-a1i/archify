@@ -1469,7 +1469,13 @@ test('readable-v2 reports conflicts between two absolute label pins without dele
       { edge: 'one', field: 'labelAt' },
       { edge: 'two', field: 'labelAt' },
     ]);
-    assertSupportedFixesNameChangedEdge(diagnostic, ['one', 'two']);
+    if (qualityProfile === 'standard') {
+      assertSupportedFixesNameChangedEdge(diagnostic, ['one', 'two']);
+    } else {
+      // Moving either label alone still leaves two fully coincident fixed
+      // routes. The stricter v2 contract must not advertise that as a repair.
+      assert.deepEqual(diagnostic.supportedFixes, []);
+    }
     assert.doesNotMatch(diagnostic.supportedFixes.join('\n'), /remove (?:one |the )?label(?!At)/i);
   }
 });
@@ -1982,12 +1988,6 @@ test('compileWorkflow applies the shared cross-collection contracts the renderer
     {
       expectedCode: 'relationship/duplicate-id',
       mutate: (document) => { document.edges[1].id = document.edges[0].id; },
-    },
-    {
-      expectedCode: 'guided-view/invalid',
-      mutate: (document) => {
-        document.meta.views = [{ id: 'view', label: 'View', focus: ['missing'] }];
-      },
     },
   ]) {
     const document = validationParityWorkflow();

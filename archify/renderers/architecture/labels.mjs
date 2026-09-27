@@ -1,9 +1,10 @@
-import { normalizeRoutePoints, rectsOverlap, segmentRectClearance } from '../shared/geometry.mjs';
+import { normalizeRoutePoints, rectsOverlap, segmentRectClearanceWithin } from '../shared/geometry.mjs';
+import { createSpatialGrid } from '../shared/spatial-grid.mjs';
 
 // A bounded fallback for an unpinned label whose usual position collides.
 // It never routes an edge, moves a node, expands the canvas, or rewrites input.
 export function placeAutomaticLabels({
-  labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true,
+  labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
 }) {
   const placed = [...labels];
   const obstacles = [...components, ...titles];
@@ -15,8 +16,29 @@ export function placeAutomaticLabels({
     rect.x >= 0 && rect.y >= 0
     && rect.x + rect.width <= viewBox[0] && rect.y + rect.height <= viewBox[1]
   );
-  const masksRoute = rect => segments.some(segment => segment.relationIndex !== rect.relationIndex
-    && segmentRectClearance(segment, rect) + 0.0001 < 4);
+  // The mask test asked every segment about every candidate position. Segments
+  // go into a uniform grid once, and a candidate only asks the cells it covers.
+  const SEGMENT_CELL = 120;
+  const segmentGrid = createSpatialGrid(SEGMENT_CELL);
+  for (const segment of segments) {
+    const [sx, sy] = segment.start;
+    const [ex, ey] = segment.end;
+    segmentGrid.insert({
+      minX: Math.min(sx, ex), maxX: Math.max(sx, ex),
+      minY: Math.min(sy, ey), maxY: Math.max(sy, ey),
+    }, segment);
+  }
+  const segmentsNear = (rect, margin) => segmentGrid.query({
+    minX: rect.x - margin, maxX: rect.x + rect.width + margin,
+    minY: rect.y - margin, maxY: rect.y + rect.height + margin,
+  });
+  const masksRoute = rect => {
+    for (const segment of segmentsNear(rect, 4)) {
+      if (segment.relationIndex === rect.relationIndex) continue;
+      if (segmentRectClearanceWithin(segment, rect, 4) + 0.0001 < 4) return true;
+    }
+    return false;
+  };
   const overlapsLabel = (rect, index, gap = 0) => placed.some((other, otherIndex) => (
     otherIndex !== index && rectsOverlap(rect, other, gap)
   ));
@@ -75,8 +97,10 @@ export function placeAutomaticLabels({
     // Dense but valid topologies can leave every point directly beside the
     // relationship occupied by another route. Search a small deterministic
     // ring around the current anchor and the relationship's segment centres.
-    // This keeps the label close to its edge while avoiding the hand-authored
-    // labelDx/labelDy repair loop that otherwise dominates first-draft cost.
+    // A collision-free island above a node is not a readable edge label.
+    // Architecture opts into keeping the mask within two label heights of
+    // its own route; shared callers retain their existing policy. If no nearby
+    // slot fits, retain the collision so validation can request more space.
     const ownSegments = segments.filter(segment => segment.relationIndex === label.relationIndex);
     const baseAnchors = [
       [label.lx, label.ly],
@@ -97,7 +121,9 @@ export function placeAutomaticLabels({
     ];
     const fallback = baseAnchors.flatMap(([baseX, baseY]) => (
       ringOffsets.map(([dx, dy]) => rectAt(label, baseX + dx, baseY + dy))
-    )).find(rect => clear(rect, index));
+    )).find(rect => clear(rect, index) && (!keepFallbackNearRoute || ownSegments.some(segment => (
+      segmentRectClearanceWithin(segment, rect, label.height * 2) <= label.height * 2
+    ))));
     if (fallback) placed[index] = fallback;
   }
   return placed;

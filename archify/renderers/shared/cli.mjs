@@ -4,7 +4,7 @@ import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
-import { installRendererDiagnosticBoundary, throwDiagnosticError, throwDiagnosticProblems } from './diagnostics.mjs';
+import { installRendererDiagnosticBoundary, throwDiagnosticError, throwDiagnosticProblems, recordDiagnostic } from './diagnostics.mjs';
 import { validateEngineeringProfile } from './engineering-profiles.mjs';
 import {
   resolveOutputPath,
@@ -18,11 +18,57 @@ import {
   removeOwnedRegularFile,
   verifyAtomicOutput,
 } from './atomic-output.mjs';
+import { resolveLocale, translateMessage, registerLocale, SUPPORTED_LOCALES } from './i18n.mjs';
 import { prepareDiagramBrandMarks } from './brand-marks.mjs';
-import { resolveLocale, translateMessage } from './i18n.mjs';
 
 const outputPathGuards = new Map();
 let renderCandidateSequence = 0;
+
+// meta.locale is renderer-owned Viewer UI, not authored content.
+// en and zh-CN ship as built-in catalogs.
+// Any other tag needs meta.translations (validated against the English
+// message-key set, layered over English per-key so partial/invalid entries
+// never break rendering) or it falls back to the English Viewer chrome —
+// the same "omit locale, disclose the fallback" contract as before, just
+// resolved from data instead of a hard-coded enum. See i18n.mjs.
+function applyLocaleTranslations(diagramType, diagram) {
+  const locale = diagram.meta?.locale;
+  if (!locale) return;
+  const translations = diagram.meta?.translations;
+  if (translations && Object.keys(translations).length) {
+    const report = registerLocale(locale, translations);
+    if (report.missingKeys.length || report.unknownKeys.length || report.placeholderMismatches.length) {
+      recordDiagnostic({
+        code: 'i18n/translation-coverage',
+        severity: 'warning',
+        message: `meta.translations for locale ${JSON.stringify(locale)} covers ${report.coveredKeys}/${report.totalKeys} renderer-owned messages (${Math.round(report.coverage * 100)}%); uncovered keys fall back to English.`,
+        subject: { diagramType, path: '/meta/translations' },
+        evidence: {
+          missingKeys: report.missingKeys.slice(0, 10),
+          missingKeysTotal: report.missingKeys.length,
+          unknownKeys: report.unknownKeys.slice(0, 10),
+          unknownKeysTotal: report.unknownKeys.length,
+          placeholderMismatches: report.placeholderMismatches.slice(0, 10),
+          placeholderMismatchesTotal: report.placeholderMismatches.length,
+        },
+        supportedFixes: ['Add the missing keys to meta.translations.', 'Match each translation\'s {placeholders} to the English source string.'],
+      });
+      // Coverage is a fact about this render, not just a diagnostic-mode
+      // artifact: print it to stderr unconditionally so `render`/`deliver`/
+      // `validate` disclose the fallback even without ARCHIFY_DIAGNOSTIC_FORMAT.
+      console.warn(`archify: meta.translations for locale ${JSON.stringify(locale)} covers ${report.coveredKeys}/${report.totalKeys} renderer-owned messages (${Math.round(report.coverage * 100)}%); uncovered keys fall back to English.`);
+    }
+  } else if (!SUPPORTED_LOCALES.includes(locale)) {
+    recordDiagnostic({
+      code: 'i18n/locale-fallback',
+      severity: 'warning',
+      message: `meta.locale ${JSON.stringify(locale)} has no built-in catalog and no meta.translations; the Viewer chrome and <html lang> fall back to English.`,
+      subject: { diagramType, path: '/meta/locale' },
+      supportedFixes: ['Supply meta.translations for this locale.', `Use a built-in locale: ${SUPPORTED_LOCALES.join(', ')}.`],
+    });
+    console.warn(`archify: meta.locale ${JSON.stringify(locale)} has no built-in catalog and no meta.translations; the Viewer chrome and <html lang> fall back to English.`);
+  }
+}
 
 // Common CLI head: node render-<type>.mjs [input.json] [output.html]
 // Keep this synchronous because callers also use it to establish the guarded
@@ -62,6 +108,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
   const authoredOutput = diagram?.meta?.output;
   if (authoredOutput !== undefined) validateAuthoredOutputPath(authoredOutput);
   validateSchema(diagramType, diagram);
+  applyLocaleTranslations(diagramType, diagram);
   validateCrossCollectionContracts(diagramType, diagram);
   validateEngineeringProfile(diagramType, diagram);
   const sourceEvidence = verifyRepositoryEvidence(diagramType, diagram, process.env.ARCHIFY_REPO_ROOT);
@@ -222,7 +269,6 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     cards: renderCards(cards),
     locale: meta.locale,
     visualPreset: meta.visual_preset || 'classic',
-    guidedViews: meta.views || [],
     sourceEvidence,
   });
   let candidatePath;
@@ -326,44 +372,9 @@ export function validateRelationshipIds(diagramType, diagram) {
   }
 }
 
-// JSON Schema keeps the view object bounded; this pass checks facts that span
-// collections. Keeping it here makes the same contract apply to all five
-// renderers, including the zero-install standalone-validator path.
-export function validateGuidedViews(diagramType, diagram) {
-  const views = diagram.meta?.views;
-  if (!Array.isArray(views) || views.length === 0) return;
-  const collection = SEMANTIC_COLLECTIONS[diagramType];
-  const semanticIds = new Set((diagram[collection] || []).map((item) => item.id));
-  const seen = new Set();
-  const problems = [];
-
-  views.forEach((view, index) => {
-    if (seen.has(view.id)) problems.push(`/meta/views/${index}/id duplicates view id ${JSON.stringify(view.id)}`);
-    seen.add(view.id);
-    const seenFocus = new Set();
-    (view.focus || []).forEach((id, focusIndex) => {
-      if (seenFocus.has(id)) {
-        problems.push(`/meta/views/${index}/focus/${focusIndex} duplicates semantic id ${JSON.stringify(id)}`);
-      }
-      seenFocus.add(id);
-      if (!semanticIds.has(id)) {
-        problems.push(`/meta/views/${index}/focus/${focusIndex} references unknown semantic id ${JSON.stringify(id)}`);
-      }
-    });
-  });
-
-  if (problems.length) {
-    throwDiagnosticProblems('Guided view validation failed', problems, {
-      code: 'guided-view/invalid',
-      subject: { diagramType, collection: 'meta.views' },
-    });
-  }
-}
-
-// Share relationship-ID and guided-view semantic checks between the loader
+// Share relationship-ID semantic checks between the loader
 // and workflow compiler without performing filesystem operations (see #429).
 export function validateCrossCollectionContracts(diagramType, diagram) {
-  validateGuidedViews(diagramType, diagram);
   validateRelationshipIds(diagramType, diagram);
 }
 
@@ -392,7 +403,7 @@ export function animateAttr(meta, kind, step) {
   if (meta.animation !== 'trace') return '';
   // Ambient trace must finish inside the fixed six-second WebM capture. The
   // cap affects visual delay only; authored order and semantic identity stay
-  // untouched in the JSON, DOM, Story, and relationship contracts.
+  // untouched in the JSON, DOM, and relationship contracts.
   const safeStep = Number.isFinite(step) && step >= 0 ? Math.min(12, Math.floor(step)) : 0;
   return ` data-animate="${kind}" style="--step:${safeStep}"`;
 }

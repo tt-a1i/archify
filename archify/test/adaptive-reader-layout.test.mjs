@@ -127,10 +127,14 @@ test('reader remeasures real content and reduces width before allowing desktop p
   assert.match(reader, /new MutationObserver\(schedule\)/);
   assert.match(reader, /document\.documentElement\.scrollHeight/);
   assert.match(reader, /lastWidth - overflow \* ratio - 4/);
-  assert.match(skill, /1440×900, 1600×1000, 1920×1080, and 2048×1320/);
-  assert.match(skill, /Reader-declared vertical page scroll/);
-  assert.match(skill, /Generate one responsive artifact for laptops and external displays/);
-  assert.match(skill, /preserv(?:e|ing) the authored SVG\/viewBox, proportions, semantic geometry/);
+  assert.match(skill, /Automated browser evidence\]\(delivery-contract\.md#automated-browser-evidence\)/);
+  assert.match(skill, /intrinsic-height page scroll/);
+  const delivery = fs.readFileSync(path.join(skillRoot, 'references/delivery-contract.md'), 'utf8');
+  const authoring = fs.readFileSync(path.join(skillRoot, 'references/authoring-contract.md'), 'utf8');
+  assert.match(delivery, /1440×900, 1600×1000, 1920×1080, and\s+2048×1320/);
+  assert.match(delivery, /Reader-declared readable exception/);
+  assert.match(authoring, /Generate one responsive artifact for laptops and external displays/);
+  assert.match(authoring, /preserv(?:e|ing) the authored SVG\/viewBox, proportions, semantic geometry/);
 });
 
 test('reader exposes an explicit stable-dimensions contract for browser evidence', () => {

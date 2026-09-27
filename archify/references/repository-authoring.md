@@ -10,9 +10,12 @@ fact has supporting source evidence.
 1. **Freeze identity.** From the target repository, record `git rev-parse
    HEAD`, `git remote get-url origin`, and `git status --short`. Remove HTTP(S)
    userinfo (including usernames, passwords, and tokens) before recording the
-   origin or placing it in the candidate. Pin the credential-free URL and
-   forty-character revision in `meta.repository`; use `link_mode: "local-only"`
-   for a local fixture whose HTTPS URL is only a repository identity. If the
+   origin or placing it in the candidate. Preserve its transport, port, path and
+   `.git` suffix; do not rewrite an internal SSH origin as HTTPS. Pin the credential-free URL and
+   forty-character revision in `meta.repository`. Use `link_mode: "local-only"`
+   for an SSH origin, unsupported forge, intentionally local-only source links,
+   or a local fixture whose HTTPS URL is only a repository identity; retain the
+   URL and revision. Web links require a supported GitHub or Gitee HTTPS origin. If the
    worktree is dirty, record the changed paths. Repository evidence is verified
    against committed bytes at the pinned revision, not working-tree edits:
    inspect a clean checkout at that revision for any cited changed path. Do not
@@ -27,17 +30,27 @@ fact has supporting source evidence.
    side effect. Read a small connected slice instead of scanning the repository
    for a convenient label.
 
-3. **Trace ownership.** For each step, name the controller that owns the
-   decision, the runtime that performs it, and the filesystem or durable store
-   that supplies or receives bytes. Keep control ownership separate from file
-   I/O. A configured provider, an injected adapter, a local stub, and a durable
+3. **Trace ownership.** Derive runtime and I/O relationships from the observed
+   actor, operation, and target at their call sites; deployment and trust
+   relationships use the corresponding configuration or enforcement evidence. Distinguish the controller requesting
+   an operation from the runtime that executes it and the store receiving bytes.
+   For a file or database edge, the source must identify its actual reader or
+   writer; a responsibility statement such as “maintains tasks” does not prove
+   direct I/O. Keep these facts with the source locations while reading, without
+   a separate planning artifact. Choose which distinctions need separate
+   nodes using [Composition and meaning](authoring-defaults.md#composition-and-meaning);
+   discovering an implementation role does not automatically add it to the overview.
+   A configured provider, an injected adapter, a local stub, and a durable
    service are different claims; label the one the source supports.
 
 4. **Record evidence while reading.** Keep exact repository-relative paths and
    inclusive line ranges for each component and meaningful relationship. Follow
    actual branches, retries, fallbacks, and error handling. A function that is
    exported or configured but never called by the normal path is an optional
-   capability, not a required runtime edge.
+   capability, not a required runtime edge. For a claim about authoritative
+   state change or control ownership, trace to the actual write or execution
+   site and the conditions that permit it; an upstream caller alone does not
+   establish those conditions.
 
 5. **Name uncertainty.** Write unresolved questions beside the claim they
    affect: for example, “`writeFile` is called here; durability is unknown.”
@@ -71,7 +84,7 @@ first-draft automatic-routing rule.
 
 Use the mode's complete JSON shape, including repository identity,
 components, and connections; every repository-backed component needs supporting source
-references, while boundaries, cards, or guided views are added only when they
+references, while boundaries or cards are added only when they
 answer a real reader question. Let automatic routes and automatic
 viewBox sizing work first. Keep the primary path readable, put exception paths
 beside their owner, and leave filesystem stores outside a control boundary when
@@ -83,11 +96,10 @@ control. Consult the specific mode schema and `schemas/common.schema.json`
 whether or not the selected example already contains the field; use the
 schema's enum, length, identifier, and repository rules. Architecture
 boundaries currently use `kind: "region"` or `kind: "security-group"`; source
-references use `path`, `line`, and optional `end_line`; guided-view notes have
-their own limit.
+references use `path`, `line`, and optional `end_line`.
 
-Repository-backed components need concise, truthful `sources` references. Keep
-control ownership separate from filesystem I/O: the code that reads or writes
+Repository-backed components need concise, truthful `sources` references. Preserve
+control ownership when summarizing filesystem I/O: the code that reads or writes
 a file owns that action, while a pure in-memory transform receives and returns
-values. Use the existing examples for valid field shape, then replace all
+values. This fact-check does not require a separate overview node for every helper. Use the existing examples for valid field shape, then replace all
 identifiers, wording, source paths, and claims with inspected repository facts.

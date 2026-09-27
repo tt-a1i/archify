@@ -82,6 +82,14 @@ furthest occupied phase column. Route presets for transitions: `straight`,
 `via` points, or the default `auto`. Multi-segment transitions get rounded
 corners; tune them with `cornerRadius` (default 10, `0` for sharp bends).
 
+Transition `label` and `note` are independently optional. A non-empty `note`
+renders even when `label` is omitted or empty, using its existing secondary
+text style on a single row and retaining the note's fine-detail visibility.
+With both fields present, the note stays below the label. Notes participate in
+automatic label placement, route-space reservation, and label collision checks;
+the existing `labelAt`, `labelDx`, `labelDy`, and
+`labelSegment` controls also position a note-only text block.
+
 ## Design Rules
 
 - Treat lifecycle diagrams as a phase map, not a dense state-transition graph.

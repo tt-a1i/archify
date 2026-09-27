@@ -21,6 +21,7 @@ import {
   cleanFlowProblems,
   cleanCrossingProblems,
   cleanAmbiguousCorridorProblems,
+  collectArrowheadCollisions,
   cleanBorderRunProblems,
   cleanRouteRhythmProblems,
   cleanLabelRouteClearanceProblems,
@@ -349,6 +350,8 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 
 const rawBoundaries = asArray(arch.boundaries).map((boundary) => boundaryRect(boundary)).filter(Boolean);
 const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections, {
+  distinctAutomaticPorts: true,
+  preferReadableRoutes: true,
   frames: rawBoundaries.map((boundary) => ({
     ...boundary,
     radius: boundary.kind === 'security-group' ? 8 : 12,
@@ -443,6 +446,7 @@ const legendY = () => viewBox[1] - 16;
 
 if (arch.meta?.quality_profile === 'showcase') {
   connectionLabels = placeAutomaticLabels({
+    keepFallbackNearRoute: true,
     labels: connectionLabels,
     routes: asArray(arch.connections).flatMap((conn, relationIndex) => (
       components.has(conn.from) && components.has(conn.to)
@@ -752,8 +756,29 @@ function validateArchitecture() {
     diagramType: 'architecture',
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
-    routeHint: 'adjust route/via or fromSide/toSide so unrelated connections do not visually merge'
+    includeSharedEndpoints: (left, right) => hasAutomaticRouteGeometry(left) && !left.labelAt
+      && hasAutomaticRouteGeometry(right) && !right.labelAt,
+    routeHint: 'adjust route/via or fromSide/toSide so distinct connections do not visually merge'
   }));
+  if ((process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile) === 'showcase') {
+    const collisions = collectArrowheadCollisions({
+      routedRelations: asArray(arch.connections)
+        .filter((conn) => components.has(conn.from) && components.has(conn.to) && hasAutomaticRouteGeometry(conn) && !conn.labelAt)
+        .map((relation) => ({ relation, points: pathFor(relation).points })),
+    });
+    for (const hit of collisions) {
+      const left = hit.left.relation;
+      const right = hit.right.relation;
+      const message = `[composition/arrowhead-collision] automatic connections "${left.id || left.from}" and "${right.id || right.from}" into "${left.to}" have arrowheads ${hit.distance}px apart (minimum ${hit.minimum}px) — enlarge or reposition the destination, or choose separate toSide ports.`;
+      problems.push(message);
+      diagnostics.push({
+        code: 'composition/arrowhead-collision', severity: 'error', message,
+        subject: { diagramType: 'architecture', collection: 'connections', id: left.id, from: left.from, to: left.to },
+        evidence: { otherId: right.id, distancePx: hit.distance, minimumPx: hit.minimum, endpoints: [hit.left.tip, hit.right.tip] },
+        supportedFixes: ['enlarge or reposition the destination', 'choose separate toSide ports'],
+      });
+    }
+  }
   problems.push(...cleanBorderRunProblems({
     relations: arch.connections,
     endpointIds: new Set(components.keys()),
@@ -788,8 +813,24 @@ function validateArchitecture() {
 
   const labelRects = connectionLabels;
   for (const rect of labelRects) {
-    for (const c of components.values()) {
-      if (rectsOverlap(rect, c, -2)) {
+    const blockedComponents = [...components.values()].filter(c => rectsOverlap(rect, c, -2));
+    const labelPinned = ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(key => rect.relation[key] !== undefined);
+    const points = pathFor(rect.relation).points;
+    const shortHorizontalGap = points.length === 2 && Math.abs(points[0][1] - points[1][1]) < 0.0001
+      ? Math.abs(points[1][0] - points[0][0]) : null;
+    const requiredGap = Math.ceil(rect.width + 16);
+    if (arch.meta?.quality_profile === 'showcase' && !labelPinned && blockedComponents.length
+        && shortHorizontalGap != null && shortHorizontalGap < requiredGap) {
+      const message = `Label "${rect.label}" has only ${Math.round(shortHorizontalGap)}px between "${rect.relation.from}" and "${rect.relation.to}"; it needs at least ${requiredGap}px to stay beside its route — increase that clear gap or place the connected nodes on another readable row, preserving the label.`;
+      problems.push(message);
+      diagnostics.push({
+        code: 'composition/label-gap', severity: 'error', message,
+        subject: { diagramType: 'architecture', collection: 'connections', id: rect.relation.id, from: rect.relation.from, to: rect.relation.to },
+        evidence: { clearGapPx: shortHorizontalGap, minimumGapPx: requiredGap, labelWidthPx: rect.width, obstacles: blockedComponents.map(c => c.id) },
+        supportedFixes: [`increase the clear gap between the connected nodes to at least ${requiredGap}px`, 'reposition the connected nodes together while preserving the full relationship label'],
+      });
+    } else {
+      for (const c of blockedComponents) {
         problems.push(`Label "${rect.label}" overlaps component "${c.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, c, 'component', viewBox, components.values())}`);
       }
     }
@@ -876,7 +917,8 @@ function renderConnectionPath(conn, index) {
   const underlay = automaticRoute
     ? `          <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>\n`
     : '';
-  const crossover = automaticRoute ? ' data-composition-crossover="halo"' : '';
+  const crossover = automaticRoute
+    ? ` data-composition-crossover="halo"${conn.labelAt ? '' : ' data-composition-independent="true"'}` : '';
   const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
   if (!automaticRoute) return edge;
   return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}${edge.replace(/^        /, '          ')}\n        </g>`;
@@ -945,9 +987,20 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  const readerFit = arch.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
+  // An automatic architecture canvas is compiler-measured geometry. Let the
+  // Reader spend the real desktop height budget on it, including when an
+  // outer route makes the canvas taller than the ordinary wide-diagram
+  // threshold. Authored viewBoxes keep their geometry and existing Reader width policy;
+  // their declared height may use readable document scrolling without reflow.
+  const readerFit = arch.meta?.viewBox
+    ? ' data-diagram-type="architecture" data-reader-fit="authored-height"'
+    : ' data-reader-fit="intrinsic-height"';
+  // A complete repository architecture is allowed to use normal page scroll;
+  // keep its common-desktop text at a comfortable reading size instead of
+  // shrinking a semantically rich graph to the universal emergency floor.
   const readerMinimumText = arch.meta?.viewBox ? '' : ' data-reader-min-text="7.5"';
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}${readerFit}${readerMinimumText}>
+  const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
 

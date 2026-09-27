@@ -12,23 +12,23 @@ metadata:
 
 Create an interactive HTML diagram from typed JSON. Static output is the default; enable motion only when requested.
 
-Run commands from your working directory, keeping candidate JSON and output artifacts there. Replace `bin/archify.mjs` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
+Run commands from your working directory. Unless the user names another location, give each new diagram request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once when the request starts): keep `candidate.json` and `<slug>.html` in it, set `meta.output` to that relative HTML path, and reuse the folder for every repair rerun. A later request gets a new folder, so earlier versions stay intact. Replace `bin/archify.mjs` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
 
-For a real codebase, read [Repository authoring](references/repository-authoring.md) for exploration and example selection. A system description uses the steps below; an existing JSON uses the handoff path.
+For a real codebase, read [Repository authoring](references/repository-authoring.md) while tracing the requested behavior. A system description uses the steps below; an existing JSON uses the handoff path.
 
 ## Existing candidate handoff
 
-When the user supplies a frozen candidate, run `finalize` first as one CLI invocation. Its passing receipt completes the handoff; screenshots and an image-capable model are optional. For repair, follow step 5.
+When the user supplies a frozen candidate, run `finalize` first as one CLI invocation. Its passing receipt completes the automated gates; follow any visual review recommendation under Delivery before claiming visual quality. For repair, follow step 5.
 
-The update check is outside the delivery critical path. A harness may start it concurrently with `finalize`; if it cannot, omit it for this task. Never add a foreground tool turn or delay a required gate for update information.
+The optional update check never delays `finalize`; see Update awareness.
 
 ## Fast authoring path
 
-Use this bounded path for ordinary generation. Do not read the optional Viewer Runtime reference unless the user asks about those features.
+Use this path for ordinary generation. Read branch references only when their stated trigger applies.
 
 1. Choose `architecture`, `workflow`, `sequence`, `dataflow`, or `lifecycle` from the question.
-2. Use the exact paths in the Type router; do not list `schemas/` or `examples/` first. For Architecture, select the matching showcase example in the Type router before loading it with `references/authoring-defaults.md` in one parallel batch; it includes boundaries, guided views, and conclusion cards. For Workflow, read defaults and its starter together. Read the relevant schema definition for any new field, enum choice, or constrained text; an example shows shape, not every allowed value or length. Boundary kinds and guided-view notes need their schema constraints before writing. For Sequence, Dataflow, and Lifecycle, read defaults, schema, common schema, and example together. Fresh authorship means new IDs, domain wording, and layout; examples provide shape, not facts. Do not run help, doctor, validate a starter, create a temporary diagram, pre-create/list output paths, or query brands. Only for explicitly requested branded marks may you query `node bin/archify.mjs brands "<name>" --json`; read `references/brand-marks.md` only for an unknown brand with a user-provided URL.
-3. Artifact first: once requested scope and source evidence are covered, write the candidate directly; do not plan coordinates in prose. Let the real system determine the number of nodes and relationships: keep separate nodes when merging would hide a responsibility, boundary, trust boundary, protocol, lifecycle, ownership, or persistence seam; group only unified concerns. Never use node, relationship, source-reference, view, card, or boundary counts as an authoring target, ceiling, or performance lever. Audit responsibility ownership rather than counts: keep an evidence-backed controller, broker, runtime, or supervisor separate when it manages multiple participants and merging would hide control-plane ownership or lifecycle. Keep an external caller or client separate from the gateway, relay, or service when source distinguishes runtimes or trust; a transport is not its user. Never use shared source citations as a substitute for an omitted role; omit only roles absent in code. For a repository showcase, add curated `meta.views` for distinct reader questions and evidence-backed conclusion cards for material takeaways; every aid must improve comprehension, with no quota. Set `meta.quality_profile` to `"showcase"` unless the user requests dense `standard`. Keep forward flow monotonic where practical, branches beside their owner, shared stores outside the main lane, and feedback paths on the perimeter; wrap broad systems into meaningful rows. Leave clear gaps for actual relationship labels and add whitespace rather than route controls. On the first draft, let the renderer route every connection: omit `via`, `route`, `fromSide`, `toSide`, `channelX`, `channelY`, `labelAt`, `labelDx`, `labelDy`, and `labelSegment` unless the user supplied that exact route intent. Add the smallest control only after a measured diagnostic.
+2. Use the exact schema and example paths in the Type router without listing their directories. Read [Authoring defaults](references/authoring-defaults.md) and the mode's example in a bounded batch separate from project documents and complete schemas so neither is truncated; recover any missing section before writing. For Architecture, use the matching showcase example. For Sequence, Dataflow, and Lifecycle, also read the mode and common schemas. Read the relevant schema definition before choosing any new field, enum, or constrained text, especially boundary kinds. Examples teach shape, not facts. Use fresh IDs, wording, and layout. Go directly to the candidate without preliminary help, doctor, starter validation, temporary diagrams, or output-path listing. Query brands only for an explicitly requested mark; read [Brand marks](references/brand-marks.md) for an unknown mark with a user-provided URL.
+3. Once the requested scope and, for a real codebase, [source evidence](references/repository-authoring.md) are covered, write the complete candidate directly without planning coordinates in prose. Choose Architecture abstraction and connected placement using Authoring defaults before coordinates: show the main user journey and necessary branches, preserve control roles and behavior-changing conditions, and leave enough room for actual relationship labels. No node, relationship, source, view, card, or boundary count is a target or ceiling. Use automatic routes first; add explicit routing only for necessary branch, return, supplied geometry, or measured repair. Set `meta.quality_profile` to `"showcase"` unless the user requests dense `standard`.
 4. Once the complete first candidate is written, run `finalize` directly. Its first gate is showcase validation; successful first drafts need no separate pre-validation. Keep the candidate unchanged while the command runs:
 
    ```bash
@@ -37,18 +37,18 @@ Use this bounded path for ordinary generation. Do not read the optional Viewer R
 
    For a repository-backed candidate, include evidence on the first draft and use the complete first command: `node bin/archify.mjs finalize <type> <candidate.json> <output.html> --repo-root <repo-root> --quality showcase --json`.
 
-   A passing receipt proves that the included `validate`, `deliver`, strict `check`, and deterministic real-browser `browser-check` gates passed. Do not read its full sidecar or rerun individual commands afterward; use a standalone command only for an explicitly separate execution or focused failure diagnosis.
+   A passing receipt proves the included `validate`, `deliver`, strict `check`, and real-browser `browser-check` gates passed. Use its compact summary; run standalone commands only for a separate request or focused failure diagnosis.
 
-5. A non-zero exit is never success. Use its compact stdout or `evidence.summaryReceipt`; read the full receipt only if the summary is truncated and lacks enough evidence for a coherent repair. After a validation failure, the next action is the smallest coherent local edit named by that evidence, not prose coordinate exploration or whole-candidate replacement. Do not run validate, layout, render, or finalize first; edit the existing JSON in place. Geometry never authorizes deleting or merging a source-backed component, relationship, reference, view, card, boundary, or semantic label; reroute, reposition, or add readable canvas space instead. After the edit, rerun the complete `finalize` command from step 4 once, retaining `--quality showcase` and `--repo-root <repo-root>` for repository-backed candidates. After editing, omit any earlier `--candidate-sha256`: it binds the previous candidate. Use `--layout-json` before the edit only when compact evidence lacks needed geometry. A receipt with only 4 artifact checks is basic validation: require all 9 checks with 0 composition errors and 0 warnings. Fix `meta.quality_profile` before geometry. For workflow v2, use the stable compiler receipt; solver internals are not authoring controls. Use standalone `validate` only for focused diagnosis, with `--repo-root <repo-root>` for a repository. A passing validation returns `candidateFrozen: true`; do not edit, revalidate, or reread it. Run its `nextAction.arguments`, replacing only `<output.html>`. Retry later environment or evidence failures against the frozen candidate. If measured evidence requires a source edit, treat it as a new candidate and rerun the complete `finalize` command without the old hash. If one issue survives two focused repairs, inspect measured geometry or the relevant contract; after one evidence-based retry, stop truthfully. A lower error count never justifies changing meaning.
+5. A non-zero exit is never success. Read compact stdout or `evidence.summaryReceipt`, then [repair the failed gate](references/delivery-contract.md#failed-finalize-and-candidate-repair), including its repair limit. Preserve requested meaning and source evidence. For several tangled Architecture routes, read [Architecture layout repair](references/architecture-layout-repair.md); for measured field or geometry failures, read [Authoring contract](references/authoring-contract.md). Edit the connected neighborhood and rerun the complete `finalize` command from step 4.
 
 ## Update awareness
 
-After the first candidate exists, a harness with true parallel tool calls may run the packaged checker `scripts/check-update.mjs` once alongside validation or `finalize`. Otherwise skip it; do not serialize it into the user's delivery path. If the checker cannot run, continue without mentioning it.
+After the first candidate exists, a harness with true parallel tool calls may run `scripts/check-update.mjs` once alongside `finalize`. Otherwise skip it without delaying delivery.
 
 - For `silent`, continue without mentioning the update check.
 - For `update_available`, read `references/update-awareness.md`, follow it, then continue the requested task.
 
-Do not read `bin/` implementation, renderer or validator source, tests, or benchmarks before the first candidate; the commands above are sufficient. Inspect implementation only for a diagnostic without actionable evidence or after two focused repairs fail.
+Before the first candidate, use the authoring references and relevant repository source, not Archify implementation or tests. Inspect Archify implementation if diagnostics remain unactionable after focused repairs.
 
 ## Type router
 
@@ -74,35 +74,27 @@ Read Mermaid for topology and meaning, then author fresh Archify JSON; do not me
 
 Use the `finalize` command above for the first candidate and after a repair.
 
-`finalize` stops at the first non-passing gate. Its compact stdout and `<output-stem>.finalize-summary.json` are the normal evidence; `<output-stem>.finalize.json` is full audit detail, not ordinary repair context. A passing handoff reports `visualReview: "not-requested"` and creates no screenshots.
+`finalize` stops at the first non-passing gate. Its compact stdout and `<output-stem>.finalize-summary.json` are ordinary evidence. A passing run creates no screenshots and reports `visualReview: "not-requested"`.
 
-Escalate to perceptual review only when the user requests an aesthetic review, a template/renderer/viewer change needs visual regression evidence, a novel layout or browser diagnostic leaves low confidence, or the run is a sampled audit. Run `visual-check` on the finalized artifact, open its HTML contact sheet in a browser or inspect the viewport PNGs with a capable image reader, and record that judgment separately. Model image capability is optional because this path is not part of ordinary acceptance.
+When a passing Architecture receipt reports `visualReviewRecommendation.signals.resolvedCrossovers`, copy the candidate aside and apply the hints in one edit that changes only node positions and sizes: every node, relationship (including its `from` and `to`), label, and source stays as it was. Rerun the complete `finalize` once with `--out-dir <folder>/review-2`, because the previous HTML already owns its browser evidence. If that run fails or reports more crossings, restore the copy and finalize it with `--out-dir <folder>/review-3`. Do not start a second placement round. Hints about extra bends alone are optional.
 
-For recovery, the required order stays `deliver` → strict provenance `check` → `browser-check`. Run optional `visual-check` only against a strict-provenance artifact. Read `references/delivery-contract.md` for standalone syntax, any failed gate, stale provenance, recovery metadata, repeated delivery to one path, export evidence, or post-delivery opening.
+Perceptual review is optional for ordinary generation, including a newly positioned Architecture. Use [Optional capture evidence](references/delivery-contract.md#optional-capture-evidence), with `--out-dir <folder>/visual-check`, when the user requests visual review, during development audits, or for a concrete route/browser concern. `visualReviewRecommendation` is advisory. Inspect captures before claiming visual quality; otherwise report automated checks only.
+
+Read [Delivery contract](references/delivery-contract.md) for failed gates, standalone commands, provenance/recovery, repeated delivery, exports, or opening. Recovery follows `deliver` → strict provenance `check` → `browser-check`; captures require strict provenance.
 
 For workflow viewport overflow, read [Workflow viewport repair](references/authoring-contract.md#workflow-viewport-repair) before the next layout edit.
 
-`browser-check` collects machine-readable browser evidence from the exact delivered HTML without modifying, rerendering, or capturing it. `visual-check` is the capture-producing command for an escalated perceptual review.
-
-Keep the claims separate: `deliver` proves deterministic artifact checks, `browser-check` proves bounded behavior in a real browser, `visual-check` adds artifact-bound captures, and perceptual review requires an actual human or image-capable reviewer. Report optional perceptual review only when it was requested or triggered by the escalation rules above.
-
-For a standalone `deliver` invocation, add `--open` only when the user wants an immediate local preview; `finalize` does not accept that flag. For an active desktop authoring loop, the optional command is:
-
-```bash
-node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcase
-```
-
-Never start preview by default.
+Report artifact checks, browser evidence, captures, and actual perceptual review as distinct results. For an explicitly requested immediate preview or active desktop loop, see [Optional opening](references/delivery-contract.md#optional-opening).
 
 ## Optional viewer capabilities
 
-`meta.animation: "trace"` is opt-in. Use optional `meta.views` for distinct reader questions, with no numeric target.
+`meta.animation: "trace"` is opt-in.
 
-Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, guided stories, deep links, presentation, search/focus, or another Viewer Runtime feature.
+Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, deep links, presentation, search/focus, or another Viewer Runtime feature.
 
 ## Setup and fallback
 
-No install is required inside the skill package. Verify with:
+No install is required inside the skill package. For setup diagnosis, verify with:
 
 ```bash
 node bin/archify.mjs doctor
@@ -113,4 +105,4 @@ When shell access is unavailable, hand-place architecture SVG into `assets/templ
 
 ## Output
 
-Return the checked HTML path, diagram type, validation summary, specification/artifact receipt, browser-evidence status, and truthful visual-review status. Do not claim success for a non-zero command or claim visual inspection you did not perform.
+Return the checked HTML as an absolute path, diagram type, validation summary, specification/artifact receipt, browser-evidence status, and truthful visual-review status. Do not claim success for a non-zero command or claim visual inspection you did not perform.

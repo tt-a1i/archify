@@ -12,27 +12,7 @@
       "url": "https://github.com/mco-org/mco",
       "revision": "9f1a1cf1afdc04d7b5406782b40dfec76d9bc798"
     },
-    "viewBox": [1680, 720],
-    "views": [
-      {
-        "id": "dispatch-path",
-        "label": "Dispatch one task",
-        "focus": ["callers", "entry", "router", "policy", "invocation", "adapters", "transport", "providers"],
-        "note": "Follow an explicit task from the caller through policy resolution into the selected native provider CLIs."
-      },
-      {
-        "id": "persistent-session",
-        "label": "Keep a provider session",
-        "focus": ["callers", "entry", "router", "session", "session_state"],
-        "note": "See how the CLI starts a detached daemon, exchanges requests over a local socket, and persists history."
-      },
-      {
-        "id": "evidence-output",
-        "label": "Preserve raw evidence",
-        "focus": ["invocation", "adapters", "transport", "artifacts", "outputs"],
-        "note": "Provider responses stay opaque while MCO records per-invocation answers, status, usage, and run metadata."
-      }
-    ]
+    "viewBox": [1680, 720]
   },
   "components": [
     { "id": "callers", "type": "external", "label": "Callers", "sublabel": "human · coding agent", "pos": [30, 280], "size": [132, 66] },

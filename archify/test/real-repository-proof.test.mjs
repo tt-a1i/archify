@@ -143,11 +143,6 @@ test('MCO public proof is source-backed, valid, and linked from every README', (
   assert.equal(source.meta.title, 'MCO Runtime Architecture');
   assert.equal(source.meta.quality_profile, 'showcase');
   assert.equal(source.meta.animation, 'trace');
-  assert.deepEqual(source.meta.views.map(view => view.id), [
-    'dispatch-path',
-    'answer-evidence',
-    'durable-sessions',
-  ]);
   assert.equal(source.components.length, 13);
   assert.equal(source.connections.length, 12);
   assert.match(source.components.find((component) => component.id === 'router')?.sublabel || '', /\bdoctor\b/);
@@ -201,7 +196,9 @@ test('MCO public proof is source-backed, valid, and linked from every README', (
   for (const filename of ['README.md', 'README_EN.md', 'README_ZH.md', 'README_JA.md']) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     assert.match(readme, /docs\/assets\/mco-runtime-share-card\.png/);
-    assert.match(readme, /cases\/mco-runtime\.architecture\.html\?theme=dark&present=1#view=dispatch-path/);
+    assert.match(readme, /cases\/mco-runtime\.architecture\.html\?theme=dark&present=1\)/);
+    assert.match(readme, /cases\/mco-runtime\.architecture\.html\?theme=dark#focus=router&reach=downstream\)/);
+    assert.doesNotMatch(readme, /cases\/mco-runtime\.architecture\.html[^)\s]*#view=/);
     assert.match(readme, /docs\/cases\/mco-runtime\.architecture\.json/);
     assert.ok(readme.includes(`[\`${repositorySlug}\`](${source.meta.repository.url})`), `${filename}: repository link drifted`);
     assert.ok(readme.includes(`\`${shortRevision}\``), `${filename}: repository revision drifted`);

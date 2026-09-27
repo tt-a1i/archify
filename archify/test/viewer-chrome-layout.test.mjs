@@ -694,7 +694,12 @@ test('zoomed camera restores its bounded desktop rail after crossing the mobile 
     assert.ok(Math.abs(restored.reserve - baseline.reserve) <= 1, JSON.stringify({ baseline, zoomed, restored }));
     assert.equal(restored.receiptReserve, restored.reserve, JSON.stringify(restored));
     assert.equal(restored.receiptEligible, true, JSON.stringify(restored));
-    assert.ok(restored.scrollHeight <= restored.innerHeight, JSON.stringify(restored));
+    // Reading-size preservation may require ordinary page scroll before zoom.
+    // Crossing the breakpoint must restore that same layout, not grow it.
+    assert.ok(Math.abs(restored.scrollHeight - baseline.scrollHeight) <= 1, JSON.stringify({ baseline, restored }));
+    assert.ok(Math.abs(restored.containerHeight - baseline.containerHeight) <= 1, JSON.stringify({ baseline, restored }));
+    assert.ok(restored.scrollWidth <= restored.innerWidth, JSON.stringify(restored));
+    assert.equal(restored.dockStageIntersectionArea, 0, JSON.stringify(restored));
   } finally {
     await browser.close();
   }
@@ -1098,6 +1103,52 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
     });
   } finally {
     if (evidence) fs.writeFileSync(path.join(evidence, 'observations.json'), JSON.stringify(observations, null, 2) + '\n');
+  }
+});
+
+test('theme switches repaint the page and diagram without dropping the desktop rail', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  const file = render('architecture', CASES.architecture);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    const session = await load(browser, file, { query: '?theme=dark' });
+    for (const theme of ['light', 'dark']) {
+      const result = await evaluate(browser, session, `(async function () {
+        var root = document.documentElement;
+        var panel = document.querySelector('.diagram-container');
+        function sample() {
+          var rect = panel.getBoundingClientRect();
+          return {
+            theme: root.getAttribute('data-theme'),
+            body: getComputedStyle(document.body).backgroundColor,
+            panel: getComputedStyle(panel).backgroundColor,
+            rail: root.getAttribute('data-nav-stage-rail'),
+            width: rect.width,
+            height: rect.height
+          };
+        }
+        var before = sample();
+        document.getElementById('btn-theme').click();
+        var frames = [sample()];
+        for (var i = 0; i < 8; i++) {
+          await new Promise(function (resolve) { requestAnimationFrame(resolve); });
+          frames.push(sample());
+        }
+        return { before: before, frames: frames };
+      })()`, true);
+      assert.equal(result.before.rail, 'true', 'fixture exercises the reserved stage rail');
+      assert.equal(result.frames.at(-1).theme, theme);
+      assert.notEqual(result.before.body, result.frames.at(-1).body);
+      assert.notEqual(result.before.panel, result.frames.at(-1).panel);
+      assert.ok(result.frames.every((frame) => frame.body === result.frames.at(-1).body),
+        'the page background must reach the new theme in the first paint');
+      assert.ok(result.frames.every((frame) => frame.rail === result.before.rail
+        && frame.width === result.before.width && frame.height === result.before.height),
+        'theme switching must not remove the rail or move the diagram');
+    }
+  } finally {
+    await browser.close();
   }
 });
 

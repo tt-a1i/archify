@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { compactFinalizeReceipt } from '../bin/finalize.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
@@ -74,17 +75,20 @@ test('render output check: predicts the certain 1440x900 overflow of a fixed-wid
   assert.equal(issue?.severity, 'warning', 'new rule surfaces as evidence first');
   assert.equal(portrait.code, 0);
   assert.equal(issue.svgHeightPx, 972);
-  assert.equal(issue.fixedChromePx, 126, 'no guided-views strip in this fixture');
+  assert.equal(issue.fixedChromePx, 126);
   assert.equal(issue.pageHeightPx, 1098);
   assert.match(issue.detail, /meta\.viewBox height is at most 696 at this width/);
   assert.match(issue.detail, /width is at least 1209 at this height/);
   assert.equal(portrait.result.composition.summary.warnings, 1);
 
-  const withViews = checkHtml('viewport-height-views', node, 'showcase', '0 0 1080 780', '<div class="guided-views"></div>');
-  assert.equal(withViews.result.composition.issues.find((item) => item.code === 'composition/viewport-height')?.pageHeightPx, 1159);
-
   const declaredFit = checkHtml('viewport-height-fit', node, 'showcase', '0 0 1080 780', '', ' data-reader-fit="intrinsic-height"');
   assert.equal(declaredFit.result.composition.issues.some((item) => item.code === 'composition/viewport-height'), false, 'a Reader-declared fit can scroll readably');
+
+  for (const type of ['architecture', 'workflow', '']) {
+    const fixed = checkHtml(`viewport-authored-${type}`, node, 'showcase', '0 0 1080 780', '',
+      ` data-reader-fit="authored-height" data-diagram-type="${type}"`);
+    assert.equal(fixed.result.composition.issues.some(item => item.code === 'composition/viewport-height'), type !== 'architecture');
+  }
 
   const wide = checkHtml('viewport-height-wide', node, 'showcase', '0 0 1600 900');
   assert.equal(wide.result.composition.issues.some((item) => item.code === 'composition/viewport-height'), false, 'a wide canvas is narrowed by the Reader instead');
@@ -611,6 +615,132 @@ test('render output check: label-route thresholds include exact 2px and 4px boun
   assert.equal(showcaseBelowFour.result.composition.summary.errors, 1);
 });
 
+function automaticArrow(id, from, to, points, width = 1.5) {
+  const d = points.map(([x, y], index) => `${index ? 'L' : 'M'} ${x} ${y}`).join(' ');
+  return `<path data-graph-role="automatic-crossover-underlay" d="${d}" fill="none" stroke="var(--mask)" stroke-width="${width + 4}" pointer-events="none"/>
+    <path data-edge-id="${id}" data-edge-from="${from}" data-edge-to="${to}" data-composition-points="${points.map((point) => point.join(',')).join(';')}" data-composition-crossover="halo" data-composition-independent="true" d="${d}" class="a-default" stroke-width="${width}" marker-end="url(#arrowhead)"/>`;
+}
+
+function automaticWorkflowArrow(id, from, to, points) {
+  const d = points.map(([x, y], index) => `${index ? 'L' : 'M'} ${x} ${y}`).join(' ');
+  return `<path data-edge-id="${id}" data-edge-from="${from}" data-edge-to="${to}" data-composition-routing="workflow-v2-auto" data-composition-points="${points.map((point) => point.join(',')).join(';')}" d="${d}" class="a-default" marker-end="url(#arrowhead)"/>`;
+}
+
+test('render output check: automatic workflow counterflow warns in standard and fails showcase without a halo', () => {
+  const markup = automaticWorkflowArrow('admission', 'a', 'hub', [[60, 20], [60, 100]])
+    + automaticWorkflowArrow('dispatch', 'hub', 'b', [[60, 100], [60, 49], [140, 49]]);
+  for (const profile of ['standard', 'showcase']) {
+    const { code, result } = checkHtml(`workflow-counterflow-${profile}`, markup, profile);
+    assert.equal(code, profile === 'showcase' ? 1 : 0);
+    const issue = result.composition.issues.find((entry) => entry.code === 'composition/ambiguous-corridor');
+    assert.equal(issue?.severity, profile === 'showcase' ? 'error' : 'warning');
+    assert.equal(issue?.overlapLength, 51);
+    assert.deepEqual([issue?.relationship.id, issue?.otherRelationship.id], ['admission', 'dispatch']);
+    assert.deepEqual(result.composition.summary, profile === 'showcase'
+      ? { errors: 1, warnings: 0 } : { errors: 0, warnings: 1 });
+  }
+  for (const preserved of [
+    markup.replaceAll(' data-composition-routing="workflow-v2-auto"', ''),
+    markup.replace(' data-composition-routing="workflow-v2-auto"', ''),
+    markup.replaceAll('workflow-v2-auto', 'workflow-v1'),
+  ]) {
+    const { code, result } = checkHtml('workflow-authored-counterflow', preserved, 'showcase');
+    assert.equal(code, 0, JSON.stringify(result));
+    assert.equal(result.composition.metrics.ambiguousCorridors, 0);
+  }
+  const sharedTrunk = automaticWorkflowArrow('first', 'hub', 'a', [[60, 20], [60, 100]])
+    + automaticWorkflowArrow('second', 'hub', 'b', [[60, 20], [60, 70], [140, 70]]);
+  const sameDirection = checkHtml('workflow-shared-trunk', sharedTrunk, 'showcase');
+  assert.equal(sameDirection.code, 0, JSON.stringify(sameDirection.result));
+  assert.equal(sameDirection.result.composition.metrics.ambiguousCorridors, 0);
+});
+
+test('render output check: automatic workflow shared-endpoint X is checked independently of halo claims', () => {
+  const markup = automaticWorkflowArrow('first', 'a', 'hub', [[20, 20], [80, 20], [80, 80], [140, 80]])
+    + automaticWorkflowArrow('second', 'b', 'hub', [[20, 100], [120, 100], [120, 40], [140, 40]]);
+  for (const profile of ['standard', 'showcase']) {
+    const { code, result } = checkHtml(`workflow-shared-crossing-${profile}`, markup, profile);
+    assert.equal(code, profile === 'showcase' ? 1 : 0);
+    assert.equal(result.composition.metrics.properCrossings, 1);
+    assert.equal(result.composition.metrics.resolvedCrossovers, 0);
+    const issue = result.composition.issues.find((entry) => entry.code === 'composition/proper-crossing');
+    assert.equal(issue?.severity, profile === 'showcase' ? 'error' : 'warning');
+    assert.deepEqual(issue?.point, [120, 80]);
+  }
+  const mixed = checkHtml('workflow-mixed-shared-crossing', markup.replace(' data-composition-routing="workflow-v2-auto"', ''), 'showcase');
+  assert.equal(mixed.code, 0, JSON.stringify(mixed.result));
+  const falseHalo = markup.replaceAll('data-composition-routing=', 'data-composition-crossover="halo" data-composition-independent="true" data-composition-routing=');
+  const forged = checkHtml('workflow-false-halo', falseHalo, 'showcase');
+  assert.equal(forged.code, 1, 'routing provenance cannot certify an absent crossover halo');
+  assert.equal(forged.result.composition.metrics.properCrossings, 1);
+  assert.equal(forged.result.composition.metrics.resolvedCrossovers, 0);
+
+  const unrelated = markup.replace('data-edge-to="hub"', 'data-edge-to="other"');
+  const marked = checkHtml('workflow-marked-unrelated-crossing', unrelated, 'showcase');
+  const unmarked = checkHtml('workflow-unmarked-unrelated-crossing', unrelated.replaceAll(' data-composition-routing="workflow-v2-auto"', ''), 'showcase');
+  assert.equal(marked.code, 1);
+  assert.equal(unmarked.code, 1, 'an automatic marker only tightens existing crossing acceptance');
+});
+
+test('render output check: independent shared-endpoint crossings still recommend visual review', () => {
+  const markup = automaticArrow('first', 'a', 'hub', [[20, 20], [80, 20], [80, 80], [140, 80]])
+    + automaticArrow('second', 'b', 'hub', [[20, 100], [120, 100], [120, 40], [140, 40]]);
+  const { code, result } = checkHtml('independent-shared-crossing', markup, 'showcase');
+  assert.equal(code, 0, JSON.stringify(result));
+  assert.equal(result.composition.metrics.resolvedCrossovers, 1);
+  assert.equal(result.composition.metrics.properCrossings, 0);
+  assert.equal(result.composition.metrics.routesOverSuggestedBends, 0);
+  assert.equal(result.composition.metrics.routesOverSuggestedStretch, 0);
+  const summary = compactFinalizeReceipt({ ok: true, stages: { check: { receipt: result } } });
+  assert.deepEqual(summary.visualReviewRecommendation.signals, { resolvedCrossovers: 1 });
+  const affected = summary.visualReviewRecommendation.affectedRoutes;
+  assert.equal(affected.crossings.length, 1);
+  assert.equal(affected.crossings[0].left.id, 'first');
+  assert.equal(affected.crossings[0].right.id, 'second');
+  assert.deepEqual(affected.crossings[0].point, [120, 80]);
+  assert.equal(affected.crossings[0].sharedNode, 'hub');
+  assert.match(summary.visualReviewRecommendation.hints[0], /move node a or b so the two reach hub from different sides/);
+  assert.deepEqual(affected.detours, []);
+  assert.equal(affected.truncated, false);
+  assert.equal(summary.visualReview, 'not-requested');
+  // A legacy/authored shared junction must keep its existing interpretation.
+  for (const preserved of [
+    markup.replaceAll(' data-composition-independent="true"', ''),
+    markup.replace(' data-composition-independent="true"', ''),
+  ]) {
+    const legacy = checkHtml('legacy-shared-crossing', preserved, 'showcase');
+    assert.equal(legacy.code, 0, JSON.stringify(legacy.result));
+    assert.equal(legacy.result.composition.metrics.resolvedCrossovers, 0);
+  }
+});
+
+test('render output check: automatic shared destinations do not excuse long merged corridors', () => {
+  const markup = automaticArrow('first', 'a', 'hub', [[20, 20], [100, 20], [100, 140]])
+    + automaticArrow('second', 'b', 'hub', [[180, 60], [100, 60], [100, 120], [140, 120], [140, 140]]);
+  const { code, result } = checkHtml('automatic-shared-corridor', markup, 'showcase');
+  assert.equal(code, 1);
+  const issue = result.composition.issues.find((entry) => entry.code === 'composition/ambiguous-corridor');
+  assert.equal(issue?.overlapLength, 60);
+  // Explicit junctions retain their historical compatibility contract.
+  const authored = checkHtml('authored-shared-corridor', markup.replaceAll('data-composition-crossover="halo"', ''), 'showcase');
+  assert.equal(authored.code, 0, JSON.stringify(authored.result));
+});
+
+test('render output check: incoming automatic markers must fit their actual stroke width', () => {
+  for (const [spacing, width, collision] of [[7, 1.5, true], [14, 1.5, false], [14, 4, true], [32, 4, false]]) {
+    const markup = automaticArrow('first', 'a', 'hub', [[100, 40], [100, 120]], width)
+      + automaticArrow('second', 'b', 'hub', [[100 + spacing, 40], [100 + spacing, 120]], width);
+    const { code, result } = checkHtml(`markers-${spacing}-${width}`, markup, 'showcase');
+    assert.equal(code, collision ? 1 : 0, JSON.stringify(result));
+    const issue = result.composition.issues.find((entry) => entry.code === 'composition/arrowhead-collision');
+    assert.equal(Boolean(issue), collision);
+    if (issue) {
+      assert.equal(issue.distancePx, spacing);
+      assert.equal(issue.minimumPx, width * 7);
+    }
+  }
+});
+
 test('render output check: unrelated shared corridors warn in standard and fail showcase', () => {
   for (const profile of ['standard', 'showcase']) {
     const { code, result } = checkHtml(`corridor-${profile}`, `
@@ -699,6 +829,30 @@ test('render output check: composition receipt records neutral normalized route 
   assert.equal(result.composition.metrics.shortEndpointSegmentCount, 0);
   assert.equal(result.composition.metrics.microSegmentCount, 0);
   assert.deepEqual(result.composition.suggestedLimits, { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 });
+});
+
+test('render output check: detours identify intervening nodes without failing valid routing', () => {
+  for (const vertical of [false, true]) {
+    const point = (x, y) => vertical ? [y, x] : [x, y];
+    const rect = (id, x, y, extra = '') => {
+      const [left, top] = point(x, y);
+      return `<g data-node-id="${id}" data-node-label="${id} role" ${extra}><rect class="c-mask" x="${left}" y="${top}" width="40" height="40"/></g>`;
+    };
+    const points = [[50, 70], [70, 70], [70, 20], [190, 20], [190, 70], [210, 70]].map(([x, y]) => point(x, y));
+    const edge = `<path data-edge-from="a" data-edge-to="b" data-composition-points="${points.map(p => p.join(',')).join(';')}" d="M ${points.map(p => p.join(' ')).join(' L ')}" class="a-default" marker-end="url(#arrowhead)"/>`;
+    const endpoints = rect('a', 10, 50) + rect('b', 210, 50);
+    const { code, result } = checkHtml(`blocked-direct-${vertical}`, endpoints + rect('blocker', 110, 50) + rect('off-row', 110, 100) + edge, 'showcase', '0 0 560 280');
+    assert.equal(code, 0, 'a legal route around an intervening node is still valid');
+    assert.deepEqual(result.composition.summary, { errors: 0, warnings: 0 });
+    assert.deepEqual(result.composition.routeReview.detours[0].directCorridorBlockers, [{
+      id: 'blocker', label: 'blocker role', box: [...point(110, 50), 40, 40],
+    }]);
+
+    const transformed = checkHtml(`transformed-blocker-${vertical}`, endpoints + `<g transform="translate(100 100)">${rect('blocker', 110, 50)}</g>` + edge, 'showcase', '0 0 560 280');
+    assert.equal(transformed.result.composition.routeReview.detours[0].directCorridorBlockers, undefined, 'unresolved coordinate spaces are not guessed');
+    const offset = checkHtml(`offset-endpoints-${vertical}`, rect('a', 10, 40) + rect('b', 210, 50) + rect('blocker', 110, 50) + edge, 'showcase', '0 0 560 280');
+    assert.equal(offset.result.composition.routeReview.detours[0].directCorridorBlockers, undefined, 'different rows have no single direct corridor');
+  }
 });
 
 test('render output check: endpoint stubs from 8px pass while cramped interior turns are profile-aware', () => {

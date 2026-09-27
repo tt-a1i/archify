@@ -6,12 +6,7 @@
     "output": "examples/dataflow-product-analytics.html",
     "viewBox": [1080, 520],
     "animation": "trace",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "collection-path", "label": "Collection path", "focus": ["web", "mobile", "edge", "stream"], "note": "Follow product events from clients into the ordered event stream." },
-      { "id": "consent-boundary", "label": "Consent and PII", "focus": ["edge", "consent", "pii"], "note": "Isolate the policy gate and restricted identity store." },
-      { "id": "analytics-consumers", "label": "Curated consumers", "focus": ["stream", "warehouse", "dashboard", "features", "model"], "note": "See curated facts, dashboards, and the derived feature path." }
-    ]
+    "quality_profile": "showcase"
   },
   "stages": [
     { "label": "Sources" },

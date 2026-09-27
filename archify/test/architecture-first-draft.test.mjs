@@ -20,16 +20,87 @@ function layout(input) {
   return JSON.parse(result.stdout);
 }
 
-// These candidates are unmodified first drafts from the repair study: authors
-// declared no route controls, yet the router accepted routes that the
-// showcase composition gate then rejected (a frame border used as a corridor,
-// a 3px jog, a 10px interior turn). Every one cost a hand-routing repair loop.
+test('architecture: automatic side changes keep incoming arrowheads distinct', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-final-ports-'));
+  try {
+    const input = path.join(tmp, 'ports.json');
+    fs.writeFileSync(input, JSON.stringify({
+      schema_version: 1,
+      diagram_type: 'architecture',
+      meta: { title: 'Shared destination', output: 'ports.html', quality_profile: 'showcase' },
+      components: [
+        ['a', 40, 40], ['b', 290, 40], ['c', 800, 40],
+        ['block', 0, 400], ['hub', 40, 485], ['store', 290, 485],
+      ].map(([id, x, y]) => ({ id, type: 'backend', label: id, pos: [x, y], size: [180, 68] })),
+      connections: ['a', 'b', 'c'].map((from) => ({ id: from, from, to: 'hub' })),
+    }));
+    const result = layout(input);
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+    const endpoints = result.connections.map((conn) => conn.points.at(-1));
+    for (let left = 0; left < endpoints.length; left += 1) {
+      for (let right = left + 1; right < endpoints.length; right += 1) {
+        const distance = Math.hypot(endpoints[left][0] - endpoints[right][0], endpoints[left][1] - endpoints[right][1]);
+        assert.ok(distance >= 14, `arrowheads share a port: ${JSON.stringify(endpoints)}`);
+      }
+    }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('architecture: wide incoming arrows reserve a whole side before routing', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-wide-ports-'));
+  try {
+    for (const { widths, height } of [
+      { widths: [4, 4], height: 68 },
+      { widths: [4, 4], height: 72 },
+      { widths: [4, 1, 4], height: 80 },
+    ]) {
+      const components = widths.map((_, index) => ({
+        id: `source-${index}`, type: 'backend', label: `Source ${index}`,
+        pos: [40, 40 + index * 140], size: [120, 68],
+      }));
+      components.push({ id: 'hub', type: 'backend', label: 'Hub', pos: [600, 140], size: [180, height] });
+      const connections = widths.map((width, index) => ({
+        id: `edge-${index}`, from: `source-${index}`, to: 'hub', toSide: 'left', width,
+      }));
+      for (const ordered of [connections, [...connections].reverse()]) {
+        const input = path.join(tmp, 'wide.json');
+        fs.writeFileSync(input, JSON.stringify({ schema_version: 1, diagram_type: 'architecture',
+          meta: { title: 'Wide incoming arrows', output: 'wide.html', quality_profile: 'showcase' },
+          components, connections: ordered,
+        }));
+        const result = layout(input);
+        assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+        const tips = new Map(result.connections.map((conn) => [conn.from, conn.points.at(-1)]));
+        for (let index = 1; index < connections.length; index += 1) {
+          const distance = Math.abs(tips.get(`source-${index}`)[1] - tips.get(`source-${index - 1}`)[1]);
+          assert.ok(distance >= 3.5 * (widths[index] + widths[index - 1]), `colliding arrows: ${distance}px`);
+        }
+      }
+    }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+// Keep the original first drafts: route-floor repairs must stay fixed, but
+// their cramped labels must not pass by being moved far from their own edge.
+function assertOnlyLabelDefects(receipt) {
+  assert.equal(receipt.ok, false);
+  assert.ok(receipt.diagnostics.length > 0);
+  for (const issue of receipt.diagnostics) {
+    assert.ok(issue.code === 'composition/label-gap'
+      || issue.code === 'composition/label-route-clearance'
+      || /^Label ".*" overlaps component /.test(issue.message), JSON.stringify(issue));
+  }
+}
 for (const name of ['audit-luna', 'audit-terra', 'queue-sol']) {
-  test(`architecture: first draft ${name} validates for showcase without route controls`, () => {
+  test(`architecture: first draft ${name} preserves route floors and reports crowded labels`, () => {
     const { status, receipt } = validate('architecture', path.join(fixtures, `${name}.architecture.json`));
-    assert.equal(status, 0, JSON.stringify(receipt.diagnostics, null, 2));
-    assert.equal(receipt.ok, true);
-    assert.equal(receipt.composition.summary.errors, 0);
+    assert.equal(status, 1);
+    assertOnlyLabelDefects(receipt);
+    assert.ok(receipt.diagnostics.some(issue => issue.code === 'composition/label-gap'));
   });
 }
 
@@ -70,7 +141,9 @@ test('architecture: a self-loop with cramped explicit sides names the loop and t
     const repaired = path.join(tmp, 'queue-luna.architecture.json');
     fs.writeFileSync(repaired, JSON.stringify(candidate));
     const result = validate('architecture', repaired);
-    assert.equal(result.status, 0, JSON.stringify(result.receipt.diagnostics, null, 2));
+    assert.equal(result.status, 1);
+    assertOnlyLabelDefects(result.receipt);
+    assert.ok(!result.receipt.diagnostics.some(issue => issue.code === 'layout/self-loop-ports'));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

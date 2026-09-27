@@ -156,7 +156,7 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
               var text = await captured.text();
               var svg = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
               return { text: text, geometry: ['viewBox', 'width', 'height'].map(function (name) { return svg.getAttribute(name); }),
-                dirty: !!svg.querySelector('[data-focus-match], [data-story-step], [data-route-match], [data-reader-layout], [data-source-evidence-beacon]') ||
+                dirty: !!svg.querySelector('[data-focus-match], [data-route-match], [data-reader-layout], [data-source-evidence-beacon]') ||
                   svg.hasAttribute('data-view-scale') || svg.hasAttribute('data-focus-active') || svg.hasAttribute('data-route-active') };
             } finally { URL.createObjectURL = original; }
           })()`, true);
@@ -220,7 +220,9 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
         document.querySelector('.cards').innerHTML = '<div style="height:1200px">Long content</div>'`);
       await stable();
       const overflow = await snapshot('long-content');
-      assert.equal(overflow.receipt.width, 960);
+      // The summary rail moves cards beside the diagram, so its width joins the readable floor.
+      const rail = await evaluate(`document.documentElement.getAttribute('data-reader-rail') === 'true'`);
+      assert.equal(overflow.receipt.width, rail ? 960 + 288 + 20 : 960);
       assert.equal(overflow.overflow, 'authored');
       assert.ok(overflow.scrollHeight > overflow.innerHeight);
       assert.deepEqual(overflow.geometry, geometry);

@@ -182,10 +182,10 @@ function segmentBlocked(start, end, obstacles) {
   return obstacles.some((rect) => segmentIntersectsRect({ start, end }, rect));
 }
 
-function segmentConflictsWithAvoided(start, end, avoidedSegments, minimumOverlapPx) {
+function segmentConflictsWithAvoided(start, end, avoidedSegments, minimumOverlapPx, allowCrossings) {
   return avoidedSegments.some((segment) => (
-    properSegmentIntersection(start, end, segment.start, segment.end)
-      || orthogonalTouchOnAvoidedInterior(start, end, segment.start, segment.end)
+    (!allowCrossings && (properSegmentIntersection(start, end, segment.start, segment.end)
+      || orthogonalTouchOnAvoidedInterior(start, end, segment.start, segment.end)))
       || collinearOverlap(start, end, segment.start, segment.end) >= minimumOverlapPx
   ));
 }
@@ -248,6 +248,7 @@ export function shortestOrthogonalGridRoute({
   endpointStubPx = clearance + 2,
   maximumGridNodes = Infinity,
   avoidedSegments = [],
+  allowAvoidedCrossings = false,
   minimumAvoidedOverlapPx = 8,
   routeSeparationPx = 8,
   minimumSegmentPx = 8,
@@ -350,7 +351,7 @@ export function shortestOrthogonalGridRoute({
     for (const y of orderedY) {
       const point = [x, y];
       if (!pointBlocked(point, expanded)
-          && !pointOnAvoidedInterior(point, relevantAvoidedSegments)) {
+          && (allowAvoidedCrossings || !pointOnAvoidedInterior(point, relevantAvoidedSegments))) {
         nodes.set(pointKey(point), point);
       }
     }
@@ -373,6 +374,7 @@ export function shortestOrthogonalGridRoute({
         right,
         relevantAvoidedSegments,
         minimumAvoidedOverlapPx,
+        allowAvoidedCrossings,
       )) continue;
       if (relevantBorderSegments.some((segment) => (
         collinearOverlap(left, right, segment.start, segment.end) > 0.0001

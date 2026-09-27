@@ -63,7 +63,7 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
     await evaluate('(async () => { await document.fonts.ready; await Archify.readerLayout.whenStable(); await Archify.viewerChromeLayout.whenStable(); })()', true);
     assert.deepEqual(await evaluate('exportTestErrors'), []);
   }
-  async function exported(label, action = '') {
+  async function exported(label, action = '', format = 'svg') {
     // Capture the SVG synchronously at the public export call. Timers and
     // animation frames cannot explain away a live-DOM mutation by cleanup.
     const value = await evaluate(`(async () => {
@@ -78,17 +78,17 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
       };
       let after;
       try {
-        const pending = Archify.exportMenu.run('svg');
+        const pending = Archify.exportMenu.run(${JSON.stringify(format)});
         after = svg.outerHTML;
         await pending;
       } finally { URL.createObjectURL = original; }
       if (!blob) throw new Error('Export did not produce SVG');
       const text = await blob.text();
       const root = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
-      const transient = root.querySelectorAll('[data-focus-selected], [data-reach-match], [data-lens-selected], [data-intent-trace-overlay], [data-route-probe-overlay], [data-route-journey-overlay], [data-story-overlay], [data-chapter-preview-role], [data-source-evidence-beacon], [data-relationship-hit-overlay]');
+      const transient = root.querySelectorAll('[data-focus-selected], [data-reach-match], [data-lens-selected], [data-intent-trace-overlay], [data-route-probe-overlay], [data-route-journey-overlay], [data-source-evidence-beacon], [data-relationship-hit-overlay]');
       return { text, liveUnchanged: before === after, transientCount: transient.length,
         geometry: root.getAttribute('viewBox'), liveGeometry: svg.getAttribute('viewBox'),
-        rootClean: !['data-view-scale', 'data-focus-active', 'data-reach-active', 'data-route-active', 'data-lens-active', 'data-story-active', 'data-share-route', 'data-share-reach'].some(a => root.hasAttribute(a)),
+        rootClean: !['data-view-scale', 'data-focus-active', 'data-reach-active', 'data-route-active', 'data-lens-active', 'data-share-route', 'data-share-reach'].some(a => root.hasAttribute(a)),
         resources: performance.getEntriesByType('resource').map(e => e.name).filter(n => /^https?:/.test(n)), errors: exportTestErrors };
     })()`, true);
     assert.equal(value.liveUnchanged, true, `${label}: live SVG changed`);
@@ -112,7 +112,62 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
     }
   });
 
-  await t.test('real zoom, focus, preview, lens, story and route actions leave exports clean', async () => {
+  await t.test('explicit light and dark SVG exports stay fixed under the opposite OS theme', async () => {
+    const cases = [
+      { authorTheme: 'dark', hostTheme: 'dark', format: 'svg-light', theme: 'light', background: 'rgb(244, 245, 247)' },
+      { authorTheme: 'light', hostTheme: 'light', format: 'svg-dark', theme: 'dark', background: 'rgb(2, 6, 23)' },
+    ];
+    for (const item of cases) {
+      await load(files.architecture, item.authorTheme);
+      const text = await exported(`fixed-${item.theme}`, '', item.format);
+      assert.match(text, new RegExp(`<svg[^>]*data-theme="${item.theme}"`));
+      assert.doesNotMatch(text, /@media \(prefers-color-scheme: light\)/);
+
+      await send('Emulation.setEmulatedMedia', { features: [
+        { name: 'prefers-color-scheme', value: item.hostTheme },
+        { name: 'prefers-reduced-motion', value: 'no-preference' },
+      ] });
+      const rendered = await evaluate(`(async () => {
+        const frame = document.createElement('iframe');
+        frame.setAttribute('aria-hidden', 'true');
+        frame.style.cssText = 'position:fixed;left:-10000px;width:320px;height:180px;border:0';
+        document.body.appendChild(frame);
+        try {
+          await new Promise((resolve, reject) => {
+            frame.onload = resolve;
+            frame.onerror = reject;
+            frame.srcdoc = '<!doctype html><html><body style="margin:0">' +
+              ${JSON.stringify(text)}.replace(/^<\\?xml[^>]*>\\s*/, '');
+          });
+          const root = frame.contentDocument.documentElement;
+          const background = root.querySelector('svg > style + rect');
+          return {
+            theme: root.querySelector('svg').getAttribute('data-theme'),
+            background: frame.contentWindow.getComputedStyle(background).fill,
+          };
+        } finally {
+          frame.remove();
+        }
+      })()`, true);
+      assert.deepEqual(rendered, { theme: item.theme, background: item.background }, item.format);
+    }
+  });
+
+  await t.test('fixed SVG options do not depend on WebP encoding', async () => {
+    const script = await send('Page.addScriptToEvaluateOnNewDocument', { source: `
+      HTMLCanvasElement.prototype.toDataURL = function () { return 'data:image/png;base64,'; };
+    ` });
+    try {
+      await load(files.architecture);
+      for (const format of ['svg', 'svg-light', 'svg-dark']) {
+        assert.equal(await evaluate(`document.querySelector('[data-format="${format}"]').disabled`), false, format);
+      }
+    } finally {
+      await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: script.identifier });
+    }
+  });
+
+  await t.test('real zoom, focus, preview, lens and route actions leave exports clean', async () => {
     await load(files.architecture);
     const pristine = await exported('interaction-pristine');
     const actions = {
@@ -120,7 +175,6 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
       focus: `if (!Archify.focus.set('api', { toggle: false, updateUrl: false })) throw new Error('focus failed');`,
       preview: `if (!Archify.intentTrace.show('api')) throw new Error('preview failed');`,
       lens: `Archify.semanticLens.select('backend'); if (!Archify.semanticLens.active()) throw new Error('lens failed');`,
-      story: `Archify.guidedViews.activate('request-path', { updateUrl: false }); Archify.guidedViews.playCurrent(); if (!Archify.guidedViews.isPlaying()) throw new Error('story failed');`,
       route: `Archify.routeProbe.begin({ source: 'users', focusNode: false }); if (!Archify.routeProbe.choose('db', { updateUrl: false })) throw new Error('route failed');`,
       upstream: `Archify.focus.set('api', { toggle: false, updateUrl: false }); if (!Archify.focus.reach('upstream', { toggle: false, updateUrl: false, reveal: false })) throw new Error('reach failed');`,
       downstream: `Archify.focus.set('api', { toggle: false, updateUrl: false }); if (!Archify.focus.reach('downstream', { toggle: false, updateUrl: false, reveal: false })) throw new Error('reach failed');`,
@@ -148,7 +202,11 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
             return original.call(URL, value);
           };
           try {
-            if (format === 'share-card') blob = await Archify.exportMenu.shareCard();
+            if (format === 'share-card') {
+              Archify.routeProbe.begin({ source: 'users', focusNode: false });
+              Archify.routeProbe.choose('api', { updateUrl: false });
+              blob = await Archify.exportMenu.shareCard({ variant: 'route' });
+            }
             else await Archify.exportMenu.run(format);
           } finally { URL.createObjectURL = original; }
           if (!blob) throw new Error('Missing raster export');
@@ -156,7 +214,11 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
           const dimensions = [bitmap.width, bitmap.height];
           bitmap.close();
           const svg = document.querySelector('.diagram-container > svg');
-          const expected = format === 'share-card' ? [1200, 630] : [svg.viewBox.baseVal.width * 4, svg.viewBox.baseVal.height * 4];
+          // Raster figures reproduce the Viewer page: 28px margins, a 24px card
+          // padding, and the title row (32px, +24px subtitle, 18px gap) at 4x.
+          const subtitle = (document.querySelector('.header .subtitle') || {}).textContent;
+          const header = document.querySelector('.header h1') ? 32 + (subtitle && subtitle.trim() ? 24 : 0) + 18 : 0;
+          const expected = format === 'share-card' ? [1200, 630] : [(svg.viewBox.baseVal.width + 104) * 4, (svg.viewBox.baseVal.height + 104 + header) * 4];
           const data = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -228,20 +290,15 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
       empty.setAttribute('viewBox', '0 0 100 50');
       const emptyBefore = empty.outerHTML;
       const emptyClean = exportCleanupTest.clean(empty);
-      const orphan = document.createElementNS(svg.namespaceURI, 'g');
-      orphan.setAttribute('data-story-carrier-token', 'true');
-      const residual = empty.cloneNode(true);
-      residual.appendChild(orphan);
-      const residualClean = exportCleanupTest.clean(residual);
       return { clean, twiceClean, unchanged: before === svg.outerHTML, idempotent: once === clone.outerHTML,
         authored: group.outerHTML === authored, labels: labels.map(n => n.getAttribute('aria-label')),
         restorationRecords: clone.querySelectorAll('[data-source-evidence-count], [data-source-evidence-original-label]').length,
         shares: clone.hasAttribute('data-share-route') || clone.hasAttribute('data-share-reach'),
-        residualClean, emptyClean, emptyUnchanged: emptyBefore === empty.outerHTML };
+        emptyClean, emptyUnchanged: emptyBefore === empty.outerHTML };
     })()`);
     assert.deepEqual(result, { clean: true, twiceClean: true, unchanged: true, idempotent: true,
       authored: true, labels: ['original', null, null], restorationRecords: 0, shares: false,
-      residualClean: false, emptyClean: true, emptyUnchanged: true });
+      emptyClean: true, emptyUnchanged: true });
     records.push({ label: 'restoration', ...result });
   });
 

@@ -7,12 +7,7 @@
     "viewBox": [1080, 560],
     "column_fit": "spread",
     "animation": "trace",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "request-and-auth", "label": "Request and identity", "focus": ["user", "web", "api", "auth"], "note": "Follow the user request through the authentication check." },
-      { "id": "cache-fallback", "label": "Cache fallback", "focus": ["api", "redis", "db"], "note": "See the cache miss and the source-of-truth query it triggers." },
-      { "id": "return-and-trace", "label": "Return and trace", "focus": ["db", "api", "redis", "trace", "web", "user"], "note": "Separate response latency from the non-blocking observability write." }
-    ]
+    "quality_profile": "showcase"
   },
   "participants": [
     { "id": "user", "type": "external", "label": "User", "sublabel": "browser session" },

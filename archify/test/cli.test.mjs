@@ -462,6 +462,35 @@ test('cli: finalize emits one compact receipt and keeps complete stage evidence 
   assert.equal(fs.existsSync(out), true, 'verified delivery remains available when browser evidence is skipped');
 });
 
+test('cli: visual-check summary preserves skipped and failed evidence without claiming image review', () => {
+  const out = path.join(tmp, 'visual-summary.html');
+  fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');
+  const outDir = path.join(tmp, 'visual-summary-evidence');
+  const result = run(['visual-check', out, '--summary', '--out-dir', outDir], {
+    env: { ...process.env, ARCHIFY_CHROME: path.join(tmp, 'summary-missing-chrome') },
+  });
+  assert.equal(result.status, 2, result.stderr || result.stdout);
+  assert.equal(result.stdout.trim().split('\n').length, 1);
+  const summary = JSON.parse(result.stdout);
+  assert.equal(summary.status, 'skipped');
+  assert.equal(summary.visualReview, 'pending');
+  assert.deepEqual(summary.evidence.screenshots, []);
+  const full = JSON.parse(fs.readFileSync(summary.evidence.receipt, 'utf8'));
+  assert.deepEqual(summary.artifact, full.artifact);
+  assert.deepEqual(summary.diagnostics, full.diagnostics);
+  assert.equal(summary.checks.containment, full.containment.status);
+  assert.equal(summary.evidence.receipt, path.join(outDir, 'visual-summary.visual-check.json'));
+
+  const failure = run(['visual-check', path.join(tmp, 'summary-missing.html'), '--summary']);
+  assert.equal(failure.status, 1);
+  const failedSummary = JSON.parse(failure.stdout);
+  assert.equal(failedSummary.status, 'fail');
+  assert.equal(failedSummary.visualReview, 'pending');
+  assert.ok(failedSummary.diagnostics.length > 0);
+  assert.deepEqual(failedSummary.evidence.screenshots, []);
+  assert.equal(failedSummary.evidence.receipt, undefined, 'an unpublished receipt must not be linked');
+});
+
 test('cli: visual-check --out-dir writes the receipt into that directory, not beside the artifact', () => {
   const out = path.join(tmp, 'visual-check-outdir.html');
   fs.writeFileSync(out, '<!doctype html><html><body>delivered</body></html>');

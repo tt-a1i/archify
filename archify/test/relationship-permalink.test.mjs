@@ -111,7 +111,6 @@ test('the viewer restores and copies stable relation links without exposing nume
   assert.match(html, /inspectRelationshipById\(relation, \{ updateUrl: false, toggle: false \}\)/);
   assert.match(html, /if \(html\.getAttribute\('data-embed'\) === 'true'\) return false/);
   assert.match(html, /if \(html\.getAttribute\('data-embed'\) === 'true' \|\|\s*!inspectRelationshipById/);
-  assert.match(html, /params\.get\('focus'\) \|\| params\.get\('relation'\)/);
   assert.match(html, /if \(!reveal\(\)\) requestAnimationFrame\(reveal\)/);
   assert.match(html, /inspectRelationshipById: inspectRelationshipById/);
   assert.match(html, /id: record\.id \|\| null, key: record\.key/);

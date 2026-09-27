@@ -183,8 +183,8 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
     const artifactSource = fs.readFileSync(artifact, 'utf8');
     const svgRoot = artifactSource.match(/<svg\b[^>]*>/)?.[0];
     assert.ok(svgRoot, 'production fixture must contain an SVG root');
-    // With 8px edge text across a 1376px SVG, the declared 7.5px floor
-    // requires a 1290px diagram plus 30px of Reader chrome.
+    // The comfortable primary-text preference uses the available width here;
+    // the viewport cap still wins over the preferred reading size.
     assert.match(svgRoot, /viewBox="0 0 1376 728"/);
     assert.match(svgRoot, /data-reader-fit="intrinsic-height"/);
     assert.match(svgRoot, /data-reader-min-text="7\.5"/);
@@ -203,9 +203,9 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
       ));
       for (const observation of [desktop, darkDesktop]) {
         assert.ok(observation);
-        assert.equal(observation.readerWidth, 1320);
+        assert.equal(observation.readerWidth, 1376);
         assert.ok(observation.readerWidth <= 1376);
-        assert.equal(observation.diagramWidth, 1290);
+        assert.equal(observation.diagramWidth, 1346);
         assert.equal(observation.viewBoxWidth, 1376);
         assert.ok(Number.isFinite(observation.minimumProjectedNodeTextPx));
         assert.ok(observation.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
@@ -229,7 +229,7 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
   }
 });
 
-test('route-expanded intrinsic architecture fits every required desktop viewport', {
+test('route-expanded intrinsic architecture preserves reading size with ordinary page scroll', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-route-expanded-reader-'));
@@ -264,8 +264,7 @@ test('route-expanded intrinsic architecture fits every required desktop viewport
     assert.equal(result.receipt.viewerChrome.status, 'pass');
     for (const viewport of result.receipt.containment.viewports) {
       assert.equal(viewport.overflowX, false, JSON.stringify(viewport, null, 2));
-      assert.equal(viewport.overflowY, false, JSON.stringify(viewport, null, 2));
-      assert.equal(viewport.scrollHeight, viewport.height, JSON.stringify(viewport, null, 2));
+      assert.equal(viewport.overflowY, viewport.verticalScrollAccepted, JSON.stringify(viewport, null, 2));
       for (const [field, floor] of [
         ['minimumProjectedNonEdgeTextPx', 7.5 - 0.01],
         ['minimumProjectedEdgeTextPx', MIN_PROJECTED_NODE_TEXT_PX],
@@ -280,7 +279,9 @@ test('route-expanded intrinsic architecture fits every required desktop viewport
       && height === DESKTOP_READABILITY_VIEWPORT.height
     ));
     assert.ok(desktop);
-    assert.ok(desktop.diagramWidth < desktop.viewBoxWidth, JSON.stringify(desktop, null, 2));
+    // Reading size holds; with notes below the fold the diagram itself fits,
+    // and any remaining overflow must be accepted scroll (checked above).
+    assert.ok(desktop.diagramWidth >= desktop.viewBoxWidth, JSON.stringify(desktop, null, 2));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -489,5 +490,51 @@ test('issue #250 five-stage stack fits below source scale without crossing the r
     assert.ok(desktop.diagramWidth < desktop.viewBoxWidth, JSON.stringify(desktop, null, 2));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('authored Architecture canvas keeps its scale and accepts readable document scrolling', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async t => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-authored-reader-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const input = path.join(tmp, 'fixed.json');
+  const artifact = path.join(tmp, 'fixed.html');
+  const doc = {
+    schema_version: 1, diagram_type: 'architecture',
+    meta: { title: 'Authored overview', output: 'fixed.html', viewBox: [1040, 700], quality_profile: 'showcase' },
+    components: [
+      { id: 'client', type: 'frontend', label: 'Client', pos: [40, 80], size: [130, 60] },
+      { id: 'api', type: 'backend', label: 'API', pos: [300, 80], size: [140, 64] },
+      { id: 'store', type: 'database', label: 'Store', pos: [300, 470], size: [140, 64] },
+    ],
+    connections: [{ from: 'client', to: 'api', label: 'request' }, { from: 'api', to: 'store', label: 'persist' }],
+  };
+  fs.writeFileSync(input, JSON.stringify(doc));
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'architecture', input, artifact]);
+  const html = fs.readFileSync(artifact, 'utf8');
+  assert.match(html, /viewBox="0 0 1040 700"/);
+  assert.match(html, /<rect x="300" y="470" width="140" height="64"/);
+  const baseline = path.join(tmp, 'legacy.html');
+  fs.writeFileSync(baseline, html.replace(' data-reader-fit="authored-height"', ''));
+  const old = await runVisualCheck({ artifactPath: baseline, chromePath });
+  assert.equal(old.exitCode, 1, 'legacy page rejects ordinary document overflow');
+  const result = await runVisualCheck({ artifactPath: artifact, chromePath });
+  assert.equal(result.exitCode, 0, JSON.stringify(result.receipt.diagnostics));
+  for (const viewport of result.receipt.containment.viewports) {
+    const before = old.receipt.containment.viewports.find(v => v.width === viewport.width);
+    assert.equal(viewport.diagramWidth, before.diagramWidth, 'keep the approved page scale');
+    assert.equal(viewport.readerWidth, before.readerWidth);
+    assert.equal(viewport.readerLayout, before.readerLayout);
+    assert.equal(viewport.readerFit, 'authored-height');
+    assert.equal(viewport.overflowX, false);
+    if (viewport.overflowY) assert.equal(viewport.verticalScrollAccepted, true);
+  }
+  for (const overflow of ['hidden', 'auto']) {
+    const clipped = path.join(tmp, `clipped-${overflow}.html`);
+    fs.writeFileSync(clipped, html.replace('</head>', `<style>.diagram-container { height: 300px !important; overflow: ${overflow} !important; }</style></head>`));
+    const failed = await runVisualCheck({ artifactPath: clipped, chromePath });
+    assert.equal(failed.exitCode, 1);
+    assert.ok(failed.receipt.diagnostics.some(d => d.code === 'viewer/diagram-clipped'), JSON.stringify(failed.receipt.diagnostics));
   }
 });

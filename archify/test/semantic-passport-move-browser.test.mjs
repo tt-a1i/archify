@@ -250,8 +250,10 @@ test('Semantic Passport pointer movement honors threshold, capture, four-edge cl
     }))`);
     await browser.cdp.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
-      x: cancelStart.x + 70,
-      y: cancelStart.y + 50,
+      // After cancellation the handle no longer owns the pointer. Releasing
+      // over page background must not turn the cancelled drag into dismissal.
+      x: 5,
+      y: 5,
       button: 'left',
       buttons: 0,
       clickCount: 1,
@@ -327,6 +329,14 @@ test('Semantic Passport pointer movement honors threshold, capture, four-edge cl
     const reopened = await focusNode(browser, sessionId, 'lb');
     assert.equal(reopened.manual, null, JSON.stringify(reopened, null, 2));
     assert.equal(reopened.styleLeft, '', JSON.stringify(reopened, null, 2));
+    await browser.cdp.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed', x: 5, y: 5, button: 'left', buttons: 1, clickCount: 1,
+    }, sessionId);
+    await browser.cdp.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased', x: 5, y: 5, button: 'left', buttons: 0, clickCount: 1,
+    }, sessionId);
+    await settle(browser, sessionId, 20);
+    assert.equal((await passportState(browser, sessionId)).hidden, true, 'a subsequent deliberate outside click must still dismiss');
   } finally {
     await browser.close();
   }

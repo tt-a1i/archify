@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, minimumLabelRouteClearance, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -109,6 +109,7 @@ if (svgMatches.length === 1) {
   const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
+  const workflowV2 = svgAttrs['data-layout-contract'] === 'readable-v2';
   const qualityGatesEnforced = svgAttrs['data-quality-gates'] !== 'advisory';
   const nonFiniteAttrs = collectNonFiniteAttrs(svg);
   addCheck('finite_svg', nonFiniteAttrs.length === 0, nonFiniteAttrs);
@@ -121,16 +122,16 @@ if (svgMatches.length === 1) {
     viewBoxWidth: viewBoxSize(svgAttrs)[0],
     viewBoxHeight: viewBoxSize(svgAttrs)[1],
     readerFit: svgAttrs['data-reader-fit'] || null,
-    hasGuidedViews: /class="guided-views/.test(html),
+    diagramType: svgAttrs['data-diagram-type'] || null,
   });
-  const arrows = collectArrows(beforeLegend);
+  const arrows = collectArrows(beforeLegend, workflowV2);
   const diagonal = arrows.flatMap((arrow) => diagonalStraightSegments(arrow).map((segment) => ({ arrow, ...segment })));
   addCheck(
     'orthogonal_arrows',
     diagonal.length === 0,
     diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: expected an orthogonal segment or an explicitly authored direct straight route; ${arrow.raw}`),
   );
-  const measuredRelationshipCrossings = collectRelationshipCrossings(arrows);
+  const measuredRelationshipCrossings = collectRelationshipCrossings(arrows, workflowV2);
   const resolvedCrossovers = measuredRelationshipCrossings.filter((hit) => (
     hit.left.crossoverHalo && hit.right.crossoverHalo
   ));
@@ -151,10 +152,27 @@ if (svgMatches.length === 1) {
   const routedRelationships = arrows
     .filter((arrow) => arrow.from && arrow.to && arrow.routePoints.length)
     .map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints }));
+  const nodeRects = svgAttrs.transform ? [] : collectUntransformedNodeRects(beforeLegend);
   const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
+  // Architecture marks only one of its two Reader fits with its type.
+  const crowdedSides = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14'
+    ? crowdedNodeSides(arrows, nodeRects) : [];
   const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
-  const ambiguousCorridors = collectAmbiguousCorridors({ routedRelations: routedRelationships });
+  const ambiguousCorridors = collectAmbiguousCorridors({
+    routedRelations: routedRelationships,
+    includeSharedEndpoints: (left, right) => workflowV2 || (left.independentPorts && right.independentPorts),
+    allowShortWorkflowTrunks: workflowV2,
+    includeSharedEndpointCounterflow: (left, right) => left.automaticWorkflowRoute && right.automaticWorkflowRoute,
+  });
+  const arrowheadCollisions = collectArrowheadCollisions({
+    routedRelations: routedRelationships.filter((entry) => workflowV2 || entry.relation.independentPorts),
+    allowShortWorkflowTrunks: workflowV2,
+  });
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
+  const leadingSpace = collectArchitectureLeadingSpace({
+    svgAttrs, fragment: beforeLegend, nodeRects, frames: compositionFrames,
+    arrows, labels: relationshipLabels,
+  });
   const labelClearanceThreshold = qualityProfile === 'showcase' ? 4 : 2;
   const labelRouteMeasurements = collectLabelRouteClearance({
     labels: relationshipLabels,
@@ -183,7 +201,7 @@ if (svgMatches.length === 1) {
   const viewportHeightIsError = false;
   const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
-    + (corridorIsError ? ambiguousCorridors.length : 0)
+    + (corridorIsError ? ambiguousCorridors.length + arrowheadCollisions.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
     + (labelContainmentIsError ? labelCanvasOverflow.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
@@ -191,7 +209,7 @@ if (svgMatches.length === 1) {
     + (viewportHeightIsError && viewportHeightIssue ? 1 : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
-    + (corridorIsError ? 0 : ambiguousCorridors.length)
+    + (corridorIsError ? 0 : ambiguousCorridors.length + arrowheadCollisions.length)
     + (labelClearanceIsError ? 0 : labelRouteClearance.length)
     + (labelContainmentIsError ? 0 : labelCanvasOverflow.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
@@ -209,6 +227,7 @@ if (svgMatches.length === 1) {
       properCrossings: relationshipCrossings.length,
       resolvedCrossovers: resolvedCrossovers.length,
       ambiguousCorridors: ambiguousCorridors.length,
+      arrowheadCollisions: arrowheadCollisions.length,
       containerBorderRuns: containerBorderRuns.length,
       labelRouteClearanceIssues: labelRouteClearance.length,
       labelCanvasOverflowIssues: labelCanvasOverflow.length,
@@ -219,6 +238,32 @@ if (svgMatches.length === 1) {
       ...roundedRouteMetrics(routeMetrics),
     },
     suggestedLimits: { bendsPerRelationship: 2, stretch: 1.35, segmentPx: 16, microSegmentPx: 8 },
+    // Perceptual review needs the affected relationships, not just a total.
+    // These are review evidence, not new pass/fail thresholds: a short, clear
+    // crossover can be preferable to a long crossing-free detour.
+    routeReview: {
+      crossings: resolvedCrossovers.map((hit) => {
+        const shared = [hit.left.from, hit.left.to].find((id) => id && (id === hit.right.from || id === hit.right.to));
+        return {
+          left: relationshipRecord(hit.left),
+          right: relationshipRecord(hit.right),
+          point: hit.point,
+          ...(shared ? { sharedNode: shared } : {}),
+        };
+      }),
+      ...(crowdedSides.length ? { crowdedSides } : {}),
+      detours: routedRelationships.flatMap((entry) => {
+        const metrics = routeBudgetMetrics({ routedRelations: [entry] });
+        const blockers = directCorridorBlockers(entry.relation, nodeRects);
+        return metrics.routesOverSuggestedBends || metrics.routesOverSuggestedStretch ? [{
+          relationship: relationshipRecord(entry.relation),
+          bends: metrics.maxBends,
+          stretch: metrics.maxStretch == null ? null : Math.round(metrics.maxStretch * 1000) / 1000,
+          ...(blockers.length ? { directCorridorBlockers: blockers } : {}),
+        }] : [];
+      }),
+    },
+    leadingSpace,
     desktopReadability: desktopReadability.evidence,
     issues: [
       ...containerBorderRuns.map((hit) => ({
@@ -278,6 +323,15 @@ if (svgMatches.length === 1) {
         from: hit.overlapStart.map((value) => Math.round(value * 10) / 10),
         to: hit.overlapEnd.map((value) => Math.round(value * 10) / 10),
       })),
+      ...arrowheadCollisions.map((hit) => ({
+        severity: corridorIsError ? 'error' : 'warning',
+        code: 'composition/arrowhead-collision',
+        relationship: relationshipRecord(hit.left.relation),
+        otherRelationship: relationshipRecord(hit.right.relation),
+        distancePx: hit.distance,
+        minimumPx: hit.minimum,
+        endpoints: [hit.left.tip, hit.right.tip],
+      })),
       ...routeRhythmIssues.map((hit) => ({
         severity: rhythmIsError ? 'error' : 'warning',
         code: hit.code,
@@ -336,10 +390,12 @@ if (svgMatches.length === 1) {
   );
   addCheck(
     'relationship_corridors',
-    !corridorIsError || ambiguousCorridors.length === 0,
-    ambiguousCorridors.map((hit) => (
+    !corridorIsError || ambiguousCorridors.length + arrowheadCollisions.length === 0,
+    [...ambiguousCorridors.map((hit) => (
       `[composition/ambiguous-corridor] ${qualityProfile} ${relationshipName(hit.left.relation)} shares a ${Math.round(hit.overlapLength * 10) / 10}px corridor with ${relationshipName(hit.right.relation)} at [${formatPoint(hit.overlapStart)}] -> [${formatPoint(hit.overlapEnd)}]`
-    )),
+    )), ...arrowheadCollisions.map((hit) => (
+      `[composition/arrowhead-collision] ${qualityProfile} ${relationshipName(hit.left.relation)} and ${relationshipName(hit.right.relation)} have incoming arrowheads ${hit.distance}px apart (minimum ${hit.minimum}px) — enlarge or reposition the destination, or choose separate toSide ports.`
+    ))],
   );
   addCheck(
     'container_border_runs',
@@ -375,7 +431,7 @@ console.log(JSON.stringify({ ok, file: htmlPath, artifact, checks, composition }
 // Let pending stdout writes drain: large receipts are asynchronous when piped.
 process.exitCode = ok ? 0 : 1;
 
-function collectArrows(fragment) {
+function collectArrows(fragment, useActualPoints = false) {
   const arrows = [];
   let index = 0;
   let previousTag = null;
@@ -426,9 +482,17 @@ function collectArrows(fragment) {
         && segments.length === 1 && borderSegments.length === 1
         && (tag[1].toLowerCase() === 'line' || /^\s*M\s+[-+\d.eE]+\s+[-+\d.eE]+\s+L\s+[-+\d.eE]+\s+[-+\d.eE]+\s*$/.test(attrs.d || '')),
       crossoverHalo: verifiedCrossoverHalo,
+      independentPorts: verifiedCrossoverHalo && attrs['data-composition-independent'] === 'true',
+      // Compatibility with first-round exports lacking a root layout contract.
+      // Readable-v2's root contract supersedes this narrower automatic-pair rule.
+      // This marker never certifies a crossover halo or waives a quality rule.
+      automaticWorkflowRoute: attrs['data-composition-routing'] === 'workflow-v2-auto',
+      width: routeStrokeWidth,
+      variant: raw.match(/\ba-(default|emphasis|security|dashed)\b/)?.[1] || 'default',
+      role: attrs['data-edge-role'],
       segments,
       borderSegments,
-      routePoints: parseRoutePoints(attrs['data-composition-points']) || (
+      routePoints: (!useActualPoints && parseRoutePoints(attrs['data-composition-points'])) || (
         borderSegments.length ? [borderSegments[0].start, ...borderSegments.map((segment) => segment.end)] : []
       ),
       from: attrs['data-edge-from'] || attrs['data-composition-edge-from'],
@@ -509,14 +573,24 @@ function parseRoutePoints(value) {
   return points.length >= 2 && points.every(isPoint) ? points : null;
 }
 
-function collectRelationshipCrossings(arrows) {
-  const relationships = arrows.filter((arrow) => arrow.from && arrow.to && arrow.segments.length);
+function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
+  const relationships = arrows.filter((arrow) => arrow.from && arrow.to && arrow.segments.length).map(arrow => ({
+    ...arrow,
+    // Readable-v2 routePoints come from the visible path, never its metadata.
+    // A straight-through via is not a visual endpoint; preserve real bends.
+    segments: includeSharedEndpoints ? forwardCollinearAnalysisSegments(arrow.routePoints) : arrow.segments,
+  }));
   const crossings = [];
   for (let leftIndex = 0; leftIndex < relationships.length; leftIndex += 1) {
     const left = relationships[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
       const right = relationships[rightIndex];
-      if ([left.from, left.to].some((id) => id === right.from || id === right.to)) continue;
+      // A shared semantic endpoint does not make an interior X a junction
+      // when both paths opt into automatic workflow or independent-port checks.
+      if ([left.from, left.to].some((id) => id === right.from || id === right.to)
+          && !includeSharedEndpoints
+          && !(left.independentPorts && right.independentPorts)
+          && !(left.automaticWorkflowRoute && right.automaticWorkflowRoute)) continue;
       let point = null;
       for (const leftSegment of left.segments) {
         for (const rightSegment of right.segments) {
@@ -535,6 +609,81 @@ function relationshipName(arrow) {
   return arrow.id
     ? `relationship id "${arrow.id}" ("${arrow.from}" -> "${arrow.to}")`
     : `relationship "${arrow.from}" -> "${arrow.to}"`;
+}
+
+// Review evidence only. Mask rectangles are the visible node bounds emitted by
+// our renderers. Skip transformed ancestry rather than mixing coordinate spaces.
+function collectUntransformedNodeRects(fragment) {
+  const groups = [];
+  const nodes = new Map();
+  for (const token of fragment.matchAll(SVG_TAG_TOKEN)) {
+    if (!token[2]) continue;
+    const name = token[2].toLowerCase();
+    if (name === 'g') {
+      if (token[1]) groups.pop();
+      else if (!/\/\s*>$/.test(token[0])) groups.push(parseAttrs(token[0]));
+      continue;
+    }
+    if (name !== 'rect' || token[1] || groups.some((group) => group.transform)) continue;
+    const attrs = parseAttrs(token[0]);
+    const owner = [...groups].reverse().find((group) => group['data-node-id']);
+    if (!owner || attrs.transform || !String(attrs.class || '').split(/\s+/).includes('c-mask')) continue;
+    const box = ['x', 'y', 'width', 'height'].map((key) => numberAttr(attrs, key));
+    if (!box.every(Number.isFinite) || box[2] <= 0 || box[3] <= 0) continue;
+    const id = owner['data-node-id'];
+    // Ambiguous ownership is not reliable evidence for moving a node.
+    nodes.set(id, nodes.has(id) ? null : { id, label: owner['data-node-label'] || id, box });
+  }
+  return [...nodes.values()].filter(Boolean);
+}
+
+function directCorridorBlockers(relation, nodes) {
+  const from = nodes.find((node) => node.id === relation.from);
+  const to = nodes.find((node) => node.id === relation.to);
+  if (!from || !to || from === to) return [];
+  const center = ({ box: [x, y, w, h] }) => [x + w / 2, y + h / 2];
+  const a = center(from);
+  const b = center(to);
+  const horizontal = Math.abs(a[1] - b[1]) < 0.01;
+  const vertical = Math.abs(a[0] - b[0]) < 0.01;
+  if (horizontal === vertical) return [];
+  const axis = horizontal ? 0 : 1;
+  const cross = 1 - axis;
+  const [first, last] = a[axis] < b[axis] ? [from, to] : [to, from];
+  const low = first.box[axis] + first.box[axis + 2];
+  const high = last.box[axis];
+  if (high <= low) return [];
+  return nodes.filter((node) => node !== from && node !== to
+    && node.box[axis] < high && node.box[axis] + node.box[axis + 2] > low
+    && node.box[cross] < a[cross] && node.box[cross] + node.box[cross + 2] > a[cross]);
+}
+
+// Automatic ports need a 16px corner gutter and 14px between neighbours, so a
+// side facing more counterparts than that fits pushes routes onto other sides.
+function crowdedNodeSides(arrows, nodes) {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const demand = new Map();
+  for (const arrow of arrows) {
+    const from = byId.get(arrow.from);
+    const to = byId.get(arrow.to);
+    if (!from || !to || from === to) continue;
+    for (const [node, other] of [[from, to], [to, from]]) {
+      const [x, y, w, h] = node.box;
+      const dx = other.box[0] + other.box[2] / 2 - (x + w / 2);
+      const dy = other.box[1] + other.box[3] / 2 - (y + h / 2);
+      const side = dx !== 0 && Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : (dy > 0 ? 'bottom' : 'top');
+      const key = `${node.id}\u0000${side}`;
+      const entry = demand.get(key) || { node, side, relationships: 0 };
+      entry.relationships += 1;
+      demand.set(key, entry);
+    }
+  }
+  return [...demand.values()].flatMap(({ node, side, relationships }) => {
+    const sidePx = side === 'left' || side === 'right' ? node.box[3] : node.box[2];
+    const neededPx = 32 + 14 * (relationships - 1);
+    return relationships > 1 && sidePx < neededPx
+      ? [{ node: node.id, label: node.label, side, relationships, sidePx, neededPx }] : [];
+  });
 }
 
 function relationshipRecord(arrow) {
@@ -583,6 +732,59 @@ function collectCompositionFrames(fragment) {
     }
   }
   return frames;
+}
+
+// Evidence for author review only. Automatic Architecture is identifiable by
+// its intrinsic Reader contract; authored canvases must retain their geometry.
+function collectArchitectureLeadingSpace({ svgAttrs, fragment, nodeRects, frames, arrows, labels }) {
+  const evidence = { measured: false, reviewSuggested: false };
+  if (svgAttrs['data-reader-fit'] !== 'intrinsic-height'
+      || svgAttrs['data-reader-primary-text'] !== '14'
+      || svgAttrs.transform
+      || [...fragment.matchAll(/<g\b[^>]*\btransform\s*=[^>]*>/gi)]
+        .some((match) => !/\bdata-semantic-sigil=/.test(match[0]))
+      || /<(?:path|line|rect|text)\b[^>]*\btransform\s*=/i.test(fragment)) return evidence;
+  const [originX, originY, width, height] = viewBoxRect(svgAttrs);
+  if (![originX, originY, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return evidence;
+  const nodeCount = [...fragment.matchAll(/<g\b[^>]*\bdata-node-id=/gi)].length;
+  if (!nodeRects.length || nodeRects.length !== nodeCount) return evidence;
+  const semanticArrows = arrows.filter((arrow) => arrow.from && arrow.to);
+  if (semanticArrows.some((arrow) => !arrow.routePoints.length)) return evidence;
+
+  const occupied = nodeRects.map((node) => node.box[1]);
+  for (const frame of frames) {
+    const top = frame.shape === 'line'
+      ? Math.min(frame.start[1], frame.end[1]) : frame.y;
+    if (!Number.isFinite(top)) return evidence;
+    occupied.push(top);
+  }
+  // Boundary titles can protrude above their structural frame.
+  for (const match of fragment.matchAll(/<g\b[^>]*\bdata-graph-role="structural-frame-label"[^>]*>[\s\S]*?<rect\b[^>]*\bdata-graph-role="structural-frame-label-mask"[^>]*>/gi)) {
+    const rect = parseAttrs(match[0].match(/<rect\b[^>]*>/i)?.[0] || '');
+    const y = numberAttr(rect, 'y');
+    if (!Number.isFinite(y)) return evidence;
+    occupied.push(y);
+  }
+  for (const arrow of semanticArrows) {
+    for (const point of arrow.routePoints) occupied.push(point[1]);
+  }
+  for (const label of labels) occupied.push(label.rect.y);
+  if (!occupied.every(Number.isFinite)) return evidence;
+  const occupiedTop = Math.min(...occupied);
+  const gap = Math.max(0, occupiedTop - originY);
+  const heights = nodeRects.map((node) => node.box[3]).sort((a, b) => a - b);
+  const typicalNodeHeight = heights[Math.floor(heights.length / 2)];
+  const ratio = gap / height;
+  return {
+    measured: true,
+    emptyTopPx: Math.round(gap * 10) / 10,
+    emptyTopRatio: Math.round(ratio * 1000) / 1000,
+    occupiedTop: Math.round(occupiedTop * 10) / 10,
+    viewBoxTop: originY,
+    canvasHeight: height,
+    typicalNodeHeight,
+    reviewSuggested: gap > 2 * typicalNodeHeight && ratio > 0.2,
+  };
 }
 
 function frameName(frame) {

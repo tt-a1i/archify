@@ -16,8 +16,8 @@
       var MOTION_FPS = 30;
       var SHARE_CARD_WIDTH = 1200;
       var SHARE_CARD_HEIGHT = 630;
-      var SHARE_CARD_PADDING = 36;
-      var SHARE_CARD_HEADER = 112;
+      var SHARE_CARD_PADDING = 40;
+      var SHARE_CARD_HEADER = 124;
 
       function exportError(key, values) {
         var error = new Error(viewerText(key, values));
@@ -56,10 +56,12 @@
        *   (PNG/JPEG/WebP/clipboard) because canvas rasterization needs
        *   deterministic colors; a raster cannot react to
        *   prefers-color-scheme after encoding.
-       * - autoTheme=true — emits BOTH dark and light variable sets plus a
+       * - theme=auto — emits BOTH dark and light variable sets plus a
        *   `@media (prefers-color-scheme)` rule so the resulting SVG
        *   self-themes when embedded in GitHub READMEs or other hosts that
-       *   expose a color scheme. Used for "Download SVG".
+       *   expose a color scheme. Used for the default "Download SVG".
+       * - theme=light|dark — locks the standalone SVG to the requested
+       *   theme, independently of its source Viewer and host OS themes.
        */
       function applyRouteSnapshot(clone, snapshot) {
         if (!snapshot || !Array.isArray(snapshot.nodeIds) || !Array.isArray(snapshot.edges) ||
@@ -224,11 +226,15 @@
       }
 
       function serializeSvg(scale, opts) {
-        // scale: integer multiplier for intrinsic SVG pixel dimensions used by
+        // scale: multiplier (integer unless the figure is oversized) for intrinsic SVG pixel dimensions used by
         // the raster path. Defaults to 1 (natural size) for SVG download.
         scale = scale || 1;
         opts = opts || {};
-        var autoTheme = opts.autoTheme === true;
+        var requestedTheme = opts.theme || (opts.autoTheme === true ? 'auto' : null);
+        if (requestedTheme && requestedTheme !== 'auto' && requestedTheme !== 'light' && requestedTheme !== 'dark') {
+          throw new Error('Unsupported SVG theme: ' + requestedTheme);
+        }
+        var autoTheme = requestedTheme === 'auto';
         var svg = document.querySelector('.diagram-container svg');
         var clone = svg.cloneNode(true);
 
@@ -273,6 +279,17 @@
               var sel = rule.selectorText || '';
               if (/(^|,)\s*(svg|:root|\[data-theme|\[data-preset|\.c-|\.t-|\.a-|\.m-)/.test(sel)) {
                 out.push(rule.cssText);
+              } else if (opts.figure && sel.indexOf('.diagram-container > svg') !== -1) {
+                // Figures look like the Viewer canvas: keep its preset/theme paint
+                // (quiet grid, lifted nodes) by rescoping matching rules to svg.
+                var scoped = sel.split(',').map(function (part) {
+                  var at = part.indexOf('.diagram-container > svg');
+                  if (at === -1) return null;
+                  var prefix = part.slice(0, at).trim();
+                  try { if (prefix && !document.documentElement.matches(prefix)) return null; } catch (_) { return null; }
+                  return 'svg' + part.slice(at + '.diagram-container > svg'.length);
+                }).filter(Boolean);
+                if (scoped.length) out.push(scoped.join(', ') + ' { ' + rule.style.cssText + ' }');
               }
             });
           });
@@ -301,9 +318,12 @@
           document.body.appendChild(probe);
           try {
             var c = getComputedStyle(probe);
-            return varNames.map(function (n) {
-              return n + ': ' + c.getPropertyValue(n).trim() + ';';
-            }).join(' ');
+            return {
+              background: c.getPropertyValue('--bg').trim(),
+              vars: varNames.map(function (n) {
+                return n + ': ' + c.getPropertyValue(n).trim() + ';';
+              }).join(' ')
+            };
           } finally {
             document.body.removeChild(probe);
           }
@@ -315,25 +335,29 @@
 
         var style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
         var bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bgRect.setAttribute('width', '100%');
-        bgRect.setAttribute('height', '100%');
+        // Cover the real viewBox: auto-cropped canvases start below y=0, and a
+        // 100% rect anchored at the origin left an unpainted band at the bottom.
+        bgRect.setAttribute('x', vb.x);
+        bgRect.setAttribute('y', vb.y);
+        bgRect.setAttribute('width', vb.width);
+        bgRect.setAttribute('height', vb.height);
 
         if (autoTheme) {
           // Dual-theme SVG. Dark is the default (so hosts without
           // prefers-color-scheme still render), light swaps in via media
           // query, and svg[data-theme="..."] still lets downstream
           // consumers force a specific theme.
-          var darkVars = resolveVars('dark');
-          var lightVars = resolveVars('light');
+          var darkTheme = resolveVars('dark');
+          var lightTheme = resolveVars('light');
 
           style.textContent =
             fontCss + "\n" +
             "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
             hostStyle + "\n" +
-            ":root, svg { " + darkVars + " }\n" +
-            "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
-            "svg[data-theme=\"light\"] { " + lightVars + " }\n" +
-            "svg[data-theme=\"dark\"] { " + darkVars + " }\n" +
+            ":root, svg { " + darkTheme.vars + " }\n" +
+            "@media (prefers-color-scheme: light) { :root, svg { " + lightTheme.vars + " } }\n" +
+            "svg[data-theme=\"light\"] { " + lightTheme.vars + " }\n" +
+            "svg[data-theme=\"dark\"] { " + darkTheme.vars + " }\n" +
             "rect.c-bg-rect { fill: var(--bg); }\n";
 
           // Don't lock the serialized SVG to the viewer's current theme.
@@ -342,11 +366,12 @@
           // swaps with the media query.
           bgRect.setAttribute('class', 'c-bg-rect');
         } else {
-          // Raster path: lock to the viewer's current theme.
-          var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-          var themeHost = document.querySelector('[data-theme="' + theme + '"]') || document.documentElement;
-          var computed = getComputedStyle(themeHost);
-          var vars = varNames.map(function (n) {
+          // Raster exports keep the viewer's current theme. Explicit SVG
+          // exports instead select their own stable light/dark source.
+          var lockedTheme = requestedTheme || document.documentElement.getAttribute('data-theme') || 'dark';
+          var resolvedTheme = requestedTheme && resolveVars(lockedTheme);
+          var computed = getComputedStyle(document.documentElement);
+          var vars = resolvedTheme ? resolvedTheme.vars : varNames.map(function (n) {
             return n + ': ' + computed.getPropertyValue(n).trim() + ';';
           }).join(' ');
 
@@ -360,7 +385,8 @@
             hostStyle + "\n" +
             ":root, svg { " + vars + " }\n";
 
-          bgRect.setAttribute('fill', computed.getPropertyValue('--bg').trim() || '#ffffff');
+          if (requestedTheme) clone.setAttribute('data-theme', lockedTheme);
+          bgRect.setAttribute('fill', (resolvedTheme ? resolvedTheme.background : computed.getPropertyValue('--bg').trim()) || '#ffffff');
         }
 
         if (opts.routeSnapshot) {
@@ -378,6 +404,9 @@
             "svg[data-share-reach=\"downstream\"] [data-share-reach-origin] > :is(rect, circle, polygon):not(.c-mask) { stroke: var(--backend-stroke); stroke-width: 3.4; stroke-dasharray: 1 0; }\n" +
             "svg[data-preset=\"blueprint\"][data-share-reach] [data-share-reach-origin], svg[data-preset=\"blueprint\"][data-share-reach] [data-edge-from][data-share-reach-match] { filter: none; }\n";
         }
+
+        // Figures draw the diagram on a painted canvas card, like the Viewer.
+        if (opts.figure) bgRect.setAttribute('fill', 'none');
 
         clone.insertBefore(style, clone.firstChild);
         clone.insertBefore(bgRect, style.nextSibling);
@@ -410,14 +439,114 @@
       // silently produces a blank canvas above ~16 Mpx; Chrome / Firefox /
       // desktop Safari are far higher but start failing on memory-constrained
       // devices. We pick the largest integer scale in {4,3,2,1} whose target
-      // pixel count fits under this cap.
+      // pixel count fits under this cap; a figure too large even at 1x is
+      // downscaled to fit rather than allocating an oversized canvas.
       var MAX_CANVAS_PIXELS = 16 * 1024 * 1024;
 
       function pickSafeScale(vbW, vbH) {
         for (var s = RASTER_SCALE; s >= 1; s--) {
           if (vbW * s * vbH * s <= MAX_CANVAS_PIXELS) return s;
         }
-        return 1;
+        return Math.sqrt(MAX_CANVAS_PIXELS / (vbW * vbH)) * 0.999;
+      }
+
+      // Raster exports reproduce the Viewer page without its controls: the
+      // title row with its accent dot, then the diagram on the same rounded
+      // canvas card (fill, hairline, shadow, dot field). CSS pixels.
+      var FIGURE_MARGIN = 28;
+      var FIGURE_CARD_PADDING = 24;
+      var FIGURE_TITLE_SIZE = 24;
+      var FIGURE_SUBTITLE_SIZE = 14;
+
+      function figureLayout(vb) {
+        var titleNode = document.querySelector('.header h1');
+        var subtitleNode = document.querySelector('.header .subtitle');
+        var container = document.querySelector('.diagram-container');
+        var root = getComputedStyle(document.documentElement);
+        var card = container ? getComputedStyle(container) : null;
+        var title = titleNode ? titleNode.textContent.trim() : '';
+        var subtitle = subtitleNode ? subtitleNode.textContent.trim() : '';
+        var header = title ? 32 + (subtitle ? 24 : 0) + 18 : 0;
+        var cardWidth = vb.width + FIGURE_CARD_PADDING * 2;
+        var cardHeight = vb.height + FIGURE_CARD_PADDING * 2;
+        var cardFill = card && card.backgroundColor && !/rgba\(0, 0, 0, 0\)|transparent/.test(card.backgroundColor)
+          ? card.backgroundColor : (root.getPropertyValue('--panel').trim() || 'transparent');
+        return {
+          title: title,
+          subtitle: subtitle,
+          family: titleNode ? getComputedStyle(titleNode).fontFamily : 'sans-serif',
+          text: root.getPropertyValue('--text').trim() || '#111827',
+          muted: root.getPropertyValue('--text-muted').trim() || '#64748b',
+          accent: root.getPropertyValue('--frontend-stroke').trim() || '#0891b2',
+          bg: root.getPropertyValue('--bg').trim() || currentBg(),
+          cardFill: cardFill,
+          cardBorder: root.getPropertyValue('--panel-border').trim() || 'transparent',
+          dot: card && /radial-gradient/.test(card.backgroundImage) ? (root.getPropertyValue('--canvas-dot').trim() || '') : '',
+          light: (document.documentElement.getAttribute('data-theme') || 'dark') === 'light',
+          header: header,
+          cardWidth: cardWidth,
+          cardHeight: cardHeight,
+          width: cardWidth + FIGURE_MARGIN * 2,
+          height: cardHeight + FIGURE_MARGIN * 2 + header
+        };
+      }
+
+      function paintFigure(ctx, layout) {
+        var m = FIGURE_MARGIN;
+        ctx.fillStyle = layout.bg;
+        ctx.fillRect(0, 0, layout.width, layout.height);
+        if (layout.title) {
+          var titleMid = m + 16;
+          ctx.fillStyle = layout.accent;
+          ctx.globalAlpha = 0.16;
+          ctx.beginPath(); ctx.arc(m + 5, titleMid, 9, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.arc(m + 5, titleMid, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = layout.text;
+          ctx.fillText(fitCanvasText(ctx, layout.title, layout.width - m * 2 - 22, FIGURE_TITLE_SIZE, 14, '650', layout.family), m + 22, titleMid + 1);
+          if (layout.subtitle) {
+            ctx.fillStyle = layout.muted;
+            ctx.fillText(fitCanvasText(ctx, layout.subtitle, layout.width - m * 2, FIGURE_SUBTITLE_SIZE, 11, '400', layout.family), m, titleMid + 30);
+          }
+          ctx.textBaseline = 'alphabetic';
+        }
+        var x = m, y = m + layout.header, w = layout.cardWidth, h = layout.cardHeight, r = 16;
+        function cardPath() {
+          ctx.beginPath();
+          if (typeof ctx.roundRect === 'function') ctx.roundRect(x, y, w, h, r);
+          else ctx.rect(x, y, w, h);
+        }
+        ctx.save();
+        if (layout.light) {
+          ctx.shadowColor = 'rgba(15, 23, 42, 0.08)';
+          ctx.shadowBlur = 28;
+          ctx.shadowOffsetY = 10;
+        }
+        cardPath();
+        ctx.fillStyle = layout.bg;
+        ctx.fill();
+        ctx.restore();
+        cardPath();
+        ctx.fillStyle = layout.cardFill;
+        ctx.fill();
+        if (layout.dot) {
+          ctx.save();
+          cardPath();
+          ctx.clip();
+          ctx.fillStyle = layout.dot;
+          for (var dy = y + 1; dy < y + h; dy += 20) {
+            for (var dx = x + 1; dx < x + w; dx += 20) {
+              ctx.beginPath(); ctx.arc(dx, dy, 1, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+          ctx.restore();
+        }
+        cardPath();
+        ctx.strokeStyle = layout.cardBorder;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        return { x: x + FIGURE_CARD_PADDING, y: y + FIGURE_CARD_PADDING };
       }
 
       function rasterize(format) {
@@ -427,8 +556,9 @@
         // size — no upsampling blur.
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
-        var scale = pickSafeScale(vb.width, vb.height);
-        var data = serializeSvg(scale);
+        var layout = figureLayout(vb);
+        var scale = pickSafeScale(layout.width, layout.height);
+        var data = serializeSvg(scale, { figure: true });
         var svgBlob = new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' });
         var svgUrl = URL.createObjectURL(svgBlob);
 
@@ -437,15 +567,15 @@
           img.onload = function () {
             try {
               var canvas = document.createElement('canvas');
-              canvas.width = data.width;
-              canvas.height = data.height;
+              canvas.width = Math.round(layout.width * scale);
+              canvas.height = Math.round(layout.height * scale);
               var ctx = canvas2dOrThrow(canvas, format);
-              if (format === 'jpeg') {
-                ctx.fillStyle = currentBg();
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-              }
-              // Draw at natural size — SVG was already rasterized at target res.
-              ctx.drawImage(img, 0, 0);
+              // Paint in CSS pixels; the SVG image is already rendered at scale,
+              // so drawing it at CSS size under this transform stays 1:1.
+              ctx.setTransform(scale, 0, 0, scale, 0, 0);
+              var origin = paintFigure(ctx, layout);
+              ctx.drawImage(img, origin.x, origin.y, vb.width, vb.height);
+              ctx.setTransform(1, 0, 0, 1, 0, 0);
               URL.revokeObjectURL(svgUrl);
               var mime = format === 'jpeg' ? 'image/jpeg' :
                          format === 'webp' ? 'image/webp' : 'image/png';
@@ -467,10 +597,10 @@
         });
       }
 
-      function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight) {
+      function fitCanvasText(ctx, text, maxWidth, startSize, minSize, weight, fontFamily) {
         var value = String(text || '').trim();
         var size = startSize;
-        var family = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        var family = fontFamily || "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
         while (size > minSize) {
           ctx.font = (weight || '600') + ' ' + size + 'px ' + family;
           if (ctx.measureText(value).width <= maxWidth) return value;
@@ -496,14 +626,13 @@
       }
 
       function renderShareCard(options) {
-        options = options || {};
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
         if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
         var svg = document.querySelector('.diagram-container svg');
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
-        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot });
+        var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot, figure: true });
         if (!data.canonicalStateClean) return Promise.reject(exportError('viewer.export.error.viewerState'));
         if (routeSnapshot && !data.routeStateClean) return Promise.reject(exportError('viewer.export.error.routeState'));
         if (reachSnapshot && !data.reachStateClean) return Promise.reject(exportError('viewer.export.error.reachState'));
@@ -528,7 +657,6 @@
                 : '--frontend-stroke';
               var accent = computed.getPropertyValue(accentProperty).trim() || '#22d3ee';
               var titleNode = document.querySelector('.header h1');
-              var subtitleNode = document.querySelector('.header .subtitle');
               var title = titleNode ? titleNode.textContent : document.title;
               var directionLabel = reachSnapshot
                 ? viewerText('viewer.export.direction.' + reachSnapshot.direction)
@@ -538,62 +666,65 @@
                     source: routeSnapshot.source.label,
                     target: routeSnapshot.target.label
                   })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachSummary', {
-                      direction: directionLabel,
-                      origin: reachSnapshot.origin.label,
-                      nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
-                      links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
-                      hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
-                    })
-                  : subtitleNode ? subtitleNode.textContent : '';
-              var preset = document.documentElement.getAttribute('data-preset') || 'classic';
-              var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-              var presetKey = preset === 'signal-flow'
-                ? 'viewer.preset.flow.short'
-                : 'viewer.preset.' + preset;
-              var presetLabel = viewerText(presetKey).toUpperCase();
-              var themeLabel = viewerText('viewer.theme.' + theme).toUpperCase();
+                : viewerText('viewer.export.card.reachSummary', {
+                    direction: directionLabel,
+                    origin: reachSnapshot.origin.label,
+                    nodes: viewerCount('viewer.export.card.node', reachSnapshot.nodeIds.length - 1),
+                    links: viewerCount('viewer.export.card.link', reachSnapshot.edges.length),
+                    hops: viewerCount('viewer.export.card.hop', reachSnapshot.maxDepth)
+                  });
               var cardLabel = routeSnapshot
                 ? viewerText('viewer.export.card.routeBadge', {
                     hops: viewerCount('viewer.export.card.hop', routeSnapshot.hops).toUpperCase()
                   })
-                : reachSnapshot
-                  ? viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() })
-                  : viewerText('viewer.export.card.defaultBadge', { preset: presetLabel, theme: themeLabel });
+                : viewerText('viewer.export.card.reachBadge', { direction: directionLabel.toUpperCase() });
+
+              var family = titleNode ? getComputedStyle(titleNode).fontFamily : 'sans-serif';
+              var panelFill = bg;
 
               ctx.fillStyle = bg;
               ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
 
+              // Header: a short accent rule and badge over the title and summary.
               ctx.fillStyle = accent;
-              ctx.fillRect(SHARE_CARD_PADDING, 27, 42, 3);
-
+              ctx.fillRect(SHARE_CARD_PADDING, 34, 28, 3);
               ctx.textBaseline = 'alphabetic';
-              ctx.fillStyle = text;
-              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 330, 29, 18, '700');
-              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 62);
-
-              ctx.fillStyle = muted;
-              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 280, 13, 11, '500');
-              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 87);
-
-              ctx.font = "600 12px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+              ctx.font = '600 12px ' + family;
               ctx.textAlign = 'right';
-              ctx.fillStyle = accent;
-              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 50);
+              ctx.fillStyle = muted;
+              ctx.fillText(cardLabel, SHARE_CARD_WIDTH - SHARE_CARD_PADDING, 40);
               ctx.textAlign = 'left';
 
-              var availableWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
-              var availableHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+              ctx.fillStyle = text;
+              var fittedTitle = fitCanvasText(ctx, title, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2 - 260, 30, 18, '650', family);
+              ctx.fillText(fittedTitle, SHARE_CARD_PADDING, 74);
+
+              ctx.fillStyle = muted;
+              var fittedSubtitle = fitCanvasText(ctx, subtitle, SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2, 15, 12, '400', family);
+              ctx.fillText(fittedSubtitle, SHARE_CARD_PADDING, 99);
+
+              // The diagram sits on one soft rounded panel with an even inset.
+              var panelX = SHARE_CARD_PADDING;
+              var panelY = SHARE_CARD_HEADER;
+              var panelWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
+              var panelHeight = SHARE_CARD_HEIGHT - SHARE_CARD_HEADER - SHARE_CARD_PADDING;
+              var inset = 18;
+              ctx.beginPath();
+              if (typeof ctx.roundRect === 'function') ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 14);
+              else ctx.rect(panelX, panelY, panelWidth, panelHeight);
+              ctx.fillStyle = panelFill;
+              ctx.fill();
+              ctx.strokeStyle = border;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+
+              var availableWidth = panelWidth - inset * 2;
+              var availableHeight = panelHeight - inset * 2;
               var fit = Math.min(availableWidth / data.width, availableHeight / data.height);
               var drawWidth = data.width * fit;
               var drawHeight = data.height * fit;
-              var drawX = SHARE_CARD_PADDING + (availableWidth - drawWidth) / 2;
-              var drawY = SHARE_CARD_HEADER + (availableHeight - drawHeight) / 2;
-
-              ctx.strokeStyle = border;
-              ctx.lineWidth = 1;
-              ctx.strokeRect(drawX - 0.5, drawY - 0.5, drawWidth + 1, drawHeight + 1);
+              var drawX = panelX + inset + (availableWidth - drawWidth) / 2;
+              var drawY = panelY + inset + (availableHeight - drawHeight) / 2;
               ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
               URL.revokeObjectURL(svgUrl);
 
@@ -616,7 +747,6 @@
 
       function rasterizeShareCard(options) {
         options = options || {};
-        if (!options.variant) return renderShareCard();
         if (options.variant !== 'route' && options.variant !== 'reach') {
           return Promise.reject(exportError('viewer.export.unknownVariant', { variant: options.variant }));
         }
@@ -929,8 +1059,7 @@
       // canvas.toBlob('image/webp') silently returns a PNG on browsers without
       // WebP encoding (older Safari), so detect explicitly.
       function supports(format) {
-        if (format === 'share-card') return true;
-        if (format === 'svg' || format === 'png') return true;
+        if (format === 'svg' || format === 'svg-light' || format === 'svg-dark' || format === 'png') return true;
         if (format === 'webm') return canRecordMotion();
         var mime = format === 'jpeg' ? 'image/jpeg' : 'image/webp';
         try {
@@ -946,7 +1075,7 @@
           it.disabled = true;
           it.title = viewerText('viewer.export.unsupported');
         }
-        if ((it.dataset.action === 'copy' || it.dataset.action === 'copy-share-card') && !canCopyImage()) {
+        if (it.dataset.action === 'copy' && !canCopyImage()) {
           it.disabled = true;
           it.title = viewerText('viewer.export.clipboardUnsupported');
         }
@@ -1036,21 +1165,21 @@
       });
 
       function runExport(format) {
+        if (['svg', 'svg-light', 'svg-dark', 'png', 'jpeg', 'webp', 'webm'].indexOf(format) === -1) {
+          return Promise.reject(exportError('viewer.export.unsupported'));
+        }
         var base = diagramFilename();
+        var svgTheme = format === 'svg' ? 'auto' :
+          format === 'svg-light' ? 'light' :
+          format === 'svg-dark' ? 'dark' : null;
         close(true);
         clearExportReceipt();
         if (format === 'webm') toast(viewerText('viewer.export.recording'));
-        return (format === 'share-card'
-          ? rasterizeShareCard().then(function (blob) {
-              recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-              download(blob, base + '-share-card.png');
-              toast(viewerText('viewer.export.downloadedShare'));
-            })
-          : format === 'svg'
-          ? Promise.resolve(serializeSvg(1, { autoTheme: true })).then(function (d) {
+        return (svgTheme
+          ? Promise.resolve(serializeSvg(1, { theme: svgTheme })).then(function (d) {
               var blob = new Blob([d.svgString], { type: 'image/svg+xml;charset=utf-8' });
               recordExportReceipt('svg', blob, d.canonicalStateClean);
-              download(blob, base + '.svg');
+              download(blob, base + (svgTheme === 'auto' ? '' : '-' + svgTheme) + '.svg');
             })
           : format === 'webm'
             ? recordWebm().then(function (blob) {
@@ -1186,29 +1315,6 @@
         }
       }
 
-      function runCopyShareCard() {
-        close(true);
-        clearExportReceipt();
-        if (!canCopyImage()) {
-          alert(viewerText('viewer.export.clipboardUnsupported.period'));
-          return;
-        }
-        var blobPromise = rasterizeShareCard();
-        return writePngToClipboard(blobPromise).then(function () {
-          return blobPromise.then(function (blob) {
-            recordExportReceipt('share-card', blob, true, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT });
-            toast(viewerText('viewer.export.copiedShare'));
-          });
-        }).catch(function (err) {
-          console.error(err);
-          var technicalMessage = err && err.message ? err.message : 'share-card';
-          var message = exportMessage(err);
-          document.documentElement.setAttribute('data-last-export-error-format', 'share-card');
-          document.documentElement.setAttribute('data-last-export-error', technicalMessage);
-          alert(viewerText('viewer.export.copyFailed', { message: message }));
-        });
-      }
-
       function runCopy() {
         close(true);
         clearExportReceipt();
@@ -1234,9 +1340,6 @@
         var reachShareCardBtn = e.target.closest('button[data-action="reach-share-card"]');
         if (reachShareCardBtn && !reachShareCardBtn.disabled && !reachShareCardBtn.hidden) { runReachShareCard(); return; }
 
-        var copyShareCardBtn = e.target.closest('button[data-action="copy-share-card"]');
-        if (copyShareCardBtn && !copyShareCardBtn.disabled) { runCopyShareCard(); return; }
-
         var copyBtn = e.target.closest('button[data-action="copy"]');
         if (copyBtn && !copyBtn.disabled) { runCopy(); return; }
 
@@ -1254,8 +1357,7 @@
         downloadRouteShareCard: runRouteShareCard,
         downloadReachShareCard: runReachShareCard,
         syncRouteShare: syncRouteShareItem,
-        syncReachShare: syncReachShareItem,
-        copyShareCard: runCopyShareCard
+        syncReachShare: syncReachShareItem
       };
 
       // Auto-open on page load for demo/screenshot purposes: ?openExport=1

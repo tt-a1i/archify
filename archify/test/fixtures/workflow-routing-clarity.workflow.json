@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Agent Turn Workflow",
+    "locale": "zh-CN",
+    "output": "workflow-routing-clarity.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "host", "label": "Runtime Host" },
+    { "id": "runtime", "label": "Session + AgentRun" },
+    { "id": "evidence", "label": "Events + Projections" }
+  ],
+  "phases": [
+    { "id": "admit", "label": "准入与路由", "fromCol": 0, "toCol": 1 },
+    { "id": "execute", "label": "Turn 执行", "fromCol": 2, "toCol": 4, "variant": "emphasis" },
+    { "id": "project", "label": "持久化与投影", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["request", "admit", "start", "turn", "commit", "project"],
+  "nodes": [
+    { "id": "request", "lane": "host", "col": 0, "type": "frontend", "label": "Submit Task", "sublabel": "Desktop / TUI / CLI" },
+    { "id": "admit", "lane": "host", "col": 1, "type": "security", "label": "Host Admission", "sublabel": "client + capability" },
+    { "id": "start", "lane": "runtime", "col": 2, "type": "backend", "label": "Start Session", "sublabel": "SessionManager" },
+    { "id": "turn", "lane": "runtime", "col": 3, "type": "backend", "label": "Run Turn", "sublabel": "model + tool loop" },
+    { "id": "tool", "lane": "runtime", "col": 4, "type": "security", "label": "Tool Boundary", "sublabel": "permission / sandbox" },
+    { "id": "commit", "lane": "evidence", "col": 4, "type": "database", "label": "Append Event", "sublabel": "RuntimeEvent" },
+    { "id": "project", "lane": "evidence", "col": 5, "type": "frontend", "label": "Project State", "sublabel": "UI + recovery" },
+    { "id": "graph", "lane": "host", "col": 3, "type": "messagebus", "label": "Agent Graph", "sublabel": "dependent child work" },
+    { "id": "resume", "lane": "runtime", "col": 5, "type": "security", "label": "Resume Check", "sublabel": "safe replay or blocked" }
+  ],
+  "edges": [
+    { "from": "request", "to": "admit", "label": "client request", "role": "main" },
+    { "from": "admit", "to": "start", "label": "authorized session", "role": "main" },
+    { "from": "start", "to": "turn", "label": "startTurn", "role": "main" },
+    { "from": "turn", "to": "tool", "label": "dispatch tool", "variant": "security", "role": "main" },
+    { "from": "tool", "to": "turn", "label": "tool result", "variant": "dashed", "role": "return" },
+    { "from": "turn", "to": "commit", "label": "append event", "variant": "dashed", "role": "main" },
+    { "from": "commit", "to": "project", "label": "projection", "variant": "dashed", "role": "main" },
+    { "from": "start", "to": "graph", "label": "schedule graph", "variant": "emphasis", "role": "async" },
+    { "from": "graph", "to": "turn", "label": "activation", "variant": "dashed", "role": "return" },
+    { "from": "turn", "to": "resume", "label": "crash / handoff", "variant": "security", "role": "branch" },
+    { "from": "resume", "to": "commit", "label": "replay evidence", "variant": "dashed", "role": "return" }
+  ]
+}

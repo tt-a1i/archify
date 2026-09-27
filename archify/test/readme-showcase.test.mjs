@@ -139,7 +139,8 @@ function inspectGif(buffer) {
 
 test('README motion proof is compact, looping, and backed by current gallery artifacts', () => {
   const builder = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-readme-showcase.mjs'), 'utf8');
-  assert.match(builder, /\?embed=1&play=1&theme=dark#view=/);
+  assert.match(builder, /\?embed=1&theme=dark\$\{scene\.hash\}/);
+  assert.doesNotMatch(builder, /play=1|#view=/);
   assert.match(builder, /path\.relative\(from, to\)\.split\(path\.sep\)\.join\('\/'\)/);
   const buffer = fs.readFileSync(assetPath);
   const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
@@ -256,8 +257,8 @@ test('README installation tables include Hermes Agent before DeepSeek Harness', 
 test('README demos use checked-in captures and live deep links below the existing hero', () => {
   const demos = [
     {
-      asset: 'archify-demo-story.png',
-      link: 'agent-tool-call.workflow.html?theme=dark&present=1&play=1#view=happy-path',
+      asset: 'archify-demo-reach.png',
+      link: 'agent-tool-call.workflow.html?theme=dark&present=1#focus=planner&reach=downstream',
     },
     {
       asset: 'archify-demo-route.png',
@@ -301,7 +302,7 @@ test('README preserves the visual proof set and key content', () => {
     'archify-lockup-dark.svg',
     'archify-readme-hero.png',
     'archify-live-proof.gif',
-    'archify-demo-story.png',
+    'archify-demo-reach.png',
     'archify-demo-route.png',
     'archify-demo-lens.png',
     'mco-runtime-share-card.png',

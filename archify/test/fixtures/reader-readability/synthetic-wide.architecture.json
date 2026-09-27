@@ -4,49 +4,7 @@
   "meta": {
     "title": "Synthetic wide reader fixture",
     "output": "synthetic-wide-reader.html",
-    "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "admission",
-        "label": "Admission",
-        "focus": [
-          "caller",
-          "listener",
-          "handler",
-          "parser",
-          "coordinator",
-          "store",
-          "queue"
-        ],
-        "note": "Trace request admission through queued state."
-      },
-      {
-        "id": "execution",
-        "label": "Execution",
-        "focus": [
-          "coordinator",
-          "queue",
-          "scheduler",
-          "worker",
-          "formatter",
-          "store"
-        ],
-        "note": "Follow one queued item through worker completion."
-      },
-      {
-        "id": "polling",
-        "label": "Polling",
-        "focus": [
-          "caller",
-          "listener",
-          "handler",
-          "coordinator",
-          "store",
-          "scheduler"
-        ],
-        "note": "Follow polling across the process boundary."
-      }
-    ]
+    "quality_profile": "showcase"
   },
   "components": [
     {
@@ -55,7 +13,7 @@
       "label": "Client caller",
       "sublabel": "external request",
       "pos": [
-        40,
+        10,
         270
       ],
       "size": [
@@ -167,7 +125,7 @@
       "label": "Work worker",
       "sublabel": "queued to complete",
       "pos": [
-        1115,
+        1195,
         370
       ],
       "size": [
@@ -181,7 +139,7 @@
       "label": "Result formatter",
       "sublabel": "text transform",
       "pos": [
-        1115,
+        1195,
         170
       ],
       "size": [

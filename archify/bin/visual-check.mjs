@@ -1690,7 +1690,12 @@ export class ChromeVisualBrowser {
         && typeof Archify.viewerChromeLayout.stageRect === 'function'
         ? Archify.viewerChromeLayout.stageRect()
         : (stage ? stage.getBoundingClientRect() : null);
-      var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
+      // The dock may lift to the viewport floor while the page scrolls; the
+      // stage contract is about its resting position.
+      var navigationDockRect = !navigationDock ? null
+        : window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.dockRect === 'function'
+          ? Archify.viewerChromeLayout.dockRect()
+          : navigationDock.getBoundingClientRect();
       var stageDockIntersectionArea = intersectionArea(stageRect, navigationDockRect);
       var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
         && typeof Archify.viewerChromeLayout.receipt === 'function'
@@ -1731,25 +1736,40 @@ export class ChromeVisualBrowser {
       var bodyStyle = window.getComputedStyle(document.body);
       var diagramStyle = diagram ? window.getComputedStyle(diagram) : null;
       var svgHeight = svg ? svg.getBoundingClientRect().height : 0;
+      var notesBelowFold = Boolean(reader) && document.documentElement.getAttribute('data-reader-rail') === 'bottom';
       var pageComposition = {
         bodyPaddingPx: Math.round((parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)),
         headerPx: Math.round(outerHeight(reader && reader.querySelector('.header'))),
-        guidedViewsPx: Math.round(outerHeight(reader && reader.querySelector('.guided-views'))),
         diagramChromePx: Math.round(outerHeight(diagram) - svgHeight),
         svgPx: Math.round(svgHeight),
-        cardsPx: Math.round(outerHeight(reader && reader.querySelector('.cards'))),
+        cardsPx: notesBelowFold ? 0 : Math.round(outerHeight(reader && reader.querySelector('.cards'))),
         viewBoxHeight: viewBox ? viewBox.height : 0
       };
+      var svgRect = svg && svg.getBoundingClientRect();
+      var diagramRect = diagram && diagram.getBoundingClientRect();
+      var documentScrollUnclipped = Boolean(svgRect && diagramRect
+        && svgRect.top >= diagramRect.top - 1 && svgRect.left >= diagramRect.left - 1
+        && svgRect.bottom <= diagramRect.bottom + 1 && svgRect.right <= diagramRect.right + 1
+        && diagram.scrollHeight <= diagram.clientHeight + 1
+        && diagram.scrollWidth <= diagram.clientWidth + 1
+        && [document.documentElement, document.body].every(function (element) {
+          return !['hidden', 'clip'].includes(window.getComputedStyle(element).overflowY);
+        }));
       return {
         pageComposition: pageComposition,
         innerWidth: window.innerWidth,
         innerHeight: window.innerHeight,
         scrollWidth: Math.ceil(document.documentElement.scrollWidth),
-        scrollHeight: Math.ceil(document.documentElement.scrollHeight),
+        // Bottom notes and index are reading material below the fold; the
+        // Reader excludes them from the one-screen fit, and so does this check.
+        scrollHeight: Math.max(window.innerHeight, Math.ceil(document.documentElement.scrollHeight - (
+          notesBelowFold ? outerHeight(reader.querySelector('.reader-rail')) : 0))),
         resolvedTheme: document.documentElement.getAttribute('data-theme') || '',
         readerLayout: document.documentElement.getAttribute('data-reader-layout') || null,
         readerOverflow: document.documentElement.getAttribute('data-reader-overflow') || null,
         readerFit: svg ? svg.getAttribute('data-reader-fit') : null,
+        diagramType: svg ? svg.getAttribute('data-diagram-type') : null,
+        documentScrollUnclipped: documentScrollUnclipped,
         readerWidth: reader ? reader.getBoundingClientRect().width : 0,
         diagramWidth: diagramWidth,
         viewBoxWidth: viewBoxWidth,
@@ -1860,11 +1880,13 @@ function observation({ width, height, theme, metrics }) {
     && !overflowX
     && readabilityOk
     && Number.isFinite(minimumProjectedNodeTextPx)
-    && readerLayout === 'adaptive'
-    && readerOverflow === 'authored'
-    && readerFit === 'intrinsic-height'
+    && ((readerLayout === 'adaptive' && readerOverflow === 'authored' && readerFit === 'intrinsic-height')
+      || (readerFit === 'authored-height' && metrics.diagramType === 'architecture'
+        && metrics.documentScrollUnclipped === true))
   );
-  const containmentOk = !overflowX && (!overflowY || verticalScrollAccepted);
+  const authoredClipped = readerFit === 'authored-height' && metrics.diagramType === 'architecture'
+    && metrics.documentScrollUnclipped !== true;
+  const containmentOk = !authoredClipped && !overflowX && (!overflowY || verticalScrollAccepted);
   const legendDockIntersectionArea = Number(metrics.legendDockIntersectionArea) || 0;
   const dockStageIntersectionArea = Number(metrics.dockStageIntersectionArea) || 0;
   const dockStageGap = metrics.dockStageGap == null ? null : Number(metrics.dockStageGap);
@@ -1889,12 +1911,13 @@ function observation({ width, height, theme, metrics }) {
     overflowX,
     overflowY,
     verticalScrollAccepted,
-    overflowDisposition: overflowX || (overflowY && !verticalScrollAccepted)
+    overflowDisposition: authoredClipped || overflowX || (overflowY && !verticalScrollAccepted)
       ? 'unexpected-overflow'
       : verticalScrollAccepted ? 'readable-vertical-scroll' : 'contained',
     readerLayout,
     readerOverflow,
     readerFit,
+    ...(readerFit === 'authored-height' ? { diagramType: metrics.diagramType, documentScrollUnclipped: metrics.documentScrollUnclipped === true } : {}),
     ok: containmentOk,
     readerWidth: Number(metrics.readerWidth) || null,
     diagramWidth: Number(metrics.diagramWidth) || null,
@@ -1948,6 +1971,46 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
 `;
 }
 
+const publishedBrowserEvidenceReceipts = new WeakSet();
+
+// Keep detailed observations in the bound receipt; expose every review image and
+// every failure without repeating the same viewport metrics in CLI context.
+export function summarizeBrowserEvidence(receipt) {
+  const directory = receipt.sidecars?.directory || path.dirname(receipt.artifact.path);
+  const evidencePath = (file) => file ? path.resolve(directory, file) : undefined;
+  const published = publishedBrowserEvidenceReceipts.has(receipt);
+  return {
+    schemaVersion: receipt.schemaVersion,
+    command: receipt.command,
+    ok: receipt.ok,
+    status: receipt.status,
+    evidenceKind: receipt.evidenceKind,
+    visualReview: receipt.visualReview,
+    artifact: receipt.artifact,
+    provenance: receipt.provenance,
+    deliveryReceiptId: receipt.deliveryReceiptId,
+    state: receipt.state,
+    chrome: receipt.chrome,
+    checks: Object.fromEntries(['containment', 'readability', 'viewerChrome', 'themeStates', 'captures']
+      .filter((key) => receipt[key])
+      .map((key) => [key, receipt[key].status])),
+    error: receipt.error,
+    publication: receipt.publication,
+    diagnostics: receipt.diagnostics || [],
+    evidence: {
+      receipt: published ? evidencePath(receipt.sidecars?.receipt) : undefined,
+      contactSheet: published ? evidencePath(receipt.captures?.contactSheet) : undefined,
+      screenshots: (published ? receipt.captures?.screenshots || [] : []).map((entry) => ({
+        path: evidencePath(entry.file),
+        width: entry.width,
+        height: entry.height,
+        theme: entry.theme,
+        resolvedTheme: entry.resolvedTheme,
+      })),
+    },
+  };
+}
+
 function viewportSubject(artifact, entry) {
   return {
     artifact,
@@ -1999,7 +2062,7 @@ export function verticalBudgetFixes(entry) {
   if (!entry.overflowY || !page) return [];
   const excess = entry.scrollHeight - entry.innerHeight;
   const fixes = [];
-  const stacked = `${page.bodyPaddingPx}px body padding + ${page.headerPx}px header + ${page.guidedViewsPx}px guided views + ${page.diagramChromePx}px diagram chrome + ${page.svgPx}px SVG + ${page.cardsPx}px cards = ${entry.scrollHeight}px against ${entry.innerHeight}px`;
+  const stacked = `${page.bodyPaddingPx}px body padding + ${page.headerPx}px header + ${page.diagramChromePx}px diagram chrome + ${page.svgPx}px SVG + ${page.cardsPx}px cards = ${entry.scrollHeight}px against ${entry.innerHeight}px`;
   if (page.svgPx > 0 && page.viewBoxHeight > 0) {
     const targetSvg = page.svgPx - excess;
     const targetViewBoxHeight = Math.floor(page.viewBoxHeight * targetSvg / page.svgPx);
@@ -2035,10 +2098,16 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
       }));
     }
     if (!entry.ok) {
-      const budgetFixes = verticalBudgetFixes(entry);
+      const authoredClipped = entry.readerFit === 'authored-height' && entry.diagramType === 'architecture'
+        && !entry.documentScrollUnclipped;
+      const budgetFixes = authoredClipped
+        ? ['restore the full SVG inside the diagram panel and allow normal document scrolling; remove internal scrollers and clipping without changing authored geometry']
+        : verticalBudgetFixes(entry);
       diagnostics.push(failureDiagnostic({
-        code: 'viewer/viewport-overflow',
-        message: `The rendered artifact overflows the ${entry.width}x${entry.height} ${entry.theme} viewport.`,
+        code: authoredClipped ? 'viewer/diagram-clipped' : 'viewer/viewport-overflow',
+        message: authoredClipped
+          ? `The authored Architecture canvas is clipped or cannot scroll in the document at ${entry.width}x${entry.height} (${entry.theme}).`
+          : `The rendered artifact overflows the ${entry.width}x${entry.height} ${entry.theme} viewport.`,
         subject: viewportSubject(artifact, entry),
         evidence: {
           innerWidth: entry.innerWidth,
@@ -2051,9 +2120,10 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
           readerLayout: entry.readerLayout,
           readerOverflow: entry.readerOverflow,
           readerFit: entry.readerFit,
+          ...(authoredClipped ? { documentScrollUnclipped: false } : {}),
           ...(entry.overflowY && entry.pageComposition ? {
             pageComposition: entry.pageComposition,
-            pageCompositionMeasurement: 'CSS pixels at this viewport; body padding, header, guided-views strip, diagram chrome, SVG and cards stack vertically and sum to scrollHeight',
+            pageCompositionMeasurement: 'CSS pixels at this viewport; body padding, header, diagram chrome, SVG and cards stack vertically and sum to scrollHeight',
           } : {}),
           ...(entry.overflowY && entry.workflowLanes?.length ? {
             workflowLanes: entry.workflowLanes,
@@ -2280,6 +2350,7 @@ function persistBrowserEvidenceFailure(
     activeOwnership = preflight.ownership;
   }
   const publication = publishReceiptOnly(artifactPath, outputs, receipt, activeOwnership);
+  if (publication.ok) publishedBrowserEvidenceReceipts.add(receipt);
   appendEvidencePublicationFailure(receipt, publication);
   appendEvidenceCleanupWarning(receipt, publication);
   return receipt;
@@ -2399,6 +2470,7 @@ async function runBrowserEvidence({
       supportedFixes: [`set ARCHIFY_CHROME to a Chrome or Chromium executable and rerun ${command}`],
     })];
     const publication = publishReceiptOnly(artifact, outputs, receipt, ownership);
+    if (publication.ok) publishedBrowserEvidenceReceipts.add(receipt);
     if (!publication.ok) {
       appendEvidencePublicationFailure(receipt, publication);
       return { exitCode: EXIT.fail, receipt };
@@ -2532,6 +2604,7 @@ async function runBrowserEvidence({
       receipt.status = 'fail';
       return { exitCode: EXIT.fail, receipt };
     }
+    publishedBrowserEvidenceReceipts.add(receipt);
     if (appendEvidenceCleanupWarning(receipt, publication)) {
       return { exitCode: EXIT.fail, receipt };
     }

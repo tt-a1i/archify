@@ -43,15 +43,11 @@ test('all typed renderers inherit one viewer-only Diagram Guide', () => {
   }
 });
 
-test('Diagram Guide reports compiled semantic facts and honest story availability', () => {
+test('Diagram Guide reports compiled semantic facts', () => {
   const html = render('workflow', CASES.workflow);
   assert.match(html, /svg\.querySelectorAll\('\[data-node-id\]'\)\.length/);
   assert.match(html, /svg\.querySelectorAll\('\[data-edge-from\]\[data-edge-to\]'\)/);
   assert.match(html, /edge\.getAttribute\('data-edge-key'\)/);
-  assert.match(html, /return Archify\.guidedViews && Number\(Archify\.guidedViews\.count\) \|\| 0/);
-  assert.match(html, /storyBtn\.disabled = views === 0/);
-  assert.match(html, /viewerCount\('viewer\.guide\.fact\.view', views\)/);
-  assert.match(html, /viewerText\('viewer\.guide\.story\.unavailable'\)/);
 });
 
 test('Diagram Guide delegates its task rows to existing production interactions', () => {
@@ -59,12 +55,10 @@ test('Diagram Guide delegates its task rows to existing production interactions'
   assert.match(html, /if \(action === 'find'\) return Archify\.finder\.open\(\)/);
   assert.match(html, /if \(action === 'route'\) return Archify\.routeProbe\.begin\(\{ focusNode: true \}\)/);
   assert.match(html, /if \(action === 'map'\) return Archify\.radar\.open\(\)/);
-  assert.match(html, /if \(action === 'story'\) return Archify\.guidedViews\.play\(\)/);
   assert.match(html, /if \(action === 'present'\) return Archify\.presentation\.enter\(\)/);
   assert.match(html, /if \(action === 'export'\) return Archify\.exportMenu\.open\(\)/);
   assert.match(html, /if \(action === 'theme'\) return Archify\.theme\.toggle\(\)/);
   assert.match(html, /if \(action === 'reset'\) return Archify\.view\.reset\(\)/);
-  assert.match(html, /Archify\.guidedViews\.pause\(\)/);
   assert.match(html, /Archify\.finder\.close\(\{ restoreFocus: false \}\)/);
   assert.match(html, /Archify\.radar\.close\(\{ restoreFocus: false \}\)/);
   assert.match(html, /event\.stopPropagation\(\);[\s\S]+execute\(button\.getAttribute\('data-guide-action'\)\)/);

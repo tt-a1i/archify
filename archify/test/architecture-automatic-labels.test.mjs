@@ -120,3 +120,37 @@ test('bounded fallback finds a clear position without hiding or shrinking the la
   assert.equal(report.labels[0].text, 'Read cache');
   assertLabelsClear(diagram, report);
 });
+
+test('a short gap cannot pass by relocating its label above an endpoint', t => {
+  const diagram = {
+    schema_version: 1, diagram_type: 'architecture',
+    meta: { title: 'Authentication', output: 'diagram.html', quality_profile: 'showcase' },
+    components: [
+      { id: 'client', type: 'frontend', label: 'Client', pos: [45, 55], size: [180, 72] },
+      { id: 'gateway', type: 'cloud', label: 'Gateway', pos: [310, 55], size: [220, 72] },
+    ],
+    connections: [{ id: 'login', from: 'client', to: 'gateway', label: '登录 · 配对 · 加密帧' }],
+  };
+  const crowded = inspect(t, diagram);
+  assert.equal(crowded.result.status, 1, crowded.result.stdout);
+  const diagnostic = crowded.report.diagnostics.find(d => d.code === 'composition/label-gap');
+  assert.ok(diagnostic, crowded.result.stdout);
+  assert.equal(diagnostic.subject.id, 'login');
+  assert.ok(diagnostic.evidence.minimumGapPx > diagnostic.evidence.clearGapPx);
+  assert.ok(diagnostic.supportedFixes.some(fix => /increase the clear gap/.test(fix)));
+
+  for (const control of [{ labelDx: 0 }, { labelAt: [267.5, 81] }]) {
+    const pinned = structuredClone(diagram);
+    Object.assign(pinned.connections[0], control);
+    const explicit = inspect(t, pinned);
+    assert.equal(explicit.result.status, 1);
+    assert.ok(explicit.report.diagnostics.some(d => /overlaps component/.test(d.message)));
+    assert.ok(!explicit.report.diagnostics.some(d => d.code === 'composition/label-gap'));
+  }
+
+  diagram.components[1].pos[0] = 390;
+  const repaired = inspect(t, diagram);
+  assert.equal(repaired.result.status, 0, repaired.result.stdout);
+  assertLabelsClear(diagram, repaired.report);
+  assert.equal(repaired.report.labels[0].text, diagram.connections[0].label);
+});

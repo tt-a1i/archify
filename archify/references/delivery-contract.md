@@ -1,5 +1,15 @@
 # Delivery contract
 
+## Failed finalize and candidate repair
+
+`finalize` stops at the first non-passing gate. Use compact stdout or `evidence.summaryReceipt`; read its full sidecar only when the summary lacks evidence needed for a coherent repair. A receipt with four artifact checks is basic validation, not showcase acceptance: require all nine checks, zero composition errors, and zero warnings. Fix `meta.quality_profile` and schema errors before geometry.
+
+For a validation failure, edit the existing JSON in the connected neighborhood named by diagnostics before rerunning a command. Preserve requested semantics, meaningful labels, source evidence, and fixed or agreed topology. Several routes sharing nodes call for one placement repair; read [Architecture layout repair](architecture-layout-repair.md) for that case. Reflow a blocked main path rather than nudging unrelated labels. Keep unrelated geometry when its composition already reads clearly. Use `--layout-json` before editing only when compact evidence lacks needed measurements. Workflow v2 uses its stable compiler receipt, not solver internals, as authoring evidence.
+
+After the edit, rerun the complete `finalize` command with `--quality showcase` and, for repository-backed work, `--repo-root <repo-root>`. If the output path already has browser evidence from another candidate, use a fresh `--out-dir <output-stem>.review-<revision>` for both the new `finalize` and any `visual-check`. Omit an earlier `--candidate-sha256` after editing because it binds the previous candidate. Compare diagnostics by code, subject, stage, and evidence, never by declining error count alone. If an issue survives two focused repairs, inspect measured geometry or the relevant contract; after one evidence-based retry, report the concrete gap.
+
+Use standalone `validate` only for focused diagnosis, passing `--repo-root` for repository-backed work. Its passing receipt marks `candidateFrozen: true`; run `nextAction.arguments`, replacing only `<output.html>`, without editing, revalidating, or rereading the candidate. Retry later environmental or evidence failures against those frozen bytes. A measured reason to edit creates a new candidate and calls for the complete `finalize` without the old hash.
+
 ## Validate and deliver
 
 `render` and direct renderer entry points print classified authoring failures
@@ -261,7 +271,15 @@ Complete stage receipts and timings remain available for auditing in
 `<path>-summary.json`. Read the full receipt only when the compact summary is
 truncated and its shown subjects and evidence cannot identify a coherent local
 repair, or when complete audit evidence was explicitly requested. The compact
-receipt reports `visualReview: "not-requested"`; ordinary acceptance does not create images or require a perceptual reviewer.
+receipt reports `visualReview: "not-requested"`; the automated gate does not create images or require a perceptual reviewer. A compact `visualReviewRecommendation` retains positive crossover and route-detour metrics from the strict check so the author can apply the review escalation below without reading the full receipt. A recommendation does not change the machine exit code or claim that review happened. Its `affectedRoutes` identifies crossing pairs and detours (up to eight of each, with a truncation flag); the full strict-check `composition.routeReview` retains all affected relationships. Use these IDs to trace the routes in the captured default viewport. Detours may include `directCorridorBlockers`, identifying nodes between aligned endpoints. These are geometric review clues, not new validation failures or inferred main-path semantics. For a blocked main path or several tangled routes, follow [Architecture layout repair](architecture-layout-repair.md) and reflow the connected scene before tuning individual sides or labels. Preserve every semantic fact; retain unrelated positions only when their surrounding composition is already accepted.
+
+For a measured automatic Architecture with a large unused leading area, the
+compact receipt may include `layoutReviewRecommendation`. Its
+`composition.leadingSpace` evidence accounts for nodes, boundary titles,
+routes and labels. Check whether that space is intentional; if not, reposition
+the connected scene while preserving meaning and user-fixed geometry, then
+finalize again. This suggestion changes no gate or exit status and requires
+no screenshot. A fixed canvas or uncertain measurement receives no suggestion.
 
 A passing finalizer receipt is sufficient evidence for all four gates. Merely
 naming the gates or requiring each one to pass does not require replaying their
@@ -366,20 +384,20 @@ The receipt binds the artifact SHA-256 and byte count, identifies
 `evidenceKind: "automated-browser"`, and reports
 `visualReview: "not-requested"`.
 
-Horizontal overflow always fails. Vertical overflow normally fails as well. One
-bounded exception preserves readability for renderer-owned canvases that declare
-intrinsic-height (omitted `meta.viewBox`, whether compiler-measured or the
-type's default canvas): after the adaptive
-Reader reaches its projected text floor and exposes
-`data-reader-layout="adaptive"` with
-`data-reader-overflow="authored"`, normal
-page-level vertical scrolling may pass. The SVG must also expose
-`data-reader-fit="intrinsic-height"`, projected text must still pass, and the
-receipt records `verticalScrollAccepted: true` with
-`overflowDisposition: "readable-vertical-scroll"`. Missing declarations,
-explicit authored viewBoxes, horizontal overflow, unreadable text, clipping, and
-Viewer chrome collisions remain failures. Do not add an internal diagram
-scroller or hide overflow.
+Horizontal overflow always fails. Normal document-level vertical scrolling is
+accepted only with a renderer-declared contract and measured readable text.
+Automatic canvases declare `data-reader-fit="intrinsic-height"`; their adaptive
+Reader must reach its readable width and expose `data-reader-overflow="authored"`.
+Architecture with an explicit `meta.viewBox` instead declares
+`data-diagram-type="architecture"` and `data-reader-fit="authored-height"`:
+its SVG coordinates, aspect ratio and existing Reader width behavior stay
+unchanged. Its full SVG must remain inside the diagram panel without internal
+scrolling or clipping, and the document must permit vertical scrolling.
+The receipt records `verticalScrollAccepted: true` and
+`overflowDisposition: "readable-vertical-scroll"`. Missing or unknown declarations,
+explicit viewBoxes in other modes, unreadable text, horizontal overflow,
+clipping and Viewer chrome collisions remain failures. Do not add an internal
+diagram scroller or hide overflow.
 
 `browser_evidence` in the handoff records only the outcome of this automated
 command:
@@ -406,8 +424,10 @@ Both browser commands inspect the exact delivered HTML without modifying or rere
 perceptual review:
 
 ```bash
-node bin/archify.mjs visual-check <output.html> --json --require-provenance
+node bin/archify.mjs visual-check <output.html> --summary --require-provenance
 ```
+
+`--summary` returns compact JSON with all diagnostics and absolute paths to the complete receipt, contact sheet, and every screenshot. For a chosen visual review, inspect the relevant captures; capture success is not perceptual approval. `--json` retains the full receipt output for existing consumers. Both modes run the same checks and keep the same exit status. If cleanup fails after publication, the summary retains the final failure diagnostics and `publication` recovery details; the linked receipt records the earlier committed evidence.
 
 It performs the same automated browser measurements, captures light/dark
 screenshots at 1440×900 and 2048×1320, and writes four viewport PNG sidecars,
@@ -462,6 +482,17 @@ a capable environment.
 
 `browser-check` applies the same private-snapshot, identity, ownership, and no-clobber rules to its single JSON receipt. Its namespace is separate from `visual-check`, so a browser-only rerun cannot remove capture evidence.
 
+## A new candidate at an existing output path
+
+Browser evidence belongs to exact artifact bytes. After editing a candidate whose previous HTML already has browser evidence, choose a fresh evidence directory before running the next `finalize`; this preserves the old receipts and captures without an avoidable ownership-conflict retry:
+
+```bash
+node bin/archify.mjs finalize architecture candidate.json diagram.html --quality showcase --repo-root <root> --out-dir diagram.review-2 --json
+node bin/archify.mjs visual-check diagram.html --out-dir diagram.review-2 --summary --require-provenance
+```
+
+Keep the requested HTML path stable. Use a new revision directory for each changed candidate, and retain the same directory for retries of unchanged bytes. For a diagram without repository evidence, omit `--repo-root`. Let the commands create their output directory. A prior validation failure that produced no HTML or browser evidence needs no new directory. Never remove unknown evidence to make a retry pass.
+
 ## Optional opening
 
 Add `--open` only when the user wants an immediate local preview. It runs after
@@ -488,12 +519,15 @@ The preview runtime ships inside the zero-dependency Skill ZIP and must work wit
 
 Never start it by default. Do not use it for CI, unattended agents, remote sharing, or mobile use. `--no-open` is only for a user who will open the printed local URL or for loop testing. Stop it with Ctrl-C before handoff. The first Ctrl-C drains the active delivery without publishing it; a second Ctrl-C forces shutdown of both delivery processes and HTTP connections, including incomplete requests. Shutdown preserves the last verified artifact and removes only staging files whose ownership can be verified. If delivery is interrupted before its receipt reaches Preview, unconfirmed files and recovery material may remain in the private staging directory; shutdown does not recursively delete unknown contents. Server state, port, source path, diagnostics, error text, and reload tokens must never enter the generated artifact or any export.
 
-## Optional perceptual review
+## Perceptual review
 
-The ordinary path ends with the deterministic browser gate and reports
-`visual_review: not_requested`. Escalate to perceptual review when any of these
-conditions applies:
+The automated path ends with the deterministic browser gate and reports
+`visual_review: not_requested`. Ordinary generation does not require screenshots
+or an image-reading step, including newly authored or repositioned Architecture.
+Perceptual review is optional; use it for an explicit request or a concrete visual
+investigation. Possible reasons include:
 
+- the compact finalizer includes `visualReviewRecommendation` for crossings or detours (advisory, not a delivery gate);
 - the user explicitly requests an aesthetic or visual review;
 - a template, renderer, or Viewer change needs visual regression evidence;
 - a novel layout or browser diagnostic leaves low confidence;
@@ -510,7 +544,7 @@ glance can support perceptual review only.
 
 Report one truthful optional-review status:
 
-- `visual_review: not_requested` — the default successful handoff.
+- `visual_review: not_requested` — no review trigger applies; this is not a visual acceptance claim.
 - `visual_review: passed` — only after inspecting the rendered artifact.
 - `visual_review: skipped (image reader unavailable)` — a requested or triggered review could not run.
 - `visual_review: failed` — with the concrete visible defect.

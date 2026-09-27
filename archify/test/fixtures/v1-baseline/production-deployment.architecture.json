@@ -7,27 +7,7 @@
     "visual_preset": "blueprint",
     "animation": "trace",
     "quality_profile": "showcase",
-    "engineering_profile": "deployment-ownership",
-    "views": [
-      {
-        "id": "request-boundary",
-        "label": "Request crosses the edge",
-        "focus": ["clients", "edge", "gateway", "api_a", "api_b"],
-        "note": "Follow public traffic into the private application network."
-      },
-      {
-        "id": "state-ownership",
-        "label": "State and ownership",
-        "focus": ["api_a", "api_b", "redis", "postgres", "replica"],
-        "note": "Separate stateless platform workloads from data-team-owned state."
-      },
-      {
-        "id": "async-operations",
-        "label": "Async and operations",
-        "focus": ["api_b", "events", "worker", "audit", "observability"],
-        "note": "See the asynchronous work and the evidence it emits."
-      }
-    ]
+    "engineering_profile": "deployment-ownership"
   },
   "components": [
     { "id": "clients", "type": "external", "label": "Customers", "sublabel": "web + mobile", "pos": [38, 300], "size": [122, 60] },

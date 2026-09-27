@@ -260,7 +260,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
         assert.equal((await snapshot('legacy-media-changed')).mode, 'still');
       }
     }
-    for (const query of ['&embed=1', '&play=1']) {
+    for (const query of ['&embed=1']) {
       await load('architecture', { query });
       // Share playback sets its root flag after Governor initialization.
       await run(`motionWait(() => document.documentElement.getAttribute('data-ambient-settle-reason') === 'suppressed')`);
@@ -270,23 +270,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal((await snapshot('initial-hidden-fixture')).mode, 'still');
   });
 
-  await t.test('Motion pauses actual Story, handoff and Route without discarding elapsed dwell', async () => {
-    await load();
-    await run(`Archify.guidedViews.activate('request-path'); motionWait(() => !Archify.guidedViews.handoff())`);
-    assert.equal(await run('Archify.guidedViews.play()'), true);
-    assert.equal(await run('Archify.guidedViews.isPlaying()'), true);
-    await run('Archify.motionGovernor.pause()');
-    assert.equal(await run('Archify.guidedViews.isPlaying()'), false);
-    await run('Archify.motionGovernor.resume()');
-    assert.equal(await run('Archify.guidedViews.isPlaying()'), false);
-    await load();
-    await run(`Archify.guidedViews.activate('request-path'); motionWait(() => !Archify.guidedViews.handoff())`);
-    const handoff = await run(`(() => {
-      Archify.guidedViews.activate('identity-and-cache');
-      const before=Archify.guidedViews.handoff(); Archify.motionGovernor.pause();
-      return {before:!!before,after:Archify.guidedViews.handoff()};
-    })()`);
-    assert.deepEqual(handoff, {before:true,after:null});
+  await t.test('Motion pauses actual Route without discarding elapsed dwell', async () => {
     await load();
     const route = await run(`(async () => {
       Archify.routeProbe.begin({source:'users'}); Archify.routeProbe.choose('db');
