@@ -1,5 +1,33 @@
 # Brand marks
 
+> **Trust boundary.** The authored brand URL is the initial untrusted input.
+> After the first response, redirect locations (`Location` headers), the
+> `finalUrl` of the page fetch, and any favicon `href` values found in the
+> fetched page's HTML head also become request targets and are themselves
+> untrusted. The HTTP client treats every URL in this chain as untrusted and
+> enforces:
+> - **Byte caps**: `MAX_IMAGE_BYTES = 1024 * 1024` (1 MB) for icons;
+>   `MAX_HTML_BYTES = 256 * 1024` (256 KB) for favicon head reads.
+> - **Timeout** (default 8 s; `ARCHIFY_BRAND_CAPTURE_TIMEOUT_MS` overrides in
+>   the range `[100, 30000]`).
+> - **Content-encoding forced to `identity`** (no compressed body to decode).
+> - **DNS-pinned lookup** — the socket opens against the *exact* resolved
+>   address that passed validation, closing the TOCTOU window between
+>   hostname check and socket open.
+> - **Content-type allowlist** for icon responses
+>   (`image/png`, `image/jpeg`, `image/webp`, `image/x-icon`,
+>   `image/vnd.microsoft.icon`). The favicon signature is then matched
+>   against the declared type before any bytes are hashed or stored, so a
+>   hostile page cannot swap a script payload into a permitted MIME slot.
+> - **Length- and encoding-bounded parsing** before any artifact is hashed
+>   or stored.
+>
+> Use only the bundled `simple-icons` catalogue (`node bin/archify.mjs brands
+> "<query>" --json`) or URLs you trust at the same trust level as your render
+> host. A hostile brand page can also choose a favicon response whose bytes
+> are hashed and embedded; the same per-request limits apply to every fetch
+> in the chain.
+
 Use a brand mark only when a real product, provider, model family, channel, or
 service identity helps the reader. Semantic `type` still explains what the node
 does; `brand` explains whose product it is.
