@@ -9,7 +9,52 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 
+// Diagram types supported by this build. Adding a sixth renderer requires
+// adding the name here AND creating `renderers/<type>/render-<type>.mjs`
+// with the documented entry-point contract.
 const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+
+// `processIsRunning(pid)` is a permission probe, not a liveness probe. The
+// delivery contract treats a PID as "still owning the lock" whenever its
+// death cannot be positively established. That gives three terminal cases:
+//
+//   * `process.kill(pid, 0)` succeeds              -> the PID exists.
+//   * `process.kill(pid, 0)` throws `ESRCH`       -> the PID is dead; the
+//                                                    lock is stale.
+//   * `process.kill(pid, 0)` throws anything else  -> we cannot signal the
+//                                                    PID for some other
+//                                                    reason (typically
+//                                                    `EPERM` because we
+//                                                    don't own it). The PID
+//                                                    may still be alive; we
+//                                                    must treat it as
+//                                                    owning the lock and
+//                                                    report
+//                                                    `delivery/concurrent-attempt`.
+//
+// Mapping `EPERM` to "not running" (and therefore to `delivery/lock-stale`)
+// would let stale-lock recovery remove a lock whose owner is still active,
+// opening the door to two simultaneous deliveries. The previous
+// implementation already had this bug; the audit finding S3 flagged it as
+// platform-fragile but did not call out the contract violation. The
+// reference implementation below carries the full cross-platform notes.
+//
+// The unit-tested reference implementation lives in
+// `renderers/shared/process-running.mjs`; we intentionally keep this inline
+// copy so a partial install (missing renderers/ at startup) still boots and
+// the `doctor` command can report the missing dependency instead of failing
+// to resolve the import.
+function processIsRunning(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error?.code === 'ESRCH') return false;
+    return true;
+  }
+}
+
 const DELIVERY_SIDECAR_SUFFIXES = Object.freeze([
   '.delivery.json',
   '.delivery-pending.json',
@@ -213,16 +258,6 @@ function rejectExistingDeliveryLock(lockPath, output, fileBindingRuntime) {
     deliveryLockPath: lockPath,
     deliveryLockOwner: { pid: lock.pid, receiptId: lock.receiptId },
   });
-}
-
-function processIsRunning(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return error.code !== 'ESRCH';
-  }
 }
 
 const deliveryOwnershipStates = new WeakMap();
