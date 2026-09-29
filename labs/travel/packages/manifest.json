@@ -1,15 +1,15 @@
 {
   "schema": 1,
   "style": {
-    "id": "illustrated-diorama-v8",
-    "sha256": "e80f416e1a2688e409ca46922f9bcfbc6ad494533f8de2f150ca8a25e72c8ea5"
+    "id": "illustrated-diorama-v9",
+    "sha256": "27081a727829d77882dfe29c305311a61359d7a7c96f05ed558a1ac927f81e41"
   },
   "groups": {
     "france": {
       "base": {
-        "url": "packages/france-base.a00ccd3c4bf0bcf2.json",
+        "url": "packages/france-base.4f66147bc631ae01.json",
         "bytes": 71705,
-        "sha256": "a00ccd3c4bf0bcf21778714b7f1561bab5c9504b032d53b37807a784f1243b16",
+        "sha256": "4f66147bc631ae01da597267bf34bf8f46663dfcd4f2f2649f383ae49558872a",
         "group": "france",
         "label": "france · 地理与行程",
         "type": "application/json"
@@ -18,9 +18,9 @@
     },
     "paris": {
       "base": {
-        "url": "packages/paris-base.94e13b41fc26bc96.json",
+        "url": "packages/paris-base.4ff8063f3d522a1a.json",
         "bytes": 188572,
-        "sha256": "94e13b41fc26bc960f52088ec9706f371ea0ccf1b1123273d002e0393c983061",
+        "sha256": "4ff8063f3d522a1ab5ed13207a101b1812d93490a9d1a683e17996ca5ddd4567",
         "group": "paris",
         "label": "paris · 地理与行程",
         "type": "application/json"
@@ -54,9 +54,9 @@
     },
     "shanghai": {
       "base": {
-        "url": "packages/shanghai-base.6c66071b596d3270.json",
+        "url": "packages/shanghai-base.1e803613c2556ce6.json",
         "bytes": 157595,
-        "sha256": "6c66071b596d32703ef1105d0f9bef0db64e212d2bd2f53967d4f577407c8bad",
+        "sha256": "1e803613c2556ce6f80e30928ad790cf399651ad8ed6f29e6428ab4f9d1b1a89",
         "group": "shanghai",
         "label": "shanghai · 地理与行程",
         "type": "application/json"
@@ -99,9 +99,9 @@
       "type": "text/javascript"
     },
     "renderer": {
-      "url": "packages/renderer.2319a7628d68c3c4.js",
-      "bytes": 665465,
-      "sha256": "2319a7628d68c3c4e4ececb10e308793fa77de9dc93fb20c90060830afe10289",
+      "url": "packages/renderer.4d1cd4428d3a87dd.js",
+      "bytes": 666828,
+      "sha256": "4d1cd4428d3a87dd6c020edc42d97fc2281b9cc8cbb3a0ad07ea2c7446789560",
       "group": "engine",
       "label": "固定插画渲染器",
       "type": "text/javascript"

@@ -1,6 +1,6 @@
 import {VISUAL} from './visual-style.js';
 import {terrainHeight} from './elevation.js';
-import {addRelief,drapeWater} from './terrain3d.js';
+import {addPointRelief,drapeWater} from './terrain3d.js';
 import { AIR_ROUTE_STYLE as AIR, airRouteStrokes, airArrowPath } from './air-route-style.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -120,7 +120,7 @@ function disposeWorld() {
 function rebuild() {
   if(!renderer)return;
   const next=atlas.scene(),changed=sceneId!==next;if(data.journey)stage.querySelector('.three-badge').innerHTML=next==='journey'?'总行程 · 地标与箭头<span>按真实坐标同比例投影 · 地标造型为示意</span>':'单日地图方块<span>水系按数据绘制 · 地表层次为插画示意</span>';sceneId=next;legend.hidden=sceneId==='france';legend.replaceChildren();const title=document.createElement('strong');title.textContent=cityTrip().title;legend.append(title);for(const d of cityTrip().days){const row=document.createElement('button');row.type='button';row.addEventListener('click',()=>document.querySelectorAll('#trip-days button')[d.day].click());row.style.color=d.color;row.textContent=String(d.day).padStart(2,'0')+'　'+d.title;legend.append(row);}const note=document.createElement('small');note.textContent='空中连线＝游览顺序 · 非道路轨迹';legend.append(note);disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
-  const base=box(world,1440,heightMode?24:1,1080,0xabbcaf,0,heightMode?(sceneId==='paris'?-54:-62):16,0);base.receiveShadow=true;
+  const base=relief()?null:box(world,1440,heightMode?24:1,1080,0xabbcaf,0,heightMode?(sceneId==='paris'?-54:-62):16,0);if(base)base.receiveShadow=true;
   const loader=new SVGLoader();
   for(const [index,region] of (relief()?[]:data.scenes[sceneId].paths).entries()) {
     const paths=loader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${region.d}" fill="#000" fill-rule="evenodd"/></svg>`).paths;
@@ -136,8 +136,8 @@ function rebuild() {
   }
   if(data.journey&&heightMode){
     // Fixed illustration texture and cutaway layers, not invented DEM heights.
-    for(const [y,h,color] of [[-40,18,0xb4a58a],[-23,16,0xc7b695],[-8,14,0xbac39a]])box(world,820.2,h,820.2,color,0,y,0);
-    if(relief()){addRelief(world,relief());terrainCount++;stage.querySelector('.three-badge').replaceChildren();const badge=stage.querySelector('.three-badge');badge.append('总行程 · 立体地貌');const subtitle=document.createElement('span');subtitle.textContent=reliefCaption();badge.append(subtitle);const ramp=document.createElement('span');ramp.className='terrain-color-key';ramp.textContent='低 ← 相对高程 → 高';ramp.title='浅绿低处、深绿坡地、岩土色高处；仅表示当前范围的相对高程，不代表植被或地质分类。';badge.append(ramp);const credit=document.createElement('a');credit.href=relief().source;credit.target='_blank';credit.rel='noopener';credit.textContent='高程数据与署名';credit.title=relief().attribution;legend.append(credit);}
+    for(const [y,h,color] of (relief()?[]:[[-40,18,0xb4a58a],[-23,16,0xc7b695],[-8,14,0xbac39a]]))box(world,820.2,h,820.2,color,0,y,0);
+    if(relief()){addPointRelief(world,relief());terrainCount++;stage.querySelector('.three-badge').replaceChildren();const badge=stage.querySelector('.three-badge');badge.append('总行程 · 三维网格点');const subtitle=document.createElement('span');subtitle.textContent=reliefCaption();badge.append(subtitle);const ramp=document.createElement('span');ramp.textContent='点＝高程采样 · 线＝地形网格';ramp.title='青绿低处、棕色高处；网格不是道路。';badge.append(ramp);const credit=document.createElement('a');credit.href=relief().source;credit.target='_blank';credit.rel='noopener';credit.textContent='高程数据与署名';credit.title=relief().attribution;legend.append(credit);}
     else{
     const ground=new THREE.PlaneGeometry(820,820,24,24);ground.rotateX(-Math.PI/2);
     const colors=[],positions=ground.attributes.position;
@@ -296,5 +296,5 @@ exportButton.addEventListener('click',event=>{
   ctx.fillText(relief()?relief().attribution+' · © OpenStreetMap contributors':data.journey?'坐标来源见行程 · 已提供的 OSM 地图 © OpenStreetMap contributors (ODbL)':'Natural Earth · © Ville de Paris / OpenStreetMap contributors (ODbL) · Wikidata (CC0)',16*ratio,output.height-24*ratio);
   output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='archify-travel-'+sceneId+'-3d.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'image/png');
 },true);
-window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,heightMode,relief:relief()?{vertices:relief().values.length,minimum:relief().minimum,maximum:relief().maximum,exaggeration:relief().exaggeration}:null,markerGround:markers.map(m=>m.position.y),markerHeights:markers.map(m=>new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()).y),scene:sceneId,terrainCount,detailBuildings:data.journey?(sceneId==='journey'?0:(data.journey.tiles[sceneId]?.buildings.length||0)):null,geometries:renderer?.info.memory.geometries,renderCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,routeArrows:airRoutes.length,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
+window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,heightMode,relief:relief()?{vertices:relief().values.length,minimum:relief().minimum,maximum:relief().maximum,exaggeration:relief().exaggeration}:null,terrainPointCount:world?.children.find(o=>o.userData.terrainPoints)?.geometry.attributes.position.count||0,markerGround:markers.map(m=>m.position.y),markerHeights:markers.map(m=>new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()).y),scene:sceneId,terrainCount,detailBuildings:data.journey?(sceneId==='journey'?0:(data.journey.tiles[sceneId]?.buildings.length||0)):null,geometries:renderer?.info.memory.geometries,renderCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,routeArrows:airRoutes.length,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
 window.dispatchEvent(new Event('archify:3d-ready'));

@@ -2,6 +2,28 @@ import * as THREE from 'three';
 import {terrainHeight} from './elevation.js';
 import {VISUAL} from './visual-style.js';
 
+// Whole-journey trial: height samples and orthogonal grid, no filled terrain.
+export function addPointRelief(world,grid){
+  const points=[],colors=[],lines=[];
+  const at=(c,r)=>[-410+820*c/(grid.columns-1),terrainHeight(grid,-410+820*c/(grid.columns-1),-410+820*r/(grid.rows-1)),-410+820*r/(grid.rows-1)];
+  const low=new THREE.Color(0x608f83),high=new THREE.Color(0x765238);
+  for(let r=0;r<grid.rows;r++)for(let c=0;c<grid.columns;c++){
+    points.push(...at(c,r));const t=(grid.values[r*grid.columns+c]-grid.minimum)/Math.max(1,grid.maximum-grid.minimum),color=low.clone().lerp(high,t);colors.push(color.r,color.g,color.b);
+    if(r%2===0&&c<grid.columns-1)lines.push(...at(c,r),...at(c+1,r));
+    if(c%2===0&&r<grid.rows-1)lines.push(...at(c,r),...at(c,r+1));
+  }
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(points,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  const material=new THREE.PointsMaterial({vertexColors:true,size:2.7,sizeAttenuation:false});
+  material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif (distance(gl_PointCoord, vec2(0.5)) > 0.5) discard;');};
+  const dots=new THREE.Points(geometry,material);dots.userData.disposeMaterial=true;dots.userData.terrainPoints=true;world.add(dots);
+  const wire=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(lines,3)),new THREE.LineBasicMaterial({color:0x73988c,transparent:true,opacity:.4,depthWrite:false}));wire.userData.disposeMaterial=true;world.add(wire);
+  // A sparse edge cage makes height legible from low viewing angles.
+  const edges=[];
+  for(let i=0;i<=8;i++)for(const [c,r] of [[i*(grid.columns-1)/8,0],[i*(grid.columns-1)/8,grid.rows-1],[0,i*(grid.rows-1)/8],[grid.columns-1,i*(grid.rows-1)/8]]){const p=at(c,r);edges.push(...p,p[0],-15,p[2]);}
+  const corners=[[-410,-15,-410],[410,-15,-410],[410,-15,410],[-410,-15,410]];for(let i=0;i<4;i++)edges.push(...corners[i],...corners[(i+1)%4]);
+  const cage=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(edges,3)),new THREE.LineBasicMaterial({color:0x8a9d93,transparent:true,opacity:.45}));cage.userData.disposeMaterial=true;world.add(cage);
+}
+
 export function addRelief(world,grid){
   const geometry=new THREE.PlaneGeometry(820,820,grid.columns-1,grid.rows-1);geometry.rotateX(-Math.PI/2);
   const positions=geometry.attributes.position,colors=[],levels=[];

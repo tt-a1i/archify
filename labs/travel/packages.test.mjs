@@ -49,12 +49,14 @@ test('HTTP packages: lazy height, cached reload, offline shell, navigation and d
   assert.ok(await run('Archify.travel3d.state().markerHeights.some(h=>h>100)'));
   assert.equal(await run('Archify.travel3d.state().places.length'),6);assert.equal(await run('Archify.travel3d.state().routeArrows'),5);assert.equal(await run('Archify.travel3d.state().detailBuildings'),0);
   assert.equal(await run('Archify.travel3d.state().relief.vertices'),4225);
+  assert.equal(await run('Archify.travel3d.state().terrainPointCount'),4225,'all-trip view renders height samples as points');
   assert.ok(await run('Archify.travel3d.state().relief.maximum>Archify.travel3d.state().relief.minimum'));
   assert.ok(await run('Math.max(...Archify.travel3d.state().markerGround)-Math.min(...Archify.travel3d.state().markerGround)>1'),'landmarks follow terrain height');
   assert.ok(await run("document.querySelector('.three-badge').textContent.includes('高差夸张')"));
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>r.name.includes('shanghai-day-'))"),false,'overview never fetches detailed day packages');
   await run("document.getElementById('mode-flow').click();document.querySelector('#flow-drawing [data-node-id=\"v2-1\"]').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))");await wait('Archify.travel3d.state().active&&Archify.travel3d.state().detailBuildings>0');await stable();assert.equal(await run('Archify.travel.scene()'),'day-2');assert.equal(await run('Archify.travel3d.state().active'),true);assert.ok(await run("TravelData.journey.tiles['day-2'].buildings.length>0&&TravelData.journey.tiles['day-2'].backdrop.length>0&&TravelData.journey.tiles['day-2'].water.length>0"));
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>/shanghai-day-[13]/.test(r.name))"),false,'only the chosen day downloads');
+  assert.equal(await run('Archify.travel3d.state().terrainPointCount'),0,'daily illustration keeps its existing filled terrain');
   if(process.env.ARCHIFY_TRAVEL_EVIDENCE){fs.mkdirSync(process.env.ARCHIFY_TRAVEL_EVIDENCE,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/disney-map.png',Buffer.from(shot.data,'base64'));}
   await run("document.querySelector('#trip-days [data-day=\"0\"]').click()");await stable();assert.equal(await run('Archify.travel.scene()'),'journey');assert.equal(await run('Archify.travel3d.state().detailBuildings'),0);
   const pixels=await run("document.querySelector('#stage-3d canvas').toDataURL()");const beforeCamera=await run('Archify.travel3d.state().camera');
