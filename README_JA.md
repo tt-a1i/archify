@@ -217,7 +217,7 @@ Put supporting detail in cards instead of adding more edges.
 ## 適切な図を選ぶ
 
 <details>
-<summary>5 種類の図、アーキテクチャの比較、サンプル</summary>
+<summary>6 種類の図、アーキテクチャの比較、サンプル</summary>
 
 
 | 種類 | 向いている対象 | プロンプトに含めるもの |
@@ -227,6 +227,7 @@ Put supporting detail in cards instead of adding more edges.
 | **Sequence** | API 呼び出し、キャッシュフォールバック、認証、非同期トレース | 呼び出し元、呼び出し先、戻り、タイミング |
 | **Data Flow** | パイプライン、リネージ、PII、コンシューマ | ソース、変換、ストア、境界 |
 | **Lifecycle** | 状態、リトライ、待機、終端結果 | 状態、イベント、リトライとキャンセルの経路 |
+| **Cognition** | 推論システムが 1 つの質問をどうルーティングしたか：判定、否定的経路、盲点 | 質問、受理・拒否カード、判定、盲点 |
 
 Architecture の任意プロファイル `deployment-ownership` は、記述されたオーナー、リージョン配置、データベースのプライベートスコープ、名前付きの境界越えが欠けている場合は fail-closed で停止します。暗黙的に有効化されることはなく、ライブのインフラを検査することもありません。[検証済みのデプロイ実証](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership)を参照してください。
 

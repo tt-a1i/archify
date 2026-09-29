@@ -225,7 +225,7 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 ## 选择合适的图表
 
 <details>
-<summary>五种图表、架构差异对比与示例</summary>
+<summary>六种图表、架构差异对比与示例</summary>
 
 
 | 类型 | 最适合 | Prompt 中应包含 |
@@ -235,6 +235,7 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 | **Sequence** | API 调用、缓存回源、鉴权、异步链路 | 调用方、被调用方、返回、时序 |
 | **Data Flow** | 数据管线、血缘、PII、下游消费者 | 来源、转换、存储、边界 |
 | **Lifecycle** | 状态、重试、等待、终态 | 状态、事件、重试与取消路径 |
+| **Cognition** | 推理系统如何路由一个问题：判定、负路由、盲区 | 问题、命中与拒绝的知识卡、判定、盲区 |
 
 做生产部署评审时，Architecture 可以按需启用 `deployment-ownership`
 工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。

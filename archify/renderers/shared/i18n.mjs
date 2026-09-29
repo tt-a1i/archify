@@ -25,6 +25,7 @@ const MESSAGE_PAIRS = {
   'node.context.sequence': ['Sequence participant', '时序参与者'],
   'node.context.dataflow': ['Data-flow node', '数据流节点'],
   'node.context.lifecycle': ['Lifecycle state', '生命周期状态'],
+  'node.context.cognition': ['Knowledge card', '知识卡'],
   'legend.title': ['Legend', '图例'],
 
   'legend.architecture.frontend': ['Frontend', '前端'],
@@ -55,6 +56,13 @@ const MESSAGE_PAIRS = {
   'legend.lifecycle.active': ['active', '进行中'],
   'legend.lifecycle.waiting': ['waiting', '等待'],
   'legend.lifecycle.decision': ['decision', '决策'],
+
+  // Cognition routing legend (verdict-driven; keys consumed by render-cognition.mjs)
+  'legend.cognition.accept': ['Accepted card', '命中的知识卡'],
+  'legend.cognition.branch': ['Lower-score branch', '低分分支'],
+  'legend.cognition.defer': ['Condition not closed', '条件未闭合'],
+  'legend.cognition.reject': ['Negative route', '负路由'],
+  'legend.cognition.blindspot': ['Blindspot', '盲区'],
   'legend.lifecycle.success': ['success', '成功'],
   'legend.lifecycle.failure': ['failure / exit', '失败 / 退出'],
   'legend.lifecycle.neutral': ['neutral', '中性状态'],
