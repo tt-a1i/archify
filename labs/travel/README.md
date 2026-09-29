@@ -104,3 +104,11 @@ Official opening/booking links are provided per stop; weekday closure guidance
 was checked on 2026-09-29. No live inventory or transport service is connected.
 Extend the atlas by adding sourced GeoJSON, verified coordinates and
 editorial metadata, then rebuild and exercise both scene and filter behavior.
+
+The 3D itinerary now uses one elevated arc and one screen-space arrowhead per
+stop pair. These indicate visit order, not road geometry. The 2D view and walking
+distance estimates retain the OSM routes. Map extrusion is 60/72 scene units;
+building heights use a more visible artistic scale, with shadows. No DEM or
+measured terrain elevation has been added. The 3D browser regression and exported
+image were checked after this change (`out/travel-air-tests.log`,
+`out/travel-air-evidence/france-three-days.png`).

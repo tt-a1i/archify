@@ -16,7 +16,7 @@ const stage = document.createElement('div');
 stage.id = 'stage-3d'; stage.className = 'stage-3d'; stage.hidden = true;
 stage.innerHTML = '<div class="three-labels"></div><div class="three-badge">立体旅行地图<span>地理轮廓真实 · 高度为艺术表现</span></div><div class="three-tools" role="toolbar" aria-label="3D 视角控制"><button id="orbit-left" title="向左旋转" aria-label="向左旋转">↶</button><button id="orbit-right" title="向右旋转" aria-label="向右旋转">↷</button><button id="orbit-top">俯视</button><button id="orbit-reset">复位</button><button id="orbit-spin" aria-pressed="false">自动旋转</button><button id="orbit-out" aria-label="3D 缩小">−</button><button id="orbit-in" aria-label="3D 放大">＋</button></div>';
 flat.after(stage);
-const legend=document.createElement('div');legend.className='trip-legend';legend.innerHTML='<strong>法国 3 天 · 巴黎慢游</strong><span style="color:#b16a35">01　凯旋门 → 埃菲尔铁塔</span><span style="color:#36766d">02　卢浮宫 → 奥赛</span><span style="color:#76619e">03　圣礼拜堂 → 巴黎圣母院</span><small>OSM 步行预览 · 箭头指向下一站</small>';stage.append(legend);
+const legend=document.createElement('div');legend.className='trip-legend';legend.innerHTML='<strong>法国 3 天 · 巴黎慢游</strong><span style="color:#b16a35">01　凯旋门 → 埃菲尔铁塔</span><span style="color:#36766d">02　卢浮宫 → 奥赛</span><span style="color:#76619e">03　圣礼拜堂 → 巴黎圣母院</span><small>空中连线＝游览顺序 · 非道路轨迹</small>';stage.append(legend);
 const labelLayer = stage.querySelector('.three-labels');
 const labelLeaders=document.createElementNS('http://www.w3.org/2000/svg','svg');labelLeaders.classList.add('three-label-leaders');labelLeaders.setAttribute('aria-hidden','true');labelLayer.before(labelLeaders);
 const footerHint = document.querySelector('.map-footer > span');
@@ -25,6 +25,8 @@ const exportButton = document.getElementById('export');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let renderer, camera, controls, scene, world, frame = 0, active = false, sceneId = '', failed = false;
 let markers = [], labels = [], terrainCount = 0, pointerStart = null;
+let airRoutes=[];
+const routeOverlay=document.createElementNS('http://www.w3.org/2000/svg','svg');routeOverlay.classList.add('three-label-leaders');routeOverlay.setAttribute('aria-hidden','true');labelLayer.before(routeOverlay);
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const clock = new THREE.Clock();
@@ -74,7 +76,7 @@ function landmark(p) {
     for(const x of [-24,24])box(group,7,23,1,dark,x,28,15.6);
   }
   const [x,z]=p.point;group.position.set(x-700,sceneId==='paris'?18:22,z-525);
-  group.scale.setScalar(sceneId==='paris'?.42:1.1);
+  group.scale.setScalar(sceneId==='paris'?.5:1.1);
   const marker=mesh(group,new THREE.CylinderGeometry(33,38,3,32),0xe8d6ab,0,1,0);
   marker.userData.base=true;world.add(group);markers.push(group);
   const button=document.createElement('button');button.className='three-label';button.dataset.place=p.id;
@@ -84,23 +86,23 @@ function landmark(p) {
 }
 function disposeWorld() {
   if(!world)return;
-  world.traverse(object=>{object.geometry?.dispose();if(object.userData.disposeMaterial)object.material.dispose();});scene.remove(world);labelLayer.replaceChildren();markers=[];labels=[];
+  world.traverse(object=>{object.geometry?.dispose();if(object.userData.disposeMaterial)object.material.dispose();});scene.remove(world);labelLayer.replaceChildren();markers=[];labels=[];airRoutes=[];routeOverlay.replaceChildren();
 }
 function rebuild() {
   if(!renderer)return;
   const next=atlas.scene(),changed=sceneId!==next;sceneId=next;legend.hidden=sceneId!=='paris';disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
-  const base=box(world,1440,12,1080,0xd6e3dd,0,-8,0);base.receiveShadow=true;
+  const base=box(world,1440,24,1080,0xabbcaf,0,sceneId==='paris'?-54:-62,0);base.receiveShadow=true;
   const loader=new SVGLoader();
   for(const [index,region] of data.scenes[sceneId].paths.entries()) {
     const paths=loader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${region.d}" fill="#000" fill-rule="evenodd"/></svg>`).paths;
     for(const path of paths)for(const shape of SVGLoader.createShapes(path)) {
-      const depth=sceneId==='paris'?18:22;
+      const depth=sceneId==='paris'?60:72,surface=sceneId==='paris'?18:22;
       const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:1,steps:1});
       geometry.translate(-700,-525,0);geometry.rotateX(Math.PI/2);
       const colors=sceneId==='paris'?[0xdbe2c3,0xcbd9b8,0xe5dfbd]:[0xcbd9ae];
-      const tile=new THREE.Mesh(geometry,[material(colors[index%colors.length]),material(0x91a67d)]);tile.position.y=depth;tile.receiveShadow=true;tile.castShadow=true;world.add(tile);terrainCount++;
+      const tile=new THREE.Mesh(geometry,[material(colors[index%colors.length]),material(0x91a67d)]);tile.position.y=surface;tile.receiveShadow=true;tile.castShadow=true;world.add(tile);terrainCount++;
       const border=new THREE.LineSegments(new THREE.EdgesGeometry(geometry,25),new THREE.LineBasicMaterial({color:0x879a7a,transparent:true,opacity:.35}));
-      border.position.y=depth+.15;border.userData.disposeMaterial=true;world.add(border);
+      border.position.y=surface+.15;border.userData.disposeMaterial=true;world.add(border);
     }
   }
   const visible=new Set(atlas.visible());
@@ -114,36 +116,21 @@ function drawCity(visible) {
   const streets=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(segments,3)),new THREE.LineBasicMaterial({color:0xb2b5a5,transparent:true,opacity:.55}));streets.userData.disposeMaterial=true;world.add(streets);
   for(const b of data.trip.buildings){
     const shape=new THREE.Shape(b.points.map(p=>new THREE.Vector2(p[0]-700,p[1]-525)));
-    const height=Math.max(1.8,Math.min(10,b.height*.12));const geo=new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:false,steps:1});geo.rotateX(Math.PI/2);
-    const building=new THREE.Mesh(geo,material(0xc7c6af));building.position.y=18+height;world.add(building);
+    const height=Math.max(5,Math.min(42,b.height*.55));const geo=new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:false,steps:1});geo.rotateX(Math.PI/2);
+    const building=new THREE.Mesh(geo,material(0xc7c6af));building.position.y=18+height;building.castShadow=true;building.receiveShadow=true;world.add(building);
   }
   for(const r of data.trip.routes.filter(r=>visible.has(r.from)&&visible.has(r.to))){
-    const vertices=r.points.map(p=>new THREE.Vector3(p[0]-700,45,p[1]-525));
-    // Flat, unlit map graphics: no tubes, cones, lighting or volumetric arrowheads.
-    const routeMaterial=new THREE.MeshBasicMaterial({color:r.color,side:THREE.DoubleSide});
-    const ribbon=[];
-    for(let i=1;i<vertices.length;i++){
-      const a=vertices[i-1],b=vertices[i],delta=b.clone().sub(a);if(delta.length()<.01)continue;
-      const side=new THREE.Vector3(-delta.z,0,delta.x).normalize().multiplyScalar(.7);
-      const leftA=a.clone().add(side),rightA=a.clone().sub(side),leftB=b.clone().add(side),rightB=b.clone().sub(side);
-      for(const p of [leftA,rightA,leftB,rightA,rightB,leftB])ribbon.push(...p.toArray());
-    }
-    const strip=new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(ribbon,3)),routeMaterial);strip.userData.disposeMaterial=true;world.add(strip);
-    // A simple solid triangular direction marker, spaced out along the route.
-    const arrowShape=new THREE.Shape();arrowShape.moveTo(0,5);arrowShape.lineTo(-3.5,-3);arrowShape.lineTo(3.5,-3);arrowShape.closePath();
-    let travelled=0,next=10;
-    for(let i=1;i<vertices.length;i++){const a=vertices[i-1],b=vertices[i],delta=b.clone().sub(a),length=delta.length();if(!length)continue;
-      while(next<=travelled+length){const at=a.clone().lerp(b,(next-travelled)/length);const geometry=new THREE.ShapeGeometry(arrowShape);geometry.rotateX(Math.PI/2);const arrow=new THREE.Mesh(geometry,routeMaterial);arrow.position.copy(at);arrow.position.y+=.15;arrow.rotation.y=Math.atan2(delta.x,delta.z);arrow.userData.routeArrow=true;world.add(arrow);next+=30;}travelled+=length;
-    }
-    for(const [id,end] of [[r.from,vertices[0]],[r.to,vertices.at(-1)]]){
-      const p=data.places.find(p=>p.id===id),line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p.point[0]-700,45,p.point[1]-525),end]),new THREE.LineDashedMaterial({color:r.color,dashSize:2,gapSize:2}));line.computeLineDistances();line.userData.disposeMaterial=true;world.add(line);
-    }
+    const endpoint=id=>{const marker=markers.find(m=>m.userData.placeId===id),bounds=new THREE.Box3().setFromObject(marker);return new THREE.Vector3(marker.position.x,bounds.max.y+12,marker.position.z);};
+    const start=endpoint(r.from),end=endpoint(r.to),middle=start.clone().add(end).multiplyScalar(.5);
+    middle.y=Math.max(start.y,end.y)+Math.min(95,Math.max(35,start.distanceTo(end)*.4));
+    airRoutes.push({day:r.day,color:r.color,points:new THREE.QuadraticBezierCurve3(start,middle,end).getPoints(48)});
+
   }
 }
 function reset(top=false) {
   if(!camera)return;let distance=fitDistance();controls.target.set(0,0,0);
   if(sceneId==='paris'){controls.target.set(-70,15,-10);distance=Math.max(700,660/Math.max(camera.aspect,.25));}
-  camera.position.copy((top?new THREE.Vector3(0,1,.001):new THREE.Vector3(.1,1.3,1)).normalize().multiplyScalar(distance)).add(controls.target);
+  camera.position.copy((top?new THREE.Vector3(0,1,.001):new THREE.Vector3(.15,.95,1)).normalize().multiplyScalar(distance)).add(controls.target);
   controls.update();requestFrame();
 }
 function focus(id){const p=data.places.find(p=>p.id===id);if(!active||!p||p.scene!==sceneId)return;const offset=camera.position.clone().sub(controls.target).normalize().multiplyScalar(650);controls.target.set(p.point[0]-700,20,p.point[1]-525);camera.position.copy(controls.target).add(offset);controls.update();requestFrame();}
@@ -168,8 +155,21 @@ function renderLabels() {
   }
   document.getElementById('detail-level').textContent=controls.getDistance()<1350?'3D · 地标细节':'3D · 拖动自由旋转';
 }
+function projectedAirRoutes(){
+  const w=stage.clientWidth,h=stage.clientHeight;if(camera.position.y<0)return [];
+  return airRoutes.map(r=>({...r,screen:r.points.map(p=>{const q=p.clone().project(camera);return {x:(q.x*.5+.5)*w,y:(-.5*q.y+.5)*h,z:q.z};})})).filter(r=>r.screen.every(p=>p.z>=-1&&p.z<=1));
+}
+function renderAirRoutes(){
+  routeOverlay.replaceChildren();routeOverlay.setAttribute('viewBox',`0 0 ${stage.clientWidth} ${stage.clientHeight}`);
+  for(const r of projectedAirRoutes()){
+    const points=r.screen,end=points.at(-1),before=points.at(-3),angle=Math.atan2(end.y-before.y,end.x-before.x);
+    const d=points.map((p,i)=>(i?'L':'M')+p.x+','+p.y).join(' ');
+    for(const [stroke,width] of [['#faf7ef',5],[r.color,2.5]]){const line=document.createElementNS('http://www.w3.org/2000/svg','path');line.setAttribute('d',d);line.setAttribute('fill','none');line.setAttribute('stroke',stroke);line.setAttribute('stroke-width',width);line.setAttribute('stroke-linecap','round');routeOverlay.append(line);}
+    const head=document.createElementNS('http://www.w3.org/2000/svg','path');head.setAttribute('d','M-10 -5 L0 0 L-10 5');head.setAttribute('transform',`translate(${end.x} ${end.y}) rotate(${angle*180/Math.PI})`);head.setAttribute('fill','none');head.setAttribute('stroke',r.color);head.setAttribute('stroke-width','3');head.setAttribute('stroke-linecap','round');head.setAttribute('stroke-linejoin','round');routeOverlay.append(head);
+  }
+}
 function requestFrame() {if(!active||document.hidden||frame)return;frame=requestAnimationFrame(render);}
-function render() {frame=0;if(!active||document.hidden)return;const changed=controls.update(Math.min(clock.getDelta(),.05));renderer.render(scene,camera);renderLabels();if(changed||controls.autoRotate)requestFrame();}
+function render() {frame=0;if(!active||document.hidden)return;const changed=controls.update(Math.min(clock.getDelta(),.05));renderer.render(scene,camera);renderLabels();renderAirRoutes();if(changed||controls.autoRotate)requestFrame();}
 function resize() {if(!renderer||!active)return;const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);requestFrame();}
 function pick(event) {
   if(!pointerStart||event.button!==0||Math.hypot(event.clientX-pointerStart.x,event.clientY-pointerStart.y)>6)return;
@@ -214,10 +214,11 @@ reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches&&controls)
 window.addEventListener('archify:travel-change',rebuild);window.addEventListener('archify:travel-select',selection);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(frame)cancelAnimationFrame(frame);frame=0;}else requestFrame();});
 exportButton.addEventListener('click',event=>{
-  if(!active)return;event.stopImmediatePropagation();renderer.render(scene,camera);
+  if(!active)return;event.stopImmediatePropagation();renderer.render(scene,camera);renderAirRoutes();
   const ratio=renderer.getPixelRatio(),mapWidth=renderer.domElement.width,summary=sceneId==='paris'?360*ratio:0;
   const output=document.createElement('canvas');output.width=mapWidth+summary;output.height=Math.max(renderer.domElement.height+90*ratio,summary?760*ratio:0);
   const ctx=output.getContext('2d');ctx.fillStyle='#e9efea';ctx.fillRect(0,0,output.width,output.height);ctx.drawImage(renderer.domElement,0,0);
+  for(const r of projectedAirRoutes()){const points=r.screen;for(const [stroke,width] of [['#faf7ef',5],[r.color,2.5]]){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x*ratio,p.y*ratio):ctx.moveTo(p.x*ratio,p.y*ratio));ctx.strokeStyle=stroke;ctx.lineWidth=width*ratio;ctx.lineCap='round';ctx.stroke();}const end=points.at(-1),before=points.at(-3);ctx.save();ctx.translate(end.x*ratio,end.y*ratio);ctx.rotate(Math.atan2(end.y-before.y,end.x-before.x));ctx.beginPath();ctx.moveTo(-10*ratio,-5*ratio);ctx.lineTo(0,0);ctx.lineTo(-10*ratio,5*ratio);ctx.strokeStyle=r.color;ctx.lineWidth=3*ratio;ctx.stroke();ctx.restore();}
   ctx.fillStyle='#263f38';ctx.font=`${14*ratio}px sans-serif`;
   for(const label of labels){if(label.button.hidden||!label.screen)continue;ctx.strokeStyle='#8b9784';ctx.lineWidth=ratio*.7;ctx.beginPath();ctx.moveTo(label.screen.x*ratio,label.screen.anchorY*ratio);ctx.lineTo(label.screen.x*ratio,label.screen.y*ratio);ctx.stroke();ctx.fillText('D'+label.p.day+' '+label.p.name,label.screen.x*ratio-24*ratio,(label.screen.y+15)*ratio);}
   if(summary){
@@ -232,9 +233,9 @@ exportButton.addEventListener('click',event=>{
     }
     text('卢浮宫周二闭馆 · 奥赛周一闭馆',output.height/ratio-84,11,'#8c592e');text('日期未核验时，请调整博物馆日并查官网。',output.height/ratio-62,10,'#6d7970');
   }
-  ctx.fillStyle='#263f38';ctx.font=`${10*ratio}px sans-serif`;ctx.fillText('OSM 道路预览 · 虚线为入口未核验连接 · 建筑高度含示意值',16*ratio,output.height-46*ratio);
+  ctx.fillStyle='#263f38';ctx.font=`${10*ratio}px sans-serif`;ctx.fillText('空中箭头仅表示游览顺序 · 步行距离另按 OSM 估算 · 高度为艺术表现',16*ratio,output.height-46*ratio);
   ctx.fillText('Natural Earth · © Ville de Paris / OpenStreetMap contributors (ODbL) · Wikidata (CC0)',16*ratio,output.height-24*ratio);
   output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='archify-travel-'+sceneId+'-3d.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'image/png');
 },true);
-window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,scene:sceneId,terrainCount,routeArrows:world?.children.filter(c=>c.userData.routeArrow).length||0,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
+window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,scene:sceneId,terrainCount,routeArrows:airRoutes.length,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
 setMode(true);

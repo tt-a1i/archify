@@ -25,9 +25,9 @@ test('3D geography, rotation, zoom, pan, scene state, export and fallback', {ski
   await run("document.getElementById('orbit-top').click()");await stable();assert.ok((await state()).polar<.03);
   await run("document.getElementById('orbit-reset').click();document.getElementById('orbit-spin').click()");await stable();const spin=await state();await stable();assert.notEqual((await state()).azimuth,spin.azimuth);await run("document.getElementById('orbit-spin').click()");
   await run("document.getElementById('paris-tab').click()");await stable();assert.equal((await state()).scene,'paris');assert.equal((await state()).terrainCount,20);
-  assert.equal((await state()).places.length,6);assert.ok((await state()).routeArrows>5);
+  assert.equal((await state()).places.length,6);assert.equal((await state()).routeArrows,3);
   await run("document.getElementById('trip-form').requestSubmit()");await stable();assert.equal(await run("document.getElementById('trip-plan').hidden"),false);assert.equal(await run("document.querySelectorAll('.schedule-stop').length"),6);
-  await run("document.querySelectorAll('#trip-days button')[3].click()");await stable();assert.deepEqual((await state()).places,['Q2981','Q193193']);assert.ok((await state()).routeArrows>0);assert.equal(await run("document.querySelectorAll('.schedule-stop').length"),2);
+  await run("document.querySelectorAll('#trip-days button')[3].click()");await stable();assert.deepEqual((await state()).places,['Q2981','Q193193']);assert.equal((await state()).routeArrows,1);assert.equal(await run("document.querySelectorAll('.schedule-stop').length"),2);
   await run("document.querySelector('.schedule-stop[data-place=Q193193]').click()");assert.equal(await run('Archify.travel.selected()'),'Q193193');assert.ok(Math.abs((await state()).distance-650)<1);
   await run("document.getElementById('trip-date').value='2026-10-04';document.getElementById('trip-date').dispatchEvent(new Event('change'))");assert.ok(await run("document.getElementById('trip-calendar').textContent.includes('奥赛闭馆')"));
   await run("document.getElementById('trip-prompt').value='日本7天';document.getElementById('trip-form').requestSubmit()");assert.ok(await run("document.getElementById('trip-status').textContent.includes('未为这条需求')"));
