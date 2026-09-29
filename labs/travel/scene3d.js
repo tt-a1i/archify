@@ -230,7 +230,7 @@ function init() {
 let modeRequest=0;
 async function setMode(want3d,withHeight=true) {
   const request=++modeRequest;
-  if(want3d&&withHeight&&window.TravelPackages){try{await window.TravelPackages.ensureHeight();}catch(error){document.getElementById('package-status').textContent=error.message+'；可改用 2D 或 3D 无高度，点击有高度可重试';if(!active)flat.hidden=false;return;}if(request!==modeRequest)return;}
+  if(want3d&&withHeight&&window.TravelPackages){try{await window.TravelPackages.ensureHeight();}catch(error){document.getElementById('package-status').textContent=error.message+'；行程图仍可查看，点击 3D 有高度重试';if(!active)flat.hidden=false;return;}if(request!==modeRequest)return;}
   const changed=want3d&&heightMode!==withHeight;if(want3d)heightMode=withHeight;
   if(want3d&&failed)return;
   if(want3d&&!renderer&&!init())return;
@@ -241,7 +241,7 @@ async function setMode(want3d,withHeight=true) {
   if(active){resize();if(!world||changed)rebuild();requestFrame();}else{if(frame)cancelAnimationFrame(frame);frame=0;Archify.view.fitAll();document.getElementById('detail-level').textContent='2D · 缩放探索';}
 }
 document.getElementById('mode-flat').addEventListener('click',()=>setMode(true,false));
-document.getElementById('mode-3d').addEventListener('click',()=>setMode(true));document.getElementById('mode-2d').addEventListener('click',()=>setMode(false));
+document.getElementById('mode-2d').addEventListener('click',()=>setMode(false));
 document.getElementById('orbit-left').addEventListener('click',()=>{controls.rotateLeft(Math.PI/8);controls.update();requestFrame();});
 document.getElementById('orbit-right').addEventListener('click',()=>{controls.rotateLeft(-Math.PI/8);controls.update();requestFrame();});
 document.getElementById('orbit-top').addEventListener('click',()=>reset(true));document.getElementById('orbit-reset').addEventListener('click',()=>reset());
@@ -275,4 +275,4 @@ exportButton.addEventListener('click',event=>{
   output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='archify-travel-'+sceneId+'-3d.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'image/png');
 },true);
 window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,heightMode,markerHeights:markers.map(m=>new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()).y),scene:sceneId,terrainCount,routeArrows:airRoutes.length,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
-setMode(new URLSearchParams(location.search).get('view')!=='2d',new URLSearchParams(location.search).get('view')!=='flat');
+window.dispatchEvent(new Event('archify:3d-ready'));

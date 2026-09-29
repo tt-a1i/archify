@@ -1,5 +1,24 @@
 # Archify Travel experiment
 
+## Flowchart first
+
+The travel UI opens with a daily workflow, compiled by Archify's existing
+`compileWorkflow` renderer from the same stops used by the 3D diorama. Clicking
+a node (or pressing Enter/Space) opens its destination in 3D with height; Disney
+opens the separate park. Only “行程流程图” and “3D 有高度” are exposed. Legacy
+flat-map internals remain for compatibility, without presentation controls.
+Long descriptions and booking links are collapsed. `?view=3d` remains a direct
+map link; absent/legacy view parameters open the flowchart.
+
+This browser demo still selects curated Shanghai/Paris three-day plans. It does
+not call an LLM or reproduce the full Agent-driven generation capability of the
+Archify Skill. The shared workflow input adapter is `build-flow.mjs`.
+
+The 2026-09-29 UI revision changes scene initialization and presentation only;
+the approved materials, lighting, model geometry and air arrows are unchanged.
+Paris and Shanghai screenshots and the cache pixel equality checks were used
+to review the updated renderer fingerprint in `visual-lock.json`.
+
 ## Destination packages and stable style
 
 Serve with `node labs/travel/serve.mjs`; open `index.html` or `world.html` over

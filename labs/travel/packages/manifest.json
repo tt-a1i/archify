@@ -2,14 +2,14 @@
   "schema": 1,
   "style": {
     "id": "illustrated-diorama-v1",
-    "sha256": "004437108532f00ef60a633e8cabe76474cfd572eab36c534767310aec34da93"
+    "sha256": "f923794de09cad67ec9637dca7df3fec4ba7b1b53515a5d0c23536d9de9d8959"
   },
   "groups": {
     "france": {
       "base": {
-        "url": "packages/france-base.8ffc377bbe74229e.json",
-        "bytes": 42073,
-        "sha256": "8ffc377bbe74229e856415c68f1500507b0a85098091c36839d3ccbd4ae0604b",
+        "url": "packages/france-base.3459e8d13deb6ed1.json",
+        "bytes": 71705,
+        "sha256": "3459e8d13deb6ed18c005e26cf0155640cef7ffaa92bbcdb9ecf1b941df9dcb5",
         "group": "france",
         "label": "france · 地理与行程",
         "type": "application/json"
@@ -17,9 +17,9 @@
     },
     "paris": {
       "base": {
-        "url": "packages/paris-base.7d681fcbbfc691d7.json",
-        "bytes": 814506,
-        "sha256": "7d681fcbbfc691d7b31d70439e88d5eedf105b8e51506af67c8779af00b3b6dd",
+        "url": "packages/paris-base.71cfb71980a0f6f1.json",
+        "bytes": 844138,
+        "sha256": "71cfb71980a0f6f13a56c61e455665dd6fec25dd3a8ce7c061105940783cf7c9",
         "group": "paris",
         "label": "paris · 地理与行程",
         "type": "application/json"
@@ -35,9 +35,9 @@
     },
     "shanghai": {
       "base": {
-        "url": "packages/shanghai-base.747a1a0c3c4f4512.json",
-        "bytes": 786052,
-        "sha256": "747a1a0c3c4f451224bb7c092a90db99b4a999dd331f20f62aff39448df70c3e",
+        "url": "packages/shanghai-base.def6e60761dc7892.json",
+        "bytes": 815684,
+        "sha256": "def6e60761dc78928a599ba642ad6a0498c72de6095d55518bab5d5ea97b23a7",
         "group": "shanghai",
         "label": "shanghai · 地理与行程",
         "type": "application/json"
@@ -54,17 +54,17 @@
   },
   "shared": {
     "atlas": {
-      "url": "packages/atlas.1c6bf1fadb423c2e.js",
-      "bytes": 71787,
-      "sha256": "1c6bf1fadb423c2eecf59f3c6b92cd1d38ef81ea1889c6e7231683f45c3a21ef",
+      "url": "packages/atlas.a870d7c14666ed94.js",
+      "bytes": 75107,
+      "sha256": "a870d7c14666ed947cf4dba683c6c58642b78cfd930f947996ec1f7e3638bdbe",
       "group": "engine",
       "label": "互动界面",
       "type": "text/javascript"
     },
     "renderer": {
-      "url": "packages/renderer.fda1f02bd66875e7.js",
-      "bytes": 657807,
-      "sha256": "fda1f02bd66875e7c5549d4c42946e1cb569625476d78658f166e206215a9887",
+      "url": "packages/renderer.f78ef788c6efd163.js",
+      "bytes": 657659,
+      "sha256": "f78ef788c6efd163dcc8aafb1d6633887ffe38d49ef2836dba2bd482c3a87c51",
       "group": "engine",
       "label": "固定插画渲染器",
       "type": "text/javascript"

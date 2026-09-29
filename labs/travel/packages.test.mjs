@@ -37,21 +37,25 @@ test('HTTP packages: lazy height, cached reload, offline shell, navigation and d
   async function stable(){await run('(async()=>{await document.fonts.ready;for(let i=0;i<35;i++)await new Promise(requestAnimationFrame)})()');}
   await send('Page.addScriptToEvaluateOnNewDocument',{source:"window.errors=[];addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));"});
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
-  await send('Page.navigate',{url:url+'?view=flat#scene=shanghai'});await wait('Boolean(window.Archify?.travel3d)');await stable();
-  assert.equal(await run('Archify.travel3d.state().heightMode'),false);
+  await send('Page.navigate',{url:url+'?view=flow#scene=shanghai'});await wait('Boolean(window.Archify?.travel3d)');await stable();
+  assert.equal(await run('Archify.travel3d.state().active'),false);
+  assert.equal(await run("document.querySelectorAll('#flow-drawing [data-node-id]').length"),6);
+  assert.equal(await run("getComputedStyle(document.getElementById('mode-flat')).display"),'none');
+  assert.equal(await run("getComputedStyle(document.getElementById('mode-2d')).display"),'none');
+  if(process.env.ARCHIFY_TRAVEL_EVIDENCE){fs.mkdirSync(process.env.ARCHIFY_TRAVEL_EVIDENCE,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/shanghai-flow.png',Buffer.from(shot.data,'base64'));}
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>r.name.includes('shanghai-height'))"),false);
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>/paris-base|france-base/.test(r.name))"),false);
-  await run("document.getElementById('mode-3d').click()");await wait('Archify.travel3d.state().heightMode');await stable();
+  await run("document.getElementById('mode-3d').click()");await wait('Archify.travel3d.state().active&&Archify.travel3d.state().heightMode');await stable();
   assert.ok(await run('Archify.travel3d.state().markerHeights.some(h=>h>100)'));
   assert.equal(await run("document.getElementById('disney-open').hidden"),false);
-  await run("document.getElementById('disney-open').click()");await stable();assert.equal(await run('Archify.travel.scene()'),'disney');assert.ok(await run('TravelData.disney.buildings.length>100&&TravelData.disney.backdrop.length>100&&TravelData.disney.water.length>0'));
+  await run("document.getElementById('mode-flow').click();document.querySelector('#flow-drawing [data-node-id=Q865312]').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))");await stable();assert.equal(await run('Archify.travel.scene()'),'disney');assert.equal(await run('Archify.travel3d.state().active'),true);assert.ok(await run('TravelData.disney.buildings.length>100&&TravelData.disney.backdrop.length>100&&TravelData.disney.water.length>0'));
   if(process.env.ARCHIFY_TRAVEL_EVIDENCE){fs.mkdirSync(process.env.ARCHIFY_TRAVEL_EVIDENCE,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/disney-map.png',Buffer.from(shot.data,'base64'));}
   await run("document.getElementById('disney-open').click()");await stable();assert.equal(await run('Archify.travel.scene()'),'shanghai');
   const pixels=await run("document.querySelector('#stage-3d canvas').toDataURL()");
-  await wait('Boolean(navigator.serviceWorker.controller)');{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:url+'?view=3d#scene=shanghai'});await loaded;}await wait('Boolean(window.Archify?.travel3d?.state().active)');await stable();
+  await wait('Boolean(navigator.serviceWorker.controller)');{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.reload');await loaded;}await wait('Boolean(window.Archify?.travel3d?.state().active)');await stable();
   assert.equal(createHash('sha256').update(await run("document.querySelector('#stage-3d canvas').toDataURL()")).digest('hex'),createHash('sha256').update(pixels).digest('hex'),'same camera and cached data retain appearance');
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>r.name.includes('shanghai-height'))"),false,'height reused from verified local cache');
-  await run("document.getElementById('trip-form').requestSubmit()");await stable();assert.equal(await run("document.querySelector('#stage-3d canvas').toDataURL()"),pixels,'generation changes no visual style');
+  await run("document.getElementById('trip-form').requestSubmit()");await stable();assert.equal(await run("document.body.dataset.travelView"),'flow');await run("document.getElementById('mode-3d').click()");await stable();assert.equal(await run("document.querySelector('#stage-3d canvas').toDataURL()"),pixels,'generation changes no visual style');
   await send('Network.enable');await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.reload');await loaded;}await wait('Boolean(window.Archify?.travel3d?.state().active)');await stable();assert.equal(await run('Archify.travel.scene()'),'shanghai');
   await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
   await run("document.getElementById('paris-tab').click()");await wait("window.Archify?.travel?.scene()==='paris'&&Archify.travel3d?.state().active");assert.equal(await run('Archify.travel3d.state().routeArrows'),3);

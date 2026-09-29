@@ -1,4 +1,5 @@
 import {buildPackages,styleIdentity} from './build-packages.mjs';
+import {buildFlow} from './build-flow.mjs';
 import {VISUAL} from './visual-style.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -75,15 +76,17 @@ trip.water=trip.water.map(line=>line.map(p=>project(p,bounds.paris)));
 trip.buildings=trip.buildings.map(b=>({...b,points:b.coordinates.map(p=>project(p,bounds.paris))}));
 for(const p of places)if(!VISUAL.icons.includes(p.icon))throw Error('Unapproved landmark model: '+p.icon);
 for(const plan of [trip,shanghaiTrip]){for(const day of plan.days)day.color=VISUAL.dayColors[day.day-1];for(const route of plan.routes)route.color=VISUAL.dayColors[route.day-1];}
-const payload = JSON.stringify({ visualStyle:styleIdentity(root), scenes, places, trip, shanghai, disney, shanghaiTrip, sources: json('sources.json') }).replace(/</g, '\\u003c');
+const flows={paris:buildFlow(trip,places),shanghai:buildFlow(shanghaiTrip,places)};
+const payload = JSON.stringify({ flows, visualStyle:styleIdentity(root), scenes, places, trip, shanghai, disney, shanghaiTrip, sources: json('sources.json') }).replace(/</g, '\\u003c');
 const camera = fs.readFileSync(path.join(root, '../../viewer/viewer-camera.js'), 'utf8');
 const threeBundle = buildSync({ entryPoints: [path.join(root, 'scene3d.js')], bundle: true,
   format: 'iife', write: false, minify: true, legalComments: 'inline', target: 'es2020',
   supported: { 'template-literal': false } }).outputFiles[0].text;
 const threeLicense = read('node_modules/three/LICENSE').replace(/</g, '&lt;');
 const html = `<!doctype html>
-<html lang="zh-CN" data-fixed-canvas><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Archify Travel · 插画沙盘</title><style>${read('style.css')}</style></head>
-<body><header><a class="brand" href="#scene=france">ARCHIFY <span>TRAVEL ATLAS</span></a><div class="edition"><a href="world.html">目的地 · 沙盘层级 ↗</a></div><button id="export" type="button">导出当前地图 SVG</button></header>
+<html lang="zh-CN" data-fixed-canvas><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Archify Travel · 插画沙盘</title><style>${read('style.css')}
+${read('flow-view.css')}</style></head>
+<body><header><a class="brand" href="#scene=france">ARCHIFY <span>TRAVEL ATLAS</span></a><div class="edition"><a href="world.html">切换目的地 ↗</a></div><button id="export" type="button">导出当前地图 SVG</button></header>
 <main><aside class="sidebar"><nav class="breadcrumb" aria-label="地图层级"><button id="country" type="button">法国</button><span id="crumb" hidden> / 巴黎</span></nav><div class="eyebrow">A LITTLE CURIOSITY, A LONG WAY</div><h1 id="title">法国</h1><div id="english" class="english">FRANCE</div><p id="intro"></p>
 <div class="scope"><button id="france-tab" aria-pressed="true">国家总览</button><button id="paris-tab" aria-pressed="false">巴黎城市</button><button id="shanghai-tab" aria-pressed="false">上海城市</button></div>
 <label class="search-label" for="search">寻找下一站</label><input id="search" type="search" placeholder="搜索城市或景点…" autocomplete="off">
@@ -101,6 +104,7 @@ const html = `<!doctype html>
 ${camera}
 ${read('runtime.js')}
 ${read('planner.js')}
+${read('flow-view.js')}
 </script><script>${threeBundle.replace(/<\/script/gi, '<\\/script')}</script>
 <script type="text/plain" id="three-license">${threeLicense}</script></body></html>`;
 buildPackages({root,html,data:JSON.parse(payload),camera,threeBundle,buildSync,check:process.argv.includes('--check')});

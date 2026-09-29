@@ -14,7 +14,8 @@ export function buildPackages({root,html,data,camera,threeBundle,buildSync,check
     manifest.groups[family]={base:asset(family+'-base',JSON.stringify(payload),family,family+' · 地理与行程')};
     if(family!=='france')manifest.groups[family].height=asset(family+'-height',JSON.stringify({disneyBuildings:family==='shanghai'?data.disney.buildings:[],buildings:(family==='paris'?data.trip:data.shanghai).buildings}),family,family+' · 建筑高度');
   }
-  manifest.shared.atlas=asset('atlas',`var Archify={};function viewerText(){return ''; }\n${camera}\n${read('runtime.js')}\n${read('planner.js')}`,'engine','互动界面','text/javascript');
+  manifest.shared.atlas=asset('atlas',`var Archify={};function viewerText(){return ''; }\n${camera}\n${read('runtime.js')}\n${read('planner.js')}
+${read('flow-view.js')}`,'engine','互动界面','text/javascript');
   manifest.shared.renderer=asset('renderer',threeBundle,'engine','固定插画渲染器','text/javascript');
   const boot=buildSync({entryPoints:[path.join(root,'bootstrap.js')],bundle:true,format:'iife',write:false,minify:true,target:'es2020'}).outputFiles[0].text;
   const bootstrap=asset('bootstrap',boot,'engine','数据包加载器','text/javascript');
