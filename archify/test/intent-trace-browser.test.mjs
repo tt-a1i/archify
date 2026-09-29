@@ -265,12 +265,12 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
     await load();
     const blockers = await run(`(()=>{
       const html=document.documentElement,svg=document.querySelector('.diagram-container > svg'),container=svg.parentElement,p=Archify.intentTrace;
-      const cases=[[html,'data-embed','true'],[html,'data-guide-open','true'],[svg,'data-lens-active',''],[svg,'data-story-active',''],[svg,'data-relationship-preview-active','']];
+      const cases=[[html,'data-embed','true'],[html,'data-guide-open','true'],[svg,'data-lens-active',''],[svg,'data-relationship-preview-active','']];
       const results=cases.map(([el,name,value])=>{p.show('api');el.setAttribute(name,value);const before=p.active(),rejected=p.show('api'),after=p.active();el.removeAttribute(name);return {before,rejected,after};});
       container.classList.add('is-panning');results.push({rejected:p.show('api'),after:p.active()});container.classList.remove('is-panning');return results;
     })()`);
     for (const row of blockers) { assert.equal(row.rejected, false); assert.equal(row.after, null); }
-    assert.ok(blockers.slice(0, 5).every(row => row.before === 'api'));
+    assert.ok(blockers.slice(0, 4).every(row => row.before === 'api'));
     for (const [name, action, release] of [
       ['focus', `Archify.focus.set('api',{toggle:false})`, `Archify.focus.clear({updateUrl:false})`],
       ['route', `Archify.routeProbe.begin({source:'users'})`, `Archify.routeProbe.clear({updateUrl:false})`],

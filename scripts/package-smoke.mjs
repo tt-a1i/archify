@@ -183,14 +183,15 @@ try {
   if (notifierReceipt.status !== 'update_available') {
     throw new Error(`packaged update checker did not return an update candidate: ${JSON.stringify(notifierReceipt)}`);
   }
-  const notifierAcknowledgement = await checker.acknowledgeUpdate({
+  const notifierSnooze = await checker.setUpdatePreference({
     releasePath: path.join(skillRoot, 'skill-release.json'),
     cacheDirectory: notifierCache,
     eventKey: notifierReceipt.eventKey,
+    mode: 'snooze',
     now: () => Date.parse('2026-08-28T00:00:01Z'),
   });
-  if (notifierAcknowledgement.status !== 'acknowledged') {
-    throw new Error('packaged update checker did not persist a visible-notice acknowledgement');
+  if (notifierSnooze.status !== 'snoozed') {
+    throw new Error('packaged update checker did not persist an explicit snooze');
   }
 
   const skill = fs.readFileSync(path.join(skillRoot, 'SKILL.md'), 'utf8');

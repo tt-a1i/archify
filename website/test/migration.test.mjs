@@ -14,6 +14,14 @@ const read = (dir, file) => fs.readFileSync(path.join(dir, file), 'utf8');
 function elements(node, tag) {
   return [ ...(node.tagName === tag ? [node] : []), ...(node.childNodes || []).flatMap(child => elements(child, tag)) ];
 }
+function attr(node, name) {
+  return node?.attrs?.find(attribute => attribute.name === name)?.value;
+}
+function byId(node, id) {
+  if (!node) return undefined;
+  return [node, ...(node.childNodes || []).flatMap(child => byId(child, id)).filter(Boolean)]
+    .find(candidate => attr(candidate, 'id') === id);
+}
 function semantic(node) {
   if (node.nodeName === '#comment') return null;
   if (node.nodeName === '#text') {
@@ -30,7 +38,30 @@ function semantic(node) {
 for (const page of pages) {
   test(`${page}: DOM, content, accessibility, scripts and styles match the migration baseline`, () => {
     const old = parse(read(docs, page)), next = parse(read(dist, page));
-    assert.deepEqual(semantic(elements(next, 'body')[0]), semantic(elements(old, 'body')[0]));
+    if (page === 'index.html') {
+      const current = read(dist, page);
+      const body = elements(next, 'body')[0];
+      const stage = byId(body, 'hero-proof-stage');
+      const frame = byId(body, 'hero-proof-frame');
+      const open = byId(body, 'proof-open');
+      const shortcuts = elements(body, 'div').filter(node => (attr(node, 'class') || '').split(/\s+/).includes('shortcut-box'));
+      assert.ok(stage, 'homepage proof stage must remain present');
+      assert.ok(frame, 'homepage proof iframe must remain present');
+      assert.ok(open, 'homepage proof link must remain present');
+      assert.equal(shortcuts.length, 1, 'homepage shortcut card must remain present');
+      assert.equal(attr(frame, 'src'), 'gallery/artifacts/agent-tool-call.workflow.html?embed=1&theme=dark#focus=planner&reach=downstream');
+      assert.equal(attr(open, 'href'), 'gallery/artifacts/agent-tool-call.workflow.html?present=1#focus=planner&reach=downstream');
+      const proofScript = elements(next, 'script').find(script => (script.childNodes || []).some(child => (child.value || '').includes("hash: '#lens=backend~database'")));
+      assert.ok(proofScript, 'homepage proof configuration must remain present');
+      const scriptText = proofScript.childNodes.map(child => child.value || '').join('');
+      assert.match(scriptText, /hash: '#lens=backend~database'/);
+      assert.match(scriptText, /hash: '#route=web~db'/);
+      assert.match(scriptText, /embedHash: '#focus=web&reach=downstream'/);
+      assert.match(scriptText, /proof\.embedHash \|\| proof\.hash/);
+      assert.doesNotMatch(current, /play=1|#view=|Guided views|Play story/);
+    } else {
+      assert.deepEqual(semantic(elements(next, 'body')[0]), semantic(elements(old, 'body')[0]));
+    }
     assert.deepEqual(elements(next, 'style').map(n => n.childNodes[0]?.value.trim()).filter(css => !css.startsWith('/*! tailwindcss')), elements(old, 'style').map(n => n.childNodes[0]?.value.trim()));
     assert.ok(!read(dist, page).includes('[[ARCHIFY_VERSION]]'));
   });

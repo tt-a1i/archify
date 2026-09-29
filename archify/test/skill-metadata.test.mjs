@@ -51,25 +51,26 @@ test('main skill stays a bounded authoring router with progressive references', 
 });
 
 test('update awareness is notification-only and never replaces the requested workflow', () => {
-  assert.match(skill + updateAwareness, /`scripts\/check-update\.mjs`/);
-  assert.match(skill + updateAwareness, /`silent`[\s\S]*without mentioning/i);
-  assert.match(skill + updateAwareness, /`update_available`[\s\S]*compact notice/i);
+  assert.match(skill + updateAwareness, /`finalize` and standalone `deliver` include `update`/);
+  assert.match(skill + updateAwareness, /`update\.noticeRequired`[\s\S]*final response/i);
+  assert.match(skill + updateAwareness, /several diagrams[\s\S]*once in the final response/i);
   assert.match(skill + updateAwareness, /information, not permission/i);
-  assert.match(skill + updateAwareness, /`severity` is `security`[\s\S]*security update[\s\S]*emphasis only, never user autonomy/i);
-  assert.match(skill + updateAwareness, /continue the user's original task/i);
-  assert.match(skill + updateAwareness, /installed version unchanged/i);
+  assert.match(skill, /Snooze or ignore a reminder only when the user explicitly asks/);
+  assert.match(updateAwareness, /explicitly asks to pause or stop[\s\S]*--snooze "<eventKey>"[\s\S]*--ignore "<eventKey>"[\s\S]*Never run them on your own initiative/);
+  assert.match(skill + updateAwareness, /installed Skill has not changed/i);
   assert.doesNotMatch(skill, /npx skills update|gh skill update/i);
 });
 
 test('language behavior stays within the bounded locale contract', () => {
   assert.match(defaults, /one primary authored language/);
   assert.match(defaults, /user's choice or the request\/conversation/);
-  assert.match(defaults, /English \(`en`\), Simplified Chinese \(`zh-CN`\), or Spanish \(`es`\)/);
-  assert.match(defaults, /otherwise omit it and disclose the fixed Viewer UI and `<html lang>` English fallback/);
+  assert.match(defaults, /English \(`en`\) or Simplified Chinese \(`zh-CN`\)/);
+  assert.match(defaults, /meta\.translations/);
   assert.match(defaults, /exact product, code, protocol, command, API, and environment names/);
   assert.match(defaults, /Language consistency\]\(authoring-contract\.md#language-consistency\)/);
   assert.match(authoringContract, /`meta\.locale` controls only renderer-owned reader surfaces/);
-  assert.match(authoringContract, /outside `en`, `zh-CN`, and `es`/);
+  assert.match(authoringContract, /every other `meta\.locale`, also set `meta\.translations`/);
+  assert.match(authoringContract, /Reuse suitable translations/);
   assert.match(authoringContract, /artifact is\s+not fully localized/);
   assert.match(authoringContract, /Do not silently substitute\s+`zh-CN` for another language or Chinese locale/);
   assert.match(authoringContract, /It never translates authored content/);

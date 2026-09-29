@@ -7,9 +7,11 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const template = fs.readFileSync(path.resolve(__dirname, '../assets/template.html'), 'utf8');
 
-test('toolbar keeps four independent controls with explicit open states', () => {
-  assert.match(template, /\.toolbar \{[\s\S]*?gap: 0\.5rem;[\s\S]*?padding: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
-  assert.match(template, /\.toolbar button \{[\s\S]*?background: var\(--toolbar-bg\);[\s\S]*?border: 1px solid var\(--toolbar-border\);/);
+test('toolbar groups tools in one capsule beside a single primary export, aligned with the reader column', () => {
+  assert.match(template, /\.toolbar \{[\s\S]*?top: var\(--archify-page-top\);[\s\S]*?right: max\(1rem, calc\(\(100vw - min\(100vw - 4rem, var\(--archify-reader-width, 1440px\)\)\) \/ 2\)\);/);
+  assert.match(template, /<div class="toolbar-group">\s*<button id="btn-theme"[\s\S]*?id="btn-present"[\s\S]*?<\/button>\s*<\/div>\s*<div class="export-wrap">/);
+  assert.match(template, /\.toolbar button \{[\s\S]*?background: transparent;[\s\S]*?min-height: 2\.75rem;/, 'ghost controls keep a 44px hit area');
+  assert.match(template, /\.toolbar #btn-export::before \{[\s\S]*?background: var\(--text\);/, 'export is the one filled primary action');
   assert.match(template, /button\[aria-expanded="true"\]/);
   assert.doesNotMatch(template, /\.preset-wrap::before,[\s\S]*?\.export-wrap::before/);
   assert.match(template, /<span id="theme-icon" class="toolbar-icon"/);
@@ -27,8 +29,9 @@ test('export menu has grouped, single-column rows and a zoom-safe width', () => 
   assert.match(template, /\.toolbar \.export-menu \{[\s\S]*?width: 19rem;[\s\S]*?max-width: calc\(100vw - 2rem\);/);
   assert.match(template, /\.export-menu-section \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);
   assert.doesNotMatch(sectionCss, /repeat\(2/);
-  assert.match(template, /\.toolbar \.export-menu button \{[\s\S]*?grid-template-columns: 1\.15rem minmax\(0, 1fr\);[\s\S]*?white-space: nowrap;/);
-  assert.match(template, /\.export-item-copy strong,[\s\S]*?\.export-item-copy small \{ display: block; \}/);
+  assert.match(template, /\.toolbar \.export-menu button \{[\s\S]*?grid-template-columns: 1rem minmax\(0, 1fr\);[\s\S]*?white-space: nowrap;/);
+  assert.match(template, /\.toolbar \.export-menu button::before \{[\s\S]*?position: static;/, 'the row glyph stays in its grid column');
+  assert.match(template, /\.export-item-copy \{[\s\S]*?display: flex;[\s\S]*?justify-content: space-between;/);
 });
 
 test('mobile menus share one viewport-safe placement and disabled exports remain explicit', () => {
@@ -38,7 +41,7 @@ test('mobile menus share one viewport-safe placement and disabled exports remain
 });
 
 test('diagram view dock stays compact on desktop and touch-safe on narrow screens', () => {
-  assert.match(template, /\.diagram-nav \{[\s\S]*?padding: 0\.15rem;[\s\S]*?border-radius: 0\.58rem;/);
+  assert.match(template, /\.diagram-nav \{[\s\S]*?padding: 0\.25rem;[\s\S]*?border-radius: 0\.75rem;/);
   assert.match(template, /\.diagram-nav button \{[\s\S]*?min-width: 2rem;[\s\S]*?height: 2rem;/);
   assert.match(template, /@media \(max-width: 720px\)[\s\S]*?\.diagram-nav button \{[\s\S]*?min-width: 2\.75rem;[\s\S]*?height: 2\.75rem;/);
   assert.match(template, /class="diagram-nav-icon find"/);

@@ -6,26 +6,6 @@
     "animation": "trace",
     "visual_preset": "signal-flow",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "happy-path",
-        "label": "Request to result",
-        "focus": ["user", "chat", "planner", "router", "approval", "tool", "external", "final"],
-        "note": "Follow the successful request from user intent to the final reply."
-      },
-      {
-        "id": "safety-gate",
-        "label": "Policy and recovery",
-        "focus": ["router", "approval", "blocked", "retry"],
-        "note": "See where risky work stops, waits for consent, or returns for revision."
-      },
-      {
-        "id": "evidence-loop",
-        "label": "Evidence and memory",
-        "focus": ["external", "store", "trace"],
-        "note": "Isolate the durable trace and context path behind the visible answer."
-      }
-    ],
     "output": "examples/workflow-agent-tool-call-rendered.html"
   },
   "lanes": [

@@ -3,8 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
-import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, cleanLabelCanvasContainmentProblems, routePointsValue, asArray, isFinitePoint } from '../shared/geometry.mjs';
+import { legendFootprint, measureLegend, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
+import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, cleanLabelCanvasContainmentProblems, routePointsValue, asArray, isFinitePoint, edgeLabelAccent } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
@@ -21,7 +21,46 @@ const { diagram: sequence, template, outPath, sourceEvidence } = await loadDiagr
   defaultExample: 'cache-miss-request.sequence.json'
 });
 
-const viewBox = sequence.meta?.viewBox || [920, 760];
+const LEGEND_CATALOG = [
+  { kind: 'emphasis', className: 'a-emphasis', marker: 'arrowhead-emphasis', strokeWidth: 1.8 },
+  { kind: 'return', className: 'a-default', marker: 'arrowhead', dash: '3,5' },
+  { kind: 'security', className: 'a-security', marker: 'arrowhead-security' },
+  { kind: 'dashed', className: 'a-dashed', marker: 'arrowhead-dashed' },
+  { kind: 'default', className: 'a-default', marker: 'arrowhead' },
+].map((entry) => ({
+  ...entry,
+  interactive: false,
+  swatchWidth: 34,
+  swatchGap: 9,
+  label: i18nText(sequence.meta.locale, `legend.sequence.${entry.kind}`),
+}));
+
+function legendEntries() {
+  const presentKinds = new Set(asArray(sequence.messages).map((message) => message.variant || 'default'));
+  return resolveLegend(sequence.meta?.legend, LEGEND_CATALOG, presentKinds);
+}
+
+// The legend sits below the timeline content: the last message and its note,
+// activation bars, and segment frames. Its block starts LEGEND_CONTENT_GAP
+// below that content; from the block top to the canvas bottom a one-row legend
+// needs LEGEND_BLOCK_HEIGHT (title glyphs, row, and the 54px baseline inset).
+const LEGEND_CONTENT_GAP = 12;
+const LEGEND_BLOCK_HEIGHT = 86;
+const contentBottom = Math.max(
+  0,
+  ...asArray(sequence.messages).map((message) => message.y + (message.note ? 22 : 6)),
+  ...asArray(sequence.activations).map((activation) => activation.to),
+  ...asArray(sequence.segments).map((segment) => segment.to),
+);
+function legendRequiredHeight(width) {
+  const entries = legendEntries();
+  if (!entries.length) return 0;
+  return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
+    + legendFootprint(entries, { width: width - 80 }).extraHeight);
+}
+// A renderer-sized canvas grows to keep the legend clear of late messages;
+// an authored viewBox is honored and validated below.
+const viewBox = sequence.meta?.viewBox || [920, Math.max(760, legendRequiredHeight(920))];
 // The timeline scales with viewBox height: a taller viewBox gains message room,
 // a shorter one shrinks the readable band (validated below) instead of clipping.
 // `column_fit: "spread"` widens the lanes with the viewBox instead of keeping
@@ -318,6 +357,14 @@ function validateSequence() {
     problems.push(`Participants exceed viewBox width — set meta.viewBox[0] to at least ${requiredWidth} or remove a participant.`);
   }
 
+  // Showcase must not silently drop the implicit legend because late content
+  // leaves no room for it; give the exact canvas height instead.
+  const legendHeight = legendRequiredHeight(viewBox[0]);
+  if (sequence.meta?.quality_profile === 'showcase' && sequence.meta?.legend === undefined
+    && legendHeight > viewBox[1] && !measureLegend(legendEntries(), legendLayout())) {
+    problems.push(`Sequence content ends at y=${contentBottom}, leaving no room for the legend below it — set meta.viewBox[1] to at least ${legendHeight} or omit meta.viewBox so the canvas grows.`);
+  }
+
   if (problems.length) {
     throwDiagnosticProblems('Sequence layout validation failed', problems, {
       subject: { diagramType: 'sequence' },
@@ -348,8 +395,15 @@ function renderParticipant(participant) {
         </g>`;
 }
 
-function renderLifeline(participant) {
-  return `        <path d="M ${participant.cx} ${layout.lifelineTop} L ${participant.cx} ${layout.lifelineBottom}" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>`;
+// Lifelines never enter the legend band. The legend is placed below all
+// timeline content, so stopping above its title still reaches every message.
+function lifelineEnd() {
+  const legend = measureLegend(legendEntries(), legendLayout());
+  return legend?.titleY == null ? layout.lifelineBottom : Math.min(layout.lifelineBottom, legend.titleY - 22);
+}
+
+function renderLifeline(participant, end) {
+  return `        <path d="M ${participant.cx} ${layout.lifelineTop} L ${participant.cx} ${end}" class="a-default" stroke-width="0.8" stroke-dasharray="3,7"/>`;
 }
 
 function renderSegment(segment, index) {
@@ -378,13 +432,9 @@ function messageLabel(message, x1, x2) {
   const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
   const y = message.y - 10;
   const labelW = box?.width || Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
-  const accent = message.variant === 'security'
-    ? 't-security'
-    : message.variant === 'dashed'
-      ? 't-messagebus'
-      : message.variant === 'return'
-        ? 't-muted'
-        : 't-backend';
+  // A colored line gets a label in the same color, as in the legend swatches.
+  // Gray lines (default and return) keep the readable muted text color.
+  const accent = ['emphasis', 'security', 'dashed'].includes(message.variant) ? edgeLabelAccent(message.variant) : 't-muted';
   return `        <g data-detail="context">
           <rect x="${center - labelW / 2}" y="${y - 10}" width="${labelW}" height="${layout.labelH}" rx="3" class="c-mask"/>
           <text x="${center}" y="${y}" class="${accent}" font-size="${messageFontSize}" text-anchor="middle">${esc(message.label)}</text>
@@ -405,34 +455,25 @@ ${messageLabel(message, start, end)}${note}
         </g>`;
 }
 
-const LEGEND_CATALOG = [
-  { kind: 'emphasis', className: 'a-emphasis', marker: 'arrowhead-emphasis', strokeWidth: 1.8 },
-  { kind: 'return', className: 'a-default', marker: 'arrowhead', dash: '3,5' },
-  { kind: 'security', className: 'a-security', marker: 'arrowhead-security' },
-  { kind: 'dashed', className: 'a-dashed', marker: 'arrowhead-dashed' },
-  { kind: 'default', className: 'a-default', marker: 'arrowhead' },
-].map((entry) => ({
-  ...entry,
-  interactive: false,
-  swatchWidth: 34,
-  swatchGap: 9,
-  label: i18nText(sequence.meta.locale, `legend.sequence.${entry.kind}`),
-}));
+
+function legendLayout() {
+  return {
+    x: 40,
+    baselineY: layout.legendY,
+    width: viewBox[0] - 80,
+    // The same content-based budget as legendRequiredHeight(): a wrapped
+    // legend may use any rows it needs as long as it stays below the content.
+    minTitleY: Math.max(layout.lifelineTop, contentBottom + LEGEND_CONTENT_GAP),
+    unfit: sequence.meta?.legend === undefined ? 'hide' : 'error',
+    diagramType: 'sequence',
+  };
+}
 
 function renderLegend() {
-  const presentKinds = new Set(asArray(sequence.messages).map((message) => message.variant || 'default'));
-  const entries = resolveLegend(sequence.meta?.legend, LEGEND_CATALOG, presentKinds);
   return renderResolvedLegend({
-    entries,
+    entries: legendEntries(),
     locale: sequence.meta.locale,
-    layout: {
-      x: 40,
-      baselineY: layout.legendY,
-      width: viewBox[0] - 80,
-      minTitleY: layout.legendY - 30,
-      unfit: sequence.meta?.legend === undefined ? 'hide' : 'error',
-      diagramType: 'sequence',
-    },
+    layout: legendLayout(),
     renderSwatch: (entry) => `<path d="M ${entry.x} ${entry.baseline - 3} L ${entry.x + 34} ${entry.baseline - 3}" class="${entry.className}" stroke-width="${entry.strokeWidth || 1.4}"${entry.dash ? ` stroke-dasharray="${entry.dash}"` : ''} marker-end="url(#${entry.marker})"/>`,
   });
 }
@@ -443,7 +484,7 @@ function renderSvg() {
   // ratio, so without intrinsic-height the desktop Reader can neither narrow
   // nor scroll it and every default sequence fails the browser gate.
   const readerFit = sequence.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(sequence.meta)}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-sequence-column-fit="${columnFit}"${readerFit} ${svgRootAttrs(sequence.meta)}>
 ${svgAccessibleText(sequence.meta, 'sequence')}
 ${renderDefinitions()}
 
@@ -454,7 +495,7 @@ ${renderDefinitions()}
 ${asArray(sequence.segments).map(renderSegment).join('\n\n')}
 
         <!-- Lifelines -->
-${participantList.map(renderLifeline).join('\n')}
+${participantList.map((participant) => renderLifeline(participant, lifelineEnd())).join('\n')}
 
         <!-- Activations -->
 ${asArray(sequence.activations).map(renderActivation).join('\n')}

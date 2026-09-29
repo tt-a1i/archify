@@ -178,8 +178,6 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     await key('End', 'End', 35); assert.equal((await snapshot('keyboard-end')).activeNode, first.results.at(-1).id);
     await key('Escape', 'Escape', 27);
     assert.equal((await snapshot('keyboard-escape')).activeId, 'btn-node-finder');
-    await run(`Archify.guidedViews.activate('request-path')`);
-    await run(`finderWait(() => !Archify.guidedViews.handoff())`);
     await key('/', 'Slash', 191); await opened(); await search('API Server');
     // Slash in an input must not reopen the panel and erase the query.
     await key('/', 'Slash', 191); assert.equal(await run(`document.getElementById('node-finder-input').value`), 'API Server');
@@ -187,7 +185,6 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     await run(`finderWait(() => !document.querySelector('.diagram-container').hasAttribute('data-camera-transaction'))`);
     const selected = await snapshot('normal-selection');
     assert.equal(selected.open, false); assert.equal(selected.focus, 'api'); assert.equal(selected.activeNode, 'api');
-    assert.equal(await run('Archify.guidedViews.active()'), null);
     assert.match(await run('location.hash'), /focus=api/);
     assert.equal(await run(`(() => {const n=document.querySelector('.diagram-container svg [data-node-id="api"]').getBoundingClientRect(),s=Archify.viewerChromeLayout.stageRect();return n.right>s.left&&n.left<s.right&&n.bottom>s.top&&n.top<s.bottom;})()`), true);
   });
@@ -208,6 +205,8 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     assert.match(state.results.find(item => item.id === 'db').badge, /4/);
     assert.equal(await run(`Archify.finder.select('auth')`), false);
     assert.equal(await run('Archify.finder.isOpen()'), true);
+    await run(`Archify.outline.select('auth')`);
+    assert.equal(await run('Archify.routeProbe.active()'), 'target');
     await key('Escape', 'Escape', 27);
     assert.equal((await snapshot('route-target-cancel')).activeId, 'route-probe-find');
     await click('#route-probe-find'); await opened(); await search('PostgreSQL');
@@ -215,6 +214,10 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     state = await snapshot('route-result'); assert.equal(state.route, 'result'); assert.equal(state.routeFinder, null); assert.equal(state.open, false);
     const result = await run('Archify.routeProbe.result()');
     assert.deepEqual(result.nodes, ['users', 'cdn', 'lb', 'api', 'db']); assert.equal(result.hops, 4);
+    assert.equal(await run('Archify.finder.context()'), 'route-target');
+    await run(`Archify.outline.select('auth')`);
+    assert.equal(await run('Archify.focus.active()'), 'auth', 'the index must focus nodes after a completed Route');
+    assert.equal(await run('Archify.routeProbe.active()'), null);
     // A sink is allowed by Route's public API even though the source picker
     // filters it out. Its actual target context must render an empty list.
     await run(`Archify.routeProbe.begin({source:'db'})`);
@@ -223,7 +226,12 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     assert.equal(state.context, 'route-target'); assert.deepEqual(ids(state), []); assert.equal(state.empty, false);
     await key('Enter', 'Enter', 13); assert.equal(await run('Archify.routeProbe.active()'), 'target');
     await key('Escape', 'Escape', 27);
-    await click('#route-probe-clear'); await key('/', 'Slash', 191); await opened();
+    await click('#route-probe-clear');
+    assert.equal(await run('Archify.finder.context()'), 'route-target');
+    await run(`Archify.outline.select('api')`);
+    assert.equal(await run('Archify.focus.active()'), 'api', 'the index must focus nodes after clearing Route selection');
+    assert.equal(await run('Archify.routeProbe.active()'), null);
+    await key('/', 'Slash', 191); await opened();
     assert.equal((await snapshot('route-cleared-default')).context, 'focus');
   });
 

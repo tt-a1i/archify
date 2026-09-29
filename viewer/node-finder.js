@@ -1,7 +1,7 @@
     /* ============================================================
        Node Finder — stable-ID search over the existing semantic SVG.
        Search never changes the IR or SVG geometry: selecting a result resets
-       the viewport, releases a guided view, and delegates to semantic focus.
+       the viewport and delegates to semantic focus.
        ============================================================ */
     Archify.finder = (function () {
       var html = document.documentElement;
@@ -122,9 +122,6 @@
           close({ restoreFocus: false });
           try { item.node.focus({ preventScroll: true }); } catch (_) { try { item.node.focus(); } catch (_) {} }
           return true;
-        }
-        if (Archify.guidedViews && typeof Archify.guidedViews.showAll === 'function') {
-          Archify.guidedViews.showAll({ clearFocus: false, updateUrl: false });
         }
         if (Archify.view && typeof Archify.view.reset === 'function') Archify.view.reset({ automatic: true });
         Archify.focus.set(id, { toggle: false });

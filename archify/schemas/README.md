@@ -22,12 +22,25 @@ level, so unknown fields are rejected rather than silently ignored.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.
-It also accepts `locale: "en" | "zh-CN" | "es"`. The field selects the fixed Viewer
-UI, renderer-owned default legend and accessibility copy, document-title
-suffix, and `<html lang>` value; it does not translate authored strings.
-Omitting it preserves legacy behavior and resolves to English. Unsupported
-locale values fail schema validation instead of being guessed or silently
-rewritten.
+It also accepts `locale`, any well-formed language tag (schema pattern
+`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`). The field selects the fixed Viewer UI,
+renderer-owned default legend and accessibility copy, document-title suffix,
+and `<html lang>` value; it does not translate authored strings. `en` and
+`zh-CN` are built-in catalogs; any other tag needs a matching `translations`
+object (see below) or the renderer falls back to English and discloses it.
+Omitting `locale` preserves legacy behavior and resolves to English.
+Malformed locale tags fail schema validation instead of being guessed or
+silently rewritten.
+
+`meta.translations` supplies the Viewer message catalog for a `locale` with no
+built-in catalog, as data: an object mapping canonical message keys (see
+`catalogKeys()` in `renderers/shared/i18n.mjs`) to translated strings whose
+`{placeholder}` tokens match the English source. A key that is missing,
+unrecognized, or has mismatched placeholders falls back to English rather than
+failing the render; `validate`/`render`/`deliver` report the resulting
+coverage to stderr. Spanish uses the reusable `examples/locales/es.json`
+catalog; dev inputs that previously used only `locale: "es"` now need this
+object in `meta.translations` to retain Spanish UI.
 `visual_preset` accepts `classic` (the stable default), `signal-flow` (luminous
 motion-forward presentation), `blueprint` (high-contrast engineering review),
 or `editorial` (warm publication-style design review and documentation).
@@ -39,9 +52,8 @@ diagram renders at the same coordinates no matter how wide its viewBox is.
 wide canvas into column distance and label room rather than empty space on the
 right. Lane order, IDs, and message semantics are unchanged either way.
 
-It may also include up to five guided `views`. Each view has a unique `id`, a
-reader-facing `label`, a non-empty `focus` list of existing semantic node IDs,
-and an optional short `note`.
+`meta.views` is retired. The schemas still accept the old guided-view shape so
+existing files keep validating, but renderers ignore it; do not author it.
 
 ### Legend presentation contract
 
@@ -114,7 +126,14 @@ output.
 Workflow supports schema versions 1 and 2. Version 1 remains the fixed-layout
 compatibility contract; version 2 opts into the readable workflow compiler and
 can be produced explicitly with `archify migrate workflow ... --to-schema 2`.
-The other four diagram schemas keep `schema_version` pinned to `1`; they have
+Lifecycle also supports versions 1 and 2 with the same fields. Version 1 keeps
+the fixed three-band layout; version 2 renders one row per lane on a shared
+column grid (see the [lifecycle renderer](../renderers/lifecycle/README.md)).
+Lifecycle has no migration command: to adopt v2, set `schema_version: 2`,
+re-place lower-lane `col` values on the shared grid (v1 column `N` sat under
+main column `N + 2`), and drop coordinates authored for the v1 canvas
+(`viewBox`, `via`, `channelX`, `channelY`, `labelAt`).
+The other three diagram schemas keep `schema_version` pinned to `1`; they have
 no schema-version migration command. For any of the five diagram types, repair
 a legacy missing or nonportable `meta.output` in the source and run `validate`.
 For a workflow v1-to-v2 migration specifically, `migrate workflow` also accepts
@@ -151,7 +170,10 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
 - `point` — an `[x, y]` pair of numbers (used by `via` and `labelAt`)
 - `componentType` — `frontend`, `backend`, `database`, `cloud`, `security`,
   `messagebus`, `external`
-- `locale` — the bounded renderer locale, `en`, `zh-CN`, or `es`
+- `locale` — a well-formed renderer locale tag (`en` and `zh-CN` are built in;
+  any other tag needs a matching `translations` object)
+- `translations` — canonical message key → translated string, for a `locale`
+  with no built-in catalog
 - `portableOutputPath` — the portable POSIX-relative `.html` path used by
   `meta.output`; see the two output-path boundaries in the
   [delivery contract](../references/delivery-contract.md#output-path-contracts)
@@ -160,7 +182,7 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   extend this list locally with `return`)
 - `legendMode` and `legendEntry` — the shared strict mode and label/visibility
   override shapes used by each renderer-owned key map
-- `guidedViews` — the bounded, read-only reader paths accepted by `meta.views`
+- `guidedViews` — the retired `meta.views` shape, still accepted and ignored
 - `cards` — the summary-card blocks rendered below the SVG
 
 Lifecycle state `type` is mode-specific (`start`/`active`/`waiting`/...) and

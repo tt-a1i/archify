@@ -25,7 +25,7 @@ const scenes = [
   {
     id: 'signal-flow',
     artifact: 'docs/gallery/artifacts/agent-tool-call.workflow.html',
-    view: 'happy-path',
+    hash: '#focus=planner&reach=downstream',
     eyebrow: 'WORKFLOW · SIGNAL FLOW',
     title: 'Agent Tool Call',
     receipt: '12 nodes · 11 edges · 9/9 checks',
@@ -34,7 +34,7 @@ const scenes = [
   {
     id: 'blueprint',
     artifact: 'docs/gallery/artifacts/production-deployment.architecture.html',
-    view: 'request-boundary',
+    hash: '#lens=backend~database',
     eyebrow: 'ARCHITECTURE · BLUEPRINT',
     title: 'Production Deployment',
     receipt: '12 nodes · 12 edges · 9/9 checks',
@@ -43,7 +43,7 @@ const scenes = [
   {
     id: 'classic',
     artifact: 'docs/gallery/artifacts/cache-miss.sequence.html',
-    view: 'cache-fallback',
+    hash: '#route=web~db',
     eyebrow: 'SEQUENCE · CLASSIC',
     title: 'Cache Miss Request',
     receipt: '7 participants · 12 messages · 9/9 checks',
@@ -103,7 +103,7 @@ function esc(value) {
 
 function wrapperHtml(scene, index) {
   const artifact = path.join(repoRoot, scene.artifact);
-  const artifactUrl = `${pathToFileURL(artifact).href}?embed=1&play=1&theme=dark#view=${encodeURIComponent(scene.view)}`;
+  const artifactUrl = `${pathToFileURL(artifact).href}?embed=1&theme=dark${scene.hash}`;
   return `<!doctype html>
 <html lang="en" style="--accent:${esc(scene.accent)};--fade:1">
 <head>
@@ -345,7 +345,7 @@ async function main() {
         id: scene.id,
         artifact: scene.artifact,
         artifactSha256: sha256(path.join(repoRoot, scene.artifact)),
-        view: scene.view,
+        hash: scene.hash,
         eyebrow: scene.eyebrow,
         title: scene.title,
         receipt: scene.receipt,

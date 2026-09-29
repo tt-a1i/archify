@@ -245,7 +245,16 @@ test('legacy v1 explicit narrow viewBoxes never hard-fail on an implicit auto le
     assert.equal((svg.match(/data-node-id=/g) || []).length, expectedNodeCounts[mode], `${mode}: topology must remain intact`);
     if (mode === 'lifecycle') {
       assert.match(svg, />Legend</, 'a fitting implicit legend should remain visible');
-      assert.equal((svg.match(/data-legend-semantic-kind=/g) || []).length, 8);
+      // 8 state kinds plus the non-interactive `final` structural entry
+      // (the col-1 states have no outgoing transitions).
+      assert.equal((svg.match(/data-legend-semantic-kind=/g) || []).length, 9);
+    } else if (mode === 'sequence') {
+      // A sequence legend wraps into the room below its last message; it stays
+      // clear of that content instead of being dropped.
+      assert.match(svg, />Legend</, 'a wrapped implicit legend that fits below the content remains visible');
+      const title = Number(svg.match(/<text x="[\d.]+" y="([\d.]+)"[^>]*>Legend<\/text>/)[1]);
+      const lastMessage = Math.max(...doc.messages.map((message) => message.y));
+      assert.ok(title - 12 >= lastMessage + 6 + 12, `legend title ${title} must clear the last message at ${lastMessage}`);
     } else {
       assert.doesNotMatch(svg, />Legend</, `${mode}: an unfit implicit legend should degrade without overlap`);
     }

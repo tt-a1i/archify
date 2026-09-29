@@ -5,21 +5,7 @@
     "title": "Brand-aware AI delivery",
     "output": "brand-aware-delivery.html",
     "quality_profile": "showcase",
-    "viewBox": [1120, 640],
-    "views": [
-      {
-        "id": "delivery-path",
-        "label": "Delivery path",
-        "focus": ["request", "claude", "github", "container", "edge", "customer"],
-        "note": "Follow one delivery from the request through the model, repository, container, and edge."
-      },
-      {
-        "id": "business-data",
-        "label": "Business and data",
-        "focus": ["container", "database", "billing"],
-        "note": "Inspect durable state and billing without losing the main delivery path."
-      }
-    ]
+    "viewBox": [1120, 640]
   },
   "components": [
     { "id": "request", "type": "external", "label": "Product request", "sublabel": "Owner brief", "pos": [38, 260], "size": [138, 68] },

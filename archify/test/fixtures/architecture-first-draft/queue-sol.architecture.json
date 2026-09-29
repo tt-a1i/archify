@@ -5,40 +5,6 @@
     "title": "Queue Gateway Architecture",
     "locale": "en",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "request-and-queue",
-        "label": "Request and queue",
-        "focus": [
-          "tenant",
-          "gateway",
-          "waiting",
-          "queue-controller",
-          "worker"
-        ],
-        "note": "Follow admission into the in-memory waiting list and dispatch under the active-worker limit."
-      },
-      {
-        "id": "configured-boundaries",
-        "label": "Configured boundaries",
-        "focus": [
-          "worker",
-          "auth",
-          "billing",
-          "result-store"
-        ],
-        "note": "Each attempt authorizes the tenant, invokes the configured billing provider, then saves the result."
-      },
-      {
-        "id": "failure-and-retry",
-        "label": "Retry and dead letter",
-        "focus": [
-          "worker",
-          "dead-letter"
-        ],
-        "note": "A caught failure retries once; the second failure moves the job to the dead-letter result."
-      }
-    ],
     "output": "queue-sol.html"
   },
   "components": [

@@ -45,6 +45,10 @@ test('DSH documentation identifies the published release and pinned candidate sn
   assert.match(integration, /repository root is not a DSH package/);
   assert.match(integration, /current adapter Git HEAD blob/);
   assert.match(integration, /working-tree edits are not package inputs/);
+  assert.match(integration, /`cordis\.patch\.yml` file is configuration consumed by the DSH host/);
+  assert.match(integration, /`!!js` expression to resolve the installed package's `skills` directory/);
+  assert.match(integration, /runs in the DSH host process, outside the agent sandbox/);
+  assert.match(integration, /does not fetch data, read credentials, spawn processes, or register another permission path/);
   assert.match(integration, /`!!js` expression that DSH evaluates during host activation/);
   assert.match(integration, /locating its packaged `skills` directory/);
   assert.match(integration, /rather than entirely declarative data/);

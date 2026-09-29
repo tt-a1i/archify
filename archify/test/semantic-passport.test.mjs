@@ -213,7 +213,7 @@ test('Semantic Passport exposes one localized, bounded move affordance outside c
   assert.equal(translateMessage('en', 'viewer.passport.move'), 'Move semantic passport. Drag, use arrow keys, or press Home to reset.');
   assert.equal(translateMessage('zh-CN', 'viewer.passport.move'), '移动语义护照。可拖动、使用方向键移动，或按 Home 恢复自动位置。');
   assert.match(html, /\.relationship-lens-drag-handle\s*\{[\s\S]*cursor:\s*grab;[\s\S]*touch-action:\s*none;/);
-  assert.match(html, /\.focus-chip button:focus-visible,[\s\S]*outline:\s*2px solid var\(--frontend-stroke\);/);
+  assert.match(html, /\.focus-chip button:focus-visible \{\s*outline:\s*2px solid var\(--frontend-stroke\);/);
   assert.match(html, /@media \(hover: none\), \(pointer: coarse\)\s*\{\s*\.relationship-lens-drag-handle \{ display: none; \}/);
   assert.match(html, /@media \(max-width: 720px\)[\s\S]*\.relationship-lens-drag-handle \{ display: none; \}/);
   assert.match(html, /function manualLensPlacementAvailable\(\)[\s\S]*finePointerQuery\.matches/);

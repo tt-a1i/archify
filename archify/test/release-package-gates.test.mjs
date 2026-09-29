@@ -11,11 +11,13 @@ import { stageCleanSkill } from '../../scripts/stage-clean-skill.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
 const canonicalZipNodeMajor = 22;
+const canonicalZipZlibVersion = '1.3.1-e00f703';
 const currentNodeMajor = Number(process.versions.node.split('.')[0]);
+const canonicalZipSkip = currentNodeMajor === canonicalZipNodeMajor && process.versions.zlib === canonicalZipZlibVersion
+  ? false
+  : `canonical ZIP builds require Node ${canonicalZipNodeMajor} with bundled zlib ${canonicalZipZlibVersion}`;
 const canonicalZipTest = (name, fn) => test(name, {
-  skip: currentNodeMajor === canonicalZipNodeMajor
-    ? false
-    : `canonical ZIP builds require Node ${canonicalZipNodeMajor}`,
+  skip: canonicalZipSkip,
 }, fn);
 
 function spawnBuildZip(outputPath, options = {}) {
@@ -602,7 +604,8 @@ exec "$ARCHIFY_REAL_NODE" "$@"
     const safeOutput = path.join(safeParent, 'safe.zip');
     const safe = spawnBuildZip(safeOutput, { cwd: fixture, env });
     assert.equal(safe.status, 1, `${safe.stdout}\n${safe.stderr}`);
-    assert.match(safe.stderr, /canonical archify[.]zip builds require Node 22 \(current: 24[.]0[.]0\)/);
+    assert.match(safe.stderr, /canonical archify[.]zip builds require Node 22 with bundled zlib /);
+    assert.match(safe.stderr, /\(current: Node 24[.]0[.]0, zlib [^)]+\)/);
     assert.equal(fs.existsSync(safeOutput), false);
     assert.equal(fs.existsSync(safeParent), false, 'path-only validation must not create output parents');
     assert.deepEqual(fs.readdirSync(fixture).sort(), ['bin']);
@@ -681,6 +684,8 @@ canonicalZipTest('built archives contain the embedded notifier runtime', () => {
     const entries = new Set(listing.stdout.trim().split('\n'));
     assert.ok(entries.has('archify/skill-release.json'));
     assert.ok(entries.has('archify/scripts/check-update.mjs'));
+    assert.ok(entries.has('archify/scripts/delivery-update-child.mjs'));
+    assert.ok(entries.has('archify/bin/delivery-update.mjs'));
     assert.ok(entries.has('archify/scripts/update-contract.mjs'));
     assert.ok(entries.has('archify/renderers/shared/atomic-output.mjs'));
     assert.ok(entries.has('archify/renderers/shared/sidecar-path.mjs'));
@@ -798,10 +803,31 @@ canonicalZipTest('archive build rejects an unmerged index and preserves an exist
   }
 });
 
-test('archive build rejects non-canonical Node versions before publishing output', {
-  skip: currentNodeMajor === canonicalZipNodeMajor
-    ? `requires a Node major other than ${canonicalZipNodeMajor}`
-    : false,
+test('archive build rejects incompatible zlib before publishing output', {
+  skip: currentNodeMajor !== canonicalZipNodeMajor ? 'requires Node 22 to isolate the zlib gate' : false,
+}, () => {
+  const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-zlib-'));
+  try {
+    const archive = path.join(outputRoot, 'archify.zip');
+    const trusted = Buffer.from('existing canonical archive');
+    const preload = path.join(outputRoot, 'noncanonical-zlib.cjs');
+    fs.writeFileSync(preload, "Object.defineProperty(process.versions, 'zlib', { value: '0.0.0-test' });\n");
+    fs.writeFileSync(archive, trusted);
+    const build = spawnBuildZip(archive, {
+      env: { ...process.env, NODE_OPTIONS: `--require ${JSON.stringify(preload)}` },
+    });
+    assert.notEqual(build.status, 0, `${build.stdout}\n${build.stderr}`);
+    assert.match(build.stderr, /canonical archify\.zip builds require Node 22 with bundled zlib/);
+    assert.match(build.stderr, /0\.0\.0-test/);
+    assert.ok(fs.readFileSync(archive).equals(trusted), 'toolchain rejection must preserve the canonical archive');
+    assert.deepEqual(fs.readdirSync(outputRoot).sort(), ['archify.zip', 'noncanonical-zlib.cjs']);
+  } finally {
+    fs.rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('archive build rejects non-canonical Node/zlib toolchains before publishing output', {
+  skip: canonicalZipSkip ? false : 'requires a non-canonical Node/zlib toolchain',
 }, () => {
   const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-node-version-'));
   try {
@@ -854,9 +880,7 @@ canonicalZipTest('archive build is byte-for-byte reproducible across caller time
 test('archive build accepts Windows-style absolute output paths', {
   skip: process.platform !== 'win32'
     ? 'Windows drive paths only reach build-zip.sh on win32'
-    : currentNodeMajor === canonicalZipNodeMajor
-      ? false
-      : `canonical ZIP builds require Node ${canonicalZipNodeMajor}`,
+    : canonicalZipSkip,
 }, () => {
   const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-windows-path-'));
   const backslashArchive = path.win32.join(outputRoot, 'backslash.zip');

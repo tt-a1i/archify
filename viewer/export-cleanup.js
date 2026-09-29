@@ -19,26 +19,6 @@
         clone.removeAttribute('data-route-journey');
         clone.removeAttribute('data-share-route');
         clone.removeAttribute('data-share-reach');
-        clone.removeAttribute('data-story-active');
-        clone.removeAttribute('data-story-playing');
-        clone.removeAttribute('data-story-beat');
-        clone.removeAttribute('data-story-next');
-        clone.removeAttribute('data-story-follow');
-        clone.removeAttribute('data-chapter-handoff');
-        clone.removeAttribute('data-chapter-anchor');
-        clone.removeAttribute('data-chapter-preview');
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-chapter-handoff-overlay]'), function (el) {
-          el.remove();
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-chapter-role]'), function (el) {
-          el.removeAttribute('data-chapter-role');
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-chapter-preview-role]'), function (el) {
-          el.removeAttribute('data-chapter-preview-role');
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay]'), function (el) {
-          el.remove();
-        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-intent-trace-overlay]'), function (el) {
           el.remove();
         });
@@ -88,12 +68,6 @@
           else el.setAttribute('aria-label', originalLabel);
           el.removeAttribute('data-source-evidence-count');
           el.removeAttribute('data-source-evidence-original-label');
-        });
-        Array.prototype.forEach.call(clone.querySelectorAll('[data-story-step], [data-story-beat-state], [data-story-beat-step]'), function (el) {
-          el.removeAttribute('data-story-step');
-          el.removeAttribute('data-story-beat-state');
-          el.removeAttribute('data-story-beat-step');
-          el.style.removeProperty('--story-step');
         });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-focus-match], [data-focus-selected]'), function (el) {
           el.removeAttribute('data-focus-match');
@@ -168,15 +142,7 @@
           !clone.hasAttribute('data-route-journey') &&
           !clone.hasAttribute('data-share-route') &&
           !clone.hasAttribute('data-share-reach') &&
-          !clone.hasAttribute('data-story-active') &&
-          !clone.hasAttribute('data-story-playing') &&
-          !clone.hasAttribute('data-story-beat') &&
-          !clone.hasAttribute('data-story-next') &&
-          !clone.hasAttribute('data-story-follow') &&
-          !clone.hasAttribute('data-chapter-handoff') &&
-          !clone.hasAttribute('data-chapter-anchor') &&
-          !clone.hasAttribute('data-chapter-preview') &&
           !clone.style.getPropertyValue('transform') &&
           !clone.style.getPropertyValue('clip-path') &&
-          clone.querySelectorAll('[data-story-overlay], [data-story-carrier-overlay], [data-story-carrier-token], [data-story-step], [data-story-beat-state], [data-story-beat-step], [data-chapter-handoff-overlay], [data-chapter-role], [data-chapter-preview-role], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
+          clone.querySelectorAll('[data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor]').length === 0;
       }

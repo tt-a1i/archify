@@ -418,6 +418,12 @@ cannot be written, the diagnostic names that incomplete evidence.
 
 Both browser commands inspect the exact delivered HTML without modifying or rerendering it.
 
+## Sequence width review
+
+A passing `finalize` may report `layoutReviewRecommendation.action: "inspect-sequence-width"`. Its `evidence` measures the fixed participant columns' unused right-hand space after accounting for message labels, notes and segment titles. This advice adds no warning, failure, screenshot requirement or automatic geometry change.
+
+For a newly authored candidate with omitted `meta.column_fit` and no user-fixed column geometry, save the candidate, set only `meta.column_fit` to `"spread"`, and rerun the complete `finalize` once with `--out-dir <folder>/width-review`. Keep participant order, messages and their y positions, labels, notes, sources and canvas dimensions. If that attempt fails, restore the candidate and finalize it with `--out-dir <folder>/width-restore`; report the remaining layout suggestion rather than iterating. Preserve an explicitly fixed layout or a supplied legacy candidate and disclose the suggestion without changing it. This review is about horizontal composition; a passing receipt still does not claim perceptual approval.
+
 ## Optional capture evidence
 
 `visual-check` remains backward compatible for a requested or escalated

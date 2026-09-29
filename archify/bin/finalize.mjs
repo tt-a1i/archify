@@ -16,8 +16,10 @@ import {
   findChrome,
   VISUAL_CHECK_VIEWPORTS,
 } from './visual-check.mjs';
+import { startDeliveryUpdateCheck } from './delivery-update.mjs';
 
 export const FINALIZE_STAGES = Object.freeze(['validate', 'deliver', 'check', 'browser-check']);
+const FINALIZE_UPDATE_DEADLINE_MS = 4_000;
 
 function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
@@ -466,6 +468,28 @@ function reservedFinalizePaths({ input, output, outDir, deliveryPaths }) {
   return [path.resolve(input), path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
 }
 
+// Node moves that remove the measured crossings and detours, most specific
+// first. Only positions and sizes change; every relationship keeps its endpoints.
+function placementHints({ crossings = [], detours = [], crowdedSides = [] }) {
+  const name = (relation) => `${relation.from} → ${relation.to}`;
+  const other = (relation, shared) => (relation.from === shared ? relation.to : relation.from);
+  const hints = [];
+  for (const side of crowdedSides) {
+    hints.push(`${side.node} has ${side.relationships} relationships facing its ${side.side} side, which fits ${Math.max(1, Math.floor((side.sidePx - 32) / 14) + 1)} ports: make that side at least ${side.neededPx}px, or move some of those neighbours so they face another side of ${side.node}.`);
+  }
+  for (const crossing of crossings) {
+    const shared = crossing.sharedNode;
+    hints.push(shared
+      ? `${name(crossing.left)} and ${name(crossing.right)} cross next to ${shared}: move node ${other(crossing.left, shared)} or ${other(crossing.right, shared)} so the two reach ${shared} from different sides (for example one level with it, one directly above or below it).`
+      : `${name(crossing.left)} crosses ${name(crossing.right)}: move the node of whichever is a branch, return, or second entrance to the other side of the main path, so that relationship runs through an empty corridor.`);
+  }
+  for (const detour of detours) {
+    if (detour.directCorridorBlockers?.length) continue;
+    hints.push(`${name(detour.relationship)} needs ${detour.bends} bends: move node ${detour.relationship.from} or ${detour.relationship.to} so they share a row or column with matching centers, or sit diagonally with a clear corner.`);
+  }
+  return [...new Set(hints)].slice(0, 8);
+}
+
 export function compactFinalizeReceipt(receipt) {
   const gates = {};
   for (const stage of FINALIZE_STAGES) gates[stage] = receipt.stages?.[stage]?.status || 'not-run';
@@ -528,6 +552,7 @@ export function compactFinalizeReceipt(receipt) {
       truncated: allDiagnostics.length > selectedDiagnostics.length,
     },
     evidence: receipt.evidence,
+    ...(receipt.update ? { update: receipt.update } : {}),
     visualReview: receipt.visualReview || 'not-requested',
     durationMs: receipt.durationMs,
   };
@@ -538,6 +563,7 @@ export function compactFinalizeReceipt(receipt) {
     .map((key) => [key, metrics[key]]));
   if (receipt.ok && Object.keys(reviewSignals).length) {
     const routeReview = receipt.stages?.check?.receipt?.composition?.routeReview;
+    const hints = routeReview ? placementHints(routeReview) : [];
     compact.visualReviewRecommendation = {
       action: 'inspect-route-readability',
       signals: reviewSignals,
@@ -548,6 +574,7 @@ export function compactFinalizeReceipt(receipt) {
           detours: routeReview.detours.slice(0, 8),
           truncated: routeReview.crossings.length > 8 || routeReview.detours.length > 8,
         },
+        ...(hints.length ? { hints } : {}),
         repair: 'Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit.',
       } : {}),
     };
@@ -559,6 +586,15 @@ export function compactFinalizeReceipt(receipt) {
       evidence: leadingSpace,
       reason: 'Measured content, including routes and labels, leaves a large empty area above the diagram. This is a composition suggestion, not a failed gate.',
       repair: 'Check whether that leading space is intentional. If not, reposition the connected scene nearer the canvas origin while retaining room for its actual boundaries, labels and return routes. Preserve all meaning and user-fixed geometry, then rerun finalize. No screenshot is required.',
+    };
+  }
+  const sequenceColumnSpace = receipt.stages?.check?.receipt?.composition?.sequenceColumnSpace;
+  if (receipt.ok && receipt.type === 'sequence' && sequenceColumnSpace?.reviewSuggested === true) {
+    compact.layoutReviewRecommendation = {
+      action: 'inspect-sequence-width',
+      evidence: sequenceColumnSpace,
+      reason: 'Fixed participant columns leave substantial unused space on the right, after accounting for message labels and notes. This is a layout suggestion, not a failed gate.',
+      repair: 'For a newly authored Sequence with omitted meta.column_fit and no user-fixed column geometry, set meta.column_fit to "spread" and rerun finalize once. Preserve participant order, every message, its y position, labels, notes and sources. Retain explicit fixed layouts and legacy inputs; report the suggestion instead of changing them automatically.',
     };
   }
   if (!receipt.ok && receipt.status === 'fail' && receipt.failedStage === 'validate') {
@@ -590,6 +626,7 @@ export async function runFinalize({
   env = process.env,
   runCommand = defaultRunner,
   runBrowserCheck,
+  startUpdateCheck = startDeliveryUpdateCheck,
   resolveChrome = findChrome,
   createBrowser = (chromePath, options) => new ChromeVisualBrowser(chromePath, options),
 } = {}) {
@@ -657,6 +694,9 @@ export async function runFinalize({
     summaryCapture = writeJsonAtomic(resolvedSummary, compactFinalizeReceipt(receipt), summaryCapture, assertReceiptPaths);
   };
   persistReceipts();
+  // The gates below usually take seconds, so a slower network can finish the
+  // update check in parallel instead of timing out on every delivery.
+  const updateCheck = startUpdateCheck({ env, deadlineMs: FINALIZE_UPDATE_DEADLINE_MS });
 
   // Only launch/attach the blank browser here. The normal browser gate still
   // verifies current delivery provenance before it consumes this one-shot factory.
@@ -706,7 +746,8 @@ export async function runFinalize({
         });
         result = { status: checked.exitCode, stdout: JSON.stringify(checked.receipt) };
       } else {
-        result = await runCommand({ stage, cliPath, args, cwd, env });
+        result = await runCommand({ stage, cliPath, args, cwd,
+          env: stage === 'deliver' ? { ...env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } : env });
       }
       const stageReceipt = parsedReceipt(result.stdout);
       const code = result.status ?? 1;
@@ -844,9 +885,11 @@ export async function runFinalize({
       : identity(resolvedOutput);
     receipt.finishedAt = new Date().toISOString();
     receipt.durationMs = durationMs(started);
+    receipt.update = await updateCheck;
     persistReceipts();
     return { exitCode, receipt, summary: compactFinalizeReceipt(receipt) };
   } finally {
     if (browser && !browserTransferred) await browser.close();
+    await updateCheck;
   }
 }

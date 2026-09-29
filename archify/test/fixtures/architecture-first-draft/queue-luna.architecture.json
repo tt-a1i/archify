@@ -4,40 +4,6 @@
   "meta": {
     "title": "Queue Gateway Architecture",
     "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "request-and-queue",
-        "label": "Request to queue",
-        "focus": [
-          "tenant",
-          "gateway",
-          "queue",
-          "worker"
-        ],
-        "note": "Follow a tenant request into the bounded waiting queue and worker runtime."
-      },
-      {
-        "id": "worker-integrations",
-        "label": "Worker integrations",
-        "focus": [
-          "worker",
-          "auth",
-          "billing",
-          "result"
-        ],
-        "note": "See the configured authentication, billing, and result boundaries used by each worker attempt."
-      },
-      {
-        "id": "failure-recovery",
-        "label": "Retry and dead letter",
-        "focus": [
-          "worker",
-          "dead-letter",
-          "queue"
-        ],
-        "note": "Trace retries through the attempt limit and the final dead-letter handoff."
-      }
-    ],
     "output": "queue-luna.html"
   },
   "components": [

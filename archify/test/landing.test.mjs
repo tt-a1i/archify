@@ -49,7 +49,6 @@ test('landing hero leads with three real generated proof artifacts', () => {
     assert.equal(entry.animation, 'trace');
     assert.equal(entry.nodeCount, proof.nodes);
     assert.equal(entry.edgeCount, proof.edges);
-    assert.ok(entry.viewIds.includes(proof.view));
     assert.ok(entry.checks.every(check => check.ok), `${proof.id}: validation receipt is not green`);
     assert.ok(fs.existsSync(path.join(docsRoot, proof.artifact)), `${proof.id}: live artifact missing`);
     assert.match(landing, new RegExp(`data-proof="${proof.key}"`));

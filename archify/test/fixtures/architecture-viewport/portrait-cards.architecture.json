@@ -4,41 +4,7 @@
   "meta": {
     "title": "Tall showcase fixture",
     "output": "portrait-cards.html",
-    "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "v0",
-        "label": "View 0",
-        "focus": [
-          "n0",
-          "n1"
-        ]
-      },
-      {
-        "id": "v1",
-        "label": "View 1",
-        "focus": [
-          "n3",
-          "n4"
-        ]
-      },
-      {
-        "id": "v2",
-        "label": "View 2",
-        "focus": [
-          "n6",
-          "n7"
-        ]
-      },
-      {
-        "id": "v3",
-        "label": "View 3",
-        "focus": [
-          "n9",
-          "n10"
-        ]
-      }
-    ]
+    "quality_profile": "showcase"
   },
   "components": [
     {

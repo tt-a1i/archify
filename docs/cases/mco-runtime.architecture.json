@@ -11,27 +11,7 @@
     "repository": {
       "url": "https://github.com/mco-org/mco",
       "revision": "9f1a1cf1afdc04d7b5406782b40dfec76d9bc798"
-    },
-    "views": [
-      {
-        "id": "dispatch-path",
-        "label": "Dispatch path",
-        "focus": ["callers", "entry", "router", "policy", "workflow", "adapters", "provider_clis"],
-        "note": "An explicit provider team crosses one validated execution-policy boundary before MCO starts parallel work."
-      },
-      {
-        "id": "answer-evidence",
-        "label": "Answer evidence",
-        "focus": ["adapters", "answer_transport", "artifacts", "consumers"],
-        "note": "Provider output is decoded and persisted without turning raw answers into an automatic decision."
-      },
-      {
-        "id": "durable-sessions",
-        "label": "Durable sessions",
-        "focus": ["router", "session_daemon", "session_state"],
-        "note": "Detached local workers use Unix sockets plus state.json and history.jsonl for resumable sessions."
-      }
-    ]
+    }
   },
   "components": [
     {

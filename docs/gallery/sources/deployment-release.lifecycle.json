@@ -1,18 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "diagram_type": "lifecycle",
   "meta": {
     "title": "Deployment Release Lifecycle",
     "output": "examples/deployment-release.html",
-    "viewBox": [980, 680],
     "animation": "trace",
     "visual_preset": "signal-flow",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "promotion-rail", "label": "Promotion rail", "focus": ["queued", "building", "verifying", "ready", "live"], "note": "Follow the deployment object from accepted change to healthy production." },
-      { "id": "approval-gate", "label": "Approval gate", "focus": ["verifying", "approval", "cancelled", "ready"], "note": "Approval pauses promotion and can terminate the release cleanly." },
-      { "id": "rollback-outcomes", "label": "Rollback outcomes", "focus": ["ready", "rollback", "failed", "live", "paused", "rolled_back"], "note": "Separate pre-promotion failure from post-promotion health regression." }
-    ]
+    "quality_profile": "showcase"
   },
   "lanes": [
     { "id": "main", "label": "Release phases" },
@@ -26,20 +20,25 @@
     { "id": "verifying", "type": "decision", "label": "Verifying", "sublabel": "tests + policy", "lane": "main", "col": 2, "step": "03", "tag": "gate" },
     { "id": "ready", "type": "waiting", "label": "Ready", "sublabel": "promotion pending", "lane": "main", "col": 3, "step": "04", "tag": "approved" },
     { "id": "live", "type": "success", "label": "Live", "sublabel": "production healthy", "lane": "main", "col": 4, "step": "05", "tag": "success" },
-    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "release owner", "lane": "waiting", "col": 0, "tag": "pause" },
-    { "id": "rollback", "type": "active", "label": "Rolling Back", "sublabel": "last good image", "lane": "recovery", "col": 1, "tag": "automatic" },
-    { "id": "paused", "type": "waiting", "label": "Health Paused", "sublabel": "SLO regression", "lane": "waiting", "col": 2, "tag": "observe" },
-    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "approval denied", "lane": "terminal", "col": 0, "tag": "terminal" },
-    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "rollback failed", "lane": "terminal", "col": 1, "tag": "terminal" },
-    { "id": "rolled_back", "type": "success", "label": "Rolled Back", "sublabel": "service restored", "lane": "terminal", "col": 2, "tag": "terminal" }
+    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "release owner", "lane": "waiting", "col": 2, "tag": "pause" },
+    { "id": "rollback", "type": "active", "label": "Rolling Back", "sublabel": "last good image", "lane": "recovery", "col": 3, "tag": "automatic" },
+    { "id": "paused", "type": "waiting", "label": "Health Paused", "sublabel": "SLO regression", "lane": "waiting", "col": 4, "tag": "observe" },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "approval denied", "lane": "terminal", "col": 2, "tag": "terminal" },
+    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "rollback failed", "lane": "terminal", "col": 3, "tag": "terminal" },
+    { "id": "rolled_back", "type": "success", "label": "Rolled Back", "sublabel": "service restored", "lane": "terminal", "col": 4, "tag": "terminal" }
   ],
   "transitions": [
-    { "from": "verifying", "to": "approval", "variant": "security", "route": "straight", "fromSide": "bottom", "toSide": "top" },
-    { "from": "approval", "to": "cancelled", "variant": "security", "route": "straight", "fromSide": "bottom", "toSide": "top" },
-    { "from": "ready", "to": "rollback", "variant": "security", "route": "straight", "fromSide": "bottom", "toSide": "top" },
-    { "from": "rollback", "to": "failed", "variant": "security", "route": "straight", "fromSide": "bottom", "toSide": "top" },
-    { "from": "live", "to": "paused", "variant": "dashed", "route": "straight", "fromSide": "bottom", "toSide": "top" },
-    { "from": "paused", "to": "rolled_back", "variant": "emphasis", "route": "straight", "fromSide": "bottom", "toSide": "top" }
+    { "from": "queued", "to": "building" },
+    { "from": "building", "to": "verifying" },
+    { "from": "verifying", "to": "ready" },
+    { "from": "ready", "to": "live" },
+    { "from": "verifying", "to": "approval", "variant": "security", "label": "needs sign-off" },
+    { "from": "approval", "to": "ready", "label": "approved" },
+    { "from": "approval", "to": "cancelled", "variant": "security" },
+    { "from": "ready", "to": "rollback", "variant": "security" },
+    { "from": "rollback", "to": "failed", "variant": "security" },
+    { "from": "live", "to": "paused", "variant": "dashed" },
+    { "from": "paused", "to": "rolled_back", "variant": "emphasis" }
   ],
   "cards": [
     { "dot": "cyan", "title": "Promotion Rail", "items": ["The release object moves through five ordered phases", "Verification and approval remain distinct states", "Live means production health is currently proven"] },

@@ -53,20 +53,28 @@ order, are `emphasis`, `return`, `security`, `dashed`, and `default`. These are
 visual message keys, not Semantic Lens controls; label/visibility overrides do
 not create edge facts.
 
+The legend sits below all timeline content: the last message and its note,
+activation bars, and segment frames, with a 12px gap. Without `meta.viewBox`
+the canvas grows to keep that gap. With an authored `viewBox` that is too short,
+`showcase` fails with the exact height to set, and `standard` hides the implicit
+legend rather than drawing it over content. Lifelines stop above the legend.
+Message labels use their line's color; gray default and return lines keep the
+muted text color.
+
 ## Layout budget
 
 | Constant | Value |
 |----------|-------|
-| viewBox | default `[920, 760]`; schema minimum `[480, 480]` |
+| viewBox | default `[920, 760]`, taller when late content needs legend room; schema minimum `[480, 480]` |
 | Participant boxes | `fixed` (default): 86×54 at y 72; `spread`: viewBox-relative width from 86px up to 190px |
 | Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width |
 | Participant count | the last box must end at or before width − 40; layouts that cannot fit fail closed |
-| Lifelines | from y 142 down to height − 65; band must be ≥120px tall |
+| Lifelines | from y 142 down to height − 65 (drawn to just above the legend); band must be ≥120px tall |
 | Message `y` range | `[160, height − 83]` |
 | Message spacing | ≥28px vertical between messages that share horizontal space |
 | Arrow span | ≥60px horizontal between the two participants |
 | Segments | y pixel ranges with `to > from`, inside `[72, lifeline bottom + 20]` |
-| Legend row | y = height − 54 |
+| Legend | last row baseline at height − 54; extra rows wrap upward and stay 12px below the timeline content |
 
 `segments[].from/to` and `activations[].from/to` are y pixel coordinates, not
 participant ids; activations also require `to > from`.
@@ -79,6 +87,12 @@ viewBox would otherwise leave empty space on the right or when meaningful
 participant labels do not fit the fixed 86px boxes. Spread derives box width
 and column distance from the viewBox while preserving participant order,
 lifelines, and message semantics.
+
+The artifact checker reports `composition.sequenceColumnSpace` from the rendered
+participants, routes and text. A large unused right-hand region in a fixed layout
+can produce an `inspect-sequence-width` recommendation in `finalize`; it is advice,
+not a new warning or failure. See [Sequence width review](../../references/delivery-contract.md#sequence-width-review)
+for the bounded authoring repair and explicit-fixed/legacy preservation rules.
 
 ## Design Rules
 

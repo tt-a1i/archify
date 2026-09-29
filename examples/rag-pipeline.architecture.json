@@ -4,12 +4,7 @@
   "meta": {
     "title": "RAG Pipeline",
     "output": "rag-pipeline.html",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "query-path", "label": "Query path", "focus": ["user", "guardrail", "orchestrator", "retriever", "vectordb", "reranker", "llm"], "note": "Follow a user question from input through safety filtering, retrieval, and generation to grounded answer." },
-      { "id": "ingestion", "label": "Document ingestion", "focus": ["sources", "loader", "chunker", "embedder", "vectordb"], "note": "How raw documents become searchable vector embeddings." },
-      { "id": "safety-and-cache", "label": "Safety and cache", "focus": ["user", "guardrail", "orchestrator", "cache", "llm"], "note": "The guardrail intercepts harmful queries before they reach the orchestrator; the semantic cache avoids redundant LLM calls." }
-    ]
+    "quality_profile": "showcase"
   },
   "components": [
     { "id": "user", "type": "external", "label": "User", "sublabel": "Chat / API", "pos": [30, 200], "size": [100, 50] },

@@ -116,25 +116,35 @@ test('cognition is registered in the preview runtime and verifies end to end', {
   child.stderr.on('data', (chunk) => { stderr += chunk; });
 
   let previewUrl;
-  const started = Date.now();
-  while (!previewUrl && Date.now() - started < 8000) {
-    previewUrl = stdout.match(/preview (http:\/\/127\.0\.0\.1:\d+\/)/)?.[1];
-    if (!previewUrl) await new Promise((resolve) => setTimeout(resolve, 40));
-  }
-  assert.ok(previewUrl, `preview URL missing; stdout=${stdout}; stderr=${stderr}`);
-
   let state;
-  while (Date.now() - started < 15000) {
-    state = await fetch(new URL('/state', previewUrl)).then((response) => response.json());
-    if (state.status === 'verified') break;
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-  assert.equal(state?.status, 'verified', `preview did not verify; stdout=${stdout}; stderr=${stderr}`);
-  assert.equal(state.revision, 1);
-  assert.equal(fs.existsSync(output), true);
+  let exit;
+  try {
+    const started = Date.now();
+    while (!previewUrl && Date.now() - started < 8000) {
+      previewUrl = stdout.match(/preview (http:\/\/127\.0\.0\.1:\d+\/)/)?.[1];
+      if (!previewUrl) await new Promise((resolve) => setTimeout(resolve, 40));
+    }
+    assert.ok(previewUrl, `preview URL missing; stdout=${stdout}; stderr=${stderr}`);
 
-  if (process.platform === 'win32') child.send('stop');
-  else child.kill('SIGTERM');
-  const exit = await new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
+    while (Date.now() - started < 15000) {
+      state = await fetch(new URL('/state', previewUrl)).then((response) => response.json());
+      if (state.status === 'verified') break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert.equal(state?.status, 'verified', `preview did not verify; stdout=${stdout}; stderr=${stderr}`);
+    assert.equal(state.revision, 1);
+    assert.equal(fs.existsSync(output), true);
+  } finally {
+    // Shutdown must survive failed assertions or fetch errors: a leaked preview
+    // child would keep the port and the temporary artifact alive.
+    const alreadyExited = child.exitCode !== null || child.signalCode !== null;
+    if (!alreadyExited) {
+      if (process.platform === 'win32') child.send('stop');
+      else child.kill('SIGTERM');
+    }
+    exit = alreadyExited
+      ? { code: child.exitCode, signal: child.signalCode }
+      : await new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
+  }
   assert.deepEqual(exit, { code: 0, signal: null });
 });

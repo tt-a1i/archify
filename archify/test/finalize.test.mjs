@@ -318,6 +318,32 @@ test('compact success bounds review context and preserves relationship identity'
   assert.match(compact.visualReviewRecommendation.repair, /architecture-layout-repair\.md/);
 });
 
+test('compact success turns route evidence into node-move hints that keep relationships', () => {
+  const routeReview = {
+    crossings: [
+      { left: { from: 'desktop', to: 'http' }, right: { from: 'tunnel', to: 'http' }, sharedNode: 'http' },
+      { left: { from: 'teamcli', to: 'http' }, right: { from: 'runtime', to: 'sqlite' } },
+    ],
+    crowdedSides: [{ node: 'app', side: 'right', relationships: 4, sidePx: 70, neededPx: 74 }],
+    detours: [
+      { relationship: { from: 'registry', to: 'shim' }, bends: 3 },
+      { relationship: { from: 'worker', to: 'api' }, bends: 4, directCorridorBlockers: [{ id: 'store' }] },
+    ],
+  };
+  const { hints } = compactFinalizeReceipt({ ok: true, stages: { check: { receipt: { composition: {
+    metrics: { resolvedCrossovers: 2, routesOverSuggestedBends: 2 }, routeReview,
+  } } } } }).visualReviewRecommendation;
+  assert.equal(hints.length, 4, 'a detour with named corridor blockers keeps its existing repair path');
+  assert.match(hints[0], /app has 4 relationships facing its right side, which fits 3 ports: make that side at least 74px/);
+  assert.match(hints[1], /move node desktop or tunnel so the two reach http from different sides/);
+  assert.match(hints[2], /teamcli → http crosses runtime → sqlite/);
+  assert.match(hints[3], /move node registry or shim/);
+  assert.ok(hints.every((hint) => !/endpoint/.test(hint)), 'hints move nodes, never re-attach relationships');
+  assert.equal('hints' in compactFinalizeReceipt({ ok: true, stages: { check: { receipt: { composition: {
+    metrics: { resolvedCrossovers: 1 }, routeReview: { crossings: [], detours: [] },
+  } } } } }).visualReviewRecommendation, false);
+});
+
 test('compact failure receipts retain diverse actionable subjects without embedding full stage evidence', () => {
   const diagnostics = Array.from({ length: 20 }, (_, index) => ({
     code: 'composition/proper-crossing',

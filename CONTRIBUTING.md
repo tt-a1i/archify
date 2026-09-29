@@ -110,7 +110,9 @@ node scripts/build-readme-showcase.mjs
 scripts/build-zip.sh /tmp/archify-contrib.zip
 ```
 
-Canonical ZIP bytes require Node 22; the builder rejects other majors to avoid different zlib representations. Skill runtime, schema, renderer, and published Skill-instruction changes require checking ZIP freshness. Bundled example or Viewer changes normally require a Gallery rebuild.
+Canonical ZIP bytes require official Node 22 with bundled zlib `1.3.1-e00f703` (for example, the official Node 22.23.2 distribution). The builder rejects other Node majors and zlib versions before staging or replacing an archive. A distribution linked against system zlib can produce different bytes even at the same Node version; check the actual executable with `node -p 'JSON.stringify({ executable: process.execPath, node: process.versions.node, zlib: process.versions.zlib })'`. This packaging constraint does not change the Skill runtime's supported Node range. When updating the canonical toolchain, review archive reproducibility and the committed ZIP together.
+
+Skill runtime, schema, renderer, and published Skill-instruction changes require checking ZIP freshness. Bundled example or Viewer changes normally require a Gallery rebuild.
 
 List regenerated files and explain freshness when an affected output is left unchanged. Changes that do not affect generated outputs may omit that PR section. Resolve generated conflicts by rebuilding from combined source. Keep unrelated generated output out of the diff.
 

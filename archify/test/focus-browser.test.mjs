@@ -173,8 +173,8 @@ test('Focus preserves semantic selection, relationships, reachability and shared
     await load();await select('cdn');await run(`Archify.focus.reach('downstream',{reveal:false});Archify.focus.clearReach({updateUrl:true})`);assert.equal((await snapshot('clear-reach')).hash,'#focus=cdn');await select('isolated');assert.equal(await run(`Archify.focus.reach('downstream')`),false);
   });
   await t.test('cold URLs and hashchange preserve focus, relation, reach and query semantics',async()=>{
-    for(const [hash,active,relationId] of [['#focus=cdn&reach=downstream','cdn',null],['#relation=edge-d','cdn','edge-d'],['#relation=unknown',null,null],['#view=request-path','users',null],['#focus=isolated','isolated',null],['#route=users~db',null,null]]) {
-      await load('graph',{hash});const s=await snapshot('cold-'+hash);if(hash.startsWith('#view=')){assert.ok(s.active);continue;}assert.equal(s.active,active);assert.equal(s.relationship?.id||null,relationId);
+    for(const [hash,active,relationId] of [['#focus=cdn&reach=downstream','cdn',null],['#relation=edge-d','cdn','edge-d'],['#relation=unknown',null,null],['#focus=isolated','isolated',null],['#route=users~db',null,null]]) {
+      await load('graph',{hash});const s=await snapshot('cold-'+hash);assert.equal(s.active,active);assert.equal(s.relationship?.id||null,relationId);
     }
     await load();await run(`new Promise(resolve=>{addEventListener('hashchange',()=>requestAnimationFrame(resolve),{once:true});location.hash='focus=cdn&reach=upstream';})`);await stable();assert.equal((await snapshot('hash-reach')).reach.direction,'upstream');
     await run(`new Promise(resolve=>{addEventListener('hashchange',()=>requestAnimationFrame(resolve),{once:true});location.hash='';})`);await stable();assert.equal(await run('Archify.focus.active()'),null);

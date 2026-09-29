@@ -1,12 +1,13 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { throwDiagnosticError } from './diagnostics.mjs';
+import { throwDiagnosticError, withDiagnosticRecordingSuppressed } from './diagnostics.mjs';
 import { sameEntry } from './path-semantics.mjs';
 import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref } from './repository-location.mjs';
 
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
+const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 
 function evidenceFailure(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
   throwDiagnosticError(message, [{
@@ -23,13 +24,63 @@ function runGit(repoRoot, args) {
   // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
   const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
     encoding: 'utf8',
-    maxBuffer: 16 * 1024 * 1024,
+    maxBuffer: MAX_SOURCE_BYTES,
   });
   if (result.error) evidenceFailure('repository-evidence/git-unavailable', `Could not run Git: ${result.error.message}`, {
     evidence: { reason: result.error.message },
     supportedFixes: ['install Git and ensure it is available on PATH'],
   });
   return result;
+}
+
+// Check types in one session, then read only blobs whose cited lines need
+// verification. Path-only references never require loading the file contents.
+function prefetchBlobs(repoRoot, objectNeedsContent) {
+  const blobs = readBatchObjects(repoRoot, [...objectNeedsContent.keys()], false);
+  if (!blobs) return null;
+  const readable = [...objectNeedsContent].filter(([object, needsContent]) => {
+    const blob = blobs.get(object);
+    return needsContent && blob?.type === 'blob' && blob.size <= MAX_SOURCE_BYTES;
+  }).map(([object]) => object);
+  const contents = readBatchObjects(repoRoot, readable, true);
+  if (contents) for (const [object, blob] of contents) blobs.set(object, blob);
+  // Failed or oversized reads fall back in source order to the original
+  // per-file path, preserving its size limit and diagnostic behavior.
+  return blobs;
+}
+
+function readBatchObjects(repoRoot, objects, includeContent) {
+  if (!objects.length) return new Map();
+  const mode = includeContent ? '--batch' : '--batch-check';
+  const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, 'cat-file', mode], {
+    input: objects.join('\n') + '\n',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (result.error || result.status !== 0 || !Buffer.isBuffer(result.stdout)) return null;
+  const buffer = result.stdout;
+  const blobs = new Map();
+  let cursor = 0;
+  for (const object of objects) {
+    const newline = buffer.indexOf(0x0a, cursor);
+    if (newline < 0) return null;
+    const header = buffer.toString('utf8', cursor, newline);
+    cursor = newline + 1;
+    if (header.endsWith(' missing')) {
+      blobs.set(object, { missing: true });
+      continue;
+    }
+    const parts = header.split(' ');
+    const size = Number(parts[2]);
+    if (parts.length !== 3 || !Number.isSafeInteger(size) || size < 0) return null;
+    const blob = { type: parts[1], size };
+    if (includeContent) {
+      if (cursor + size >= buffer.length || buffer[cursor + size] !== 0x0a) return null;
+      blob.content = buffer.toString('utf8', cursor, cursor + size);
+      cursor += size + 1;
+    }
+    blobs.set(object, blob);
+  }
+  return blobs;
 }
 
 function gitValue(repoRoot, args, failure) {
@@ -187,6 +238,26 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     });
   }
 
+  // The batch is an optimization only: every path, line-range, file and line
+  // check still runs in source order in the verification loop below, so a
+  // citation the batch cannot answer for never reorders the first diagnostic.
+  const citedObjects = new Map();
+  for (const [nodeIndex, node] of authoredNodes.entries()) {
+    if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
+    for (const [sourceIndex, authored] of node.sources.entries()) {
+      const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
+      let sourcePath;
+      try {
+        sourcePath = withDiagnosticRecordingSuppressed(() => verifiedSourcePath(authored.path, `${at}/path`));
+      } catch {
+        continue;
+      }
+      const object = `${revision}:${sourcePath}`;
+      citedObjects.set(object, citedObjects.get(object) || Boolean(authored.line));
+    }
+  }
+  const prefetchedBlobs = prefetchBlobs(realRoot, citedObjects);
+
   const nodes = Object.create(null);
   let referenceCount = 0;
   for (const [nodeIndex, node] of authoredNodes.entries()) {
@@ -220,8 +291,14 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         });
       }
       const object = `${revision}:${source.path}`;
-      const type = runGit(realRoot, ['cat-file', '-t', object]);
-      if (type.status !== 0 || type.stdout.trim() !== 'blob') {
+      const prefetched = prefetchedBlobs ? prefetchedBlobs.get(object) : undefined;
+      const objectIsBlob = prefetched
+        ? !prefetched.missing && prefetched.type === 'blob'
+        : (() => {
+          const type = runGit(realRoot, ['cat-file', '-t', object]);
+          return type.status === 0 && type.stdout.trim() === 'blob';
+        })();
+      if (!objectIsBlob) {
         evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
           subject: { path: where, ...nodeSubject },
           evidence: { sourcePath: source.path, revision },
@@ -229,7 +306,9 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         });
       }
       if (source.line) {
-        const content = runGit(realRoot, ['show', object]);
+        const content = prefetched && Object.hasOwn(prefetched, 'content')
+          ? { status: 0, stdout: prefetched.content }
+          : runGit(realRoot, ['show', object]);
         if (content.status !== 0) evidenceFailure('repository-evidence/file-unreadable', `${where} could not be read at revision ${revision}.`, {
           subject: { path: where, ...nodeSubject },
           evidence: { sourcePath: source.path, revision },

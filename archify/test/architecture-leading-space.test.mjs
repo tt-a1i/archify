@@ -88,3 +88,26 @@ test('authored viewBox and transformed SVGs are not suggested for automatic revi
   fs.writeFileSync(automatic.output, html);
   assert.equal(automatic.read().composition.leadingSpace.reviewSuggested, false, 'other diagram modes do not qualify');
 });
+
+test('automatic Architecture reports a node side facing more neighbours than it has ports', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-crowded-side-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const render = (hubHeight) => {
+    const source = path.join(dir, `hub-${hubHeight}.json`);
+    const output = path.join(dir, `hub-${hubHeight}.html`);
+    fs.writeFileSync(source, JSON.stringify({
+      schema_version: 1, diagram_type: 'architecture',
+      meta: { title: 'Crowded side', quality_profile: 'standard', output: path.basename(output) },
+      components: [
+        { id: 'hub', type: 'backend', label: 'Hub', pos: [40, 190], size: [140, hubHeight] },
+        ...[0, 1, 2, 3].map((index) => ({ id: `n${index}`, type: 'backend', label: `N${index}`, pos: [420, 40 + index * 110], size: [120, 60] })),
+      ],
+      connections: [0, 1, 2, 3].map((index) => ({ from: 'hub', to: `n${index}` })),
+    }));
+    const rendered = spawnSync(process.execPath, [cli, 'render', 'architecture', source, output], { encoding: 'utf8' });
+    assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+    return run([checker, output]).composition.routeReview.crowdedSides;
+  };
+  assert.deepEqual(render(64), [{ node: 'hub', label: 'Hub', side: 'right', relationships: 4, sidePx: 64, neededPx: 74 }]);
+  assert.equal(render(80), undefined);
+});

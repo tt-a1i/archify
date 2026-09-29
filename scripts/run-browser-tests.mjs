@@ -30,7 +30,6 @@ const testFiles = [
   'intent-trace-browser.test.mjs',
   'semantic-lens-browser.test.mjs',
   'route-probe-browser.test.mjs',
-  'guided-views-browser.test.mjs',
   'focus-browser.test.mjs',
   'crossover-state-browser.test.mjs',
   'semantic-passport-move-browser.test.mjs',

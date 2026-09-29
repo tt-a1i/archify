@@ -57,6 +57,46 @@ function evidencePayload(html) {
   return JSON.parse(match[1]);
 }
 
+test('evidence prefetch preserves the first source diagnostic in JSON output', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  data.diagram.components[0].sources = [{ path: 'src/missing.js' }, { path: '../escape' }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1);
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.diagnostics.map(({ code, subject }) => [code, subject.path]), [
+    ['repository-evidence/file-missing', '/components/0/sources/0/path'],
+  ]);
+});
+
+test('path-only evidence verifies types without reading blob contents', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  data.diagram.components[0].sources = [{ path: 'src/router.js' }, { path: 'src/store.js' }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const trace = path.join(data.root, 'git.trace');
+  const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', data.input, '--repo-root', data.root, '--json'], {
+    cwd: skillRoot, encoding: 'utf8', env: { ...process.env, GIT_TRACE: trace },
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.doesNotMatch(fs.readFileSync(trace, 'utf8'), /cat-file --batch(?:\s|$)|\bshow\s/);
+});
+
+test('line evidence retains the per-file read limit after batch prefetch', (t) => {
+  const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(data.root, 'large.txt'), Buffer.alloc(17 * 1024 * 1024, 'x'));
+  git(data.root, 'add', 'large.txt');
+  git(data.root, 'commit', '-m', 'large source');
+  data.diagram.meta.repository.revision = git(data.root, 'rev-parse', 'HEAD');
+  data.diagram.components[0].sources = [{ path: 'large.txt', line: 1 }];
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+  assert.equal(result.status, 1, result.stdout);
+  assert.equal(JSON.parse(result.stdout).diagnostics[0].code, 'repository-evidence/git-unavailable');
+});
+
 test('repository root accepts a different spelling of the same physical Git top-level', (t) => {
   const data = fixture();
   const alias = `${data.root}-alias`;

@@ -20,7 +20,7 @@ Read both the mode schema and `schemas/common.schema.json`. The mode schemas use
 - `variant`: `default`, `emphasis`, `security`, `dashed`
 - Relationship IDs use the shared identifier pattern and must be unique in their collection.
 
-Do not invent fields. Before writing any new field, enum, or constrained text, read its schema definition, including common `$ref` targets. In particular, check boundary kinds, guided-view note lengths, repository identity, and source-reference shapes. An example demonstrates structure; it does not enumerate every valid value. Author fresh IDs, wording, facts, and layout.
+Do not invent fields. Before writing any new field, enum, or constrained text, read its schema definition, including common `$ref` targets. In particular, check boundary kinds, repository identity, and source-reference shapes. An example demonstrates structure; it does not enumerate every valid value. Author fresh IDs, wording, facts, and layout.
 
 ## Workflow layout contracts
 
@@ -60,27 +60,46 @@ them, or widen the viewBox using the emitted diagnostic.
 Choose one primary authored language. An explicit user choice wins; otherwise
 use the language of the request, or the conversation's dominant language when
 the request itself is language-neutral. Separately choose the Viewer locale.
-For supported languages, always write the matching `meta.locale`: `"en"` for
-English, `"zh-CN"` for Simplified Chinese, or `"es"` for Spanish. The renderer consumes the authored
-locale without inferring language from diagram strings. Documents that omit it
-remain valid and default to English.
+Always write the matching `meta.locale` as a well-formed language tag: `"en"`
+for English, `"zh-CN"` for Simplified Chinese, `"es"` for Spanish, or any
+other tag for another language. The renderer consumes the authored locale without inferring language
+from diagram strings. Documents that omit it remain valid and default to
+English.
 
 `meta.locale` controls only renderer-owned reader surfaces: `<html lang>`, the
 document-title suffix, default SVG description and focus labels, default legend
 labels, and fixed Viewer controls, statuses, accessibility names, and errors.
 It never translates authored content. Apply the primary language separately to
 titles, subtitles, node and relationship copy, boundaries, lanes, groups,
-guided views, legend label overrides, and cards. A bilingual diagram still
+legend label overrides, and cards. A bilingual diagram still
 chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
-For a requested language outside `en`, `zh-CN`, and `es`, do not write an unsupported
-locale. Keep every reader-facing authored string in the requested language,
-omit `meta.locale` so the renderer safely uses English, and explicitly tell the
-user that fixed Viewer UI and `<html lang>` remain English and the artifact is
-not fully localized. The fallback applies only to renderer-owned surfaces; it
-never permits authored copy to fall back to English. Do not silently substitute
-`zh-CN` for another language or Chinese locale.
+`en` and `zh-CN` are built-in Viewer catalogs and need nothing further. For
+every other `meta.locale`, also set `meta.translations`: an object mapping the
+renderer's canonical message keys (`catalogKeys()` in
+`renderers/shared/i18n.mjs`) to translated strings whose `{placeholder}` tokens
+match the English source exactly. Reuse suitable translations from `examples/locales/` or a previously reviewed
+catalog; Spanish uses `examples/locales/es.json`. Translate missing keys or adapt terminology when the diagram needs it;
+use the English source to check keys and placeholders. Example catalogs may
+lag new Viewer keys; validation reports those gaps and uses English for them. A key that is missing, unrecognized, or has mismatched
+placeholders falls back to its English string — `validate`/`render`/`deliver`
+report the resulting coverage to stderr — rather than breaking the render or
+silently shipping an untranslated string as if it were translated.
+
+For older dev inputs using only `meta.locale: "es"`, copy the Spanish catalog
+into `meta.translations` before rendering again. Existing standalone HTML
+keeps its embedded translations.
+
+For a requested language you cannot supply `meta.translations` for, do not
+write a `meta.locale` with no built-in catalog and no translations. Keep every
+reader-facing authored string in the requested language, omit `meta.locale` so
+the renderer safely uses English, and explicitly tell the user that fixed
+Viewer UI and `<html lang>` remain English and the artifact is not fully localized.
+The fallback applies only to renderer-owned surfaces; it never
+permits authored copy to fall back to English. Do not silently substitute
+`zh-CN` for another language or Chinese locale, and do not machine-translate
+`meta.translations` values without disclosing that they are unreviewed.
 
 Keep exact product names, code identifiers, commands, protocols, API paths, and
 environment names intact. Those terms may remain English inside localized copy,
@@ -291,12 +310,21 @@ Stages express transformation or custody. Rows separate parallel streams. Label 
 
 ### Lifecycle
 
-Main phases use columns `0..4`; event and terminal bands use columns `0..2`.
-Event/terminal column `N` aligns to the same x coordinate as main column
-`N + 2`. A recoverable failure needs a real transition back to an active state.
-A card or guided view saying “retry” is not topology.
-Every lane other than `main` and `terminal` shares one middle band; states in
-the same column there need distinct `yOffset` values.
+Schema v2 (new diagrams): each populated lane is one row, `main` first,
+`terminal` last, others in `lanes[]` order. `col` `0..4` is one shared x grid,
+so a state placed in the column of the state it leaves gets a straight vertical
+transition. Every transition, including the main path, is authored; there is no
+implied rail. The renderer sizes the canvas, widens a column gap for a
+same-row label, and routes automatic transitions orthogonally through row gaps.
+Keep labels short: a gap carrying several parallel lines has little room.
+
+Schema v1 (legacy): main phases use columns `0..4`; event and terminal bands
+use columns `0..2`, and event/terminal column `N` aligns with main column
+`N + 2`. Every lane other than `main` and `terminal` shares one middle band;
+states in the same column there need distinct `yOffset` values.
+
+In both versions a recoverable failure needs a real transition back to an
+active state. A card saying “retry” is not topology.
 
 ## Repository evidence
 

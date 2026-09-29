@@ -136,7 +136,15 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     // Route lets the panned key through; the existing Focus handler then consumes it.
     assert.deepEqual(filtered, { capture: { mode: 'source', prevented: false }, mode: null, unrelated: false, panned: true, focus: 'users' });
     await load('architecture', { suffix: '&embed=1#route=users~db' });
-    assert.equal(await run('Archify.routeProbe.begin()'), false); assert.equal((await snapshot('embed-hash')).active, null);
+    assert.equal(await run('Archify.routeProbe.begin()'), false);
+    const embeddedRoute = await snapshot('embed-hash');
+    assert.equal(embeddedRoute.active, null);
+    assert.equal(embeddedRoute.result, null);
+    await load('sequence', { suffix: '&embed=1#focus=web&reach=downstream' });
+    const embeddedFocus = await snapshot('embed-focus');
+    assert.equal(embeddedFocus.focus, 'web');
+    assert.equal(embeddedFocus.active, null);
+    assert.equal(embeddedFocus.hash, '#focus=web&reach=downstream');
   });
 
   await t.test('SVG graph fixtures preserve directed BFS order, parallel edges and strict export snapshots', async () => {
@@ -225,7 +233,17 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
     const fallback = await run(`routeClock(({last,fire})=>{Archify.routeProbe.selectJourneyIndex(1);const before=!!document.querySelector('[data-route-journey-overlay]');fire(last(860));return {before,after:!!document.querySelector('[data-route-journey-overlay]'),result:Archify.routeProbe.result()};})`);
     assert.equal(fallback.before, true); assert.equal(fallback.after, false); assert.equal(fallback.result.journey, 1);
     records.push({ scenario: 'pulse-fixture', pulses, fallback });
-    await run('Archify.routeProbe.selectJourneyIndex(2)');
+    await run(`
+      routeEnds.length = 0;
+      // Hold cleanup timers while checking the independent, real animationend path.
+      // The fallback and stale callbacks are exercised above with the same clock.
+      routeClock(() => {
+        Archify.routeProbe.selectJourneyIndex(2);
+        // A busy first frame must not make this assertion race the 860ms fallback.
+        const until = performance.now() + 350;
+        while (performance.now() < until) {}
+      });
+    `);
     await run(`routeWait(()=>routeEnds.some(e=>e.trusted&&e.name==='archify-route-journey-flow'))`);
     await run(`routeWait(()=>!document.querySelector('[data-route-journey-overlay]'))`);
     assert.equal((await snapshot('real-animation-complete')).result.journey, 2);

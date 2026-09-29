@@ -1,0 +1,22 @@
+{
+  "page.title": "Diagramme {title}",
+  "diagram.description.architecture": "Un diagramme d'architecture généré par Archify.",
+  "legend.title": "Légende",
+  "node.focus": "Focus {label}",
+  "node.context.architecture": "Composant d'architecture",
+  "viewer.kind.frontend": "Frontend",
+  "viewer.kind.backend": "Backend",
+  "viewer.export.button": "Exporter",
+  "viewer.export.button.title": "Exporter le diagramme (E)",
+  "viewer.export.diagram": "Exporter le diagramme",
+  "viewer.finder.title": "Rechercher un nœud",
+  "viewer.route.eyebrow": "Sonde d'itinéraire",
+  "viewer.route.overview.node.one": "{count} nœud",
+  "viewer.route.overview.node.other": "{count} nœuds",
+  "viewer.guide.eyebrow": "Guide du diagramme",
+  "viewer.nav.controls": "Contrôles de vue du diagramme",
+  "viewer.theme.toggle": "Changer de thème",
+  "viewer.preset.classic": "Classique",
+  "viewer.common.close": "Fermer",
+  "viewer.common.copyLink": "Copier le lien"
+}

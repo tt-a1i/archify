@@ -9,9 +9,9 @@ import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
-  acknowledgeUpdate,
   checkForUpdate,
   isMainModule,
+  setUpdatePreference,
 } from '../scripts/check-update.mjs';
 import { DEFAULT_MANIFEST_URL, compareSemver, parseSemver } from '../scripts/update-contract.mjs';
 
@@ -24,7 +24,6 @@ const expectedManifestUrl = 'https://tt-a1i.github.io/archify/skill-updates/arch
 const baseTime = Date.parse('2026-08-28T08:00:00Z');
 const childCheckTimeoutMs = 2_000;
 const parentCheckTimeoutMs = 5_000;
-const maxCacheStateBytes = 64 * 1_024;
 
 function writeJson(target, value) {
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -45,43 +44,16 @@ function metadataWithOverrides(metadata, overrides) {
   });
 }
 
-function historyDigest(index) {
-  return `sha256:${crypto.createHash('sha256').update(`history-${index}`).digest('hex')}`;
-}
-
-function cachedStateWithHistory({ offeredDigests = [], acknowledgedDigests = [] } = {}) {
+function expiredCachedState() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     skillId: 'archify',
     installedVersion: '2.15.0',
     check: {
       nextCheckAt: '2020-01-01T00:00:00.000Z',
       consecutiveFailures: 0,
     },
-    notification: {
-      offeredDigests: [...offeredDigests],
-      acknowledgedDigests: [...acknowledgedDigests],
-    },
-  };
-}
-
-function candidateStateForDigest(state, digest) {
-  return {
-    ...state,
-    check: {
-      nextCheckAt: new Date(baseTime + (72 * 60 * 60 * 1_000)).toISOString(),
-      consecutiveFailures: 0,
-    },
-    notification: {
-      offeredDigests: [...state.notification.offeredDigests, digest],
-      acknowledgedDigests: [...state.notification.acknowledgedDigests],
-    },
-    candidate: {
-      version: '2.16.0',
-      targetDigest: digest,
-      severity: 'normal',
-      releaseNotes: 'https://github.com/tt-a1i/archify/releases/tag/v2.16.0',
-    },
+    preferences: [],
   };
 }
 
@@ -396,23 +368,47 @@ function options(testFixture, fetchImpl, overrides = {}) {
 
 function cachedUpdateState() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     skillId: 'archify',
     installedVersion: '2.15.0',
     check: {
       nextCheckAt: new Date(baseTime + (24 * 60 * 60 * 1_000)).toISOString(),
       consecutiveFailures: 0,
     },
-    notification: {
-      offeredDigests: [`sha256:${'b'.repeat(64)}`],
-      acknowledgedDigests: [],
-    },
+    preferences: [],
     candidate: {
       version: '2.16.0',
       targetDigest: `sha256:${'b'.repeat(64)}`,
       severity: 'normal',
       releaseNotes: 'https://github.com/tt-a1i/archify/releases/tag/v2.16.0',
+      checkedAt: new Date(baseTime).toISOString(),
     },
+  };
+}
+
+function currentResult(availableVersion = '2.15.0', {
+  installedVersion = '2.15.0', checkedAtMs = baseTime, source = 'network',
+} = {}) {
+  return {
+    status: 'current', installedVersion, availableVersion,
+    checkedAt: new Date(checkedAtMs).toISOString(), source, noticeRequired: false,
+  };
+}
+
+function snooze(testFixture, eventKey, nowMs = baseTime) {
+  return setUpdatePreference({
+    releasePath: testFixture.releasePath,
+    cacheDirectory: testFixture.cacheDirectory,
+    eventKey,
+    mode: 'snooze',
+    now: () => nowMs,
+  });
+}
+
+function snoozed(eventKey, nowMs = baseTime) {
+  return {
+    status: 'snoozed', eventKey,
+    suppressedUntil: new Date(nowMs + (7 * 24 * 60 * 60 * 1_000)).toISOString(),
   };
 }
 
@@ -465,7 +461,7 @@ function runCheckInChild(testFixture) {
 
 function assertUnsafeCacheStateIsIgnored(testFixture) {
   assert.deepEqual(runCheckInChild(testFixture), {
-    result: { status: 'silent', reason: 'current' },
+    result: currentResult(),
     requests: 1,
   });
 }
@@ -507,7 +503,7 @@ test('development installs never treat the older stable release as an update', a
     })),
   ));
 
-  assert.deepEqual(result, { status: 'silent', reason: 'current' });
+  assert.deepEqual(result, currentResult('2.15.0', { installedVersion: '2.16.0-dev.0' }));
 });
 
 test('a changed digest never bypasses same-version or downgrade protection', async () => {
@@ -521,7 +517,7 @@ test('a changed digest never bypasses same-version or downgrade protection', asy
         testFixture,
         async () => response(remoteReleaseForVersion(version, digest)),
       ));
-      assert.deepEqual(result, { status: 'silent', reason: 'current' });
+      assert.deepEqual(result, currentResult(version));
     } finally {
       fs.rmSync(testFixture.root, { recursive: true, force: true });
     }
@@ -546,12 +542,12 @@ test('a successful refresh withdraws a previously offered higher candidate', asy
   const withdrawn = await checkForUpdate(options(testFixture, fetchImpl, {
     now: () => baseTime + (73 * 60 * 60 * 1_000),
   }));
-  assert.deepEqual(withdrawn, { status: 'silent', reason: 'current' });
+  assert.deepEqual(withdrawn, currentResult('2.15.0', { checkedAtMs: baseTime + (73 * 60 * 60 * 1_000) }));
   assert.equal(JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8')).candidate.version, '2.15.0');
   assert.equal(requests, 2);
 });
 
-test('a newer immutable candidate is re-offered until the visible notice is acknowledged', async (t) => {
+test('a newer immutable candidate is repeated from cache on every check', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   let requests = 0;
@@ -566,390 +562,26 @@ test('a newer immutable candidate is re-offered until the visible notice is ackn
   assert.equal(first.latestVersion, '2.16.0');
   assert.equal(first.eventKey, `archify@sha256:${'b'.repeat(64)}`);
   assert.equal(first.targetDigest, `sha256:${'b'.repeat(64)}`);
+  assert.equal(first.source, 'network');
+  assert.equal(first.noticeRequired, true);
   assert.equal(Object.hasOwn(first, 'updateCommand'), false);
   assert.equal(first.summary, 'Archify 2.16.0 is available; see the official release notes for details.');
   const persisted = JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8'));
-  assert.deepEqual(Object.keys(persisted.check).sort(), [
-    'consecutiveFailures', 'nextCheckAt',
-  ]);
-  assert.deepEqual(Object.keys(persisted.notification).sort(), [
-    'acknowledgedDigests', 'offeredDigests',
+  assert.deepEqual(Object.keys(persisted).sort(), [
+    'candidate', 'check', 'installedVersion', 'preferences', 'schemaVersion', 'skillId',
   ]);
   assert.deepEqual(Object.keys(persisted.candidate).sort(), [
-    'releaseNotes', 'severity', 'targetDigest', 'version',
+    'checkedAt', 'releaseNotes', 'severity', 'targetDigest', 'version',
   ]);
 
-  const second = await checkForUpdate(options(testFixture, fetchImpl));
-  assert.equal(second.status, 'update_available');
-  assert.equal(second.eventKey, first.eventKey);
+  for (let index = 0; index < 2; index += 1) {
+    const repeated = await checkForUpdate(options(testFixture, fetchImpl));
+    assert.equal(repeated.eventKey, first.eventKey);
+    assert.equal(repeated.source, 'cache');
+    assert.equal(repeated.checkedAt, first.checkedAt);
+    assert.equal(repeated.noticeRequired, true);
+  }
   assert.equal(requests, 1, 'fresh cached candidates must not make another request');
-
-  const acknowledgement = await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: first.eventKey,
-    now: () => baseTime + 1_000,
-  });
-  assert.deepEqual(acknowledgement, { status: 'acknowledged', eventKey: first.eventKey });
-  assert.deepEqual(
-    JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8')).notification.acknowledgedDigests,
-    [first.targetDigest],
-  );
-
-  const third = await checkForUpdate(options(testFixture, fetchImpl));
-  assert.deepEqual(third, { status: 'silent', reason: 'already-notified' });
-  assert.equal(requests, 1);
-});
-
-test('an acknowledged candidate stays suppressed after a later candidate and manifest rollback', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  const releases = [
-    remoteReleaseForVersion('2.16.0', 'b'.repeat(64)),
-    remoteReleaseForVersion('2.17.0', 'c'.repeat(64)),
-    remoteReleaseForVersion('2.16.0', 'b'.repeat(64)),
-  ];
-  let requests = 0;
-  const fetchImpl = async () => response(releases[requests++]);
-
-  const first = await checkForUpdate(options(testFixture, fetchImpl));
-  assert.equal(first.status, 'update_available');
-  assert.deepEqual(await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: first.eventKey,
-  }), { status: 'acknowledged', eventKey: first.eventKey });
-
-  const second = await checkForUpdate(options(testFixture, fetchImpl, {
-    now: () => baseTime + (73 * 60 * 60 * 1_000),
-  }));
-  assert.equal(second.status, 'update_available');
-  assert.deepEqual(await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: second.eventKey,
-  }), { status: 'acknowledged', eventKey: second.eventKey });
-
-  assert.deepEqual(await checkForUpdate(options(testFixture, fetchImpl, {
-    now: () => baseTime + (146 * 60 * 60 * 1_000),
-  })), { status: 'silent', reason: 'already-notified' });
-  assert.equal(requests, 3);
-  assert.deepEqual(
-    JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8')).notification.acknowledgedDigests,
-    [first.targetDigest, second.targetDigest],
-  );
-});
-
-test('a 64 KiB multi-offer cache only returns an event whose acknowledgement closure can commit', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  const earlierDigest = `sha256:${'a'.repeat(64)}`;
-  const currentDigest = `sha256:${'b'.repeat(64)}`;
-  const replacementDigest = `sha256:${'c'.repeat(64)}`;
-  const cachedVersion = `3.16.${'9'.repeat(35)}`;
-  const state = cachedStateWithHistory({
-    offeredDigests: [earlierDigest, currentDigest],
-    acknowledgedDigests: Array.from({ length: 877 }, (_, index) => historyDigest(index)),
-  });
-  state.check.nextCheckAt = 'Mon, 31 Aug 2026 08:00:00 GMT';
-  state.candidate = {
-    version: cachedVersion,
-    targetDigest: currentDigest,
-    severity: 'normal',
-    releaseNotes: `https://github.com/tt-a1i/archify/releases/tag/v${cachedVersion}`,
-  };
-  assert.equal(Buffer.byteLength(compactStateSource(state)), maxCacheStateBytes);
-  writeCompactCommittedState(testFixture, state);
-  let requests = 0;
-
-  const offered = await checkForUpdate(options(testFixture, async () => {
-    requests += 1;
-    return response(remoteReleaseForVersion('2.16.0', 'c'.repeat(64)));
-  }));
-  assert.equal(offered.status, 'update_available');
-  const acknowledgement = await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: offered.eventKey,
-  });
-
-  assert.deepEqual(acknowledgement, {
-    status: 'acknowledged',
-    eventKey: offered.eventKey,
-  });
-  assert.equal(requests, 1, 'an unrecoverable cached offer must be rebuilt before exposure');
-  assert.equal(offered.targetDigest, replacementDigest);
-});
-
-test('a recoverable multi-offer boundary acknowledges every event without pruning history', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  const earlierDigest = `sha256:${'a'.repeat(64)}`;
-  const currentDigest = `sha256:${'b'.repeat(64)}`;
-  const cachedVersion = `3.16.${'9'.repeat(35)}`;
-  const exactHistory = Array.from({ length: 877 }, (_, index) => historyDigest(index));
-  const state = cachedStateWithHistory({
-    offeredDigests: [earlierDigest, currentDigest],
-    acknowledgedDigests: exactHistory,
-  });
-  state.check.nextCheckAt = 'Mon, 31 Aug 2026 8:00:00 GMT';
-  state.candidate = {
-    version: cachedVersion,
-    targetDigest: currentDigest,
-    severity: 'normal',
-    releaseNotes: `https://github.com/tt-a1i/archify/releases/tag/v${cachedVersion}`,
-  };
-  assert.equal(Buffer.byteLength(compactStateSource(state)), maxCacheStateBytes - 1);
-  writeCompactCommittedState(testFixture, state);
-
-  const current = await checkForUpdate(options(testFixture, async () => {
-    throw new Error('a fresh recoverable cache must not use the network');
-  }));
-  assert.equal(current.targetDigest, currentDigest);
-  assert.deepEqual(await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: current.eventKey,
-  }), { status: 'acknowledged', eventKey: current.eventKey });
-  const earlierEventKey = `archify@${earlierDigest}`;
-  assert.deepEqual(await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: earlierEventKey,
-  }), { status: 'acknowledged', eventKey: earlierEventKey });
-
-  const persisted = JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8'));
-  assert.deepEqual(persisted.notification, {
-    offeredDigests: [],
-    acknowledgedDigests: [...exactHistory, currentDigest, earlierDigest],
-  });
-  assert.equal(fs.statSync(statePath(testFixture)).size, maxCacheStateBytes);
-});
-
-test('a near-capacity null schedule does not retry the network on every activation', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  const state = cachedStateWithHistory({
-    acknowledgedDigests: Array.from({ length: 883 }, (_, index) => historyDigest(index)),
-  });
-  state.check.nextCheckAt = null;
-  assert.equal(Buffer.byteLength(compactStateSource(state)), 65_524);
-  writeCompactCommittedState(testFixture, state);
-  let requests = 0;
-  const fetchImpl = async () => {
-    requests += 1;
-    return response(remoteRelease());
-  };
-
-  const first = await checkForUpdate(options(testFixture, fetchImpl));
-  const second = await checkForUpdate(options(testFixture, fetchImpl));
-
-  assert.equal(first.status, 'update_available');
-  assert.deepEqual(second, first);
-  assert.equal(requests, 1, 'the first check must commit a bounded retry or reusable candidate');
-});
-
-test('a saturated exact acknowledgement history never returns an unacknowledgeable offer', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  const targetDigest = `sha256:${'f'.repeat(64)}`;
-  const state = cachedStateWithHistory();
-  let projected = candidateStateForDigest(state, targetDigest);
-  let index = 0;
-  while (Buffer.byteLength(compactStateSource(projected)) <= maxCacheStateBytes) {
-    state.notification.acknowledgedDigests.push(historyDigest(index));
-    index += 1;
-    projected = candidateStateForDigest(state, targetDigest);
-  }
-  assert.ok(Buffer.byteLength(compactStateSource(state)) <= maxCacheStateBytes);
-  assert.ok(Buffer.byteLength(compactStateSource(projected)) > maxCacheStateBytes);
-  const exactHistory = [...state.notification.acknowledgedDigests];
-  writeCompactCommittedState(testFixture, state);
-  let requests = 0;
-
-  const result = await checkForUpdate(options(testFixture, async () => {
-    requests += 1;
-    return response(remoteReleaseForVersion('2.16.0', 'f'.repeat(64)));
-  }));
-  const acknowledgement = result.status === 'update_available'
-    ? await acknowledgeUpdate({
-      releasePath: testFixture.releasePath,
-      cacheDirectory: testFixture.cacheDirectory,
-      eventKey: result.eventKey,
-    })
-    : null;
-
-  assert.deepEqual({ result, acknowledgement }, {
-    result: { status: 'silent', reason: 'cache-unavailable' },
-    acknowledgement: null,
-  });
-  assert.equal(requests, 1);
-  assert.ok(committedStateFiles(testFixture).every(
-    (target) => fs.statSync(target).size <= maxCacheStateBytes,
-  ));
-  assert.deepEqual(
-    JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8')).notification.acknowledgedDigests,
-    exactHistory,
-  );
-
-  assert.deepEqual(await checkForUpdate(options(testFixture, async () => {
-    requests += 1;
-    return response(remoteReleaseForVersion('2.16.0', 'f'.repeat(64)));
-  })), { status: 'silent', reason: 'cache-valid' });
-  assert.equal(requests, 1, 'capacity rejection should commit a bounded retry delay');
-});
-
-test('capacity backoff withdraws a stale candidate while preserving its late acknowledgement', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  const staleDigest = `sha256:${'b'.repeat(64)}`;
-  const replacementDigest = `sha256:${'c'.repeat(64)}`;
-  const state = cachedStateWithHistory({ offeredDigests: [staleDigest] });
-  state.candidate = {
-    version: '2.16.0',
-    targetDigest: staleDigest,
-    severity: 'normal',
-    releaseNotes: 'https://github.com/tt-a1i/archify/releases/tag/v2.16.0',
-  };
-  let replacement = candidateStateForDigest(state, replacementDigest);
-  let index = 0;
-  while (Buffer.byteLength(compactStateSource(replacement)) <= maxCacheStateBytes) {
-    state.notification.acknowledgedDigests.push(historyDigest(index));
-    index += 1;
-    replacement = candidateStateForDigest(state, replacementDigest);
-  }
-  assert.ok(Buffer.byteLength(compactStateSource(state)) <= maxCacheStateBytes);
-  assert.ok(Buffer.byteLength(compactStateSource(replacement)) > maxCacheStateBytes);
-  const exactHistory = [...state.notification.acknowledgedDigests];
-  writeCompactCommittedState(testFixture, state);
-  let requests = 0;
-  const fetchImpl = async () => {
-    requests += 1;
-    return response(remoteReleaseForVersion('2.16.0', 'c'.repeat(64)));
-  };
-
-  const refresh = await checkForUpdate(options(testFixture, fetchImpl));
-  const cached = await checkForUpdate(options(testFixture, fetchImpl));
-  const staleEventKey = `archify@${staleDigest}`;
-  const lateAcknowledgement = await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: staleEventKey,
-  });
-
-  assert.deepEqual({ refresh, cached, lateAcknowledgement }, {
-    refresh: { status: 'silent', reason: 'cache-unavailable' },
-    cached: { status: 'silent', reason: 'cache-valid' },
-    lateAcknowledgement: { status: 'acknowledged', eventKey: staleEventKey },
-  });
-  assert.equal(requests, 1);
-  assert.ok(committedStateFiles(testFixture).every(
-    (target) => fs.statSync(target).size <= maxCacheStateBytes,
-  ));
-  const persisted = JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8'));
-  assert.equal(Object.hasOwn(persisted, 'candidate'), false);
-  assert.deepEqual(persisted.notification, {
-    offeredDigests: [],
-    acknowledgedDigests: [...exactHistory, staleDigest],
-  });
-});
-
-test('a 64 KiB state can be acknowledged but a 64 KiB plus one state is ignored', async () => {
-  const targetDigest = `sha256:${'e'.repeat(64)}`;
-  const exactState = cachedStateWithHistory({ offeredDigests: [targetDigest] });
-  exactState.candidate = {
-    version: '2.16.0',
-    targetDigest,
-    severity: 'normal',
-    releaseNotes: 'https://github.com/tt-a1i/archify/releases/tag/v2.16.0',
-  };
-  const initialBytes = Buffer.byteLength(compactStateSource(exactState));
-  exactState.check.nextCheckAt += 'x'.repeat(maxCacheStateBytes - initialBytes);
-  assert.equal(Buffer.byteLength(compactStateSource(exactState)), maxCacheStateBytes);
-
-  const exactFixture = fixture();
-  try {
-    writeCompactCommittedState(exactFixture, exactState);
-    const eventKey = `archify@${targetDigest}`;
-    assert.deepEqual(await acknowledgeUpdate({
-      releasePath: exactFixture.releasePath,
-      cacheDirectory: exactFixture.cacheDirectory,
-      eventKey,
-    }), { status: 'acknowledged', eventKey });
-    assert.equal(fs.statSync(statePath(exactFixture)).size, maxCacheStateBytes);
-    assert.deepEqual(
-      JSON.parse(fs.readFileSync(statePath(exactFixture), 'utf8')).notification,
-      { offeredDigests: [], acknowledgedDigests: [targetDigest] },
-    );
-  } finally {
-    fs.rmSync(exactFixture.root, { recursive: true, force: true });
-  }
-
-  const oversizedFixture = fixture();
-  try {
-    const target = writeCompactCommittedState(oversizedFixture, exactState);
-    fs.appendFileSync(target, ' ');
-    assert.equal(fs.statSync(target).size, maxCacheStateBytes + 1);
-    assert.deepEqual(await acknowledgeUpdate({
-      releasePath: oversizedFixture.releasePath,
-      cacheDirectory: oversizedFixture.cacheDirectory,
-      eventKey: `archify@${targetDigest}`,
-    }), { status: 'silent', reason: 'invalid-acknowledgement' });
-  } finally {
-    fs.rmSync(oversizedFixture.root, { recursive: true, force: true });
-  }
-});
-
-test('a boundary offer remains acknowledgeable without pruning exact history', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  const targetDigest = `sha256:${'d'.repeat(64)}`;
-  const state = cachedStateWithHistory();
-  let index = 0;
-  while (true) {
-    state.notification.acknowledgedDigests.push(historyDigest(index));
-    if (Buffer.byteLength(compactStateSource(
-      candidateStateForDigest(state, targetDigest),
-    )) > maxCacheStateBytes) {
-      state.notification.acknowledgedDigests.pop();
-      break;
-    }
-    index += 1;
-  }
-  const projected = candidateStateForDigest(state, targetDigest);
-  assert.ok(Buffer.byteLength(compactStateSource(projected)) <= maxCacheStateBytes);
-  const oneMoreAcknowledgement = cachedStateWithHistory({
-    acknowledgedDigests: [...state.notification.acknowledgedDigests, historyDigest(index)],
-  });
-  assert.ok(Buffer.byteLength(compactStateSource(
-    candidateStateForDigest(oneMoreAcknowledgement, targetDigest),
-  )) > maxCacheStateBytes);
-  const exactHistory = [...state.notification.acknowledgedDigests];
-  writeCompactCommittedState(testFixture, state);
-  const fetchImpl = async () => response(remoteReleaseForVersion('2.16.0', 'd'.repeat(64)));
-
-  const offered = await checkForUpdate(options(testFixture, fetchImpl));
-  assert.equal(offered.status, 'update_available');
-  assert.deepEqual(await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: offered.eventKey,
-  }), { status: 'acknowledged', eventKey: offered.eventKey });
-
-  assert.ok(committedStateFiles(testFixture).every(
-    (target) => fs.statSync(target).size <= maxCacheStateBytes,
-  ));
-  assert.deepEqual(
-    JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8')).notification,
-    {
-      offeredDigests: [],
-      acknowledgedDigests: [...exactHistory, targetDigest],
-    },
-  );
-  assert.deepEqual(await checkForUpdate(options(testFixture, fetchImpl)), {
-    status: 'silent',
-    reason: 'already-notified',
-  });
 });
 
 test('opaque response validators are neither persisted nor replayed after the check TTL', async (t) => {
@@ -994,11 +626,13 @@ test('an HTTP 304 is always a failed unconditional refresh', async (t) => {
     now: () => baseTime + (73 * 60 * 60 * 1_000),
   }));
 
-  assert.deepEqual(refresh, { status: 'silent', reason: 'check-failed' });
+  assert.equal(refresh.status, 'update_available');
+  assert.equal(refresh.source, 'cache');
   assert.equal(requests, 2);
+  assert.equal(JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8')).check.consecutiveFailures, 1);
 });
 
-test('a failed refresh preserves the last-good unacknowledged candidate', async (t) => {
+test('a failed refresh keeps repeating the last validated candidate', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   let requests = 0;
@@ -1013,7 +647,9 @@ test('a failed refresh preserves the last-good unacknowledged candidate', async 
   const failed = await checkForUpdate(options(testFixture, fetchImpl, {
     now: () => baseTime + (73 * 60 * 60 * 1_000),
   }));
-  assert.deepEqual(failed, { status: 'silent', reason: 'check-failed' });
+  assert.equal(failed.status, 'update_available');
+  assert.equal(failed.eventKey, first.eventKey);
+  assert.equal(failed.checkedAt, first.checkedAt);
 
   const cached = await checkForUpdate(options(testFixture, fetchImpl, {
     now: () => baseTime + (74 * 60 * 60 * 1_000),
@@ -1027,17 +663,14 @@ test('failure backoff saturates safely instead of overflowing the cache counter'
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   writeJson(statePath(testFixture), {
-    schemaVersion: 1,
+    schemaVersion: 2,
     skillId: 'archify',
     installedVersion: '2.15.0',
     check: {
       nextCheckAt: new Date(baseTime - 1_000).toISOString(),
       consecutiveFailures: Number.MAX_SAFE_INTEGER,
     },
-    notification: {
-      offeredDigests: [],
-      acknowledgedDigests: [],
-    },
+    preferences: [],
   });
   let requests = 0;
   const fetchImpl = async () => {
@@ -1104,7 +737,7 @@ test('a cache ancestor replaced before a cached read cannot inject a reminder', 
     fsPromises.readdir = originalReaddir;
     fs.rmSync(testFixture.root, { recursive: true, force: true });
   });
-  writeCompactCommittedState(testFixture, cachedStateWithHistory());
+  writeCompactCommittedState(testFixture, expiredCachedState());
   const replacementRoot = path.join(testFixture.root, 'replacement-cache');
   writeJson(
     path.join(replacementRoot, path.basename(stateDirectory(testFixture)),
@@ -1159,7 +792,7 @@ test('a committed directory replaced by a symlink cannot inject a reminder', asy
     fsPromises.readdir = originalReaddir;
     fs.rmSync(testFixture.root, { recursive: true, force: true });
   });
-  writeCompactCommittedState(testFixture, cachedStateWithHistory());
+  writeCompactCommittedState(testFixture, expiredCachedState());
   const committed = operationPath(testFixture, 'committed', 1n);
   const replacement = path.join(testFixture.root, 'replacement-committed');
   writeJson(path.join(replacement, 'state.json'), cachedUpdateState());
@@ -1274,7 +907,7 @@ test('zero-inode cache metadata uses timestamp fallback to reject a replaced anc
     fsPromises.readdir = originalReaddir;
     fs.rmSync(testFixture.root, { recursive: true, force: true });
   });
-  writeCompactCommittedState(testFixture, cachedStateWithHistory());
+  writeCompactCommittedState(testFixture, expiredCachedState());
   const replacementRoot = path.join(testFixture.root, 'replacement-cache');
   writeJson(
     path.join(replacementRoot, path.basename(stateDirectory(testFixture)),
@@ -1316,7 +949,7 @@ test('zero-inode cache metadata uses timestamp fallback to reject a replaced anc
   assert.equal(requests, 0);
 });
 
-test('zero-inode cache metadata still supports a normal check and acknowledgement', async (t) => {
+test('zero-inode cache metadata still supports a normal check and snooze', async (t) => {
   const testFixture = fixture();
   const originalLstat = fsPromises.lstat;
   const originalOpen = fsPromises.open;
@@ -1361,14 +994,17 @@ test('zero-inode cache metadata still supports a normal check and acknowledgemen
     requests += 1;
     return response(remoteRelease());
   }));
-  const acknowledged = await acknowledgeUpdate({
+  const snoozed = await setUpdatePreference({
     releasePath: testFixture.releasePath,
     cacheDirectory: testFixture.cacheDirectory,
     eventKey: offered.eventKey,
+    mode: 'snooze',
+    now: () => baseTime,
   });
 
   assert.equal(offered.status, 'update_available');
-  assert.deepEqual(acknowledged, { status: 'acknowledged', eventKey: offered.eventKey });
+  assert.equal(snoozed.status, 'snoozed');
+  assert.equal(snoozed.eventKey, offered.eventKey);
   assert.equal(requests, 1);
 });
 
@@ -1438,7 +1074,8 @@ test('a state write replaced before post-verification is never reported as commi
   const result = await checkForUpdate(options(testFixture, async () => response(remoteRelease())));
 
   assert.equal(replaced, true);
-  assert.deepEqual(result, { status: 'silent', reason: 'cache-unavailable' });
+  assert.equal(result.status, 'update_available');
+  assert.equal(result.source, 'network');
   for (const committed of committedStateFiles(testFixture)) {
     assert.notDeepEqual(JSON.parse(fs.readFileSync(committed, 'utf8')), {});
   }
@@ -1498,7 +1135,8 @@ test('a pending directory replaced by a symlink cannot be reported as committed'
   }));
 
   assert.equal(replaced, true);
-  assert.deepEqual(result, { status: 'silent', reason: 'cache-unavailable' });
+  assert.equal(result.status, 'update_available');
+  assert.equal(result.source, 'network');
   assert.equal(requests, 1);
   assert.equal(fs.existsSync(path.join(detachedPending, 'state.json')), true);
 });
@@ -2416,7 +2054,7 @@ test('a fenced owner rechecks its active claim immediately before network access
     return new Promise((resolve) => { releaseFetch = resolve; });
   };
 
-  const delayedOwner = checkForUpdate(options(testFixture, fetchImpl));
+  const delayedOwner = checkForUpdate(options(testFixture, fetchImpl, { timeoutMs: 2_000 }));
   await pause.reached;
   const staleTime = new Date(Date.now() - 60_000);
   fs.utimesSync(
@@ -2424,7 +2062,7 @@ test('a fenced owner rechecks its active claim immediately before network access
     staleTime,
     staleTime,
   );
-  const successor = checkForUpdate(options(testFixture, fetchImpl));
+  const successor = checkForUpdate(options(testFixture, fetchImpl, { timeoutMs: 2_000 }));
   await fetchStarted;
   assert.equal(requests, 1);
 
@@ -2468,7 +2106,7 @@ test('an overlapping check reads the last-good candidate while another process r
   assert.equal((await refresh).status, 'update_available');
 });
 
-test('acknowledgement waits briefly for an in-flight refresh instead of losing the notice', async (t) => {
+test('a snooze waits briefly for an in-flight refresh instead of losing the choice', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   const offered = await checkForUpdate(options(
@@ -2486,26 +2124,21 @@ test('acknowledgement waits briefly for an in-flight refresh instead of losing t
   }));
   await refreshStarted;
 
-  const acknowledgement = acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: offered.eventKey,
-    now: () => baseTime + (73 * 60 * 60 * 1_000) + 1,
-  });
+  const snoozeTime = baseTime + (73 * 60 * 60 * 1_000) + 1;
+  const preference = snooze(testFixture, offered.eventKey, snoozeTime);
   await new Promise((resolve) => setTimeout(resolve, 25));
   releaseRefresh(response(remoteRelease()));
   await refresh;
 
-  assert.deepEqual(await acknowledgement, {
-    status: 'acknowledged',
-    eventKey: offered.eventKey,
-  });
-  assert.deepEqual(await checkForUpdate(options(testFixture, async () => response(remoteRelease()), {
+  assert.deepEqual(await preference, snoozed(offered.eventKey, snoozeTime));
+  const later = await checkForUpdate(options(testFixture, async () => response(remoteRelease()), {
     now: () => baseTime + (74 * 60 * 60 * 1_000),
-  })), { status: 'silent', reason: 'already-notified' });
+  }));
+  assert.equal(later.noticeRequired, false);
+  assert.equal(later.reason, 'snoozed');
 });
 
-test('a last-good notice remains acknowledgeable after the refresh commits a new candidate', async (t) => {
+test('a snooze for a superseded release never suppresses the newer candidate', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   const firstRelease = remoteReleaseForVersion('2.16.0', 'b'.repeat(64));
@@ -2531,25 +2164,20 @@ test('a last-good notice remains acknowledgeable after the refresh commits a new
     now: () => baseTime + (73 * 60 * 60 * 1_000),
   }));
   assert.equal(visibleDuringRefresh.eventKey, offered.eventKey);
-  const acknowledgement = acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: visibleDuringRefresh.eventKey,
-  });
+  const preference = snooze(testFixture, visibleDuringRefresh.eventKey);
   await new Promise((resolve) => setTimeout(resolve, 25));
   releaseRefresh(response(secondRelease));
-  assert.equal((await refresh).latestVersion, '2.17.0');
-  assert.deepEqual(await acknowledgement, {
-    status: 'acknowledged',
-    eventKey: offered.eventKey,
-  });
-
-  assert.deepEqual(await checkForUpdate(options(testFixture, async () => response(firstRelease), {
-    now: () => baseTime + (146 * 60 * 60 * 1_000),
-  })), { status: 'silent', reason: 'already-notified' });
+  const newer = await refresh;
+  assert.equal(newer.latestVersion, '2.17.0');
+  assert.deepEqual(await preference, { status: 'silent', reason: 'invalid-preference' });
+  const repeated = await checkForUpdate(options(testFixture, async () => {
+    assert.fail('a fresh cache must not start another network request');
+  }));
+  assert.equal(repeated.eventKey, newer.eventKey);
+  assert.equal(repeated.noticeRequired, true);
 });
 
-test('acknowledgement retry budget uses a monotonic clock', async (t) => {
+test('preference retry budget uses a monotonic clock', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   const offered = await checkForUpdate(options(
@@ -2560,10 +2188,11 @@ test('acknowledgement retry budget uses a monotonic clock', async (t) => {
   const ticks = [100, 1_301];
   const started = Date.now();
 
-  assert.deepEqual(await acknowledgeUpdate({
+  assert.deepEqual(await setUpdatePreference({
     releasePath: testFixture.releasePath,
     cacheDirectory: testFixture.cacheDirectory,
     eventKey: offered.eventKey,
+    mode: 'snooze',
     monotonicNow: () => ticks.shift() ?? 1_301,
   }), { status: 'silent', reason: 'check-in-progress' });
   assert.ok(Date.now() - started < 200, 'an exhausted monotonic budget should not sleep on wall time');
@@ -2581,24 +2210,17 @@ test('a delayed allocator cannot reuse a generation after its reservation name w
   const pause = pauseMkdirOnce(operationPath(testFixture, 'reserved', 2n));
   t.after(() => pause.restore());
 
-  const acknowledgement = acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: offered.eventKey,
-  });
+  const preference = snooze(testFixture, offered.eventKey);
   await pause.reached;
   assert.equal((await checkForUpdate(options(testFixture, async () => response(secondRelease), {
     now: () => baseTime + (73 * 60 * 60 * 1_000),
   }))).latestVersion, '2.17.0');
 
   pause.release();
-  assert.deepEqual(await acknowledgement, { status: 'acknowledged', eventKey: offered.eventKey });
+  assert.deepEqual(await preference, { status: 'silent', reason: 'invalid-preference' });
   pause.restore();
   assert.equal(fs.existsSync(operationPath(testFixture, 'reserved', 2n)), true);
   assert.equal(fs.existsSync(operationPath(testFixture, 'reserved', 3n)), true);
-  assert.deepEqual(await checkForUpdate(options(testFixture, async () => response(firstRelease), {
-    now: () => baseTime + (146 * 60 * 60 * 1_000),
-  })), { status: 'silent', reason: 'already-notified' });
 });
 
 test('an oversized generation name cannot poison future allocation', async (t) => {
@@ -2630,11 +2252,7 @@ test('a lower generation stalled after reservation cannot commit behind a newer 
   const pause = pauseMkdirOnce(operationPath(testFixture, 'pending', 2n));
   t.after(() => pause.restore());
 
-  const acknowledgement = acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: offered.eventKey,
-  });
+  const preference = snooze(testFixture, offered.eventKey);
   await pause.reached;
   assert.equal(fs.existsSync(operationPath(testFixture, 'reserved', 2n)), true);
   assert.equal((await checkForUpdate(options(testFixture, async () => response(secondRelease), {
@@ -2642,18 +2260,15 @@ test('a lower generation stalled after reservation cannot commit behind a newer 
   }))).latestVersion, '2.17.0');
 
   pause.release();
-  assert.deepEqual(await acknowledgement, { status: 'acknowledged', eventKey: offered.eventKey });
+  assert.deepEqual(await preference, { status: 'silent', reason: 'invalid-preference' });
   pause.restore();
   assert.equal(fs.existsSync(operationPath(testFixture, 'committed', 2n)), false);
   assert.equal(fs.existsSync(operationPath(testFixture, 'cancelled', 2n)), true);
   assert.equal(fs.existsSync(operationPath(testFixture, 'reserved', 3n)), true);
   assert.equal(fs.existsSync(operationPath(testFixture, 'reserved', 4n)), true);
-  assert.deepEqual(await checkForUpdate(options(testFixture, async () => response(firstRelease), {
-    now: () => baseTime + (146 * 60 * 60 * 1_000),
-  })), { status: 'silent', reason: 'already-notified' });
 });
 
-test('acknowledgement fences an expired refresh and the resumed owner cannot erase it', async (t) => {
+test('a snooze fences an expired refresh and the resumed owner cannot erase it', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   const offered = await checkForUpdate(options(
@@ -2676,22 +2291,21 @@ test('acknowledgement fences an expired refresh and the resumed owner cannot era
   const refreshPending = operationPath(testFixture, 'pending', 2n);
   const staleTime = new Date(Date.now() - 60_000);
   fs.utimesSync(path.join(refreshPending, 'owner.json'), staleTime, staleTime);
-  assert.deepEqual(await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: offered.eventKey,
-    now: () => baseTime + (73 * 60 * 60 * 1_000) + 1,
-  }), { status: 'acknowledged', eventKey: offered.eventKey });
+  const snoozeTime = baseTime + (73 * 60 * 60 * 1_000) + 1;
+  assert.deepEqual(await snooze(testFixture, offered.eventKey, snoozeTime),
+    snoozed(offered.eventKey, snoozeTime));
 
   resumeRefresh(response(remoteRelease()));
-  assert.deepEqual(await refresh, { status: 'silent', reason: 'check-in-progress' });
-  assert.deepEqual(await checkForUpdate(options(testFixture, async () => response(remoteRelease()), {
-    now: () => baseTime + (71 * 60 * 60 * 1_000),
-  })), { status: 'silent', reason: 'already-notified' });
+  assert.equal((await refresh).reason, 'snoozed');
+  const later = await checkForUpdate(options(testFixture, async () => response(remoteRelease()), {
+    now: () => baseTime + (74 * 60 * 60 * 1_000),
+  }));
+  assert.equal(later.noticeRequired, false);
+  assert.equal(later.reason, 'snoozed');
 });
 
 for (const pausePoint of ['pending owner creation', 'state temp creation']) {
-  test(`acknowledgement retries when fenced during ${pausePoint}`, async (t) => {
+  test(`a snooze retries when fenced during ${pausePoint}`, async (t) => {
     const testFixture = fixture();
     t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
     const offered = await checkForUpdate(options(
@@ -2708,11 +2322,7 @@ for (const pausePoint of ['pending owner creation', 'state temp creation']) {
     });
     t.after(() => pause.restore());
 
-    const acknowledgement = acknowledgeUpdate({
-      releasePath: testFixture.releasePath,
-      cacheDirectory: testFixture.cacheDirectory,
-      eventKey: offered.eventKey,
-    });
+    const preference = snooze(testFixture, offered.eventKey);
     await pause.reached;
     const staleTime = new Date(Date.now() - 60_000);
     fs.utimesSync(
@@ -2729,10 +2339,7 @@ for (const pausePoint of ['pending owner creation', 'state temp creation']) {
     assert.equal(fs.existsSync(operationPath(testFixture, 'fenced', 2n)), true);
 
     pause.release();
-    assert.deepEqual(await acknowledgement, {
-      status: 'acknowledged',
-      eventKey: offered.eventKey,
-    });
+    assert.deepEqual(await preference, snoozed(offered.eventKey));
     pause.restore();
   });
 }
@@ -3040,13 +2647,13 @@ test('a fenced stale owner cannot overwrite a newer committed candidate after re
   assert.equal(newer.latestVersion, '3.0.0');
 
   resumeOldOwner(response(remoteReleaseForVersion('2.16.0', 'b'.repeat(64))));
-  assert.deepEqual(await oldCheck, { status: 'silent', reason: 'check-in-progress' });
+  assert.equal((await oldCheck).latestVersion, '3.0.0');
   const persisted = JSON.parse(fs.readFileSync(statePath(testFixture), 'utf8'));
   assert.equal(persisted.candidate.version, '3.0.0');
   assert.equal(fs.existsSync(operationPath(testFixture, 'fenced', 1n)), true);
 });
 
-test('different installed versions share no acknowledgement or cache-reset state', async (t) => {
+test('different installed versions share no preference or cache-reset state', async (t) => {
   const testFixture = fixture('2.15.0');
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
   const olderReleasePath = path.join(testFixture.root, 'older-skill-release.json');
@@ -3059,22 +2666,15 @@ test('different installed versions share no acknowledgement or cache-reset state
 
   const newerInstall = await checkForUpdate(options(testFixture, fetchImpl));
   assert.equal(newerInstall.status, 'update_available');
-  assert.deepEqual(await acknowledgeUpdate({
-    releasePath: testFixture.releasePath,
-    cacheDirectory: testFixture.cacheDirectory,
-    eventKey: newerInstall.eventKey,
-    now: () => baseTime + 1_000,
-  }), { status: 'acknowledged', eventKey: newerInstall.eventKey });
+  assert.deepEqual(await snooze(testFixture, newerInstall.eventKey, baseTime + 1_000),
+    snoozed(newerInstall.eventKey, baseTime + 1_000));
 
   const olderInstallOptions = options(testFixture, fetchImpl, { releasePath: olderReleasePath });
   const olderInstall = await checkForUpdate(olderInstallOptions);
   assert.equal(olderInstall.status, 'update_available');
   assert.equal(olderInstall.installedVersion, '2.14.0');
 
-  assert.deepEqual(await checkForUpdate(options(testFixture, fetchImpl)), {
-    status: 'silent',
-    reason: 'already-notified',
-  });
+  assert.equal((await checkForUpdate(options(testFixture, fetchImpl))).reason, 'snoozed');
   const olderAgain = await checkForUpdate(olderInstallOptions);
   assert.equal(olderAgain.status, 'update_available');
   assert.equal(requests, 2, 'each installed version should retain its own fresh cache');
@@ -3337,39 +2937,6 @@ test('a semantically corrupt cached candidate discards legacy validators and reb
   );
 });
 
-test('a newer cached candidate without offered or acknowledged provenance is rebuilt', async (t) => {
-  const testFixture = fixture();
-  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
-  writeJson(statePath(testFixture), {
-    schemaVersion: 1,
-    skillId: 'archify',
-    installedVersion: '2.15.0',
-    check: {
-      nextCheckAt: new Date(baseTime + (24 * 60 * 60 * 1_000)).toISOString(),
-      consecutiveFailures: 0,
-    },
-    notification: {
-      offeredDigests: [],
-      acknowledgedDigests: [],
-    },
-    candidate: {
-      version: '2.16.0',
-      targetDigest: `sha256:${'b'.repeat(64)}`,
-      severity: 'normal',
-      releaseNotes: 'https://github.com/tt-a1i/archify/releases/tag/v2.16.0',
-    },
-  });
-  let requests = 0;
-
-  const result = await checkForUpdate(options(testFixture, async () => {
-    requests += 1;
-    return response(remoteReleaseForVersion('2.15.0', 'd'.repeat(64)));
-  }));
-
-  assert.deepEqual(result, { status: 'silent', reason: 'current' });
-  assert.equal(requests, 1, 'semantic corruption must not produce an unacknowledgeable cached notice');
-});
-
 test('corrupt cache is rebuilt without exposing an error to the user', async (t) => {
   const testFixture = fixture();
   t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
@@ -3400,7 +2967,7 @@ test('disabled CLI returns one silent JSON line and never needs the network', ()
   assert.equal(result.stdout.trim().split('\n').length, 1);
 });
 
-test('CLI acknowledgement emits the documented one-line success schema', async (t) => {
+test('legacy CLI acknowledgement is a harmless one-line no-op', async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-update-cli-ack-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const home = path.join(root, 'home');
@@ -3439,8 +3006,7 @@ test('CLI acknowledgement emits the documented one-line success schema', async (
   });
   assert.equal(acknowledgement.status, 0, acknowledgement.stderr);
   assert.deepEqual(JSON.parse(acknowledgement.stdout), {
-    status: 'acknowledged',
-    eventKey: offered.eventKey,
+    status: 'silent', reason: 'legacy-ack-no-op',
   });
   assert.equal(acknowledgement.stdout.trim().split('\n').length, 1);
 });
@@ -3489,4 +3055,102 @@ test('notifier source has no process execution or remote-origin override surface
     'XDG_CACHE_HOME',
   ]);
   assert.doesNotMatch(combinedSource, /updateCommand/);
+});
+
+test('delivery preferences are explicit and scoped to the exact release digest', async (t) => {
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  const first = await checkForUpdate(options(testFixture,
+    async () => response(remoteRelease())));
+  const ignored = await setUpdatePreference({ ...testFixture,
+    eventKey: first.eventKey, mode: 'ignore', now: () => baseTime });
+  assert.equal(ignored.status, 'ignored');
+  const suppressed = await checkForUpdate(options(testFixture,
+    async () => { throw new Error('should use cache'); }));
+  assert.equal(suppressed.noticeRequired, false);
+  assert.equal(suppressed.reason, 'ignored');
+  const newer = await checkForUpdate(options(testFixture,
+    async () => response(remoteReleaseForVersion('2.17.0', 'c'.repeat(64))),
+    { now: () => baseTime + 2 * 24 * 60 * 60 * 1_000 }));
+  assert.equal(newer.status, 'update_available');
+  assert.equal(newer.noticeRequired, true);
+  const snoozed = await setUpdatePreference({ ...testFixture,
+    eventKey: newer.eventKey, mode: 'snooze', now: () => baseTime + 2 * 24 * 60 * 60 * 1_000 });
+  assert.equal(snoozed.status, 'snoozed');
+  const during = await checkForUpdate(options(testFixture,
+    async () => { throw new Error('should use cache'); }, {
+      now: () => baseTime + 3 * 24 * 60 * 60 * 1_000 }));
+  assert.equal(during.noticeRequired, false);
+  assert.equal(during.reason, 'snoozed');
+  const after = await checkForUpdate(options(testFixture,
+    async () => { throw new Error('offline'); }, {
+      now: () => baseTime + 10 * 24 * 60 * 60 * 1_000 }));
+  assert.equal(after.noticeRequired, true);
+  assert.equal(after.source, 'cache');
+});
+
+test('delivery check treats a withdrawn manifest differently from an invalid response', async (t) => {
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  await checkForUpdate(options(testFixture,
+    async () => response(remoteRelease())));
+  const invalid = await checkForUpdate(options(testFixture,
+    async () => response('invalid JSON'), {
+      now: () => baseTime + 2 * 24 * 60 * 60 * 1_000 }));
+  assert.equal(invalid.status, 'update_available');
+  assert.equal(invalid.source, 'cache');
+  const withdrawn = await checkForUpdate(options(testFixture,
+    async () => response('{}', { status: 404 }), {
+      now: () => baseTime + 3 * 24 * 60 * 60 * 1_000 }));
+  assert.deepEqual(withdrawn, { status: 'silent', reason: 'withdrawn' });
+  const cached = await checkForUpdate(options(testFixture,
+    async () => { throw new Error('backoff'); }, {
+      now: () => baseTime + 3 * 24 * 60 * 60 * 1_000 + 1_000 }));
+  assert.notEqual(cached.status, 'update_available');
+});
+
+test('a validated network result survives a cache publication failure without inventing an upgrade', async (t) => {
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  const originalRename = fsPromises.rename;
+  fsPromises.rename = async (source, destination, ...args) => {
+    if (destination.endsWith('state.json')) throw Object.assign(new Error('read-only state'), { code: 'EACCES' });
+    return originalRename(source, destination, ...args);
+  };
+  try {
+    const offered = await checkForUpdate(options(testFixture,
+      async () => response(remoteRelease())));
+    assert.equal(offered.status, 'update_available');
+    assert.equal(offered.source, 'network');
+    const currentFixture = fixture('2.16.0');
+    t.after(() => fs.rmSync(currentFixture.root, { recursive: true, force: true }));
+    const current = await checkForUpdate(options(currentFixture,
+      async () => response(remoteRelease())));
+    assert.equal(current.status, 'current');
+    assert.equal(current.noticeRequired, false);
+  } finally {
+    fsPromises.rename = originalRename;
+  }
+});
+
+test('an offline delivery still offers the last validated candidate when backoff cannot be written', async (t) => {
+  const testFixture = fixture();
+  t.after(() => fs.rmSync(testFixture.root, { recursive: true, force: true }));
+  await checkForUpdate(options(testFixture,
+    async () => response(remoteRelease())));
+  const originalRename = fsPromises.rename;
+  fsPromises.rename = async (source, destination, ...args) => {
+    if (destination.endsWith('state.json')) throw Object.assign(new Error('read-only state'), { code: 'EACCES' });
+    return originalRename(source, destination, ...args);
+  };
+  try {
+    const result = await checkForUpdate(options(testFixture,
+      async () => { throw new Error('offline'); }, {
+        now: () => baseTime + 2 * 24 * 60 * 60 * 1_000 }));
+    assert.equal(result.status, 'update_available');
+    assert.equal(result.source, 'cache');
+    assert.equal(result.noticeRequired, true);
+  } finally {
+    fsPromises.rename = originalRename;
+  }
 });

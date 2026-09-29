@@ -14,7 +14,10 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 1
+      "enum": [
+        1,
+        2
+      ]
     },
     "diagram_type": {
       "const": "lifecycle"
@@ -33,6 +36,9 @@
         },
         "locale": {
           "$ref": "common.schema.json#/$defs/locale"
+        },
+        "translations": {
+          "$ref": "common.schema.json#/$defs/translations"
         },
         "subtitle": {
           "type": "string"
@@ -85,7 +91,7 @@
             },
             {
               "type": "number",
-              "minimum": 566
+              "minimum": 300
             }
           ],
           "items": false,

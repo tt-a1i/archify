@@ -84,7 +84,7 @@ first-draft automatic-routing rule.
 
 Use the mode's complete JSON shape, including repository identity,
 components, and connections; every repository-backed component needs supporting source
-references, while boundaries, cards, or guided views are added only when they
+references, while boundaries or cards are added only when they
 answer a real reader question. Let automatic routes and automatic
 viewBox sizing work first. Keep the primary path readable, put exception paths
 beside their owner, and leave filesystem stores outside a control boundary when
@@ -96,8 +96,7 @@ control. Consult the specific mode schema and `schemas/common.schema.json`
 whether or not the selected example already contains the field; use the
 schema's enum, length, identifier, and repository rules. Architecture
 boundaries currently use `kind: "region"` or `kind: "security-group"`; source
-references use `path`, `line`, and optional `end_line`; guided-view notes have
-their own limit.
+references use `path`, `line`, and optional `end_line`.
 
 Repository-backed components need concise, truthful `sources` references. Preserve
 control ownership when summarizing filesystem I/O: the code that reads or writes

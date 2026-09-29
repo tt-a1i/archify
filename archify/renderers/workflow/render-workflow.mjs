@@ -14,6 +14,7 @@ const { diagram: workflow, template, outPath, sourceEvidence } = await loadDiagr
 const compiled = compileWorkflow({
   workflow,
   qualityProfile: process.env.ARCHIFY_QUALITY_PROFILE || workflow.meta?.quality_profile,
+  sourceEvidence,
 });
 
 const layoutJson = process.argv.includes('--layout-json');

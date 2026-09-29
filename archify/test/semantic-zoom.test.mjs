@@ -67,7 +67,6 @@ test('reading depth stays quiet at overview and yields to semantic intent', () =
   assert.match(html, /svg\[data-focus-active\] \[data-focus-match\] \[data-detail\]/);
   assert.match(html, /svg\[data-intent-trace-active\] \[data-intent-trace-match\] \[data-detail\]/);
   assert.match(html, /svg\[data-route-active\] \[data-route-match\] \[data-detail\]/);
-  assert.match(html, /svg\[data-story-active\] \[data-story-step\] \[data-detail\]/);
   assert.match(html, /svg\[data-relationship-preview-active\] \[data-relationship-preview\] \[data-detail\]/);
 });
 

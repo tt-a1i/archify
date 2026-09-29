@@ -34,7 +34,8 @@ test('wide desktop diagrams use one height-budgeted reader shell instead of brea
   assert.match(reader, /var MAX_READER_WIDTH = 1920/);
   assert.match(reader, /var availableSvgHeight = Math\.max\(1, window\.innerHeight - fixedHeight\)/);
   assert.match(reader, /var desiredWidth = availableSvgHeight \* ratio \+ chrome\.diagramX/);
-  assert.match(reader, /html\.style\.setProperty\('--archify-reader-width', rounded \+ 'px'\)/);
+  assert.match(reader, /html\.style\.setProperty\('--archify-reader-width', Math\.max\(rounded, shellFloor\) \+ 'px'\)/);
+  assert.match(reader, /html\.style\.setProperty\('--archify-diagram-max-width'/);
   assert.equal((template.match(/<meta name="archify-reader-contract" content="declared-wide-v1">/g) || []).length, 1);
 });
 
@@ -49,8 +50,10 @@ test('compiler-measured intrinsic tall workflows reuse the height budget without
   assert.doesNotMatch(reader, /function eligible\(\)[\s\S]{0,240}ratio > 0/);
 });
 
-test('declared wide intrinsic readers include semantic edge labels in the readable floor', () => {
-  assert.match(reader, /g\[data-detail="context"\]\[data-edge-from\]\[data-edge-to\] > text/);
+test('context relationship labels join the readable floor in every reader', () => {
+  assert.match(reader, /g\[data-detail="context"\] text/);
+  assert.match(reader, /text\.closest\('\[data-edge-from\]\[data-edge-to\]'\)/);
+  assert.match(reader, /\? requestedMinimumText\s*: MIN_PROJECTED_NODE_TEXT_PX;/);
   assert.match(reader, /measuredHeightFit && ratio >= WIDE_RATIO && Number\.isFinite\(declaredMinimumText\)/);
   assert.match(reader, /measuredHeightFit && ratio < WIDE_RATIO[\s\S]{0,60}\? readableWidth/);
   assert.match(reader, /Math\.max\(MIN_READER_WIDTH, readableWidth\)/);

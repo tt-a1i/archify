@@ -366,6 +366,60 @@ for (const [name, mode, mutate, expected] of CASES) {
   });
 }
 
+test('workflow: same-lane nodes the solver separated by exactly 8px keep passing (#583)', () => {
+  // Redacted reproduction from #583: the neighbour constraint puts column
+  // centers at 873.6 and 1041.6, a 167.9999999999999 distance the check re-derives
+  // from the nodes' left edges as 1.14e-13px past a5. The compiler rejected the
+  // layout it had just produced, with an empty supportedFixes list.
+  const doc = {
+    schema_version: 2,
+    diagram_type: 'workflow',
+    meta: { title: 'Clearance rounding', quality_profile: 'showcase' },
+    lanes: [
+      { id: 'upper', label: 'Upper: the first lane' },
+      { id: 'lower', label: 'Lower lane: second lane' },
+    ],
+    nodes: [
+      { id: 's0', lane: 'lower', col: 0, type: 'backend', label: 'Start', width: 160 },
+      { id: 'a1', lane: 'upper', col: 1, type: 'backend', label: 'Step one', width: 160 },
+      { id: 'a2', lane: 'upper', col: 2, type: 'backend', label: 'Step two', width: 160 },
+      { id: 'a3', lane: 'upper', col: 3, type: 'backend', label: 'Step three', width: 160 },
+      { id: 'a4', lane: 'upper', col: 4, type: 'backend', label: 'Step four', width: 160 },
+      { id: 'a5', lane: 'upper', col: 5, type: 'backend', label: 'Step five', width: 160 },
+    ],
+    edges: [
+      { id: 's0-a1', from: 's0', to: 'a1', fromSide: 'top', toSide: 'left' },
+      { id: 'a3-a4', from: 'a3', to: 'a4' },
+    ],
+  };
+
+  const { code, result } = validateCli('workflow', doc);
+  assert.equal(code, 0, JSON.stringify(result, null, 2));
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics, null, 2));
+
+  // The painted pair must sit on the minimum, not comfortably clear of it, or
+  // this regression would pass with the tolerance set to anything.
+  const rendered = render('workflow', doc);
+  assert.equal(rendered.code, 0, rendered.stderr);
+  const html = fs.readFileSync(rendered.outPath, 'utf8');
+  const left = workflowNodeRect(html, 'a4');
+  const right = workflowNodeRect(html, 'a5');
+  const paintedGap = right.x - (left.x + left.width);
+  assert.ok(
+    Math.abs(paintedGap - 8) < 1e-6,
+    `expected a4 and a5 to paint 8px apart, measured ${paintedGap}`,
+  );
+
+  const overlapping = JSON.parse(JSON.stringify(doc));
+  overlapping.nodes[5].col = 4;
+  const { result: overlapResult } = validateCli('workflow', overlapping);
+  assert.equal(overlapResult.ok, false, JSON.stringify(overlapResult, null, 2));
+  assert.ok(
+    overlapResult.diagnostics.some((diagnostic) => diagnostic.code === 'workflow/node-overlap'),
+    JSON.stringify(overlapResult.diagnostics, null, 2),
+  );
+});
+
 test('architecture: ordinary boundaries may express orthogonal overlapping memberships', () => {
   const d = load('architecture');
   d.boundaries[1].wraps.push('auth');
@@ -1262,7 +1316,7 @@ test('sequence: showcase rejects a message label that leaves the canvas', () => 
   const { code, stderr } = render('sequence', d);
   assert.notEqual(code, 0, `expected non-zero exit; stderr:\n${stderr}`);
   assert.match(stderr, /\[composition\/label-canvas-containment\] showcase sequence label ".*" on messages\[0\]/);
-  assert.match(stderr, /extends past the left edge by 99\.2px .*viewBox 1080x560/);
+  assert.match(stderr, /extends past the left edge by 99\.2px .*viewBox 1080x580/);
   assert.match(stderr, /shorten the label, reorder participants, or enlarge meta\.viewBox/);
 });
 

@@ -4,11 +4,13 @@ import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../share
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { recordDiagnostic, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { createRouter } from '../architecture/routing.mjs';
+import { createLifecycleGridRouter } from './grid-routing.mjs';
 import { placeAutomaticLabels, reservedLabelRect } from '../architecture/labels.mjs';
-import { resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
+import { legendFootprint, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX } from '../shared/desktop-readability.mjs';
 import {
   asArray,
   isFinitePoint,
@@ -36,13 +38,6 @@ import {
   edgeLabelAccent
 } from '../shared/geometry.mjs';
 
-const stateTextFit = {
-  sublabelPreferred: 7,
-  sublabelMinimum: 6,
-  tagPreferred: 7,
-  tagMinimum: 6,
-};
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { diagram: lifecycle, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
@@ -50,7 +45,34 @@ const { diagram: lifecycle, template, outPath, sourceEvidence } = await loadDiag
   defaultExample: 'agent-run.lifecycle.json'
 });
 
-const viewBox = lifecycle.meta?.viewBox || [980, 660];
+// v2 sets state text one step larger; its canvas width is then budgeted
+// from the smallest fitted text so the desktop Reader keeps it legible.
+const stateTextFit = lifecycle.schema_version === 2 ? {
+  labelPreferred: 11,
+  labelMinimum: 9,
+  sublabelPreferred: 8,
+  sublabelMinimum: 7,
+  tagPreferred: 8,
+  tagMinimum: 7,
+  step: 8,
+} : {
+  labelPreferred: 10,
+  labelMinimum: 8,
+  sublabelPreferred: 7,
+  sublabelMinimum: 6,
+  tagPreferred: 7,
+  tagMinimum: 6,
+  step: 7,
+};
+
+// schema_version 2 replaces the three fixed bands (main/event/outcome, with
+// non-main lanes sharing one band and lower columns offset by +2) with one
+// row per populated lane on a shared 0..4 column grid. v1 keeps its exact
+// state geometry; only presentation (colors, markers, legend, sigil side)
+// is shared between versions.
+const isV2 = lifecycle.schema_version === 2;
+const authoredViewBox = lifecycle.meta?.viewBox;
+
 const layout = {
   phaseY: 126,
   eventY: 278,
@@ -66,12 +88,96 @@ const layout = {
   outcomeXs: [402, 556, 710]
 };
 
+const layoutV2 = {
+  stateW: 140,
+  stateH: 64,
+  marginX: 60,
+  minGap: 64,
+  floorGap: 44,
+  firstRowTop: 56,
+  rowPitch: 184,
+};
+
+function transitionLabelWidth(transition) {
+  const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
+  return Math.max(32, longestLine * 4.9 + 12);
+}
+
+function stateFontSizes(state, width) {
+  return {
+    label: fittedNodeFontSize(state.label, brandLabelFitWidth(state, width), stateTextFit.labelPreferred, stateTextFit.labelMinimum),
+    sublabel: fittedNodeFontSize(state.sublabel, width, stateTextFit.sublabelPreferred, stateTextFit.sublabelMinimum),
+    tag: fittedNodeFontSize(state.tag, width, stateTextFit.tagPreferred, stateTextFit.tagMinimum),
+  };
+}
+
+// v2 column centers. A gap between two columns widens until the label of a
+// same-row neighbour transition fits beside its line; the whole canvas then
+// stays inside the desktop readability budget of its smallest state text.
+const v2ColumnCenters = (() => {
+  if (!isV2) return [];
+  const authored = asArray(lifecycle.states);
+  const widths = [0, 1, 2, 3, 4].map((col) => Math.max(
+    layoutV2.stateW, ...authored.filter((state) => state.col === col).map((state) => state.width || 0),
+  ));
+  const cols = authored.map((state) => state.col).filter((col) => Number.isInteger(col) && col >= 0 && col <= 4);
+  const lastCol = cols.length ? Math.max(...cols) : 0;
+  const gaps = [0, 1, 2, 3].map(() => layoutV2.minGap);
+  const byId = new Map(authored.map((state) => [state.id, state]));
+  for (const transition of asArray(lifecycle.transitions)) {
+    const [from, to] = [byId.get(transition.from), byId.get(transition.to)];
+    if (!(transition.label || transition.note) || !from || !to || from.lane !== to.lane
+      || !Number.isInteger(from.col) || !Number.isInteger(to.col) || Math.abs(from.col - to.col) !== 1) continue;
+    const gap = Math.min(from.col, to.col);
+    if (gap >= 0 && gap < 4) gaps[gap] = Math.max(gaps[gap], Math.ceil(transitionLabelWidth(transition) + 24));
+  }
+  const smallestText = Math.min(stateTextFit.step, ...authored.flatMap((state) => (
+    Object.values(stateFontSizes(state, state.width || layoutV2.stateW))
+  )));
+  const budget = Math.floor(DESKTOP_READER_DIAGRAM_WIDTH * smallestText / MIN_PROJECTED_NODE_TEXT_PX);
+  const fixed = layoutV2.marginX * 2 + widths.slice(0, lastCol + 1).reduce((sum, width) => sum + width, 0);
+  const used = gaps.slice(0, lastCol);
+  const excess = fixed + used.reduce((sum, gap) => sum + gap, 0) - budget;
+  const slack = used.reduce((sum, gap) => sum + gap - layoutV2.floorGap, 0);
+  if (excess > 0 && slack > 0) {
+    const ratio = Math.min(1, excess / slack);
+    for (let index = 0; index < used.length; index += 1) {
+      gaps[index] = Math.floor(gaps[index] - (gaps[index] - layoutV2.floorGap) * ratio);
+    }
+  }
+  const centers = [];
+  let x = layoutV2.marginX;
+  for (let col = 0; col <= 4; col += 1) {
+    centers.push(x + widths[col] / 2);
+    x += widths[col] + (gaps[col] ?? 0);
+  }
+  return centers;
+})();
+
+// Rows render in authored lane order with `main` first and `terminal` last;
+// lanes without states get no row and no title.
+function laneRowOrder() {
+  const lanes = asArray(lifecycle.lanes);
+  const populated = new Set(asArray(lifecycle.states).map((state) => state.lane));
+  const ordered = [];
+  if (populated.has('main')) ordered.push('main');
+  for (const lane of lanes) {
+    if (lane.id !== 'main' && lane.id !== 'terminal' && populated.has(lane.id)) ordered.push(lane.id);
+  }
+  if (populated.has('terminal')) ordered.push('terminal');
+  return ordered;
+}
+
+const v2RowTop = new Map(isV2
+  ? laneRowOrder().map((laneId, index) => [laneId, layoutV2.firstRowTop + index * layoutV2.rowPitch])
+  : []);
+
 const typeClass = {
   start: 'c-frontend',
-  active: 'c-backend',
+  active: 'c-frontend',
   waiting: 'c-cloud',
-  decision: 'c-security',
-  success: 'c-database',
+  decision: 'c-database',
+  success: 'c-backend',
   failure: 'c-security',
   neutral: 'c-external',
   external: 'c-external'
@@ -79,29 +185,18 @@ const typeClass = {
 
 const textClass = {
   start: 't-frontend',
-  active: 't-backend',
+  active: 't-frontend',
   waiting: 't-cloud',
-  decision: 't-security',
-  success: 't-database',
+  decision: 't-database',
+  success: 't-backend',
   failure: 't-security',
   neutral: 't-muted',
   external: 't-muted'
 };
 
-function legendY() {
-  return viewBox[1] - 36;
-}
-
-// Keep the authored state-placement contract independent from the measured
-// legend's lower baseline. Moving legend chrome must not admit new state
-// geometry into the reserved outcome/legend band.
-function lifecycleAreaBottom() {
-  return viewBox[1] - 122;
-}
-
 // Lane semantics are fixed: lane id "main" maps to the top phase band, lane id
 // "terminal" maps to the bottom outcome band, and every other lane shares the
-// middle event band (separated visually via yOffset).
+// middle event band (separated visually via yOffset). v1 only.
 function bandFor(lane) {
   if (lane === 'main') return 'phase';
   if (lane === 'terminal') return 'outcome';
@@ -109,17 +204,28 @@ function bandFor(lane) {
 }
 
 function measureState(state) {
-  const isPhase = bandFor(state.lane) === 'phase';
-  const isOutcome = bandFor(state.lane) === 'outcome';
-  const width = state.width || (isPhase ? layout.phaseW : isOutcome ? layout.outcomeW : layout.eventW);
-  const height = state.height || (isPhase ? layout.phaseH : isOutcome ? layout.outcomeH : layout.eventH);
-  const xs = isPhase ? layout.phaseXs : isOutcome ? layout.outcomeXs : layout.eventXs;
-  const cx = xs[state.col] ?? xs[xs.length - 1];
-  const y = (
-    isPhase ? layout.phaseY :
-      isOutcome ? layout.outcomeY :
-        layout.eventY
-  ) + (state.yOffset || 0);
+  let width;
+  let height;
+  let cx;
+  let y;
+  if (isV2) {
+    width = state.width || layoutV2.stateW;
+    height = state.height || layoutV2.stateH;
+    cx = v2ColumnCenters[state.col] ?? NaN;
+    y = (v2RowTop.get(state.lane) ?? NaN) + (state.yOffset || 0);
+  } else {
+    const isPhase = bandFor(state.lane) === 'phase';
+    const isOutcome = bandFor(state.lane) === 'outcome';
+    width = state.width || (isPhase ? layout.phaseW : isOutcome ? layout.outcomeW : layout.eventW);
+    height = state.height || (isPhase ? layout.phaseH : isOutcome ? layout.outcomeH : layout.eventH);
+    const xs = isPhase ? layout.phaseXs : isOutcome ? layout.outcomeXs : layout.eventXs;
+    cx = xs[state.col] ?? xs[xs.length - 1];
+    y = (
+      isPhase ? layout.phaseY :
+        isOutcome ? layout.outcomeY :
+          layout.eventY
+    ) + (state.yOffset || 0);
+  }
   return {
     ...state,
     width,
@@ -132,7 +238,105 @@ function measureState(state) {
 }
 
 const states = new Map(asArray(lifecycle.states).map((state) => [state.id, measureState(state)]));
+const plannedTransitions = asArray(lifecycle.transitions).filter(plannerRouted);
+const v2Rows = laneRowOrder();
+const v2RowOf = (state) => (v2Rows.includes(state.lane) ? v2Rows.indexOf(state.lane) : undefined);
+let useGridRouter = isV2;
+if (isV2) {
+  // Route once to learn how many horizontal tracks each row gap carries,
+  // then open every gap to fit them before the final routing pass.
+  const probe = createLifecycleGridRouter(states, plannedTransitions, {
+    rowOf: v2RowOf, columnXs: v2ColumnCenters,
+  });
+  // Compatible pins keep the grid layout. A conflicting pin sends the whole
+  // scene to the side-aware planner so all edges still share port spreading
+  // and obstacle reservations.
+  useGridRouter = plannedTransitions.every(transition => {
+    const sides = probe.connectionSides(transition);
+    return ['fromSide', 'toSide'].every(key => !transition[key] || transition[key] === 'auto' || transition[key] === sides[key]);
+  });
+  let top = layoutV2.firstRowTop;
+  v2Rows.forEach((laneId, index) => {
+    const rowHeight = Math.max(layoutV2.stateH, ...[...states.values()]
+      .filter((state) => state.lane === laneId)
+      .map((state) => state.y + state.height - v2RowTop.get(laneId)));
+    v2RowTop.set(laneId, top);
+    top += rowHeight + Math.max(layoutV2.rowPitch - layoutV2.stateH, useGridRouter ? probe.gapHeight(index) : 0);
+  });
+  for (const state of asArray(lifecycle.states)) states.set(state.id, measureState(state));
+}
 const laneLabels = new Map(asArray(lifecycle.lanes).map((lane) => [lane.id, lane.label]));
+const authoredOutgoing = new Set(asArray(lifecycle.transitions).map((transition) => transition.from));
+
+// A state with no authored outgoing transition is terminal in the UML sense.
+// v1 main states rely on the implied phase rail, so a main state is only final
+// at the furthest occupied main column; every other v1 lane is explicit.
+function isFinal(state) {
+  if (authoredOutgoing.has(state.id)) return false;
+  if (isV2) return true;
+  if (bandFor(state.lane) !== 'phase') return true;
+  const mainCols = [...states.values()].filter((s) => bandFor(s.lane) === 'phase').map((s) => s.col);
+  return state.col === Math.max(...mainCols);
+}
+
+const LEGEND_CATALOG = [
+  'start',
+  'active',
+  'waiting',
+  'decision',
+  'success',
+  'failure',
+  'neutral',
+  'external',
+].map((kind) => ({
+  kind,
+  label: i18nText(lifecycle.meta.locale, `legend.lifecycle.${kind}`),
+  swatchWidth: kind === 'start' ? 26 : undefined,
+}));
+
+// Entries exist before the canvas so an auto-sized v2 viewBox can reserve the
+// measured legend rows below the last row instead of painting over them.
+// The structural `final` entry explains the double border; it follows the
+// kind entries and disappears with them, so a hidden legend stays empty.
+function legendCatalog() {
+  const presentKinds = new Set([...states.values()].map((state) => state.type));
+  const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
+  if (!entries.length || ![...states.values()].some(isFinal)) return entries;
+  return [...entries, {
+    kind: 'final',
+    label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'),
+    interactive: false,
+    present: true,
+    swatchWidth: 16,
+  }];
+}
+
+const resolvedLegendEntries = legendCatalog();
+
+let viewBox;
+if (isV2 && !authoredViewBox) {
+  const finite = [...states.values()];
+  const maxRight = Math.max(0, ...finite.map((state) => state.cx + state.width / 2).filter(Number.isFinite));
+  const width = Math.max(640, Math.ceil(maxRight + layoutV2.marginX));
+  const footprint = legendFootprint(resolvedLegendEntries, { width: width - 80 });
+  const statesBottom = Math.max(0, ...finite.map((state) => state.y + state.height).filter(Number.isFinite));
+  viewBox = [width, Math.ceil(statesBottom + footprint.extraHeight + 96)];
+} else {
+  viewBox = authoredViewBox || [980, 660];
+}
+
+const legendExtraHeight = legendFootprint(resolvedLegendEntries, { width: viewBox[0] - 80 }).extraHeight;
+
+function legendY() {
+  return viewBox[1] - 36;
+}
+
+// Keep the authored state-placement contract independent from the measured
+// legend's lower baseline. Moving legend chrome must not admit new state
+// geometry into the reserved outcome/legend band.
+function lifecycleAreaBottom() {
+  return isV2 ? viewBox[1] - legendExtraHeight - 96 : viewBox[1] - 122;
+}
 const stateSteps = new Map();
 for (const [index, transition] of asArray(lifecycle.transitions).entries()) {
   if (!stateSteps.has(transition.from)) stateSteps.set(transition.from, index);
@@ -148,14 +352,17 @@ function validateLifecycle() {
 
   // The three bands are fixed at y=112/264/436. Preserve the original
   // outcome/legend reserve even though measured legend rows now sit lower.
-  if (lifecycleAreaBottom() + 4 < 448) {
+  // v2 derives its canvas from rendered rows, so the floor does not apply.
+  if (!isV2 && lifecycleAreaBottom() + 4 < 448) {
     problems.push(`viewBox height ${viewBox[1]} is too short for the fixed band layout — set meta.viewBox[1] to at least 566.`);
   }
 
   const laneIds = new Set(asArray(lifecycle.lanes).map((lane) => lane.id));
   if (laneIds.size !== asArray(lifecycle.lanes).length) problems.push('Lane ids must be unique.');
   if (!laneIds.has('main')) {
-    problems.push('Lifecycle diagrams need a lane with id "main" (the phase rail). Lane ids "main" and "terminal" are reserved: "main" maps to the top phase band, "terminal" to the bottom outcome band, and all other lanes share the middle event band.');
+    problems.push(isV2
+      ? 'Lifecycle diagrams need a lane with id "main" (the first row). Lane ids "main" and "terminal" are reserved: "main" renders as the first row, "terminal" as the last, and every other lane in authored order.'
+      : 'Lifecycle diagrams need a lane with id "main" (the phase rail). Lane ids "main" and "terminal" are reserved: "main" maps to the top phase band, "terminal" to the bottom outcome band, and all other lanes share the middle event band.');
   }
 
   for (const state of states.values()) {
@@ -163,25 +370,32 @@ function validateLifecycle() {
       problems.push(`State "${state.id}" uses unknown lane "${state.lane}".`);
       continue;
     }
-    const band = bandFor(state.lane);
-    const maxCol = band === 'phase'
-      ? layout.phaseXs.length
-      : band === 'outcome'
-        ? layout.outcomeXs.length
-        : layout.eventXs.length;
-    if (!Number.isInteger(state.col) || state.col < 0 || state.col >= maxCol) {
-      problems.push(`State "${state.id}" uses invalid column ${state.col} — the ${band} band has integer columns 0..${maxCol - 1}.`);
-      continue;
+    if (isV2) {
+      if (!Number.isInteger(state.col) || state.col < 0 || state.col > 4) {
+        problems.push(`State "${state.id}" uses invalid column ${state.col} — every lifecycle row has integer columns 0..4.`);
+        continue;
+      }
+    } else {
+      const band = bandFor(state.lane);
+      const maxCol = band === 'phase'
+        ? layout.phaseXs.length
+        : band === 'outcome'
+          ? layout.outcomeXs.length
+          : layout.eventXs.length;
+      if (!Number.isInteger(state.col) || state.col < 0 || state.col >= maxCol) {
+        problems.push(`State "${state.id}" uses invalid column ${state.col} — the ${band} band has integer columns 0..${maxCol - 1}.`);
+        continue;
+      }
     }
     if (!isFinitePoint(state.x, state.y, state.cx, state.cy)) {
       problems.push(`State "${state.id}" produced non-finite coordinates — check col, width, height, and yOffset are numbers.`);
       continue;
     }
-    if (state.x < 32 || state.x + state.width > viewBox[0] - 32) {
-      problems.push(`State "${state.id}" exceeds the horizontal bounds of the diagram — reduce state.width or increase meta.viewBox[0].`);
+    if (state.x < (isV2 ? 28 : 32) || state.x + state.width > viewBox[0] - (isV2 ? 28 : 32)) {
+      problems.push(`State "${state.id}" exceeds the horizontal bounds of the diagram — reduce state.width${isV2 ? ', lower its col,' : ''} or increase meta.viewBox[0].`);
     }
-    if (state.y < 64 || state.y + state.height > lifecycleAreaBottom()) {
-      problems.push(`State "${state.id}" exceeds the vertical lifecycle area — keep y between 64 and ${lifecycleAreaBottom()} (adjust yOffset or increase meta.viewBox[1]).`);
+    if (state.y < (isV2 ? 44 : 64) || state.y + state.height > lifecycleAreaBottom()) {
+      problems.push(`State "${state.id}" exceeds the vertical lifecycle area — keep y between ${isV2 ? 44 : 64} and ${lifecycleAreaBottom()} (adjust yOffset or increase meta.viewBox[1]).`);
     }
     const estLabelW = textUnits(state.label) * 6.2;
     if (estLabelW > state.width + 6) {
@@ -204,13 +418,15 @@ function validateLifecycle() {
     }
   }
 
-  // All non-main/non-terminal lanes share the same y band, so the overlap
-  // check must run across lanes — not per-lane.
+  // v1: all non-main/non-terminal lanes share the same y band, so the overlap
+  // check must run across lanes — not per-lane. v2 gives each lane its own
+  // row, so only same-row neighbours can collide, but the shared check still
+  // covers custom widths and yOffset nudges.
   const allStates = [...states.values()];
   for (let i = 0; i < allStates.length; i += 1) {
     for (let j = i + 1; j < allStates.length; j += 1) {
       if (rectsOverlap(allStates[i], allStates[j], 10)) {
-        problems.push(`States "${allStates[i].id}" and "${allStates[j].id}" are less than 10px apart — move one to another col or separate them with yOffset (lanes other than "main"/"terminal" share one band).`);
+        problems.push(`States "${allStates[i].id}" and "${allStates[j].id}" are less than 10px apart — move one to another col or separate them with yOffset${isV2 ? '.' : ' (lanes other than "main"/"terminal" share one band).'}`);
       }
     }
   }
@@ -402,8 +618,12 @@ function plannerRouted(transition) {
     && transition.channelY === undefined;
 }
 
-const plannedTransitions = asArray(lifecycle.transitions).filter(plannerRouted);
-const planner = createRouter(states, plannedTransitions, {
+// v2 states sit on a fixed row/column grid, so automatic transitions use the
+// dedicated orthogonal grid router; v1 keeps the shared obstacle planner.
+const planner = useGridRouter ? createLifecycleGridRouter(states, plannedTransitions, {
+  rowOf: v2RowOf,
+  columnXs: v2ColumnCenters,
+}) : createRouter(states, plannedTransitions, {
   labelRectFor: (transition, points, { routes, labels }) => ((transition.label || transition.note) ? reservedLabelRect({
     label: { relation: transition, label: transition.label || transition.note, ...transitionLabelBoxAt(transition, labelPoint(transition, points)) },
     points,
@@ -434,7 +654,8 @@ const automaticPorts = automaticPortSpread(
 function pathFor(transition) {
   if (pathCache.has(transition)) return pathCache.get(transition);
   if (plannerRouted(transition)) {
-    const routed = planner.pathFor(transition);
+    let routed = planner.pathFor(transition);
+    if (useGridRouter) routed = { d: roundedPath(routed, transition.cornerRadius ?? 10), points: routed };
     pathCache.set(transition, routed);
     return routed;
   }
@@ -468,8 +689,7 @@ function transitionLabelBox(transition) {
 }
 
 function transitionLabelBoxAt(transition, [lx, ly]) {
-  const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
-  const width = Math.max(32, longestLine * 4.9 + 12);
+  const width = transitionLabelWidth(transition);
   const height = transition.label && transition.note ? 27 : 16;
   return { x: lx - width / 2, y: ly - 11, width, height, lx, ly };
 }
@@ -496,59 +716,79 @@ if (lifecycle.meta?.quality_profile === 'showcase') {
     titles: bandGeometry(),
     viewBox,
     placementBottom: lifecycleAreaBottom(),
+    keepFallbackNearRoute: isV2,
+    gridSweep: isV2,
   });
   for (const rect of placed) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
 }
 
-function bandTitles() {
+function bandGeometry() {
+  if (isV2) {
+    // One row header per rendered row, set vertically in the left gutter so
+    // routes entering a row never run through its title.
+    return laneRowOrder().map((laneId, index) => {
+      const cy = v2RowTop.get(laneId) + layoutV2.stateH / 2;
+      const label = laneLabels.get(laneId) || laneId;
+      const length = textUnits(label) * 6.2;
+      return { index, label, vertical: true, cx: 18, cy, x: 11, y: cy - length / 2, width: 14, height: length };
+    });
+  }
   const lanes = asArray(lifecycle.lanes);
   const mainLane = lanes.find((lane) => lane.id === 'main');
   const terminalLane = lanes.find((lane) => lane.id === 'terminal');
   const eventLanes = lanes.filter((lane) => lane.id !== 'main' && lane.id !== 'terminal');
+  const populated = new Set([...states.values()].map((state) => bandFor(state.lane)));
   return [
     mainLane?.label || 'Lifecycle phases',
     eventLanes.length ? eventLanes.map((lane) => lane.label).join(' + ') : 'Interruptions + recovery',
     terminalLane?.label || 'Outcomes'
-  ];
-}
-
-function bandGeometry() {
-  return bandTitles().map((title, index) => {
+  ].map((title, index) => {
     const baseline = [100, 252, 424][index];
     const label = `${String(index + 1).padStart(2, '0')} / ${title}`;
-    return { index, label, x: 72, y: baseline - 11, width: textUnits(label) * 6.2, height: 14, baseline };
-  });
+    return { index, band: ['phase', 'event', 'outcome'][index], label, x: 72, y: baseline - 11, width: textUnits(label) * 6.2, height: 14, baseline };
+  }).filter((band) => populated.has(band.band));
 }
 
 function renderBands() {
-  const right = viewBox[0] - 72;
-  return bandGeometry().map((band) => `        <path d="M 72 ${band.baseline + 12} L ${right} ${band.baseline + 12}" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="${band.x}" y="${band.baseline}" class="t-dim" font-size="10" font-weight="600">${esc(band.label)}</text>`).join('\n');
+  return bandGeometry().map((band) => (band.vertical
+    ? `        <text x="${band.cx}" y="${band.cy}" class="t-dim" font-size="10" font-weight="600" writing-mode="vertical-rl" text-anchor="middle">${esc(band.label)}</text>`
+    : `        <path d="M ${band.x} ${band.baseline + 12} L ${viewBox[0] - band.x} ${band.baseline + 12}" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
+        <text x="${band.x}" y="${band.baseline}" class="t-dim" font-size="10" font-weight="600">${esc(band.label)}</text>`)).join('\n');
 }
 
 function renderState(state) {
   const fill = typeClass[state.type] || typeClass.neutral;
   const accent = textClass[state.type] || 't-muted';
   const hasSub = state.sublabel != null && state.sublabel !== '';
-  const labelFontSize = fittedNodeFontSize(state.label, brandLabelFitWidth(state, state.width), 10, 8);
-  const sublabelFontSize = fittedNodeFontSize(state.sublabel, state.width, stateTextFit.sublabelPreferred, stateTextFit.sublabelMinimum);
-  const tagFontSize = fittedNodeFontSize(state.tag, state.width, stateTextFit.tagPreferred, stateTextFit.tagMinimum);
-  const textRows = [{ text: state.label, font: labelFontSize, y: 21 }];
-  if (hasSub) textRows.push({ text: state.sublabel, font: sublabelFontSize, y: 37 });
-  if (state.tag) textRows.push({ text: state.tag, font: tagFontSize, y: state.height - 11 });
+  const { label: labelFontSize, sublabel: sublabelFontSize, tag: tagFontSize } = stateFontSizes(state, state.width);
+  const textRows = [{ text: state.label, font: labelFontSize, y: isV2 ? 23 : 21 }];
+  if (hasSub) textRows.push({ text: state.sublabel, font: sublabelFontSize, y: isV2 ? 40 : 37 });
+  if (state.tag) textRows.push({ text: state.tag, font: tagFontSize, y: state.height - (isV2 ? 12 : 11) });
+  const hasBrand = Boolean(brandMarkFor(state));
+  const hasSource = Boolean(sourceEvidence?.nodes?.[state.id]?.length);
   const labelLayout = nodeLabelLayout({ width: state.width, height: state.height, rows: textRows,
-    brand: Boolean(brandMarkFor(state)), side: brandMarkFor(state) ? 'left' : 'right', step: state.step });
+    brand: hasBrand, source: hasSource, side: 'left', step: state.step });
   const sub = hasSub
     ? `\n          <text data-detail="context" x="${state.cx}" y="${state.y + labelLayout.ys[1]}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(state.sublabel)}</text>`
     : '';
   const tag = state.tag
     ? `\n        <text data-detail="fine" x="${state.cx}" y="${state.y + labelLayout.ys[hasSub ? 2 : 1]}" class="${accent}" font-size="${tagFontSize}" text-anchor="middle">${esc(state.tag)}</text>`
     : '';
-  const hasBrand = Boolean(brandMarkFor(state));
   const step = state.step
-    ? `\n        <text data-detail="fine" x="${state.x + (hasBrand ? 23 : 10)}" y="${state.y + 14}" class="${accent}" font-size="7" font-weight="700">${esc(state.step)}</text>`
+    ? `\n        <text data-detail="fine" x="${state.x + 23}" y="${state.y + 14}" class="${accent}" font-size="${stateTextFit.step}" font-weight="700">${esc(state.step)}</text>`
     : '';
   const brand = renderBrandMark(state, { x: state.x + state.width - 22, y: state.y + 6 });
+  // UML pseudo-state markers: start states get an initial dot + arrow into
+  // the left border; states with no authored outgoing transition get a double
+  // border. Both are decorations, not focus/relationship edges.
+  const initialMarker = state.type === 'start'
+    ? `\n          <g aria-hidden="true" data-lifecycle-initial-marker="">
+            ${initialMarkerShape(state.x - 22, state.x - 1, state.cy)}
+          </g>`
+    : '';
+  const finalBorder = isFinal(state)
+    ? `\n          <rect x="${state.x + 3}" y="${state.y + 3}" width="${state.width - 6}" height="${state.height - 6}" rx="4" class="${fill}" style="fill: none" stroke-width="1"/>`
+    : '';
   const passport = {
     kind: state.type,
     sublabel: state.sublabel,
@@ -559,16 +799,30 @@ function renderState(state) {
   return `        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>
           ${focusNodeTitle(state.label, passport)}
           <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
-          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>
-          ${renderSemanticSigil(state.type, { icon: state.icon, x: hasBrand ? state.x + 6 : state.x + state.width - 17, y: state.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}${step}
+          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>${finalBorder}${initialMarker}
+          ${renderSemanticSigil(state.type, { icon: state.icon, x: state.x + 6, y: state.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}${step}
           <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
         </g>`;
 }
 
+// v2 replaces the implied phase rail with explicit topology: a forward
+// transition between two main-lane states renders as the emphasized primary
+// path unless the author chose another variant.
+function effectiveVariant(transition) {
+  if (transition.variant) return transition.variant;
+  if (isV2) {
+    const from = states.get(transition.from);
+    const to = states.get(transition.to);
+    if (from?.lane === 'main' && to?.lane === 'main' && to.col > from.col) return 'emphasis';
+  }
+  return 'default';
+}
+
 function renderTransitionPath(transition, index) {
-  const [cls, marker] = arrowClassMap[transition.variant || 'default'] || arrowClassMap.default;
+  const variant = effectiveVariant(transition);
+  const [cls, marker] = arrowClassMap[variant] || arrowClassMap.default;
   const routed = pathFor(transition);
-  const strokeWidth = transition.width || (transition.variant === 'emphasis' ? 2 : 1.1);
+  const strokeWidth = transition.width || (variant === 'emphasis' ? (isV2 ? 1.6 : 2) : 1.1);
   const automaticRoute = plannerRouted(transition);
   const crossover = automaticRoute ? ' data-composition-crossover="halo"' : '';
   const edge = `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(transition, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
@@ -583,7 +837,7 @@ function renderTransitionLabel(transition, index) {
   if (!(transition.label || transition.note)) return '';
   const { lx, ly, width: labelW, height: labelH } = transitionLabelBox(transition);
   const label = transition.label
-    ? `\n          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(transition.variant)}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>`
+    ? `\n          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(effectiveVariant(transition))}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>`
     : '';
   const note = transition.note
     ? `\n        <text data-detail="fine" x="${lx}" y="${ly + (transition.label ? 11 : 0)}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
@@ -593,22 +847,27 @@ function renderTransitionLabel(transition, index) {
         </g>`;
 }
 
-const LEGEND_CATALOG = [
-  'start',
-  'active',
-  'waiting',
-  'decision',
-  'success',
-  'failure',
-  'neutral',
-  'external',
-].map((kind) => ({ kind, label: i18nText(lifecycle.meta.locale, `legend.lifecycle.${kind}`) }));
+// UML initial pseudo-state: a filled dot and a short arrow ending at `tipX`.
+function initialMarkerShape(dotX, tipX, y) {
+  return `<circle cx="${dotX}" cy="${y}" r="4.5" style="fill: var(--arrow-emphasis)"/><path d="M ${dotX + 4.5} ${y} L ${tipX - 6} ${y}" class="a-emphasis" stroke-width="1.4"/><path d="M ${tipX - 7} ${y - 3.5} L ${tipX} ${y} L ${tipX - 7} ${y + 3.5} Z" style="fill: var(--arrow-emphasis)"/>`;
+}
+
+function renderSwatch(entry) {
+  // `start` is structural, not a color: its swatch is the same initial
+  // pseudo-state marker drawn on the canvas. `final` is a non-interactive
+  // structural entry (a double-border rect) appended when a final state exists.
+  if (entry.kind === 'start') {
+    return initialMarkerShape(entry.x + 4.5, entry.x + 24, entry.baseline - 3.5);
+  }
+  if (entry.kind === 'final') {
+    return `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="c-external" stroke-width="1"/><rect x="${entry.x + 2.5}" y="${entry.baseline - 5.5}" width="9" height="4" rx="1" class="c-external" style="fill: none" stroke-width="0.8"/>`;
+  }
+  return `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="${typeClass[entry.kind] || 'c-external'}" stroke-width="1"/>`;
+}
 
 function renderLegend() {
-  const presentKinds = new Set([...states.values()].map((state) => state.type));
-  const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
   return renderResolvedLegend({
-    entries,
+    entries: resolvedLegendEntries,
     locale: lifecycle.meta.locale,
     layout: {
       x: 40,
@@ -618,11 +877,14 @@ function renderLegend() {
       unfit: lifecycle.meta?.legend === undefined ? 'hide' : 'error',
       diagramType: 'lifecycle',
     },
-    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="${typeClass[entry.kind] || 'c-external'}" stroke-width="1"/>`,
+    renderSwatch,
   });
 }
 
+// v1 only: the implied emphasis line behind main states. v2 topology is fully
+// explicit, so the rail would double the authored forward transitions.
 function renderLifecycleRail() {
+  if (isV2) return '';
   const mainCols = [...states.values()]
     .filter((state) => bandFor(state.lane) === 'phase')
     .map((state) => state.col);

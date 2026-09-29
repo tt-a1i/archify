@@ -84,9 +84,8 @@ export function declaredWideReadabilityBudget({
 // Vertical chrome that always stacks with the SVG at the 1440x900 desktop
 // viewport, measured from the delivered Viewer with the shortest one-line
 // header and no cards: body padding 12, header 39, diagram padding/border 75.
-// The guided-views strip adds 61 when meta.views exist. Cards are excluded so
-// the prediction stays a lower bound.
-export const DESKTOP_FIXED_VERTICAL_CHROME_PX = Object.freeze({ body: 12, header: 39, diagram: 75, guidedViews: 61 });
+// Cards are excluded so the prediction stays a lower bound.
+export const DESKTOP_FIXED_VERTICAL_CHROME_PX = Object.freeze({ body: 12, header: 39, diagram: 75 });
 
 // A canvas the Reader can neither narrow (viewBox ratio below the wide
 // threshold) nor scroll readably (no intrinsic-height fit) renders at the full
@@ -98,7 +97,6 @@ export function predictedFixedWidthOverflow({
   viewBoxHeight,
   readerFit,
   diagramType,
-  hasGuidedViews = false,
   viewport = DESKTOP_READABILITY_VIEWPORT,
   bodyHorizontalPx = DECLARED_WIDE_REFERENCE_BODY_HORIZONTAL_PX,
   diagramHorizontalPx = DECLARED_WIDE_REFERENCE_DIAGRAM_HORIZONTAL_PX,
@@ -111,7 +109,7 @@ export function predictedFixedWidthOverflow({
       || ratio >= DECLARED_WIDE_READER_RATIO) return null;
   const svgWidthPx = viewport.width - bodyHorizontalPx - diagramHorizontalPx;
   const svgHeightPx = Math.round(svgWidthPx * viewBoxHeight / viewBoxWidth);
-  const fixedChromePx = chrome.body + chrome.header + chrome.diagram + (hasGuidedViews ? chrome.guidedViews : 0);
+  const fixedChromePx = chrome.body + chrome.header + chrome.diagram;
   const pageHeightPx = svgHeightPx + fixedChromePx;
   if (pageHeightPx <= viewport.height) return null;
   return {

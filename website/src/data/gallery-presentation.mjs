@@ -7,7 +7,6 @@ export const CASES = [
     input: 'agent-tool-call.workflow.json',
     output: 'agent-tool-call.workflow.html',
     focus: 'planner',
-    view: 'happy-path',
     accent: '#67e8f9',
     featured: true,
     titleEn: 'Agent Tool Call',
@@ -21,7 +20,6 @@ export const CASES = [
     input: 'production-deployment.architecture.json',
     output: 'production-deployment.architecture.html',
     focus: 'gateway',
-    view: 'request-boundary',
     accent: '#38bdf8',
     titleEn: 'Production Deployment Ownership',
     titleZh: '生产部署与归属',
@@ -34,7 +32,6 @@ export const CASES = [
     input: 'cache-miss-request.sequence.json',
     output: 'cache-miss.sequence.html',
     focus: 'redis',
-    view: 'cache-fallback',
     accent: '#c4b5fd',
     titleEn: 'Cache Miss Request',
     titleZh: '缓存未命中请求',
@@ -47,7 +44,6 @@ export const CASES = [
     input: 'release-delivery.workflow.json',
     output: 'release-delivery.workflow.html',
     focus: 'approval',
-    view: 'approval-to-production',
     accent: '#34d399',
     titleEn: 'Release Delivery Workflow',
     titleZh: '研发交付流程',
@@ -60,7 +56,6 @@ export const CASES = [
     input: 'incident-response.workflow.json',
     output: 'incident-response.workflow.html',
     focus: 'triage',
-    view: 'mitigate-and-verify',
     accent: '#fb7185',
     titleEn: 'Incident Response Runbook',
     titleZh: '事故处置 Runbook',
@@ -73,7 +68,6 @@ export const CASES = [
     input: 'product-analytics.dataflow.json',
     output: 'product-analytics.dataflow.html',
     focus: 'consent',
-    view: 'consent-boundary',
     accent: '#f6c453',
     titleEn: 'Product Analytics',
     titleZh: '产品分析数据流',
@@ -86,7 +80,6 @@ export const CASES = [
     input: 'async-job-roundtrip.sequence.json',
     output: 'async-job-roundtrip.sequence.html',
     focus: 'queue',
-    view: 'work-and-retry',
     accent: '#a78bfa',
     titleEn: 'Async Job Roundtrip',
     titleZh: '异步任务往返链路',
@@ -99,7 +92,6 @@ export const CASES = [
     input: 'event-stream.dataflow.json',
     output: 'event-stream.dataflow.html',
     focus: 'orders',
-    view: 'order-transit',
     accent: '#fbbf24',
     titleEn: 'Order Event-stream Topology',
     titleZh: '订单事件流拓扑',
@@ -112,7 +104,6 @@ export const CASES = [
     input: 'agent-run.lifecycle.json',
     output: 'agent-run.lifecycle.html',
     focus: 'approval',
-    view: 'main-lifecycle',
     accent: '#fb7185',
     titleEn: 'Agent Run Lifecycle',
     titleZh: '智能体运行生命周期',
@@ -125,7 +116,6 @@ export const CASES = [
     input: 'deployment-release.lifecycle.json',
     output: 'deployment-release.lifecycle.html',
     focus: 'live',
-    view: 'rollback-outcomes',
     accent: '#f472b6',
     titleEn: 'Deployment Release Lifecycle',
     titleZh: '部署发布生命周期',
@@ -138,7 +128,6 @@ export const CASES = [
     input: 'web-app.architecture.json',
     output: 'web-app.architecture.html',
     focus: 'api',
-    view: 'request-path',
     accent: '#6ee7b7',
     titleEn: 'Three-tier Web App',
     titleZh: '三层 Web 应用',
@@ -166,11 +155,9 @@ export function renderCard(entry, index) {
   const mode = entry.animation === 'trace' ? `${entry.visualPreset} + trace` : entry.visualPreset;
   const artifact = `gallery/artifacts/${entry.output}`;
   const source = `gallery/sources/${entry.input}`;
-  const focusedArtifact = entry.view
-    ? `${artifact}?present=1&play=1#view=${encodeURIComponent(entry.view)}`
-    : `${artifact}#focus=${encodeURIComponent(entry.focus)}`;
-  const exploreEn = entry.view ? 'Play named chapter ↗' : 'Explore focus ↗';
-  const exploreZh = entry.view ? '播放命名章节 ↗' : '探索聚焦路径 ↗';
+  const focusedArtifact = `${artifact}#focus=${encodeURIComponent(entry.focus)}`;
+  const exploreEn = 'Explore focus ↗';
+  const exploreZh = '探索聚焦路径 ↗';
   const engineeringProof = entry.engineeringProfile
     ? `\n              <div class="engineering-proof" aria-label="Engineering profile validation"><span>Engineering profile</span><strong>${esc(entry.engineeringProfile.replaceAll('-', ' ').toUpperCase())} · PASS</strong></div>`
     : '';
@@ -178,7 +165,7 @@ export function renderCard(entry, index) {
             <header class="card-header">
               <div class="card-index">${String(index + 1).padStart(2, '0')}</div>
               <div class="card-title-wrap">
-                <div class="card-kicker">${esc(DIAGRAM_TYPE_LABELS.en[entry.type])} / ${entry.nodeCount} nodes${entry.viewCount ? ` / ${entry.viewCount} views · play` : ''}</div>
+                <div class="card-kicker">${esc(DIAGRAM_TYPE_LABELS.en[entry.type])} / ${entry.nodeCount} nodes</div>
                 <h3 class="card-title" data-en="${esc(entry.titleEn)}" data-zh="${esc(entry.titleZh)}">${esc(entry.titleEn)}</h3>
               </div>
               <div class="card-mode">${esc(mode)}</div>

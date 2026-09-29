@@ -115,7 +115,6 @@ test('activation opens the existing source passport and pins its exact relations
 
 test('direct relationship targets support one-tap touch, yield to stronger states, and stay export-clean', () => {
   assert.match(template, /html\.getAttribute\('data-embed'\) === 'true'/);
-  assert.match(template, /svg\.hasAttribute\('data-story-active'\)/);
   assert.match(template, /svg\.hasAttribute\('data-route-active'\)/);
   assert.match(template, /svg\.hasAttribute\('data-lens-active'\)/);
   assert.match(template, /event\.target\.closest\('\[data-relationship-hit-key\]'\)/);

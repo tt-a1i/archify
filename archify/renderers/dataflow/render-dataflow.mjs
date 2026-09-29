@@ -429,7 +429,7 @@ function renderNode(node) {
   if (hasSub) textRows.push({ text: node.sublabel, font: sublabelFontSize, y: 37 });
   if (node.tag) textRows.push({ text: node.tag, font: tagFontSize, y: node.height - 11 });
   const labelLayout = nodeLabelLayout({ width: node.width, height: node.height, rows: textRows,
-    brand: Boolean(brandMarkFor(node)) });
+    brand: Boolean(brandMarkFor(node)), source: Boolean(sourceEvidence?.nodes?.[node.id]?.length) });
   const sub = hasSub
     ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + labelLayout.ys[1]}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(node.sublabel)}</text>`
     : '';

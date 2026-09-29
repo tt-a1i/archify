@@ -384,6 +384,14 @@ export function createRouter(components, connections = [], {
     return { start, end };
   }
 
+  // A reciprocal pair is repaired jointly after planning, so crossings that
+  // involve it are not final yet; keep the established first choice there.
+  const reciprocal = (conn) => connections.some((other) => other.from === conn.to && other.to === conn.from);
+  function siblingCrossings(conn, points, resolvedRoutes) {
+    if (reciprocal(conn)) return 0;
+    return crossingCount(conn, points, resolvedRoutes.filter((entry) => !reciprocal(entry.conn)));
+  }
+
   function routeVia(conn, from, to, start, end, fromSide, toSide, resolvedRoutes = []) {
     if (conn.via) return conn.via;
     switch (conn.route || 'auto') {
@@ -486,7 +494,35 @@ export function createRouter(components, connections = [], {
           if (routeClearsEndpointComponents(points, from, to)
               && routeClearsComponents(conn, points)
               && routeMeetsCompositionFloors(points)
-              && !routeConflictsWithResolved(conn, points, resolvedRoutes)) return candidate;
+              && !routeConflictsWithResolved(conn, points, resolvedRoutes)
+              && (!distinctAutomaticPorts || (!routeOverlapsResolved(conn, points, resolvedRoutes)
+                && !siblingCrossings(conn, points, resolvedRoutes)))) return candidate;
+        }
+        // Siblings fanning out from one side all want the same midpoint
+        // channel. Step outward through the corridor to a free parallel
+        // channel before searching.
+        if (distinctAutomaticPorts) {
+          const channels = (from, to, mid) => {
+            const [low, high] = [Math.min(from, to) + 24, Math.max(from, to) - 24];
+            const values = [];
+            for (let offset = 16; mid - offset >= low || mid + offset <= high; offset += 16) {
+              values.push(...[mid + offset, mid - offset].filter((value) => value >= low && value <= high));
+            }
+            return values;
+          };
+          for (const candidate of [
+            ...channels(start[0], end[0], midX).map((x) => [[x, start[1]], [x, end[1]]]),
+            ...channels(start[1], end[1], midY).map((y) => [[start[0], y], [end[0], y]]),
+          ]) {
+            const points = [start, ...candidate, end];
+            if (routeHonorsEndpointSides(points, fromSide, toSide)
+                && routeClearsEndpointComponents(points, from, to)
+                && routeClearsComponents(conn, points)
+                && routeMeetsCompositionFloors(points)
+                && !routeConflictsWithResolved(conn, points, resolvedRoutes)
+                && !routeOverlapsResolved(conn, points, resolvedRoutes)
+                && !siblingCrossings(conn, points, resolvedRoutes)) return candidate;
+          }
         }
 
         // Two-bend doglegs are deliberately cheap, but a real architecture can
@@ -587,16 +623,61 @@ export function createRouter(components, connections = [], {
     }
   }
 
+  // A node's neighbours laid out as one row below (or above) it read as a
+  // fan-out: reach them all through the same vertical side. Center-based
+  // inference alone sends the outer ones sideways around their siblings.
+  const neighbourRects = new Map();
+  for (const conn of connections) {
+    const from = components.get(conn.from);
+    const to = components.get(conn.to);
+    if (!from || !to || from === to) continue;
+    for (const [node, other] of [[from, to], [to, from]]) {
+      neighbourRects.set(node.id, [...(neighbourRects.get(node.id) || []), other]);
+    }
+  }
+  function rowFanOutSides(from, to) {
+    if (!preferReadableRoutes) return null;
+    const verticalSides = (node, other) => {
+      const below = other.y >= node.y + node.height;
+      if (!below && other.y + other.height > node.y) return null;
+      if (['top', 'bottom'].includes(defaultFromSide(node, other))) return null;
+      const rowSibling = (neighbourRects.get(node.id) || []).some((sibling) => sibling !== other
+        && Math.abs(sibling.cy - other.cy) < 1
+        && defaultFromSide(node, sibling) === (below ? 'bottom' : 'top'));
+      // Only when a node of that row blocks a sideways route to one of the
+      // neighbours on this side; otherwise side exits stay clear and keep the
+      // vertical side free. Decide per side so a row never mixes both styles.
+      const blocked = (target) => {
+        const [gapStart, gapEnd] = target.cx < node.cx
+          ? [target.x + target.width, node.x] : [node.x + node.width, target.x];
+        return [...components.values()].some((rect) => rect !== node && rect !== target
+          && rect.y < target.y + target.height && rect.y + rect.height > target.y
+          && rect.x < gapEnd && rect.x + rect.width > gapStart);
+      };
+      const sameSide = (neighbourRects.get(node.id) || []).filter((sibling) => Math.abs(sibling.cy - other.cy) < 1
+        && defaultFromSide(node, sibling) === defaultFromSide(node, other));
+      return rowSibling && sameSide.some(blocked) ? (below ? 'bottom' : 'top') : null;
+    };
+    const opposite = { top: 'bottom', bottom: 'top' };
+    const fromSide = verticalSides(from, to);
+    if (fromSide) return { fromSide, toSide: opposite[fromSide] };
+    const toSide = verticalSides(to, from);
+    return toSide ? { fromSide: opposite[toSide], toSide } : null;
+  }
+
   const pathCache = new Map();
   const selectedSides = new Map();
   const stroke = (relation) => relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.5);
   const markerSpacing = (left, right) => 3.5 * (stroke(left) + stroke(right));
   const portSpacing = (left, right) => Math.max(14, markerSpacing(left, right) + 3.5);
-  const automaticPorts = automaticPortSpread(connections, components,
+  const automaticPorts = automaticPortSpread(connections, components, {
+    sideFor: (relation, endpoint) => rowFanOutSides(components.get(relation.from), components.get(relation.to))
+      ?.[endpoint === 'source' ? 'fromSide' : 'toSide'],
     // Preserve the established initial placement for ordinary markers; only
     // widen groups whose arrowheads cannot fit the legacy 14px slots.
-    distinctAutomaticPorts ? { spacingFor: (left, right) =>
-      markerSpacing(left, right) > 14 ? portSpacing(left, right) : 14 } : {});
+    ...(distinctAutomaticPorts ? { spacingFor: (left, right) =>
+      markerSpacing(left, right) > 14 ? portSpacing(left, right) : 14 } : {}),
+  });
   const incidentEndpoints = new Map();
   for (const conn of connections) {
     if (!components.has(conn.from) || !components.has(conn.to)) continue;
@@ -609,9 +690,10 @@ export function createRouter(components, connections = [], {
   function inferredConnectionSides(conn) {
     const from = components.get(conn.from);
     const to = components.get(conn.to);
+    const fanOut = rowFanOutSides(from, to);
     return {
-      fromSide: chosenSide(conn.fromSide, defaultFromSide(from, to)),
-      toSide: chosenSide(conn.toSide, defaultToSide(from, to)),
+      fromSide: chosenSide(conn.fromSide, fanOut?.fromSide || defaultFromSide(from, to)),
+      toSide: chosenSide(conn.toSide, fanOut?.toSide || defaultToSide(from, to)),
     };
   }
 

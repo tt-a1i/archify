@@ -7,12 +7,7 @@
     "viewBox": [820, 920],
     "animation": "trace",
     "visual_preset": "signal-flow",
-    "quality_profile": "showcase",
-    "views": [
-      { "id": "accept-and-enqueue", "label": "Accept without blocking", "focus": ["client", "api", "queue"], "note": "The API acknowledges quickly after durable enqueue." },
-      { "id": "work-and-retry", "label": "Background work and retry", "focus": ["queue", "worker", "provider"], "note": "Timeouts re-enter the queue instead of holding the original request open." },
-      { "id": "observe-final-state", "label": "Observe final consistency", "focus": ["worker", "store", "notify", "client", "api"], "note": "Webhook delivery is primary; polling remains a bounded fallback." }
-    ]
+    "quality_profile": "showcase"
   },
   "participants": [
     { "id": "client", "type": "external", "label": "Client", "sublabel": "mobile app" },

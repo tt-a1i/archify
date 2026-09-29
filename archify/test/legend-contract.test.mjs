@@ -90,8 +90,13 @@ const AUTO_KINDS = {
   workflow: ['frontend', 'backend'],
   sequence: ['emphasis', 'return'],
   dataflow: ['default'],
-  lifecycle: ['start', 'active', 'success'],
+  lifecycle: ['start', 'active', 'success', 'final'],
 };
+
+// Structural entries a renderer appends after its kind catalog when the
+// diagram draws the structure they explain (lifecycle final states).
+const STRUCTURAL = { lifecycle: ['final'] };
+const legendOrder = (type) => [...CATALOGS[type], ...(STRUCTURAL[type] || [])];
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -179,7 +184,7 @@ test('Issue #52 dataflow and lifecycle reproductions publish truthful default le
 
   const lifecycle = canonicalSvg(render('lifecycle', FIXTURES.lifecycle));
   const lifecycleLegend = lifecycle.slice(lifecycle.indexOf('<!-- Legend -->'));
-  assert.deepEqual(attrValues(lifecycleLegend, 'data-legend-semantic-kind'), ['start', 'active', 'success']);
+  assert.deepEqual(attrValues(lifecycleLegend, 'data-legend-semantic-kind'), ['start', 'active', 'success', 'final']);
   assert.doesNotMatch(lifecycleLegend, /waiting|failure \/ exit/i);
   assert.deepEqual(attrValues(lifecycleLegend, 'data-legend-kind'), ['start', 'active', 'success']);
 });
@@ -187,7 +192,7 @@ test('Issue #52 dataflow and lifecycle reproductions publish truthful default le
 test('all mode follows each renderer-owned stable catalog order', () => {
   for (const type of Object.keys(FIXTURES)) {
     const html = render(type, withLegend(type, { mode: 'all' }));
-    assert.deepEqual(legendKinds(html), CATALOGS[type], type);
+    assert.deepEqual(legendKinds(html), legendOrder(type), type);
   }
 });
 
@@ -223,7 +228,7 @@ test('visibility overrides apply after auto/all and empty legends leave no chrom
     const expected = AUTO_KINDS[type]
       .filter((kind) => kind !== kinds.hidden)
       .concat(kinds.forced)
-      .sort((left, right) => CATALOGS[type].indexOf(left) - CATALOGS[type].indexOf(right));
+      .sort((left, right) => legendOrder(type).indexOf(left) - legendOrder(type).indexOf(right));
     assert.deepEqual(legendKinds(html), expected, type);
   }
 
@@ -237,7 +242,8 @@ test('visibility overrides apply after auto/all and empty legends leave no chrom
   );
 
   for (const type of Object.keys(FIXTURES)) {
-    const entries = Object.fromEntries(AUTO_KINDS[type].map((kind) => [kind, { visible: false }]));
+    const entries = Object.fromEntries(AUTO_KINDS[type]
+      .filter((kind) => !(STRUCTURAL[type] || []).includes(kind)).map((kind) => [kind, { visible: false }]));
     const empty = canonicalSvg(render(type, withLegend(type, { entries })));
     assert.doesNotMatch(empty, />Legend</, type);
     assert.doesNotMatch(empty, /data-legend/, type);
@@ -385,7 +391,7 @@ test('measured legend rows share baselines and stay within the viewBox for local
   const svg = canonicalSvg(render('lifecycle', doc));
   const viewBox = attrValues(svg.match(/<svg\b[^>]*>/)?.[0] || '', 'viewBox')[0].split(/\s+/).map(Number);
   const tags = [...svg.matchAll(/<g\b[^>]*data-legend-semantic-kind="[^"]+"[^>]*>/g)].map((match) => match[0]);
-  assert.equal(tags.length, CATALOGS.lifecycle.length);
+  assert.equal(tags.length, legendOrder('lifecycle').length);
   const boxes = tags.map((tag) => ({
     x: Number(attrValues(tag, 'data-legend-x')[0]),
     y: Number(attrValues(tag, 'data-legend-baseline')[0]),

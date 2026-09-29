@@ -16,6 +16,24 @@ function validate(input) {
   return { status: result.status, receipt: JSON.parse(result.stdout) };
 }
 
+test('lifecycle: the deployment release starter passes showcase delivery and artifact checks', t => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-lifecycle-starter-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/deployment-release.lifecycle.json'), 'utf8'));
+  const input = path.join(tmp, 'candidate.json');
+  const output = path.join(tmp, 'release.html');
+  source.meta.output = 'release.html';
+  fs.writeFileSync(input, JSON.stringify(source));
+  const result = spawnSync(process.execPath, [cli, 'finalize', 'lifecycle', input, output, '--quality', 'showcase', '--json'], {
+    cwd: tmp,
+    encoding: 'utf8',
+    env: { ...process.env, ARCHIFY_CHROME: path.join(tmp, 'missing-chrome') },
+  });
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(result.status, 2, result.stdout || result.stderr);
+  assert.deepEqual(receipt.gates, { validate: 'pass', deliver: 'pass', check: 'pass', 'browser-check': 'skipped' });
+});
+
 // Before the planner, this hub fan-out produced two edge-through-node, four
 // micro-segment and several label-clearance diagnostics from a candidate that
 // declared no route controls at all; the author had nothing to repair except

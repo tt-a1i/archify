@@ -1,6 +1,6 @@
 # Skill 内置可选更新提醒器：技术设计提案
 
-> 状态：Implementation draft / Issue #167 / 待评审
+> 状态：已被取代。现行行为见 `archify/references/update-awareness.md`：提醒写入 `finalize` / `deliver` 回执并每次重复，`--ack` 已停用，改为用户明确要求的 `--snooze` / `--ignore`。
 > 提案版本：v0.1
 > 日期：2026-08-28
 > 面向对象：Skill 维护者、Agent 集成开发者、安全与发布工程师
