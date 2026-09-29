@@ -1,13 +1,18 @@
 import * as THREE from 'three';
 import {terrainHeight} from './elevation.js';
+import {VISUAL} from './visual-style.js';
 
 export function addRelief(world,grid){
   const geometry=new THREE.PlaneGeometry(820,820,grid.columns-1,grid.rows-1);geometry.rotateX(-Math.PI/2);
   const positions=geometry.attributes.position,colors=[];
+  // Clip color normalization at the 5th/95th percentiles so isolated DEM
+  // outliers cannot wash out all the ordinary relief. Geometry stays untouched.
+  const sorted=[...grid.values].sort((a,b)=>a-b),low=sorted[Math.floor((sorted.length-1)*.05)],high=sorted[Math.floor((sorted.length-1)*.95)];
+  const palette=VISUAL.terrainColors.map(c=>new THREE.Color(c));
   for(let i=0;i<positions.count;i++){
     const x=positions.getX(i),z=positions.getZ(i),y=terrainHeight(grid,x,z);positions.setY(i,y);
-    const fraction=(grid.values[i]-grid.minimum)/Math.max(1,grid.maximum-grid.minimum);
-    const color=new THREE.Color(0x9caf87).lerp(new THREE.Color(0xd7d8aa),fraction);colors.push(color.r,color.g,color.b);
+    const fraction=Math.max(0,Math.min(1,(grid.values[i]-low)/Math.max(1,high-low))),step=fraction*(palette.length-1),band=Math.min(palette.length-2,Math.floor(step));
+    const color=palette[band].clone().lerp(palette[band+1],step-band);colors.push(color.r,color.g,color.b);
   }
   geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.computeVertexNormals();
   const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));mesh.receiveShadow=true;mesh.castShadow=true;mesh.userData.disposeMaterial=true;world.add(mesh);

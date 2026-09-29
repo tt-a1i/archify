@@ -19,7 +19,7 @@ selected day. It can represent other cities without renderer changes; detailed
 geometry and bespoke models are **not** automatically available for every city.
 Without supplied detail, the day is a landmark-only block with honest labels.
 
-Style `illustrated-diorama-v6` records the geographic overview requested by the user
+Style `illustrated-diorama-v7` records the geographic overview requested by the user
 and daily blocks; the overview now preserves geographic anchor positions. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
 tests cover Shanghai/Paris, cross-day links, lazy day fetching, offline cached
 days, arbitrary-duration input, repeated places, date-line coordinates and GPU
@@ -28,7 +28,7 @@ new portable trips are produced by `render-journey.mjs`.
 
 The landform layer retains available sourced water polygons in overview and
 daily tiles, clips rivers crossing the tile boundary, and draws shoreline edges.
-A fixed muted ground texture and cutaway soil bands are decorative. The v6
+A fixed muted ground texture and cutaway soil bands are decorative. The v7
 overview adds a 65×65 DEM mesh with smooth normals, draped landmarks/water and a
 closed perimeter. Shanghai/Paris use zoom-12 Mapzen Terrain Tiles sampled into
 129×129 source grids, then resampled for the medium-resolution overview. Regenerate

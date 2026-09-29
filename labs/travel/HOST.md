@@ -54,7 +54,7 @@ must research those facts and perform browser checks before making such claims.
 
 Water rings crossing a tile boundary are clipped instead of dropped. The overview
 keeps the available sourced water outlines, while omitting streets and buildings.
-Shorelines, muted surface texture and cutaway soil colors use the fixed v6 style;
+Shorelines, muted surface texture and cutaway soil colors use the fixed v7 style;
 texture and cutaway layers are illustrative, not DEM terrain heights or geology.
 
 Optional top-level `elevation` adds coarse relief to the **whole-trip overview**:

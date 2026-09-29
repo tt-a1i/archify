@@ -11,3 +11,4 @@
 
 #disney-open{border:1px solid #b6c5b7;border-radius:6px;background:#faf7ef;color:#365e4e;padding:7px 10px;font:inherit;cursor:pointer}#disney-open[hidden]{display:none}.trip-legend button{display:block;border:0;background:transparent;padding:3px 0;font-family:inherit;text-align:left;cursor:pointer;pointer-events:auto}.trip-legend button:hover{text-decoration:underline}
 :where(.trip-legend) a { display:block; margin-top:6px; font-size:10px; color:#557365; pointer-events:auto; }
+.three-badge .terrain-color-key{width:150px;max-width:100%;margin-top:9px;padding-top:7px;border-top:6px solid transparent;border-image:linear-gradient(to right,#c4d69a,#719b60,#356447,#a07850) 1;font-size:9px;letter-spacing:0;color:#365340}

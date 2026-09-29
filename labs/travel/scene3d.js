@@ -137,7 +137,7 @@ function rebuild() {
   if(data.journey&&heightMode){
     // Fixed illustration texture and cutaway layers, not invented DEM heights.
     for(const [y,h,color] of [[-40,18,0xb4a58a],[-23,16,0xc7b695],[-8,14,0xbac39a]])box(world,820.2,h,820.2,color,0,y,0);
-    if(relief()){addRelief(world,relief());terrainCount++;stage.querySelector('.three-badge').replaceChildren();const badge=stage.querySelector('.three-badge');badge.append('总行程 · 立体地貌');const subtitle=document.createElement('span');subtitle.textContent=reliefCaption();badge.append(subtitle);const credit=document.createElement('a');credit.href=relief().source;credit.target='_blank';credit.rel='noopener';credit.textContent='高程数据与署名';credit.title=relief().attribution;legend.append(credit);}
+    if(relief()){addRelief(world,relief());terrainCount++;stage.querySelector('.three-badge').replaceChildren();const badge=stage.querySelector('.three-badge');badge.append('总行程 · 立体地貌');const subtitle=document.createElement('span');subtitle.textContent=reliefCaption();badge.append(subtitle);const ramp=document.createElement('span');ramp.className='terrain-color-key';ramp.textContent='低 ← 相对高程 → 高';ramp.title='浅绿低处、深绿坡地、岩土色高处；仅表示当前范围的相对高程，不代表植被或地质分类。';badge.append(ramp);const credit=document.createElement('a');credit.href=relief().source;credit.target='_blank';credit.rel='noopener';credit.textContent='高程数据与署名';credit.title=relief().attribution;legend.append(credit);}
     else{
     const ground=new THREE.PlaneGeometry(820,820,24,24);ground.rotateX(-Math.PI/2);
     const colors=[],positions=ground.attributes.position;
