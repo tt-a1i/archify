@@ -4,9 +4,12 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node --test travel.test.mjs travel3d.test.mjs trip.test.mjs"
+    "test": "node --test travel.test.mjs travel3d.test.mjs trip.test.mjs",
+    "serve": "node serve.mjs",
+    "test:world": "node --test world.test.mjs"
   },
   "dependencies": {
+    "maplibre-gl": "6.11.2",
     "three": "0.186.1"
   }
 }

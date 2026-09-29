@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { buildWorld } from './build-world.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+buildWorld(process.argv.includes('--check'));
 const require = createRequire(new URL('../../archify/package.json', import.meta.url));
 const { buildSync } = require('esbuild');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
@@ -58,7 +60,7 @@ const threeBundle = buildSync({ entryPoints: [path.join(root, 'scene3d.js')], bu
 const threeLicense = read('node_modules/three/LICENSE').replace(/</g, '&lt;');
 const html = `<!doctype html>
 <html lang="zh-CN" data-fixed-canvas><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Archify Travel · 法国与巴黎</title><style>${read('style.css')}</style></head>
-<body><header><a class="brand" href="#scene=france">ARCHIFY <span>TRAVEL ATLAS</span></a><div class="edition">旅行地图实验室 / 01</div><button id="export" type="button">导出当前地图 SVG</button></header>
+<body><header><a class="brand" href="#scene=france">ARCHIFY <span>TRAVEL ATLAS</span></a><div class="edition"><a href="world.html">全球地图 · 选择精细度 ↗</a></div><button id="export" type="button">导出当前地图 SVG</button></header>
 <main><aside class="sidebar"><nav class="breadcrumb" aria-label="地图层级"><button id="country" type="button">法国</button><span id="crumb" hidden> / 巴黎</span></nav><div class="eyebrow">A LITTLE CURIOSITY, A LONG WAY</div><h1 id="title">法国</h1><div id="english" class="english">FRANCE</div><p id="intro"></p>
 <div class="scope"><button id="france-tab" aria-pressed="true">国家总览</button><button id="paris-tab" aria-pressed="false">巴黎城市</button></div>
 <label class="search-label" for="search">寻找下一站</label><input id="search" type="search" placeholder="搜索城市或景点…" autocomplete="off">

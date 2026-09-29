@@ -51,3 +51,21 @@ Evidence: `out/travel-trip-tests.log` and `out/travel-trip-evidence/`.
 layout and the desktop page were visually inspected. OSM routes remain
 planning previews: the offline graph does not model barriers at nodes,
 accessibility or live closures, and attraction coordinates are not entrances.
+
+## Optional global data explorer
+
+The package catalog separates bundled global boundaries, streamed geography,
+streamed buildings, streamed terrain, the existing Paris landmark set and
+unavailable global textured landmarks. The separate MapLibre view loads no
+external data until the user applies a detailed selection; its engine assets
+and simplified country data are local. It is not an offline regional package
+manager and has not yet been connected to the generated itinerary overlay.
+
+Five tests passed with no skips in `out/travel-world-final-tests.log`: the four
+travel checks plus a live-network Chrome check. The latter verified zero remote
+requests in the initial light mode, real rendered Paris building features,
+positive Alps DEM elevation after tiles finished loading, terrain/building
+removal, retaining the light map when a style request fails, and narrow layout.
+The live screenshots in `out/travel-world-evidence/` were visually inspected.
+Sources were tested in these sample regions; worldwide completeness, precise
+building heights and offline persistence are not claimed.
