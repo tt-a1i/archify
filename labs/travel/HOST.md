@@ -54,7 +54,7 @@ must research those facts and perform browser checks before making such claims.
 
 Water rings crossing a tile boundary are clipped instead of dropped. The overview
 keeps the available sourced water outlines, while omitting streets and buildings.
-Shorelines, muted surface texture and cutaway soil colors use the fixed v9 style;
+Shorelines, muted surface texture and cutaway soil colors use the fixed v10 style;
 texture and cutaway layers are illustrative, not DEM terrain heights or geology.
 
 Optional top-level `elevation` adds coarse relief to the **whole-trip overview**:
@@ -64,6 +64,9 @@ dimension is 2–129. Bounds must cover the full padded square, not only its sto
 Unwrapped east longitude up to 540 is allowed across the date line. Never invent
 heights. The renderer resamples to 65×65 vertices, uses a fixed exaggeration rule
 (1–12×, aiming for 60 scene units of relief) and labels the resulting factor.
+Grid vertices use geographic source interpolation without visual smoothing;
+the package retains geographic bounds and sampled elevations in meters. The
+map displays the DEM elevation range, which may include source artifacts.
 No elevation input preserves the flat fallback. Daily geometry remains isolated.
 For Shanghai/Paris snapshots see `prepare-elevation.mjs` and `data/*-elevation.json`;
 source provenance and credits are included in the map and export.

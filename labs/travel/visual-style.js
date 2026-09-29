@@ -1,6 +1,6 @@
 // The renderer, model code, CSS and this preset are pinned together by the build.
 export const VISUAL = Object.freeze({
-  id:'illustrated-diorama-v9',
+  id:'illustrated-diorama-v10',
   terrainColors:Object.freeze([0xc4d69a,0x719b60,0x356447,0xa07850]),
   dayColors:Object.freeze(['#b16a35','#36766d','#76619e']),
   icons:Object.freeze(['tower','museum','church','chapel','arch','pearl','shanghai-tower','swfc','castle','garden','bund','skyline']),

@@ -16,6 +16,11 @@ test('overview elevation is coarse, sourced, geographically aligned and excluded
   assert.equal(grid.values.length,4225);assert.ok(grid.maximum>grid.minimum);assert.ok(grid.exaggeration>=1&&grid.exaggeration<=12);
   assert.ok(terrainHeight(grid,410,-410)>terrainHeight(grid,-410,-410));
   assert.equal(sampleElevation(input.elevation,.2,.3),35);assert.equal(sampleElevation(input.elevation,.8,.7),115);
+  const [west,south,east,north]=grid.bounds;
+  for(const [c,r] of [[0,0],[14,23],[64,64]]){
+    const lng=west+(east-west)*c/64,lat=north-(north-south)*r/64;
+    assert.ok(Math.abs(grid.values[r*65+c]-sampleElevation(input.elevation,(lng-120)/3,(33-lat)/3))<1e-8,'each grid sample follows its actual geographic position without visual smoothing');
+  }
   assert.deepEqual(raised.places.map(p=>p.views),flat.places.map(p=>p.views));assert.equal(raised.journey.tiles['day-1'].elevation,undefined);
   for(const change of [e=>e.values=[0],e=>e.values[0]=NaN,e=>e.source='javascript:foo',e=>e.columns=130,e=>e.bounds=[0,0,1,1]]){const bad=structuredClone(input);change(bad.elevation);assert.throws(()=>createJourney(bad),/高程/);}
 });
