@@ -16,7 +16,9 @@ const stage = document.createElement('div');
 stage.id = 'stage-3d'; stage.className = 'stage-3d'; stage.hidden = true;
 stage.innerHTML = '<div class="three-labels"></div><div class="three-badge">立体旅行地图<span>地理轮廓真实 · 高度为艺术表现</span></div><div class="three-tools" role="toolbar" aria-label="3D 视角控制"><button id="orbit-left" title="向左旋转" aria-label="向左旋转">↶</button><button id="orbit-right" title="向右旋转" aria-label="向右旋转">↷</button><button id="orbit-top">俯视</button><button id="orbit-reset">复位</button><button id="orbit-spin" aria-pressed="false">自动旋转</button><button id="orbit-out" aria-label="3D 缩小">−</button><button id="orbit-in" aria-label="3D 放大">＋</button></div>';
 flat.after(stage);
+const legend=document.createElement('div');legend.className='trip-legend';legend.innerHTML='<strong>法国 3 天 · 巴黎慢游</strong><span style="color:#b16a35">01　凯旋门 → 埃菲尔铁塔</span><span style="color:#36766d">02　卢浮宫 → 奥赛</span><span style="color:#76619e">03　圣礼拜堂 → 巴黎圣母院</span><small>OSM 步行预览 · 箭头指向下一站</small>';stage.append(legend);
 const labelLayer = stage.querySelector('.three-labels');
+const labelLeaders=document.createElementNS('http://www.w3.org/2000/svg','svg');labelLeaders.classList.add('three-label-leaders');labelLeaders.setAttribute('aria-hidden','true');labelLayer.before(labelLeaders);
 const footerHint = document.querySelector('.map-footer > span');
 const originalHint = footerHint.textContent;
 const exportButton = document.getElementById('export');
@@ -64,16 +66,19 @@ function landmark(p) {
     const gable=mesh(group,new THREE.ConeGeometry(26,19,4),roof,0,38,-10);gable.rotation.y=Math.PI/4;
     for(const x of [-20,20]){box(group,8,16,1,roof,x,46,28.6);box(group,8,8,1,roof,x,21,28.6);}
     const rose=mesh(group,new THREE.CylinderGeometry(7,7,1,16),0x6d959a,0,24,29);rose.rotation.x=Math.PI/2;
+  } else if(p.icon==='chapel') {
+    box(group,28,45,60,stone);const roofMesh=mesh(group,new THREE.ConeGeometry(25,24,4),roof,0,57,0);roofMesh.scale.z=1.6;roofMesh.rotation.y=Math.PI/4;
+    beam(group,[0,68,0],[0,92,0],1.5,dark);for(const x of [-14.5,14.5])for(const z of [-18,0,18])box(group,1,24,7,0x7cb5b1,x,27,z);
   } else {
     box(group,19,51,30,stone,-22,25.5,0);box(group,19,51,30,stone,22,25.5,0);box(group,63,19,34,stone,0,53,0);box(group,69,5,38,dark,0,65,0);
     for(const x of [-24,24])box(group,7,23,1,dark,x,28,15.6);
   }
   const [x,z]=p.point;group.position.set(x-700,sceneId==='paris'?18:22,z-525);
-  group.scale.setScalar(sceneId==='paris'?.95:1.1);
+  group.scale.setScalar(sceneId==='paris'?.42:1.1);
   const marker=mesh(group,new THREE.CylinderGeometry(33,38,3,32),0xe8d6ab,0,1,0);
   marker.userData.base=true;world.add(group);markers.push(group);
   const button=document.createElement('button');button.className='three-label';button.dataset.place=p.id;
-  const title=document.createElement('strong');title.textContent=p.name;const detail=document.createElement('span');detail.textContent=p.label;
+  const title=document.createElement('strong');title.textContent=(p.scene==='paris'?'D'+p.day+' · ':'')+p.name;const detail=document.createElement('span');detail.textContent=p.label;
   button.append(title,detail);button.addEventListener('click',()=>atlas.select(p.id));labelLayer.append(button);
   labels.push({button,p,anchor:new THREE.Vector3(x-700,20,z-525)});
 }
@@ -83,7 +88,7 @@ function disposeWorld() {
 }
 function rebuild() {
   if(!renderer)return;
-  const next=atlas.scene(),changed=sceneId!==next;sceneId=next;disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
+  const next=atlas.scene(),changed=sceneId!==next;sceneId=next;legend.hidden=sceneId!=='paris';disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
   const base=box(world,1440,12,1080,0xd6e3dd,0,-8,0);base.receiveShadow=true;
   const loader=new SVGLoader();
   for(const [index,region] of data.scenes[sceneId].paths.entries()) {
@@ -100,32 +105,59 @@ function rebuild() {
   }
   const visible=new Set(atlas.visible());
   const points=data.places.filter(p=>p.scene===sceneId&&visible.has(p.id));points.forEach(landmark);
-  for(const day of [1,2]) {
-    const route=points.filter(p=>p.day===day);if(route.length<2)continue;
-    const vertices=route.map(p=>new THREE.Vector3(p.point[0]-700,(sceneId==='paris'?18:22)+2,p.point[1]-525));
-    const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(vertices),new THREE.LineDashedMaterial({color:0xa97940,dashSize:8,gapSize:5}));line.computeLineDistances();line.userData.disposeMaterial=true;world.add(line);
-  }
+  if(sceneId==='paris')drawCity(visible);
   if(changed)reset();selection();requestFrame();
 }
 function fitDistance() {return Math.max(1400/Math.max(camera.aspect,.25),1050)*1.85;}
+function drawCity(visible) {
+  const segments=[];for(const line of data.trip.backdrop)for(let i=1;i<line.length;i++)segments.push(line[i-1][0]-700,18.5,line[i-1][1]-525,line[i][0]-700,18.5,line[i][1]-525);
+  const streets=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(segments,3)),new THREE.LineBasicMaterial({color:0xb2b5a5,transparent:true,opacity:.55}));streets.userData.disposeMaterial=true;world.add(streets);
+  for(const b of data.trip.buildings){
+    const shape=new THREE.Shape(b.points.map(p=>new THREE.Vector2(p[0]-700,p[1]-525)));
+    const height=Math.max(1.8,Math.min(10,b.height*.12));const geo=new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:false,steps:1});geo.rotateX(Math.PI/2);
+    const building=new THREE.Mesh(geo,material(0xc7c6af));building.position.y=18+height;world.add(building);
+  }
+  for(const r of data.trip.routes.filter(r=>visible.has(r.from)&&visible.has(r.to))){
+    const vertices=r.points.map(p=>new THREE.Vector3(p[0]-700,45,p[1]-525));
+    // Each segment uses the source road geometry. Elevation lifts the itinerary above rooftops.
+    for(let i=1;i<vertices.length;i++){
+      const a=vertices[i-1],b=vertices[i],delta=b.clone().sub(a);if(delta.length()<.01)continue;
+      const segment=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,delta.length(),5),material(r.color));segment.position.copy(a).add(b).multiplyScalar(.5);segment.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());world.add(segment);
+    }
+    let travelled=0,next=8;
+    for(let i=1;i<vertices.length;i++){const a=vertices[i-1],b=vertices[i],delta=b.clone().sub(a),length=delta.length();if(!length)continue;
+      while(next<=travelled+length){const at=a.clone().lerp(b,(next-travelled)/length);const arrow=new THREE.Mesh(new THREE.ConeGeometry(3.4,9,3),material(r.color));arrow.position.copy(at);arrow.position.y+=2;arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.clone().normalize());arrow.userData.routeArrow=true;world.add(arrow);next+=18;}travelled+=length;
+    }
+    for(const [id,end] of [[r.from,vertices[0]],[r.to,vertices.at(-1)]]){
+      const p=data.places.find(p=>p.id===id),line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p.point[0]-700,45,p.point[1]-525),end]),new THREE.LineDashedMaterial({color:r.color,dashSize:2,gapSize:2}));line.computeLineDistances();line.userData.disposeMaterial=true;world.add(line);
+    }
+  }
+}
 function reset(top=false) {
-  if(!camera)return;const distance=fitDistance();controls.target.set(0,0,0);
-  camera.position.copy((top?new THREE.Vector3(0,1,.001):new THREE.Vector3(.45,.95,1)).normalize().multiplyScalar(distance));
+  if(!camera)return;let distance=fitDistance();controls.target.set(0,0,0);
+  if(sceneId==='paris'){controls.target.set(-70,15,-10);distance=Math.max(700,660/Math.max(camera.aspect,.25));}
+  camera.position.copy((top?new THREE.Vector3(0,1,.001):new THREE.Vector3(.1,1.3,1)).normalize().multiplyScalar(distance)).add(controls.target);
   controls.update();requestFrame();
 }
+function focus(id){const p=data.places.find(p=>p.id===id);if(!active||!p||p.scene!==sceneId)return;const offset=camera.position.clone().sub(controls.target).normalize().multiplyScalar(650);controls.target.set(p.point[0]-700,20,p.point[1]-525);camera.position.copy(controls.target).add(offset);controls.update();requestFrame();}
+function focusDay(day){if(!active||sceneId!=='paris')return;if(!day){reset();return;}const route=data.trip.routes.find(r=>r.day===day);if(!route)return;const box=new THREE.Box3().setFromPoints(route.points.map(p=>new THREE.Vector3(p[0]-700,20,p[1]-525))),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());const distance=Math.max(260,size.z*2.4,size.x/Math.max(camera.aspect,.25)*2.4);const offset=camera.position.clone().sub(controls.target).normalize().multiplyScalar(distance);controls.target.copy(center);camera.position.copy(center).add(offset);controls.update();requestFrame();}
 function selection() {if(!renderer)return;for(const {button,p} of labels)button.classList.toggle('selected',p.id===atlas.selected());requestFrame();}
 function renderLabels() {
   const rect=stage.getBoundingClientRect(), occupied=[];
+  labelLeaders.replaceChildren();labelLeaders.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);
   const ordered=[...labels].sort((a,b)=>Number(b.p.id===atlas.selected())-Number(a.p.id===atlas.selected()));
   for(const label of ordered) {
-    const point=label.anchor.clone().project(camera);const x=(point.x*.5+.5)*rect.width,y=(-point.y*.5+.5)*rect.height+16;
+    const point=label.anchor.clone().project(camera);const x=(point.x*.5+.5)*rect.width;let y=(-point.y*.5+.5)*rect.height+16;
     const detailed=controls.getDistance()<1350;
     label.button.classList.toggle('detailed',detailed);
     label.button.hidden=false;const halfWidth=label.button.offsetWidth/2+5;const bounds={left:x-halfWidth,right:x+halfWidth,top:y,bottom:y+label.button.offsetHeight+5};
-    const overlaps=occupied.some(b=>bounds.left<b.right&&bounds.right>b.left&&bounds.top<b.bottom&&bounds.bottom>b.top);
+    let overlaps=occupied.some(b=>bounds.left<b.right&&bounds.right>b.left&&bounds.top<b.bottom&&bounds.bottom>b.top);
+    for(let tries=0;overlaps&&tries<3;tries++){const shift=label.button.offsetHeight+7;y+=shift;bounds.top+=shift;bounds.bottom+=shift;overlaps=occupied.some(b=>bounds.left<b.right&&bounds.right>b.left&&bounds.top<b.bottom&&bounds.bottom>b.top);}
     const hide=point.z>1||point.z< -1||x<40||x>rect.width-40||y<0||y>rect.height-85||camera.position.y<0||overlaps;
     label.button.hidden=hide;
-    if(!hide){label.button.style.transform=`translate(${x}px,${y}px) translateX(-50%)`;occupied.push(bounds);}
+    if(!hide){label.button.style.transform=`translate(${x}px,${y}px) translateX(-50%)`;const anchorY=(-point.y*.5+.5)*rect.height;label.screen={x,y,anchorY};occupied.push(bounds);
+      const leader=document.createElementNS('http://www.w3.org/2000/svg','line');leader.setAttribute('x1',x);leader.setAttribute('x2',x);leader.setAttribute('y1',anchorY);leader.setAttribute('y2',y);labelLeaders.append(leader);
+    }
   }
   document.getElementById('detail-level').textContent=controls.getDistance()<1350?'3D · 地标细节':'3D · 拖动自由旋转';
 }
@@ -176,12 +208,26 @@ window.addEventListener('archify:travel-change',rebuild);window.addEventListener
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(frame)cancelAnimationFrame(frame);frame=0;}else requestFrame();});
 exportButton.addEventListener('click',event=>{
   if(!active)return;event.stopImmediatePropagation();renderer.render(scene,camera);
-  const output=document.createElement('canvas');output.width=renderer.domElement.width;output.height=renderer.domElement.height+60;
+  const ratio=renderer.getPixelRatio(),mapWidth=renderer.domElement.width,summary=sceneId==='paris'?360*ratio:0;
+  const output=document.createElement('canvas');output.width=mapWidth+summary;output.height=Math.max(renderer.domElement.height+90*ratio,summary?760*ratio:0);
   const ctx=output.getContext('2d');ctx.fillStyle='#e9efea';ctx.fillRect(0,0,output.width,output.height);ctx.drawImage(renderer.domElement,0,0);
-  const ratio=renderer.getPixelRatio();ctx.fillStyle='#263f38';ctx.font=`${14*ratio}px sans-serif`;
-  for(const label of labels){if(label.button.hidden)continue;const p=label.anchor.clone().project(camera);ctx.fillText(label.p.name,(p.x*.5+.5)*output.width-24*ratio,(-p.y*.5+.5)*renderer.domElement.height+32*ratio);}
-  ctx.font='12px sans-serif';ctx.fillText('Natural Earth · © Ville de Paris (ODbL) · Wikidata (CC0) | Archify Travel · artistic heights',16,output.height-22);
+  ctx.fillStyle='#263f38';ctx.font=`${14*ratio}px sans-serif`;
+  for(const label of labels){if(label.button.hidden||!label.screen)continue;ctx.strokeStyle='#8b9784';ctx.lineWidth=ratio*.7;ctx.beginPath();ctx.moveTo(label.screen.x*ratio,label.screen.anchorY*ratio);ctx.lineTo(label.screen.x*ratio,label.screen.y*ratio);ctx.stroke();ctx.fillText('D'+label.p.day+' '+label.p.name,label.screen.x*ratio-24*ratio,(label.screen.y+15)*ratio);}
+  if(summary){
+    ctx.fillStyle='#faf7ef';ctx.fillRect(mapWidth,0,summary,output.height);const x=mapWidth+24*ratio;
+    const text=(value,y,size=12,color='#263f38')=>{ctx.fillStyle=color;ctx.font=`${size*ratio}px sans-serif`;ctx.fillText(value,x,y*ratio);};
+    text('法国 3 天 · 巴黎慢游',42,23);text('3 个完整游览日 · 以巴黎为基地',70,12);text('建议时段，未确认预约和临时开放',94,11,'#6d7970');
+    let y=140;const chosen=Number(document.getElementById('day').value);
+    for(const day of data.trip.days.filter(d=>!chosen||d.day===chosen)){
+      text('DAY '+day.day+'  '+day.title,y,14,day.color);y+=32;
+      for(const stop of day.stops){const p=data.places.find(p=>p.id===stop.id);text(stop.time+'  '+p.name,y,14);text('建议停留 '+stop.duration,y+23,11,'#6d7970');y+=57;}
+      const route=data.trip.routes.find(r=>r.day===day.day);text('两站间约 '+(route.meters/1000).toFixed(1)+' km / '+route.walkMinutes+' 分钟',y,11,day.color);y+=50;
+    }
+    text('卢浮宫周二闭馆 · 奥赛周一闭馆',output.height/ratio-84,11,'#8c592e');text('日期未核验时，请调整博物馆日并查官网。',output.height/ratio-62,10,'#6d7970');
+  }
+  ctx.fillStyle='#263f38';ctx.font=`${10*ratio}px sans-serif`;ctx.fillText('OSM 道路预览 · 虚线为入口未核验连接 · 建筑高度含示意值',16*ratio,output.height-46*ratio);
+  ctx.fillText('Natural Earth · © Ville de Paris / OpenStreetMap contributors (ODbL) · Wikidata (CC0)',16*ratio,output.height-24*ratio);
   output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='archify-travel-'+sceneId+'-3d.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'image/png');
 },true);
-window.Archify.travel3d={setMode,reset,state:()=>({active,failed,scene:sceneId,terrainCount,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
+window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,scene:sceneId,terrainCount,routeArrows:world?.children.filter(c=>c.userData.routeArrow).length||0,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
 setMode(true);

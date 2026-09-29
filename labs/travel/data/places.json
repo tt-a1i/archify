@@ -70,5 +70,23 @@
       48.87378
     ],
     "source": "https://www.wikidata.org/wiki/Q64436"
+  },
+  {
+    "id": "Q23402",
+    "label": "Musée d'Orsay",
+    "coordinates": [
+      2.326527,
+      48.859972
+    ],
+    "source": "https://www.wikidata.org/wiki/Q23402"
+  },
+  {
+    "id": "Q193193",
+    "label": "Sainte Chapelle",
+    "coordinates": [
+      2.345028,
+      48.855369
+    ],
+    "source": "https://www.wikidata.org/wiki/Q193193"
   }
 ]

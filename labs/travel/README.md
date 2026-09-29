@@ -7,7 +7,13 @@ merging `upstream/labs/infinite-canvas` (`b5d06bb9`) into dev (`e023ea45`).
 ## Scope
 
 - Metropolitan France and Corsica: Paris, Lyon, Nîmes and Nantes.
-- Paris: all 20 arrondissement polygons and four located landmarks.
+- Paris: all 20 arrondissement polygons and six located landmarks.
+- A sentence entry point supports the curated France/Paris three-day itinerary.
+  This is a local, bounded prototype, not a general LLM planner. Other destinations
+  and durations report that no new plan was generated. The optional start date
+  flags museum weekday closures; it does not check tickets or reschedule bookings.
+- Click a day to filter and frame its route; click a timetable stop to focus its
+  landmark. Export the itinerary as JSON or the 3D map and timetable together as PNG.
 - Country/city switching, atlas-wide search, category/day filters, accessible
   landmark buttons, details, URL state, a local saved list and SVG download.
 - Default 3D mode: locally bundled Three.js, extruded geographic boundaries,
@@ -22,11 +28,17 @@ merging `upstream/labs/infinite-canvas` (`b5d06bb9`) into dev (`e023ea45`).
 
 The travel model is deliberately separate from the five stable diagram schemas.
 This experiment does not add unsupported fields to the production CLI. It is a
-travel atlas, not a street map: the city base shows administrative boundaries;
-day lines show editorial visit order, not roads, walking directions or travel
-times. Only Paris currently has a detailed city view. Ground coordinates are
+travel atlas with an OSM street backdrop and three walking-route previews.
+Routes follow a selected OSM way graph; nearest graph nodes are not verified
+entrances. Dashed endpoint connections are illustrative. Estimates use 4.2 km/h
+and exclude endpoint gaps, waits and walking inside attractions. This is not
+turn-by-turn navigation: node barriers, accessibility, turn restrictions and
+live closures are not modeled. Only Paris currently has a detailed city view. Ground coordinates are
 real; SVG and 3D landmark art is original and decorative, not a building footprint.
-Extrusion and building heights are artistic, not measured terrain or buildings.
+Landmark models and terrain extrusion remain artistic. Along-route buildings
+use OSM footprints with tagged height, estimated floors or a 12 m default,
+then a capped artistic vertical scale. Complex building relations/holes are
+excluded from this first backdrop; it is not a complete city reconstruction.
 An equirectangular local projection with midpoint-latitude correction preserves
 location relationships at each scene's scale. It is not a surveying projection.
 
@@ -41,7 +53,7 @@ Pop-Location
 node labs/travel/build.mjs
 node labs/travel/build.mjs --check
 $env:ARCHIFY_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
-node --test labs/travel/travel.test.mjs labs/travel/travel3d.test.mjs
+node --test labs/travel/travel.test.mjs labs/travel/travel3d.test.mjs labs/travel/trip.test.mjs
 ```
 
 Set `ARCHIFY_TRAVEL_EVIDENCE` to an output directory to retain desktop country,
@@ -72,10 +84,23 @@ each Wikidata entity and its coordinate at retrieval time.
   [Open Database License](https://opendatacommons.org/licenses/odbl/1-0/).
   [Dataset](https://opendata.paris.fr/explore/dataset/arrondissements/).
 - **Wikidata**, P625 coordinates, CC0. [License](https://www.wikidata.org/wiki/Wikidata:Licensing).
+- **© OpenStreetMap contributors**, ODbL. `data/trip.json` includes route
+  coordinates, OSM way IDs, a street backdrop, 343 nearby simple building rings,
+  the source timestamp and transformation notes. This derived database is
+  available under [ODbL](https://www.openstreetmap.org/copyright).
+  Rebuild it with `node labs/travel/prepare-trip.mjs roads.osm.json core.osm.json`.
+  Inputs are Overpass `out geom` snapshots: the core bbox is
+  `(48.85,2.285,48.872,2.365)` with highways, buildings, building parts,
+  parks and water; roads add `(48.871,2.289,48.878,2.31)` around the Arc.
+  The original downloads and queries from this run are in `out/city-map-size/`.
+  Input regeneration from live OSM may change the output; normal builds use the
+  committed snapshot and do not query a service.
 
 The generated page, SVG and PNG exports retain source attribution. Three.js
 is MIT licensed; its license is embedded in the generated HTML. No online map
 tiles, stock images or external fonts are loaded. Editorial descriptions are
-original short suggestions; no prices, opening times or navigation claims are
-provided. Extend the atlas by adding sourced GeoJSON, verified coordinates and
+original suggestions with suggested visit times, not confirmed reservations.
+Official opening/booking links are provided per stop; weekday closure guidance
+was checked on 2026-09-29. No live inventory or transport service is connected.
+Extend the atlas by adding sourced GeoJSON, verified coordinates and
 editorial metadata, then rebuild and exercise both scene and filter behavior.

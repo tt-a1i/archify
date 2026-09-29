@@ -10,7 +10,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 test('travel artifact is reproducible and source coordinates have valid provenance', () => {
   execFileSync(process.execPath, [path.join(root,'build.mjs'), '--check']);
   const places=JSON.parse(fs.readFileSync(path.join(root,'data/places.json')));
-  assert.equal(new Set(places.map(p=>p.id)).size,8);
+  assert.equal(new Set(places.map(p=>p.id)).size,10);
   for(const p of places){assert.ok(p.source.endsWith(p.id));assert.ok(p.coordinates[0]>-6&&p.coordinates[0]<10);assert.ok(p.coordinates[1]>41&&p.coordinates[1]<52);}
   assert.equal(JSON.parse(fs.readFileSync(path.join(root,'data/paris-arrondissements.geojson'))).features.length,20);
 });

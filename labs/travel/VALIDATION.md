@@ -29,3 +29,25 @@ notifier rerun is `out/travel-notifier-recheck.log`.
 
 The 3D addition is confined to this lab; it does not change the shared viewer
 or release package, so its final validation uses the affected travel suites.
+
+## Three-day itinerary integration
+
+The follow-up adds the curated France/Paris three-day sentence entry point,
+six stops, optional date warnings, day-specific camera framing and selection,
+three OSM walking previews with 3D directional arrows, a street/building
+backdrop, itinerary JSON and combined map/timetable PNG export. General LLM
+generation, live bookings and production navigation are not implemented.
+
+Four affected tests pass (no skips): reproducible artifact/provenance, 2D
+browser regression, 3D/browser itinerary interactions, and route continuity.
+Browser coverage includes the requested Chinese prompt, unsupported-request
+feedback, day 3 filtering, schedule selection, Monday closure warning, camera
+controls, PNG output, narrow viewport and forced WebGL fallback. Data checks
+cover all six sourced stops, matching route order, road-segment continuity,
+distance totals, endpoint gaps and building-height provenance.
+
+Evidence: `out/travel-trip-tests.log` and `out/travel-trip-evidence/`.
+`france-three-days.png` is generated through the page's export button; its
+layout and the desktop page were visually inspected. OSM routes remain
+planning previews: the offline graph does not model barriers at nodes,
+accessibility or live closures, and attraction coordinates are not entrances.
