@@ -10,9 +10,9 @@ export function buildPackages({root,html,data,camera,threeBundle,buildSync,check
   const trip={...data.trip,backdrop:[],water:[],buildings:[]};
   for(const family of ['france','paris','shanghai']){
     const scenes=Object.fromEntries(Object.entries(data.scenes).filter(([id])=>id===family||(family==='shanghai'&&id==='disney')));
-    const payload={...data,scenes,trip:family==='paris'?{...data.trip,buildings:[]}:trip,shanghai:family==='shanghai'?{...data.shanghai,buildings:[]}:{backdrop:[],water:[],buildings:[]}};
+    const payload={...data,scenes,disney:family==='shanghai'?{...data.disney,buildings:[]}:{backdrop:[],water:[],buildings:[]},trip:family==='paris'?{...data.trip,buildings:[]}:trip,shanghai:family==='shanghai'?{...data.shanghai,buildings:[]}:{backdrop:[],water:[],buildings:[]}};
     manifest.groups[family]={base:asset(family+'-base',JSON.stringify(payload),family,family+' · 地理与行程')};
-    if(family!=='france')manifest.groups[family].height=asset(family+'-height',JSON.stringify({buildings:(family==='paris'?data.trip:data.shanghai).buildings}),family,family+' · 建筑高度');
+    if(family!=='france')manifest.groups[family].height=asset(family+'-height',JSON.stringify({disneyBuildings:family==='shanghai'?data.disney.buildings:[],buildings:(family==='paris'?data.trip:data.shanghai).buildings}),family,family+' · 建筑高度');
   }
   manifest.shared.atlas=asset('atlas',`var Archify={};function viewerText(){return ''; }\n${camera}\n${read('runtime.js')}\n${read('planner.js')}`,'engine','互动界面','text/javascript');
   manifest.shared.renderer=asset('renderer',threeBundle,'engine','固定插画渲染器','text/javascript');

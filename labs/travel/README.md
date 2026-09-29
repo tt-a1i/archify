@@ -166,9 +166,9 @@ image were checked after this change (`out/travel-air-tests.log`,
 ## Shanghai three-day itinerary
 
 The local curated Shanghai template covers Oriental Pearl → Lujiazui → SWFC
-(exterior), a full Disneyland day, and Yu Garden → Bund. All six stops retain
-Wikidata coordinates. Disneyland uses a separate location window with an
-original symbolic castle, not a park survey or attraction layout. The general
+(exterior), a full Disneyland day, and Yu Garden → Bund. Stops retain sourced coordinates. Disneyland uses a separate OSM park view
+with an original symbolic castle anchored to its OSM footprint; it is not an
+official attraction or navigation map. The general
 Shanghai view shows the central-city stops; day buttons, the day select and
 schedule stops switch between views. Shanghai arrows indicate order only; no
 road routing, verified transit duration, ticket inventory or dated opening
@@ -176,3 +176,18 @@ confirmation is implied. Official reference links accompany available stops.
 Both Shanghai and Paris retain the fixed air-arc-v1 arrows and three display
 levels. PNG export includes the selected view and itinerary; JSON exports the
 current destination plan.
+
+## Disney park geography
+
+The map heading now links directly to day 2; legend day titles are also buttons.
+Disney uses OSM boundary way 494725605, 211 in-park road runs, 174 building
+footprints and 13 closed water surfaces. The same illustrative castle is anchored
+to the OSM castle footprint center (way 494348161), replacing the generic park
+coordinate. Its shape and proportions remain artistic, not a surveyed model.
+Snapshots are in `data/disney.json` under ODbL; regenerate using
+`prepare-disney.mjs` and the recorded Overpass inputs. Edge-crossing buildings,
+complex relations and water polygons are omitted. This is not an official park
+map, verified pedestrian route or live attraction/queue dataset. Park geography
+is included in the Shanghai base and park buildings in its height layer.
+The visual lock was reviewed for scene/data wiring and navigation additions;
+materials, landmark geometry, lighting and air-arc-v1 remain unchanged.

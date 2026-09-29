@@ -101,3 +101,10 @@ The manifest checks each content hash and the explicit visual baseline lock.
 The portable offline atlas retains the existing interaction/export/browser tests.
 No claim is made about all browsers, production CDN deployment or global coverage.
 Evidence: `out/travel-packages-evidence/` and tool-reported focused test results.
+
+## Disney map completion
+
+Added sourced park boundary, roads, water and building footprints plus a visible
+map-heading entry and clickable day legend. Browser regression follows the
+entry to Disney, verifies park data and returns to the city. Evidence:
+`out/disney-map-evidence/disney-map.png`; visual style remains the same.

@@ -114,7 +114,7 @@ function disposeWorld() {
 }
 function rebuild() {
   if(!renderer)return;
-  const next=atlas.scene(),changed=sceneId!==next;sceneId=next;legend.hidden=sceneId==='france';legend.replaceChildren();const title=document.createElement('strong');title.textContent=cityTrip().title;legend.append(title);for(const d of cityTrip().days){const row=document.createElement('span');row.style.color=d.color;row.textContent=String(d.day).padStart(2,'0')+'　'+d.title;legend.append(row);}const note=document.createElement('small');note.textContent='空中连线＝游览顺序 · 非道路轨迹';legend.append(note);disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
+  const next=atlas.scene(),changed=sceneId!==next;sceneId=next;legend.hidden=sceneId==='france';legend.replaceChildren();const title=document.createElement('strong');title.textContent=cityTrip().title;legend.append(title);for(const d of cityTrip().days){const row=document.createElement('button');row.type='button';row.addEventListener('click',()=>document.querySelectorAll('#trip-days button')[d.day].click());row.style.color=d.color;row.textContent=String(d.day).padStart(2,'0')+'　'+d.title;legend.append(row);}const note=document.createElement('small');note.textContent='空中连线＝游览顺序 · 非道路轨迹';legend.append(note);disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
   const base=box(world,1440,heightMode?24:1,1080,0xabbcaf,0,heightMode?(sceneId==='paris'?-54:-62):16,0);base.receiveShadow=true;
   const loader=new SVGLoader();
   for(const [index,region] of data.scenes[sceneId].paths.entries()) {
@@ -131,14 +131,14 @@ function rebuild() {
   }
   const visible=new Set(atlas.visible());
   const points=data.places.filter(p=>p.scene===sceneId&&visible.has(p.id));points.forEach(landmark);
-  if(sceneId==='paris'||sceneId==='shanghai')drawCity(visible);
+  if(['paris','shanghai','disney'].includes(sceneId))drawCity(visible);
   if(changed)reset();selection();requestFrame();
 }
 function fitDistance() {return Math.max(1400/Math.max(camera.aspect,.25),1050)*1.85;}
 function drawCity(visible) {
-  const city=sceneId==='shanghai'?data.shanghai:data.trip;
-  const surface=sceneId==='shanghai'?22:18;
-  for(const points of (sceneId==='shanghai'?city.water:[])){
+  const city=sceneId==='shanghai'?data.shanghai:sceneId==='disney'?data.disney:data.trip;
+  const surface=sceneId==='paris'?18:22;
+  for(const points of (sceneId!=='paris'?city.water:[])){
     const shape=new THREE.Shape(points.map(p=>new THREE.Vector2(p[0]-700,p[1]-525)));
     const geo=new THREE.ShapeGeometry(shape);geo.rotateX(Math.PI/2);
     const water=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x9fc5c6,side:THREE.DoubleSide,roughness:.6}));water.position.y=surface+.3;water.userData.disposeMaterial=true;world.add(water);
@@ -160,13 +160,13 @@ function drawCity(visible) {
 }
 function reset(top=false) {
   if(!camera)return;let distance=fitDistance();controls.target.set(0,0,0);
-  if(sceneId==='shanghai'){distance=Math.max(1550,1400/Math.max(camera.aspect,.25));}
+  if(sceneId==='shanghai'||sceneId==='disney'){distance=Math.max(1550,1400/Math.max(camera.aspect,.25));}
   if(sceneId==='paris'){controls.target.set(-70,15,-10);distance=Math.max(700,660/Math.max(camera.aspect,.25));}
   camera.position.copy((top?new THREE.Vector3(0,1,.001):new THREE.Vector3(.15,.95,1)).normalize().multiplyScalar(distance)).add(controls.target);
   controls.update();requestFrame();
 }
 function focus(id){const p=data.places.find(p=>p.id===id);if(!active||!p||p.scene!==sceneId)return;const offset=camera.position.clone().sub(controls.target).normalize().multiplyScalar(650);controls.target.set(p.point[0]-700,20,p.point[1]-525);camera.position.copy(controls.target).add(offset);controls.update();requestFrame();}
-function focusDay(day){if(!active||sceneId==='france')return;if(!day){reset();return;}const points=data.places.filter(p=>p.scene===sceneId&&p.day===day).map(p=>p.point);if(!points.length)return;const route={points};const box=new THREE.Box3().setFromPoints(route.points.map(p=>new THREE.Vector3(p[0]-700,20,p[1]-525))),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());const distance=Math.max(650,size.z*2.4,size.x/Math.max(camera.aspect,.25)*2.4);const offset=camera.position.clone().sub(controls.target).normalize().multiplyScalar(distance);controls.target.copy(center);camera.position.copy(center).add(offset);controls.update();requestFrame();}
+function focusDay(day){if(!active||sceneId==='france')return;if(!day||sceneId==='disney'){reset();return;}const points=data.places.filter(p=>p.scene===sceneId&&p.day===day).map(p=>p.point);if(!points.length)return;const route={points};const box=new THREE.Box3().setFromPoints(route.points.map(p=>new THREE.Vector3(p[0]-700,20,p[1]-525))),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());const distance=Math.max(650,size.z*2.4,size.x/Math.max(camera.aspect,.25)*2.4);const offset=camera.position.clone().sub(controls.target).normalize().multiplyScalar(distance);controls.target.copy(center);camera.position.copy(center).add(offset);controls.update();requestFrame();}
 function selection() {if(!renderer)return;for(const {button,p} of labels)button.classList.toggle('selected',p.id===atlas.selected());requestFrame();}
 function renderLabels() {
   const rect=stage.getBoundingClientRect(), occupied=[];

@@ -43,6 +43,10 @@ test('HTTP packages: lazy height, cached reload, offline shell, navigation and d
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>/paris-base|france-base/.test(r.name))"),false);
   await run("document.getElementById('mode-3d').click()");await wait('Archify.travel3d.state().heightMode');await stable();
   assert.ok(await run('Archify.travel3d.state().markerHeights.some(h=>h>100)'));
+  assert.equal(await run("document.getElementById('disney-open').hidden"),false);
+  await run("document.getElementById('disney-open').click()");await stable();assert.equal(await run('Archify.travel.scene()'),'disney');assert.ok(await run('TravelData.disney.buildings.length>100&&TravelData.disney.backdrop.length>100&&TravelData.disney.water.length>0'));
+  if(process.env.ARCHIFY_TRAVEL_EVIDENCE){fs.mkdirSync(process.env.ARCHIFY_TRAVEL_EVIDENCE,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/disney-map.png',Buffer.from(shot.data,'base64'));}
+  await run("document.getElementById('disney-open').click()");await stable();assert.equal(await run('Archify.travel.scene()'),'shanghai');
   const pixels=await run("document.querySelector('#stage-3d canvas').toDataURL()");
   await wait('Boolean(navigator.serviceWorker.controller)');{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:url+'?view=3d#scene=shanghai'});await loaded;}await wait('Boolean(window.Archify?.travel3d?.state().active)');await stable();
   assert.equal(createHash('sha256').update(await run("document.querySelector('#stage-3d canvas').toDataURL()")).digest('hex'),createHash('sha256').update(pixels).digest('hex'),'same camera and cached data retain appearance');
