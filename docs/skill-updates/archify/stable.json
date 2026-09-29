@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "skillId": "archify",
   "channel": "stable",
-  "version": "2.16.0",
-  "publishedAt": "2026-08-30T11:13:26Z",
+  "version": "3.0.1",
+  "publishedAt": "2026-09-28T15:16:27Z",
   "source": {
     "repository": "https://github.com/tt-a1i/archify",
-    "ref": "v2.16.0",
-    "treeSha": "a198a3e0d03cd08eb582062a52dc4b0bd5b0aa4f"
+    "ref": "v3.0.1",
+    "treeSha": "7dcd73a73672d5da4f85d4c612017b478547303b"
   },
   "artifact": {
-    "sha256": "4c59fa6557a2385beaaef8c7219cc414573acc9f0c30a932d5053b0b20689a46"
+    "sha256": "b0b23bd28db314f04ca8ab9620fe20f8c1ac6474a3546bd8fe4679508aa1b7f5"
   },
-  "summary": "Adds constraint-driven compilation and update awareness, improves multilingual authoring and viewer behavior, and hardens reproducible releases.",
-  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v2.16.0",
+  "summary": "Makes verified stable update reminders part of normal diagram delivery, with repeat notices and explicit snooze or ignore controls.",
+  "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.0.1",
   "severity": "normal"
 }
