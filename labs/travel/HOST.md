@@ -51,3 +51,8 @@ not terrain elevation. Overview/daily modes both use `air-arc-v1` arrows.
 The command validates data and compiles the workflow; its receipt does not assert
 coordinate truth, venue availability, booking status, or visual review. The host
 must research those facts and perform browser checks before making such claims.
+
+Water rings crossing a tile boundary are clipped instead of dropped. The overview
+keeps the available sourced water outlines, while omitting streets and buildings.
+Shorelines, muted surface texture and cutaway soil colors use the fixed v4 style;
+texture and cutaway layers are illustrative, not DEM terrain heights or geology.

@@ -19,12 +19,18 @@ selected day. It can represent other cities without renderer changes; detailed
 geometry and bespoke models are **not** automatically available for every city.
 Without supplied detail, the day is a landmark-only block with honest labels.
 
-Style `illustrated-diorama-v3` records the geographic overview requested by the user
+Style `illustrated-diorama-v4` records the geographic overview requested by the user
 and daily blocks; the overview now preserves geographic anchor positions. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
 tests cover Shanghai/Paris, cross-day links, lazy day fetching, offline cached
 days, arbitrary-duration input, repeated places, date-line coordinates and GPU
 geometry disposal. `offline.html` preserves the earlier compatibility fixture;
 new portable trips are produced by `render-journey.mjs`.
+
+The v4 landform layer retains available sourced water polygons in overview and
+daily tiles, clips rivers crossing the tile boundary, and draws shoreline edges.
+A fixed muted ground texture and cutaway soil bands are decorative; no DEM or
+measured ground elevations have been added. Water coverage remains limited to
+the supplied snapshots. Draw ordering is stable across cached reloads.
 
 The remaining sections below record earlier experimental stages; this section
 and HOST.md describe the current host-generated journey path.

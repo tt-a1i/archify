@@ -53,8 +53,10 @@ test('HTTP packages: lazy height, cached reload, offline shell, navigation and d
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>/shanghai-day-[13]/.test(r.name))"),false,'only the chosen day downloads');
   if(process.env.ARCHIFY_TRAVEL_EVIDENCE){fs.mkdirSync(process.env.ARCHIFY_TRAVEL_EVIDENCE,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/disney-map.png',Buffer.from(shot.data,'base64'));}
   await run("document.querySelector('#trip-days [data-day=\"0\"]').click()");await stable();assert.equal(await run('Archify.travel.scene()'),'journey');assert.equal(await run('Archify.travel3d.state().detailBuildings'),0);
-  const pixels=await run("document.querySelector('#stage-3d canvas').toDataURL()");
+  const pixels=await run("document.querySelector('#stage-3d canvas').toDataURL()");const beforeCamera=await run('Archify.travel3d.state().camera');
   await wait('Boolean(navigator.serviceWorker.controller)');{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.reload');await loaded;}await wait('Boolean(window.Archify?.travel3d?.state().active)');await stable();
+  assert.deepEqual(await run('Archify.travel3d.state().camera'),beforeCamera);
+  if(process.env.ARCHIFY_TRAVEL_EVIDENCE){fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/before-cache.png',Buffer.from(pixels.split(',')[1],'base64'));fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/after-cache.png',Buffer.from((await run("document.querySelector('#stage-3d canvas').toDataURL()")).split(',')[1],'base64'));}
   assert.equal(createHash('sha256').update(await run("document.querySelector('#stage-3d canvas').toDataURL()")).digest('hex'),createHash('sha256').update(pixels).digest('hex'),'same camera and cached data retain appearance');
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>r.name.includes('shanghai-day-'))"),false,'overview does not reload any height layer');
   await run("document.getElementById('trip-form').requestSubmit()");await stable();assert.equal(await run("document.body.dataset.travelView"),'flow');await run("document.getElementById('mode-3d').click()");await stable();assert.equal(await run("document.querySelector('#stage-3d canvas').toDataURL()"),pixels,'generation changes no visual style');

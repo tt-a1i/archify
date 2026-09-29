@@ -5,9 +5,20 @@ import os from 'node:os';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {spawn,execFileSync} from 'node:child_process';
-import {createJourney,validateJourney} from './journey.mjs';
+import {createJourney,validateJourney,clipWater} from './journey.mjs';
 import {ChromeVisualBrowser} from '../../archify/bin/visual-check.mjs';
 const sample=()=>JSON.parse(fs.readFileSync(new URL('./examples/host-journey.json',import.meta.url)));
+test('water crossing the tile is clipped, retained in overview, and absent off-tile',()=>{
+  const polygon=clipWater([[0,300],[1400,300],[1400,600],[0,600]]);
+  assert.equal(polygon.length,4);assert.ok(polygon.every(([x,y])=>x>=290&&x<=1110&&y>=115&&y<=935));
+  assert.deepEqual(clipWater([[0,0],[10,0],[0,10]]),[]);
+  const input=sample();const p=input.places.find(p=>p.id===input.days[0].stops[0].placeId).coordinates;
+  input.days[0].geography={source:'https://www.openstreetmap.org/copyright',roads:[],buildings:[],water:[[[p[0]-.1,p[1]-.002],[p[0]+.1,p[1]-.002],[p[0]+.1,p[1]+.002],[p[0]-.1,p[1]+.002]]]};
+  const data=createJourney(input);assert.equal(data.journey.tiles.journey.water.length,1);assert.equal(data.journey.tiles['day-1'].water.length,1);
+  input.days=input.days.slice(0,1);input.days[0].stops=[{placeId:input.days[0].stops[0].placeId,time:'上午',duration:'1 小时'}];
+  input.days[0].geography.water=[[[p[0]-.002,p[1]-.001],[p[0]-.001,p[1]-.001],[p[0]-.001,p[1]+.001],[p[0]-.002,p[1]+.001]]];
+  const west=createJourney(input).journey.tiles['day-1'].water;assert.equal(west.length,1);assert.ok(west[0].every(([x])=>x>290&&x<700),'nearby water west of the first landmark must not wrap around the globe');
+});
 test('overview preserves geographic direction, distance ratios and positions independent of visit order',()=>{
   const input=sample();input.days=input.days.slice(0,1);input.places=input.places.slice(0,3);
   input.places.forEach((p,i)=>{p.coordinates=[121+i*.01,31];});

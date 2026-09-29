@@ -21,8 +21,20 @@ export function validateJourney(input){
   return input;
 }
 // Unwrap at the largest longitude gap: trips across the dateline stay compact.
-function extent(points){const xs=points.map(p=>(p[0]+360)%360).sort((a,b)=>a-b);let gap=-1,start=xs[0];for(let i=0;i<xs.length;i++){const next=xs[(i+1)%xs.length]+(i===xs.length-1?360:0);if(next-xs[i]>gap){gap=next-xs[i];start=next%360;}}const unwrap=x=>{x=(x+360)%360;return x<start?x+360:x;};const lats=points.map(p=>p[1]),ys=[Math.min(...lats),Math.max(...lats)],lngs=points.map(p=>unwrap(p[0]));const cos=Math.max(.08,Math.cos((ys[0]+ys[1])/2*Math.PI/180));const size=Math.max(.008,(Math.max(...lngs)-Math.min(...lngs))*cos,ys[1]-ys[0])*1.25;const cx=(Math.min(...lngs)+Math.max(...lngs))/2,cy=(ys[0]+ys[1])/2;return {size,unwrap,cos,cx,cy,project:p=>[700+(unwrap(p[0])-cx)*cos/size*820,525-(p[1]-cy)/size*820]};}
+function extent(points){const xs=points.map(p=>(p[0]+360)%360).sort((a,b)=>a-b);let gap=-1,start=xs[0];for(let i=0;i<xs.length;i++){const next=xs[(i+1)%xs.length]+(i===xs.length-1?360:0);if(next-xs[i]>gap){gap=next-xs[i];start=next%360;}}const unwrap=x=>{x=(x+360)%360;return x<start?x+360:x;};const lats=points.map(p=>p[1]),ys=[Math.min(...lats),Math.max(...lats)],lngs=points.map(p=>unwrap(p[0]));const cos=Math.max(.08,Math.cos((ys[0]+ys[1])/2*Math.PI/180));const size=Math.max(.008,(Math.max(...lngs)-Math.min(...lngs))*cos,ys[1]-ys[0])*1.25;const cx=(Math.min(...lngs)+Math.max(...lngs))/2,cy=(ys[0]+ys[1])/2;return {size,unwrap,cos,cx,cy,project:p=>[700+(p[0]+360*Math.round((cx-p[0])/360)-cx)*cos/size*820,525-(p[1]-cy)/size*820]};}
 function cutLine(line,frame){const out=[];let run=[];for(const p of line){const q=frame.project(p);if(q[0]>=290&&q[0]<=1110&&q[1]>=115&&q[1]<=935)run.push(q);else{if(run.length>1)out.push(run);run=[];}}if(run.length>1)out.push(run);return out;}
+// Clip crossing water rings instead of discarding the river when its shore
+// extends outside a daily tile. Coordinates and geographic scale stay intact.
+export function clipWater(ring){
+  let points=ring.slice();
+  for(const [axis,bound,sign] of [[0,290,1],[0,1110,-1],[1,115,1],[1,935,-1]]){
+    const input=points;points=[];if(!input.length)break;
+    for(let i=0;i<input.length;i++){const a=input[i],b=input[(i+1)%input.length],ai=sign*(a[axis]-bound)>=0,bi=sign*(b[axis]-bound)>=0;
+      if(ai)points.push(a);if(ai!==bi){const t=(bound-a[axis])/(b[axis]-a[axis]);points.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);}
+    }
+  }
+  return points.length>=3?points:[];
+}
 export function createJourney(candidate){
   const input=validateJourney(candidate),lookup=new Map(input.places.map(p=>[p.id,p])),visits=[],days=[];
   for(const d of input.days){const color=VISUAL.dayColors[(d.day-1)%VISUAL.dayColors.length];days.push({...d,color,scene:'day-'+d.day,stops:d.stops.map((s,i)=>{const place=lookup.get(s.placeId),id=`v${d.day}-${i+1}`;visits.push({...place,id,placeId:place.id,day:d.day,label:place.name,category:'landmark',description:s.note||'固定风格示意模型，非实景测绘。',caption:'第 '+d.day+' 天',views:{}});return {...s,id};})});}
@@ -30,11 +42,13 @@ export function createJourney(candidate){
   const scene=(id,name)=>{scenes[id]={name,english:name,subtitle:'地标与方向 · 示意模型',paths:[{name:'行程展示范围，非行政边界',d:'M290,115H1110V935H290Z'}]};};
   scene('journey',input.title);tiles.journey={backdrop:[],water:[],buildings:[],bounds:null};
   const overview=extent(visits.map(p=>p.coordinates));
+  const waters=new Map();for(const day of input.days)for(const ring of day.geography?.water||[])waters.set(JSON.stringify(ring),ring);
+  tiles.journey.water=[...waters.values()].map(r=>clipWater(r.map(overview.project))).filter(r=>r.length);
   for(const p of visits){p.views.journey=overview.project(p.coordinates);p.point=p.views.journey;p.scene='journey';}
   for(let i=1;i<visits.length;i++){const a=visits[i-1],b=visits[i];routes.push({day:b.day,from:a.id,to:b.id,color:days[b.day-1].color,points:[a.views.journey,b.views.journey],transfer:a.day!==b.day});}
   for(const d of days){const ps=visits.filter(p=>p.day===d.day),frame=extent(ps.map(p=>p.coordinates));scene(d.scene,'第 '+d.day+' 天 · '+d.title);for(const p of ps)p.views[d.scene]=frame.project(p.coordinates);
     const g=d.geography,inside=line=>line.every(p=>{const q=frame.project(p);return q[0]>=290&&q[0]<=1110&&q[1]>=115&&q[1]<=935;});
-    tiles[d.scene]={backdrop:g?g.roads.flatMap(l=>cutLine(l,frame)):[],water:g?g.water.filter(inside).map(l=>l.map(frame.project)):[],buildings:g?g.buildings.filter(b=>inside(b.coordinates)).map(b=>({points:b.coordinates.map(frame.project),height:b.height,heightSource:b.heightSource||'estimated'})):[],source:g?.source||null};
+    tiles[d.scene]={backdrop:g?g.roads.flatMap(l=>cutLine(l,frame)):[],water:g?g.water.map(l=>clipWater(l.map(frame.project))).filter(l=>l.length):[],buildings:g?g.buildings.filter(b=>inside(b.coordinates)).map(b=>({points:b.coordinates.map(frame.project),height:b.height,heightSource:b.heightSource||'estimated'})):[],source:g?.source||null};
     delete d.geography;
   }
   const plan={title:input.title,prompt:input.prompt,preferences:input.preferences,days,routes,official:Object.fromEntries(input.places.filter(p=>source(p.official)).map(p=>[p.id,p.official])),provenance:input.places.map(p=>({id:p.id,source:p.source}))};

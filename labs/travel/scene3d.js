@@ -114,7 +114,7 @@ function disposeWorld() {
 }
 function rebuild() {
   if(!renderer)return;
-  const next=atlas.scene(),changed=sceneId!==next;if(data.journey)stage.querySelector('.three-badge').innerHTML=next==='journey'?'总行程 · 地标与箭头<span>按真实坐标同比例投影 · 地标造型为示意</span>':'单日地图方块<span>真实坐标 · 高度含估算 · 非地形高程</span>';sceneId=next;legend.hidden=sceneId==='france';legend.replaceChildren();const title=document.createElement('strong');title.textContent=cityTrip().title;legend.append(title);for(const d of cityTrip().days){const row=document.createElement('button');row.type='button';row.addEventListener('click',()=>document.querySelectorAll('#trip-days button')[d.day].click());row.style.color=d.color;row.textContent=String(d.day).padStart(2,'0')+'　'+d.title;legend.append(row);}const note=document.createElement('small');note.textContent='空中连线＝游览顺序 · 非道路轨迹';legend.append(note);disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
+  const next=atlas.scene(),changed=sceneId!==next;if(data.journey)stage.querySelector('.three-badge').innerHTML=next==='journey'?'总行程 · 地标与箭头<span>按真实坐标同比例投影 · 地标造型为示意</span>':'单日地图方块<span>水系按数据绘制 · 地表层次为插画示意</span>';sceneId=next;legend.hidden=sceneId==='france';legend.replaceChildren();const title=document.createElement('strong');title.textContent=cityTrip().title;legend.append(title);for(const d of cityTrip().days){const row=document.createElement('button');row.type='button';row.addEventListener('click',()=>document.querySelectorAll('#trip-days button')[d.day].click());row.style.color=d.color;row.textContent=String(d.day).padStart(2,'0')+'　'+d.title;legend.append(row);}const note=document.createElement('small');note.textContent='空中连线＝游览顺序 · 非道路轨迹';legend.append(note);disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
   const base=box(world,1440,heightMode?24:1,1080,0xabbcaf,0,heightMode?(sceneId==='paris'?-54:-62):16,0);base.receiveShadow=true;
   const loader=new SVGLoader();
   for(const [index,region] of data.scenes[sceneId].paths.entries()) {
@@ -129,9 +129,21 @@ function rebuild() {
       border.position.y=surface+.15;border.userData.disposeMaterial=true;world.add(border);
     }
   }
+  if(data.journey&&heightMode){
+    // Fixed illustration texture and cutaway layers, not invented DEM heights.
+    for(const [y,h,color] of [[-40,18,0xb4a58a],[-23,16,0xc7b695],[-8,14,0xbac39a]])box(world,820.2,h,820.2,color,0,y,0);
+    const ground=new THREE.PlaneGeometry(820,820,24,24);ground.rotateX(-Math.PI/2);
+    const colors=[],positions=ground.attributes.position;
+    for(let i=0;i<positions.count;i++){const x=positions.getX(i),z=positions.getZ(i),c=new THREE.Color(0xcbd9ae);c.offsetHSL(0,0,(Math.sin(x*.031+z*.019)+Math.cos(z*.027-x*.013))*.012);colors.push(c.r,c.g,c.b);}
+    ground.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+    const texture=new THREE.Mesh(ground,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));texture.position.y=22.08;texture.receiveShadow=true;texture.userData.disposeMaterial=true;world.add(texture);
+  }
   const visible=new Set(atlas.visible());
   const points=data.places.filter(p=>p.scene===sceneId&&visible.has(p.id));points.forEach(landmark);
   if(data.journey||['paris','shanghai','disney'].includes(sceneId))drawCity(visible);
+  // Newly allocated shoreline/texture materials must not change draw order
+  // after a day switch versus a fresh page (overlapping snapshot water rings).
+  if(data.journey){let order=0;world.traverse(object=>{object.renderOrder=++order;});}
   if(changed)reset();selection();requestFrame();
 }
 function fitDistance() {return Math.max(1400/Math.max(camera.aspect,.25),1050)*1.85;}
@@ -141,7 +153,8 @@ function drawCity(visible) {
   for(const points of (sceneId!=='paris'?city.water:[])){
     const shape=new THREE.Shape(points.map(p=>new THREE.Vector2(p[0]-700,p[1]-525)));
     const geo=new THREE.ShapeGeometry(shape);geo.rotateX(Math.PI/2);
-    const water=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x9fc5c6,side:THREE.DoubleSide,roughness:.6}));water.position.y=surface+.3;water.userData.disposeMaterial=true;world.add(water);
+    const water=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:data.journey?0x88b9be:0x9fc5c6,side:THREE.DoubleSide,roughness:.6}));water.position.y=surface+.3;water.userData.disposeMaterial=true;world.add(water);
+    if(data.journey){const edges=[];for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];if([[0,290],[0,1110],[1,115],[1,935]].some(([axis,bound])=>Math.abs(a[axis]-bound)<.001&&Math.abs(b[axis]-bound)<.001))continue;edges.push(a[0]-700,surface+.45,a[1]-525,b[0]-700,surface+.45,b[1]-525);}const shore=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(edges,3)),new THREE.LineBasicMaterial({color:0x628f87,transparent:true,opacity:.65}));shore.userData.disposeMaterial=true;world.add(shore);}
   }
   const segments=[];for(const line of city.backdrop)for(let i=1;i<line.length;i++)segments.push(line[i-1][0]-700,surface+.5,line[i-1][1]-525,line[i][0]-700,surface+.5,line[i][1]-525);
   const streets=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(segments,3)),new THREE.LineBasicMaterial({color:0xb2b5a5,transparent:true,opacity:.55}));streets.userData.disposeMaterial=true;world.add(streets);
@@ -236,7 +249,7 @@ async function setMode(want3d,withHeight=true) {
   if(want3d&&failed)return;
   if(want3d&&!renderer&&!init())return;
   active=want3d;stage.hidden=!active;flat.hidden=active;
-  document.getElementById('mode-3d').setAttribute('aria-pressed',String(active&&heightMode));document.getElementById('mode-flat').setAttribute('aria-pressed',String(active&&!heightMode));stage.querySelector('.three-badge').innerHTML=data.journey?(atlas.scene()==='journey'?'总行程 · 地标与箭头<span>按真实坐标同比例投影 · 地标造型为示意</span>':'单日地图方块<span>真实坐标 · 建筑高度含估算 · 非地形高程</span>'):heightMode?'插画立体沙盘<span>地标艺术造型 · 建筑高度含估算 · 非真实地形高程</span>':'插画平面沙盘<span>可旋转的平面地理 · 无建筑高度</span>';document.getElementById('mode-2d').setAttribute('aria-pressed',String(!active));
+  document.getElementById('mode-3d').setAttribute('aria-pressed',String(active&&heightMode));document.getElementById('mode-flat').setAttribute('aria-pressed',String(active&&!heightMode));stage.querySelector('.three-badge').innerHTML=data.journey?(atlas.scene()==='journey'?'总行程 · 地标与箭头<span>按真实坐标同比例投影 · 地标造型为示意</span>':'单日地图方块<span>水系按数据绘制 · 地表层次为插画示意</span>'):heightMode?'插画立体沙盘<span>地标艺术造型 · 建筑高度含估算 · 非真实地形高程</span>':'插画平面沙盘<span>可旋转的平面地理 · 无建筑高度</span>';document.getElementById('mode-2d').setAttribute('aria-pressed',String(!active));
   footerHint.textContent=active?'左键 / 单指旋转 · 滚轮 / 双指缩放 · 右键平移':originalHint;
   exportButton.textContent=active?'导出 3D 视角 PNG':'导出当前地图 SVG';
   if(active){resize();if(!world||changed||data.journey)rebuild();requestFrame();}else{if(frame)cancelAnimationFrame(frame);frame=0;Archify.view.fitAll();document.getElementById('detail-level').textContent='2D · 缩放探索';}
