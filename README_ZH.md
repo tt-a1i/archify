@@ -79,10 +79,6 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 ## ❤️ 赞助伙伴
 
-<p align="center">
-  <a href="https://www.kimi.com/?aff=archify"><img src="docs/assets/sponsors/archify-kimi-work.png" alt="Archify × Kimi Work 合作海报" width="800" /></a>
-</p>
-
 **Archify × Kimi Work。** 在 Kimi Work 插件商店搜索 **「可交互架构图」**，用一句话描述你的系统，即可生成可交互的图。**[在 Kimi Work 中使用 →](https://www.kimi.com/?aff=archify)**
 
 <table>

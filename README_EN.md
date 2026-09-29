@@ -79,10 +79,6 @@ Then continue: “Add authentication”, “Highlight the cache-miss path”, or
 
 ## ❤️ Sponsors
 
-<p align="center">
-  <a href="https://www.kimi.ai/?aff=archify"><img src="docs/assets/sponsors/archify-kimi-work.png" alt="Archify × Kimi Work collaboration banner" width="800" /></a>
-</p>
-
 **Archify × Kimi Work.** Find Archify in the Kimi Work plugin store as **Interactive Architecture Diagram**. Describe your system in one sentence to create an interactive diagram. **[Try it in Kimi Work →](https://www.kimi.ai/?aff=archify)**
 
 <table>
