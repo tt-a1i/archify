@@ -108,3 +108,21 @@ Added sourced park boundary, roads, water and building footprints plus a visible
 map-heading entry and clickable day legend. Browser regression follows the
 entry to Disney, verifies park data and returns to the city. Evidence:
 `out/disney-map-evidence/disney-map.png`; visual style remains the same.
+# Host journeys and daily blocks — 2026-09-29
+
+Ran all five travel test files with Chrome: **10 tests passed, 0 skipped**.
+The earlier HTTP coverage was retained and adapted to day packages. New checks
+exercise five-day input, seven stops in one day, repeated place visits, invalid
+coordinates/models/source URLs, antimeridian projection, geometry cropping,
+four-day portable CLI output, keyboard node navigation, day-only downloads,
+cached days offline, and repeated scene switches without GPU geometry growth.
+Legacy offline navigation, rotation, export and WebGL fallback remain covered.
+
+Visually inspected Shanghai's full overview in the app, Disney's detailed day
+block and Paris's full overview. Evidence from the automated browser run is in
+`out/journey-evidence/` (local, not a shipped input). The user-authorized layout
+change is pinned as `illustrated-diorama-v2`; the `air-arc-v1` arrow contract and
+pastel materials are unchanged. Host generation is repo-local via SKILL.md and
+render-journey.mjs, not a live installation or new model backend. Coordinate
+provenance URLs are structurally validated; truth/availability still requires
+host research. This work did not run or claim the full core renderer suite.

@@ -10,5 +10,6 @@
 body[data-travel-view=flow] .diagram-container,body[data-travel-view=flow] #stage-3d,body[data-travel-view=flow] .map-footer,body[data-travel-view=flow] #disney-open{display:none!important}body[data-travel-view=map] #travel-flow{display:none}
 .trip-route-note{display:none}.edition a{font-size:12px}.package-status:empty{display:none}
 main{grid-template-columns:300px minmax(0,1fr)}
+#trip-days{flex-wrap:wrap;max-height:190px;overflow:auto}#trip-days button{flex:0 0 auto;min-width:60px}.trip-legend{max-height:220px;overflow:auto;pointer-events:auto}
 @media(max-width:1100px){main{display:flex;flex-direction:column;height:auto;min-height:calc(100dvh - 76px)}.sidebar{width:auto;overflow:visible}.sidebar h1,.sidebar .scope,.trip-plan-title{display:none}.trip-panel{margin:0}.trip-panel form{border:0;padding:0}#trip-prompt{min-height:50px}.trip-days{margin-bottom:0}.trip-more{margin-top:10px}.map-column{min-height:600px}#flow-drawing svg{min-width:760px}}
 @media(max-width:800px){.sidebar{width:auto;padding:16px}.sidebar h1{font-size:23px;margin:0}.trip-panel{margin:12px 0}.trip-form-row{align-items:center}.trip-plan-title{margin-top:14px}#travel-flow{padding:16px;min-height:420px}.flow-caption h2{font-size:21px}.map-column{min-height:540px}}

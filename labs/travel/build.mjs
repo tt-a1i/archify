@@ -1,5 +1,6 @@
 import {buildPackages,styleIdentity} from './build-packages.mjs';
 import {buildFlow} from './build-flow.mjs';
+import {createJourney} from './journey.mjs';
 import {VISUAL} from './visual-style.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -77,7 +78,9 @@ trip.buildings=trip.buildings.map(b=>({...b,points:b.coordinates.map(p=>project(
 for(const p of places)if(!VISUAL.icons.includes(p.icon))throw Error('Unapproved landmark model: '+p.icon);
 for(const plan of [trip,shanghaiTrip]){for(const day of plan.days)day.color=VISUAL.dayColors[day.day-1];for(const route of plan.routes)route.color=VISUAL.dayColors[route.day-1];}
 const flows={paris:buildFlow(trip,places),shanghai:buildFlow(shanghaiTrip,places)};
-const payload = JSON.stringify({ flows, visualStyle:styleIdentity(root), scenes, places, trip, shanghai, disney, shanghaiTrip, sources: json('sources.json') }).replace(/</g, '\\u003c');
+const candidateArg=process.argv.indexOf('--candidate'),outputArg=process.argv.indexOf('--output');
+const custom=candidateArg>=0?createJourney(JSON.parse(fs.readFileSync(process.argv[candidateArg+1],'utf8'))):null;
+const payload = JSON.stringify(custom?{...custom,visualStyle:styleIdentity(root)}:{ flows, visualStyle:styleIdentity(root), scenes, places, trip, shanghai, disney, shanghaiTrip, sources: json('sources.json') }).replace(/</g, '\\u003c');
 const camera = fs.readFileSync(path.join(root, '../../viewer/viewer-camera.js'), 'utf8');
 const threeBundle = buildSync({ entryPoints: [path.join(root, 'scene3d.js')], bundle: true,
   format: 'iife', write: false, minify: true, legalComments: 'inline', target: 'es2020',
@@ -102,10 +105,10 @@ ${read('flow-view.css')}</style></head>
 <div class="map-footer"><span>拖动：右键 / 空格＋左键　·　缩放：Ctrl / ⌘＋滚轮</span><button id="sources-toggle" aria-expanded="false" aria-controls="sources">© OSM · Paris · Natural Earth ↗</button></div><div id="sources" hidden>边界：<a href="https://www.naturalearthdata.com/">Natural Earth</a>（公共领域） · 行政区：<a href="https://opendata.paris.fr/explore/dataset/arrondissements/">© Ville de Paris</a>（<a href="https://opendatacommons.org/licenses/odbl/">ODbL</a>） · 坐标：<a href="https://www.wikidata.org/wiki/Wikidata:Licensing">Wikidata / CC0</a>。数据快照：2026-09-29；法国范围为本土及科西嘉岛；上海为陆家嘴局部视窗。地标插画为原创装饰，不代表建筑占地。所有底图数据随源码提供。街道、沿线建筑与步行路线：<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors / ODbL</a>；数据快照随 trip.json / shanghai.json / disney.json 提供，高度缺失时采用示意值。</div></section></main>
 <script id="travel-data" type="application/json">${payload}</script><script>var Archify = {};function viewerText(key, values) { return key === 'viewer.nav.camera' || key === 'viewer.nav.camera.title' ? '重置到 100%' : key === 'viewer.nav.detail.full' ? '地图详情' : ''; }
 ${camera}
-${read('runtime.js')}
-${read('planner.js')}
+if(window.TravelData?.journey||JSON.parse(document.getElementById('travel-data').textContent).journey){${read('journey-runtime.js')}}else{${read('runtime.js')}
+${read('planner.js')}}
 ${read('flow-view.js')}
 </script><script>${threeBundle.replace(/<\/script/gi, '<\\/script')}</script>
 <script type="text/plain" id="three-license">${threeLicense}</script></body></html>`;
-buildPackages({root,html,data:JSON.parse(payload),camera,threeBundle,buildSync,check:process.argv.includes('--check')});
+if(custom){if(outputArg<0)throw Error('--output required');fs.mkdirSync(path.dirname(path.resolve(process.argv[outputArg+1])),{recursive:true});fs.writeFileSync(process.argv[outputArg+1],html.replace('href="world.html"','href="#scene=journey"').replace('切换目的地 ↗','返回总行程 ↗'));}else buildPackages({root,html,data:JSON.parse(payload),raw:{paris:json('trip.json'),shanghai:json('shanghai.json'),disney:json('disney.json')},camera,threeBundle,buildSync,check:process.argv.includes('--check')});
 console.log('Built versioned destination packages and portable offline atlas');

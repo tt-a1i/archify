@@ -1,5 +1,34 @@
 # Archify Travel experiment
 
+## Host generation and overview/day blocks (current)
+
+In this checkout, root `AGENTS.md` routes travel requests to [SKILL.md](SKILL.md).
+The host LLM researches the requested cities, duration and preferences, writes
+the [HOST.md](HOST.md) contract, then calls `render-journey.mjs`. No separate model
+API, spawned agent or installed Skill is required. A four-day example is in
+`examples/host-journey.json`. The browser copies a revision request for the host;
+it does not pretend that a static form can call the host LLM directly.
+
+The current online Shanghai/Paris examples use a connected, schematic overview:
+all visits, N−1 arrows including cross-day transfers, no streets/ordinary
+buildings. Daily scenes use real coordinates in an isolated square and fetch
+only their content-addressed day package. Leaving a scene disposes its Three.js
+geometry. The day packages use the existing private integrity/LRU cache.
+Portable host-generated HTML embeds supplied geometry but constructs only the
+selected day. It can represent other cities without renderer changes; detailed
+geometry and bespoke models are **not** automatically available for every city.
+Without supplied detail, the day is a landmark-only block with honest labels.
+
+Style `illustrated-diorama-v2` records the user-requested lightweight overview
+and daily blocks. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
+tests cover Shanghai/Paris, cross-day links, lazy day fetching, offline cached
+days, arbitrary-duration input, repeated places, date-line coordinates and GPU
+geometry disposal. `offline.html` preserves the earlier compatibility fixture;
+new portable trips are produced by `render-journey.mjs`.
+
+The remaining sections below record earlier experimental stages; this section
+and HOST.md describe the current host-generated journey path.
+
 ## Flowchart first
 
 The travel UI opens with a daily workflow, compiled by Archify's existing

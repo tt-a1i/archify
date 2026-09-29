@@ -1,7 +1,7 @@
 import {PackageCache} from './package-cache.js';
 const manifest=JSON.parse(document.getElementById('package-manifest').textContent);
 const family=scene=>scene==='disney'?'shanghai':['france','paris','shanghai'].includes(scene)?scene:'france';
-const initial=new URLSearchParams(location.hash.slice(1)).get('scene')||'france',group=family(initial);
+const initial=new URLSearchParams(location.hash.slice(1)).get('scene')||'france',requested=new URLSearchParams(location.search).get('destination'),group=manifest.groups[requested]?requested:family(initial);
 const banner=document.createElement('p');banner.id='package-status';banner.setAttribute('role','status');banner.className='package-status';document.querySelector('header').after(banner);
 let preferences={budget:64,pins:[]};try{const saved=JSON.parse(localStorage.getItem('travel-package-preferences'));if(saved&&Number.isFinite(saved.budget)&&saved.budget>=5&&saved.budget<=256&&Array.isArray(saved.pins))preferences=saved;}catch{}
 const manager=new PackageCache({budget:preferences.budget*1024*1024,notify:text=>banner.textContent=text});manager.pins=new Set(preferences.pins);
@@ -9,7 +9,9 @@ const entries=manifest.groups[group],absolute=e=>new URL(e.url,location.href).hr
 manager.active=new Set([entries.base,entries.height,...Object.values(manifest.shared)].filter(Boolean).map(absolute));
 const parse=bytes=>JSON.parse(new TextDecoder().decode(bytes));
 let heightPromise,heightsReady=false;
+const dayRequests=new Map();
 const packages=window.TravelPackages={manifest,group,manager,
+  async ensureDay(scene){const tile=window.TravelData?.journey?.tiles[scene],entry=entries.days?.[scene];manager.active=new Set([entries.base,...Object.values(manifest.shared),entry].filter(Boolean).map(absolute));if(!tile?.pending||!entry)return;if(!dayRequests.has(scene))dayRequests.set(scene,manager.get(entry).then(bytes=>{window.TravelData.journey.tiles[scene]=parse(bytes);}).finally(()=>dayRequests.delete(scene)));return dayRequests.get(scene);},
   async ensureHeight(){if(heightsReady)return;if(!entries.height)return;if(!heightPromise)heightPromise=manager.get(entries.height).then(bytes=>{const payload=parse(bytes);const city=group==='paris'?window.TravelData.trip:window.TravelData.shanghai;city.buildings=payload.buildings;if(window.TravelData.disney)window.TravelData.disney.buildings=payload.disneyBuildings||[];heightsReady=true;}).finally(()=>heightPromise=null);return heightPromise;},
   navigate(scene,id){if(family(scene)===group)return false;const url=new URL(location.href);url.searchParams.set('destination',family(scene));url.hash='scene='+scene+(id?'&place='+id:'');location.assign(url);return true;}
 };

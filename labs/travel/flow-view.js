@@ -9,15 +9,15 @@
   $('trip-plan').append(details);
   for(const selector of ['.trip-assumption','#trip-calendar','#trip-schedule','.trip-route-note','#trip-download'])details.append(document.querySelector(selector));
   function render(){
-    const family=['shanghai','disney'].includes(Archify.travel.scene())?'shanghai':'paris',flow=data.flows[family];
+    const family=data.journey?'journey':['shanghai','disney'].includes(Archify.travel.scene())?'shanghai':'paris',flow=data.flows[family];
     chart.querySelector('h2').textContent=flow.workflow.meta.title;
     $('flow-drawing').innerHTML=flow.svg;
     $('flow-drawing').querySelector('svg').setAttribute('role','group');
     chart.querySelectorAll('[data-node-id]').forEach(node=>{
       const day=Number($('day').value),planned=flow.workflow.nodes.find(n=>n.id===node.dataset.nodeId);
-      node.style.opacity=day&&planned.lane!=='day'+day?'.3':'1';
+      node.style.opacity=day&&!planned.lane.match(new RegExp('^day'+day+'(?:-|$)'))?'.3':'1';
       node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',flow.workflow.nodes.find(n=>n.id===node.dataset.nodeId)?.label+' · 查看 3D');
-      const open=()=>{const p=data.places.find(p=>p.id===node.dataset.nodeId);if(!p)return;Archify.travel.changeScene(p.scene);$('day').value=String(p.day||0);$('day').dispatchEvent(new Event('change'));Archify.travel.select(p.id);show(true).then(()=>Archify.travel3d.focus(p.id));};
+      const open=()=>{const p=data.places.find(p=>p.id===node.dataset.nodeId);if(!p)return;Archify.travel.changeScene(data.journey?'day-'+p.day:p.scene);$('day').value=String(p.day||0);$('day').dispatchEvent(new Event('change'));Archify.travel.select(p.id);show(true).then(()=>Archify.travel3d.focus(p.id));};
       node.onclick=open;node.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};
     });
   }

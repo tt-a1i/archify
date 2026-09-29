@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {demoJourney} from './journey.mjs';
 import {VISUAL} from './visual-style.js';
 export function styleIdentity(root){return {id:VISUAL.id,sha256:createHash('sha256').update(['visual-style.js','scene3d.js','style.css','air-route-style.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n')).digest('hex')};}
-export function buildPackages({root,html,data,camera,threeBundle,buildSync,check}){
+export function buildPackages({root,html,data,raw,camera,threeBundle,buildSync,check}){
   const read=f=>fs.readFileSync(path.join(root,f),'utf8'),digest=b=>createHash('sha256').update(b).digest('hex');
   const outputs=new Map(),manifest={schema:1,style:data.visualStyle,groups:{},shared:{}};
   function asset(name,body,group,label,type='application/json'){const b=Buffer.from(body),sha256=digest(b),ext=type==='application/json'?'json':'js',url='packages/'+name+'.'+sha256.slice(0,16)+'.'+ext;outputs.set(url,b);return {url,bytes:b.length,sha256,group,label,type};}
@@ -11,10 +12,15 @@ export function buildPackages({root,html,data,camera,threeBundle,buildSync,check
   for(const family of ['france','paris','shanghai']){
     const scenes=Object.fromEntries(Object.entries(data.scenes).filter(([id])=>id===family||(family==='shanghai'&&id==='disney')));
     const payload={...data,scenes,disney:family==='shanghai'?{...data.disney,buildings:[]}:{backdrop:[],water:[],buildings:[]},trip:family==='paris'?{...data.trip,buildings:[]}:trip,shanghai:family==='shanghai'?{...data.shanghai,buildings:[]}:{backdrop:[],water:[],buildings:[]}};
-    manifest.groups[family]={base:asset(family+'-base',JSON.stringify(payload),family,family+' · 地理与行程')};
-    if(family!=='france')manifest.groups[family].height=asset(family+'-height',JSON.stringify({disneyBuildings:family==='shanghai'?data.disney.buildings:[],buildings:(family==='paris'?data.trip:data.shanghai).buildings}),family,family+' · 建筑高度');
+    const days={};
+    if(family!=='france'){
+      Object.assign(payload,demoJourney(data,family,raw),{visualStyle:data.visualStyle});
+      for(const key of ['trip','shanghai','disney','shanghaiTrip'])delete payload[key];
+      for(const [id,tile] of Object.entries(payload.journey.tiles)){if(id==='journey')continue;days[id]=asset(family+'-'+id,JSON.stringify(tile),family,id+' · 单日地图');payload.journey.tiles[id]={backdrop:[],water:[],buildings:[],source:tile.source,pending:true};}
+    }
+    manifest.groups[family]={base:asset(family+'-base',JSON.stringify(payload),family,family+' · 地理与行程'),days};
   }
-  manifest.shared.atlas=asset('atlas',`var Archify={};function viewerText(){return ''; }\n${camera}\n${read('runtime.js')}\n${read('planner.js')}
+  manifest.shared.atlas=asset('atlas',`var Archify={};function viewerText(){return ''; }\n${camera}\nif(window.TravelData.journey){${read('journey-runtime.js')}}else{${read('runtime.js')}\n${read('planner.js')}}
 ${read('flow-view.js')}`,'engine','互动界面','text/javascript');
   manifest.shared.renderer=asset('renderer',threeBundle,'engine','固定插画渲染器','text/javascript');
   const boot=buildSync({entryPoints:[path.join(root,'bootstrap.js')],bundle:true,format:'iife',write:false,minify:true,target:'es2020'}).outputFiles[0].text;

@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "title": "上海 4 天 · 亲子慢游",
+  "prompt": "上海4天亲子慢游，想看东方明珠、陆家嘴、环球金融中心和迪士尼，不赶路",
+  "preferences": [
+    "亲子",
+    "慢节奏",
+    "每天最多两站"
+  ],
+  "places": [
+    {
+      "id": "Q865312",
+      "name": "上海迪士尼",
+      "icon": "castle",
+      "coordinates": [
+        121.657,
+        31.144
+      ],
+      "source": "https://www.wikidata.org/wiki/Q865312"
+    },
+    {
+      "id": "Q125474",
+      "name": "外滩",
+      "icon": "bund",
+      "coordinates": [
+        121.48613888889,
+        31.238027777778
+      ],
+      "source": "https://www.wikidata.org/wiki/Q125474"
+    },
+    {
+      "id": "Q1328025",
+      "name": "豫园",
+      "icon": "garden",
+      "coordinates": [
+        121.4875,
+        31.22916667
+      ],
+      "source": "https://www.wikidata.org/wiki/Q1328025"
+    },
+    {
+      "id": "Q1074628",
+      "name": "陆家嘴",
+      "icon": "skyline",
+      "coordinates": [
+        121.49722222,
+        31.23888889
+      ],
+      "source": "https://www.wikidata.org/wiki/Q1074628"
+    },
+    {
+      "id": "Q223207",
+      "name": "东方明珠",
+      "icon": "pearl",
+      "coordinates": [
+        121.49471666667,
+        31.241669444444
+      ],
+      "source": "https://www.wikidata.org/wiki/Q223207"
+    },
+    {
+      "id": "Q80852",
+      "name": "上海环球金融中心",
+      "icon": "swfc",
+      "coordinates": [
+        121.50277777778,
+        31.236666666667
+      ],
+      "source": "https://www.wikidata.org/wiki/Q80852"
+    }
+  ],
+  "days": [
+    {
+      "day": 1,
+      "title": "陆家嘴地标",
+      "stops": [
+        {
+          "placeId": "Q223207",
+          "time": "上午",
+          "duration": "2–3 小时",
+          "note": "建议游览安排，出发前核对开放和预约。"
+        },
+        {
+          "placeId": "Q1074628",
+          "time": "下午",
+          "duration": "2–3 小时",
+          "note": "建议游览安排，出发前核对开放和预约。"
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "title": "天际线与外滩",
+      "stops": [
+        {
+          "placeId": "Q80852",
+          "time": "上午",
+          "duration": "2–3 小时",
+          "note": "建议游览安排，出发前核对开放和预约。"
+        },
+        {
+          "placeId": "Q125474",
+          "time": "下午",
+          "duration": "2–3 小时",
+          "note": "建议游览安排，出发前核对开放和预约。"
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "title": "迪士尼一整天",
+      "stops": [
+        {
+          "placeId": "Q865312",
+          "time": "上午",
+          "duration": "全天",
+          "note": "建议游览安排，出发前核对开放和预约。"
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "title": "豫园慢游",
+      "stops": [
+        {
+          "placeId": "Q1328025",
+          "time": "上午",
+          "duration": "2–3 小时",
+          "note": "建议游览安排，出发前核对开放和预约。"
+        }
+      ]
+    }
+  ]
+}
