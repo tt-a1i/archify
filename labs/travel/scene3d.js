@@ -1,3 +1,4 @@
+import { AIR_ROUTE_STYLE as AIR, airRouteStrokes, airArrowPath } from './air-route-style.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
@@ -120,10 +121,10 @@ function drawCity(visible) {
     const building=new THREE.Mesh(geo,material(0xc7c6af));building.position.y=18+height;building.castShadow=true;building.receiveShadow=true;world.add(building);
   }
   for(const r of data.trip.routes.filter(r=>visible.has(r.from)&&visible.has(r.to))){
-    const endpoint=id=>{const marker=markers.find(m=>m.userData.placeId===id),bounds=new THREE.Box3().setFromObject(marker);return new THREE.Vector3(marker.position.x,bounds.max.y+12,marker.position.z);};
+    const endpoint=id=>{const marker=markers.find(m=>m.userData.placeId===id),bounds=new THREE.Box3().setFromObject(marker);return new THREE.Vector3(marker.position.x,bounds.max.y+AIR.roofClearance,marker.position.z);};
     const start=endpoint(r.from),end=endpoint(r.to),middle=start.clone().add(end).multiplyScalar(.5);
-    middle.y=Math.max(start.y,end.y)+Math.min(95,Math.max(35,start.distanceTo(end)*.4));
-    airRoutes.push({day:r.day,color:r.color,points:new THREE.QuadraticBezierCurve3(start,middle,end).getPoints(48)});
+    middle.y=Math.max(start.y,end.y)+Math.min(AIR.maxRise,Math.max(AIR.minRise,start.distanceTo(end)*AIR.riseRatio));
+    airRoutes.push({day:r.day,color:r.color,points:new THREE.QuadraticBezierCurve3(start,middle,end).getPoints(AIR.curveSegments)});
 
   }
 }
@@ -164,8 +165,8 @@ function renderAirRoutes(){
   for(const r of projectedAirRoutes()){
     const points=r.screen,end=points.at(-1),before=points.at(-3),angle=Math.atan2(end.y-before.y,end.x-before.x);
     const d=points.map((p,i)=>(i?'L':'M')+p.x+','+p.y).join(' ');
-    for(const [stroke,width] of [['#faf7ef',5],[r.color,2.5]]){const line=document.createElementNS('http://www.w3.org/2000/svg','path');line.setAttribute('d',d);line.setAttribute('fill','none');line.setAttribute('stroke',stroke);line.setAttribute('stroke-width',width);line.setAttribute('stroke-linecap','round');routeOverlay.append(line);}
-    const head=document.createElementNS('http://www.w3.org/2000/svg','path');head.setAttribute('d','M-10 -5 L0 0 L-10 5');head.setAttribute('transform',`translate(${end.x} ${end.y}) rotate(${angle*180/Math.PI})`);head.setAttribute('fill','none');head.setAttribute('stroke',r.color);head.setAttribute('stroke-width','3');head.setAttribute('stroke-linecap','round');head.setAttribute('stroke-linejoin','round');routeOverlay.append(head);
+    for(const [stroke,width] of airRouteStrokes(r.color)){const line=document.createElementNS('http://www.w3.org/2000/svg','path');line.setAttribute('d',d);line.setAttribute('fill','none');line.setAttribute('stroke',stroke);line.setAttribute('stroke-width',width);line.setAttribute('stroke-linecap','round');routeOverlay.append(line);}
+    const head=document.createElementNS('http://www.w3.org/2000/svg','path');head.setAttribute('d',airArrowPath());head.setAttribute('transform',`translate(${end.x} ${end.y}) rotate(${angle*180/Math.PI})`);head.setAttribute('fill','none');head.setAttribute('stroke',r.color);head.setAttribute('stroke-width',AIR.headStrokeWidth);head.setAttribute('stroke-linecap','round');head.setAttribute('stroke-linejoin','round');routeOverlay.append(head);
   }
 }
 function requestFrame() {if(!active||document.hidden||frame)return;frame=requestAnimationFrame(render);}
@@ -218,7 +219,7 @@ exportButton.addEventListener('click',event=>{
   const ratio=renderer.getPixelRatio(),mapWidth=renderer.domElement.width,summary=sceneId==='paris'?360*ratio:0;
   const output=document.createElement('canvas');output.width=mapWidth+summary;output.height=Math.max(renderer.domElement.height+90*ratio,summary?760*ratio:0);
   const ctx=output.getContext('2d');ctx.fillStyle='#e9efea';ctx.fillRect(0,0,output.width,output.height);ctx.drawImage(renderer.domElement,0,0);
-  for(const r of projectedAirRoutes()){const points=r.screen;for(const [stroke,width] of [['#faf7ef',5],[r.color,2.5]]){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x*ratio,p.y*ratio):ctx.moveTo(p.x*ratio,p.y*ratio));ctx.strokeStyle=stroke;ctx.lineWidth=width*ratio;ctx.lineCap='round';ctx.stroke();}const end=points.at(-1),before=points.at(-3);ctx.save();ctx.translate(end.x*ratio,end.y*ratio);ctx.rotate(Math.atan2(end.y-before.y,end.x-before.x));ctx.beginPath();ctx.moveTo(-10*ratio,-5*ratio);ctx.lineTo(0,0);ctx.lineTo(-10*ratio,5*ratio);ctx.strokeStyle=r.color;ctx.lineWidth=3*ratio;ctx.stroke();ctx.restore();}
+  for(const r of projectedAirRoutes()){const points=r.screen;for(const [stroke,width] of airRouteStrokes(r.color)){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x*ratio,p.y*ratio):ctx.moveTo(p.x*ratio,p.y*ratio));ctx.strokeStyle=stroke;ctx.lineWidth=width*ratio;ctx.lineCap='round';ctx.stroke();}const end=points.at(-1),before=points.at(-3);ctx.save();ctx.translate(end.x*ratio,end.y*ratio);ctx.rotate(Math.atan2(end.y-before.y,end.x-before.x));ctx.beginPath();ctx.moveTo(-AIR.headLength*ratio,-AIR.headHalfWidth*ratio);ctx.lineTo(0,0);ctx.lineTo(-AIR.headLength*ratio,AIR.headHalfWidth*ratio);ctx.strokeStyle=r.color;ctx.lineWidth=AIR.headStrokeWidth*ratio;ctx.stroke();ctx.restore();}
   ctx.fillStyle='#263f38';ctx.font=`${14*ratio}px sans-serif`;
   for(const label of labels){if(label.button.hidden||!label.screen)continue;ctx.strokeStyle='#8b9784';ctx.lineWidth=ratio*.7;ctx.beginPath();ctx.moveTo(label.screen.x*ratio,label.screen.anchorY*ratio);ctx.lineTo(label.screen.x*ratio,label.screen.y*ratio);ctx.stroke();ctx.fillText('D'+label.p.day+' '+label.p.name,label.screen.x*ratio-24*ratio,(label.screen.y+15)*ratio);}
   if(summary){
