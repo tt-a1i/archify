@@ -1,6 +1,6 @@
 import {VISUAL} from './visual-style.js';
 import {buildFlow} from './build-flow.mjs';
-import {sampleElevation} from './elevation.js';
+import {sampleElevation,generalizeElevation} from './elevation.js';
 
 const fail=m=>{throw Error('行程数据无效：'+m);};
 const str=(x,label,max=300)=>{if(typeof x!=='string'||!x.trim()||x.length>max)fail(label);return x;};
@@ -55,9 +55,10 @@ export function createJourney(candidate){
     if(west+shift<w||eastEdge+shift>east||south<s||north>n)fail('高程范围需覆盖整个总行程方块');
     const values=[],columns=65,rows=65;
     for(let r=0;r<rows;r++)for(let c=0;c<columns;c++)values.push(sampleElevation(e,(west+shift+(eastEdge-west)*c/(columns-1)-w)/(east-w),(n-north+(north-south)*r/(rows-1))/(n-s)));
+    values.splice(0,values.length,...generalizeElevation(values,columns,rows));
     const minimum=Math.min(...values),maximum=Math.max(...values),trueScale=820/(overview.size*111320);
     const exaggeration=Math.max(1,Math.min(12,60/Math.max(.001,(maximum-minimum)*trueScale)));
-    tiles.journey.elevation={columns,rows,values,bounds:[west+shift,south,eastEdge+shift,north],sampling:'source-triangle-interpolation',minimum,maximum,unitsPerMeter:trueScale*exaggeration,exaggeration,source:e.source,attribution:e.attribution};
+    tiles.journey.elevation={columns,rows,values,bounds:[west+shift,south,eastEdge+shift,north],sampling:'source-triangle-interpolation-generalized',minimum,maximum,unitsPerMeter:trueScale*exaggeration,exaggeration,source:e.source,attribution:e.attribution};
   }
   const waters=new Map();for(const day of input.days)for(const ring of day.geography?.water||[])waters.set(JSON.stringify(ring),ring);
   tiles.journey.water=[...waters.values()].map(r=>clipWater(r.map(overview.project))).filter(r=>r.length);

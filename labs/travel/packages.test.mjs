@@ -47,9 +47,9 @@ test('HTTP packages: lazy height, cached reload, offline shell, navigation and d
   assert.equal(await run("performance.getEntriesByType('resource').some(r=>/paris-base|france-base/.test(r.name))"),false);
   await run("document.getElementById('mode-3d').click()");await wait('Archify.travel3d.state().active&&Archify.travel3d.state().heightMode');await stable();
   assert.ok(await run('Archify.travel3d.state().markerHeights.some(h=>h>100)'));
-  assert.equal(await run('Archify.travel3d.state().places.length'),6);assert.equal(await run('Archify.travel3d.state().routeArrows'),5);assert.equal(await run('Archify.travel3d.state().detailBuildings'),0);
+  assert.equal(await run('Archify.travel3d.state().places.length'),6);assert.equal(await run('Archify.travel3d.state().routeArrows'),2);assert.equal(await run('Archify.travel3d.state().detailBuildings'),0);
   assert.equal(await run('Archify.travel3d.state().relief.vertices'),4225);
-  assert.equal(await run('Archify.travel3d.state().terrainPointCount'),4225,'all-trip view renders height samples as points');
+  assert.equal(await run('Archify.travel3d.state().terrainPointCount'),0,'all-trip view restores filled terrain');
   assert.ok(await run('Archify.travel3d.state().relief.maximum>Archify.travel3d.state().relief.minimum'));
   assert.ok(await run('Math.max(...Archify.travel3d.state().markerGround)-Math.min(...Archify.travel3d.state().markerGround)>1'),'landmarks follow terrain height');
   assert.ok(await run("document.querySelector('.three-badge').textContent.includes('高差放大')&&document.querySelector('.three-badge').textContent.includes('DEM 海拔')"));
@@ -69,6 +69,6 @@ test('HTTP packages: lazy height, cached reload, offline shell, navigation and d
   await send('Network.enable');await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.reload');await loaded;}await wait('Boolean(window.Archify?.travel3d?.state().active)');await stable();assert.equal(await run('Archify.travel.scene()'),'journey');
   await run("document.querySelector('#trip-days [data-day=\"2\"]').click()");await wait('Archify.travel3d.state().detailBuildings>0');assert.equal(await run('Archify.travel3d.state().places.length'),1,'cached day available offline');
   await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
-  {const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:url+'?destination=paris&view=3d#scene=journey'});await loaded;}await wait("window.TravelPackages?.group==='paris'&&window.Archify?.travel3d?.state().active");assert.equal(await run('Archify.travel3d.state().routeArrows'),5);
+  {const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:url+'?destination=paris&view=3d#scene=journey'});await loaded;}await wait("window.TravelPackages?.group==='paris'&&window.Archify?.travel3d?.state().active");assert.equal(await run('Archify.travel3d.state().routeArrows'),2);
   if(process.env.ARCHIFY_TRAVEL_EVIDENCE){await stable();fs.mkdirSync(process.env.ARCHIFY_TRAVEL_EVIDENCE,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/packages-paris.png',Buffer.from(shot.data,'base64'));}
 });

@@ -10,7 +10,7 @@ API, spawned agent or installed Skill is required. A four-day example is in
 it does not pretend that a static form can call the host LLM directly.
 
 The current online Shanghai/Paris examples use a connected, geographically projected overview:
-all visits, N−1 arrows including cross-day transfers, no streets/ordinary
+all visits, one arrow per day transition (D−1 total), no intra-day arrows or streets/ordinary
 buildings. Daily scenes use real coordinates in an isolated square and fetch
 only their content-addressed day package. Leaving a scene disposes its Three.js
 geometry. The day packages use the existing private integrity/LRU cache.
@@ -19,7 +19,7 @@ selected day. It can represent other cities without renderer changes; detailed
 geometry and bespoke models are **not** automatically available for every city.
 Without supplied detail, the day is a landmark-only block with honest labels.
 
-Style `illustrated-diorama-v10` records the geographic overview requested by the user
+Style `illustrated-diorama-v11` records the geographic overview requested by the user
 and daily blocks; the overview now preserves geographic anchor positions. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
 tests cover Shanghai/Paris, cross-day links, lazy day fetching, offline cached
 days, arbitrary-duration input, repeated places, date-line coordinates and GPU
@@ -28,10 +28,11 @@ new portable trips are produced by `render-journey.mjs`.
 
 The landform layer retains available sourced water polygons in overview and
 daily tiles, clips rivers crossing the tile boundary, and draws shoreline edges.
-A fixed muted ground texture and cutaway soil bands remain in daily scenes. The v10
-overview renders 65×65 DEM sample points, orthogonal grid lines and a sparse
-perimeter cage instead of filled land and a solid base. Landmark positions and
-air arrows are unchanged. Shanghai/Paris use zoom-12 Mapzen Terrain Tiles sampled into
+A fixed muted ground texture and cutaway soil bands remain in daily scenes. The v11
+overview restores the filled 65×65 DEM terrain, solid base and clear elevation
+color bands. Only day transitions are connected: the previous day's last stop
+to the following day's first stop. Daily views retain all intra-day arrows.
+Shanghai/Paris use zoom-12 Mapzen Terrain Tiles sampled into
 129×129 source grids, then resampled for the medium-resolution overview. Regenerate
 explicitly with `node labs/travel/prepare-elevation.mjs`; page loads never fetch
 DEM tiles. Heights are vertically exaggerated (shown in the map badge), so XY
@@ -41,10 +42,10 @@ need a sourced host `elevation` grid; no grid means the existing flat fallback.
 Water coverage remains limited to supplied snapshots. Draw ordering is stable
 across cached reloads.
 
-The grid directly resamples sourced DEM elevations at its geographic positions,
-without the earlier visual smoothing, and caps vertical exaggeration at 12×.
+The terrain resamples sourced DEM elevations at their geographic positions,
+restores two passes of 3×3 generalization and caps vertical exaggeration at 12×.
 The badge reports sampled elevation range in meters and the vertical factor.
-Points vary from teal to brown by relative
+Color bands vary from pale green to brown by relative
 height. This styling is only applied to the whole-journey DEM overview; daily
 illustrations are preserved. The sourced elevation samples remain unchanged.
 

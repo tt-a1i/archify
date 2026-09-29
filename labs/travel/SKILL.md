@@ -26,8 +26,8 @@ Agent, CLI model process or model API. Do not install a live Archify Skill.
 5. Run `node labs/travel/render-journey.mjs <input> <output.html>` from the repo
    root. Repair reported data/compiler failures and rerun. The same visit IDs
    drive both views; never author a second independent itinerary for the map.
-6. Open the output and check the overview contains all visits and N−1 arrows,
-   including day-to-day transfers. Click a day and confirm only its landmarks,
+6. Open the output and check the overview contains all visits and D−1 arrows,
+   linking day-to-day transfers only. Click a day and confirm only its landmarks,
    links and cropped geometry remain. Check the browser console and narrow
    screens. Report browser/perceptual checks separately from data validation.
 7. Deliver the HTML path, a short usage instruction and any missing geographical

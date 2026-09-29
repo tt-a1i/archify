@@ -17,10 +17,9 @@ test('overview elevation is coarse, sourced, geographically aligned and excluded
   assert.ok(terrainHeight(grid,410,-410)>terrainHeight(grid,-410,-410));
   assert.equal(sampleElevation(input.elevation,.2,.3),35);assert.equal(sampleElevation(input.elevation,.8,.7),115);
   const [west,south,east,north]=grid.bounds;
-  for(const [c,r] of [[0,0],[14,23],[64,64]]){
-    const lng=west+(east-west)*c/64,lat=north-(north-south)*r/64;
-    assert.ok(Math.abs(grid.values[r*65+c]-sampleElevation(input.elevation,(lng-120)/3,(33-lat)/3))<1e-8,'each grid sample follows its actual geographic position without visual smoothing');
-  }
+  const geographic=Array.from({length:65*65},(_,i)=>{const lng=west+(east-west)*(i%65)/64,lat=north-(north-south)*Math.floor(i/65)/64;return sampleElevation(input.elevation,(lng-120)/3,(33-lat)/3);});
+  const expected=generalizeElevation(geographic,65,65);
+  assert.ok(grid.values.every((v,i)=>Math.abs(v-expected[i])<1e-8),'filled overview generalizes samples at their geographic positions');
   assert.deepEqual(raised.places.map(p=>p.views),flat.places.map(p=>p.views));assert.equal(raised.journey.tiles['day-1'].elevation,undefined);
   for(const change of [e=>e.values=[0],e=>e.values[0]=NaN,e=>e.source='javascript:foo',e=>e.columns=130,e=>e.bounds=[0,0,1,1]]){const bad=structuredClone(input);change(bad.elevation);assert.throws(()=>createJourney(bad),/高程/);}
 });
@@ -71,8 +70,9 @@ test('host CLI delivers portable multi-day flow/3D, isolates visits and releases
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(output).href});await loaded;await stable();
   assert.equal(await run("document.querySelectorAll('#trip-days button').length"),5);assert.equal(await run("document.querySelectorAll('#flow-drawing [data-node-id]').length"),6);
-  await run("document.getElementById('mode-3d').click()");await stable();assert.equal(await run('Archify.travel3d.state().routeArrows'),5);assert.equal(await run('Archify.travel3d.state().places.length'),6);const count=await run('Archify.travel3d.state().geometries');
+  await run("document.getElementById('mode-3d').click()");await stable();assert.equal(await run('Archify.travel3d.state().routeArrows'),3);assert.equal(await run('Archify.travel3d.state().places.length'),6);const count=await run('Archify.travel3d.state().geometries');
   for(let i=0;i<3;i++){await run("document.querySelector('#trip-days [data-day=\"3\"]').click()");await stable();assert.equal(await run('Archify.travel3d.state().places.length'),1);assert.equal(await run('Archify.travel3d.state().routeArrows'),0);await run("document.querySelector('#trip-days [data-day=\"0\"]').click()");await stable();assert.equal(await run('Archify.travel3d.state().geometries'),count,'switches do not accumulate GPU geometry');}
+  await run("document.querySelector('#trip-days [data-day=\"1\"]').click()");await stable();assert.equal(await run('Archify.travel3d.state().routeArrows'),sample().days[0].stops.length-1,'daily view keeps every intra-day connection');
   await run("document.querySelector('#trip-days [data-day=\"4\"]').click()");await stable();assert.equal(await run('Archify.travel3d.state().places.length'),1);assert.equal(await run('Archify.travel3d.state().scene'),'day-4');
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await stable();assert.ok(await run('document.documentElement.scrollWidth<=innerWidth+1'));assert.deepEqual(await run('errors'),[]);
 });

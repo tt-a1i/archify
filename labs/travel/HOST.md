@@ -42,7 +42,8 @@ generic illustration. Input must not contain CSS, shaders, scripts or new models
 Resource limits: 32 MiB input, 1–120 days, 1–48 stops/day, 1500 distinct places;
 these are explicit resource guards, not a three-day or city restriction.
 Flowchart rows wrap after six stops. Day colors cycle through the locked palette.
-The overview retains every visit, connects consecutive visits across day borders,
+The overview retains every visit, connects only the last stop of each day to
+the first stop of the next day (D−1 arrows); daily views show intra-day arrows,
 and uses one common geographic projection for all coordinate anchors. Do not
 rearrange places into a schematic grid. Model dimensions remain illustrative. Daily square blocks use local projection,
 including correct longitude unwrapping around the date line. Landmark heights are
@@ -54,7 +55,7 @@ must research those facts and perform browser checks before making such claims.
 
 Water rings crossing a tile boundary are clipped instead of dropped. The overview
 keeps the available sourced water outlines, while omitting streets and buildings.
-Shorelines, muted surface texture and cutaway soil colors use the fixed v10 style;
+Shorelines, muted surface texture and cutaway soil colors use the fixed v11 style;
 texture and cutaway layers are illustrative, not DEM terrain heights or geology.
 
 Optional top-level `elevation` adds coarse relief to the **whole-trip overview**:
@@ -64,7 +65,7 @@ dimension is 2–129. Bounds must cover the full padded square, not only its sto
 Unwrapped east longitude up to 540 is allowed across the date line. Never invent
 heights. The renderer resamples to 65×65 vertices, uses a fixed exaggeration rule
 (1–12×, aiming for 60 scene units of relief) and labels the resulting factor.
-Grid vertices use geographic source interpolation without visual smoothing;
+Terrain vertices use geographic source interpolation with two 3×3 generalization passes;
 the package retains geographic bounds and sampled elevations in meters. The
 map displays the DEM elevation range, which may include source artifacts.
 No elevation input preserves the flat fallback. Daily geometry remains isolated.
