@@ -32,7 +32,7 @@ let renderer, camera, controls, scene, world, frame = 0, active = false, sceneId
 let markers = [], labels = [], terrainCount = 0, pointerStart = null;
 const relief=()=>heightMode&&sceneId==='journey'?data.journey?.tiles.journey.elevation:null;
 const groundAt=(x,z)=>relief()?terrainHeight(relief(),x,z):sceneId==='paris'?18:22;
-const reliefCaption=()=>relief()?`真实高程粗网格 · 高差夸张 ${relief().exaggeration.toFixed(1)}×`:'按真实坐标同比例投影 · 地标造型为示意';
+const reliefCaption=()=>relief()?`中精度地貌 · 高差夸张 ${relief().exaggeration.toFixed(1)}×`:'按真实坐标同比例投影 · 地标造型为示意';
 let airRoutes=[];
 let heightMode=true;
 const routeOverlay=document.createElementNS('http://www.w3.org/2000/svg','svg');routeOverlay.classList.add('three-label-leaders');routeOverlay.setAttribute('aria-hidden','true');labelLayer.before(routeOverlay);

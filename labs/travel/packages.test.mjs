@@ -48,7 +48,7 @@ test('HTTP packages: lazy height, cached reload, offline shell, navigation and d
   await run("document.getElementById('mode-3d').click()");await wait('Archify.travel3d.state().active&&Archify.travel3d.state().heightMode');await stable();
   assert.ok(await run('Archify.travel3d.state().markerHeights.some(h=>h>100)'));
   assert.equal(await run('Archify.travel3d.state().places.length'),6);assert.equal(await run('Archify.travel3d.state().routeArrows'),5);assert.equal(await run('Archify.travel3d.state().detailBuildings'),0);
-  assert.equal(await run('Archify.travel3d.state().relief.vertices'),625);
+  assert.equal(await run('Archify.travel3d.state().relief.vertices'),4225);
   assert.ok(await run('Archify.travel3d.state().relief.maximum>Archify.travel3d.state().relief.minimum'));
   assert.ok(await run('Math.max(...Archify.travel3d.state().markerGround)-Math.min(...Archify.travel3d.state().markerGround)>1'),'landmarks follow terrain height');
   assert.ok(await run("document.querySelector('.three-badge').textContent.includes('高差夸张')"));

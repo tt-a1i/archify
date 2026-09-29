@@ -53,7 +53,7 @@ export function createJourney(candidate){
     const e=input.elevation,[w,s,east,n]=e.bounds,west=overview.cx-overview.size/2/overview.cos,south=overview.cy-overview.size/2,eastEdge=overview.cx+overview.size/2/overview.cos,north=overview.cy+overview.size/2;
     const shift=360*Math.round(((w+east)/2-overview.cx)/360);
     if(west+shift<w||eastEdge+shift>east||south<s||north>n)fail('高程范围需覆盖整个总行程方块');
-    const values=[],columns=25,rows=25;
+    const values=[],columns=65,rows=65;
     for(let r=0;r<rows;r++)for(let c=0;c<columns;c++)values.push(sampleElevation(e,(west+shift+(eastEdge-west)*c/(columns-1)-w)/(east-w),(n-north+(north-south)*r/(rows-1))/(n-s)));
     const minimum=Math.min(...values),maximum=Math.max(...values),trueScale=820/(overview.size*111320);
     const exaggeration=Math.max(1,Math.min(80,60/Math.max(.001,(maximum-minimum)*trueScale)));

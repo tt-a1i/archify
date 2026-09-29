@@ -12,10 +12,10 @@ function decode(png){
   return (x,y)=>{const i=(y*w+x)*channels;return out[i]*256+out[i+1]+out[i+2]/256-32768;};
 }
 const regions={shanghai:[121.43,31.07,121.70,31.31],paris:[2.24,48.81,2.40,48.92]};
-const zoom=10,n=2**zoom,cache=new Map();
+const zoom=12,n=2**zoom,cache=new Map();
 const tilePoint=(lng,lat)=>[(lng+180)/360*n,(1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*n];
 for(const [name,bounds] of Object.entries(regions)){
-  const [west,south,east,north]=bounds,columns=49,rows=49,values=[],urls=new Set();
+  const [west,south,east,north]=bounds,columns=129,rows=129,values=[],urls=new Set();
   for(let row=0;row<rows;row++)for(let col=0;col<columns;col++){
     const [x,y]=tilePoint(west+(east-west)*col/(columns-1),north-(north-south)*row/(rows-1));
     const tx=Math.floor(x),ty=Math.floor(y),url=`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${zoom}/${tx}/${ty}.png`;urls.add(url);

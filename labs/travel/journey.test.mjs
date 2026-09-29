@@ -13,7 +13,7 @@ test('overview elevation is coarse, sourced, geographically aligned and excluded
   const input=sample(),flat=createJourney(input);
   input.elevation={bounds:[120,30,123,33],columns:2,rows:2,values:[0,100,50,150],source:'https://example.com/dem',attribution:'Test slope'};
   const raised=createJourney(input),grid=raised.journey.tiles.journey.elevation;
-  assert.equal(grid.values.length,625);assert.ok(grid.maximum>grid.minimum);assert.ok(grid.exaggeration>=1&&grid.exaggeration<=80);
+  assert.equal(grid.values.length,4225);assert.ok(grid.maximum>grid.minimum);assert.ok(grid.exaggeration>=1&&grid.exaggeration<=80);
   assert.ok(terrainHeight(grid,410,-410)>terrainHeight(grid,-410,-410));
   assert.equal(sampleElevation(input.elevation,.2,.3),35);assert.equal(sampleElevation(input.elevation,.8,.7),115);
   assert.deepEqual(raised.places.map(p=>p.views),flat.places.map(p=>p.views));assert.equal(raised.journey.tiles['day-1'].elevation,undefined);
