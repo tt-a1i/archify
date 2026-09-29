@@ -4,18 +4,32 @@ import {VISUAL} from './visual-style.js';
 
 export function addRelief(world,grid){
   const geometry=new THREE.PlaneGeometry(820,820,grid.columns-1,grid.rows-1);geometry.rotateX(-Math.PI/2);
-  const positions=geometry.attributes.position,colors=[];
-  // Clip color normalization at the 5th/95th percentiles so isolated DEM
-  // outliers cannot wash out all the ordinary relief. Geometry stays untouched.
-  const sorted=[...grid.values].sort((a,b)=>a-b),low=sorted[Math.floor((sorted.length-1)*.05)],high=sorted[Math.floor((sorted.length-1)*.95)];
+  const positions=geometry.attributes.position,colors=[],levels=[];
+  // Use the generalized range; percentile stretching exaggerated tiny bumps.
+  const low=grid.minimum,high=grid.maximum;
   const palette=VISUAL.terrainColors.map(c=>new THREE.Color(c));
   for(let i=0;i<positions.count;i++){
     const x=positions.getX(i),z=positions.getZ(i),y=terrainHeight(grid,x,z);positions.setY(i,y);
     const fraction=Math.max(0,Math.min(1,(grid.values[i]-low)/Math.max(1,high-low))),step=fraction*(palette.length-1),band=Math.min(palette.length-2,Math.floor(step));
+    levels.push(fraction);
     const color=palette[band].clone().lerp(palette[band+1],step-band);colors.push(color.r,color.g,color.b);
   }
   geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.computeVertexNormals();
-  const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));mesh.receiveShadow=true;mesh.castShadow=true;mesh.userData.disposeMaterial=true;world.add(mesh);
+  geometry.setAttribute('terrainLevel',new THREE.Float32BufferAttribute(levels,1));
+  const groundMaterial=new THREE.MeshStandardMaterial({roughness:1});
+  // Classify height in the fragment shader instead of blurring vertex colors
+  // across triangles. Narrow screen-antialiased transitions keep bands legible.
+  groundMaterial.onBeforeCompile=shader=>{
+    palette.forEach((color,i)=>shader.uniforms['terrainColor'+i]={value:color});
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float terrainLevel; varying float vTerrainLevel;').replace('#include <begin_vertex>','#include <begin_vertex>\nvTerrainLevel = terrainLevel;');
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying float vTerrainLevel; uniform vec3 terrainColor0; uniform vec3 terrainColor1; uniform vec3 terrainColor2; uniform vec3 terrainColor3;').replace('#include <color_fragment>',`#include <color_fragment>
+      float bandWidth = max(fwidth(vTerrainLevel), 0.002);
+      vec3 terrainTint = mix(terrainColor0, terrainColor1, smoothstep(0.3-bandWidth,0.3+bandWidth,vTerrainLevel));
+      terrainTint = mix(terrainTint, terrainColor2, smoothstep(0.6-bandWidth,0.6+bandWidth,vTerrainLevel));
+      terrainTint = mix(terrainTint, terrainColor3, smoothstep(0.85-bandWidth,0.85+bandWidth,vTerrainLevel));
+      diffuseColor.rgb *= terrainTint;`);
+  };
+  const mesh=new THREE.Mesh(geometry,groundMaterial);mesh.receiveShadow=true;mesh.castShadow=true;mesh.userData.disposeMaterial=true;world.add(mesh);
   // Close the uneven perimeter down to the existing soil base.
   const edge=[];for(let c=0;c<grid.columns;c++)edge.push(c);for(let r=1;r<grid.rows;r++)edge.push(r*grid.columns+grid.columns-1);for(let c=grid.columns-2;c>=0;c--)edge.push((grid.rows-1)*grid.columns+c);for(let r=grid.rows-2;r>0;r--)edge.push(r*grid.columns);
   const vertices=[];

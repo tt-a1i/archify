@@ -1,15 +1,15 @@
 {
   "schema": 1,
   "style": {
-    "id": "illustrated-diorama-v7",
-    "sha256": "3a48fc4ead9e096b67cb4b48e4707a8bda0849207ffa6fc2a1708d46768a03b7"
+    "id": "illustrated-diorama-v8",
+    "sha256": "e80f416e1a2688e409ca46922f9bcfbc6ad494533f8de2f150ca8a25e72c8ea5"
   },
   "groups": {
     "france": {
       "base": {
-        "url": "packages/france-base.fe1b9d6710c338d3.json",
+        "url": "packages/france-base.a00ccd3c4bf0bcf2.json",
         "bytes": 71705,
-        "sha256": "fe1b9d6710c338d31e709d76c4cc2dacc75f03a71f3d61bc7fdf5663f422f2b3",
+        "sha256": "a00ccd3c4bf0bcf21778714b7f1561bab5c9504b032d53b37807a784f1243b16",
         "group": "france",
         "label": "france · 地理与行程",
         "type": "application/json"
@@ -18,9 +18,9 @@
     },
     "paris": {
       "base": {
-        "url": "packages/paris-base.072352b95df0615f.json",
-        "bytes": 188600,
-        "sha256": "072352b95df0615f0d316cbdde6b0937321e907cbdc47423b1a05ba2386ba5d3",
+        "url": "packages/paris-base.94e13b41fc26bc96.json",
+        "bytes": 188572,
+        "sha256": "94e13b41fc26bc960f52088ec9706f371ea0ccf1b1123273d002e0393c983061",
         "group": "paris",
         "label": "paris · 地理与行程",
         "type": "application/json"
@@ -54,9 +54,9 @@
     },
     "shanghai": {
       "base": {
-        "url": "packages/shanghai-base.8dc492b7bfb0e962.json",
-        "bytes": 155752,
-        "sha256": "8dc492b7bfb0e96210a6f44867657f7d501399c5ccb724619395f2e8b8a36273",
+        "url": "packages/shanghai-base.6c66071b596d3270.json",
+        "bytes": 157595,
+        "sha256": "6c66071b596d32703ef1105d0f9bef0db64e212d2bd2f53967d4f577407c8bad",
         "group": "shanghai",
         "label": "shanghai · 地理与行程",
         "type": "application/json"
@@ -99,9 +99,9 @@
       "type": "text/javascript"
     },
     "renderer": {
-      "url": "packages/renderer.fd7cfa45455ccc9e.js",
-      "bytes": 664451,
-      "sha256": "fd7cfa45455ccc9ebe4b265a1b73357f4ceb9b6a70255a7e663926c0cafd41b4",
+      "url": "packages/renderer.2319a7628d68c3c4.js",
+      "bytes": 665465,
+      "sha256": "2319a7628d68c3c4e4ececb10e308793fa77de9dc93fb20c90060830afe10289",
       "group": "engine",
       "label": "固定插画渲染器",
       "type": "text/javascript"
