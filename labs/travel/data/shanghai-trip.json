@@ -1,0 +1,106 @@
+{
+  "title": "上海 3 天 · 天际线与童话",
+  "prompt": "上海3日游，包含陆家嘴、东方明珠、迪士尼、环球金融中心",
+  "assumption": "已抵达上海，拥有 3 个完整游览日，住市中心；不含往返上海交通。金融中心按上海环球金融中心安排。",
+  "days": [
+    {
+      "day": 1,
+      "title": "陆家嘴 · 摩天楼与江景",
+      "color": "#b16a35",
+      "scene": "shanghai",
+      "stops": [
+        {
+          "id": "Q223207",
+          "time": "09:30",
+          "duration": "2–3 小时",
+          "note": "东方明珠登塔；提前核对票种和入场时段。"
+        },
+        {
+          "id": "Q1074628",
+          "time": "13:00",
+          "duration": "1–1.5 小时",
+          "note": "陆家嘴午餐与街区漫步，拍摄城市天际线。"
+        },
+        {
+          "id": "Q80852",
+          "time": "15:00",
+          "duration": "1 小时",
+          "note": "环球金融中心外观与周边；不默认观光厅开放，入内另查官方。"
+        }
+      ],
+      "extra": "傍晚可在浦东滨江散步；登高以东方明珠为主，避免一天重复登多座塔。"
+    },
+    {
+      "day": 2,
+      "title": "迪士尼 · 留给乐园一整天",
+      "color": "#36766d",
+      "scene": "disney",
+      "stops": [
+        {
+          "id": "Q865312",
+          "time": "开园后",
+          "duration": "全天",
+          "note": "提前购买所选日期门票；按官方日历安排入园、项目与演出。夜间演出如当天安排可观看。"
+        }
+      ],
+      "extra": "从市中心前往园区单程先预留 1–1.5 小时作为计划缓冲（非实时导航）；按官方交通指引前往，结束后返回酒店。当天不再安排市区景点。"
+    },
+    {
+      "day": 3,
+      "title": "豫园 · 老城与外滩",
+      "color": "#76619e",
+      "scene": "shanghai",
+      "stops": [
+        {
+          "id": "Q1328025",
+          "time": "10:00",
+          "duration": "2 小时",
+          "note": "豫园与周边老城漫步；入园需核对开放及门票。若未开放，可改逛周边商城。"
+        },
+        {
+          "id": "Q125474",
+          "time": "15:00",
+          "duration": "2–3 小时",
+          "note": "外滩建筑群与滨江步道；如当日返程，提前结束并留足交通时间。"
+        }
+      ],
+      "extra": "12:00 老城午餐与休息 · 下午外滩；若返程较晚，可等天色渐暗再看陆家嘴夜景。"
+    }
+  ],
+  "routes": [
+    {
+      "from": "Q223207",
+      "to": "Q1074628",
+      "day": 1,
+      "color": "#b16a35",
+      "scene": "shanghai",
+      "kind": "visit-order"
+    },
+    {
+      "from": "Q1074628",
+      "to": "Q80852",
+      "day": 1,
+      "color": "#b16a35",
+      "scene": "shanghai",
+      "kind": "visit-order"
+    },
+    {
+      "from": "Q1328025",
+      "to": "Q125474",
+      "day": 3,
+      "color": "#76619e",
+      "scene": "shanghai",
+      "kind": "visit-order"
+    }
+  ],
+  "official": {
+    "Q223207": "https://english.shanghai.gov.cn/en-ScenicSpots/20231205/19a5f5184eca45728fd57a4d4c8efc61.html",
+    "Q80852": "https://www.swfc-shanghai.com/space_leasing_ob.php",
+    "Q865312": "https://www.shanghaidisneyresort.com/en/park-calendar/",
+    "Q1328025": "https://english.shanghai.gov.cn/en-UniqueExperience-travelinshanghai/20250729/25cfb8bce97d4e798f99ac62986255ff.html"
+  },
+  "provenance": {
+    "date": "2026-09-29",
+    "method": "Curated itinerary. Links between stops indicate visit order only, not routed roads. No tickets, opening dates, travel times or entrance positions are confirmed."
+  }
+}

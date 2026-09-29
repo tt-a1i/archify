@@ -81,3 +81,12 @@ levels, Paris itinerary compatibility, export, mobile layout and WebGL fallback.
 Screenshots: `out/travel-shanghai-evidence/shanghai-3d.png` and
 `shanghai-flat.png`; both visually inspected. This does not validate surveyed
 building accuracy or real terrain elevations.
+
+## Shanghai three-day plan
+
+Focused browser coverage now includes the Shanghai prompt, six scheduled stops,
+three day views, cross-view schedule selection, day select navigation, PNG
+export and Paris compatibility. Evidence: `out/travel-shanghai-trip-evidence/`,
+including visually inspected `shanghai-three-days.png` and `disney-day2.png`.
+The Disney castle is a symbolic model at the sourced park coordinate; the
+background is a location window, not mapped park geography.

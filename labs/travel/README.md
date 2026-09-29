@@ -128,3 +128,17 @@ building heights use a more visible artistic scale, with shadows. No DEM or
 measured terrain elevation has been added. The 3D browser regression and exported
 image were checked after this change (`out/travel-air-tests.log`,
 `out/travel-air-evidence/france-three-days.png`).
+
+## Shanghai three-day itinerary
+
+The local curated Shanghai template covers Oriental Pearl → Lujiazui → SWFC
+(exterior), a full Disneyland day, and Yu Garden → Bund. All six stops retain
+Wikidata coordinates. Disneyland uses a separate location window with an
+original symbolic castle, not a park survey or attraction layout. The general
+Shanghai view shows the central-city stops; day buttons, the day select and
+schedule stops switch between views. Shanghai arrows indicate order only; no
+road routing, verified transit duration, ticket inventory or dated opening
+confirmation is implied. Official reference links accompany available stops.
+Both Shanghai and Paris retain the fixed air-arc-v1 arrows and three display
+levels. PNG export includes the selected view and itinerary; JSON exports the
+current destination plan.

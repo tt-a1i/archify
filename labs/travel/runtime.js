@@ -34,11 +34,12 @@
     }
     if (!visible.length) { const p = document.createElement('p'); p.className='empty'; p.textContent='没有匹配的地点，请调整搜索或筛选。'; $('places').append(p); }
     const polygons = s.paths.map(p => `<path class="${scene === 'france' ? 'land' : 'district'}" d="${p.d}"><title>${esc(p.name)}</title></path>${p.center ? `<text class="district-label" x="${p.center[0]}" y="${p.center[1]}" text-anchor="middle">${p.number}</text>` : ''}`).join('');
-    const routes = scene === 'paris' ? data.trip.routes.filter(r => (!day || r.day === day) && mapPlaces.some(p=>p.id===r.from) && mapPlaces.some(p=>p.id===r.to)) : [];
-    const lines = routes.map(r => '<polyline class="trip-route" stroke="'+r.color+'" marker-mid="url(#route-arrow-'+r.day+')" points="'+r.points.map(p=>p.join(',')).join(' ')+'"><title>第 '+r.day+' 天 OSM 道路步行预览</title></polyline>').join('');
+    const plan=['shanghai','disney'].includes(scene)?data.shanghaiTrip:data.trip;
+    const routes = scene !== 'france' ? plan.routes.filter(r => (!day || r.day === day) && mapPlaces.some(p=>p.id===r.from) && mapPlaces.some(p=>p.id===r.to)) : [];
+    const lines = routes.map(r => '<polyline class="trip-route" stroke="'+r.color+'" marker-end="url(#route-arrow-'+r.day+')" points="'+r.points.map(p=>p.join(',')).join(' ')+'"><title>第 '+r.day+' 天游览顺序 / 巴黎道路预览</title></polyline>').join('');
     const cityData=scene==='paris'?data.trip:scene==='shanghai'?data.shanghai:null;
     const streets = cityData ? cityData.backdrop.map(points=>'<polyline class="street-line" points="'+points.map(p=>p.join(',')).join(' ')+'"/>').join('') : '';
-    const arrowDefs = '<defs>'+data.trip.days.map(d=>'<marker id="route-arrow-'+d.day+'" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L5 2.5L0 5Z" fill="'+d.color+'"/></marker>').join('')+'</defs>';
+    const arrowDefs = '<defs>'+plan.days.map(d=>'<marker id="route-arrow-'+d.day+'" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L5 2.5L0 5Z" fill="'+d.color+'"/></marker>').join('')+'</defs>';
     const markers = mapPlaces.map(p => { const [x,y] = p.point; const offset = p.id === 'Q64436' ? -35 : p.id === 'Q19675' ? -15 : 0;
       return `<g class="poi" data-place="${p.id}" role="button" tabindex="0" aria-label="${esc(p.name)}，查看详情" transform="translate(${x} ${y})"><path class="leader" d="M0 0L${offset} -20"/><circle class="pin" r="6"/><use href="#${p.icon}" x="${offset - 42}" y="-102" width="84" height="86" aria-hidden="true"/><text class="name" text-anchor="middle" x="${offset}" y="30">${esc(p.name)}</text><text class="local-name" text-anchor="middle" x="${offset}" y="49">${esc(p.label)}</text><text class="detail-label" text-anchor="middle" x="${offset}" y="67">${esc(p.caption)}</text></g>`;
     }).join('');
@@ -53,16 +54,16 @@
     scene = next; selected = null; $('search').value = ''; $('category').value = 'all'; $('day').value = '0';
     const s = data.scenes[scene]; $('title').textContent = s.name; $('english').textContent = s.english; $('intro').textContent = s.subtitle; $('crumb').hidden = scene !== 'paris';
     document.querySelector('.breadcrumb').hidden=scene==='shanghai';
-    document.querySelector('.editorial').textContent=scene==='shanghai'?'陆家嘴与外滩局部示例。地理来自 OSM，地标坐标来自 Wikidata；模型为原创艺术表现，尚未生成上海行程。':'三日推荐以巴黎为基地。路线使用 OSM 道路快照，仅作游览规划预览，不含实时通行与入口核验。';
+    document.querySelector('.editorial').textContent=scene==='shanghai'?'陆家嘴与外滩局部示例。地理来自 OSM，地标坐标来自 Wikidata；模型为原创艺术表现，迪士尼使用独立位置视窗；箭头仅表示游览顺序。':'三日推荐以巴黎为基地。路线使用 OSM 道路快照，仅作游览规划预览，不含实时通行与入口核验。';
     $('map-level').textContent = (scene === 'france' ? '国家 / ' : '城市 / ') + s.english;
     $('france-tab').setAttribute('aria-pressed', String(scene === 'france')); $('paris-tab').setAttribute('aria-pressed', String(scene === 'paris'));
     $('shanghai-tab').setAttribute('aria-pressed',String(scene==='shanghai'));
-    $('day').disabled = scene !== 'paris'; svg.setAttribute('aria-label', s.name + '互动地图');
+    $('day').disabled = scene === 'france'; svg.setAttribute('aria-label', s.name + '互动地图');
     draw(); if (id) detail(id); Archify.view.fitAll(); if (write) writeHash();
   }
   function syncDepth() { const scale = Archify.view.state().scale; const depth = scale < .8 ? 'overview' : scale < 1.5 ? 'read' : 'detail'; canvas.dataset.travelDepth = depth; $('detail-level').textContent = {overview:'全景 · 放大探索',read:'地点 · 城市细节',detail:'细节 · 景点与行程'}[depth]; }
   new MutationObserver(syncDepth).observe(svg, {attributes:true,attributeFilter:['data-view-scale']});
-  for (const id of ['search','category','day']) $(id).addEventListener(id === 'search' ? 'input' : 'change', draw);
+  for (const id of ['search','category','day']) $(id).addEventListener(id === 'search' ? 'input' : 'change',()=>{if(id==='day'&&['shanghai','disney'].includes(scene)){const value=$('day').value,target=value==='2'?'disney':'shanghai';if(scene!==target){changeScene(target);$('day').value=value;}}draw();});
   $('country').addEventListener('click', () => changeScene('france')); $('france-tab').addEventListener('click', () => changeScene('france')); $('paris-tab').addEventListener('click', () => changeScene('paris'));
   $('shanghai-tab').addEventListener('click',()=>changeScene('shanghai'));
   $('sources-toggle').addEventListener('click', () => { $('sources').hidden = !$('sources').hidden; $('sources-toggle').setAttribute('aria-expanded', String(!$('sources').hidden)); });
