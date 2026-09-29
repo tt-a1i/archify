@@ -21,7 +21,7 @@ test('country/city navigation, filtering, detail, depth, saved state, links and 
   await send('Page.addScriptToEvaluateOnNewDocument',{source:"window.travelErrors=[];addEventListener('error',e=>travelErrors.push(e.message));addEventListener('unhandledrejection',e=>travelErrors.push(String(e.reason)));"});
   const url=pathToFileURL(path.join(root,'index.html')).href;
   let loadNumber=0;
-  async function load(hash=''){const ready=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:url+'?test='+ (++loadNumber)+hash});await ready;await stable();}
+  async function load(hash=''){const ready=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:url+'?test='+ (++loadNumber)+hash});await ready;await run("document.getElementById('mode-2d').click()");await stable();}
   async function stable(){await run('(async()=>{await document.fonts.ready;for(let i=0;i<12;i++)await new Promise(requestAnimationFrame);})()');}
   async function shot(name){if(!process.env.ARCHIFY_TRAVEL_EVIDENCE)return;fs.mkdirSync(process.env.ARCHIFY_TRAVEL_EVIDENCE,{recursive:true});const r=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(process.env.ARCHIFY_TRAVEL_EVIDENCE,name+'.png'),Buffer.from(r.data,'base64'));}
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await load();

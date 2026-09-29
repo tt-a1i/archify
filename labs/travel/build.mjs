@@ -1,8 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(new URL('../../archify/package.json', import.meta.url));
+const { buildSync } = require('esbuild');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const json = name => JSON.parse(read('data/' + name));
 export function project([lng, lat], bounds) {
@@ -42,6 +45,10 @@ const scenes = {
 };
 const payload = JSON.stringify({ scenes, places, sources: json('sources.json') }).replace(/</g, '\\u003c');
 const camera = fs.readFileSync(path.join(root, '../../viewer/viewer-camera.js'), 'utf8');
+const threeBundle = buildSync({ entryPoints: [path.join(root, 'scene3d.js')], bundle: true,
+  format: 'iife', write: false, minify: true, legalComments: 'inline', target: 'es2020',
+  supported: { 'template-literal': false } }).outputFiles[0].text;
+const threeLicense = read('node_modules/three/LICENSE').replace(/</g, '&lt;');
 const html = `<!doctype html>
 <html lang="zh-CN" data-fixed-canvas><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Archify Travel · 法国与巴黎</title><style>${read('style.css')}</style></head>
 <body><header><a class="brand" href="#scene=france">ARCHIFY <span>TRAVEL ATLAS</span></a><div class="edition">旅行地图实验室 / 01</div><button id="export" type="button">导出当前地图 SVG</button></header>
@@ -61,7 +68,8 @@ const html = `<!doctype html>
 <script id="travel-data" type="application/json">${payload}</script><script>var Archify = {};function viewerText(key, values) { return key === 'viewer.nav.camera' || key === 'viewer.nav.camera.title' ? '重置到 100%' : key === 'viewer.nav.detail.full' ? '地图详情' : ''; }
 ${camera}
 ${read('runtime.js')}
-</script></body></html>`;
+</script><script>${threeBundle.replace(/<\/script/gi, '<\\/script')}</script>
+<script type="text/plain" id="three-license">${threeLicense}</script></body></html>`;
 if (process.argv.includes('--check')) {
   if (read('index.html') !== html) throw new Error('Travel artifact is stale; run node labs/travel/build.mjs');
 } else {

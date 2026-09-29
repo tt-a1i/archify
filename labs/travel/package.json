@@ -1,0 +1,12 @@
+{
+  "name": "archify-travel-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test travel.test.mjs travel3d.test.mjs"
+  },
+  "dependencies": {
+    "three": "0.186.1"
+  }
+}

@@ -18,6 +18,7 @@
     $('save').addEventListener('click', () => { if (saved.has(id)) saved.delete(id); else saved.add(id); try { localStorage.setItem('archify-travel-saved', JSON.stringify([...saved])); } catch (_) {} detail(id); });
     document.querySelectorAll('[data-place]').forEach(el => el.classList.toggle('selected', el.dataset.place === id));
     writeHash();
+    window.dispatchEvent(new CustomEvent('archify:travel-select', {detail:{id}}));
   }
   function draw() {
     const s = data.scenes[scene], query = $('search').value.trim().toLowerCase(), category = $('category').value, day = Number($('day').value);
@@ -41,6 +42,7 @@
     $('scene').querySelectorAll('.poi').forEach(el => { el.addEventListener('click', () => detail(el.dataset.place)); el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); detail(el.dataset.place); } }); });
     if (selected && mapPlaces.some(p => p.id === selected)) detail(selected); else { selected=null; $('detail').hidden=true; writeHash(); }
     syncDepth();
+    window.dispatchEvent(new CustomEvent('archify:travel-change'));
   }
   function changeScene(next, id = null, write = true) {
     if (!data.scenes[next]) next = 'france';
@@ -64,5 +66,5 @@
   });
   function restore() { const params = new URLSearchParams(location.hash.slice(1)); changeScene(params.get('scene') || 'france', params.get('place'), false); }
   window.addEventListener('hashchange', restore); restore();
-  Archify.travel = { scene: () => scene, selected: () => selected, visible: () => visible.map(p=>p.id), changeScene };
+  Archify.travel = { scene: () => scene, selected: () => selected, visible: () => visible.map(p=>p.id), changeScene, select: detail };
 })();
