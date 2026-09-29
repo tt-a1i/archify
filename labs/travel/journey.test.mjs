@@ -8,6 +8,16 @@ import {spawn,execFileSync} from 'node:child_process';
 import {createJourney,validateJourney} from './journey.mjs';
 import {ChromeVisualBrowser} from '../../archify/bin/visual-check.mjs';
 const sample=()=>JSON.parse(fs.readFileSync(new URL('./examples/host-journey.json',import.meta.url)));
+test('overview preserves geographic direction, distance ratios and positions independent of visit order',()=>{
+  const input=sample();input.days=input.days.slice(0,1);input.places=input.places.slice(0,3);
+  input.places.forEach((p,i)=>{p.coordinates=[121+i*.01,31];});
+  input.days[0].stops=input.places.map(p=>({placeId:p.id,time:'上午',duration:'1 小时'}));
+  const result=createJourney(input),[a,b,c]=result.places.map(p=>p.views.journey);
+  assert.ok(a[0]<b[0]&&b[0]<c[0]);assert.equal(a[1],c[1]);assert.ok(Math.abs((c[0]-a[0])/(b[0]-a[0])-2)<1e-8);
+  input.days[0].stops.reverse();const reversed=createJourney(input);
+  for(const p of result.places)assert.deepEqual(p.views.journey,reversed.places.find(q=>q.placeId===p.placeId).views.journey);
+  assert.equal(reversed.journey.plan.routes.length,2);
+});
 test('host contract supports different duration, repeated visits, long days and rejects unsafe/invalid input',()=>{
   const input=sample();input.days.push({day:5,title:'自由安排',stops:Array.from({length:7},()=>({...input.days[0].stops[0]}))});
   const result=createJourney(input);assert.equal(result.journey.plan.days.length,5);assert.equal(result.places.length,13);assert.equal(result.journey.plan.routes.length,12);assert.equal(new Set(result.places.map(p=>p.id)).size,13);assert.ok(result.flows.journey.workflow.lanes.some(l=>l.id==='day5-1'));

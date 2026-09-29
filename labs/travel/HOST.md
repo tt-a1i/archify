@@ -43,7 +43,8 @@ Resource limits: 32 MiB input, 1–120 days, 1–48 stops/day, 1500 distinct pla
 these are explicit resource guards, not a three-day or city restriction.
 Flowchart rows wrap after six stops. Day colors cycle through the locked palette.
 The overview retains every visit, connects consecutive visits across day borders,
-and uses a readable schematic layout. Daily square blocks use local projection,
+and uses one common geographic projection for all coordinate anchors. Do not
+rearrange places into a schematic grid. Model dimensions remain illustrative. Daily square blocks use local projection,
 including correct longitude unwrapping around the date line. Heights are artistic,
 not terrain elevation. Overview/daily modes both use `air-arc-v1` arrows.
 

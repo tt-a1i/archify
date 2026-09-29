@@ -1,11 +1,12 @@
 # Travel map visual contract
 
-The approved overall style is `illustrated-diorama-v2` in `visual-style.js`.
+The approved overall style is `illustrated-diorama-v3` in `visual-style.js`.
 Keep pastel materials, model silhouettes, lighting and typography consistent
 across destinations and generated itineraries. The user-facing presentation is
 now flowchart first, then 3D with height; do not restore 2D/flat-3D controls.
-The user-approved v2 overview contains all visits and consecutive cross-day
-arrows with a labeled schematic layout. It omits roads and ordinary buildings.
+The user-approved overview contains all visits and consecutive cross-day
+arrows with one shared geographic projection. Never rearrange anchors by visit
+order or displace nearby places to avoid overlap. It omits roads and ordinary buildings.
 Selecting a day projects its real coordinates into an isolated square, loads
 only that day's detail package, and disposes the previous scene's geometry.
 Generation supplies known places and visit order, not new rendering code or

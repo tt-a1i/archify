@@ -29,8 +29,8 @@ export function createJourney(candidate){
   const scenes={},tiles={},routes=[];
   const scene=(id,name)=>{scenes[id]={name,english:name,subtitle:'地标与方向 · 示意模型',paths:[{name:'行程展示范围，非行政边界',d:'M290,115H1110V935H290Z'}]};};
   scene('journey',input.title);tiles.journey={backdrop:[],water:[],buildings:[],bounds:null};
-  const cols=Math.max(2,Math.ceil(Math.sqrt(visits.length*1.4))),rows=Math.ceil(visits.length/cols);
-  for(const [i,p] of visits.entries()){const row=Math.floor(i/cols),col=row%2?cols-1-i%cols:i%cols;p.views.journey=[340+col*720/(cols-1),rows===1?525:190+row*670/(rows-1)];p.point=p.views.journey;p.scene='journey';}
+  const overview=extent(visits.map(p=>p.coordinates));
+  for(const p of visits){p.views.journey=overview.project(p.coordinates);p.point=p.views.journey;p.scene='journey';}
   for(let i=1;i<visits.length;i++){const a=visits[i-1],b=visits[i];routes.push({day:b.day,from:a.id,to:b.id,color:days[b.day-1].color,points:[a.views.journey,b.views.journey],transfer:a.day!==b.day});}
   for(const d of days){const ps=visits.filter(p=>p.day===d.day),frame=extent(ps.map(p=>p.coordinates));scene(d.scene,'第 '+d.day+' 天 · '+d.title);for(const p of ps)p.views[d.scene]=frame.project(p.coordinates);
     const g=d.geography,inside=line=>line.every(p=>{const q=frame.project(p);return q[0]>=290&&q[0]<=1110&&q[1]>=115&&q[1]<=935;});

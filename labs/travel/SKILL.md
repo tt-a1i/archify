@@ -34,6 +34,7 @@ Agent, CLI model process or model API. Do not install a live Archify Skill.
    detail. For revisions, change the JSON and rerender; keep style/model code
    fixed. The web “复制给 Agent” button copies a prompt; it does not call the LLM.
 
-The overview uses an explicit visit-order layout, not geographic scale. Daily
+The overview uses a shared geographic projection and preserves relative positions;
+visit order affects arrows only. Model sizes remain illustrative. Daily
 blocks project actual sourced coordinates. Missing road/building packages do
 not prevent generating a valid landmark-only block; disclose that limitation.

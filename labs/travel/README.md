@@ -9,7 +9,7 @@ API, spawned agent or installed Skill is required. A four-day example is in
 `examples/host-journey.json`. The browser copies a revision request for the host;
 it does not pretend that a static form can call the host LLM directly.
 
-The current online Shanghai/Paris examples use a connected, schematic overview:
+The current online Shanghai/Paris examples use a connected, geographically projected overview:
 all visits, N−1 arrows including cross-day transfers, no streets/ordinary
 buildings. Daily scenes use real coordinates in an isolated square and fetch
 only their content-addressed day package. Leaving a scene disposes its Three.js
@@ -19,8 +19,8 @@ selected day. It can represent other cities without renderer changes; detailed
 geometry and bespoke models are **not** automatically available for every city.
 Without supplied detail, the day is a landmark-only block with honest labels.
 
-Style `illustrated-diorama-v2` records the user-requested lightweight overview
-and daily blocks. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
+Style `illustrated-diorama-v3` records the geographic overview requested by the user
+and daily blocks; the overview now preserves geographic anchor positions. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
 tests cover Shanghai/Paris, cross-day links, lazy day fetching, offline cached
 days, arbitrary-duration input, repeated places, date-line coordinates and GPU
 geometry disposal. `offline.html` preserves the earlier compatibility fixture;
