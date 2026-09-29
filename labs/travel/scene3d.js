@@ -1,11 +1,13 @@
 import {VISUAL} from './visual-style.js';
+import {terrainHeight} from './elevation.js';
+import {addRelief,drapeWater} from './terrain3d.js';
 import { AIR_ROUTE_STYLE as AIR, airRouteStrokes, airArrowPath } from './air-route-style.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 
-// Render the same sourced geography and place state as the 2D atlas. No tiles,
-// remote models, elevation claims, or second search/filter model are introduced.
+// Render the same sourced geography and place state as the 2D atlas.
+// Overview DEM snapshots are included in the city package; no runtime DEM fetch.
 const data = (window.TravelData||JSON.parse(document.getElementById('travel-data').textContent));
 const atlas = window.Archify.travel;
 const cityTrip=()=>data.journey?.plan||(['shanghai','disney'].includes(atlas.scene())?data.shanghaiTrip:data.trip);
@@ -28,6 +30,9 @@ const exportButton = document.getElementById('export');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let renderer, camera, controls, scene, world, frame = 0, active = false, sceneId = '', failed = false;
 let markers = [], labels = [], terrainCount = 0, pointerStart = null;
+const relief=()=>heightMode&&sceneId==='journey'?data.journey?.tiles.journey.elevation:null;
+const groundAt=(x,z)=>relief()?terrainHeight(relief(),x,z):sceneId==='paris'?18:22;
+const reliefCaption=()=>relief()?`真实高程粗网格 · 高差夸张 ${relief().exaggeration.toFixed(1)}×`:'按真实坐标同比例投影 · 地标造型为示意';
 let airRoutes=[];
 let heightMode=true;
 const routeOverlay=document.createElementNS('http://www.w3.org/2000/svg','svg');routeOverlay.classList.add('three-label-leaders');routeOverlay.setAttribute('aria-hidden','true');labelLayer.before(routeOverlay);
@@ -98,7 +103,7 @@ function landmark(p) {
     box(group,19,51,30,stone,-22,25.5,0);box(group,19,51,30,stone,22,25.5,0);box(group,63,19,34,stone,0,53,0);box(group,69,5,38,dark,0,65,0);
     for(const x of [-24,24])box(group,7,23,1,dark,x,28,15.6);
   }
-  const [x,z]=p.point;group.position.set(x-700,sceneId==='paris'?18:22,z-525);
+  const [x,z]=p.point;group.position.set(x-700,groundAt(x-700,z-525),z-525);
   group.scale.setScalar(data.journey?(sceneId==='journey'?.55:.85):sceneId==='paris'?.5:sceneId==='shanghai'?.85:1.1);
   if(!heightMode)group.scale.y=.001;
   const marker=mesh(group,new THREE.CylinderGeometry(33,38,3,32),0xe8d6ab,0,1,0);
@@ -106,7 +111,7 @@ function landmark(p) {
   const button=document.createElement('button');button.className='three-label';button.dataset.place=p.id;
   const title=document.createElement('strong');title.textContent=(p.day?'D'+p.day+' · ':'')+p.name;const detail=document.createElement('span');detail.textContent=p.label;
   button.append(title,detail);button.addEventListener('click',()=>atlas.select(p.id));labelLayer.append(button);
-  labels.push({button,p,anchor:new THREE.Vector3(x-700,20,z-525)});
+  labels.push({button,p,anchor:new THREE.Vector3(x-700,groundAt(x-700,z-525)+2,z-525)});
 }
 function disposeWorld() {
   if(!world)return;
@@ -117,7 +122,7 @@ function rebuild() {
   const next=atlas.scene(),changed=sceneId!==next;if(data.journey)stage.querySelector('.three-badge').innerHTML=next==='journey'?'总行程 · 地标与箭头<span>按真实坐标同比例投影 · 地标造型为示意</span>':'单日地图方块<span>水系按数据绘制 · 地表层次为插画示意</span>';sceneId=next;legend.hidden=sceneId==='france';legend.replaceChildren();const title=document.createElement('strong');title.textContent=cityTrip().title;legend.append(title);for(const d of cityTrip().days){const row=document.createElement('button');row.type='button';row.addEventListener('click',()=>document.querySelectorAll('#trip-days button')[d.day].click());row.style.color=d.color;row.textContent=String(d.day).padStart(2,'0')+'　'+d.title;legend.append(row);}const note=document.createElement('small');note.textContent='空中连线＝游览顺序 · 非道路轨迹';legend.append(note);disposeWorld();world=new THREE.Group();scene.add(world);terrainCount=0;
   const base=box(world,1440,heightMode?24:1,1080,0xabbcaf,0,heightMode?(sceneId==='paris'?-54:-62):16,0);base.receiveShadow=true;
   const loader=new SVGLoader();
-  for(const [index,region] of data.scenes[sceneId].paths.entries()) {
+  for(const [index,region] of (relief()?[]:data.scenes[sceneId].paths).entries()) {
     const paths=loader.parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${region.d}" fill="#000" fill-rule="evenodd"/></svg>`).paths;
     for(const path of paths)for(const shape of SVGLoader.createShapes(path)) {
       const depth=heightMode?(sceneId==='paris'?60:72):1,surface=sceneId==='paris'?18:22;
@@ -132,11 +137,14 @@ function rebuild() {
   if(data.journey&&heightMode){
     // Fixed illustration texture and cutaway layers, not invented DEM heights.
     for(const [y,h,color] of [[-40,18,0xb4a58a],[-23,16,0xc7b695],[-8,14,0xbac39a]])box(world,820.2,h,820.2,color,0,y,0);
+    if(relief()){addRelief(world,relief());terrainCount++;stage.querySelector('.three-badge').replaceChildren();const badge=stage.querySelector('.three-badge');badge.append('总行程 · 立体地貌');const subtitle=document.createElement('span');subtitle.textContent=reliefCaption();badge.append(subtitle);const credit=document.createElement('a');credit.href=relief().source;credit.target='_blank';credit.rel='noopener';credit.textContent='高程数据与署名';credit.title=relief().attribution;legend.append(credit);}
+    else{
     const ground=new THREE.PlaneGeometry(820,820,24,24);ground.rotateX(-Math.PI/2);
     const colors=[],positions=ground.attributes.position;
     for(let i=0;i<positions.count;i++){const x=positions.getX(i),z=positions.getZ(i),c=new THREE.Color(0xcbd9ae);c.offsetHSL(0,0,(Math.sin(x*.031+z*.019)+Math.cos(z*.027-x*.013))*.012);colors.push(c.r,c.g,c.b);}
     ground.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
     const texture=new THREE.Mesh(ground,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));texture.position.y=22.08;texture.receiveShadow=true;texture.userData.disposeMaterial=true;world.add(texture);
+    }
   }
   const visible=new Set(atlas.visible());
   const points=data.places.filter(p=>p.scene===sceneId&&visible.has(p.id));points.forEach(landmark);
@@ -152,9 +160,9 @@ function drawCity(visible) {
   const surface=sceneId==='paris'?18:22;
   for(const points of (sceneId!=='paris'?city.water:[])){
     const shape=new THREE.Shape(points.map(p=>new THREE.Vector2(p[0]-700,p[1]-525)));
-    const geo=new THREE.ShapeGeometry(shape);geo.rotateX(Math.PI/2);
+    let geo=new THREE.ShapeGeometry(shape);geo.rotateX(Math.PI/2);if(relief())geo=drapeWater(geo,relief());
     const water=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:data.journey?0x88b9be:0x9fc5c6,side:THREE.DoubleSide,roughness:.6}));water.position.y=surface+.3;water.userData.disposeMaterial=true;world.add(water);
-    if(data.journey){const edges=[];for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];if([[0,290],[0,1110],[1,115],[1,935]].some(([axis,bound])=>Math.abs(a[axis]-bound)<.001&&Math.abs(b[axis]-bound)<.001))continue;edges.push(a[0]-700,surface+.45,a[1]-525,b[0]-700,surface+.45,b[1]-525);}const shore=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(edges,3)),new THREE.LineBasicMaterial({color:0x628f87,transparent:true,opacity:.65}));shore.userData.disposeMaterial=true;world.add(shore);}
+    if(data.journey){const edges=[];for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];if([[0,290],[0,1110],[1,115],[1,935]].some(([axis,bound])=>Math.abs(a[axis]-bound)<.001&&Math.abs(b[axis]-bound)<.001))continue;edges.push(a[0]-700,groundAt(a[0]-700,a[1]-525)+.7,a[1]-525,b[0]-700,groundAt(b[0]-700,b[1]-525)+.7,b[1]-525);}const shore=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(edges,3)),new THREE.LineBasicMaterial({color:0x628f87,transparent:true,opacity:.65}));shore.userData.disposeMaterial=true;world.add(shore);}
   }
   const segments=[];for(const line of city.backdrop)for(let i=1;i<line.length;i++)segments.push(line[i-1][0]-700,surface+.5,line[i-1][1]-525,line[i][0]-700,surface+.5,line[i][1]-525);
   const streets=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(segments,3)),new THREE.LineBasicMaterial({color:0xb2b5a5,transparent:true,opacity:.55}));streets.userData.disposeMaterial=true;world.add(streets);
@@ -284,9 +292,9 @@ exportButton.addEventListener('click',event=>{
     }
     text(sceneId==='paris'?'卢浮宫周二闭馆 · 奥赛周一闭馆':'迪士尼时段以所选日期官方日历为准',output.height/ratio-84,11,'#8c592e');text(sceneId==='paris'?'日期未核验时，请调整博物馆日并查官网。':'金融中心默认外观 · 未确认门票与入内开放。',output.height/ratio-62,10,'#6d7970');
   }
-  ctx.fillStyle='#263f38';ctx.font=`${10*ratio}px sans-serif`;ctx.fillText('空中箭头仅表示游览顺序 · 非实时道路导航 · 高度为艺术表现',16*ratio,output.height-46*ratio);
-  ctx.fillText(data.journey?'坐标来源见行程 · 已提供的 OSM 地图 © OpenStreetMap contributors (ODbL)':'Natural Earth · © Ville de Paris / OpenStreetMap contributors (ODbL) · Wikidata (CC0)',16*ratio,output.height-24*ratio);
+  ctx.fillStyle='#263f38';ctx.font=`${10*ratio}px sans-serif`;ctx.fillText(relief()?'空中箭头＝游览顺序 · '+reliefCaption():'空中箭头仅表示游览顺序 · 非实时道路导航 · 高度为艺术表现',16*ratio,output.height-46*ratio);
+  ctx.fillText(relief()?relief().attribution+' · © OpenStreetMap contributors':data.journey?'坐标来源见行程 · 已提供的 OSM 地图 © OpenStreetMap contributors (ODbL)':'Natural Earth · © Ville de Paris / OpenStreetMap contributors (ODbL) · Wikidata (CC0)',16*ratio,output.height-24*ratio);
   output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='archify-travel-'+sceneId+'-3d.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'image/png');
 },true);
-window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,heightMode,markerHeights:markers.map(m=>new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()).y),scene:sceneId,terrainCount,detailBuildings:data.journey?(sceneId==='journey'?0:(data.journey.tiles[sceneId]?.buildings.length||0)):null,geometries:renderer?.info.memory.geometries,renderCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,routeArrows:airRoutes.length,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
+window.Archify.travel3d={setMode,reset,focus,focusDay,state:()=>({active,failed,heightMode,relief:relief()?{vertices:relief().values.length,minimum:relief().minimum,maximum:relief().maximum,exaggeration:relief().exaggeration}:null,markerGround:markers.map(m=>m.position.y),markerHeights:markers.map(m=>new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3()).y),scene:sceneId,terrainCount,detailBuildings:data.journey?(sceneId==='journey'?0:(data.journey.tiles[sceneId]?.buildings.length||0)):null,geometries:renderer?.info.memory.geometries,renderCalls:renderer?.info.render.calls,triangles:renderer?.info.render.triangles,routeArrows:airRoutes.length,places:markers.map(m=>m.userData.placeId),camera:camera?.position.toArray(),target:controls?.target.toArray(),distance:controls?.getDistance(),azimuth:controls?.getAzimuthalAngle(),polar:controls?.getPolarAngle(),autoRotate:controls?.autoRotate,framesPending:Boolean(frame)})};
 window.dispatchEvent(new Event('archify:3d-ready'));

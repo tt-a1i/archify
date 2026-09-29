@@ -10,3 +10,4 @@
 .package-status{margin:0;padding:6px 24px;background:#edf0e4;font-size:12px;color:#466352}.cache-dialog{max-width:480px;border:1px solid #b8c4b6;border-radius:12px;padding:24px;background:#faf7ef;color:#29463e}.cache-dialog label{display:block;margin:16px 0}.cache-dialog button{margin:6px;padding:8px}.cache-dialog p{line-height:1.6}.cache-dialog::backdrop{background:#263f3855}
 
 #disney-open{border:1px solid #b6c5b7;border-radius:6px;background:#faf7ef;color:#365e4e;padding:7px 10px;font:inherit;cursor:pointer}#disney-open[hidden]{display:none}.trip-legend button{display:block;border:0;background:transparent;padding:3px 0;font-family:inherit;text-align:left;cursor:pointer;pointer-events:auto}.trip-legend button:hover{text-decoration:underline}
+:where(.trip-legend) a { display:block; margin-top:6px; font-size:10px; color:#557365; pointer-events:auto; }

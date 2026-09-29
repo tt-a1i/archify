@@ -1,5 +1,6 @@
 import {VISUAL} from './visual-style.js';
 import {buildFlow} from './build-flow.mjs';
+import {sampleElevation} from './elevation.js';
 
 const fail=m=>{throw Error('行程数据无效：'+m);};
 const str=(x,label,max=300)=>{if(typeof x!=='string'||!x.trim()||x.length>max)fail(label);return x;};
@@ -11,6 +12,12 @@ export function validateJourney(input){
   if(!Array.isArray(input.places)||!input.places.length||input.places.length>1500)fail('places 数量');
   const ids=new Set();for(const p of input.places){str(p.id,'place.id',80);if(!/^[\w-]+$/.test(p.id)||ids.has(p.id))fail('地点 ID 必须唯一且只含字母数字下划线连字符');ids.add(p.id);str(p.name,'place.name',80);if(!coord(p.coordinates))fail(p.id+' 坐标');if(!source(p.source))fail(p.id+' 缺少坐标来源 URL');if(!VISUAL.icons.includes(p.icon))fail(p.id+' 模型不在固定模型库中');}
   if(!Array.isArray(input.days)||!input.days.length||input.days.length>120)fail('days 需为 1–120 天');
+  const e=input.elevation;
+  if(e){
+    if(!source(e.source))fail('高程来源 URL');str(e.attribution,'高程署名',1000);
+    if(!Array.isArray(e.bounds)||e.bounds.length!==4||!e.bounds.every(Number.isFinite)||e.bounds[0]>=e.bounds[2]||e.bounds[1]>=e.bounds[3]||e.bounds[0]<-180||e.bounds[2]>540||e.bounds[2]-e.bounds[0]>360||e.bounds[1]<-90||e.bounds[3]>90)fail('高程范围');
+    if(!Number.isInteger(e.columns)||!Number.isInteger(e.rows)||e.columns<2||e.rows<2||e.columns>129||e.rows>129||!Array.isArray(e.values)||e.values.length!==e.columns*e.rows||e.values.some(v=>!Number.isFinite(v)||v< -11000||v>9000))fail('高程网格');
+  }
   for(const [i,d] of input.days.entries()){
     if(d.day!==i+1)fail('天数必须从 1 连续编号');str(d.title,'day.title',100);
     if(!Array.isArray(d.stops)||!d.stops.length||d.stops.length>48)fail('每天需 1–48 站');
@@ -42,6 +49,16 @@ export function createJourney(candidate){
   const scene=(id,name)=>{scenes[id]={name,english:name,subtitle:'地标与方向 · 示意模型',paths:[{name:'行程展示范围，非行政边界',d:'M290,115H1110V935H290Z'}]};};
   scene('journey',input.title);tiles.journey={backdrop:[],water:[],buildings:[],bounds:null};
   const overview=extent(visits.map(p=>p.coordinates));
+  if(input.elevation){
+    const e=input.elevation,[w,s,east,n]=e.bounds,west=overview.cx-overview.size/2/overview.cos,south=overview.cy-overview.size/2,eastEdge=overview.cx+overview.size/2/overview.cos,north=overview.cy+overview.size/2;
+    const shift=360*Math.round(((w+east)/2-overview.cx)/360);
+    if(west+shift<w||eastEdge+shift>east||south<s||north>n)fail('高程范围需覆盖整个总行程方块');
+    const values=[],columns=25,rows=25;
+    for(let r=0;r<rows;r++)for(let c=0;c<columns;c++)values.push(sampleElevation(e,(west+shift+(eastEdge-west)*c/(columns-1)-w)/(east-w),(n-north+(north-south)*r/(rows-1))/(n-s)));
+    const minimum=Math.min(...values),maximum=Math.max(...values),trueScale=820/(overview.size*111320);
+    const exaggeration=Math.max(1,Math.min(80,60/Math.max(.001,(maximum-minimum)*trueScale)));
+    tiles.journey.elevation={columns,rows,values,minimum,maximum,unitsPerMeter:trueScale*exaggeration,exaggeration,source:e.source,attribution:e.attribution};
+  }
   const waters=new Map();for(const day of input.days)for(const ring of day.geography?.water||[])waters.set(JSON.stringify(ring),ring);
   tiles.journey.water=[...waters.values()].map(r=>clipWater(r.map(overview.project))).filter(r=>r.length);
   for(const p of visits){p.views.journey=overview.project(p.coordinates);p.point=p.views.journey;p.scene='journey';}
@@ -57,5 +74,5 @@ export function createJourney(candidate){
 
 export function demoJourney(data,family,raw){
   const plan=family==='shanghai'?data.shanghaiTrip:data.trip,ids=new Set(plan.days.flatMap(d=>d.stops.map(s=>s.id)));
-  return createJourney({version:1,title:plan.title,prompt:plan.prompt||plan.title,preferences:['经典地标','适度节奏'],places:data.places.filter(p=>ids.has(p.id)).map(p=>({...p,official:plan.official?.[p.id],source:p.source||'https://www.wikidata.org/wiki/'+p.id})),days:plan.days.map(d=>{const city=family==='shanghai'?(d.day===2?raw.disney:raw.shanghai):raw.paris;return {...d,stops:d.stops.map(s=>({...s,placeId:s.id})),geography:{source:'https://www.openstreetmap.org/copyright',roads:city.backdrop,water:city.water||[],buildings:city.buildings.map(b=>({coordinates:b.coordinates,height:b.height,heightSource:b.heightSource}))}};})});
+  return createJourney({version:1,elevation:raw.elevation?.[family],title:plan.title,prompt:plan.prompt||plan.title,preferences:['经典地标','适度节奏'],places:data.places.filter(p=>ids.has(p.id)).map(p=>({...p,official:plan.official?.[p.id],source:p.source||'https://www.wikidata.org/wiki/'+p.id})),days:plan.days.map(d=>{const city=family==='shanghai'?(d.day===2?raw.disney:raw.shanghai):raw.paris;return {...d,stops:d.stops.map(s=>({...s,placeId:s.id})),geography:{source:'https://www.openstreetmap.org/copyright',roads:city.backdrop,water:city.water||[],buildings:city.buildings.map(b=>({coordinates:b.coordinates,height:b.height,heightSource:b.heightSource}))}};})});
 }

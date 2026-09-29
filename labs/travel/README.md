@@ -19,18 +19,25 @@ selected day. It can represent other cities without renderer changes; detailed
 geometry and bespoke models are **not** automatically available for every city.
 Without supplied detail, the day is a landmark-only block with honest labels.
 
-Style `illustrated-diorama-v4` records the geographic overview requested by the user
+Style `illustrated-diorama-v5` records the geographic overview requested by the user
 and daily blocks; the overview now preserves geographic anchor positions. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
 tests cover Shanghai/Paris, cross-day links, lazy day fetching, offline cached
 days, arbitrary-duration input, repeated places, date-line coordinates and GPU
 geometry disposal. `offline.html` preserves the earlier compatibility fixture;
 new portable trips are produced by `render-journey.mjs`.
 
-The v4 landform layer retains available sourced water polygons in overview and
+The landform layer retains available sourced water polygons in overview and
 daily tiles, clips rivers crossing the tile boundary, and draws shoreline edges.
-A fixed muted ground texture and cutaway soil bands are decorative; no DEM or
-measured ground elevations have been added. Water coverage remains limited to
-the supplied snapshots. Draw ordering is stable across cached reloads.
+A fixed muted ground texture and cutaway soil bands are decorative. The v5
+overview adds a 25×25 DEM mesh, draped landmarks/water and a closed perimeter.
+Shanghai/Paris use small checked-in Mapzen Terrain Tiles snapshots. Regenerate
+explicitly with `node labs/travel/prepare-elevation.mjs`; page loads never fetch
+DEM tiles. Heights are vertically exaggerated (shown in the map badge), so XY
+scale remains geographic but vertical scale is illustrative. Coarse source data
+can contain urban/river artifacts and is not surveyed ground truth. Other cities
+need a sourced host `elevation` grid; no grid means the existing flat fallback.
+Water coverage remains limited to supplied snapshots. Draw ordering is stable
+across cached reloads.
 
 The remaining sections below record earlier experimental stages; this section
 and HOST.md describe the current host-generated journey path.

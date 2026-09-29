@@ -3,7 +3,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {demoJourney} from './journey.mjs';
 import {VISUAL} from './visual-style.js';
-export function styleIdentity(root){return {id:VISUAL.id,sha256:createHash('sha256').update(['visual-style.js','scene3d.js','style.css','air-route-style.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n')).digest('hex')};}
+export function styleIdentity(root){return {id:VISUAL.id,sha256:createHash('sha256').update(['visual-style.js','scene3d.js','terrain3d.js','elevation.js','style.css','air-route-style.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n')).digest('hex')};}
 export function buildPackages({root,html,data,raw,camera,threeBundle,buildSync,check}){
   const read=f=>fs.readFileSync(path.join(root,f),'utf8'),digest=b=>createHash('sha256').update(b).digest('hex');
   const outputs=new Map(),manifest={schema:1,style:data.visualStyle,groups:{},shared:{}};

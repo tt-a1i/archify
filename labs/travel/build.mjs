@@ -110,5 +110,5 @@ ${read('planner.js')}}
 ${read('flow-view.js')}
 </script><script>${threeBundle.replace(/<\/script/gi, '<\\/script')}</script>
 <script type="text/plain" id="three-license">${threeLicense}</script></body></html>`;
-if(custom){if(outputArg<0)throw Error('--output required');fs.mkdirSync(path.dirname(path.resolve(process.argv[outputArg+1])),{recursive:true});fs.writeFileSync(process.argv[outputArg+1],html.replace('href="world.html"','href="#scene=journey"').replace('切换目的地 ↗','返回总行程 ↗'));}else buildPackages({root,html,data:JSON.parse(payload),raw:{paris:json('trip.json'),shanghai:json('shanghai.json'),disney:json('disney.json')},camera,threeBundle,buildSync,check:process.argv.includes('--check')});
+if(custom){if(outputArg<0)throw Error('--output required');fs.mkdirSync(path.dirname(path.resolve(process.argv[outputArg+1])),{recursive:true});fs.writeFileSync(process.argv[outputArg+1],html.replace('href="world.html"','href="#scene=journey"').replace('切换目的地 ↗','返回总行程 ↗'));}else buildPackages({root,html,data:JSON.parse(payload),raw:{elevation:{shanghai:json('shanghai-elevation.json'),paris:json('paris-elevation.json')},paris:json('trip.json'),shanghai:json('shanghai.json'),disney:json('disney.json')},camera,threeBundle,buildSync,check:process.argv.includes('--check')});
 console.log('Built versioned destination packages and portable offline atlas');

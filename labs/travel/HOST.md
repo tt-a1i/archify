@@ -45,8 +45,8 @@ Flowchart rows wrap after six stops. Day colors cycle through the locked palette
 The overview retains every visit, connects consecutive visits across day borders,
 and uses one common geographic projection for all coordinate anchors. Do not
 rearrange places into a schematic grid. Model dimensions remain illustrative. Daily square blocks use local projection,
-including correct longitude unwrapping around the date line. Heights are artistic,
-not terrain elevation. Overview/daily modes both use `air-arc-v1` arrows.
+including correct longitude unwrapping around the date line. Landmark heights are
+artistic. Overview/daily modes both use `air-arc-v1` arrows.
 
 The command validates data and compiles the workflow; its receipt does not assert
 coordinate truth, venue availability, booking status, or visual review. The host
@@ -54,5 +54,16 @@ must research those facts and perform browser checks before making such claims.
 
 Water rings crossing a tile boundary are clipped instead of dropped. The overview
 keeps the available sourced water outlines, while omitting streets and buildings.
-Shorelines, muted surface texture and cutaway soil colors use the fixed v4 style;
+Shorelines, muted surface texture and cutaway soil colors use the fixed v5 style;
 texture and cutaway layers are illustrative, not DEM terrain heights or geology.
+
+Optional top-level `elevation` adds coarse relief to the **whole-trip overview**:
+`{bounds:[west,south,east,north],columns,rows,values,source,attribution}`. Values
+are sourced elevations in meters, row-major from northwest to southeast; each
+dimension is 2–129. Bounds must cover the full padded square, not only its stops.
+Unwrapped east longitude up to 540 is allowed across the date line. Never invent
+heights. The renderer resamples to 25×25 vertices, uses a fixed exaggeration rule
+(1–80×, aiming for 60 scene units of relief) and labels the resulting factor.
+No elevation input preserves the flat fallback. Daily geometry remains isolated.
+For Shanghai/Paris snapshots see `prepare-elevation.mjs` and `data/*-elevation.json`;
+source provenance and credits are included in the map and export.

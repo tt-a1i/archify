@@ -6,8 +6,19 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {spawn,execFileSync} from 'node:child_process';
 import {createJourney,validateJourney,clipWater} from './journey.mjs';
+import {sampleElevation,terrainHeight} from './elevation.js';
 import {ChromeVisualBrowser} from '../../archify/bin/visual-check.mjs';
 const sample=()=>JSON.parse(fs.readFileSync(new URL('./examples/host-journey.json',import.meta.url)));
+test('overview elevation is coarse, sourced, geographically aligned and excluded from daily detail',()=>{
+  const input=sample(),flat=createJourney(input);
+  input.elevation={bounds:[120,30,123,33],columns:2,rows:2,values:[0,100,50,150],source:'https://example.com/dem',attribution:'Test slope'};
+  const raised=createJourney(input),grid=raised.journey.tiles.journey.elevation;
+  assert.equal(grid.values.length,625);assert.ok(grid.maximum>grid.minimum);assert.ok(grid.exaggeration>=1&&grid.exaggeration<=80);
+  assert.ok(terrainHeight(grid,410,-410)>terrainHeight(grid,-410,-410));
+  assert.equal(sampleElevation(input.elevation,.2,.3),35);assert.equal(sampleElevation(input.elevation,.8,.7),115);
+  assert.deepEqual(raised.places.map(p=>p.views),flat.places.map(p=>p.views));assert.equal(raised.journey.tiles['day-1'].elevation,undefined);
+  for(const change of [e=>e.values=[0],e=>e.values[0]=NaN,e=>e.source='javascript:foo',e=>e.columns=130,e=>e.bounds=[0,0,1,1]]){const bad=structuredClone(input);change(bad.elevation);assert.throws(()=>createJourney(bad),/高程/);}
+});
 test('water crossing the tile is clipped, retained in overview, and absent off-tile',()=>{
   const polygon=clipWater([[0,300],[1400,300],[1400,600],[0,600]]);
   assert.equal(polygon.length,4);assert.ok(polygon.every(([x,y])=>x>=290&&x<=1110&&y>=115&&y<=935));
