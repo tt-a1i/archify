@@ -39,7 +39,18 @@ test('3D geography, rotation, zoom, pan, scene state, export and fallback', {ski
   await run("window.exported=null;URL.createObjectURL=b=>{window.exported=b;return 'blob:test'};HTMLAnchorElement.prototype.click=function(){};document.getElementById('export').click()");await stable();assert.equal(await run('exported.type'),'image/png');assert.ok(await run('exported.size>10000'));
   if(process.env.ARCHIFY_TRAVEL_EVIDENCE){const png=await run("new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(exported)})");fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/france-three-days.png',Buffer.from(png,'base64'));}
   await run("document.getElementById('mode-2d').click()");assert.equal((await state()).active,false);await run("document.getElementById('mode-3d').click()");assert.equal((await state()).active,true);
+  await run("document.getElementById('shanghai-tab').click()");await stable();assert.equal((await state()).scene,'shanghai');assert.equal((await state()).places.length,3);assert.equal((await state()).routeArrows,0);
+  if(process.env.ARCHIFY_TRAVEL_EVIDENCE){const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/shanghai-3d.png',Buffer.from(shot.data,'base64'));}
+  await run("document.getElementById('mode-flat').click()");await stable();assert.equal((await state()).heightMode,false);assert.ok((await state()).markerHeights.every(h=>h<1));assert.equal((await state()).active,true);assert.equal(await run("document.getElementById('mode-flat').getAttribute('aria-pressed')"),'true');
+  if(process.env.ARCHIFY_TRAVEL_EVIDENCE){const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(process.env.ARCHIFY_TRAVEL_EVIDENCE+'/shanghai-flat.png',Buffer.from(shot.data,'base64'));}
+  await run("document.getElementById('mode-2d').click()");assert.equal((await state()).active,false);assert.equal(await run("document.querySelectorAll('.poi').length"),3);
+  await run("document.getElementById('mode-3d').click()");await stable();assert.equal((await state()).heightMode,true);assert.ok((await state()).markerHeights.every(h=>h>100));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await stable();assert.ok(await run('document.documentElement.scrollWidth<=innerWidth+1'));assert.deepEqual(await run('errors'),[]);
+  for(const level of ['2d','flat','3d']){
+    const ready=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:new URL('./world.html',import.meta.url).href});await ready;
+    const next=browser.cdp.waitFor('Page.loadEventFired',session);await run("document.getElementById('precision').value="+JSON.stringify(level)+";document.getElementById('apply').click()");await next;await stable();
+    assert.equal(await run('Archify.travel.scene()'),'shanghai');assert.equal((await state()).active,level!=='2d');if(level!=='2d')assert.equal((await state()).heightMode,level==='3d');
+  }
   await send('Page.addScriptToEvaluateOnNewDocument',{source:"const native=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){return kind.startsWith('webgl')?null:native.call(this,kind,...args)}"});
   await load('?fallback');assert.equal((await state()).failed,true);assert.equal(await run("document.querySelector('.diagram-container').hidden"),false);assert.equal(await run('Archify.travel.visible().length'),4);
 });

@@ -7,6 +7,7 @@
   const titles=['三日总览','第 1 天','第 2 天','第 3 天'];
   titles.forEach((title,day)=>{const b=document.createElement('button');b.type='button';b.textContent=title;b.dataset.day=day;b.addEventListener('click',()=>{if(atlas.scene()!=='paris')atlas.changeScene('paris');$('day').value=String(day);$('search').value='';$('category').value='all';$('day').dispatchEvent(new Event('change'));Archify.travel3d?.focusDay(day);});$('trip-days').append(b);});
   function render(){
+    panel.hidden=atlas.scene()==='shanghai';
     const isParis=atlas.scene()==='paris',day=Number($('day').value);$('trip-plan').hidden=!isParis;if(!isParis)return;
     $('trip-days').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.day)===day)));
     const date=$('trip-date').value,start=date?new Date(date+'T12:00:00'):null;

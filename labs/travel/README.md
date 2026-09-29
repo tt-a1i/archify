@@ -1,53 +1,24 @@
 # Archify Travel experiment
 
-## Global precision explorer
+## Illustrated diorama levels
 
-Run `node labs/travel/serve.mjs` and open
-`http://127.0.0.1:4319/world.html`. The itinerary header also links to this page
-when served by the same server. This optional page uses locally bundled
-MapLibre GL JS 6.11.2 (BSD-3-Clause; license in `vendor/maplibre/`). It is separate
-from the existing offline itinerary renderer; loading that renderer does not
-load MapLibre or request global tiles.
+Open `world.html` to choose France, Paris or the Shanghai Lujiazui sample and
+one of three presentations: 2D illustration, rotatable 3D without heights,
+or 3D with artistic landmark/building heights. The conventional MapLibre map,
+remote tile layers and dependency have been removed at the user's request.
+All three modes retain the same sourced geometry and pastel illustration style.
+This is not global city coverage or real DEM terrain. The approved air-arc-v1
+route style remains unchanged for Paris.
 
-`data/package-catalog.json` is the package registry: delivery mode, coverage,
-dependencies, source/license and availability. The bundled 110m Natural Earth
-country outlines include actual size and SHA-256; online datasets have variable
-viewport-dependent size, not an invented fixed download estimate.
-
-- Default: local generalized world boundaries, no external requests.
-- Detailed geography: OpenFreeMap/OpenMapTiles/OSM streets, parks and water.
-- Buildings: optional provider building footprints extruded by `render_height`;
-  data can include estimated heights, and coverage is not uniformly complete.
-  This option enables detailed geography and renders at neighborhood zoom.
-- Terrain: optional Mapzen Terrarium DEM tiles on AWS, real elevation at 1x.
-  Mercator coverage is approximately ±85 degrees; resolution/source dates vary.
-- Detailed textured landmark models: explicitly **not integrated**. The six
-  original Paris illustrative landmarks remain in the itinerary view.
-
-Online layers load only when Apply is clicked, then only for the current view.
-Saved preferences do not silently enable remote data after reload. Source
-failures are visible, with retry; a failed style fetch preserves the current
-map. HTTP caching is controlled by the browser/provider. This is NOT a complete
-offline world download or a durable region-cache implementation. Online sources
-are provider-current snapshots, not pinned data releases. Production regional
-archives, provider hosting/availability contracts and offline storage remain
-separate work. No global itinerary generation or route-arrow overlay has yet
-been connected to this separate explorer; `air-arc-v1` remains the contract
-when that integration is added.
-
-Sources: [OpenFreeMap](https://openfreemap.org/quick_start/),
-[building schema](https://openmaptiles.org/schema/#building),
-[terrain](https://registry.opendata.aws/terrain-tiles/),
-[terrain attribution](https://github.com/tilezen/joerd/blob/master/docs/attribution.md).
-The map retains provider attribution. Live validation is opt-in:
-`ARCHIFY_WORLD_LIVE=1` and `ARCHIFY_CHROME` with `node --test labs/travel/world.test.mjs`.
-It exercises actual Paris building tiles and Alps elevation, layer removal,
-offline initial loading, failure fallback and narrow layout. It does not claim
-to exhaustively validate coverage of every country or building.
-
-Open `index.html` directly in a browser. No server, key, network request, live
-installation, or account is required. The prototype is on `labs/travel`, after
-merging `upstream/labs/infinite-canvas` (`b5d06bb9`) into dev (`e023ea45`).
+Shanghai's bundled `data/shanghai.json` is an ODbL derived OSM snapshot:
+1,774 building footprints, 2,445 road line runs and 35 clipped closed water
+polygons. Each building retains its OSM ID and height provenance. Missing
+heights default to 12 metres before artistic scaling; floors estimate 3 m each.
+The three Wikidata coordinates are CC0; the procedural landmark models are
+original illustrations. The rectangular floor is a viewport, not a city boundary.
+Regenerate the snapshot with `prepare-shanghai.mjs` and the OSM / Wikidata JSON
+inputs; its exact query and OSM timestamp are embedded in the committed data.
+Normal builds are offline and use the committed snapshot.
 
 ## Scope
 

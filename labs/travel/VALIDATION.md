@@ -52,7 +52,7 @@ layout and the desktop page were visually inspected. OSM routes remain
 planning previews: the offline graph does not model barriers at nodes,
 accessibility or live closures, and attraction coordinates are not entrances.
 
-## Optional global data explorer
+## Historical global data explorer (removed)
 
 The package catalog separates bundled global boundaries, streamed geography,
 streamed buildings, streamed terrain, the existing Paris landmark set and
@@ -69,3 +69,15 @@ removal, retaining the light map when a style request fails, and narrow layout.
 The live screenshots in `out/travel-world-evidence/` were visually inspected.
 Sources were tested in these sample regions; worldwide completeness, precise
 building heights and offline persistence are not claimed.
+
+## Illustrated Shanghai and three presentation levels
+
+The conventional street-map renderer, online layer UI and MapLibre dependency
+were removed. The replacement destination picker leads to the same offline
+illustrated atlas in 2D, flat 3D or height 3D. Shanghai is a bounded Lujiazui
+sample, not full-city coverage. Four focused tests passed with no skips,
+including Shanghai scene navigation, three landmark models, all three display
+levels, Paris itinerary compatibility, export, mobile layout and WebGL fallback.
+Screenshots: `out/travel-shanghai-evidence/shanghai-3d.png` and
+`shanghai-flat.png`; both visually inspected. This does not validate surveyed
+building accuracy or real terrain elevations.
