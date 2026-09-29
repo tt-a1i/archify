@@ -119,14 +119,21 @@ function drawCity(visible) {
   }
   for(const r of data.trip.routes.filter(r=>visible.has(r.from)&&visible.has(r.to))){
     const vertices=r.points.map(p=>new THREE.Vector3(p[0]-700,45,p[1]-525));
-    // Each segment uses the source road geometry. Elevation lifts the itinerary above rooftops.
+    // Flat, unlit map graphics: no tubes, cones, lighting or volumetric arrowheads.
+    const routeMaterial=new THREE.MeshBasicMaterial({color:r.color,side:THREE.DoubleSide});
+    const ribbon=[];
     for(let i=1;i<vertices.length;i++){
       const a=vertices[i-1],b=vertices[i],delta=b.clone().sub(a);if(delta.length()<.01)continue;
-      const segment=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,delta.length(),5),material(r.color));segment.position.copy(a).add(b).multiplyScalar(.5);segment.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());world.add(segment);
+      const side=new THREE.Vector3(-delta.z,0,delta.x).normalize().multiplyScalar(.7);
+      const leftA=a.clone().add(side),rightA=a.clone().sub(side),leftB=b.clone().add(side),rightB=b.clone().sub(side);
+      for(const p of [leftA,rightA,leftB,rightA,rightB,leftB])ribbon.push(...p.toArray());
     }
-    let travelled=0,next=8;
+    const strip=new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(ribbon,3)),routeMaterial);strip.userData.disposeMaterial=true;world.add(strip);
+    // A simple solid triangular direction marker, spaced out along the route.
+    const arrowShape=new THREE.Shape();arrowShape.moveTo(0,5);arrowShape.lineTo(-3.5,-3);arrowShape.lineTo(3.5,-3);arrowShape.closePath();
+    let travelled=0,next=10;
     for(let i=1;i<vertices.length;i++){const a=vertices[i-1],b=vertices[i],delta=b.clone().sub(a),length=delta.length();if(!length)continue;
-      while(next<=travelled+length){const at=a.clone().lerp(b,(next-travelled)/length);const arrow=new THREE.Mesh(new THREE.ConeGeometry(3.4,9,3),material(r.color));arrow.position.copy(at);arrow.position.y+=2;arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.clone().normalize());arrow.userData.routeArrow=true;world.add(arrow);next+=18;}travelled+=length;
+      while(next<=travelled+length){const at=a.clone().lerp(b,(next-travelled)/length);const geometry=new THREE.ShapeGeometry(arrowShape);geometry.rotateX(Math.PI/2);const arrow=new THREE.Mesh(geometry,routeMaterial);arrow.position.copy(at);arrow.position.y+=.15;arrow.rotation.y=Math.atan2(delta.x,delta.z);arrow.userData.routeArrow=true;world.add(arrow);next+=30;}travelled+=length;
     }
     for(const [id,end] of [[r.from,vertices[0]],[r.to,vertices.at(-1)]]){
       const p=data.places.find(p=>p.id===id),line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p.point[0]-700,45,p.point[1]-525),end]),new THREE.LineDashedMaterial({color:r.color,dashSize:2,gapSize:2}));line.computeLineDistances();line.userData.disposeMaterial=true;world.add(line);
