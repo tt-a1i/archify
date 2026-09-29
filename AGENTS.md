@@ -2,6 +2,13 @@
 
 Follow [CONTRIBUTING.md](CONTRIBUTING.md) for repository changes and [REVIEWING.md](REVIEWING.md) for reviews.
 
+## Travel generation in this checkout
+
+For a travel itinerary, tourism flowchart or illustrated travel sandbox request,
+follow [the host travel workflow](labs/travel/SKILL.md). Use the current host LLM
+to author and research the itinerary, then call the repository renderer. This
+experimental route does not install a Skill or invoke a separate model service.
+
 ## Live Archify installations
 
 Install, update, reinstall, or remove a live Archify installation only when the user explicitly requests that action. Repository editing, testing, reviewing, publishing, or syncing does not authorize installation. This applies to Skills CLI, manual ZIP copies, and DSH plugins. Reuse authorization already given for the same action and scope; ask only for unresolved decisions.

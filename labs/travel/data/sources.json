@@ -1,0 +1,22 @@
+{
+  "retrieved": "2026-09-29",
+  "country": {
+    "name": "Natural Earth",
+    "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson",
+    "license": "Public domain",
+    "scope": "Metropolitan France; overseas polygons omitted"
+  },
+  "city": {
+    "name": "Ville de Paris — Arrondissements",
+    "url": "https://opendata.paris.fr/explore/dataset/arrondissements/",
+    "download": "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/arrondissements/exports/geojson",
+    "license": "Open Database License (ODbL)",
+    "licenseUrl": "http://opendatacommons.org/licenses/odbl/"
+  },
+  "places": {
+    "name": "Wikidata P625",
+    "license": "CC0",
+    "url": "https://www.wikidata.org/wiki/Wikidata:Licensing"
+  },
+  "artwork": "Original SVG illustrations; decorative, not building footprints"
+}

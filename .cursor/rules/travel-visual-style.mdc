@@ -1,0 +1,18 @@
+---
+description: Preserve the approved illustrated travel diorama across data generation and package loading
+globs: labs/travel/**
+alwaysApply: false
+---
+
+- Follow `labs/travel/AGENTS.md` and `visual-style.js`.
+- Keep the approved pastel diorama, original landmark models and air-arc-v1 arrows.
+- Generated itineraries may select known place IDs and order stops; they must not
+  generate CSS, shaders, materials, model code or replacement arrow styles.
+- Data packages are geometry and itinerary inputs, never executable theme code.
+- Pin the renderer and its dependencies, and verify content hashes before use.
+- Changing cache availability, destinations or detail level must not select a new style.
+- Change the style version only after an explicit user-requested visual change;
+  preserve older content-addressed assets when deploying updates.
+- Check Paris and Shanghai, screen and export, flat and height modes. Reopening
+  the same data with the same camera must reproduce its appearance. Never promise
+  byte-identical pixels across different GPUs, browsers or fonts.

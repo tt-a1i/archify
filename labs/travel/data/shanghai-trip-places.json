@@ -1,0 +1,38 @@
+[
+  {
+    "id": "Q865312",
+    "label": "Shanghai Disneyland Park",
+    "coordinates": [
+      121.657,
+      31.144
+    ],
+    "source": "https://www.wikidata.org/wiki/Q865312"
+  },
+  {
+    "id": "Q125474",
+    "label": "The Bund",
+    "coordinates": [
+      121.48613888889,
+      31.238027777778
+    ],
+    "source": "https://www.wikidata.org/wiki/Q125474"
+  },
+  {
+    "id": "Q1328025",
+    "label": "Yu Garden",
+    "coordinates": [
+      121.4875,
+      31.22916667
+    ],
+    "source": "https://www.wikidata.org/wiki/Q1328025"
+  },
+  {
+    "id": "Q1074628",
+    "label": "Lujiazui",
+    "coordinates": [
+      121.49722222,
+      31.23888889
+    ],
+    "source": "https://www.wikidata.org/wiki/Q1074628"
+  }
+]
