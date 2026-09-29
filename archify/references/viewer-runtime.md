@@ -5,12 +5,18 @@ Read this only when the user asks for a reader-facing capability. Ordinary gener
 ## Exploration
 
 - Diagram Guide lists current actions and shortcuts.
-- Reading Depth starts at READ at the default 100% scale, reveals FULL detail at 175%, and falls back to MAP only below 100%. Focus, route, and semantic interactions reveal their exact facts at any scale.
+- Original node titles, subtitles, tags and relationship labels remain visible at every scale. Hover and semantic interactions highlight existing facts and open supplementary details.
+- Ordinary desktop windows at CSS sizes ≥1024×600 use a fixed viewport canvas, with pan, zoom and Fit all for navigation. Diagram notes opens the original cards in an independently scrollable sidebar; smaller windows and print restore document flow.
+- Fixed-canvas first view fits the complete authored viewBox and caps automatic
+  enlargement at 100%; 100% is one authored SVG unit per CSS pixel in this mode.
+  Explicit focus/chapter links take precedence. Manual pan/zoom preserves real
+  scale and the reading point through sidebar and window size changes; Fit all
+  follows the available stage. The existing 100% reset remains distinct from Fit all.
 - Semantic Lens summarizes selected node/relationship kinds without changing authored geometry.
 - Intent Trace previews a fine-pointer or keyboard target before committed focus.
 - Node Finder searches labels and stable IDs.
 - Semantic Passport opens on focus, shows authored upstream/downstream facts, supports a copyable deep link, has an explicit close action, closes on true outside activation and Escape, and never enters canonical export.
-- Semantic Radar mirrors the visible viewport and authored graph without becoming a second source of truth.
+- Semantic Radar mirrors the visible infinite-canvas viewport and authored graph without becoming a second source of truth; when the camera is outside the authored graph, it renders a finite edge marker.
 - Direct Relationship Pin makes a unique compiled relationship operable while preserving the authored line and stable relationship identity. It must fail closed on conflicting source/target/label/ID metadata.
 - Route Probe resolves exactly two endpoints over authored directed relationships. It never infers a route from geometry.
 

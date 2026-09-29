@@ -69,6 +69,10 @@ function executable(file) {
 }
 
 function commandPath(command) {
+  if (process.platform === 'win32') {
+    const result = spawnSync('where.exe', [command], { encoding: 'utf8', windowsHide: true });
+    return result.status === 0 ? result.stdout.trim().split(/\r?\n/)[0] : null;
+  }
   const result = spawnSync('sh', ['-c', 'command -v "$1"', 'archify-showcase', command], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore'],

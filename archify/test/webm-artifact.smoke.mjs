@@ -536,12 +536,17 @@ try {
     const embedUrl = new URL(pathToFileURL(outputs.custom).href);
     embedUrl.searchParams.set('embed', '1');
     await navigateReady(embedUrl, '!!(window.Archify && Archify.semanticLens)', 'embedded legend');
-    const embed = await evaluate(cdp, sessionId, `(() => ({
-      roles: document.querySelectorAll('[data-legend-kind][role]').length,
-      runtime: document.querySelectorAll('[data-legend-bridge-runtime]').length,
-      kinds: Array.from(document.querySelectorAll('[data-legend-semantic-kind]')).map(function (entry) { return entry.getAttribute('data-legend-semantic-kind'); })
-    }))()`);
-    assert.deepEqual(embed, { roles: 0, runtime: 0, kinds: ['frontend', 'database', 'external'] });
+    const embed = await evaluate(cdp, sessionId, `(() => {
+      const docks = Array.from(document.querySelectorAll('.fixed-legend'));
+      return {
+        roles: document.querySelectorAll('[data-legend-kind][role]').length,
+        runtime: document.querySelectorAll('[data-legend-bridge-runtime]').length,
+        kinds: Array.from(document.querySelectorAll('.diagram-container > svg [data-legend-semantic-kind]')).map(function (entry) { return entry.getAttribute('data-legend-semantic-kind'); }),
+        dockCount: docks.length,
+        dockHidden: docks.every(function (dock) { return dock.hidden && getComputedStyle(dock).display === 'none' && !dock.querySelector('[tabindex="0"]'); })
+      };
+    })()`);
+    assert.deepEqual(embed, { roles: 0, runtime: 0, kinds: ['frontend', 'database', 'external'], dockCount: 1, dockHidden: true });
 
     await navigateReady(outputs.hidden, '!!(window.Archify && Archify.semanticLens)', 'hidden legend');
     const hidden = await evaluate(cdp, sessionId, `(() => ({

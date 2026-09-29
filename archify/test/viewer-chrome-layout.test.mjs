@@ -296,13 +296,19 @@ test('Dock Safe Rail keeps typed renderers clear across themes, Presentation, an
       assert.equal(receipt.dockStageIntersectionArea, 0, message);
       assert.ok(receipt.scrollWidth <= receipt.innerWidth, message);
       assert.ok(receipt.navBottom <= receipt.containerBottom + 0.5, message);
-      /* Normal artifacts intentionally keep supporting cards in document
-         flow on low-height pages. Presentation removes that document scroll
-         while every mode keeps the Viewer itself vertically contained. */
-      if (entry.present) {
+      // Desktop cards occupy a sidebar; short windows retain document flow.
+      if (entry.present || (entry.width >= 1024 && entry.height >= 600)) {
         assert.ok(receipt.scrollHeight <= receipt.innerHeight, message);
       }
-      assert.ok(receipt.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX, message);
+      // An automatic overview can be smaller than the reading threshold.
+      // Verify original label readability separately at the explicit 100% scale.
+      if (!entry.present) {
+        await evaluate(browser, sessionId, 'Archify.view.reset()');
+        await waitForLayout(browser, sessionId);
+      }
+      const reading = entry.present ? receipt : await finalGeometry(browser, sessionId);
+      assert.ok(reading.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX,
+        `${entry.mode} at reading scale: ${JSON.stringify(reading)}`);
     }
   } finally {
     await browser.close();
@@ -587,7 +593,7 @@ test('live camera transitions keep authored relationship paint outside the Dock 
 
       assert.deepEqual(result.hits, [], `${scenario.name}: ${JSON.stringify(result.hits)}`);
       if (scenario.clearsClip) {
-        assert.equal(result.clipPath, '', `${scenario.name} retains runtime clip-path`);
+        assert.match(result.clipPath, /^inset\(/, `${scenario.name}: fixed canvas retains the visible stage clip`);
       }
     }
   } finally {
@@ -906,7 +912,7 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
       return {
         reserve: parseFloat(container.style.getPropertyValue('--archify-nav-reserve')) || 0,
         rootRail: html.getAttribute('data-nav-stage-rail'), rail: container.getAttribute('data-nav-stage-rail'),
-        reader: html.getAttribute('data-reader-layout'), width: innerWidth,
+        reader: html.getAttribute('data-reader-layout'), fixed: html.hasAttribute('data-fixed-canvas'), width: innerWidth,
         viewBox: svg.getAttribute('viewBox'),
         errors: chromeLayoutErrors,
         external: performance.getEntriesByType('resource').map(e => e.name).filter(n => /^https?:/.test(n))
@@ -932,8 +938,8 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
   }
   function variant(name, source) {
     const original = fs.readFileSync(file, 'utf8');
-    const html = original.replace('  <script>\n    var Archify = {};',
-      () => `  <script>${source}</script>\n  <script>\n    var Archify = {};`);
+    const html = original.replace(/<script>\s*var Archify\s*=\s*\{\};/,
+      match => `<script>${source}</script>\n${match}`);
     assert.notEqual(html, original);
     const output = path.join(tmp, `chrome-${name}.html`);
     fs.writeFileSync(output, html);
@@ -947,7 +953,8 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
         await resize(width);
         const current = await state(`threshold-${width}-${observations.length}`);
         assert.equal(current.geometry.receiptEligible, width > 720);
-        assert.equal(current.reader, width >= 1024 ? 'adaptive' : null);
+        assert.equal(current.reader, null);
+        assert.equal(current.fixed, width >= 1024);
         assert.equal(current.viewBox, initial.viewBox);
         if (width <= 720) zero(current);
         else clearStage(current);
@@ -980,7 +987,8 @@ test('Chrome Layout preserves scheduling, mode restoration and Reader handoffs',
       assert.equal((await state('observer-returned')).reserve, initial.reserve);
       await run(`document.querySelector('.diagram-nav').style.bottom = '-200px'; window.dispatchEvent(new Event('resize'))`);
       await waitForLayout(browser, session);
-      zero(await state('no-reserve-needed'));
+      const legendOnly = await state('legend-still-needs-reserve');
+      assert.ok(legendOnly.reserve > 0, 'the fixed legend retains its bottom safe area when navigation moves out of the stage');
     });
 
     await t.test('embed and print restore a zoomed rail, while Presentation remains eligible', async () => {

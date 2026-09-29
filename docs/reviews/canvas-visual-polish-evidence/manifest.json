@@ -1,0 +1,155 @@
+{
+  "baseline": "018378126c5d09085ef79afcd28434d388e8a2bf",
+  "branch": "codex/canvas-visual-polish",
+  "candidateFiles": {
+    "viewer/viewer-camera.js": "11553b4f5c044efd74cd82e909fd44e8fb4cd09cf596608ba0fe8b4da7007719",
+    "viewer/viewer.css": "4f45e5fb464492479bcb76871066d0ea447740c68f46f48a6a418d378df2adbd",
+    "viewer/semantic-lens.js": "b990fe6e19a1dacff424582efea5e7d62922ce4c460106076576714543d07c7c",
+    "viewer/viewer-chrome-layout.js": "23af7a5f2b7e39352dbbe5c6c715393eb62e9e2c59ebecdd6fb21910bd9b0c8a",
+    "viewer/focus.js": "760a4354dcb595bbb993c7fd57582440b0b6b2dc80130b1b8082b3c7560043cb",
+    "viewer/semantic-radar.js": "86f379c10ae739ba03793dc3c0764f854e5663765de1d2b2e145dff291166ae1",
+    "archify/assets/template.html": "4eeb61443382b091e59d8d1fea230504b417bd1a0732a4ef72b3e6e761878f11"
+  },
+  "inputs": [
+    {
+      "name": "architecture",
+      "sha256": "483350f5297df682aba4e4a0fa491307ce3d3abd725ae4df07fab177490752cf",
+      "canonicalSvgEqual": true,
+      "svgSha256": "8dd3c888ac0e38a8170e340b22a9d2d6c736e083e8fcbabdd13f5ca8946852f9"
+    },
+    {
+      "name": "workflow",
+      "sha256": "4d3f6c23de2ca7d306e05d0041a9506833bb5a164a2bddc2d1984cf4da3ee90c",
+      "canonicalSvgEqual": true,
+      "svgSha256": "ea3cd939c9c359b37b4a51c1751d14851802b9f4bd6776d973d35144c23a501d"
+    },
+    {
+      "name": "sequence",
+      "sha256": "9a799a3661c16cd6ab4f6373ff6a04da95a9ab70d93b0a349b668466f4912fd7",
+      "canonicalSvgEqual": true,
+      "svgSha256": "57c371589603c6fc69a9575dad450494eb37a05d7b26a543a6676b3adf01cd64"
+    },
+    {
+      "name": "dataflow",
+      "sha256": "91411404fb4828a3b7ea358f3a7b9877781c9e9dc9c04b42b6eb4a757281b59f",
+      "canonicalSvgEqual": true,
+      "svgSha256": "4425889a97d836c35064a5f7d3c1355c1769ae2e70e46a438d5d198d6ca6e928"
+    },
+    {
+      "name": "lifecycle",
+      "sha256": "7c0ad72ee7affbd6c6e4758b7520d61ddd4508c917acf36beabcad3ee7ca3ba7",
+      "canonicalSvgEqual": true,
+      "svgSha256": "ffeb6c8e8cca18ef67a143cd3a29b90430f7f5f4ceaad96839cff84f32fe97a6"
+    }
+  ],
+  "visualReview": {
+    "viewport": [
+      1440,
+      900
+    ],
+    "dpr": 1,
+    "states": [
+      "fit",
+      "read"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "privateMaka": "Same frozen local input; canonical SVG identical; screenshots reviewed and retained locally.",
+    "motion": "still for paired screenshots and grid frames"
+  },
+  "ablation": {
+    "removed": "interactionChangesScale/gridPositionOnly plumbing; 23 input tests pass",
+    "retained": "legend layout cache; final 120-frame experiment: 0 writes retained, 1725 writes removed"
+  },
+  "validation": {
+    "status": "Completed locally; no remote CI; uncommitted and unpushed",
+    "node": {
+      "tests": 2145,
+      "pass": 2070,
+      "fail": 0,
+      "skipped": 75,
+      "skipBreakdown": {
+        "browserCasesRunBySeparateGate": 63,
+        "caseSensitiveFilesystem": 1,
+        "windowsOnly": 7,
+        "nonNode22Rejection": 1,
+        "optionalMcoClone": 1,
+        "unchangedSiteIntegration": 2
+      }
+    },
+    "packageSmoke": "passed: Node 22 ZIP extracted outside repository; five modes and package contracts",
+    "gallery": {
+      "artifacts": 11,
+      "checks": 99
+    },
+    "conditionalGaps": [
+      "Case-sensitive filesystem branch unavailable on this volume",
+      "Seven Windows-only path/alias/launch cases",
+      "Non-Node-22 builder rejection branch",
+      "Optional MCO clone absent",
+      "Serialized site integration gate not required because shared export cleanup is unchanged; separate browser gate runs Viewer coverage"
+    ],
+    "browser": {
+      "tests": 384,
+      "pass": 384,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 528175.62125,
+      "includesLocalMaka": true
+    },
+    "zipSourceConsistency": {
+      "files": 84,
+      "result": "pass; standard package.json development fields removed"
+    },
+    "finalChecks": [
+      "Viewer template freshness",
+      "Documentation links",
+      "git diff --check",
+      "Source/test/artifact/evidence SHA-256 identities"
+    ],
+    "logHashes": {
+      "node-final.log": "af61c9bda7743b0578f0bd3da9706ea7cbdb11d974dd725e046f5ed87184ed1f",
+      "browser-final.log": "af188e772ed37380eb0107ff7c9910075c00ab21ce7453228f7ca9725bdd1fc8",
+      "package-smoke.log": "a3039b2bfc45d9afeb8ae4a18cd448ef10d54dd97ea37af214e6bdb74a5f6b8c",
+      "ablation-browser.log": "6a7869ef11a0acb1df72e4f161e112619e5484537fe90f3ad1b7902dffccbb27"
+    }
+  },
+  "testFiles": {
+    "archify/test/canvas-polish-browser.test.mjs": "3e96099e3a3513ab9e048aed3d26878d28ace1220dd92f963621d1cef583f3eb",
+    "archify/test/viewer-canvas-input.test.mjs": "71eba16b4498020ec5028ea78260cf1be15eca3e1db3113a762fa54b1318e8f7",
+    "archify/test/semantic-lens-browser.test.mjs": "be51f267991456bc3777a0e42d9a78b72cd7e9a02aa9ce1c9155f079debe36c7",
+    "archify/test/finder-browser.test.mjs": "2868883cfa8292efc9dd67f76d4d3b416e491b5f8dd4b82853946654b0627624",
+    "archify/test/browser-zoom-browser.test.mjs": "6ea0b5a2d59f7cb2b621edfd66aed157683fa6e30c716e220568f4464035b166",
+    "archify/test/viewer-chrome-layout.test.mjs": "cd4ac9aad1dea18d907d76738d7584e2adcabbc476d7b2d87b1ff8ebd22d44fe",
+    "archify/test/semantic-legend-gateway.test.mjs": "bc46b706a090b253f21291409ff5590aaa3f78f970cd25b9549c640df61ac7b3"
+  },
+  "artifacts": {
+    "archify.zip": "b3402185245b4edc1c83c20639ca5645c4711a5fd2e1cebad7873aaa64b2e981",
+    "docs/gallery/manifest.json": "c99505cfbdd2946849ec800949ce6b7d9138cbd8fcb04e44c69ec43fbb57c410",
+    "docs/assets/archify-live-proof.gif": "5ca3c331c6b7fae52366de7da8badc4992989810b178a832b153467a2e03f888",
+    "docs/assets/archify-live-proof.json": "ce4dca1692d0ba3bbe875a81af3be8750c492e81344e187cc6f992f6f67642e0",
+    "examples/checkout-platform-delta.html": "01c34552d555ca94f20086f8bdf29479d47f05e4e69b9dd65f492c11c94cf36f",
+    "examples/checkout-platform-delta.receipt.json": "c018daa225597e5a484e4b59f66991a7f8851fe18f4efe640f777285002c9854"
+  },
+  "evidenceFiles": {
+    "acceptance.json": "722421c51b4c466e94921d133d8a79b7f5719959650b7076efe24ec17bc1d9e7",
+    "architecture.jpg": "e9efd403c8067ba7d75a4a2f03768859f50e0359ac2420d4f20ccdfc66e3d279",
+    "comparisons.json": "539b79c12ac0fb07f48ac2cea532ce049d1edc375187981c5258b431a1d8445d",
+    "dataflow.jpg": "682a8790baf5fa464f4812db88456709d79ccf64193a77808928604af579f608",
+    "export-dark.png": "90206ec65c4578b3603e3bddebdededd0325d051665359c9368bb777aef3defa",
+    "export-light.png": "0470522148f43889f06cee9436f02f7159c9987663dfc5ef4be8d3810cb11552",
+    "grid-dark.gif": "f7ed1573b4d0b1851d6b5c5630aa258afe1a7c6088310d6f5df681f67994cee0",
+    "grid-light.gif": "37e1ef4cb3d76df239344ed2ea13fc68c64c25f51f8383c916652752298ea6b6",
+    "languages.jpg": "4a8bf4009512f732963a5b4cd8f1a75a8241335e3010c0f6e0ac49aba26fd602",
+    "lifecycle.jpg": "4a58f83de2a2a08cc4b212a03c6f9d266fce8a90e5a1f7fc20a3caf521c51e9b",
+    "overflow-open.png": "4a42204b2731a82a777d8e5a5a04d46d0fa600ff1e8e44c59fdabb636b2a63a2",
+    "preset-pairs-dark.jpg": "b9adac2cfd7fb8399aee2a75ba6a98e6d2007f5eb3ef58715ac9b64b0900e4f1",
+    "preset-pairs-light.jpg": "5705468daf6cfd00238a4b964263dd08b2dd470e913bed7773db478b2670aef8",
+    "presets.jpg": "6a2ef5befff4d35ce4f34d3f9f89ce4fa266901da9a91a9e04a0b703b7359f10",
+    "print-preview.png": "44fa3f3c3dda03e2a7f5502d2f6039b389116a248391b4f37de71dc4d1189c21",
+    "sequence.jpg": "7cadc100620557de7b83a0a86833b1c76b8be5d3f828748cdf90f99aeb161cc4",
+    "workflow.jpg": "125fba26a860add76ac593442feb70d360336c259c44ca61096bc1a0ee19c305"
+  }
+}

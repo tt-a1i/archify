@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -121,7 +122,7 @@ function run(type, doc, command = 'render') {
   const result = spawnSync(process.execPath, args, { cwd: skillRoot, encoding: 'utf8' });
   return {
     ...result,
-    html: result.status === 0 && command === 'render' ? fs.readFileSync(output, 'utf8') : '',
+    html: result.status === 0 && command === 'render' ? viewerContractSource(fs.readFileSync(output, 'utf8')) : '',
   };
 }
 

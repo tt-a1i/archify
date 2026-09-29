@@ -1,0 +1,59 @@
+{
+  "branch": "codex/canvas-visual-polish",
+  "baselineLensSha256": "b990fe6e19a1dacff424582efea5e7d62922ce4c460106076576714543d07c7c",
+  "candidateFiles": {
+    "viewer/semantic-lens.js": "eca9c7c204cca36422052d039fc64bcc442eb38769dd71b322d9dab8bd9fe7a1",
+    "archify/assets/template.html": "8698599c87005529eba3c558fad49de1ee34f9bb322c94a9670ba6d1b5d25fed",
+    "archify/test/semantic-lens-browser.test.mjs": "d35e5ad57635b51143a5ff8e190f9bf15f3ae9cfa566a4fc0e0d6fd2fb232174",
+    "archify/test/semantic-lens.test.mjs": "f2cf4708857df3d69fc2b33ae36298180e7bdc10d3f01b4906e7a1efb9e1cfbd"
+  },
+  "artifacts": {
+    "archify.zip": "250a0519109e52f1bc07ca1544d3e864ec15ff4b378f0a89c8ead389d932c741",
+    "docs/gallery/manifest.json": "45736fb6e43d36afa6e2773fb3d39e2f221fa12ace6f89c18be32ff93a0b7ae2",
+    "docs/assets/archify-live-proof.gif": "e92b9ab1d7f632301e5e3f14b22f80433ac1c40465eca37608d532cb8755e109",
+    "docs/assets/archify-live-proof.json": "1f96e210aac4971c68d125fa4c0a1e456ffc5861aebf27c2d9b7d53196b19025"
+  },
+  "regression": {
+    "before": "fail: selected store outside stage after first legend activation resets camera to scale 1",
+    "after": {
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0
+    },
+    "privateOriginal": "Unchanged local input; native database then security clicks preserve fitted camera and contain all selected nodes; source SVG identical."
+  },
+  "ablation": {
+    "removed": "Only resetView:false from Lens chapter cleanup, in isolated HTML",
+    "result": "Original native-click reproduction fails: selected bottom exceeds stage by 144px",
+    "decision": "Keep resetView:false; no new abstraction"
+  },
+  "validation": {
+    "node": {
+      "tests": 2145,
+      "pass": 2070,
+      "fail": 0,
+      "skipped": 75
+    },
+    "browser": {
+      "tests": 385,
+      "pass": 385,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 532114.52525
+    },
+    "packageSmoke": "pass",
+    "zipSourceFiles": 84,
+    "visualReview": "passed",
+    "remoteCI": "not run"
+  },
+  "logHashes": {
+    "regression-red.log": "9d33ebd0785c82bdce23bdce6f0c09a520690f7a586d0169f66e40ff5baa0038",
+    "regression-green.log": "4a93fed13146397ee46e2c54ec2786da3dcfc368d1c83dc8bb0b51500c7da3f2",
+    "maka-green.log": "aabe15bbd178a011448bfa9ba6cd2b86fd4b5e195e1f8ebeee62182ebd704692",
+    "ablation.log": "6fcafcae3a3849f1b240f027468fd372f8eacd22f44e64ddc667a7b5a18166fb",
+    "node-final.log": "a5df6e1cc0c48c26eaa2db996042846d9376b9b674a8fd74f41c2a7ea88eacd6",
+    "package-smoke.log": "1af3686ac30044228ac8e32026aa916fb8dc78f0f6d90aab4265d4fed4c88b41",
+    "browser-final.log": "f65031750a2c4d243cbb8e02e6a929dc61e04c654ef75a9c6c598f768bf9e3db"
+  }
+}

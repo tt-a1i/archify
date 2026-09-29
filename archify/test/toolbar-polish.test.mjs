@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -5,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const template = fs.readFileSync(path.resolve(__dirname, '../assets/template.html'), 'utf8');
+const template = viewerContractSource(fs.readFileSync(path.resolve(__dirname, '../assets/template.html'), 'utf8'));
 
 test('toolbar groups tools in one capsule beside a single primary export, aligned with the reader column', () => {
   assert.match(template, /\.toolbar \{[\s\S]*?top: var\(--archify-page-top\);[\s\S]*?right: max\(1rem, calc\(\(100vw - min\(100vw - 4rem, var\(--archify-reader-width, 1440px\)\)\) \/ 2\)\);/);
@@ -52,8 +53,8 @@ test('diagram view dock stays compact on desktop and touch-safe on narrow screen
 
 test('diagram view reset separates semantic detail from zoom percentage', () => {
   assert.match(template, /data-view="reset"[\s\S]*?data-view-detail hidden>\{\{i18n:viewer\.nav\.read\}\}<[\s\S]*?data-view-percent>100%</);
-  assert.match(template, /var resolvedLevel = semantic \? viewerText\('viewer\.nav\.level\.auto'\) : levelLabel;/);
-  assert.match(template, /var showDetailLevel = semantic \|\| detail !== 'read';/);
+  assert.match(template, /var resolvedLevel = semantic \? viewerText\('viewer\.nav\.level\.auto'\) : '';/);
+  assert.match(template, /var showDetailLevel = semantic;/);
   assert.match(template, /resetDetailLabel\.hidden = !showDetailLevel/);
   assert.match(template, /resetPercentLabel\.textContent = percent/);
   assert.match(template, /resetBtn\.toggleAttribute\('data-detail-visible', showDetailLevel\)/);

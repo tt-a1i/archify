@@ -41,9 +41,9 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
   // repository verification and brand rendering have their own tests.
   files.metadata = path.join(scratch, 'metadata.html');
   const metadataSource = fs.readFileSync(files.architecture, 'utf8');
-  assert.ok(metadataSource.includes('    Archify.finder = (function () {'), 'Finder fixture anchor');
+  assert.ok(/Archify\.finder\s*=\s*\(function\s*\(\)\s*\{/.test(metadataSource), 'Finder fixture anchor');
   fs.writeFileSync(files.metadata, metadataSource.replace(
-    '    Archify.finder = (function () {', `
+    /Archify\.finder\s*=\s*\(function\s*\(\)\s*\{/, () => `
     document.querySelector('[data-node-id="api"]').setAttribute('data-node-brand', 'finder-brand-token');
     var finderOriginalSources = Archify.sourceEvidence.node;
     Archify.sourceEvidence.node = function (id) {
@@ -241,7 +241,7 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     assert.equal(await run('Archify.exportMenu.isOpen()'), false);
     await run('Archify.semanticLens.open(); Archify.finder.open()'); await opened();
     assert.equal(await run('Archify.semanticLens.isOpen()'), false);
-    await run(`Archify.finder.close(); document.querySelector('[data-legend-kind][role="button"]').focus()`);
+    await run(`Archify.finder.close(); document.querySelector('.fixed-legend [data-legend-kind][role="button"]').focus()`);
     assert.equal(await run(`document.querySelector('.diagram-container > svg').hasAttribute('data-legend-preview-active')`), true);
     await run('Archify.finder.open()'); await opened();
     assert.equal(await run(`document.querySelector('.diagram-container > svg').hasAttribute('data-legend-preview-active')`), false);

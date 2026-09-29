@@ -421,5 +421,10 @@
   "viewer.common.copyFailed": "コピーに失敗しました",
   "viewer.common.copyLink": "リンクをコピー",
   "viewer.common.clear": "クリア",
-  "viewer.common.close": "閉じる"
+  "viewer.common.close": "閉じる",
+  "viewer.guide.canvas": "クリックまたは Tab でキャンバスに移動します。右ボタン、中ボタン、またはスペース＋左ボタンでドラッグして移動。ホイールまたは矢印キーで移動し、Ctrl/Cmd＋ホイールでポインター位置を拡大・縮小します。0 でリセット。",
+  "viewer.notes.title": "図のメモ",
+  "viewer.notes.close": "図のメモを閉じる",
+  "viewer.nav.fitAll": "図全体を表示",
+  "viewer.nav.fitAll.short": "全体"
 }

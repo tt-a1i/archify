@@ -277,7 +277,9 @@
 
       function centerChapterButton(button) {
         if (!button || !chapterList) return false;
-        var target = Math.max(0, button.offsetLeft - (chapterList.clientWidth - button.offsetWidth) / 2);
+        var bounds = button.getBoundingClientRect();
+        var viewportLeft = chapterList.getBoundingClientRect().left + chapterList.clientLeft;
+        var target = Math.max(0, chapterList.scrollLeft + bounds.left - viewportLeft - (chapterList.clientWidth - bounds.width) / 2);
         if (typeof chapterList.scrollTo === 'function') chapterList.scrollTo({ left: target, behavior: 'auto' });
         else chapterList.scrollLeft = target;
         return true;
@@ -1595,7 +1597,8 @@
         }
       }, true);
 
-      function syncViewFromHash() {
+      function syncViewFromHash(options) {
+        options = options || {};
         try {
           var params = new URLSearchParams(location.hash.replace(/^#/, ''));
           var initial = params.get('view');
@@ -1604,7 +1607,7 @@
           if (initial) {
             var activated = activateById(initial, { updateUrl: false, restore: true });
             if (!activated) {
-              showAll({ updateUrl: false, restore: true });
+              showAll({ updateUrl: false, restore: true, resetView: options.preserveView !== true });
               return;
             }
             if (requestedBeat) afterHandoff(function () {
@@ -1618,9 +1621,9 @@
             activeIndex = -1;
             render();
           } else {
-            showAll({ updateUrl: false, restore: true });
+            showAll({ updateUrl: false, restore: true, resetView: options.preserveView !== true });
           }
-        } catch (_) { showAll({ updateUrl: false, restore: true }); }
+        } catch (_) { showAll({ updateUrl: false, restore: true, resetView: options.preserveView !== true }); }
       }
 
       window.addEventListener('hashchange', syncViewFromHash);
@@ -1683,7 +1686,7 @@
         else clearStoryPulse();
         settleHandoff('print');
       });
-      syncViewFromHash();
+      syncViewFromHash({ preserveView: true });
       if (autoplayPending) {
         requestAnimationFrame(function () {
           requestAnimationFrame(maybeStartSharePlayback);

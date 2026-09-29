@@ -1,0 +1,12 @@
+[
+  {
+    "removed": "round-small-scale",
+    "exit": 1,
+    "decision": "retain production implementation; original regression fails"
+  },
+  {
+    "removed": "remove-document-compatibility",
+    "exit": 1,
+    "decision": "retain production implementation; original regression fails"
+  }
+]

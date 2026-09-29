@@ -42,8 +42,8 @@ test('Focus preserves semantic selection, relationships, reachability and shared
   function variant(name, setup) {
     files[name] = path.join(scratch, name + '.html');
     const original = fs.readFileSync(files.architecture, 'utf8');
-    assert.ok(original.includes('    var Archify = {};'), 'Focus fixture anchor');
-    fs.writeFileSync(files[name], original.replace('    var Archify = {};', setup + '\n    var Archify = {};'));
+    assert.ok(/var Archify\s*=\s*\{\};/.test(original), 'Focus fixture anchor');
+    fs.writeFileSync(files[name], original.replace(/var Archify\s*=\s*\{\};/, match => setup + '\n' + match));
   }
   variant('graph', graphSetup);
   variant('no-geometry', graphSetup + `document.querySelector('[data-edge-key="f"] path').remove();`);

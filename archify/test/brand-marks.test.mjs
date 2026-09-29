@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -789,7 +790,7 @@ test('unknown preset names fail with a repairable public CLI diagnostic', () => 
 });
 
 test('viewer exposes brand identity to Passport and Finder while keeping source beacons clear', () => {
-  const template = fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8');
+  const template = viewerContractSource(fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8'));
   assert.match(template, /id="focus-brand" data-passport="brand" hidden/);
   assert.match(template, /node\.getAttribute\('data-node-brand'\)/);
   assert.match(template, /brandOffset = node\.hasAttribute\('data-node-brand'\) \? 22 : 0/);

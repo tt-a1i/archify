@@ -421,5 +421,10 @@
   "viewer.common.copyFailed": "Kopieren fehlgeschlagen",
   "viewer.common.copyLink": "Link kopieren",
   "viewer.common.clear": "Löschen",
-  "viewer.common.close": "Schließen"
+  "viewer.common.close": "Schließen",
+  "viewer.guide.canvas": "Klicken oder Tab öffnet die Zeichenfläche. Mit rechter oder mittlerer Maustaste oder Leertaste + linker Maustaste ziehen. Mausrad oder Pfeiltasten verschieben; Strg/Cmd + Mausrad zoomt am Zeiger. Mit 0 zurücksetzen.",
+  "viewer.notes.title": "Diagrammnotizen",
+  "viewer.notes.close": "Diagrammnotizen schließen",
+  "viewer.nav.fitAll": "Gesamtes Diagramm einpassen",
+  "viewer.nav.fitAll.short": "ALLES"
 }

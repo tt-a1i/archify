@@ -872,7 +872,12 @@
         else svg.appendChild(relationshipHitOverlay);
 
         relationshipHitOverlay.addEventListener('pointerdown', function (event) {
-          if (event.target.closest('[data-relationship-hit-key]')) event.stopPropagation();
+          // Relationship selection owns a plain primary click. Camera drag
+          // gestures must still reach the container when starting on an edge.
+          var pan = event.button === 1 || event.button === 2 ||
+            (event.button === 0 && (event.pointerType === 'touch' || event.pointerType === 'pen' ||
+              container.classList.contains('is-pan-ready')));
+          if (!pan && event.target.closest('[data-relationship-hit-key]')) event.stopPropagation();
         });
         relationshipHitOverlay.addEventListener('pointerover', function (event) {
           if (event.pointerType === 'touch') return;
@@ -1201,7 +1206,7 @@
         var safeGap = 10;
         var protectViewerChrome = !mobile || compactOnMobile || previewingOnMobile;
         var protectedRects = (protectViewerChrome
-          ? [svg.querySelector('[data-legend]'), container.querySelector('.diagram-nav')]
+          ? [container.hasAttribute('data-fixed-legend') ? container.querySelector('.fixed-legend') : svg.querySelector('[data-legend]'), container.querySelector('.diagram-nav')]
           : [])
           .filter(function (element) {
             if (!element || element.hidden) return false;
@@ -1531,7 +1536,7 @@
             (event.pointerId == null || event.pointerId === lensDragClickPointer)) {
           lensDragClickPointer = null;
           event.preventDefault();
-          event.stopPropagation();
+          event.stopImmediatePropagation();
           return;
         }
         var target = event.target;
@@ -1559,7 +1564,8 @@
 
       installRelationshipHitTargets();
 
-      function syncFocusFromHash() {
+      function syncFocusFromHash(options) {
+        options = options || {};
         try {
           var params = new URLSearchParams(location.hash.replace(/^#/, ''));
           var relation = params.get('relation');
@@ -1567,7 +1573,7 @@
           var reach = params.get('reach');
           if (relation) {
             if (html.getAttribute('data-embed') === 'true' ||
-                !inspectRelationshipById(relation, { updateUrl: false, toggle: false })) clear({ updateUrl: false });
+                !inspectRelationshipById(relation, { updateUrl: false, toggle: false })) clear({ updateUrl: false, preserveView: options.preserveView === true });
           }
           else if (initial) {
             if (set(initial, { updateUrl: false, toggle: false }) &&
@@ -1575,12 +1581,12 @@
               applyReachability(reach, { updateUrl: false, toggle: false, reveal: false });
             }
           }
-          else clear({ updateUrl: false });
+          else clear({ updateUrl: false, preserveView: options.preserveView === true });
         } catch (_) {}
       }
 
       window.addEventListener('hashchange', syncFocusFromHash);
-      syncFocusFromHash();
+      syncFocusFromHash({ preserveView: true });
 
       return {
         set: set,

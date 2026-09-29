@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -18,7 +19,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
-const template = fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8');
+const template = viewerContractSource(fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8'));
 const skill = fs.readFileSync(path.join(skillRoot, 'references/authoring-defaults.md'), 'utf8');
 const architectureRenderer = fs.readFileSync(path.join(skillRoot, 'renderers', 'architecture', 'render-architecture.mjs'), 'utf8');
 const reader = template.slice(
@@ -124,7 +125,7 @@ test('adaptive width preserves canonical SVG geometry and yields to specialized 
   assert.doesNotMatch(reader, /overflow\s*=\s*['"]hidden/);
 });
 
-test('reader remeasures real content and reduces width before allowing desktop page overflow', () => {
+test('document-flow fallback remeasures content while author guidance uses the fixed canvas contract', () => {
   assert.match(reader, /document\.fonts\.ready\.then\(schedule\)/);
   assert.match(reader, /new ResizeObserver\(schedule\)/);
   assert.match(reader, /new MutationObserver\(schedule\)/);

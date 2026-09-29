@@ -2,7 +2,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+
+const require = createRequire(new URL('../archify/package.json', import.meta.url));
+const { transformSync } = require('esbuild');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'archify/assets/template.html');
@@ -39,11 +43,7 @@ function reindent(source, spaces) {
     .join('\n');
 }
 
-try {
-  const args = process.argv.slice(2);
-  if (args.length > 1 || (args.length === 1 && args[0] !== '--check')) {
-    throw new Error('Usage: node scripts/generate-viewer.mjs [--check]');
-  }
+export function assembleViewer({ compact = true } = {}) {
   let generated = fs.readFileSync(path.join(root, 'viewer/template.source.html'), 'utf8');
   for (const [marker, file, indent = 0] of fragments) {
     const source = fs.readFileSync(path.join(root, 'viewer', file), 'utf8');
@@ -66,6 +66,32 @@ try {
     // including characters with String.replace semantics.
     generated = parts[0] + reindent(source, indent) + tail;
   }
+  if (compact) {
+    // Compile only owned executable/style blocks, after fragment assembly.
+    // Keep HTML slots and the complete licensed font block byte-for-byte.
+    generated = generated.replace(/<(script|style)>([\s\S]*?)<\/\1>/g, (_block, tag, source) => {
+      const { code } = transformSync(source, {
+        loader: tag === 'script' ? 'js' : 'css',
+        minifyWhitespace: true,
+        minifyIdentifiers: false,
+        minifySyntax: false,
+        treeShaking: false,
+        legalComments: 'inline',
+        charset: 'utf8',
+      });
+      return `<${tag}>\n${code}</${tag}>`;
+    });
+  }
+  return generated;
+}
+
+// path-contract-allow: url-path -- Canonical module URLs select CLI entry, not filesystem authorization.
+if (process.argv[1] && pathToFileURL(fs.realpathSync(process.argv[1])).href === import.meta.url) try {
+  const args = process.argv.slice(2);
+  if (args.length > 1 || (args.length === 1 && args[0] !== '--check')) {
+    throw new Error('Usage: node scripts/generate-viewer.mjs [--check]');
+  }
+  const generated = assembleViewer();
   if (args[0] === '--check') {
     if (!fs.existsSync(output) || fs.readFileSync(output, 'utf8') !== generated) {
       throw new Error('Viewer template is stale — run npm run generate:viewer from archify/.');

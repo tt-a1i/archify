@@ -38,6 +38,16 @@
       }
       function protectedStageRect() {
         if (!svg) return null;
+        if (html.hasAttribute('data-fixed-canvas')) {
+          var bounds = container.getBoundingClientRect();
+          var style = window.getComputedStyle(container);
+          var left = bounds.left + container.clientLeft + (parseFloat(style.paddingLeft) || 0);
+          var top = bounds.top + container.clientTop + (parseFloat(style.paddingTop) || 0);
+          var right = bounds.left + container.clientLeft + container.clientWidth - (parseFloat(style.paddingRight) || 0);
+          var bottom = bounds.top + container.clientTop + container.clientHeight - (parseFloat(style.paddingBottom) || 0);
+          return { x: left, y: top, left: left, top: top, right: right, bottom: bottom,
+            width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+        }
         var rect = svg.getBoundingClientRect();
         var transform = '';
         try { transform = window.getComputedStyle(svg).transform || ''; } catch (_) {}
@@ -84,11 +94,17 @@
           container && svg && nav &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
+          !nav.hasAttribute('data-viewport-docked') &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
           visible(nav)
         );
       }
       function cameraAtBaseline() {
+        // The fixed stage is independent of SVG camera scale.
+        if (html.hasAttribute('data-fixed-canvas')) return true;
+        // Automatic framing still permits layout reprobes after leaving the
+        // fixed shell; only a user's zoom should retain a previous rail.
+        if (Archify.view && Archify.view.state().mode === 'fit') return true;
         var scale = Number(svg && svg.getAttribute('data-view-scale'));
         return !Number.isFinite(scale) || Math.abs(scale - 1) < 0.001;
       }
@@ -172,7 +188,12 @@
         frame = 0;
         scheduleLift();
         if (probingBaseline) return null;
-        if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
+        var fixedLegend = Archify.semanticLens && Archify.semanticLens.layoutLegendDock();
+        if (!eligible()) {
+          var temporaryViewerMode = html.getAttribute('data-embed') === 'true' ||
+            Boolean(window.matchMedia && window.matchMedia('print').matches);
+          return clear({ preserveBaseline: temporaryViewerMode || !cameraAtBaseline() });
+        }
 
         /* Camera transforms enlarge and translate authored paint inside the
            fixed, clipped root SVG viewport. They must not redefine the
@@ -210,7 +231,8 @@
         if (!usable(navRect) || !usable(stageRect)) return clear();
 
         var actualIntersectionArea = usable(legendRect) ? intersectionArea(navRect, legendRect) : 0;
-        var stageGap = navRect.top - stageRect.bottom;
+        var controlsTop = fixedLegend ? Math.min(navRect.top, fixedLegend.getBoundingClientRect().top) : navRect.top;
+        var stageGap = controlsTop - stageRect.bottom;
         if (!railLatched && reserve === 0) {
           baselineIntersectionArea = actualIntersectionArea;
           baselineStageGap = stageGap;
@@ -229,7 +251,7 @@
         navRect = restingNavRect();
         legendRect = visible(legend) ? legend.getBoundingClientRect() : null;
         stageRect = protectedStageRect();
-        stageGap = navRect.top - stageRect.bottom;
+        stageGap = (fixedLegend ? Math.min(navRect.top, fixedLegend.getBoundingClientRect().top) : navRect.top) - stageRect.bottom;
         lastReceipt = {
           eligible: true,
           active: reserve > 0,
@@ -329,7 +351,7 @@
         if (legend) contentObserver.observe(legend, { attributes: true, childList: true, subtree: true });
         contentObserver.observe(html, {
           attributes: true,
-          attributeFilter: ['data-embed', 'data-present', 'data-preset', 'data-theme']
+          attributeFilter: ['data-embed', 'data-present', 'data-preset', 'data-theme', 'data-fixed-canvas']
         });
       }
       schedule();

@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -29,7 +30,7 @@ function render(mode, example, animation = 'trace') {
   execFileSync('node', [path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`), input, output], {
     stdio: ['ignore', 'ignore', 'pipe'],
   });
-  return fs.readFileSync(output, 'utf8');
+  return viewerContractSource(fs.readFileSync(output, 'utf8'));
 }
 
 function svgBlock(html) {

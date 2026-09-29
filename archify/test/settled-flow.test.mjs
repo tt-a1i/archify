@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -9,7 +10,7 @@ import { animateAttr } from '../renderers/shared/cli.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
-const template = fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8');
+const template = viewerContractSource(fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8'));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-settled-flow-'));
 
 const CASES = {
@@ -29,7 +30,7 @@ function render(mode, example) {
   execFileSync('node', [path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`), input, output], {
     stdio: ['ignore', 'ignore', 'pipe'],
   });
-  return fs.readFileSync(output, 'utf8');
+  return viewerContractSource(fs.readFileSync(output, 'utf8'));
 }
 
 test('all five renderers inherit one finite running-to-settled ambient contract', () => {

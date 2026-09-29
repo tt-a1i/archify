@@ -6,6 +6,15 @@
       var svg = diagram && diagram.querySelector(':scope > svg');
       var header = shell && shell.querySelector('.header');
       var cards = shell && shell.querySelector('.cards');
+      var notes = document.getElementById('diagram-notes');
+      var notesContent = document.getElementById('diagram-notes-content');
+      var notesButton = document.getElementById('btn-diagram-notes');
+      var notesClose = document.getElementById('diagram-notes-close');
+      var notesCopy = notes && notes.querySelector('.diagram-notes-copy');
+      var notesTitle = document.getElementById('diagram-notes-full-title');
+      var notesSubtitle = document.getElementById('diagram-notes-full-subtitle');
+      var toolbar = document.querySelector('.toolbar');
+      var notesOpen = false;
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
@@ -54,6 +63,10 @@
         try { localStorage.setItem(key, value); } catch (_) {}
       }
 
+      if (diagram && viewBox && viewBox.width > 0 && viewBox.height > 0) {
+        diagram.style.setProperty('--archify-canvas-width', viewBox.width + 'px');
+        diagram.style.setProperty('--archify-canvas-height', viewBox.height + 'px');
+      }
       if (diagram && ratio >= WIDE_RATIO) {
         diagram.setAttribute('data-wide-diagram', 'true');
         html.setAttribute('data-diagram-shape', 'wide');
@@ -122,12 +135,64 @@
       }
       function eligible() {
         return Boolean(
+          !fixedEligible() &&
           shell && diagram && svg && (ratio >= WIDE_RATIO || measuredHeightFit) &&
           window.innerWidth >= MIN_DESKTOP_WIDTH &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches)
         );
+      }
+      function fixedEligible() {
+        return Boolean(shell && diagram && svg && notes &&
+          window.innerWidth >= MIN_DESKTOP_WIDTH && window.innerHeight >= 600 &&
+          html.getAttribute('data-embed') !== 'true' &&
+          html.getAttribute('data-present') !== 'true' &&
+          (!window.matchMedia || !window.matchMedia('print').matches));
+      }
+      function flag(name, enabled) {
+        if (html.hasAttribute(name) !== enabled) html.toggleAttribute(name, enabled);
+      }
+      function text(element, value) {
+        if (element && element.textContent !== value) element.textContent = value;
+      }
+      function focus(element) {
+        if (element) { try { element.focus({ preventScroll: true }); } catch (_) { element.focus(); } }
+      }
+      function syncFixedShell() {
+        var enabled = fixedEligible();
+        var wasEnabled = html.hasAttribute('data-fixed-canvas');
+        var focusInNotes = notes && notes.contains(document.activeElement);
+        flag('data-fixed-canvas', enabled);
+        if (!notesButton || !notesContent) return enabled;
+        var title = header && header.querySelector('h1');
+        var subtitle = header && header.querySelector('.subtitle');
+        var titleClipped = enabled && title && title.scrollWidth > title.clientWidth + 1;
+        var subtitleClipped = enabled && subtitle && subtitle.scrollWidth > subtitle.clientWidth + 1;
+        var clipped = Boolean(titleClipped || subtitleClipped);
+        text(notesTitle, titleClipped ? title.textContent : '');
+        text(notesSubtitle, subtitleClipped ? subtitle.textContent : '');
+        if (notesCopy) notesCopy.hidden = !clipped;
+        var hasCards = Boolean(notes && notes.querySelector('.cards .card'));
+        var hasOutline = Boolean(svg && svg.querySelectorAll('[data-node-id]').length > 1);
+        var available = enabled && (hasCards || hasOutline || clipped);
+        if (!available) notesOpen = false;
+        notesButton.hidden = !available;
+        notesButton.setAttribute('aria-expanded', String(notesOpen));
+        notesContent.tabIndex = notesOpen ? 0 : -1;
+        flag('data-notes-open', notesOpen);
+        if (!enabled && wasEnabled && (focusInNotes || document.activeElement === notesButton)) focus(diagram);
+        if (enabled && !notesOpen && focusInNotes) focus(available ? notesButton : diagram);
+        if (enabled && !wasEnabled) window.scrollTo(0, 0);
+        return enabled;
+      }
+      function setNotes(open, restoreFocus) {
+        if (!fixedEligible() || !notesButton || notesButton.hidden) return false;
+        notesOpen = open;
+        measure();
+        if (notesOpen) focus(notesContent);
+        else if (restoreFocus !== false) focus(notesButton);
+        return notesOpen;
       }
       function clear() {
         html.style.removeProperty('--archify-reader-width');
@@ -239,6 +304,11 @@
       }
       function measure() {
         frame = 0;
+        if (syncFixedShell()) {
+          if (settleFrame) { cancelAnimationFrame(settleFrame); settleFrame = 0; }
+          clear();
+          return { layout: 'fixed', notesOpen: notesOpen };
+        }
         if (!eligible()) {
           clear();
           return null;
@@ -311,6 +381,8 @@
         var diagramRect = diagram ? diagram.getBoundingClientRect() : { width: 0, height: 0 };
         return [
           lastWidth,
+          html.hasAttribute('data-fixed-canvas'),
+          notesOpen,
           html.getAttribute('data-reader-layout') || '',
           html.getAttribute('data-reader-overflow') || '',
           Math.ceil(document.documentElement.scrollWidth),
@@ -338,15 +410,31 @@
         settledCap = 0;
         schedule();
       }, { passive: true });
+      window.addEventListener('beforeprint', measure);
+      window.addEventListener('afterprint', schedule);
+      if (window.matchMedia) {
+        var printQuery = window.matchMedia('print');
+        if (printQuery.addEventListener) printQuery.addEventListener('change', schedule);
+      }
+      if (notesButton) notesButton.addEventListener('click', function () { setNotes(!notesOpen); });
+      if (notesClose) notesClose.addEventListener('click', function () { setNotes(false); });
+      if (notes) notes.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape' || event.defaultPrevented || !notesOpen) return;
+        if (event.target.closest('[aria-expanded="true"], [role="listbox"], [role="menu"]')) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setNotes(false);
+      });
       window.addEventListener('load', schedule, { once: true });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [header, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [header, cards, toolbar].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(schedule);
         if (cards) contentObserver.observe(cards, { attributes: true, childList: true, subtree: true });
+        if (header) contentObserver.observe(header, { childList: true, characterData: true, subtree: true });
         contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present'] });
       }
       // Reader choices persist across artifacts; a resize-style remeasure
@@ -354,7 +442,7 @@
       function chooseRail(key, value) {
         writePreference(key, value);
         settledCap = 0;
-        schedule();
+        measure();
       }
       function collapseRail() {
         chooseRail(RAIL_COLLAPSED_KEY, '1');
@@ -375,7 +463,8 @@
         if (!railPanel.contains(event.target) && !(railReveal && railReveal.contains(event.target))) chooseRail(RAIL_COLLAPSED_KEY, '1');
       });
       if (typeof ResizeObserver === 'function' && railPanel) new ResizeObserver(schedule).observe(railPanel);
-      schedule();
+      // Camera must see the fixed shell before its first geometry measurement.
+      measure();
 
       return {
         measure: measure,

@@ -350,14 +350,14 @@ Settings:
 | Action | Control |
 |---|---|
 | Open the factual Diagram Guide | <kbd>?</kbd> |
-| Find and focus a semantic node | <kbd>/</kbd> |
+| Find a node | <kbd>/</kbd> |
 | Trace upstream/downstream authored reach | Focus a node → `Upstream` / `Downstream` |
 | Probe a directed route and inspect its journey | <kbd>R</kbd> or `PATH` |
 | Compare one or two semantic roles | <kbd>L</kbd> or `LENS` |
 | Open the live overview radar | <kbd>M</kbd> or `MAP` |
 | Enter Presentation Stage | <kbd>F</kbd> |
-| Choose visual style (`S` cycles) / toggle theme / open Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
-| Zoom or reset | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
+| Style / theme / Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
+| Canvas navigation | Wheel pans; right-drag/arrows move (<kbd>Shift</kbd> accelerates); <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+wheel zooms; <kbd>+</kbd>/<kbd>-</kbd> step; <kbd>0</kbd> resets; tall-view controls dock automatically. |
 
 Stable links can restore `#focus=<id>`, `#focus=<id>&reach=upstream|downstream`, `#relation=<id>`, `#route=<source>~<target>`, and `#lens=<kind>~<kind>`. Reader-driven motion is finite, respects `prefers-reduced-motion`, and never enters canonical exports.
 

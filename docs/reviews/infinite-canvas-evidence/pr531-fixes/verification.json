@@ -1,0 +1,33 @@
+{
+  "node": {
+    "tests": 2143,
+    "pass": 2069,
+    "fail": 0,
+    "skipped": 74,
+    "durationMs": 183238.423625
+  },
+  "browser": {
+    "tests": 360,
+    "pass": 360,
+    "fail": 0,
+    "skipped": 0,
+    "durationMs": 476104.868125
+  },
+  "camera": {
+    "tests": 22,
+    "pass": 22,
+    "fail": 0
+  },
+  "artifactAndSemanticCamera": {
+    "tests": 43,
+    "pass": 43,
+    "fail": 0
+  },
+  "packageSmoke": {
+    "host": "macOS",
+    "node": "22.23.1",
+    "result": "passed",
+    "modes": 5
+  },
+  "remoteCI": "Pending push; use PR checks for the exact pushed head."
+}

@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -8,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
-const template = fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8');
+const template = viewerContractSource(fs.readFileSync(path.join(skillRoot, 'assets', 'template.html'), 'utf8'));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-route-journey-'));
 
 const CASES = {
@@ -27,7 +28,7 @@ function render(mode, example) {
     input,
     output,
   ], { encoding: 'utf8' });
-  return { result, html: fs.existsSync(output) ? fs.readFileSync(output, 'utf8') : '' };
+  return { result, html: fs.existsSync(output) ? viewerContractSource(fs.readFileSync(output, 'utf8')) : '' };
 }
 
 function canonicalSvg(html) {
@@ -94,7 +95,8 @@ test('motion, camera, layered Escape, mobile, print, and embed boundaries stay e
   assert.match(template, /Archify\.motionGovernor\.claim\('route'/);
   assert.match(template, /reason: 'route-journey',[\s\S]*?maxScale: 1\.65,[\s\S]*?padding: 64,[\s\S]*?duration: 360/);
   assert.match(template, /Archify\.routeProbe\.pauseJourney\(\{ preserveElapsed: true, reason: reason \|\| 'manual' \}\)/);
-  assert.match(template, /event\.target\.closest\('\.diagram-nav, \.focus-chip, \.node-finder, \.diagram-guide, \.overview-map, \.route-probe, \.semantic-lens'\)/);
+  assert.match(template, /function cameraControlTarget\(target\)/);
+  assert.match(template, /cameraControlTarget\(event\.target\)/);
   assert.match(template, /reason: 'guide'/);
   assert.match(template, /window\.addEventListener\('beforeprint'[\s\S]*?pauseJourney/);
   assert.match(template, /function escapeRoute\(options\)[\s\S]*?return 'paused'[\s\S]*?return 'overview'[\s\S]*?return 'cleared'/);

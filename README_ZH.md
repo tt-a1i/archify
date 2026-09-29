@@ -351,14 +351,14 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 操作 | 控制方式 |
 |---|---|
 | 打开事实型 Diagram Guide | <kbd>?</kbd> |
-| 查找并聚焦语义节点 | <kbd>/</kbd> |
+| 查找节点 | <kbd>/</kbd> |
 | 追踪作者定义的上游 / 下游可达范围 | 聚焦节点 → `Upstream` / `Downstream` |
 | 探查有向路径并逐站检查 | <kbd>R</kbd> 或“路径” |
 | 对比一种或两种语义角色 | <kbd>L</kbd> 或“透镜” |
 | 打开实时全局雷达 | <kbd>M</kbd> 或“地图” |
 | 进入 Presentation Stage | <kbd>F</kbd> |
-| 选择视觉风格（<kbd>S</kbd> 循环）/ 切换主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
-| 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
+| 风格 / 主题 / Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
+| 画布导航 | 滚轮平移；右键拖动或方向键移动（<kbd>Shift</kbd> 加速）；<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + 滚轮缩放；<kbd>+</kbd>/<kbd>-</kbd> 分级缩放；<kbd>0</kbd> 复位；超高图的控件自动停靠在视口内。 |
 
 稳定链接可以恢复 `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>` 和 `#lens=<kind>~<kind>`。读者触发的动态有限运行、遵守 `prefers-reduced-motion`，并且不会进入标准导出。
 

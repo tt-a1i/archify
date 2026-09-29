@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -9,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
-const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
+const template = viewerContractSource(fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8'));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-authored-reach-'));
 
 const CASES = {
@@ -27,7 +28,7 @@ function render(mode, example) {
     path.join(skillRoot, 'examples', example),
     output,
   ]);
-  return fs.readFileSync(output, 'utf8');
+  return viewerContractSource(fs.readFileSync(output, 'utf8'));
 }
 
 function canonicalSvg(html) {

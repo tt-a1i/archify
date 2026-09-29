@@ -421,5 +421,10 @@
   "viewer.common.copyFailed": "Copia non riuscita",
   "viewer.common.copyLink": "Copia link",
   "viewer.common.clear": "Cancella",
-  "viewer.common.close": "Chiudi"
+  "viewer.common.close": "Chiudi",
+  "viewer.guide.canvas": "Fai clic o usa Tab per entrare nel canvas. Trascina con il tasto destro, centrale o Spazio + sinistro. Rotella o frecce spostano; Ctrl/Cmd + rotella ingrandisce al puntatore. Premi 0 per ripristinare.",
+  "viewer.notes.title": "Note del diagramma",
+  "viewer.notes.close": "Chiudi le note del diagramma",
+  "viewer.nav.fitAll": "Adatta tutto il diagramma",
+  "viewer.nav.fitAll.short": "ADATTA"
 }

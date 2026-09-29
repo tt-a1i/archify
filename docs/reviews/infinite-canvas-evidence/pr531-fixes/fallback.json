@@ -1,0 +1,44 @@
+[
+  {
+    "label": "base",
+    "viewport": [
+      1023,
+      599
+    ],
+    "initial": {
+      "fixed": false,
+      "cards": 3,
+      "cardHeight": 162,
+      "range": [
+        0,
+        263
+      ]
+    },
+    "last": {
+      "top": 416.71875,
+      "bottom": 578.71875,
+      "viewport": 599
+    }
+  },
+  {
+    "label": "candidate",
+    "viewport": [
+      1023,
+      599
+    ],
+    "initial": {
+      "fixed": false,
+      "cards": 3,
+      "cardHeight": 162,
+      "range": [
+        0,
+        263
+      ]
+    },
+    "last": {
+      "top": 416.71875,
+      "bottom": 578.71875,
+      "viewport": 599
+    }
+  }
+]

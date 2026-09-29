@@ -17,6 +17,12 @@
       var clearBtn = document.getElementById('semantic-lens-clear');
       var legendBridge = svg.querySelector('[data-legend-bridge]');
       var legendEntries = [];
+      var legendSource = svg.querySelector('[data-legend]');
+      var legendDock = null;
+      var legendList = null;
+      var legendToggle = null;
+      var dockEntries = [];
+      var dockLayoutKey = '';
       var hoveredLegendEntry = null;
       var focusedLegendEntry = null;
       var activeLegendPreview = null;
@@ -162,13 +168,153 @@
         return true;
       }
       function syncLegendBridge() {
-        legendEntries.forEach(function (entry) {
+        legendEntries.concat(dockEntries).forEach(function (entry) {
           var selected = selectedKinds.indexOf(entry.getAttribute('data-legend-kind')) >= 0;
           entry.setAttribute('aria-pressed', selected ? 'true' : 'false');
           entry.setAttribute('aria-expanded', !panel.hidden && lensOpener === entry ? 'true' : 'false');
           if (selected) entry.setAttribute('data-legend-selected', '');
           else entry.removeAttribute('data-legend-selected');
         });
+      }
+      // Project authored labels and swatches only. Counts and selection remain
+      // owned by the existing bridge; both surfaces use the same event handlers.
+      function createLegendDock() {
+        if (!legendSource) return;
+        var sources = Array.prototype.slice.call(legendSource.querySelectorAll('[data-legend-semantic-kind]'));
+        if (!sources.length) return;
+        var dock = document.createElement('div');
+        dock.className = 'fixed-legend no-print';
+        dock.hidden = true;
+        var toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'fixed-legend-toggle';
+        toggle.textContent = legendSource.querySelector(':scope > text').textContent + ' (' + sources.length + ')';
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-controls', 'fixed-legend-list');
+        var list = document.createElement('div');
+        list.id = 'fixed-legend-list';
+        list.className = 'fixed-legend-list';
+        list.setAttribute('role', 'group');
+        list.setAttribute('aria-label', viewerText('viewer.lens.legend'));
+        list.tabIndex = -1;
+        sources.forEach(function (source) {
+          var text = source.querySelector(':scope > text');
+          if (!text) throw new Error('Legend entry has no authored label.');
+          var interactive = source.getAttribute('role') === 'button';
+          var item = document.createElement(interactive ? 'button' : 'span');
+          item.className = 'fixed-legend-entry';
+          if (interactive) item.type = 'button';
+          ['data-legend-semantic-kind', 'data-legend-kind', 'data-legend-count', 'data-legend-zero',
+            'role', 'tabindex', 'aria-label', 'aria-pressed', 'aria-haspopup', 'aria-controls', 'aria-expanded'].forEach(function (name) {
+            if (source.hasAttribute(name)) item.setAttribute(name, source.getAttribute(name));
+          });
+          var swatch = document.createElementNS(namespace, 'svg');
+          swatch.setAttribute('aria-hidden', 'true');
+          var x = Number(source.getAttribute('data-legend-x'));
+          var y = Number(source.getAttribute('data-legend-baseline'));
+          var width = Math.max(14, Number(text.getAttribute('x')) - x - 4);
+          swatch.setAttribute('viewBox', (x - 2) + ' ' + (y - 14) + ' ' + (width + 4) + ' 20');
+          swatch.style.width = (width + 4) + 'px';
+          Array.prototype.forEach.call(source.children, function (child) {
+            if (child === text || child.hasAttribute('data-legend-bridge-runtime')) return;
+            var copy = child.cloneNode(true);
+            copy.removeAttribute('id');
+            Array.prototype.forEach.call(copy.querySelectorAll('[id]'), function (el) { el.removeAttribute('id'); });
+            swatch.appendChild(copy);
+          });
+          item.appendChild(swatch);
+          var label = document.createElement('span');
+          label.textContent = text.textContent;
+          item.appendChild(label);
+          if (source.hasAttribute('data-legend-count')) {
+            var count = document.createElement('span');
+            count.className = 'fixed-legend-count';
+            count.setAttribute('aria-hidden', 'true');
+            count.textContent = source.getAttribute('data-legend-count');
+            item.appendChild(count);
+          }
+          list.appendChild(item);
+          if (interactive) dockEntries.push(item);
+        });
+        dock.appendChild(toggle);
+        dock.appendChild(list);
+        container.appendChild(dock);
+        legendDock = dock; legendList = list; legendToggle = toggle;
+        toggle.addEventListener('click', function () {
+          var open = toggle.getAttribute('aria-expanded') !== 'true';
+          toggle.setAttribute('aria-expanded', String(open));
+          list.hidden = !open;
+          if (open) (dockEntries[0] || list).focus();
+        });
+        dock.addEventListener('keydown', function (event) {
+          if (event.key !== 'Escape' || toggle.hidden) return;
+          event.preventDefault(); event.stopPropagation();
+          toggle.setAttribute('aria-expanded', 'false'); list.hidden = true; toggle.focus();
+        });
+        document.addEventListener('click', function (event) {
+          if (!toggle.hidden && !dock.contains(event.target)) {
+            toggle.setAttribute('aria-expanded', 'false'); list.hidden = true;
+          }
+        });
+        syncLegendBridge();
+      }
+      function legendDockActive() {
+        return Boolean(legendDock && html.hasAttribute('data-fixed-canvas') &&
+          html.getAttribute('data-present') !== 'true' && html.getAttribute('data-embed') !== 'true' &&
+          !(window.matchMedia && window.matchMedia('print').matches));
+      }
+      function legendFocusTarget(entry) {
+        var kind = entry && entry.getAttribute('data-legend-kind');
+        if (entry === legendToggle) {
+          return legendDockActive() ? (legendToggle.hidden ? dockEntries[0] || legendList : legendToggle) : legendEntries[0] || trigger;
+        }
+        if (!kind) return entry || trigger;
+        var entries = legendDockActive() ? dockEntries : legendEntries;
+        if (legendDockActive() && legendList.hidden) return legendToggle;
+        return entries.find(function (candidate) { return candidate.getAttribute('data-legend-kind') === kind; }) || trigger;
+      }
+      function layoutLegendDock() {
+        if (!legendDock) return null;
+        var active = legendDockActive();
+        var bounds = container.getBoundingClientRect();
+        var nav = container.querySelector('.diagram-nav').getBoundingClientRect();
+        var style = getComputedStyle(legendDock);
+        var key = [active, bounds.width, bounds.height, nav.width, style.font, html.getAttribute('data-preset')].join('|');
+        if (key === dockLayoutKey) return active ? legendDock : null;
+        dockLayoutKey = key;
+        var focused = document.activeElement;
+        var hadFocus = legendSource.contains(focused) || legendDock.contains(focused);
+        var oldKind = focused && focused.getAttribute('data-legend-kind');
+        hoveredLegendEntry = focusedLegendEntry = null;
+        clearLegendPreview();
+        legendDock.hidden = !active;
+        container.toggleAttribute('data-fixed-legend', active);
+        legendEntries.forEach(function (entry, i) { entry.tabIndex = !active && i === 0 ? 0 : -1; });
+        if (active) {
+          legendDock.style.maxWidth = Math.max(0, bounds.width - nav.width - 42) + 'px';
+          legendList.style.maxHeight = Math.min(320, bounds.height * .5) + 'px';
+          legendDock.removeAttribute('data-collapsed');
+          legendList.hidden = false; legendToggle.hidden = true;
+          // Measure at most two complete rows. Long labels collapse instead of
+          // truncating; the expanded list can wrap and scroll inside the canvas.
+          var rows = new Set(Array.prototype.map.call(legendList.children, function (entry) { return entry.offsetTop; }));
+          var collapse = rows.size > 2 || legendList.scrollWidth > legendList.clientWidth + 1;
+          legendDock.toggleAttribute('data-collapsed', collapse);
+          legendToggle.hidden = !collapse;
+          legendToggle.setAttribute('aria-expanded', 'false');
+          legendList.hidden = collapse;
+        }
+        if (hadFocus) {
+          var target = oldKind ? legendFocusTarget(focused) : (active ? legendToggle : legendEntries[0] || trigger);
+          if (active && !legendToggle.hidden) target = legendToggle;
+          else if (active && !oldKind) target = dockEntries[0] || legendList;
+          target.focus();
+          if (target.getAttribute('role') === 'button') focusedLegendEntry = target;
+          syncLegendPreview();
+        }
+        if (lensOpener !== trigger) lensOpener = legendFocusTarget(lensOpener);
+        syncLegendBridge();
+        return active ? legendDock : null;
       }
       function clearLegendPreview() {
         activeLegendPreview = null;
@@ -351,7 +497,7 @@
         var rightCandidate = { left: containerRect.right - 16 - width, right: containerRect.right - 16, top: top, bottom: panelRect.bottom };
         var leftScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(leftCandidate, rect); }, 0);
         var rightScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(rightCandidate, rect); }, 0);
-        var legend = svg.querySelector('[data-legend]');
+        var legend = legendDockActive() ? legendDock : legendSource;
         var nav = container.querySelector('.diagram-nav');
         var protectedRects = [legend, nav].filter(function (element) {
           return element && !element.hidden && window.getComputedStyle(element).display !== 'none';
@@ -453,8 +599,9 @@
           Archify.focus.clear({ updateUrl: false, preserveView: true });
         }
         if (Archify.routeProbe && typeof Archify.routeProbe.clear === 'function') {
-          Archify.routeProbe.clear({ updateUrl: false, restoreFocus: false });
+          Archify.routeProbe.clear({ updateUrl: false, preserveView: true, restoreFocus: false });
         }
+        if (Archify.radar && Archify.radar.isOpen()) Archify.radar.close({ restoreFocus: false });
         if (Archify.intentTrace && typeof Archify.intentTrace.clear === 'function') {
           Archify.intentTrace.clear({ announce: false });
         }
@@ -478,13 +625,19 @@
         panel.hidden = true;
         trigger.setAttribute('aria-expanded', 'false');
         updateTrigger();
-        if (options.restoreFocus !== false && lensOpener && typeof lensOpener.focus === 'function') lensOpener.focus();
+        if (options.restoreFocus !== false && lensOpener) {
+          var opener = legendFocusTarget(lensOpener);
+          opener.focus();
+        }
         return false;
       }
       function open(options) {
         options = options || {};
         if (html.getAttribute('data-embed') === 'true') return false;
         lensOpener = options.opener || trigger;
+        if (Archify.routeProbe && Archify.routeProbe.active()) {
+          Archify.routeProbe.clear({ preserveView: true, restoreFocus: false });
+        }
         if (Archify.exportMenu && Archify.exportMenu.isOpen()) Archify.exportMenu.close(false);
         if (Archify.finder && Archify.finder.isOpen()) Archify.finder.close({ restoreFocus: false });
         if (Archify.radar && Archify.radar.isOpen()) Archify.radar.close({ restoreFocus: false });
@@ -562,7 +715,7 @@
       }
 
       trigger.addEventListener('click', toggle);
-      if (decorateLegendBridge()) {
+      function bindLegendBridge(legendBridge, legendEntries) {
         legendBridge.addEventListener('click', function (event) {
           var entry = event.target.closest('[data-legend-kind][role="button"]');
           if (entry) activateLegendEntry(entry);
@@ -617,6 +770,21 @@
           legendEntries[next].focus();
         });
       }
+      if (decorateLegendBridge()) bindLegendBridge(legendBridge, legendEntries);
+      try { createLegendDock(); } catch (_) { dockEntries = []; }
+      if (legendDock) {
+        bindLegendBridge(legendList, dockEntries);
+        layoutLegendDock();
+        if (Archify.viewerChromeLayout) Archify.viewerChromeLayout.schedule();
+        function legendFontsChanged() {
+          dockLayoutKey = ''; layoutLegendDock();
+          if (Archify.viewerChromeLayout) Archify.viewerChromeLayout.reprobe();
+        }
+        if (document.fonts) {
+          if (document.fonts.ready) document.fonts.ready.then(legendFontsChanged);
+          if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', legendFontsChanged);
+        }
+      }
       closeBtn.addEventListener('click', function () { close(); });
       clearBtn.addEventListener('click', function () { clear({ preserveView: true }); });
       copyBtn.addEventListener('click', copyLink);
@@ -644,7 +812,7 @@
       document.addEventListener('click', function (event) {
         var eventPath = typeof event.composedPath === 'function' ? event.composedPath() : [];
         var clickedInside = eventPath.indexOf(panel) >= 0 || panel.contains(event.target);
-        var clickedLauncher = event.target === trigger || legendEntries.some(function (entry) {
+        var clickedLauncher = event.target === trigger || legendEntries.concat(dockEntries).some(function (entry) {
           return event.target === entry || entry.contains(event.target);
         });
         if (!panel.hidden && !clickedInside && !clickedLauncher) close({ restoreFocus: false });
@@ -667,6 +835,7 @@
         copyLink: copyLink,
         isOpen: function () { return !panel.hidden; },
         active: function () { return selectedKinds.length ? selectedKinds.slice() : null; },
+        layoutLegendDock: layoutLegendDock,
         kinds: function () { return collectKinds().map(function (kind) { return { id: kind.id, count: kind.nodes.length }; }); }
       };
     })();

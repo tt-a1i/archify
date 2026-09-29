@@ -436,5 +436,10 @@
   "viewer.common.copyFailed": "Error al copiar",
   "viewer.common.copyLink": "Copiar enlace",
   "viewer.common.clear": "Borrar",
-  "viewer.common.close": "Cerrar"
+  "viewer.common.close": "Cerrar",
+  "viewer.guide.canvas": "Haz clic o usa Tab para entrar al lienzo. Arrastra con el botón derecho, central o Espacio + botón izquierdo. Usa la rueda o las flechas para desplazarte; Ctrl/Cmd + rueda amplía en el puntero. Pulsa 0 para restablecer.",
+  "viewer.notes.title": "Notas del diagrama",
+  "viewer.notes.close": "Cerrar notas del diagrama",
+  "viewer.nav.fitAll": "Ajustar todo el diagrama",
+  "viewer.nav.fitAll.short": "AJUSTAR"
 }

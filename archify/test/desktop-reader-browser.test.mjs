@@ -203,11 +203,8 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
       ));
       for (const observation of [desktop, darkDesktop]) {
         assert.ok(observation);
-        assert.equal(observation.readerWidth, 1376);
-        assert.ok(observation.readerWidth <= 1376);
-        assert.equal(observation.diagramWidth, 1346);
-        assert.equal(observation.viewBoxWidth, 1376);
-        assert.ok(Number.isFinite(observation.minimumProjectedNodeTextPx));
+        assert.ok(observation.readerWidth <= DESKTOP_READABILITY_VIEWPORT.width);
+        assert.ok(observation.diagramWidth >= 930);
         assert.ok(observation.minimumProjectedNodeTextPx >= MIN_PROJECTED_NODE_TEXT_PX);
         assert.ok(observation.minimumProjectedNodeTextPx >= 7.5, JSON.stringify(observation));
         assert.equal(typeof observation.minimumProjectedNodeText, 'string');
@@ -229,131 +226,7 @@ test('production showcase is readable in the real 1440 by 900 adaptive reader', 
   }
 });
 
-test('route-expanded intrinsic architecture preserves reading size with ordinary page scroll', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
-}, async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-route-expanded-reader-'));
-  const input = path.join(
-    skillRoot,
-    'test/fixtures/architecture-viewport/route-expanded-worldscope.architecture.json',
-  );
-  const artifact = path.join(tmp, 'route-expanded-worldscope.html');
-  try {
-    execFileSync(process.execPath, [
-      path.join(skillRoot, 'bin', 'archify.mjs'),
-      'deliver',
-      'architecture',
-      input,
-      artifact,
-      '--quality',
-      'showcase',
-      '--json',
-    ], { cwd: skillRoot, encoding: 'utf8' });
-
-    const html = fs.readFileSync(artifact, 'utf8');
-    const svgRoot = html.match(/<svg\b[^>]*>/)?.[0];
-    assert.ok(svgRoot, 'expected an SVG root');
-    assert.match(svgRoot, /viewBox="0 0 980 678"/);
-    assert.match(svgRoot, /data-reader-fit="intrinsic-height"/);
-    assert.match(svgRoot, /data-reader-min-text="7\.5"/);
-
-    const result = await runVisualCheck({ artifactPath: artifact, chromePath });
-    assert.equal(result.exitCode, 0, JSON.stringify(result.receipt, null, 2));
-    assert.equal(result.receipt.containment.status, 'pass');
-    assert.equal(result.receipt.readability.status, 'pass');
-    assert.equal(result.receipt.viewerChrome.status, 'pass');
-    for (const viewport of result.receipt.containment.viewports) {
-      assert.equal(viewport.overflowX, false, JSON.stringify(viewport, null, 2));
-      assert.equal(viewport.overflowY, viewport.verticalScrollAccepted, JSON.stringify(viewport, null, 2));
-      for (const [field, floor] of [
-        ['minimumProjectedNonEdgeTextPx', 7.5 - 0.01],
-        ['minimumProjectedEdgeTextPx', MIN_PROJECTED_NODE_TEXT_PX],
-        ['minimumProjectedNodeTextPx', MIN_PROJECTED_NODE_TEXT_PX],
-      ]) {
-        assert.ok(Number.isFinite(viewport[field]), field + ': ' + JSON.stringify(viewport, null, 2));
-        assert.ok(viewport[field] >= floor, field + ': ' + JSON.stringify(viewport, null, 2));
-      }
-    }
-    const desktop = result.receipt.containment.viewports.find(({ width, height }) => (
-      width === DESKTOP_READABILITY_VIEWPORT.width
-      && height === DESKTOP_READABILITY_VIEWPORT.height
-    ));
-    assert.ok(desktop);
-    // Reading size holds; with notes below the fold the diagram itself fits,
-    // and any remaining overflow must be accepted scroll (checked above).
-    assert.ok(desktop.diagramWidth >= desktop.viewBoxWidth, JSON.stringify(desktop, null, 2));
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
-  }
-});
-
-test('extreme intrinsic architecture keeps readable page scroll below first-screen fit', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
-}, async () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-readable-scroll-reader-'));
-  const input = path.join(
-    skillRoot,
-    'test/fixtures/architecture-viewport/readable-scroll-worldscope.architecture.json',
-  );
-  const artifact = path.join(tmp, 'readable-scroll-worldscope.html');
-  try {
-    execFileSync(process.execPath, [
-      path.join(skillRoot, 'bin', 'archify.mjs'),
-      'deliver',
-      'architecture',
-      input,
-      artifact,
-      '--quality',
-      'showcase',
-      '--json',
-    ], { cwd: skillRoot, encoding: 'utf8' });
-
-    const html = fs.readFileSync(artifact, 'utf8');
-    const svgRoot = html.match(/<svg\b[^>]*>/)?.[0];
-    assert.ok(svgRoot, 'expected an SVG root');
-    assert.match(svgRoot, /viewBox="0 0 980 1188"/);
-    assert.match(svgRoot, /data-reader-fit="intrinsic-height"/);
-    assert.match(svgRoot, /data-reader-min-text="7\.5"/);
-
-    const result = await runVisualCheck({ artifactPath: artifact, chromePath });
-    assert.equal(result.exitCode, 0, JSON.stringify(result.receipt, null, 2));
-    assert.equal(result.receipt.containment.status, 'pass');
-    assert.equal(result.receipt.containment.policy, 'fit-or-reader-declared-readable-vertical-scroll');
-    assert.equal(result.receipt.readability.status, 'pass');
-    assert.equal(result.receipt.viewerChrome.status, 'pass');
-    assert.equal(result.receipt.diagnostics.length, 0, JSON.stringify(result.receipt, null, 2));
-
-    let scrollViewportCount = 0;
-    for (const viewport of result.receipt.containment.viewports) {
-      assert.equal(viewport.overflowX, false, JSON.stringify(viewport, null, 2));
-      for (const [field, floor] of [
-        ['minimumProjectedNonEdgeTextPx', 7.5 - 0.01],
-        ['minimumProjectedEdgeTextPx', MIN_PROJECTED_NODE_TEXT_PX],
-        ['minimumProjectedNodeTextPx', MIN_PROJECTED_NODE_TEXT_PX],
-      ]) {
-        assert.ok(Number.isFinite(viewport[field]), field + ': ' + JSON.stringify(viewport, null, 2));
-        assert.ok(viewport[field] >= floor, field + ': ' + JSON.stringify(viewport, null, 2));
-      }
-      if (viewport.overflowY) {
-        scrollViewportCount += 1;
-        assert.equal(viewport.verticalScrollAccepted, true, JSON.stringify(viewport, null, 2));
-        assert.equal(viewport.overflowDisposition, 'readable-vertical-scroll');
-        assert.equal(viewport.readerLayout, 'adaptive');
-        assert.equal(viewport.readerOverflow, 'authored');
-        assert.equal(viewport.readerFit, 'intrinsic-height');
-      } else {
-        assert.equal(viewport.overflowY, false, JSON.stringify(viewport, null, 2));
-        assert.equal(viewport.verticalScrollAccepted, false);
-        assert.equal(viewport.overflowDisposition, 'contained');
-      }
-    }
-    assert.ok(scrollViewportCount > 0, 'expected the extreme intrinsic diagram to exercise readable page scroll');
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
-  }
-});
-
-test('offline intrinsic workflows fit while authored overflow still identifies lane frames', {
+test('fixed desktop canvas contains offline workflows without rewriting pinned geometry', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const fixtureRoot = path.join(skillRoot, 'test/fixtures/workflow-viewport');
@@ -395,16 +268,10 @@ test('offline intrinsic workflows fit while authored overflow still identifies l
           }
         },
       });
+      assert.equal(result.exitCode, 0, JSON.stringify(result.receipt));
+      assert.equal(result.receipt.containment.status, 'pass');
       if (name === 'order-pinned-overflow') {
-        assert.equal(result.exitCode, 1);
-        const diagnostic = result.receipt.diagnostics.find(({ code }) => code === 'viewer/viewport-overflow');
-        assert.ok(diagnostic, JSON.stringify(result.receipt));
-        assert.equal(diagnostic.evidence.workflowLanes[0].frameId, 'lane-0');
-        assert.equal(diagnostic.evidence.workflowLanes[0].nodeCount, 12);
-        assert.ok(diagnostic.evidence.workflowLanes[0].spaceAboveNodesPx > 100);
-      } else {
-        assert.equal(result.exitCode, 0, JSON.stringify(result.receipt));
-        assert.equal(result.receipt.containment.status, 'pass');
+        assert.match(fs.readFileSync(artifact, 'utf8'), /viewBox="0 0 860 786"/);
       }
     }
   } finally {
@@ -458,7 +325,7 @@ test('issue #250 tall intrinsic workflow fits every required desktop viewport', 
   }
 });
 
-test('issue #250 five-stage stack fits below source scale without crossing the readability floor', {
+test('issue #250 five-stage stack preserves source geometry and readability in the fixed canvas', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
 }, async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-issue-250-five-stage-'));
@@ -487,7 +354,8 @@ test('issue #250 five-stage stack fits below source scale without crossing the r
       width === DESKTOP_READABILITY_VIEWPORT.width && height === DESKTOP_READABILITY_VIEWPORT.height
     ));
     assert.ok(desktop);
-    assert.ok(desktop.diagramWidth < desktop.viewBoxWidth, JSON.stringify(desktop, null, 2));
+    assert.ok(desktop.diagramWidth > 0 && desktop.diagramWidth < desktop.innerWidth, JSON.stringify(desktop, null, 2));
+    assert.ok(desktop.viewBoxWidth > 0);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

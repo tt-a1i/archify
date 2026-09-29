@@ -1,0 +1,67 @@
+{
+  "before": {
+    "scale": 0.5296296296296297,
+    "x": 15.999995373535171,
+    "y": 98.78888888888886,
+    "mode": "fit"
+  },
+  "state": {
+    "scale": 1,
+    "x": -223,
+    "y": -125.50003051757812,
+    "mode": "semantic"
+  },
+  "stage": {
+    "x": 29,
+    "y": 281.125,
+    "left": 29,
+    "top": 281.125,
+    "right": 633,
+    "bottom": 690.125,
+    "width": 604,
+    "height": 409
+  },
+  "nodes": [
+    {
+      "id": "users",
+      "x": -154,
+      "right": -34,
+      "top": 455.6249694824219,
+      "bottom": 515.625,
+      "fullyVisible": false
+    },
+    {
+      "id": "cdn",
+      "x": 56,
+      "right": 186,
+      "top": 455.6249694824219,
+      "bottom": 515.625,
+      "fullyVisible": true
+    },
+    {
+      "id": "lb",
+      "x": 266,
+      "right": 396,
+      "top": 455.6249694824219,
+      "bottom": 515.625,
+      "fullyVisible": true
+    },
+    {
+      "id": "api",
+      "x": 476,
+      "right": 606,
+      "top": 455.6249694824219,
+      "bottom": 515.625,
+      "fullyVisible": true
+    },
+    {
+      "id": "db",
+      "x": 686,
+      "right": 816,
+      "top": 455.6249694824219,
+      "bottom": 515.625,
+      "fullyVisible": false
+    }
+  ],
+  "notes": true
+}

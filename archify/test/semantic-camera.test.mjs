@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -25,7 +26,7 @@ function render(mode, example) {
     path.join(skillRoot, 'examples', example),
     output,
   ]);
-  return fs.readFileSync(output, 'utf8');
+  return viewerContractSource(fs.readFileSync(output, 'utf8'));
 }
 
 function svg(html) {
@@ -39,12 +40,12 @@ test('all typed renderers ship the same geometry-neutral semantic camera', () =>
     assert.match(html, /function semanticIds\(ids, includeNeighbors\)/, mode);
     assert.match(html, /if \(seeds\[from\] \|\| seeds\[to\]\) \{ wanted\[from\] = true; wanted\[to\] = true; \}/, mode);
     assert.match(html, /contentScale = Math\.min\(svgWidth \/ viewBox\.width, svgHeight \/ viewBox\.height\)/, mode);
-    assert.match(html, /targetScale = Math\.max\(1, Math\.min\(maxScale, targetScale\)\)/, mode);
+    assert.match(html, /targetScale = Math\.min\(maxScale, targetScale\)/, mode);
     assert.match(html, /visibleTop = Math\.max\(0, -containerRect\.top\)/, mode);
     assert.match(html, /visibleBottom - visibleTop >= 240/, mode);
     assert.match(html, /data-camera-mode/, mode);
     assert.match(html, /data-camera-indicator/, mode);
-    assert.match(html, /var resolvedLevel = semantic \? viewerText\('viewer\.nav\.level\.auto'\) : levelLabel/, mode);
+    assert.match(html, /var resolvedLevel = semantic \? viewerText\('viewer\.nav\.level\.auto'\) : ''/, mode);
     assert.match(html, /is-camera-moving/, mode);
     assert.match(html, /cubic-bezier\(0\.22, 1, 0\.36, 1\)/, mode);
     assert.doesNotMatch(svg(html), /data-camera-mode|is-camera-moving|AUTO /, mode);

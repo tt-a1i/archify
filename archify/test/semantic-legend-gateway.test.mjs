@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -32,7 +33,7 @@ function render(mode, mutate) {
     input,
     output,
   ]);
-  return fs.readFileSync(output, 'utf8');
+  return viewerContractSource(fs.readFileSync(output, 'utf8'));
 }
 
 function canonicalSvg(html) {
@@ -134,7 +135,7 @@ test('activation delegates to Semantic Lens and supports roving keyboard navigat
   assert.match(html, /event\.key === 'ArrowLeft'/);
   assert.match(html, /event\.key === 'Home'/);
   assert.match(html, /event\.key === 'End'/);
-  assert.match(html, /lensOpener\.focus\(\)/);
+  assert.match(html, /opener\.focus\(\)/);
   assert.match(html, /entry\.setAttribute\('aria-pressed', selected \? 'true' : 'false'\)/);
 });
 

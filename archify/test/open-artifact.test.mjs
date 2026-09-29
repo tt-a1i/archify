@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 import { openArtifact, openLoopbackUrl } from '../bin/open-artifact.mjs';
 
@@ -61,19 +62,36 @@ test('open artifact: uses argument arrays without shell interpolation on every s
   }
 });
 
+test('open artifact: forwards an explicit startup budget without changing the default', () => {
+  let timeout;
+  openArtifact(target, { platform: 'win32', timeoutMs: 30_000,
+    spawn(_command, _args, options) { timeout = options.timeout; return { status: 0 }; } });
+  assert.equal(timeout, 30_000);
+});
+
 test('open artifact: Windows PowerShell launches a real target', { skip: process.platform !== 'win32' }, () => {
   // Use a bundled console executable so this exercises PowerShell without a browser.
   // CI runners can cold-start PowerShell well beyond the 5s production default.
   const systemRoot = process.env.SystemRoot ?? process.env.WINDIR ?? 'C:\\Windows';
   const target = path.join(systemRoot, 'System32', 'where.exe');
-  const result = openArtifact(target, { timeoutMs: 60_000 });
+  let diagnostic;
+  const result = openArtifact(target, {
+    timeoutMs: 60_000,
+    spawn(command, args, options) {
+      const started = Date.now();
+      const child = spawnSync(command, args, options);
+      diagnostic = { elapsedMs: Date.now() - started, timeoutMs: options.timeout,
+        errorCode: child.error?.code, status: child.status, signal: child.signal };
+      return child;
+    },
+  });
 
   assert.deepEqual(result, {
     requested: true,
     status: 'opened',
     target: path.resolve(target),
     method: 'powershell',
-  });
+  }, JSON.stringify(diagnostic));
 });
 
 test('open artifact: normalizes missing opener and timeout failures', () => {

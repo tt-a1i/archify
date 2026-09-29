@@ -1527,9 +1527,11 @@ export class ChromeVisualBrowser {
     getuid = typeof process.getuid === 'function' ? () => process.getuid() : null,
     spawnImpl = spawn,
     startupTimeoutMs = CHROME_STARTUP_TIMEOUT_MS,
+    pageLoadTimeoutMs = 45_000,
   } = {}) {
     this.profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-visual-check-profile-'));
     this.stderr = '';
+    this.pageLoadTimeoutMs = pageLoadTimeoutMs;
     const args = chromeVisualBrowserArgs(this.profileRoot, { env, getuid });
     this.child = spawnImpl(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
     this.child.stderr.setEncoding('utf8');
@@ -1587,7 +1589,11 @@ export class ChromeVisualBrowser {
 
     const url = pathToFileURL(artifactPath);
     url.searchParams.set('theme', theme);
-    const loaded = this.cdp.waitFor('Page.loadEventFired', sessionId);
+    const loaded = this.cdp.waitFor(
+      'Page.loadEventFired',
+      sessionId,
+      this.pageLoadTimeoutMs,
+    );
     // Navigation can fail before this waiter is awaited. Attach a rejection
     // handler immediately so a later load failure never escapes as an
     // unhandled rejection; awaiting `loaded` below still reports it normally.

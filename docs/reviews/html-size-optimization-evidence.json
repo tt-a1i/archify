@@ -1,0 +1,256 @@
+{
+  "baselineHead": "018378126c5d09085ef79afcd28434d388e8a2bf",
+  "baselineIncludesWorkingTreeChanges": true,
+  "baselineSourceSha256": {
+    "viewer/template.source.html": "5b57eda2e64c9931991ac220832e250091bb1dd388e431800129813aaf606db2",
+    "viewer/viewer-chrome-layout.js": "23af7a5f2b7e39352dbbe5c6c715393eb62e9e2c59ebecdd6fb21910bd9b0c8a",
+    "viewer/reader-layout.js": "64caee69d8826376ad784d0cd815d3e0b150dcb04c02e2a08288e3616039f960",
+    "archify/package.json": "daf8c92626435e4ffe2accab6d2628ab551197a6edef1c2edcd244d92c863b7e",
+    "viewer/node-finder.js": "2e2cc8aa732d733ea2305f076732058fd804ef7f5f5e18fec255c40cf9525ccb",
+    "viewer/semantic-radar.js": "01df0b3d266717c7eba5f1b19f115d8b99e749da431206a7cd8e242e24db163a",
+    "viewer/README.md": "08436194e71ac20e7dc68ad3a69c55c90243c5ffa46e28485d4bea52e9453ce9",
+    "viewer/viewer.css": "4f45e5fb464492479bcb76871066d0ea447740c68f46f48a6a418d378df2adbd",
+    "viewer/guided-views.js": "31a24051df0b4dc877b8863da0564dae4c2d444eb47f6bda868960bd0f6fcf71",
+    "scripts/generate-viewer.mjs": "23b7b9fa56665132ea6d9469ea5abae280041204b340e5b2daf87f41ca9f8425",
+    "viewer/motion-governor.js": "8ad23c83aedbd6518418069e4e6f75fdc04174d79a32b16df0afc517dab6fde4",
+    "archify/package-lock.json": "a900ea1ce2f33fca2b88ab1c8cb2cc30031ba285c05101a9b7b25768e6591c6f",
+    "viewer/route-probe.js": "2c1f302bbf7026d1b6b36d00571436e0854bf65f2961bedee1320aa6e256057b",
+    "viewer/export.js": "045dc7f16689a45a28b921d074199f458f673115a1c55a2bfa388276c3433aea",
+    "viewer/export-cleanup.js": "1542924975fca5ad5b0f52b1328b50b21795de8fc377ea4dd9b528ac1b67c8f7",
+    "archify/assets/template.html": "7011fe1ff0799e14cf0a31e993d24a0097c2a45cc1040bd9e604b688a1326aba",
+    "viewer/viewer-camera.js": "11553b4f5c044efd74cd82e909fd44e8fb4cd09cf596608ba0fe8b4da7007719",
+    "viewer/intent-trace.js": "54746e67bd40045c02cc238c9667965a65a307f9b6782f4066ccdc2ff36cc2d0",
+    "viewer/focus.js": "760a4354dcb595bbb993c7fd57582440b0b6b2dc80130b1b8082b3c7560043cb",
+    "viewer/semantic-lens.js": "2815839aafb66c7f34d44543ed6a8f44afe13006ccc7caa35232ef2af9d9a506"
+  },
+  "candidateSourceSha256": {
+    "viewer/template.source.html": "5b57eda2e64c9931991ac220832e250091bb1dd388e431800129813aaf606db2",
+    "viewer/viewer-chrome-layout.js": "23af7a5f2b7e39352dbbe5c6c715393eb62e9e2c59ebecdd6fb21910bd9b0c8a",
+    "viewer/reader-layout.js": "64caee69d8826376ad784d0cd815d3e0b150dcb04c02e2a08288e3616039f960",
+    "archify/package.json": "4ea6d54509c35badf1f803869b17e7c3e3dad412061c65409cc974f0b5dd78b9",
+    "viewer/node-finder.js": "2e2cc8aa732d733ea2305f076732058fd804ef7f5f5e18fec255c40cf9525ccb",
+    "viewer/semantic-radar.js": "01df0b3d266717c7eba5f1b19f115d8b99e749da431206a7cd8e242e24db163a",
+    "viewer/README.md": "3b6324a7a0d4f527bd392f044b637af5c701a01388c5c5be7b7d21bd2d18bab5",
+    "viewer/viewer.css": "4f45e5fb464492479bcb76871066d0ea447740c68f46f48a6a418d378df2adbd",
+    "viewer/guided-views.js": "31a24051df0b4dc877b8863da0564dae4c2d444eb47f6bda868960bd0f6fcf71",
+    "scripts/generate-viewer.mjs": "f1a1632416c536e335f143cd51c7aad4fe26498d24e7b79f840f65419612af23",
+    "viewer/motion-governor.js": "8ad23c83aedbd6518418069e4e6f75fdc04174d79a32b16df0afc517dab6fde4",
+    "archify/package-lock.json": "427fc0c5655e05ff5914aac0e7a185956a6b4819e88d594d399f278893670c0e",
+    "viewer/route-probe.js": "2c1f302bbf7026d1b6b36d00571436e0854bf65f2961bedee1320aa6e256057b",
+    "viewer/export.js": "045dc7f16689a45a28b921d074199f458f673115a1c55a2bfa388276c3433aea",
+    "viewer/export-cleanup.js": "1542924975fca5ad5b0f52b1328b50b21795de8fc377ea4dd9b528ac1b67c8f7",
+    "archify/assets/template.html": "8e7a67d6d867cb9858120beec112a488367b05e784a85dbe081e6246b5de4d65",
+    "viewer/viewer-camera.js": "11553b4f5c044efd74cd82e909fd44e8fb4cd09cf596608ba0fe8b4da7007719",
+    "viewer/intent-trace.js": "54746e67bd40045c02cc238c9667965a65a307f9b6782f4066ccdc2ff36cc2d0",
+    "viewer/focus.js": "760a4354dcb595bbb993c7fd57582440b0b6b2dc80130b1b8082b3c7560043cb",
+    "viewer/semantic-lens.js": "2815839aafb66c7f34d44543ed6a8f44afe13006ccc7caa35232ef2af9d9a506"
+  },
+  "checks": {
+    "node-final": {
+      "tests": 2150,
+      "pass": 2074,
+      "fail": 0,
+      "skipped": 76,
+      "logSha256": "9f23c7c5c662bec91555b0a05721098b245f601fc9231553b2ae755c95cff8be"
+    },
+    "browser-final": {
+      "tests": 393,
+      "pass": 393,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "433081b8c8be65c7446fbdfc3ba088de72a458c38b919dcb2d61d82b0b55257b"
+    },
+    "webm-final": {
+      "tests": 7,
+      "pass": 7,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "f41a033064e0f9c0872787b3aef24f9c6549f56afad4a18930e8c97eb403b89b"
+    },
+    "ablation": {
+      "tests": 278,
+      "pass": 278,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "43d3fb791bca28ff9c63a2ba6033c292dec3e339d6275578a7c75d60080bfbaa"
+    },
+    "maka-framing": {
+      "tests": 46,
+      "pass": 46,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "054ac7b9ba3d8cd02e957c4a75aebf475b213606183f5e4f8f5bc24e1ee56b06"
+    }
+  },
+  "publicSizes": [
+    {
+      "name": "architecture",
+      "version": "baseline",
+      "bytes": 880856,
+      "sha256": "f430259f73c3f8bd84791f8f87090ee9b287e4f74ddb6a99196ced3a22da6f46",
+      "gzip": 211693,
+      "brotli": 176877
+    },
+    {
+      "name": "architecture",
+      "version": "candidate",
+      "bytes": 688841,
+      "sha256": "880da38cff223326655c5737118b4cec58438a60f3f20984b3bdb9a1f9d2e9fc",
+      "gzip": 186184,
+      "brotli": 160839
+    },
+    {
+      "name": "workflow",
+      "version": "baseline",
+      "bytes": 888673,
+      "sha256": "892c03c267c108e3cc04dceae5e0645ff7f711abc7f157d69d4b8e5867adccbd",
+      "gzip": 212839,
+      "brotli": 177676
+    },
+    {
+      "name": "workflow",
+      "version": "candidate",
+      "bytes": 696658,
+      "sha256": "e30ddcbead37f6482f8b4a43c0918e2dce3ab9d6a898e1ea1c95b6bb48fec3e3",
+      "gzip": 187333,
+      "brotli": 161624
+    },
+    {
+      "name": "sequence",
+      "version": "baseline",
+      "bytes": 883785,
+      "sha256": "6452933a9e73ed43f4820da36402723ef19920222ee99b9c7beae587cde50295",
+      "gzip": 212126,
+      "brotli": 177181
+    },
+    {
+      "name": "sequence",
+      "version": "candidate",
+      "bytes": 691770,
+      "sha256": "733922bbf2e708b6f3f1af0eb5ab73c905e421a9848c14c583ccbf4ba50fa790",
+      "gzip": 186637,
+      "brotli": 161144
+    },
+    {
+      "name": "dataflow",
+      "version": "baseline",
+      "bytes": 886140,
+      "sha256": "22c73bb29f6c0b9df705eb5083cc69da24bd1094541f5a77855f8f75b6a42ffd",
+      "gzip": 212481,
+      "brotli": 177418
+    },
+    {
+      "name": "dataflow",
+      "version": "candidate",
+      "bytes": 694125,
+      "sha256": "a99833eb8763d8e7d7b41399f5506b3cde51bba4f29eb1278050f82a9793388b",
+      "gzip": 186991,
+      "brotli": 161307
+    },
+    {
+      "name": "lifecycle",
+      "version": "baseline",
+      "bytes": 879217,
+      "sha256": "c0614df6185f8ece7bc9e6c4e67bfb025f5359605334635c306349b44f571b06",
+      "gzip": 211467,
+      "brotli": 176504
+    },
+    {
+      "name": "lifecycle",
+      "version": "candidate",
+      "bytes": 687202,
+      "sha256": "92935eedd1bd1924be07ca2af175f56e54cff98f9c8d877b023aa5097ec6d7c2",
+      "gzip": 185979,
+      "brotli": 160562
+    }
+  ],
+  "localSampleBytes": {
+    "baseline": 893011,
+    "candidate": 700996
+  },
+  "visual": {
+    "pairedStates": 28,
+    "maxGeometryDeltaPx": 0.000732421875,
+    "canonicalSvgAndJsonEqual": 6,
+    "initialPixelIdentical": 24,
+    "initialPairs": 28,
+    "additionalStableRechecks": 4,
+    "additionalPixelIdentical": 3,
+    "residual": "Minor workflow text rasterization differences; reviewed. Repeated uncompressed baseline also varied."
+  },
+  "ablation": {
+    "removed": "unused sourceRoot argument on assembleViewer",
+    "tests": 278,
+    "outputUnchanged": true
+  },
+  "retained": [
+    "complete licensed fonts including arbitrary Finder input characters",
+    "complete selected-locale catalog including dynamically constructed custom-template keys"
+  ],
+  "toolchain": {
+    "node": "v22.23.1",
+    "esbuild": "0.28.2"
+  },
+  "package": {
+    "files": 84,
+    "smoke": "passed outside repository without node_modules"
+  },
+  "previousViewerAndRendererFilesUnchanged": 49,
+  "candidateTestSha256": {
+    "archify/test/story-horizon.test.mjs": "e72d554cc7bdf1415b17b371b473c0ca3c1d75d0ce34b3bbb74f3a430ef80885",
+    "archify/test/export-cleanup-browser.test.mjs": "c019818de1ba398ef9287591c0346bd2b9a1ad425e43a1575a06f2d8b628b2c2",
+    "archify/test/semantic-passport.test.mjs": "02e06b89efccb8745583dbaedb8e23086bb2d28a652a7ddacac97bf8441c6a40",
+    "archify/test/semantic-flow.test.mjs": "f21589b6ac56961db153b0e512e0482ebcae70f53449f6ad0cf5d2cc078be5da",
+    "archify/test/relationship-permalink.test.mjs": "cc505c52ec03070f0c1ce4e48d2bde2ae66556f28a85da7f11687ac7063c9590",
+    "archify/test/semantic-legend-gateway.test.mjs": "b0752382cc6a15771a52587b2f92857b86c46d9f507c7f7ac739d030fdfae8cc",
+    "archify/test/story-director-strip.test.mjs": "217131296983cca956d2ddeac361d2cc0aa0178f714513a190ebc6db013dbf03",
+    "archify/test/route-share-card.test.mjs": "545ce512b84cb9b0c5a45d61c0ffadca2db7b3ee7caf0e6798b1a780741dda84",
+    "archify/test/brand-marks.test.mjs": "9ed197ab7e50d99f05185d67a0fc8a9257f2cf106be87c537cde95c7cd994ad1",
+    "archify/test/story-moment-link.test.mjs": "0b65416bc9fec0fd4b6ae9d4c81634e7b8a5d5f21864a698f8b73ecd5bcd7e5d",
+    "archify/test/focus-browser.test.mjs": "2e5044c947afcdab12c70b1ea5afd1362dbc036b8946feb4d4dfcdc700bcfa3c",
+    "archify/test/relationship-direct-explorer.test.mjs": "c58f9eb2428b2f960c5bbbac0f1a6dc563e41d6526b13768efc43c6dd20c9f02",
+    "archify/test/story-shelf.test.mjs": "c412db10d55b32e4d21a840818ea15ed3bb9114bcdbca823b4c62ce0515719f1",
+    "archify/test/presentation.test.mjs": "e6ac1ca8b2694673625e138f9749f5c7eeed2eac464119ba7ca78a730891905a",
+    "archify/test/reach-share-card.test.mjs": "3e61e5981b7eee2773570aa8dddfcfa3e47e9cbfd303b81f381608fb2cc56d10",
+    "archify/test/share-card-export.test.mjs": "1abb4652917c4852dc807a065323c78c8c9ce9d2e9f9cdcd7579c6626bc43ad3",
+    "archify/test/guided-views.test.mjs": "7feebb0b4e413c0988e98b3dbb31fe7d3ec7f3165eedad1b2176e28935765e41",
+    "archify/test/story-beat-navigator.test.mjs": "397f911c4877db963981c9f1e88ef63a8eb1f550f9f8049eca5fe5ca6cec29d6",
+    "archify/test/animation.test.mjs": "1cdb5119b8f3a46954e66119712ece197347c848fd0942fef8a3dd7e3170913d",
+    "archify/test/story-carrier.test.mjs": "c7996d4928b46746a28355a8ff9b982b9205c3db068285e569ca7a3e6983d0af",
+    "archify/test/finder.test.mjs": "480a9dc7daa1408424d5d62a28fb2f8392bfd4b75884bdde78a1c81314eec9bd",
+    "archify/test/semantic-zoom.test.mjs": "1677b3ba82588b7feea508808adaf8c12017779522932100b829eb4fd5c3b516",
+    "archify/test/finder-browser.test.mjs": "2453a330dd33f5aabb5fa09720e06299453ed33f9293683c1d0484c979c59c85",
+    "archify/test/diagram-guide.test.mjs": "a7c4ec8dcec417319640dcab6a769a75d62091a9e3c34ac363cab4e6fd4eb401",
+    "archify/test/semantic-lens.test.mjs": "d4fda56f48f3c126687ddcad3b7b74f821fd31f69a2eb60325471c9d8531dbe4",
+    "archify/test/story-trail.test.mjs": "502e704ac7a8b5f8af5800dc61df13e77fb64de8b77de93fd0100257cf934ff8",
+    "archify/test/legend-contract.test.mjs": "94859a3c1c3849a848708ed81fb8994dcb6d44cde5e2f4176232fc5711f9acd4",
+    "archify/test/relationship-pulse.test.mjs": "cc5ba36552667283f4ed3024e103648a5686f8aad5b1b92be5c8b46279c68aeb",
+    "archify/test/reader-layout-browser.test.mjs": "08dfff0e1a8e787f3d18381f73848a28c10953f78ccdbd0bcfa0b038ca967a96",
+    "archify/test/semantic-lens-browser.test.mjs": "ca8127337bce86c5e45a0ed7c7dae1edaf88d3cec02d19a4ad4708916f7d7b37",
+    "archify/test/chapter-rail.test.mjs": "5df7d5c77ee69ef2ec005a4005e8afd28f307483d40878b1aee9de0b1baeff0a",
+    "archify/test/relationship-lens.test.mjs": "eceb8a57b063e78b995a8de4581eb541770e187e89c9afe311da97bf71047d04",
+    "archify/test/story-follow-camera.test.mjs": "e40e4552e9f6b613a1b0476bfe5bfe0cfd25bfdcd7bf842add0f55518bd76529",
+    "archify/test/guided-views-browser.test.mjs": "9a6f0bdcaa26c0f5ea6ef1a3dceedef1b0e6593f1e6ed07909c268570edbd5ff",
+    "archify/test/motion-governor.test.mjs": "5cef28fc3652bd6a45b1a5da6d51bb53f482fa8d0c76e0b027d8a27c87ad6aa5",
+    "archify/test/start-page.test.mjs": "12d322d48536afde7d12bf917ae997ebfac94af8ef25eec2da54aa8ec7fd9c9c",
+    "archify/test/adaptive-reader-layout.test.mjs": "d7f78ce63893248ee7a964b5696fef7be3b8e5fd015b08c5d2f3b2c4f83ff64b",
+    "archify/test/chapter-delta-preview.test.mjs": "dfc835cc9a757ce0837821ee71c60f145587a063a4b4a56c00a19c1cab032c3c",
+    "archify/test/semantic-camera.test.mjs": "4029f0234f2d3411d7b43c225840710743becd07d0a3f5f45a20a81f27bb196a",
+    "archify/test/preset-tryon.test.mjs": "8d882c77964e46e52b64466b4fb5f8f4d4d08ebecf7c88f20c2e32830dabcd4d",
+    "archify/test/route-journey.test.mjs": "d4ade76e56896177b7cdbc6fcd22f2c8410f26e294cc42fca8bc3e3d0a3543f3",
+    "archify/test/viewer-chrome-layout.test.mjs": "7adf32ea912effad20a817e40676520d70ea51676c35a6292f71f6ea0fd968b3",
+    "archify/test/authored-reachability.test.mjs": "2e4139fce6c865b881a853326ed62ae6a87f047424661dae738cc3da49e5f3b1",
+    "archify/test/settled-flow.test.mjs": "376ba046562b0f72e28bd5b6b074745ad88d42b49a72995c68a25826f0c073f1",
+    "archify/test/semantic-radar.test.mjs": "2a7df63424a68ba1373004c08b8545f40c38ddc53c3b19cf1145514922aef08e",
+    "archify/test/webm-artifact.smoke.mjs": "8b6e2a5335ee931f325a8ab24debd28a9795594be239de1a201e38bd26b84137",
+    "archify/test/intent-trace.test.mjs": "af5b79467d04749083c7260e819a1020d72036373148fdfed2f94da77550affd",
+    "archify/test/route-probe.test.mjs": "5efb3fe652b819791f5df1b04b68c826e8f4bb671dd007ffbe632e8beff7e51e",
+    "archify/test/generate-viewer.test.mjs": "53994f54010575e004f49a0933272b5fa6d0a6b737badd0aaaf17d7e166c46bc",
+    "archify/test/viewer-size.test.mjs": "ff0e86ed6f17878d928f1d157c04e2fb4a48a1c6e444ddb1b2181926b569a494",
+    "archify/test/chapter-handoff.test.mjs": "8751495a57dafde0b1ca6f30fa9bd57f82d6c526cb50dd593eab59a3556acb5a",
+    "archify/test/toolbar-polish.test.mjs": "155646621feef281deb1ed56819c09d1197284d3bab8886379d3f9e68e0d3706",
+    "archify/test/repository-evidence.test.mjs": "713be198a90266fa78b31e932299a1c2877f8315b5981ff22b6dc20253894c2c",
+    "archify/test/helpers/viewer-contract-source.mjs": "d95c450392458cd9120cdaf8187dceb0b99a2a4e6dbbbc7fbeec3c2e1726a25c"
+  },
+  "status": "complete"
+}

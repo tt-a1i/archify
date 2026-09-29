@@ -1,0 +1,88 @@
+{
+  "branch": "codex/canvas-visual-polish",
+  "scope": [
+    "Path",
+    "Map",
+    "Lens"
+  ],
+  "beforeFiles": {
+    "route-probe": "19da95374d2344f6db5aa980321b6672c6fd53e443312532759db4d51fbc2e73",
+    "semantic-lens": "eca9c7c204cca36422052d039fc64bcc442eb38769dd71b322d9dab8bd9fe7a1",
+    "semantic-radar": "86f379c10ae739ba03793dc3c0764f854e5663765de1d2b2e145dff291166ae1"
+  },
+  "candidateFiles": {
+    "viewer/route-probe.js": "2c1f302bbf7026d1b6b36d00571436e0854bf65f2961bedee1320aa6e256057b",
+    "viewer/semantic-lens.js": "2815839aafb66c7f34d44543ed6a8f44afe13006ccc7caa35232ef2af9d9a506",
+    "viewer/semantic-radar.js": "01df0b3d266717c7eba5f1b19f115d8b99e749da431206a7cd8e242e24db163a",
+    "archify/assets/template.html": "7011fe1ff0799e14cf0a31e993d24a0097c2a45cc1040bd9e604b688a1326aba",
+    "archify/test/navigation-modes-browser.test.mjs": "2713f08bf3d1a29c9b64c594fed67aaba639895ee6245f02d504856929b85706",
+    "archify/test/semantic-lens.test.mjs": "6a9b765974129bdddd3949b8ad972c1ae7d43db868ee6bc84af8a5df38330765",
+    "scripts/run-browser-tests.mjs": "0b744e623ed98b88d94e696b6c69f333c69d9f10f2a3a612606439103d2e845a",
+    "archify/test/route-probe-browser.test.mjs": "72479b0eff3e99e1a8a263736bfe4d0a18801d28a0896f82efbf24def22f2b36"
+  },
+  "artifacts": {
+    "archify.zip": "96b674e6bf1cc611ea1612d8d5abfda2adf6f7dd78dd0be5e8ace1466a00920b",
+    "docs/gallery/manifest.json": "8efe4ee7fec6a152c1e858c2b1637a45551317debe3d3ec52accc4e4291a11af",
+    "docs/assets/archify-live-proof.gif": "762595b27b7c6b77abcb97ec24dedbffcb8fd43f0082f774eb272da107846bd5",
+    "docs/assets/archify-live-proof.json": "fde185021fdedc3eed08a655028fb40ba4fac91db1ea8d926ec276a3cf04cbfe"
+  },
+  "targeted": {
+    "tests": 14,
+    "pass": 14,
+    "fail": 0,
+    "skipped": 0
+  },
+  "ablation": {
+    "removed": "Map close in prepareForLens only, isolated generated HTML",
+    "outcome": "Direct selection without opening Lens panel leaves both Map and Lens active; 1 child test fails",
+    "decision": "Retain the cleanup for the separate direct-selection entry point"
+  },
+  "privateMaka": "Input and static SVG unchanged; native Path/Lens/Map/Path sequence verified exclusive and camera-stable; screenshots inspected locally; first-view light/dark captures identical to previous reviewed artifact.",
+  "validation": {
+    "node": {
+      "tests": 2146,
+      "pass": 2070,
+      "fail": 0,
+      "skipped": 76
+    },
+    "browser": {
+      "finalAffectedSuites": {
+        "tests": 23,
+        "pass": 23,
+        "fail": 0,
+        "skipped": 0
+      },
+      "reuse": "Other passing integration suites reused; final runtime difference only narrows Route.begin URL cleanup, covered by full Route and navigation switching suites."
+    },
+    "packageSmoke": "pass",
+    "zipSourceConsistencyFiles": 84,
+    "visualReview": "passed",
+    "remoteCI": "not run"
+  },
+  "logHashes": {
+    "red.log": "2f04229775bfcb9b18c23a300d83545124f250664eb6108aeb616e47a4e31c36",
+    "green.log": "d2adbaf55106d08e005674a2aba17ae58d1f586cb267b0e5750a9fbdb99ead60",
+    "ablation.log": "fd625c531f5b676150cf813d3150c0f84caca78f9bfddd47cb42cb81393bdf61",
+    "package-smoke.log": "67a77ebb69e969edb0021248e0d69629fe4072f819b21d876914a8eae5ff1ec2",
+    "node-final.log": "c303e256efee961c12046d3d41cecc3f136bdc350a40736ecb5fd328dcb5a6a9",
+    "browser-final-focused.log": "e79d89f43f5209064c0237103c6f3643c462ec6eec55120998a7a9b0884adc30"
+  },
+  "integrationBeforeUrlCorrection": {
+    "candidateFiles": {
+      "viewer/route-probe.js": "61a68996c9d993313df03aa2d9bc0fa9936f6a562d7c3b496385c45a2fed974e",
+      "viewer/semantic-lens.js": "2815839aafb66c7f34d44543ed6a8f44afe13006ccc7caa35232ef2af9d9a506",
+      "viewer/semantic-radar.js": "01df0b3d266717c7eba5f1b19f115d8b99e749da431206a7cd8e242e24db163a",
+      "archify/assets/template.html": "214f8cda339f026d547f91adf3e7913f13ecbb7d71bca90fdb64641a8b6ced52",
+      "archify/test/navigation-modes-browser.test.mjs": "2713f08bf3d1a29c9b64c594fed67aaba639895ee6245f02d504856929b85706",
+      "archify/test/semantic-lens.test.mjs": "6a9b765974129bdddd3949b8ad972c1ae7d43db868ee6bc84af8a5df38330765",
+      "scripts/run-browser-tests.mjs": "0b744e623ed98b88d94e696b6c69f333c69d9f10f2a3a612606439103d2e845a"
+    },
+    "tests": 399,
+    "pass": 397,
+    "fail": 2,
+    "skipped": 0,
+    "failedChildTests": 1,
+    "reason": "Route.begin cleared an unrelated hash; parent suite also reported failure",
+    "logSha256": "8a1bf02cfcc0c6611a32367b20d3b575b6c73c75411275cc0b82713af66ab141"
+  }
+}

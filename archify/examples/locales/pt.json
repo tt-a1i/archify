@@ -421,5 +421,10 @@
   "viewer.common.copyFailed": "Falha ao copiar",
   "viewer.common.copyLink": "Copiar link",
   "viewer.common.clear": "Limpar",
-  "viewer.common.close": "Fechar"
+  "viewer.common.close": "Fechar",
+  "viewer.guide.canvas": "Clique ou use Tab para entrar na tela. Arraste com o botão direito, central ou Espaço + esquerdo. A roda ou as setas deslocam; Ctrl/Cmd + roda amplia no ponteiro. Pressione 0 para redefinir.",
+  "viewer.notes.title": "Notas do diagrama",
+  "viewer.notes.close": "Fechar notas do diagrama",
+  "viewer.nav.fitAll": "Ajustar diagrama inteiro",
+  "viewer.nav.fitAll.short": "AJUSTAR"
 }

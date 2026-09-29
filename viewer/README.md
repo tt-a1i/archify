@@ -1,6 +1,6 @@
 # Viewer source
 
-Edit `reader-layout.js` for Adaptive Reader Layout, `viewer-chrome-layout.js`
+Edit `reader-layout.js` for fixed desktop canvas, Diagram notes and adaptive fallback, `viewer-chrome-layout.js`
 for navigation clearance, `viewer-camera.js` for camera interactions and
 transactions, `semantic-radar.js` for the overview map, `motion-governor.js` for
 motion mode and ownership, `node-finder.js` for node search and endpoint picking,
@@ -18,15 +18,20 @@ sources live outside the packaged `archify/` directory.
 
 From `archify/`, run `npm run generate:viewer` after editing any source.
 `npm run check:viewer` verifies freshness without writing; `npm test` includes
-that check. Assembly inserts JavaScript fragments verbatim at fixed markers.
-The CSS fragment is authored at column zero and reindented four spaces when it
-is inserted into the shell's `<style>` block; this preserves the delivered
-template bytes while keeping the standalone source easy to edit.
-Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder, Intent Trace, Semantic Lens, Route Probe, Focus and Export
-extractions preserve delivered HTML bytes. Export cleanup adds a
-private function and a call, changing script bytes but preserving cleanup order
-and SVG output. All JavaScript fragments retain classic-script scope and
-initialization order.
+that check. Assembly inserts fragments at fixed markers in classic-script scope
+and initialization order. A final build-only esbuild pass compacts owned JS/CSS
+blocks using `minifyWhitespace`, with identifier/syntax minification and tree
+shaking disabled. HTML slots and the complete licensed font block remain intact.
+The pinned development dependency is not required by the packaged renderers or
+browser artifacts. No source maps or runtime decompressor are shipped.
+
+Maintain readable source here, not minified output. Ordinary comments and
+formatting discarded by compilation do not by themselves make output stale.
+Source-contract tests first verify the emitted blocks against this exact compiler
+output before inspecting readable source; browser tests run the compact artifact.
+The historical Reader, Chrome Layout, Camera, Radar, Motion Governor, Finder,
+Intent Trace, Semantic Lens, Route Probe, Guided Views, Focus and Export
+extractions preserved bytes before this final compilation step.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
 
@@ -267,10 +272,12 @@ The nineteen methods remain `begin`, `choose`, `clear`, `toggle`, `escape`,
   error while retaining target mode. Unknown IDs and choices outside picker mode
   retain their existing early returns. Finder's allowed list does not constrain
   every public choose call. Results retain full path/hops and begin in overview.
-- `begin` rejects embed, clears Lens preview/active selection, captures an explicit
-  source or single Focus node, clears old Route, then clears Intent/Focus
-  and closes Finder/Radar in the existing order. Optional checks and options stay
-  unchanged. Multi-Focus and invalid sources are not normalized into new behavior.
+- `begin` rejects embed, clears Lens preview/selection and any open Lens panel, captures an explicit
+  source or single Focus node, clears old Route, then clears Intent/Guided/Focus
+  and closes Finder/Radar in the existing order. Guided cleanup preserves the
+  Camera. Starting a new path clears obsolete share state; `updateUrl:false`
+  retains the incoming hash during route restoration. Multi-Focus and invalid
+  sources are not normalized into new behavior.
 - `clear` returns undefined, closes only the applicable route Finder context,
   invalidates Journey work and removes Route state, overlays and docking, then
   updates controls/Export. Camera resets only when previously active and without
@@ -356,8 +363,10 @@ Lens controls and shared translation helpers; Legend Bridge is optional.
 - `select` clears legend preview before validation. Unknown or third kinds return
   false; existing kinds toggle off. Removing the last kind returns false without
   the Camera reset performed by explicit `clear`. Adding the first kind clears
-  Focus, Route and Intent in that order, with existing options.
-  These real callers can affect Camera; the second kind does not repeat prepare.
+  Focus, Route, Guided Views and Intent in that order, with existing options.
+  Chapter cleanup passes `resetView:false`, preserving the fitted or manually
+  positioned Camera instead of resetting to 100% and clipping selected nodes.
+  The second kind does not repeat prepare.
 - `close` returns false and hides only the panel, retaining selection, hash and
   flow. It normally restores the current opener's focus. `clear` returns false,
   clears selection/Lens SVG state and docking, updates URL unless disabled,
@@ -365,7 +374,8 @@ Lens controls and shared translation helpers; Legend Bridge is optional.
   It does not itself clear legend preview. `clearPreview` returns undefined,
   clears preview attributes but retains hovered/focused references, selection,
   URL and panel state. A false return is not a guarantee of no side effects.
-- `open` rejects embed early, records the opener, closes Export/Finder/Radar/Guide
+- `open` rejects embed early, records the opener, clears Route while preserving
+  the Camera, and closes Export/Finder/Radar/Guide
   as currently implemented, renders and opens the panel, then docks/focuses in
   rAF. It does not introduce a universal preview cleanup. Repeated/rapid calls
   retain pending-frame ordering. Guide is initialized later and stays a runtime
@@ -413,6 +423,16 @@ Lens controls and shared translation helpers; Legend Bridge is optional.
 
 `semantic-lens-browser.test.mjs` covers five-mode initialization, trusted input,
 real capability handoffs, cleanup, URL/copy, themes, motion and SVG export.
+
+Path, Map and Lens are mutually exclusive navigation tools. Starting Path closes
+even an unselected Lens panel and cancels Map; opening Lens exits Path before a
+kind is selected; opening Map clears Path and Lens selections as well as their
+panels. Switching tools preserves the Camera and removes obsolete share hashes.
+Direct Lens selection also cancels Map. Buttons, shortcuts and capability calls
+use these same entry points; no separate toolbar selection state is stored.
+Route hash restoration explicitly preserves its incoming URL during startup.
+`navigation-modes-browser.test.mjs` covers all six directions, active selections,
+completed routes, shortcuts, rapid switches and deep links.
 Explicit DOM/media/geometry/clipboard fixtures isolate boundary inputs; they do
 not certify touch hardware, OS clipboard permission, screen readers or arbitrary
 layout collision freedom. Static Lens/legend/flow checks remain useful alongside
@@ -550,6 +570,25 @@ The source split narrows maintenance scope while preserving runtime dependencies
   and `receipt`. Viewer Chrome Layout calls `schedule` after changing the
   navigation reserve and `whenStable` while probing layout. The browser
   visual checker also uses `window.Archify.readerLayout.whenStable`.
+- Ordinary screen viewports ≥1024×600 use `data-fixed-canvas`: a remaining-height
+  canvas and a single `diagram-notes` card tree. `data-notes-open` reserves sidebar
+  width; notes own their scroll and Escape/focus behavior. No cards are cloned.
+  Smaller viewports, embed, presentation and print release the fixed shell.
+- Reader measures the initial shell synchronously before Camera starts. On the
+  diagram container it publishes the authored viewBox width/height as CSS
+  variables; only fixed-canvas CSS uses them. One authored SVG unit is one CSS
+  pixel at 100%, independent of window or sidebar width. The canonical SVG is
+  untouched, and document/presentation/embed/print retain their own sizing.
+- Camera initially fits the complete fixed stage without enlarging beyond 100%.
+  It establishes navigation clearance first; initial Focus/Guided Views hash
+  cleanup preserves this framing, while valid explicit targets still take over.
+  Fixed-stage transforms use Camera's existing animation frames, without a
+  second CSS transform transition.
+- Geometry refresh keeps a manual view's effective scale and the authored point
+  at the old stage center. A temporary Camera-owned reading snapshot bridges
+  document-mode round trips; explicit navigation invalidates it. Fit mode tracks
+  stage size, semantic mode retains its target, and reset/legacy fit still return
+  scale=1,x=0,y=0. No view history or persisted preference is introduced.
 - Reader owns the outer width (`html`'s `--archify-reader-width`) and temporary
   `data-reader-layout` / `data-reader-overflow` attributes. Ineligible measures
   clear them and reset the recorded width. CSS consumes the width on `.container`.
@@ -563,8 +602,9 @@ The source split narrows maintenance scope while preserving runtime dependencies
   the page lifetime. `schedule` coalesces requests; deferred overflow settling
   rechecks eligibility. Leaving adaptive layout clears its state without
   unmounting the module or clearing another module's state.
-- Width eligibility, overflow fallback and optional-observer behavior are
-  unchanged. Shared `waitForStableLayout` waits for fonts, pending work and
+- `active()` reports the legacy adaptive-width fallback only; fixed canvas
+  activity is identified by `data-fixed-canvas`. Width fallback and optional
+  observers remain available outside fixed canvas. Shared `waitForStableLayout` waits for fonts, pending work and
   consecutive stable dimensions; its default 240-frame sampling limit starts
   after font readiness. It is not a wall-clock timeout for stalled fonts or
   background pages. Keep this helper shared with Viewer Chrome Layout.
@@ -613,6 +653,10 @@ resulting layout rather than importing Chrome's private state. Keeping this
 contract beside the source localizes navigation-clearance maintenance; the
 Reader/Chrome feedback and Camera/CSS dependencies still exist.
 
+Camera's viewport-docked navigation is outside the authored stage and therefore
+is not eligible for a Chrome Layout reserve. Returning the navigation to its
+container restores the normal overlap measurement and rail behavior.
+
 ## Camera contract
 
 `viewer-camera.js` initializes `Archify.view` once, after Reader and Chrome
@@ -622,12 +666,58 @@ zoom/reset controls and the initial viewBox. The existing `apply()`,
 exists; checks for later modules and deferred callers remain needed.
 The shared `viewerText` helper stays in classic-script scope.
 
-The interface remains `zoomIn`, `zoomOut`, `reset`, `reveal`, `centerAt`,
-`logicalViewport`, `sync`, and `state`. `state()` returns a copy of scale/x/y/mode;
+The interface includes `zoomIn`, `zoomOut`, `zoomAt`, `panBy`, `fit`, `reset`,
+`reveal`, `centerAt`, `logicalViewport`, `worldViewport`, `sync`, and `state`.
+`state()` returns a copy of scale/x/y/mode;
 the modes are overview, manual and semantic. Zoom and Reset return undefined;
 `centerAt` returns a boolean, `logicalViewport` can return null, and `sync`
 delegates to `reveal` or returns false. Manual Reset interrupts callers, whereas
 `reset({ automatic: true })` stops camera motion without the manual takeover path.
+
+Desktop Camera is an unbounded interaction surface. Holding the right mouse
+button pans from any diagram content outside Viewer controls, arrow keys pan while
+the diagram intersects the viewport, and ordinary wheel input pans vertically
+(and horizontally when the device supplies `deltaX`). Ctrl/Cmd-wheel and trackpad
+pinch zoom around the pointer. Scale is bounded to 25%–400%, while translation has
+only a large numeric safety bound. `fit()` uses the same authored overview as Reset.
+On diagrams taller than the viewport, the navigation toolbar docks to the viewport
+bottom while the diagram remains visible. The camera-created grid layer tracks
+translation and scale but remains outside the authored SVG, semantic geometry, and
+exports. Wide diagrams at widths up to 720px keep their established horizontal-scroll
+behavior.
+
+An accepted right-button pan owns the native context menu from pointerdown,
+including before the first movement and throughout a long hold. This handles
+browsers that dispatch contextmenu on press; the existing post-movement grace
+period still handles release-time menus. Unclaimed controls, editors, embed and
+mobile wide-diagram scrolling retain their native input behavior.
+
+Arrow-key movement uses elapsed-time animation frames rather than operating-system
+key-repeat steps. Holding multiple arrows combines their directions, Shift raises
+the movement speed, key release ends the interaction, and window blur clears held
+keys. The animation rate follows the browser and display refresh rate without a
+fixed 60fps cap.
+
+High-frequency pointer and wheel input coalesces into at most one interactive
+render per animation frame. Interactive renders update the camera and controls
+while the container supplies the live clipping boundary; the grid, final SVG
+clipping, Radar, and Chrome Layout synchronize once the gesture settles. Container
+resizing and page scrolling update viewport docking separately, so camera movement
+does not force a container layout read on every frame.
+
+Unmodified wheel panning accumulates device deltas into a target camera position
+and approaches it with elapsed-time interpolation. Discrete mouse-wheel ticks and
+continuous trackpad input therefore share the same frame-driven motion path.
+Modifier-wheel zoom remains pointer-anchored and directly responsive.
+
+Interactive frames update only the SVG camera transform and the lightweight dotted
+canvas grid. Clipping, Radar, control state, and Chrome Layout settle afterward.
+The canvas grid uses dots at minor and major intervals; it does not draw solid lines.
+
+`worldViewport()` reports the unbounded visible rectangle in authored logical
+coordinates. `logicalViewport()` reports its intersection with the authored
+viewBox and includes `outside` plus the original `world` rectangle so Radar can
+render a finite edge marker when the viewport is completely outside the graph.
 
 `reveal` returns a transaction or false, with branch-specific side effects.
 Desktop empty/unknown targets can return before changing the camera. At widths
@@ -655,9 +745,9 @@ Motion Governor and other callers retain their own responsibilities.
 
 | State / dependency | Ownership and coordination |
 | --- | --- |
-| Scale/x/y/mode, drag, transaction generation/object, camera frame/timer, clip/resize frames, automatic-scroll guard | Camera owns its page-lifetime state and pointer/scroll/resize/hashchange subscriptions. There is no destroy method. |
+| Scale/x/y/mode, drag, wheel gesture/timer, transaction generation/object, camera frame/timer, clip/resize frames, automatic-scroll guard | Camera owns its page-lifetime state and pointer/wheel/scroll/resize/hashchange subscriptions. There is no destroy method. |
 | SVG `transform`, `clip-path`, `data-view-scale` | Camera applies runtime transforms and clipping without rewriting authored geometry, viewBox or semantic IDs. Export cleanup removes these from its clone. |
-| Container detail/camera attributes, `is-pannable`, camera movement/transaction flags, `data-just-panned`, `--archify-scroll-x` | Camera updates controls, drag suppression and mobile control positioning. `is-panning` is also used by Radar surface dragging; it is not exclusively owned by Camera. |
+| Camera grid element; container detail/camera attributes, grid variables, `is-pannable`, camera movement/transaction flags, `data-just-panned`, `--archify-scroll-x` | Camera updates the infinite-grid origin/scale, controls, drag suppression and mobile control positioning. `is-panning` is also used by Radar surface dragging; it is not exclusively owned by Camera. |
 | Zoom/Reset labels, disabled state, detail attributes, title and ARIA text | Camera renders controls through shared translation helpers; associated CSS stays in the shell. |
 | Reader width/wide-diagram classification; Chrome navigation reserve | Owned by the layout modules. Camera consumes geometry and classification; `apply()` schedules Chrome and synchronizes Radar. |
 | Focus / Route | Finishing transactions repositions Focus. Manual takeover pauses Route Journey, preserving Route elapsed time as before. |
@@ -726,9 +816,9 @@ universally remove every drag attribute. In particular, `data-dragging` is remov
 by the surface drag-end handler, not by the close/reset-docking path.
 
 Camera and Focus notify Radar to sync. Radar consumes Camera logicalViewport and
-calls centerAt/reveal; opening clears Semantic Lens preview and closes that panel
-as before. Route, Semantic Lens, Guide and global keyboard handlers keep their
-existing mutual-exclusion and focus rules. Reader's wide-diagram classification
+calls centerAt/reveal; opening clears Semantic Lens preview, selection and panel,
+and exits Route while preserving the Camera. Guide and global keyboard handlers
+retain their focus rules. Reader's wide-diagram classification
 and Chrome's navigation reserve affect measured placement without transferring
 ownership. Embed/print and narrow-screen presentation retain their existing CSS
 and caller rules, rather than a new universal Radar eligibility gate. Export

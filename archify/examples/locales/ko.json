@@ -436,5 +436,10 @@
   "viewer.rail.controls": "측면 패널",
   "viewer.rail.collapse": "측면 패널 접기",
   "viewer.rail.bottom": "패널을 다이어그램 아래로 이동",
-  "viewer.rail.right": "패널을 다이어그램 옆으로 이동"
+  "viewer.rail.right": "패널을 다이어그램 옆으로 이동",
+  "viewer.guide.canvas": "클릭하거나 Tab으로 캔버스에 들어갑니다. 오른쪽 또는 가운데 버튼, 스페이스+왼쪽 버튼으로 드래그해 이동합니다. 휠이나 방향키로 이동하고 Ctrl/Cmd+휠로 포인터 위치를 확대합니다. 0으로 초기화합니다.",
+  "viewer.notes.title": "다이어그램 메모",
+  "viewer.notes.close": "다이어그램 메모 닫기",
+  "viewer.nav.fitAll": "전체 다이어그램 맞추기",
+  "viewer.nav.fitAll.short": "전체"
 }

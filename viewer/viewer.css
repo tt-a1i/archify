@@ -334,11 +334,8 @@ html[data-preset="signal-flow"][data-theme="light"] body {
     radial-gradient(circle at 92% 18%, rgba(139, 92, 246, 0.08), transparent 30rem);
 }
 html[data-preset="blueprint"] body {
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--grid) 0 1px, transparent 1.2px);
   background-size: 32px 32px;
-  background-position: -1px -1px;
   background-attachment: fixed;
 }
 html[data-preset="editorial"] body {
@@ -578,6 +575,27 @@ html[data-preset="editorial"] .header-row::after {
   position: relative;
 }
 
+.diagram-container:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+.infinite-canvas-grid {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, color-mix(in srgb, var(--text) 14%, transparent) 0 1px, transparent 1.2px),
+    radial-gradient(circle, color-mix(in srgb, var(--text) 24%, transparent) 0 1.25px, transparent 1.45px);
+  background-position:
+    var(--archify-grid-x, 1.5rem) var(--archify-grid-y, 1.5rem),
+    var(--archify-grid-x, 1.5rem) var(--archify-grid-y, 1.5rem);
+  background-size:
+    var(--archify-grid-minor, 24px) var(--archify-grid-minor, 24px),
+    var(--archify-grid-major, 120px) var(--archify-grid-major, 120px);
+}
+
 html[data-preset="signal-flow"] .diagram-container {
   position: relative;
   overflow: hidden;
@@ -722,6 +740,11 @@ html[data-motion="still"] svg {
   transition: none !important;
 }
 
+.diagram-container > svg {
+  position: relative;
+  z-index: 1;
+}
+
 svg {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace;
   width: 100%;
@@ -735,9 +758,14 @@ svg {
   transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .diagram-container.is-camera-transaction svg { transition: none; }
-.diagram-container.is-pannable { cursor: grab; }
-.diagram-container.is-panning { cursor: grabbing; user-select: none; }
-.diagram-container.is-panning svg { transition: none; }
+.diagram-container.is-pannable { cursor: default; }
+.diagram-container.is-pan-ready,
+.diagram-container.is-pan-ready > svg * { cursor: grab; }
+.diagram-container.is-panning,
+.diagram-container.is-panning > svg * { cursor: grabbing; user-select: none; }
+.diagram-container.is-panning svg,
+.diagram-container.is-keyboard-panning svg,
+.diagram-container.is-wheel-moving svg { transition: none; will-change: transform; }
 
 .diagram-nav {
   position: absolute;
@@ -757,6 +785,11 @@ svg {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 28px -14px rgba(15, 23, 42, 0.28);
   backdrop-filter: blur(14px) saturate(1.2);
   scrollbar-width: none;
+}
+.diagram-nav[data-viewport-docked] {
+  position: fixed;
+  right: var(--archify-nav-viewport-right, 1rem);
+  bottom: 0.5rem;
 }
 .diagram-nav::-webkit-scrollbar { display: none; }
 .diagram-nav button,
@@ -1077,10 +1110,10 @@ html[data-preset="blueprint"] .overview-map { border-radius: 0.28rem; }
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--panel-border) 72%, transparent);
   border-radius: 0.42rem;
-  background:
-    linear-gradient(color-mix(in srgb, var(--panel-border) 26%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--panel-border) 26%, transparent) 1px, transparent 1px),
-    color-mix(in srgb, var(--bg) 86%, transparent);
+  background-color: color-mix(in srgb, var(--bg) 86%, transparent);
+  background-image: radial-gradient(circle,
+    color-mix(in srgb, var(--panel-border) 34%, transparent) 0 1px,
+    transparent 1.2px);
   background-size: 12px 12px;
   cursor: crosshair;
   touch-action: none;
@@ -1130,6 +1163,11 @@ html[data-preset="blueprint"] .overview-map-surface { border-radius: 0.1rem; }
   vector-effect: non-scaling-stroke;
   pointer-events: none;
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--frontend-stroke) 54%, transparent));
+}
+.overview-map-viewport[data-outside] {
+  fill: color-mix(in srgb, var(--security-fill) 68%, transparent);
+  stroke: var(--security-stroke);
+  stroke-dasharray: 3 2;
 }
 .overview-map-hint {
   display: flex;
@@ -2419,6 +2457,7 @@ html:is([data-reader-rail="true"], [data-reader-rail="overlay"]) .cards .card h3
 html:is([data-reader-rail="true"], [data-reader-rail="overlay"]) .cards .card ul { font-size: 0.8125rem; line-height: 1.6; }
 
 .node-outline { display: none; }
+html[data-fixed-canvas] .diagram-notes .node-outline:not([hidden]) { display: block; margin-top: 1rem; }
 html:is([data-reader-rail="true"], [data-reader-rail="overlay"]) .node-outline:not([hidden]) {
   display: flex;
   flex: 1 0 min(13rem, 55%);
@@ -2808,12 +2847,23 @@ html[data-reader-rail]:not([data-reader-rail="bottom"]) .header { min-height: 0;
     --external-fill:    rgba(148, 163, 184, 0.18);
     --external-stroke:  #64748b;
   }
-  body { background: #ffffff !important; padding: 0; }
+  body { background: #ffffff !important; min-height: 0; padding: 0; }
   .container { max-width: none; }
   .toolbar, .diagram-nav, .focus-chip, .archify-toast, .no-print { display: none !important; }
   
   .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
-  .diagram-container { --archify-nav-reserve: 0px !important; }
+  .diagram-container { --archify-nav-reserve: 0px !important; overflow: visible !important; height: auto !important; }
+  /* Keep the complete viewBox on one sheet; print has no camera viewport.
+     Leave room for the document heading and the diagram's padding. */
+  .diagram-container > svg {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: calc(100vh - 8rem);
+    transform: none !important;
+    clip-path: none !important;
+  }
+  .infinite-canvas-grid { display: none !important; }
   html[data-preset="signal-flow"] .diagram-container,
   html[data-preset="signal-flow"] .card { background: #ffffff; }
   .cards { grid-template-columns: 1fr 1fr; }
@@ -3237,9 +3287,7 @@ html[data-preset="editorial"] .toolbar { border-radius: 0.45rem; }
   border-color: #34799a;
   border-radius: 0.08rem;
   background-color: #0a2031;
-  background-image:
-    linear-gradient(rgba(102, 217, 239, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(102, 217, 239, 0.18) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(102, 217, 239, 0.34) 0 1px, transparent 1.2px);
   background-size: 0.42rem 0.42rem;
 }
 .preset-option-swatch.blueprint::before {
@@ -3825,7 +3873,7 @@ html[data-preset="editorial"] .node-finder {
 /* ==========================================================
    SVG SEMANTIC CLASSES — use these instead of inline fill/stroke
    ========================================================== */
-.c-grid       { stroke: var(--grid); fill: none; }
+.c-grid       { fill: var(--grid); stroke: none; }
 .c-mask       { fill: var(--mask); stroke: none; }
 .c-lane-rule  { stroke: var(--lane-stroke); fill: none; opacity: 0.7; }
 .c-lane-wash  { fill: var(--lane-fill); stroke: none; }
@@ -3928,55 +3976,8 @@ svg .brand-mark-fallback {
 svg[data-preset="blueprint"] .brand-mark-badge,
 svg[data-preset="blueprint"] .brand-mark-frame { rx: 1px; }
 
-/* Reading Depth is a viewer-only level-of-detail layer. MAP preserves the
-   authored structure and primary labels, READ restores relationship labels
-   and node context, and FULL restores tags and fine annotations. Semantic
-   intent can reveal the relevant detail without moving any geometry. */
-svg [data-detail] { transition: opacity 160ms ease; }
-svg [data-detail-anchor] {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 160ms ease;
-}
-.diagram-container[data-detail-level="map"] svg [data-detail="context"],
-.diagram-container[data-detail-level="map"] svg [data-detail="fine"],
-.diagram-container[data-detail-level="read"] svg [data-detail="fine"] {
-  opacity: 0;
-  pointer-events: none;
-}
-.diagram-container[data-detail-level="map"] svg [data-detail-anchor] {
-  transform: translateY(8px);
-}
-
-/* Focus, lens, preview, route, and story states are stronger reader intent than
-   the global zoom level. Reveal only their exact semantic matches. */
-svg[data-focus-active] [data-focus-match][data-detail],
-svg[data-focus-active] [data-focus-match] [data-detail],
-svg[data-reach-active] [data-reach-match][data-detail],
-svg[data-reach-active] [data-reach-match] [data-detail],
-svg[data-lens-active] [data-lens-match][data-detail],
-svg[data-lens-active] [data-lens-match] [data-detail],
-svg[data-legend-preview-active] [data-legend-preview-match][data-detail],
-svg[data-legend-preview-active] [data-legend-preview-match] [data-detail],
-svg[data-intent-trace-active] [data-intent-trace-match][data-detail],
-svg[data-intent-trace-active] [data-intent-trace-match] [data-detail],
-svg[data-route-active] [data-route-match][data-detail],
-svg[data-route-active] [data-route-match] [data-detail],
-svg[data-relationship-preview-active] [data-relationship-preview][data-detail],
-svg[data-relationship-preview-active] [data-relationship-preview] [data-detail],
-svg [data-node-id]:hover [data-detail],
-svg [data-node-id]:focus-visible [data-detail] {
-  opacity: 1;
-  pointer-events: auto;
-}
-svg[data-focus-active] [data-focus-match] [data-detail-anchor],
-svg[data-reach-active] [data-reach-match] [data-detail-anchor],
-svg[data-lens-active] [data-lens-match] [data-detail-anchor],
-svg[data-legend-preview-active] [data-legend-preview-match] [data-detail-anchor],
-svg[data-intent-trace-active] [data-intent-trace-match] [data-detail-anchor],
-svg[data-route-active] [data-route-match] [data-detail-anchor],
-svg [data-node-id]:hover [data-detail-anchor],
-svg [data-node-id]:focus-visible [data-detail-anchor] { transform: none; }
+/* Authored node context, tags and relationship labels remain visible at every
+   camera scale. Hover and semantic exploration highlight existing content. */
 
 /* Arrows */
 .a-default   { stroke: var(--arrow); fill: none; }
@@ -4483,7 +4484,6 @@ svg[data-preset="editorial"] .route-probe-flow,
 svg[data-preset="editorial"] .route-journey-flow { filter: none; }
 
 svg[data-preset="editorial"] .c-grid {
-  stroke-dasharray: 1 4;
   opacity: 0.48;
 }
 svg[data-preset="editorial"] .c-region {
@@ -4497,7 +4497,6 @@ svg[data-preset="editorial"][data-focus-active] [data-focus-selected] {
 }
 
 svg[data-preset="blueprint"] .c-grid {
-  stroke-dasharray: 1 3;
   opacity: 0.78;
 }
 svg[data-preset="blueprint"] .c-region {
@@ -4697,4 +4696,229 @@ html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="a
   .relationship-pulse-overlay { display: none !important; }
   .source-evidence-beacon,
   svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
+}
+
+@media (max-width: 720px) {
+  .diagram-container[data-wide-diagram] [data-view="fit-all"] { display: none; }
+}
+
+/* The document fallback keeps the one authored cards tree in normal flow. */
+.diagram-notes, .diagram-notes-content { display: contents; }
+.diagram-notes-heading, .diagram-notes-copy { display: none; }
+.toolbar button[hidden] { display: none !important; }
+
+@media screen and (min-width: 1024px) and (min-height: 600px) {
+  html[data-fixed-canvas] { height: 100%; overflow: hidden; }
+  html[data-fixed-canvas] body {
+    height: 100dvh;
+    min-height: 0;
+    padding: 0.75rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+  html[data-fixed-canvas] .toolbar {
+    position: relative;
+    inset: auto;
+    flex: none;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+  html[data-fixed-canvas] .container {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 0.625rem;
+  }
+  html[data-fixed-canvas][data-notes-open] .container {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  }
+  html[data-fixed-canvas] .header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+  }
+  html[data-fixed-canvas] .header-row { margin: 0; min-width: 0; }
+  html[data-fixed-canvas] .header-row .pulse-dot { flex-shrink: 0; }
+  html[data-fixed-canvas] h1, html[data-fixed-canvas] .subtitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  html[data-fixed-canvas] .guided-views {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+    max-height: 25dvh;
+    overflow: auto;
+    overscroll-behavior: contain;
+    margin: 0;
+  }
+  html[data-fixed-canvas] .diagram-container {
+    grid-column: 1;
+    grid-row: 3;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+    padding-bottom: calc(1rem + var(--archify-nav-reserve));
+    overflow: hidden;
+  }
+  html[data-fixed-canvas] .diagram-container > svg {
+    width: var(--archify-canvas-width);
+    height: var(--archify-canvas-height);
+    min-width: 0;
+    max-width: none;
+    /* Camera owns interpolation; layout changes must not animate a second transform. */
+    transition: none;
+  }
+  html[data-fixed-canvas] .diagram-notes { display: none; }
+  html[data-fixed-canvas][data-notes-open] .diagram-notes {
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 3;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.75rem;
+    background: var(--panel);
+    overflow: hidden;
+  }
+  html[data-fixed-canvas] .diagram-notes-heading {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .diagram-notes-heading h2 { font-size: 0.875rem; }
+  .diagram-notes-heading button {
+    font: inherit;
+    font-size: 1.25rem;
+    color: var(--text);
+    background: var(--toolbar-bg);
+    border: 1px solid var(--toolbar-border);
+    border-radius: 0.375rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    cursor: pointer;
+  }
+  html[data-fixed-canvas] .diagram-notes-content {
+    display: block;
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+    padding: 0.875rem;
+  }
+  html[data-fixed-canvas] .diagram-notes-copy:not([hidden]) { display: block; margin-bottom: 1rem; }
+  .diagram-notes-copy p { white-space: pre-wrap; font-size: 0.875rem; }
+  html[data-fixed-canvas] .cards { grid-template-columns: minmax(0, 1fr); margin: 0; gap: 0.75rem; }
+  html[data-fixed-canvas] .card { min-width: 0; padding: 0.875rem; }
+  .diagram-notes-content:focus-visible, .diagram-notes-heading button:focus-visible {
+    outline: 2px solid var(--frontend-stroke);
+    outline-offset: -2px;
+  }
+}
+
+/* Desktop reader polish is scoped to its active mode, including preset overrides. */
+@media screen and (min-width: 1024px) and (min-height: 600px) {
+  html[data-fixed-canvas] .infinite-canvas-grid {
+    --grid-soft: color-mix(in srgb, var(--text) 8%, transparent);
+    --grid-strong: color-mix(in srgb, var(--text) 13%, transparent);
+    background-image:
+      radial-gradient(circle, color-mix(in srgb, var(--grid-soft) calc(var(--archify-grid-weight, 1) * 100%), transparent) 0 0.8px, transparent 1px),
+      radial-gradient(circle, color-mix(in srgb, var(--grid-soft) calc((1 - var(--archify-grid-weight, 1)) * 100%), transparent) 0 0.8px, transparent 1px),
+      radial-gradient(circle, color-mix(in srgb, var(--grid-strong) calc(var(--archify-grid-weight, 1) * 100%), transparent) 0 1px, transparent 1.2px),
+      radial-gradient(circle, color-mix(in srgb, var(--grid-strong) calc((1 - var(--archify-grid-weight, 1)) * 100%), transparent) 0 1px, transparent 1.2px);
+    background-size:
+      var(--archify-grid-minor) var(--archify-grid-minor),
+      calc(var(--archify-grid-minor) / 2) calc(var(--archify-grid-minor) / 2),
+      var(--archify-grid-major) var(--archify-grid-major),
+      calc(var(--archify-grid-major) / 2) calc(var(--archify-grid-major) / 2);
+    background-position:
+      calc(var(--archify-grid-x) - var(--archify-grid-minor) / 2) calc(var(--archify-grid-y) - var(--archify-grid-minor) / 2),
+      calc(var(--archify-grid-x) - var(--archify-grid-minor) / 4) calc(var(--archify-grid-y) - var(--archify-grid-minor) / 4),
+      calc(var(--archify-grid-x) - var(--archify-grid-major) / 2) calc(var(--archify-grid-y) - var(--archify-grid-major) / 2),
+      calc(var(--archify-grid-x) - var(--archify-grid-major) / 4) calc(var(--archify-grid-y) - var(--archify-grid-major) / 4);
+  }
+  html[data-fixed-canvas][data-preset] .diagram-container,
+  html[data-fixed-canvas] .diagram-notes { box-shadow: none; }
+  html[data-fixed-canvas] .toolbar button { box-shadow: 0 1px 3px rgb(0 0 0 / 4%); }
+  html[data-fixed-canvas] .diagram-nav,
+  html[data-fixed-canvas] .fixed-legend,
+  html[data-fixed-canvas] .overview-map,
+  html[data-fixed-canvas] .focus-chip { box-shadow: 0 3px 12px rgb(0 0 0 / 10%); }
+  html[data-fixed-canvas] .preset-menu,
+  html[data-fixed-canvas] .export-menu,
+  html[data-fixed-canvas] .node-finder,
+  html[data-fixed-canvas] .semantic-lens { box-shadow: 0 8px 24px rgb(0 0 0 / 16%); }
+}
+
+.fixed-legend { display: none; }
+@media screen and (min-width: 1024px) and (min-height: 600px) {
+  html[data-fixed-canvas] .diagram-nav { background: var(--toolbar-menu-bg); border-color: var(--toolbar-border); }
+  html[data-fixed-canvas] .diagram-nav button { flex-shrink: 0; min-width: 32px; height: 32px; font-size: 11px; color: var(--toolbar-text); }
+  html[data-fixed-canvas] .diagram-nav #btn-route-probe,
+  html[data-fixed-canvas] .diagram-nav #btn-overview-map,
+  html[data-fixed-canvas] .diagram-nav #btn-semantic-lens,
+  html[data-fixed-canvas] .diagram-nav #btn-node-finder,
+  html[data-fixed-canvas] .diagram-nav #btn-diagram-guide { color: var(--toolbar-text); }
+  html[data-fixed-canvas] .diagram-nav-icon { width: 14px; height: 14px; }
+  html[data-fixed-canvas] .diagram-nav [data-view="reset"] { width: 6.4rem; min-width: 6.4rem; }
+  html[data-fixed-canvas] .diagram-container .diagram-nav-percent { font-size: 11px; color: var(--toolbar-text); font-variant-numeric: tabular-nums; }
+  html[data-fixed-canvas] .diagram-container .diagram-nav-detail { font-size: 11px; color: var(--toolbar-text); }
+  html[data-fixed-canvas] .diagram-nav [data-view="out"] { margin-left: 0; }
+  html[data-fixed-canvas] .diagram-nav [data-view="out"]::before { display: none; }
+  html[data-fixed-canvas] .diagram-nav [data-view="fit-all"] { border-left: 1px solid var(--toolbar-border); border-radius: 0; margin-left: 4px; padding-left: 8px; }
+  html[data-fixed-canvas] .diagram-nav button[aria-pressed="true"],
+  html[data-fixed-canvas] .diagram-nav button[aria-expanded="true"] { background: var(--toolbar-hover); box-shadow: inset 0 -2px var(--toolbar-text); }
+  html[data-fixed-canvas] .diagram-nav button:focus-visible { outline-color: var(--toolbar-text); outline-offset: -2px; }
+  html[data-fixed-canvas] .fixed-legend {
+    position: absolute; left: 16px; bottom: 16px; z-index: 13;
+    display: block; width: max-content; padding: 3px;
+    border: 1px solid var(--toolbar-border); border-radius: .58rem;
+    background: var(--toolbar-menu-bg); color: var(--toolbar-text);
+    font-size: 11px; line-height: 1.4;
+  }
+  html[data-fixed-canvas][data-preset="blueprint"] .fixed-legend { border-radius: .28rem; }
+  html[data-fixed-canvas] .fixed-legend[hidden],
+  html[data-fixed-canvas] .fixed-legend [hidden] { display: none !important; }
+  html[data-fixed-canvas] .diagram-container[data-fixed-legend] > svg [data-legend] { visibility: hidden; }
+  .fixed-legend-list { display: flex; flex-wrap: wrap; gap: 2px 6px; }
+  .fixed-legend-entry, .fixed-legend-toggle {
+    display: inline-flex; align-items: center; gap: 5px; min-height: 32px;
+    padding: 3px 5px; margin: 0; border: 1px solid transparent; border-radius: .35rem;
+    font: inherit; color: inherit; background: transparent; white-space: nowrap;
+  }
+  .fixed-legend button { cursor: pointer; }
+  .fixed-legend-entry > svg { flex: none; height: 20px; min-width: 0; max-width: none; margin: 0; overflow: visible; }
+  .fixed-legend-count { font-size: 10px; opacity: .8; font-variant-numeric: tabular-nums; }
+  .fixed-legend [data-legend-zero] { opacity: .5; }
+  .fixed-legend button:hover { background: var(--toolbar-hover); }
+  .fixed-legend button[aria-pressed="true"] { background: var(--toolbar-hover); border-color: var(--toolbar-text); }
+  .fixed-legend button:focus-visible, .fixed-legend-list:focus-visible { outline: 2px solid var(--toolbar-text); outline-offset: -2px; }
+  .fixed-legend[data-collapsed] .fixed-legend-list {
+    position: absolute; left: -1px; bottom: calc(100% + 8px); width: min(28rem, 100% + 16rem);
+    max-width: calc(100vw - 64px); overflow-y: auto; overscroll-behavior: contain;
+    padding: 6px; border: 1px solid var(--toolbar-border); border-radius: .58rem;
+    background: var(--toolbar-menu-bg); box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
+  }
+  .fixed-legend[data-collapsed] .fixed-legend-entry { width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+  .fixed-legend[data-collapsed] .fixed-legend-entry > span:not(.fixed-legend-count) { min-width: 0; }
 }

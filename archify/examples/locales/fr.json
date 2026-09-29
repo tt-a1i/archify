@@ -421,5 +421,10 @@
   "viewer.common.copyFailed": "Échec de la copie",
   "viewer.common.copyLink": "Copier le lien",
   "viewer.common.clear": "Effacer",
-  "viewer.common.close": "Fermer"
+  "viewer.common.close": "Fermer",
+  "viewer.guide.canvas": "Cliquez ou utilisez Tab pour entrer dans le canevas. Déplacez avec le bouton droit, central ou Espace + bouton gauche. La molette ou les flèches déplacent; Ctrl/Cmd + molette zoome au pointeur. Appuyez sur 0 pour réinitialiser.",
+  "viewer.notes.title": "Notes du diagramme",
+  "viewer.notes.close": "Fermer les notes du diagramme",
+  "viewer.nav.fitAll": "Afficher tout le diagramme",
+  "viewer.nav.fitAll.short": "TOUT"
 }

@@ -1,3 +1,4 @@
+import { viewerContractSource } from './helpers/viewer-contract-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -25,54 +26,41 @@ function render(mode, example) {
     path.join(skillRoot, 'examples', example),
     output,
   ]);
-  return fs.readFileSync(output, 'utf8');
+  return viewerContractSource(fs.readFileSync(output, 'utf8'));
 }
 
 function svg(html) {
   return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
 }
 
-test('all typed renderers emit explicit context and fine reading-depth semantics', () => {
+test('all typed renderers preserve authored context hooks without hiding primary text', () => {
   for (const [mode, example] of Object.entries(CASES)) {
-    const html = render(mode, example);
-    assert.match(html, /data-detail="context"/, mode);
-    assert.match(html, /data-detail="fine"/, mode);
-    assert.match(html, /data-detail-anchor/, mode);
-    assert.doesNotMatch(html, /<text[^>]*data-detail="(?:context|fine)"[^>]*class="t-primary"/, mode);
-    assert.match(html, /class="diagram-container" data-detail-level="read"/, mode);
+    const html = render(mode, example), diagram = svg(html);
+    assert.match(diagram, /data-detail="context"/, mode);
+    assert.match(diagram, /data-detail-anchor/, mode);
+    assert.doesNotMatch(diagram, /<text[^>]*data-detail="(?:context|fine)"[^>]*class="t-primary"/, mode);
+    assert.match(diagram, /data-node-id=/, mode);
+    if (mode === 'architecture') assert.match(diagram, /data-detail="fine"/);
   }
 });
 
-test('semantic zoom exposes MAP, READ, and FULL at deterministic thresholds', () => {
+test('camera help no longer promises labels only after zooming', () => {
   const html = render('workflow', CASES.workflow);
-  assert.match(html, /function detailLevel\(\)/);
-  assert.match(html, /if \(state\.mode === 'semantic'\) return 'full'/);
-  assert.match(html, /if \(state\.scale >= 1\.75\) return 'full'/);
-  assert.match(html, /if \(state\.scale >= 1\) return 'read'/);
-  assert.match(html, /return 'map'/);
-  assert.match(html, /container\.setAttribute\('data-detail-level', detail\)/);
-  assert.match(html, /var levelLabel = viewerText\('viewer\.nav\.level\.' \+ detail\)/);
-  assert.match(html, /var resolvedLevel = semantic \? viewerText\('viewer\.nav\.level\.auto'\) : levelLabel/);
-  assert.match(html, /Zoom in to reveal relationship labels and node context/);
-  assert.match(html, /Zoom in again to reveal tags and annotations/);
+  assert.doesNotMatch(html, /Zoom in to reveal relationship labels and node context/);
+  assert.doesNotMatch(html, /Zoom in again to reveal tags and annotations/);
   assert.match(html, /Full diagram detail/);
 });
 
-test('reading depth stays quiet at overview and yields to semantic intent', () => {
+test('no reading-depth CSS hides authored labels or displaces their anchors', () => {
   const html = render('architecture', CASES.architecture);
-  assert.match(html, /\.diagram-container\[data-detail-level="map"\] svg \[data-detail="context"\]/);
-  assert.match(html, /\.diagram-container\[data-detail-level="map"\] svg \[data-detail="fine"\]/);
-  assert.match(html, /\.diagram-container\[data-detail-level="read"\] svg \[data-detail="fine"\]/);
-  assert.match(html, /\.diagram-container\[data-detail-level="map"\] svg \[data-detail-anchor\]/);
-  assert.match(html, /svg\[data-focus-active\] \[data-focus-match\] \[data-detail\]/);
-  assert.match(html, /svg\[data-intent-trace-active\] \[data-intent-trace-match\] \[data-detail\]/);
-  assert.match(html, /svg\[data-route-active\] \[data-route-match\] \[data-detail\]/);
-  assert.match(html, /svg\[data-relationship-preview-active\] \[data-relationship-preview\] \[data-detail\]/);
+  // Browser coverage checks effective styles and ancestors at real camera scales.
+  const styles = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m=>m[1]).join('\n');
+  assert.doesNotMatch(styles, /\[data-detail-level="(?:map|read)"\][^{]*\[data-detail(?:=|\])/);
+  assert.doesNotMatch(styles, /\[data-detail-level="map"\][^{]*\[data-detail-anchor\]/);
 });
 
 test('semantic zoom is motion-safe and full-fidelity in print and export', () => {
   const html = render('dataflow', CASES.dataflow);
-  assert.match(html, /\[data-detail\] \{ transition: opacity 160ms ease/);
   assert.match(html, /@media print \{[\s\S]+\.diagram-container svg \[data-detail\] \{[\s\S]+opacity: 1 !important/);
   assert.match(html, /@media \(prefers-reduced-motion: reduce\)[\s\S]+svg \[data-detail\]/);
   assert.match(html, /clone\.querySelectorAll\('\[data-detail\], \[data-detail-anchor\]'\)/);

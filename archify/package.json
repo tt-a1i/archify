@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "ajv": "^8.17.1",
+    "esbuild": "0.28.2",
     "parse5": "7.3.0",
     "saxes": "6.0.0",
     "simple-icons": "16.28.0"

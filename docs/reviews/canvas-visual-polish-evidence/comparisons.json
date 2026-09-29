@@ -1,0 +1,1702 @@
+[
+  {
+    "name": "architecture",
+    "theme": "light",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "architecture-light-fit-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 26.5,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "architecture",
+    "theme": "light",
+    "state": "read",
+    "variant": "baseline",
+    "file": "architecture-light-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "architecture",
+    "theme": "light",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "architecture-light-fit-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 26,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 648.25,
+      "height": 40,
+      "top": 831,
+      "right": 677.25,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "architecture",
+    "theme": "light",
+    "state": "read",
+    "variant": "candidate",
+    "file": "architecture-light-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 648.25,
+      "height": 40,
+      "top": 831,
+      "right": 677.25,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "architecture",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "architecture-dark-fit-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 26.5,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "architecture",
+    "theme": "dark",
+    "state": "read",
+    "variant": "baseline",
+    "file": "architecture-dark-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "architecture",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "architecture-dark-fit-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 26,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 648.25,
+      "height": 40,
+      "top": 831,
+      "right": 677.25,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "architecture",
+    "theme": "dark",
+    "state": "read",
+    "variant": "candidate",
+    "file": "architecture-dark-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 588",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 648.25,
+      "height": 40,
+      "top": 831,
+      "right": 677.25,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "light",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "workflow-light-fit-baseline.png",
+    "camera": {
+      "scale": 0.8903508771929824,
+      "x": 203.08804229629249,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "light",
+    "state": "read",
+    "variant": "baseline",
+    "file": "workflow-light-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "light",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "workflow-light-fit-candidate.png",
+    "camera": {
+      "scale": 0.8888888888888888,
+      "x": 203.88872873263904,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 908.84375,
+      "height": 40,
+      "top": 831,
+      "right": 937.84375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "light",
+    "state": "read",
+    "variant": "candidate",
+    "file": "workflow-light-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 908.84375,
+      "height": 40,
+      "top": 831,
+      "right": 937.84375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "workflow-dark-fit-baseline.png",
+    "camera": {
+      "scale": 0.8903508771929824,
+      "x": 203.08773712051124,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "dark",
+    "state": "read",
+    "variant": "baseline",
+    "file": "workflow-dark-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "workflow-dark-fit-candidate.png",
+    "camera": {
+      "scale": 0.8888888888888888,
+      "x": 203.88872873263904,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 908.84375,
+      "height": 40,
+      "top": 831,
+      "right": 937.84375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "workflow",
+    "theme": "dark",
+    "state": "read",
+    "variant": "candidate",
+    "file": "workflow-dark-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1096 684",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 908.84375,
+      "height": 40,
+      "top": 831,
+      "right": 937.84375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "signal-flow",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "light",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "sequence-light-fit-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 40.5,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "light",
+    "state": "read",
+    "variant": "baseline",
+    "file": "sequence-light-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "light",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "sequence-light-fit-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 40,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 642.234375,
+      "height": 40,
+      "top": 831,
+      "right": 671.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "light",
+    "state": "read",
+    "variant": "candidate",
+    "file": "sequence-light-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 642.234375,
+      "height": 40,
+      "top": 831,
+      "right": 671.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "sequence-dark-fit-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 40.5,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "dark",
+    "state": "read",
+    "variant": "baseline",
+    "file": "sequence-dark-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "sequence-dark-fit-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 40,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 642.234375,
+      "height": 40,
+      "top": 831,
+      "right": 671.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "sequence",
+    "theme": "dark",
+    "state": "read",
+    "variant": "candidate",
+    "file": "sequence-dark-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 560",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 642.234375,
+      "height": 40,
+      "top": 831,
+      "right": 671.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "light",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "dataflow-light-fit-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 60.5,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "light",
+    "state": "read",
+    "variant": "baseline",
+    "file": "dataflow-light-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "light",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "dataflow-light-fit-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 60,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 678.421875,
+      "height": 40,
+      "top": 831,
+      "right": 707.421875,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "light",
+    "state": "read",
+    "variant": "candidate",
+    "file": "dataflow-light-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 678.421875,
+      "height": 40,
+      "top": 831,
+      "right": 707.421875,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "dataflow-dark-fit-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 60.5,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "dark",
+    "state": "read",
+    "variant": "baseline",
+    "file": "dataflow-dark-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "dataflow-dark-fit-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 151,
+      "y": 60,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 678.421875,
+      "height": 40,
+      "top": 831,
+      "right": 707.421875,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "dataflow",
+    "theme": "dark",
+    "state": "read",
+    "variant": "candidate",
+    "file": "dataflow-dark-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1080 520",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 678.421875,
+      "height": 40,
+      "top": 831,
+      "right": 707.421875,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "light",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "lifecycle-light-fit-baseline.png",
+    "camera": {
+      "scale": 0.9666666666666667,
+      "x": 193.1663306070963,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "light",
+    "state": "read",
+    "variant": "baseline",
+    "file": "lifecycle-light-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "light",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "lifecycle-light-fit-candidate.png",
+    "camera": {
+      "scale": 0.9650793650793651,
+      "x": 193.9843318181113,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 747.234375,
+      "height": 40,
+      "top": 831,
+      "right": 776.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "light",
+    "state": "read",
+    "variant": "candidate",
+    "file": "lifecycle-light-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 747.234375,
+      "height": 40,
+      "top": 831,
+      "right": 776.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "baseline",
+    "file": "lifecycle-dark-fit-baseline.png",
+    "camera": {
+      "scale": 0.9666666666666667,
+      "x": 193.1663306070963,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "dark",
+    "state": "read",
+    "variant": "baseline",
+    "file": "lifecycle-dark-read-baseline.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": null,
+    "nav": {
+      "x": 1077.484375,
+      "y": 832.21875,
+      "width": 333.515625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1077.484375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "dark",
+    "state": "fit",
+    "variant": "candidate",
+    "file": "lifecycle-dark-fit-candidate.png",
+    "camera": {
+      "scale": 0.9650793650793651,
+      "x": 193.9843318181113,
+      "y": 16,
+      "mode": "fit"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 747.234375,
+      "height": 40,
+      "top": 831,
+      "right": 776.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  },
+  {
+    "name": "lifecycle",
+    "theme": "dark",
+    "state": "read",
+    "variant": "candidate",
+    "file": "lifecycle-dark-read-candidate.png",
+    "camera": {
+      "scale": 1,
+      "x": 0,
+      "y": 0,
+      "mode": "overview"
+    },
+    "viewBox": "0 0 1030 630",
+    "container": {
+      "x": 12,
+      "y": 171.9375,
+      "width": 1416,
+      "height": 716.0625,
+      "top": 171.9375,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    },
+    "legend": {
+      "x": 29,
+      "y": 831,
+      "width": 747.234375,
+      "height": 40,
+      "top": 831,
+      "right": 776.234375,
+      "bottom": 871,
+      "left": 29
+    },
+    "nav": {
+      "x": 1007.734375,
+      "y": 832.21875,
+      "width": 403.265625,
+      "height": 38.78125,
+      "top": 832.21875,
+      "right": 1411,
+      "bottom": 871,
+      "left": 1007.734375
+    },
+    "preset": "classic",
+    "dpr": 1,
+    "motion": "still"
+  }
+]

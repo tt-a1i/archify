@@ -120,7 +120,7 @@
         if (controlRect) bottom = Math.min(bottom, controlRect.top - placementGap);
         var lens = document.getElementById('focus-chip');
         var lensRect = visibleRect(lens);
-        var legendRect = visibleRect(diagram.querySelector('[data-legend]'));
+        var legendRect = visibleRect((container.hasAttribute('data-fixed-legend') ? container.querySelector('.fixed-legend') : diagram.querySelector('[data-legend]')));
         var active = diagram.querySelector('[data-focus-selected]');
         var activeRect = visibleRect(active);
         return {
@@ -350,6 +350,34 @@
         if (!panel.hasAttribute('data-compact')) surface.focus();
         return !panel.hasAttribute('data-compact');
       }
+      // Camera frames update this small overlay without panel measurement or node scans.
+      function syncViewport() {
+        if (panel.hidden || !Archify.view || typeof Archify.view.logicalViewport !== 'function') return;
+        var visible = Archify.view.logicalViewport();
+        if (!visible) return;
+        var markerWidth = visible.outside ? Math.max(2, viewBox.width * 0.025) : visible.width;
+        var markerHeight = visible.outside ? Math.max(2, viewBox.height * 0.025) : visible.height;
+        var markerX = visible.outside
+          ? Math.max(viewBox.x, Math.min(viewBox.x + viewBox.width - markerWidth, visible.x - markerWidth / 2))
+          : visible.x;
+        var markerY = visible.outside
+          ? Math.max(viewBox.y, Math.min(viewBox.y + viewBox.height - markerHeight, visible.y - markerHeight / 2))
+          : visible.y;
+        viewport.setAttribute('x', String(markerX));
+        viewport.setAttribute('y', String(markerY));
+        viewport.setAttribute('width', String(markerWidth));
+        viewport.setAttribute('height', String(markerHeight));
+        viewport.toggleAttribute('data-outside', visible.outside === true);
+        var full = visible.width >= viewBox.width * 0.98 && visible.height >= viewBox.height * 0.98;
+        var mobileWide = window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram');
+        var viewportCopy = full
+          ? viewerText('viewer.radar.viewport.full')
+          : (mobileWide
+            ? viewerText('viewer.radar.viewport.width', { percent: Math.round(visible.width / viewBox.width * 100) })
+            : viewerText('viewer.radar.viewport.scale', { percent: visible.scale < 0.01 ? '<1' : Math.round(visible.scale * 100) }));
+        var statusText = viewerText('viewer.radar.status', { count: nodes.length, viewport: viewportCopy });
+        if (status.textContent !== statusText) status.textContent = statusText;
+      }
       function syncNow() {
         syncFrame = 0;
         if (panel.hidden || !Archify.view || typeof Archify.view.logicalViewport !== 'function') return;
@@ -365,20 +393,7 @@
           }
         }
         reflectVisible();
-        var visible = Archify.view.logicalViewport();
-        if (!visible) return;
-        viewport.setAttribute('x', String(visible.x));
-        viewport.setAttribute('y', String(visible.y));
-        viewport.setAttribute('width', String(visible.width));
-        viewport.setAttribute('height', String(visible.height));
-        var full = visible.width >= viewBox.width * 0.98 && visible.height >= viewBox.height * 0.98;
-        var mobileWide = window.innerWidth <= 720 && container.hasAttribute('data-wide-diagram');
-        var viewportCopy = full
-          ? viewerText('viewer.radar.viewport.full')
-          : (mobileWide
-            ? viewerText('viewer.radar.viewport.width', { percent: Math.round(visible.width / viewBox.width * 100) })
-            : viewerText('viewer.radar.viewport.scale', { percent: Math.round(visible.scale * 100) }));
-        status.textContent = viewerText('viewer.radar.status', { count: nodes.length, viewport: viewportCopy });
+        syncViewport();
         nodes.forEach(function (item) {
           var active = item.node.hasAttribute('data-focus-selected');
           if (active) item.rect.setAttribute('data-radar-active', 'true');
@@ -397,8 +412,11 @@
         options = options || {};
         next = Boolean(next);
         if (next && Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
-        if (next && Archify.semanticLens && Archify.semanticLens.isOpen()) {
-          Archify.semanticLens.close({ restoreFocus: false });
+        if (next && Archify.semanticLens && (Archify.semanticLens.active() || Archify.semanticLens.isOpen())) {
+          Archify.semanticLens.clear({ updateUrl: !!Archify.semanticLens.active(), preserveView: true, closePanel: true });
+        }
+        if (next && Archify.routeProbe && Archify.routeProbe.active()) {
+          Archify.routeProbe.clear({ preserveView: true, restoreFocus: false });
         }
         requestedOpen = next;
         if (next) {
@@ -410,7 +428,9 @@
         } else {
           clearSpaceRetry();
           spaceRetryCount = 0;
-          viewportDrag = null;
+          endViewportDrag();
+          if (syncFrame) cancelAnimationFrame(syncFrame);
+          syncFrame = 0;
           panelDrag = null;
           container.classList.remove('is-panning');
           panel.hidden = true;
@@ -466,15 +486,17 @@
       function navigate(event) {
         var point = diagramPoint(event);
         if (!point || !Archify.view || typeof Archify.view.centerAt !== 'function') return;
-        Archify.view.centerAt(point.x, point.y, { minimumScale: 1.5, instant: true });
-        sync();
+        Archify.view.centerAt(point.x, point.y, { preserveScale: true, instant: true,
+          defer: true, manual: !viewportDrag });
       }
-      function endViewportDrag(event) {
-        if (!viewportDrag) return;
+      function endViewportDrag(event, cancelOnly) {
+        if (!viewportDrag || (event && event.pointerId !== viewportDrag.pointerId)) return;
+        var pointerId = viewportDrag.pointerId;
         viewportDrag = null;
+        if (!cancelOnly && Archify.view && Archify.view.settle) Archify.view.settle();
         panel.removeAttribute('data-dragging');
         container.classList.remove('is-panning');
-        try { surface.releasePointerCapture(event.pointerId); } catch (_) {}
+        try { surface.releasePointerCapture(pointerId); } catch (_) {}
       }
       function beginPanelDrag(event) {
         if (event.button !== 0 || event.target.closest('button, a, input, [role="button"]')) return;
@@ -542,11 +564,11 @@
       surface.addEventListener('pointerdown', function (event) {
         if (event.button !== 0 || event.target.closest('[data-radar-node-id]')) return;
         event.preventDefault();
+        navigate(event);
         viewportDrag = { pointerId: event.pointerId };
         panel.setAttribute('data-dragging', 'true');
         container.classList.add('is-panning');
         try { surface.setPointerCapture(event.pointerId); } catch (_) {}
-        navigate(event);
       });
       surface.addEventListener('pointermove', function (event) {
         if (!viewportDrag || viewportDrag.pointerId !== event.pointerId) return;
@@ -554,6 +576,7 @@
       });
       surface.addEventListener('pointerup', endViewportDrag);
       surface.addEventListener('pointercancel', endViewportDrag);
+      surface.addEventListener('lostpointercapture', endViewportDrag);
       surface.addEventListener('click', function (event) {
         var node = event.target.closest('[data-radar-node-id]');
         if (node) focusNode(node.getAttribute('data-radar-node-id'));
@@ -583,7 +606,7 @@
         else if (event.key === 'ArrowRight') x += stepX;
         else if (event.key === 'ArrowUp') y -= stepY;
         else y += stepY;
-        Archify.view.centerAt(x, y, { minimumScale: 1.5, instant: true });
+        Archify.view.centerAt(x, y, { preserveScale: true, instant: true });
         sync();
       });
       document.addEventListener('keydown', function (event) {
@@ -619,6 +642,8 @@
         close: close,
         toggle: toggle,
         sync: sync,
+        syncViewport: syncViewport,
+        cancelPan: function () { endViewportDrag(null, true); },
         focus: focusNode,
         isOpen: function () { return requestedOpen; },
         count: function () { return nodes.length; }

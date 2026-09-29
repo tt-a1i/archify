@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -30,6 +31,7 @@ function fixture(t) {
   fs.mkdirSync(path.join(root, 'archify/assets'), { recursive: true });
   fs.cpSync(path.join(repoRoot, 'viewer'), path.join(root, 'viewer'), { recursive: true });
   fs.copyFileSync(path.join(repoRoot, 'scripts/generate-viewer.mjs'), path.join(root, 'scripts/generate-viewer.mjs'));
+  fs.symlinkSync(path.join(repoRoot, 'archify/node_modules'), path.join(root, 'archify/node_modules'), 'junction');
   const output = path.join(root, 'archify/assets/template.html');
   fs.copyFileSync(path.join(repoRoot, 'archify/assets/template.html'), output);
   return {
@@ -73,7 +75,7 @@ test('editing any authoritative source requires explicit regeneration', (t) => {
   const f = fixture(t);
   for (const input of [f.shell, f.viewerCss, f.export, f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.outline, f.intent, f.lens, f.route, f.focus]) {
     const previous = fs.readFileSync(f.output);
-    fs.appendFileSync(input, '\n/* source change */\n');
+    fs.writeFileSync(input, (input === f.viewerCss ? ':root { --source-change: 1; }\n' : input === f.shell ? '<!-- source change -->\n' : 'globalThis.__sourceChange = 1;\n') + fs.readFileSync(input, 'utf8'));
     const stale = f.run('--check');
     assert.equal(stale.status, 1);
     assert.match(stale.stderr, /stale.*generate:viewer/);
@@ -130,37 +132,23 @@ for (const [fragment, slot] of Object.entries(fragments)) {
   }
 }
 
-test('assembly preserves literal replacement tokens, Unicode and source line endings', (t) => {
+test('compilation preserves literal replacement tokens and Unicode across fragments', (t) => {
   const f = fixture(t);
-  const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
-  const css = '/* === TOKENS === */\r\n:root { --x: 1; }\r\n';
+  const literal = '$& $\' $` $$ 中文 🗺';
+  const reader = `globalThis.values.push(${JSON.stringify(literal)});\r\n`;
+  const css = '/* ordinary build comment */\r\n:root { --x: 1; }\r\n';
   fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><script>\r\n${focusMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${outlineMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
   fs.writeFileSync(f.viewerCss, css);
+  for (const file of [f.reader, f.cleanup, f.chrome, f.camera, f.radar, f.motion, f.finder, f.intent, f.lens, f.route, f.outline, f.focus]) fs.writeFileSync(file, reader);
   fs.writeFileSync(f.export, reader + cleanupMarker);
-  fs.writeFileSync(f.cleanup, reader);
-  fs.writeFileSync(f.chrome, reader);
-  fs.writeFileSync(f.camera, reader);
-  fs.writeFileSync(f.radar, reader);
-  fs.writeFileSync(f.motion, reader);
-  fs.writeFileSync(f.finder, reader);
-  fs.writeFileSync(f.outline, reader);
-  fs.writeFileSync(f.intent, reader);
-  fs.writeFileSync(f.lens, reader);
-  fs.writeFileSync(f.route, reader);
-  fs.writeFileSync(f.focus, reader);
-  fs.writeFileSync(f.reader, reader);
-  assert.equal(f.run().status, 0);
-  // The viewer.css file is inlined inside the <style> block. The marker sits
-  // at column 0 inside the shell so every line of the CSS gets a 4-space
-  // reindent, including the first. The <script> block then contains the JS
-  // fragments unchanged. Both the leading `\n` after the marker and the
-  // marker line itself are stripped from `parts[1]` so the reindented CSS
-  // ends flush with the closing </style> tag.
-  const indentedCss = css.split('\n').map((line) => line.length === 0 ? line : '    ' + line).join('\n');
-  assert.equal(
-    fs.readFileSync(f.output, 'utf8'),
-    `<style>${indentedCss}</style><script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
-  );
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(f.output, 'utf8');
+  const values = [];
+  vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], { values });
+  assert.deepEqual(values, Array(13).fill(literal));
+  assert.match(html, /--x:\s*1/);
+  assert.doesNotMatch(html, /ordinary build comment/);
   assert.equal(f.run('--check').status, 0);
 });
 

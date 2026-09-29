@@ -241,7 +241,7 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
   // Private checks supplement the real public exports. The hook exists only in
   // this disposable test artifact; production receives no testing interface.
   const html = fs.readFileSync(files.architecture, 'utf8');
-  let cleanup = html.match(/function cleanExportClone\(clone\) \{[\s\S]*?\n      \}/)?.[0];
+  let cleanup = /function cleanExportClone\(clone\)\s*\{/.test(html) ? 'cleanExportClone' : null;
   if (!cleanup && process.env.ARCHIFY_EXPORT_BASELINE_DIR) {
     const start = html.indexOf('        // View transforms and neighborhood focus');
     const end = html.indexOf('        var vb = svg.viewBox.baseVal;', start);
@@ -249,8 +249,8 @@ test('Export cleanup preserves canonical artifacts and live interaction state', 
     cleanup = `function cleanExportClone(clone) {\n${html.slice(start, end)}return canonicalStateClean;\n}`;
   }
   assert.ok(cleanup, 'the extracted cleanup implementation is present');
-  const cleanupReference = html.includes('function cleanExportClone(clone)') ? 'cleanExportClone' : cleanup;
-  const hooked = html.replace('      function download(blob, filename) {',
+  const cleanupReference = cleanup;
+  const hooked = html.replace(/function download\(blob,\s*filename\)\s*\{/,
     `      window.exportCleanupTest = { serialize: serializeSvg, clean: ${cleanupReference} };\n      function download(blob, filename) {`);
   assert.notEqual(hooked, html);
   const privateFile = path.join(scratch, 'private.html');

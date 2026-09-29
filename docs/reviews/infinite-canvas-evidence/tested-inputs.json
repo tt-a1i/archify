@@ -1,0 +1,658 @@
+{
+  "base": "3791eb59840e10cd5766871e21b723fa2358b4ea",
+  "scope": "Public repository inputs from the final pre-commit browser run; rechecked before commit. Private absolute input paths omitted.",
+  "inputs": [
+    {
+      "path": "viewer/export-cleanup.js",
+      "sha256": "1542924975fca5ad5b0f52b1328b50b21795de8fc377ea4dd9b528ac1b67c8f7"
+    },
+    {
+      "path": "viewer/export.js",
+      "sha256": "045dc7f16689a45a28b921d074199f458f673115a1c55a2bfa388276c3433aea"
+    },
+    {
+      "path": "viewer/focus.js",
+      "sha256": "568ae6aab7a5d42635d6f3181dadb18527e79ae74becb5a46a06348f56479eae"
+    },
+    {
+      "path": "viewer/guided-views.js",
+      "sha256": "31a24051df0b4dc877b8863da0564dae4c2d444eb47f6bda868960bd0f6fcf71"
+    },
+    {
+      "path": "viewer/intent-trace.js",
+      "sha256": "54746e67bd40045c02cc238c9667965a65a307f9b6782f4066ccdc2ff36cc2d0"
+    },
+    {
+      "path": "viewer/motion-governor.js",
+      "sha256": "8ad23c83aedbd6518418069e4e6f75fdc04174d79a32b16df0afc517dab6fde4"
+    },
+    {
+      "path": "viewer/node-finder.js",
+      "sha256": "2e2cc8aa732d733ea2305f076732058fd804ef7f5f5e18fec255c40cf9525ccb"
+    },
+    {
+      "path": "viewer/reader-layout.js",
+      "sha256": "64caee69d8826376ad784d0cd815d3e0b150dcb04c02e2a08288e3616039f960"
+    },
+    {
+      "path": "viewer/route-probe.js",
+      "sha256": "19da95374d2344f6db5aa980321b6672c6fd53e443312532759db4d51fbc2e73"
+    },
+    {
+      "path": "viewer/semantic-lens.js",
+      "sha256": "4ff735baea398e858d90418fd963ae4c6b7e77fb91db907d522b6db2abb5ab02"
+    },
+    {
+      "path": "viewer/semantic-radar.js",
+      "sha256": "f95e764d7f76591534884772174e170b9f6a79ce4738e022413ee4b4c6fabd45"
+    },
+    {
+      "path": "viewer/viewer-camera.js",
+      "sha256": "3f28a64b4a0863912dfb2fff875372101eade2b585601ca487a48dcf9a4cfed0"
+    },
+    {
+      "path": "viewer/viewer-chrome-layout.js",
+      "sha256": "fe91f8d9281ed8bf9a45908a5e998dd61cd94334c82ed6ea6fe515bfd53dedee"
+    },
+    {
+      "path": "viewer/viewer.css",
+      "sha256": "51fff06ebcd84de7d361a9cd34df2a4fd2a7f920e61b0df61f74b9c9ebe8e289"
+    },
+    {
+      "path": "archify/assets/template.html",
+      "sha256": "d6c12ad2832ba1bf7ff7a745364736eea6850a17210f167c4c66581d2b62d378"
+    },
+    {
+      "path": "archify/test/adaptive-reader-layout.test.mjs",
+      "sha256": "449c4da15abd514904f37e3a776460074adecfc0f293c159902fa2a333eb0888"
+    },
+    {
+      "path": "archify/test/animation.test.mjs",
+      "sha256": "f53265be97ca6e59a6902c68a4cd2690a7ed931ab89cb83ad071030d80e17398"
+    },
+    {
+      "path": "archify/test/architecture-compare-recovery.test.mjs",
+      "sha256": "6da0a8cc3be17431cc1362e0254a43afcc830e8d5678ed7c13b865f03cfd25b6"
+    },
+    {
+      "path": "archify/test/architecture-delta-literals.test.mjs",
+      "sha256": "ef2983346164ba449b9799e174545e71eed2d6790dbc757c691dff6631a04d2b"
+    },
+    {
+      "path": "archify/test/architecture-delta-markers.test.mjs",
+      "sha256": "9322ed406b858e7bbda97afb966e2b854b888cbd671f3233fa0ad8e627e01e07"
+    },
+    {
+      "path": "archify/test/architecture-delta.test.mjs",
+      "sha256": "a03268cdee963cf5be1964607c8fee1d837fa2aff996563284f523ffc96219ae"
+    },
+    {
+      "path": "archify/test/artifact-receipt-flush.test.mjs",
+      "sha256": "ade28c97ccfc106f772c78cc20e8ed798fa42da7bf36befd7477b284792df48f"
+    },
+    {
+      "path": "archify/test/authored-reachability.test.mjs",
+      "sha256": "b243c1568c8470a28cfbebc6b9db4dfe0302e7f37f5c451ccffec53de23fd01b"
+    },
+    {
+      "path": "archify/test/authored-straight-routes.test.mjs",
+      "sha256": "41467dc0a64a06e8f5adddc64493ba9b143f33ebbc2ee631db7c3872c8217d85"
+    },
+    {
+      "path": "archify/test/authoring-safety-contract.test.mjs",
+      "sha256": "1454a57493576d4afa9fd3f8640e064c86e5cdcaac2de1890fcedce84d0fce24"
+    },
+    {
+      "path": "archify/test/automatic-port-spread.test.mjs",
+      "sha256": "7c162b7a9ddefe0ec1269d1981f322748f7327b75664d513ced02adfeb1249e0"
+    },
+    {
+      "path": "archify/test/base-input-compatibility.test.mjs",
+      "sha256": "0cc0ec480aa23620adfb493b0c102a744c72c8799e3e837ef4c31f26980551d5"
+    },
+    {
+      "path": "archify/test/brand-href-entities.test.mjs",
+      "sha256": "276c1d40c31e9fa4ec12cf3b176de929d4553bccbffca6f8e89e02aed1b2ecd3"
+    },
+    {
+      "path": "archify/test/brand-marks.test.mjs",
+      "sha256": "72b0f7beafa05fc548fdb981ebb0521c05bbb614fbc17523f108aab90f98ef53"
+    },
+    {
+      "path": "archify/test/browser-gate.test.mjs",
+      "sha256": "86c8fab8e2b267e76a2db9fa85f088587a6f2d7ecd8d7165f986b4c46154169f"
+    },
+    {
+      "path": "archify/test/browser-zoom-browser.test.mjs",
+      "sha256": "937a7661acac152b0b4c520ec100c309bd479416b8ff630d376ec1df13b99a84"
+    },
+    {
+      "path": "archify/test/canvas-endpoints-browser.test.mjs",
+      "sha256": "19a204eee4e87e233e29db181636bc6bf599343aaf330e089ed7338daa5f4e60"
+    },
+    {
+      "path": "archify/test/canvas-framing-browser.test.mjs",
+      "sha256": "39fa11273cacad5b0260e5a91fb998e6c72aad311c045a040b5ea797f5539e3f"
+    },
+    {
+      "path": "archify/test/chapter-centering.test.mjs",
+      "sha256": "d41ca8a0b62d272d76a98b0f3706a55ea6e4ec0a62b94812a1b5a258c0f06dc5"
+    },
+    {
+      "path": "archify/test/chapter-delta-preview.test.mjs",
+      "sha256": "834fab9360c66e333e028879d12c751e540e26618ee39cdcb6def1699376dbe3"
+    },
+    {
+      "path": "archify/test/chapter-handoff.test.mjs",
+      "sha256": "384683b85c8181b9be6a54f24dc00e739d5347b86b1a878d2d9a865a650b4f3e"
+    },
+    {
+      "path": "archify/test/chapter-rail.test.mjs",
+      "sha256": "a95d33c9d19e400954aa93e8585788828dba40698b7a9ada9648430872da8f9c"
+    },
+    {
+      "path": "archify/test/checkout-line-endings.test.mjs",
+      "sha256": "6a001dbd0559e2129391c2d23633317ee27b6b91101879d91ab274f0d30c5eff"
+    },
+    {
+      "path": "archify/test/chrome-pipe-transport.test.mjs",
+      "sha256": "08e6c1e434f9cccbdbc0b840fd00ffdd10de99599836e1574c9283353e5469ec"
+    },
+    {
+      "path": "archify/test/clean-skill-staging.test.mjs",
+      "sha256": "8f14a308935fa16a9b7729bbbb37e3a9a7a2bf502c3ce4c98c689cc7322eb69b"
+    },
+    {
+      "path": "archify/test/cli-output-types.test.mjs",
+      "sha256": "504e8da56a15f2aaf691ec09a6b370567dc2fe971b897b753de57f0cc4e5fd56"
+    },
+    {
+      "path": "archify/test/cli.test.mjs",
+      "sha256": "99bef064582eb8da81bc36c2b80d9fa06cc760622019a5211ed36b7a74f3d231"
+    },
+    {
+      "path": "archify/test/community-proof-intake.test.mjs",
+      "sha256": "6b4273a0deadffa7f054b8e8b5ddee74e6123062ccd5ddda08492a4b9ced39b9"
+    },
+    {
+      "path": "archify/test/copy-site-assets.test.mjs",
+      "sha256": "2868565b5a9cf5337b74f10766e4572583ce6c2fb6b5b323197a304f38882b5e"
+    },
+    {
+      "path": "archify/test/cursor-onboarding.test.mjs",
+      "sha256": "cfd37b92b0aa9819b875779dcc7ee5630f2553f53939d9ce40ddabf9293b1a9e"
+    },
+    {
+      "path": "archify/test/degraded.test.mjs",
+      "sha256": "b7cdbd22d594c627a4d8b0b6403e403a0599df9229c561c9bb435ce200ce1344"
+    },
+    {
+      "path": "archify/test/delivery-contract.test.mjs",
+      "sha256": "3ce7aa340c9a7f698b5dd24324b3eeaf83aac183165c6fad2a3e6508a8c86773"
+    },
+    {
+      "path": "archify/test/delivery-sidecar-path.test.mjs",
+      "sha256": "38646b57b48fec4baffc60bfe14a89ce910d349d7abe70883d78bf5ae770d708"
+    },
+    {
+      "path": "archify/test/desktop-reader-browser.test.mjs",
+      "sha256": "5b9025f26251be2329aaf8c54e01d05c6c9ef65f82770078136b0450f65e6cdf"
+    },
+    {
+      "path": "archify/test/diagram-guide.test.mjs",
+      "sha256": "52c057417736299482f3ca270992d87a4eae4807062b78c760d85cce5ef8aa3e"
+    },
+    {
+      "path": "archify/test/edge-label-color.test.mjs",
+      "sha256": "df2e3217ce4fe513e0c49642b0e5bf1e64bdccd298fb226edce47fd78cb4f410"
+    },
+    {
+      "path": "archify/test/engineering-profile.test.mjs",
+      "sha256": "d5419dc45da1927a2cac1b998fdd5d1bbdbc68369ccb17cffaf4d98a90e0e242"
+    },
+    {
+      "path": "archify/test/export-browser.test.mjs",
+      "sha256": "67f61c5a482acfc3447d190b3de4ee90c465ca2202f0324241ff9a1292c4b78f"
+    },
+    {
+      "path": "archify/test/export-cleanup-browser.test.mjs",
+      "sha256": "8ce9d20717d0572c7e3f022354f75dbf9ca62fdfa9db72ccd5a31f8cecff4f0c"
+    },
+    {
+      "path": "archify/test/finder-browser.test.mjs",
+      "sha256": "de9301bd05020d9cb7f86d2f32bd356250b05c21fb6654175b3c85a8db709163"
+    },
+    {
+      "path": "archify/test/finder.test.mjs",
+      "sha256": "10683c42d6d9e3d20e2c7b48006e0f4c0bb16094f8aa5c76ebaa105be531585c"
+    },
+    {
+      "path": "archify/test/fixed-canvas-browser.test.mjs",
+      "sha256": "d4dc956947285c0c5e1cb3054a4785af5daca8be2909a22701fc321fddf684f3"
+    },
+    {
+      "path": "archify/test/focus-browser.test.mjs",
+      "sha256": "4c1de50316dd79cf42a6b386f9ab38f0a8462bfa3d748121fa29e60dcb4907a8"
+    },
+    {
+      "path": "archify/test/gallery.test.mjs",
+      "sha256": "f30d8e759e16b793c0c7755779718cb0680b95be14bf7a8b5827105cfad7f4b5"
+    },
+    {
+      "path": "archify/test/generate-validators.test.mjs",
+      "sha256": "fb440eeb3705a3e8e0b14a1c526b898243384749676b27eaf657012b3903f87d"
+    },
+    {
+      "path": "archify/test/generate-viewer.test.mjs",
+      "sha256": "b4322cd21663e4939cd282b821ffbfe304ba1a2c73fae3ce2be75e4dd0b6ceb5"
+    },
+    {
+      "path": "archify/test/generated-artifact-xml.test.mjs",
+      "sha256": "e44204d5e48ae6806f96e62627c72ca086ef3b543a7e4227bc6ba02116e2a201"
+    },
+    {
+      "path": "archify/test/geometry.test.mjs",
+      "sha256": "3f1461ec307a7feab3cc265dd6fb577e10417e2826b8d0cb31c5f5a41d25dfc2"
+    },
+    {
+      "path": "archify/test/grid.test.mjs",
+      "sha256": "ebf1cd47535148c43b578eb10df0260f0f55cb6811d06c01375fbb408bf2cf6b"
+    },
+    {
+      "path": "archify/test/guide-page.test.mjs",
+      "sha256": "0439328d2de8f5d15e88e5556ef71eed36927401e46bb86e6366fc9dfffee0c3"
+    },
+    {
+      "path": "archify/test/guide.test.mjs",
+      "sha256": "1d43e2adf4349980f3455e25c42cbf0836f5e0422a2dcc29d50d4ccb7854c48a"
+    },
+    {
+      "path": "archify/test/guided-views-browser.test.mjs",
+      "sha256": "95cba5037a695df49a0d4cf11964bd628eaad17c6e67a2a6bfad4593c9a96c39"
+    },
+    {
+      "path": "archify/test/guided-views.test.mjs",
+      "sha256": "fbed156af01082f3bbde7b0c0b6675664613c47644e14a33fad3fbd1b8dc062e"
+    },
+    {
+      "path": "archify/test/i18n.test.mjs",
+      "sha256": "918a453736e0d1a2e042ad04e7081cd641e075ca7271d30370bd76e0e57834fa"
+    },
+    {
+      "path": "archify/test/intent-trace-browser.test.mjs",
+      "sha256": "1b7b8db09d1e31e23ff9d662d0b7dff09e69f519db2ecdb4ec0922cf8df277e1"
+    },
+    {
+      "path": "archify/test/intent-trace.test.mjs",
+      "sha256": "63f4eed2a0221cdccf6893a8b15402a96a8f1bdedcb0ccf9cbdb04bac367b8e8"
+    },
+    {
+      "path": "archify/test/label-clearance.test.mjs",
+      "sha256": "2d3fcb62a6e58875cc58e46032af7dd7f31f8912823af914449f31a6b2cc99ff"
+    },
+    {
+      "path": "archify/test/landing.test.mjs",
+      "sha256": "3e7437d7dfd8aa1be1de0c2c91e2b1fdf67fe6df117ea4cca31588fb67712a72"
+    },
+    {
+      "path": "archify/test/layout-rules.test.mjs",
+      "sha256": "a319a2811cb3da20222e05e015666d9173e1c39bd9f6c0c1598d6250989a6e96"
+    },
+    {
+      "path": "archify/test/legend-contract.test.mjs",
+      "sha256": "78d91bdaff2c040d1eb777b2c75650aa31dd6fdd888e8449b02babd1f30b50ce"
+    },
+    {
+      "path": "archify/test/lifecycle-rail-browser.test.mjs",
+      "sha256": "19da1be2e1d494cd5f39cb8e3df5e995e817a07ed59542b1dc338d7b2e3be9af"
+    },
+    {
+      "path": "archify/test/meta-output-contract.test.mjs",
+      "sha256": "fceb85c788c118609a0c80dce266c9bbf990a8e14a428d5a240f5b28ad2f9f50"
+    },
+    {
+      "path": "archify/test/motion-governor-browser.test.mjs",
+      "sha256": "d4f7c1372657b8aeb84aee1d7cae7d4554b07049bbdc2e7e697aacb1a0326883"
+    },
+    {
+      "path": "archify/test/motion-governor.test.mjs",
+      "sha256": "02609189ef79e6b44f9b5b6c1a5c1716886201714fb16212eeb038ab12785b8c"
+    },
+    {
+      "path": "archify/test/native-output-path.test.mjs",
+      "sha256": "32cfb55ac3dcdb6597b00c2af368b008adb1fa5b2e15d1759ffca4055c090081"
+    },
+    {
+      "path": "archify/test/offline-font-browser.test.mjs",
+      "sha256": "331e49e54538ad36102bf4c0e507327721c06b8fe74981f56c7ee929489025d6"
+    },
+    {
+      "path": "archify/test/offline-self-containment.test.mjs",
+      "sha256": "1d21a47d50c6178f8412c13af48912e12694159cd51c66dcd709df16e6fbc500"
+    },
+    {
+      "path": "archify/test/open-artifact.test.mjs",
+      "sha256": "cfbc28bd6a896d40974eb4f62360246f5bfbad913912213878d77604ecf50850"
+    },
+    {
+      "path": "archify/test/ordinary-model-floor.test.mjs",
+      "sha256": "b62491be7e6ade42a406f49921ad6acdb700f8f7a837183c9c137ec7dcee5d2d"
+    },
+    {
+      "path": "archify/test/output-path.test.mjs",
+      "sha256": "42c1310a69eeb91bff909701f61ca00c747c72c926989a5e9bc694231a2ec002"
+    },
+    {
+      "path": "archify/test/passport-drag-click.test.mjs",
+      "sha256": "e2c6cbb802bca65dab3620f275a776554575ed8ab7999e8c9363734828d60465"
+    },
+    {
+      "path": "archify/test/path-boundary-contract.test.mjs",
+      "sha256": "821c28cbe3d073427c78b0df1bf4638d915c497d3f2dc0db0e43c6abec0a4535"
+    },
+    {
+      "path": "archify/test/path-semantics.test.mjs",
+      "sha256": "50050e8ef1ba4fe6b606a9f0663f53a2e03304e866c22fcfa9356d6d2b4b7568"
+    },
+    {
+      "path": "archify/test/portable-path.test.mjs",
+      "sha256": "858e1abe9f064b928fa0762d94c8dc3e16666f5c9bc73dc708d6a644b3bc405a"
+    },
+    {
+      "path": "archify/test/presentation.test.mjs",
+      "sha256": "9c0fd988a3123762218093ddb8b8189998272318695347ed6fb924cec490280a"
+    },
+    {
+      "path": "archify/test/preset-tryon.test.mjs",
+      "sha256": "92c45df6deac7ccefcb8c1c38ad0f0ba7f42ddd737e5ef0baa9d15aa57ef1719"
+    },
+    {
+      "path": "archify/test/preview-contract.test.mjs",
+      "sha256": "fab520b1c709e23b6393684f57db76fcf1aff5425bef838652efa355e63cccd3"
+    },
+    {
+      "path": "archify/test/preview-force-stop.test.mjs",
+      "sha256": "93ad0123ca70e6ecfb6fc30d77174359bcddce3e461ba6ba0e03653c9b680a35"
+    },
+    {
+      "path": "archify/test/preview.test.mjs",
+      "sha256": "0c4b9500b0d853be5e7574ca057edd370853f28b691c24f7dab80d38a745112e"
+    },
+    {
+      "path": "archify/test/proof-aperture.test.mjs",
+      "sha256": "f393b9935bb9d915e301a1bf974b67faa72161a2717d6b65077e1060280e9af2"
+    },
+    {
+      "path": "archify/test/reach-share-card.test.mjs",
+      "sha256": "b94cc337cacc3e412ff08d00e88078d975e1fa2c32ad7d72a37fcffe151a8832"
+    },
+    {
+      "path": "archify/test/reader-layout-browser.test.mjs",
+      "sha256": "bfc6d887f785629e2edaaa19fd84bc83c96a6a35c83eea15de0a8029f26e259e"
+    },
+    {
+      "path": "archify/test/readme-showcase.test.mjs",
+      "sha256": "836a7910eb2ba9d446505d4403ab6d2117934b583164fa677d515dea5d994d0a"
+    },
+    {
+      "path": "archify/test/real-repository-proof.test.mjs",
+      "sha256": "6ce5dc9a9ad0e1109ec40480e959e077a0a21ff931758ab072bfa5cbee7c24ed"
+    },
+    {
+      "path": "archify/test/relationship-direct-explorer.test.mjs",
+      "sha256": "d8e330ec1e4d7edc74636e4d738f16c6ab8b823960f31a9b464f3387098aa779"
+    },
+    {
+      "path": "archify/test/relationship-lens.test.mjs",
+      "sha256": "aa1f3ee7ffe9f7aa6c97417a33e7d7075d54d81bcf4bc238ea4102967a4f5004"
+    },
+    {
+      "path": "archify/test/relationship-pan-input.test.mjs",
+      "sha256": "db5e1049cc6b29628d0339c76d2d2cd28d3cb66884196117d988c8f0c7db7119"
+    },
+    {
+      "path": "archify/test/relationship-permalink.test.mjs",
+      "sha256": "c2425e42a1b78b8a9714b675a2330352c78cc59880ab5d3ac7628c794490e3c6"
+    },
+    {
+      "path": "archify/test/relationship-pulse.test.mjs",
+      "sha256": "c15ac8f463ca7978dd48c18698b8700ae408ae05a9eebfd334425d74fad96c18"
+    },
+    {
+      "path": "archify/test/release-identity.test.mjs",
+      "sha256": "5a55ab3abc7e5da7764a7fdb414f8cb8db21c1d83688a1aa68c69ab3423979f1"
+    },
+    {
+      "path": "archify/test/release-package-gates.test.mjs",
+      "sha256": "9ab4e13569bfb313f4fe199fbba966d524680c93105e360e3391c8120e1e2fc8"
+    },
+    {
+      "path": "archify/test/render-failure-diagnostics.test.mjs",
+      "sha256": "4b7ce445797f18d8b9dfbc9deef1d648b32515be61cf23588203775c4228623d"
+    },
+    {
+      "path": "archify/test/render-output-checks.test.mjs",
+      "sha256": "fa7d516207605c845ca26b5230014c378aec7952778e7cf4c6007e86cb0fd737"
+    },
+    {
+      "path": "archify/test/renderer-atomic-write.test.mjs",
+      "sha256": "83451784f8afd091538adb6a0e657cb253daa43877e24310d858c6680ac1cc4d"
+    },
+    {
+      "path": "archify/test/renderer-diagnostic-boundary.test.mjs",
+      "sha256": "73afe2d494c73741993e4b72f4bc307360c715fba832568dd81b86686da31e1c"
+    },
+    {
+      "path": "archify/test/renderer-import-isolation.test.mjs",
+      "sha256": "a08ca63717f04075ec4a9d8cae527c7d248d003a7b14cc7de2ec009edfa4e789"
+    },
+    {
+      "path": "archify/test/repair-receipt.test.mjs",
+      "sha256": "037e09aba980196e968ef92c195fa11a353f2f6986727f0c10fb662b61ea7771"
+    },
+    {
+      "path": "archify/test/repository-evidence-replacement.test.mjs",
+      "sha256": "8ca2d0ceea443638b830c17215b83618c3faaabcfe9848dfff1bc73db91de57f"
+    },
+    {
+      "path": "archify/test/repository-evidence-types-browser.test.mjs",
+      "sha256": "38d4694710325f564b5ded69485f47266993a76097d3bf5af181b1860b5b6ef5"
+    },
+    {
+      "path": "archify/test/repository-evidence-types.test.mjs",
+      "sha256": "33204a28b7cc0ca82ebb7b9e0b3d00c5a13ccd7a2293e4bb1616db66b34c92ad"
+    },
+    {
+      "path": "archify/test/repository-evidence.test.mjs",
+      "sha256": "c253cb11f16f6687ded610e60d91fd5880a0743e55b5b951c64cc5651a3b1874"
+    },
+    {
+      "path": "archify/test/repository-language-metadata.test.mjs",
+      "sha256": "c4d65ebc03a1d3a583697abee8ddfe701264627def18e2e918c36a4d5c126c40"
+    },
+    {
+      "path": "archify/test/route-journey.test.mjs",
+      "sha256": "fa540062fae2d0ce37a3c302073cf174689a2f41b1f491f52804db006f98d727"
+    },
+    {
+      "path": "archify/test/route-probe-browser.test.mjs",
+      "sha256": "72479b0eff3e99e1a8a263736bfe4d0a18801d28a0896f82efbf24def22f2b36"
+    },
+    {
+      "path": "archify/test/route-probe.test.mjs",
+      "sha256": "3bc76e9426254f5589466e1fa3d10c826b4e5e883f6b7f67bc371061c3405f25"
+    },
+    {
+      "path": "archify/test/route-share-card.test.mjs",
+      "sha256": "da8a73f42167d6fa47041f818aa6e8bde4fe6b614ad3441a9a7ac30c15db1709"
+    },
+    {
+      "path": "archify/test/semantic-camera.test.mjs",
+      "sha256": "c3e12a8a6671cf8d2a321790d3cd8f489e6df8fe2cb42c33337e2124ad5e39b0"
+    },
+    {
+      "path": "archify/test/semantic-flow.test.mjs",
+      "sha256": "305dad25e06dc01825f01cb6889411cc7a6db36ceaac624f7bc6c6136ce53a76"
+    },
+    {
+      "path": "archify/test/semantic-legend-gateway.test.mjs",
+      "sha256": "a2aaf49464f2d5a48612dc3dcb60bb557de85da5c11ca9f6fea3373c011fd820"
+    },
+    {
+      "path": "archify/test/semantic-lens-browser.test.mjs",
+      "sha256": "5cab22edf55b8c259efc0643d2b36d5828c7a7bf0435364ba2d29760c2782c92"
+    },
+    {
+      "path": "archify/test/semantic-lens.test.mjs",
+      "sha256": "e2306109c643f9e9a7c73f6c328142acd719f1d83e3901b5e053578ecdb71493"
+    },
+    {
+      "path": "archify/test/semantic-passport-move-browser.test.mjs",
+      "sha256": "d8433877f04a0671e3b651fb11dc789f9041b8cc422db25a150da5c5d17c2c83"
+    },
+    {
+      "path": "archify/test/semantic-passport.test.mjs",
+      "sha256": "30760ae68c83e6cf57db64fdef5f87304dcc9c35595284bf8db826bb8c94b2c2"
+    },
+    {
+      "path": "archify/test/semantic-radar.test.mjs",
+      "sha256": "6aded61bd7b4f622b614d9ffd82eb91ab7185ce8fa804c3f5c33790f9f3f6577"
+    },
+    {
+      "path": "archify/test/semantic-zoom.test.mjs",
+      "sha256": "302057dbecbbf13232497bcb29567ef4b11362780f02b503361b0f5f00d50ec6"
+    },
+    {
+      "path": "archify/test/sequence-column-fit.test.mjs",
+      "sha256": "c993979fb9bc6e7865f92b759a45cd46606811c7c21b3a00447815e0d1a8191a"
+    },
+    {
+      "path": "archify/test/sequence-header-clearance.test.mjs",
+      "sha256": "7a439a453c4f648fe24b0e3392bc41a92ea49a1dd35a5b835d85f7984f69df96"
+    },
+    {
+      "path": "archify/test/settled-flow.test.mjs",
+      "sha256": "e079d492252d77612439fc055a6d79ef545829b12539aefac496f796ac90165e"
+    },
+    {
+      "path": "archify/test/share-card-export.test.mjs",
+      "sha256": "635ebf918753136fd8dad6f40e01676fd993b64a5869d7a40620253959c8ec2e"
+    },
+    {
+      "path": "archify/test/sidecar-path-length.test.mjs",
+      "sha256": "0f6e95621f95b9ff0e59e2920dbc69aefbe4fdfe94d2daa33904080e62b14f5b"
+    },
+    {
+      "path": "archify/test/site-language-continuity.test.mjs",
+      "sha256": "9a9bc4ce25a5573b64534aa9d9ccc37b6b4c2874886f072790c450d70dff1c9c"
+    },
+    {
+      "path": "archify/test/skill-metadata.test.mjs",
+      "sha256": "80b2fbbc89d2fca60e623ea0fc86e6cf7f0a3febf2b9f04a6d4a08f0f409708c"
+    },
+    {
+      "path": "archify/test/stable-update-manifest.test.mjs",
+      "sha256": "15e15dfb5bd45852fb1f00acde4270695c99eefbbc14db75b465028fa5134ef5"
+    },
+    {
+      "path": "archify/test/start-page.test.mjs",
+      "sha256": "0dbffe9b3b8cd6d4426c14770d6b843556a1280891c17bc4c7ababeaadd20043"
+    },
+    {
+      "path": "archify/test/story-beat-navigator.test.mjs",
+      "sha256": "6b6c0ab5b396e8a608d337cd8e351d4118a75678a5d90620943249b1bc53d7b0"
+    },
+    {
+      "path": "archify/test/story-carrier.test.mjs",
+      "sha256": "05143cd9c5f28ac5041fcb46daddf830ac171c0bf72335a8f9623a14916bf8bc"
+    },
+    {
+      "path": "archify/test/story-director-strip.test.mjs",
+      "sha256": "8ab2e1ff83cb63384ef9d2b459f7d86b2e7de767a30173b845009a02d26a7cce"
+    },
+    {
+      "path": "archify/test/story-follow-camera.test.mjs",
+      "sha256": "edc511d606a6eb18e41d8110a6fb9c9c0958c5638dce109ffb7968151cc709d7"
+    },
+    {
+      "path": "archify/test/story-horizon.test.mjs",
+      "sha256": "3f3c6a1055fa3fbaeeb6d0e21dfe66860a392bf5d5e64dc4499efb0e0cb0807f"
+    },
+    {
+      "path": "archify/test/story-moment-link.test.mjs",
+      "sha256": "acd13d838b3af58058a68dca90b7f4aad81a4d2fea7e6a89afd3a21345aa2207"
+    },
+    {
+      "path": "archify/test/story-shelf.test.mjs",
+      "sha256": "b734d038ca09136f46b5b514d1f19b8ca8bfa3377839d27cbcc338179c7da210"
+    },
+    {
+      "path": "archify/test/story-trail.test.mjs",
+      "sha256": "9ec4a06fcd365cc7a4ecc31927a004d98a62bab0eb6f3dd9feefa4e9f7ae009b"
+    },
+    {
+      "path": "archify/test/toolbar-polish.test.mjs",
+      "sha256": "741f571e6cf09370996a5cdc7b6e64437af213ce32f0259613fc4217901f4c2c"
+    },
+    {
+      "path": "archify/test/update-contract.test.mjs",
+      "sha256": "b4b98e73569308570f2a7f598d1e251487007739aeee761010884bc352b2dd13"
+    },
+    {
+      "path": "archify/test/update-notifier.test.mjs",
+      "sha256": "742e7399d7dce74df6479a13a01e5af3b73d40a43550a7943d971497bcc44f30"
+    },
+    {
+      "path": "archify/test/v1-compatibility.test.mjs",
+      "sha256": "f09e4253fb3b615ddb0db10aa29e535cf57011804b828f2d1f4f957c4f7509b3"
+    },
+    {
+      "path": "archify/test/vertical-edge.test.mjs",
+      "sha256": "2d53919eb463184c51d0baf0f6877631e0668fd1e2017dd7816e28ebb4d5d64c"
+    },
+    {
+      "path": "archify/test/viewer-camera-browser.test.mjs",
+      "sha256": "1aad4b98150a8130919bf6bb6a11ae3249c6f8c9ca3d414755cb9b4f017179e4"
+    },
+    {
+      "path": "archify/test/viewer-canvas-input.test.mjs",
+      "sha256": "18ad03b759c73b6f1a793c56940191e80e2aab866c1a22cd0a983327afff579c"
+    },
+    {
+      "path": "archify/test/viewer-chrome-layout.test.mjs",
+      "sha256": "701f229759511f05873f18d25ded7327aad20899f145444a25da2ff076d785b0"
+    },
+    {
+      "path": "archify/test/viewer-identifiers-browser.test.mjs",
+      "sha256": "9d572688c115a52ae8033f4775f891c9f0ab5d4bad5aaf03873ab4ad93d2f904"
+    },
+    {
+      "path": "archify/test/visual-check.test.mjs",
+      "sha256": "4e8704ea3c99c7d3dc4866377aa02f6f9a27e45c7e747976feab6ae6105dc46d"
+    },
+    {
+      "path": "archify/test/workflow-action-pinning.test.mjs",
+      "sha256": "af173e61c51e9d4201cf9e56adfd44e7a4c9891e7531d74cd08dc294fa728602"
+    },
+    {
+      "path": "archify/test/workflow-compiler-call-contract.test.mjs",
+      "sha256": "4f18215838396b6905d1109f798e46a5e981b98712935ebe25ef1f88cd84f5cd"
+    },
+    {
+      "path": "archify/test/workflow-compiler-hard-contract.test.mjs",
+      "sha256": "3575f4dd6eb714ebaaa947dd05cc11fefa960d28d26979d691b48563bc174967"
+    },
+    {
+      "path": "archify/test/workflow-compiler.test.mjs",
+      "sha256": "98e2fbdcc78ef7f35353b4dee5331ccb589370aa27b67c30893033f16aee7d79"
+    },
+    {
+      "path": "archify/test/workflow-migration.test.mjs",
+      "sha256": "6cbdaf136b2210f080c285fd14848a26ca8952396ed0a04dbbeefc67c7894df6"
+    },
+    {
+      "path": "archify/test/workflow-semantic-contract.test.mjs",
+      "sha256": "7d67d0074735fb7332786093b9286d475a7280a39fdca64e808c161dd2137cb1"
+    }
+  ]
+}

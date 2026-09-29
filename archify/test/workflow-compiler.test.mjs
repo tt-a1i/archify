@@ -34,6 +34,16 @@ function withoutNodeTextPositions(svg) {
     tag => tag.replace(/\s[xy]="[^"]*"/g, ''));
 }
 
+// Infinite-canvas navigation intentionally replaces the decorative line grid
+// with dots. Keep compiler compatibility hashes focused on authored workflow
+// geometry; the Viewer camera browser suite owns the grid-style regression.
+function withBaselineViewerGrid(svg) {
+  return svg.replace(
+    '<circle cx="20" cy="20" r="1" class="c-grid"/>',
+    '<path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5"/>',
+  );
+}
+
 function attribute(tag, name) {
   const value = tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
   assert.notEqual(value, undefined, `expected ${name} in ${tag}`);
@@ -324,7 +334,7 @@ test('fixed-v1 preserves baseline SVG except repaired node text positions', () =
   const result = compileSuccessfully(workflow);
   assert.equal(result.receipt.contract, 'fixed-v1');
   assert.equal(
-    sha256(withoutNodeTextPositions(result.svg)),
+    sha256(withBaselineViewerGrid(withoutNodeTextPositions(result.svg))),
     'e64795a4521e8568718981bf053c6e8f4e0cf714e27f70f0087d1850ae1fe633',
   );
 });
@@ -341,7 +351,7 @@ test('fixed-v1 compiler preserves the exact 700x400 compatibility geometry', () 
   assert.deepEqual(result.receipt.viewBox, [700, 400]);
   assert.deepEqual(svgViewBox(result.svg), [0, 0, 700, 400]);
   assert.equal(
-    sha256(withoutNodeTextPositions(result.svg)),
+    sha256(withBaselineViewerGrid(withoutNodeTextPositions(result.svg))),
     '79ac3e30f9e81263f9c7941339a6fe684f3a33dd2ac3ce4f7281a03fa2ee1c6b',
     'the clearance repair must not move or reserialize legacy geometry outside node text',
   );
@@ -356,7 +366,7 @@ test('readable-v2 separates approval branches in the checked-in workflow example
     // The only visible delta is approved-tool's source moving 12px left:
     // approval-denied and approved-tool previously shared a mixed-style trunk.
     // Node geometry, labels, all other paths and v1 baselines are unchanged.
-    sha256(result.svg.replace(/ data-(?:composition-routing|edge-role|layout-contract)="[^"]*"/g, '')),
+    sha256(withBaselineViewerGrid(result.svg).replace(/ data-(?:composition-routing|edge-role|layout-contract)="[^"]*"/g, '')),
     '7a4effe6000ef4d5c8e2e933186ff225f6398d76216d916600e51f8e05a7e139',
   );
 });

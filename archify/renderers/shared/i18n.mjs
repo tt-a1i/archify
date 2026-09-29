@@ -227,6 +227,7 @@ const MESSAGE_PAIRS = {
   'viewer.guide.fact.relationship.one': ['{count} relationship', '{count} 条关系'],
   'viewer.guide.fact.relationship.other': ['{count} relationships', '{count} 条关系'],
   'viewer.guide.open': ['Open diagram guide', '打开图表指南'],
+  'viewer.guide.canvas': ['Click or Tab into the canvas. Pan with right-drag, middle-drag, or Space + left-drag. Scroll or use arrow keys to pan; Ctrl/Cmd + scroll zooms at the pointer. Reset with 0.', '点击画布或用 Tab 进入。右键、中键或空格＋左键拖动平移；滚轮或方向键平移；Ctrl/Cmd＋滚轮以指针为中心缩放。按 0 重置。'],
 
   'viewer.finder.title': ['Find a node', '查找节点'],
   'viewer.finder.close': ['Close node finder', '关闭节点查找器'],
@@ -452,9 +453,13 @@ const MESSAGE_PAIRS = {
   'viewer.nav.level.read': ['READ', '阅读'],
   'viewer.nav.level.full': ['FULL', '完整'],
   'viewer.nav.level.auto': ['AUTO', '自动'],
-  'viewer.nav.detail.map': ['Zoom in to reveal relationship labels and node context', '放大以显示关系标签和节点上下文'],
-  'viewer.nav.detail.read': ['Zoom in again to reveal tags and annotations', '再次放大以显示标签和注释'],
+  'viewer.nav.detail.map': ['All authored detail remains visible', '所有已编写的细节保持显示'],
+  'viewer.nav.detail.read': ['All authored detail remains visible', '所有已编写的细节保持显示'],
   'viewer.nav.detail.full': ['Full diagram detail', '完整图表详情'],
+  'viewer.notes.title': ['Diagram notes', '图示说明'],
+  'viewer.notes.close': ['Close diagram notes', '关闭图示说明'],
+  'viewer.nav.fitAll': ['Fit entire diagram', '适应全部'],
+  'viewer.nav.fitAll.short': ['FIT', '全图'],
 
   'viewer.intent.summary': ['{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.', '{label}。{out} 条出向，{in} 条入向{loops}。共 {total} 条连接。按 Enter 查看详情。'],
   'viewer.intent.loops': [', {count} self loop', '，{count} 条自环'],

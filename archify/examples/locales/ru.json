@@ -421,5 +421,10 @@
   "viewer.common.copyFailed": "Не удалось скопировать",
   "viewer.common.copyLink": "Скопировать ссылку",
   "viewer.common.clear": "Очистить",
-  "viewer.common.close": "Закрыть"
+  "viewer.common.close": "Закрыть",
+  "viewer.guide.canvas": "Щёлкните или нажмите Tab для входа на холст. Перетаскивайте правой, средней кнопкой или Пробел + левой. Колесо и стрелки перемещают; Ctrl/Cmd + колесо масштабирует у указателя. 0 сбрасывает вид.",
+  "viewer.notes.title": "Заметки к диаграмме",
+  "viewer.notes.close": "Закрыть заметки к диаграмме",
+  "viewer.nav.fitAll": "Показать всю диаграмму",
+  "viewer.nav.fitAll.short": "ЦЕЛИКОМ"
 }
