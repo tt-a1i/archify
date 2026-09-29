@@ -2,10 +2,12 @@
 
 ## Download and try
 
-- [Download Shanghai standalone HTML](https://github.com/yijiez666-alt/archify/raw/refs/heads/labs/travel/labs/travel/demo/shanghai.html)
-- [Download Paris standalone HTML](https://github.com/yijiez666-alt/archify/raw/refs/heads/labs/travel/labs/travel/demo/paris.html)
+- [Download Shanghai ZIP (contains standalone HTML)](https://github.com/yijiez666-alt/archify/raw/refs/heads/labs/travel/labs/travel/demo/shanghai.zip)
+- [Download Paris ZIP (contains standalone HTML)](https://github.com/yijiez666-alt/archify/raw/refs/heads/labs/travel/labs/travel/demo/paris.zip)
 
-Save the HTML and open it in Chrome/Edge. Each file embeds the renderer, itinerary,
+Download and extract the ZIP, then open its HTML in Chrome/Edge. GitHub serves raw
+HTML as text, so the ZIP links above are the download entry points.
+Each HTML file embeds the renderer, itinerary,
 DEM and all three daily geometry blocks. No install, server, API key or network
 is needed to explore it. Start with the workflow, click **3D 有高度**, then switch
 between **全部行程** and individual days. Official venue links still need internet.
