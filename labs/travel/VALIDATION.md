@@ -90,3 +90,14 @@ export and Paris compatibility. Evidence: `out/travel-shanghai-trip-evidence/`,
 including visually inspected `shanghai-three-days.png` and `disney-day2.png`.
 The Disney castle is a symbolic model at the sourced park coordinate; the
 background is a location window, not mapped park geography.
+
+## Versioned packages and deterministic style
+
+The HTTP suite checks destination isolation, deferred height downloads, local
+cache reuse, service-worker offline reload, cross-city navigation and identical
+canvas output after reload and curated itinerary regeneration. Cache unit tests
+cover LRU order, active/pinned protection, quota failure and corrupt-byte rejection.
+The manifest checks each content hash and the explicit visual baseline lock.
+The portable offline atlas retains the existing interaction/export/browser tests.
+No claim is made about all browsers, production CDN deployment or global coverage.
+Evidence: `out/travel-packages-evidence/` and tool-reported focused test results.

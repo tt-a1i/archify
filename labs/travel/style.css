@@ -6,3 +6,5 @@
 .view-modes{flex-wrap:wrap}.scope{flex-wrap:wrap}.view-modes button{white-space:nowrap}
 
 .breadcrumb[hidden]{display:none}
+
+.package-status{margin:0;padding:6px 24px;background:#edf0e4;font-size:12px;color:#466352}.cache-dialog{max-width:480px;border:1px solid #b8c4b6;border-radius:12px;padding:24px;background:#faf7ef;color:#29463e}.cache-dialog label{display:block;margin:16px 0}.cache-dialog button{margin:6px;padding:8px}.cache-dialog p{line-height:1.6}.cache-dialog::backdrop{background:#263f3855}

@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const data = JSON.parse(document.getElementById('travel-data').textContent);
+  const data = (window.TravelData||JSON.parse(document.getElementById('travel-data').textContent));
   const $ = id => document.getElementById(id);
   const svg = document.querySelector('.diagram-container > svg');
   const canvas = document.querySelector('.diagram-container');
@@ -50,6 +50,7 @@
     window.dispatchEvent(new CustomEvent('archify:travel-change'));
   }
   function changeScene(next, id = null, write = true) {
+    if(window.TravelPackages?.navigate(next,id))return;
     if (!data.scenes[next]) next = 'france';
     scene = next; selected = null; $('search').value = ''; $('category').value = 'all'; $('day').value = '0';
     const s = data.scenes[scene]; $('title').textContent = s.name; $('english').textContent = s.english; $('intro').textContent = s.subtitle; $('crumb').hidden = scene !== 'paris';

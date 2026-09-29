@@ -1,5 +1,39 @@
 # Archify Travel experiment
 
+## Destination packages and stable style
+
+Serve with `node labs/travel/serve.mjs`; open `index.html` or `world.html` over
+HTTP (HTTPS outside localhost). The default entry now downloads only the selected
+destination base plus shared renderer. Height/building data is fetched when
+3D height mode is selected. The full standalone file is `offline.html`; it is
+kept for portable use and compatibility tests and is never auto-downloaded.
+
+`packages/manifest.json` pins content-addressed paths, sizes and SHA-256 hashes.
+All package bytes are verified before use. The private Cache API store defaults
+to a 64 MiB budget (UI: 5–256 MiB). LRU eviction skips active files and pinned
+destinations; quota/storage failure keeps the verified download in memory and
+shows that it is temporary. No P2P transport is used. The header's cache dialog
+shows actual cached bytes, changes the budget and clears only eligible data.
+Budget protection is best effort: existing active/pinned files may exceed a
+newly reduced budget. Browser eviction or user-cleared site data can still
+remove everything. Pinning is an app policy, not a browser persistence grant.
+
+A service worker stores the small page shell; after successful installation and
+package downloads, tested cached destinations reopen offline. Uncached cities or
+height layers still need network. The server supports gzip, ETag revalidation
+and immutable hashed assets. Deploy the shell, worker and packages together;
+retain prior hashed releases for open clients. CDN/production hosting is not
+configured by this local change. Coverage is still France, Paris and the Shanghai
+sample, not a complete worldwide dataset or dynamic city extraction service.
+
+The `illustrated-diorama-v1` preset, original models, fixed day palette and
+`air-arc-v1` are versioned together. `visual-lock.json` detects changes to the
+renderer/CSS/preset/arrow sources; changing its baseline needs explicit visual
+review. Generated itinerary JSON records the style identity and fingerprint.
+No theme/model/shader code is generated from prompts or supplied by city packs.
+Same-browser regression compares canvas pixels after cache reload and itinerary
+regeneration. Different GPUs/fonts/browsers can still differ at the pixel level.
+
 ## Illustrated diorama levels
 
 Open `world.html` to choose France, Paris or the Shanghai Lujiazui sample and
@@ -69,7 +103,7 @@ Pop-Location
 node labs/travel/build.mjs
 node labs/travel/build.mjs --check
 $env:ARCHIFY_CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
-node --test labs/travel/travel.test.mjs labs/travel/travel3d.test.mjs labs/travel/trip.test.mjs
+node --test labs/travel/travel.test.mjs labs/travel/travel3d.test.mjs labs/travel/trip.test.mjs labs/travel/packages.test.mjs
 ```
 
 Set `ARCHIFY_TRAVEL_EVIDENCE` to an output directory to retain desktop country,
@@ -86,7 +120,7 @@ native two-finger pinch is not implemented by this experiment.
 
 ## Data and attribution
 
-All data was retrieved on 2026-09-29 and bundled locally. `data/sources.json`
+Source snapshots were retrieved on 2026-09-29 and bundled into versioned local packages. `data/sources.json`
 records provenance, download endpoints and licenses. `data/places.json` records
 each Wikidata entity and its coordinate at retrieval time.
 

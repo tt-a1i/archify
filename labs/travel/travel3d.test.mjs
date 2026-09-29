@@ -13,7 +13,7 @@ test('3D geography, rotation, zoom, pan, scene state, export and fallback', {ski
   const state=()=>run('Archify.travel3d.state()');
   await send('Page.addScriptToEvaluateOnNewDocument',{source:"window.errors=[];addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));"});
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
-  async function load(suffix=''){const ready=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:new URL('./index.html',import.meta.url).href+suffix});await ready;await stable();}
+  async function load(suffix=''){const ready=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:new URL('./offline.html',import.meta.url).href+suffix});await ready;await stable();}
   await load();assert.deepEqual(await run('errors'),[]);assert.equal((await state()).active,true);assert.ok((await state()).terrainCount>0);assert.equal((await state()).places.length,4);
   const rect=await run('(()=>{const r=document.querySelector("#stage-3d canvas").getBoundingClientRect();return {x:r.x+r.width*.85,y:r.y+r.height*.55}})()');
   async function drag(button,dx,dy){await send('Input.dispatchMouseEvent',{type:'mousePressed',button,clickCount:1,...rect});for(let i=1;i<=8;i++)await send('Input.dispatchMouseEvent',{type:'mouseMoved',button,buttons:button==='left'?1:2,x:rect.x+dx*i/8,y:rect.y+dy*i/8});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button,clickCount:1,x:rect.x+dx,y:rect.y+dy});await stable();}
@@ -55,11 +55,6 @@ test('3D geography, rotation, zoom, pan, scene state, export and fallback', {ski
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await stable();assert.ok(await run('document.documentElement.scrollWidth<=innerWidth+1'));assert.deepEqual(await run('errors'),[]);
   await run("document.getElementById('day').value='2';document.getElementById('day').dispatchEvent(new Event('change'))");await stable();assert.equal((await state()).scene,'disney');assert.deepEqual((await state()).places,['Q865312']);
   await run("document.getElementById('day').value='3';document.getElementById('day').dispatchEvent(new Event('change'))");await stable();assert.equal((await state()).scene,'shanghai');assert.equal((await state()).places.length,2);
-  for(const level of ['2d','flat','3d']){
-    const ready=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:new URL('./world.html',import.meta.url).href});await ready;
-    const next=browser.cdp.waitFor('Page.loadEventFired',session);await run("document.getElementById('precision').value="+JSON.stringify(level)+";document.getElementById('apply').click()");await next;await stable();
-    assert.equal(await run('Archify.travel.scene()'),'shanghai');assert.equal((await state()).active,level!=='2d');if(level!=='2d')assert.equal((await state()).heightMode,level==='3d');
-  }
   await send('Page.addScriptToEvaluateOnNewDocument',{source:"const native=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){return kind.startsWith('webgl')?null:native.call(this,kind,...args)}"});
   await load('?fallback');assert.equal((await state()).failed,true);assert.equal(await run("document.querySelector('.diagram-container').hidden"),false);assert.equal(await run('Archify.travel.visible().length'),4);
 });

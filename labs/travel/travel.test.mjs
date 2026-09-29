@@ -19,7 +19,7 @@ test('country/city navigation, filtering, detail, depth, saved state, links and 
   const send=(method,params={})=>browser.cdp.send(method,params,session);
   const run=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});assert.equal(r.exceptionDetails,undefined,r.exceptionDetails?.exception?.description);return r.result?.value;};
   await send('Page.addScriptToEvaluateOnNewDocument',{source:"window.travelErrors=[];addEventListener('error',e=>travelErrors.push(e.message));addEventListener('unhandledrejection',e=>travelErrors.push(String(e.reason)));"});
-  const url=pathToFileURL(path.join(root,'index.html')).href;
+  const url=pathToFileURL(path.join(root,'offline.html')).href;
   let loadNumber=0;
   async function load(hash=''){const ready=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:url+'?test='+ (++loadNumber)+hash});await ready;await run("document.getElementById('mode-2d').click()");await stable();}
   async function stable(){await run('(async()=>{await document.fonts.ready;for(let i=0;i<12;i++)await new Promise(requestAnimationFrame);})()');}

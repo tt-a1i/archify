@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node --test travel.test.mjs travel3d.test.mjs trip.test.mjs",
+    "test": "node --test travel.test.mjs travel3d.test.mjs trip.test.mjs packages.test.mjs",
     "serve": "node serve.mjs"
   },
   "dependencies": {

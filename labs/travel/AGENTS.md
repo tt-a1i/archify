@@ -1,5 +1,14 @@
 # Travel map visual contract
 
+The approved overall style is `illustrated-diorama-v1` in `visual-style.js`.
+Keep pastel materials, model silhouettes, lighting, typography and three
+presentation levels consistent across destinations and generated itineraries.
+Generation supplies known places and visit order, not new rendering code or
+arbitrary visual parameters. The build pins renderer/CSS/arrow/preset content
+hashes; downloaded data is integrity-checked. Any intentional style change needs
+an explicit user request, a style version update and Paris/Shanghai visual checks.
+Cache misses and quota failures must never switch to a different visual renderer.
+
 The user approved and explicitly locked the `air-arc-v1` direction style.
 Apply it to future generated 3D travel maps and itinerary changes in this module.
 

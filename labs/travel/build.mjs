@@ -1,3 +1,5 @@
+import {buildPackages,styleIdentity} from './build-packages.mjs';
+import {VISUAL} from './visual-style.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -67,7 +69,9 @@ trip.routes=trip.routes.map(r=>({...r,points:r.coordinates.map(p=>project(p,boun
 trip.backdrop=trip.backdrop.map(line=>line.map(p=>project(p,bounds.paris)));
 trip.water=trip.water.map(line=>line.map(p=>project(p,bounds.paris)));
 trip.buildings=trip.buildings.map(b=>({...b,points:b.coordinates.map(p=>project(p,bounds.paris))}));
-const payload = JSON.stringify({ scenes, places, trip, shanghai, shanghaiTrip, sources: json('sources.json') }).replace(/</g, '\\u003c');
+for(const p of places)if(!VISUAL.icons.includes(p.icon))throw Error('Unapproved landmark model: '+p.icon);
+for(const plan of [trip,shanghaiTrip]){for(const day of plan.days)day.color=VISUAL.dayColors[day.day-1];for(const route of plan.routes)route.color=VISUAL.dayColors[route.day-1];}
+const payload = JSON.stringify({ visualStyle:styleIdentity(root), scenes, places, trip, shanghai, shanghaiTrip, sources: json('sources.json') }).replace(/</g, '\\u003c');
 const camera = fs.readFileSync(path.join(root, '../../viewer/viewer-camera.js'), 'utf8');
 const threeBundle = buildSync({ entryPoints: [path.join(root, 'scene3d.js')], bundle: true,
   format: 'iife', write: false, minify: true, legalComments: 'inline', target: 'es2020',
@@ -95,9 +99,5 @@ ${read('runtime.js')}
 ${read('planner.js')}
 </script><script>${threeBundle.replace(/<\/script/gi, '<\\/script')}</script>
 <script type="text/plain" id="three-license">${threeLicense}</script></body></html>`;
-if (process.argv.includes('--check')) {
-  if (read('index.html') !== html) throw new Error('Travel artifact is stale; run node labs/travel/build.mjs');
-} else {
-  fs.writeFileSync(path.join(root, 'index.html'), html);
-  console.log('Built labs/travel/index.html (offline, shared Archify camera)');
-}
+buildPackages({root,html,data:JSON.parse(payload),camera,threeBundle,buildSync,check:process.argv.includes('--check')});
+console.log('Built versioned destination packages and portable offline atlas');

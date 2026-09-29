@@ -1,5 +1,5 @@
 (() => {
-  const data=JSON.parse(document.getElementById('travel-data').textContent);let trip=data.trip;let lastFamily='';
+  const data=(window.TravelData||JSON.parse(document.getElementById('travel-data').textContent));let trip=data.trip;let lastFamily='';
   const isShanghai=()=>['shanghai','disney'].includes(Archify.travel.scene());
   const $=id=>document.getElementById(id),atlas=Archify.travel;
   const panel=document.createElement('section');panel.className='trip-panel';panel.setAttribute('aria-label','一句话行程');
@@ -36,7 +36,7 @@
     const sh=/(上海|shanghai)/i.test(prompt);$('trip-status').textContent=sh?'已生成上海三日精选方案：陆家嘴、东方明珠、环球金融中心、迪士尼、豫园与外滩。':'已生成法国三日精选方案：以巴黎为基地，每天两处主要景点。';atlas.changeScene(sh?'shanghai':'paris');render();Archify.travel3d?.setMode(true);Archify.travel3d?.reset();
   });
   $('trip-date').addEventListener('change',render);
-  $('trip-download').addEventListener('click',()=>{const b=new Blob([JSON.stringify({title:trip.title,departure:$('trip-date').value||null,days:trip.days,routes:trip.routes.map(({points,...r})=>r),provenance:trip.provenance},null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=document.createElement('a');a.href=url;a.download=(isShanghai()?'shanghai':'france')+'-three-days.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+  $('trip-download').addEventListener('click',()=>{const b=new Blob([JSON.stringify({visualStyle:data.visualStyle,title:trip.title,departure:$('trip-date').value||null,days:trip.days,routes:trip.routes.map(({points,...r})=>r),provenance:trip.provenance},null,2)],{type:'application/json'}),url=URL.createObjectURL(b),a=document.createElement('a');a.href=url;a.download=(isShanghai()?'shanghai':'france')+'-three-days.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   window.addEventListener('archify:travel-change',render);window.addEventListener('archify:travel-select',()=>document.querySelectorAll('.schedule-stop').forEach(b=>b.classList.toggle('selected',b.dataset.place===atlas.selected())));
   render();
 })();

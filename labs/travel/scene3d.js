@@ -1,3 +1,4 @@
+import {VISUAL} from './visual-style.js';
 import { AIR_ROUTE_STYLE as AIR, airRouteStrokes, airArrowPath } from './air-route-style.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -5,7 +6,7 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 
 // Render the same sourced geography and place state as the 2D atlas. No tiles,
 // remote models, elevation claims, or second search/filter model are introduced.
-const data = JSON.parse(document.getElementById('travel-data').textContent);
+const data = (window.TravelData||JSON.parse(document.getElementById('travel-data').textContent));
 const atlas = window.Archify.travel;
 const cityTrip=()=>['shanghai','disney'].includes(atlas.scene())?data.shanghaiTrip:data.trip;
 const flat = document.querySelector('.diagram-container');
@@ -144,7 +145,7 @@ function drawCity(visible) {
   }
   const segments=[];for(const line of city.backdrop)for(let i=1;i<line.length;i++)segments.push(line[i-1][0]-700,surface+.5,line[i-1][1]-525,line[i][0]-700,surface+.5,line[i][1]-525);
   const streets=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(segments,3)),new THREE.LineBasicMaterial({color:0xb2b5a5,transparent:true,opacity:.55}));streets.userData.disposeMaterial=true;world.add(streets);
-  for(const b of city.buildings){
+  for(const b of (heightMode?city.buildings:[])){
     const shape=new THREE.Shape(b.points.map(p=>new THREE.Vector2(p[0]-700,p[1]-525)));
     const height=heightMode?Math.max(5,Math.min(sceneId==='shanghai'?115:42,b.height*.55)):.6;const geo=new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:false,steps:1});geo.rotateX(Math.PI/2);
     const building=new THREE.Mesh(geo,material(0xc7c6af));building.position.y=surface+height;building.castShadow=true;building.receiveShadow=true;world.add(building);
@@ -213,10 +214,10 @@ function init() {
     failed=true;document.getElementById('mode-flat').disabled=true;document.getElementById('mode-3d').disabled=true;document.getElementById('mode-3d').title='此浏览器未提供 WebGL 2，继续使用 2D 地图';
     const notice=document.createElement('p');notice.className='three-fallback';notice.setAttribute('role','status');notice.textContent='此浏览器暂不支持 3D，已保留可交互的 2D 地图。';heading.after(notice);return false;
   }
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0xe9efea);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=VISUAL.exposure;renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(VISUAL.background);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','3D 地图：左键旋转，滚轮缩放，右键平移。方向键平移，R 复位。');stage.prepend(renderer.domElement);
-  scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xfffaf0,0x768776,2.4));
-  const sun=new THREE.DirectionalLight(0xfff1d4,3.1);sun.position.set(-450,1100,600);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-950,right:950,top:950,bottom:-950,near:1,far:3000});sun.shadow.bias=-.0006;scene.add(sun);
+  scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(VISUAL.hemisphereSky,VISUAL.hemisphereGround,VISUAL.hemisphereIntensity));
+  const sun=new THREE.DirectionalLight(VISUAL.sun,VISUAL.sunIntensity);sun.position.set(-450,1100,600);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-950,right:950,top:950,bottom:-950,near:1,far:3000});sun.shadow.bias=-.0006;scene.add(sun);
   camera=new THREE.PerspectiveCamera(40,1,1,10000);camera.position.set(900,1100,1300);
   controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.1;controls.minDistance=180;controls.maxDistance=6500;controls.minPolarAngle=.02;controls.maxPolarAngle=Math.PI-.02;controls.autoRotateSpeed=.6;controls.screenSpacePanning=false;controls.listenToKeyEvents(renderer.domElement);
   controls.addEventListener('change',requestFrame);controls.addEventListener('start',requestFrame);
@@ -226,7 +227,10 @@ function init() {
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();setMode(false);document.getElementById('mode-3d').title='3D 上下文已丢失，请刷新页面后重试';document.getElementById('mode-3d').disabled=true;});
   new ResizeObserver(resize).observe(stage);return true;
 }
-function setMode(want3d,withHeight=true) {
+let modeRequest=0;
+async function setMode(want3d,withHeight=true) {
+  const request=++modeRequest;
+  if(want3d&&withHeight&&window.TravelPackages){try{await window.TravelPackages.ensureHeight();}catch(error){document.getElementById('package-status').textContent=error.message+'；可改用 2D 或 3D 无高度，点击有高度可重试';if(!active)flat.hidden=false;return;}if(request!==modeRequest)return;}
   const changed=want3d&&heightMode!==withHeight;if(want3d)heightMode=withHeight;
   if(want3d&&failed)return;
   if(want3d&&!renderer&&!init())return;

@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "style": {
+    "id": "illustrated-diorama-v1",
+    "sha256": "75d3fba3f8e37319b18baec5240c563fb4ce1d4629e311ab772cc15c4d6b7586"
+  },
+  "groups": {
+    "france": {
+      "base": {
+        "url": "packages/france-base.c133934705fbbe21.json",
+        "bytes": 41881,
+        "sha256": "c133934705fbbe21f9a7a469c6ac4c25ae3727f0ced25d120451641bfcc48175",
+        "group": "france",
+        "label": "france · 地理与行程",
+        "type": "application/json"
+      }
+    },
+    "paris": {
+      "base": {
+        "url": "packages/paris-base.c891549e21aaa174.json",
+        "bytes": 814314,
+        "sha256": "c891549e21aaa174df882df99cfa881af2e9ab05bdf05232696b68a84d7d79c4",
+        "group": "paris",
+        "label": "paris · 地理与行程",
+        "type": "application/json"
+      },
+      "height": {
+        "url": "packages/paris-height.a107a0b90a37047e.json",
+        "bytes": 376624,
+        "sha256": "a107a0b90a37047e1b77130e7f3252b978b22c0d6729fd018600650f2fd1ccce",
+        "group": "paris",
+        "label": "paris · 建筑高度",
+        "type": "application/json"
+      }
+    },
+    "shanghai": {
+      "base": {
+        "url": "packages/shanghai-base.dcefd65031312488.json",
+        "bytes": 682019,
+        "sha256": "dcefd6503131248890614f26e91c7b9435b6829cfb50ebae957bf44aa48ce5b0",
+        "group": "shanghai",
+        "label": "shanghai · 地理与行程",
+        "type": "application/json"
+      },
+      "height": {
+        "url": "packages/shanghai-height.082896d20fa1b69b.json",
+        "bytes": 1059972,
+        "sha256": "082896d20fa1b69b04c51fabf5935ffe0f7b5593275613d50a3b58e7ba2dc1de",
+        "group": "shanghai",
+        "label": "shanghai · 建筑高度",
+        "type": "application/json"
+      }
+    }
+  },
+  "shared": {
+    "atlas": {
+      "url": "packages/atlas.c90b30c9c1f6f74e.js",
+      "bytes": 71115,
+      "sha256": "c90b30c9c1f6f74e282307cbf7fbf8711dc41d9f69980b479007ef91f9ce1f68",
+      "group": "engine",
+      "label": "互动界面",
+      "type": "text/javascript"
+    },
+    "renderer": {
+      "url": "packages/renderer.a77b0a469b7e25f9.js",
+      "bytes": 657634,
+      "sha256": "a77b0a469b7e25f9f5dd547923abcebb3e375b03cc070e7e41bb215bde69a0a3",
+      "group": "engine",
+      "label": "固定插画渲染器",
+      "type": "text/javascript"
+    }
+  }
+}
