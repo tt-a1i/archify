@@ -351,6 +351,14 @@ blob, and valid line range are required in every link mode. Verification is
 local and makes no remote requests; it establishes neither public availability
 nor the current reader's access rights.
 
+来源校验会在每个 Git 子进程中禁止按需补取对象和所有远端传输，不修改仓库或全局配置。
+这一限制也覆盖 partial clone、批量读取及逐项回退，与 `link_mode` 无关。
+缺少本地 commit/blob 时返回失败；请先自行确认固定 revision 和来源路径，再显式准备
+所需对象后重试。Archify 不会替用户执行 fetch，也不会把缺少本地对象当作已验证来源。
+每次本地 Git 读取最多等待 10 秒；超时返回 `repository-evidence/git-timeout`，
+立即停止本次验证，不再通过逐项回退重复等待。检查本地磁盘/仓库访问后再重试。
+实现使用子进程环境变量，因此不要求旧版 Git 支持 `--no-lazy-fetch` 参数。
+
 `link_mode` defaults to `web`. GitHub and Gitee HTTPS repository URLs generate
 revision-pinned links; their public hosts select the provider automatically.
 Optional `provider: "github"` or `"gitee"` must agree with the host. Existing

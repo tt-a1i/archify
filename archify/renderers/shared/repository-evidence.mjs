@@ -8,6 +8,7 @@ import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref } f
 const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
 const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
+const GIT_READ_TIMEOUT_MS = 10_000;
 
 function evidenceFailure(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
   throwDiagnosticError(message, [{
@@ -20,9 +21,32 @@ function evidenceFailure(code, message, { subject = {}, evidence = {}, supported
   }]);
 }
 
-function runGit(repoRoot, args) {
-  // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
+function spawnEvidenceGit(repoRoot, args, options) {
+  // 固定 SHA 只读取本地原始对象；旧 Git 即使忽略 lazy-fetch 开关，也不能启动 transport。
   const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
+    ...options,
+    env: {
+      ...process.env,
+      GIT_NO_LAZY_FETCH: '1',
+      GIT_ALLOW_PROTOCOL: '',
+      GIT_TERMINAL_PROMPT: '0',
+    },
+    timeout: GIT_READ_TIMEOUT_MS,
+    // 同步调用会等待子进程退出；SIGKILL 避免被忽略的 SIGTERM 延长这个上限。
+    killSignal: 'SIGKILL',
+  });
+  if (result.error?.code === 'ETIMEDOUT') {
+    evidenceFailure('repository-evidence/git-timeout', `Local Git evidence read exceeded ${GIT_READ_TIMEOUT_MS}ms.`, {
+      subject: { repoRoot },
+      evidence: { gitArgs: args, timeoutMs: GIT_READ_TIMEOUT_MS },
+      supportedFixes: ['restore responsive access to the local repository and retry; explicitly prepare missing objects before validation'],
+    });
+  }
+  return result;
+}
+
+function runGit(repoRoot, args) {
+  const result = spawnEvidenceGit(repoRoot, args, {
     encoding: 'utf8',
     maxBuffer: MAX_SOURCE_BYTES,
   });
@@ -52,7 +76,7 @@ function prefetchBlobs(repoRoot, objectNeedsContent) {
 function readBatchObjects(repoRoot, objects, includeContent) {
   if (!objects.length) return new Map();
   const mode = includeContent ? '--batch' : '--batch-check';
-  const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, 'cat-file', mode], {
+  const result = spawnEvidenceGit(repoRoot, ['cat-file', mode], {
     input: objects.join('\n') + '\n',
     maxBuffer: 64 * 1024 * 1024,
   });
@@ -299,10 +323,10 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           return type.status === 0 && type.stdout.trim() === 'blob';
         })();
       if (!objectIsBlob) {
-        evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
+        evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file available in the local repository at revision ${revision}.`, {
           subject: { path: where, ...nodeSubject },
           evidence: { sourcePath: source.path, revision },
-          supportedFixes: ['use a file path that exists at the pinned revision'],
+          supportedFixes: ['verify the path at the pinned revision; if a partial clone lacks its objects, explicitly fetch the required objects before retrying'],
         });
       }
       if (source.line) {

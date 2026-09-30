@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
+### Fixed
+
+- **仓库证据保持本地读取（#621）。** 五类图的来源校验现在禁止 partial clone 隐式向 promisor remote 补取对象，批量读取和逐项回退采用同一限制且不修改用户 Git 配置。每次 Git 读取有 10 秒超时和专用诊断；缺少本地对象时提示先显式准备对象再重试，避免误导作者修改正确的来源路径。
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed
