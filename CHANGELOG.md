@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
+### Fixed
+
+- **Sequence content capacity.** Automatic canvases retain room for late messages, notes, activations, and segments when the legend is hidden or all its entries are hidden. Existing timeline margins, explicit viewBox dimensions, and authored coordinates remain authoritative. Fixes #601.
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed

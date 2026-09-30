@@ -46,6 +46,8 @@ function legendEntries() {
 // needs LEGEND_BLOCK_HEIGHT (title glyphs, row, and the 54px baseline inset).
 const LEGEND_CONTENT_GAP = 12;
 const LEGEND_BLOCK_HEIGHT = 86;
+const LIFELINE_BOTTOM_INSET = 65;
+const MESSAGE_TIMELINE_MARGIN = 18;
 const contentBottom = Math.max(
   0,
   ...asArray(sequence.messages).map((message) => message.y + (message.note ? 22 : 6)),
@@ -58,9 +60,14 @@ function legendRequiredHeight(width) {
   return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
     + legendFootprint(entries, { width: width - 80 }).extraHeight);
 }
-// A renderer-sized canvas grows to keep the legend clear of late messages;
-// an authored viewBox is honored and validated below.
-const viewBox = sequence.meta?.viewBox || [920, Math.max(760, legendRequiredHeight(920))];
+// Content still needs a readable timeline when the legend has no entries.
+// Messages also retain their existing clearance from the lifeline endpoint.
+const contentRequiredHeight = Math.ceil(Math.max(
+  contentBottom + LIFELINE_BOTTOM_INSET,
+  ...asArray(sequence.messages).map((message) => message.y + LIFELINE_BOTTOM_INSET + MESSAGE_TIMELINE_MARGIN),
+));
+// An authored viewBox remains authoritative and is validated below.
+const viewBox = sequence.meta?.viewBox || [920, Math.max(760, contentRequiredHeight, legendRequiredHeight(920))];
 // The timeline scales with viewBox height: a taller viewBox gains message room,
 // a shorter one shrinks the readable band (validated below) instead of clipping.
 // `column_fit: "spread"` widens the lanes with the viewBox instead of keeping
@@ -90,7 +97,7 @@ const layout = {
   participantLabelY: 36,
   participantSublabelY: 50,
   lifelineTop: 142,
-  lifelineBottom: viewBox[1] - 65,
+  lifelineBottom: viewBox[1] - LIFELINE_BOTTOM_INSET,
   legendY: viewBox[1] - 54,
   leftX: columnFit === 'spread' ? sideMargin + participantW / 2 : sideMargin,
   colGap,
@@ -222,8 +229,8 @@ function validateSequence() {
     if (!participants.has(message.from)) problems.push(`Message "${message.label}" references unknown source "${message.from}".`);
     if (!participants.has(message.to)) problems.push(`Message "${message.label}" references unknown target "${message.to}".`);
     if (typeof message.y !== 'number') problems.push(`Message "${message.label}" must provide a numeric y.`);
-    if (message.y < layout.lifelineTop + 18 || message.y > layout.lifelineBottom - 18) {
-      problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${layout.lifelineBottom - 18}.`);
+    if (message.y < layout.lifelineTop + MESSAGE_TIMELINE_MARGIN || message.y > layout.lifelineBottom - MESSAGE_TIMELINE_MARGIN) {
+      problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + MESSAGE_TIMELINE_MARGIN} and ${layout.lifelineBottom - MESSAGE_TIMELINE_MARGIN}.`);
     }
     if (participants.has(message.from) && participants.has(message.to)) {
       const distance = Math.abs(participants.get(message.to).cx - participants.get(message.from).cx);

@@ -61,11 +61,18 @@ legend rather than drawing it over content. Lifelines stop above the legend.
 Message labels use their line's color; gray default and return lines keep the
 muted text color.
 
+Automatic content capacity is independent of legend visibility: `mode: "hidden"`
+or hiding every legend entry still reserves the existing 65px bottom inset
+after the last message/note, activation, or segment. Messages also keep their
+18px clearance from the lifeline endpoint. The default height remains at least
+760px; visible legends retain their additional space. Authored `meta.viewBox`
+dimensions and timeline coordinates are not rewritten.
+
 ## Layout budget
 
 | Constant | Value |
 |----------|-------|
-| viewBox | default `[920, 760]`, taller when late content needs legend room; schema minimum `[480, 480]` |
+| viewBox | default `[920, 760]`, taller when timeline content or a visible legend needs room; schema minimum `[480, 480]` |
 | Participant boxes | `fixed` (default): 86×54 at y 72; `spread`: viewBox-relative width from 86px up to 190px |
 | Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width |
 | Participant count | the last box must end at or before width − 40; layouts that cannot fit fail closed |
