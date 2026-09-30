@@ -6651,7 +6651,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
         var data = serializeSvg(scale);
-        var sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
 
         function createMotionScene(root) {
           var rootMatrix = root.getCTM ? root.getCTM() : null;
@@ -6803,73 +6802,99 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var motionScene = createMotionScene(svg);
 
         return new Promise(function (resolve, reject) {
-          var backgroundImage = new Image();
-          backgroundImage.onload = function () {
-            var canvas = document.createElement('canvas');
-            canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
-            canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
-            var ctx = canvas.getContext('2d');
-            var stream = canvas.captureStream(fps);
-            var mime = motionMimeType();
-            var recorder;
-            try {
-              recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
-            } catch (err) {
-              URL.revokeObjectURL(sourceUrl);
-              stream.getTracks().forEach(function (track) { track.stop(); });
-              reject(err);
-              return;
+          var sourceUrl = null;
+          var backgroundImage = null;
+          var stream = null;
+          var recorder = null;
+          var raf = 0;
+          var durationTimer = 0;
+          var flushTimer = 0;
+          var settled = false;
+
+          function finish(error, blob) {
+            if (settled) return;
+            // 先锁定终态：停止录制和释放流可能产生晚到的编码事件。
+            settled = true;
+            cancelAnimationFrame(raf);
+            clearTimeout(durationTimer);
+            clearTimeout(flushTimer);
+            if (backgroundImage) {
+              backgroundImage.onload = null;
+              backgroundImage.onerror = null;
             }
-            var chunks = [];
-            var raf = 0;
-            var stopped = false;
-            var startedAt = performance.now();
-            function cleanup() {
-              if (stopped) return;
-              stopped = true;
-              cancelAnimationFrame(raf);
-              URL.revokeObjectURL(sourceUrl);
-              stream.getTracks().forEach(function (track) { track.stop(); });
+            if (recorder) {
+              recorder.ondataavailable = null;
+              recorder.onerror = null;
+              recorder.onstop = null;
+              try { if (recorder.state !== 'inactive') recorder.stop(); } catch (_) {}
             }
-            function draw(now) {
-              var elapsed = Math.max(0, ((Number(now) || performance.now()) - startedAt) / 1000);
-              drawMotionFrame(ctx, backgroundImage, motionScene, elapsed);
-              raf = requestAnimationFrame(draw);
-            }
-            recorder.ondataavailable = function (event) {
-              if (event.data && event.data.size) chunks.push(event.data);
+            if (stream) stream.getTracks().forEach(function (track) { track.stop(); });
+            if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+            if (blob) resolve(blob);
+            else reject(error);
+          }
+
+          try {
+            sourceUrl = URL.createObjectURL(new Blob([data.svgString], { type: 'image/svg+xml;charset=utf-8' }));
+            backgroundImage = new Image();
+            backgroundImage.onload = function () {
+              if (settled) return;
+              try {
+                var canvas = document.createElement('canvas');
+                canvas.width = Math.max(2, Math.round(data.width / 2) * 2);
+                canvas.height = Math.max(2, Math.round(data.height / 2) * 2);
+                var ctx = canvas.getContext('2d');
+                if (!ctx) throw exportError('viewer.export.error.contextUnavailable', { label: 'WebM' });
+                stream = canvas.captureStream(fps);
+                var mime = motionMimeType();
+                recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+                var chunks = [];
+                var startedAt = performance.now();
+                function draw(now) {
+                  if (settled) return;
+                  try {
+                    var elapsed = Math.max(0, ((Number(now) || performance.now()) - startedAt) / 1000);
+                    drawMotionFrame(ctx, backgroundImage, motionScene, elapsed);
+                    raf = requestAnimationFrame(draw);
+                  } catch (error) { finish(error); }
+                }
+                recorder.ondataavailable = function (event) {
+                  if (!settled && event.data && event.data.size) chunks.push(event.data);
+                };
+                recorder.onerror = function (event) {
+                  finish(event.error || exportError('viewer.export.error.mediaRecorder'));
+                };
+                recorder.onstop = function () {
+                  if (settled) return;
+                  try {
+                    var blob = new Blob(chunks, { type: recorder.mimeType || mime });
+                    if (!blob.size) throw exportError('viewer.export.error.emptyWebm');
+                    finish(null, blob);
+                  } catch (error) { finish(error); }
+                };
+                drawMotionFrame(ctx, backgroundImage, motionScene, 0);
+                recorder.start(250);
+                if (settled) return;
+                startedAt = performance.now();
+                raf = requestAnimationFrame(draw);
+                durationTimer = setTimeout(function () {
+                  if (settled || recorder.state === 'inactive') return;
+                  // 保留最佳努力的编码器 flush；失败后仍通过 stop 收集最后的片段。
+                  try { recorder.requestData(); } catch (_) {}
+                  if (settled) return;
+                  flushTimer = setTimeout(function () {
+                    if (settled) return;
+                    try { if (recorder.state !== 'inactive') recorder.stop(); }
+                    catch (error) { finish(error); }
+                  }, 120);
+                }, duration);
+              } catch (error) { finish(error); }
             };
-            recorder.onerror = function (event) {
-              cleanup();
-              reject(event.error || exportError('viewer.export.error.mediaRecorder'));
+            backgroundImage.onerror = function () {
+              finish(exportError('viewer.export.error.webmBackground'));
             };
-            recorder.onstop = function () {
-              cleanup();
-              var blob = new Blob(chunks, { type: recorder.mimeType || mime });
-              if (!blob.size) reject(exportError('viewer.export.error.emptyWebm'));
-              else resolve(blob);
-            };
-            drawMotionFrame(ctx, backgroundImage, motionScene, 0);
-            recorder.start(250);
-            startedAt = performance.now();
-            raf = requestAnimationFrame(draw);
-            setTimeout(function () {
-              if (recorder.state === 'inactive') return;
-              // Chromium normally emits the final chunk during stop(), but
-              // some embedded browser shells need an explicit encoder flush
-              // first. Keep the short grace window bounded and harmless for
-              // browsers that already delivered timeslice chunks.
-              try { recorder.requestData(); } catch (_) {}
-              setTimeout(function () {
-                if (recorder.state !== 'inactive') recorder.stop();
-              }, 120);
-            }, duration);
-          };
-          backgroundImage.onerror = function () {
-            URL.revokeObjectURL(sourceUrl);
-            reject(exportError('viewer.export.error.webmBackground'));
-          };
-          backgroundImage.src = sourceUrl;
+            backgroundImage.src = sourceUrl;
+          } catch (error) { finish(error); }
         });
       }
 

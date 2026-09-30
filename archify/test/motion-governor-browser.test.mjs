@@ -40,8 +40,9 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     path.join(skillRoot, 'examples', cases.architecture), files.static]);
   const browser = new ChromeVisualBrowser(chrome);
   t.after(() => browser.close());
-  const session = await browser.sessionPromise;
-  await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
+  await browser.sessionPromise;
+  let session;
+  let browserContextId;
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   async function run(expression) {
     const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
@@ -59,11 +60,17 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   async function load(mode = 'architecture', { theme = 'dark', reduced = false, fixture = '', preserveStorage = false, query = '' } = {}) {
     const expectedNavigation = ++navigationId;
     if (!preserveStorage) {
+      // 用独立上下文保证新场景为空，不依赖旧页面仍存活时清理 file 存储。
+      // 持久化场景保留上下文，并在下方重载同一文件。
+      if (browserContextId) await browser.cdp.send('Target.disposeBrowserContext', { browserContextId });
+      ({ browserContextId } = await browser.cdp.send('Target.createBrowserContext', { disposeOnDetach: true }));
+      const { targetId } = await browser.cdp.send('Target.createTarget', { url: 'about:blank', browserContextId });
+      ({ sessionId: session } = await browser.cdp.send('Target.attachToTarget', { targetId, flatten: true }));
+      await send('Page.enable');
+      await send('Runtime.enable');
+      await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny', browserContextId });
+      startup = undefined;
       fixtureUrl = pathToFileURL(files[mode]).href + `?theme=${theme}&testNavigation=${expectedNavigation}${query}`;
-      // Reset the disposable browser profile before navigation. Touching
-      // localStorage in a new-document script can disturb file-backed storage
-      // in Chrome; leave startup and reload reads to the Viewer itself.
-      await send('Storage.clearDataForStorageKey', { storageKey: 'file:///', storageTypes: 'local_storage' });
     }
     if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {

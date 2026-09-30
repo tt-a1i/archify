@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
+### Fixed
+
+- **WebM 录制失败清理 (#622)。** 画布、捕获流、编码器启动、逐帧绘制或停止失败时，录制 Promise 现在会拒绝并释放已创建的流、临时 URL、动画帧和定时器；晚到的编码事件不能再将失败录制报告为成功。正常编码与最佳努力的最终片段 flush 行为保持不变。
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed
