@@ -9,7 +9,7 @@ import {createJourney,validateJourney,clipWater} from './journey.mjs';
 import {sampleElevation,terrainHeight,generalizeElevation} from './elevation.js';
 import {ChromeVisualBrowser} from '../../archify/bin/visual-check.mjs';
 const sample=()=>JSON.parse(fs.readFileSync(new URL('./examples/host-journey.json',import.meta.url)));
-test('overview elevation is coarse, sourced, geographically aligned and excluded from daily detail',()=>{
+test('overview elevation is coarse, sourced, geographically aligned and cropped for daily detail',()=>{
   const input=sample(),flat=createJourney(input);
   input.elevation={bounds:[120,30,123,33],columns:2,rows:2,values:[0,100,50,150],source:'https://example.com/dem',attribution:'Test slope'};
   const raised=createJourney(input),grid=raised.journey.tiles.journey.elevation;
@@ -20,7 +20,7 @@ test('overview elevation is coarse, sourced, geographically aligned and excluded
   const geographic=Array.from({length:65*65},(_,i)=>{const lng=west+(east-west)*(i%65)/64,lat=north-(north-south)*Math.floor(i/65)/64;return sampleElevation(input.elevation,(lng-120)/3,(33-lat)/3);});
   const expected=generalizeElevation(geographic,65,65);
   assert.ok(grid.values.every((v,i)=>Math.abs(v-expected[i])<1e-8),'filled overview generalizes samples at their geographic positions');
-  assert.deepEqual(raised.places.map(p=>p.views),flat.places.map(p=>p.views));assert.equal(raised.journey.tiles['day-1'].elevation,undefined);
+  assert.deepEqual(raised.places.map(p=>p.views),flat.places.map(p=>p.views));assert.equal(raised.journey.tiles['day-1'].elevation.source,input.elevation.source);
   for(const change of [e=>e.values=[0],e=>e.values[0]=NaN,e=>e.source='javascript:foo',e=>e.columns=130,e=>e.bounds=[0,0,1,1]]){const bad=structuredClone(input);change(bad.elevation);assert.throws(()=>createJourney(bad),/高程/);}
 });
 test('overview generalization removes isolated spikes and preserves broad slopes',()=>{
@@ -75,4 +75,13 @@ test('host CLI delivers portable multi-day flow/3D, isolates visits and releases
   await run("document.querySelector('#trip-days [data-day=\"1\"]').click()");await stable();assert.equal(await run('Archify.travel3d.state().routeArrows'),sample().days[0].stops.length-1,'daily view keeps every intra-day connection');
   await run("document.querySelector('#trip-days [data-day=\"4\"]').click()");await stable();assert.equal(await run('Archify.travel3d.state().places.length'),1);assert.equal(await run('Archify.travel3d.state().scene'),'day-4');
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await stable();assert.ok(await run('document.documentElement.scrollWidth<=innerWidth+1'));assert.deepEqual(await run('errors'),[]);
+});
+
+test('daily tiles retain sourced relief and single-day terrain matches overview',()=>{
+  const input=sample();input.days=input.days.slice(0,1);
+  input.elevation={bounds:[120,30,123,33],columns:3,rows:3,values:[0,100,200,50,150,250,100,200,300],source:'https://example.com/dem',attribution:'Synthetic test fixture'};
+  const result=createJourney(input);
+  assert.deepEqual(result.journey.tiles['day-1'].elevation,result.journey.tiles.journey.elevation);
+  assert.equal(result.journey.tiles['day-1'].elevation.values.length,4225);
+  assert.ok(result.journey.tiles['day-1'].elevation.maximum>result.journey.tiles['day-1'].elevation.minimum);
 });

@@ -13,7 +13,7 @@ is needed to explore it. Start with the workflow, click **3D 有高度**, then s
 between **全部行程** and individual days. Official venue links still need internet.
 
 These screenshots show the checked-in Travel experiment, captured at 1440×1000
-with Chrome/SwiftShader and style `illustrated-diorama-v11`. They are real browser
+with Chrome/SwiftShader and style `illustrated-diorama-v12`. They are real browser
 captures, not generated mockups. Capture source: `../capture-demos.mjs`.
 
 Run `node labs/travel/serve.mjs`, open the printed address, then use these paths:

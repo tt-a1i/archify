@@ -30,7 +30,7 @@ const exportButton = document.getElementById('export');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let renderer, camera, controls, scene, world, frame = 0, active = false, sceneId = '', failed = false;
 let markers = [], labels = [], terrainCount = 0, pointerStart = null;
-const relief=()=>heightMode&&sceneId==='journey'?data.journey?.tiles.journey.elevation:null;
+const relief=()=>heightMode?data.journey?.tiles[sceneId]?.elevation:null;
 const groundAt=(x,z)=>relief()?terrainHeight(relief(),x,z):sceneId==='paris'?18:22;
 const reliefCaption=()=>relief()?`DEM 海拔 ${relief().minimum.toFixed(1)}～${relief().maximum.toFixed(1)} m · 高差放大 ${relief().exaggeration.toFixed(1)}×`:'按真实坐标同比例投影 · 地标造型为示意';
 let airRoutes=[];
@@ -137,7 +137,7 @@ function rebuild() {
   if(data.journey&&heightMode){
     // Fixed illustration texture and cutaway layers, not invented DEM heights.
     for(const [y,h,color] of [[-40,18,0xb4a58a],[-23,16,0xc7b695],[-8,14,0xbac39a]])box(world,820.2,h,820.2,color,0,y,0);
-    if(relief()){addRelief(world,relief());terrainCount++;stage.querySelector('.three-badge').replaceChildren();const badge=stage.querySelector('.three-badge');badge.append('总行程 · 立体地貌');const subtitle=document.createElement('span');subtitle.textContent=reliefCaption();badge.append(subtitle);const ramp=document.createElement('span');ramp.className='terrain-color-key';ramp.textContent='低 ← 相对高程 → 高';ramp.title='浅绿低处、深绿坡地、岩土色高处；仅表示当前范围的相对高程，不代表植被或地质分类。';badge.append(ramp);const credit=document.createElement('a');credit.href=relief().source;credit.target='_blank';credit.rel='noopener';credit.textContent='高程数据与署名';credit.title=relief().attribution;legend.append(credit);}
+    if(relief()){addRelief(world,relief());terrainCount++;stage.querySelector('.three-badge').replaceChildren();const badge=stage.querySelector('.three-badge');badge.append(sceneId==='journey'?'总行程 · 立体地貌':'单日行程 · 立体地貌');const subtitle=document.createElement('span');subtitle.textContent=reliefCaption();badge.append(subtitle);const ramp=document.createElement('span');ramp.className='terrain-color-key';ramp.textContent='低 ← 相对高程 → 高';ramp.title='浅绿低处、深绿坡地、岩土色高处；仅表示当前范围的相对高程，不代表植被或地质分类。';badge.append(ramp);const credit=document.createElement('a');credit.href=relief().source;credit.target='_blank';credit.rel='noopener';credit.textContent='高程数据与署名';credit.title=relief().attribution;legend.append(credit);}
     else{
     const ground=new THREE.PlaneGeometry(820,820,24,24);ground.rotateX(-Math.PI/2);
     const colors=[],positions=ground.attributes.position;
@@ -164,12 +164,12 @@ function drawCity(visible) {
     const water=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:data.journey?0x88b9be:0x9fc5c6,side:THREE.DoubleSide,roughness:.6}));water.position.y=surface+.3;water.userData.disposeMaterial=true;world.add(water);
     if(data.journey){const edges=[];for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];if([[0,290],[0,1110],[1,115],[1,935]].some(([axis,bound])=>Math.abs(a[axis]-bound)<.001&&Math.abs(b[axis]-bound)<.001))continue;edges.push(a[0]-700,groundAt(a[0]-700,a[1]-525)+.7,a[1]-525,b[0]-700,groundAt(b[0]-700,b[1]-525)+.7,b[1]-525);}const shore=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(edges,3)),new THREE.LineBasicMaterial({color:0x628f87,transparent:true,opacity:.65}));shore.userData.disposeMaterial=true;world.add(shore);}
   }
-  const segments=[];for(const line of city.backdrop)for(let i=1;i<line.length;i++)segments.push(line[i-1][0]-700,surface+.5,line[i-1][1]-525,line[i][0]-700,surface+.5,line[i][1]-525);
+  const segments=[];for(const line of city.backdrop)for(let i=1;i<line.length;i++)segments.push(line[i-1][0]-700,groundAt(line[i-1][0]-700,line[i-1][1]-525)+.5,line[i-1][1]-525,line[i][0]-700,groundAt(line[i][0]-700,line[i][1]-525)+.5,line[i][1]-525);
   const streets=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(segments,3)),new THREE.LineBasicMaterial({color:0xb2b5a5,transparent:true,opacity:.55}));streets.userData.disposeMaterial=true;world.add(streets);
   for(const b of (heightMode?city.buildings:[])){
     const shape=new THREE.Shape(b.points.map(p=>new THREE.Vector2(p[0]-700,p[1]-525)));
     const height=heightMode?Math.max(5,Math.min(sceneId==='shanghai'?115:42,b.height*.55)):.6;const geo=new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:false,steps:1});geo.rotateX(Math.PI/2);
-    const building=new THREE.Mesh(geo,material(0xc7c6af));building.position.y=surface+height;building.castShadow=true;building.receiveShadow=true;world.add(building);
+    const building=new THREE.Mesh(geo,material(0xc7c6af));building.position.y=Math.max(...b.points.map(p=>groundAt(p[0]-700,p[1]-525)))+height;building.castShadow=true;building.receiveShadow=true;world.add(building);
   }
   for(const r of cityTrip().routes.filter(r=>visible.has(r.from)&&visible.has(r.to)&&(!data.journey||sceneId!=='journey'||r.transfer))){
     const endpoint=id=>{const marker=markers.find(m=>m.userData.placeId===id),bounds=new THREE.Box3().setFromObject(marker);return new THREE.Vector3(marker.position.x,bounds.max.y+AIR.roofClearance,marker.position.z);};

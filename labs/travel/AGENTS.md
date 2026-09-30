@@ -1,6 +1,6 @@
 # Travel map visual contract
 
-The approved overall style is `illustrated-diorama-v11` in `visual-style.js`.
+The approved overall style is `illustrated-diorama-v12` in `visual-style.js`.
 Keep pastel materials, model silhouettes, lighting and typography consistent
 across destinations and generated itineraries. The user-facing presentation is
 now flowchart first, then 3D with height; do not restore 2D/flat-3D controls.

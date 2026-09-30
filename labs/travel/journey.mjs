@@ -1,3 +1,15 @@
+function projectRelief(e,frame,required=false){
+    const [w,s,east,n]=e.bounds,west=frame.cx-frame.size/2/frame.cos,south=frame.cy-frame.size/2,eastEdge=frame.cx+frame.size/2/frame.cos,north=frame.cy+frame.size/2;
+    const shift=360*Math.round(((w+east)/2-frame.cx)/360);
+    if(west+shift<w||eastEdge+shift>east||south<s||north>n){if(required)fail('高程范围需覆盖整个总行程方块');return null;}
+    const values=[],columns=65,rows=65;
+    for(let r=0;r<rows;r++)for(let c=0;c<columns;c++)values.push(sampleElevation(e,(west+shift+(eastEdge-west)*c/(columns-1)-w)/(east-w),(n-north+(north-south)*r/(rows-1))/(n-s)));
+    values.splice(0,values.length,...generalizeElevation(values,columns,rows));
+    const minimum=Math.min(...values),maximum=Math.max(...values),trueScale=820/(frame.size*111320);
+    const exaggeration=Math.max(1,Math.min(12,60/Math.max(.001,(maximum-minimum)*trueScale)));
+    return {columns,rows,values,bounds:[west+shift,south,eastEdge+shift,north],sampling:'source-triangle-interpolation-generalized',minimum,maximum,unitsPerMeter:trueScale*exaggeration,exaggeration,source:e.source,attribution:e.attribution};
+  }
+
 import {VISUAL} from './visual-style.js';
 import {buildFlow} from './build-flow.mjs';
 import {sampleElevation,generalizeElevation} from './elevation.js';
@@ -49,17 +61,7 @@ export function createJourney(candidate){
   const scene=(id,name)=>{scenes[id]={name,english:name,subtitle:'地标与方向 · 示意模型',paths:[{name:'行程展示范围，非行政边界',d:'M290,115H1110V935H290Z'}]};};
   scene('journey',input.title);tiles.journey={backdrop:[],water:[],buildings:[],bounds:null};
   const overview=extent(visits.map(p=>p.coordinates));
-  if(input.elevation){
-    const e=input.elevation,[w,s,east,n]=e.bounds,west=overview.cx-overview.size/2/overview.cos,south=overview.cy-overview.size/2,eastEdge=overview.cx+overview.size/2/overview.cos,north=overview.cy+overview.size/2;
-    const shift=360*Math.round(((w+east)/2-overview.cx)/360);
-    if(west+shift<w||eastEdge+shift>east||south<s||north>n)fail('高程范围需覆盖整个总行程方块');
-    const values=[],columns=65,rows=65;
-    for(let r=0;r<rows;r++)for(let c=0;c<columns;c++)values.push(sampleElevation(e,(west+shift+(eastEdge-west)*c/(columns-1)-w)/(east-w),(n-north+(north-south)*r/(rows-1))/(n-s)));
-    values.splice(0,values.length,...generalizeElevation(values,columns,rows));
-    const minimum=Math.min(...values),maximum=Math.max(...values),trueScale=820/(overview.size*111320);
-    const exaggeration=Math.max(1,Math.min(12,60/Math.max(.001,(maximum-minimum)*trueScale)));
-    tiles.journey.elevation={columns,rows,values,bounds:[west+shift,south,eastEdge+shift,north],sampling:'source-triangle-interpolation-generalized',minimum,maximum,unitsPerMeter:trueScale*exaggeration,exaggeration,source:e.source,attribution:e.attribution};
-  }
+  if(input.elevation)tiles.journey.elevation=projectRelief(input.elevation,overview,true);
   const waters=new Map();for(const day of input.days)for(const ring of day.geography?.water||[])waters.set(JSON.stringify(ring),ring);
   tiles.journey.water=[...waters.values()].map(r=>clipWater(r.map(overview.project))).filter(r=>r.length);
   for(const p of visits){p.views.journey=overview.project(p.coordinates);p.point=p.views.journey;p.scene='journey';}
@@ -67,6 +69,7 @@ export function createJourney(candidate){
   for(const d of days){const ps=visits.filter(p=>p.day===d.day),frame=extent(ps.map(p=>p.coordinates));scene(d.scene,'第 '+d.day+' 天 · '+d.title);for(const p of ps)p.views[d.scene]=frame.project(p.coordinates);
     const g=d.geography,inside=line=>line.every(p=>{const q=frame.project(p);return q[0]>=290&&q[0]<=1110&&q[1]>=115&&q[1]<=935;});
     tiles[d.scene]={backdrop:g?g.roads.flatMap(l=>cutLine(l,frame)):[],water:g?g.water.map(l=>clipWater(l.map(frame.project))).filter(l=>l.length):[],buildings:g?g.buildings.filter(b=>inside(b.coordinates)).map(b=>({points:b.coordinates.map(frame.project),height:b.height,heightSource:b.heightSource||'estimated'})):[],source:g?.source||null};
+    if(input.elevation)tiles[d.scene].elevation=projectRelief(input.elevation,frame);
     delete d.geography;
   }
   const plan={title:input.title,prompt:input.prompt,preferences:input.preferences,days,routes,official:Object.fromEntries(input.places.filter(p=>source(p.official)).map(p=>[p.id,p.official])),provenance:input.places.map(p=>({id:p.id,source:p.source}))};

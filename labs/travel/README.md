@@ -19,7 +19,7 @@ selected day. It can represent other cities without renderer changes; detailed
 geometry and bespoke models are **not** automatically available for every city.
 Without supplied detail, the day is a landmark-only block with honest labels.
 
-Style `illustrated-diorama-v11` records the geographic overview requested by the user
+Style `illustrated-diorama-v12` records the geographic overview requested by the user
 and daily blocks; the overview now preserves geographic anchor positions. Pastel materials and `air-arc-v1` remain fixed. Screenshots and
 tests cover Shanghai/Paris, cross-day links, lazy day fetching, offline cached
 days, arbitrary-duration input, repeated places, date-line coordinates and GPU
@@ -262,3 +262,5 @@ map, verified pedestrian route or live attraction/queue dataset. Park geography
 is included in the Shanghai base and park buildings in its height layer.
 The visual lock was reviewed for scene/data wiring and navigation additions;
 materials, landmark geometry, lighting and air-arc-v1 remain unchanged.
+
+The v12 correction retains sourced DEM relief in covered daily blocks, with the same fixed terrain palette and air arrows. Streets and buildings follow the local ground height. Missing DEM coverage keeps the flat fallback.

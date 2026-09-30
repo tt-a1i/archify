@@ -19,3 +19,6 @@ The earlier full-core test failures belonged to the superseded mixed branch;
 those results do not establish failure or success of this clean branch. Core
 sources are unchanged relative to the selected base. Required remote CI remains
 the gate for merge readiness. No live Archify installation was performed.
+
+Daily-relief follow-up: all 17 Travel tests passed with Chrome (0 failed, 0 skipped). Rebuilt online packages, standalone HTML/ZIP demos and all six screenshots. Visually inspected Shanghai and Paris daily terrain. Style identity v12 retains the existing palette and arrows while adding sourced, geographically cropped daily relief. No DEM coverage means a flat fallback.
+

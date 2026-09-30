@@ -1,15 +1,15 @@
 {
   "schema": 1,
   "style": {
-    "id": "illustrated-diorama-v11",
-    "sha256": "00e048ceae614cb8c13238ff188c6c7af694cf03325fdceb1aaba95db763fcc6"
+    "id": "illustrated-diorama-v12",
+    "sha256": "ba4fa2a3b86015c79b79cecec8f929779ca15191394d2573999d8a445ba167f5"
   },
   "groups": {
     "france": {
       "base": {
-        "url": "packages/france-base.1dc6a82da291904b.json",
+        "url": "packages/france-base.5ed83d4e825dc061.json",
         "bytes": 71212,
-        "sha256": "1dc6a82da291904bf5c31ec91076ce1465d4f781401371511cca92c0904467dd",
+        "sha256": "5ed83d4e825dc061575a591fdd557c925d4481ca0312218d2a97631fa61536c8",
         "group": "france",
         "label": "france · 地理与行程",
         "type": "application/json"
@@ -18,34 +18,34 @@
     },
     "paris": {
       "base": {
-        "url": "packages/paris-base.9af4abe56d4f46e3.json",
+        "url": "packages/paris-base.8eefc94abee5df6b.json",
         "bytes": 188464,
-        "sha256": "9af4abe56d4f46e32c380e9bd5d52b2819bf45be52c378e80c64db1d7089199a",
+        "sha256": "8eefc94abee5df6bdd602dac6864b573757e3a226cabcee6bea8db8b3438c006",
         "group": "paris",
         "label": "paris · 地理与行程",
         "type": "application/json"
       },
       "days": {
         "day-1": {
-          "url": "packages/paris-day-1.5d8af36763d299bc.json",
-          "bytes": 356934,
-          "sha256": "5d8af36763d299bc3845221233dc1712c04e8d8e1bf2e1e699c7437691f985de",
+          "url": "packages/paris-day-1.a8fe1a8066b96c95.json",
+          "bytes": 433929,
+          "sha256": "a8fe1a8066b96c95d1db7bf634016922d93cae50fd6a31b6f80e1d9373b1acbc",
           "group": "paris",
           "label": "day-1 · 单日地图",
           "type": "application/json"
         },
         "day-2": {
-          "url": "packages/paris-day-2.95edbacb99ea86b6.json",
-          "bytes": 72728,
-          "sha256": "95edbacb99ea86b6f2681e5f8bef686aebcbe7bed311b4ae65c0ca29e016a5ce",
+          "url": "packages/paris-day-2.3f3ab5b028ee615e.json",
+          "bytes": 150481,
+          "sha256": "3f3ab5b028ee615e7810f301d9d68bfc808652733b5154e41c0f3c227840a565",
           "group": "paris",
           "label": "day-2 · 单日地图",
           "type": "application/json"
         },
         "day-3": {
-          "url": "packages/paris-day-3.42a7ebf93e46785b.json",
-          "bytes": 68313,
-          "sha256": "42a7ebf93e46785bce091bfc66e9461e561cba7270becfe8d8cffb8d78a99d1d",
+          "url": "packages/paris-day-3.66799c1aba82730d.json",
+          "bytes": 146083,
+          "sha256": "66799c1aba82730d59f39c90fff42cf10b0d5f0037c5213b0591ca83f9a4aa79",
           "group": "paris",
           "label": "day-3 · 单日地图",
           "type": "application/json"
@@ -54,34 +54,34 @@
     },
     "shanghai": {
       "base": {
-        "url": "packages/shanghai-base.881dc5a4c8c9a1f5.json",
+        "url": "packages/shanghai-base.b5c730fa6781bc67.json",
         "bytes": 157490,
-        "sha256": "881dc5a4c8c9a1f5643808d1a82ee76bb0b2616f7d28307d85b20b52128494cd",
+        "sha256": "b5c730fa6781bc679a70cdfd7a7200f502956faa6e1273def44e6370a096eb99",
         "group": "shanghai",
         "label": "shanghai · 地理与行程",
         "type": "application/json"
       },
       "days": {
         "day-1": {
-          "url": "packages/shanghai-day-1.d63f8ed5ce74678a.json",
-          "bytes": 214234,
-          "sha256": "d63f8ed5ce74678a214f8fc3df6e6189cbfac32e60b0841d8c922eda75170ae8",
+          "url": "packages/shanghai-day-1.5c5ca069e0fe2fc3.json",
+          "bytes": 292556,
+          "sha256": "5c5ca069e0fe2fc32b254a2a71a1b8993ed8682741600dd49e9d3aaf13a64eba",
           "group": "shanghai",
           "label": "day-1 · 单日地图",
           "type": "application/json"
         },
         "day-2": {
-          "url": "packages/shanghai-day-2.b502caf50978581a.json",
-          "bytes": 189580,
-          "sha256": "b502caf50978581a788b2c9bc2bf29541713dd1c115aae7deb8c97c02b0e235c",
+          "url": "packages/shanghai-day-2.7f327cd5de3585e7.json",
+          "bytes": 264697,
+          "sha256": "7f327cd5de3585e75cfd4bb14b4881f8162c2e9daec60edf37c39d5acea0f88d",
           "group": "shanghai",
           "label": "day-2 · 单日地图",
           "type": "application/json"
         },
         "day-3": {
-          "url": "packages/shanghai-day-3.0a7d637cfcdda356.json",
-          "bytes": 307633,
-          "sha256": "0a7d637cfcdda356a4f24a568a535c6965dbe196f507833eb0c38e281a39dc7b",
+          "url": "packages/shanghai-day-3.9a829b50c41bdfee.json",
+          "bytes": 386396,
+          "sha256": "9a829b50c41bdfeea638d3d940d8548e19f3eed5a0bb932f3bdbd88656f042a2",
           "group": "shanghai",
           "label": "day-3 · 单日地图",
           "type": "application/json"
@@ -99,9 +99,9 @@
       "type": "text/javascript"
     },
     "renderer": {
-      "url": "packages/renderer.ca38a27e5607bfa4.js",
-      "bytes": 665678,
-      "sha256": "ca38a27e5607bfa465826a56a66951adcbd9c095f4ca825b6137a79bc3a052fb",
+      "url": "packages/renderer.50905b36e2f3d448.js",
+      "bytes": 665837,
+      "sha256": "50905b36e2f3d448d5138786f46403f309371cd70dbc40bd3e3c91731a219969",
       "group": "engine",
       "label": "固定插画渲染器",
       "type": "text/javascript"
