@@ -238,15 +238,21 @@ function measureState(state) {
 }
 
 const states = new Map(asArray(lifecycle.states).map((state) => [state.id, measureState(state)]));
+const laneLabels = new Map(asArray(lifecycle.lanes).map((lane) => [lane.id, lane.label]));
 const plannedTransitions = asArray(lifecycle.transitions).filter(plannerRouted);
 const v2Rows = laneRowOrder();
 const v2RowOf = (state) => (v2Rows.includes(state.lane) ? v2Rows.indexOf(state.lane) : undefined);
+// probe、最终路由和 SVG 必须使用同一个水平预算；显式画布不变。
+const v2CanvasWidth = authoredViewBox?.[0] ?? Math.max(640, Math.ceil(
+  Math.max(0, ...[...states.values()].map(state => state.x + state.width).filter(Number.isFinite)) + layoutV2.marginX,
+));
 let useGridRouter = isV2;
 if (isV2) {
   // Route once to learn how many horizontal tracks each row gap carries,
   // then open every gap to fit them before the final routing pass.
   const probe = createLifecycleGridRouter(states, plannedTransitions, {
-    rowOf: v2RowOf, columnXs: v2ColumnCenters,
+    rowOf: v2RowOf, columnXs: v2ColumnCenters, canvasWidth: v2CanvasWidth,
+    bandTitles: bandGeometry(),
   });
   // Compatible pins keep the grid layout. A conflicting pin sends the whole
   // scene to the side-aware planner so all edges still share port spreading
@@ -265,7 +271,6 @@ if (isV2) {
   });
   for (const state of asArray(lifecycle.states)) states.set(state.id, measureState(state));
 }
-const laneLabels = new Map(asArray(lifecycle.lanes).map((lane) => [lane.id, lane.label]));
 const authoredOutgoing = new Set(asArray(lifecycle.transitions).map((transition) => transition.from));
 
 // A state with no authored outgoing transition is terminal in the UML sense.
@@ -316,8 +321,7 @@ const resolvedLegendEntries = legendCatalog();
 let viewBox;
 if (isV2 && !authoredViewBox) {
   const finite = [...states.values()];
-  const maxRight = Math.max(0, ...finite.map((state) => state.cx + state.width / 2).filter(Number.isFinite));
-  const width = Math.max(640, Math.ceil(maxRight + layoutV2.marginX));
+  const width = v2CanvasWidth;
   const footprint = legendFootprint(resolvedLegendEntries, { width: width - 80 });
   const statesBottom = Math.max(0, ...finite.map((state) => state.y + state.height).filter(Number.isFinite));
   viewBox = [width, Math.ceil(statesBottom + footprint.extraHeight + 96)];
@@ -623,6 +627,8 @@ function plannerRouted(transition) {
 const planner = useGridRouter ? createLifecycleGridRouter(states, plannedTransitions, {
   rowOf: v2RowOf,
   columnXs: v2ColumnCenters,
+  canvasWidth: v2CanvasWidth,
+  bandTitles: bandGeometry(),
 }) : createRouter(states, plannedTransitions, {
   labelRectFor: (transition, points, { routes, labels }) => ((transition.label || transition.note) ? reservedLabelRect({
     label: { relation: transition, label: transition.label || transition.note, ...transitionLabelBoxAt(transition, labelPoint(transition, points)) },

@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
+### Fixed
+
+- **Lifecycle v2 外绕路径边界（#623）。** 外绕轨道按实际画布宽度和遮罩描边预算调整，并为泳道标题留空；原侧空间不足时，未固定侧边的路线可改走无障碍的另一侧，保留轨道间隔、节点和显式坐标。换侧候选按需扩大到跨度内同列中间状态的完整宽度，避免端点较窄时错过可用走廊，同时保留已可用的不同跨度嵌套分配，并继续避开所有节点、初始标记和标题。已有无需调整的 v2 输出及 v1 几何保持不变。
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed

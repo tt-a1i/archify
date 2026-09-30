@@ -36,6 +36,11 @@ omit `meta.viewBox`, and center nodes around the lane content with symmetric
 `yOffset` values such as `-90 / 0 / 90`. Keep semantic edge labels and act on
 compiler diagnostics.
 
+Lifecycle v2 的外绕路径使用与画布一致的水平预算；越界重排时为泳道标题
+留空，换侧候选也考虑跨度内同列的中间状态宽度。固定侧边和显式坐标仍由作者
+决定。空间不足时不要删除关系，按 [Lifecycle 布局预算](../renderers/lifecycle/README.md#layout-budget-v2)
+调整可用空间或路由，并保留视觉检查。
+
 ## Legend contract
 
 Omit `meta.legend` for the truthful default: `auto` lists only semantic kinds
