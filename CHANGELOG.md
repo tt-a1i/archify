@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
+### Fixed
+
+- **Architecture Delta translation changes (#600).** Compare reports additions, removals and edits to `meta.translations` as presentation changes; translation-key order does not affect the result or entity-change counts.
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed
