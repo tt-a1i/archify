@@ -337,6 +337,10 @@ function legendY() {
 function lifecycleAreaBottom() {
   return isV2 ? viewBox[1] - legendExtraHeight - 96 : viewBox[1] - 122;
 }
+const lifecycleAreaTop = isV2 ? 44 : 64;
+// Mirrors the authored minimum in schemas/lifecycle.schema.json: a repair that
+// would need a state shorter than the schema allows cannot be offered.
+const minimumStateHeight = 36;
 const stateSteps = new Map();
 for (const [index, transition] of asArray(lifecycle.transitions).entries()) {
   if (!stateSteps.has(transition.from)) stateSteps.set(transition.from, index);
@@ -394,8 +398,64 @@ function validateLifecycle() {
     if (state.x < (isV2 ? 28 : 32) || state.x + state.width > viewBox[0] - (isV2 ? 28 : 32)) {
       problems.push(`State "${state.id}" exceeds the horizontal bounds of the diagram — reduce state.width${isV2 ? ', lower its col,' : ''} or increase meta.viewBox[0].`);
     }
-    if (state.y < (isV2 ? 44 : 64) || state.y + state.height > lifecycleAreaBottom()) {
-      problems.push(`State "${state.id}" exceeds the vertical lifecycle area — keep y between ${isV2 ? 44 : 64} and ${lifecycleAreaBottom()} (adjust yOffset or increase meta.viewBox[1]).`);
+    // y is the state's top edge, so the top bound moves only with yOffset —
+    // height cannot repair it. Both bounds are reported independently, because
+    // a state tall enough to cross the whole area violates both at once.
+    if (state.y < lifecycleAreaTop) {
+      problems.push({
+        message: `State "${state.id}" starts above the vertical lifecycle area — keep y at or above ${lifecycleAreaTop}.`,
+        subject: { state: state.id },
+        evidence: { y: state.y, areaTop: lifecycleAreaTop, yOffset: state.yOffset || 0 },
+        supportedFixes: [
+          `raise or remove the negative yOffset on state "${state.id}"`,
+        ],
+      });
+    }
+    if (state.y + state.height > lifecycleAreaBottom()) {
+      const areaBottom = lifecycleAreaBottom();
+      const stateBottom = state.y + state.height;
+      // The band between the area floor and the canvas bottom: the fixed v1
+      // legend reserve, or v2's measured legend chrome.
+      const bottomReserve = viewBox[1] - areaBottom;
+      const requiredViewBoxHeight = stateBottom + bottomReserve;
+      // Raising meta.viewBox[1] satisfies this check directly, but the lifecycle
+      // canvas is the reader's printed page: a taller canvas renders a taller
+      // first screen, so the raise only holds while the page still fits the
+      // target viewport. Name that conflict here instead of leaving the author
+      // to discover it one command later (see #468).
+      //
+      // Only offer a repair that can clear this bound on its own. Lowering
+      // yOffset moves the whole state, which reaches the bound only while the
+      // state is short enough to fit between them at all; reducing height moves
+      // only the bottom edge, and only reaches the bound while a state short
+      // enough to do it is still legal to author.
+      const supportedFixes = [];
+      const roomForState = areaBottom - lifecycleAreaTop;
+      if (state.height <= roomForState) {
+        supportedFixes.push(`lower yOffset on state "${state.id}"`);
+      }
+      if (state.y + minimumStateHeight <= areaBottom) {
+        supportedFixes.push(`reduce state "${state.id}" height`);
+      }
+      supportedFixes.push(`raise meta.viewBox[1] to at least ${requiredViewBoxHeight} only while the delivered page still fits the target viewport (references/delivery-contract.md), then rerun deliver and visual-check`);
+      // The bound belongs to y + height, so name the y that satisfies it. The
+      // unadjusted "keep y between 64 and areaBottom" let an author follow the
+      // message exactly and still fail.
+      const extent = state.height <= roomForState
+        ? `keep y within [${lifecycleAreaTop}, ${areaBottom - state.height}] so that y + height does not pass ${areaBottom}`
+        : `it is taller than the area from y = ${lifecycleAreaTop} to y = ${areaBottom}, so no yOffset can fit it — reduce state height to at most ${roomForState}`;
+      problems.push({
+        message: `State "${state.id}" exceeds the vertical lifecycle area — ${extent}. Raising meta.viewBox[1] to at least ${requiredViewBoxHeight} also fits it, but that canvas also renders a taller first screen, so it holds only while the page still fits the target viewport.`,
+        subject: { state: state.id },
+        evidence: {
+          y: state.y,
+          height: state.height,
+          areaBottom,
+          requiredViewBoxHeight,
+          viewBoxHeight: viewBox[1],
+        },
+        supportedFixes,
+      });
     }
     const estLabelW = textUnits(state.label) * 6.2;
     if (estLabelW > state.width + 6) {

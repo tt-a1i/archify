@@ -62,7 +62,7 @@ without a database node keeps it visual-only.
 | Stages (2–5) | centers at x = 100 + stage×215; stage band 168 wide, header at y 46 |
 | Row tops (`row` 0–4) | y = 128, 242, 356, 470, 584 (plus `yOffset`) |
 | Default node | 112×58 |
-| Node area | x within `[24, width − 24]`; y within `[104, height − 74]` |
+| Node area | x within `[24, width − 24]`; y within `[104, height − 74 − node height]` |
 | Node spacing | ≥10px between any two nodes (checked across stages and rows) |
 | Flow length | ≥34px between endpoints |
 | Legend row | y = height − 36 |

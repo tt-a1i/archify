@@ -53,18 +53,44 @@ export function throwDiagnosticError(message, diagnostics) {
   throw error;
 }
 
+// A problem is either a message, or a plain data object carrying the repair
+// contract for a failure the shared layout code cannot describe on its own.
+// Everything else — including an Error, whose `message` is not a repair
+// contract — keeps the previous treatment of one stringified finding, so an
+// existing caller can never be downgraded to a nameless diagnostic by this
+// branch. The generic `layout/constraint` severity, subject and empty fix list
+// stay the default for message-only problems.
+function classifiedProblem(problem, { code, subject }) {
+  const structured = problem !== null && typeof problem === 'object' && !Array.isArray(problem)
+    && !(problem instanceof Error)
+    && typeof problem.message === 'string' && problem.message.trim() !== '';
+  if (!structured) {
+    return { structured: false, code, message: String(problem), subject, evidence: {}, supportedFixes: [] };
+  }
+  return {
+    structured: true,
+    code: String(problem.code || code),
+    message: problem.message,
+    subject: { ...subject, ...plainObject(problem.subject) },
+    evidence: plainObject(problem.evidence),
+    supportedFixes: problem.supportedFixes || [],
+  };
+}
+
 export function throwDiagnosticProblems(prefix, problems, { code = 'layout/constraint', subject = {}, diagnostics: details = [] } = {}) {
-  const messages = (problems || []).map((problem) => String(problem));
   const byMessage = new Map(details.map((entry) => [entry.message, entry]));
-  const diagnostics = messages.map((message) => normalizedDiagnostic(byMessage.get(message) || {
-      code,
-      severity: 'error',
-      message,
-      subject,
-      evidence: {},
-      supportedFixes: [],
+  const classified = (problems || []).map((problem) => {
+    const entry = classifiedProblem(problem, { code, subject });
+    // An explicit repair contract on the problem itself wins; otherwise a
+    // caller-supplied detail matched by message upgrades the string; otherwise
+    // the generic finding stands.
+    return entry.structured ? entry : (byMessage.get(entry.message) || entry);
+  });
+  const diagnostics = classified.map((problem) => normalizedDiagnostic({
+      ...problem,
+      severity: problem.severity || 'error',
     }));
-  throwDiagnosticError(`${prefix}:\n- ${messages.join('\n- ')}`, diagnostics);
+  throwDiagnosticError(`${prefix}:\n- ${classified.map((problem) => problem.message).join('\n- ')}`, diagnostics);
 }
 
 function fallbackDiagnostic(error) {

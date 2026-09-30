@@ -63,6 +63,9 @@ const layout = {
   rowYs: [128, 242, 356, 470, 584],
   labelH: 16
 };
+// Mirrors the authored minimum in schemas/dataflow.schema.json: a repair that
+// would need a node shorter than the schema allows cannot be offered.
+const minimumNodeHeight = 36;
 
 function flowLabelSize(flow) {
   const longestLine = Math.max(textUnits(flow.label), textUnits(flow.classification || ''));
@@ -136,8 +139,61 @@ function validateDataflow() {
     if (node.x < 24 || node.x + node.width > viewBox[0] - 24) {
       problems.push(`Node "${node.id}" exceeds the horizontal bounds of the viewBox — reduce node.width or increase meta.viewBox[0].`);
     }
-    if (node.y < layout.stageY + layout.stageH + 22 || node.y + node.height > viewBox[1] - layout.stageBottomPad) {
-      problems.push(`Node "${node.id}" exceeds the readable diagram area — keep y between ${layout.stageY + layout.stageH + 22} and ${viewBox[1] - layout.stageBottomPad} (adjust row/yOffset or increase meta.viewBox[1]).`);
+    const diagramAreaTop = layout.stageY + layout.stageH + 22;
+    const diagramAreaBottom = viewBox[1] - layout.stageBottomPad;
+    // y is the node's top edge, so the top bound moves only with yOffset —
+    // height cannot repair it. Both bounds are reported independently, because
+    // a node tall enough to cross the whole area violates both at once.
+    if (node.y < diagramAreaTop) {
+      problems.push({
+        message: `Node "${node.id}" starts above the readable diagram area — keep y at or above ${diagramAreaTop}.`,
+        subject: { node: node.id },
+        evidence: { y: node.y, areaTop: diagramAreaTop, yOffset: node.yOffset || 0 },
+        supportedFixes: [
+          `raise or remove the negative yOffset on node "${node.id}"`,
+        ],
+      });
+    }
+    if (node.y + node.height > diagramAreaBottom) {
+      const nodeBottom = node.y + node.height;
+      const requiredViewBoxHeight = nodeBottom + layout.stageBottomPad;
+      // The canvas is the reader's printed page, so raising meta.viewBox[1]
+      // satisfies this check while also rendering a taller first screen. The
+      // raise is offered with that constraint attached rather than on its own
+      // (see #468).
+      //
+      // Only offer a repair that can clear this bound on its own. Lowering
+      // yOffset moves the whole node, which reaches the bound only while the
+      // node is short enough to fit between them at all; reducing height moves
+      // only the bottom edge, and only reaches the bound while a node short
+      // enough to do it is still legal to author.
+      const supportedFixes = [];
+      const roomForNode = diagramAreaBottom - diagramAreaTop;
+      if (node.height <= roomForNode) {
+        supportedFixes.push(`lower yOffset on node "${node.id}"`);
+      }
+      if (node.y + minimumNodeHeight <= diagramAreaBottom) {
+        supportedFixes.push(`reduce node "${node.id}" height`);
+      }
+      supportedFixes.push(`raise meta.viewBox[1] to at least ${requiredViewBoxHeight} only while the delivered page still fits the target viewport (references/delivery-contract.md), then rerun deliver and visual-check`);
+      // The bound belongs to y + height, so name the y that satisfies it. The
+      // unadjusted "keep y between 104 and areaBottom" let an author follow the
+      // message exactly and still fail.
+      const extent = node.height <= roomForNode
+        ? `keep y within [${diagramAreaTop}, ${diagramAreaBottom - node.height}] so that y + height does not pass ${diagramAreaBottom}`
+        : `it is taller than the area from y = ${diagramAreaTop} to y = ${diagramAreaBottom}, so no yOffset can fit it — reduce node height to at most ${roomForNode}`;
+      problems.push({
+        message: `Node "${node.id}" exceeds the readable diagram area — ${extent}. Raising meta.viewBox[1] to at least ${requiredViewBoxHeight} also fits it, but that canvas also renders a taller first screen, so it holds only while the page still fits the target viewport.`,
+        subject: { node: node.id },
+        evidence: {
+          y: node.y,
+          height: node.height,
+          areaBottom: diagramAreaBottom,
+          requiredViewBoxHeight,
+          viewBoxHeight: viewBox[1],
+        },
+        supportedFixes,
+      });
     }
     const estLabelW = textUnits(node.label) * 6.2;
     if (estLabelW > node.width + 6) {
