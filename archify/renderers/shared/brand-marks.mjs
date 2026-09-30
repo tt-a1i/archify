@@ -411,6 +411,49 @@ function iconCandidates(html, pageUrl) {
   return [...unique.values()].slice(0, 5).concat({ url: fallback, score: -1 });
 }
 
+// Necessary RIFF bounds, not a WebP bitstream decoder. Unknown chunks and
+// bytes after the declared RIFF end remain compatible with tolerant readers.
+// https://developers.google.com/speed/webp/docs/riff_container
+function webpChunks(buffer, start, end) {
+  const chunks = [];
+  for (let cursor = start; cursor < end;) {
+    if (end - cursor < 8) return null;
+    const size = buffer.readUInt32LE(cursor + 4);
+    const payload = cursor + 8;
+    const next = payload + size + (size % 2);
+    if (next > end) return null;
+    chunks.push({ type: buffer.toString('latin1', cursor, cursor + 4), start: payload, size });
+    cursor = next;
+  }
+  return chunks;
+}
+
+function hasWebpImageData(buffer) {
+  if (buffer.length < 12 || buffer.toString('latin1', 0, 4) !== 'RIFF'
+    || buffer.toString('latin1', 8, 12) !== 'WEBP') return false;
+  const end = buffer.readUInt32LE(4) + 8;
+  if (end < 12 || end > buffer.length) return false;
+  const chunks = webpChunks(buffer, 12, end);
+  if (!chunks) return false;
+  const isBitstream = ({ type }) => type === 'VP8 ' || type === 'VP8L';
+  let imageFound = false;
+  for (const chunk of chunks) {
+    if (isBitstream(chunk)) {
+      if (chunk.size === 0) return false;
+      imageFound = true;
+    } else if (chunk.type === 'ANMF') {
+      if (chunk.size < 16) return false;
+      // ANMF holds one level of padded subchunks after its 16-byte frame header.
+      const frame = webpChunks(buffer, chunk.start + 16, chunk.start + chunk.size);
+      if (!frame) return false;
+      const bitstreams = frame.filter(isBitstream);
+      if (!bitstreams.length || bitstreams.some(({ size }) => size === 0)) return false;
+      imageFound = true;
+    }
+  }
+  return imageFound;
+}
+
 async function imageData(response) {
   const contentType = (response.headers.get('content-type') || '').split(';')[0].trim().toLocaleLowerCase('en-US');
   const allowed = new Set([
@@ -438,10 +481,7 @@ async function imageData(response) {
         && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff
         && buffer.at(-2) === 0xff && buffer.at(-1) === 0xd9
       : (contentType === 'image/webp'
-        ? buffer.length >= 16
-          && buffer.toString('ascii', 0, 4) === 'RIFF'
-          && buffer.toString('ascii', 8, 12) === 'WEBP'
-          && buffer.readUInt32LE(4) + 8 <= buffer.length
+        ? hasWebpImageData(buffer)
         : buffer.length >= 22
           && buffer[0] === 0 && buffer[1] === 0 && buffer[2] === 1 && buffer[3] === 0
           && buffer.readUInt16LE(4) > 0

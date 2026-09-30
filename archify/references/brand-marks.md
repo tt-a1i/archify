@@ -72,6 +72,13 @@ and pinned digest tied to the unencoded representation. A later usable icon may
 still succeed; otherwise an encoding error is retained instead of being hidden
 by an unrelated favicon 404.
 
+WebP capture checks the declared RIFF range, chunk headers, payload bounds and
+required padding space. Still images need nonempty VP8/VP8L data; each ANMF
+frame needs bounded subchunks and nonempty image data after its frame header.
+Unknown chunks and bytes beyond the RIFF range remain accepted, and the digest
+covers the complete original file. These are container checks, not full codec,
+pixel, feature-flag or chunk-order validation.
+
 The final artifact never fetches a brand asset when opened. Preset vectors and
 digest-verified captured site icons remain embedded in SVG, PNG, WebP, JPEG,
 Share Card, and WebM exports.
