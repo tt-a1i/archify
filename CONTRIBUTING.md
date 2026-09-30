@@ -72,10 +72,23 @@ A visual PR must provide enough evidence to evaluate whether the intended user v
 
 Static SVG/XML checks cannot establish browser layout, font settling, or interaction behavior. When the adaptive reader or Viewer layout changes, run the real browser test with Chrome available:
 
+In a POSIX shell:
+
 ```sh
 cd archify
 ARCHIFY_CHROME="/path/to/chrome" node --test test/desktop-reader-browser.test.mjs
 ```
+
+In Windows PowerShell:
+
+```powershell
+cd archify
+$env:ARCHIFY_CHROME = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+node --test test/desktop-reader-browser.test.mjs
+```
+
+Replace the example Chrome path with your installed executable's path. In
+PowerShell, the environment variable remains set for the current session.
 
 A browser test skipped because Chrome was unavailable is **skipped**, not passed. Follow [the delivery contract](archify/references/delivery-contract.md) for visual evidence, receipts, and failure stages. Successful validation, atomic delivery, browser checks, and perceptual review establish different claims.
 
