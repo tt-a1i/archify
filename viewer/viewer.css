@@ -2294,6 +2294,14 @@ html[data-preset="blueprint"] .node-finder-results { border-radius: 0.18rem; }
   border-radius: 0.75rem;
   border: 1px solid var(--panel-border);
   padding: 1.125rem 1.25rem;
+  /* A single unbreakable token (a path, a slug) must not raise the track's
+     min-content floor above the card's grid share: min-width: 0 lets the
+     card shrink to its track, and overflow-wrap: anywhere — which, unlike
+     break-word, participates in intrinsic sizing — lets the token break
+     inside the card instead of pushing the document into horizontal
+     overflow. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 html[data-preset="signal-flow"] .card {
