@@ -2632,6 +2632,16 @@ function checkerDiagnostics(checker) {
   }
   for (const check of checker?.checks || []) {
     if (check.ok || COMPOSITION_CHECKS.has(check.name)) continue;
+    if (check.name === 'svg_path_data') {
+      const pathDiagnostics = (checker.diagnostics || []).filter(item => (
+        item?.severity === 'error'
+        && ['artifact/svg-path-malformed', 'artifact/svg-path-unsupported'].includes(item.code)
+      ));
+      if (pathDiagnostics.length) {
+        diagnostics.push(...pathDiagnostics.map(item => diagnostic(item)));
+        continue;
+      }
+    }
     diagnostics.push(diagnostic({
       code: `artifact/${check.name.replaceAll('_', '-')}`,
       message: (check.details || []).find(Boolean) || `Final artifact failed ${check.name}.`,

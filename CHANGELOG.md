@@ -4,6 +4,12 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+> Development identity: `v3.0.2-dev.1`. Not a stable release.
+
+### Fixed
+
+- **SVG 路径检查（#641）。** 统一解析关系线和结构边界的 `M/L/H/V/Q/Z` 路径，正确保留子路径与闭合语义；截断参数、非法数值和不支持的命令现在有限失败并给出定位诊断，避免检查挂起、漏检或虚构跨子路径线段。普通有效产物的 9 项检查保持不变。
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed

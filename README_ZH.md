@@ -29,7 +29,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
-  <a href="CHANGELOG.md#301--2026-09-28"><img src="https://img.shields.io/badge/version-3.0.1-0891b2?style=flat-square" alt="Stable version 3.0.1" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.0.2--dev.1-0891b2?style=flat-square" alt="Development version 3.0.2-dev.1" /></a>
 </p>
 
 <p align="center">
@@ -179,7 +179,7 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ## 快速开始
 
-**当前稳定版本：** `v3.0.1`。详见[版本历史](CHANGELOG.md#301--2026-09-28)。
+**当前开发版本：** `v3.0.2-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
 
 ### 1. 安装
 

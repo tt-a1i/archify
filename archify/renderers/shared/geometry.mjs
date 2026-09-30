@@ -719,6 +719,8 @@ export function collectAmbiguousCorridors({
       relation,
       relationIndex: Number.isInteger(entry.relationIndex) ? entry.relationIndex : fallbackIndex,
       points,
+      ...(entry.sourceEndpoint === false ? { sourceEndpoint: false } : {}),
+      ...(entry.targetEndpoint === false ? { targetEndpoint: false } : {}),
     };
   }).filter(Boolean);
   const hits = [];
@@ -773,9 +775,11 @@ function shortWorkflowTrunk(left, right, leftSegment, rightSegment, length) {
   const width = (edge) => edge.width || (variant(edge) === 'emphasis' ? 1.8 : 1.4);
   if (variant(a) !== variant(b) || width(a) !== width(b) || (a.role || '') !== (b.role || '')) return false;
   const same = (p, q) => Math.abs(p[0] - q[0]) < 0.0001 && Math.abs(p[1] - q[1]) < 0.0001;
-  const source = a.from === b.from && leftSegment === 0 && rightSegment === 0
+  const source = left.sourceEndpoint !== false && right.sourceEndpoint !== false
+    && a.from === b.from && leftSegment === 0 && rightSegment === 0
     && same(left.points[0], right.points[0]);
-  const target = a.to === b.to && leftSegment === left.points.length - 2 && rightSegment === right.points.length - 2
+  const target = left.targetEndpoint !== false && right.targetEndpoint !== false
+    && a.to === b.to && leftSegment === left.points.length - 2 && rightSegment === right.points.length - 2
     && same(left.points.at(-1), right.points.at(-1));
   if (!source && !target) return false;
   const p = left.points[leftSegment], q = left.points[leftSegment + 1];
