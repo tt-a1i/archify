@@ -1,0 +1,9 @@
+{
+  "baseCommit": "f12947c420810399cfbaa254870de4f41b087bba",
+  "svgSha256": {
+    "ordinary": "5ad328ef6a7e52996e2dd7fdc0f63f77f79941660e87644d66ab91731805ac6c",
+    "dense": "c17515df57f97e19d2578ea9aa6177e5ff6acdb9ca1ce8d577c905667269fa4a",
+    "cjk": "4d87a81b2dbf353d33fdecdde6e1d066f60755865efc98cee6adb2914c703ac6",
+    "v1": "213fb33727c430f74c5e2fcc220b3c7be82a52eb31849f54cb4ed5d3393549c1"
+  }
+}

@@ -4,6 +4,11 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ## [Unreleased]
 
+> Development identity: `v3.0.2-dev.1`. Not a stable release.
+
+### Added
+- **Workflow v2 字体与测量布局联动（#631）。** 新增可选 `meta.typography_scale`（1–2），让节点文本、泳道/阶段/分组标题、连线标签及图例共同参与布局测量；固定尺寸不足时返回结构化容量诊断。省略或设为 1 保持原有输出，schema v1 和其他图类型不变。
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed

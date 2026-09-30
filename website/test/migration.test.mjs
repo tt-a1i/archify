@@ -67,6 +67,24 @@ for (const page of pages) {
   });
 }
 
+test('homepage version labels and translations match the release identity baseline', () => {
+  const baseline = parse(read(docs, 'index.html'));
+  const generated = parse(read(dist, 'index.html'));
+  for (const key of ['hero-badge', 'footer-meta']) {
+    const labels = (tree) => [...elements(tree, 'span'), ...elements(tree, 'p')]
+      .filter(node => attr(node, 'data-i18n') === key).map(semantic);
+    assert.equal(labels(baseline).length, 1);
+    assert.deepEqual(labels(generated), labels(baseline), `${key}: initial identity`);
+    const translations = (tree) => elements(tree, 'script').flatMap(node => {
+      const source = (node.childNodes || []).map(child => child.value || '').join('');
+      return [...source.matchAll(new RegExp(`['"]${key}['"]\\s*:\\s*(['"])(.*?)\\1`, 'g'))]
+        .map(match => match[2]);
+    });
+    assert.equal(translations(baseline).length, 2, 'both built-in languages must be covered');
+    assert.deepEqual(translations(generated), translations(baseline), `${key}: translated identity`);
+  }
+});
+
 test('all existing non-page public URLs retain exact file bytes', () => {
   function visit(dir, rel = '') {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

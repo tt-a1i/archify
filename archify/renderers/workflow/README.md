@@ -63,6 +63,52 @@ The schema lives at:
 archify/schemas/workflow.schema.json
 ```
 
+## 可选字体缩放（Workflow v2）
+
+`meta.typography_scale` 接受 `1` 到 `2` 之间的数字；例如 `1.5` 将节点标题、
+副标题、标签、泳道/阶段/分组标题、连线标签和图例的字号放大至 1.5 倍。
+省略此字段或设为 `1` 保持现有输出；schema v1 不接受此字段。
+
+```json
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Readable inventory workflow",
+    "output": "inventory.html",
+    "typography_scale": 1.5
+  },
+  "lanes": [{ "id": "inventory", "label": "Inventory" }],
+  "nodes": [
+    { "id": "reserve", "lane": "inventory", "col": 0, "type": "backend",
+      "label": "Reserve", "sublabel": "InventoryRecordType", "tag": "pending" }
+  ],
+  "edges": []
+}
+```
+
+将示例保存为 `inventory.workflow.json`，在仓库根目录执行：
+
+```bash
+node archify/bin/archify.mjs validate workflow inventory.workflow.json --layout-json
+node archify/bin/archify.mjs render workflow inventory.workflow.json inventory.html
+ARCHIFY_CHROME="/path/to/chrome" node archify/bin/archify.mjs browser-check inventory.html --json
+```
+
+缩放大于 `1` 时，编译器按首选字号估计自动节点宽度，并为文本行、标题、
+连线标签遮罩及图例保留空间，联动列距与泳道高度；宽度估计按 CJK 字符宽度计算。
+布局回执的 `typography` 字段报告比例和各节点最终采用的字号。
+
+显式 `node.width`、`node.height`、`meta.viewBox` 和路径坐标仍然有效。固定节点
+允许在已缩放的首选/最小字号之间适配；无法容纳时报告 `workflow/typography-capacity`，
+提供所需宽高及经过重新规划验证的修复建议。画布不足仍报告
+`workflow/viewbox-capacity`，冲突路径仍使用现有路径诊断；不会静默移动绝对坐标，
+也不会删减文案。可省略节点尺寸和 `viewBox`，让编译器测量自动布局。
+
+此配置不修改阅读器适配策略或全局可读性门槛，也不保证任意密集图在固定窗口
+达到某个屏幕字号。更大的字体可能需要更宽或更高的图；应比较最终 HTML 的实际
+显示效果。自动浏览器检查与人工视觉检查分别提供证据，单独通过校验不代表视觉验收完成。
+
 ## Migration and layout receipt
 
 Migrate an existing v1 source into a separate v2 file:
