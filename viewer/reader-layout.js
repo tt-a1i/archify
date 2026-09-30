@@ -126,6 +126,7 @@
           window.innerWidth >= MIN_DESKTOP_WIDTH &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
+          document.fullscreenElement !== diagram &&
           (!window.matchMedia || !window.matchMedia('print').matches)
         );
       }
@@ -339,6 +340,7 @@
         schedule();
       }, { passive: true });
       window.addEventListener('load', schedule, { once: true });
+      document.addEventListener('fullscreenchange', schedule);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);

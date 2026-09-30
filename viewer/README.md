@@ -30,6 +30,17 @@ initialization order.
 Generated output is not a second editing
 surface; release identity changes also belong in `template.source.html`.
 
+## Diagram fullscreen
+
+The camera dock offers native fullscreen for the diagram container when the
+browser exposes an enabled Fullscreen API. The browser owns Escape and the
+`fullscreenchange` event; the button reflects that native state, including exits
+through browser chrome. Rejected requests announce a localized message without
+changing the pressed state. Unsupported browsers keep the existing presentation
+stage. Fullscreen does not change the presentation URL or authored SVG, and its
+controls and layout are excluded from printing and canonical exports. Entering
+and leaving refits the camera; leaving restores scroll and button focus.
+
 ## Export contract
 
 `export.js` contains the complete Export heading and IIFE. It initializes once

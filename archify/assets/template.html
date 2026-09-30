@@ -1020,6 +1020,51 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 5v10M5 10h10' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 5v10M5 10h10' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
     }
+    .diagram-nav-icon.fullscreen {
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    #btn-fullscreen[aria-pressed="true"] .diagram-nav-icon.fullscreen {
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 7h4V3m6 0v4h4M7 17v-4H3m14 0h-4v4' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 7h4V3m6 0v4h4M7 17v-4H3m14 0h-4v4' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    }
+    .fullscreen-status {
+      position: absolute;
+      bottom: 4rem;
+      right: 1rem;
+      z-index: 13;
+      max-width: calc(100% - 2rem);
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.5rem;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 0.8rem;
+    }
+    @media screen {
+      .diagram-container:fullscreen {
+        box-sizing: border-box;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: 0 !important;
+        border: 0;
+        border-radius: 0;
+        padding: 1rem 1rem 4.5rem !important;
+        background: var(--panel);
+        overflow: hidden !important;
+        --archify-dock-lift: 0px !important;
+      }
+      .diagram-container:fullscreen > svg {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        max-height: none !important;
+      }
+    }
     .diagram-nav [data-view="reset"] {
       display: inline-flex;
       align-items: center;
@@ -5301,7 +5346,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button data-view="out" type="button" aria-label="{{i18n:viewer.nav.zoomOut}}" title="{{i18n:viewer.nav.zoomOut.title}}"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
         <button data-view="reset" type="button" aria-label="{{i18n:viewer.nav.reset}}" title="{{i18n:viewer.nav.reset.title}}"><span class="diagram-nav-detail" data-view-detail hidden>{{i18n:viewer.nav.read}}</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
         <button data-view="in" type="button" aria-label="{{i18n:viewer.nav.zoomIn}}" title="{{i18n:viewer.nav.zoomIn.title}}"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
+        <button id="btn-fullscreen" type="button" hidden aria-label="{{i18n:viewer.fullscreen.enter}}" aria-pressed="false" title="{{i18n:viewer.fullscreen.enter}}"><span class="diagram-nav-icon fullscreen" aria-hidden="true"></span></button>
       </div>
+      <p id="fullscreen-status" class="fullscreen-status no-print" role="status" hidden></p>
     </div>
 
     <aside class="reader-rail" id="reader-rail">
@@ -9469,6 +9516,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           window.innerWidth >= MIN_DESKTOP_WIDTH &&
           html.getAttribute('data-embed') !== 'true' &&
           html.getAttribute('data-present') !== 'true' &&
+          document.fullscreenElement !== diagram &&
           (!window.matchMedia || !window.matchMedia('print').matches)
         );
       }
@@ -9682,6 +9730,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         schedule();
       }, { passive: true });
       window.addEventListener('load', schedule, { once: true });
+      document.addEventListener('fullscreenchange', schedule);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
@@ -9813,6 +9862,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function eligible() {
         return Boolean(
           container && svg && nav &&
+          document.fullscreenElement !== container &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
@@ -11337,6 +11387,62 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         toggle: toggle,
         active: active
       };
+    })();
+
+    /* Native fullscreen is local to the diagram, independent of the shareable
+       presentation stage. The browser owns Escape and fullscreen state. */
+    (function () {
+      var container = document.querySelector('.diagram-container');
+      var button = document.getElementById('btn-fullscreen');
+      var status = document.getElementById('fullscreen-status');
+      var wasActive = false;
+      var pending = false;
+      var previousScroll = { x: 0, y: 0 };
+
+      button.hidden = !document.fullscreenEnabled || typeof container.requestFullscreen !== 'function';
+
+      function sync() {
+        var active = document.fullscreenElement === container;
+        var exited = wasActive && !active;
+        wasActive = active;
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        button.setAttribute('aria-label', viewerText(active ? 'viewer.fullscreen.exit' : 'viewer.fullscreen.enter'));
+        button.title = viewerText(active ? 'viewer.fullscreen.exit' : 'viewer.fullscreen.enter');
+        status.hidden = true;
+        requestAnimationFrame(function () {
+          if (Archify.view) Archify.view.reset({ automatic: true });
+          requestAnimationFrame(function () {
+            if (Archify.view) Archify.view.sync();
+            if (exited) {
+              window.scrollTo(previousScroll.x, previousScroll.y);
+              button.focus({ preventScroll: true });
+            }
+          });
+        });
+      }
+
+      button.addEventListener('click', async function () {
+        if (pending) return;
+        pending = true;
+        status.hidden = true;
+        var exiting = document.fullscreenElement === container;
+        try {
+          if (exiting) {
+            await document.exitFullscreen();
+          } else {
+            previousScroll = { x: window.scrollX, y: window.scrollY };
+            // Request synchronously within the click's user activation.
+            await container.requestFullscreen();
+          }
+        } catch (_) {
+          // Permission/policy failures must not leave a false pressed state.
+          status.textContent = viewerText(exiting ? 'viewer.fullscreen.exitFailed' : 'viewer.fullscreen.failed');
+          status.hidden = false;
+        } finally {
+          pending = false;
+        }
+      });
+      document.addEventListener('fullscreenchange', sync);
     })();
 
     /* ============================================================

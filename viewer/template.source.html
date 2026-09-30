@@ -602,7 +602,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button data-view="out" type="button" aria-label="{{i18n:viewer.nav.zoomOut}}" title="{{i18n:viewer.nav.zoomOut.title}}"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
         <button data-view="reset" type="button" aria-label="{{i18n:viewer.nav.reset}}" title="{{i18n:viewer.nav.reset.title}}"><span class="diagram-nav-detail" data-view-detail hidden>{{i18n:viewer.nav.read}}</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
         <button data-view="in" type="button" aria-label="{{i18n:viewer.nav.zoomIn}}" title="{{i18n:viewer.nav.zoomIn.title}}"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
+        <button id="btn-fullscreen" type="button" hidden aria-label="{{i18n:viewer.fullscreen.enter}}" aria-pressed="false" title="{{i18n:viewer.fullscreen.enter}}"><span class="diagram-nav-icon fullscreen" aria-hidden="true"></span></button>
       </div>
+      <p id="fullscreen-status" class="fullscreen-status no-print" role="status" hidden></p>
     </div>
 
     <aside class="reader-rail" id="reader-rail">
@@ -1162,6 +1164,62 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         toggle: toggle,
         active: active
       };
+    })();
+
+    /* Native fullscreen is local to the diagram, independent of the shareable
+       presentation stage. The browser owns Escape and fullscreen state. */
+    (function () {
+      var container = document.querySelector('.diagram-container');
+      var button = document.getElementById('btn-fullscreen');
+      var status = document.getElementById('fullscreen-status');
+      var wasActive = false;
+      var pending = false;
+      var previousScroll = { x: 0, y: 0 };
+
+      button.hidden = !document.fullscreenEnabled || typeof container.requestFullscreen !== 'function';
+
+      function sync() {
+        var active = document.fullscreenElement === container;
+        var exited = wasActive && !active;
+        wasActive = active;
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        button.setAttribute('aria-label', viewerText(active ? 'viewer.fullscreen.exit' : 'viewer.fullscreen.enter'));
+        button.title = viewerText(active ? 'viewer.fullscreen.exit' : 'viewer.fullscreen.enter');
+        status.hidden = true;
+        requestAnimationFrame(function () {
+          if (Archify.view) Archify.view.reset({ automatic: true });
+          requestAnimationFrame(function () {
+            if (Archify.view) Archify.view.sync();
+            if (exited) {
+              window.scrollTo(previousScroll.x, previousScroll.y);
+              button.focus({ preventScroll: true });
+            }
+          });
+        });
+      }
+
+      button.addEventListener('click', async function () {
+        if (pending) return;
+        pending = true;
+        status.hidden = true;
+        var exiting = document.fullscreenElement === container;
+        try {
+          if (exiting) {
+            await document.exitFullscreen();
+          } else {
+            previousScroll = { x: window.scrollX, y: window.scrollY };
+            // Request synchronously within the click's user activation.
+            await container.requestFullscreen();
+          }
+        } catch (_) {
+          // Permission/policy failures must not leave a false pressed state.
+          status.textContent = viewerText(exiting ? 'viewer.fullscreen.exitFailed' : 'viewer.fullscreen.failed');
+          status.hidden = false;
+        } finally {
+          pending = false;
+        }
+      });
+      document.addEventListener('fullscreenchange', sync);
     })();
 
 /* ARCHIFY:NODE_FINDER */

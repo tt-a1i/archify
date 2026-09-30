@@ -38,10 +38,9 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   files.static = path.join(scratch, 'static.html');
   execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'),
     path.join(skillRoot, 'examples', cases.architecture), files.static]);
-  const browser = new ChromeVisualBrowser(chrome);
-  t.after(() => browser.close());
-  const session = await browser.sessionPromise;
-  await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
+  let browser;
+  let session;
+  t.after(() => browser?.close());
   const send = (method, params = {}) => browser.cdp.send(method, params, session);
   async function run(expression) {
     const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
@@ -59,11 +58,16 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   async function load(mode = 'architecture', { theme = 'dark', reduced = false, fixture = '', preserveStorage = false, query = '' } = {}) {
     const expectedNavigation = ++navigationId;
     if (!preserveStorage) {
+      // Clearing the generic file:/// storage key does not reliably invalidate
+      // Chrome's file-backed storage in a live renderer. A fresh fixture gets
+      // a fresh profile; persistence checks below still reload the same page
+      // in the same browser without intercepting the Viewer's storage reads.
+      if (browser) await browser.close();
+      browser = new ChromeVisualBrowser(chrome);
+      session = await browser.sessionPromise;
+      await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
+      startup = undefined;
       fixtureUrl = pathToFileURL(files[mode]).href + `?theme=${theme}&testNavigation=${expectedNavigation}${query}`;
-      // Reset the disposable browser profile before navigation. Touching
-      // localStorage in a new-document script can disturb file-backed storage
-      // in Chrome; leave startup and reload reads to the Viewer itself.
-      await send('Storage.clearDataForStorageKey', { storageKey: 'file:///', storageTypes: 'local_storage' });
     }
     if (startup) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: startup });
     ({ identifier: startup } = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
@@ -184,10 +188,13 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal((await snapshot('released')).mode, 'live');
     assert.equal(await run('Archify.motionGovernor.toggle()'), true);
     assert.equal(await run('Archify.motionGovernor.toggle()'), false);
-    await run('Archify.motionGovernor.pause()');
-    await load();
-    assert.equal(await run(`localStorage.getItem('archify-motion')`), null, 'Fresh fixtures reset prior stored intent.');
-    assert.equal((await snapshot('fresh-after-stored-intent')).mode, 'live');
+    for (let reset = 0; reset < 3; reset++) {
+      await run('Archify.motionGovernor.pause()');
+      assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
+      await load();
+      assert.equal(await run(`localStorage.getItem('archify-motion')`), null, 'Fresh fixtures reset prior stored intent.');
+      assert.equal((await snapshot('fresh-after-stored-intent-' + reset)).mode, 'live');
+    }
     await load('architecture', { fixture: `Storage.prototype.getItem = Storage.prototype.setItem = Storage.prototype.removeItem = function () { throw new Error('storage fixture'); };` });
     assert.equal(await run('Archify.motionGovernor.pause()'), true);
     assert.equal(await run('Archify.motionGovernor.resume()'), false);

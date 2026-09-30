@@ -25,6 +25,7 @@ const testFiles = [
   'semantic-radar.test.mjs',
   'viewer-chrome-layout.test.mjs',
   'viewer-camera-browser.test.mjs',
+  'fullscreen-browser.test.mjs',
   'motion-governor-browser.test.mjs',
   'finder-browser.test.mjs',
   'intent-trace-browser.test.mjs',

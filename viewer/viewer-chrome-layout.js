@@ -82,6 +82,7 @@
       function eligible() {
         return Boolean(
           container && svg && nav &&
+          document.fullscreenElement !== container &&
           window.innerWidth > 720 &&
           html.getAttribute('data-embed') !== 'true' &&
           (!window.matchMedia || !window.matchMedia('print').matches) &&
