@@ -457,7 +457,8 @@ test('explicit viewBox retains shared-height readable-v2 geometry', () => {
   const result = compileSuccessfully(workflow);
   assert.deepEqual([0, 1, 2].map((index) => laneFrameRect(result.svg, index).height), [276, 270, 270]);
   const svgRoot = result.svg.match(/<svg\b[^>]*>/)?.[0];
-  assert.equal(attributeOrUndefined(svgRoot, 'data-reader-fit'), undefined);
+  assert.equal(attributeOrUndefined(svgRoot, 'data-reader-fit'), 'authored-height');
+  assert.equal(attributeOrUndefined(svgRoot, 'data-diagram-type'), 'workflow');
 });
 
 test('absolute route pins retain shared-height readable-v2 geometry', () => {

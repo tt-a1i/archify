@@ -4751,12 +4751,14 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  const isAuthoredHeight = Boolean(workflow.meta?.viewBox
+  const isAuthoredHeight = Boolean(workflow.schema_version === 2
+    && workflow.meta?.viewBox
     && workflow.lanes?.length >= 2
     && viewBox[1] > 800);
   const readerFit = isAuthoredHeight
     ? ' data-diagram-type="workflow" data-reader-fit="authored-height"'
     : (workflow.schema_version === 2
+      && !workflow.meta?.viewBox
       && hasVerticalStack(workflow)
       && asArray(layout.laneHeights).some((height) => height > 104)
       ? ' data-reader-fit="intrinsic-height"'
