@@ -40,6 +40,10 @@ export function planningWorkflow(workflow) {
     return [automatic];
   });
 
+  // Full-topology contracts cannot be checked against a layout-only subgraph.
+  // The source and final mapped candidate retain and validate these contracts.
+  if (planned.edges.length !== workflow.edges.length) delete planned.semanticChecks;
+
   if (Array.isArray(planned.mainPath)) {
     const projectedPairs = new Set(planned.edges.map((edge) => `${edge.from}\u0000${edge.to}`));
     const projectionBreaksMainPath = planned.mainPath.some((from, index) => (

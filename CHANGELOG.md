@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
+### Fixed
+
+- **Workflow migration semantic contracts (#497).** Layout planning no longer checks full-topology requirements against a temporary graph with routed edges removed. Migrated documents retain their authored contracts and must pass complete validation before publication.
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed
