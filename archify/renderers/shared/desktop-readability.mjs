@@ -105,7 +105,7 @@ export function predictedFixedWidthOverflow({
   if (![viewBoxWidth, viewBoxHeight].every(Number.isFinite) || viewBoxWidth <= 0 || viewBoxHeight <= 0) return null;
   const ratio = viewBoxWidth / viewBoxHeight;
   if (readerFit === 'intrinsic-height'
-      || (readerFit === 'authored-height' && diagramType === 'architecture')
+      || (readerFit === 'authored-height' && (diagramType === 'architecture' || diagramType === 'workflow'))
       || ratio >= DECLARED_WIDE_READER_RATIO) return null;
   const svgWidthPx = viewport.width - bodyHorizontalPx - diagramHorizontalPx;
   const svgHeightPx = Math.round(svgWidthPx * viewBoxHeight / viewBoxWidth);
