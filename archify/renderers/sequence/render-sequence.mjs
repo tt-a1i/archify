@@ -46,21 +46,29 @@ function legendEntries() {
 // needs LEGEND_BLOCK_HEIGHT (title glyphs, row, and the 54px baseline inset).
 const LEGEND_CONTENT_GAP = 12;
 const LEGEND_BLOCK_HEIGHT = 86;
+const TIMELINE_BOTTOM_MARGIN = 65;
 const contentBottom = Math.max(
   0,
   ...asArray(sequence.messages).map((message) => message.y + (message.note ? 22 : 6)),
   ...asArray(sequence.activations).map((activation) => activation.to),
   ...asArray(sequence.segments).map((segment) => segment.to),
 );
+function contentRequiredHeight() {
+  if (!contentBottom) return 0;
+  return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + TIMELINE_BOTTOM_MARGIN);
+}
 function legendRequiredHeight(width) {
   const entries = legendEntries();
   if (!entries.length) return 0;
   return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
     + legendFootprint(entries, { width: width - 80 }).extraHeight);
 }
-// A renderer-sized canvas grows to keep the legend clear of late messages;
-// an authored viewBox is honored and validated below.
-const viewBox = sequence.meta?.viewBox || [920, Math.max(760, legendRequiredHeight(920))];
+// A renderer-sized canvas grows to contain timeline content and to keep the
+// legend clear of late messages; an authored viewBox is honored and validated below.
+const viewBox = sequence.meta?.viewBox || [
+  920,
+  Math.max(760, contentRequiredHeight(), legendRequiredHeight(920)),
+];
 // The timeline scales with viewBox height: a taller viewBox gains message room,
 // a shorter one shrinks the readable band (validated below) instead of clipping.
 // `column_fit: "spread"` widens the lanes with the viewBox instead of keeping
@@ -90,7 +98,7 @@ const layout = {
   participantLabelY: 36,
   participantSublabelY: 50,
   lifelineTop: 142,
-  lifelineBottom: viewBox[1] - 65,
+  lifelineBottom: viewBox[1] - TIMELINE_BOTTOM_MARGIN,
   legendY: viewBox[1] - 54,
   leftX: columnFit === 'spread' ? sideMargin + participantW / 2 : sideMargin,
   colGap,
@@ -197,7 +205,7 @@ function validateSequence() {
   if (participants.size !== asArray(sequence.participants).length) problems.push('Participant ids must be unique.');
 
   if (layout.lifelineBottom - layout.lifelineTop < 120) {
-    problems.push(`viewBox height ${viewBox[1]} leaves under 120px of timeline — set meta.viewBox[1] to at least ${layout.lifelineTop + 120 + 65}.`);
+    problems.push(`viewBox height ${viewBox[1]} leaves under 120px of timeline — set meta.viewBox[1] to at least ${layout.lifelineTop + 120 + TIMELINE_BOTTOM_MARGIN}.`);
   }
 
   for (const participant of participants.values()) {
