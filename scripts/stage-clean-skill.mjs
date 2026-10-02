@@ -203,6 +203,9 @@ function cleanPackageManifestEntry(packageEntries) {
   const packageJson = JSON.parse(packageEntry.content.toString('utf8'));
   delete packageJson.scripts;
   delete packageJson.devDependencies;
+  // Dependency-resolution configuration is meaningless in a package with no
+  // dependencies, and a published manifest must not carry it.
+  delete packageJson.overrides;
   packageEntry.content = Buffer.from(`${JSON.stringify(packageJson, null, 2)}\n`);
 }
 

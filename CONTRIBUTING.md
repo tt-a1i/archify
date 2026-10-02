@@ -94,6 +94,37 @@ remain in the separate `npm run test:webm` gate used by both workflows.
 
 ## Packages and generated artifacts
 
+### CLI-first npm package proof
+
+The npm prototype uses the same tracked-only clean staging path as the Skill
+ZIP. Ordinary `npm pack` or `npm publish` from `archify/` retains repository-only
+manifest fields and is not the supported distribution path.
+
+From the repository root, run the verification script with Node/npm, Git and
+tar available (Bash or Windows Git Bash):
+
+```sh
+artifact_parent="$(mktemp -d)"
+bash scripts/npm-pack-poc.sh "$artifact_parent/verified-package"
+```
+
+The script packs the clean staging tree, prints the package file list and
+integrity, then tests that tarball through local/npx and isolated-global CLI
+installs outside the checkout. Only after all checks pass does the optional,
+previously nonexistent output directory receive the exact tested `.tgz`,
+`pack.json` and `source-revision.txt`. Omitting the directory keeps the check
+temporary. Consumers can install the retained `.tgz` directly with `npm install
+/absolute/path/to/verified-package/tt-a1i-archify-<version>.tgz` and invoke its
+`archify` bin as a subprocess; internal renderer paths are not a public API.
+
+This command does not publish to a registry or install an agent Skill. The npm
+scope/name, publishing permissions and release automation remain maintainer
+decisions. Any future publication must use the exact verified staged tarball,
+not repack the source directory. The npm and Skill versions stay aligned with
+the current development version; a packaging PR does not introduce a version bump.
+
+### Generated artifacts
+
 Viewer maintenance starts in [`viewer/`](viewer/README.md). Edit its source
 files, then run `npm run generate:viewer` from `archify/`; the delivered template
 is generated and its freshness is checked by `npm test`.

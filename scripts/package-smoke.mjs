@@ -112,6 +112,7 @@ try {
     'peerDependencies',
     'bundledDependencies',
     'bundleDependencies',
+    'overrides',
   ];
   const declaredDependencyField = dependencyFields.find((field) => (
     Object.prototype.hasOwnProperty.call(packageJson, field)

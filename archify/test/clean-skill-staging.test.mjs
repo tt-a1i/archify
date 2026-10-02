@@ -36,6 +36,7 @@ function repositoryFixture() {
     name: 'archify-fixture',
     scripts: { test: 'node --test' },
     devDependencies: { ajv: '1.0.0' },
+    overrides: { 'fast-uri': '^3.1.7' },
   }));
   write(root, 'archify/package-lock.json', '{}\n');
   write(root, 'archify/skill-release.json', '{}\n');
@@ -162,6 +163,7 @@ test('clean staging preserves index modes and strips repository-only package met
     const packageJson = JSON.parse(fs.readFileSync(path.join(destination, 'package.json'), 'utf8'));
     assert.equal(Object.hasOwn(packageJson, 'scripts'), false);
     assert.equal(Object.hasOwn(packageJson, 'devDependencies'), false);
+    assert.equal(Object.hasOwn(packageJson, 'overrides'), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
