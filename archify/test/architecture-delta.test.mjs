@@ -557,6 +557,14 @@ test('portable compare retains link settings and uses the same repository identi
   assert.throws(() => compareArchitecture(base, head), (error) => error.code === 'delta/repository-mismatch');
   base.meta.repository = { url: 'https://gitee.com/Team/repo', revision: 'a'.repeat(40), provider: 'gitee' };
   assert.equal(JSON.parse(canonicalArchitectureJson(base)).meta.repository.provider, 'gitee');
+  base.meta.repository = { url: 'https://gitlab.com/Team/Group/repo.git', revision: 'a'.repeat(40) };
+  head.meta.repository = { url: 'git@gitlab.com:team/group/repo', revision: 'b'.repeat(40) };
+  assert.equal(compareArchitecture(base, head, { baseVerified: true, headVerified: true }).proofLevel, 'revision-pinned');
+  base.meta.repository = { url: 'https://git.internal/Team/repo', revision: 'a'.repeat(40), provider: 'gitlab' };
+  head.meta.repository = { url: 'git@git.internal:Team/repo.git', revision: 'b'.repeat(40), provider: 'gitlab' };
+  assert.equal(compareArchitecture(base, head, { baseVerified: true, headVerified: true }).proofLevel, 'revision-pinned');
+  head.meta.repository = { url: 'git@git.internal:Team/repo.git', revision: 'b'.repeat(40), link_mode: 'local-only' };
+  assert.throws(() => compareArchitecture(base, head), (error) => error.code === 'delta/repository-mismatch');
 });
 
 test('portable compare preserves literal SCP paths and rejects different Git locations', () => {

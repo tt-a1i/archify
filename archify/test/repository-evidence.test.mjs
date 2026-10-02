@@ -214,6 +214,73 @@ test('Gitee evidence generates provider-specific revision and line links', () =>
   }
 });
 
+test('GitLab evidence links nested groups and accepts SSH, HTTPS, suffix and case variants', () => {
+  const data = fixture();
+  fs.mkdirSync(path.join(data.root, 'docs'));
+  fs.writeFileSync(path.join(data.root, 'docs', 'guide.md'), '# Guide\n\nRoute requests.\n');
+  git(data.root, 'add', '.');
+  git(data.root, 'commit', '-m', 'guide');
+  const revision = git(data.root, 'rev-parse', 'HEAD');
+  data.diagram.meta.repository = { url: 'https://gitlab.com/example/platform/evidence-repo', revision };
+  data.diagram.components[1].sources = [{ path: 'docs/guide.md', line: 1, end_line: 3 }, { path: 'docs/guide.md' }];
+  const docsNode = data.diagram.components[1].id;
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const output = path.join(data.root, 'gitlab.html');
+  const base = 'https://gitlab.com/example/platform/evidence-repo';
+  for (const remote of [
+    'https://gitlab.com/example/platform/evidence-repo.git/',
+    'https://oauth2:not-a-real-token@gitlab.com/example/platform/evidence-repo.git',
+    'git@gitlab.com:example/platform/evidence-repo.git',
+    'ssh://git@gitlab.com/example/platform/evidence-repo',
+    'git@gitlab.com:Example/Platform/evidence-repo.git',
+  ]) {
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
+    assert.equal(JSON.parse(result.stdout).evidence.linkMode, undefined);
+    const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    assert.equal(evidence.repository.href, `${base}/-/tree/${revision}`);
+    assert.deepEqual(evidence.nodes.users.map((source) => source.href), [
+      `${base}/-/blob/${revision}/src/router.js#L1-3`,
+      `${base}/-/blob/${revision}/src/store.js#L1`,
+    ]);
+    assert.deepEqual(evidence.nodes[docsNode].map((source) => source.href), [
+      `${base}/-/blob/${revision}/docs/guide.md?plain=1#L1-3`,
+      `${base}/-/blob/${revision}/docs/guide.md`,
+    ]);
+  }
+});
+
+test('self-managed GitLab links require an explicit provider and keep endpoint identity', () => {
+  const data = fixture();
+  const url = 'https://git.example.internal/Platform/Services/evidence-repo';
+  const output = path.join(data.root, 'self-managed.html');
+  for (const remote of [url, 'git@git.example.internal:Platform/Services/evidence-repo.git']) {
+    data.diagram.meta.repository = { url, revision: data.revision, provider: 'gitlab' };
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
+    const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    assert.equal(evidence.repository.href, `${url}/-/tree/${data.revision}`);
+    assert.equal(evidence.nodes.users[0].href, `${url}/-/blob/${data.revision}/src/router.js#L1-3`);
+  }
+  for (const [repository, remote, code] of [
+    [{ url }, url, 'repository-evidence/links-unsupported'],
+    [{ url: 'https://github.com/example/evidence-repo', provider: 'gitlab' }, 'https://github.com/example/evidence-repo', 'repository-evidence/provider-invalid'],
+    [{ url: 'http://git.example.internal/Platform/evidence-repo', provider: 'gitlab' }, 'http://git.example.internal/Platform/evidence-repo', 'repository-evidence/links-unsupported'],
+    [{ url, provider: 'gitlab' }, 'ssh://git@git.example.internal:2222/Platform/Services/evidence-repo.git', 'repository-evidence/origin-mismatch'],
+    [{ url, provider: 'gitlab' }, 'git@ssh.example.internal:Platform/Services/evidence-repo.git', 'repository-evidence/origin-mismatch'],
+  ]) {
+    data.diagram.meta.repository = { revision: data.revision, ...repository };
+    fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+    git(data.root, 'remote', 'set-url', 'origin', remote);
+    const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 1, `${JSON.stringify(repository)} with ${remote}`);
+    assert.ok(JSON.parse(result.stdout).diagnostics.some((diagnostic) => diagnostic.code === code), `${JSON.stringify(repository)}: ${result.stdout}`);
+  }
+});
+
 test('local-only evidence verifies HTTP self-hosted origins without generating links', () => {
   const data = fixture();
   data.diagram.meta.repository = {
@@ -436,7 +503,7 @@ test('browser renders local-only sources as searchable text and web sources as l
   const data = fixture();
   const browser = new ChromeVisualBrowser(findChrome());
   try {
-    for (const mode of ['github', 'gitee', 'local-only']) {
+    for (const mode of ['github', 'gitee', 'gitlab', 'local-only']) {
       const local = mode === 'local-only';
       const url = local ? 'http://git.internal/Team/repo' : `https://${mode}.com/example/evidence-repo`;
       data.diagram.meta.repository = { url, revision: data.revision, ...(local ? { link_mode: mode } : {}) };
@@ -479,7 +546,7 @@ test('browser renders local-only sources as searchable text and web sources as l
         assert.match(observed.search, /Users/);
         assert.equal(observed.links.length, local ? 0 : 2);
         assert.equal(observed.locations[0], local ? 'L1–3' : 'L1–3 ↗');
-        assert.equal(observed.repositoryHref, local ? null : `${url}/tree/${data.revision}`);
+        assert.equal(observed.repositoryHref, local ? null : `${url}/${mode === 'gitlab' ? '-/' : ''}tree/${data.revision}`);
       }
     }
   } finally { await browser.close(); }

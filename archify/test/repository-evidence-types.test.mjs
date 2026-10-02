@@ -199,7 +199,7 @@ for (const shape of TYPES) {
     assert.equal(fs.readFileSync(output, 'utf8'), 'trusted previous artifact');
   });
 
-  test(`${type} repository evidence honors Gitee links and local-only mode`, () => {
+  test(`${type} repository evidence honors Gitee and GitLab links and local-only mode`, () => {
     const data = fixture(shape);
     const output = path.join(data.root, `provider.${type}.html`);
 
@@ -217,6 +217,15 @@ for (const shape of TYPES) {
     result = run(['validate', type, data.input, '--repo-root', data.root, '--json']);
     assert.equal(result.status, 1);
     assert.ok(JSON.parse(result.stdout).diagnostics.some((entry) => entry.code === 'repository-evidence/provider-invalid'));
+
+    data.diagram.meta.repository = { url: 'https://gitlab.com/example/platform/evidence-repo', revision: data.revision };
+    data.write();
+    git(data.root, 'remote', 'set-url', 'origin', 'git@gitlab.com:example/platform/evidence-repo.git');
+    result = run(['deliver', type, data.input, output, '--repo-root', data.root, '--json']);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    assert.equal(evidence.repository.href, `https://gitlab.com/example/platform/evidence-repo/-/tree/${data.revision}`);
+    assert.equal(evidence.nodes[first][0].href, `https://gitlab.com/example/platform/evidence-repo/-/blob/${data.revision}/src/router.js#L1-3`);
 
     data.diagram.meta.repository = { url: 'http://git.internal:3000/Platform/evidence-repo', revision: data.revision, link_mode: 'local-only' };
     data.write();

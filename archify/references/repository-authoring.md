@@ -15,7 +15,9 @@ fact has supporting source evidence.
    forty-character revision in `meta.repository`. Use `link_mode: "local-only"`
    for an SSH origin, unsupported forge, intentionally local-only source links,
    or a local fixture whose HTTPS URL is only a repository identity; retain the
-   URL and revision. Web links require a supported GitHub or Gitee HTTPS origin. If the
+   URL and revision. Web links require a supported GitHub, Gitee, or GitLab HTTPS
+   origin; GitHub, Gitee, gitlab.com, and a self-managed GitLab host declared with
+   `provider: "gitlab"` match their SSH origin on the same host. If the
    worktree is dirty, record the changed paths. Repository evidence is verified
    against committed bytes at the pinned revision, not working-tree edits:
    inspect a clean checkout at that revision for any cited changed path. Do not

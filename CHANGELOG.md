@@ -6,6 +6,9 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
+### Added
+- **GitLab source links.** Repository evidence on gitlab.com, or on a self-managed host declared with `provider: "gitlab"`, now generates revision-pinned web links (`/-/blob/<revision>/<path>#L<a>-<b>`, `/-/tree/<revision>`) instead of requiring `link_mode: "local-only"`. Nested groups are accepted, SSH and HTTPS origins on the same host match, paths compare case-insensitively, and cited Markdown line ranges open the plain view. Verification is unchanged and `local-only` remains available.
+
 ## [3.0.1] — 2026-09-28
 
 ### Changed

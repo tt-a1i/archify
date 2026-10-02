@@ -351,16 +351,34 @@ blob, and valid line range are required in every link mode. Verification is
 local and makes no remote requests; it establishes neither public availability
 nor the current reader's access rights.
 
-`link_mode` defaults to `web`. GitHub and Gitee HTTPS repository URLs generate
-revision-pinned links; their public hosts select the provider automatically.
-Optional `provider: "github"` or `"gitee"` must agree with the host. Existing
-GitHub declarations and default delivery receipt fields remain compatible.
+`link_mode` defaults to `web`. GitHub, Gitee, and GitLab HTTPS repository URLs
+generate revision-pinned links; the public hosts github.com, gitee.com, and
+gitlab.com select the provider automatically. Optional `provider: "github"`,
+`"gitee"`, or `"gitlab"` must agree with a public host. A self-managed GitLab
+host declares `provider: "gitlab"`; Archify never contacts the host to detect
+its forge. Existing GitHub declarations and default delivery receipt fields
+remain compatible.
+
+GitLab URLs may name nested groups (`group/subgroup/project`). Source links use
+`<url>/-/blob/<revision>/<path>#L<line>-<end_line>` and the repository link
+uses `<url>/-/tree/<revision>`. A Markdown source (`.md`, `.markdown`) with a
+line range links to the plain view (`?plain=1`) so the cited lines are
+highlighted instead of the rendered document. GitLab repository paths compare
+case-insensitively, like GitHub.
 
 ```json
 {
   "url": "https://gitee.com/team/service",
   "revision": "0123456789abcdef0123456789abcdef01234567",
   "provider": "gitee"
+}
+```
+
+```json
+{
+  "url": "https://git.example.com/platform/payments/service",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "provider": "gitlab"
 }
 ```
 
@@ -383,15 +401,17 @@ Local-only accepts HTTP(S), `git@host:path`, and `ssh://git@host[:port]/path`
 addresses, including nested namespaces. Declare a credential-free address;
 HTTP(S) credentials on the checkout's origin are ignored for identity and
 redacted from diagnostics. Hostnames compare case-insensitively; repository
-paths retain case except for the existing GitHub behavior. A trailing slash
-normalizes away. Only GitHub and Gitee normalize a terminal `.git` and match
-standard HTTPS/443 with Git SSH/22. For other hosts, use the actual clone address:
+paths retain case except for GitHub and GitLab. A trailing slash
+normalizes away. Only GitHub, Gitee, and GitLab (gitlab.com, or a host declared
+with `provider: "gitlab"`) normalize a terminal `.git` and match standard
+HTTPS/443 with Git SSH/22 on the same host; a GitLab SSH endpoint on another host
+or port is not inferred. For other hosts, use the actual clone address:
 transport, port, `.git` suffix, and remote-relative versus absolute paths must
 match. For example, `git@host:Team/repo` differs from
 `ssh://git@host/Team/repo`; `git@host:/Team/repo` matches the latter. SCP-style
 paths preserve literal percent escapes, while URI paths decode them. SSH host
 aliases and forge-specific browse/clone prefixes are not guessed.
-GitLab/Gitea/Forgejo/Bitbucket web links are not implemented in this version;
+Gitea/Forgejo/Bitbucket web links are not implemented in this version;
 use local-only until a tested link provider is available. Unknown web providers
 fail with a diagnostic rather than emitting a guessed link.
 

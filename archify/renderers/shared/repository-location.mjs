@@ -1,6 +1,10 @@
 // Repository identity and forge links are independent of local Git object checks.
 // This module never contacts a remote server or reads the user's SSH config.
-export function parseRepositoryRemote(value, { authored = false } = {}) {
+// Public forge hosts select their provider automatically. GitLab is also
+// self-hosted, so an explicit `provider: "gitlab"` hint selects it on any host.
+const PROVIDER_HOSTS = { 'github.com': 'github', 'gitee.com': 'gitee', 'gitlab.com': 'gitlab' };
+
+export function parseRepositoryRemote(value, { authored = false, provider: providerHint } = {}) {
   if (typeof value !== 'string') return null;
   const raw = authored ? value : value.trim();
   if (!raw || /[\s\\\u0000-\u001f\u007f?#]/.test(raw)) return null;
@@ -25,7 +29,7 @@ export function parseRepositoryRemote(value, { authored = false } = {}) {
   if (authored && protocol !== 'ssh:' && (url.username || url.password)) return null;
   const hostname = url.hostname.toLowerCase();
   if (!hostname) return null;
-  const provider = hostname === 'github.com' ? 'github' : hostname === 'gitee.com' ? 'gitee' : null;
+  const provider = PROVIDER_HOSTS[hostname] || (providerHint === 'gitlab' ? 'gitlab' : null);
   const last = segments.length - 1;
   if (provider) segments[last] = segments[last].replace(provider === 'github' ? /\.git$/i : /\.git$/, '');
   if (!segments[last] || segments[last] === '.' || segments[last] === '..') return null;
@@ -36,8 +40,8 @@ export function parseRepositoryRemote(value, { authored = false } = {}) {
   const endpoint = provider && ((protocol === 'https:' && port === '443') || (protocol === 'ssh:' && port === '22'))
     ? 'standard' : `${protocol}${port}`;
   const pathKind = provider ? 'repository' : scp && !scpAbsolute ? 'relative' : 'absolute';
-  // path-contract-allow: url-path -- GitHub repository names are case-insensitive URL identities.
-  const identityPath = provider === 'github' ? repositoryPath.toLowerCase() : repositoryPath;
+  // path-contract-allow: url-path -- GitHub and GitLab repository paths are case-insensitive URL identities.
+  const identityPath = provider === 'github' || provider === 'gitlab' ? repositoryPath.toLowerCase() : repositoryPath;
   const encodedPath = segments.map(encodeURIComponent).join('/');
   const canonicalUrl = scp ? `git@${hostname}:${scpAbsolute ? '/' : ''}${repositoryPath}`
     : `${protocol}//${protocol === 'ssh:' ? 'git@' : ''}${url.host}/${encodedPath}`;
@@ -55,5 +59,13 @@ export function repositorySourceHref(provider, url, revision, source) {
   const end = source.endLine && source.endLine !== source.line
     ? `-${provider === 'github' ? 'L' : ''}${source.endLine}` : '';
   const fragment = source.line ? `#L${source.line}${end}` : '';
-  return `${url}/blob/${revision}/${encodedPath}${fragment}`;
+  if (provider !== 'gitlab') return `${url}/blob/${revision}/${encodedPath}${fragment}`;
+  // GitLab renders Markdown blobs, where line anchors select nothing; the
+  // plain view keeps the cited lines highlighted.
+  const plain = source.line && /\.(?:md|markdown)$/i.test(source.path) ? '?plain=1' : '';
+  return `${url}/-/blob/${revision}/${encodedPath}${plain}${fragment}`;
+}
+
+export function repositoryTreeHref(provider, url, revision) {
+  return `${url}/${provider === 'gitlab' ? '-/' : ''}tree/${revision}`;
 }
