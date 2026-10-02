@@ -106,6 +106,41 @@ test('benchmark verifies one first-pass architecture candidate through semantic,
   assert.equal(receipt.firstPassUsable, true);
 });
 
+test('benchmark rejects invalid run identities and preserves reportable valid identities', () => {
+  const caseFile = path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json');
+  const candidate = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const validRun = {
+    schema_version: 1, case_id: 'web-runtime-architecture', attempt: 1,
+    agent: ' fixture-agent ', model: ' fixture-model ',
+    // Synthetic review metadata isolates identity validation; no visual review occurred.
+    visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects: [] },
+  };
+  for (const field of ['agent', 'model']) {
+    for (const value of [undefined, null, '', ' \t\n ', 42, false, {}, []]) {
+      const runFile = writeJson('invalid-identity.run.json', { ...validRun, [field]: value });
+      const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+      assert.equal(result.status, 2, `${field}=${JSON.stringify(value)}: ${result.stderr || result.stdout}`);
+      assert.deepEqual(JSON.parse(result.stdout).error, {
+        code: 'INVALID_RUN', message: 'run agent and model must be non-empty strings',
+      });
+    }
+  }
+  const runFile = writeJson('valid-identity.run.json', validRun);
+  const verified = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+  assert.equal(verified.status, 0, verified.stderr || verified.stdout);
+  const receipt = JSON.parse(verified.stdout);
+  assert.equal(receipt.firstPassUsable, true);
+  assert.deepEqual(receipt.run, { agent: validRun.agent, model: validRun.model, attempt: 1 });
+  const resultsFile = path.join(tmp, 'valid-identity.results.jsonl');
+  fs.writeFileSync(resultsFile, `${JSON.stringify(receipt)}\n`);
+  const reported = run(['report', '--results', resultsFile]);
+  assert.equal(reported.status, 0, reported.stderr || reported.stdout);
+  const report = JSON.parse(reported.stdout);
+  assert.equal(report.overall.firstPassUsableRate, 1);
+  assert.equal(report.byConfiguration[0].agent, validRun.agent);
+  assert.equal(report.byConfiguration[0].model, validRun.model);
+});
+
 test('benchmark rejects a renderer-valid candidate that changes required technical roles or relationship labels', () => {
   const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
   source.components.find((component) => component.id === 'cache').type = 'frontend';
