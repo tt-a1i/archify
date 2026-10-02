@@ -1413,4 +1413,55 @@ test('CLI validate workflow --layout-json returns only the causal compiler failu
   assert.equal(receipt.diagnostics[0].code, 'workflow/column-capacity');
 });
 
+test('issue #565: inferred top endpoints reserve lane-header clearance for vertical straight routes', () => {
+  const downward = {
+    schema_version: 2,
+    diagram_type: 'workflow',
+    meta: { title: 'Vertical handoff downward', output: 'downward.html' },
+    lanes: [
+      { id: 'top', label: 'Top' },
+      { id: 'bottom', label: 'Bottom' },
+    ],
+    nodes: [
+      { id: 'a', lane: 'top', col: 0, type: 'backend', label: 'A' },
+      { id: 'b', lane: 'bottom', col: 0, type: 'backend', label: 'B' },
+    ],
+    edges: [
+      { id: 'ab', from: 'a', to: 'b', route: 'straight' },
+    ],
+  };
+
+  const downwardResult = compileSuccessfully(downward);
+  assert.equal(downwardResult.receipt.contract, 'readable-v2');
+  const downwardEdge = downwardResult.receipt.edges.find((e) => e.id === 'ab');
+  assert.ok(downwardEdge, 'edge ab must be present');
+  assert.equal(downwardEdge.points[0][0], downwardEdge.points[1][0], 'route must remain straight');
+  // Column 0 must be shifted beyond 02 / Bottom text width (40 + 14 + 11 * 6.2 + 2 = 124.2)
+  assert.ok(downwardEdge.points[0][0] >= 124, `route x ${downwardEdge.points[0][0]} must clear lane header`);
+
+  const upward = {
+    schema_version: 2,
+    diagram_type: 'workflow',
+    meta: { title: 'Vertical handoff upward', output: 'upward.html' },
+    lanes: [
+      { id: 'top', label: 'Top' },
+      { id: 'bottom', label: 'Bottom' },
+    ],
+    nodes: [
+      { id: 'a', lane: 'top', col: 0, type: 'backend', label: 'A' },
+      { id: 'b', lane: 'bottom', col: 0, type: 'backend', label: 'B' },
+    ],
+    edges: [
+      { id: 'ba', from: 'b', to: 'a', route: 'straight' },
+    ],
+  };
+
+  const upwardResult = compileSuccessfully(upward);
+  assert.equal(upwardResult.receipt.contract, 'readable-v2');
+  const upwardEdge = upwardResult.receipt.edges.find((e) => e.id === 'ba');
+  assert.ok(upwardEdge, 'edge ba must be present');
+  assert.equal(upwardEdge.points[0][0], upwardEdge.points[1][0], 'route must remain straight');
+  assert.ok(upwardEdge.points[0][0] >= 124, `route x ${upwardEdge.points[0][0]} must clear lane header`);
+});
+
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
