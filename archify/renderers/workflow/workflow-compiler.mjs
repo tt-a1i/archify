@@ -4758,7 +4758,7 @@ function renderSvg() {
     ? ' data-reader-fit="intrinsic-height"'
     : '';
   const contract = workflow.schema_version === 2 ? ' data-layout-contract="readable-v2"' : '';
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit}${contract} ${svgRootAttrs(workflow.meta, resolvedQualityProfile)}>
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit}${contract} ${svgRootAttrs(workflow.meta, resolvedQualityProfile, { profileIsAuthoritative: true })}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
 ${renderDefinitions()}
 
@@ -4822,7 +4822,7 @@ ${renderLegend()}
       }),
       diagnostics: workflowDiagnostics,
     };
-    return { ok: true, svg, receipt };
+    return { ok: true, svg, receipt, resolvedQualityProfile };
   } catch (error) {
     if (!Array.isArray(error?.archifyDiagnostics)) throw error;
     const diagnostics = error.archifyDiagnostics.map((diagnostic) => ({ ...diagnostic }));
