@@ -26,3 +26,10 @@ test('a variant that removes a crossing by adding a detour is not accepted', asy
   assert.ok(result);
   assert.ok(result.record.detours[1] <= result.record.detours[0]);
 });
+
+test('an exhausted search budget stops before any trial runs', async () => {
+  const candidate = JSON.parse(fs.readFileSync(path.join(root, 'fixtures', 'route-repair-crossing.json'), 'utf8'));
+  const started = Date.now();
+  assert.equal(await reduceCrossings({ cliPath, candidate, env: process.env, budgetMs: 0 }), null);
+  assert.ok(Date.now() - started < 2000);
+});

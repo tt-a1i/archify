@@ -12,9 +12,12 @@ import path from 'node:path';
 
 const SIDES = ['top', 'right', 'bottom', 'left'];
 
-function run(args, { cwd, env }) {
+// Each child gets only the time left in the search budget, so a stalled
+// render or check cannot hold finalize before its browser gate.
+function run(args, { cwd, env, timeout }) {
+  if (timeout <= 0) return Promise.resolve({ status: 1, stdout: '' });
   return new Promise((resolve) => {
-    execFile(process.execPath, args, { cwd, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, windowsHide: true },
+    execFile(process.execPath, args, { cwd, env, timeout, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, windowsHide: true },
       (error, stdout) => resolve({ status: error ? (error.code ?? 1) : 0, stdout }));
   });
 }
@@ -49,9 +52,10 @@ export async function reduceCrossings({
     const input = path.join(directory, `${id}.json`);
     const output = path.join(directory, `${id}.html`);
     fs.writeFileSync(input, JSON.stringify(trialCopy(trial, output)));
-    const rendered = await run([cliPath, 'render', 'architecture', input, output, '--quality', quality], { cwd: directory, env });
+    const remaining = () => budgetMs - (Date.now() - started);
+    const rendered = await run([cliPath, 'render', 'architecture', input, output, '--quality', quality], { cwd: directory, env, timeout: remaining() });
     if (rendered.status !== 0) return null;
-    const checked = await run([cliPath, 'check', output, '--json'], { cwd: directory, env });
+    const checked = await run([cliPath, 'check', output, '--json'], { cwd: directory, env, timeout: remaining() });
     let receipt;
     try { receipt = JSON.parse(checked.stdout); } catch { return null; }
     const composition = receipt.composition;

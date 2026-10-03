@@ -719,6 +719,7 @@ export async function runFinalize({
   startUpdateCheck = startDeliveryUpdateCheck,
   resolveChrome = findChrome,
   createBrowser = (chromePath, options) => new ChromeVisualBrowser(chromePath, options),
+  repairRoutes = reduceCrossings,
 } = {}) {
   if (!cliPath || !type || !input || !output) throw new Error('finalize requires cliPath, type, input, and output.');
   const started = process.hrtime.bigint();
@@ -806,9 +807,23 @@ export async function runFinalize({
   }
   const browserFactory = () => {
     if (browserStartupError) throw browserStartupError;
+    // A restored draft after a failed route repair needs a second browser
+    // gate; the browser evidence runner closes each browser it is given.
+    if (browserTransferred && chromePath) return createBrowser(chromePath, { env });
     if (browserTransferred || !browser) throw new Error('The finalize browser is unavailable or already consumed.');
     browserTransferred = true;
     return browser;
+  };
+  // A rerun replaces only the browser evidence this run wrote: any other
+  // receipt at the sidecar path stays a conflict for browser-check to report.
+  let ownBrowserEvidence = null;
+  const retireOwnBrowserEvidence = () => {
+    if (!ownBrowserEvidence) return;
+    const sidecar = browserCheckSidecarPaths(resolvedOutput, { outDir: resolvedOutDir }).receipt;
+    try {
+      if (JSON.stringify(JSON.parse(fs.readFileSync(sidecar, 'utf8'))) === JSON.stringify(ownBrowserEvidence)) fs.rmSync(sidecar);
+    } catch {}
+    ownBrowserEvidence = null;
   };
 
   try {
@@ -836,6 +851,7 @@ export async function runFinalize({
         outDir: resolvedOutDir,
       });
       const inProcess = stage === 'browser-check' && runBrowserCheck;
+      if (stage === 'browser-check') retireOwnBrowserEvidence();
       let result;
       if (inProcess) {
         const checked = await runBrowserCheck({
@@ -851,6 +867,7 @@ export async function runFinalize({
           env: stage === 'deliver' ? { ...env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } : env });
       }
       const stageReceipt = parsedReceipt(result.stdout);
+      if (stage === 'browser-check' && stageReceipt?.command === 'browser-check') ownBrowserEvidence = stageReceipt;
       const code = result.status ?? 1;
       let status = stageStatus(stage, code, stageReceipt, quality);
       let stageDiagnostics;
@@ -956,7 +973,7 @@ export async function runFinalize({
         const originalBytes = fs.readFileSync(resolvedInput);
         let repaired = null;
         try {
-          repaired = await reduceCrossings({
+          repaired = await repairRoutes({
             cliPath, quality, cwd, env,
             candidate: JSON.parse(originalBytes.toString('utf8').replace(/^﻿/, '')),
           });
