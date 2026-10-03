@@ -8,6 +8,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ### Fixed
 
+- **Inactive brand icon declarations.** Capture ignores icon markup in comments, raw text (including `noscript` for `text/html`), quoted attributes and templates, so inactive page edits cannot replace the selected image or break its pinned digest. Complete link attributes keep quoted delimiters and distinguish `href` from `data-href`; XHTML `noscript` discovery is unchanged.
 - **Brand ICO data bounds (#585).** Capture and pinned re-fetches reject empty, directory-overlapping or out-of-bounds image ranges in ICO directory entries, while preserving valid PNG/DIB payloads and normal icon fallback.
 
 ### Changed
