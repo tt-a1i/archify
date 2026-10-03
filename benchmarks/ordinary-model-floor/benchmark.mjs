@@ -132,6 +132,7 @@ function evaluateSemantic(benchmarkCase, candidate) {
   const bindings = {};
   const ambiguousNodes = [];
   const mismatchedNodes = [];
+  const identitiesByNode = new Map();
   for (const required of requirements.nodes || []) {
     const identity = required.key || required.id;
     const binding = bindRequiredNode(required, nodesById, nodes);
@@ -147,6 +148,10 @@ function evaluateSemantic(benchmarkCase, candidate) {
       continue;
     }
     if (typeof required.key === 'string') bindings[required.key] = actual.id;
+    if (typeof identity === 'string') {
+      if (!identitiesByNode.has(actual.id)) identitiesByNode.set(actual.id, new Set());
+      identitiesByNode.get(actual.id).add(identity);
+    }
     for (const field of ['type', 'label', 'sublabel', 'tag']) {
       if (required[field] !== undefined && actual[field] !== required[field]) {
         mismatchedNodes.push({
@@ -172,6 +177,18 @@ function evaluateSemantic(benchmarkCase, candidate) {
         field: 'type',
         expected: required.types,
         actual: actual.type ?? null,
+      });
+    }
+  }
+  // Resolve first so every conflicting identity is diagnosed, regardless of requirement order.
+  for (const [nodeId, identities] of identitiesByNode) {
+    if (identities.size < 2) continue;
+    for (const identity of identities) {
+      mismatchedNodes.push({
+        id: identity,
+        field: 'binding',
+        expected: 'distinct candidate node',
+        actual: nodeId,
       });
     }
   }
