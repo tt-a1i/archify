@@ -1,0 +1,6 @@
+flowchart LR
+  subgraph Platform
+    A[Customer subscription management service]
+  end
+  B[Backend] -->|RPC| A
+  B[Backend] --> C[(PostgreSQL)]
