@@ -3169,12 +3169,13 @@ for (const [command, run] of [['browser-check', runBrowserCheck], ['visual-check
 }
 
 
-test('authored Architecture scroll requires readable unclipped document flow and preserves other modes', async () => {
+test('authored Architecture and Workflow scroll requires readable unclipped document flow and preserves other modes', async () => {
   const input = artifact('authored-scroll.html');
   const target = ({ width, theme }) => width === 1440 && theme === 'light';
   for (const [name, options, accepted] of [
     ['readable document', {}, true],
-    ['other diagram mode', { authoredDiagramType: 'workflow' }, false],
+    ['readable workflow document', { authoredDiagramType: 'workflow' }, true],
+    ['other diagram mode', { authoredDiagramType: 'sequence' }, false],
     ['missing mode', { authoredDiagramType: null }, false],
     ['clipped or internally scrolled SVG', { authoredUnclipped: false }, false],
     ['unreadable text', { unreadableAt: target }, false],
