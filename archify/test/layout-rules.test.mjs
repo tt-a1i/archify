@@ -2173,4 +2173,86 @@ test('sequence: segment label boundary containment within canvas vs segment fram
   assert.equal(resExact.code, 0, `exact-fit label at segment frame boundary must pass cleanly: ${resExact.stderr}`);
 });
 
+test('sequence: automatic canvas expands to contain activations when legend is hidden', () => {
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'sequence',
+    meta: {
+      title: 'Activation capacity',
+      quality_profile: 'showcase',
+      column_fit: 'spread',
+      legend: { mode: 'hidden' },
+    },
+    participants: [
+      { id: 'client', type: 'external', label: 'Client' },
+      { id: 'api', type: 'backend', label: 'API' },
+    ],
+    messages: [
+      { id: 'request', from: 'client', to: 'api', y: 200, label: 'request' },
+    ],
+    activations: [{ participant: 'api', from: 180, to: 1200 }],
+  };
+
+  const res = render('sequence', doc);
+  assert.equal(res.code, 0, res.stderr);
+  const svg = fs.readFileSync(res.outPath, 'utf8');
+  const viewBoxMatch = svg.match(/<svg viewBox="0 0 920 (\d+)"/);
+  assert.ok(viewBoxMatch, 'expected an SVG root with viewBox');
+  const height = Number(viewBoxMatch[1]);
+  assert.ok(height >= 1200, `automatic canvas height ${height} must contain activation to 1200`);
+  assert.doesNotMatch(svg, />Legend</, 'hidden mode must not render a legend');
+});
+
+test('sequence: automatic canvas expands to contain late messages when legend is hidden', () => {
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'sequence',
+    meta: {
+      title: 'Late message capacity',
+      quality_profile: 'showcase',
+      column_fit: 'spread',
+      legend: { mode: 'hidden' },
+    },
+    participants: [
+      { id: 'client', type: 'external', label: 'Client' },
+      { id: 'api', type: 'backend', label: 'API' },
+    ],
+    messages: [
+      { id: 'late', from: 'client', to: 'api', y: 1000, label: 'late request' },
+    ],
+  };
+
+  const res = render('sequence', doc);
+  assert.equal(res.code, 0, res.stderr);
+  const svg = fs.readFileSync(res.outPath, 'utf8');
+  const viewBoxMatch = svg.match(/<svg viewBox="0 0 920 (\d+)"/);
+  assert.ok(viewBoxMatch, 'expected an SVG root with viewBox');
+  const height = Number(viewBoxMatch[1]);
+  assert.ok(height > 1000, `automatic canvas height ${height} must contain late message at y=1000`);
+});
+
+test('sequence: automatic canvas preserves default 760 height for short diagrams with hidden legend', () => {
+  const doc = {
+    schema_version: 1,
+    diagram_type: 'sequence',
+    meta: {
+      title: 'Short sequence',
+      quality_profile: 'showcase',
+      legend: { mode: 'hidden' },
+    },
+    participants: [
+      { id: 'client', type: 'external', label: 'Client' },
+      { id: 'api', type: 'backend', label: 'API' },
+    ],
+    messages: [
+      { id: 'short', from: 'client', to: 'api', y: 200, label: 'short request' },
+    ],
+  };
+
+  const res = render('sequence', doc);
+  assert.equal(res.code, 0, res.stderr);
+  const svg = fs.readFileSync(res.outPath, 'utf8');
+  assert.match(svg, /<svg viewBox="0 0 920 760"/, 'short diagram must maintain 760 default height');
+});
+
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
