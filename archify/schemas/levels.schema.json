@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/levels.schema.json",
+  "title": "Archify Levels Document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "diagram_type", "meta", "levels"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "diagram_type": { "const": "levels" },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "output"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "subtitle": { "type": "string" },
+        "output": { "$ref": "common.schema.json#/$defs/portableOutputPath" },
+        "locale": { "$ref": "common.schema.json#/$defs/locale" },
+        "visual_preset": { "$ref": "common.schema.json#/$defs/visualPreset" },
+        "quality_profile": { "$ref": "common.schema.json#/$defs/qualityProfile" }
+      }
+    },
+    "levels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "source"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 48 },
+          "source": { "type": "string", "minLength": 1, "maxLength": 240 },
+          "note": { "type": "string", "maxLength": 140 },
+          "parent": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["level", "node"],
+            "properties": {
+              "level": { "$ref": "common.schema.json#/$defs/id" },
+              "node": { "$ref": "common.schema.json#/$defs/id" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

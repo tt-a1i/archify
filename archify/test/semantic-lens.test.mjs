@@ -59,7 +59,7 @@ test('Semantic Lens derives honest kind counts and compares at most two roles', 
 
 test('Semantic Lens is shareable and yields cleanly to stronger reader intent', () => {
   const html = render('architecture', CASES.architecture);
-  assert.match(html, /#lens=/);
+  assert.match(html, /viewerReplaceHash\(\{[\s\S]*?lens: selectedKinds\.length \? selectedKinds\.join\('~'\) : null/);
   assert.match(html, /params\.get\('lens'\)/);
   assert.match(html, /window\.addEventListener\('hashchange', syncFromHash\)/);
   assert.match(html, /event\.composedPath\(\)/);

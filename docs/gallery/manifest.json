@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "generator": "scripts/build-gallery.mjs",
-  "archifyVersion": "3.0.1",
-  "entryCount": 11,
-  "checkCount": 99,
+  "archifyVersion": "3.1.0-dev.0",
+  "entryCount": 12,
+  "checkCount": 117,
   "entries": [
     {
       "id": "agent-tool-call",
@@ -19,8 +19,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 11,
-      "artifactBytes": 767770,
-      "artifactSha256": "3edbb38a05430865ee2f620c35de49f8e78dfd8788be14840d9e134b5912230d",
+      "artifactBytes": 797566,
+      "artifactSha256": "37946b9ff40d79374d9284dfe7e5608f50b38db7787b7bd290b494e706ad0fa7",
       "sourceBytes": 4939,
       "sourceSha256": "d67965d50872c97e4ff3476271e645bf19fab6b3ab44e111bdb44b063e3aa36f",
       "checks": [
@@ -154,8 +154,8 @@
       "engineeringProfile": "deployment-ownership",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 770497,
-      "artifactSha256": "78642d7f08ef0c56031efd83bfd444227ca1c258463ae3fd12d684deaa551e59",
+      "artifactBytes": 800293,
+      "artifactSha256": "f82944fed04b2e073ecb7e9461ca2e2e24ed968a92050d511b7ef39c43c57e48",
       "sourceBytes": 4734,
       "sourceSha256": "cb54bad2dfd0c2d02aa5b496bde6839789a0f07f23062343c4458b8d38806c13",
       "checks": [
@@ -287,8 +287,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 12,
-      "artifactBytes": 762310,
-      "artifactSha256": "307951a168d2492eb0c41f318260d0a866f6e6057df5253d3528c32a23084ea3",
+      "artifactBytes": 792106,
+      "artifactSha256": "5754a2d0845d7c9d46eefb0b436ea77e40a288745e7d5a1ae089f8bd28eb58db",
       "sourceBytes": 3805,
       "sourceSha256": "f8486daa803fff6c295cecca4604c561fbbf9acb2e83326022b5a87639e8afe6",
       "checks": [
@@ -421,8 +421,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 763284,
-      "artifactSha256": "0252b1b7049a381271d3ab901079d2029729370ab6f3f3ffb697edc083cf3c5a",
+      "artifactBytes": 793080,
+      "artifactSha256": "6f4c555cba12bb60257553edde70ae212641381ae53288a3509417eb45f4d10a",
       "sourceBytes": 4510,
       "sourceSha256": "dbd5c174af66296caec372e7214cf4df7158b50a563508e16826b95ab8d1cd6c",
       "checks": [
@@ -561,8 +561,8 @@
       "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 10,
-      "artifactBytes": 760604,
-      "artifactSha256": "22cdc0f32dd18a54b3ce209fd224f03c138d6f219bc3fd855b8d774add0317fe",
+      "artifactBytes": 790400,
+      "artifactSha256": "cdfb09cb3069df9db6dd11e31fcbcad0377cbad361f844dc32c1682c5bbaa1a3",
       "sourceBytes": 4723,
       "sourceSha256": "630be98449925d2716ecb8439f404b2bff5fe65ba905b0ad0baea6d96890c526",
       "checks": [
@@ -747,8 +747,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 10,
-      "artifactBytes": 764604,
-      "artifactSha256": "6d6790f1fa3631241dba4065e33ba2ce947a1da032cdd6d7d44c7190f85d3f5d",
+      "artifactBytes": 794400,
+      "artifactSha256": "6232ec5a2bdbdfafa49036d9f3299cef1ef3ad1839a90d7cecd93567ab5dc1f0",
       "sourceBytes": 5035,
       "sourceSha256": "8a635db9e51a5b1a8d2955b9d66f5b9a450e0a298432ce8f2e2f0be11f372e05",
       "checks": [
@@ -882,8 +882,8 @@
       "engineeringProfile": null,
       "nodeCount": 7,
       "edgeCount": 14,
-      "artifactBytes": 761396,
-      "artifactSha256": "7e3e7ea49bcca50b828800dcac653651b4b4426b6533232032d2e8094621ad4c",
+      "artifactBytes": 791192,
+      "artifactSha256": "2b1daa21bcdc22ef3f7286bfd8c53681f215ed7bc92926392ac351778ce873c2",
       "sourceBytes": 3766,
       "sourceSha256": "b8c6c52f1763ede2933c77deb8da59b3e06917bc41d27e66df896136456b859a",
       "checks": [
@@ -1034,8 +1034,8 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 768524,
-      "artifactSha256": "9f984158ae4baabbb332d7ab4df6e58f8f52e17e0588142db934b3856261ad5b",
+      "artifactBytes": 798320,
+      "artifactSha256": "c7dfb94808f5784231a302924df8fe4e09f1eb0cdc92c60d8f1b73d4df3b2a13",
       "sourceBytes": 4769,
       "sourceSha256": "3bdd77674282009c7c68d588cf8a3c495bc98a3be1b9c45327fd1801a6f83a23",
       "checks": [
@@ -1186,8 +1186,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 6,
-      "artifactBytes": 758914,
-      "artifactSha256": "0874c0723b10104ea03c566d1d63d958b6f93a6788c0075c1d1d162ccdb4054c",
+      "artifactBytes": 788710,
+      "artifactSha256": "0e59ca77280935f206c8bb0bc5525309b6309f30d78969e9919fd96ed7e6dc03",
       "sourceBytes": 3405,
       "sourceSha256": "230242a7557663877766c43a9fe7cffe8b4fb66e4866457dccd24c63175b4917",
       "checks": [
@@ -1357,8 +1357,8 @@
       "engineeringProfile": null,
       "nodeCount": 11,
       "edgeCount": 11,
-      "artifactBytes": 765969,
-      "artifactSha256": "81cbb41da9d165b401578b9a67429ca6fe369e75e5334f4bdd06c647e102b676",
+      "artifactBytes": 795765,
+      "artifactSha256": "6b27e240b0ee57c1a58ddabbe24a7b332183fd77e3bf92be601e7e7b7ac3b135",
       "sourceBytes": 3507,
       "sourceSha256": "f565a8acfebdb21453e2bccd82d3760b4736e38fe194fb2f0804b57817eba813",
       "checks": [
@@ -1479,8 +1479,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 762310,
-      "artifactSha256": "8233f4f600c89559b64ac650ad11b66ee1423103e8b6c5e53f63740afc06f6da",
+      "artifactBytes": 792106,
+      "artifactSha256": "88e878d564cc4753f93416d03734405c5aa76c383d85b08582243166b93954bc",
       "sourceBytes": 3197,
       "sourceSha256": "95e051b27a9e4a3307e194c0f666fca4af51470be7e2228d400ff48aea5b353b",
       "checks": [
@@ -1608,6 +1608,156 @@
           "minimumProjectedTextPx": 7.5,
           "semanticTextCount": 28
         },
+        "issues": []
+      }
+    },
+    {
+      "id": "web-platform-levels",
+      "type": "levels",
+      "title": "Sample Web App — levels",
+      "subtitle": "",
+      "input": "gallery/sources/web-platform.levels.json",
+      "artifact": "gallery/artifacts/web-platform-levels.html",
+      "focus": "platform",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "static",
+      "engineeringProfile": null,
+      "nodeCount": 2,
+      "edgeCount": 0,
+      "artifactBytes": 810115,
+      "artifactSha256": "cad76e47d72cccd99bb9a0eb2e180c68b325d3f22654b8223024904c111a414f",
+      "sourceBytes": 657,
+      "sourceSha256": "ae2d9c55f55867fac77a3c1ae77709383d869daf02a5ff2d71f876c93d677917",
+      "checks": [
+        {
+          "name": "levels_identified",
+          "ok": true
+        },
+        {
+          "name": "levels_single_active",
+          "ok": true
+        },
+        {
+          "name": "finite_svg_level_context",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows_level_context",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance_level_context",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings_level_context",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors_level_context",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs_level_context",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm_level_context",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance_level_context",
+          "ok": true
+        },
+        {
+          "name": "finite_svg_level_containers",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows_level_containers",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance_level_containers",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings_level_containers",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors_level_containers",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs_level_containers",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm_level_containers",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance_level_containers",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": 18.8,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 6.642857142857143,
+          "maxBends": 3,
+          "routesOverSuggestedBends": 1,
+          "maxStretch": 1,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": 54,
+          "minInteriorSegmentPx": 84.9,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "levels": [
+          {
+            "level": "context",
+            "status": "pass",
+            "summary": {
+              "errors": 0,
+              "warnings": 0
+            }
+          },
+          {
+            "level": "containers",
+            "status": "pass",
+            "summary": {
+              "errors": 0,
+              "warnings": 0
+            }
+          }
+        ],
         "issues": []
       }
     }

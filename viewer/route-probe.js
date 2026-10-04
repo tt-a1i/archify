@@ -7,7 +7,10 @@
     Archify.routeProbe = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector(':scope > svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage; this module reads
+      // its nodes live, so re-pointing the reference is enough.
+      Archify.stage.onChange(function () { svg = Archify.stage.svg(); });
       var trigger = document.getElementById('btn-route-probe');
       var panel = document.getElementById('route-probe');
       var title = document.getElementById('route-probe-title');
@@ -185,7 +188,9 @@
       }
       function replaceRouteHash(value) {
         try {
-          history.replaceState(null, '', location.pathname + location.search + (value ? '#route=' + value : ''));
+          viewerReplaceHash(value
+            ? { route: value, focus: null, reach: null, relation: null, lens: null }
+            : { route: null });
         } catch (_) {}
       }
       function renderPlaceholder(copy) {
@@ -751,7 +756,7 @@
         setTrigger(true);
         if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         if (options.updateUrl !== false) {
-          replaceRouteHash(encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
+          replaceRouteHash(startId + '~' + endId);
         }
         showJourneyOverview({ reveal: false });
         if (Archify.view && typeof Archify.view.reveal === 'function') {
@@ -896,7 +901,11 @@
       }
       function copyLink() {
         if (mode !== 'result') return Promise.resolve(false);
-        var value = location.href.replace(/#.*$/, '') + '#route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId);
+        var routeParams = new URLSearchParams();
+        var routeLevel = new URLSearchParams(String(location.hash || '').replace(/^#/, '')).get('level');
+        if (routeLevel) routeParams.set('level', routeLevel);
+        routeParams.set('route', startId + '~' + endId);
+        var value = location.href.replace(/#.*$/, '') + '#' + routeParams.toString().replace(/\+/g, '%20').replace(/%7E/gi, '~');
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -912,6 +921,7 @@
       }
       function interceptSelection(event) {
         if (mode !== 'source' && mode !== 'target') return;
+        if (!Archify.stage.fromCanvas(event)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
         var node = event.target.closest('[data-node-id]');
         if (!node) return;
@@ -992,8 +1002,8 @@
           selectJourneyIndex(index);
         }
       });
-      svg.addEventListener('click', interceptSelection, true);
-      svg.addEventListener('keydown', interceptSelection, true);
+      container.addEventListener('click', interceptSelection, true);
+      container.addEventListener('keydown', interceptSelection, true);
       container.addEventListener('scroll', updateDocking, { passive: true });
       window.addEventListener('resize', requestDocking);
       window.addEventListener('beforeprint', function () {

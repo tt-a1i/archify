@@ -4698,3 +4698,133 @@ html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="a
   .source-evidence-beacon,
   svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
 }
+
+/* A levels document ships every level's SVG and cards in the one diagram
+   shell so the viewer chrome and its element ids are never duplicated.
+   Author display rules outrank the user-agent [hidden] rule, so every
+   element that is both laid out by an author rule and hidden by attribute
+   must restate display:none here. Missing one costs invisible page height
+   and, through the adaptive reader's height budget, a layout that never
+   settles -- including on ordinary single-diagram artifacts, where this
+   chrome is hidden for the whole life of the page. */
+.diagram-container > svg[hidden],
+.cards[hidden],
+.level-rail[hidden],
+.level-children[hidden] { display: none; }
+
+.level-rail {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.level-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.level-crumbs li { display: flex; align-items: center; }
+.level-crumbs li[data-level-depth]::before {
+  content: "›";
+  margin: 0 0.35rem;
+  color: var(--text-dim);
+}
+.level-crumb,
+.level-child {
+  font: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  min-height: 28px;
+}
+.level-crumb:hover,
+.level-child:hover { color: var(--text); border-color: var(--panel-border); }
+.level-crumb[aria-current="true"] {
+  color: var(--text);
+  cursor: default;
+  border-color: var(--panel-border);
+  background: var(--panel);
+}
+.level-children { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.level-children-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.diagram-container [data-drill-to] { cursor: zoom-in; }
+.diagram-container [data-drill-to]:hover { filter: brightness(1.08); }
+.level-drill-badge { cursor: zoom-in; }
+.level-drill-badge-disc {
+  fill: var(--panel);
+  stroke: var(--text-muted);
+  stroke-width: 1.1;
+  opacity: 0.94;
+}
+.level-drill-badge-glyph {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.level-drill-badge:hover .level-drill-badge-disc,
+.level-drill-badge:focus-visible .level-drill-badge-disc {
+  stroke: var(--arrow-emphasis);
+  opacity: 1;
+}
+.level-drill-badge:hover .level-drill-badge-glyph,
+.level-drill-badge:focus-visible .level-drill-badge-glyph { stroke: var(--arrow-emphasis); }
+.level-drill-badge:focus-visible { outline: none; }
+.level-drill-badge:focus-visible .level-drill-badge-disc { stroke-width: 2; }
+.diagram-container[data-level-drilled="true"] {
+  box-shadow: inset 0 0 0 1px var(--panel-border);
+}
+.level-zoom-out {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 4;
+}
+.level-zoom-out[hidden] { display: none; }
+.level-zoom-out-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--toolbar-border);
+  border-radius: 0.45rem;
+  background: var(--toolbar-bg);
+  color: var(--toolbar-text);
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: zoom-out;
+}
+.level-zoom-out-btn:hover { background: var(--toolbar-hover); color: var(--text); }
+.level-zoom-out-btn svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  min-width: 0;
+  flex: 0 0 auto;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html[data-embed="true"] .level-zoom-out,
+html[data-present="true"] .level-zoom-out {
+  display: none;
+}

@@ -6,7 +6,8 @@
     Archify.motionGovernor = (function () {
       var STORAGE_KEY = 'archify-motion';
       var html = document.documentElement;
-      var svg = document.querySelector('.diagram-container svg');
+      var stageContainer = Archify.stage.container();
+      var svg = Archify.stage.svg();
       var btn = document.getElementById('btn-motion');
       var label = document.getElementById('motion-label');
       var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -23,8 +24,8 @@
 
       function detachAmbientBoundary() {
         if (!svg) return;
-        svg.removeEventListener('animationend', onAmbientBoundary, true);
-        svg.removeEventListener('animationcancel', onAmbientBoundary, true);
+        stageContainer.removeEventListener('animationend', onAmbientBoundary, true);
+        stageContainer.removeEventListener('animationcancel', onAmbientBoundary, true);
       }
       function settleAmbient(reason) {
         if (!capable) return false;
@@ -45,8 +46,8 @@
         ambientStarted = true;
         ambientPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="edge"], [data-animate="node"]')));
         if (!ambientPending.size) return settleAmbient('empty');
-        svg.addEventListener('animationend', onAmbientBoundary, true);
-        svg.addEventListener('animationcancel', onAmbientBoundary, true);
+        stageContainer.addEventListener('animationend', onAmbientBoundary, true);
+        stageContainer.addEventListener('animationcancel', onAmbientBoundary, true);
         html.setAttribute('data-ambient-motion', 'running');
         html.removeAttribute('data-ambient-settle-reason');
         return true;
@@ -220,13 +221,22 @@
       document.addEventListener('visibilitychange', syncVisibility);
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
-        ownerObserver.observe(svg, {
+        var ownerObserverOptions = {
           attributes: true,
           attributeFilter: [
             'data-route-picking', 'data-route-active',
             'data-lens-active', 'data-relationship-preview-active', 'data-intent-trace-active',
             'data-focus-active', 'data-legend-preview-active'
           ]
+        };
+        ownerObserver.observe(svg, ownerObserverOptions);
+        // A levels document swaps the SVG under the stage; the owner attributes
+        // live on whichever one is showing, so the observer follows it.
+        Archify.stage.onChange(function () {
+          svg = Archify.stage.svg();
+          ownerObserver.disconnect();
+          if (svg instanceof Node) ownerObserver.observe(svg, ownerObserverOptions);
+          publishOwner();
         });
       }
       syncVisibility();

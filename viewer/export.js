@@ -235,7 +235,7 @@
           throw new Error('Unsupported SVG theme: ' + requestedTheme);
         }
         var autoTheme = requestedTheme === 'auto';
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var clone = svg.cloneNode(true);
 
         var canonicalStateClean = cleanExportClone(clone);
@@ -554,7 +554,7 @@
         // resulting canvas would exceed MAX_CANVAS_PIXELS). The SVG itself is
         // rasterized at target resolution natively; drawImage draws at natural
         // size — no upsampling blur.
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var vb = svg.viewBox.baseVal;
         var layout = figureLayout(vb);
         var scale = pickSafeScale(layout.width, layout.height);
@@ -629,7 +629,7 @@
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
         if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
         var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot, figure: true });
@@ -776,7 +776,7 @@
       }
 
       function canRecordMotion() {
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         return !!(svg && svg.getAttribute('data-animation') === 'trace' &&
           typeof MediaRecorder !== 'undefined' && motionMimeType() &&
           typeof HTMLCanvasElement !== 'undefined' &&
@@ -796,7 +796,7 @@
         }
         var duration = Math.max(250, Number(options.duration) || MOTION_DURATION);
         var fps = Math.max(1, Number(options.fps) || MOTION_FPS);
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
         var data = serializeSvg(scale);

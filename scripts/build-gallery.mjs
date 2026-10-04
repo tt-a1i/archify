@@ -26,6 +26,9 @@ const SHAPES = {
   sequence: ['participants', 'messages'],
   dataflow: ['nodes', 'flows'],
   lifecycle: ['states', 'transitions'],
+  // A levels document has levels rather than nodes, and no relationships of
+  // its own: every edge belongs to a level's own diagram.
+  levels: ['levels', null],
 };
 
 function digest(buffer) {

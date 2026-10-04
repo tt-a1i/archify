@@ -30,6 +30,21 @@ Use the type that matches the question you want the reader to answer:
 | `dataflow` | Data movement, transformations, and consumers | `examples/product-analytics.dataflow.json` |
 | `lifecycle` | States, retries, waits, and terminal outcomes | `examples/agent-run.lifecycle.json` |
 
+One system can also need more than one diagram. When a single canvas would
+need more than roughly 14 components to stay readable, bind several authored
+architecture levels into one artifact with a `levels` document, so a node
+opens the diagram that explains it:
+
+| Document | Use it for | Start with |
+| --- | --- | --- |
+| `levels` | C4 depth: context, containers, components | `examples/web-platform.levels.json` |
+
+Each level is an ordinary architecture file you author and validate as usual.
+The manifest adds only the drill relationships, and it declares them on the
+**child**, so an existing diagram is bound in unmodified. Nothing reflows
+between levels. Read [levels documents](../archify/references/levels-documents.md)
+before writing the manifest.
+
 When the type is unclear, ask the built-in scenario guide:
 
 ```bash

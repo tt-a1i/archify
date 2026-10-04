@@ -125,6 +125,7 @@ const SVG_SLOT_RE = /      <!-- ARCHIFY:SVG_SLOT_START -->[\s\S]*?      <!-- ARC
 const CARDS_SLOT_RE = /    <!-- ARCHIFY:CARDS_SLOT_START -->[\s\S]*?    <!-- ARCHIFY:CARDS_SLOT_END -->/;
 const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<\/p>[ \t]*(\r?\n)?/m;
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
+const LEVELS_PLACEHOLDER = '    <!-- ARCHIFY:LEVELS_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
 
 function serializeScriptJson(value) {
@@ -149,6 +150,7 @@ export function applyTemplate(template, {
   locale,
   visualPreset = 'classic',
   sourceEvidence = null,
+  levels = null,
 }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
@@ -170,9 +172,15 @@ export function applyTemplate(template, {
   if (sourceEvidence && !template.includes(SOURCE_EVIDENCE_PLACEHOLDER)) {
     throw new Error(`applyTemplate: repository evidence requires placeholder ${JSON.stringify(SOURCE_EVIDENCE_PLACEHOLDER)}`);
   }
+  // Same rule as evidence: the slot is mandatory only for the opt-in path, so
+  // existing custom templates keep working until they carry level content.
+  if (levels && !template.includes(LEVELS_PLACEHOLDER)) {
+    throw new Error(`applyTemplate: levels documents require placeholder ${JSON.stringify(LEVELS_PLACEHOLDER)}`);
+  }
   // Function replacers: a literal `$&`, `$'`, `$\`` or `$$` in titles, labels,
   // or rendered SVG must not be interpreted as a replacement pattern.
   const sourceEvidenceJson = serializeScriptJson(sourceEvidence);
+  const levelsJson = serializeScriptJson(levels);
   const resolvedLocale = resolveLocale(locale);
   const i18nJson = serializeScriptJson({ locale: resolvedLocale, messages: viewerCatalog(resolvedLocale) });
   const renderedSubtitle = typeof subtitle === 'string' && subtitle.trim()
@@ -191,6 +199,9 @@ export function applyTemplate(template, {
     .replace(CARDS_SLOT_RE, () => cards)
     .replace(SOURCE_EVIDENCE_PLACEHOLDER, () => sourceEvidence
       ? `    <script id="archify-source-evidence-data" type="application/json">${sourceEvidenceJson}</script>`
+      : '')
+    .replace(LEVELS_PLACEHOLDER, () => levels
+      ? `    <script id="archify-levels-data" type="application/json">${levelsJson}</script>`
       : '');
 }
 

@@ -102,10 +102,36 @@ function addCheck(name, ok, details = []) {
 }
 
 const svgMatches = [...html.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)];
-addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <svg> block(s)`]);
 
-if (svgMatches.length === 1) {
-  const svg = svgMatches[0][0];
+// A levels document binds several authored architecture levels into one
+// artifact, so it legitimately carries one <svg> per level. Every level is
+// inspected below, not just the first: binding levels together must never buy
+// a weaker check than rendering each level separately would.
+const levelsMode = /id="archify-levels-data"/.test(html);
+const levelIds = svgMatches.map((match) => match[0].match(/^<svg[^>]*\bdata-level="([^"]*)"/)?.[1] || null);
+const activeLevelCount = svgMatches.filter((match) => /^<svg[^>]*\bdata-level-active="true"/.test(match[0])).length;
+
+if (levelsMode) {
+  addCheck(
+    'levels_identified',
+    svgMatches.length > 0 && levelIds.every(Boolean),
+    [`found ${svgMatches.length} <svg> block(s), ${levelIds.filter(Boolean).length} carrying data-level`],
+  );
+  addCheck('levels_single_active', activeLevelCount === 1, [`found ${activeLevelCount} active level(s)`]);
+} else {
+  addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <svg> block(s)`]);
+}
+
+const inspectable = levelsMode ? svgMatches : (svgMatches.length === 1 ? svgMatches : []);
+const levelCompositions = [];
+
+for (const [svgIndex, svgMatch] of inspectable.entries()) {
+  const levelId = levelsMode ? (levelIds[svgIndex] || `level${svgIndex}`) : null;
+  // Per-level checks keep distinct names so a failure names the level it came
+  // from. A single-diagram artifact keeps its historical check names exactly.
+  const levelSuffix = levelId ? `_level_${levelId.replace(/[^A-Za-z0-9]+/g, '_')}` : '';
+  const addCheck = (name, ok, details = []) => checks.push({ name: `${name}${levelSuffix}`, ok, details });
+  const svg = svgMatch[0];
   const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
@@ -216,7 +242,7 @@ if (svgMatches.length === 1) {
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
     + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1)
     + (viewportHeightIsError || !viewportHeightIssue ? 0 : 1);
-  composition = {
+  const levelComposition = {
     schemaVersion: 1,
     profile: qualityProfile,
     status: compositionErrors ? 'fail' : 'pass',
@@ -426,6 +452,49 @@ if (svgMatches.length === 1) {
   } else {
     addCheck('legend_clearance', true, ['no legend marker found']);
   }
+
+  levelCompositions.push(levelId ? { ...levelComposition, level: levelId } : levelComposition);
+}
+
+if (levelCompositions.length === 1) {
+  composition = levelCompositions[0];
+} else if (levelCompositions.length > 1) {
+  composition = mergeLevelCompositions(levelCompositions);
+}
+
+// A levels artifact is acceptable only when every level is: totals add up,
+// the worst status wins, and each issue keeps the level it came from so a
+// failure stays actionable.
+function mergeLevelCompositions(parts) {
+  const metricKeys = Object.keys(parts[0].metrics);
+  const minimums = new Set(['minLabelRouteClearance', 'minSegmentPx', 'minInteriorSegmentPx', 'minProjectedNodeTextPx']);
+  const maximums = new Set(['maxBends', 'maxStretch']);
+  const metrics = {};
+  for (const key of metricKeys) {
+    const values = parts.map((part) => part.metrics[key]).filter((value) => value !== null && value !== undefined);
+    if (!values.length) {
+      metrics[key] = parts[0].metrics[key] ?? null;
+    } else if (minimums.has(key)) {
+      metrics[key] = Math.min(...values);
+    } else if (maximums.has(key)) {
+      metrics[key] = Math.max(...values);
+    } else {
+      metrics[key] = values.reduce((total, value) => total + value, 0);
+    }
+  }
+  return {
+    schemaVersion: 1,
+    profile: parts.every((part) => part.profile === parts[0].profile) ? parts[0].profile : 'standard',
+    status: parts.some((part) => part.status === 'fail') ? 'fail' : 'pass',
+    summary: {
+      errors: parts.reduce((total, part) => total + part.summary.errors, 0),
+      warnings: parts.reduce((total, part) => total + part.summary.warnings, 0),
+    },
+    metrics,
+    suggestedLimits: parts[0].suggestedLimits,
+    levels: parts.map((part) => ({ level: part.level, status: part.status, summary: part.summary })),
+    issues: parts.flatMap((part) => part.issues.map((issue) => ({ ...issue, level: part.level }))),
+  };
 }
 
 const ok = checks.every((check) => check.ok) && composition.status !== 'fail';

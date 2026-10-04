@@ -3,7 +3,7 @@ name: archify
 description: Create polished, validated architecture, workflow, sequence, data-flow, and lifecycle/state diagrams as explorable standalone HTML with inline SVG, dark/light themes, optional trace motion, and PNG/JPEG/WebP/SVG/WebM export. Accept plain-language requirements or pasted Mermaid flowchart, sequenceDiagram, and stateDiagram input; inspect repository evidence when the diagram must reflect real code. Use when the user asks to visualize system architecture, infrastructure, cloud/security/network topology, technical workflows, API call sequences, request lifecycles, data pipelines, ETL/ELT, data lineage, state machines, or to convert/beautify Mermaid.
 license: MIT
 metadata:
-  version: "3.0"
+  version: "3.1"
   author: tt-a1i
   based_on: Cocoon-AI/architecture-diagram-generator (MIT, v1.0)
 ---
@@ -58,6 +58,12 @@ Before the first candidate, use the authoring references and relevant repository
 | `lifecycle` | State/status transitions, retries, waiting and terminal states | `schemas/lifecycle.schema.json` | `examples/deployment-release.lifecycle.json` |
 
 When ambiguous, run `node bin/archify.mjs guide "<scenario>" --json`. Scenario proof examples are structural references, not facts to copy.
+
+## Levels documents
+
+When one canvas would need more than roughly 14 nodes, or the user asks for C4 levels, author several architecture diagrams normally and bind them with a `levels` document so a node opens the diagram that explains it. Each level keeps its own coordinates, cards, and views, and is validated exactly as if it shipped alone; nothing reflows. Use `levels` as the CLI type: `node bin/archify.mjs deliver levels <doc>.levels.json <out>.html --quality showcase --json`.
+
+Read `references/levels-documents.md` before authoring the manifest.
 
 ## Mermaid input
 

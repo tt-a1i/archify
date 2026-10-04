@@ -117,8 +117,8 @@ test('Relationship Lens renders one Semantic Passport and copyable stable focus 
   assert.match(html, /id="btn-focus-relations"[^>]+aria-expanded="false"[^>]+aria-controls="relationship-lens-list"/);
   assert.match(html, /function renderPassport\(id, node\)/);
   assert.match(html, /var relationId = record && record\.id/);
-  assert.match(html, /\? '#relation=' \+ encodeURIComponent\(relationId\)/);
-  assert.match(html, /: '#focus=' \+ encodeURIComponent\(activeIds\[0\]\)/);
+  assert.match(html, /if \(relationId\) linkParams\.set\('relation', relationId\)/);
+  assert.match(html, /linkParams\.set\('focus', activeIds\[0\]\)/);
   assert.match(html, /navigator\.clipboard\.writeText\(value\)/);
   assert.match(html, /document\.execCommand\('copy'\)/);
   assert.match(html, /copyLink: copyFocusLink/);

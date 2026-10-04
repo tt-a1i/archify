@@ -1,6 +1,6 @@
     Archify.view = (function () {
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector('svg');
+      var svg = Archify.stage.svg();
       var outBtn = container.querySelector('[data-view="out"]');
       var resetBtn = container.querySelector('[data-view="reset"]');
       var resetDetailLabel = resetBtn.querySelector('[data-view-detail]');
@@ -500,6 +500,17 @@
         });
       });
       window.addEventListener('hashchange', function () { requestAnimationFrame(syncSemantic); });
+
+      // A new level is a new canvas, so the camera re-points at it and returns
+      // to overview rather than carrying the previous level's pan and zoom on
+      // to coordinates that no longer mean the same thing.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        viewBox = svg && svg.viewBox ? svg.viewBox.baseVal : null;
+        reset({ automatic: true });
+        requestAnimationFrame(syncSemantic);
+      });
+
       apply();
       pinControls();
       requestAnimationFrame(syncSemantic);

@@ -27,23 +27,23 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
     path.join(repoRoot, 'scripts', 'build-gallery.mjs'),
     generatedRoot,
   ], { encoding: 'utf8' });
-  assert.match(output, /gallery 11 artifacts \/ 99 checks/);
+  assert.match(output, /gallery 12 artifacts \/ 117 checks/);
 
   const manifestPath = path.join(generatedRoot, 'gallery', 'manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.archifyVersion, JSON.parse(fs.readFileSync(path.join(skillRoot, 'package.json'))).version);
-  assert.equal(manifest.entryCount, 11);
-  assert.equal(manifest.checkCount, 99);
+  assert.equal(manifest.entryCount, 12);
+  assert.equal(manifest.checkCount, 117);
   assert.deepEqual(new Set(manifest.entries.map((entry) => entry.type)), new Set([
-    'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle',
+    'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'levels',
   ]));
   assert.deepEqual(
-    Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].map((type) => [
+    Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'levels'].map((type) => [
       type,
       manifest.entries.filter((entry) => entry.type === type).length,
     ])),
-    { architecture: 2, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2 },
+    { architecture: 2, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2, levels: 1 },
   );
   assert.deepEqual(
     new Set(manifest.entries.map((entry) => entry.id)),
@@ -66,7 +66,11 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
     assert.ok(fs.existsSync(source), `${entry.id}: source missing`);
     assert.equal(sha256(artifact), entry.artifactSha256, `${entry.id}: artifact digest drift`);
     assert.equal(sha256(source), entry.sourceSha256, `${entry.id}: source digest drift`);
-    assert.equal(entry.checks.length, 9);
+    // A single diagram runs nine artifact checks. A levels document runs the
+    // same per-SVG suite for every level, plus two document-level checks, so
+    // binding levels together never buys a weaker receipt.
+    const expectedChecks = entry.type === 'levels' ? 2 + 8 * entry.nodeCount : 9;
+    assert.equal(entry.checks.length, expectedChecks, `${entry.id}: unexpected check count`);
     assert.ok(entry.checks.every((check) => check.ok), `${entry.id}: validation receipt not green`);
     assert.equal(entry.composition.profile, 'showcase', `${entry.id}: expected showcase composition profile`);
     assert.equal(entry.composition.status, 'pass', `${entry.id}: showcase composition is not green`);
@@ -79,7 +83,7 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   }
 
   const html = fs.readFileSync(path.join(generatedRoot, 'gallery.html'), 'utf8');
-  assert.equal((html.match(/class="showcase-card/g) || []).length, 11);
+  assert.equal((html.match(/class="showcase-card/g) || []).length, 12);
   assert.match(html, /id="gallery-manifest" type="application\/json"/);
   assert.match(html, /data-src-base="gallery\/artifacts\/agent-tool-call\.workflow\.html"/);
   assert.match(html, /agent-tool-call\.workflow\.html#focus=planner/);
@@ -87,7 +91,7 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   assert.match(html, /id="proof-deployment-lifecycle"/);
   assert.match(html, /Explore focus/);
   assert.match(html, /Proof,<br><em>not promises\.<\/em>/);
-  assert.match(html, /Five lenses\. Eleven real stories\./);
+  assert.match(html, /Five lenses\. Twelve real stories\./);
   assert.match(html, /Composition<\/span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS/);
   assert.match(html, /Engineering profile/);
   assert.match(html, /DEPLOYMENT OWNERSHIP · PASS/);
@@ -98,7 +102,7 @@ test('generated proof gallery matches its sources, receipts, and checked-in arti
   );
   assert.match(html, /\.filter-button \{\s+min-height: 44px;/);
   assert.match(html, /\.card-link \{ min-height: 44px;/);
-  assert.equal((html.match(/class="card-link create-link"/g) || []).length, 11);
+  assert.equal((html.match(/class="card-link create-link"/g) || []).length, 12);
   for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']) {
     assert.match(html, new RegExp(`start\\.html\\?type=${type}&amp;source=gallery`), `${type}: gallery-to-start link missing`);
   }

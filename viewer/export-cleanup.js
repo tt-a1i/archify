@@ -19,6 +19,17 @@
         clone.removeAttribute('data-route-journey');
         clone.removeAttribute('data-share-route');
         clone.removeAttribute('data-share-reach');
+        // Level identity and the drill affordance are viewer-only: an exported
+        // level is an ordinary standalone diagram, not part of a document.
+        clone.removeAttribute('data-level');
+        clone.removeAttribute('data-level-label');
+        clone.removeAttribute('data-level-active');
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-drill-badge]'), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-drill-to]'), function (el) {
+          el.removeAttribute('data-drill-to');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-intent-trace-overlay]'), function (el) {
           el.remove();
         });

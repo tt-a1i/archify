@@ -6,7 +6,15 @@
     Archify.finder = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector('svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage; this module reads
+      // its nodes live, so re-pointing the reference is enough.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        // The search index is built from the stage, so it is rebuilt with it;
+        // re-pointing alone would keep searching the level that loaded first.
+        items = buildItems();
+      });
       var trigger = document.getElementById('btn-node-finder');
       var panel = document.getElementById('node-finder');
       var heading = document.getElementById('node-finder-title');
@@ -54,7 +62,8 @@
         return count;
       }
 
-      var items = Array.prototype.map.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+      function buildItems() {
+        return Array.prototype.map.call(svg.querySelectorAll('[data-node-id]'), function (node) {
         var id = node.getAttribute('data-node-id');
         var label = node.getAttribute('data-node-label') || (node.getAttribute('aria-label') || id).replace(/^Focus\s+/, '');
         var text = (node.textContent || '').replace(/\s+/g, ' ').trim();
@@ -80,7 +89,9 @@
           search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase() + ' ' + brand.toLowerCase(),
           node: node
         };
-      });
+        });
+      }
+      var items = buildItems();
 
       function resultButtons() {
         return Array.prototype.slice.call(results.querySelectorAll('.node-finder-result'));
@@ -257,6 +268,8 @@
         select: select,
         isOpen: function () { return !panel.hidden; },
         context: function () { return context.kind; },
-        count: items.length
+        // A getter, not a snapshot: the index is rebuilt when the stage
+        // changes, and callers read this as a property.
+        get count() { return items.length; }
       };
     })();

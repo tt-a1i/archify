@@ -25,6 +25,7 @@ const fragments = [
   ['/* ARCHIFY:INTENT_TRACE */', 'intent-trace.js'],
   ['/* ARCHIFY:SEMANTIC_LENS */', 'semantic-lens.js'],
   ['/* ARCHIFY:ROUTE_PROBE */', 'route-probe.js'],
+  ['/* ARCHIFY:LEVELS */', 'levels.js'],
   ['/* ARCHIFY:EXPORT_CLEANUP */', 'export-cleanup.js'],
 ];
 const childMarker = '/* ARCHIFY:EXPORT_CLEANUP */';

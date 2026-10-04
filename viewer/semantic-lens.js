@@ -7,7 +7,10 @@
     Archify.semanticLens = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector(':scope > svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage; this module reads
+      // its nodes live, so re-pointing the reference is enough.
+      Archify.stage.onChange(function () { svg = Archify.stage.svg(); });
       var trigger = document.getElementById('btn-semantic-lens');
       var panel = document.getElementById('semantic-lens');
       var closeBtn = document.getElementById('semantic-lens-close');
@@ -318,10 +321,13 @@
       }
       function updateHash() {
         try {
-          var hash = selectedKinds.length
-            ? '#lens=' + selectedKinds.map(encodeURIComponent).join('~')
-            : '';
-          history.replaceState(null, '', location.pathname + location.search + hash);
+          viewerReplaceHash({
+            lens: selectedKinds.length ? selectedKinds.join('~') : null,
+            focus: null,
+            reach: null,
+            relation: null,
+            route: null,
+          });
         } catch (_) {}
       }
       function updateTrigger() {

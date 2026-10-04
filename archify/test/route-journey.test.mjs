@@ -85,7 +85,7 @@ test('playback is explicit, finite, resumable, and never leaks position into the
   assert.doesNotMatch(template, /journeyTimer\s*=\s*(?:window\.)?setInterval/);
   assert.match(template, /function playJourney\(\)[\s\S]*?if \(journeyIndex < 0\) applyJourneyState\(0/);
   assert.match(template, /function syncFromHash\(\)[\s\S]*?choose\(parts\[1\], \{ updateUrl: false \}\)/);
-  assert.match(template, /'#route=' \+ encodeURIComponent\(startId\) \+ '~' \+ encodeURIComponent\(endId\)/);
+  assert.match(template, /replaceRouteHash\(startId \+ '~' \+ endId\)/);
   assert.doesNotMatch(template, /#route=[^'\n]*journey/);
 });
 

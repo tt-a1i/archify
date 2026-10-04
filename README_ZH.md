@@ -29,7 +29,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
-  <a href="CHANGELOG.md#301--2026-09-28"><img src="https://img.shields.io/badge/version-3.0.1-0891b2?style=flat-square" alt="Stable version 3.0.1" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.1.0--dev.0-0891b2?style=flat-square" alt="Development version 3.1.0-dev.0" /></a>
 </p>
 
 <p align="center">
@@ -177,7 +177,7 @@ Export 菜单支持复制 PNG，并下载静态或动态格式：
 
 ## 快速开始
 
-**当前稳定版本：** `v3.0.1`。详见[版本历史](CHANGELOG.md#301--2026-09-28)。
+**当前开发版本：** `v3.1.0-dev.0`。详见[版本历史](CHANGELOG.md#unreleased)。
 
 ### 1. 安装
 
@@ -245,6 +245,14 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 | **Sequence** | API 调用、缓存回源、鉴权、异步链路 | 调用方、被调用方、返回、时序 |
 | **Data Flow** | 数据管线、血缘、PII、下游消费者 | 来源、转换、存储、边界 |
 | **Lifecycle** | 状态、重试、等待、终态 | 状态、事件、重试与取消路径 |
+
+当一张图需要超过约 14 个组件才能讲清楚时，可以用 **levels 文档**把多张各自排布的架构图绑定为一个制品，点开某个节点就进入解释它的那张图。这正是 C4 的场景：上下文、容器、组件和代码，是同一个系统的不同深度。
+
+levels 不引入任何自动布局，层级之间也不会重排：每一层保留自己手工排布的坐标、卡片与章节，渲染和校验都与单独交付时完全一致，因此 levels 制品里的某一层与单独渲染该层的结果逐字节相同。节点只是打开另一张已经编排好的图，而不是就地展开。
+
+`node archify/bin/archify.mjs deliver levels model.levels.json model.html --quality showcase`
+
+可查看[通过校验的分层证明](https://tt-a1i.github.io/archify/gallery.html#proof-web-platform-levels)和[编写约定](archify/references/levels-documents.md)。
 
 做生产部署评审时，Architecture 可以按需启用 `deployment-ownership`
 工程画像：负责人、单一区域归属、数据库私有边界或边界穿越机制缺失时会直接阻断。

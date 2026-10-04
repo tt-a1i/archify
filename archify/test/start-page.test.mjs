@@ -147,7 +147,7 @@ test('start page: offers five bounded bilingual starts without ingesting source 
   const dataMatch = html.match(/<script id="start-data" type="application\/json">([\s\S]*?)<\/script>/);
   assert.ok(dataMatch);
   const data = JSON.parse(dataMatch[1]);
-  assert.deepEqual(Object.keys(data), ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+  assert.deepEqual(Object.keys(data), ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'levels']);
   assert.ok(Object.values(data).every((entry) => entry.en.prompt && entry.zh.prompt && entry.en.descriptionPrompt && entry.zh.descriptionPrompt && entry.en.repositoryPrompt && entry.zh.repositoryPrompt && entry.proof));
 
   const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
@@ -179,6 +179,7 @@ test('start page: canonical recipes own description and repository prompt varian
     ['sequence', 'api-request'],
     ['dataflow', 'event-stream'],
     ['lifecycle', 'object-lifecycle'],
+    ['levels', 'c4-levels'],
   ]);
   for (const [type, id] of selected) {
     const recipe = SCENARIO_RECIPES.find((candidate) => candidate.id === id);

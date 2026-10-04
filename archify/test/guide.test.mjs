@@ -8,9 +8,9 @@ import {
   recommendScenario,
 } from '../recipes/scenarios.mjs';
 
-test('guide: exposes 12 unique recipes across every diagram type, including repair', () => {
-  assert.equal(SCENARIO_RECIPES.length, 12);
-  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 12);
+test('guide: exposes 13 unique recipes across every diagram type, including repair and levels', () => {
+  assert.equal(SCENARIO_RECIPES.length, 13);
+  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 13);
   assert.deepEqual(
     Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'].map((type) => [
       type,
@@ -52,6 +52,17 @@ test('guide: representative scenarios map to specialized recipes', () => {
     ['deployment lifecycle approval rollback state', 'deployment-lifecycle'],
     ['agent tool call approval gate MCP', 'agent-tool-call'],
     ['Show a system overview via an architecture diagram', 'system-overview'],
+    ['分层架构', 'system-overview'],
+    ['log levels', 'system-overview'],
+    ['Show the Context, Containers, and Components of our billing system', 'c4-levels'],
+    ['Show the context, containers and components of our billing system', 'c4-levels'],
+    ['Explain our containers and components', 'c4-levels'],
+    ['Map the services and components of the platform', 'system-overview'],
+    ['Draw a component diagram of the checkout service', 'system-overview'],
+    ['Show a container diagram for the platform', 'system-overview'],
+    ['画一张组件图', 'system-overview'],
+    ['容器图', 'system-overview'],
+    ['C4 container diagram', 'c4-levels'],
     ['Draw deployment topology with named boundary crossings', 'deployment-ownership'],
     ['Explain an API request via a webhook callback', 'async-roundtrip'],
   ];
@@ -103,7 +114,7 @@ test('guide: exact ids win and unknown questions fall back honestly', () => {
 
 test('guide: public data includes both languages and weighted signals', () => {
   const data = publicGuideData();
-  assert.equal(data.length, 12);
+  assert.equal(data.length, 13);
   for (const recipe of data) {
     assert.ok(recipe.en.title);
     assert.ok(recipe.zh.title);

@@ -6,7 +6,14 @@
     Archify.focus = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector('svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage. Re-pointing the reference
+      // covers everything this module reads live, but the relationship hit overlay
+      // is real DOM, so it has to be installed into whichever level is on stage.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        syncRelationshipHitTargets();
+      });
       var chip = document.getElementById('focus-chip');
       var label = document.getElementById('focus-label');
       var detail = document.getElementById('focus-detail');
@@ -37,12 +44,25 @@
       var activeRelationshipPreview = null;
       var relationshipHitOverlay = null;
       var relationshipHitTargets = [];
+      // Every level's SVG stays in the DOM, so the overlay is installed per level
+      // and keyed by SVG: a level is enhanced once, on first activation.
+      var relationshipHitBySvg = new WeakMap();
       var directPreviewTimer = null;
       var lensDrag = null;
       var lensDragClickPointer = null;
       var manualLensPosition = null;
       var reachabilityMode = null;
       var activeReachability = null;
+      // A caller-supplied urlKey (for example `view`) is written into a shared
+      // hash, so it is remembered and removed with the focus it stands for.
+      var customHashKey = null;
+      function replaceFocusHash(updates) {
+        if (customHashKey && !Object.prototype.hasOwnProperty.call(updates, customHashKey)) {
+          updates[customHashKey] = null;
+        }
+        customHashKey = null;
+        viewerReplaceHash(updates);
+      }
       var svgNamespace = 'http://www.w3.org/2000/svg';
       var reducedMotionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
@@ -149,7 +169,7 @@
         }
         if (options.updateUrl === true && activeIds.length === 1) {
           try {
-            history.replaceState(null, '', location.pathname + location.search + '#focus=' + encodeURIComponent(activeIds[0]));
+            replaceFocusHash({ focus: activeIds[0], reach: null, relation: null, route: null, lens: null });
           } catch (_) {}
         }
       }
@@ -225,8 +245,9 @@
         }
         if (options.updateUrl !== false) {
           try {
-            history.replaceState(null, '', location.pathname + location.search + '#focus=' +
-              encodeURIComponent(activeIds[0]) + '&reach=' + direction);
+            replaceFocusHash({
+              focus: activeIds[0], reach: direction, relation: null, route: null, lens: null,
+            });
           } catch (_) {}
         }
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
@@ -811,7 +832,7 @@
         });
         revealPinnedRelationship(record);
         if (options.updateUrl !== false && record.id) {
-          try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
+          try { replaceFocusHash({ relation: record.id, focus: null, reach: null, route: null, lens: null }); } catch (_) {}
         }
         return true;
       }
@@ -820,9 +841,12 @@
         return record ? inspectRelationship(record.key, options) : false;
       }
       function installRelationshipHitTargets() {
-        if (html.getAttribute('data-embed') === 'true') return 0;
+        if (!svg) return 0;
+        relationshipHitOverlay = null;
+        relationshipHitTargets = [];
+        if (html.getAttribute('data-embed') === 'true') { relationshipHitBySvg.set(svg, null); return 0; }
         var records = relationshipHitRecords();
-        if (!records.length) return 0;
+        if (!records.length) { relationshipHitBySvg.set(svg, null); return 0; }
         relationshipHitOverlay = document.createElementNS(svgNamespace, 'g');
         relationshipHitOverlay.setAttribute('class', 'relationship-hit-overlay');
         relationshipHitOverlay.setAttribute('data-relationship-hit-overlay', '');
@@ -864,7 +888,7 @@
             relationshipHitOverlay.appendChild(target);
           }
         });
-        if (!relationshipHitTargets.length) return 0;
+        if (!relationshipHitTargets.length) { relationshipHitOverlay = null; relationshipHitBySvg.set(svg, null); return 0; }
         var firstNode = svg.querySelector('[data-node-id]');
         var nodeLayer = firstNode;
         while (nodeLayer && nodeLayer.parentNode && nodeLayer.parentNode !== svg) nodeLayer = nodeLayer.parentNode;
@@ -936,6 +960,19 @@
           try { relationshipHitTargets[index].focus({ preventScroll: true }); }
           catch (_) { try { relationshipHitTargets[index].focus(); } catch (_) {} }
         });
+        relationshipHitBySvg.set(svg, { overlay: relationshipHitOverlay, targets: relationshipHitTargets });
+        return relationshipHitTargets.length;
+      }
+      function syncRelationshipHitTargets() {
+        if (!svg) {
+          relationshipHitOverlay = null;
+          relationshipHitTargets = [];
+          return 0;
+        }
+        if (!relationshipHitBySvg.has(svg)) return installRelationshipHitTargets();
+        var entry = relationshipHitBySvg.get(svg);
+        relationshipHitOverlay = entry ? entry.overlay : null;
+        relationshipHitTargets = entry ? entry.targets : [];
         return relationshipHitTargets.length;
       }
       function renderRelationshipLens(id, byId) {
@@ -1303,7 +1340,7 @@
           Archify.view.reset({ automatic: true });
         }
         if (options.updateUrl !== false) {
-          try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {}
+          try { replaceFocusHash({ focus: null, reach: null, relation: null, route: null, lens: null }); } catch (_) {}
         }
         if (restoreNode) {
           try { restoreNode.focus({ preventScroll: true }); }
@@ -1374,7 +1411,13 @@
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
           var value = options.urlValue || normalized[0];
-          try { history.replaceState(null, '', location.pathname + location.search + '#' + key + '=' + encodeURIComponent(value)); } catch (_) {}
+          try {
+            var hashUpdates = { reach: null, relation: null, route: null, lens: null };
+            hashUpdates[key] = value;
+            if (key !== 'focus') hashUpdates.focus = null;
+            replaceFocusHash(hashUpdates);
+            if (key !== 'focus' && key !== 'level') customHashKey = key;
+          } catch (_) {}
         }
         return true;
       }
@@ -1403,9 +1446,16 @@
         if (activeIds.length !== 1) return Promise.resolve(false);
         var record = pinnedRelationshipRecord();
         var relationId = record && record.id;
-        var value = location.href.replace(/#.*$/, '') + (relationId
-          ? '#relation=' + encodeURIComponent(relationId)
-          : '#focus=' + encodeURIComponent(activeIds[0]) + (reachabilityMode ? '&reach=' + reachabilityMode : ''));
+        var linkParams = new URLSearchParams();
+        var activeLevel = new URLSearchParams(String(location.hash || '').replace(/^#/, '')).get('level');
+        if (activeLevel) linkParams.set('level', activeLevel);
+        if (relationId) linkParams.set('relation', relationId);
+        else {
+          linkParams.set('focus', activeIds[0]);
+          if (reachabilityMode) linkParams.set('reach', reachabilityMode);
+        }
+        var linkQuery = linkParams.toString().replace(/\+/g, '%20').replace(/%7E/gi, '~');
+        var value = location.href.replace(/#.*$/, '') + (linkQuery ? '#' + linkQuery : '');
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -1421,8 +1471,9 @@
         });
       }
 
-      svg.addEventListener('click', function (event) {
+      container.addEventListener('click', function (event) {
         if (container.getAttribute('data-just-panned') === 'true') return;
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (node) {
           var id = node.getAttribute('data-node-id');
@@ -1433,7 +1484,8 @@
         }
         else if (activeIds.length) clear();
       });
-      svg.addEventListener('keydown', function (event) {
+      container.addEventListener('keydown', function (event) {
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (!node || (event.key !== 'Enter' && event.key !== ' ')) return;
         event.preventDefault();

@@ -30,7 +30,8 @@
       var shareCueNote = document.getElementById('share-chapter-note');
       var shareCueRoute = document.getElementById('share-chapter-route');
       var shareCueProgress = document.getElementById('share-chapter-progress-bar');
-      var svg = document.querySelector('.diagram-container svg');
+      var svg = Archify.stage.svg();
+      var stageContainer = Archify.stage.container();
       var views = [];
       var activeIndex = -1;
       var playing = false;
@@ -61,28 +62,47 @@
       var activePreviewIndex = -1;
       var previewOwnerToken = 0;
 
-      try { views = JSON.parse(data.textContent || '[]'); } catch (_) { views = []; }
-      if (!views.length) return { count: 0, active: function () { return null; } };
-      var canonicalNodeIds = Object.create(null);
-      Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
-        canonicalNodeIds[node.getAttribute('data-node-id')] = true;
-      });
-      views.forEach(function (view) {
-        var seen = Object.create(null);
-        view.focus = (view.focus || []).filter(function (id) {
-          if (!canonicalNodeIds[id] || seen[id]) return false;
-          seen[id] = true;
-          return true;
+      var authoredViews = [];
+      try { authoredViews = JSON.parse(data.textContent || '[]'); } catch (_) { authoredViews = []; }
+
+      // A levels document carries one chapter set per level, so the module has
+      // to stay alive even when the level that loads first has none. An
+      // ordinary artifact keeps its historical early return, so nothing below
+      // runs for a single diagram without views.
+      var levelsDocument = !!document.getElementById('archify-levels-data');
+      if (!authoredViews.length && !levelsDocument) return { count: 0, active: function () { return null; } };
+
+      // Chapters are installed through a function the stage can call again
+      // rather than read once, and focus is filtered against the level that is
+      // actually on screen.
+      function installViews(nextViews) {
+        // Resolve the stage here so a caller cannot install a level's chapters
+        // against the previous level's nodes by calling in the wrong order.
+        svg = Archify.stage.svg();
+        views = Array.isArray(nextViews) ? nextViews : [];
+        var canonicalNodeIds = Object.create(null);
+        Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+          canonicalNodeIds[node.getAttribute('data-node-id')] = true;
         });
-      });
-      // Establish the compact cold state before exposing the panel so the
-      // full Director cannot flash during first paint. Hash restoration runs
-      // in the same task and replaces this state before paint when valid.
-      panel.setAttribute('data-active-view', 'all');
-      panel.hidden = false;
-      panel.setAttribute('data-view-interval-ms', String(VIEW_INTERVAL_MS));
-      panel.setAttribute('data-story-follow-min-dwell-ms', String(STORY_FOLLOW_MIN_DWELL_MS));
-      buildChapterIndex();
+        views.forEach(function (view) {
+          var seen = Object.create(null);
+          view.focus = (view.focus || []).filter(function (id) {
+            if (!canonicalNodeIds[id] || seen[id]) return false;
+            seen[id] = true;
+            return true;
+          });
+        });
+        activeIndex = -1;
+        // Establish the compact cold state before exposing the panel so the
+        // full Director cannot flash during first paint. Hash restoration runs
+        // in the same task and replaces this state before paint when valid.
+        panel.setAttribute('data-active-view', 'all');
+        panel.hidden = views.length === 0;
+        panel.setAttribute('data-view-interval-ms', String(VIEW_INTERVAL_MS));
+        panel.setAttribute('data-story-follow-min-dwell-ms', String(STORY_FOLLOW_MIN_DWELL_MS));
+        buildChapterIndex();
+      }
+      installViews(authoredViews);
 
       function reducedMotion() {
         return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -1566,9 +1586,12 @@
           showAll({ clearFocus: false, updateUrl: false });
         }
       }
-      svg.addEventListener('click', releaseForNode, true);
-      svg.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter' || event.key === ' ') releaseForNode(event);
+      stageContainer.addEventListener('click', function (event) {
+        if (Archify.stage.fromCanvas(event)) releaseForNode(event);
+      }, true);
+      stageContainer.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (Archify.stage.fromCanvas(event)) releaseForNode(event);
       }, true);
 
       document.addEventListener('keydown', function (event) {
@@ -1691,7 +1714,19 @@
       }
 
       return {
-        count: views.length,
+        // A getter, not a snapshot: a levels document reinstalls chapters when
+        // the stage changes, and callers read this as a property.
+        get count() { return views.length; },
+        // Install the chapter set belonging to the level now on stage. Ends
+        // playback, handoff and preview from the level being left, because
+        // that state names nodes this level does not have.
+        load: function (nextViews) {
+          try { pausePlayback({ reason: 'stage-change' }); } catch (_) {}
+          try { cancelHandoff('stage-change'); } catch (_) {}
+          try { clearChapterPreview({ clearIntents: true }); } catch (_) {}
+          installViews(nextViews);
+          return views.length;
+        },
         activate: activateById,
         showAll: showAll,
         play: startPlayback,

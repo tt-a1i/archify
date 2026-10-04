@@ -369,7 +369,7 @@ test('proof gallery type filters localize with the selected language', () => {
 
 test('scenario guide type filters use consistent Chinese diagram names', () => {
   const template = fs.readFileSync(path.join(repoRoot, 'scripts/guide-template.html'), 'utf8');
-  assert.match(template, /var types = \[\[DIAGRAM_TYPES_JSON\]\];/);
+  assert.match(template, /var types = \[\[GUIDE_TYPES_JSON\]\];/);
   assert.match(template, /var labels = \[\[DIAGRAM_TYPE_LABELS_JSON\]\];/);
 
   const html = fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8');
@@ -377,6 +377,11 @@ test('scenario guide type filters use consistent Chinese diagram names', () => {
     html.includes(`var labels = ${JSON.stringify(DIAGRAM_TYPE_LABELS)};`),
     'docs/guide.html: Guide filters must use the shared Chinese diagram names',
   );
+  const types = JSON.parse(html.match(/var types = (\[[^\]]*\]);/)[1]);
+  assert.ok(types.includes('levels'), 'docs/guide.html: every recipe type has a filter');
+  for (const type of types) {
+    assert.ok(DIAGRAM_TYPE_LABELS.en[type] && DIAGRAM_TYPE_LABELS.zh[type], `guide filter ${type} needs EN and ZH labels`);
+  }
 });
 
 test('real Chrome preserves language through entry, navigation, selection, refresh, and consistent navigation chrome', {
@@ -429,7 +434,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".nav-logo-path").textContent'), '/ 验证作品集');
     assert.deepEqual(await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('[data-filter]')).map(function (button) {
       return button.textContent;
-    })`), ['全部配方 / 11', '架构图', '工作流', '时序图', '数据流', '生命周期']);
+    })`), ['全部配方 / 12', '架构图', '工作流', '时序图', '数据流', '生命周期']);
 
     await evaluate(browser, sessionId, 'document.querySelector(\'[data-filter="architecture"]\').click()');
     state = await evaluate(browser, sessionId, `({
@@ -459,7 +464,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".nav-logo-path").textContent'), '/ proof lab');
     assert.deepEqual(await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('[data-filter]')).map(function (button) {
       return button.textContent;
-    })`), ['All / 11', 'Architecture', 'Workflow', 'Sequence', 'Data flow', 'Lifecycle']);
+    })`), ['All / 12', 'Architecture', 'Workflow', 'Sequence', 'Data flow', 'Lifecycle']);
 
     loaded = browser.cdp.waitFor('Page.loadEventFired', sessionId);
     await browser.cdp.send('Page.reload', {}, sessionId);
@@ -479,7 +484,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".nav-logo-path").textContent'), '/ 场景指南');
     assert.deepEqual(await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('#filters [data-filter]')).map(function (button) {
       return button.textContent;
-    })`), ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期']);
+    })`), ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期', '分层文档']);
 
     await evaluate(browser, sessionId, 'document.querySelector(\'#filters [data-filter="sequence"]\').click()');
     state = await evaluate(browser, sessionId, `({
@@ -498,7 +503,7 @@ test('real Chrome preserves language through entry, navigation, selection, refre
       selected: true,
       visibleCount: 2,
       onlySequence: true,
-      labels: ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期'],
+      labels: ['全部配方', '架构图', '工作流', '时序图', '数据流', '生命周期', '分层文档'],
     });
 
     await clickAndNavigate(browser, sessionId, '.site-nav a[href="start.html"]');

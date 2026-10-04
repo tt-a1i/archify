@@ -459,6 +459,12 @@ const MESSAGE_PAIRS = {
   'viewer.intent.summary': ['{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.', '{label}。{out} 条出向，{in} 条入向{loops}。共 {total} 条连接。按 Enter 查看详情。'],
   'viewer.intent.loops': [', {count} self loop', '，{count} 条自环'],
 
+  'viewer.levels.rail': ['Diagram levels', '图层级'],
+  'viewer.levels.open': ['Open', '打开'],
+  'viewer.levels.openNamed': ['Open {label}', '打开{label}'],
+  'viewer.levels.openFrom': ['Open {label} from {node}', '从 {node} 打开 {label}'],
+  'viewer.levels.back': ['Back to {label}', '返回 {label}'],
+
   'viewer.common.copied': ['Copied', '已复制'],
   'viewer.common.copyFailed': ['Copy failed', '复制失败'],
   'viewer.common.copyLink': ['Copy link', '复制链接'],

@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sample Web App — System Context",
+    "output": "web-platform-context.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1120,
+      620
+    ],
+    "views": [
+      {
+        "id": "who-uses-it",
+        "label": "Who uses it",
+        "focus": [
+          "customers",
+          "operators",
+          "platform"
+        ],
+        "note": "Both audiences arrive over HTTPS; the platform node opens the container view."
+      },
+      {
+        "id": "external-trust",
+        "label": "External trust",
+        "focus": [
+          "platform",
+          "identity",
+          "payments"
+        ],
+        "note": "Identity is delegated to an OAuth provider and payments run through hosted checkout."
+      },
+      {
+        "id": "drill-in",
+        "label": "Where to drill",
+        "focus": [
+          "platform"
+        ],
+        "note": "Sample Web App is the only node with a child level; opening it shows the containers."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "customers",
+      "type": "external",
+      "label": "Customers",
+      "sublabel": "browser and mobile",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "operators",
+      "type": "security",
+      "label": "Operators",
+      "sublabel": "admin console",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "platform",
+      "type": "cloud",
+      "label": "Sample Web App",
+      "sublabel": "CDN, API, worker and durable state",
+      "pos": [
+        400,
+        200
+      ],
+      "size": [
+        280,
+        150
+      ],
+      "tag": "drill in for containers"
+    },
+    {
+      "id": "identity",
+      "type": "external",
+      "label": "OAuth provider",
+      "sublabel": "JWT + PKCE",
+      "pos": [
+        860,
+        130
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "email",
+      "type": "external",
+      "label": "Email delivery",
+      "sublabel": "transactional",
+      "pos": [
+        860,
+        250
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "payments",
+      "type": "external",
+      "label": "Payments",
+      "sublabel": "hosted checkout",
+      "pos": [
+        860,
+        370
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "customers",
+      "to": "platform",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "from": "operators",
+      "to": "platform",
+      "label": "admin actions",
+      "variant": "security"
+    },
+    {
+      "from": "platform",
+      "to": "identity",
+      "label": "verify JWT",
+      "variant": "security",
+      "labelDx": 55
+    },
+    {
+      "from": "platform",
+      "to": "email",
+      "label": "send receipts",
+      "labelDx": 55
+    },
+    {
+      "from": "platform",
+      "to": "payments",
+      "label": "charge",
+      "labelDx": 55
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Reading this document",
+      "items": [
+        "This is the root level of a levels document",
+        "The Sample Web App node opens the container view",
+        "Each level is its own hand-placed architecture diagram"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust boundary",
+      "items": [
+        "Customers and operators both arrive over HTTPS",
+        "Identity is delegated to an external OAuth provider"
+      ]
+    }
+  ]
+}

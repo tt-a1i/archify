@@ -68,7 +68,7 @@ test('Route Probe turns a two-node question into a readable route receipt and st
   assert.match(html, /edge\.setAttribute\('data-route-match', ''\)/);
   assert.match(html, /clone\.setAttribute\('pathLength', '1'\)/);
   assert.match(html, /clone\.style\.setProperty\('--route-step', String\(step\)\)/);
-  assert.match(html, /#route=' \+ encodeURIComponent\(startId\) \+ '~' \+ encodeURIComponent\(endId\)/);
+  assert.match(html, /replaceRouteHash\(startId \+ '~' \+ endId\)/);
   assert.match(html, /new URLSearchParams\(location\.hash\.replace/);
   assert.match(html, /Archify\.view\.reveal\(result\.nodes, \{ includeNeighbors: false, reason: 'route' \}\)/);
   assert.match(html, /shortest path/);
@@ -91,8 +91,12 @@ test('Route Probe hands large-diagram endpoint selection to a reachability-aware
 
 test('Route Probe keeps pointer, keyboard, motion, embed, and export boundaries explicit', () => {
   const html = render('sequence', CASES.sequence);
-  assert.match(html, /svg\.addEventListener\('click', interceptSelection, true\)/);
-  assert.match(html, /svg\.addEventListener\('keydown', interceptSelection, true\)/);
+  // Delegated to the stage container so a levels document cannot strand the
+  // listener on the level that happened to be on stage at boot; the canvas
+  // guard keeps chrome inside that container from being read as selection.
+  assert.match(html, /container\.addEventListener\('click', interceptSelection, true\)/);
+  assert.match(html, /container\.addEventListener\('keydown', interceptSelection, true\)/);
+  assert.match(html, /if \(!Archify\.stage\.fromCanvas\(event\)\) return;/);
   assert.match(html, /event\.key !== 'Enter' && event\.key !== ' '/);
   assert.match(html, /e\.key === 'r' \|\| e\.key === 'R'/);
   assert.match(html, /e\.key === 'Escape' && Archify\.routeProbe\.active\(\)/);

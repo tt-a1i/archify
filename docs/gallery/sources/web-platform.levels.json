@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "diagram_type": "levels",
+  "meta": {
+    "title": "Sample Web App — levels",
+    "output": "web-platform-levels-rendered.html",
+    "quality_profile": "showcase"
+  },
+  "levels": [
+    {
+      "id": "context",
+      "label": "Context",
+      "source": "web-platform-context.architecture.json",
+      "note": "Who uses the platform and what it depends on."
+    },
+    {
+      "id": "containers",
+      "label": "Containers",
+      "source": "web-app.architecture.json",
+      "parent": { "level": "context", "node": "platform" },
+      "note": "The same web-app example, bound in unmodified as the container level."
+    }
+  ]
+}

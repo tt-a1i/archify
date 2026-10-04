@@ -134,6 +134,19 @@ export const CASES = [
     descriptionEn: 'A classic AWS web stack with edge delivery, authentication, API services, cache, persistence, and background work.',
     descriptionZh: '经典 AWS Web 栈：边缘分发、鉴权、API 服务、缓存、持久化与后台任务。',
   },
+  {
+    id: 'web-platform-levels',
+    type: 'levels',
+    input: 'web-platform.levels.json',
+    output: 'web-platform-levels.html',
+    focus: 'platform',
+    view: 'who-uses-it',
+    accent: '#fbbf24',
+    titleEn: 'Sample Web App Levels',
+    titleZh: '示例 Web 应用分层',
+    descriptionEn: 'Two authored architecture levels bound into one artifact: the context level opens the container view from its platform node, and each level keeps its own cards and chapters.',
+    descriptionZh: '两张各自排布的架构图绑定为一个制品：上下文层从 platform 节点打开容器视图，每一层保留各自的卡片与章节。',
+  },
 ];
 
 const TYPE_ACCENTS = {

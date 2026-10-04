@@ -436,5 +436,10 @@
   "viewer.rail.controls": "측면 패널",
   "viewer.rail.collapse": "측면 패널 접기",
   "viewer.rail.bottom": "패널을 다이어그램 아래로 이동",
-  "viewer.rail.right": "패널을 다이어그램 옆으로 이동"
+  "viewer.rail.right": "패널을 다이어그램 옆으로 이동",
+  "viewer.levels.rail": "다이어그램 단계",
+  "viewer.levels.open": "열기",
+  "viewer.levels.openNamed": "{label} 열기",
+  "viewer.levels.openFrom": "{node}에서 {label} 열기",
+  "viewer.levels.back": "{label}(으)로 돌아가기"
 }

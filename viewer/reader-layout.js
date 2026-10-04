@@ -3,9 +3,13 @@
       var body = document.body;
       var shell = document.querySelector('.container');
       var diagram = document.querySelector('.diagram-container');
-      var svg = diagram && diagram.querySelector(':scope > svg');
+      var svg = Archify.stage.svg();
       var header = shell && shell.querySelector('.header');
-      var cards = shell && shell.querySelector('.cards');
+      // A levels document adds a breadcrumb rail above the diagram. It is
+      // fixed chrome like the header, so it must enter the height budget or
+      // the adaptive width oscillates and never settles.
+      var levelRail = shell && shell.querySelector('.level-rail');
+      var cards = shell && shell.querySelector('.cards:not([hidden])');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
@@ -54,10 +58,30 @@
         try { localStorage.setItem(key, value); } catch (_) {}
       }
 
-      if (diagram && ratio >= WIDE_RATIO) {
-        diagram.setAttribute('data-wide-diagram', 'true');
-        html.setAttribute('data-diagram-shape', 'wide');
+      function reflectShape() {
+        if (!diagram) return;
+        if (ratio >= WIDE_RATIO) {
+          diagram.setAttribute('data-wide-diagram', 'true');
+          html.setAttribute('data-diagram-shape', 'wide');
+        } else {
+          diagram.removeAttribute('data-wide-diagram');
+          html.removeAttribute('data-diagram-shape');
+        }
       }
+      reflectShape();
+
+      // Levels can differ in aspect ratio and in whether they carry cards, and
+      // both feed the adaptive width, so the measurement inputs are rebuilt
+      // whenever the stage changes rather than kept from the level that loaded.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        cards = shell && shell.querySelector('.cards:not([hidden])');
+        viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
+        ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
+        lastWidth = 0;
+        reflectShape();
+        schedule();
+      });
 
       function number(value) {
         var parsed = parseFloat(value);
@@ -289,7 +313,7 @@
         if (docked) minWidth = Math.min(maxWidth, minWidth + railExtra);
         var stackedBelow = mode === 'bottom' ? 0 : docked ? 0 : outerHeight(cards);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + stackedBelow;
+          outerHeight(header) + outerHeight(levelRail) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));
@@ -342,10 +366,11 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [header, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [header, levelRail, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(schedule);
+        if (levelRail) contentObserver.observe(levelRail, { attributes: true, childList: true, subtree: true });
         if (cards) contentObserver.observe(cards, { attributes: true, childList: true, subtree: true });
         contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present'] });
       }

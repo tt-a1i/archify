@@ -220,6 +220,7 @@
         <button class="type-tab" type="button" role="tab" data-type="sequence" data-en="[[DIAGRAM_TYPE_SEQUENCE_EN]]" data-zh="[[DIAGRAM_TYPE_SEQUENCE_ZH]]">[[DIAGRAM_TYPE_SEQUENCE_EN]]</button>
         <button class="type-tab" type="button" role="tab" data-type="dataflow" data-en="[[DIAGRAM_TYPE_DATAFLOW_EN]]" data-zh="[[DIAGRAM_TYPE_DATAFLOW_ZH]]">[[DIAGRAM_TYPE_DATAFLOW_EN]]</button>
         <button class="type-tab" type="button" role="tab" data-type="lifecycle" data-en="[[DIAGRAM_TYPE_LIFECYCLE_EN]]" data-zh="[[DIAGRAM_TYPE_LIFECYCLE_ZH]]">[[DIAGRAM_TYPE_LIFECYCLE_EN]]</button>
+        <button class="type-tab" type="button" role="tab" data-type="levels" data-en="Levels" data-zh="分层文档">Levels</button>
       </div>
     </section>
 
@@ -268,7 +269,7 @@
     </section>
 
     <footer class="page-footer">
-      <span data-en="Archify v[[ARCHIFY_VERSION]] · stable · self-contained HTML · typed JSON source" data-zh="Archify v[[ARCHIFY_VERSION]] · 稳定版 · 独立 HTML · 类型化 JSON 源">Archify v[[ARCHIFY_VERSION]] · stable · self-contained HTML · typed JSON source</span>
+      <span data-en="Archify v[[ARCHIFY_VERSION]] · development · self-contained HTML · typed JSON source" data-zh="Archify v[[ARCHIFY_VERSION]] · 开发版 · 独立 HTML · 类型化 JSON 源">Archify v[[ARCHIFY_VERSION]] · development · self-contained HTML · typed JSON source</span>
       <span id="copy-status" role="status" aria-live="polite"></span>
       <a href="https://github.com/tt-a1i/archify" data-en="View source on GitHub ↗" data-zh="在 GitHub 查看源码 ↗">View source on GitHub ↗</a>
     </footer>
@@ -281,7 +282,7 @@
       'use strict';
 
       var DATA = JSON.parse(document.getElementById('start-data').textContent);
-      var KNOWN_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle']);
+      var KNOWN_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'levels']);
       var KNOWN_AGENTS = new Set(['cursor', 'codex', 'claude-code', 'opencode', 'github-copilot']);
       var KNOWN_INPUTS = new Set(['description', 'repository']);
       var KNOWN_SOURCES = new Set(['artifact', 'gallery', 'readme', 'direct']);

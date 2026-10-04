@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 3.0.1">
+  <meta name="generator" content="archify 3.1.0-dev.0">
   <meta name="archify-reader-contract" content="declared-wide-v1">
   <title>Incident Response Runbook Diagram</title>
   <script>
@@ -4867,6 +4867,136 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       .source-evidence-beacon,
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
     }
+
+    /* A levels document ships every level's SVG and cards in the one diagram
+       shell so the viewer chrome and its element ids are never duplicated.
+       Author display rules outrank the user-agent [hidden] rule, so every
+       element that is both laid out by an author rule and hidden by attribute
+       must restate display:none here. Missing one costs invisible page height
+       and, through the adaptive reader's height budget, a layout that never
+       settles -- including on ordinary single-diagram artifacts, where this
+       chrome is hidden for the whole life of the page. */
+    .diagram-container > svg[hidden],
+    .cards[hidden],
+    .level-rail[hidden],
+    .level-children[hidden] { display: none; }
+
+    .level-rail {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .level-crumbs {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .level-crumbs li { display: flex; align-items: center; }
+    .level-crumbs li[data-level-depth]::before {
+      content: "›";
+      margin: 0 0.35rem;
+      color: var(--text-dim);
+    }
+    .level-crumb,
+    .level-child {
+      font: inherit;
+      font-size: 0.75rem;
+      letter-spacing: 0.01em;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      min-height: 28px;
+    }
+    .level-crumb:hover,
+    .level-child:hover { color: var(--text); border-color: var(--panel-border); }
+    .level-crumb[aria-current="true"] {
+      color: var(--text);
+      cursor: default;
+      border-color: var(--panel-border);
+      background: var(--panel);
+    }
+    .level-children { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+    .level-children-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .diagram-container [data-drill-to] { cursor: zoom-in; }
+    .diagram-container [data-drill-to]:hover { filter: brightness(1.08); }
+    .level-drill-badge { cursor: zoom-in; }
+    .level-drill-badge-disc {
+      fill: var(--panel);
+      stroke: var(--text-muted);
+      stroke-width: 1.1;
+      opacity: 0.94;
+    }
+    .level-drill-badge-glyph {
+      fill: none;
+      stroke: var(--text-muted);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .level-drill-badge:hover .level-drill-badge-disc,
+    .level-drill-badge:focus-visible .level-drill-badge-disc {
+      stroke: var(--arrow-emphasis);
+      opacity: 1;
+    }
+    .level-drill-badge:hover .level-drill-badge-glyph,
+    .level-drill-badge:focus-visible .level-drill-badge-glyph { stroke: var(--arrow-emphasis); }
+    .level-drill-badge:focus-visible { outline: none; }
+    .level-drill-badge:focus-visible .level-drill-badge-disc { stroke-width: 2; }
+    .diagram-container[data-level-drilled="true"] {
+      box-shadow: inset 0 0 0 1px var(--panel-border);
+    }
+    .level-zoom-out {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      z-index: 4;
+    }
+    .level-zoom-out[hidden] { display: none; }
+    .level-zoom-out-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid var(--toolbar-border);
+      border-radius: 0.45rem;
+      background: var(--toolbar-bg);
+      color: var(--toolbar-text);
+      font: inherit;
+      font-size: 0.72rem;
+      line-height: 1;
+      cursor: zoom-out;
+    }
+    .level-zoom-out-btn:hover { background: var(--toolbar-hover); color: var(--text); }
+    .level-zoom-out-btn svg {
+      width: 0.85rem;
+      height: 0.85rem;
+      min-width: 0;
+      flex: 0 0 auto;
+      display: block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    html[data-embed="true"] .level-zoom-out,
+    html[data-present="true"] .level-zoom-out {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -4983,7 +5113,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
 
 
-    <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"to cycle","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.svg.auto":"SVG · Auto","viewer.export.svg.auto.hint":"Matches host theme","viewer.export.svg.light":"SVG · Light","viewer.export.svg.light.hint":"Always light","viewer.export.svg.dark":"SVG · Dark","viewer.export.svg.dark.hint":"Always dark","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Path: {source} → {target} · {count} step","viewer.export.card.routeSummary.other":"Path: {source} → {target} · {count} steps","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guide.title":"Explore this system","viewer.focus.selectedNodes":"{count} selected nodes","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.open":"Open diagram guide","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.verificationScope":"Verified against local Git at the pinned revision. Remote access has not been checked.","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.move":"Move semantic passport. Drag, use arrow keys, or press Home to reset.","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Path","viewer.route.start":"Click where the path starts","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Path","viewer.route.pickTwo":"Click two nodes on the diagram","viewer.route.pickOne":"Click a node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Click a start, then an end. Paths follow the arrows.","viewer.route.destination":"Where does the path from {label} end?","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"Pick two different nodes.","viewer.route.unreachable":"Cannot reach {label} from here","viewer.route.unreachable.detail":"{target} cannot be reached from {source} along the arrows. Pick a highlighted node.","viewer.route.start.instructions":"Next, pick the end. Only nodes you can reach will light up.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest path","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} step","viewer.route.overview.hop.other":"{count} steps","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} reachable node is highlighted. Click it.","viewer.route.destination.count.other":"{count} reachable nodes are highlighted. Click one.","viewer.route.noOutgoing":"No arrows lead out of this node. Clear it and pick another start.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.outline.title":"Node index","viewer.rail.show":"Notes \u0026 index","viewer.rail.controls":"Side panel","viewer.rail.collapse":"Collapse side panel","viewer.rail.bottom":"Move panel below the diagram","viewer.rail.right":"Move panel beside the diagram","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
+
+    <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"to cycle","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.svg.auto":"SVG · Auto","viewer.export.svg.auto.hint":"Matches host theme","viewer.export.svg.light":"SVG · Light","viewer.export.svg.light.hint":"Always light","viewer.export.svg.dark":"SVG · Dark","viewer.export.svg.dark.hint":"Always dark","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Path: {source} → {target} · {count} step","viewer.export.card.routeSummary.other":"Path: {source} → {target} · {count} steps","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guide.title":"Explore this system","viewer.focus.selectedNodes":"{count} selected nodes","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.open":"Open diagram guide","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.verificationScope":"Verified against local Git at the pinned revision. Remote access has not been checked.","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.move":"Move semantic passport. Drag, use arrow keys, or press Home to reset.","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Path","viewer.route.start":"Click where the path starts","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Path","viewer.route.pickTwo":"Click two nodes on the diagram","viewer.route.pickOne":"Click a node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Click a start, then an end. Paths follow the arrows.","viewer.route.destination":"Where does the path from {label} end?","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"Pick two different nodes.","viewer.route.unreachable":"Cannot reach {label} from here","viewer.route.unreachable.detail":"{target} cannot be reached from {source} along the arrows. Pick a highlighted node.","viewer.route.start.instructions":"Next, pick the end. Only nodes you can reach will light up.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest path","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} step","viewer.route.overview.hop.other":"{count} steps","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} reachable node is highlighted. Click it.","viewer.route.destination.count.other":"{count} reachable nodes are highlighted. Click one.","viewer.route.noOutgoing":"No arrows lead out of this node. Clear it and pick another start.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.outline.title":"Node index","viewer.rail.show":"Notes \u0026 index","viewer.rail.controls":"Side panel","viewer.rail.collapse":"Collapse side panel","viewer.rail.bottom":"Move panel below the diagram","viewer.rail.right":"Move panel beside the diagram","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.levels.rail":"Diagram levels","viewer.levels.open":"Open","viewer.levels.openNamed":"Open {label}","viewer.levels.openFrom":"Open {label} from {node}","viewer.levels.back":"Back to {label}","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
+    <!-- Level rail: present only in a levels document, populated at runtime. -->
+    <nav class="level-rail no-print" id="level-rail" hidden="hidden" aria-label="Diagram levels">
+      <ol class="level-crumbs" id="level-crumbs"></ol>
+      <div class="level-children" id="level-children" hidden="hidden"></div>
+    </nav>
+
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
@@ -5441,6 +5578,37 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   <script>
     var Archify = {};
+
+    // The diagram stage. An ordinary artifact has exactly one SVG and this is
+    // a constant; a levels document ships one SVG per level with the inactive
+    // ones hidden, so every module must ask which one is on stage rather than
+    // cache the first child. Modules that keep a reference re-resolve it from
+    // onChange, which levels.js fires after it swaps the visible level.
+    Archify.stage = (function () {
+      var container = document.querySelector('.diagram-container');
+      var listeners = [];
+      function svg() {
+        return container ? container.querySelector(':scope > svg:not([hidden])') : null;
+      }
+      return {
+        container: function () { return container; },
+        svg: svg,
+        fromCanvas: function (event) {
+          var target = event && event.target;
+          if (!target || typeof target.closest !== 'function') return false;
+          var owner = target.closest('svg');
+          return !!(owner && owner.parentNode === container);
+        },
+        onChange: function (listener) {
+          if (typeof listener === 'function') listeners.push(listener);
+        },
+        notify: function (detail) {
+          for (var i = 0; i < listeners.length; i += 1) {
+            try { listeners[i](detail || {}); } catch (_) {}
+          }
+        }
+      };
+    })();
     var archifyI18nData = (function () {
       var node = document.getElementById('archify-i18n-data');
       try { return JSON.parse(node ? node.textContent : '{}'); }
@@ -5454,6 +5622,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, function (match, name) {
         return values && Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match;
       });
+    }
+
+    // Merge hash params instead of replacing the fragment, so a focus or route
+    // link keeps the active level and a level change keeps the other params.
+    function viewerReplaceHash(updates) {
+      var params = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''));
+      Object.keys(updates || {}).forEach(function (key) {
+        var value = updates[key];
+        if (value == null || value === '') params.delete(key);
+        else params.set(key, String(value));
+      });
+      var next = params.toString().replace(/\+/g, '%20').replace(/%7E/gi, '~');
+      var url = window.location.pathname + window.location.search + (next ? '#' + next : '');
+      try { window.history.replaceState(null, '', url); }
+      catch (error) { window.location.hash = next; }
     }
 
     function viewerCount(key, count, values) {
@@ -5509,7 +5692,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         editorial: viewerText('viewer.preset.editorial')
       };
       var html = document.documentElement;
-      var svg = document.querySelector('.diagram-container svg');
+      var svg = Archify.stage.svg();
       var btn = document.getElementById('btn-preset');
       var label = document.getElementById('preset-label');
       var menu = document.getElementById('preset-menu');
@@ -5743,6 +5926,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         clone.removeAttribute('data-route-journey');
         clone.removeAttribute('data-share-route');
         clone.removeAttribute('data-share-reach');
+        // Level identity and the drill affordance are viewer-only: an exported
+        // level is an ordinary standalone diagram, not part of a document.
+        clone.removeAttribute('data-level');
+        clone.removeAttribute('data-level-label');
+        clone.removeAttribute('data-level-active');
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-drill-badge]'), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-drill-to]'), function (el) {
+          el.removeAttribute('data-drill-to');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-intent-trace-overlay]'), function (el) {
           el.remove();
         });
@@ -6060,7 +6254,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           throw new Error('Unsupported SVG theme: ' + requestedTheme);
         }
         var autoTheme = requestedTheme === 'auto';
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var clone = svg.cloneNode(true);
 
         var canonicalStateClean = cleanExportClone(clone);
@@ -6379,7 +6573,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // resulting canvas would exceed MAX_CANVAS_PIXELS). The SVG itself is
         // rasterized at target resolution natively; drawImage draws at natural
         // size — no upsampling blur.
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var vb = svg.viewBox.baseVal;
         var layout = figureLayout(vb);
         var scale = pickSafeScale(layout.width, layout.height);
@@ -6454,7 +6648,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var routeSnapshot = options.routeSnapshot || null;
         var reachSnapshot = options.reachSnapshot || null;
         if (routeSnapshot && reachSnapshot) return Promise.reject(exportError('viewer.export.error.variantsCombined'));
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var vb = svg.viewBox.baseVal;
         var sourceScale = Math.min(2, pickSafeScale(vb.width, vb.height));
         var data = serializeSvg(sourceScale, { routeSnapshot: routeSnapshot, reachSnapshot: reachSnapshot, figure: true });
@@ -6601,7 +6795,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function canRecordMotion() {
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         return !!(svg && svg.getAttribute('data-animation') === 'trace' &&
           typeof MediaRecorder !== 'undefined' && motionMimeType() &&
           typeof HTMLCanvasElement !== 'undefined' &&
@@ -6621,7 +6815,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         var duration = Math.max(250, Number(options.duration) || MOTION_DURATION);
         var fps = Math.max(1, Number(options.fps) || MOTION_FPS);
-        var svg = document.querySelector('.diagram-container svg');
+        var svg = Archify.stage.svg();
         var vb = svg.viewBox.baseVal;
         var scale = Math.min(1, 1280 / vb.width);
         var data = serializeSvg(scale);
@@ -7212,7 +7406,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     Archify.motionGovernor = (function () {
       var STORAGE_KEY = 'archify-motion';
       var html = document.documentElement;
-      var svg = document.querySelector('.diagram-container svg');
+      var stageContainer = Archify.stage.container();
+      var svg = Archify.stage.svg();
       var btn = document.getElementById('btn-motion');
       var label = document.getElementById('motion-label');
       var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -7229,8 +7424,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       function detachAmbientBoundary() {
         if (!svg) return;
-        svg.removeEventListener('animationend', onAmbientBoundary, true);
-        svg.removeEventListener('animationcancel', onAmbientBoundary, true);
+        stageContainer.removeEventListener('animationend', onAmbientBoundary, true);
+        stageContainer.removeEventListener('animationcancel', onAmbientBoundary, true);
       }
       function settleAmbient(reason) {
         if (!capable) return false;
@@ -7251,8 +7446,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         ambientStarted = true;
         ambientPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="edge"], [data-animate="node"]')));
         if (!ambientPending.size) return settleAmbient('empty');
-        svg.addEventListener('animationend', onAmbientBoundary, true);
-        svg.addEventListener('animationcancel', onAmbientBoundary, true);
+        stageContainer.addEventListener('animationend', onAmbientBoundary, true);
+        stageContainer.addEventListener('animationcancel', onAmbientBoundary, true);
         html.setAttribute('data-ambient-motion', 'running');
         html.removeAttribute('data-ambient-settle-reason');
         return true;
@@ -7426,13 +7621,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       document.addEventListener('visibilitychange', syncVisibility);
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
-        ownerObserver.observe(svg, {
+        var ownerObserverOptions = {
           attributes: true,
           attributeFilter: [
             'data-route-picking', 'data-route-active',
             'data-lens-active', 'data-relationship-preview-active', 'data-intent-trace-active',
             'data-focus-active', 'data-legend-preview-active'
           ]
+        };
+        ownerObserver.observe(svg, ownerObserverOptions);
+        // A levels document swaps the SVG under the stage; the owner attributes
+        // live on whichever one is showing, so the observer follows it.
+        Archify.stage.onChange(function () {
+          svg = Archify.stage.svg();
+          ownerObserver.disconnect();
+          if (svg instanceof Node) ownerObserver.observe(svg, ownerObserverOptions);
+          publishOwner();
         });
       }
       syncVisibility();
@@ -7542,6 +7746,369 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     })();
     Archify.sourceEvidence.installBeacons();
 
+    Archify.levels = (function () {
+      var data = document.getElementById('archify-levels-data');
+      var inert = {
+        count: 0,
+        root: null,
+        active: function () { return null; },
+        path: function () { return []; },
+        labelOf: function () { return null; },
+        drillTargets: function () { return []; },
+        show: function () { return false; },
+        up: function () { return false; }
+      };
+      if (!data) return inert;
+
+      var manifest = null;
+      try { manifest = JSON.parse(data.textContent || 'null'); } catch (_) { manifest = null; }
+      if (!manifest || !manifest.levels || !manifest.levels.length) return inert;
+
+      var container = Archify.stage.container();
+      var shell = document.querySelector('.container');
+      var rail = document.getElementById('level-rail');
+      var crumbs = document.getElementById('level-crumbs');
+      var children = document.getElementById('level-children');
+      if (!container || !rail || !crumbs || !children) return inert;
+
+      var byId = Object.create(null);
+      manifest.levels.forEach(function (level) { byId[level.id] = level; });
+      var root = manifest.root;
+      var activeId = null;
+
+      // The manifest declares each child's parent; the viewer needs the
+      // inverse to know which node on the visible level opens something.
+      var drillTargets = Object.create(null);
+      manifest.levels.forEach(function (level) {
+        if (!level.drillFrom) return;
+        var parent = level.drillFrom.level;
+        if (!drillTargets[parent]) drillTargets[parent] = Object.create(null);
+        drillTargets[parent][level.drillFrom.node] = level.id;
+      });
+
+      function svgFor(id) {
+        return container.querySelector('svg[data-level="' + id + '"]');
+      }
+      function cardsFor(id) {
+        return shell ? shell.querySelector('.cards[data-level="' + id + '"]') : null;
+      }
+      function pathTo(id) {
+        var chain = [];
+        var guard = 0;
+        var cursor = byId[id];
+        while (cursor && guard < manifest.levels.length + 1) {
+          chain.unshift(cursor.id);
+          cursor = cursor.drillFrom ? byId[cursor.drillFrom.level] : null;
+          guard += 1;
+        }
+        return chain;
+      }
+
+      function setVisible(element, visible) {
+        if (!element) return;
+        if (visible) {
+          element.removeAttribute('hidden');
+          element.removeAttribute('aria-hidden');
+          element.setAttribute('data-level-active', 'true');
+        } else {
+          element.setAttribute('hidden', 'hidden');
+          element.setAttribute('aria-hidden', 'true');
+          element.removeAttribute('data-level-active');
+        }
+      }
+
+      // Transient reader state belongs to the level it was raised on. Clearing
+      // it through each module's own public API avoids reaching into their
+      // internals and leaves every owner consistent.
+      function clearTransientState() {
+        try { if (Archify.focus) { Archify.focus.clearReach(); Archify.focus.clear(); } } catch (_) {}
+        try { if (Archify.semanticLens) Archify.semanticLens.clear(); } catch (_) {}
+        try { if (Archify.routeProbe) Archify.routeProbe.clear(); } catch (_) {}
+        try { if (Archify.finder) Archify.finder.close(); } catch (_) {}
+        try { if (Archify.radar) Archify.radar.close(); } catch (_) {}
+      }
+
+      // Which node opens which level is a fixed property of the document, not
+      // of what is on screen, so every level is marked once. Marking only the
+      // active level would leave stale attributes behind on switch.
+      var SVG_NS = 'http://www.w3.org/2000/svg';
+
+      // The badge is an overlay in the node's own corner: authored geometry is
+      // read, never rewritten, and the glyph carries the drill target so one
+      // click is enough. Double-click and Ctrl/Cmd+Enter keep working.
+      function drillBadge(node, childId, label) {
+        var existing = node.querySelector('[data-drill-badge]');
+        if (existing) existing.remove();
+        var rect = node.querySelector('rect');
+        if (!rect) return;
+        var x = parseFloat(rect.getAttribute('x'));
+        var y = parseFloat(rect.getAttribute('y'));
+        var width = parseFloat(rect.getAttribute('width'));
+        if (!isFinite(x) || !isFinite(y) || !isFinite(width)) return;
+
+        var badge = document.createElementNS(SVG_NS, 'g');
+        badge.setAttribute('class', 'level-drill-badge');
+        // The target rides on data-drill-badge, not data-drill-to: the latter
+        // means "a node that opens a level" and is queried as such.
+        badge.setAttribute('data-drill-badge', childId);
+        badge.setAttribute('role', 'button');
+        badge.setAttribute('tabindex', '0');
+        badge.setAttribute('aria-label', viewerText('viewer.levels.openNamed', { label: label }));
+        badge.setAttribute('transform', 'translate(' + (x + width - 15) + ' ' + (y + 15) + ')');
+        var title = document.createElementNS(SVG_NS, 'title');
+        title.textContent = viewerText('viewer.levels.openNamed', { label: label });
+        badge.appendChild(title);
+        var disc = document.createElementNS(SVG_NS, 'circle');
+        disc.setAttribute('class', 'level-drill-badge-disc');
+        disc.setAttribute('r', '10');
+        badge.appendChild(disc);
+        var glyph = document.createElementNS(SVG_NS, 'g');
+        glyph.setAttribute('class', 'level-drill-badge-glyph');
+        var lens = document.createElementNS(SVG_NS, 'circle');
+        lens.setAttribute('cx', '-1'); lens.setAttribute('cy', '-1'); lens.setAttribute('r', '3.7');
+        glyph.appendChild(lens);
+        var marks = document.createElementNS(SVG_NS, 'path');
+        marks.setAttribute('d', 'M1.7 1.7 L4.5 4.5 M-2.9 -1 H0.9 M-1 -2.9 V0.9');
+        glyph.appendChild(marks);
+        badge.appendChild(glyph);
+        node.appendChild(badge);
+      }
+
+      function markDrillable() {
+        manifest.levels.forEach(function (level) {
+          var svg = svgFor(level.id);
+          if (!svg) return;
+          var targets = drillTargets[level.id] || Object.create(null);
+          Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+            var child = targets[node.getAttribute('data-node-id')];
+            // An attribute plus an overlay badge; authored geometry is untouched.
+            if (child) {
+              node.setAttribute('data-drill-to', child);
+              drillBadge(node, child, byId[child] ? byId[child].label : child);
+            } else {
+              node.removeAttribute('data-drill-to');
+              var stale = node.querySelector('[data-drill-badge]');
+              if (stale) stale.remove();
+            }
+          });
+        });
+      }
+
+      // A framed stage with its own zoom-out control: once you are inside a
+      // level, leaving it is the mirror of the badge that opened it.
+      var zoomOut = document.createElement('div');
+      zoomOut.className = 'level-zoom-out no-print';
+      zoomOut.hidden = true;
+      var zoomOutBtn = document.createElement('button');
+      zoomOutBtn.type = 'button';
+      zoomOutBtn.className = 'level-zoom-out-btn';
+      zoomOutBtn.setAttribute('data-level-up', '');
+      // Built through the DOM rather than an inline markup string: a literal
+      // svg tag in this source would be counted as a level by the artifact check.
+      var zoomOutIcon = document.createElementNS(SVG_NS, 'svg');
+      zoomOutIcon.setAttribute('viewBox', '-8 -8 16 16');
+      zoomOutIcon.setAttribute('aria-hidden', 'true');
+      zoomOutIcon.setAttribute('focusable', 'false');
+      var zoomOutLens = document.createElementNS(SVG_NS, 'circle');
+      zoomOutLens.setAttribute('cx', '-1');
+      zoomOutLens.setAttribute('cy', '-1');
+      zoomOutLens.setAttribute('r', '3.7');
+      zoomOutIcon.appendChild(zoomOutLens);
+      var zoomOutMarks = document.createElementNS(SVG_NS, 'path');
+      zoomOutMarks.setAttribute('d', 'M1.7 1.7 L4.5 4.5 M-2.9 -1 H0.9');
+      zoomOutIcon.appendChild(zoomOutMarks);
+      zoomOutBtn.appendChild(zoomOutIcon);
+      var zoomOutLabel = document.createElement('span');
+      zoomOutBtn.appendChild(zoomOutLabel);
+      zoomOut.appendChild(zoomOutBtn);
+      container.appendChild(zoomOut);
+      zoomOutBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        up();
+      });
+
+      function renderZoomOut() {
+        var level = byId[activeId];
+        var parent = level && level.drillFrom ? byId[level.drillFrom.level] : null;
+        if (!parent) {
+          zoomOut.hidden = true;
+          container.removeAttribute('data-level-drilled');
+          return;
+        }
+        zoomOutLabel.textContent = parent.label;
+        zoomOutBtn.title = viewerText('viewer.levels.back', { label: parent.label });
+        zoomOutBtn.setAttribute('aria-label', viewerText('viewer.levels.back', { label: parent.label }));
+        zoomOut.hidden = false;
+        container.setAttribute('data-level-drilled', 'true');
+      }
+
+      function renderRail() {
+        var chain = pathTo(activeId);
+        crumbs.textContent = '';
+        chain.forEach(function (id, index) {
+          var item = document.createElement('li');
+          var level = byId[id];
+          var current = id === activeId;
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'level-crumb';
+          button.textContent = level.label;
+          button.setAttribute('data-level-target', id);
+          if (current) {
+            button.setAttribute('aria-current', 'true');
+            button.disabled = true;
+            if (level.note) button.title = level.note;
+          } else {
+            button.title = viewerText('viewer.levels.back', { label: level.label });
+          }
+          if (index > 0) item.setAttribute('data-level-depth', String(index));
+          item.appendChild(button);
+          crumbs.appendChild(item);
+        });
+
+        children.textContent = '';
+        var targets = drillTargets[activeId] || Object.create(null);
+        var targetNodes = Object.keys(targets);
+        if (targetNodes.length) {
+          var openLabel = document.createElement('span');
+          openLabel.className = 'level-children-label';
+          openLabel.textContent = viewerText('viewer.levels.open');
+          children.appendChild(openLabel);
+        }
+        targetNodes.forEach(function (nodeId) {
+          var childId = targets[nodeId];
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'level-child';
+          button.setAttribute('data-level-target', childId);
+          button.textContent = byId[childId].label;
+          button.title = viewerText('viewer.levels.openFrom', {
+            label: byId[childId].label,
+            node: nodeId,
+          });
+          children.appendChild(button);
+        });
+        children.hidden = children.childNodes.length === 0;
+        rail.hidden = false;
+      }
+
+      function show(id, options) {
+        if (!byId[id] || id === activeId) return false;
+        var nextSvg = svgFor(id);
+        if (!nextSvg) return false;
+
+        clearTransientState();
+
+        manifest.levels.forEach(function (level) {
+          setVisible(svgFor(level.id), level.id === id);
+          setVisible(cardsFor(level.id), level.id === id);
+        });
+        activeId = id;
+        renderRail();
+        renderZoomOut();
+
+        document.documentElement.setAttribute('data-active-level', id);
+        Archify.stage.notify({ level: id, previous: options && options.previous });
+
+        if (!options || options.updateHash !== false) {
+          viewerReplaceHash({ level: id === root ? null : id });
+        }
+        return true;
+      }
+
+      function up() {
+        var level = byId[activeId];
+        return level && level.drillFrom ? show(level.drillFrom.level) : false;
+      }
+
+      rail.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-level-target]');
+        if (!button) return;
+        event.preventDefault();
+        show(button.getAttribute('data-level-target'));
+      });
+
+      // The badge is an explicit control, so one click on it drills. Capture
+      // phase with propagation stopped keeps the same click from also being
+      // read as "focus this node" by the passport.
+      function drillFromBadge(event) {
+        var badge = event.target.closest && event.target.closest('[data-drill-badge]');
+        if (!badge) return false;
+        event.preventDefault();
+        event.stopPropagation();
+        show(badge.getAttribute('data-drill-badge'));
+        return true;
+      }
+      container.addEventListener('click', drillFromBadge, true);
+      container.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        drillFromBadge(event);
+      }, true);
+
+      // Anywhere else on a drillable node, drilling stays a deliberate second
+      // gesture: a single click already means focus.
+      container.addEventListener('dblclick', function (event) {
+        var node = event.target.closest('[data-drill-to]');
+        if (!node) return;
+        event.preventDefault();
+        show(node.getAttribute('data-drill-to'));
+      });
+
+      container.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return;
+        var node = event.target.closest && event.target.closest('[data-drill-to]');
+        if (!node) return;
+        event.preventDefault();
+        show(node.getAttribute('data-drill-to'));
+      });
+
+      // Absent means "keep the level already on stage". An explicit level that
+      // is not in the manifest falls back to root; a hash written by focus or
+      // route, with no level param, must not.
+      function requestedLevel() {
+        var hash = window.location.hash || '';
+        if (!/(?:^|[#&])level=/.test(hash)) return { present: false, id: null };
+        var match = /(?:^|[#&])level=([^&]*)/.exec(hash);
+        var id = match ? decodeURIComponent(match[1]) : '';
+        return { present: true, id: byId[id] ? id : null };
+      }
+
+      window.addEventListener('hashchange', function () {
+        var requested = requestedLevel();
+        if (!requested.present) return;
+        var next = requested.id || root;
+        if (next !== activeId) show(next, { updateHash: false });
+      });
+
+      markDrillable();
+
+      // Establish the starting level without rewriting a deep link that
+      // already names it.
+      var requested = requestedLevel();
+      var initial = requested.present ? (requested.id || root) : (manifest.active || root);
+      activeId = null;
+      show(initial, { updateHash: initial !== root && !requested.present });
+      if (activeId !== initial) show(root, { updateHash: false });
+
+      return {
+        count: manifest.levels.length,
+        root: root,
+        active: function () { return activeId; },
+        path: function () { return pathTo(activeId); },
+        labelOf: function (id) { return byId[id] ? byId[id].label : null; },
+        drillTargets: function (id) {
+          var targets = drillTargets[id || activeId] || {};
+          return Object.keys(targets).map(function (nodeId) {
+            return { node: nodeId, level: targets[nodeId] };
+          });
+        },
+        show: show,
+        up: up
+      };
+    })();
+
+
     /* ============================================================
        Explore — stable-ID neighborhood focus + dependency-free pan/zoom.
        Renderer IDs become deep-linkable semantic hooks without turning the
@@ -7550,7 +8117,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     Archify.focus = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector('svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage. Re-pointing the reference
+      // covers everything this module reads live, but the relationship hit overlay
+      // is real DOM, so it has to be installed into whichever level is on stage.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        syncRelationshipHitTargets();
+      });
       var chip = document.getElementById('focus-chip');
       var label = document.getElementById('focus-label');
       var detail = document.getElementById('focus-detail');
@@ -7581,12 +8155,25 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var activeRelationshipPreview = null;
       var relationshipHitOverlay = null;
       var relationshipHitTargets = [];
+      // Every level's SVG stays in the DOM, so the overlay is installed per level
+      // and keyed by SVG: a level is enhanced once, on first activation.
+      var relationshipHitBySvg = new WeakMap();
       var directPreviewTimer = null;
       var lensDrag = null;
       var lensDragClickPointer = null;
       var manualLensPosition = null;
       var reachabilityMode = null;
       var activeReachability = null;
+      // A caller-supplied urlKey (for example `view`) is written into a shared
+      // hash, so it is remembered and removed with the focus it stands for.
+      var customHashKey = null;
+      function replaceFocusHash(updates) {
+        if (customHashKey && !Object.prototype.hasOwnProperty.call(updates, customHashKey)) {
+          updates[customHashKey] = null;
+        }
+        customHashKey = null;
+        viewerReplaceHash(updates);
+      }
       var svgNamespace = 'http://www.w3.org/2000/svg';
       var reducedMotionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
       var finePointerQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : null;
@@ -7693,7 +8280,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         if (options.updateUrl === true && activeIds.length === 1) {
           try {
-            history.replaceState(null, '', location.pathname + location.search + '#focus=' + encodeURIComponent(activeIds[0]));
+            replaceFocusHash({ focus: activeIds[0], reach: null, relation: null, route: null, lens: null });
           } catch (_) {}
         }
       }
@@ -7769,8 +8356,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         if (options.updateUrl !== false) {
           try {
-            history.replaceState(null, '', location.pathname + location.search + '#focus=' +
-              encodeURIComponent(activeIds[0]) + '&reach=' + direction);
+            replaceFocusHash({
+              focus: activeIds[0], reach: direction, relation: null, route: null, lens: null,
+            });
           } catch (_) {}
         }
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
@@ -8355,7 +8943,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
         revealPinnedRelationship(record);
         if (options.updateUrl !== false && record.id) {
-          try { history.replaceState(null, '', location.pathname + location.search + '#relation=' + encodeURIComponent(record.id)); } catch (_) {}
+          try { replaceFocusHash({ relation: record.id, focus: null, reach: null, route: null, lens: null }); } catch (_) {}
         }
         return true;
       }
@@ -8364,9 +8952,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return record ? inspectRelationship(record.key, options) : false;
       }
       function installRelationshipHitTargets() {
-        if (html.getAttribute('data-embed') === 'true') return 0;
+        if (!svg) return 0;
+        relationshipHitOverlay = null;
+        relationshipHitTargets = [];
+        if (html.getAttribute('data-embed') === 'true') { relationshipHitBySvg.set(svg, null); return 0; }
         var records = relationshipHitRecords();
-        if (!records.length) return 0;
+        if (!records.length) { relationshipHitBySvg.set(svg, null); return 0; }
         relationshipHitOverlay = document.createElementNS(svgNamespace, 'g');
         relationshipHitOverlay.setAttribute('class', 'relationship-hit-overlay');
         relationshipHitOverlay.setAttribute('data-relationship-hit-overlay', '');
@@ -8408,7 +8999,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             relationshipHitOverlay.appendChild(target);
           }
         });
-        if (!relationshipHitTargets.length) return 0;
+        if (!relationshipHitTargets.length) { relationshipHitOverlay = null; relationshipHitBySvg.set(svg, null); return 0; }
         var firstNode = svg.querySelector('[data-node-id]');
         var nodeLayer = firstNode;
         while (nodeLayer && nodeLayer.parentNode && nodeLayer.parentNode !== svg) nodeLayer = nodeLayer.parentNode;
@@ -8480,6 +9071,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           try { relationshipHitTargets[index].focus({ preventScroll: true }); }
           catch (_) { try { relationshipHitTargets[index].focus(); } catch (_) {} }
         });
+        relationshipHitBySvg.set(svg, { overlay: relationshipHitOverlay, targets: relationshipHitTargets });
+        return relationshipHitTargets.length;
+      }
+      function syncRelationshipHitTargets() {
+        if (!svg) {
+          relationshipHitOverlay = null;
+          relationshipHitTargets = [];
+          return 0;
+        }
+        if (!relationshipHitBySvg.has(svg)) return installRelationshipHitTargets();
+        var entry = relationshipHitBySvg.get(svg);
+        relationshipHitOverlay = entry ? entry.overlay : null;
+        relationshipHitTargets = entry ? entry.targets : [];
         return relationshipHitTargets.length;
       }
       function renderRelationshipLens(id, byId) {
@@ -8847,7 +9451,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           Archify.view.reset({ automatic: true });
         }
         if (options.updateUrl !== false) {
-          try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {}
+          try { replaceFocusHash({ focus: null, reach: null, relation: null, route: null, lens: null }); } catch (_) {}
         }
         if (restoreNode) {
           try { restoreNode.focus({ preventScroll: true }); }
@@ -8918,7 +9522,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (options.updateUrl !== false) {
           var key = options.urlKey || 'focus';
           var value = options.urlValue || normalized[0];
-          try { history.replaceState(null, '', location.pathname + location.search + '#' + key + '=' + encodeURIComponent(value)); } catch (_) {}
+          try {
+            var hashUpdates = { reach: null, relation: null, route: null, lens: null };
+            hashUpdates[key] = value;
+            if (key !== 'focus') hashUpdates.focus = null;
+            replaceFocusHash(hashUpdates);
+            if (key !== 'focus' && key !== 'level') customHashKey = key;
+          } catch (_) {}
         }
         return true;
       }
@@ -8947,9 +9557,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (activeIds.length !== 1) return Promise.resolve(false);
         var record = pinnedRelationshipRecord();
         var relationId = record && record.id;
-        var value = location.href.replace(/#.*$/, '') + (relationId
-          ? '#relation=' + encodeURIComponent(relationId)
-          : '#focus=' + encodeURIComponent(activeIds[0]) + (reachabilityMode ? '&reach=' + reachabilityMode : ''));
+        var linkParams = new URLSearchParams();
+        var activeLevel = new URLSearchParams(String(location.hash || '').replace(/^#/, '')).get('level');
+        if (activeLevel) linkParams.set('level', activeLevel);
+        if (relationId) linkParams.set('relation', relationId);
+        else {
+          linkParams.set('focus', activeIds[0]);
+          if (reachabilityMode) linkParams.set('reach', reachabilityMode);
+        }
+        var linkQuery = linkParams.toString().replace(/\+/g, '%20').replace(/%7E/gi, '~');
+        var value = location.href.replace(/#.*$/, '') + (linkQuery ? '#' + linkQuery : '');
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -8965,8 +9582,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
       }
 
-      svg.addEventListener('click', function (event) {
+      container.addEventListener('click', function (event) {
         if (container.getAttribute('data-just-panned') === 'true') return;
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (node) {
           var id = node.getAttribute('data-node-id');
@@ -8977,7 +9595,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         else if (activeIds.length) clear();
       });
-      svg.addEventListener('keydown', function (event) {
+      container.addEventListener('keydown', function (event) {
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (!node || (event.key !== 'Enter' && event.key !== ' ')) return;
         event.preventDefault();
@@ -9163,7 +9782,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     Archify.intentTrace = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector(':scope > svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage; this module reads
+      // its nodes live, so re-pointing the reference is enough.
+      Archify.stage.onChange(function () { svg = Archify.stage.svg(); });
       var status = document.getElementById('intent-trace-status');
       var namespace = 'http://www.w3.org/2000/svg';
       var activeId = null;
@@ -9331,26 +9953,30 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         show(candidate.getAttribute('data-node-id'), { announce: candidate === focusedNode });
       }
 
-      svg.addEventListener('pointerover', function (event) {
+      container.addEventListener('pointerover', function (event) {
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (!node || !finePointer() || event.pointerType === 'touch') return;
         if (event.relatedTarget && node.contains(event.relatedTarget)) return;
         hoveredNode = node;
         schedule(node);
       });
-      svg.addEventListener('pointerout', function (event) {
+      container.addEventListener('pointerout', function (event) {
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (!node || (event.relatedTarget && node.contains(event.relatedTarget))) return;
         if (hoveredNode === node) hoveredNode = null;
         sync();
       });
-      svg.addEventListener('focusin', function (event) {
+      container.addEventListener('focusin', function (event) {
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (!node) return;
         focusedNode = node;
         show(node.getAttribute('data-node-id'), { announce: true });
       });
-      svg.addEventListener('focusout', function (event) {
+      container.addEventListener('focusout', function (event) {
+        if (!Archify.stage.fromCanvas(event)) return;
         var node = event.target.closest('[data-node-id]');
         if (!node || (event.relatedTarget && node.contains(event.relatedTarget))) return;
         if (focusedNode === node) focusedNode = null;
@@ -9423,9 +10049,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var body = document.body;
       var shell = document.querySelector('.container');
       var diagram = document.querySelector('.diagram-container');
-      var svg = diagram && diagram.querySelector(':scope > svg');
+      var svg = Archify.stage.svg();
       var header = shell && shell.querySelector('.header');
-      var cards = shell && shell.querySelector('.cards');
+      // A levels document adds a breadcrumb rail above the diagram. It is
+      // fixed chrome like the header, so it must enter the height budget or
+      // the adaptive width oscillates and never settles.
+      var levelRail = shell && shell.querySelector('.level-rail');
+      var cards = shell && shell.querySelector('.cards:not([hidden])');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
@@ -9474,10 +10104,30 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         try { localStorage.setItem(key, value); } catch (_) {}
       }
 
-      if (diagram && ratio >= WIDE_RATIO) {
-        diagram.setAttribute('data-wide-diagram', 'true');
-        html.setAttribute('data-diagram-shape', 'wide');
+      function reflectShape() {
+        if (!diagram) return;
+        if (ratio >= WIDE_RATIO) {
+          diagram.setAttribute('data-wide-diagram', 'true');
+          html.setAttribute('data-diagram-shape', 'wide');
+        } else {
+          diagram.removeAttribute('data-wide-diagram');
+          html.removeAttribute('data-diagram-shape');
+        }
       }
+      reflectShape();
+
+      // Levels can differ in aspect ratio and in whether they carry cards, and
+      // both feed the adaptive width, so the measurement inputs are rebuilt
+      // whenever the stage changes rather than kept from the level that loaded.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        cards = shell && shell.querySelector('.cards:not([hidden])');
+        viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
+        ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
+        lastWidth = 0;
+        reflectShape();
+        schedule();
+      });
 
       function number(value) {
         var parsed = parseFloat(value);
@@ -9709,7 +10359,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (docked) minWidth = Math.min(maxWidth, minWidth + railExtra);
         var stackedBelow = mode === 'bottom' ? 0 : docked ? 0 : outerHeight(cards);
         var fixedHeight = chrome.bodyY + chrome.diagramY + SAFE_BOTTOM_GAP +
-          outerHeight(header) + stackedBelow;
+          outerHeight(header) + outerHeight(levelRail) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));
@@ -9762,10 +10412,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
-        [header, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        [header, levelRail, cards].forEach(function (element) { if (element) resizeObserver.observe(element); });
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(schedule);
+        if (levelRail) contentObserver.observe(levelRail, { attributes: true, childList: true, subtree: true });
         if (cards) contentObserver.observe(cards, { attributes: true, childList: true, subtree: true });
         contentObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-present'] });
       }
@@ -10199,7 +10850,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     };
     Archify.view = (function () {
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector('svg');
+      var svg = Archify.stage.svg();
       var outBtn = container.querySelector('[data-view="out"]');
       var resetBtn = container.querySelector('[data-view="reset"]');
       var resetDetailLabel = resetBtn.querySelector('[data-view-detail]');
@@ -10699,6 +11350,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
       });
       window.addEventListener('hashchange', function () { requestAnimationFrame(syncSemantic); });
+
+      // A new level is a new canvas, so the camera re-points at it and returns
+      // to overview rather than carrying the previous level's pan and zoom on
+      // to coordinates that no longer mean the same thing.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        viewBox = svg && svg.viewBox ? svg.viewBox.baseVal : null;
+        reset({ automatic: true });
+        requestAnimationFrame(syncSemantic);
+      });
+
       apply();
       pinControls();
       requestAnimationFrame(syncSemantic);
@@ -10722,7 +11384,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        ============================================================ */
     Archify.radar = (function () {
       var container = document.querySelector('.diagram-container');
-      var diagram = container.querySelector(':scope > svg');
+      var diagram = Archify.stage.svg();
       var panel = document.getElementById('overview-map');
       var panelHead = panel.querySelector('.overview-map-head');
       var surface = document.getElementById('overview-map-surface');
@@ -11329,6 +11991,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           radarResizeObserver.observe(element);
         });
       }
+      // The radar caches a built node list and the canvas viewBox, so a level
+      // change has to rebuild both; re-pointing the reference alone would map
+      // the new level's nodes onto the previous level's coordinate space.
+      Archify.stage.onChange(function () {
+        diagram = Archify.stage.svg();
+        viewBox = diagram && diagram.viewBox ? diagram.viewBox.baseVal : null;
+        build();
+      });
+
       requestAnimationFrame(build);
 
       return {
@@ -11424,7 +12095,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     Archify.finder = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector('svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage; this module reads
+      // its nodes live, so re-pointing the reference is enough.
+      Archify.stage.onChange(function () {
+        svg = Archify.stage.svg();
+        // The search index is built from the stage, so it is rebuilt with it;
+        // re-pointing alone would keep searching the level that loaded first.
+        items = buildItems();
+      });
       var trigger = document.getElementById('btn-node-finder');
       var panel = document.getElementById('node-finder');
       var heading = document.getElementById('node-finder-title');
@@ -11472,7 +12151,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return count;
       }
 
-      var items = Array.prototype.map.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+      function buildItems() {
+        return Array.prototype.map.call(svg.querySelectorAll('[data-node-id]'), function (node) {
         var id = node.getAttribute('data-node-id');
         var label = node.getAttribute('data-node-label') || (node.getAttribute('aria-label') || id).replace(/^Focus\s+/, '');
         var text = (node.textContent || '').replace(/\s+/g, ' ').trim();
@@ -11498,7 +12178,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase() + ' ' + brand.toLowerCase(),
           node: node
         };
-      });
+        });
+      }
+      var items = buildItems();
 
       function resultButtons() {
         return Array.prototype.slice.call(results.querySelectorAll('.node-finder-result'));
@@ -11675,7 +12357,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         select: select,
         isOpen: function () { return !panel.hidden; },
         context: function () { return context.kind; },
-        count: items.length
+        // A getter, not a snapshot: the index is rebuilt when the stage
+        // changes, and callers read this as a property.
+        get count() { return items.length; }
       };
     })();
 
@@ -11827,7 +12511,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     Archify.routeProbe = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector(':scope > svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage; this module reads
+      // its nodes live, so re-pointing the reference is enough.
+      Archify.stage.onChange(function () { svg = Archify.stage.svg(); });
       var trigger = document.getElementById('btn-route-probe');
       var panel = document.getElementById('route-probe');
       var title = document.getElementById('route-probe-title');
@@ -12005,7 +12692,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function replaceRouteHash(value) {
         try {
-          history.replaceState(null, '', location.pathname + location.search + (value ? '#route=' + value : ''));
+          viewerReplaceHash(value
+            ? { route: value, focus: null, reach: null, relation: null, lens: null }
+            : { route: null });
         } catch (_) {}
       }
       function renderPlaceholder(copy) {
@@ -12571,7 +13260,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         setTrigger(true);
         if (Archify.exportMenu && typeof Archify.exportMenu.syncRouteShare === 'function') Archify.exportMenu.syncRouteShare();
         if (options.updateUrl !== false) {
-          replaceRouteHash(encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
+          replaceRouteHash(startId + '~' + endId);
         }
         showJourneyOverview({ reveal: false });
         if (Archify.view && typeof Archify.view.reveal === 'function') {
@@ -12716,7 +13405,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function copyLink() {
         if (mode !== 'result') return Promise.resolve(false);
-        var value = location.href.replace(/#.*$/, '') + '#route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId);
+        var routeParams = new URLSearchParams();
+        var routeLevel = new URLSearchParams(String(location.hash || '').replace(/^#/, '')).get('level');
+        if (routeLevel) routeParams.set('level', routeLevel);
+        routeParams.set('route', startId + '~' + endId);
+        var value = location.href.replace(/#.*$/, '') + '#' + routeParams.toString().replace(/\+/g, '%20').replace(/%7E/gi, '~');
         var copy = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
           ? navigator.clipboard.writeText(value).then(function () { return true; }).catch(function () { return fallbackCopy(value); })
           : Promise.resolve(fallbackCopy(value));
@@ -12732,6 +13425,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function interceptSelection(event) {
         if (mode !== 'source' && mode !== 'target') return;
+        if (!Archify.stage.fromCanvas(event)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
         var node = event.target.closest('[data-node-id]');
         if (!node) return;
@@ -12812,8 +13506,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           selectJourneyIndex(index);
         }
       });
-      svg.addEventListener('click', interceptSelection, true);
-      svg.addEventListener('keydown', interceptSelection, true);
+      container.addEventListener('click', interceptSelection, true);
+      container.addEventListener('keydown', interceptSelection, true);
       container.addEventListener('scroll', updateDocking, { passive: true });
       window.addEventListener('resize', requestDocking);
       window.addEventListener('beforeprint', function () {
@@ -12859,7 +13553,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     Archify.semanticLens = (function () {
       var html = document.documentElement;
       var container = document.querySelector('.diagram-container');
-      var svg = container.querySelector(':scope > svg');
+      var svg = Archify.stage.svg();
+      // A levels document swaps which SVG is on stage; this module reads
+      // its nodes live, so re-pointing the reference is enough.
+      Archify.stage.onChange(function () { svg = Archify.stage.svg(); });
       var trigger = document.getElementById('btn-semantic-lens');
       var panel = document.getElementById('semantic-lens');
       var closeBtn = document.getElementById('semantic-lens-close');
@@ -13170,10 +13867,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function updateHash() {
         try {
-          var hash = selectedKinds.length
-            ? '#lens=' + selectedKinds.map(encodeURIComponent).join('~')
-            : '';
-          history.replaceState(null, '', location.pathname + location.search + hash);
+          viewerReplaceHash({
+            lens: selectedKinds.length ? selectedKinds.join('~') : null,
+            focus: null,
+            reach: null,
+            relation: null,
+            route: null,
+          });
         } catch (_) {}
       }
       function updateTrigger() {
@@ -13705,7 +14405,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          R -> start/clear Route Probe
          / -> open node finder or the active route endpoint picker
          + / - -> zoom, 0 -> reset view
-         Escape -> clear temporary trace/focus/view first, then exit presentation
+         Escape -> clear temporary trace/focus/view first, then climb one level, then exit presentation
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
@@ -13776,6 +14476,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (e.key === 'Escape' && Archify.focus.active()) {
         e.preventDefault();
         Archify.focus.clear({ restoreFocus: true });
+      } else if (e.key === 'Escape' && Archify.levels.up()) {
+        e.preventDefault();
       } else if (e.key === 'Escape' && Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();

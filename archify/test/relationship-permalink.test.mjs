@@ -66,8 +66,8 @@ test('authored relationship identity and readable-v2 compiler keys survive sourc
     relationshipKey(second.html, 'request-chat'),
     relationshipKey(first.html, 'request-chat'),
   );
-  assert.match(first.html, /'#relation=' \+ encodeURIComponent\(record\.id\)/);
-  assert.match(second.html, /'#relation=' \+ encodeURIComponent\(record\.id\)/);
+  assert.match(first.html, /replaceFocusHash\(\{ relation: record\.id, focus: null/);
+  assert.match(second.html, /replaceFocusHash\(\{ relation: record\.id, focus: null/);
 });
 
 test('relationship ids stay optional and duplicate ids fail closed in the shared zero-install path', () => {
@@ -106,7 +106,7 @@ test('the viewer restores and copies stable relation links without exposing nume
   assert.match(html, /target\.setAttribute\('data-relationship-id', record\.id\)/);
   assert.match(html, /button\.setAttribute\('data-relationship-id', relationship\.id\)/);
   assert.match(html, /copyBtn\.textContent = viewerText\('viewer\.passport\.copyRelation'\)/);
-  assert.match(html, /'#relation=' \+ encodeURIComponent\(record\.id\)/);
+  assert.match(html, /replaceFocusHash\(\{ relation: record\.id, focus: null/);
   assert.match(html, /var relation = params\.get\('relation'\)/);
   assert.match(html, /inspectRelationshipById\(relation, \{ updateUrl: false, toggle: false \}\)/);
   assert.match(html, /if \(html\.getAttribute\('data-embed'\) === 'true'\) return false/);
@@ -114,7 +114,7 @@ test('the viewer restores and copies stable relation links without exposing nume
   assert.match(html, /if \(!reveal\(\)\) requestAnimationFrame\(reveal\)/);
   assert.match(html, /inspectRelationshipById: inspectRelationshipById/);
   assert.match(html, /id: record\.id \|\| null, key: record\.key/);
-  assert.doesNotMatch(html, /'#relation=' \+ encodeURIComponent\(record\.key\)/);
+  assert.doesNotMatch(html, /relation: record\.key/);
 });
 
 test('runtime overlays drop durable edge ids while canonical SVG keeps authored identity', () => {

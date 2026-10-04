@@ -30,6 +30,18 @@ npx skills add tt-a1i/archify -g
 | `dataflow` | 数据移动、转换和消费者 | `examples/product-analytics.dataflow.json` |
 | `lifecycle` | 状态、重试、等待和终态 | `examples/agent-run.lifecycle.json` |
 
+一个系统也可能需要不止一张图。当单张画布需要超过约 14 个组件才能讲清楚时，
+可以用 `levels` 文档把多张各自排布的架构图绑定为一个制品，点开某个节点即可
+进入解释它的那张图：
+
+| 文档 | 适用场景 | 起步示例 |
+| --- | --- | --- |
+| `levels` | C4 深度：上下文、容器、组件 | `examples/web-platform.levels.json` |
+
+每一层都是你照常编写并校验的普通架构图；清单只增加下钻关系，而且声明在
+**子层**上，因此已有的图可以原样绑定进来。层级之间不会重排。编写清单前请先阅读
+[levels 文档](../archify/references/levels-documents.md)。
+
 不确定类型时，可以询问内置场景指南：
 
 ```bash

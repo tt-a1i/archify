@@ -10,7 +10,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const schemasDir = path.join(root, 'schemas');
 const output = path.join(root, 'renderers/shared/generated-validators.mjs');
-const diagramTypes = ['workflow', 'sequence', 'dataflow', 'lifecycle', 'architecture'];
+// The five typed diagrams, plus `levels`: a document that binds several
+// already-authored architecture diagrams into one drill-down artifact. It
+// compiles through the same standalone path so the zero-install skill keeps
+// rejecting malformed input without development dependencies present.
+const diagramTypes = ['workflow', 'sequence', 'dataflow', 'lifecycle', 'architecture', 'levels'];
 
 const ajv = new Ajv2020({
   allErrors: true,

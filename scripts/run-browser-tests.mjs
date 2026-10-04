@@ -31,6 +31,7 @@ const testFiles = [
   'semantic-lens-browser.test.mjs',
   'route-probe-browser.test.mjs',
   'focus-browser.test.mjs',
+  'levels-browser.test.mjs',
   'crossover-state-browser.test.mjs',
   'semantic-passport-move-browser.test.mjs',
   'export-browser.test.mjs',

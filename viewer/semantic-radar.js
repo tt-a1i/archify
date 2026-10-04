@@ -5,7 +5,7 @@
        ============================================================ */
     Archify.radar = (function () {
       var container = document.querySelector('.diagram-container');
-      var diagram = container.querySelector(':scope > svg');
+      var diagram = Archify.stage.svg();
       var panel = document.getElementById('overview-map');
       var panelHead = panel.querySelector('.overview-map-head');
       var surface = document.getElementById('overview-map-surface');
@@ -612,6 +612,15 @@
           radarResizeObserver.observe(element);
         });
       }
+      // The radar caches a built node list and the canvas viewBox, so a level
+      // change has to rebuild both; re-pointing the reference alone would map
+      // the new level's nodes onto the previous level's coordinate space.
+      Archify.stage.onChange(function () {
+        diagram = Archify.stage.svg();
+        viewBox = diagram && diagram.viewBox ? diagram.viewBox.baseVal : null;
+        build();
+      });
+
       requestAnimationFrame(build);
 
       return {

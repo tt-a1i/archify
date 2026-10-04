@@ -62,8 +62,10 @@ test('ambient ownership is generation-bounded and cannot replay after settle', (
   assert.match(template, /ambientStarted = true;[\s\S]*?html\.setAttribute\('data-ambient-motion', 'running'\)/);
   assert.match(template, /ambientPending\.delete\(event\.target\)/);
   assert.match(template, /if \(!ambientPending\.size\) settleAmbient\('complete'\)/);
-  assert.match(template, /svg\.addEventListener\('animationend', onAmbientBoundary, true\)/);
-  assert.match(template, /svg\.addEventListener\('animationcancel', onAmbientBoundary, true\)/);
+  assert.match(template, /stageContainer\.addEventListener\('animationend', onAmbientBoundary, true\)/);
+  assert.match(template, /stageContainer\.addEventListener\('animationcancel', onAmbientBoundary, true\)/);
+  assert.match(template, /stageContainer\.removeEventListener\('animationend', onAmbientBoundary, true\)/);
+  assert.match(template, /stageContainer\.removeEventListener\('animationcancel', onAmbientBoundary, true\)/);
   assert.match(template, /if \(paused \|\| owner \|\| html\.hasAttribute\('data-embed'\)/);
   assert.doesNotMatch(template, /setInterval\([^)]*ambient|addEventListener\('scroll'[^)]*ambient/);
 });

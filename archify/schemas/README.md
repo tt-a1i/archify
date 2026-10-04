@@ -12,12 +12,69 @@ against one of the schemas in this folder before any layout work happens.
 | `dataflow.schema.json` | `diagram_type: "dataflow"` | `stages`, `nodes`, `flows` |
 | `lifecycle.schema.json` | `diagram_type: "lifecycle"` | `lanes`, `states`, `transitions` |
 | `architecture.schema.json` | `diagram_type: "architecture"` | `components`, `boundaries`, `connections` |
+| `levels.schema.json` | `diagram_type: "levels"` | `levels` |
 | `common.schema.json` | shared `$defs` only (no top-level document) | — |
 
 Every diagram schema requires `schema_version`, `diagram_type`, `meta` (with
 `title` and a durable portable `output`), and its structural arrays — except `segments`, `activations`, and
 `cards`, which are optional — and sets `additionalProperties: false` at every
 level, so unknown fields are rejected rather than silently ignored.
+
+## Levels documents
+
+`levels.schema.json` governs a *document*, not a sixth diagram type. A levels
+document binds several already-authored architecture diagrams into one
+drill-down artifact — the C4 case, where a node on one level opens the diagram
+that explains it.
+
+It owns no geometry. Each level keeps its own hand-placed coordinates and its own
+`cards`, so every existing layout and composition
+check still runs against a single static canvas. This is why levels do not
+reverse the anti-auto-layout decision in `ROADMAP.md`: nothing reflows, and
+each level is validated exactly as it would be on its own.
+
+```json
+{
+  "schema_version": 1,
+  "diagram_type": "levels",
+  "meta": { "title": "ST3 — C4 model", "output": "st3-levels.html", "quality_profile": "showcase" },
+  "levels": [
+    { "id": "context", "label": "Context", "source": "l1.architecture.json" },
+    { "id": "containers", "label": "Containers", "source": "l2.architecture.json",
+      "parent": { "level": "context", "node": "st3" } }
+  ]
+}
+```
+
+Each entry needs `id`, `label`, and a `source` path. Every level except the
+single root also names its `parent`: the level it is reached from and the
+component id it drills out of. Declaring the link on the **child** is what
+keeps the feature additive — a parent level file never learns it has children,
+so existing architecture diagrams can be bound into a levels document without
+being edited.
+
+`source` is resolved relative to the manifest and must stay inside that
+directory: absolute paths, backslashes, control characters, and `.`/`..`
+segments are rejected, matching the containment rule repository evidence
+already applies.
+
+Beyond the schema, `renderers/shared/levels-document.mjs` checks the facts that
+span files and reports all of them at once rather than stopping at the first:
+
+| Code | Meaning |
+|------|---------|
+| `levels/duplicate-id`, `levels/duplicate-source` | a level id or source file is used twice |
+| `levels/source-path-invalid`, `levels/source-path-escape` | the path is not manifest-relative, or escapes the directory |
+| `levels/source-missing`, `levels/source-unparsable` | the file is absent or is not valid JSON |
+| `levels/source-type` | the file is not `diagram_type: "architecture"` |
+| `levels/source-schema` | the referenced level fails architecture schema validation |
+| `levels/parent-unknown-level`, `levels/parent-unknown-node`, `levels/parent-self` | `parent` names a level or component that does not exist, or itself |
+| `levels/drill-target-conflict` | two levels drill from the same parent node, leaving no single destination |
+| `levels/root-missing`, `levels/root-ambiguous` | the document does not have exactly one level without a parent |
+| `levels/unreachable` | a level cannot be reached by drilling from the root |
+
+Resolution returns levels in breadth-first order from the root, which is the
+order the renderer emits them and the viewer breadcrumb follows.
 
 Every `meta` object also accepts `animation: "trace"` for opt-in SVG/CSS motion
 in generated HTML. Omit it, or set `"none"`, for the default static output.

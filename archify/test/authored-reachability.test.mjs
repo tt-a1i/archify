@@ -81,7 +81,7 @@ test('reachability uses stable breadth-first depth, supports cycles, and dedupli
 test('reachability stays explicit, deep-linkable, keyboard reachable, and export-clean', () => {
   assert.match(template, /Authored Reachability is a bounded graph query over the relationships/);
   assert.match(template, /direction !== 'upstream' && direction !== 'downstream'/);
-  assert.match(template, /encodeURIComponent\(activeIds\[0\]\) \+ '&reach=' \+ direction/);
+  assert.match(template, /replaceFocusHash\(\{\s*focus: activeIds\[0\], reach: direction, relation: null, route: null, lens: null,/);
   assert.match(template, /applyReachability\(reach, \{ updateUrl: false, toggle: false, reveal: false \}\)/);
   assert.match(template, /upstreamBtn\.addEventListener\('click'/);
   assert.match(template, /downstreamBtn\.addEventListener\('click'/);

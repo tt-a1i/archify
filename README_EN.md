@@ -29,7 +29,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
-  <a href="CHANGELOG.md#301--2026-09-28"><img src="https://img.shields.io/badge/version-3.0.1-0891b2?style=flat-square" alt="Stable version 3.0.1" /></a>
+  <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.1.0--dev.0-0891b2?style=flat-square" alt="Development version 3.1.0-dev.0" /></a>
 </p>
 
 <p align="center">
@@ -177,7 +177,7 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 
 ## Quick start
 
-**Current stable version:** `v3.0.1`. See [Changelog](CHANGELOG.md#301--2026-09-28).
+**Current development version:** `v3.1.0-dev.0`. See [Changelog](CHANGELOG.md#unreleased).
 
 ### 1. Install
 
@@ -247,6 +247,14 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 | **Sequence** | API calls, cache fallback, auth, async traces | Callers, callees, returns, timing |
 | **Data Flow** | Pipelines, lineage, PII, consumers | Sources, transforms, stores, boundaries |
 | **Lifecycle** | States, retries, waits, terminal outcomes | States, events, retry and cancellation paths |
+
+When one diagram would need more than roughly 14 components to stay readable, a **levels document** binds several authored architecture levels into one artifact, so a node opens the diagram that explains it. That is the C4 case: context, containers, components, and code as separate drawings of one system.
+
+Levels add no automatic layout. Nothing reflows: each level keeps its own hand-placed coordinates, cards, and chapters, and is rendered and validated exactly as if it shipped alone, so a level inside a levels artifact is byte-identical to the same level rendered standalone. A node opens another authored drawing; it never grows into one.
+
+`node archify/bin/archify.mjs deliver levels model.levels.json model.html --quality showcase`
+
+See the [checked levels proof](https://tt-a1i.github.io/archify/gallery.html#proof-web-platform-levels) and the [authoring contract](archify/references/levels-documents.md).
 
 Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
 

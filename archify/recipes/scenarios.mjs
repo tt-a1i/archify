@@ -251,6 +251,31 @@ const RAW_RECIPES = [
     },
   },
   {
+    id: 'c4-levels', type: 'levels', proof: 'web-platform-levels',
+    presentation: { preset: 'classic', motion: 'static' },
+    start: {
+      en: { descriptionPrompt: 'Use an Archify levels document to turn this description into C4 levels: [describe the system boundary, its main containers, and the inside of the one container worth opening]. Author each level as its own architecture diagram that reads on its own, declare where each child level drills from, and mark missing facts instead of inventing them.' },
+      zh: { descriptionPrompt: '用 Archify 的 levels 文档把下面的描述画成 C4 分层：[描述系统边界、主要容器，以及值得展开的那个容器内部]。每一层单独编写为一张能独立阅读的架构图，并声明每个子层从哪里下钻；缺失的信息要标明而不是编造。' },
+    },
+    signals: [['c4 model', 16], ['c4 levels', 14], ['c4', 14], ['drill-down levels', 12], ['drill down', 12], ['context, containers, and components', 16], ['context, containers and components', 16], ['containers and components', 10], ['context and containers', 10], ['zoom into a component', 7], ['C4 模型', 16], ['C4 分层', 14], ['分层下钻', 12], ['下钻', 12]],
+    en: {
+      title: 'C4 levels', question: 'How does one system read at context, container, and component depth?',
+      summary: 'Several authored architecture levels bound into one artifact, where a node opens the diagram that explains it.',
+      useWhen: 'One canvas would need more than about 14 components, or the audience expects C4 context, containers, and components.',
+      avoidWhen: 'The system already fits one readable diagram, or the levels would repeat each other instead of adding depth.',
+      include: ['one root level', 'a drill target for each child', 'per-level cards', 'every level readable alone'],
+      prompt: 'Use an Archify levels document to build C4 levels for this system. Author each level as its own architecture diagram with its own coordinates and cards, then declare in the manifest which component of which level each child drills from. Nothing reflows between levels: a node opens another authored diagram rather than expanding in place, so keep every level independently readable at a desktop width.',
+    },
+    zh: {
+      title: 'C4 分层', question: '同一个系统如何在上下文、容器和组件三个深度上阅读？',
+      summary: '把多张各自排布的架构图绑定为一个制品，点开某个节点就进入解释它的那张图。',
+      useWhen: '单张图需要超过约 14 个组件，或者读者期待 C4 的上下文、容器与组件层级时使用。',
+      avoidWhen: '系统本来一张图就能讲清楚，或者各层之间只是互相重复而没有增加深度时不要使用。',
+      include: ['一个根层级', '每个子层一个下钻目标', '每层各自的卡片', '每层单独看也清晰'],
+      prompt: '用 Archify 的 levels 文档为这个系统建立 C4 分层。每一层单独编写为一张架构图，各自拥有坐标和卡片，然后在清单里声明每个子层从哪一层的哪个组件下钻。层级之间不会自动重排：节点只是打开另一张已经编排好的图，因此每一层在桌面宽度下都要能独立阅读。',
+    },
+  },
+  {
     id: 'layout-repair', type: 'architecture', proof: 'web-app',
     presentation: { preset: 'classic', motion: 'static' },
     signals: [

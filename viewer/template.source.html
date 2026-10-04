@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 3.0.1">
+  <meta name="generator" content="archify 3.1.0-dev.0">
   <meta name="archify-reader-contract" content="declared-wide-v1">
   <title>[PROJECT NAME] Architecture Diagram</title>
   <script>
@@ -285,7 +285,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     </div>
 
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
+    <!-- ARCHIFY:LEVELS_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
+    <!-- Level rail: present only in a levels document, populated at runtime. -->
+    <nav class="level-rail no-print" id="level-rail" hidden="hidden" aria-label="{{i18n:viewer.levels.rail}}">
+      <ol class="level-crumbs" id="level-crumbs"></ol>
+      <div class="level-children" id="level-children" hidden="hidden"></div>
+    </nav>
+
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="{{i18n:viewer.preset.badge.editorialPlate}}">
@@ -665,6 +672,37 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   <script>
     var Archify = {};
+
+    // The diagram stage. An ordinary artifact has exactly one SVG and this is
+    // a constant; a levels document ships one SVG per level with the inactive
+    // ones hidden, so every module must ask which one is on stage rather than
+    // cache the first child. Modules that keep a reference re-resolve it from
+    // onChange, which levels.js fires after it swaps the visible level.
+    Archify.stage = (function () {
+      var container = document.querySelector('.diagram-container');
+      var listeners = [];
+      function svg() {
+        return container ? container.querySelector(':scope > svg:not([hidden])') : null;
+      }
+      return {
+        container: function () { return container; },
+        svg: svg,
+        fromCanvas: function (event) {
+          var target = event && event.target;
+          if (!target || typeof target.closest !== 'function') return false;
+          var owner = target.closest('svg');
+          return !!(owner && owner.parentNode === container);
+        },
+        onChange: function (listener) {
+          if (typeof listener === 'function') listeners.push(listener);
+        },
+        notify: function (detail) {
+          for (var i = 0; i < listeners.length; i += 1) {
+            try { listeners[i](detail || {}); } catch (_) {}
+          }
+        }
+      };
+    })();
     var archifyI18nData = (function () {
       var node = document.getElementById('archify-i18n-data');
       try { return JSON.parse(node ? node.textContent : '{}'); }
@@ -678,6 +716,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, function (match, name) {
         return values && Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match;
       });
+    }
+
+    // Merge hash params instead of replacing the fragment, so a focus or route
+    // link keeps the active level and a level change keeps the other params.
+    function viewerReplaceHash(updates) {
+      var params = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''));
+      Object.keys(updates || {}).forEach(function (key) {
+        var value = updates[key];
+        if (value == null || value === '') params.delete(key);
+        else params.set(key, String(value));
+      });
+      var next = params.toString().replace(/\+/g, '%20').replace(/%7E/gi, '~');
+      var url = window.location.pathname + window.location.search + (next ? '#' + next : '');
+      try { window.history.replaceState(null, '', url); }
+      catch (error) { window.location.hash = next; }
     }
 
     function viewerCount(key, count, values) {
@@ -733,7 +786,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         editorial: viewerText('viewer.preset.editorial')
       };
       var html = document.documentElement;
-      var svg = document.querySelector('.diagram-container svg');
+      var svg = Archify.stage.svg();
       var btn = document.getElementById('btn-preset');
       var label = document.getElementById('preset-label');
       var menu = document.getElementById('preset-menu');
@@ -987,6 +1040,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       };
     })();
     Archify.sourceEvidence.installBeacons();
+
+/* ARCHIFY:LEVELS */
 
 /* ARCHIFY:FOCUS */
 
@@ -1354,7 +1409,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          R -> start/clear Route Probe
          / -> open node finder or the active route endpoint picker
          + / - -> zoom, 0 -> reset view
-         Escape -> clear temporary trace/focus/view first, then exit presentation
+         Escape -> clear temporary trace/focus/view first, then climb one level, then exit presentation
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
@@ -1425,6 +1480,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (e.key === 'Escape' && Archify.focus.active()) {
         e.preventDefault();
         Archify.focus.clear({ restoreFocus: true });
+      } else if (e.key === 'Escape' && Archify.levels.up()) {
+        e.preventDefault();
       } else if (e.key === 'Escape' && Archify.presentation.active()) {
         e.preventDefault();
         Archify.presentation.exit();
