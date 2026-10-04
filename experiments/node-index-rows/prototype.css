@@ -1,0 +1,37 @@
+/* Review-only experiment for #664. All selectors are scoped to the bottom rail. */
+html[data-reader-rail="bottom"] .node-outline-list {
+  columns: auto;
+  display: grid;
+  gap: 0.75rem;
+}
+html[data-reader-rail="bottom"] .node-outline-group > ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: 0.25rem 0.75rem;
+}
+html[data-reader-rail="bottom"] .node-outline-group > ul::before { display: none; }
+html[data-reader-rail="bottom"] .node-outline-heading {
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+html[data-reader-rail="bottom"] .node-outline-heading > span { overflow-wrap: anywhere; }
+html[data-reader-rail="bottom"] .node-outline-item {
+  height: 100%;
+  grid-template-columns: 0.625rem minmax(0, 1fr) 0.75rem;
+  row-gap: 0.125rem;
+  align-content: start;
+  padding-block: 0.5rem;
+}
+html[data-reader-rail="bottom"] .node-outline-item strong {
+  grid-column: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+html[data-reader-rail="bottom"] .node-outline-item small {
+  grid-column: 2;
+  grid-row: 2;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+html[data-reader-rail="bottom"] .node-outline-item::after { grid-column: 3; grid-row: 1; }
