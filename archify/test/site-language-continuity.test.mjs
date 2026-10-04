@@ -291,6 +291,8 @@ test('all site pages consume one language runtime and one navigation contract', 
     assert.match(html, /href="guide\.html"/, `${relative}: Guide navigation missing`);
     assert.match(html, /href="gallery\.html"/, `${relative}: Proof Lab navigation missing`);
     assert.match(html, /href="start\.html"/, `${relative}: Start navigation missing`);
+    assert.match(html, /<a class="nav-link" href="community\.html"/, `${relative}: Community navigation missing`);
+    assert.match(html, /<div class="nav-links">/, `${relative}: shared link row missing`);
     assert.match(html, /class="btn btn-primary nav-cta"/, `${relative}: install action missing`);
     assert.doesNotMatch(html, /(?:^|\s)nav\s*\{/, `${relative}: inline navigation layout bypasses the shared contract`);
     assert.doesNotMatch(html, /\.nav-right\s*\{/, `${relative}: inline navigation actions bypass the shared contract`);
@@ -304,7 +306,7 @@ test('all site pages consume one language runtime and one navigation contract', 
   const navigation = fs.readFileSync(navigationPath, 'utf8');
   assert.match(navigation, /\.site-nav\s*\{/);
   assert.match(navigation, /\.site-nav \.nav-right\s*\{/);
-  assert.match(navigation, /@media \(max-width: 640px\)/);
+  assert.match(navigation, /@media \(max-width: 960px\)/);
 });
 
 test('site page identity paths localize with the selected language', () => {
@@ -381,7 +383,7 @@ test('scenario guide type filters use consistent Chinese diagram names', () => {
 
 test('real Chrome preserves language through entry, navigation, selection, refresh, and consistent navigation chrome', {
   skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real site regression.',
-  timeout: 60000,
+  timeout: 120000,
 }, async () => {
   const docsRoot = process.env.ARCHIFY_SITE_ROOT ? path.resolve(process.env.ARCHIFY_SITE_ROOT) : path.join(repoRoot, 'docs');
   const basePath = process.env.ARCHIFY_SITE_ROOT ? '/archify' : '';
@@ -507,6 +509,8 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".nav-logo-path").textContent'), '/ 快速上手');
 
     const pages = ['index.html', 'gallery.html', 'guide.html', 'start.html'];
+    if (fs.existsSync(path.join(docsRoot, 'community.html'))) pages.push('community.html');
+    if (process.env.ARCHIFY_SITE_ROOT) assert.ok(pages.includes('community.html'), 'built site must include the catalog');
     const desktopReceipts = [];
     for (const page of pages) {
       await navigate(browser, sessionId, `${baseUrl}/${page}`);
@@ -534,33 +538,64 @@ test('real Chrome preserves language through entry, navigation, selection, refre
           languageRadius: languageStyle.borderRadius,
           ctaHeight: cta.getBoundingClientRect().height,
           ctaRadius: ctaStyle.borderRadius,
-          linkCount: nav.querySelectorAll('.nav-link').length
+          linkCount: nav.querySelectorAll('.nav-link').length,
+          communityLabel: nav.querySelector('a[href="community.html"]').textContent.trim()
         };
       })()`));
     }
+    assert.equal(desktopReceipts[0].linkCount, 5);
+    assert.equal(desktopReceipts[0].communityLabel, '社区包');
     for (const receipt of desktopReceipts.slice(1)) assert.deepEqual(receipt, desktopReceipts[0]);
 
-    await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
-      width: 390,
-      height: 844,
-      deviceScaleFactor: 1,
-      mobile: true,
-    }, sessionId);
-    for (const page of pages) {
-      await navigate(browser, sessionId, `${baseUrl}/${page}`);
-      const mobile = await evaluate(browser, sessionId, `(function () {
-        var nav = document.querySelector('.site-nav');
-        var rect = nav.getBoundingClientRect();
-        var actions = nav.querySelector('.nav-right').getBoundingClientRect();
-        return {
-          height: rect.height,
-          left: rect.left,
-          right: rect.right,
-          actionsRight: actions.right,
-          linkDisplay: getComputedStyle(nav.querySelector('.nav-link')).display
-        };
-      })()`);
-      assert.deepEqual(mobile, { height: 60, left: 0, right: 390, actionsRight: 370, linkDisplay: 'none' }, page);
+    for (const width of [320, 390, 768]) {
+      await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
+        width, height: 844, deviceScaleFactor: 1, mobile: true,
+      }, sessionId);
+      for (const language of ['en', 'zh']) {
+        for (const page of pages) {
+          await navigate(browser, sessionId, `${baseUrl}/${page}?lang=${language}`);
+          const mobile = await evaluate(browser, sessionId, `(function () {
+            var nav = document.querySelector('.site-nav');
+            var rect = nav.getBoundingClientRect();
+            var community = nav.querySelector('a[href="community.html"]');
+            var linkRect = community.getBoundingClientRect();
+            var x = linkRect.x + linkRect.width / 2;
+            var y = linkRect.y + linkRect.height / 2;
+            return {
+              height: rect.height, left: rect.left, right: rect.right, pageWidth: document.documentElement.scrollWidth,
+              communityLabel: community.textContent.trim(),
+              language: document.documentElement.lang,
+              active: nav.querySelector('[aria-current="page"]')?.getAttribute('href') || null,
+              linksFit: [...nav.querySelectorAll('a, button')].every(node => {
+                var box = node.getBoundingClientRect();
+                return box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= rect.bottom;
+              }),
+              reachable: document.elementFromPoint(x, y)?.closest('a') === community,
+              targetHeight: linkRect.height, x, y
+            };
+          })()`);
+          assert.equal(mobile.height, 104, page);
+          assert.equal(mobile.left, 0, page);
+          assert.equal(mobile.right, width, page);
+          assert.ok(mobile.pageWidth <= width, `${page} ${language} ${width}: page must not overflow`);
+          assert.equal(mobile.language, language === 'zh' ? 'zh-CN' : 'en', page);
+          assert.equal(mobile.communityLabel, language === 'zh' ? '社区包' : 'Community', page);
+          assert.equal(mobile.active, page === 'index.html' ? null : page, page);
+          assert.ok(mobile.linksFit, `${page} ${language} ${width}: navigation must fit`);
+          assert.ok(mobile.reachable, `${page} ${language} ${width}: Community must be reachable`);
+          assert.ok(mobile.targetHeight >= 44, 'mobile navigation must retain a 44px touch target');
+          if (page === 'index.html' && pages.includes('community.html')) {
+            const loaded = browser.cdp.waitFor('Page.loadEventFired', sessionId);
+            for (const type of ['mousePressed', 'mouseReleased']) {
+              await browser.cdp.send('Input.dispatchMouseEvent', { type, x: mobile.x, y: mobile.y, button: 'left', clickCount: 1 }, sessionId);
+            }
+            await loaded;
+            assert.equal(await evaluate(browser, sessionId, 'location.pathname'), `${basePath}/community.html`);
+            assert.equal(await evaluate(browser, sessionId, 'document.documentElement.lang'), language === 'zh' ? 'zh-CN' : 'en');
+            assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".site-nav a[aria-current=page]").getAttribute("href")'), 'community.html');
+          }
+        }
+      }
     }
   } finally {
     await browser.close();

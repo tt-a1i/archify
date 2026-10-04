@@ -342,6 +342,7 @@
       .cta-actions { flex-direction:column; gap:1rem; }
       .cta-install { width:100%; justify-content:center; }
       footer { padding:2rem 1.25rem; }
-      .footer-inner { grid-template-columns:1fr; }
+      .footer-inner { grid-template-columns:minmax(0,1fr); }
+      .footer-left, .footer-links { flex-wrap:wrap; }
       .footer-left { border-right:0; border-bottom:1px solid var(--line); }
     }
