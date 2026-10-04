@@ -1,0 +1,404 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI Voice Assistant (Yeli) Architecture",
+    "locale": "en",
+    "output": "route-repair-detour.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "wake word + question",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "mic",
+      "type": "backend",
+      "label": "Mic Capture",
+      "sublabel": "sounddevice + webrtcvad",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "voice_loop",
+      "type": "backend",
+      "label": "Voice Loop",
+      "sublabel": "wake · voice lock · barge-in",
+      "tag": "main.py",
+      "pos": [
+        470,
+        290
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "asr",
+      "type": "backend",
+      "label": "ASR Server",
+      "sublabel": "faster-whisper :8001",
+      "pos": [
+        460,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "voiceprint",
+      "type": "security",
+      "label": "Voice Lock",
+      "sublabel": "speaker embedding",
+      "pos": [
+        630,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "llm_client",
+      "type": "backend",
+      "label": "LLM Client",
+      "sublabel": "chat · lookup · ask",
+      "pos": [
+        790,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "zai",
+      "type": "cloud",
+      "label": "Z.AI GLM",
+      "sublabel": "glm-5.3-flash",
+      "pos": [
+        790,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "Tool Registry",
+      "sublabel": "10 local tools",
+      "pos": [
+        1030,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "backend",
+      "label": "Search Pipeline",
+      "sublabel": "plan·clean·extract·pack",
+      "pos": [
+        1270,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "apis",
+      "type": "external",
+      "label": "Data APIs",
+      "sublabel": "Serper·Open-Meteo·Gmail",
+      "pos": [
+        1270,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "search_db",
+      "type": "database",
+      "label": "search.db",
+      "sublabel": "SQLite FTS5 archive",
+      "pos": [
+        1270,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "tts",
+      "type": "backend",
+      "label": "TTS Server",
+      "sublabel": "qwentts.cpp :8080",
+      "pos": [
+        460,
+        480
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "database",
+      "label": "Memory Files",
+      "sublabel": "facts.json · transcripts",
+      "pos": [
+        630,
+        480
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hub",
+      "type": "messagebus",
+      "label": "Avatar Hub",
+      "sublabel": "UI event bus",
+      "pos": [
+        230,
+        480
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Desktop UI",
+      "sublabel": "PySide6 + tray",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "broadcaster",
+      "type": "backend",
+      "label": "News Broadcaster",
+      "sublabel": "flash thread",
+      "pos": [
+        460,
+        640
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "wscn",
+      "type": "external",
+      "label": "WallStreetCN",
+      "sublabel": "live flashes API",
+      "pos": [
+        700,
+        640
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-mic",
+      "from": "user",
+      "to": "mic",
+      "label": "voice",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mic-loop",
+      "from": "mic",
+      "to": "voice_loop",
+      "label": "WAV clip",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loop-asr",
+      "from": "voice_loop",
+      "to": "asr",
+      "label": "POST /transcribe"
+    },
+    {
+      "id": "loop-voiceprint",
+      "from": "voice_loop",
+      "to": "voiceprint",
+      "label": "identify speaker",
+      "variant": "security"
+    },
+    {
+      "id": "loop-llm",
+      "from": "voice_loop",
+      "to": "llm_client",
+      "label": "ask_llm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "llm-zai",
+      "from": "llm_client",
+      "to": "zai",
+      "label": "HTTPS stream"
+    },
+    {
+      "id": "llm-tools",
+      "from": "llm_client",
+      "to": "tools",
+      "label": "tool call"
+    },
+    {
+      "id": "tools-pipeline",
+      "from": "tools",
+      "to": "pipeline",
+      "label": "search_web"
+    },
+    {
+      "id": "tools-apis",
+      "from": "tools",
+      "to": "apis",
+      "label": "weather·quote·mail",
+      "variant": "dashed"
+    },
+    {
+      "id": "pipeline-apis",
+      "from": "pipeline",
+      "to": "apis",
+      "label": "Serper query"
+    },
+    {
+      "id": "pipeline-db",
+      "from": "pipeline",
+      "to": "search_db",
+      "label": "recall / archive"
+    },
+    {
+      "id": "loop-tts",
+      "from": "voice_loop",
+      "to": "tts",
+      "label": "speak per sentence",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loop-memory",
+      "from": "voice_loop",
+      "to": "memory",
+      "label": "log turn"
+    },
+    {
+      "id": "loop-hub",
+      "from": "voice_loop",
+      "to": "hub",
+      "label": "state · text"
+    },
+    {
+      "id": "hub-ui",
+      "from": "hub",
+      "to": "ui",
+      "label": "Qt signal"
+    },
+    {
+      "id": "broadcaster-wscn",
+      "from": "broadcaster",
+      "to": "wscn",
+      "label": "poll / WS"
+    },
+    {
+      "id": "broadcaster-tts",
+      "from": "broadcaster",
+      "to": "tts",
+      "label": "say() when idle",
+      "variant": "dashed"
+    },
+    {
+      "id": "broadcaster-hub",
+      "from": "broadcaster",
+      "to": "hub",
+      "label": "news",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Turn pipeline",
+      "items": [
+        "Wake word matched by pinyin; follow-up window skips it",
+        "LLM text split into sentences, each synthesized and played while the next streams",
+        "Stop words or a keypress interrupt playback (barge-in)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Voice lock",
+      "items": [
+        "Unknown speakers with a usable embedding cannot wake or continue a turn",
+        "The assistant's own voice is filtered out before ASR"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "LLM routing",
+      "items": [
+        "chat: no tools; lookup: run pipeline first; ask: model picks a registry tool",
+        "Facts are extracted from turns asynchronously into memory"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Side channels",
+      "items": [
+        "UI input bar sends typed questions back through hub.on_ask",
+        "Flashes are held while a turn is active"
+      ]
+    }
+  ]
+}

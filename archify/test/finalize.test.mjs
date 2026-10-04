@@ -1104,3 +1104,107 @@ test('finalize rechecks delivery barriers and the frozen candidate after the bro
     assert.equal(finalized.summary.diagnostics[0].code, scenario === 'pending-delivery' ? 'delivery/provenance-pending' : 'finalize/candidate-changed');
   }
 });
+
+test('finalize compacts a draft that only fails desktop width, and restores it when compaction breaks something else', async (t) => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const draft = `${JSON.stringify({
+    meta: {},
+    components: [{ id: 'a', pos: [40, 40] }, { id: 'b', pos: [400, 40] }, { id: 'c', pos: [800, 40] }],
+    connections: [{ id: 'ab', from: 'a', to: 'b', label: 'calls' }, { id: 'bc', from: 'b', to: 'c' }],
+  }, null, 2)}\n`;
+  fs.writeFileSync(input, draft);
+  const tooWide = {
+    code: 'composition/desktop-readability', severity: 'error', message: 'too wide',
+    evidence: { viewBoxWidth: 1300, sourceFontPx: 8, availableDiagramWidth: 930, minimumProjectedFontPx: 6 },
+  };
+  const delivered = [];
+  const runCommand = ({ stage }) => {
+    assert.equal(stage, 'deliver');
+    delivered.push(fs.readFileSync(input, 'utf8'));
+    const diagnostics = delivered.length === 1 ? [tooWide] : [{ code: 'composition/label-collision', severity: 'error', message: 'collision' }];
+    return result({ schemaVersion: 1, ok: false, command: 'deliver', stage: 'check', diagnostics }, 1);
+  };
+  const { exitCode, receipt, summary } = await runFinalize({ cliPath: 'archify.mjs', type: 'architecture', input, output, runCommand });
+
+  assert.equal(exitCode, 1);
+  assert.equal(delivered.length, 2);
+  assert.ok(JSON.parse(delivered[1]).components[2].pos[0] <= 800 - 80);
+  assert.equal(fs.readFileSync(input, 'utf8'), draft);
+  assert.equal(receipt.failedStage, 'validate');
+  assert.deepEqual(receipt.diagnostics.map((d) => d.code), ['composition/desktop-readability']);
+  assert.equal(summary.autoRepair.outcome, 'reverted');
+  assert.deepEqual(summary.autoRepair.retryDiagnostics, ['composition/label-collision']);
+});
+
+test('finalize narrows an end_line past the end of the file once, and leaves a bad start line to the author', async (t) => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const draft = `${JSON.stringify({
+    meta: {},
+    components: [{ id: 'a', pos: [40, 40], sources: [{ path: 'src/a.js', line: 10, end_line: 90 }, { path: 'src/b.js', line: 5 }] }],
+  }, null, 2)}\n`;
+  const pastEnd = (index, line, endLine, lineCount) => ({
+    code: 'repository-evidence/line-out-of-range', severity: 'error', message: 'out of range',
+    subject: { path: `/components/0/sources/${index}` },
+    evidence: { line, ...(endLine ? { endLine } : {}), requestedLine: endLine || line, lineCount },
+  });
+  const delivered = [];
+  const runCommand = () => {
+    delivered.push(fs.readFileSync(input, 'utf8'));
+    const diagnostics = delivered.length === 1 ? [pastEnd(0, 10, 90, 42)] : [{ code: 'composition/label-collision', severity: 'error', message: 'collision' }];
+    return result({ schemaVersion: 1, ok: false, command: 'deliver', stage: 'input', diagnostics }, 1);
+  };
+
+  fs.writeFileSync(input, draft);
+  const narrowed = await runFinalize({ cliPath: 'archify.mjs', type: 'architecture', input, output, runCommand });
+  assert.equal(JSON.parse(delivered[1]).components[0].sources[0].end_line, 42);
+  assert.equal(narrowed.summary.autoRepair.outcome, 'reverted');
+  assert.deepEqual(narrowed.summary.autoRepair.sourceRanges, [{ path: '/components/0/sources/0', endLine: [90, 42] }]);
+  assert.equal(fs.readFileSync(input, 'utf8'), draft);
+
+  // A start line past the end needs the author to reread the file.
+  delivered.length = 0;
+  const startPastEnd = () => {
+    delivered.push(fs.readFileSync(input, 'utf8'));
+    return result({ schemaVersion: 1, ok: false, command: 'deliver', stage: 'input', diagnostics: [pastEnd(1, 5, null, 3)] }, 1);
+  };
+  const untouched = await runFinalize({ cliPath: 'archify.mjs', type: 'architecture', input, output, runCommand: startPastEnd });
+  assert.equal(delivered.length, 1);
+  assert.equal(untouched.summary.autoRepair, undefined);
+});
+
+test('finalize chains a narrowed source range into a width repair, and restores both together', async (t) => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const draft = `${JSON.stringify({
+    meta: {},
+    components: [
+      { id: 'a', pos: [40, 40], sources: [{ path: 'src/a.js', line: 10, end_line: 90 }] },
+      { id: 'b', pos: [400, 40] }, { id: 'c', pos: [800, 40] },
+    ],
+    connections: [{ id: 'ab', from: 'a', to: 'b' }, { id: 'bc', from: 'b', to: 'c' }],
+  }, null, 2)}\n`;
+  fs.writeFileSync(input, draft);
+  const failures = [
+    [{ code: 'repository-evidence/line-out-of-range', severity: 'error', message: 'out of range', subject: { path: '/components/0/sources/0' }, evidence: { line: 10, endLine: 90, requestedLine: 90, lineCount: 42 } }],
+    [{ code: 'composition/desktop-readability', severity: 'error', message: 'too wide', evidence: { viewBoxWidth: 1300, sourceFontPx: 8, availableDiagramWidth: 930, minimumProjectedFontPx: 6 } }],
+    [{ code: 'composition/label-collision', severity: 'error', message: 'collision' }],
+  ];
+  const delivered = [];
+  const runCommand = () => {
+    delivered.push(JSON.parse(fs.readFileSync(input, 'utf8')));
+    return result({ schemaVersion: 1, ok: false, command: 'deliver', stage: 'check', diagnostics: failures[delivered.length - 1] }, 1);
+  };
+  const { summary } = await runFinalize({ cliPath: 'archify.mjs', type: 'architecture', input, output, runCommand });
+  assert.equal(delivered.length, 3);
+  assert.equal(delivered[2].components[0].sources[0].end_line, 42, 'the width repair keeps the narrowed range');
+  assert.ok(delivered[2].components[2].pos[0] < 800);
+  assert.equal(summary.autoRepair.outcome, 'reverted');
+  assert.ok(summary.autoRepair.compaction && summary.autoRepair.sourceRanges.length === 1);
+  assert.equal(fs.readFileSync(input, 'utf8'), draft);
+  assert.deepEqual(summary.diagnostics.map((d) => d.code), ['repository-evidence/line-out-of-range']);
+});

@@ -310,3 +310,50 @@ test('finalize closes an unconsumed browser when the in-process browser callback
   })), /browser callback failed before consume/);
   assert.deepEqual(events, ['close']);
 });
+
+test('a route repair that fails the browser gate is reverted and the restored draft gets a fresh browser', async t => {
+  const { input, output, outDir } = inputs(t);
+  const original = '{"meta":{"quality_profile":"showcase"},"connections":[{"id":"ab"}]}';
+  fs.writeFileSync(input, original);
+  const events = [];
+  let delivered;
+  let checks = 0;
+  let inspections = 0;
+  const finalized = await runFinalize({
+    ...options({
+      input, output, outDir,
+      resolveChrome: () => '/fake/chrome',
+      createBrowser: () => { events.push('create'); return browser(events); },
+      runCommand: async ({ stage }) => {
+        if (stage === 'deliver') {
+          delivered = delivery({ input, output, source: fs.readFileSync(input, 'utf8') });
+          return stageResult(delivered);
+        }
+        checks += 1;
+        const crossing = checks === 1 ? { routeReview: { crossings: [{ left: { id: 'ab' }, right: { id: 'cd' } }], detours: [] } } : {};
+        const receipt = check(output, delivered);
+        return stageResult({ ...receipt, composition: { ...receipt.composition, ...crossing } });
+      },
+      runBrowserCheck: async ({ browserFactory }) => {
+        const reusable = browserFactory();
+        await reusable.inspect();
+        await reusable.close();
+        inspections += 1;
+        const receipt = browserReceipt(output, delivered, outDir);
+        return inspections === 1
+          ? { exitCode: 1, receipt: { ...receipt, ok: false, status: 'fail', diagnostics: [{ code: 'browser/containment', severity: 'error', message: 'clipped' }] } }
+          : { exitCode: 0, receipt };
+      },
+    }),
+    repairRoutes: async ({ candidate }) => ({
+      candidate: { ...candidate, connections: [{ id: 'ab', fromSide: 'top', toSide: 'top' }] },
+      record: { crossings: [1, 0], detours: [0, 0], pinned: [{ id: 'ab', fromSide: 'top', toSide: 'top' }] },
+    }),
+  });
+
+  assert.equal(finalized.exitCode, 0);
+  assert.equal(inspections, 2);
+  assert.equal(events.filter((event) => event === 'create').length, 2);
+  assert.equal(fs.readFileSync(input, 'utf8'), original);
+  assert.equal(finalized.summary.autoRouteRepair.outcome, 'reverted');
+});
