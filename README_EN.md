@@ -18,7 +18,8 @@
   <a href="https://tt-a1i.github.io/archify/guide.html"><strong>Scenario guide</strong></a> &nbsp;·&nbsp;
   <a href="#community"><strong>Community</strong></a> &nbsp;·&nbsp;
   <a href="./README_ZH.md"><strong>简体中文</strong></a> &nbsp;·&nbsp;
-  <a href="./README_JA.md"><strong>日本語</strong></a>
+  <a href="./README_JA.md"><strong>日本語</strong></a> &nbsp;·&nbsp;
+  <a href="./README_KO.md"><strong>한국어</strong></a>
 </p>
 
 <p align="center">
