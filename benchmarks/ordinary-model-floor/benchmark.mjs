@@ -242,6 +242,10 @@ function verify(args) {
       `run case_id "${run.case_id}" does not match benchmark case "${benchmarkCase.id}"`,
     );
   }
+  if (typeof run.agent !== 'string' || run.agent.trim() === ''
+      || typeof run.model !== 'string' || run.model.trim() === '') {
+    throw new BenchmarkError('INVALID_RUN', 'run agent and model must be non-empty strings');
+  }
   const semantic = evaluateSemantic(benchmarkCase, candidate);
   const validation = validateCandidate(benchmarkCase, candidateFile);
   let visualReview = {
