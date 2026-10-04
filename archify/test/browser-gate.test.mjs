@@ -84,3 +84,16 @@ test('CI and release use the same browser command and retain WebM decoding', () 
     assert.doesNotMatch(source, /run: node --test[^\n]*test\/.*browser/);
   }
 });
+
+
+test('website CI uses the maintained browser script including community security coverage', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'website/package.json'), 'utf8'));
+  const source = fs.readFileSync(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8');
+  const gate = source.match(/ {6}- name: Verify built website navigation and language continuity\n([\s\S]*?)(?=\n {6}- |\n {2}[\w-]+:|$)/)?.[1];
+  assert.ok(gate, 'website must run its browser regression gate');
+  assert.match(gate, /run: npm run test:browser\n/);
+  assert.match(gate, /working-directory: website/);
+  assert.match(gate, /ARCHIFY_SITE_INTEGRATION: '1'/);
+  assert.match(manifest.scripts['test:browser'], /site-language-continuity\.test\.mjs/);
+  assert.match(manifest.scripts['test:browser'], /community-browser\.test\.mjs/);
+});

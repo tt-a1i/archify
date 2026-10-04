@@ -206,6 +206,14 @@ DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile
 
 </details>
 
+### 获取更新
+
+- **订阅新版本：** 在本 GitHub 仓库顶部选择 **Watch → Custom → Releases**，订阅版本发布通知。点 Star 不会自动订阅更新。
+- **查看更新内容：** [版本说明](https://github.com/tt-a1i/archify/releases)。
+- **使用 RSS 阅读器：** [订阅版本更新源](https://github.com/tt-a1i/archify/releases.atom)。
+
+带有更新检查器的安装版本，也会在交付图时检查新的稳定版，并可显示提醒。不带检查器的旧安装需要先手动更新，才能获得这项功能。是否升级、何时升级由你决定，Archify 不会自动安装更新。
+
 ### 2. 直接从描述开始——不需要代码库
 
 ```text

@@ -40,7 +40,7 @@ The existing real Chrome integration suite can run against the built site, inclu
 ```sh
 ARCHIFY_SITE_ROOT="$PWD/dist" ARCHIFY_SITE_INTEGRATION=1 \
 ARCHIFY_CHROME="/path/to/chrome" \
-node --test --test-name-pattern='real Chrome' ../archify/test/site-language-continuity.test.mjs
+npm run test:browser
 ```
 
 CI builds/tests the website when website inputs change and on every main push. It uploads `website-dist`; the existing protected Pages deployment downloads that exact verified artifact. Build output, caches and staged assets are ignored by Git. Existing GitHub required checks and obsolete-deployment protection remain in place.

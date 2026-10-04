@@ -301,7 +301,8 @@ jobs:
           chrome-version: stable
           install-dependencies: true
       - name: Verify built website navigation and language continuity
-        run: node --test --test-name-pattern='real Chrome' archify/test/site-language-continuity.test.mjs
+        run: npm run test:browser
+        working-directory: website
         env:
           ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist
           ARCHIFY_SITE_INTEGRATION: '1'

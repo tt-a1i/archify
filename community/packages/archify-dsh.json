@@ -1,0 +1,34 @@
+{
+  "name": "archify-dsh",
+  "type": "wrapper",
+  "summary": {
+    "en": "Published DSH skill bundle @tt-a1i/archify-dsh 0.1.0 includes Archify 2.14.0. Experimental DSH 0.1.0-rc.6 support; the 0.2.0 bundle remains unpublished.",
+    "zh": "已发布的 DSH 技能包 @tt-a1i/archify-dsh 0.1.0 内含 Archify 2.14.0，实验支持 DSH 0.1.0-rc.6；0.2.0 包尚未发布。"
+  },
+  "author": {
+    "name": "tt-a1i",
+    "url": "https://github.com/tt-a1i"
+  },
+  "repository": "https://github.com/tt-a1i/archify/tree/archify-dsh-v0.1.0/integrations/deepseek-harness",
+  "homepage": "https://www.npmjs.com/package/@tt-a1i/archify-dsh/v/0.1.0",
+  "archify": "2.14.0",
+  "schemaVersions": [
+    1
+  ],
+  "tags": [
+    "deepseek-harness",
+    "dsh",
+    "npm",
+    "integration"
+  ],
+  "evidence": [
+    {
+      "label": "Published 0.1.0 integration guide",
+      "url": "https://github.com/tt-a1i/archify/blob/archify-dsh-v0.1.0/integrations/deepseek-harness/README.md"
+    },
+    {
+      "label": "Bundled Archify 2.14.0 source",
+      "url": "https://github.com/tt-a1i/archify/blob/archify-dsh-v0.1.0/archify/package.json"
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 ---
 import Brand from './Brand';
-interface Props { page: 'index' | 'gallery' | 'guide' | 'start' }
+interface Props { page: 'index' | 'gallery' | 'guide' | 'start' | 'community' }
 const { page } = Astro.props;
 const home = page === 'index';
 const identities = {
   gallery: { en: '/ proof lab', zh: '/ 验证作品集', label: 'Back to Archify home' },
   guide: { en: '/ guide', zh: '/ 场景指南', label: 'Archify home' },
   start: { en: '/ start', zh: '/ 快速上手', label: 'Archify project page' },
+  community: { en: '/ community', zh: '/ 社区包', label: 'Archify home' },
 };
 const identity = home ? undefined : identities[page];
 const guideKeys: Record<string, string> = { guide: 'navGuide', gallery: 'navProof', start: 'navStart' };
@@ -14,7 +15,14 @@ const links = [
   { page: 'guide', en: 'Guide', zh: '场景指南' },
   { page: 'gallery', en: 'Proof Lab', zh: '验证作品集' },
   { page: 'start', en: 'Start', zh: '快速上手' },
+  { page: 'community', en: 'Community', zh: '社区包' },
 ];
+// The four baseline pages (index/gallery/guide/start) must keep identical
+// navigation: site-language continuity tests deep-compare nav metrics across
+// pages, and gallery/guide/start are deep-compared against the docs/
+// migration baselines. The community link lives on the community page itself
+// and in the index footer.
+const visibleLinks = page === 'community' ? links : links.filter(link => link.page !== 'community');
 ---
 <nav class="site-nav" aria-label="Primary navigation">
   <a class="nav-logo" href={home ? '#' : './'} aria-label={identity?.label}>
@@ -22,7 +30,7 @@ const links = [
     {identity && <span class="nav-logo-path" data-en={identity.en} data-zh={identity.zh}>{identity.en}</span>}
   </a>
   <div class="nav-right">
-    {links.map(link => <a class="nav-link" href={`${link.page}.html`} aria-current={page === link.page ? 'page' : undefined} {...(home ? { 'data-i18n': `nav-${link.page}` } : page === 'guide' ? { 'data-i18n': guideKeys[link.page] } : { 'data-en': link.en, 'data-zh': link.zh })}>{link.en}</a>)}
+    {visibleLinks.map(link => <a class="nav-link" href={`${link.page}.html`} aria-current={page === link.page ? 'page' : undefined} {...(home ? { 'data-i18n': `nav-${link.page}` } : page === 'guide' ? { 'data-i18n': guideKeys[link.page] } : { 'data-en': link.en, 'data-zh': link.zh })}>{link.en}</a>)}
     <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
     <button class={home ? 'btn btn-lang' : 'btn-lang'} id={home ? 'btn-lang' : 'language'} type={home ? undefined : 'button'} aria-label={home ? undefined : 'Switch language'}>中文</button>
     <a class="btn btn-primary nav-cta" href={home ? '#quickstart' : page === 'start' ? '#install' : 'start.html'} {...(home ? { 'data-i18n': 'nav-install' } : page === 'guide' ? { 'data-i18n': 'navInstall' } : { 'data-en': 'Install Skill', 'data-zh': '安装技能' })}>Install Skill</a>

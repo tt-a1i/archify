@@ -29,8 +29,8 @@ function writeJson(name, value) {
   return file;
 }
 
-function miniManifest(id, type, defects) {
-  const fixture = path.join(skillRoot, 'examples', {
+function miniManifest(id, type, defects, fixtureOverride) {
+  const fixture = fixtureOverride || path.join(skillRoot, 'examples', {
     architecture: 'web-app.architecture.json',
     workflow: 'agent-tool-call.workflow.json',
     sequence: 'cache-miss-request.sequence.json',
@@ -77,9 +77,43 @@ test('rules repair converges a schema defect reported with a path and evidence',
   assert.equal(receipt.totals.rounds, 2);
   assert.deepEqual(receipt.defects.map((d) => d.firstSeenGate), ['validate:render']);
   assert.equal(receipt.rounds[0].diagnostics[0].code, 'schema/required');
+  assert.equal(receipt.rounds[0].diagnostics[0].hasSubjectDetail, true);
+  assert.equal(receipt.rounds[0].diagnostics[0].hasEvidence, true);
+  assert.equal(receipt.rounds[0].diagnostics[0].hasSupportedFixes, true);
   assert.equal(receipt.rounds[0].repairs.applied.length, 1);
   assert.equal(receipt.totals.tokens.context > 0, true);
   assert.equal(receipt.totals.tokens.receipts > 0, true);
+});
+
+test('keeps a valid boundary label visible to the repair-rounds suite', () => {
+  const fixture = writeJson('valid-boundary.architecture.json', {
+    schema_version: 1,
+    diagram_type: 'architecture',
+    meta: {
+      title: 'Valid boundary label',
+      output: 'boundary.html',
+      quality_profile: 'showcase',
+      viewBox: [1600, 300],
+    },
+    components: [{
+      id: 'boundary',
+      type: 'backend',
+      label: 'i'.repeat(205),
+      sublabel: '',
+      pos: [80, 100],
+      size: [1400, 60],
+    }],
+    boundaries: [],
+    connections: [],
+    cards: [],
+  });
+  const file = miniManifest('architecture-valid-boundary', 'architecture', [], fixture);
+  const result = run(['run', '--manifest', file, '--command', 'validate']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout.split('\n')[0]);
+  assert.equal(receipt.passed, true);
+  assert.equal(receipt.rounds[0].ok, true);
+  assert.deepEqual(receipt.defects, []);
 });
 
 test('a staged second defect surfaces only after the first is repaired', () => {

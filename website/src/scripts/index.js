@@ -4,7 +4,7 @@
   ══════════════════════════════════════ */
   const LANGS = {
     en: {
-      'nav-guide':'Guide','nav-gallery':'Proof Lab','nav-start':'Start','nav-install':'Install Skill',
+      'nav-guide':'Guide','nav-gallery':'Proof Lab','nav-start':'Start','nav-community':'Community','nav-install':'Install Skill',
       'hero-badge':'Agent Skill &nbsp;·&nbsp; development &nbsp;·&nbsp; v[[ARCHIFY_VERSION]]',
       'hero-h1':'From plain English<br>to architecture <em>you can trust.</em>',
       'hero-sub':'Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.',
@@ -61,10 +61,10 @@
       'cta-h':'Describe it once.<br><em>Share the map.</em>',
       'cta-sub':'One command installs the checked skill for Cursor, Claude Code, Codex, or OpenCode — and your next diagram is a chat message away.',
       'cta-install':'Install the skill',
-      'footer-changelog':'Changelog','footer-license':'License'
+      'footer-changelog':'Changelog','footer-license':'License','footer-community':'Community'
     },
     zh: {
-      'nav-guide':'场景指南','nav-gallery':'验证作品集','nav-start':'快速上手','nav-install':'安装技能',
+      'nav-guide':'场景指南','nav-gallery':'验证作品集','nav-start':'快速上手','nav-community':'社区包','nav-install':'安装技能',
       'hero-badge':'Agent 技能 &nbsp;·&nbsp; 开发版 &nbsp;·&nbsp; v[[ARCHIFY_VERSION]]',
       'hero-h1':'用自然语言，<br>生成<em>可信的架构图。</em>',
       'hero-sub':'在对话中描述你的系统，Archify 生成精美、可探索的 HTML 技术图——信息会按 MAP → READ → FULL 渐进展开，并内置语义镜头、路径故事、动态效果和超清导出。',
@@ -121,7 +121,7 @@
       'cta-h':'描述一次，<br><em>分享这张图。</em>',
       'cta-sub':'一条命令即可为 Cursor、Claude Code、Codex 或 OpenCode 安装经过检查的技能——你的下一张架构图，只差一句对话。',
       'cta-install':'安装技能',
-      'footer-changelog':'更新日志','footer-license':'许可证'
+      'footer-changelog':'更新日志','footer-license':'许可证','footer-community':'社区包'
     }
   };
 

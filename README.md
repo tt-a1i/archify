@@ -208,6 +208,14 @@ Archify may GET the fixed stable manifest solely to show an optional reminder; i
 
 </details>
 
+### Stay updated
+
+- **Get release notifications:** select **Watch → Custom → Releases** at the top of this GitHub repository. Starring the project does not subscribe you to release notifications.
+- **See what changed:** [Release notes](https://github.com/tt-a1i/archify/releases).
+- **Use a feed reader:** [Subscribe to the release feed](https://github.com/tt-a1i/archify/releases.atom).
+
+Installations with the update checker also check for newer stable releases during diagram delivery and can show a reminder. Older installations without the checker need a manual update to gain this feature. You choose whether and when to upgrade; Archify never installs updates automatically.
+
 ### 2. Start from a description — no repository required
 
 ```text
