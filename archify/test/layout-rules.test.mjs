@@ -220,7 +220,7 @@ const CASES = [
   // ---- workflow layout rules ----
   ['workflow: unknown lane', 'workflow', (d) => { d.nodes[0].lane = 'ghost'; }, ['unknown lane "ghost"']],
   ['workflow: node label wider than box', 'workflow',
-    (d) => { d.nodes[0].label = 'An Extremely Long Node Label That Overflows'; }, ['wider than node', 'shorten the label']],
+    (d) => { d.nodes[0].label = 'An Extremely Long Node Label That Overflows'; }, ['wider than component', 'shorten the label']],
   ['workflow: node sublabel wider than its legible minimum', 'workflow',
     (d) => { d.nodes[0].sublabel = 'This supporting sentence is much too long for one workflow node'; }, ['Sublabel', 'legible', 'increase node.width']],
   ['workflow: node tag wider than its legible minimum', 'workflow',

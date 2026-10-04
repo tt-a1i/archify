@@ -618,9 +618,28 @@ function validateArchitecture() {
     }
   }
 
-  for (const conn of asArray(arch.connections)) {
-    if (!components.has(conn.from)) problems.push(`Connection "${conn.label || conn.from}" references unknown source "${conn.from}".`);
-    if (!components.has(conn.to)) problems.push(`Connection "${conn.label || conn.to}" references unknown target "${conn.to}".`);
+  const connectionList = asArray(arch.connections);
+  const knownComponentIds = [...components.keys()].sort();
+  for (const conn of connectionList) {
+    const connIndex = connectionList.indexOf(conn);
+    for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
+      if (components.has(conn[field])) continue;
+      const message = `Connection "${conn.label || conn[field]}" references unknown ${endpoint} "${conn[field]}".`;
+      diagnostics.push({
+        code: 'architecture/unknown-endpoint', severity: 'error', message,
+        subject: {
+          diagramType: 'architecture',
+          connection: conn.id ?? null,
+          path: `/connections/${connIndex}/${field}`,
+          from: conn.from,
+          to: conn.to,
+        },
+        evidence: { endpoint, unknownNodeId: conn[field], availableNodeIds: knownComponentIds },
+        supportedFixes: knownComponentIds.map((id) => `set /connections/${connIndex}/${field} to verified node id "${id}"`),
+      });
+      problems.push(message);
+      problems.push(`Connection "${conn.label || conn[field]}" endpoint "${conn[field]}" does not name a declared component.`);
+    }
     if (components.has(conn.from) && components.has(conn.to)) {
       const routed = pathFor(conn);
       const outsidePoints = routed.points.filter(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1]);

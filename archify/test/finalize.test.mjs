@@ -380,6 +380,82 @@ test('compact failure receipts retain diverse actionable subjects without embedd
   assert.ok(JSON.stringify(compact).length < JSON.stringify(receipt).length / 4);
 });
 
+test('merged viewport-overflow diagnostics preserve each subject, evidence, and detection source', async t => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'diagram.json');
+  const output = path.join(directory, 'diagram.html');
+  fs.writeFileSync(input, '{}');
+  const diagnostics = [
+    {
+      code: 'viewer/viewport-overflow',
+      severity: 'error',
+      message: 'meta.title overflows the 2048px viewport by 193px.',
+      subject: { diagramType: 'architecture', path: '/meta/title', viewport: '2048x1200' },
+      evidence: { scrollWidth: 2241, scrollHeight: 1200, overflowX: true, overflowY: false, overflowDisposition: 'clipped' },
+      supportedFixes: ['shorten meta.title'],
+    },
+    {
+      code: 'viewer/viewport-overflow',
+      severity: 'error',
+      message: 'meta.subtitle overflows the 2048px viewport by 91px.',
+      subject: { diagramType: 'architecture', path: '/meta/subtitle', viewport: '2048x1200' },
+      evidence: { scrollWidth: 2139, scrollHeight: 1200, overflowX: true, overflowY: false, overflowDisposition: 'clipped' },
+      supportedFixes: ['shorten meta.subtitle'],
+    },
+    {
+      code: 'viewer/viewport-overflow',
+      severity: 'error',
+      message: 'meta.title (~4090px estimated) exceeds the widest 2048px viewport — it will overflow before render.',
+      subject: { diagramType: 'architecture', path: '/meta/title' },
+      evidence: { estimatedTextWidthPx: 4090, widestViewportPx: 2048, prediction: 'text-width estimate' },
+      supportedFixes: ['shorten meta.title'],
+    },
+    {
+      code: 'layout/constraint',
+      severity: 'error',
+      message: 'Two distinct subjects share this identical message.',
+      subject: { diagramType: 'architecture', path: '/nodes/0/label' },
+      evidence: { node: 0 },
+      supportedFixes: [],
+    },
+    {
+      code: 'layout/constraint',
+      severity: 'error',
+      message: 'Two distinct subjects share this identical message.',
+      subject: { diagramType: 'architecture', path: '/nodes/1/label' },
+      evidence: { node: 1 },
+      supportedFixes: [],
+    },
+  ];
+
+  const finalized = await runFinalize({
+    cliPath: '/fake/archify.mjs',
+    type: 'architecture',
+    input,
+    output,
+    runCommand: () => result({ ok: false, command: 'deliver', diagnostics }, 1),
+  });
+
+  assert.equal(finalized.exitCode, 1);
+  const [merged, ...rest] = finalized.receipt.diagnostics;
+  assert.equal(merged.code, 'viewer/viewport-overflow');
+  assert.equal(merged.subject.path, undefined, 'the merged entry must not keep only the first subject');
+  assert.equal(merged.evidence.overflows.length, 3);
+  assert.deepEqual(
+    merged.evidence.overflows.map((entry) => [entry.subject.path, entry.detection]),
+    [
+      ['/meta/title', 'browser-measurement'],
+      ['/meta/subtitle', 'browser-measurement'],
+      ['/meta/title', 'validate-prediction'],
+    ],
+  );
+  assert.equal(merged.evidence.overflows[0].evidence.scrollWidth, 2241);
+  assert.equal(merged.evidence.overflows[1].evidence.scrollWidth, 2139);
+  assert.equal(merged.evidence.overflows[2].evidence.estimatedTextWidthPx, 4090);
+  // Identical messages with different subjects are not duplicates.
+  assert.deepEqual(rest.map((entry) => entry.subject.path), ['/nodes/0/label', '/nodes/1/label']);
+});
+
 test('finalize refuses a receipt path that aliases a gate sidecar', async t => {
   const directory = workspace(t);
   const input = path.join(directory, 'diagram.json');

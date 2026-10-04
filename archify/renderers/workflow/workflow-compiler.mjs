@@ -1519,6 +1519,33 @@ const edgeIndexByEdge = new Map(asArray(workflow.edges).map((edge, index) => [ed
     }).ok);
   }
 
+  function repointReferences(document, unknownId, nodeId) {
+    for (const entry of asArray(document.edges)) {
+      if (entry.from === unknownId) entry.from = nodeId;
+      if (entry.to === unknownId) entry.to = nodeId;
+    }
+    if (Array.isArray(document.mainPath)) {
+      document.mainPath = document.mainPath.map((id) => (id === unknownId ? nodeId : id));
+    }
+  }
+
+  // repointReferences verifies repointing every reference together; suggestions
+  // must list that same complete edit set so applying them verbatim is what was
+  // verified. Indexes follow the emitter conventions: edges use the
+  // sourceIndexes space, mainPath the canonical workflow's.
+  function unknownIdReferenceFixes(unknownId, nodeId) {
+    const fixes = [];
+    asArray(qualityResolvedWorkflow.edges).forEach((entry, index) => {
+      for (const field of ['from', 'to']) {
+        if (entry[field] === unknownId) fixes.push(`set /edges/${index}/${field} to verified node id "${nodeId}"`);
+      }
+    });
+    asArray(workflow.mainPath).forEach((id, index) => {
+      if (id === unknownId) fixes.push(`set /mainPath/${index} to verified node id "${nodeId}"`);
+    });
+    return fixes;
+  }
+
 const { enforceLegacyColumnCapacity } = createLegacyCapacityRepair({
   workflow,
   nodes,
@@ -2570,7 +2597,7 @@ function validateWorkflow() {
     }
     const estLabelW = textUnits(node.label) * 6.8;
     if (estLabelW > node.width + 6) {
-      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than node "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
+      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than component "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
     }
     const brandRailProblem = brandTopRailProblem(node, node.width, nodeTextFit.labelMinimum);
     if (brandRailProblem) problems.push(brandRailProblem);
@@ -2758,9 +2785,32 @@ function validateWorkflow() {
   }));
 
   if (Array.isArray(workflow.mainPath)) {
-    for (const id of workflow.mainPath) {
+    for (let stepIndex = 0; stepIndex < workflow.mainPath.length; stepIndex += 1) {
+      const id = workflow.mainPath[stepIndex];
       if (!nodes.has(id)) {
-        problems.push(`mainPath references unknown node "${id}".`);
+        const message = `mainPath references unknown node "${id}".`;
+        problems.push(message);
+        const candidates = [...nodes.keys()].sort(stableCompare);
+        workflowDiagnostics.push({
+          code: 'workflow/unknown-endpoint',
+          severity: 'error',
+          message,
+          subject: {
+            diagramType: 'workflow',
+            mainPath: id,
+            path: `/mainPath/${stepIndex}`,
+          },
+          evidence: {
+            unknownNodeId: id,
+            availableNodeIds: candidates,
+            fixVerification: 'each candidate was verified by applying every listed repoint together and recompiling',
+          },
+          supportedFixes: candidates.flatMap((nodeId) => (
+            acceptsFix((document) => repointReferences(document, id, nodeId))
+              ? unknownIdReferenceFixes(id, nodeId)
+              : []
+          )),
+        });
       }
     }
     for (let i = 0; i < workflow.mainPath.length - 1; i += 1) {
@@ -2912,12 +2962,9 @@ function validateReadableInputsBeforeRouting() {
     for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
       if (nodes.has(edge[field])) continue;
       const message = `Workflow edge "${workflowEdgeName(edge)}" references unknown ${endpoint} "${edge[field]}".`;
-      const canonicalEdgeIndex = workflow.edges.indexOf(edge);
       const supportedFixes = availableNodeIds.flatMap((nodeId) => (
-        acceptsFix((document) => {
-          document.edges[canonicalEdgeIndex][field] = nodeId;
-        })
-          ? [`set /edges/${edgeIndex}/${field} to verified node id "${nodeId}"`]
+        acceptsFix((document) => repointReferences(document, edge[field], nodeId))
+          ? unknownIdReferenceFixes(edge[field], nodeId)
           : []
       ));
       fail({
@@ -2935,6 +2982,7 @@ function validateReadableInputsBeforeRouting() {
           endpoint,
           unknownNodeId: edge[field],
           availableNodeIds,
+          fixVerification: 'each candidate was verified by applying every listed repoint together and recompiling',
         },
         supportedFixes,
       });

@@ -1701,6 +1701,7 @@ test('readable-v2 reports unknown edge endpoints with a precise semantic diagnos
     endpoint: 'target',
     unknownNodeId: 'ghost',
     availableNodeIds: ['a', 'b'],
+    fixVerification: 'each candidate was verified by applying every listed repoint together and recompiling',
   });
 });
 
@@ -1722,6 +1723,51 @@ test('unknown endpoint diagnostics retain the authored edge pointer after canoni
   assert.equal(diagnostic.evidence.endpoint, 'target');
   assert.equal(diagnostic.evidence.unknownNodeId, 'ghost');
   assert.ok(diagnostic.supportedFixes.length > 0);
+});
+
+test('unknown-endpoint supportedFixes list the complete verified edit set and recompile verbatim', () => {
+  // "ghost" is referenced from an edge AND mainPath; the verified repair
+  // repoints every reference to the same candidate.
+  const document = workflow({
+    lanes: [{ id: 'main', label: 'M' }],
+    nodes: [
+      { id: 'a', lane: 'main', col: 0, type: 'backend', label: 'A' },
+      { id: 'b', lane: 'main', col: 1, type: 'backend', label: 'B' },
+      { id: 'c', lane: 'main', col: 2, type: 'backend', label: 'C' },
+    ],
+    edges: [
+      { id: 'ab', from: 'a', to: 'ghost' },
+      { id: 'bc', from: 'b', to: 'c' },
+      { id: 'ac', from: 'a', to: 'c' },
+    ],
+  });
+  document.mainPath = ['a', 'ghost', 'c'];
+  const result = compileWorkflow({ workflow: document, qualityProfile: 'standard' });
+  assert.equal(result.ok, false);
+  const diagnostic = result.diagnostics.find((entry) => entry.code === 'workflow/unknown-edge-endpoint');
+  assert.ok(diagnostic);
+  const fixesByCandidate = new Map();
+  for (const fix of diagnostic.supportedFixes) {
+    const match = fix.match(/^set (\S+) to verified node id "([^"]+)"$/);
+    assert.ok(match, `fix must be executable verbatim: ${fix}`);
+    if (!fixesByCandidate.has(match[2])) fixesByCandidate.set(match[2], []);
+    fixesByCandidate.get(match[2]).push(match[1]);
+  }
+  assert.ok(fixesByCandidate.size > 0, 'expected at least one verified candidate');
+  for (const [nodeId, pointers] of fixesByCandidate) {
+    assert.ok(pointers.includes('/edges/0/to'), `candidate "${nodeId}" must cover the edge reference`);
+    assert.ok(pointers.includes('/mainPath/1'), `candidate "${nodeId}" must cover the mainPath reference`);
+    assert.equal(pointers.length, 2);
+    const repaired = clone(document);
+    for (const pointer of pointers) {
+      const segments = pointer.split('/').filter(Boolean);
+      let target = repaired;
+      for (const segment of segments.slice(0, -1)) target = target[segment];
+      target[segments.at(-1)] = nodeId;
+    }
+    const verified = compileWorkflow({ workflow: repaired });
+    assert.equal(verified.ok, true, `applying every suggested edit for "${nodeId}" must recompile: ${JSON.stringify(verified.diagnostics, null, 2)}`);
+  }
 });
 
 test('unknown node lane diagnostics retain the authored node pointer after canonical sorting', () => {

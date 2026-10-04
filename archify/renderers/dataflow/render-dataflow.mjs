@@ -119,6 +119,7 @@ for (const [index, node] of asArray(dataflow.nodes).entries()) {
 
 function validateDataflow() {
   const problems = [];
+  const diagnostics = [];
   if (nodes.size !== asArray(dataflow.nodes).length) problems.push('Node ids must be unique.');
 
   const stageCount = asArray(dataflow.stages).length;
@@ -141,7 +142,7 @@ function validateDataflow() {
     }
     const estLabelW = textUnits(node.label) * 6.2;
     if (estLabelW > node.width + 6) {
-      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than node "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
+      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than component "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
     }
     const brandRailProblem = brandTopRailProblem(node, node.width, 8);
     if (brandRailProblem) problems.push(brandRailProblem);
@@ -171,9 +172,42 @@ function validateDataflow() {
     }
   }
 
-  for (const flow of asArray(dataflow.flows)) {
-    if (!nodes.has(flow.from)) problems.push(`Flow "${flow.label || flow.from}" references unknown source "${flow.from}".`);
-    if (!nodes.has(flow.to)) problems.push(`Flow "${flow.label || flow.to}" references unknown target "${flow.to}".`);
+  const flowList = asArray(dataflow.flows);
+  const stageById = new Map(asArray(dataflow.nodes).map((node) => [node.id, node.stage]));
+  for (const flow of flowList) {
+    const flowIndex = flowList.indexOf(flow);
+    for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
+      if (nodes.has(flow[field])) continue;
+      const problem = `Flow "${flow.label || flow[field]}" references unknown ${endpoint} "${flow[field]}".`;
+      const anchorStage = stageById.get(flow[field === 'from' ? 'to' : 'from']);
+      const anchorId = flow[field === 'from' ? 'to' : 'from'];
+      const stageDelta = (id) => (anchorStage === undefined || stageById.get(id) === undefined
+        ? 0
+        : field === 'to'
+          ? stageById.get(id) - anchorStage
+          : anchorStage - stageById.get(id));
+      const candidates = [...stageById.keys()]
+        .filter((id) => id !== anchorId)
+        .sort((a, b) => {
+          const da = stageDelta(a);
+          const db = stageDelta(b);
+          const forwardDiff = (db > 0) - (da > 0);
+          return forwardDiff !== 0 ? forwardDiff : da - db;
+        });
+      diagnostics.push({
+        code: 'dataflow/unknown-endpoint', severity: 'error', message: problem,
+        subject: {
+          diagramType: 'dataflow',
+          flow: flow.id ?? null,
+          path: `/flows/${flowIndex}/${field}`,
+          from: flow.from,
+          to: flow.to,
+        },
+        evidence: { endpoint, unknownNodeId: flow[field], availableNodeIds: candidates },
+        supportedFixes: candidates.map((id) => `set /flows/${flowIndex}/${field} to verified node id "${id}"`),
+      });
+      problems.push(problem);
+    }
     if (!flow.label) problems.push(`Flow "${flow.from}" -> "${flow.to}" must include a short data label.`);
     if (nodes.has(flow.from) && nodes.has(flow.to)) {
       const routed = pathFor(flow);
@@ -298,6 +332,7 @@ function validateDataflow() {
   if (problems.length) {
     throwDiagnosticProblems('Data-flow layout validation failed', problems, {
       subject: { diagramType: 'dataflow' },
+      diagnostics,
     });
   }
 }

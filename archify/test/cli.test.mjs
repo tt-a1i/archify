@@ -4027,6 +4027,20 @@ test('cli: validate JSON exposes only the primary v1 column-capacity diagnostic'
   )));
 });
 
+test('cli: validate accepts deliverable headers including narrow glyphs and wrapping text', () => {
+  // h1 and .subtitle wrap; even an unbreakable run of narrow glyphs fits the
+  // widest viewport, so validation must not second-guess the browser with a
+  // static width estimate.
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-tool-call.workflow.json'), 'utf8'));
+  source.meta.title = 'i'.repeat(205);
+  source.meta.subtitle = 'a reasonably long subtitle sentence that wraps onto multiple lines inside the viewer header without any need for overflow'.repeat(2);
+  const input = path.join(tmp, 'narrow-glyph-header.workflow.json');
+  fs.writeFileSync(input, JSON.stringify(source));
+  const result = run(['validate', 'workflow', input, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(JSON.parse(result.stdout).ok, true);
+});
+
 test('cli: --quality overrides the source profile for render, validate, and deliver', () => {
   const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
   const out = path.join(tmp, 'workflow-standard.html');

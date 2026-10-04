@@ -161,6 +161,24 @@ test('a recorded layout diagnostic cannot hide a later unclassified exception', 
   assert.deepEqual(JSON.parse(classified.stderr).diagnostics.map(d => d.message), ['earlier layout problem', 'final layout problem']);
 });
 
+test('repeated problem messages keep their own subject and evidence', t => {
+  const cwd = workspace(t);
+  const message = 'Connection "ghost" references unknown target "ghost".';
+  const script = `${installBoundary} import { throwDiagnosticProblems } from ${JSON.stringify(diagnosticModule)};
+    throwDiagnosticProblems('architecture rejected', [${JSON.stringify(message)}, ${JSON.stringify(message)}], {
+      diagnostics: [
+        { code: 'architecture/unknown-endpoint', message: ${JSON.stringify(message)}, subject: { path: '/connections/0/to' }, evidence: { connection: 0 }, supportedFixes: ['set /connections/0/to to verified node id "a"'] },
+        { code: 'architecture/unknown-endpoint', message: ${JSON.stringify(message)}, subject: { path: '/connections/1/to' }, evidence: { connection: 1 }, supportedFixes: ['set /connections/1/to to verified node id "b"'] },
+      ],
+    });`;
+  const machine = run(['--input-type=module', '-e', script], cwd, true);
+  assert.equal(machine.status, 1, machine.stderr);
+  const failure = JSON.parse(machine.stderr);
+  assert.equal(failure.diagnostics.length, 2);
+  assert.deepEqual(failure.diagnostics.map((entry) => entry.subject.path), ['/connections/0/to', '/connections/1/to']);
+  assert.deepEqual(failure.diagnostics.map((entry) => entry.evidence.connection), [0, 1]);
+});
+
 test('invalid output arguments keep their implementation error instead of a filesystem repair', t => {
   const cwd = workspace(t);
   const helper = new URL('../renderers/shared/cli.mjs', import.meta.url).href;

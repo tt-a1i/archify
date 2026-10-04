@@ -105,7 +105,7 @@ test('a label the fixed box rejects fits the spread box on the same viewBox', ()
   const fixed = renderOutcome(labelledSequence());
   assert.notEqual(fixed.code, 0, 'the fixed box still rejects a label it cannot hold');
   assert.ok(fixed.stderr.includes(`Label "${wideLabel}"`), `expected the label in stderr:\n${fixed.stderr}`);
-  assert.ok(fixed.stderr.includes('86px participant box'), `expected the fixed box width in stderr:\n${fixed.stderr}`);
+  assert.ok(fixed.stderr.includes('component "gateway" (86px)'), `expected the fixed box width in stderr:\n${fixed.stderr}`);
 
   const spread = renderOutcome(labelledSequence('spread'));
   assert.equal(spread.code, 0, spread.stderr);

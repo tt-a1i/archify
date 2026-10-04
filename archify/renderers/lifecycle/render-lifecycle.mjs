@@ -348,6 +348,7 @@ for (const [index, state] of asArray(lifecycle.states).entries()) {
 
 function validateLifecycle() {
   const problems = [];
+  const diagnostics = [];
   if (states.size !== asArray(lifecycle.states).length) problems.push('State ids must be unique.');
 
   // The three bands are fixed at y=112/264/436. Preserve the original
@@ -399,7 +400,7 @@ function validateLifecycle() {
     }
     const estLabelW = textUnits(state.label) * 6.2;
     if (estLabelW > state.width + 6) {
-      problems.push(`Label "${state.label}" (~${Math.round(estLabelW)}px) is wider than state "${state.id}" (${state.width}px) — shorten the label or increase state.width.`);
+      problems.push(`Label "${state.label}" (~${Math.round(estLabelW)}px) is wider than component "${state.id}" (${state.width}px) — shorten the label or increase state.width.`);
     }
     const brandRailProblem = brandTopRailProblem(state, state.width, 8, 'State');
     if (brandRailProblem) problems.push(brandRailProblem);
@@ -431,9 +432,27 @@ function validateLifecycle() {
     }
   }
 
-  for (const transition of asArray(lifecycle.transitions)) {
-    if (!states.has(transition.from)) problems.push(`Transition "${transition.label || transition.from}" references unknown source "${transition.from}".`);
-    if (!states.has(transition.to)) problems.push(`Transition "${transition.label || transition.to}" references unknown target "${transition.to}".`);
+  const transitionList = asArray(lifecycle.transitions);
+  const knownStateIds = [...states.keys()].sort();
+  for (const transition of transitionList) {
+    const transitionIndex = transitionList.indexOf(transition);
+    for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
+      if (states.has(transition[field])) continue;
+      const problem = `Transition "${transition.label || transition[field]}" references unknown ${endpoint} "${transition[field]}".`;
+      diagnostics.push({
+        code: 'lifecycle/unknown-endpoint', severity: 'error', message: problem,
+        subject: {
+          diagramType: 'lifecycle',
+          transition: transition.id ?? null,
+          path: `/transitions/${transitionIndex}/${field}`,
+          from: transition.from,
+          to: transition.to,
+        },
+        evidence: { endpoint, unknownNodeId: transition[field], availableNodeIds: knownStateIds },
+        supportedFixes: knownStateIds.map((id) => `set /transitions/${transitionIndex}/${field} to verified node id "${id}"`),
+      });
+      problems.push(problem);
+    }
     if (states.has(transition.from) && states.has(transition.to)) {
       const routed = pathFor(transition);
       const [start, end] = [routed.points[0], routed.points[routed.points.length - 1]];
@@ -558,6 +577,7 @@ function validateLifecycle() {
   if (problems.length) {
     throwDiagnosticProblems('Lifecycle layout validation failed', problems, {
       subject: { diagramType: 'lifecycle' },
+      diagnostics,
     });
   }
 }
