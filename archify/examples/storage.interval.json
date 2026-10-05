@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "diagram_type": "interval",
+  "meta": {
+    "title": "Storage pipeline intervals",
+    "output": "storage.interval.html"
+  },
+  "unitWidth": 100,
+  "anchors": {
+    "commit": {
+      "at": "62%",
+      "label": "Commit",
+      "across": [
+        "capture",
+        "storage"
+      ]
+    }
+  },
+  "tracks": [
+    {
+      "id": "capture",
+      "label": "Capture",
+      "spans": [
+        {
+          "from": 0,
+          "to": "commit",
+          "label": "Collecting"
+        }
+      ],
+      "points": [
+        {
+          "at": "15%",
+          "label": "Start"
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "label": "Storage",
+      "gapBefore": 72,
+      "spans": [
+        {
+          "from": "commit",
+          "to": 100,
+          "label": "Stored"
+        }
+      ],
+      "arrows": [
+        {
+          "from": "90%",
+          "to": "20%",
+          "label": "Review range"
+        }
+      ]
+    }
+  ]
+}

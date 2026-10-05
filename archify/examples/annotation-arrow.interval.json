@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "interval",
+  "meta": {
+    "title": "Cross-track probe annotation",
+    "quality_profile": "standard",
+    "output": "annotation-arrow.interval.html"
+  },
+  "unitWidth": 100,
+  "showAxis": false,
+  "tracks": [
+    {
+      "id": "probe",
+      "label": "Probe reads",
+      "height": 32,
+      "arrows": [
+        {
+          "from": {
+            "at": 20,
+            "edge": "bottom"
+          },
+          "to": {
+            "at": 60,
+            "track": "target",
+            "edge": "top"
+          },
+          "label": "Page 0 probe",
+          "labelPlacement": "start",
+          "startXOffset": 12,
+          "startYOffset": 40
+        }
+      ]
+    },
+    {
+      "id": "target",
+      "label": "Candidate",
+      "gapBefore": 80,
+      "height": 32,
+      "spans": [
+        {
+          "from": 55,
+          "to": 65,
+          "style": "emphasis"
+        }
+      ]
+    }
+  ]
+}

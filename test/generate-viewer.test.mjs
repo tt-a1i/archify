@@ -31,6 +31,9 @@ function fixture(t) {
   fs.mkdirSync(path.join(root, 'archify/assets'), { recursive: true });
   fs.cpSync(path.join(repoRoot, 'viewer'), path.join(root, 'viewer'), { recursive: true });
   fs.copyFileSync(path.join(repoRoot, 'scripts/generate-viewer.mjs'), path.join(root, 'scripts/generate-viewer.mjs'));
+  fs.cpSync(path.join(repoRoot, 'archify/renderers/interval'), path.join(root, 'archify/renderers/interval'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'archify/renderers/shared'), { recursive: true });
+  for (const file of ['svg-grid.mjs', 'text-units.mjs']) fs.copyFileSync(path.join(repoRoot, 'archify/renderers/shared', file), path.join(root, 'archify/renderers/shared', file));
   const output = path.join(root, 'archify/assets/template.html');
   fs.copyFileSync(path.join(repoRoot, 'archify/assets/template.html'), output);
   return {
@@ -136,7 +139,7 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   const f = fixture(t);
   const reader = '// $& $\' $` $$ 中文 \u{1f5fa}\r\n(function () {})();\r\n';
   const css = '/* === TOKENS === */\r\n:root { --x: 1; }\r\n';
-  fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><script>\r\n${focusMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${outlineMarker}${treeMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
+  fs.writeFileSync(f.shell, `<style>${viewerCssMarker}</style><script>\r\n/* ARCHIFY:INTERVAL_LAYOUT *//* ARCHIFY:INTERVAL_VALIDATOR *//* ARCHIFY:INTERVAL_EDITOR */${focusMarker}${routeMarker}${lensMarker}${intentMarker}${finderMarker}${outlineMarker}${treeMarker}${motionMarker}${radarMarker}${cameraMarker}${chromeMarker}${exportMarker}${marker}</script>\n`);
   fs.writeFileSync(f.viewerCss, css);
   fs.writeFileSync(f.export, reader + cleanupMarker);
   fs.writeFileSync(f.cleanup, reader);
@@ -162,7 +165,7 @@ test('assembly preserves literal replacement tokens, Unicode and source line end
   // ends flush with the closing </style> tag.
   const indentedCss = css.split('\n').map((line) => line.length === 0 ? line : '    ' + line).join('\n');
   assert.equal(
-    fs.readFileSync(f.output, 'utf8'),
+    fs.readFileSync(f.output, 'utf8').replace(/Archify\.intervalLayout = \(function \(\) \{[\s\S]*?\}\)\(\);/,'').replace(/Archify\.validateInterval = \(function \(\) \{[\s\S]*?\}\)\(\);/,'').replace(fs.readFileSync(path.join(f.root, 'viewer/interval-editor.js'),'utf8'),''),
     `<style>${indentedCss}</style><script>\r\n${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}${reader}</script>\n`,
   );
   assert.equal(f.run('--check').status, 0);

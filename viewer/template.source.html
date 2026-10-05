@@ -286,6 +286,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
+    <!-- ARCHIFY:INTERVAL_DATA -->
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="{{i18n:viewer.preset.badge.editorialPlate}}">
@@ -685,6 +686,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var payload = Object.assign({}, values || {}, { count: count });
       return viewerText(key + suffix, payload);
     }
+
+/* ARCHIFY:INTERVAL_LAYOUT */
+/* ARCHIFY:INTERVAL_VALIDATOR */
+/* ARCHIFY:INTERVAL_EDITOR */
 
     function viewerKindLabel(value) {
       var normalized = String(value || 'node').toLowerCase();
@@ -1365,6 +1370,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       if (e.defaultPrevented) return;
       var t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (Archify.interval && ['?', '/', 'm', 'l', 'r'].includes(e.key.toLowerCase())) return;
       if (Archify.preset && Archify.preset.isOpen() && e.key !== 'Escape' && e.key !== 's' && e.key !== 'S') {
         Archify.preset.close(false);
       }

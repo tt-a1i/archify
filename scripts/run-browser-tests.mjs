@@ -8,6 +8,8 @@ import { findChrome } from '../archify/bin/visual-check.mjs';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Shared by PR CI and tag releases. WebM decoding stays in test:webm.
 const testFiles = [
+  "interval-browser.test.mjs",
+  "interval-editor-placement-browser.test.mjs",
   'finalize-browser.test.mjs',
   'desktop-reader-browser.test.mjs',
   'reader-readability-maintained-browser.test.mjs',

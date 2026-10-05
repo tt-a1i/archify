@@ -63,6 +63,10 @@ Before the first candidate, use the authoring references and relevant repository
 | `timeline` | When things happened: incident reviews, release histories, timestamped events on a proportional clock with source lanes | `schemas/timeline.schema.json` | `examples/payment-incident.timeline.json` |
 | `waterfall` | Where the time went: span durations, overlap, and nesting of one request or agent run on a common time axis | `schemas/waterfall.schema.json` | `examples/checkout-request.waterfall.json` |
 
+| `interval` (Tracks) | A shared-axis canvas: numeric/address ranges, repeated spans per track, overlays, anchors and cross-track annotations | `schemas/interval.schema.json` | `examples/storage.interval.json` |
+
+Read [Tracks authoring](references/interval-tracks.md) for this fork’s canvas renderer. Use `standard` quality with `finalize`. Use Timeline for dated event cards and Waterfall for elapsed execution spans with parent/child nesting. Tracks keeps authored bounds authoritative and uses bounded label placement; inspect outside leaders and ownership.
+
 When ambiguous, run `node bin/archify.mjs guide "<scenario>" --json`. Scenario proof examples are structural references, not facts to copy.
 
 For an everyday subject, keep the same five modes and semantic types, then name them for the reader: use everyday `icon` values and `meta.legend` labels as in [Node icons](references/authoring-contract.md#node-icons). Ask for missing personal facts instead of inventing dates, amounts, or rules.

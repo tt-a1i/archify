@@ -1,4 +1,10 @@
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('.edit-handle'), function (el) {
+          el.remove();
+        });
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-edit-path][transform]'), function (el) {
+          el.removeAttribute('transform');
+        });
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');

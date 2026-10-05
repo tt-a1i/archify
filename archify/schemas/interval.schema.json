@@ -1,0 +1,731 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/interval.schema.json",
+  "title": "Archify Interval Diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diagram_type",
+    "meta",
+    "tracks"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "interval"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "output"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "output": {
+          "$ref": "common.schema.json#/$defs/portableOutputPath"
+        },
+        "quality_profile": {
+          "const": "standard"
+        },
+        "visual_preset": {
+          "$ref": "common.schema.json#/$defs/visualPreset"
+        }
+      }
+    },
+    "unitWidth": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "background": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "span": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "ink": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "line": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "warning": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "muted": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-red": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-red-fill": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-gray": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-gray-fill": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-blue": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-blue-fill": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-green": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-green-fill": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-orange": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-orange-fill": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-yellow": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-yellow-fill": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-purple": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        },
+        "io-purple-fill": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$"
+        }
+      }
+    },
+    "anchors": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/anchor"
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/track"
+      }
+    },
+    "cards": {
+      "$ref": "common.schema.json#/$defs/cards"
+    },
+    "horizontalScale": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Multiplier for the shared X axis only; default 1. Fonts, Y spacing, and label offsets remain unchanged."
+    },
+    "showAxis": {
+      "type": "boolean",
+      "description": "Show numeric axis ticks; defaults to true. Hide for illustrative execution order."
+    }
+  },
+  "$defs": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "position": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "labelOffset": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "yPos": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:\\d+\\.?\\d*|\\.\\d+)%$"
+        },
+        {
+          "enum": [
+            "top",
+            "center",
+            "bottom"
+          ]
+        }
+      ]
+    },
+    "trackPair": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "$ref": "#/$defs/id"
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "style": {
+      "oneOf": [
+        {
+          "enum": [
+            "default",
+            "emphasis",
+            "muted",
+            "alert",
+            "stripes"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "preset": {
+              "enum": [
+                "default",
+                "emphasis",
+                "muted",
+                "alert",
+                "stripes"
+              ]
+            },
+            "fill": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?:#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?|background|track|span|ink|line|accent|warning|muted|io-(?:red|gray|blue|green|orange|yellow|purple)(?:-fill)?)$"
+                },
+                {
+                  "const": "none"
+                }
+              ]
+            },
+            "stroke": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?:#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?|background|track|span|ink|line|accent|warning|muted|io-(?:red|gray|blue|green|orange|yellow|purple)(?:-fill)?)$"
+                },
+                {
+                  "const": "none"
+                }
+              ]
+            },
+            "text": {
+              "type": "string",
+              "pattern": "^(?:#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?|background|track|span|ink|line|accent|warning|muted|io-(?:red|gray|blue|green|orange|yellow|purple)(?:-fill)?)$"
+            },
+            "strokeWidth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dash": {
+              "enum": [
+                "solid",
+                "dashed",
+                "dotted"
+              ]
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "fontWeight": {
+              "enum": [
+                "normal",
+                "bold"
+              ]
+            },
+            "pattern": {
+              "enum": [
+                "solid",
+                "stripes"
+              ]
+            },
+            "stripeColor": {
+              "type": "string",
+              "pattern": "^(?:#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?|background|track|span|ink|line|accent|warning|muted|io-(?:red|gray|blue|green|orange|yellow|purple)(?:-fill)?)$"
+            },
+            "gradient": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string",
+                  "pattern": "^(?:#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?|background|track|span|ink|line|accent|warning|muted|io-(?:red|gray|blue|green|orange|yellow|purple)(?:-fill)?)$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(?:#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?|background|track|span|ink|line|accent|warning|muted|io-(?:red|gray|blue|green|orange|yellow|purple)(?:-fill)?)$"
+                }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "not": {
+            "properties": {
+              "gradient": {},
+              "pattern": {
+                "const": "stripes"
+              }
+            },
+            "required": [
+              "gradient",
+              "pattern"
+            ]
+          }
+        }
+      ]
+    },
+    "rectangle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/position"
+        },
+        "to": {
+          "$ref": "#/$defs/position"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelOffset": {
+          "$ref": "#/$defs/labelOffset"
+        },
+        "style": {
+          "$ref": "#/$defs/style"
+        },
+        "z": {
+          "type": "number"
+        },
+        "height": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:\\d+\\.?\\d*|\\.\\d+)%$"
+            }
+          ]
+        },
+        "align": {
+          "enum": [
+            "top",
+            "center",
+            "bottom"
+          ]
+        },
+        "offsetY": {
+          "type": "number"
+        }
+      }
+    },
+    "endpoint": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/position"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "at"
+          ],
+          "properties": {
+            "at": {
+              "$ref": "#/$defs/position"
+            },
+            "track": {
+              "$ref": "#/$defs/id"
+            },
+            "edge": {
+              "enum": [
+                "top",
+                "center",
+                "bottom"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "arrow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "to": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelOffset": {
+          "$ref": "#/$defs/labelOffset"
+        },
+        "labelPlacement": {
+          "enum": [
+            "midpoint",
+            "start"
+          ],
+          "description": "Attach the label to the route midpoint (default) or its start."
+        },
+        "startXOffset": {
+          "type": "number",
+          "description": "Move the arrow tail and its start-attached label horizontally in SVG units; the target stays fixed."
+        },
+        "startYOffset": {
+          "type": "number",
+          "description": "Move the arrow tail and its start-attached label vertically in SVG units; the target stays fixed."
+        },
+        "style": {
+          "$ref": "#/$defs/style"
+        },
+        "z": {
+          "type": "number"
+        },
+        "offset": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnY": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "track",
+            "y_pos"
+          ],
+          "properties": {
+            "track": {
+              "$ref": "#/$defs/id"
+            },
+            "y_pos": {
+              "$ref": "#/$defs/yPos"
+            },
+            "offset": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "at"
+      ],
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/position"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelOffset": {
+          "$ref": "#/$defs/labelOffset"
+        },
+        "style": {
+          "$ref": "#/$defs/style"
+        },
+        "z": {
+          "type": "number"
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "at"
+      ],
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/position"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelOffset": {
+          "$ref": "#/$defs/labelOffset"
+        },
+        "style": {
+          "$ref": "#/$defs/style"
+        },
+        "z": {
+          "type": "number"
+        },
+        "across": {
+          "$ref": "#/$defs/trackPair"
+        }
+      }
+    },
+    "callout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "at",
+        "text"
+      ],
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/position"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "shape": {
+          "enum": [
+            "circle",
+            "triangle",
+            "rectangle",
+            "bubble"
+          ]
+        },
+        "routing": {
+          "enum": [
+            "straight",
+            "orthogonal"
+          ]
+        },
+        "y_pos": {
+          "$ref": "#/$defs/yPos"
+        },
+        "offsetX": {
+          "type": "number"
+        },
+        "offsetY": {
+          "type": "number"
+        },
+        "labelOffset": {
+          "$ref": "#/$defs/labelOffset"
+        },
+        "style": {
+          "$ref": "#/$defs/style"
+        },
+        "z": {
+          "type": "number"
+        }
+      },
+      "if": {
+        "properties": {
+          "shape": {
+            "const": "bubble"
+          }
+        },
+        "required": [
+          "shape"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "routing"
+          ],
+          "properties": {
+            "routing": {}
+          }
+        }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "at"
+      ],
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/position"
+        },
+        "across": {
+          "$ref": "#/$defs/trackPair"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelOffset": {
+          "$ref": "#/$defs/labelOffset"
+        },
+        "style": {
+          "$ref": "#/$defs/style"
+        },
+        "z": {
+          "type": "number"
+        }
+      }
+    },
+    "track": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelOffset": {
+          "$ref": "#/$defs/labelOffset"
+        },
+        "lifetime": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/position"
+            },
+            {
+              "$ref": "#/$defs/position"
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "gapBefore": {
+          "type": "number",
+          "minimum": 0
+        },
+        "style": {
+          "$ref": "#/$defs/style"
+        },
+        "z": {
+          "type": "number"
+        },
+        "spans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rectangle"
+          }
+        },
+        "objects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rectangle"
+          }
+        },
+        "arrows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/arrow"
+          }
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/event"
+          }
+        },
+        "callouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/callout"
+          }
+        }
+      }
+    }
+  }
+}

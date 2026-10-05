@@ -1,3 +1,5 @@
+> **Tracks fork:** This fork adds aligned Tracks diagrams (`interval`) to Archify. Use Tracks when position, length, overlap, or alignment across lanes matters: timing, concurrent activity, memory/storage layouts, or multiple segmentations of one range. State whether X means measured time, addresses/indices, or illustrative order. Use Timeline for dated event cards, Waterfall for execution spans, sequence diagrams for messages, and workflows for process branches. Tracks provides the more general shared-axis canvas. Start with the [Tracks setup and usage guide](TRACKS.md) and [authoring reference](archify/references/interval-tracks.md). This is a development fork; the new type is not yet accepted upstream.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/archify-lockup-dark.svg" />

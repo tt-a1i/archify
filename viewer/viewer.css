@@ -4705,3 +4705,60 @@ html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="a
   .source-evidence-beacon,
   svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
 }
+
+html[data-interval="true"] #btn-route-probe,
+html[data-interval="true"] #btn-overview-map,
+html[data-interval="true"] #btn-semantic-lens,
+html[data-interval="true"] #btn-node-finder,
+html[data-interval="true"] #btn-diagram-guide { display: none !important; }
+
+.interval-editor {
+  margin-top: 1rem;
+  max-width: 36rem;
+  padding: .75rem;
+  border: 1px solid var(--panel-border);
+  border-radius: .65rem;
+  background: var(--toolbar-menu-bg);
+  color: var(--toolbar-text);
+  font: .8125rem system-ui, sans-serif;
+}
+.interval-tools-summary { cursor: pointer; padding: 12px 4px; font: 14px/1.4 Arial, sans-serif; }
+.interval-tools-summary:focus-visible { outline: 2px solid var(--frontend-stroke); }
+.interval-editor button {
+  margin: .2rem;
+  padding: .35rem .6rem;
+  border: 1px solid var(--toolbar-border);
+  border-radius: .35rem;
+  background: var(--toolbar-bg);
+  color: var(--toolbar-text);
+  font: inherit;
+  cursor: pointer;
+}
+.interval-editor button:disabled { opacity: .5; cursor: default; }
+.interval-editor button:focus-visible,
+.interval-editor textarea:focus-visible { outline: 2px solid var(--frontend-stroke); outline-offset: 2px; }
+.interval-editor textarea {
+  display: none;
+  width: min(32rem, 100%);
+  height: min(40vh, 28rem);
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  font: .75rem ui-monospace, monospace;
+}
+.interval-editor[data-json-open="true"] textarea,
+.interval-editor[data-json-open="true"] .interval-apply { display: block; }
+.interval-editor .interval-apply { display: none; }
+.interval-editor p { margin: .25rem; }
+.interval-editor .interval-warnings { color: var(--cloud-stroke); }
+.diagram-container.editing g[data-edit-path] { cursor: move; }
+.diagram-container.editing .edit-handle {
+  fill: var(--bg);
+  stroke: var(--arrow-emphasis);
+  stroke-width: 2;
+  cursor: ew-resize;
+}
+@media print {
+  .interval-editor { display: none; }
+}

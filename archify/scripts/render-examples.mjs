@@ -10,6 +10,7 @@ const skillRoot = path.resolve(__dirname, '..');
 const outputRoot = path.resolve(process.argv[2] || path.join(skillRoot, 'examples'));
 
 const TARGETS = [
+  ['interval', 'storage.interval.json', 'storage-interval.html'],
   ['workflow', 'agent-tool-call.workflow.json', 'workflow-agent-tool-call-rendered.html'],
   ['sequence', 'cache-miss-request.sequence.json', 'sequence-cache-miss-request.html'],
   ['dataflow', 'product-analytics.dataflow.json', 'dataflow-product-analytics.html'],

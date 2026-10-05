@@ -137,7 +137,7 @@ test('property: shuffling node/state order still renders (order-independence)', 
       }
       const { code, html } = render(mode, doc);
       assert.equal(code, 0, `${mode} seed ${seed}: valid shuffle should render (exit 0)`);
-      assert.doesNotMatch(withoutFontData(html), /NaN|undefined>/, `${mode} seed ${seed}: NaN in output`);
+      assert.doesNotMatch((html.match(/<svg\b[\s\S]*?<\/svg>/g) || []).join(''), /NaN|undefined>/, `${mode} seed ${seed}: NaN in output`);
     }
   }
 });

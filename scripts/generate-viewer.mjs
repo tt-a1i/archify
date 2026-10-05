@@ -12,6 +12,9 @@ const output = path.join(root, 'archify/assets/template.html');
 // the same depth the marker occupies. JS fragments need no indent because their
 // markers are already at column 0; the standalone CSS file needs four spaces.
 const fragments = [
+  ["/* ARCHIFY:INTERVAL_LAYOUT */", "../archify/renderers/interval/interval-layout.mjs"],
+  ["/* ARCHIFY:INTERVAL_VALIDATOR */", "../archify/renderers/interval/interval-validator.js"],
+  ["/* ARCHIFY:INTERVAL_EDITOR */", "interval-editor.js"],
   ['/* ARCHIFY:VIEWER_CSS */', 'viewer.css', 4],
   ['/* ARCHIFY:EXPORT */', 'export.js'],
   ['/* ARCHIFY:READER_LAYOUT */', 'reader-layout.js'],
@@ -47,7 +50,20 @@ try {
   }
   let generated = fs.readFileSync(path.join(root, 'viewer/template.source.html'), 'utf8');
   for (const [marker, file, indent = 0] of fragments) {
-    const source = fs.readFileSync(path.join(root, 'viewer', file), 'utf8');
+    let source = fs.readFileSync(path.join(root, 'viewer', file), 'utf8');
+    if (file.endsWith('/interval-layout.mjs')) {
+      const grid = fs.readFileSync(path.join(root, 'archify/renderers/shared/svg-grid.mjs'), 'utf8').replace('export function', 'function');
+      const units = fs.readFileSync(path.join(root, 'archify/renderers/shared/text-units.mjs'), 'utf8').replace('export function', 'function');
+      source = units + '\n' + grid + '\n' + source.replace("import { textUnits } from '../shared/text-units.mjs';\n", '').replace("import { renderGridPattern } from '../shared/svg-grid.mjs';\n", '');
+      const exportLine = 'export function renderIntervalLayout';
+      if (source.split(exportLine).length !== 2) throw new Error('Interval layout export changed.');
+      source = source.replace(exportLine, 'function renderIntervalLayout')
+        .replaceAll('<svg', '\\x3csvg').replaceAll('</svg>', '\\x3c/svg>');
+      source = `Archify.intervalLayout = (function () {\n${source}\nreturn renderIntervalLayout;\n})();`;
+    } else if (file.endsWith('/interval-validator.js')) {
+      if (!source.includes('const validateInterval =')) throw new Error('Interval validator export changed.');
+      source = `Archify.validateInterval = (function () {\n${source}\nreturn validateInterval;\n})();`;
+    }
     const parts = generated.split(marker);
     if (parts.length !== 2) throw new Error(`Viewer source must contain exactly one ${file} marker.`);
     // Export owns the sole nested fragment; expand it before Cleanup.

@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
 
-const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall']);
+const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall', 'interval']);
 const DELIVERY_SIDECAR_SUFFIXES = Object.freeze([
   '.delivery.json',
   '.delivery-pending.json',
@@ -2209,7 +2209,7 @@ function usage() {
   archify demo [output-directory]
 
 Types:
-  architecture, workflow, sequence, dataflow, lifecycle, erd, tree, class, timeline, waterfall
+  architecture, workflow, sequence, dataflow, lifecycle, erd, tree, class, timeline, waterfall, interval
 `;
 }
 
@@ -4298,6 +4298,20 @@ function sourceEvidenceFromArtifact(artifact) {
   return evidence;
 }
 
+function intervalDiagnosticsFromArtifact(artifact) {
+  const match = artifact.toString('utf8').match(/<script id="archify-interval-data" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!match) return [];
+  const data = JSON.parse(match[1]);
+  return (data.warnings || []).map((message) => diagnostic({
+    code: 'interval/layout-warning',
+    severity: 'warning',
+    message,
+    subject: { diagramType: 'interval', path: '/tracks' },
+    evidence: { reason: message },
+    supportedFixes: ['inspect the named annotation or interval; adjust its explicit geometry if the overflow or overlap is unintended'],
+  }));
+}
+
 function engineeringProfileFromArtifact(artifact) {
   const match = artifact.toString('utf8').match(/<svg[^>]*\sdata-engineering-profile="([^"]+)"/);
   return match ? match[1] : null;
@@ -4875,7 +4889,10 @@ async function commandDeliver(args) {
       return;
     }
     const engineeringProfile = engineeringProfileFromArtifact(artifact);
-    const localeWarnings = await specificationLocaleDiagnostics(type, specification);
+    const localeWarnings = [
+      ...await specificationLocaleDiagnostics(type, specification),
+      ...intervalDiagnosticsFromArtifact(artifact),
+    ];
     const receipt = {
       schemaVersion: 1,
       receiptId,
@@ -4899,7 +4916,7 @@ async function commandDeliver(args) {
         compositionStatus: result.composition.status,
         ...(engineeringProfile ? { engineeringProfile } : {}),
         errors: result.composition.summary.errors,
-        warnings: result.composition.summary.warnings,
+        warnings: result.composition.summary.warnings + intervalDiagnosticsFromArtifact(artifact).length,
         ...(result.composition.summary.warnings ? {
           compositionIssues: result.composition.issues.filter((issue) => issue.severity === 'warning'),
         } : {}),
@@ -5920,6 +5937,7 @@ async function commandDoctor(args) {
     class: 'payments.class.json',
     timeline: 'payment-incident.timeline.json',
     waterfall: 'checkout-request.waterfall.json',
+    interval: 'storage.interval.json',
   };
 
   for (const type of TYPES) {
@@ -6859,7 +6877,10 @@ async function commandValidate(args) {
             ...artifactIdentity(specification),
           };
           const resolvedQuality = quality || result.composition.profile || 'standard';
-          const localeWarnings = await specificationLocaleDiagnostics(type, specification);
+          const localeWarnings = [
+            ...await specificationLocaleDiagnostics(type, specification),
+            ...intervalDiagnosticsFromArtifact(fs.readFileSync(out)),
+          ];
           const receipt = {
             schemaVersion: 1,
             ok: true,

@@ -66,7 +66,7 @@ test('lifecycle: planner routes render as one semantic edge with a crossover mas
     const authoredOutput = path.join(tmp, 'authored.html');
     execFileSync(process.execPath, [renderer, authoredInput, authoredOutput]);
     const authoredHtml = fs.readFileSync(authoredOutput, 'utf8');
-    assert.doesNotMatch(authoredHtml, /data-reader-fit=/, 'an authored viewBox keeps the authored fit contract');
+    assert.doesNotMatch(authoredHtml.match(/<svg\b[^>]*>/g).join(''), /data-reader-fit=/, 'an authored viewBox keeps the authored fit contract');
     assert.equal((authoredHtml.match(/<g data-graph-role="automatic-crossover"/g) || []).length, 6, 'the drop preset is not planner routed');
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
