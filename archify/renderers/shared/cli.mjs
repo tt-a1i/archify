@@ -88,6 +88,7 @@ export function loadDiagram({ rendererDir, diagramType, defaultExample, argv = p
     defaultOutput: `${diagramType}.html`,
     inputPaths: [inputPath],
     cwd: process.cwd(),
+    regeneration: { title: diagram.meta?.title },
   };
   let outPath;
   try {

@@ -4457,6 +4457,7 @@ async function commandDeliver(args) {
       authoredOutput,
       defaultOutput: `${type}.html`,
       inputPaths: [inputPath],
+      regeneration: { title: diagram?.meta?.title },
     }));
     deliveryAliasOutput = outputPath;
     // Redelivery through a case, normalization, 8.3, or file-symlink alias
@@ -5021,6 +5022,7 @@ async function commandDeliver(args) {
         defaultOutput: `${type}.html`,
         inputPaths: [inputPath],
         otherOutputPaths: [provenancePath],
+        regeneration: { title: diagram?.meta?.title },
       }).outputPath);
       resolveOutputPath({
         requestedOutput: deliveryProvenancePath(currentOutputPath),
@@ -5269,7 +5271,7 @@ async function commandPreview(args) {
       open: !noOpen,
     });
   } catch (error) {
-    fail(`Could not start live preview: ${error.message}`, 1);
+    fail(formatDiagnostics(`Could not start live preview: ${error.message}`, error.archifyDiagnostics || []), 1);
   }
 }
 

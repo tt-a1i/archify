@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import {
   containedBy,
   isValidWindowsSmbShareName,
@@ -370,6 +371,70 @@ export class OutputPathError extends Error {
   }
 }
 
+// Recognize the existing generated format without adding path-dependent
+// metadata to portable artifacts. This is a conservative UX check, not an
+// authentication claim: matching titles do not prove common source identity.
+function isMatchingGeneratedHtml(html, title) {
+  if (typeof title !== 'string' || !title) return false;
+  const markup = html.replace(/<!--[\s\S]*?-->|<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '');
+  const head = markup.match(/^\s*<!doctype html>\s*<html\b[^>]*>\s*<head\b[^>]*>([\s\S]*?)<\/head\s*>/i)?.[1];
+  if (!head || !/<meta name="generator" content="archify \d+\.\d+\.\d+[^"<>]*"\s*\/?\s*>/.test(head)) return false;
+  const names = [...markup.matchAll(/<svg\b[^>]*\baria-labelledby="archify-diagram-title archify-diagram-description"[^>]*>\s*<title id="archify-diagram-title">([^<]*)<\/title>/g)];
+  // Match the renderer's escaping without loading translation catalogs into
+  // the path-safety runtime, which is also used by standalone packaging tools.
+  const escapedTitle = title.replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+  return names.length === 1 && names[0][1] === escapedTitle;
+}
+
+function requireReplacementIntent(outputPath, source, regeneration) {
+  let descriptor;
+  let reason = 'unrecognized-artifact';
+  try {
+    const initial = fs.statSync(outputPath, { bigint: true });
+    // Preserve the existing atomic-output diagnostics for unsupported targets.
+    if (!initial.isFile() || initial.nlink !== 1n) return;
+    descriptor = fs.openSync(canonicalFuturePath(outputPath), fs.constants.O_RDONLY
+      | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+    const before = fs.fstatSync(descriptor, { bigint: true });
+    if (!before.isFile() || before.dev !== initial.dev || before.ino !== initial.ino) {
+      reason = 'target-changed-during-inspection';
+    } else if (before.size > 64n * 1024n * 1024n) {
+      reason = 'recognition-size-limit';
+    } else {
+      const bytes = Buffer.alloc(Number(before.size));
+      let read = 0;
+      while (read < bytes.length) {
+        const count = fs.readSync(descriptor, bytes, read, bytes.length - read, read);
+        if (!count) break;
+        read += count;
+      }
+      const after = fs.fstatSync(descriptor, { bigint: true });
+      if (read !== bytes.length || before.size !== after.size
+        || before.mtimeNs !== after.mtimeNs || before.ctimeNs !== after.ctimeNs) {
+        reason = 'target-changed-during-inspection';
+      } else if (isMatchingGeneratedHtml(bytes.toString('utf8'), regeneration.title)) {
+        return;
+      }
+    }
+  } catch (error) {
+    if (error.code === 'ENOENT' && descriptor === undefined) return;
+    reason = error.code || 'inspection-failed';
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
+  }
+  const message = 'Implicit output would replace an existing HTML file that is not recognized as an Archify diagram with the same title.';
+  throw new OutputPathError(message, {
+    code: 'output/replacement-required', message,
+    subject: { output: outputPath },
+    evidence: { outputSource: source, reason },
+    supportedFixes: [
+      'choose a new output path to preserve the existing file',
+      'to intentionally replace this file, pass its output.html path explicitly as the CLI output argument',
+    ],
+  });
+}
+
 export function resolveOutputPath({
   requestedOutput,
   authoredOutput,
@@ -380,6 +445,7 @@ export function resolveOutputPath({
   cwd = process.cwd(),
   requiredExtension = '.html',
   platform = process.platform,
+  regeneration,
 }) {
   if (authoredOutput !== undefined) validateAuthoredOutputPath(authoredOutput, { cwd });
   const source = requestedOutput !== undefined
@@ -433,6 +499,9 @@ export function resolveOutputPath({
     }
   }
 
+  if (regeneration && source !== 'cli' && requiredExtension === '.html') {
+    requireReplacementIntent(outputPath, source, regeneration);
+  }
   return {
     outputPath,
     source,

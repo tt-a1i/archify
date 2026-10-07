@@ -12,6 +12,30 @@ Use standalone `validate` only for focused diagnosis, passing `--repo-root` for 
 
 ## Validate and deliver
 
+For `render`, `deliver` and `preview`, a positional CLI output path explicitly
+selects the file to replace. An output selected implicitly from `meta.output`
+(or a default where supported) is more conservative: a new file is allowed,
+but an existing regular HTML file is replaced only when it has the recognized
+Archify generator metadata and primary diagram markup with the same title.
+Normal regeneration can change nodes, relationships and styling without an
+extra option. This does not relax the required `meta.output` input contract.
+
+An unrecognized file, a different diagram title, or a file larger than the
+64 MiB recognition budget fails with `output/replacement-required`, preserving
+the existing HTML. Choose another path, or pass the intended `output.html`
+explicitly to approve replacement. This works without an interactive prompt;
+`deliver --json` includes the diagnostic and supported fixes. Preview rejects
+an initial conflict before starting its server and rechecks before publishing
+later generations. A running preview may edit its own successfully published
+title; reopening it after a title change requires explicit output selection.
+
+Recognition is a convenience heuristic, not source-file identity or an
+authentication boundary: another Archify diagram with the same title may also
+match. Customized/older templates that cannot be recognized need explicit
+replacement. No new ownership marker, sidecar or machine-specific path is
+added to HTML. Explicit replacement still obeys all input-alias, file-type,
+hard-link, concurrent-change and atomic-publication protections.
+
 `render` and direct renderer entry points print classified authoring failures
 to stderr as readable diagnostics and exit 1. Input read/JSON parse failures
 use `input/read` or `input/json-parse`; output filesystem failures use

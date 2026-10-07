@@ -41,17 +41,15 @@ function sourceDigest(inputPath) {
   }
 }
 
-function initialAuthoredOutput(inputPath) {
+function initialSource(inputPath) {
   try {
     const source = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-    if (typeof source?.meta?.output === 'string') {
-      return source.meta.output;
-    }
+    return source;
   } catch {
     // An invalid initial source still gets a status shell. Its output target is
     // fixed to the same fallback that `deliver` would use after repair.
   }
-  return undefined;
+  return {};
 }
 
 function previewPage() {
@@ -351,13 +349,15 @@ export async function startPreview(options) {
     throw new Error(`Unknown quality profile "${options.quality}".`);
   }
   const inputPath = path.resolve(options.input);
+  const source = initialSource(inputPath);
   const outputRequest = {
     requestedOutput: options.output,
-    authoredOutput: initialAuthoredOutput(inputPath),
+    authoredOutput: typeof source?.meta?.output === 'string' ? source.meta.output : undefined,
     defaultOutput: `${type}.html`,
     inputPaths: [inputPath],
     inputDescription: 'its JSON input',
     cwd: options.cwd || process.cwd(),
+    regeneration: { title: source?.meta?.title },
   };
   const { outputPath } = resolveOutputPath(outputRequest);
   const outputDirectory = path.dirname(outputPath);
@@ -698,6 +698,9 @@ export async function startPreview(options) {
       commitCandidatePath = undefined;
       commitCandidateIdentity = undefined;
       artifactBuffer = candidate;
+      // The same live session may rename its diagram. Subsequent generations
+      // recognize the title that this session last successfully published.
+      outputRequest.regeneration.title = JSON.parse(currentSource.bytes).meta?.title;
       lastGoodSourceHash = generationHash;
       state.status = 'verified';
       if (!sameArtifact) {
@@ -718,6 +721,10 @@ export async function startPreview(options) {
       publishFailure({
         stage: 'commit',
         error: `Could not publish the verified preview: ${error.message}`,
+        ...(error.archifyDiagnostics ? {
+          diagnostics: error.archifyDiagnostics,
+          code: error.archifyDiagnostics[0]?.code,
+        } : {}),
         ...(error.previewFailure || {}),
       }, '', '', candidatePath);
       return { committed: false, supersededBy: null, candidateIdentity: sourceCandidateIdentity };
