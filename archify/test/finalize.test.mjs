@@ -1138,6 +1138,42 @@ test('finalize compacts a draft that only fails desktop width, and restores it w
   assert.deepEqual(summary.autoRepair.retryDiagnostics, ['composition/label-collision']);
 });
 
+test('finalize restores a compacted draft when a gate after validate fails', async (t) => {
+  const directory = workspace(t);
+  const input = path.join(directory, 'candidate.json');
+  const output = path.join(directory, 'diagram.html');
+  const draft = `${JSON.stringify({
+    meta: {},
+    components: [{ id: 'a', pos: [40, 40] }, { id: 'b', pos: [400, 40] }, { id: 'c', pos: [800, 40] }],
+    connections: [{ id: 'ab', from: 'a', to: 'b' }, { id: 'bc', from: 'b', to: 'c' }],
+  }, null, 2)}\n`;
+  fs.writeFileSync(input, draft);
+  const tooWide = {
+    code: 'composition/desktop-readability', severity: 'error', message: 'too wide',
+    evidence: { viewBoxWidth: 1300, sourceFontPx: 8, availableDiagramWidth: 930, minimumProjectedFontPx: 6 },
+  };
+  let deliveries = 0;
+  let delivery;
+  const runCommand = ({ stage }) => {
+    if (stage === 'deliver') {
+      deliveries += 1;
+      if (deliveries === 1) return result({ schemaVersion: 1, ok: false, command: 'deliver', stage: 'check', diagnostics: [tooWide] }, 1);
+      delivery = passingDelivery({ input, output, source: fs.readFileSync(input, 'utf8') });
+      return result(delivery);
+    }
+    const failing = passingCheck({ output, artifact: delivery.artifact, deliveryReceiptId: delivery.receiptId });
+    return result({ ...failing, ok: false, checks: [{ name: 'artifact-0', ok: false }] }, 1);
+  };
+  const { exitCode, receipt, summary } = await runFinalize({ cliPath: 'archify.mjs', type: 'architecture', input, output, runCommand });
+
+  assert.equal(deliveries, 2);
+  assert.equal(exitCode, 1);
+  assert.equal(fs.readFileSync(input, 'utf8'), draft, 'the original draft is restored byte for byte');
+  assert.equal(summary.autoRepair.outcome, 'reverted');
+  assert.equal(receipt.failedStage, 'validate');
+  assert.deepEqual(receipt.diagnostics.map((d) => d.code), ['composition/desktop-readability']);
+});
+
 test('finalize narrows an end_line past the end of the file once, and leaves a bad start line to the author', async (t) => {
   const directory = workspace(t);
   const input = path.join(directory, 'candidate.json');

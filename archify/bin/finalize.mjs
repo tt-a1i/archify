@@ -1041,9 +1041,10 @@ export async function runFinalize({
       persistReceipts();
       continue;
     }
-    if (repair && failedAtValidate) {
-      // A repair introduced another authoring defect: restore the draft and
-      // report its original failure instead.
+    if (repair && exitCode !== 0) {
+      // A repaired draft that fails any later gate (validate, check or the
+      // browser gate) is not delivered: restore the draft and report its
+      // original failure instead.
       const retryDiagnostics = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
       try {
         replaceCandidate(resolvedInput, repair.originalBytes);
