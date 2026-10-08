@@ -127,6 +127,43 @@ function validExpectedLinks(value) {
   return Number.isSafeInteger(value) && value > 0;
 }
 
+// Win32 never decrements the link count of the surviving name when a hard link is
+// removed. Creating a second name and unlinking it therefore leaves the remaining
+// name reporting two links even though only one name exists. The inflation is
+// written to the directory entry, so it survives process exit, a reopened handle,
+// and a rename round-trip, which makes it indistinguishable from a genuine hard
+// link when an entry is inspected from the outside.
+//
+// The overstatement is one-directional: the count can only claim more names than
+// exist, never fewer. That makes it safe to treat "at least as many links as
+// expected" as proof that the expected name is present, but only where the
+// inspected name is one this module just hard-linked itself and therefore knows
+// how many names it created. Checks that inspect an entry the caller did not
+// create keep reading the count strictly: there, a multi-link handle is a
+// possible hard-link redirection and must keep failing closed, including the
+// `nlink === 0` and `nlink === 2` cases on a pre-existing target.
+//
+// Identity itself is unaffected. `dev` and `ino` stay stable across link, unlink
+// and rename, and stay distinct between different files, so `dev`+`ino` plus the
+// content digest remain authoritative on Windows.
+const inflatedLinkCounts = process.platform === 'win32';
+
+/**
+ * Decide whether an observed link count proves the expected name is present.
+ *
+ * `phase` is the existing discriminator between the two situations this module
+ * cares about:
+ *   - `'inspection'` reads an entry the caller did not create, so an overcount is
+ *     a possible hard-link redirection and must fail closed.
+ *   - `'verification'` re-reads a name this module just linked or renamed, so it
+ *     already knows how many names it made and an overcount is the Win32 artifact.
+ */
+function linkCountMatches(observed, expected, phase) {
+  const target = BigInt(expected);
+  if (!inflatedLinkCounts || phase !== 'verification') return observed === target;
+  return observed >= target;
+}
+
 function validateBindingExpectations(options) {
   const hasSha256 = options.expectedSha256 !== undefined;
   const hasBytes = options.expectedBytes !== undefined;
@@ -240,7 +277,7 @@ function inspectRegularFileDescriptor({
   if (beforeHandle.nlink === 0n) {
     return relation('unknown', `${subject}-link-count-unavailable`, { filePath });
   }
-  if (beforeHandle.nlink !== BigInt(expectedLinks)) {
+  if (!linkCountMatches(beforeHandle.nlink, expectedLinks, phase)) {
     if (beforeHandle.nlink > BigInt(expectedLinks)) {
       return relation('unsupported', `${subject}-hardlinked`, {
         filePath,
@@ -855,10 +892,13 @@ export function quarantineRemoveRegularFileBinding(binding, filePath, {
       error,
     );
   }
+  // This call re-established these names itself, so the Win32 artifact described
+  // at `inflatedLinkCounts` may overstate `nlink`; identity stays proven by dev+ino.
   if (restored.dev !== displaced.dev || restored.ino !== displaced.ino
     || retained.dev !== displaced.dev || retained.ino !== displaced.ino
-    || restored.nlink !== displaced.nlink + 1n
-    || retained.nlink !== displaced.nlink + 1n) {
+    || (!inflatedLinkCounts
+      && (restored.nlink !== displaced.nlink + 1n
+        || retained.nlink !== displaced.nlink + 1n))) {
     return removalRecovery(
       subject,
       'replacement-restore-identity-changed',
@@ -890,7 +930,7 @@ export function quarantineRemoveRegularFileBinding(binding, filePath, {
     );
   }
   if (restored.dev !== displaced.dev || restored.ino !== displaced.ino
-    || restored.nlink !== displaced.nlink) {
+    || (!inflatedLinkCounts && restored.nlink !== displaced.nlink)) {
     const cleanup = removeEmptyAfterFileRemoval();
     return cleanup || relation('different', `${subject}-replacement-final-identity-changed`, {
       filePath: resolvedPath,
