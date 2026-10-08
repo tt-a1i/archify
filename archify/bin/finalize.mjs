@@ -539,6 +539,36 @@ function defaultDeliveryPaths(output) {
   };
 }
 
+// A reverted specification must not retain the retry's current-delivery claim.
+// Preserve sidecars from other deliveries and remove only the verified inode.
+function invalidateRepairedDelivery(output, delivery, deliveryPaths) {
+  if (!delivery?.ok || !delivery.receiptId) return;
+  const file = deliveryPaths(output).provenance;
+  const captured = captureRegularFileBinding(file, {
+    subject: 'finalize-repaired-delivery', includeContent: true,
+  });
+  if (captured.reason?.systemCode === 'ENOENT') return;
+  if (captured.status !== 'captured') throw new Error('Cannot bind the repaired delivery sidecar.');
+  let owned = false;
+  try {
+    const sidecar = JSON.parse(captured.content.buffer.toString('utf8'));
+    if (sidecar.receiptId !== delivery.receiptId) return;
+    owned = sidecar.status === 'current' && sidecar.command === 'deliver'
+      && pathsAlias(sidecar.output, output)
+      && sidecar.artifact?.sha256 === delivery.artifact?.sha256
+      && sidecar.specification?.sha256 === delivery.specification?.sha256;
+    if (!owned) throw new Error('The repaired delivery sidecar changed before rollback.');
+  } finally {
+    releaseRegularFileBinding(captured.binding);
+  }
+  if (owned) {
+    const removed = removeOwnedRegularFile(file, captured.identity, { subject: 'finalize-repaired-delivery' });
+    if (!['removed', 'absent'].includes(removed.status)) {
+      throw new Error('Cannot invalidate the repaired delivery sidecar.');
+    }
+  }
+}
+
 function reservedFinalizePaths({ input, output, outDir, deliveryPaths }) {
   const browser = browserCheckSidecarPaths(output, { outDir });
   return [path.resolve(input), path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
@@ -1138,7 +1168,9 @@ export async function runFinalize({
       // original failure instead.
       const retryDiagnostics = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
       try {
+        invalidateRepairedDelivery(resolvedOutput, receipt.stages.deliver?.receipt, deliveryPaths);
         replaceCandidate(resolvedInput, repair.originalBytes);
+        retireOwnBrowserEvidence();
         Object.assign(receipt, repair.firstAttempt);
         specification = receipt.specification;
         receipt.autoRepair = { ...repair.record, outcome: 'reverted', retryDiagnostics };
