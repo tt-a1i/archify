@@ -8,6 +8,7 @@ import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCro
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 
 const participantTextFit = {
   sublabelPreferred: 7,
@@ -58,23 +59,49 @@ function legendRequiredHeight(width) {
   return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
     + legendFootprint(entries, { width: width - 80 }).extraHeight);
 }
+// A renderer-sized spread canvas widens until every participant label fits,
+// but never past the width where 7px sublabels would project below the
+// desktop reading minimum; an inherently crowded row still fails below.
+const spreadParticipantWidth = (canvasWidth) => Math.max(86,
+  Math.min(190, Math.round((canvasWidth - 124) / Math.max(1, asArray(sequence.participants).length)) - 24));
+const readableCanvasWidth = Math.floor(DESKTOP_READER_DIAGRAM_WIDTH * participantTextFit.sublabelPreferred / MIN_PROJECTED_NODE_TEXT_PX);
+function automaticCanvasWidth() {
+  const participantsFit = (width) => asArray(sequence.participants).every((participant) => (
+    textUnits(participant.label) * 6.8 <= width + 6
+    && (!participant.sublabel || minimumNodeTextWidth(participant.sublabel, participantTextFit.sublabelMinimum) <= availableNodeTextWidth(width))
+  ));
+  if ((sequence.meta?.column_fit || 'spread') !== 'spread' || participantsFit(spreadParticipantWidth(920))) return 920;
+  const needed = Math.max(...asArray(sequence.participants).map((participant) => Math.max(
+    textUnits(participant.label) * 6.8 - 6,
+    participant.sublabel ? minimumNodeTextWidth(participant.sublabel, participantTextFit.sublabelPreferred) + 86 - availableNodeTextWidth(86) : 0,
+  )));
+  const count = Math.max(1, asArray(sequence.participants).length);
+  return Math.min(readableCanvasWidth, Math.max(920, Math.ceil((Math.min(190, needed) + 25) * count + 124)));
+}
 // A renderer-sized canvas grows to keep the legend clear of late messages;
 // an authored viewBox is honored and validated below.
-const viewBox = sequence.meta?.viewBox || [920, Math.max(760, legendRequiredHeight(920))];
+const automaticWidth = sequence.meta?.viewBox ? null : automaticCanvasWidth();
+const viewBox = sequence.meta?.viewBox || [automaticWidth, Math.max(760, legendRequiredHeight(automaticWidth))];
 // The timeline scales with viewBox height: a taller viewBox gains message room,
 // a shorter one shrinks the readable band (validated below) instead of clipping.
 // `column_fit: "spread"` widens the lanes with the viewBox instead of keeping
 // the fixed 108px gap, so a wide canvas gains column distance and label room
-// rather than dead space on the right. The default stays "fixed" so existing
-// diagrams keep their coordinates.
-const columnFit = sequence.meta?.column_fit === 'spread' ? 'spread' : 'fixed';
+// rather than dead space on the right. Spread is the default on both automatic
+// and authored canvases; explicit fixed retains historical coordinates.
+const columnFit = sequence.meta?.column_fit || 'spread';
 const participantCount = Math.max(1, asArray(sequence.participants).length);
-const sideMargin = 62;
-const participantW = columnFit === 'spread'
-  ? Math.max(86, Math.min(190, Math.round((viewBox[0] - sideMargin * 2) / participantCount) - 24))
-  : 86;
+const preferredSideMargin = 62;
+const participantW = columnFit === 'spread' ? spreadParticipantWidth(viewBox[0]) : 86;
+// Narrow feasible frames can reduce the left margin, while ordinary frames
+// keep 62px. Compute card width first so this does not change its sizing rule.
+const minimumParticipantSpan = participantCount * participantW + (participantCount - 1) * 16;
+const sideMargin = columnFit === 'spread'
+  ? Math.max(40, Math.min(preferredSideMargin, viewBox[0] - 40 - minimumParticipantSpan))
+  : preferredSideMargin;
+// Fit the authored width when feasible, preserving a real 16px card gutter.
+// Infeasible frames retain that minimum and fail the capacity check below.
 const colGap = columnFit === 'spread' && participantCount > 1
-  ? Math.max(108, (viewBox[0] - 40 - sideMargin - participantW) / (participantCount - 1))
+  ? Math.max(participantW + 16, (viewBox[0] - 40 - sideMargin - participantW) / (participantCount - 1))
   : 108;
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
@@ -97,9 +124,20 @@ const layout = {
   labelH: readableMessages ? 18 : 16
 };
 
-const participantBoxWidthNote = columnFit === 'spread'
-  ? `participant boxes are ${participantW}px for this viewBox width and ${participantCount} participants`
-  : `participant boxes are a fixed ${participantW}px unless meta.column_fit is "spread"`;
+// Automatic showcase spread can guarantee a readable fit within its bounded
+// canvas. Standard, fixed columns and authored canvases retain historical text
+// sizing; composition reports their projected readability under its own policy.
+const readableAutomaticSublabel = readableMessages && automaticWidth !== null && columnFit === 'spread';
+const readableSublabelMinimum = readableAutomaticSublabel
+  ? Math.max(participantTextFit.sublabelMinimum, Math.ceil(minimumReadableSourceTextPx(viewBox[0]) * 10) / 10)
+  : participantTextFit.sublabelMinimum;
+const readableSublabelPreferred = Math.max(participantTextFit.sublabelPreferred, readableSublabelMinimum);
+
+const participantBoxWidthNote = automaticWidth
+  ? `participant boxes are ${participantW}px: the automatic ${viewBox[0]}px canvas cannot widen further without its 7px sublabels falling below the desktop reading minimum, so keep meta.viewBox omitted`
+  : columnFit === 'spread'
+    ? `participant boxes are ${participantW}px for this viewBox width and ${participantCount} participants`
+    : `participant boxes are a fixed ${participantW}px unless meta.column_fit is "spread"`;
 
 const arrowClass = {
   ...arrowClassMap,
@@ -194,6 +232,7 @@ function messagePath(message) {
 
 function validateSequence() {
   const problems = [];
+  const diagnostics = [];
   if (participants.size !== asArray(sequence.participants).length) problems.push('Participant ids must be unique.');
 
   if (layout.lifelineBottom - layout.lifelineTop < 120) {
@@ -201,9 +240,23 @@ function validateSequence() {
   }
 
   for (const participant of participants.values()) {
+    const participantIndex = asArray(sequence.participants).findIndex((entry) => entry.id === participant.id);
+    const participantProblem = (field, message, evidence, supportedFixes) => {
+      problems.push(message);
+      diagnostics.push({
+        code: `sequence/participant-${field}-overflow`, severity: 'error', message,
+        subject: { diagramType: 'sequence', nodeId: participant.id, path: `/participants/${participantIndex}/${field}` },
+        evidence: { viewBoxWidth: viewBox[0], participantWidth: layout.participantW, ...evidence },
+        supportedFixes,
+      });
+    };
     const estLabelW = textUnits(participant.label) * 6.8;
     if (estLabelW > layout.participantW + 6) {
-      problems.push(`Label "${participant.label}" (~${Math.round(estLabelW)}px) is wider than the ${layout.participantW}px participant box — shorten it.`);
+      const message = automaticWidth
+        ? `Label "${participant.label}" (~${Math.round(estLabelW)}px) is wider than component "${participant.id}" — shorten it to at most ${Math.floor((layout.participantW + 6) / 6.8)} text units (CJK counts 2; ${participantBoxWidthNote}).`
+        : `Label "${participant.label}" (~${Math.round(estLabelW)}px) is wider than component "${participant.id}" (${layout.participantW}px) — shorten the label or widen the participant box.`;
+      participantProblem('label', message, { text: participant.label, requiredWidth: estLabelW, availableWidth: layout.participantW + 6 },
+        ['shorten the participant label while preserving its role', ...(columnFit === 'fixed' ? ['set meta.column_fit to "spread" if fixed coordinates are not required'] : [])]);
     }
     const brandRailProblem = brandTopRailProblem(participant, layout.participantW, 8, 'Participant');
     if (brandRailProblem) problems.push(brandRailProblem);
@@ -211,23 +264,79 @@ function validateSequence() {
     // ordinary case, this rejects what it cannot rescue.
     if (participant.sublabel) {
       const availableTextW = availableNodeTextWidth(layout.participantW);
-      const minimumW = minimumNodeTextWidth(participant.sublabel, participantTextFit.sublabelMinimum);
+      const minimumW = minimumNodeTextWidth(participant.sublabel, readableSublabelMinimum);
       if (minimumW > availableTextW) {
-        problems.push(`Sublabel "${participant.sublabel}" needs ~${Math.ceil(minimumW)}px at the ${participantTextFit.sublabelMinimum}px legible minimum, but participant "${participant.id}" provides ${availableTextW}px — shorten the sublabel (${participantBoxWidthNote}).`);
+        const minimumDescription = readableAutomaticSublabel
+          ? `${readableSublabelMinimum}px minimum that stays readable on this ${viewBox[0]}px canvas`
+          : `${readableSublabelMinimum}px legible minimum`;
+        const message = `Sublabel "${participant.sublabel}" needs ~${Math.ceil(minimumW)}px at the ${minimumDescription}, but participant "${participant.id}" provides ${availableTextW}px — shorten the sublabel (${participantBoxWidthNote}).`;
+        participantProblem('sublabel', message, { text: participant.sublabel, requiredWidth: minimumW, availableWidth: availableTextW, minimumFontPx: readableSublabelMinimum },
+          ['shorten the participant sublabel while preserving its role or protocol; move supplementary detail into a card', ...(columnFit === 'fixed' ? ['set meta.column_fit to "spread" if fixed coordinates are not required'] : [])]);
       }
     }
   }
 
-  for (const message of asArray(sequence.messages)) {
-    if (!participants.has(message.from)) problems.push(`Message "${message.label}" references unknown source "${message.from}".`);
-    if (!participants.has(message.to)) problems.push(`Message "${message.label}" references unknown target "${message.to}".`);
+  const messageList = asArray(sequence.messages);
+  const participantList = asArray(sequence.participants);
+  const participantOrder = new Map(participantList.map((p, index) => [p.id, index]));
+  for (const message of messageList) {
+    const messageIndex = messageList.indexOf(message);
+    for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
+      if (participants.has(message[field])) continue;
+      const problem = `Message "${message.label}" references unknown ${endpoint} "${message[field]}".`;
+      const otherField = field === 'from' ? 'to' : 'from';
+      const anchorOrder = participantOrder.get(message[otherField]) ?? 0;
+      const candidates = [...participantOrder.keys()]
+        .filter((id) => id !== message[otherField])
+        .sort((a, b) => Math.abs(participantOrder.get(a) - anchorOrder) - Math.abs(participantOrder.get(b) - anchorOrder));
+      diagnostics.push({
+        code: 'sequence/unknown-endpoint', severity: 'error', message: problem,
+        subject: {
+          diagramType: 'sequence',
+          message: message.label ?? null,
+          path: `/messages/${messageIndex}/${field}`,
+          from: message.from,
+          to: message.to,
+        },
+        evidence: { endpoint, unknownNodeId: message[field], availableNodeIds: candidates },
+        supportedFixes: candidates.slice(0, 3).map((id) => `set /messages/${messageIndex}/${field} to verified node id "${id}"`),
+      });
+      problems.push(problem);
+    }
     if (typeof message.y !== 'number') problems.push(`Message "${message.label}" must provide a numeric y.`);
     if (message.y < layout.lifelineTop + 18 || message.y > layout.lifelineBottom - 18) {
       problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${layout.lifelineBottom - 18}.`);
     }
     if (participants.has(message.from) && participants.has(message.to)) {
-      const distance = Math.abs(participants.get(message.to).cx - participants.get(message.from).cx);
-      if (distance < 60) problems.push(`Message "${message.label}" spans ${Math.round(distance)}px (minimum 60px) — give its participants more column distance.`);
+      if (message.from === message.to) {
+        const problem = `Message "${message.label}" is a self-message on participant "${message.from}"; this Sequence renderer supports only messages between distinct participants. Participant spacing cannot repair it. Preserve the internal step's meaning and order in a supported representation such as a note on a real message or a card; do not invent a participant.`;
+        diagnostics.push({
+          code: 'sequence/self-message-unsupported', severity: 'error', message: problem,
+          subject: {
+            diagramType: 'sequence',
+            message: message.label,
+            collection: 'messages',
+            index: messageIndex,
+            path: `/messages/${messageIndex}`,
+            ...(message.id ? { id: message.id } : {}),
+            from: message.from,
+            to: message.to,
+            fromPath: `/messages/${messageIndex}/from`,
+            toPath: `/messages/${messageIndex}/to`,
+          },
+          evidence: {
+            participant: message.from,
+            participantPath: `/participants/${participantOrder.get(message.from)}`,
+            y: message.y,
+            supportedMessageGeometry: 'horizontal-between-distinct-participants',
+          },
+          supportedFixes: [],
+        });
+        problems.push(problem);
+      } else {
+        const distance = Math.abs(participants.get(message.to).cx - participants.get(message.from).cx);
+        if (distance < 60) problems.push(`Message "${message.label}" spans ${Math.round(distance)}px (minimum 60px) — give its participants more column distance.`);
+      }
     }
   }
 
@@ -368,6 +477,7 @@ function validateSequence() {
   if (problems.length) {
     throwDiagnosticProblems('Sequence layout validation failed', problems, {
       subject: { diagramType: 'sequence' },
+      diagnostics,
     });
   }
 }
@@ -376,7 +486,7 @@ function renderParticipant(participant) {
   const fill = componentFill[participant.type] || 'c-external';
   const hasSub = participant.sublabel != null && participant.sublabel !== '';
   const sub = hasSub
-    ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + layout.participantSublabelY}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, participantTextFit.sublabelPreferred, participantTextFit.sublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
+    ? `\n          <text data-detail="context" x="${participant.cx}" y="${layout.topY + layout.participantSublabelY}" class="t-muted" font-size="${fittedNodeFontSize(participant.sublabel, layout.participantW, readableSublabelPreferred, readableSublabelMinimum)}" text-anchor="middle">${esc(participant.sublabel)}</text>`
     : '';
   const brand = renderBrandMark(participant, { x: participant.x + layout.participantW - 22, y: layout.topY + 6 });
   const labelFontSize = fittedNodeFontSize(participant.label, brandLabelFitWidth(participant, layout.participantW), 11, 8);
@@ -483,7 +593,7 @@ function renderSvg() {
   // Same default-canvas contract as lifecycle: 920x760 is below the 1.55 wide
   // ratio, so without intrinsic-height the desktop Reader can neither narrow
   // nor scroll it and every default sequence fails the browser gate.
-  const readerFit = sequence.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
+  const readerFit = sequence.meta?.viewBox ? '' : ' data-reader-fit="width-first"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-sequence-column-fit="${columnFit}"${readerFit} ${svgRootAttrs(sequence.meta)}>
 ${svgAccessibleText(sequence.meta, 'sequence')}
 ${renderDefinitions()}

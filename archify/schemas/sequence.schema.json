@@ -52,7 +52,7 @@
           "$ref": "common.schema.json#/$defs/qualityProfile"
         },
         "column_fit": {
-          "description": "Horizontal participant layout. Omit this field or use fixed for the stable 86px boxes and 108px gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives wider boxes and gaps from the viewBox without changing participant order or message semantics.",
+          "description": "Horizontal participant layout. Defaults to spread whether or not meta.viewBox is supplied. Explicit fixed preserves the historical 86px boxes and 108px column gap. Use spread when a wide viewBox would leave unused horizontal space or meaningful participant labels do not fit the fixed boxes; spread derives box width and column distance from the viewBox with at least a 16px gap between participant cards without changing participant order or message semantics.",
           "enum": ["fixed", "spread"]
         },
         "repository": {

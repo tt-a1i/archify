@@ -66,8 +66,8 @@ muted text color.
 | Constant | Value |
 |----------|-------|
 | viewBox | default `[920, 760]`, taller when late content needs legend room; schema minimum `[480, 480]` |
-| Participant boxes | `fixed` (default): 86×54 at y 72; `spread`: viewBox-relative width from 86px up to 190px |
-| Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width |
+| Participant boxes | `spread` (default): viewBox-relative width from 86px up to 190px; `fixed`: 86px wide; both 60px tall at y 72 |
+| Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width with at least a 16px card gutter |
 | Participant count | the last box must end at or before width − 40; layouts that cannot fit fail closed |
 | Lifelines | from y 142 down to height − 65 (drawn to just above the legend); band must be ≥120px tall |
 | Message `y` range | `[160, height − 83]` |
@@ -81,21 +81,36 @@ participant ids; activations also require `to > from`.
 
 ### Column fit
 
-Sequence diagrams use `meta.column_fit: "fixed"` by default so existing
-documents keep their historical coordinates. Use `"spread"` when a wide
+Sequence diagrams default to `meta.column_fit: "spread"`, whether or not
+`meta.viewBox` is supplied.
+Explicit `"fixed"` preserves the historical 86px boxes and 108px column gap.
+To retain historical fixed coordinates, set `meta.column_fit: "fixed"` explicitly.
+Use `"spread"` when a wide
 viewBox would otherwise leave empty space on the right or when meaningful
 participant labels do not fit the fixed 86px boxes. Spread derives box width
 and column distance from the viewBox while preserving participant order,
-lifelines, and message semantics.
+lifelines, and message semantics. Participant cards retain at least a 16px
+gutter. Narrow canvases that can fit those cards may reduce the left margin
+from 62px down to 40px; ordinary canvases keep 62px and the right margin
+remains 40px. Frames too narrow for those margins and gutters fail rather than
+enlarge the authored viewBox.
 
 The artifact checker reports `composition.sequenceColumnSpace` from the rendered
 participants, routes and text. A large unused right-hand region in a fixed layout
 can produce an `inspect-sequence-width` recommendation in `finalize`; it is advice,
 not a new warning or failure. See [Sequence width review](../../references/delivery-contract.md#sequence-width-review)
-for the bounded authoring repair and explicit-fixed/legacy preservation rules.
+for the bounded authoring repair and explicit-fixed preservation rules.
 
 ## Design Rules
 
+- Messages currently require distinct `from` and `to` participants. Although
+  schema-v1 accepts matching IDs, this renderer does not draw self-call loops
+  and rejects them with `sequence/self-message-unsupported`, naming the message
+  path and participant. Increasing column distance cannot repair a self-message.
+  Preserve an internal step's wording, ownership, and order in a note on an
+  actual interaction or an explicitly ordered card. Do not invent another
+  participant or change the target merely to pass validation. These authoring
+  choices require semantic review and are not advertised as automatic fixes.
 - Put participants across the top, ordered by the story the reader should
   follow.
 - Time moves downward.

@@ -1,0 +1,25 @@
+{
+  "name": "archify-repository",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "npm --prefix archify run check:viewer && npm --prefix archify run check:brand-marks && npm --prefix archify run check:validators && npm --prefix archify run check:release-identity && node test/golden.mjs && node scripts/run-tests.mjs",
+    "test:focus": "node scripts/run-tests.mjs --require-files",
+    "test:compat": "node scripts/run-compat-tests.mjs",
+    "test:browser": "node scripts/run-browser-tests.mjs",
+    "test:webm": "node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "parse5": "7.3.0",
+    "saxes": "6.0.0",
+    "skills": "1.7.0",
+    "yaml": "2.9.1"
+  },
+  "overrides": {
+    "fast-uri": "^3.1.7"
+  }
+}

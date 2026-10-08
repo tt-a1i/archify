@@ -58,12 +58,42 @@ HTML reads stop at an explicit head ending outside comments, raw-text elements
 and quoted attributes, including when those tokens span network chunks. The
 256 KiB head limit and capture deadline still apply; a larger body after the
 head is not read for icon discovery.
+Icon candidates come from complete `link` tags outside comments, raw text and
+template contents. Attribute values and lookalike names such as `data-href`
+cannot supply icon declarations; quoted `>` characters stay within their tags.
+For `text/html`, discovery treats `noscript` contents as raw text, matching
+scripting-enabled HTML parsing; capture does not execute scripts. This exclusion
+does not apply to `application/xhtml+xml`, where `noscript` links remain
+discoverable. XHTML empty elements such as `<script />` and `<template />` do not
+hide following links; the same trailing slash does not close those elements in
+`text/html`.
 Unknown URL capture accepts only bounded raster image formats, blocks
 credentials, nonstandard public ports, and private or link-local destinations,
 uses bounded concurrency and one total deadline, and returns the captured
 content digest. Later render and validate operations require that exact digest;
 blocked, unavailable, changed, oversized, or unsafe content fails closed instead
 of silently changing the artifact.
+
+Remote-brand provenance in capture receipts, node metadata and SVG/HTML keeps
+the source URL's HTTP(S) scheme, host, port and path, but omits userinfo, query
+strings and fragments. The authored `brand.url` and all download/redirect URLs
+remain unchanged so existing pins still reproduce the same bytes and digest.
+Credential-bearing download URLs remain rejected. Built-in marks retain their
+recorded catalogue provenance.
+
+The public source link identifies the original site/path, not necessarily a
+downloadable asset: removing a signed query or a query-based page selector can
+make that link unusable or less specific. Prefer capturing a stable public
+landing page that exposes the intended icon when one is available; do not edit
+an existing pin's URL without capturing and verifying that source again. Paths
+are retained, so this normalization is not a general URL-secret scrubber.
+
+After upgrading from a version that captured inactive HTML markup (including
+`noscript`), an existing URL pin may fail with `brand/digest-mismatch` because
+discovery now selects a different icon. Inspect the intended icon, rerun the
+capture command above for the same URL, and explicitly replace the authored
+`brand` value with the returned pin. Existing pins are not rewritten
+automatically, and digest verification remains enforced.
 
 For ICO captures, every directory entry must reference a non-empty image range
 after the complete directory and within the downloaded file. This bounds check

@@ -22,6 +22,7 @@ never collapsed onto another catalog.
 | --- | --- | --- |
 | `en` | Archify source strings | Canonical |
 | `zh-CN` | #108 | Maintained with the renderer |
+| `zh-TW` | kevinlincg | Complete; OpenCC `s2twp` conversion hand-reviewed for Taiwan terminology; not independently native-reviewed |
 | `es` | Juan Pablo Tamayo (#457, moved to data in #586) | Complete; not independently native-reviewed |
 | `ko` | uygnoey (#457) | Complete; not independently native-reviewed |
 

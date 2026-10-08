@@ -1,0 +1,324 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Omnigent 会话回合工作流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "x.html"
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "客户端 · CLI / Web"
+    },
+    {
+      "id": "server",
+      "label": "Omnigent 服务器"
+    },
+    {
+      "id": "policy",
+      "label": "策略关卡（服务器）",
+      "variant": "exception"
+    },
+    {
+      "id": "runner",
+      "label": "Runner · 主机进程"
+    },
+    {
+      "id": "harness",
+      "label": "Harness 运行时"
+    }
+  ],
+  "phases": [
+    {
+      "id": "intake",
+      "label": "接收 + 输入策略",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "schedule",
+      "label": "调度回合",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "tooling",
+      "label": "工具调用 + 策略",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "send",
+    "ingest",
+    "route",
+    "turn",
+    "loop",
+    "dispatch",
+    "toolGate",
+    "exec",
+    "resultGate"
+  ],
+  "nodes": [
+    {
+      "id": "send",
+      "lane": "client",
+      "col": 0,
+      "type": "frontend",
+      "label": "用户发送消息",
+      "sublabel": "POST …/events"
+    },
+    {
+      "id": "ingest",
+      "lane": "server",
+      "col": 1,
+      "type": "backend",
+      "label": "接收事件",
+      "sublabel": "校验 + REQUEST 策略"
+    },
+    {
+      "id": "inputDeny",
+      "lane": "policy",
+      "col": 1,
+      "type": "security",
+      "label": "输入被拒",
+      "sublabel": "deny 提示 → idle"
+    },
+    {
+      "id": "route",
+      "lane": "server",
+      "col": 2,
+      "type": "backend",
+      "label": "解析 Runner",
+      "sublabel": "离线则主机重启"
+    },
+    {
+      "id": "native",
+      "lane": "harness",
+      "col": 2,
+      "type": "backend",
+      "label": "Native 终端",
+      "sublabel": "tmux 注入 · 转录回写"
+    },
+    {
+      "id": "turn",
+      "lane": "runner",
+      "col": 3,
+      "type": "backend",
+      "label": "启动回合",
+      "sublabel": "_run_turn_bg",
+      "tag": "回合中则缓冲"
+    },
+    {
+      "id": "loop",
+      "lane": "harness",
+      "col": 3,
+      "type": "backend",
+      "label": "智能体循环",
+      "sublabel": "LLM → function_call"
+    },
+    {
+      "id": "dispatch",
+      "lane": "runner",
+      "col": 4,
+      "type": "backend",
+      "label": "派发工具",
+      "sublabel": "dispatch_tool_locally"
+    },
+    {
+      "id": "toolGate",
+      "lane": "policy",
+      "col": 4,
+      "type": "security",
+      "label": "TOOL_CALL 策略",
+      "sublabel": "MCP 代理 tools/call",
+      "tag": "deny → 错误结果"
+    },
+    {
+      "id": "approve",
+      "lane": "client",
+      "col": 4,
+      "type": "frontend",
+      "label": "人工审批卡片",
+      "sublabel": "accept / decline"
+    },
+    {
+      "id": "exec",
+      "lane": "runner",
+      "col": 5,
+      "type": "backend",
+      "label": "执行工具",
+      "sublabel": "POST /mcp/execute"
+    },
+    {
+      "id": "resultGate",
+      "lane": "policy",
+      "col": 5,
+      "type": "security",
+      "label": "TOOL_RESULT 策略",
+      "sublabel": "抑制或改写输出"
+    },
+    {
+      "id": "relay",
+      "lane": "server",
+      "col": 3,
+      "type": "backend",
+      "label": "事件中继",
+      "sublabel": "持久化条目 + 发布"
+    },
+    {
+      "id": "stream",
+      "lane": "client",
+      "col": 3,
+      "type": "frontend",
+      "label": "会话实时流",
+      "sublabel": "GET …/stream SSE"
+    }
+  ],
+  "edges": [
+    {
+      "id": "send-ingest",
+      "from": "send",
+      "to": "ingest",
+      "label": "message",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingest-route",
+      "from": "ingest",
+      "to": "route",
+      "label": "ALLOW",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingest-deny",
+      "from": "ingest",
+      "to": "inputDeny",
+      "label": "DENY / 未批准",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "route-turn",
+      "from": "route",
+      "to": "turn",
+      "label": "持久化 + 转发",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-native",
+      "from": "route",
+      "to": "native",
+      "label": "native 会话",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "turn-loop",
+      "from": "turn",
+      "to": "loop",
+      "label": "流式回合",
+      "variant": "emphasis"
+    },
+    {
+      "id": "turn-relay",
+      "from": "turn",
+      "to": "relay",
+      "label": "SSE 事件",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "id": "relay-stream",
+      "from": "relay",
+      "to": "stream",
+      "label": "response.* / status",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "id": "loop-dispatch",
+      "from": "loop",
+      "to": "dispatch",
+      "label": "action_required",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dispatch-gate",
+      "from": "dispatch",
+      "to": "toolGate",
+      "label": "tools/call",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gate-approve",
+      "from": "toolGate",
+      "to": "approve",
+      "label": "ASK",
+      "variant": "security",
+      "role": "branch"
+    },
+    {
+      "id": "approve-gate",
+      "from": "approve",
+      "to": "toolGate",
+      "label": "批准后重试",
+      "variant": "security",
+      "role": "return"
+    },
+    {
+      "id": "gate-exec",
+      "from": "toolGate",
+      "to": "exec",
+      "label": "ALLOW",
+      "variant": "emphasis"
+    },
+    {
+      "id": "exec-result",
+      "from": "exec",
+      "to": "resultGate",
+      "label": "工具输出",
+      "variant": "emphasis"
+    },
+    {
+      "id": "result-loop",
+      "from": "resultGate",
+      "to": "loop",
+      "label": "结果回传 · 继续循环",
+      "variant": "default",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "策略判定规则",
+      "items": [
+        "PolicyEngine 按 YAML 顺序评估；DENY 立即短路",
+        "ASK 的标签/状态写入仅在批准后生效",
+        "TOOL_CALL 评估失败时 fail-closed（拒绝）"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "会话状态",
+      "items": [
+        "idle → running → waiting → idle；不可恢复错误为 failed",
+        "回合进行中的新消息先缓冲，回合结束后续跑",
+        "interrupt 不进队列，直接取消当前回合"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Native 终端钩子",
+      "items": [
+        "PreToolUse / UserPromptSubmit 钩子调用 /policies/evaluate",
+        "服务器挂起 ASK，等待人工后返回硬性 ALLOW / DENY"
+      ]
+    }
+  ]
+}

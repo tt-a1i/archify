@@ -20,7 +20,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const diff = execFileSync('git', ['diff', '--no-renames', '--name-only', '-z', base, 'HEAD'], { encoding: 'utf8' });
     const paths = diff.split('\0').filter(Boolean);
     scope = classifyPaths(paths);
-    website = paths.some(path => /^(website\/|docs\/|scripts\/|archify\/(recipes\/|package\.json|test\/site-language-continuity\.test\.mjs)|\.github\/workflows\/ci\.yml)/.test(path));
+    website = paths.some(path => /^(website\/|docs\/|scripts\/|archify\/(recipes\/|package\.json)|test\/site-language-continuity\.test\.mjs|package(?:-lock)?\.json|\.github\/workflows\/ci\.yml)/.test(path));
   }
   console.log(`CI scope: ${scope}`);
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `scope=${scope}\nwebsite=${website}\n`);

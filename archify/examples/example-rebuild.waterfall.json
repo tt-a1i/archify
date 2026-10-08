@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "diagram_type": "waterfall",
+  "meta": {
+    "title": "Rebuilding the bundled examples",
+    "subtitle": "Measured on one local run: render and artifact check of eight examples across three concurrent workers (process start to exit, ms from batch start).",
+    "output": "example-rebuild-waterfall.html",
+    "evidence": "measured",
+    "unit": "ms",
+    "quality_profile": "showcase"
+  },
+  "spans": [
+    {
+      "id": "batch",
+      "name": "Rebuild bundled examples (3 workers)",
+      "start": 0,
+      "end": 1286.2
+    },
+    {
+      "id": "ex0",
+      "name": "web-app.architecture",
+      "start": 0.2,
+      "end": 429.7,
+      "parent": "batch",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex0_render",
+      "name": "render-architecture.mjs",
+      "start": 0.2,
+      "end": 263.3,
+      "parent": "ex0",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex0_check",
+      "name": "check-render-output.mjs",
+      "start": 263.3,
+      "end": 429.7,
+      "parent": "ex0",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex1",
+      "name": "agent-tool-call.workflow",
+      "start": 1.6,
+      "end": 445.2,
+      "parent": "batch",
+      "service": "worker 2"
+    },
+    {
+      "id": "ex1_render",
+      "name": "render-workflow.mjs",
+      "start": 1.6,
+      "end": 298.5,
+      "parent": "ex1",
+      "service": "worker 2"
+    },
+    {
+      "id": "ex1_check",
+      "name": "check-render-output.mjs",
+      "start": 298.5,
+      "end": 445.2,
+      "parent": "ex1",
+      "service": "worker 2"
+    },
+    {
+      "id": "ex2",
+      "name": "cache-miss-request.sequence",
+      "start": 2.2,
+      "end": 398.4,
+      "parent": "batch",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex2_render",
+      "name": "render-sequence.mjs",
+      "start": 2.2,
+      "end": 224.4,
+      "parent": "ex2",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex2_check",
+      "name": "check-render-output.mjs",
+      "start": 224.4,
+      "end": 398.4,
+      "parent": "ex2",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex3",
+      "name": "product-analytics.dataflow",
+      "start": 398.4,
+      "end": 830.7,
+      "parent": "batch",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex3_render",
+      "name": "render-dataflow.mjs",
+      "start": 398.4,
+      "end": 593.4,
+      "parent": "ex3",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex3_check",
+      "name": "check-render-output.mjs",
+      "start": 593.4,
+      "end": 830.7,
+      "parent": "ex3",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex4",
+      "name": "agent-run.lifecycle",
+      "start": 429.8,
+      "end": 862.8,
+      "parent": "batch",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex4_render",
+      "name": "render-lifecycle.mjs",
+      "start": 429.8,
+      "end": 643.7,
+      "parent": "ex4",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex4_check",
+      "name": "check-render-output.mjs",
+      "start": 643.7,
+      "end": 862.8,
+      "parent": "ex4",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex5",
+      "name": "orders.erd",
+      "start": 445.2,
+      "end": 868.3,
+      "parent": "batch",
+      "service": "worker 2"
+    },
+    {
+      "id": "ex5_render",
+      "name": "render-erd.mjs",
+      "start": 445.2,
+      "end": 645.9,
+      "parent": "ex5",
+      "service": "worker 2"
+    },
+    {
+      "id": "ex5_check",
+      "name": "check-render-output.mjs",
+      "start": 645.9,
+      "end": 868.3,
+      "parent": "ex5",
+      "service": "worker 2"
+    },
+    {
+      "id": "ex6",
+      "name": "subscription-billing.erd",
+      "start": 830.7,
+      "end": 1231.3,
+      "parent": "batch",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex6_render",
+      "name": "render-erd.mjs",
+      "start": 830.7,
+      "end": 1022.2,
+      "parent": "ex6",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex6_check",
+      "name": "check-render-output.mjs",
+      "start": 1022.2,
+      "end": 1231.3,
+      "parent": "ex6",
+      "service": "worker 3"
+    },
+    {
+      "id": "ex7",
+      "name": "checkout-request.waterfall",
+      "start": 862.8,
+      "end": 1286.2,
+      "parent": "batch",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex7_render",
+      "name": "render-waterfall.mjs",
+      "start": 862.8,
+      "end": 1082.5,
+      "parent": "ex7",
+      "service": "worker 1"
+    },
+    {
+      "id": "ex7_check",
+      "name": "check-render-output.mjs",
+      "start": 1082.5,
+      "end": 1286.2,
+      "parent": "ex7",
+      "service": "worker 1"
+    }
+  ]
+}

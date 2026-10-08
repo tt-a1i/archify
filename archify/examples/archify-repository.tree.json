@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "diagram_type": "tree",
+  "meta": {
+    "title": "Archify repository layout",
+    "subtitle": "Observed directory structure of this repository (selected files). Runs of three or more files are listed; the viewer/ branch starts collapsed.",
+    "output": "archify-repository-tree.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "direction": "down"
+  },
+  "nodes": [
+    {
+      "id": "repo",
+      "label": "archify repository",
+      "sublabel": "Skill, viewer, and site"
+    },
+    {
+      "id": "skill",
+      "label": "archify/",
+      "parent": "repo",
+      "sublabel": "Installable Skill package"
+    },
+    {
+      "id": "viewer",
+      "label": "viewer/",
+      "parent": "repo",
+      "sublabel": "Inlined into the template",
+      "collapsed": true
+    },
+    {
+      "id": "site",
+      "label": "website/",
+      "parent": "repo",
+      "sublabel": "Astro project site"
+    },
+    {
+      "id": "scripts",
+      "label": "scripts/",
+      "parent": "repo",
+      "sublabel": "Build and freshness tools"
+    },
+    {
+      "id": "renderers",
+      "label": "renderers/",
+      "parent": "skill",
+      "sublabel": "One per diagram type"
+    },
+    {
+      "id": "schemas",
+      "label": "schemas/",
+      "parent": "skill",
+      "sublabel": "Typed JSON contracts"
+    },
+    {
+      "id": "bin",
+      "label": "bin/",
+      "parent": "skill",
+      "sublabel": "CLI entry points"
+    },
+    {
+      "id": "references",
+      "label": "references/",
+      "parent": "skill",
+      "sublabel": "Authoring contracts"
+    },
+    {
+      "id": "r_arch",
+      "label": "architecture/",
+      "parent": "renderers",
+      "sublabel": "Boundaries and router"
+    },
+    {
+      "id": "r_workflow",
+      "label": "workflow/",
+      "parent": "renderers",
+      "sublabel": "Workflow compiler"
+    },
+    {
+      "id": "r_sequence",
+      "label": "sequence/",
+      "parent": "renderers"
+    },
+    {
+      "id": "r_dataflow",
+      "label": "dataflow/",
+      "parent": "renderers"
+    },
+    {
+      "id": "r_lifecycle",
+      "label": "lifecycle/",
+      "parent": "renderers"
+    },
+    {
+      "id": "r_erd",
+      "label": "erd/",
+      "parent": "renderers",
+      "sublabel": "Crow's foot markers"
+    },
+    {
+      "id": "r_tree",
+      "label": "tree/",
+      "parent": "renderers",
+      "sublabel": "This renderer"
+    },
+    {
+      "id": "r_shared",
+      "label": "shared/",
+      "parent": "renderers",
+      "sublabel": "Shared helpers"
+    },
+    {
+      "id": "s_cli",
+      "label": "cli.mjs",
+      "parent": "r_shared",
+      "sublabel": "Load, validate, write"
+    },
+    {
+      "id": "s_geometry",
+      "label": "geometry.mjs",
+      "parent": "r_shared",
+      "sublabel": "Composition gates"
+    },
+    {
+      "id": "s_i18n",
+      "label": "i18n.mjs",
+      "parent": "r_shared",
+      "sublabel": "Locale catalogs"
+    },
+    {
+      "id": "s_validators",
+      "label": "generated-validators.mjs",
+      "parent": "r_shared",
+      "sublabel": "Schema validators"
+    },
+    {
+      "id": "b_archify",
+      "label": "archify.mjs",
+      "parent": "bin",
+      "sublabel": "CLI: validate, finalize"
+    },
+    {
+      "id": "b_finalize",
+      "label": "finalize.mjs",
+      "parent": "bin",
+      "sublabel": "Render, check, deliver"
+    },
+    {
+      "id": "b_preview",
+      "label": "preview.mjs",
+      "parent": "bin",
+      "sublabel": "Live preview server"
+    },
+    {
+      "id": "v_focus",
+      "label": "focus.js",
+      "parent": "viewer",
+      "sublabel": "Semantic passport"
+    },
+    {
+      "id": "v_export",
+      "label": "export.js",
+      "parent": "viewer",
+      "sublabel": "SVG, PNG, WebM export"
+    },
+    {
+      "id": "v_tree",
+      "label": "tree-branches.js",
+      "parent": "viewer",
+      "sublabel": "Expand and collapse"
+    },
+    {
+      "id": "v_camera",
+      "label": "viewer-camera.js",
+      "parent": "viewer",
+      "sublabel": "Pan, zoom, reveal"
+    },
+    {
+      "id": "sc_viewer",
+      "label": "generate-viewer.mjs",
+      "parent": "scripts",
+      "sublabel": "Inlines viewer/"
+    },
+    {
+      "id": "sc_zip",
+      "label": "build-zip.sh",
+      "parent": "scripts",
+      "sublabel": "Deterministic archive"
+    },
+    {
+      "id": "sc_gallery",
+      "label": "build-gallery.mjs",
+      "parent": "scripts"
+    }
+  ]
+}

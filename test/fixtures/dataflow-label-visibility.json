@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": { "title": "Two-line flow label visibility", "output": "diagram.html", "locale": "en", "viewBox": [600, 360] },
+  "stages": [{ "label": "Caller" }, { "label": "Process" }],
+  "nodes": [
+    { "id": "adapter", "type": "backend", "label": "Adapter", "stage": 0, "row": 0 },
+    { "id": "provider", "type": "external", "label": "Provider CLI", "stage": 1, "row": 0 }
+  ],
+  "flows": [{ "id": "launch", "from": "adapter", "to": "provider", "label": "argv / JSON-RPC", "classification": "Native flags", "variant": "security" }]
+}

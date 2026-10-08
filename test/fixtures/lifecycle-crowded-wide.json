@@ -1,0 +1,237 @@
+{
+ "schema_version": 3,
+ "diagram_type": "lifecycle",
+ "meta": {
+  "title": "Crowded wide lifecycle",
+  "locale": "zh-CN",
+  "output": "lifecycle.html",
+  "quality_profile": "showcase"
+ },
+ "mainPath": [
+  "connecting",
+  "planning",
+  "plan_ready",
+  "executing",
+  "awaiting_acceptance",
+  "completed"
+ ],
+ "states": [
+  {
+   "id": "connecting",
+   "type": "start",
+   "label": "正在连接",
+   "sublabel": "建立 ACP 会话",
+   "tag": "connecting",
+   "step": "01"
+  },
+  {
+   "id": "planning",
+   "type": "active",
+   "label": "规划中",
+   "sublabel": "生成 Plan",
+   "tag": "running·plan",
+   "step": "02"
+  },
+  {
+   "id": "plan_ready",
+   "type": "decision",
+   "label": "待确认计划",
+   "sublabel": "等待确认",
+   "tag": "ready·plan",
+   "step": "03"
+  },
+  {
+   "id": "executing",
+   "type": "active",
+   "label": "执行中",
+   "sublabel": "按 Plan 执行",
+   "tag": "running·process",
+   "step": "04"
+  },
+  {
+   "id": "awaiting_acceptance",
+   "type": "waiting",
+   "label": "待验收",
+   "sublabel": "结果卡片",
+   "tag": "ready·result",
+   "step": "05"
+  },
+  {
+   "id": "completed",
+   "type": "success",
+   "label": "已完成",
+   "sublabel": "结果已验收",
+   "tag": "completed",
+   "step": "06"
+  },
+  {
+   "id": "undelivered",
+   "type": "waiting",
+   "label": "回合结束未交付",
+   "sublabel": "缺少有效 mobi-result",
+   "tag": "ready·process"
+  },
+  {
+   "id": "revision",
+   "type": "waiting",
+   "label": "待返工反馈",
+   "sublabel": "revisionRequested",
+   "tag": "ready·result"
+  },
+  {
+   "id": "paused",
+   "type": "neutral",
+   "label": "已停止",
+   "sublabel": "用户停止或宿主重启",
+   "tag": "paused"
+  },
+  {
+   "id": "error",
+   "type": "failure",
+   "label": "出错了",
+   "sublabel": "ACP 或协议异常",
+   "tag": "error"
+  }
+ ],
+ "transitions": [
+  {
+   "id": "t-connect",
+   "from": "connecting",
+   "to": "planning",
+   "label": "会话就绪"
+  },
+  {
+   "id": "t-plan-done",
+   "from": "planning",
+   "to": "plan_ready",
+   "label": "回合结束"
+  },
+  {
+   "id": "t-confirm",
+   "from": "plan_ready",
+   "to": "executing",
+   "label": "确认计划",
+   "variant": "emphasis"
+  },
+  {
+   "id": "t-deliver",
+   "from": "executing",
+   "to": "awaiting_acceptance",
+   "label": "mobi-result"
+  },
+  {
+   "id": "t-accept",
+   "from": "awaiting_acceptance",
+   "to": "completed",
+   "label": "验收通过",
+   "variant": "emphasis"
+  },
+  {
+   "id": "t-clarify",
+   "from": "plan_ready",
+   "to": "planning",
+   "label": "补充消息"
+  },
+  {
+   "id": "t-native-approve",
+   "from": "planning",
+   "to": "executing",
+   "label": "批准计划权限",
+   "variant": "dashed"
+  },
+  {
+   "id": "t-no-envelope",
+   "from": "executing",
+   "to": "undelivered",
+   "label": "无结果信封"
+  },
+  {
+   "id": "t-continue",
+   "from": "undelivered",
+   "to": "executing",
+   "label": "继续对话"
+  },
+  {
+   "id": "t-request-changes",
+   "from": "awaiting_acceptance",
+   "to": "revision",
+   "label": "提出修改"
+  },
+  {
+   "id": "t-feedback",
+   "from": "revision",
+   "to": "planning",
+   "label": "发送反馈"
+  },
+  {
+   "id": "t-followup",
+   "from": "completed",
+   "to": "planning",
+   "label": "追加消息",
+   "variant": "dashed"
+  },
+  {
+   "id": "t-stop-connect",
+   "from": "connecting",
+   "to": "paused",
+   "label": "停止"
+  },
+  {
+   "id": "t-stop-plan",
+   "from": "planning",
+   "to": "paused",
+   "label": "停止"
+  },
+  {
+   "id": "t-stop-exec",
+   "from": "executing",
+   "to": "paused",
+   "label": "停止"
+  },
+  {
+   "id": "t-resume-plan",
+   "from": "paused",
+   "to": "planning",
+   "label": "继续·计划"
+  },
+  {
+   "id": "t-resume-exec",
+   "from": "paused",
+   "to": "executing",
+   "label": "继续·执行"
+  },
+  {
+   "id": "t-fail-connect",
+   "from": "connecting",
+   "to": "error",
+   "label": "出错",
+   "variant": "security"
+  },
+  {
+   "id": "t-fail-plan",
+   "from": "planning",
+   "to": "error",
+   "label": "出错",
+   "variant": "security"
+  },
+  {
+   "id": "t-fail-exec",
+   "from": "executing",
+   "to": "error",
+   "label": "出错",
+   "variant": "security"
+  },
+  {
+   "id": "t-retry-plan",
+   "from": "error",
+   "to": "planning",
+   "label": "重发·计划"
+  },
+  {
+   "id": "t-retry-exec",
+   "from": "error",
+   "to": "executing",
+   "label": "重发·执行"
+  }
+ ]
+}

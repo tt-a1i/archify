@@ -3,9 +3,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sameEntry } from '../archify/renderers/shared/path-semantics.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const output = path.join(root, 'archify/assets/template.html');
+const defaultRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Each fragment maps a marker in `viewer/template.source.html` to a file in
 // `viewer/`. The optional indent re-prefixes every non-empty source line so
 // the inlined block sits inside the surrounding `<style>` / `<script>` tags at
@@ -21,6 +21,7 @@ const fragments = [
   ['/* ARCHIFY:MOTION_GOVERNOR */', 'motion-governor.js'],
   ['/* ARCHIFY:NODE_FINDER */', 'node-finder.js'],
   ['/* ARCHIFY:NODE_OUTLINE */', 'node-outline.js'],
+  ['/* ARCHIFY:TREE_BRANCHES */', 'tree-branches.js'],
   ['/* ARCHIFY:FOCUS */', 'focus.js'],
   ['/* ARCHIFY:INTENT_TRACE */', 'intent-trace.js'],
   ['/* ARCHIFY:SEMANTIC_LENS */', 'semantic-lens.js'],
@@ -39,11 +40,8 @@ function reindent(source, spaces) {
     .join('\n');
 }
 
-try {
-  const args = process.argv.slice(2);
-  if (args.length > 1 || (args.length === 1 && args[0] !== '--check')) {
-    throw new Error('Usage: node scripts/generate-viewer.mjs [--check]');
-  }
+export function generateViewer({ root = defaultRoot, check = false } = {}) {
+  const output = path.join(root, 'archify/assets/template.html');
   let generated = fs.readFileSync(path.join(root, 'viewer/template.source.html'), 'utf8');
   for (const [marker, file, indent = 0] of fragments) {
     const source = fs.readFileSync(path.join(root, 'viewer', file), 'utf8');
@@ -66,7 +64,7 @@ try {
     // including characters with String.replace semantics.
     generated = parts[0] + reindent(source, indent) + tail;
   }
-  if (args[0] === '--check') {
+  if (check) {
     if (!fs.existsSync(output) || fs.readFileSync(output, 'utf8') !== generated) {
       throw new Error('Viewer template is stale — run npm run generate:viewer from archify/.');
     }
@@ -78,9 +76,19 @@ try {
     } finally {
       fs.rmSync(temporary, { force: true });
     }
-    console.log('generated archify/assets/template.html');
   }
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 1;
+}
+
+if (process.argv[1] && sameEntry(process.argv[1], fileURLToPath(import.meta.url)).status === 'match') {
+  try {
+    const args = process.argv.slice(2);
+    if (args.length > 1 || (args.length === 1 && args[0] !== '--check')) {
+      throw new Error('Usage: node scripts/generate-viewer.mjs [--check]');
+    }
+    generateViewer({ check: args[0] === '--check' });
+    if (args.length === 0) console.log('generated archify/assets/template.html');
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
 }

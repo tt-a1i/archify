@@ -114,6 +114,19 @@ export const DEFECTS = {
       return { restores };
     },
   },
+  // Same unknown id referenced from an edge endpoint and mainPath: a fix is
+  // only complete when it repoints every reference, and the advertised edits
+  // must match the set verification applied.
+  'endpoint-shared-ghost': {
+    appliesTo: ['workflow'],
+    expectedCodes: { default: ['workflow/unknown-edge-endpoint'] },
+    inject(doc) {
+      const restores = [capture(doc, '/edges/0/from'), capture(doc, '/mainPath/0')];
+      doc.edges[0].from = 'benchmark-ghost-node';
+      doc.mainPath[0] = 'benchmark-ghost-node';
+      return { restores };
+    },
+  },
   'viewbox-oversized': {
     appliesTo: ['architecture'],
     expectedCodes: { default: ['composition/desktop-readability'] },

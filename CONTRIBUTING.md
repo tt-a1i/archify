@@ -5,6 +5,7 @@ Archify is Agent-first: people describe systems, and the Skill, typed JSON, rend
 ## Choose the right path
 
 - Renderer, validator, package, or Viewer defect: use the [bug report form](.github/ISSUE_TEMPLATE/bug-report.yml).
+- Standalone community package: follow the [submission guide](community/README.md#submitting-a-package) and submit one metadata file to `dev`.
 - Reproducible real-world diagram: use the [showcase form](.github/ISSUE_TEMPLATE/showcase.yml).
 - New schema fields, defaults, acceptance rules, installation/export contracts, or broad product behavior: agree on value, compatibility, and non-goals before substantial implementation. Link the issue or recorded maintainer decision; reuse an existing agreed scope.
 - Narrow fixes and small documentation or test corrections can proceed with a concrete reproduction or rationale; a separate planning issue is unnecessary.
@@ -37,7 +38,7 @@ Use [the PR template](.github/PULL_REQUEST_TEMPLATE.md); link existing receipts 
 
 Skill instructions, authored examples, build inputs, and generated-site sources are behavioral inputs even when they look like documentation. Policy changes need process review; runtime evidence depends on whether they affect runtime inputs.
 
-Start with focused checks for the affected behavior. Use the full `npm test` suite from `archify/` when shared behavior, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
+Start with focused checks for the affected behavior. Use the full `npm test` suite from the repository root when shared behavior, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
 
 ### Documentation-only CI
 
@@ -56,13 +57,58 @@ Any other changed path (including tests, Skill instructions, templates, generate
 
 ## Local setup and verification
 
-The renderer package is in `archify/`; its Node range and commands are defined in `archify/package.json`.
+The renderer package is in `archify/`; repository tests and their dependencies live at the root. Install both dependency sets before running tests. The supported Node range is defined in both package manifests.
 
 ```sh
-cd archify
 npm ci
-npm test
+npm --prefix archify ci
+npm run test:focus -- test/geometry.test.mjs
 ```
+
+For the development loop, select the files covering the changed behavior with
+`npm run test:focus -- test/<name>.test.mjs [test/<other>.test.mjs ...]`.
+This runs only those suites, without the generated-output checks or golden pass.
+It requires at least one file and rejects unknown files rather than silently
+running the full suite. Paths are relative to the repository root; absolute
+paths also work. Use `--list` with the same selection to inspect it without
+running tests. A focused pass is evidence for that selection only.
+
+To narrow a large file further, add a quoted Node test-name pattern (Node 18.11+):
+
+```sh
+npm run test:focus -- test/cli.test.mjs '--test-name-pattern=cli: validate'
+```
+
+Nested tests follow Node's filtering rules: include their parent test names in
+the pattern as well. Check the reported pass/skip counts for the intended cases.
+
+`npm test` still runs all generated-output checks, golden comparisons, and every
+discovered test suite. CI runs that complete suite once on canonical Node 22.
+The Node 18, 20, and 24 checks run `npm run test:compat`: all golden comparisons
+across the ten diagram types, followed by the maintained whole suites for CLI,
+schema compatibility, processes, paths, atomic output, preview, update, and
+diagnostics. The compatibility inventory is in
+`scripts/compat-test-inventory.mjs`; it also retains the complete package-gate
+suite for filesystem failures and noncanonical archive-toolchain rejection.
+Repository content, generator, and installation regressions remain in the
+complete Node 22 run. This preserves every regression in its owning gate while
+testing the maintained Node runtimes; it does not repeat every regression on
+every Node major. Tags retain the complete Node 22 suite, and both workflows
+retain their real Windows path, browser, WebM, and package gates.
+
+Use `npm run test:compat -- --list` to inspect the compatibility suites without
+running them; a normal compatibility run also runs the golden harness first.
+Exact file and test-name selections are supported through the shared runner,
+but a selected pass covers only that selection plus the golden harness.
+`test:focus` remains the development command that omits the golden pass.
+
+The test runners accept `--concurrency=N` to tune the number of simultaneous
+test files on Node 18.19+, for example `npm test -- --concurrency=4`. Headless
+repository and compatibility runs default to the available CPU count, capped
+at 4. Setting `ARCHIFY_CHROME` or running `test:browser` keeps the default at 2.
+Older Node versions that lack this concurrency option retain Node's default.
+Compare timing and results on the same machine before increasing concurrency;
+browser tests can become slower or unstable under CPU contention.
 
 Test through public behavior such as `render`, `validate`, `deliver`, `visual-check`, or final SVG/HTML. Behavioral fixes should include a regression that demonstrates the original failure. Private helper checks can supplement that evidence.
 
@@ -73,8 +119,7 @@ A visual PR must provide enough evidence to evaluate whether the intended user v
 Static SVG/XML checks cannot establish browser layout, font settling, or interaction behavior. When the adaptive reader or Viewer layout changes, run the real browser test with Chrome available:
 
 ```sh
-cd archify
-ARCHIFY_CHROME="/path/to/chrome" node --test test/desktop-reader-browser.test.mjs
+ARCHIFY_CHROME="/path/to/chrome" npm run test:browser -- test/desktop-reader-browser.test.mjs
 ```
 
 A browser test skipped because Chrome was unavailable is **skipped**, not passed. Follow [the delivery contract](archify/references/delivery-contract.md) for visual evidence, receipts, and failure stages. Successful validation, atomic delivery, browser checks, and perceptual review establish different claims.
@@ -82,7 +127,6 @@ A browser test skipped because Chrome was unavailable is **skipped**, not passed
 PR CI and tag releases run the same browser regression gate:
 
 ```sh
-cd archify
 ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
 ```
 
@@ -91,6 +135,21 @@ Its maintained file list is in `scripts/run-browser-tests.mjs`; add new browser
 suites there so both workflows keep the same coverage. Ordinary `npm test`
 retains optional browser skips. Real WebM decoding and site-language integration
 remain in the separate `npm run test:webm` gate used by both workflows.
+
+PR CI divides the maintained browser inventory into two disjoint file shards
+with `npm run test:browser -- --shard=1/2` and `--shard=2/2`. Both run alongside
+the independent WebM gate; the required `webm-artifact` check succeeds only
+after both browser shards, WebM, and scope checks succeed. Tag releases and an
+unqualified `npm run test:browser` still run the complete browser inventory.
+`--list --shard=1/2` lists a shard without requiring Chrome. Shards cannot be
+combined with explicit files or test-name filtering; every maintained file runs
+in exactly one shard, and every executing shard still requires Chrome.
+
+Only set `ARCHIFY_CHROME` for the browser run when you also plan to run the full
+browser gate: many browser suites are included in `npm test` and would otherwise
+execute again. The canonical regression suite, Node compatibility matrix, and
+required browser gate establish their respective coverage. Reuse the applicable
+final-head CI results instead of repeating an unchanged full suite locally.
 
 ## Packages and generated artifacts
 
@@ -117,6 +176,29 @@ Skill runtime, schema, renderer, and published Skill-instruction changes require
 List regenerated files and explain freshness when an affected output is left unchanged. Changes that do not affect generated outputs may omit that PR section. Resolve generated conflicts by rebuilding from combined source. Keep unrelated generated output out of the diff.
 
 Treat published versions as immutable. Ordinary feature PRs do not change versions, tags, or distribution identities unless release work is explicitly in scope.
+
+## Release checklist
+
+Use this single checklist in the release PR or its linked release record. Link evidence at each stage; mark an item complete only when its stated outcome is verified, or record an explicit deferral with an owner, reason, and follow-up. PR completion, release publication, Pages deployment, and updates to live installations are separate outcomes. Existing gates in [CI](.github/workflows/ci.yml) and the [release workflow](.github/workflows/release.yml) already cover release identity, ZIP freshness, installation parser/real Skills CLI tests, three-platform package smoke, browser checks, and the published manifest's actual Release ZIP. Reuse those gates and their receipts rather than creating another release pipeline.
+
+1. [ ] **Scope and revision.** Record the intended version/channel, release scope, final source SHA, comparison base, release notes, known issues, and required integration follow-ups. Follow the `dev` trial-use → `main` promotion process below. Pin evidence to its tested SHA; refresh the record when the candidate changes.
+2. [ ] **Identity and build.** Verify package/Skill identity and generated outputs using the candidate revision's existing checks. Use the canonical Node/zlib toolchain above for `scripts/build-zip.sh`; confirm the committed `archify.zip` matches the clean tracked-source build. Do not change versions or regenerate unrelated artifacts in ordinary feature PRs. Preserve the previous stable manifest until the new stable Release exists.
+3. [ ] **Final-head validation.** Account for the latest target base and verify required CI at the final candidate: identity and ZIP gates, schema/renderer tests, installation parser and real Skills CLI discovery, package smoke on Linux/macOS/Windows, browser/WebM checks, and affected website checks. Record run URLs, SHA, real-use evidence, and any skipped or unavailable checks; an earlier green head or zero checks is not final acceptance. Use commands from that revision's manifests/workflows: current `dev` installs root and renderer dependencies and runs `npm test`, `npm run test:browser`, and `npm run test:webm` at the repository root (see [Local setup](#local-setup-and-verification)); older `main`/release revisions may run these from `archify/`. Website commands run in `website/`. Do not transplant a command or its working directory across revisions without checking.
+4. [ ] **Authorized publication.** Confirm authorization for the exact release version/channel and source SHA before pushing a release tag. Stable `v<version>` tags must be annotated and resolve to the verified commit; the workflow checks tag/package identity and the release channel. Verify the resulting GitHub Release and its `archify.zip` asset, digest, and expected stable/prerelease status. Do not overwrite existing versions, tags, or assets to repair a release. Installing or updating a user's live installation requires its own authorization.
+5. [ ] **Manifest, website, and integrations.** After the stable Release exists, publish `docs/skill-updates/archify/stable.json` in a follow-up commit through the normal branch process. Retain the `published-update-manifest` result that compares the actual Release ZIP, tagged archive, digest, and tagged Skill tree; wait for the gated `main` Pages deployment. Development/prerelease tags do not advance the stable notifier. Complete the [DSH synchronization checklist](#release-checklist-dsh-synchronization) or record an explicit deferral. Evaluate other integrations by their actual distribution mechanism: [Hermes](integrations/hermes-agent/README.md#install-shows-up-in-available-skills) installs the main Skill identifier; do not invent a separate Hermes release simply because Archify changed. Record any documentation/compatibility update or indexing lag that needs follow-up.
+6. [ ] **Public acceptance and closure.** Check the public download and advertised installation/discovery paths against the released artifact in an isolated environment, without changing live user installations. Verify the public stable manifest, Pages version, installation instructions, and community catalog source/evidence/compatibility links describe what users can actually obtain; distinguish published, pending, and explicitly deferred integration versions. Record the final release/tag/SHA, asset digest, CI and deployment receipts, public acceptance result, and every remaining owner/follow-up. Only describe each channel as complete after its own verification.
+
+### Release checklist: DSH synchronization
+
+For every Archify release, record the DSH decision in the release PR or its linked follow-up. The Skill source is pinned: releasing Archify or updating `main` does not update the DSH package or existing installations. Use the [DSH release maintenance procedure](integrations/deepseek-harness/README.md#release-maintenance) for commands and host requirements.
+
+- [ ] Assess whether the release needs a DSH update. Record the selected Archify source/version and plugin version, or an explicit deferral with its reason and follow-up. The plugin has its own version sequence; it need not match Archify's version.
+- [ ] For a host-version change or compatibility report, complete the [host migration review](integrations/deepseek-harness/README.md#host-migration-review): pin official source tags/commits and registry identities, inventory the adapter's actual API/configuration touchpoints, and check the target host's compatibility checker (including prerelease semantics). Record applicable changes and gaps in any community reference; a heuristic scan or an accepted peer range is not support evidence. Do not widen peers or add exemptions merely to make installation pass.
+- [ ] If syncing, update `integrations/deepseek-harness/release.json` to a full immutable `sourceCommit` and matching `skillVersion`; retain or deliberately update the exact tested DSH host version. Check both `archify/package.json` and `archify/skill-release.json` at that source. Identify any fixes included after the Archify version tag.
+- [ ] Commit the adapter inputs before packing. Inspect the actual `.tgz`, including `release.json`, the bundled Skill version/content, license notices, and dependency exclusions; run the package contracts and real distribution acceptance (isolated install, discovery/load, installed Skill smoke, and uninstall). Before plugin publication, complete the DSH workflow's three-platform adapter release gate on the candidate commit and retain its receipts.
+- [ ] Record a support-evidence matrix with the plugin version/tarball digest, bundled Skill source/version, exact host and command source, OS/Node, profile, update mechanism, host running/exited state, date, and evidence link. Separate clean install, load, CLI smoke, same-profile upgrade, and uninstall outcomes. Reuse unchanged evidence under its original identity; CLI acceptance does not validate Electron Desktop or an in-process third-party updater. Keep untested platforms and externally reported failures explicit before changing the support statement.
+- [ ] Record publication separately from PR completion: verify the tested npm tarball/version and `archify-dsh-v<plugin-version>` tag, then align the integration README, public README install commands, and `community/packages/archify-dsh.json` with what users can actually obtain. Keep published and pending versions distinct while unpublished; never describe a prepared bundle as publicly available.
+- [ ] Treat plugin publication and updates to users' live installations as separate authorized actions. Do not replace an existing version/tag or silently publish as part of the Archify release.
 
 ## Final integration and follow-up
 

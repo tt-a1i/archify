@@ -73,7 +73,7 @@
     },
     "nodeIcon": {
       "description": "Decorative corner icon. Omit the icon field for the type default; none hides it. Does not change type, color, or legend grouping.",
-      "enum": ["calendar", "clock", "person", "briefcase", "flag", "moon", "frontend", "backend", "database", "cloud", "security", "messagebus", "external", "start", "active", "waiting", "success", "failure", "neutral", "none"]
+      "enum": ["calendar", "clock", "person", "briefcase", "flag", "moon", "frontend", "backend", "database", "cloud", "security", "messagebus", "external", "start", "active", "waiting", "decision", "success", "failure", "stop", "neutral", "none"]
     },
     "brandMark": {
       "oneOf": [
@@ -140,7 +140,7 @@
           "type": "string",
           "minLength": 1
         },
-        "provider": { "enum": ["github", "gitee"] },
+        "provider": { "enum": ["github", "gitee", "gitlab"] },
         "link_mode": { "enum": ["web", "local-only"] },
         "revision": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" }
       }

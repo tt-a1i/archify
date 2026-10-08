@@ -1,0 +1,43 @@
+{
+  "name": "archify-dsh",
+  "type": "wrapper",
+  "summary": {
+    "en": "DSH 1.0.0 bundles Archify 3.0.1. Supports exact developer-preview DSH 0.1.2-rc.1; independent community Skill-only integration.",
+    "zh": "已发布 DSH 技能包 1.0.0，内含 Archify 3.0.1；支持明确测试的开发者预览版 DSH 0.1.2-rc.1，属于独立社区集成。"
+  },
+  "author": {
+    "name": "tt-a1i",
+    "url": "https://github.com/tt-a1i"
+  },
+  "repository": "https://github.com/tt-a1i/archify/tree/archify-dsh-v1.0.0/integrations/deepseek-harness",
+  "homepage": "https://www.npmjs.com/package/@tt-a1i/archify-dsh/v/1.0.0",
+  "archify": "3.0.1",
+  "schemaVersions": [
+    1,
+    2
+  ],
+  "tags": [
+    "deepseek-harness",
+    "dsh",
+    "npm",
+    "integration"
+  ],
+  "evidence": [
+    {
+      "label": "Published 1.0.0 package guide",
+      "url": "https://github.com/tt-a1i/archify/blob/archify-dsh-v1.0.0/integrations/deepseek-harness/PACKAGE_README.md"
+    },
+    {
+      "label": "Bundled Archify 3.0.1 source",
+      "url": "https://github.com/tt-a1i/archify/blob/7158026e852f3aa6578c741e673b46d7878c92c1/archify/package.json"
+    },
+    {
+      "label": "Published 1.0.0 release and tarball checksum",
+      "url": "https://github.com/tt-a1i/archify/releases/tag/archify-dsh-v1.0.0"
+    },
+    {
+      "label": "Three-platform installation and upgrade acceptance",
+      "url": "https://github.com/tt-a1i/archify/actions/runs/37217119585"
+    }
+  ]
+}

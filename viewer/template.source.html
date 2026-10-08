@@ -910,83 +910,43 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     Archify.sourceEvidence = (function () {
       var element = document.getElementById('archify-source-evidence-data');
       var payload = null;
-      var svgNamespace = 'http://www.w3.org/2000/svg';
       if (element) {
         try {
           var parsed = JSON.parse(element.textContent || 'null');
           if (parsed && parsed.verified === true && parsed.repository && parsed.nodes) payload = parsed;
         } catch (_) {}
       }
-      function installBeacons() {
-        if (!payload) return 0;
-        var svg = document.querySelector('.diagram-container svg');
-        if (!svg) return 0;
-        var installed = 0;
-        Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
-          var id = node.getAttribute('data-node-id');
-          var sources = payload.nodes[id];
-          if (!Array.isArray(sources) || !sources.length || node.querySelector('[data-source-evidence-beacon]')) return;
-          var shape = node.querySelector('[data-animate="node"]') || node.querySelector('[class*="c-"]');
-          var box;
-          try { box = (shape || node).getBBox(); } catch (_) { return; }
-          if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || box.width < 36) return;
-
-          var count = sources.length;
-          var label = viewerCount('viewer.passport.beacon', count);
-          var beacon = document.createElementNS(svgNamespace, 'g');
-          beacon.classList.add('source-evidence-beacon');
-          beacon.setAttribute('data-source-evidence-beacon', '');
-          beacon.setAttribute('aria-hidden', 'true');
-          var brandOffset = node.hasAttribute('data-node-brand') ? 22 : 0;
-          var title = document.createElementNS(svgNamespace, 'title');
-          title.textContent = label;
-          var plate = document.createElementNS(svgNamespace, 'rect');
-          plate.setAttribute('height', '13');
-          plate.setAttribute('rx', '6.5');
-          var text = document.createElementNS(svgNamespace, 'text');
-          text.setAttribute('y', '9.4');
-          text.textContent = viewerText('viewer.passport.sourceMarker') + ' ' + count;
-          beacon.appendChild(title);
-          beacon.appendChild(plate);
-          beacon.appendChild(text);
-          node.appendChild(beacon);
-
-          // Measure the real glyph advance, then clamp the plate between 24
-          // and 36px; a still-wider label is squeezed with textLength so the
-          // badge never overlaps the neighbouring brand mark or sigil.
-          var textWidth = 16;
-          try {
-            var measured = text.getComputedTextLength();
-            if (Number.isFinite(measured) && measured > 0) textWidth = measured;
-          } catch (_) {}
-          var plateWidth = Math.min(36, Math.max(24, textWidth + 8));
-          if (textWidth > plateWidth - 8) {
-            text.setAttribute('textLength', String(plateWidth - 8));
-            text.setAttribute('lengthAdjust', 'spacingAndGlyphs');
-          }
-          plate.setAttribute('width', String(plateWidth));
-          text.setAttribute('x', String(plateWidth / 2));
-          beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 6 - brandOffset - plateWidth) + ' ' + (box.y + 4.5) + ')');
-
-          var originalLabel = node.getAttribute('aria-label') || '';
-          node.setAttribute('data-source-evidence-count', String(count));
-          node.setAttribute('data-source-evidence-original-label', originalLabel);
-          node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') + viewerCount('viewer.passport.sourceCount', count));
-          installed += 1;
-        });
-        return installed;
-      }
+      // Keep verified evidence discoverable to screen readers without adding
+      // visual marks. Restore first so repeated initialization never appends
+      // another count or retains one after evidence becomes unavailable.
+      var svg = document.querySelector('.diagram-container svg');
+      if (svg) Array.prototype.forEach.call(svg.querySelectorAll('[data-node-id]'), function (node) {
+        if (node.hasAttribute('data-source-evidence-count')) {
+          var savedLabel = node.getAttribute('data-source-evidence-original-label');
+          if (savedLabel == null) node.removeAttribute('aria-label');
+          else node.setAttribute('aria-label', savedLabel);
+          node.removeAttribute('data-source-evidence-count');
+          node.removeAttribute('data-source-evidence-original-label');
+        }
+        var sources = payload && payload.nodes[node.getAttribute('data-node-id')];
+        if (!Array.isArray(sources) || !sources.length) return;
+        var originalLabel = node.getAttribute('aria-label');
+        node.setAttribute('data-source-evidence-count', String(sources.length));
+        if (originalLabel != null) node.setAttribute('data-source-evidence-original-label', originalLabel);
+        node.setAttribute('aria-label', (originalLabel ? originalLabel + ', ' : '') +
+          viewerCount('viewer.passport.sourceCount', sources.length));
+      });
       return {
         available: function () { return Boolean(payload); },
         repository: function () { return payload ? payload.repository : null; },
         node: function (id) {
           var sources = payload && payload.nodes ? payload.nodes[id] : null;
           return Array.isArray(sources) ? sources.slice() : [];
-        },
-        installBeacons: installBeacons
+        }
       };
     })();
-    Archify.sourceEvidence.installBeacons();
+
+/* ARCHIFY:TREE_BRANCHES */
 
 /* ARCHIFY:FOCUS */
 
@@ -1167,6 +1127,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 /* ARCHIFY:NODE_FINDER */
 
 /* ARCHIFY:NODE_OUTLINE */
+
 
 /* ARCHIFY:ROUTE_PROBE */
 

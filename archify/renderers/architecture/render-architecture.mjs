@@ -11,12 +11,13 @@ import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createRouter } from './routing.mjs';
-import { placeAutomaticLabels, reservedLabelRect } from './labels.mjs';
+import { placeAutomaticLabels, reservedLabelRect } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
   asArray,
   isFinitePoint,
   rectsOverlap,
+  segmentIntersectsRect,
   cleanEndpointSideProblems,
   cleanFlowProblems,
   cleanCrossingProblems,
@@ -252,6 +253,42 @@ function horizontalOverlap(left, right) {
   return left.x < right.x + right.width && left.x + left.width > right.x;
 }
 
+// A route through a title disappears under its mask and reads as struck-through
+// text. Keep the left rail position when it is clear; otherwise slide the title
+// along its rail to the nearest clear position inside the frame.
+let titleRouteSegments = null;
+function slideTitleOffRoutes(boundary, title, placedTitles) {
+  if (!enforcesBoundaryTitleComposition) return;
+  titleRouteSegments ||= asArray(arch.connections)
+    .filter((conn) => components.has(conn.from) && components.has(conn.to))
+    .flatMap((conn) => {
+      const points = pathFor(conn).points;
+      return points.slice(1).map((end, index) => ({ start: points[index], end }));
+    });
+  const clear = (x) => {
+    const rect = { ...title, x };
+    return !titleRouteSegments.some((segment) => segmentIntersectsRect(segment, rect, 2))
+      && ![...placedTitles, ...components.values(), ...connectionLabels].some((other) => rectsOverlap(rect, other));
+  };
+  if (clear(title.x)) return;
+  const left = boundary.x + layout.boundaryLabelFrameInset;
+  const right = boundary.x + boundary.width - layout.boundaryLabelFrameInset - title.width;
+  const band = titleRouteSegments.filter(({ start, end }) => (
+    Math.max(start[1], end[1]) >= title.y - 2 && Math.min(start[1], end[1]) <= title.y + title.height + 2
+  ));
+  const labelBlockers = connectionLabels.filter((label) => (
+    label.y < title.y + title.height && label.y + label.height > title.y
+  ));
+  const x = [right, ...band.flatMap(({ start, end }) => [
+    Math.max(start[0], end[0]) + 8, Math.min(start[0], end[0]) - 8 - title.width,
+  ]), ...labelBlockers.flatMap((label) => [
+    label.x + label.width + 8, label.x - 8 - title.width,
+  ])].filter((value) => value >= left && value <= right)
+    .sort((a, b) => a - b)
+    .find(clear);
+  if (x !== undefined) title.x = x;
+}
+
 function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
   const placedTitles = [];
   const measured = new Map();
@@ -280,6 +317,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
         Infinity,
       );
     }
+    slideTitleOffRoutes(boundary, title, placedTitles);
     placedTitles.push(title);
     measured.set(index, { boundary, title });
   }
@@ -311,7 +349,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // automatic route never borrows a frame border as its corridor), never the
 // title-expanded frames or the viewBox.
 const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
-const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections, {
+const routerOptions = {
   distinctAutomaticPorts: true,
   preferReadableRoutes: true,
   frames: rawBoundaries.map((boundary) => ({
@@ -325,7 +363,8 @@ const { pathFor, connectionSides, connectionEndpointSide } = createRouter(compon
     labels,
     components: [...components.values()],
   }) : null),
-});
+};
+const { pathFor, connectionSides, connectionEndpointSide } = createRouter(components, arch.connections, routerOptions);
 function hasAutomaticRouteGeometry(connection) {
   return !Array.isArray(connection?.via)
     && (!connection?.route || connection.route === 'auto')
@@ -618,9 +657,38 @@ function validateArchitecture() {
     }
   }
 
-  for (const conn of asArray(arch.connections)) {
-    if (!components.has(conn.from)) problems.push(`Connection "${conn.label || conn.from}" references unknown source "${conn.from}".`);
-    if (!components.has(conn.to)) problems.push(`Connection "${conn.label || conn.to}" references unknown target "${conn.to}".`);
+  const connectionList = asArray(arch.connections);
+  const knownComponentIds = [...components.keys()].sort();
+  for (const conn of connectionList) {
+    const connIndex = connectionList.indexOf(conn);
+    for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
+      if (components.has(conn[field])) continue;
+      const message = `Connection "${conn.label || conn[field]}" references unknown ${endpoint} "${conn[field]}".`;
+      const otherId = conn[field === 'from' ? 'to' : 'from'];
+      const neighbors = new Set();
+      for (const edge of connectionList) {
+        if (edge === conn) continue;
+        if (edge.from === otherId) neighbors.add(edge.to);
+        if (edge.to === otherId) neighbors.add(edge.from);
+      }
+      const candidates = knownComponentIds
+        .filter((id) => id !== otherId)
+        .sort((a, b) => (neighbors.has(b) - neighbors.has(a)) || a.localeCompare(b));
+      diagnostics.push({
+        code: 'architecture/unknown-endpoint', severity: 'error', message,
+        subject: {
+          diagramType: 'architecture',
+          connection: conn.id ?? null,
+          path: `/connections/${connIndex}/${field}`,
+          from: conn.from,
+          to: conn.to,
+        },
+        evidence: { endpoint, unknownNodeId: conn[field], availableNodeIds: knownComponentIds },
+        supportedFixes: candidates.slice(0, 3).map((id) => `set /connections/${connIndex}/${field} to verified node id "${id}"`),
+      });
+      problems.push(message);
+      problems.push(`Connection "${conn.label || conn[field]}" endpoint "${conn[field]}" does not name a declared component.`);
+    }
     if (components.has(conn.from) && components.has(conn.to)) {
       const routed = pathFor(conn);
       const outsidePoints = routed.points.filter(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1]);
@@ -748,7 +816,6 @@ function validateArchitecture() {
     relationCollection: 'connections',
     profile: arch.meta?.quality_profile,
   }));
-
   // Connection labels must not land on top of components.
   const labelRects = connectionLabels;
   for (const rect of labelRects) {

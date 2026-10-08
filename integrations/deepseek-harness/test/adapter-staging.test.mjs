@@ -155,6 +155,7 @@ test('pack stages adapter inputs from the fixture HEAD despite dirty and untrack
     fs.writeFileSync(releasePath, `${JSON.stringify(release, null, 2)}\n`);
     fs.appendFileSync(adapterPath(checkout, 'cordis.patch.yml'), `\n# ${dirtyMarker}\n`);
     fs.appendFileSync(adapterPath(checkout, 'README.md'), `\n${dirtyMarker}\n`);
+    fs.appendFileSync(adapterPath(checkout, 'PACKAGE_README.md'), `\n${dirtyMarker}\n`);
     fs.writeFileSync(adapterPath(checkout, 'lib/index.js'), `// ${dirtyMarker}\n`);
     fs.writeFileSync(adapterPath(checkout, 'lib/untracked-dirty.mjs'), dirtyMarker);
 
@@ -165,14 +166,15 @@ test('pack stages adapter inputs from the fixture HEAD despite dirty and untrack
     assert.equal(fs.existsSync(out), true);
 
     const packageRoot = unpack(out, root);
-    for (const relative of ['package.json', 'release.json', 'cordis.patch.yml', 'README.md', 'lib/index.js']) {
+    for (const relative of ['package.json', 'release.json', 'cordis.patch.yml', 'README.md', 'CHANGELOG.md', 'lib/index.js']) {
       assert.deepEqual(
         fs.readFileSync(path.join(packageRoot, ...relative.split('/'))),
-        headBlob(checkout, head, relative),
+        headBlob(checkout, head, relative === 'README.md' ? 'PACKAGE_README.md' : relative),
         `packed adapter input differs from fixture HEAD: ${relative}`,
       );
     }
     assert.equal(fs.existsSync(path.join(packageRoot, 'lib', 'untracked-dirty.mjs')), false);
+    assert.equal(fs.existsSync(path.join(packageRoot, 'PACKAGE_README.md')), false);
     const packedText = fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8')
       + fs.readFileSync(path.join(packageRoot, 'release.json'), 'utf8')
       + fs.readFileSync(path.join(packageRoot, 'cordis.patch.yml'), 'utf8')

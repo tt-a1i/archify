@@ -88,7 +88,7 @@ export function declaredWideReadabilityBudget({
 export const DESKTOP_FIXED_VERTICAL_CHROME_PX = Object.freeze({ body: 12, header: 39, diagram: 75 });
 
 // A canvas the Reader can neither narrow (viewBox ratio below the wide
-// threshold) nor scroll readably (no intrinsic-height fit) renders at the full
+// threshold) nor scroll readably (no automatic Reader fit) renders at the full
 // reader width, so its page height is a function of the viewBox alone. Returns
 // null when the Reader has a way to fit the page; otherwise the certain
 // overflow at 1440x900 before any cards are counted.
@@ -104,7 +104,7 @@ export function predictedFixedWidthOverflow({
 } = {}) {
   if (![viewBoxWidth, viewBoxHeight].every(Number.isFinite) || viewBoxWidth <= 0 || viewBoxHeight <= 0) return null;
   const ratio = viewBoxWidth / viewBoxHeight;
-  if (readerFit === 'intrinsic-height'
+  if (readerFit === 'intrinsic-height' || readerFit === 'width-first'
       || (readerFit === 'authored-height' && diagramType === 'architecture')
       || ratio >= DECLARED_WIDE_READER_RATIO) return null;
   const svgWidthPx = viewport.width - bodyHorizontalPx - diagramHorizontalPx;
@@ -128,5 +128,5 @@ export function predictedFixedWidthOverflow({
 export function describeFixedWidthOverflow(issue) {
   const maximumViewBoxHeight = Math.floor(issue.viewBoxWidth / issue.wideRatio);
   const wideViewBoxWidth = Math.ceil(issue.viewBoxHeight * issue.wideRatio);
-  return `Preserve every node, relationship, and label. This ${issue.viewBoxWidth}x${issue.viewBoxHeight} canvas (ratio ${issue.ratio}) declares no intrinsic-height fit and is below the ${issue.wideRatio} wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders ${issue.svgHeightPx}px tall at the full ${issue.svgWidthPx}px width and the page reaches ${issue.pageHeightPx}px before cards against ${issue.viewportHeight}px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most ${maximumViewBoxHeight} at this width, or spread content sideways so the width is at least ${wideViewBoxWidth} at this height; for architecture, omitting meta.viewBox lets the renderer size the canvas and declare the fit.`;
+  return `Preserve every node, relationship, and label. This ${issue.viewBoxWidth}x${issue.viewBoxHeight} canvas (ratio ${issue.ratio}) declares no intrinsic-height fit and is below the ${issue.wideRatio} wide ratio, so the desktop Reader can neither narrow it nor accept vertical scroll: it renders ${issue.svgHeightPx}px tall at the full ${issue.svgWidthPx}px width and the page reaches ${issue.pageHeightPx}px before cards against ${issue.viewportHeight}px, a certain visual-check failure. Either compact vertical spacing so meta.viewBox height is at most ${maximumViewBoxHeight} at this width, or spread content sideways so the width is at least ${wideViewBoxWidth} at this height; for architecture and readable-v2 workflow, omitting meta.viewBox lets the renderer size the canvas and declare the fit.`;
 }

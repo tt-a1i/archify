@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "一年的年假怎么排",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "leave-plan.workflow.html",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "休假"
+        },
+        "external": {
+          "label": "额度节点"
+        },
+        "security": {
+          "label": "规则提醒"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "plan",
+      "label": "休假计划"
+    },
+    {
+      "id": "rules",
+      "label": "规则提醒"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "spring",
+    "summer",
+    "autumn",
+    "winter",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "plan",
+      "col": 0,
+      "type": "external",
+      "label": "年初额度",
+      "sublabel": "年假 10 天 · 调休 2 天",
+      "icon": "briefcase"
+    },
+    {
+      "id": "spring",
+      "lane": "plan",
+      "col": 1,
+      "type": "backend",
+      "label": "春节拼假",
+      "sublabel": "2 月 · 调休 2 + 年假 1",
+      "tag": "连休 9 天",
+      "icon": "calendar"
+    },
+    {
+      "id": "summer",
+      "lane": "plan",
+      "col": 2,
+      "type": "backend",
+      "label": "暑期旅行",
+      "sublabel": "7 月 · 年假 4 天",
+      "tag": "连休 9 天",
+      "icon": "moon"
+    },
+    {
+      "id": "autumn",
+      "lane": "plan",
+      "col": 3,
+      "type": "backend",
+      "label": "国庆后接",
+      "sublabel": "10 月 · 年假 3 天",
+      "tag": "连休 10 天",
+      "icon": "calendar"
+    },
+    {
+      "id": "winter",
+      "lane": "plan",
+      "col": 4,
+      "type": "backend",
+      "label": "年底清零",
+      "sublabel": "12 月 · 年假 2 天",
+      "tag": "不浪费",
+      "icon": "calendar"
+    },
+    {
+      "id": "done",
+      "lane": "plan",
+      "col": 5,
+      "type": "external",
+      "label": "全年用完",
+      "sublabel": "12 天 · 结余 0",
+      "icon": "flag"
+    },
+    {
+      "id": "expire",
+      "lane": "rules",
+      "col": 1,
+      "type": "security",
+      "label": "调休会过期",
+      "sublabel": "6 月底前用完",
+      "icon": "clock"
+    },
+    {
+      "id": "early",
+      "lane": "rules",
+      "col": 3,
+      "type": "security",
+      "label": "早点提交",
+      "sublabel": "提前 2 周审批",
+      "icon": "person"
+    }
+  ],
+  "edges": [
+    {
+      "id": "to-spring",
+      "from": "start",
+      "to": "spring",
+      "label": "先排春节"
+    },
+    {
+      "id": "to-summer",
+      "from": "spring",
+      "to": "summer",
+      "label": "剩年假 9 天"
+    },
+    {
+      "id": "to-autumn",
+      "from": "summer",
+      "to": "autumn",
+      "label": "剩 5 天"
+    },
+    {
+      "id": "to-winter",
+      "from": "autumn",
+      "to": "winter",
+      "label": "剩 2 天"
+    },
+    {
+      "id": "to-done",
+      "from": "winter",
+      "to": "done",
+      "label": "用完"
+    },
+    {
+      "id": "spring-rule",
+      "from": "spring",
+      "to": "expire",
+      "label": "先花调休",
+      "role": "branch",
+      "variant": "security"
+    },
+    {
+      "id": "autumn-rule",
+      "from": "autumn",
+      "to": "early",
+      "label": "国庆前申请",
+      "role": "branch",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "额度账本",
+      "items": [
+        "年初：年假 10 天 + 调休 2 天",
+        "四次拼假共用 12 天，年底结余 0",
+        "示例额度，换成你自己的即可"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "两条规则",
+      "items": [
+        "调休 6 月底作废，所以排在最前面",
+        "国庆前后是热门时段，提前两周提交审批",
+        "规则是示例，以你公司的休假制度为准"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "拼假思路",
+      "items": [
+        "每次请假贴着法定假期或周末",
+        "少请几天，连休更长"
+      ]
+    }
+  ]
+}

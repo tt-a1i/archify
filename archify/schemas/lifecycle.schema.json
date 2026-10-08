@@ -8,16 +8,14 @@
     "schema_version",
     "diagram_type",
     "meta",
-    "lanes",
+    "mainPath",
     "states",
     "transitions"
   ],
   "properties": {
     "schema_version": {
-      "enum": [
-        1,
-        2
-      ]
+      "description": "Lifecycle uses version 3: an automatic main-path layout.",
+      "const": 3
     },
     "diagram_type": {
       "const": "lifecycle"
@@ -81,45 +79,15 @@
               }
             }
           }
-        },
-        "viewBox": {
-          "type": "array",
-          "prefixItems": [
-            {
-              "type": "number",
-              "minimum": 420
-            },
-            {
-              "type": "number",
-              "minimum": 300
-            }
-          ],
-          "items": false,
-          "minItems": 2,
-          "maxItems": 2
         }
       }
     },
-    "lanes": {
+    "mainPath": {
+      "description": "The happy path from the initial state, left to right. Each consecutive pair needs a transition. Every other state is placed below the state it branches from; transitions back to an earlier main-path state are drawn as loops above.",
       "type": "array",
-      "minItems": 1,
-      "maxItems": 4,
+      "minItems": 2,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "label"
-        ],
-        "properties": {
-          "id": {
-            "$ref": "common.schema.json#/$defs/id"
-          },
-          "label": {
-            "type": "string",
-            "minLength": 1
-          }
-        }
+        "$ref": "common.schema.json#/$defs/id"
       }
     },
     "states": {
@@ -131,15 +99,14 @@
         "required": [
           "id",
           "type",
-          "label",
-          "lane",
-          "col"
+          "label"
         ],
         "properties": {
           "id": {
             "$ref": "common.schema.json#/$defs/id"
           },
           "type": {
+            "description": "start: the initial state. active: work in progress. waiting: paused for a person, time, or input. decision: a review or branch point (Mermaid <<choice>>). success / failure: a good or bad outcome. neutral: parked, or ended without success or failure. external: handled by an outside party. Color and the default corner sigil follow the type.",
             "enum": [
               "start",
               "active",
@@ -170,25 +137,6 @@
           },
           "step": {
             "type": "string"
-          },
-          "lane": {
-            "$ref": "common.schema.json#/$defs/id"
-          },
-          "col": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 4
-          },
-          "width": {
-            "type": "number",
-            "minimum": 48
-          },
-          "height": {
-            "type": "number",
-            "minimum": 36
-          },
-          "yOffset": {
-            "type": "number"
           }
         }
       }
@@ -220,55 +168,6 @@
           },
           "variant": {
             "$ref": "common.schema.json#/$defs/variant"
-          },
-          "route": {
-            "enum": [
-              "auto",
-              "straight",
-              "drop",
-              "bottom-channel",
-              "top-channel",
-              "right-channel",
-              "left-channel"
-            ]
-          },
-          "fromSide": {
-            "$ref": "common.schema.json#/$defs/side"
-          },
-          "toSide": {
-            "$ref": "common.schema.json#/$defs/side"
-          },
-          "channelX": {
-            "type": "number"
-          },
-          "channelY": {
-            "type": "number"
-          },
-          "cornerRadius": {
-            "type": "number",
-            "minimum": 0
-          },
-          "labelAt": {
-            "$ref": "common.schema.json#/$defs/point"
-          },
-          "labelDx": {
-            "type": "number"
-          },
-          "labelDy": {
-            "type": "number"
-          },
-          "labelSegment": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "via": {
-            "type": "array",
-            "items": {
-              "$ref": "common.schema.json#/$defs/point"
-            }
-          },
-          "width": {
-            "$ref": "common.schema.json#/$defs/relationshipWidth"
           }
         }
       }

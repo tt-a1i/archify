@@ -1,864 +1,1043 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
+import { esc, renderDefinitions, renderSemanticSigil, textUnits, SEMANTIC_SIGIL_FOOTPRINT, SOURCE_BADGE_FOOTPRINT } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
-import { recordDiagnostic, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
-import { createRouter } from '../architecture/routing.mjs';
-import { createLifecycleGridRouter } from './grid-routing.mjs';
-import { placeAutomaticLabels, reservedLabelRect } from '../architecture/labels.mjs';
+import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
+import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout, nodeTextFit } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX } from '../shared/desktop-readability.mjs';
-import {
-  asArray,
-  isFinitePoint,
-  rectsOverlap,
-  cleanEndpointSideProblems,
-  cleanFlowProblems,
-  cleanCrossingProblems,
-  cleanAmbiguousCorridorProblems,
-  cleanBorderRunProblems,
-  cleanRouteRhythmProblems,
-  cleanLabelRouteClearanceProblems,
-  cleanLabelCanvasContainmentProblems,
-  suggestLabelObstacleFix,
-  suggestLabelPairFix,
-  anchor,
-  automaticPortSpread,
-  legacyDefaultFromSide as defaultFromSide,
-  legacyDefaultToSide as defaultToSide,
-  chosenSide,
-  roundedPath,
-  routePointsValue,
-  authoredStraightRouteAttrs,
-  labelPoint,
-  arrowClassMap,
-  edgeLabelAccent
-} from '../shared/geometry.mjs';
+import { asArray, rectsOverlap, segmentRectClearance, roundedPath, routePointsValue, arrowClassMap, edgeLabelAccent } from '../shared/geometry.mjs';
+
+// Lifecycle v3 draws one shape: the main path as a left-to-right row, loops
+// back to earlier phases as arcs above it, and every other state (exits,
+// waiting or recovery states) in one row below the phase it branches from.
+// Geometry is derived from that structure alone; there are no routing controls.
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { diagram: lifecycle, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'lifecycle',
-  defaultExample: 'agent-run.lifecycle.json'
+  defaultExample: 'agent-run.lifecycle.json',
 });
 
-// v2 sets state text one step larger; its canvas width is then budgeted
-// from the smallest fitted text so the desktop Reader keeps it legible.
-const stateTextFit = lifecycle.schema_version === 2 ? {
-  labelPreferred: 11,
-  labelMinimum: 9,
-  sublabelPreferred: 8,
-  sublabelMinimum: 7,
-  tagPreferred: 8,
-  tagMinimum: 7,
-  step: 8,
-} : {
-  labelPreferred: 10,
-  labelMinimum: 8,
-  sublabelPreferred: 7,
-  sublabelMinimum: 6,
-  tagPreferred: 7,
-  tagMinimum: 6,
-  step: 7,
-};
-
-// schema_version 2 replaces the three fixed bands (main/event/outcome, with
-// non-main lanes sharing one band and lower columns offset by +2) with one
-// row per populated lane on a shared 0..4 column grid. v1 keeps its exact
-// state geometry; only presentation (colors, markers, legend, sigil side)
-// is shared between versions.
-const isV2 = lifecycle.schema_version === 2;
-const authoredViewBox = lifecycle.meta?.viewBox;
-
-const layout = {
-  phaseY: 126,
-  eventY: 278,
-  outcomeY: 450,
-  phaseW: 118,
-  phaseH: 62,
-  eventW: 126,
-  eventH: 58,
-  outcomeW: 118,
-  outcomeH: 58,
-  phaseXs: [94, 248, 402, 556, 710],
-  eventXs: [402, 556, 710],
-  outcomeXs: [402, 556, 710]
-};
-
-const layoutV2 = {
-  stateW: 140,
-  stateH: 64,
-  marginX: 60,
-  minGap: 64,
-  floorGap: 44,
-  firstRowTop: 56,
-  rowPitch: 184,
-};
-
-function transitionLabelWidth(transition) {
-  const longestLine = Math.max(textUnits(transition.label), textUnits(transition.note || ''));
-  return Math.max(32, longestLine * 4.9 + 12);
-}
-
-function stateFontSizes(state, width) {
-  return {
-    label: fittedNodeFontSize(state.label, brandLabelFitWidth(state, width), stateTextFit.labelPreferred, stateTextFit.labelMinimum),
-    sublabel: fittedNodeFontSize(state.sublabel, width, stateTextFit.sublabelPreferred, stateTextFit.sublabelMinimum),
-    tag: fittedNodeFontSize(state.tag, width, stateTextFit.tagPreferred, stateTextFit.tagMinimum),
-  };
-}
-
-// v2 column centers. A gap between two columns widens until the label of a
-// same-row neighbour transition fits beside its line; the whole canvas then
-// stays inside the desktop readability budget of its smallest state text.
-const v2ColumnCenters = (() => {
-  if (!isV2) return [];
-  const authored = asArray(lifecycle.states);
-  const widths = [0, 1, 2, 3, 4].map((col) => Math.max(
-    layoutV2.stateW, ...authored.filter((state) => state.col === col).map((state) => state.width || 0),
-  ));
-  const cols = authored.map((state) => state.col).filter((col) => Number.isInteger(col) && col >= 0 && col <= 4);
-  const lastCol = cols.length ? Math.max(...cols) : 0;
-  const gaps = [0, 1, 2, 3].map(() => layoutV2.minGap);
-  const byId = new Map(authored.map((state) => [state.id, state]));
-  for (const transition of asArray(lifecycle.transitions)) {
-    const [from, to] = [byId.get(transition.from), byId.get(transition.to)];
-    if (!(transition.label || transition.note) || !from || !to || from.lane !== to.lane
-      || !Number.isInteger(from.col) || !Number.isInteger(to.col) || Math.abs(from.col - to.col) !== 1) continue;
-    const gap = Math.min(from.col, to.col);
-    if (gap >= 0 && gap < 4) gaps[gap] = Math.max(gaps[gap], Math.ceil(transitionLabelWidth(transition) + 24));
-  }
-  const smallestText = Math.min(stateTextFit.step, ...authored.flatMap((state) => (
-    Object.values(stateFontSizes(state, state.width || layoutV2.stateW))
-  )));
-  const budget = Math.floor(DESKTOP_READER_DIAGRAM_WIDTH * smallestText / MIN_PROJECTED_NODE_TEXT_PX);
-  const fixed = layoutV2.marginX * 2 + widths.slice(0, lastCol + 1).reduce((sum, width) => sum + width, 0);
-  const used = gaps.slice(0, lastCol);
-  const excess = fixed + used.reduce((sum, gap) => sum + gap, 0) - budget;
-  const slack = used.reduce((sum, gap) => sum + gap - layoutV2.floorGap, 0);
-  if (excess > 0 && slack > 0) {
-    const ratio = Math.min(1, excess / slack);
-    for (let index = 0; index < used.length; index += 1) {
-      gaps[index] = Math.floor(gaps[index] - (gaps[index] - layoutV2.floorGap) * ratio);
-    }
-  }
-  const centers = [];
-  let x = layoutV2.marginX;
-  for (let col = 0; col <= 4; col += 1) {
-    centers.push(x + widths[col] / 2);
-    x += widths[col] + (gaps[col] ?? 0);
-  }
-  return centers;
-})();
-
-// Rows render in authored lane order with `main` first and `terminal` last;
-// lanes without states get no row and no title.
-function laneRowOrder() {
-  const lanes = asArray(lifecycle.lanes);
-  const populated = new Set(asArray(lifecycle.states).map((state) => state.lane));
-  const ordered = [];
-  if (populated.has('main')) ordered.push('main');
-  for (const lane of lanes) {
-    if (lane.id !== 'main' && lane.id !== 'terminal' && populated.has(lane.id)) ordered.push(lane.id);
-  }
-  if (populated.has('terminal')) ordered.push('terminal');
-  return ordered;
-}
-
-const v2RowTop = new Map(isV2
-  ? laneRowOrder().map((laneId, index) => [laneId, layoutV2.firstRowTop + index * layoutV2.rowPitch])
-  : []);
+const TEXT = { labelPreferred: 12, labelMinimum: 10, sublabelPreferred: 9, sublabelMinimum: 8, tagPreferred: 8, tagMinimum: 7, step: 8 };
+const LABEL_FONT = 10;
+const NOTE_FONT = 9;
+const STATE_H = 64;
+const STATE_MIN_W = 140;
+const STATE_MAX_W = 220;
+const MARGIN_X = 56;
+const MARGIN_TOP = 28;
+const PORT_PAD = 22;
+const PORT_STEP = 26;
+const CORNER = 12;
+const FRAME_PAD = 10;
+const ARC_BASE = 30;
+const ARC_STEP = 24;
+const TRACK_STEP = 18;
+const LABEL_GAP = 6;
+const CLEARANCE = 5;
+const SPACING_ROUNDS = 5;
 
 const typeClass = {
-  start: 'c-frontend',
-  active: 'c-frontend',
-  waiting: 'c-cloud',
-  decision: 'c-database',
-  success: 'c-backend',
-  failure: 'c-security',
-  neutral: 'c-external',
-  external: 'c-external'
+  start: 'c-frontend', active: 'c-frontend', waiting: 'c-cloud', decision: 'c-database',
+  success: 'c-backend', failure: 'c-security', neutral: 'c-external', external: 'c-external',
 };
-
+// Ordinary states carry no default corner sigil, so the ones a reader should
+// notice (waiting, decision, outcomes, external) stand out. An ordinary state
+// that ends the lifecycle is still an outcome and gets a stop sigil.
+const QUIET_TYPES = new Set(['start', 'active', 'neutral']);
 const textClass = {
-  start: 't-frontend',
-  active: 't-frontend',
-  waiting: 't-cloud',
-  decision: 't-database',
-  success: 't-backend',
-  failure: 't-security',
-  neutral: 't-muted',
-  external: 't-muted'
+  start: 't-frontend', active: 't-frontend', waiting: 't-cloud', decision: 't-database',
+  success: 't-backend', failure: 't-security', neutral: 't-muted', external: 't-muted',
 };
 
-// Lane semantics are fixed: lane id "main" maps to the top phase band, lane id
-// "terminal" maps to the bottom outcome band, and every other lane shares the
-// middle event band (separated visually via yOffset). v1 only.
-function bandFor(lane) {
-  if (lane === 'main') return 'phase';
-  if (lane === 'terminal') return 'outcome';
-  return 'event';
-}
+const transitions = asArray(lifecycle.transitions);
+const mainPath = asArray(lifecycle.mainPath);
+const states = new Map(asArray(lifecycle.states).map((state) => [state.id, { ...state }]));
+const spineIndex = new Map(mainPath.map((id, index) => [id, index]));
+const onSpine = (id) => spineIndex.has(id);
 
-function measureState(state) {
-  let width;
-  let height;
-  let cx;
-  let y;
-  if (isV2) {
-    width = state.width || layoutV2.stateW;
-    height = state.height || layoutV2.stateH;
-    cx = v2ColumnCenters[state.col] ?? NaN;
-    y = (v2RowTop.get(state.lane) ?? NaN) + (state.yOffset || 0);
-  } else {
-    const isPhase = bandFor(state.lane) === 'phase';
-    const isOutcome = bandFor(state.lane) === 'outcome';
-    width = state.width || (isPhase ? layout.phaseW : isOutcome ? layout.outcomeW : layout.eventW);
-    height = state.height || (isPhase ? layout.phaseH : isOutcome ? layout.outcomeH : layout.eventH);
-    const xs = isPhase ? layout.phaseXs : isOutcome ? layout.outcomeXs : layout.eventXs;
-    cx = xs[state.col] ?? xs[xs.length - 1];
-    y = (
-      isPhase ? layout.phaseY :
-        isOutcome ? layout.outcomeY :
-          layout.eventY
-    ) + (state.yOffset || 0);
-  }
+validateStructure();
+
+// ---------------------------------------------------------------- measure
+
+function fonts(state, width) {
   return {
-    ...state,
-    width,
-    height,
-    x: cx - width / 2,
-    y,
-    cx,
-    cy: y + height / 2
+    label: fittedNodeFontSize(state.label, brandLabelFitWidth(state, width), TEXT.labelPreferred, TEXT.labelMinimum),
+    sublabel: fittedNodeFontSize(state.sublabel, width, TEXT.sublabelPreferred, TEXT.sublabelMinimum),
+    tag: fittedNodeFontSize(state.tag, width, TEXT.tagPreferred, TEXT.tagMinimum),
   };
 }
 
-const states = new Map(asArray(lifecycle.states).map((state) => [state.id, measureState(state)]));
-const plannedTransitions = asArray(lifecycle.transitions).filter(plannerRouted);
-const v2Rows = laneRowOrder();
-const v2RowOf = (state) => (v2Rows.includes(state.lane) ? v2Rows.indexOf(state.lane) : undefined);
-let useGridRouter = isV2;
-if (isV2) {
-  // Route once to learn how many horizontal tracks each row gap carries,
-  // then open every gap to fit them before the final routing pass.
-  const probe = createLifecycleGridRouter(states, plannedTransitions, {
-    rowOf: v2RowOf, columnXs: v2ColumnCenters,
-  });
-  // Compatible pins keep the grid layout. A conflicting pin sends the whole
-  // scene to the side-aware planner so all edges still share port spreading
-  // and obstacle reservations.
-  useGridRouter = plannedTransitions.every(transition => {
-    const sides = probe.connectionSides(transition);
-    return ['fromSide', 'toSide'].every(key => !transition[key] || transition[key] === 'auto' || transition[key] === sides[key]);
-  });
-  let top = layoutV2.firstRowTop;
-  v2Rows.forEach((laneId, index) => {
-    const rowHeight = Math.max(layoutV2.stateH, ...[...states.values()]
-      .filter((state) => state.lane === laneId)
-      .map((state) => state.y + state.height - v2RowTop.get(laneId)));
-    v2RowTop.set(laneId, top);
-    top += rowHeight + Math.max(layoutV2.rowPitch - layoutV2.stateH, useGridRouter ? probe.gapHeight(index) : 0);
-  });
-  for (const state of asArray(lifecycle.states)) states.set(state.id, measureState(state));
-}
-const laneLabels = new Map(asArray(lifecycle.lanes).map((lane) => [lane.id, lane.label]));
-const authoredOutgoing = new Set(asArray(lifecycle.transitions).map((transition) => transition.from));
-
-// A state with no authored outgoing transition is terminal in the UML sense.
-// v1 main states rely on the implied phase rail, so a main state is only final
-// at the furthest occupied main column; every other v1 lane is explicit.
-function isFinal(state) {
-  if (authoredOutgoing.has(state.id)) return false;
-  if (isV2) return true;
-  if (bandFor(state.lane) !== 'phase') return true;
-  const mainCols = [...states.values()].filter((s) => bandFor(s.lane) === 'phase').map((s) => s.col);
-  return state.col === Math.max(...mainCols);
+// Wide enough for every row at its preferred size; the label also clears the
+// top-rail decorations (sigil or step, brand, source badge) that share its row.
+function preferredWidth(state) {
+  const need = (text, font) => (text ? textUnits(text) * font * nodeTextFit.widthFactor + nodeTextFit.horizontalPadding + 36 : 0);
+  const left = Math.max(SEMANTIC_SIGIL_FOOTPRINT + 2, state.step ? 26 + minimumNodeTextWidth(state.step, TEXT.step) : 0);
+  const right = (brandMarkFor(state) ? 26 : 4) + (sourceEvidence?.nodes?.[state.id]?.length ? SOURCE_BADGE_FOOTPRINT : 0);
+  const label = minimumNodeTextWidth(state.label, TEXT.labelPreferred) + left + right + 4;
+  return Math.ceil(Math.min(STATE_MAX_W, Math.max(STATE_MIN_W,
+    label, need(state.sublabel, TEXT.sublabelPreferred), need(state.tag, TEXT.tagPreferred))));
 }
 
-const LEGEND_CATALOG = [
-  'start',
-  'active',
-  'waiting',
-  'decision',
-  'success',
-  'failure',
-  'neutral',
-  'external',
-].map((kind) => ({
+for (const state of states.values()) {
+  state.width = preferredWidth(state);
+  state.height = STATE_H;
+}
+
+function labelBox(transition) {
+  const text = transition.label || '';
+  const note = transition.note || '';
+  const width = Math.ceil(Math.max(
+    text ? textUnits(text) * LABEL_FONT * 0.6 : 0,
+    note ? textUnits(note) * NOTE_FONT * 0.6 : 0,
+  ) + 12);
+  return { width, height: text && note ? 28 : 16 };
+}
+const hasLabel = (transition) => Boolean(transition.label || transition.note);
+
+// ---------------------------------------------------------------- classify
+
+// The first forward transition between consecutive main-path states is the
+// row itself; any other main-path pair is an arc above the row.
+const spineEdges = new Map();
+for (const transition of transitions) {
+  const from = spineIndex.get(transition.from);
+  const to = spineIndex.get(transition.to);
+  if (from !== undefined && to === from + 1 && !spineEdges.has(from)) spineEdges.set(from, transition);
+}
+
+// Every other state sits in a row below the main path at its distance from
+// it, so each transition stays within one row or joins two adjacent rows.
+const depth = new Map(mainPath.map((id) => [id, 0]));
+for (let frontier = [...mainPath]; frontier.length;) {
+  const next = [];
+  for (const id of frontier) {
+    for (const transition of transitions) {
+      const other = transition.from === id ? transition.to : transition.to === id ? transition.from : null;
+      if (other && states.has(other) && !depth.has(other)) {
+        depth.set(other, depth.get(id) + 1);
+        next.push(other);
+      }
+    }
+  }
+  frontier = next;
+}
+for (const id of states.keys()) if (!depth.has(id)) depth.set(id, 1);
+const depthOf = (id) => depth.get(id);
+const rowCount = Math.max(...depth.values()) + 1;
+const rows = Array.from({ length: rowCount }, (_, row) => (row === 0
+  ? mainPath.map((id) => states.get(id))
+  : [...states.values()].filter((state) => depthOf(state.id) === row)));
+const offStates = rows.slice(1).flat();
+
+const kindOf = new Map(transitions.map((transition) => {
+  const [from, to] = [depthOf(transition.from), depthOf(transition.to)];
+  if (from === 0 && to === 0) return [transition, spineEdges.get(spineIndex.get(transition.from)) === transition ? 'spine' : 'arc'];
+  return [transition, from === to ? 'same' : 'between'];
+}));
+const ofKind = (kind) => transitions.filter((transition) => kindOf.get(transition) === kind);
+
+// Exits that leave several main-path phases for one state are drawn once:
+// from a composite frame around consecutive phases, or from a shared bus.
+const downByTarget = new Map();
+for (const transition of ofKind('between')) {
+  if (depthOf(transition.from) !== 0) continue;
+  if (!downByTarget.has(transition.to)) downByTarget.set(transition.to, []);
+  downByTarget.get(transition.to).push(transition);
+}
+// A merged exit promises one meaning, so a target joins a bracket only when
+// every transition into it shares label, note and variant; differing exits
+// keep separate connectors instead of painting over each other.
+const exitSignature = (transition) => [transition.label ?? '', transition.note ?? '', variantOf(transition)].join('\u0000');
+const brackets = new Map();
+for (const [target, list] of downByTarget) {
+  const sources = [...new Set(list.map((transition) => transition.from))].sort((a, b) => spineIndex.get(a) - spineIndex.get(b));
+  if (sources.length < 2 || new Set(list.map(exitSignature)).size > 1) continue;
+  const key = sources.join('\u0000');
+  if (!brackets.has(key)) brackets.set(key, { key, sources, targets: [], transitions: [] });
+  brackets.get(key).targets.push(target);
+  brackets.get(key).transitions.push(...list);
+}
+const bracketOf = new Map();
+for (const bracket of brackets.values()) {
+  for (const transition of bracket.transitions) bracketOf.set(transition, bracket);
+}
+// Consecutive main-path phases form a composite state: one frame around them
+// and one exit per target, like a UML superstate transition. Frames never
+// partially overlap; such a bracket keeps a shared bus under its phases.
+const frameSpans = [];
+for (const bracket of brackets.values()) {
+  const indexes = bracket.sources.map((id) => spineIndex.get(id));
+  const lo = Math.min(...indexes);
+  const hi = Math.max(...indexes);
+  if (hi - lo + 1 !== indexes.length || frameSpans.some((span) => span.lo <= hi && lo <= span.hi)) continue;
+  bracket.frame = { lo, hi };
+  frameSpans.push(bracket.frame);
+}
+const bracketTargets = new Map();
+for (const bracket of brackets.values()) for (const target of bracket.targets) bracketTargets.set(target, bracket);
+
+const outgoing = new Set(transitions.map((transition) => transition.from));
+const isFinal = (state) => !outgoing.has(state.id);
+
+// ---------------------------------------------------------------- layout
+
+// Each round tries ports pulled toward their partners and ports spread evenly,
+// and keeps the placed layout with the fewest bends and short jogs.
+let spacing = { spineGap: 72, rowGap: 44, drop: 58, firstTrack: 34 };
+let geometry;
+// Labels that could not be placed at a tighter spacing, which widened every gap.
+const spacingWideners = new Set();
+for (let round = 0; round < SPACING_ROUNDS; round += 1) {
+  const candidates = ['partner', 'even'].map((ports) => ({ ports, ...layout({ ...spacing, ports }) }));
+  const placed = candidates.filter((candidate) => !candidate.unplacedLabels.length);
+  const best = placed.sort((a, b) => routeCost(a.routes) - routeCost(b.routes))[0] || candidates[0];
+  // layout() positions the shared states, so the winner is laid out again.
+  geometry = best === candidates.at(-1) ? best : layout({ ...spacing, ports: best.ports });
+  if (placed.length) break;
+  if (round === 0) {
+    const closest = [...candidates].sort((a, b) => a.unplacedLabels.length - b.unplacedLabels.length)[0];
+    for (const transition of closest.unplacedLabels) spacingWideners.add(transition);
+  }
+  spacing = { spineGap: spacing.spineGap + 28, rowGap: spacing.rowGap + 28, drop: spacing.drop + 14, firstTrack: spacing.firstTrack + 6 };
+}
+
+function routeCost(routes) {
+  let cost = 0;
+  for (const { points } of routes.values()) {
+    cost += Math.max(0, points.length - 2) * 10;
+    for (let index = 1; index < points.length; index += 1) {
+      const run = Math.abs(points[index][0] - points[index - 1][0]);
+      if (points.length > 2 && Math.abs(points[index][1] - points[index - 1][1]) < 0.5) cost += run * 0.1 + (run < 30 ? 40 : 0);
+    }
+  }
+  return cost;
+}
+
+function layout({ spineGap, rowGap, drop, firstTrack, ports: portMode }) {
+  // Main-path x positions: each gap fits its row label.
+  let cursor = MARGIN_X;
+  mainPath.forEach((id, index) => {
+    const state = states.get(id);
+    state.x = cursor;
+    state.cx = cursor + state.width / 2;
+    const edge = spineEdges.get(index);
+    const labelWidth = edge && hasLabel(edge) ? labelBox(edge).width : 0;
+    cursor += state.width + Math.max(spineGap, labelWidth + 26);
+  });
+  for (let row = 1; row < rowCount; row += 1) placeRow(row, rowGap);
+
+  // Shift horizontally so the leftmost element keeps the margin.
+  const minX = Math.min(...[...states.values()].map((state) => state.x));
+  const dx = MARGIN_X - minX;
+  for (const state of states.values()) { state.x += dx; state.cx += dx; }
+
+  const arcs = assignArcLevels();
+  const maxLevel = Math.max(0, ...arcs.map((arc) => arc.level));
+  const arcLabelReserve = arcs.some((arc) => hasLabel(arc.transition)) ? 12 : 0;
+  const spineTop = MARGIN_TOP + (maxLevel ? ARC_BASE + (maxLevel - 1) * ARC_STEP + arcLabelReserve : 0);
+
+  const ports = new Map();
+  const portOf = (id, side, key) => ports.get(`${id}|${side}`)?.get(key);
+  const requestPort = (id, side, key, otherX, order) => {
+    const slot = `${id}|${side}`;
+    if (!ports.has(slot)) ports.set(slot, new Map());
+    if (!ports.get(slot).has(key)) ports.get(slot).set(key, { key, otherX, order, x: 0 });
+  };
+  const cx = (id) => states.get(id).cx;
+
+  // Connectors cross the gap below row `gap`: single transitions between two
+  // rows, composite frame exits, shared buses, and loops between two
+  // non-adjacent states of one row.
+  const connectors = [];
+  for (const transition of ofKind('between')) {
+    if (bracketOf.has(transition)) continue;
+    const down = depthOf(transition.from) < depthOf(transition.to);
+    const upperId = down ? transition.from : transition.to;
+    const lowerId = down ? transition.to : transition.from;
+    connectors.push({ kind: 'single', transition, down, upperId, lowerId, gap: depthOf(upperId), order: transitions.indexOf(transition) });
+  }
+  const frames = [];
+  for (const bracket of brackets.values()) {
+    const order = transitions.indexOf(bracket.transitions[0]);
+    if (!bracket.frame) {
+      connectors.push({ kind: 'bracket', bracket, gap: 0, order });
+      continue;
+    }
+    const first = states.get(mainPath[bracket.frame.lo]);
+    const last = states.get(mainPath[bracket.frame.hi]);
+    const rect = { x: first.x - FRAME_PAD, y: spineTop - FRAME_PAD, width: last.x + last.width - first.x + FRAME_PAD * 2, height: STATE_H + FRAME_PAD * 2 };
+    frames.push(rect);
+    for (const target of bracket.targets) connectors.push({ kind: 'frame', bracket, rect, lowerId: target, gap: 0, order });
+  }
+  // Neighbours in one lower row connect side to side; others loop underneath.
+  const rowOrder = rows.map((list) => [...list].sort((a, b) => a.x - b.x).map((state) => state.id));
+  const adjacent = (transition) => transition.from !== transition.to
+    && Math.abs(rowOrder[depthOf(transition.from)].indexOf(transition.from) - rowOrder[depthOf(transition.from)].indexOf(transition.to)) === 1;
+  const sides = ofKind('same').filter(adjacent);
+  // Side labels ride on the line for groups of three or more. Reserve their
+  // actual height before placing rows: horizontal gap growth cannot clear a
+  // label trapped between two full-width parallel strokes.
+  const sideGroups = new Map();
+  for (const transition of sides) {
+    const key = [transition.from, transition.to].sort().join('\u0000');
+    if (!sideGroups.has(key)) sideGroups.set(key, []);
+    sideGroups.get(key).push(transition);
+  }
+  const sideLanes = [];
+  const rowHeights = rows.map(() => STATE_H);
+  for (const group of sideGroups.values()) {
+    const rightward = (transition) => states.get(transition.from).x < states.get(transition.to).x;
+    const ordered = [...group.filter(rightward), ...group.filter((transition) => !rightward(transition))];
+    if (ordered.length > 5) {
+      const message = `${ordered.length} transitions between the neighbouring states "${ordered[0].from}" and "${ordered[0].to}" cannot spread apart on the shared edge; at most five stay legible.`;
+      throwDiagnosticProblems('Lifecycle validation failed', [message], {
+        subject: { diagramType: 'lifecycle' },
+        diagnostics: [structureProblem('lifecycle/crowded-side-transitions', message,
+          { collection: 'transitions', from: ordered[0].from, to: ordered[0].to },
+          ['merge the triggers into one transition label'])],
+      });
+    }
+    let step = Math.min(20, 48 / (ordered.length - 1));
+    if (ordered.length > 2) {
+      const heights = ordered.map((transition) => hasLabel(transition) ? labelBox(transition).height : 0);
+      step = Math.max(step, ...heights.map((height) => height ? height / 2 + CLEARANCE : 0),
+        ...heights.slice(1).map((height, index) => height && heights[index] ? (height + heights[index]) / 2 + 4 : 0));
+      const row = depthOf(ordered[0].from);
+      // Keep every side port eight pixels inside the rounded state corners.
+      rowHeights[row] = Math.max(rowHeights[row], step * (ordered.length - 1) + 16);
+    }
+    sideLanes.push({ ordered, step });
+  }
+  for (const transition of ofKind('same').filter((transition) => !adjacent(transition))) {
+    connectors.push({ kind: 'loop', transition, gap: depthOf(transition.from), order: transitions.indexOf(transition) });
+  }
+
+  for (const connector of connectors) {
+    if (connector.kind === 'single') {
+      requestPort(connector.upperId, 'bottom', connector, cx(connector.lowerId), connector.order);
+      requestPort(connector.lowerId, 'top', connector, cx(connector.upperId), connector.order);
+    } else if (connector.kind === 'frame') {
+      requestPort(connector.lowerId, 'top', connector, connector.rect.x + connector.rect.width / 2, connector.order);
+    } else if (connector.kind === 'loop') {
+      const { from, to } = connector.transition;
+      if (from === to) {
+        requestPort(from, 'bottom', `${connector.order}:out`, Infinity, 0);
+        requestPort(from, 'bottom', `${connector.order}:in`, Infinity, 1);
+      } else {
+        requestPort(from, 'bottom', `${connector.order}:out`, cx(to), connector.order);
+        requestPort(to, 'bottom', `${connector.order}:in`, cx(from), connector.order);
+      }
+    } else {
+      const { sources, targets } = connector.bracket;
+      const dropCenter = targets.reduce((sum, id) => sum + cx(id), 0) / targets.length;
+      const sourceCenter = sources.reduce((sum, id) => sum + cx(id), 0) / sources.length;
+      for (const id of sources) requestPort(id, 'bottom', connector, dropCenter, connector.order);
+      for (const id of targets) requestPort(id, 'top', connector, sourceCenter, connector.order);
+    }
+  }
+  for (const arc of arcs) {
+    const { transition } = arc;
+    if (transition.from === transition.to) {
+      requestPort(transition.from, 'top', `${arc.key}:out`, Infinity, 0);
+      requestPort(transition.from, 'top', `${arc.key}:in`, Infinity, 1);
+    } else {
+      requestPort(transition.from, 'top', `${arc.key}:out`, cx(transition.to), 0);
+      requestPort(transition.to, 'top', `${arc.key}:in`, cx(transition.from), 0);
+    }
+  }
+  distributePorts(ports, arcs, portMode);
+  placeFrameExits(connectors, ports, portOf);
+
+  // Each gap assigns its horizontal runs to tracks, then the next row follows.
+  const runs = connectors.map((connector) => {
+    if (connector.kind === 'loop') {
+      const { from, to } = connector.transition;
+      const tops = [portOf(from, 'bottom', `${connector.order}:out`).x, portOf(to, 'bottom', `${connector.order}:in`).x];
+      return { connector, tops, bottoms: [], lo: Math.min(...tops), hi: Math.max(...tops), straight: false };
+    }
+    if (connector.kind === 'bracket') {
+      const { sources, targets } = connector.bracket;
+      const tops = sources.map((id) => portOf(id, 'bottom', connector).x);
+      const bottoms = targets.map((id) => portOf(id, 'top', connector).x);
+      const xs = [...tops, ...bottoms];
+      return { connector, tops, bottoms, lo: Math.min(...xs), hi: Math.max(...xs), straight: false };
+    }
+    const top = connector.kind === 'frame' ? connector.exitX : portOf(connector.upperId, 'bottom', connector).x;
+    const bottom = portOf(connector.lowerId, 'top', connector).x;
+    return { connector, tops: [top], bottoms: [bottom], lo: Math.min(top, bottom), hi: Math.max(top, bottom), straight: Math.abs(top - bottom) < 0.5 };
+  });
+  const rowTop = [spineTop];
+  const trackY = [];
+  for (let row = 0; row < rowCount; row += 1) {
+    for (const state of rows[row]) {
+      state.y = rowTop[row];
+      state.height = rowHeights[row];
+      state.cy = rowTop[row] + state.height / 2;
+    }
+    const bottom = rowTop[row] + rowHeights[row];
+    const count = assignTracks(runs.filter((run) => run.connector.gap === row));
+    trackY[row] = (track) => bottom + firstTrack + track * TRACK_STEP;
+    if (row + 1 < rowCount) rowTop.push((count ? trackY[row](count - 1) : bottom + firstTrack) + drop);
+  }
+  const rowBottom = (row) => rowTop[row] + rowHeights[row];
+
+  // Routes, keyed by transition.
+  const routes = new Map();
+  const junctions = [];
+  for (const [index, transition] of spineEdges) {
+    const from = states.get(mainPath[index]);
+    const to = states.get(mainPath[index + 1]);
+    routes.set(transition, { points: [[from.x + from.width, from.cy], [to.x, to.cy]], segment: 0, labelMode: 'above' });
+  }
+  for (const arc of arcs) {
+    const { transition } = arc;
+    const out = portOf(transition.from, 'top', `${arc.key}:out`).x;
+    const inn = portOf(transition.to, 'top', `${arc.key}:in`).x;
+    const y = spineTop - ARC_BASE - (arc.level - 1) * ARC_STEP;
+    routes.set(transition, { points: [[out, spineTop], [out, y], [inn, y], [inn, spineTop]], segment: 1, labelMode: 'on' });
+  }
+  for (const run of runs) {
+    const { connector } = run;
+    const { gap } = connector;
+    const y = trackY[gap](run.track ?? 0);
+    const upper = rowBottom(gap);
+    const lower = rowTop[gap + 1];
+    if (connector.kind === 'loop') {
+      const [a, b] = run.tops;
+      routes.set(connector.transition, { points: [[a, upper], [a, y], [b, y], [b, upper]], segment: 1, labelMode: 'on' });
+      continue;
+    }
+    if (connector.kind === 'single' || connector.kind === 'frame') {
+      const [top] = run.tops;
+      const [bottom] = run.bottoms;
+      const start = connector.kind === 'frame' ? connector.rect.y + connector.rect.height : upper;
+      const down = run.straight ? [[top, start], [top, lower]] : [[top, start], [top, y], [bottom, y], [bottom, lower]];
+      if (connector.kind === 'single') {
+        const points = connector.down ? down : [...down].reverse();
+        routes.set(connector.transition, { points, segment: connector.down ? points.length - 2 : 0, labelMode: 'beside' });
+      } else {
+        connector.bracket.transitions.filter((transition) => transition.to === connector.lowerId)
+          .forEach((transition, index) => routes.set(transition, {
+            points: down, segment: down.length - 2, labelMode: index ? 'none' : 'beside', bracket: connector.bracket,
+          }));
+      }
+      continue;
+    }
+    const { bracket } = connector;
+    const labelled = new Set();
+    for (const transition of bracket.transitions) {
+      const tick = portOf(transition.from, 'bottom', connector).x;
+      const dropX = portOf(transition.to, 'top', connector).x;
+      const points = Math.abs(tick - dropX) < 0.5
+        ? [[tick, upper], [tick, lower]]
+        : [[tick, upper], [tick, y], [dropX, y], [dropX, lower]];
+      const owner = !labelled.has(transition.to);
+      labelled.add(transition.to);
+      routes.set(transition, { points, segment: points.length - 2, labelMode: owner ? 'beside' : 'none', bracket });
+    }
+    for (const x of [...run.tops, ...run.bottoms]) {
+      if (x > run.lo + 0.5 && x < run.hi - 0.5) junctions.push([x, y]);
+    }
+  }
+  // Parallel transitions between two neighbours spread symmetrically around
+  // the shared edge, left-to-right ones first; a reciprocal pair lands at ±10.
+  for (const { ordered, step } of sideLanes) {
+    ordered.forEach((transition, index) => {
+      const from = states.get(transition.from);
+      const to = states.get(transition.to);
+      const y = from.cy + (index - (ordered.length - 1) / 2) * step;
+      const points = from.x < to.x ? [[from.x + from.width, y], [to.x, y]] : [[from.x, y], [to.x + to.width, y]];
+      // With three or more parallels the inner strokes leave no lane for a
+      // floating label, so their labels ride on the line like arc labels.
+      routes.set(transition, { points, segment: 0, labelMode: ordered.length > 2 ? 'on' : 'above' });
+    });
+  }
+
+  const stateRight = Math.max(...[...states.values()].map((state) => state.x + state.width));
+  const placed = placeLabels({ routes, contentRight: stateRight });
+  const boxes = [...states.values(), ...placed.placedLabels.values()];
+  const contentBottom = Math.max(
+    ...boxes.map((box) => box.y + box.height),
+    ...[...routes.values()].flatMap((route) => route.points.map((point) => point[1])),
+  );
+  const contentRight = Math.max(...boxes.map((box) => box.x + box.width));
+  return { routes, junctions, frames, contentBottom, contentRight, ...placed };
+}
+
+// A composite exit leaves the frame directly above its target when possible,
+// clear of the inner phases' own connectors and of sibling exits.
+function placeFrameExits(connectors, ports, portOf) {
+  const frameConnectors = connectors.filter((connector) => connector.kind === 'frame');
+  for (const connector of frameConnectors) {
+    const { rect, bracket } = connector;
+    const inner = mainPath.slice(bracket.frame.lo, bracket.frame.hi + 1)
+      .flatMap((id) => [...(ports.get(`${id}|bottom`)?.values() || [])].map((port) => port.x));
+    const taken = [...inner, ...frameConnectors.filter((other) => other.rect === rect && other.exitX !== undefined).map((other) => other.exitX)];
+    const target = portOf(connector.lowerId, 'top', connector);
+    const low = rect.x + 16;
+    const high = rect.x + rect.width - 16;
+    const wanted = Math.min(high, Math.max(low, target.x));
+    const free = (x) => x >= low && x <= high && taken.every((other) => Math.abs(other - x) >= 14);
+    let exitX = wanted;
+    for (let step = 0; step <= 40 && !free(exitX); step += 1) {
+      exitX = [wanted + step * 7, wanted - step * 7].find(free) ?? exitX;
+    }
+    connector.exitX = exitX;
+    // Snap the target's port to the exit when that keeps its spacing.
+    const delta = Math.abs(exitX - target.x);
+    if (delta >= 0.5 && delta < 24) {
+      const state = states.get(connector.lowerId);
+      const others = [...ports.get(`${connector.lowerId}|top`).values()].filter((port) => port !== target);
+      if (exitX >= state.x + 12 && exitX <= state.x + state.width - 12 && others.every((port) => Math.abs(port.x - exitX) >= 12)) {
+        target.x = exitX;
+      } else if (delta < 16) {
+        connector.exitX = [target.x, exitX + Math.sign(exitX - target.x || 1) * (16 - delta)].find(free) ?? exitX;
+      }
+    }
+  }
+}
+
+// Each lower row starts every state under the states it connects to in the
+// row above; overlapping blocks merge and centre on their combined ideal.
+function placeRow(row, rowGap) {
+  const members = rows[row];
+  const ideal = new Map();
+  for (const state of members) {
+    const xs = transitions.flatMap((transition) => {
+      const other = transition.to === state.id ? transition.from : transition.from === state.id ? transition.to : null;
+      return other && depthOf(other) === row - 1 ? [states.get(other).cx] : [];
+    });
+    if (xs.length) ideal.set(state.id, xs.reduce((sum, x) => sum + x, 0) / xs.length);
+  }
+  if (row === 1) {
+    for (const bracket of brackets.values()) {
+      const center = bracket.sources.reduce((sum, id) => sum + states.get(id).cx, 0) / bracket.sources.length;
+      bracket.targets.forEach((id) => ideal.set(id, center));
+    }
+  }
+  const fallback = Math.max(...mainPath.map((id) => states.get(id).cx)) + 1;
+  const blocks = [];
+  const grouped = new Set();
+  for (const state of members) {
+    if (grouped.has(state.id)) continue;
+    const bracket = row === 1 ? bracketTargets.get(state.id) : null;
+    const list = bracket ? bracket.targets.map((id) => states.get(id)) : [state];
+    list.forEach((member) => grouped.add(member.id));
+    blocks.push({ members: list, ideal: ideal.get(state.id) ?? fallback, weight: ideal.has(state.id) ? list.length : 0.05, order: members.indexOf(state) });
+  }
+  // Neighbours joined by a labelled transition keep room for its label.
+  const gapBetween = (left, right) => Math.max(rowGap, ...transitions
+    .filter((transition) => hasLabel(transition) && ((transition.from === left.id && transition.to === right.id)
+      || (transition.from === right.id && transition.to === left.id)))
+    .map((transition) => labelBox(transition).width + 32));
+  blocks.sort((a, b) => a.ideal - b.ideal || a.order - b.order);
+  // Lay a cluster of blocks side by side and return each block's centre offset.
+  const arrange = (list) => {
+    const offsets = [];
+    let x = 0;
+    let previous = null;
+    for (const block of list) {
+      const start = x;
+      for (const member of block.members) {
+        if (previous) x += gapBetween(previous, member);
+        member.offset = x;
+        x += member.width;
+        previous = member;
+      }
+      offsets.push((start + x) / 2);
+    }
+    return { width: x, offsets: offsets.map((offset) => offset - x / 2) };
+  };
+  // A cluster's centre is the weighted mean of (ideal - offset) over its
+  // blocks, which minimises their squared drift.
+  const centre = (list) => {
+    const { width, offsets } = arrange(list);
+    const weight = list.reduce((sum, block) => sum + block.weight, 0);
+    return { width, x: list.reduce((sum, block, index) => sum + block.weight * (block.ideal - offsets[index]), 0) / weight };
+  };
+  const clusters = [];
+  for (const block of blocks) {
+    clusters.push([block]);
+    while (clusters.length > 1) {
+      const last = clusters.at(-1);
+      const previous = clusters.at(-2);
+      const a = centre(previous);
+      const b = centre(last);
+      if (a.x + a.width / 2 + gapBetween(previous.at(-1).members.at(-1), last[0].members[0]) <= b.x - b.width / 2) break;
+      clusters.splice(-2, 2, [...previous, ...last]);
+    }
+  }
+  for (const cluster of clusters) {
+    const { x, width } = centre(cluster);
+    arrange(cluster);
+    for (const block of cluster) {
+      for (const member of block.members) {
+        member.x = x - width / 2 + member.offset;
+        member.cx = member.x + member.width / 2;
+      }
+    }
+  }
+}
+
+// Arcs nest by span: a shorter arc stays lower; overlapping spans never share a level.
+function assignArcLevels() {
+  const arcs = ofKind('arc').map((transition, index) => {
+    const a = spineIndex.get(transition.from);
+    const b = spineIndex.get(transition.to);
+    return { transition, key: `arc${transitions.indexOf(transition)}`, lo: Math.min(a, b), hi: Math.max(a, b), index };
+  });
+  const sorted = [...arcs].sort((left, right) => (left.hi - left.lo) - (right.hi - right.lo) || left.lo - right.lo || left.index - right.index);
+  for (const arc of sorted) {
+    const blocking = sorted.filter((other) => other !== arc && other.level
+      && ((other.lo < arc.hi && arc.lo < other.hi) || (other.lo === other.hi && arc.lo < other.lo && other.lo < arc.hi)
+        || (other.lo === arc.lo && other.hi === arc.hi)));
+    arc.level = 1 + Math.max(0, ...blocking.map((other) => other.level));
+  }
+  return arcs;
+}
+
+// Port order on one side avoids crossings: connections toward the left use
+// the left part of the side, connections toward the right the right part.
+// Nested arcs put the outer (higher) arc's port furthest out and spread evenly;
+// every other port moves toward its partner so connectors can drop straight.
+function distributePorts(ports, arcs, mode) {
+  const arcLevel = new Map(arcs.flatMap((arc) => [[`${arc.key}:out`, arc.level], [`${arc.key}:in`, arc.level]]));
+  // Lower-row tops follow the upper ports they connect to, so place them last.
+  const lowerTop = ([slot]) => slot.endsWith('|top') && !onSpine(slot.split('|')[0]);
+  const slots = [...ports].sort((a, b) => lowerTop(a) - lowerTop(b));
+  for (const [slot, entries] of slots) {
+    const id = slot.split('|')[0];
+    const state = states.get(id);
+    const list = [...entries.values()];
+    if (lowerTop([slot])) {
+      for (const port of list) {
+        const upper = port.key?.kind === 'single' ? ports.get(`${port.key.upperId}|bottom`)?.get(port.key) : null;
+        if (upper) port.otherX = upper.x;
+      }
+    }
+    list.sort((left, right) => {
+      const leftDirection = Math.sign(left.otherX - state.cx);
+      const rightDirection = Math.sign(right.otherX - state.cx);
+      if (leftDirection !== rightDirection) return leftDirection - rightDirection;
+      const leftLevel = arcLevel.get(left.key);
+      const rightLevel = arcLevel.get(right.key);
+      if (leftLevel !== undefined && rightLevel !== undefined && leftLevel !== rightLevel) {
+        // An outer arc's riser must stay outside every inner span it rises past.
+        return leftDirection < 0 ? leftLevel - rightLevel : rightLevel - leftLevel;
+      }
+      return left.otherX - right.otherX || left.order - right.order;
+    });
+    const usable = state.width - PORT_PAD * 2;
+    const step = list.length > 1 ? Math.min(PORT_STEP, usable / (list.length - 1)) : 0;
+    const xs = mode === 'even' || (onSpine(id) && slot.endsWith('|top'))
+      ? list.map((_, index) => state.cx - (step * (list.length - 1)) / 2 + index * step)
+      : fitPorts(list.map((port) => port.otherX), step, state.x + PORT_PAD, state.x + state.width - PORT_PAD);
+    list.forEach((port, index) => { port.x = Math.round(xs[index] * 10) / 10; });
+  }
+  snapPorts(ports, mode);
+}
+
+// Ordered ports as close to their wanted x as the step and side allow: a pool
+// of adjacent violators (isotonic regression on wanted - index * step).
+function fitPorts(wanted, step, low, high) {
+  const n = wanted.length;
+  const top = high - step * (n - 1);
+  const clamp = (x) => Math.min(Math.max(x, low), Math.max(low, top));
+  const pools = [];
+  wanted.forEach((x, index) => {
+    pools.push({ sum: (Number.isFinite(x) ? x : x > 0 ? high : low) - index * step, count: 1 });
+    while (pools.length > 1 && pools.at(-2).sum / pools.at(-2).count > pools.at(-1).sum / pools.at(-1).count) {
+      const last = pools.pop();
+      pools.at(-1).sum += last.sum;
+      pools.at(-1).count += last.count;
+    }
+  });
+  return pools.flatMap((pool) => Array(pool.count).fill(clamp(pool.sum / pool.count))).map((x, index) => x + index * step);
+}
+
+// A nearly vertical connector becomes exactly vertical when a port can move
+// without crowding its neighbours; otherwise its jog widens to a readable run.
+function snapPorts(ports, mode) {
+  const fits = (id, side, moving, x) => {
+    const state = states.get(id);
+    return x >= state.x + PORT_PAD - 8 && x <= state.x + state.width - PORT_PAD + 8
+      && [...ports.get(`${id}|${side}`).values()].every((other) => other === moving || Math.abs(other.x - x) >= 12);
+  };
+  for (const [slot, entries] of ports) {
+    if (!slot.endsWith('|top')) continue;
+    const lowerId = slot.split('|')[0];
+    if (onSpine(lowerId)) continue;
+    for (const port of entries.values()) {
+      const connector = port.key;
+      if (connector?.kind === 'single') {
+        const upperPort = ports.get(`${connector.upperId}|bottom`).get(connector);
+        const delta = Math.abs(upperPort.x - port.x);
+        if (delta < 0.5 || (delta >= 16 && mode === 'even')) continue;
+        if (fits(lowerId, 'top', port, upperPort.x)) port.x = upperPort.x;
+        else if (delta >= 16) continue;
+        else if (fits(connector.upperId, 'bottom', upperPort, port.x)) upperPort.x = port.x;
+        else {
+          const away = Math.sign(port.x - upperPort.x) || 1;
+          const pushed = [upperPort.x + away * 16, upperPort.x - away * 16].find((x) => fits(lowerId, 'top', port, x));
+          if (pushed !== undefined) port.x = pushed;
+        }
+      } else if (connector?.kind === 'bracket') {
+        // A drop next to a tick would leave a micro run on the shared bus.
+        const ticks = connector.bracket.sources.map((id) => ports.get(`${id}|bottom`).get(connector).x);
+        const near = ticks.find((x) => Math.abs(x - port.x) >= 0.5 && Math.abs(x - port.x) < 16);
+        if (near !== undefined && fits(lowerId, 'top', port, near)) port.x = near;
+      }
+    }
+  }
+}
+
+// Greedy interval tracks for one gap, trying several orderings and keeping
+// the one with the fewest crossings.
+function assignTracks(runs) {
+  const needs = runs.filter((run) => !run.straight);
+  if (!needs.length) return 0;
+  const mean = (xs) => xs.reduce((sum, x) => sum + x, 0) / xs.length;
+  const direction = (run) => (run.bottoms.length ? Math.sign(mean(run.bottoms) - mean(run.tops)) : 0);
+  const start = (run) => mean(run.tops);
+  const byStart = (a, b) => (direction(a) >= 0 ? start(b) - start(a) : start(a) - start(b));
+  const loopsFirst = (a, b) => (a.bottoms.length ? 1 : 0) - (b.bottoms.length ? 1 : 0);
+  const orderings = [
+    [...needs].sort((a, b) => (direction(b) - direction(a)) || byStart(a, b)),
+    [...needs].sort((a, b) => (direction(a) - direction(b)) || byStart(a, b)),
+    [...needs].sort((a, b) => (a.hi - a.lo) - (b.hi - b.lo)),
+    [...needs].sort((a, b) => loopsFirst(a, b) || (a.hi - a.lo) - (b.hi - b.lo)),
+    [...needs].sort((a, b) => -loopsFirst(a, b) || (a.hi - a.lo) - (b.hi - b.lo)),
+  ];
+  let best = null;
+  for (const ordering of orderings) {
+    const tracks = [];
+    const assignment = new Map();
+    for (const run of ordering) {
+      let track = 0;
+      while (tracks[track]?.some((other) => other.lo - 10 < run.hi && run.lo < other.hi + 10)) track += 1;
+      (tracks[track] ||= []).push(run);
+      assignment.set(run, track);
+    }
+    const crossings = countCrossings(runs, assignment);
+    if (!best || crossings < best.crossings || (crossings === best.crossings && tracks.length < best.count)) {
+      best = { assignment, crossings, count: tracks.length };
+    }
+  }
+  for (const run of needs) run.track = best.assignment.get(run);
+  return best.count;
+}
+
+function countCrossings(runs, assignment) {
+  // Verticals run from the upper row (y 0) to a track, then on to the lower row (y 1000).
+  const pieces = runs.map((run) => {
+    const track = assignment.get(run);
+    if (track === undefined) return { verticals: [[run.tops[0], 0, 1000]], horizontals: [] };
+    const y = 10 + track;
+    return {
+      verticals: [...run.tops.map((x) => [x, 0, y]), ...run.bottoms.map((x) => [x, y, 1000])],
+      horizontals: [[y, run.lo, run.hi]],
+    };
+  });
+  let count = 0;
+  for (let left = 0; left < pieces.length; left += 1) {
+    for (let right = 0; right < pieces.length; right += 1) {
+      if (left === right) continue;
+      for (const [x, y1, y2] of pieces[left].verticals) {
+        for (const [y, x1, x2] of pieces[right].horizontals) {
+          if (x > x1 + 0.5 && x < x2 - 0.5 && y > y1 && y < y2) count += 1;
+        }
+      }
+    }
+  }
+  return count;
+}
+
+// Labels sit beside the segment that enters the target (or leaves the lower
+// row), above main-path arrows, and on arc and lower-loop runs. Every
+// candidate keeps clear of other routes, states and labels.
+function placeLabels({ routes, contentRight }) {
+  const placedLabels = new Map();
+  const unplacedLabels = [];
+  const segmentsOf = (transition) => {
+    const points = routes.get(transition)?.points || [];
+    return points.slice(1).map((end, index) => ({ start: points[index], end }));
+  };
+  const siblings = (transition) => {
+    const bracket = routes.get(transition)?.bracket;
+    return bracket ? bracket.transitions.filter((other) => other.to === transition.to) : [transition];
+  };
+  const others = (transition) => transitions.filter((other) => !siblings(transition).includes(other));
+  for (const transition of transitions) {
+    const route = routes.get(transition);
+    if (!route || route.labelMode === 'none' || !hasLabel(transition)) continue;
+    const { width, height } = labelBox(transition);
+    const [start, end] = [route.points[route.segment], route.points[route.segment + 1]];
+    const candidates = [];
+    const at = (cx, cy) => ({ x: cx - width / 2, y: cy - height / 2, width, height, cx, cy });
+    if (route.labelMode === 'above') {
+      const mid = (start[0] + end[0]) / 2;
+      candidates.push(at(mid, start[1] - LABEL_GAP - height / 2), at(mid, start[1] + LABEL_GAP + height / 2));
+    } else if (route.labelMode === 'on') {
+      for (const fraction of [0.5, 0.35, 0.65, 0.2, 0.8]) {
+        candidates.push(at(start[0] + (end[0] - start[0]) * fraction, start[1]));
+      }
+    } else {
+      const verticals = route.points.slice(1).map((point, index) => [route.points[index], point])
+        .filter(([a, b]) => Math.abs(a[0] - b[0]) < 0.5);
+      const preferred = [[start, end], ...verticals.filter(([a]) => a !== start)];
+      const rowState = states.get(depthOf(transition.to) < depthOf(transition.from) ? transition.from : transition.to);
+      for (const [a, b] of preferred) {
+        const x = a[0];
+        const mid = (a[1] + b[1]) / 2;
+        const sides = x <= rowState.cx ? [-1, 1] : [1, -1];
+        for (const side of sides) {
+          for (const shift of [0, -10, 10]) candidates.push(at(x + side * (LABEL_GAP + width / 2), mid + shift));
+        }
+      }
+      const horizontal = route.points.slice(1).map((point, index) => [route.points[index], point])
+        .find(([a, b]) => Math.abs(a[1] - b[1]) < 0.5 && Math.abs(a[0] - b[0]) > width + 8);
+      if (horizontal) candidates.push(at((horizontal[0][0] + horizontal[1][0]) / 2, horizontal[0][1]));
+    }
+    const otherSegments = others(transition).flatMap(segmentsOf);
+    const ownSegments = siblings(transition).flatMap(segmentsOf);
+    const free = (rect) => rect.x >= 8 && rect.x + rect.width <= contentRight + MARGIN_X - 8 && rect.y >= 4
+      && [...states.values()].every((state) => !rectsOverlap(rect, state, 4))
+      && [...placedLabels.values()].every((other) => !rectsOverlap(rect, other, 4))
+      && otherSegments.every((segment) => (segmentRectClearance(segment, rect) ?? Infinity) >= CLEARANCE)
+      && (route.labelMode === 'on' || ownSegments.every((segment) => (segmentRectClearance(segment, rect) ?? Infinity) >= LABEL_GAP - 1));
+    const chosen = candidates.find(free);
+    if (chosen) placedLabels.set(transition, chosen);
+    else {
+      unplacedLabels.push(transition);
+      placedLabels.set(transition, candidates[0]);
+    }
+  }
+  return { placedLabels, unplacedLabels };
+}
+
+// ---------------------------------------------------------------- validate
+
+function structureProblem(code, message, subject, supportedFixes) {
+  return { code, severity: 'error', message, subject: { diagramType: 'lifecycle', ...subject }, evidence: {}, supportedFixes };
+}
+
+function validateStructure() {
+  const diagnostics = [];
+  const problems = [];
+  const add = (...args) => {
+    const diagnostic = structureProblem(...args);
+    diagnostics.push(diagnostic);
+    problems.push(diagnostic.message);
+  };
+  if (states.size !== asArray(lifecycle.states).length) {
+    add('lifecycle/duplicate-state', 'State ids must be unique.', { collection: 'states' }, ['give every state a unique id']);
+  }
+  const ids = [...states.keys()];
+  mainPath.forEach((id, index) => {
+    if (!states.has(id)) {
+      add('lifecycle/unknown-main-path-state', `mainPath[${index}] "${id}" is not a state.`, { path: `/mainPath/${index}` },
+        ids.slice(0, 3).map((known) => `set /mainPath/${index} to state id "${known}"`));
+    }
+  });
+  if (new Set(mainPath).size !== mainPath.length) {
+    add('lifecycle/repeated-main-path-state', 'mainPath lists a state more than once; a return to an earlier phase is a transition, not a repeated step.',
+      { path: '/mainPath' }, ['list each main-path state once and keep the return as a transition']);
+  }
+  transitions.forEach((transition, index) => {
+    for (const field of ['from', 'to']) {
+      if (states.has(transition[field])) continue;
+      add('lifecycle/unknown-endpoint', `Transition ${index} references unknown ${field === 'from' ? 'source' : 'target'} "${transition[field]}".`,
+        { collection: 'transitions', path: `/transitions/${index}/${field}`, transition: transition.id ?? null },
+        ids.slice(0, 3).map((known) => `set /transitions/${index}/${field} to state id "${known}"`));
+    }
+  });
+  for (let index = 0; index + 1 < mainPath.length; index += 1) {
+    const [from, to] = [mainPath[index], mainPath[index + 1]];
+    if (!transitions.some((transition) => transition.from === from && transition.to === to)) {
+      add('lifecycle/main-path-gap', `mainPath step "${from}" -> "${to}" has no transition.`, { path: `/mainPath/${index}` },
+        [`add a transition from "${from}" to "${to}"`, 'remove the state from mainPath if it is not on the happy path']);
+    }
+  }
+  asArray(lifecycle.states).forEach((state, index) => {
+    const brandRail = brandTopRailProblem(state, preferredWidth(state), TEXT.labelMinimum, 'State');
+    if (brandRail) problems.push(brandRail);
+    for (const [field, name, minimum] of [['label', 'Label', TEXT.labelMinimum], ['sublabel', 'Sublabel', TEXT.sublabelMinimum], ['tag', 'Tag', TEXT.tagMinimum]]) {
+      const value = state[field];
+      const needed = Math.ceil(minimumNodeTextWidth(value || '', minimum));
+      const available = availableNodeTextWidth(STATE_MAX_W) - (field === 'label' && brandMarkFor(state) ? 26 : 0);
+      if (value && needed > available) {
+        add('lifecycle/state-text-too-long',
+          `${name} "${value}" of state "${state.id}" is wider than the widest ${STATE_MAX_W}px state: it needs ~${needed}px at the ${minimum}px legible minimum, but ${available}px fit — shorten the ${field} and move detail into a card.`,
+          { collection: 'states', path: `/states/${index}/${field}` }, [`shorten the ${field} and move detail into a card`]);
+      }
+    }
+  });
+  if (problems.length) throwDiagnosticProblems('Lifecycle validation failed', problems, { subject: { diagramType: 'lifecycle' }, diagnostics });
+}
+
+function validateLayout() {
+  const problems = [];
+  const diagnostics = [];
+  const smallest = Math.min(LABEL_FONT, ...[...states.values()].flatMap((state) => {
+    const fitted = fonts(state, state.width);
+    return [fitted.label, state.sublabel ? fitted.sublabel : Infinity];
+  }));
+  const budget = Math.floor(DESKTOP_READER_DIAGRAM_WIDTH * smallest / MIN_PROJECTED_NODE_TEXT_PX);
+  if (viewBox[0] > budget) {
+    // A labelled main-path step widens its gap past the default spacing.
+    const wideStepLabels = mainPath.slice(0, -1).flatMap((id, index) => {
+      const edge = spineEdges.get(index);
+      const excessPx = edge && hasLabel(edge) ? Math.round(labelBox(edge).width + 26 - spacing.spineGap) : 0;
+      return excessPx > 0 ? [{ from: edge.from, to: edge.to, label: edge.label || edge.note, excessPx }] : [];
+    }).sort((a, b) => b.excessPx - a.excessPx);
+    const widenerLabels = [...spacingWideners].map((transition) => `"${transition.label || transition.note}"`);
+    const labelFixes = [
+      ...(widenerLabels.length ? [`relieve the routes crowding ${widenerLabels.join(', ')}: those labels found no clear spot at the base spacing, so every gap widened by 28px; drop labels both endpoints imply, merge exits that share a target, or move a secondary transition elsewhere`] : []),
+      ...(wideStepLabels.length ? [`shorten the main-path transition labels that widen their gaps: ${wideStepLabels.map((step) => `"${step.label}" (+${step.excessPx}px)`).join(', ')}`] : []),
+    ];
+    const message = `The lifecycle is ${viewBox[0]}px wide; at ${smallest}px text it stays readable on a desktop only up to ${budget}px.${labelFixes.length ? ` Transition labels set most of that width.` : ''}`;
+    diagnostics.push({
+      code: 'lifecycle/too-wide', severity: 'error', message,
+      subject: { diagramType: 'lifecycle', path: '/mainPath' },
+      evidence: { viewBoxWidth: viewBox[0], budgetPx: budget, mainPathStates: mainPath.length, lowerRowStates: offStates.length, wideStepLabels, spacingWideners: [...spacingWideners].map((transition) => ({ from: transition.from, to: transition.to, label: transition.label || transition.note })) },
+      supportedFixes: [...labelFixes, 'shorten state labels and sublabels', 'move secondary phases off mainPath or merge adjacent phases', 'split the lifecycle into two diagrams'],
+    });
+    problems.push(message);
+  }
+  for (const transition of geometry.unplacedLabels) {
+    const message = `Transition "${transition.from}" -> "${transition.to}" label "${transition.label || transition.note}" cannot be placed clear of nearby routes.`;
+    diagnostics.push({
+      code: 'lifecycle/label-unplaced', severity: 'error', message,
+      subject: { diagramType: 'lifecycle', collection: 'transitions', index: transitions.indexOf(transition), from: transition.from, to: transition.to },
+      evidence: {},
+      supportedFixes: ['shorten the transition label', 'give exits that share a target the same label so they share one arrow'],
+    });
+    problems.push(message);
+  }
+  if (problems.length) throwDiagnosticProblems('Lifecycle layout validation failed', problems, { subject: { diagramType: 'lifecycle' }, diagnostics });
+}
+
+// ---------------------------------------------------------------- canvas
+
+const LEGEND_CATALOG = ['start', 'active', 'waiting', 'decision', 'success', 'failure', 'neutral', 'external'].map((kind) => ({
   kind,
   label: i18nText(lifecycle.meta.locale, `legend.lifecycle.${kind}`),
   swatchWidth: kind === 'start' ? 26 : undefined,
 }));
 
-// Entries exist before the canvas so an auto-sized v2 viewBox can reserve the
-// measured legend rows below the last row instead of painting over them.
-// The structural `final` entry explains the double border; it follows the
-// kind entries and disappears with them, so a hidden legend stays empty.
 function legendCatalog() {
   const presentKinds = new Set([...states.values()].map((state) => state.type));
+  presentKinds.add('start');
   const entries = resolveLegend(lifecycle.meta?.legend, LEGEND_CATALOG, presentKinds);
   if (!entries.length || ![...states.values()].some(isFinal)) return entries;
-  return [...entries, {
-    kind: 'final',
-    label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'),
-    interactive: false,
-    present: true,
-    swatchWidth: 16,
-  }];
+  return [...entries, { kind: 'final', label: i18nText(lifecycle.meta.locale, 'legend.lifecycle.final'), interactive: false, present: true, swatchWidth: 16 }];
 }
+const legendEntries = legendCatalog();
+const canvasWidth = Math.max(640, Math.ceil(geometry.contentRight + MARGIN_X));
+const legend = legendFootprint(legendEntries, { width: canvasWidth - 80 });
+const viewBox = [canvasWidth, Math.ceil(geometry.contentBottom + (legendEntries.length ? 78 + legend.extraHeight : 32))];
+validateLayout();
 
-const resolvedLegendEntries = legendCatalog();
-
-let viewBox;
-if (isV2 && !authoredViewBox) {
-  const finite = [...states.values()];
-  const maxRight = Math.max(0, ...finite.map((state) => state.cx + state.width / 2).filter(Number.isFinite));
-  const width = Math.max(640, Math.ceil(maxRight + layoutV2.marginX));
-  const footprint = legendFootprint(resolvedLegendEntries, { width: width - 80 });
-  const statesBottom = Math.max(0, ...finite.map((state) => state.y + state.height).filter(Number.isFinite));
-  viewBox = [width, Math.ceil(statesBottom + footprint.extraHeight + 96)];
-} else {
-  viewBox = authoredViewBox || [980, 660];
-}
-
-const legendExtraHeight = legendFootprint(resolvedLegendEntries, { width: viewBox[0] - 80 }).extraHeight;
-
-function legendY() {
-  return viewBox[1] - 36;
-}
-
-// Keep the authored state-placement contract independent from the measured
-// legend's lower baseline. Moving legend chrome must not admit new state
-// geometry into the reserved outcome/legend band.
-function lifecycleAreaBottom() {
-  return isV2 ? viewBox[1] - legendExtraHeight - 96 : viewBox[1] - 122;
-}
 const stateSteps = new Map();
-for (const [index, transition] of asArray(lifecycle.transitions).entries()) {
-  if (!stateSteps.has(transition.from)) stateSteps.set(transition.from, index);
+mainPath.forEach((id, index) => stateSteps.set(id, index));
+for (const [index, transition] of transitions.entries()) {
   if (!stateSteps.has(transition.to)) stateSteps.set(transition.to, index + 1);
 }
-for (const [index, state] of asArray(lifecycle.states).entries()) {
-  if (!stateSteps.has(state.id)) stateSteps.set(state.id, index);
-}
 
-function validateLifecycle() {
-  const problems = [];
-  if (states.size !== asArray(lifecycle.states).length) problems.push('State ids must be unique.');
-
-  // The three bands are fixed at y=112/264/436. Preserve the original
-  // outcome/legend reserve even though measured legend rows now sit lower.
-  // v2 derives its canvas from rendered rows, so the floor does not apply.
-  if (!isV2 && lifecycleAreaBottom() + 4 < 448) {
-    problems.push(`viewBox height ${viewBox[1]} is too short for the fixed band layout — set meta.viewBox[1] to at least 566.`);
-  }
-
-  const laneIds = new Set(asArray(lifecycle.lanes).map((lane) => lane.id));
-  if (laneIds.size !== asArray(lifecycle.lanes).length) problems.push('Lane ids must be unique.');
-  if (!laneIds.has('main')) {
-    problems.push(isV2
-      ? 'Lifecycle diagrams need a lane with id "main" (the first row). Lane ids "main" and "terminal" are reserved: "main" renders as the first row, "terminal" as the last, and every other lane in authored order.'
-      : 'Lifecycle diagrams need a lane with id "main" (the phase rail). Lane ids "main" and "terminal" are reserved: "main" maps to the top phase band, "terminal" to the bottom outcome band, and all other lanes share the middle event band.');
-  }
-
-  for (const state of states.values()) {
-    if (!laneIds.has(state.lane)) {
-      problems.push(`State "${state.id}" uses unknown lane "${state.lane}".`);
-      continue;
-    }
-    if (isV2) {
-      if (!Number.isInteger(state.col) || state.col < 0 || state.col > 4) {
-        problems.push(`State "${state.id}" uses invalid column ${state.col} — every lifecycle row has integer columns 0..4.`);
-        continue;
-      }
-    } else {
-      const band = bandFor(state.lane);
-      const maxCol = band === 'phase'
-        ? layout.phaseXs.length
-        : band === 'outcome'
-          ? layout.outcomeXs.length
-          : layout.eventXs.length;
-      if (!Number.isInteger(state.col) || state.col < 0 || state.col >= maxCol) {
-        problems.push(`State "${state.id}" uses invalid column ${state.col} — the ${band} band has integer columns 0..${maxCol - 1}.`);
-        continue;
-      }
-    }
-    if (!isFinitePoint(state.x, state.y, state.cx, state.cy)) {
-      problems.push(`State "${state.id}" produced non-finite coordinates — check col, width, height, and yOffset are numbers.`);
-      continue;
-    }
-    if (state.x < (isV2 ? 28 : 32) || state.x + state.width > viewBox[0] - (isV2 ? 28 : 32)) {
-      problems.push(`State "${state.id}" exceeds the horizontal bounds of the diagram — reduce state.width${isV2 ? ', lower its col,' : ''} or increase meta.viewBox[0].`);
-    }
-    if (state.y < (isV2 ? 44 : 64) || state.y + state.height > lifecycleAreaBottom()) {
-      problems.push(`State "${state.id}" exceeds the vertical lifecycle area — keep y between ${isV2 ? 44 : 64} and ${lifecycleAreaBottom()} (adjust yOffset or increase meta.viewBox[1]).`);
-    }
-    const estLabelW = textUnits(state.label) * 6.2;
-    if (estLabelW > state.width + 6) {
-      problems.push(`Label "${state.label}" (~${Math.round(estLabelW)}px) is wider than state "${state.id}" (${state.width}px) — shorten the label or increase state.width.`);
-    }
-    const brandRailProblem = brandTopRailProblem(state, state.width, 8, 'State');
-    if (brandRailProblem) problems.push(brandRailProblem);
-    // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
-    // handles the ordinary case, this rejects what it cannot rescue.
-    const availableTextW = availableNodeTextWidth(state.width);
-    for (const [field, value, minimum] of [
-      ['Sublabel', state.sublabel, stateTextFit.sublabelMinimum],
-      ['Tag', state.tag, stateTextFit.tagMinimum],
-    ]) {
-      if (!value) continue;
-      const minimumW = minimumNodeTextWidth(value, minimum);
-      if (minimumW > availableTextW) {
-        problems.push(`${field} "${value}" needs ~${Math.ceil(minimumW)}px at the ${minimum}px legible minimum, but state "${state.id}" provides ${availableTextW}px — shorten the ${field.toLowerCase()} or increase state.width.`);
-      }
-    }
-  }
-
-  // v1: all non-main/non-terminal lanes share the same y band, so the overlap
-  // check must run across lanes — not per-lane. v2 gives each lane its own
-  // row, so only same-row neighbours can collide, but the shared check still
-  // covers custom widths and yOffset nudges.
-  const allStates = [...states.values()];
-  for (let i = 0; i < allStates.length; i += 1) {
-    for (let j = i + 1; j < allStates.length; j += 1) {
-      if (rectsOverlap(allStates[i], allStates[j], 10)) {
-        problems.push(`States "${allStates[i].id}" and "${allStates[j].id}" are less than 10px apart — move one to another col or separate them with yOffset${isV2 ? '.' : ' (lanes other than "main"/"terminal" share one band).'}`);
-      }
-    }
-  }
-
-  for (const transition of asArray(lifecycle.transitions)) {
-    if (!states.has(transition.from)) problems.push(`Transition "${transition.label || transition.from}" references unknown source "${transition.from}".`);
-    if (!states.has(transition.to)) problems.push(`Transition "${transition.label || transition.to}" references unknown target "${transition.to}".`);
-    if (states.has(transition.from) && states.has(transition.to)) {
-      const routed = pathFor(transition);
-      const [start, end] = [routed.points[0], routed.points[routed.points.length - 1]];
-      const distance = Math.hypot(end[0] - start[0], end[1] - start[1]);
-      if (distance < 32) problems.push(`Transition "${transition.label || `${transition.from}->${transition.to}`}" is too short (${Math.round(distance)}px; minimum 32px) — route it through a channel or drop its label.`);
-    }
-  }
-
-  // Authored via points are authoritative in schema v1, including under a
-  // quality profile. Preserve and render them exactly: applying the endpoint
-  // gate would either reject an existing typed input or require silently
-  // falsifying its geometry. Automatic routes still receive the side gate.
-  problems.push(...cleanEndpointSideProblems({
-    relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
-    pathFor,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    fromSideFor: (transition) => transitionSides(transition).fromSide,
-    toSideFor: (transition) => transitionSides(transition).toSide,
-    shouldCheckRelation: (transition) => !Array.isArray(transition.via),
-    routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross state borders perpendicularly',
-  }));
-  problems.push(...cleanFlowProblems({
-    relations: lifecycle.transitions,
-    obstacles: states.values(),
-    pathFor,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    obstacleKind: 'state',
-    routeHint: 'adjust fromSide/toSide, set route/via or channelX/channelY, or move the state with col/yOffset'
-  }));
-  problems.push(...cleanCrossingProblems({
-    relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
-    pathFor,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    profile: lifecycle.meta?.quality_profile,
-    // Planner routes render with the opaque crossover halo, like architecture.
-    crossingResolved: (left, right) => plannerRouted(left) && plannerRouted(right),
-    routeHint: 'adjust route/via or channelX/channelY so the transitions use separate lifecycle corridors'
-  }));
-  problems.push(...cleanAmbiguousCorridorProblems({
-    relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
-    pathFor,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    profile: lifecycle.meta?.quality_profile,
-    routeHint: 'adjust route/via or channelX/channelY so unrelated transitions do not visually merge'
-  }));
-  // Lifecycle bands are dashed reading guides, not closed containers. Keep the
-  // shared contract wired with an explicit empty frame set so future typed
-  // lifecycle containers cannot accidentally inherit presentation geometry.
-  problems.push(...cleanBorderRunProblems({
-    relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
-    frames: [],
-    pathFor,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    profile: lifecycle.meta?.quality_profile
-  }));
-  problems.push(...cleanRouteRhythmProblems({
-    relations: lifecycle.transitions,
-    endpointIds: new Set(states.keys()),
-    pathFor,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    profile: lifecycle.meta?.quality_profile,
-    routeHint: 'move route/via or channel coordinates so each lifecycle turn has a readable run-up'
-  }));
-
-  const labelRects = transitionLabelRects();
-  if (lifecycle.meta?.quality_profile === 'showcase') {
-    for (const rect of labelRects) {
-      for (const title of bandGeometry()) {
-        if (!rectsOverlap(rect, title)) continue;
-        const message = `Transition ${rect.relationIndex} label "${rect.label}" overlaps lifecycle band title "${title.label}" — move the label with labelAt/labelDx/labelDy/labelSegment or provide more space.`;
-        recordDiagnostic({
-          code: 'composition/label-band-title-overlap', severity: 'error', message,
-          subject: { diagramType: 'lifecycle', collection: 'transitions', index: rect.relationIndex, from: rect.relation.from, to: rect.relation.to },
-          evidence: { labelRect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }, bandTitle: title },
-          supportedFixes: ['move the transition label with labelAt/labelDx/labelDy/labelSegment while preserving its text'],
-        });
-        problems.push(message);
-      }
-    }
-  }
-  for (const rect of labelRects) {
-    for (const state of states.values()) {
-      if (rectsOverlap(rect, state, -2)) {
-        problems.push(`Label "${rect.label}" overlaps state "${state.id}" — adjust labelDx/labelDy/labelSegment or set labelAt.\n${suggestLabelObstacleFix(rect, rect.lx, rect.ly, state, 'state', viewBox, states.values())}`);
-      }
-    }
-  }
-  for (let i = 0; i < labelRects.length; i += 1) {
-    for (let j = i + 1; j < labelRects.length; j += 1) {
-      if (rectsOverlap(labelRects[i], labelRects[j], -2)) {
-        problems.push(`Labels "${labelRects[i].label}" and "${labelRects[j].label}" overlap — adjust labelDx/labelDy.\n${suggestLabelPairFix(labelRects[i], labelRects[j])}`);
-      }
-    }
-  }
-  problems.push(...cleanLabelRouteClearanceProblems({
-    relations: lifecycle.transitions,
-    labels: labelRects,
-    endpointIds: new Set(states.keys()),
-    pathFor,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    profile: lifecycle.meta?.quality_profile,
-  }));
-  problems.push(...cleanLabelCanvasContainmentProblems({
-    labels: labelRects,
-    viewBox,
-    diagramType: 'lifecycle',
-    relationCollection: 'transitions',
-    profile: lifecycle.meta?.quality_profile,
-  }));
-
-  if (problems.length) {
-    throwDiagnosticProblems('Lifecycle layout validation failed', problems, {
-      subject: { diagramType: 'lifecycle' },
-    });
-  }
-}
-
-function routeVia(transition, from, to, start, end, fromSide, toSide) {
-  if (transition.via) return transition.via;
-  switch (transition.route || 'auto') {
-    case 'straight':
-      return [];
-    case 'drop': {
-      const y = transition.channelY ?? (start[1] + end[1]) / 2;
-      return [[start[0], y], [end[0], y]];
-    }
-    case 'bottom-channel': {
-      const y = transition.channelY ?? Math.max(from.y + from.height, to.y + to.height) + 34;
-      return [[start[0], y], [end[0], y]];
-    }
-    case 'top-channel': {
-      const y = transition.channelY ?? Math.min(from.y, to.y) - 28;
-      return [[start[0], y], [end[0], y]];
-    }
-    case 'right-channel': {
-      const x = transition.channelX ?? Math.max(from.x + from.width, to.x + to.width) + 36;
-      return [[x, start[1]], [x, end[1]]];
-    }
-    case 'left-channel': {
-      const x = transition.channelX ?? Math.min(from.x, to.x) - 36;
-      return [[x, start[1]], [x, end[1]]];
-    }
-    case 'auto':
-    default: {
-      if (start[0] === end[0] || start[1] === end[1]) return [];
-      const fromVertical = fromSide === 'top' || fromSide === 'bottom';
-      const toVertical = toSide === 'top' || toSide === 'bottom';
-      if (fromVertical !== toVertical) {
-        return [fromVertical ? [start[0], end[1]] : [end[0], start[1]]];
-      }
-      if (fromVertical) {
-        const y = transition.channelY ?? (start[1] + end[1]) / 2;
-        return [[start[0], y], [end[0], y]];
-      }
-      const x = transition.channelX ?? (start[0] + end[0]) / 2;
-      return [[x, start[1]], [x, end[1]]];
-    }
-  }
-}
-
-const pathCache = new Map();
-
-// A transition without via, channel, or a lifecycle route preset is routed by
-// the obstacle-aware planner shared with architecture, so a first draft that
-// leaves routing to the renderer does not cross unrelated states or produce
-// micro jogs. Authored via/route/channel geometry keeps the lifecycle presets.
-function plannerRouted(transition) {
-  return !transition.via
-    && (!transition.route || transition.route === 'auto')
-    && transition.channelX === undefined
-    && transition.channelY === undefined;
-}
-
-// v2 states sit on a fixed row/column grid, so automatic transitions use the
-// dedicated orthogonal grid router; v1 keeps the shared obstacle planner.
-const planner = useGridRouter ? createLifecycleGridRouter(states, plannedTransitions, {
-  rowOf: v2RowOf,
-  columnXs: v2ColumnCenters,
-}) : createRouter(states, plannedTransitions, {
-  labelRectFor: (transition, points, { routes, labels }) => ((transition.label || transition.note) ? reservedLabelRect({
-    label: { relation: transition, label: transition.label || transition.note, ...transitionLabelBoxAt(transition, labelPoint(transition, points)) },
-    points,
-    routes: routes.map((route, index) => ({ relationIndex: index, points: route })),
-    labels,
-    components: [...states.values()],
-    viewBox,
-    placementBottom: lifecycleAreaBottom(),
-  }) : null),
-});
-
-function transitionSides(transition) {
-  if (plannerRouted(transition)) return planner.connectionSides(transition);
-  const from = states.get(transition.from);
-  const to = states.get(transition.to);
-  return {
-    fromSide: chosenSide(transition.fromSide, defaultFromSide(from, to)),
-    toSide: chosenSide(transition.toSide, defaultToSide(from, to)),
-  };
-}
-
-const automaticPorts = automaticPortSpread(
-  asArray(lifecycle.transitions).filter((transition) => !plannerRouted(transition)),
-  states,
-  { sideFor: (transition, endpoint) => transitionSides(transition)[endpoint === 'source' ? 'fromSide' : 'toSide'] },
-);
-
-function pathFor(transition) {
-  if (pathCache.has(transition)) return pathCache.get(transition);
-  if (plannerRouted(transition)) {
-    let routed = planner.pathFor(transition);
-    if (useGridRouter) routed = { d: roundedPath(routed, transition.cornerRadius ?? 10), points: routed };
-    pathCache.set(transition, routed);
-    return routed;
-  }
-  const from = states.get(transition.from);
-  const to = states.get(transition.to);
-  const ports = automaticPorts.get(transition);
-  const { fromSide, toSide } = transitionSides(transition);
-  const start = ports?.from || anchor(from, fromSide);
-  const end = ports?.to || anchor(to, toSide);
-  let via = routeVia(transition, from, to, start, end, fromSide, toSide);
-  if (ports && !via.length && Math.abs(start[0] - end[0]) >= 4 && Math.abs(start[1] - end[1]) >= 4) {
-    const midX = (start[0] + end[0]) / 2;
-    via = [[midX, start[1]], [midX, end[1]]];
-  }
-  const points = [start, ...via, end];
-  const routed = {
-    d: roundedPath(points, transition.cornerRadius ?? 10),
-    points
-  };
-  pathCache.set(transition, routed);
-  return routed;
-}
-
-const resolvedLabelPoints = new Map();
-
-function transitionLabelBox(transition) {
-  return transitionLabelBoxAt(
-    transition,
-    resolvedLabelPoints.get(transition) || labelPoint(transition, pathFor(transition).points),
-  );
-}
-
-function transitionLabelBoxAt(transition, [lx, ly]) {
-  const width = transitionLabelWidth(transition);
-  const height = transition.label && transition.note ? 27 : 16;
-  return { x: lx - width / 2, y: ly - 11, width, height, lx, ly };
-}
-
-function transitionLabelRects() {
-  const rects = [];
-  for (const [relationIndex, transition] of asArray(lifecycle.transitions).entries()) {
-    if (!(transition.label || transition.note) || !states.has(transition.from) || !states.has(transition.to)) continue;
-    rects.push({ relation: transition, relationIndex, label: transition.label || transition.note, ...transitionLabelBox(transition) });
-  }
-  return rects;
-}
-
-// Showcase drafts leave label positions to the renderer too: move an unpinned
-// label off other routes and states instead of reporting a clearance defect.
-if (lifecycle.meta?.quality_profile === 'showcase') {
-  const placed = placeAutomaticLabels({
-    labels: transitionLabelRects(),
-    routes: asArray(lifecycle.transitions).flatMap((transition, relationIndex) => (
-      states.has(transition.from) && states.has(transition.to)
-        ? [{ relationIndex, points: pathFor(transition).points }] : []
-    )),
-    components: [...states.values()],
-    titles: bandGeometry(),
-    viewBox,
-    placementBottom: lifecycleAreaBottom(),
-    keepFallbackNearRoute: isV2,
-    gridSweep: isV2,
-  });
-  for (const rect of placed) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
-}
-
-function bandGeometry() {
-  if (isV2) {
-    // One row header per rendered row, set vertically in the left gutter so
-    // routes entering a row never run through its title.
-    return laneRowOrder().map((laneId, index) => {
-      const cy = v2RowTop.get(laneId) + layoutV2.stateH / 2;
-      const label = laneLabels.get(laneId) || laneId;
-      const length = textUnits(label) * 6.2;
-      return { index, label, vertical: true, cx: 18, cy, x: 11, y: cy - length / 2, width: 14, height: length };
-    });
-  }
-  const lanes = asArray(lifecycle.lanes);
-  const mainLane = lanes.find((lane) => lane.id === 'main');
-  const terminalLane = lanes.find((lane) => lane.id === 'terminal');
-  const eventLanes = lanes.filter((lane) => lane.id !== 'main' && lane.id !== 'terminal');
-  const populated = new Set([...states.values()].map((state) => bandFor(state.lane)));
-  return [
-    mainLane?.label || 'Lifecycle phases',
-    eventLanes.length ? eventLanes.map((lane) => lane.label).join(' + ') : 'Interruptions + recovery',
-    terminalLane?.label || 'Outcomes'
-  ].map((title, index) => {
-    const baseline = [100, 252, 424][index];
-    const label = `${String(index + 1).padStart(2, '0')} / ${title}`;
-    return { index, band: ['phase', 'event', 'outcome'][index], label, x: 72, y: baseline - 11, width: textUnits(label) * 6.2, height: 14, baseline };
-  }).filter((band) => populated.has(band.band));
-}
-
-function renderBands() {
-  return bandGeometry().map((band) => (band.vertical
-    ? `        <text x="${band.cx}" y="${band.cy}" class="t-dim" font-size="10" font-weight="600" writing-mode="vertical-rl" text-anchor="middle">${esc(band.label)}</text>`
-    : `        <path d="M ${band.x} ${band.baseline + 12} L ${viewBox[0] - band.x} ${band.baseline + 12}" class="a-default" stroke-width="0.8" stroke-dasharray="3,8"/>
-        <text x="${band.x}" y="${band.baseline}" class="t-dim" font-size="10" font-weight="600">${esc(band.label)}</text>`)).join('\n');
-}
+// ---------------------------------------------------------------- render
 
 function renderState(state) {
   const fill = typeClass[state.type] || typeClass.neutral;
   const accent = textClass[state.type] || 't-muted';
   const hasSub = state.sublabel != null && state.sublabel !== '';
-  const { label: labelFontSize, sublabel: sublabelFontSize, tag: tagFontSize } = stateFontSizes(state, state.width);
-  const textRows = [{ text: state.label, font: labelFontSize, y: isV2 ? 23 : 21 }];
-  if (hasSub) textRows.push({ text: state.sublabel, font: sublabelFontSize, y: isV2 ? 40 : 37 });
-  if (state.tag) textRows.push({ text: state.tag, font: tagFontSize, y: state.height - (isV2 ? 12 : 11) });
-  const hasBrand = Boolean(brandMarkFor(state));
-  const hasSource = Boolean(sourceEvidence?.nodes?.[state.id]?.length);
-  const labelLayout = nodeLabelLayout({ width: state.width, height: state.height, rows: textRows,
-    brand: hasBrand, source: hasSource, side: 'left', step: state.step });
+  const { label: labelFont, sublabel: sublabelFont, tag: tagFont } = fonts(state, state.width);
+  // Baselines keep each row's full glyph box (ascent and descent) separate.
+  const [labelY, sublabelY, tagY] = hasSub && state.tag ? [23, 40, 55] : hasSub ? [27, 45] : state.tag ? [29, 0, 50] : [37];
+  const textOffset = (state.height - STATE_H) / 2;
+  const rows = [{ text: state.label, font: labelFont, y: labelY + textOffset }];
+  if (hasSub) rows.push({ text: state.sublabel, font: sublabelFont, y: sublabelY + textOffset });
+  if (state.tag) rows.push({ text: state.tag, font: tagFont, y: tagY + textOffset });
+  const labelLayout = nodeLabelLayout({
+    width: state.width, height: state.height, rows,
+    brand: Boolean(brandMarkFor(state)), source: Boolean(sourceEvidence?.nodes?.[state.id]?.length), side: 'left', step: state.step,
+  });
   const sub = hasSub
-    ? `\n          <text data-detail="context" x="${state.cx}" y="${state.y + labelLayout.ys[1]}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(state.sublabel)}</text>`
+    ? `\n          <text data-detail="context" x="${state.cx}" y="${state.y + labelLayout.ys[1]}" class="t-muted" font-size="${sublabelFont}" text-anchor="middle">${esc(state.sublabel)}</text>`
     : '';
   const tag = state.tag
-    ? `\n        <text data-detail="fine" x="${state.cx}" y="${state.y + labelLayout.ys[hasSub ? 2 : 1]}" class="${accent}" font-size="${tagFontSize}" text-anchor="middle">${esc(state.tag)}</text>`
+    ? `\n          <text data-detail="fine" x="${state.cx}" y="${state.y + labelLayout.ys[hasSub ? 2 : 1]}" class="${accent}" font-size="${tagFont}" text-anchor="middle">${esc(state.tag)}</text>`
     : '';
+  const icon = state.icon ?? (QUIET_TYPES.has(state.type) ? (isFinal(state) ? 'stop' : 'none') : undefined);
   const step = state.step
-    ? `\n        <text data-detail="fine" x="${state.x + 23}" y="${state.y + 14}" class="${accent}" font-size="${stateTextFit.step}" font-weight="700">${esc(state.step)}</text>`
+    ? `\n          <text data-detail="fine" x="${state.x + 23}" y="${state.y + 14}" class="${accent}" font-size="${TEXT.step}" font-weight="700">${esc(state.step)}</text>`
     : '';
   const brand = renderBrandMark(state, { x: state.x + state.width - 22, y: state.y + 6 });
-  // UML pseudo-state markers: start states get an initial dot + arrow into
-  // the left border; states with no authored outgoing transition get a double
-  // border. Both are decorations, not focus/relationship edges.
-  const initialMarker = state.type === 'start'
-    ? `\n          <g aria-hidden="true" data-lifecycle-initial-marker="">
-            ${initialMarkerShape(state.x - 22, state.x - 1, state.cy)}
-          </g>`
+  const initial = state.id === mainPath[0]
+    ? `\n          <g aria-hidden="true" data-lifecycle-initial-marker="">${initialMarkerShape(state.x - 26, state.x - 1, state.cy)}</g>`
     : '';
   const finalBorder = isFinal(state)
-    ? `\n          <rect x="${state.x + 3}" y="${state.y + 3}" width="${state.width - 6}" height="${state.height - 6}" rx="4" class="${fill}" style="fill: none" stroke-width="1"/>`
+    ? `\n          <rect x="${state.x + 3}" y="${state.y + 3}" width="${state.width - 6}" height="${state.height - 6}" rx="5" class="${fill}" style="fill: none" stroke-width="1"/>`
     : '';
   const passport = {
     kind: state.type,
     sublabel: state.sublabel,
     tag: state.tag,
-    context: laneLabels.get(state.lane) || i18nText(lifecycle.meta.locale, 'node.context.lifecycle'),
+    context: i18nText(lifecycle.meta.locale, 'node.context.lifecycle'),
     ...brandMetadataFor(state),
   };
   return `        <g ${focusNodeAttrs(state.id, state.label, passport, lifecycle.meta.locale)}>
           ${focusNodeTitle(state.label, passport)}
-          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="c-mask"/>
-          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="7" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>${finalBorder}${initialMarker}
-          ${renderSemanticSigil(state.type, { icon: state.icon, x: state.x + 6, y: state.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}${step}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
+          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="8" class="c-mask"/>
+          <rect x="${state.x}" y="${state.y}" width="${state.width}" height="${state.height}" rx="8" class="${fill}"${animateAttr(lifecycle.meta, 'node', stateSteps.get(state.id))} stroke-width="1.5"/>${finalBorder}${initial}
+          ${renderSemanticSigil(state.type, { icon, x: state.x + 6, y: state.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}${step}
+          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${state.x + labelLayout.x}" y="${state.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFont}" font-weight="600" text-anchor="middle">${esc(state.label)}</text>${sub}${tag}
         </g>`;
 }
 
-// v2 replaces the implied phase rail with explicit topology: a forward
-// transition between two main-lane states renders as the emphasized primary
-// path unless the author chose another variant.
-function effectiveVariant(transition) {
+function variantOf(transition) {
   if (transition.variant) return transition.variant;
-  if (isV2) {
-    const from = states.get(transition.from);
-    const to = states.get(transition.to);
-    if (from?.lane === 'main' && to?.lane === 'main' && to.col > from.col) return 'emphasis';
-  }
-  return 'default';
+  return kindOf.get(transition) === 'spine' ? 'emphasis' : 'default';
 }
 
-function renderTransitionPath(transition, index) {
-  const variant = effectiveVariant(transition);
+function renderTransition(transition, index) {
+  const route = geometry.routes.get(transition);
+  const variant = variantOf(transition);
   const [cls, marker] = arrowClassMap[variant] || arrowClassMap.default;
-  const routed = pathFor(transition);
-  const strokeWidth = transition.width || (variant === 'emphasis' ? (isV2 ? 1.6 : 2) : 1.1);
-  const automaticRoute = plannerRouted(transition);
-  const crossover = automaticRoute ? ' data-composition-crossover="halo"' : '';
-  const edge = `        <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(transition, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
-  if (!automaticRoute) return edge;
-  // Same presentation-only wrapper as architecture: the mask underlay lets two
-  // planner routes cross legibly while the viewer still sees one semantic edge.
-  const underlay = `          <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>\n`;
-  return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}${edge.replace(/^        /, '          ')}\n        </g>`;
+  const strokeWidth = variant === 'emphasis' ? 1.8 : 1.2;
+  const d = roundedPath(route.points, CORNER);
+  const junction = route.bracket ? ` data-composition-junction="${esc(route.bracket.key.replaceAll('\u0000', '+'))}"` : '';
+  const edge = `          <path ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)} data-composition-points="${routePointsValue(route.points)}" data-composition-crossover="halo" data-composition-independent="true"${junction} d="${d}" class="${cls}"${animateAttr(lifecycle.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const underlay = `          <path data-graph-role="automatic-crossover-underlay" d="${d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
+  return `        <g data-graph-role="automatic-crossover" style="--step:${index}">\n${underlay}\n${edge}\n        </g>`;
 }
 
-function renderTransitionLabel(transition, index) {
-  if (!(transition.label || transition.note)) return '';
-  const { lx, ly, width: labelW, height: labelH } = transitionLabelBox(transition);
+function renderLabel(transition, index) {
+  const rect = geometry.placedLabels.get(transition);
+  if (!rect) return '';
+  const accent = edgeLabelAccent(variantOf(transition));
+  const baseline = rect.y + (transition.label ? 11.5 : 11);
   const label = transition.label
-    ? `\n          <text x="${lx}" y="${ly}" class="${edgeLabelAccent(effectiveVariant(transition))}" font-size="8" text-anchor="middle">${esc(transition.label)}</text>`
+    ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${esc(transition.label)}</text>`
     : '';
   const note = transition.note
-    ? `\n        <text data-detail="fine" x="${lx}" y="${ly + (transition.label ? 11 : 0)}" class="t-dim" font-size="7" text-anchor="middle">${esc(transition.note)}</text>`
+    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-dim" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
     : '';
   return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}>
-          <rect x="${lx - labelW / 2}" y="${ly - 11}" width="${labelW}" height="${labelH}" rx="4" class="c-mask"/>${label}${note}
+          <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}
         </g>`;
 }
 
-// UML initial pseudo-state: a filled dot and a short arrow ending at `tipX`.
 function initialMarkerShape(dotX, tipX, y) {
   return `<circle cx="${dotX}" cy="${y}" r="4.5" style="fill: var(--arrow-emphasis)"/><path d="M ${dotX + 4.5} ${y} L ${tipX - 6} ${y}" class="a-emphasis" stroke-width="1.4"/><path d="M ${tipX - 7} ${y - 3.5} L ${tipX} ${y} L ${tipX - 7} ${y + 3.5} Z" style="fill: var(--arrow-emphasis)"/>`;
 }
 
 function renderSwatch(entry) {
-  // `start` is structural, not a color: its swatch is the same initial
-  // pseudo-state marker drawn on the canvas. `final` is a non-interactive
-  // structural entry (a double-border rect) appended when a final state exists.
-  if (entry.kind === 'start') {
-    return initialMarkerShape(entry.x + 4.5, entry.x + 24, entry.baseline - 3.5);
-  }
+  if (entry.kind === 'start') return initialMarkerShape(entry.x + 4.5, entry.x + 24, entry.baseline - 3.5);
   if (entry.kind === 'final') {
     return `<rect x="${entry.x}" y="${entry.baseline - 8}" width="14" height="9" rx="2" class="c-external" stroke-width="1"/><rect x="${entry.x + 2.5}" y="${entry.baseline - 5.5}" width="9" height="4" rx="1" class="c-external" style="fill: none" stroke-width="0.8"/>`;
   }
@@ -867,13 +1046,13 @@ function renderSwatch(entry) {
 
 function renderLegend() {
   return renderResolvedLegend({
-    entries: resolvedLegendEntries,
+    entries: legendEntries,
     locale: lifecycle.meta.locale,
     layout: {
       x: 40,
-      baselineY: legendY(),
+      baselineY: viewBox[1] - 32,
       width: viewBox[0] - 80,
-      minTitleY: lifecycleAreaBottom() + 8,
+      minTitleY: geometry.contentBottom + 12,
       unfit: lifecycle.meta?.legend === undefined ? 'hide' : 'error',
       diagramType: 'lifecycle',
     },
@@ -881,52 +1060,34 @@ function renderLegend() {
   });
 }
 
-// v1 only: the implied emphasis line behind main states. v2 topology is fully
-// explicit, so the rail would double the authored forward transitions.
-function renderLifecycleRail() {
-  if (isV2) return '';
-  const mainCols = [...states.values()]
-    .filter((state) => bandFor(state.lane) === 'phase')
-    .map((state) => state.col);
-  if (!mainCols.length) return '';
-  const railEnd = layout.phaseXs[mainCols.reduce((max, col) => Math.max(max, col))] + 38;
-  return `        <path data-lifecycle-rail="" d="M 154 ${layout.phaseY + 31} L ${railEnd} ${layout.phaseY + 31}" class="a-emphasis" stroke-width="2.2" marker-end="url(#arrowhead-emphasis)"/>`;
-}
-
 function renderSvg() {
-  // A renderer-sized canvas declares the intrinsic-height fit exactly like
-  // architecture: the default 980x660 band layout is below the 1.55 wide
-  // ratio, so without this the desktop Reader could neither narrow it nor
-  // scroll it and every default lifecycle failed the browser gate.
-  const readerFit = lifecycle.meta?.viewBox ? '' : ' data-reader-fit="intrinsic-height"';
-  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit} ${svgRootAttrs(lifecycle.meta)}>
+  const junctions = geometry.junctions.map(([x, y]) => `        <circle cx="${x}" cy="${y}" r="2.6" data-lifecycle-junction="" style="fill: var(--arrow)" aria-hidden="true"/>`).join('\n');
+  const frames = geometry.frames.map((rect) => `        <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="14" data-lifecycle-frame="" fill="none" stroke="var(--arrow)" stroke-opacity="0.55" stroke-width="1" stroke-dasharray="1.5 3.5" stroke-linecap="round" aria-hidden="true"/>`).join('\n');
+  return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" data-reader-fit="intrinsic-height" data-lifecycle-layout="main-path-v3" ${svgRootAttrs(lifecycle.meta)}>
 ${svgAccessibleText(lifecycle.meta, 'lifecycle')}
 ${renderDefinitions()}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- Lifecycle bands -->
-${renderBands()}
-
-        <!-- Primary lifecycle rail -->
-${renderLifecycleRail()}
+        <!-- Composite phases -->
+${frames}
 
         <!-- Transition paths -->
-${asArray(lifecycle.transitions).map(renderTransitionPath).join('\n')}
+${transitions.map(renderTransition).join('\n')}
+${junctions}
 
         <!-- States -->
 ${[...states.values()].map(renderState).join('\n\n')}
 
         <!-- Transition labels -->
-${asArray(lifecycle.transitions).map(renderTransitionLabel).join('\n')}
+${transitions.map(renderLabel).filter(Boolean).join('\n')}
 
         <!-- Legend -->
 ${renderLegend()}
       </svg>`;
 }
 
-validateLifecycle();
 writeDiagram({
   outPath,
   template,

@@ -899,6 +899,10 @@ function entityHeader(entity) {
 
 function validateEr() {
   const problems = [];
+  // A self-relationship is reported once below; route checks skip it so they
+  // do not suggest side or route repairs for a line that is never drawn.
+  const routableRelationships = relationships.map((relationship) => (
+    relationship.from === relationship.to ? null : relationship));
   const headerDetails = [];
   const domainDetails = [];
   for (const entity of entities.values()) {
@@ -1081,7 +1085,7 @@ function validateEr() {
   }
 
   problems.push(...cleanEndpointSideProblems({
-    relations: relationships,
+    relations: routableRelationships,
     endpointIds: new Set(entities.keys()),
     pathFor,
     diagramType: 'erd',
@@ -1091,7 +1095,7 @@ function validateEr() {
     routeHint: 'keep automatic routing so the renderer can use a side-aware bridge, or set truthful fromSide/toSide',
   }));
   problems.push(...cleanFlowProblems({
-    relations: relationships,
+    relations: routableRelationships,
     obstacles: entities.values(),
     pathFor,
     diagramType: 'erd',
@@ -1100,7 +1104,7 @@ function validateEr() {
     routeHint: 'adjust fromSide/toSide, set route/via, or move the entity',
   }));
   problems.push(...cleanCrossingProblems({
-    relations: relationships,
+    relations: routableRelationships,
     endpointIds: new Set(entities.keys()),
     pathFor,
     diagramType: 'erd',
@@ -1109,7 +1113,7 @@ function validateEr() {
     routeHint: 'move the entities so unrelated relationships use separate corridors',
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
-    relations: relationships,
+    relations: routableRelationships,
     endpointIds: new Set(entities.keys()),
     pathFor,
     diagramType: 'erd',
@@ -1118,7 +1122,7 @@ function validateEr() {
     routeHint: 'give the relationships different fromSide/toSide targets, or move an entity so their corridors differ',
   }));
   problems.push(...cleanRouteRhythmProblems({
-    relations: relationships,
+    relations: routableRelationships,
     endpointIds: new Set(entities.keys()),
     pathFor,
     diagramType: 'erd',
@@ -1147,7 +1151,7 @@ function validateEr() {
     }
   }
   problems.push(...cleanLabelRouteClearanceProblems({
-    relations: relationships,
+    relations: routableRelationships,
     labels: labelRects,
     endpointIds: new Set(entities.keys()),
     pathFor,

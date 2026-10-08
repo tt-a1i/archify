@@ -7,7 +7,7 @@ import { spawnCliSync } from './resolve-cli.mjs';
 export const integrationRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const repoRoot = path.resolve(integrationRoot, '..', '..');
 const adapterPrefix = 'integrations/deepseek-harness/';
-const requiredAdapterFiles = ['package.json', 'release.json', 'cordis.patch.yml', 'README.md', 'lib/index.js'];
+const requiredAdapterFiles = ['package.json', 'release.json', 'cordis.patch.yml', 'PACKAGE_README.md', 'CHANGELOG.md', 'lib/index.js'];
 
 function readGit(args) {
   const result = spawnCliSync('git', args, { cwd: repoRoot, encoding: null, maxBuffer: 128 * 1024 * 1024 });
@@ -52,7 +52,9 @@ export const release = JSON.parse(adapterFiles.get('release.json').content.toStr
 
 export function stageAdapter(destination) {
   for (const [relative, entry] of adapterFiles) {
-    const target = path.join(destination, ...relative.split('/'));
+    // The repository README tracks publication status; npm needs version-specific usage.
+    const packageRelative = relative === 'PACKAGE_README.md' ? 'README.md' : relative;
+    const target = path.join(destination, ...packageRelative.split('/'));
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.writeFileSync(target, entry.content, { mode: entry.mode === '100755' ? 0o755 : 0o644 });
   }

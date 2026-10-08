@@ -6,7 +6,9 @@
 
 For a validation failure, edit the existing JSON in the connected neighborhood named by diagnostics before rerunning a command. Preserve requested semantics, meaningful labels, source evidence, and fixed or agreed topology. Several routes sharing nodes call for one placement repair; read [Architecture layout repair](architecture-layout-repair.md) for that case. Reflow a blocked main path rather than nudging unrelated labels. Keep unrelated geometry when its composition already reads clearly. Use `--layout-json` before editing only when compact evidence lacks needed measurements. Workflow v2 uses its stable compiler receipt, not solver internals, as authoring evidence.
 
-After the edit, rerun the complete `finalize` command with `--quality showcase` and, for repository-backed work, `--repo-root <repo-root>`. If the output path already has browser evidence from another candidate, use a fresh `--out-dir <output-stem>.review-<revision>` for both the new `finalize` and any `visual-check`. Omit an earlier `--candidate-sha256` after editing because it binds the previous candidate. Compare diagnostics by code, subject, stage, and evidence, never by declining error count alone. If an issue survives two focused repairs, inspect measured geometry or the relevant contract; after one evidence-based retry, report the concrete gap.
+Keep the best candidate that cleared route checks before a viewport repair. If that repair introduces new route collisions, restore the measured layout and address its remaining canvas or text constraint.
+
+After the edit, rerun the complete `finalize` command with `--quality showcase` and, for repository-backed work, `--repo-root <repo-root>`. If the output path already has browser evidence from another candidate, use a fresh `--out-dir <output-stem>.review-<revision>` for both the new `finalize` and any `visual-check`. Omit an earlier `--candidate-sha256` after editing because it binds the previous candidate. Compare diagnostics by code, subject, stage, and evidence, never by declining error count alone. Track the repair limit per persistent issue, using that code, subject, stage, and evidence: a newly exposed issue starts its own repair sequence. If an issue survives two focused repairs, inspect measured geometry or the relevant contract; after one evidence-based retry, report the concrete gap.
 
 Use standalone `validate` only for focused diagnosis, passing `--repo-root` for repository-backed work. Its passing receipt marks `candidateFrozen: true`; run `nextAction.arguments`, replacing only `<output.html>`, without editing, revalidating, or rereading the candidate. Retry later environmental or evidence failures against those frozen bytes. A measured reason to edit creates a new candidate and calls for the complete `finalize` without the old hash.
 
@@ -336,6 +338,51 @@ recovery journal, or delivery lock makes every checker fail before accepting
 the preserved HTML; report the diagnostics and complete a successful recovery
 delivery before collecting new browser evidence.
 
+Static `check` uses the same SVG path analysis for inspected relationships and
+structural frames. It supports `M/L/H/V/Q/Z`, their lowercase relative forms,
+repeated parameters, and finite numbers. Each `M` starts an independent subpath;
+`Z` closes only the current subpath. Separate subpaths never create connecting
+segments that are absent from the drawing. Straight segments separated by a
+non-collinear `Q` also remain separate in route analysis; curve sample points
+do not become micro-segments in straight-route budgets or rhythm checks.
+Segment lengths and stretch are measured per continuous piece, while actual
+bends are summed per relationship. A relationship exceeding a budget is counted
+once, and internal piece boundaries do not receive the short shared-trunk
+exception reserved for semantic endpoints.
+
+This is not a promise of full SVG command support: `A/C/S/T` produce
+`artifact/svg-path-unsupported`; missing parameters, invalid numbers, and other
+syntax errors produce `artifact/svg-path-malformed`. The checker exits non-zero
+instead of skipping a bad path or waiting indefinitely. Path failures append a
+`svg_path_data` check; normal valid artifacts retain the existing nine checks.
+Diagnostics carry the inspected `pathIndex`, `role`, available relationship/frame
+`id`, parsing `tokenOffset`, available `command`, and `reason` so the generating
+source can be located and repaired. `pathIndex` is one-based; `tokenOffset` is a
+zero-based UTF-16 offset in `d` after numeric character references are decoded.
+Apparent tags in comments, CDATA, and attribute text are ignored. Passing static
+path checks does not establish browser or perceptual visual acceptance.
+
+<details>
+<summary>中文说明</summary>
+
+静态 `check` 对受检关系线和结构边界的 SVG 路径使用同一解析结果，支持
+`M/L/H/V/Q/Z` 及其小写相对形式、重复参数和有限数值。每个 `M` 开始独立
+子路径，`Z` 只闭合当前子路径；子路径之间不会被拼接成图中不存在的线段。
+非共线 `Q` 前后的直线也保持分离，不会把曲线采样点计为直线路由预算或
+节奏检查中的微线段。线段长度和伸长率按连续片段测量，真实转弯数汇总到原关系；超预算关系
+只计一次，内部子路径断点不享有语义起终点的短共享线例外。
+这不是完整 SVG 命令集的支持承诺：`A/C/S/T` 返回
+`artifact/svg-path-unsupported`；缺少参数、非法数值等格式错误返回
+`artifact/svg-path-malformed`，检查以非零状态结束，不跳过坏路径或无限等待。
+路径失败时追加 `svg_path_data` 检查；普通有效产物仍保留原来的 9 项检查。
+诊断携带受检路径的 `pathIndex`、`role`、可用的关系/边界 `id`，以及解析位置
+`tokenOffset`、可用的 `command` 和 `reason`，用于定位并修复生成路径的来源。
+`pathIndex` 从 1 开始；`tokenOffset` 是数字字符引用解码后的 `d` 字符串中
+从 0 开始的 UTF-16 位置。注释、CDATA 和属性文本中的伪标签不参与检查。
+静态路径检查通过仍不代表浏览器或感知视觉验收通过。
+
+</details>
+
 The delivery interface exposes four separate claims:
 
 1. `deliver` proves deterministic artifact checks and byte identity.
@@ -386,7 +433,8 @@ The receipt binds the artifact SHA-256 and byte count, identifies
 
 Horizontal overflow always fails. Normal document-level vertical scrolling is
 accepted only with a renderer-declared contract and measured readable text.
-Automatic canvases declare `data-reader-fit="intrinsic-height"`; their adaptive
+Automatic canvases declare `data-reader-fit="intrinsic-height"` (height fitting)
+or `data-reader-fit="width-first"` (Sequence and Waterfall reading width); their adaptive
 Reader must reach its readable width and expose `data-reader-overflow="authored"`.
 Architecture with an explicit `meta.viewBox` instead declares
 `data-diagram-type="architecture"` and `data-reader-fit="authored-height"`:
@@ -424,7 +472,7 @@ A passing `finalize` may report `layoutReviewRecommendation.action: "inspect-seq
 
 A passing `validate --json`, `deliver`, or `finalize` receipt may carry `diagnostics[]` entries with `severity: "warning"` for Viewer locale fallbacks (`i18n/*`). They fail no gate. When the artifact should be fully localized, repair the listed keys from their `evidence` and rerun `finalize`.
 
-For a newly authored candidate with omitted `meta.column_fit` and no user-fixed column geometry, save the candidate, set only `meta.column_fit` to `"spread"`, and rerun the complete `finalize` once with `--out-dir <folder>/width-review`. Keep participant order, messages and their y positions, labels, notes, sources and canvas dimensions. If that attempt fails, restore the candidate and finalize it with `--out-dir <folder>/width-restore`; report the remaining layout suggestion rather than iterating. Preserve an explicitly fixed layout or a supplied legacy candidate and disclose the suggestion without changing it. This review is about horizontal composition; a passing receipt still does not claim perceptual approval.
+Sequence canvases with omitted `meta.column_fit` use `spread`, whether or not `meta.viewBox` is supplied. An authored viewBox remains authoritative; infeasible participant capacity fails without silently enlarging it. Explicit `meta.column_fit: "fixed"` preserves historical fixed columns. For a candidate whose fixed-column width suggestion remains, first check whether the fixed geometry is intentional. Only when a change to that geometry is authorized, save the candidate, set only `meta.column_fit` to `"spread"`, and rerun the complete `finalize` once with `--out-dir <folder>/width-review`. Keep participant order, messages and their y positions, labels, notes, sources and canvas dimensions. If that attempt fails, restore the candidate and finalize it with `--out-dir <folder>/width-restore`; report the remaining layout suggestion rather than iterating. Preserve intentional fixed geometry and disclose the suggestion when a change is not authorized. To retain historical fixed coordinates for an older omitted-fit input, set `meta.column_fit: "fixed"` explicitly. This review is about horizontal composition; a passing receipt still does not claim perceptual approval.
 
 ## Optional capture evidence
 

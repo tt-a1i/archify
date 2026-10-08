@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "class",
+  "meta": {
+    "title": "Payment processor hierarchy",
+    "subtitle": "Illustrative module: one processor contract, a retrying base class, and five provider implementations.",
+    "output": "payment-processors-class.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "types": [
+    {
+      "id": "checkout_orchestrator",
+      "label": "CheckoutOrchestrator",
+      "kind": "class",
+      "sublabel": "Runs one checkout from order to receipt",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        { "name": "registry", "type": "ProcessorRegistry", "visibility": "private" },
+        { "name": "clock", "type": "Clock", "visibility": "private" }
+      ],
+      "methods": [
+        { "name": "checkout", "parameters": "order: Order, key: IdempotencyKey", "returns": "CheckoutResult", "visibility": "public" },
+        { "name": "cancelPendingAuthorization", "parameters": "orderId: OrderId", "returns": "void", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "processor_registry",
+      "label": "ProcessorRegistry",
+      "kind": "class",
+      "sublabel": "Selects a processor for a payment method",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        { "name": "processors", "type": "Map<MethodType, PaymentProcessor>", "visibility": "private" }
+      ],
+      "methods": [
+        { "name": "processorFor", "parameters": "method: PaymentMethod", "returns": "PaymentProcessor", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "payment_processor",
+      "label": "PaymentProcessor",
+      "kind": "interface",
+      "sublabel": "Authorize, capture, and refund contract",
+      "row": 0,
+      "col": 2.5,
+      "methods": [
+        { "name": "authorize", "parameters": "request: AuthorizationRequest", "returns": "AuthorizationResult", "visibility": "public", "abstract": true },
+        { "name": "capture", "parameters": "authorization: AuthorizationId, amount: Money", "returns": "CaptureResult", "visibility": "public", "abstract": true },
+        { "name": "refund", "parameters": "capture: CaptureId, amount: Money", "returns": "RefundResult", "visibility": "public", "abstract": true }
+      ]
+    },
+    {
+      "id": "order",
+      "label": "Order",
+      "kind": "class",
+      "sublabel": "Aggregate root for one purchase",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        { "name": "id", "type": "OrderId", "visibility": "public" },
+        { "name": "total", "type": "Money", "visibility": "public" },
+        { "name": "status", "type": "PaymentStatus", "visibility": "public" }
+      ],
+      "methods": [
+        { "name": "addLine", "parameters": "sku: Sku, quantity: int", "returns": "LineItem", "visibility": "public" },
+        { "name": "markAuthorized", "parameters": "authorization: AuthorizationId", "returns": "void", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "payment_status",
+      "label": "PaymentStatus",
+      "kind": "enum",
+      "sublabel": "Lifecycle of the order's payment",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        { "name": "PENDING" },
+        { "name": "AUTHORIZED" },
+        { "name": "CAPTURED" },
+        { "name": "REFUNDED" },
+        { "name": "FAILED" }
+      ]
+    },
+    {
+      "id": "retrying_processor",
+      "label": "RetryingProcessorBase",
+      "kind": "abstract",
+      "sublabel": "Shared retry, timeout, and idempotency handling",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        { "name": "DEFAULT_TIMEOUT", "type": "Duration", "visibility": "public", "static": true },
+        { "name": "retryPolicy", "type": "RetryPolicy", "visibility": "protected" }
+      ],
+      "methods": [
+        { "name": "authorize", "parameters": "request: AuthorizationRequest", "returns": "AuthorizationResult", "visibility": "public" },
+        { "name": "sendToProvider", "parameters": "request: ProviderRequest", "returns": "ProviderResponse", "visibility": "protected", "abstract": true }
+      ]
+    },
+    {
+      "id": "bank_transfer",
+      "label": "BankTransferProcessor",
+      "kind": "class",
+      "sublabel": "Asynchronous transfer without provider retries",
+      "row": 1,
+      "col": 3,
+      "methods": [
+        { "name": "authorize", "parameters": "request: AuthorizationRequest", "returns": "AuthorizationResult", "visibility": "public" },
+        { "name": "awaitSettlement", "parameters": "transfer: TransferId", "returns": "SettlementResult", "visibility": "private" }
+      ]
+    },
+    {
+      "id": "line_item",
+      "label": "LineItem",
+      "kind": "record",
+      "sublabel": "Immutable priced order line",
+      "row": 2,
+      "col": 0,
+      "attributes": [
+        { "name": "sku", "type": "Sku", "visibility": "public" },
+        { "name": "quantity", "type": "int", "visibility": "public" },
+        { "name": "unitPrice", "type": "Money", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "stripe_card",
+      "label": "StripeCardProcessor",
+      "kind": "class",
+      "sublabel": "Card payments through Stripe",
+      "row": 2,
+      "col": 1,
+      "methods": [
+        { "name": "sendToProvider", "parameters": "request: ProviderRequest", "returns": "ProviderResponse", "visibility": "protected" }
+      ]
+    },
+    {
+      "id": "adyen_card",
+      "label": "AdyenCardProcessor",
+      "kind": "class",
+      "sublabel": "Card payments through Adyen",
+      "row": 2,
+      "col": 2,
+      "methods": [
+        { "name": "sendToProvider", "parameters": "request: ProviderRequest", "returns": "ProviderResponse", "visibility": "protected" }
+      ]
+    },
+    {
+      "id": "paypal_wallet",
+      "label": "PayPalWalletProcessor",
+      "kind": "class",
+      "sublabel": "Wallet payments through PayPal",
+      "row": 2,
+      "col": 3,
+      "methods": [
+        { "name": "sendToProvider", "parameters": "request: ProviderRequest", "returns": "ProviderResponse", "visibility": "protected" },
+        { "name": "exchangeBillingAgreementToken", "parameters": "token: String", "returns": "AgreementId", "visibility": "private" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "orchestrator_registry", "from": "checkout_orchestrator", "to": "processor_registry", "kind": "association", "label": "selects via" },
+    { "id": "registry_processors", "from": "processor_registry", "to": "payment_processor", "kind": "aggregation", "label": "holds" },
+    { "id": "orchestrator_order", "from": "checkout_orchestrator", "to": "order", "kind": "dependency", "label": "updates" },
+    { "id": "order_lines", "from": "order", "to": "line_item", "kind": "composition", "label": "owns lines" },
+    { "id": "order_status", "from": "order", "to": "payment_status", "kind": "association" },
+    { "id": "retrying_implements", "from": "retrying_processor", "to": "payment_processor", "kind": "realization" },
+    { "id": "bank_implements", "from": "bank_transfer", "to": "payment_processor", "kind": "realization" },
+    { "id": "stripe_extends", "from": "stripe_card", "to": "retrying_processor", "kind": "inheritance" },
+    { "id": "adyen_extends", "from": "adyen_card", "to": "retrying_processor", "kind": "inheritance" },
+    { "id": "paypal_extends", "from": "paypal_wallet", "to": "retrying_processor", "kind": "inheritance" }
+  ]
+}

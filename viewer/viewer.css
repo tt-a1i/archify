@@ -430,14 +430,28 @@ html[data-present="true"]:not([data-embed="true"]) #btn-present {
   color: var(--frontend-stroke);
 }
 
-/* The reader owns only the outer scale. Wide diagrams and measured tall workflows keep one authored
-   SVG/viewBox while the runtime chooses a desktop width from the actual
-   vertical budget. This avoids device-specific files and breakpoint
-   jumps between a laptop and a tall monitor. */
+/* The reader owns only the outer scale. Long sequences and waterfall rows
+   favor reading width and page scroll; other diagrams keep height fitting.
+   Small automatic canvases retain a modest scale inside a usable shell.
+   Every strategy preserves the authored SVG/viewBox and semantic geometry. */
 .container {
   width: 100%;
   max-width: var(--archify-reader-width, 1440px);
   margin: 0 auto;
+}
+html[data-reader-area="true"] .diagram-container {
+  min-height: var(--archify-diagram-min-height);
+  display: flex;
+  align-items: center;
+}
+html[data-reader-area="true"] .diagram-container > svg { flex-shrink: 0; }
+/* The original SVG legend can use the spare outer reader canvas while the
+   capped diagram stays centered. The container still clips all outer paint. */
+.diagram-container:has([data-reader-legend-corner]) > svg { overflow: visible; }
+.diagram-container [data-reader-legend-corner] {
+  transform-origin: 0 0;
+  transform-box: view-box;
+  transform: var(--archify-reader-legend-transform);
 }
 html[data-reader-narrow="true"]:not([data-present="true"]) .diagram-container > svg {
   min-width: 0;
@@ -4009,41 +4023,6 @@ svg [data-node-id]:focus-visible {
   filter: drop-shadow(0 0 7px var(--frontend-stroke));
   outline: none;
 }
-/* Verified Source Beacons are installed at runtime only for nodes whose
-   repository evidence passed the local revision/blob/line checks. They
-   live inside the owning node so every focus, route, story, and guided
-   view keeps one coherent opacity state. Export serialization removes
-   them before producing the canonical SVG or any derived visual. */
-.source-evidence-beacon {
-  pointer-events: none;
-  opacity: 1;
-  transition: filter 160ms ease;
-}
-.source-evidence-beacon rect {
-  fill: color-mix(in srgb, var(--mask) 92%, var(--backend-stroke));
-  stroke: color-mix(in srgb, var(--backend-stroke) 82%, var(--panel-border));
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-.source-evidence-beacon text {
-  fill: var(--backend-stroke);
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-anchor: middle;
-  text-transform: uppercase;
-}
-svg [data-node-id]:hover .source-evidence-beacon,
-svg [data-node-id]:focus-visible .source-evidence-beacon,
-svg [data-node-id][data-focus-selected] .source-evidence-beacon {
-  opacity: 1;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--backend-stroke) 72%, transparent));
-}
-svg[data-preset="signal-flow"] .source-evidence-beacon { opacity: 0.9; }
-svg[data-preset="blueprint"] .source-evidence-beacon rect {
-  rx: 0.8px;
-  filter: none;
-}
 svg [data-legend-kind][role="button"] { cursor: pointer; }
 svg [data-legend-kind]:focus { outline: none; }
 svg [data-legend-hit] {
@@ -4702,6 +4681,5 @@ html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="a
     filter: none;
   }
   .relationship-pulse-overlay { display: none !important; }
-  .source-evidence-beacon,
   svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
 }

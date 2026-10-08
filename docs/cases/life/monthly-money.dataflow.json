@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Where a Paycheck Goes Each Month",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "monthly-money.dataflow.html",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "Main money path"
+        },
+        "default": {
+          "label": "Transfer"
+        },
+        "security": {
+          "label": "Safety net"
+        },
+        "dashed": {
+          "label": "Long-term"
+        },
+        "database": {
+          "label": "Account"
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "label": "Income"
+    },
+    {
+      "label": "Lands in"
+    },
+    {
+      "label": "Payday rules"
+    },
+    {
+      "label": "Ends up"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "salary",
+      "type": "external",
+      "label": "Salary",
+      "sublabel": "$4,800 net",
+      "stage": 0,
+      "row": 0,
+      "icon": "briefcase"
+    },
+    {
+      "id": "side",
+      "type": "external",
+      "label": "Side Gig",
+      "sublabel": "$600 avg",
+      "stage": 0,
+      "row": 2,
+      "icon": "person"
+    },
+    {
+      "id": "checking",
+      "type": "database",
+      "label": "Checking",
+      "sublabel": "main account",
+      "stage": 1,
+      "row": 1,
+      "tag": "$5,400 in"
+    },
+    {
+      "id": "autopay",
+      "type": "messagebus",
+      "label": "Autopay",
+      "sublabel": "on the 1st",
+      "stage": 2,
+      "row": 0,
+      "icon": "calendar"
+    },
+    {
+      "id": "transfer",
+      "type": "messagebus",
+      "label": "Auto-Transfer",
+      "sublabel": "on payday",
+      "stage": 2,
+      "row": 2,
+      "icon": "clock"
+    },
+    {
+      "id": "bills",
+      "type": "backend",
+      "label": "Rent + Bills",
+      "sublabel": "$2,300 fixed",
+      "stage": 3,
+      "row": 0,
+      "tag": "43%"
+    },
+    {
+      "id": "emergency",
+      "type": "security",
+      "label": "Emergency Fund",
+      "sublabel": "$500 / month",
+      "stage": 3,
+      "row": 2,
+      "tag": "9%"
+    },
+    {
+      "id": "invest",
+      "type": "cloud",
+      "label": "Retirement",
+      "sublabel": "$800 / month",
+      "stage": 3,
+      "row": 3,
+      "tag": "15%"
+    }
+  ],
+  "flows": [
+    {
+      "id": "pay-in",
+      "from": "salary",
+      "to": "checking",
+      "label": "direct deposit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "side-in",
+      "from": "side",
+      "to": "checking",
+      "label": "transfer in"
+    },
+    {
+      "id": "to-autopay",
+      "from": "checking",
+      "to": "autopay",
+      "label": "fixed costs"
+    },
+    {
+      "id": "to-transfer",
+      "from": "checking",
+      "to": "transfer",
+      "label": "pay yourself",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pay-bills",
+      "from": "autopay",
+      "to": "bills",
+      "label": "rent, phone, power",
+      "route": "straight"
+    },
+    {
+      "id": "save",
+      "from": "transfer",
+      "to": "emergency",
+      "label": "until 6 months",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "retire",
+      "from": "transfer",
+      "to": "invest",
+      "label": "index fund",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "The Rule",
+      "items": [
+        "Saving happens on payday, before spending",
+        "Fixed bills leave automatically on the 1st"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "What's Left",
+      "items": [
+        "About $1,800 stays in checking for food, transport, and fun",
+        "That remainder is the real monthly budget"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Example Numbers",
+      "items": [
+        "Amounts are illustrative; swap in your own"
+      ]
+    }
+  ]
+}

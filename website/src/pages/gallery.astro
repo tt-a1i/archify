@@ -6,8 +6,9 @@ import Navigation from '../components/Navigation.astro';
 import head from '../data/gallery-head.html?raw';
 import css from '../styles/gallery.css?raw';
 import pageScript from '../scripts/gallery.js?raw';
+const { lang = 'en' } = Astro.props;
 ---
-<SiteLayout head={versioned(head)} css={css}>
+<SiteLayout page="gallery" lang={lang} head={versioned(head)} css={css}>
 
   <div class="grid-bg" aria-hidden="true"></div>
 
@@ -32,7 +33,7 @@ import pageScript from '../scripts/gallery.js?raw';
     <section class="controls" aria-label="Gallery controls">
       <div class="shell controls-inner">
         <div class="filter-group" role="group" aria-label="Filter diagrams by type">
-          <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en="All / 12" data-zh="全部配方 / 12">All / 12</button>
+          <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en={`All / ${cards.length}`} data-zh={`全部配方 / ${cards.length}`}>All / {cards.length}</button>
           <button class="filter-button" type="button" data-filter="architecture" aria-pressed="false" data-en="Architecture" data-zh="架构图">Architecture</button>
           <button class="filter-button" type="button" data-filter="workflow" aria-pressed="false" data-en="Workflow" data-zh="工作流">Workflow</button>
           <button class="filter-button" type="button" data-filter="sequence" aria-pressed="false" data-en="Sequence" data-zh="时序图">Sequence</button>
@@ -57,6 +58,38 @@ import pageScript from '../scripts/gallery.js?raw';
           {cards.map((entry, index) => <GalleryCard entry={entry} index={index} />)}
         </div>
         <div class="empty-state" id="empty-state" data-en="No proof cards match this filter." data-zh="当前筛选条件下没有成品。">No proof cards match this filter.</div>
+        <div class="life-section">
+          <div class="section-intro">
+            <h2 data-en="Beyond code. Same proof." data-zh="不只是代码，同样经过校验。">Beyond code. Same proof.</h2>
+            <p data-en="Everyday plans and processes, generated and checked by the same renderers and gates. Numbers are illustrative; the JSON source sits beside each artifact." data-zh="生活里的计划和流程，由同一套渲染器生成、经过同样的校验。数字仅作演示，每个成品旁边都附有 JSON 源。">Everyday plans and processes, generated and checked by the same renderers and gates. Numbers are illustrative; the JSON source sits beside each artifact.</p>
+          </div>
+          <div class="life-grid">
+            <article class="life-card">
+              <a class="life-plate" href="cases/life/leave-plan.workflow.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-leave-plan"><img src="assets/life/leave-plan.workflow.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
+              <div class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-en="Workflow" data-zh="工作流">Workflow</span></div>
+              <h3 class="life-q" id="life-q-leave-plan" data-en="How should I spread my leave across the year?" data-zh="一年的假怎么排最划算？">How should I spread my leave across the year?</h3>
+              <div class="life-links"><a class="card-link primary" href="cases/life/leave-plan.workflow.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/leave-plan.workflow.json" target="_blank" rel="noopener">JSON</a></div>
+            </article>
+            <article class="life-card">
+              <a class="life-plate" href="cases/life/job-search.lifecycle.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-job-search"><img src="assets/life/job-search.lifecycle.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
+              <div class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-en="Lifecycle" data-zh="生命周期">Lifecycle</span></div>
+              <h3 class="life-q" id="life-q-job-search" data-en="Where does each job application stand?" data-zh="每份求职申请走到哪一步了？">Where does each job application stand?</h3>
+              <div class="life-links"><a class="card-link primary" href="cases/life/job-search.lifecycle.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/job-search.lifecycle.json" target="_blank" rel="noopener">JSON</a></div>
+            </article>
+            <article class="life-card">
+              <a class="life-plate" href="cases/life/monthly-money.dataflow.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-monthly-money"><img src="assets/life/monthly-money.dataflow.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
+              <div class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-en="Data flow" data-zh="数据流">Data flow</span></div>
+              <h3 class="life-q" id="life-q-monthly-money" data-en="Where does my paycheck go each month?" data-zh="工资每个月都去哪了？">Where does my paycheck go each month?</h3>
+              <div class="life-links"><a class="card-link primary" href="cases/life/monthly-money.dataflow.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/monthly-money.dataflow.json" target="_blank" rel="noopener">JSON</a></div>
+            </article>
+            <article class="life-card">
+              <a class="life-plate" href="cases/life/renting.sequence.html?present=1" target="_blank" rel="noopener" aria-labelledby="life-q-renting"><img src="assets/life/renting.sequence.webp" alt="" loading="lazy" decoding="async" width="2160" height="1350"></a>
+              <div class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-en="Sequence" data-zh="时序图">Sequence</span></div>
+              <h3 class="life-q" id="life-q-renting" data-en="Who says what when I rent a flat?" data-zh="租房时，谁跟谁说了什么？">Who says what when I rent a flat?</h3>
+              <div class="life-links"><a class="card-link primary" href="cases/life/renting.sequence.html?present=1" target="_blank" rel="noopener" data-en="Open artifact" data-zh="打开成品">Open artifact</a><a class="card-link" href="cases/life/renting.sequence.json" target="_blank" rel="noopener">JSON</a></div>
+            </article>
+          </div>
+        </div>
         <div class="community-callout">
           <div class="community-callout-copy">
             <strong class="community-callout-title" data-en="Built something real?" data-zh="做出了真实成品？">Built something real?</strong>

@@ -57,7 +57,7 @@ export function validateSchema(diagramType, data) {
         additionalProperties: [`remove unsupported property ${JSON.stringify(error.params?.additionalProperty)}`],
         required: [`add required property ${JSON.stringify(error.params?.missingProperty)}`],
         type: [`use ${JSON.stringify(error.params?.type)} at ${annotated.path}`],
-        enum: [`choose one of ${JSON.stringify(error.params?.allowedValues || [])}`],
+        enum: [`choose one of the allowed values`],
         pattern: [`match the required pattern ${JSON.stringify(error.params?.pattern)}`],
         minimum: [`use a value ${error.params?.comparison || '>='} ${error.params?.limit}`],
         maximum: [`use a value ${error.params?.comparison || '<='} ${error.params?.limit}`],
@@ -66,13 +66,10 @@ export function validateSchema(diagramType, data) {
         minLength: [`provide at least ${error.params?.limit} character(s)`],
         maxLength: [`provide at most ${error.params?.limit} character(s)`],
       }[error.keyword] || [];
-      const detail = error.params && Object.keys(error.params).length
-        ? ` ${JSON.stringify(error.params)}`
-        : '';
       return {
         code: `schema/${error.keyword}`,
         severity: 'error',
-        message: `${annotatePath(error.instancePath, data)} ${error.message}${detail}`,
+        message: `${annotatePath(error.instancePath, data)} ${error.message}`,
         subject,
         evidence,
         supportedFixes,

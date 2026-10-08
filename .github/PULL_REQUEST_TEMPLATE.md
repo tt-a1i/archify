@@ -27,3 +27,8 @@ Report automated or browser evidence separately from perceptual review.
 ## Generated artifacts
 
 Omit this section if generated outputs are unaffected. Otherwise list regenerated files or linked build evidence, and explain freshness of affected outputs left unchanged.
+
+
+## Release follow-up
+
+Omit for changes without release scope. For a release, link the completed or explicitly deferred stages and evidence in the [central release checklist](https://github.com/tt-a1i/archify/blob/main/CONTRIBUTING.md#release-checklist), including the DSH decision. Do not equate PR completion with publication or deployment.

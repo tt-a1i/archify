@@ -363,7 +363,8 @@
       .cta-actions { flex-direction:column; gap:1rem; }
       .cta-install { width:100%; justify-content:center; }
       footer { padding:2rem 1.25rem; }
-      .footer-inner { grid-template-columns:1fr; }
+      .footer-inner { grid-template-columns:minmax(0,1fr); }
+      .footer-left, .footer-links { flex-wrap:wrap; }
       .footer-left { border-right:0; border-bottom:1px solid var(--line); }
     }
   </style>
@@ -377,10 +378,13 @@
       <img class="nav-logo-text brand-lockup" src="assets/archify-lockup-light.svg" alt="Archify" width="117" height="32">
     </a>
     <div class="nav-right">
+      <div class="nav-links">
       <a class="nav-link" href="guide.html" data-i18n="nav-guide">Guide</a>
       <a class="nav-link" href="gallery.html" data-i18n="nav-gallery">Proof Lab</a>
       <a class="nav-link" href="start.html" data-i18n="nav-start">Start</a>
+      <a class="nav-link" href="community.html" data-i18n="nav-community">Community</a>
       <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
+      </div>
       <button class="btn btn-lang" id="btn-lang">中文</button>
       <a class="btn btn-primary nav-cta" href="#quickstart" data-i18n="nav-install">Install Skill</a>
     </div>
@@ -842,7 +846,7 @@
   ══════════════════════════════════════ */
   const LANGS = {
     en: {
-      'nav-guide':'Guide','nav-gallery':'Proof Lab','nav-start':'Start','nav-install':'Install Skill',
+      'nav-guide':'Guide','nav-gallery':'Proof Lab','nav-start':'Start','nav-community':'Community','nav-install':'Install Skill',
       'hero-badge':'Agent Skill &nbsp;·&nbsp; development &nbsp;·&nbsp; v3.0.2-dev.1',
       'hero-h1':'From plain English<br>to architecture <em>you can trust.</em>',
       'hero-sub':'Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.',
@@ -902,7 +906,7 @@
       'footer-changelog':'Changelog','footer-license':'License'
     },
     zh: {
-      'nav-guide':'场景指南','nav-gallery':'验证作品集','nav-start':'快速上手','nav-install':'安装技能',
+      'nav-guide':'场景指南','nav-gallery':'验证作品集','nav-start':'快速上手','nav-community':'社区包','nav-install':'安装技能',
       'hero-badge':'Agent 技能 &nbsp;·&nbsp; 开发版 &nbsp;·&nbsp; v3.0.2-dev.1',
       'hero-h1':'用自然语言，<br>生成<em>可信的架构图。</em>',
       'hero-sub':'在对话中描述你的系统，Archify 生成精美、可探索的 HTML 技术图——信息会按 MAP → READ → FULL 渐进展开，并内置语义镜头、路径故事、动态效果和超清导出。',

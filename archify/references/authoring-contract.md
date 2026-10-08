@@ -80,7 +80,7 @@ chooses one primary locale for the Viewer; follow an explicit primary-language
 request, then prompt order or conversation dominance.
 
 Bundled Viewer catalogs are enrolled in `locales/manifest.json`: currently
-`en`, `zh-CN`, `es`, and `ko`. For these, `meta.locale` alone selects the full
+`en`, `zh-CN`, `zh-TW`, `es`, and `ko`. For these, `meta.locale` alone selects the full
 catalog. Tags match case-insensitively (`zh-cn` selects `zh-CN`), but region
 and script variants are distinct: `zh-Hant`, `es-MX`, or `ko-KR` select no
 bundled catalog.
@@ -154,8 +154,8 @@ Generate one responsive artifact for laptops and external displays, preserving t
 
 - Node anchors start at side midpoints. `left`/`right` change the horizontal endpoint; `top`/`bottom` change the vertical endpoint. For an automatic Architecture relationship, unobstructed facing ports whose axis offset is under 16px may share one horizontal or vertical axis when both endpoints retain the 16px corner gutter. If exactly one endpoint belongs to a spread group, only its unshared counterpart moves; relationships spread at both endpoints keep their distinct ports and outside bridge unless a reciprocal facing pair can jointly use separate straight lanes while preserving endpoint spacing, labels, and all surrounding route and obstacle clearances.
 - A side is a direction contract. The first and final route segment must be perpendicular and outward/inward in the named direction.
-- In architecture, data-flow, and lifecycle diagrams, explicit `route: "straight"` requests one direct segment, which may be diagonal when endpoint sides are not pinned. The artifact checker preserves this intent; explicit sides, opaque-node clearance, and other quality gates still apply. `via` takes precedence and retains existing rules, including data-flow's requirement for orthogonal via segments.
-- Automatic Port Spread is a default renderer behavior for architecture, workflow, data-flow, and lifecycle diagrams. Shared automatic endpoints spread deterministically and symmetrically with a 16px corner gutter. It does not apply to sequence messages, single relationships, or explicit `via`, `channelX`, `channelY`, `labelAt`, or non-`auto` routes.
+- In architecture and data-flow diagrams, explicit `route: "straight"` requests one direct segment, which may be diagonal when endpoint sides are not pinned. The artifact checker preserves this intent; explicit sides, opaque-node clearance, and other quality gates still apply. `via` takes precedence and retains existing rules, including data-flow's requirement for orthogonal via segments.
+- Automatic Port Spread is a default renderer behavior for architecture, workflow, and data-flow diagrams. Shared automatic endpoints spread deterministically and symmetrically with a 16px corner gutter. It does not apply to sequence messages, single relationships, or explicit `via`, `channelX`, `channelY`, `labelAt`, or non-`auto` routes.
 - Showcase route rhythm: every nonzero segment must be at least 8px; every interior segment must be at least 16px. When spread ports are nearly parallel, the router uses a 24px endpoint stub and a 16px outside bridge instead of manufacturing a tiny dogleg.
 - Showcase route compactness: an explicit Architecture route fails with `composition/excessive-route-detour` when its orthogonal length is at least 2.5 times an obstacle-aware legal route, adds at least 200px, and sends a control point at least 96px beyond the content envelope. The evidence records both lengths, ratio, excess, bounds, and excursion. Remove an unnecessary `via` or move the diagnosed corridor inward instead of enlarging the canvas. Related relationships that overlap on the same outer corridor by at least 32px are treated as an intentional bus and remain valid.
 - Shared endpoint corridors are allowed only when they remain semantically unambiguous. Unrelated collinear overlap of 8px or more fails showcase.
@@ -275,7 +275,7 @@ Compare diagnostics by code, subject, and stage instead of total count alone.
 5. Fix label-to-node, label-to-label, then label-to-route clearance.
 6. Fix labels that leave the canvas: move the label with `labelAt`/`labelDx`/`labelDy`/`labelSegment`, or widen `meta.viewBox`. Suggested `labelDx`/`labelDy` values replace the authored field; they are not added to it.
 
-Run `validate` after every edit. Consume `diagnostics[]` by stable `code`, exact `subject`, measured `evidence`, and `supportedFixes`. If the diagnostic gives `labelAt`, use that point instead of estimating another offset.
+After every edit, rerun the complete `finalize` as the delivery contract requires; use `validate` only for focused diagnosis between finalize runs. Consume `diagnostics[]` by stable `code`, exact `subject`, measured `evidence`, and `supportedFixes`. If the diagnostic gives `labelAt`, use that point instead of estimating another offset.
 
 ## Mode placement
 
@@ -321,6 +321,14 @@ Participants are ordered by conversation role. Messages own their vertical order
 ### Dataflow
 
 Stages express transformation or custody. Rows separate parallel streams. Label only data contracts, classifications, or cross-boundary movement that is not obvious.
+
+Omit `meta.viewBox` to fit canvas width to all stages and nodes in either quality
+profile, including explicit node widths. The 940px minimum and 24px right padding
+remain; left-edge overflow still needs a node repair. An authored viewBox stays
+fixed. Showcase node growth, readable typography, content height, port bridges
+and bounded label placement apply only when the canvas and all node widths are
+omitted. `--quality` overrides `meta.quality_profile`; without it, the renderer
+uses `ARCHIFY_QUALITY_PROFILE` when set, otherwise the JSON profile.
 
 ### ERD
 
@@ -391,23 +399,113 @@ capacity instead of dropping the key; see
 [`../renderers/erd/README.md`](../renderers/erd/README.md) for the band, port, and
 reader contract.
 
+### Tree
+
+A tree answers "how is this decomposed?": one root, and every other node names
+exactly one `parent`. Links mean containment only; do not use a tree for calls,
+data movement, or cross-branch dependencies. Nothing is inferred: a missing
+parent (`tree/missing-parent`), zero or several roots (`tree/root-count`), a
+parent cycle (`tree/cycle`, which also covers every node stranded beneath it),
+and duplicate ids are refused. Children read in declaration order.
+
+Use `layout.direction: "down"` (default) for a shallow, balanced breakdown and
+`"right"` for a deep or leaf-heavy tree such as a repository layout; a rightward
+tree aligns each parent with its first child and scrolls vertically in the
+reader. Labels wrap between words. `collapsed: true` makes a branch start
+collapsed in the Viewer; it never removes content from the artifact, and every
+export is the complete tree. For a real codebase, ground each node in the
+observed path and attach `sources`. See
+[`../renderers/tree/README.md`](../renderers/tree/README.md).
+
+### Class
+
+A class diagram explains the contracts inside one module: which types exist,
+which members matter to the explanation, and how the types relate. Choose the
+members the question needs; a type may show none. Each type states its `kind`
+(`class`, `abstract`, `interface`, `enum`, `record`); every kind except `class`
+draws its UML keyword, so an interface never reads as an empty class. For a real
+codebase, ground every type, member, and relationship in repository evidence and
+attach `sources`.
+
+Every relationship reads `from` -> `to` and its `kind` owns the notation:
+`dependency` (`from` uses `to`, dashed open arrow), `association` (`from` holds a
+`to`, solid open arrow), `inheritance` (`from` extends `to`, solid hollow
+triangle), `realization` (`from` implements interface `to`, dashed hollow
+triangle), `composition` and `aggregation` (`from` is the whole, filled or
+hollow diamond at `from`). Realization must target an interface from a
+non-interface; inheritance must not cross the interface boundary; an
+inheritance cycle is rejected.
+
+Place types on the `row`/`col` grid with supertypes above their subtypes. Two
+or more automatic generalizations into one supertype draw as one hierarchy bus
+with a single triangle. Members never truncate: a type grows to its widest
+member up to `layout.typeMaxW` and longer members wrap at parameter boundaries.
+See [`../renderers/class/README.md`](../renderers/class/README.md).
+
+### Timeline
+
+A timeline answers "when did what happen, and how far apart?". Every event
+needs an ISO 8601 `at` with an explicit `Z` or `±HH:MM` offset; a timestamp
+without one is rejected rather than guessed. `meta.timezone` (IANA, default
+`UTC`) is the display clock for ticks and labels, and the axis caption states
+it. `meta.evidence` is required: `observed` for recorded events (logs, git
+history, pager records) and `illustrative` for explanatory input. Never mark
+invented or approximate times as observed, and never fill gaps with events the
+input does not contain.
+
+Use `lanes` for sources or categories (release, monitoring, response); every
+event then names one. `kind` (`change`, `alert`, `action`, `recovery`) only
+colours the card. Events are drawn in time order whatever the authored order;
+simultaneous and close events stack. By default a quiet period longer than 8×
+the median gap and 10% of the span is drawn as a fixed-width break labelled
+with the omitted duration; `layout.breaks: "none"` keeps one proportional axis.
+See [`../renderers/timeline/README.md`](../renderers/timeline/README.md).
+
+### Waterfall
+
+A waterfall answers "where did the time go?" for one request, job, or agent
+run. Each span has `id`, `name`, `start`, and `end` or `duration` in
+`meta.unit` (`us`, `ms`, `s`; default `ms`), plus optional `parent`, `status`,
+`service`, and `detail`. Bar position and length come only from these numbers.
+`meta.evidence` is required: `measured` only for recorded timing (trace export,
+logs, profiler, timed run); otherwise `illustrative`. Never infer a duration
+from code structure, and never present estimated numbers as measured.
+
+A span with no recorded end must be `status: "incomplete"`; it is drawn as an
+open lower bound to the last recorded instant. Contradictory end/duration,
+an end before the start, a missing parent, or a parent cycle is refused.
+Percentages are always "of the wall-clock total"; parent and child durations
+are inclusive and never summed. Do not mark a critical path or waiting time
+unless the input states the dependency. See
+[`../renderers/waterfall/README.md`](../renderers/waterfall/README.md).
+
 ### Lifecycle
 
-Schema v2 (new diagrams): each populated lane is one row, `main` first,
-`terminal` last, others in `lanes[]` order. `col` `0..4` is one shared x grid,
-so a state placed in the column of the state it leaves gets a straight vertical
-transition. Every transition, including the main path, is authored; there is no
-implied rail. The renderer sizes the canvas, widens a column gap for a
-same-row label, and routes automatic transitions orthogonally through row gaps.
-Keep labels short: a gap carrying several parallel lines has little room.
+Schema v3 is the only lifecycle contract. `mainPath` lists the happy path from
+the initial state; every consecutive pair needs a transition. The renderer owns
+all geometry: the main path is one row, transitions back to an earlier phase
+(or skipping ahead) become arcs above it, and every other state sits below the
+state it branches from, one row deeper per step away from the main path.
+Exits that several consecutive phases share (for example “cancel” from any
+running phase) are drawn once from a composite frame around those phases; give
+them the same label. There are no lanes, columns, sizes, or routing controls.
 
-Schema v1 (legacy): main phases use columns `0..4`; event and terminal bands
-use columns `0..2`, and event/terminal column `N` aligns with main column
-`N + 2`. Every lane other than `main` and `terminal` shares one middle band;
-states in the same column there need distinct `yOffset` values.
+Keep the main path to the phases a reader follows, at most about six states,
+and keep transition labels short. A recoverable failure needs a real transition
+back to an active state; a card saying “retry” is not topology.
 
-In both versions a recoverable failure needs a real transition back to an
-active state. A card saying “retry” is not topology.
+Pick each state's `type` by what the reader should notice, since color and the
+corner sigil follow it: `waiting` for a pause on a person, time, or input;
+`decision` for a review or branch point; `success` or `failure` for a good or
+bad outcome; `neutral` for parked states and outcomes that are neither;
+`external` when an outside party holds the work; `active` otherwise. From a
+Mermaid `stateDiagram`, `[*] -->` names the first `mainPath` state, a state
+with `--> [*]` is an outcome (`success`, `failure`, or `neutral`; it is drawn as
+final when it has no other outgoing transition), and `<<choice>>` becomes a
+`decision` state. Flatten a composite `state X { ... }` into its inner states
+and repeat its exit from each of them with one label; consecutive main-path
+phases sharing that exit are framed automatically. Concurrent regions (`--`)
+have no lifecycle form: draw one lifecycle per region.
 
 ## Repository evidence
 
@@ -434,16 +532,34 @@ blob, and valid line range are required in every link mode. Verification is
 local and makes no remote requests; it establishes neither public availability
 nor the current reader's access rights.
 
-`link_mode` defaults to `web`. GitHub and Gitee HTTPS repository URLs generate
-revision-pinned links; their public hosts select the provider automatically.
-Optional `provider: "github"` or `"gitee"` must agree with the host. Existing
-GitHub declarations and default delivery receipt fields remain compatible.
+`link_mode` defaults to `web`. GitHub, Gitee, and GitLab HTTPS repository URLs
+generate revision-pinned links; the public hosts github.com, gitee.com, and
+gitlab.com select the provider automatically. Optional `provider: "github"`,
+`"gitee"`, or `"gitlab"` must agree with a public host. A self-managed GitLab
+host declares `provider: "gitlab"`; Archify never contacts the host to detect
+its forge. Existing GitHub declarations and default delivery receipt fields
+remain compatible.
+
+GitLab URLs may name nested groups (`group/subgroup/project`). Source links use
+`<url>/-/blob/<revision>/<path>#L<line>-<end_line>` and the repository link
+uses `<url>/-/tree/<revision>`. A Markdown source (`.md`, `.markdown`) with a
+line range links to the plain view (`?plain=1`) so the cited lines are
+highlighted instead of the rendered document. GitLab repository paths compare
+case-insensitively, like GitHub.
 
 ```json
 {
   "url": "https://gitee.com/team/service",
   "revision": "0123456789abcdef0123456789abcdef01234567",
   "provider": "gitee"
+}
+```
+
+```json
+{
+  "url": "https://git.example.com/platform/payments/service",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "provider": "gitlab"
 }
 ```
 
@@ -466,15 +582,17 @@ Local-only accepts HTTP(S), `git@host:path`, and `ssh://git@host[:port]/path`
 addresses, including nested namespaces. Declare a credential-free address;
 HTTP(S) credentials on the checkout's origin are ignored for identity and
 redacted from diagnostics. Hostnames compare case-insensitively; repository
-paths retain case except for the existing GitHub behavior. A trailing slash
-normalizes away. Only GitHub and Gitee normalize a terminal `.git` and match
-standard HTTPS/443 with Git SSH/22. For other hosts, use the actual clone address:
+paths retain case except for GitHub and GitLab. A trailing slash
+normalizes away. Only GitHub, Gitee, and GitLab (gitlab.com, or a host declared
+with `provider: "gitlab"`) normalize a terminal `.git` and match standard
+HTTPS/443 with Git SSH/22 on the same host; a GitLab SSH endpoint on another host
+or port is not inferred. For other hosts, use the actual clone address:
 transport, port, `.git` suffix, and remote-relative versus absolute paths must
 match. For example, `git@host:Team/repo` differs from
 `ssh://git@host/Team/repo`; `git@host:/Team/repo` matches the latter. SCP-style
 paths preserve literal percent escapes, while URI paths decode them. SSH host
 aliases and forge-specific browse/clone prefixes are not guessed.
-GitLab/Gitea/Forgejo/Bitbucket web links are not implemented in this version;
+Gitea/Forgejo/Bitbucket web links are not implemented in this version;
 use local-only until a tested link provider is available. Unknown web providers
 fail with a diagnostic rather than emitting a guessed link.
 
@@ -489,7 +607,8 @@ workflow/dataflow nodes, sequence participants, or lifecycle states. Choose
 `calendar`, `clock`, `person`, `briefcase`, `flag`, or `moon` for everyday concepts;
 the complete catalog (including existing technical and lifecycle symbols) is
 `common.schema.json#/$defs/nodeIcon`. Use `icon: "none"` to hide the corner symbol.
-Omitting `icon` keeps the type-based default. These inline SVG symbols are
+Omitting `icon` keeps the type-based default; lifecycle `start`, `active`, and
+`neutral` states default to no symbol. These inline SVG symbols are
 renderer-owned and export with the diagram; URLs and raw SVG are not accepted.
 
 Icon selection changes only the corner symbol. The node's type still determines

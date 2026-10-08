@@ -1,0 +1,63 @@
+---
+import { recipeSourceUrl, productChannel } from '../data/product-facts';
+interface RecipeCopy {
+  title: string; question: string; summary: string; useWhen: string;
+  avoidWhen: string; include: string[]; prompt: string;
+}
+interface Props {
+  recipes: { id: string; type: string; proof?: string;
+    presentation: { preset: string; motion: string };
+    en: RecipeCopy; zh: RecipeCopy }[];
+}
+const { recipes } = Astro.props;
+const labels = {
+  use: ['Use when', '适用场景'], avoid: ['Avoid when', '不适用场景'],
+  evidence: ['Evidence to include', '必须包含的证据'], prompt: ['Copy-ready prompt', '可直接复制的提示词'],
+};
+---
+<section class="recipe-reference" id="recipe-reference" aria-labelledby="recipe-reference-title">
+  <div class="section-head">
+    <div><div class="lead-label" data-en="Read the complete recipes" data-zh="阅读完整配方">Read the complete recipes</div><h2 id="recipe-reference-title" data-en="One question. A clear evidence boundary." data-zh="一个问题，一份明确的证据边界。">One question. A clear evidence boundary.</h2></div>
+    <p data-en="These recipes come directly from this build's CLI source. Follow the source and proof links to inspect what each recommendation means." data-zh="这些配方直接来自当前构建的 CLI 源码。通过源码和成品链接，可以检查每条推荐的具体含义。">These recipes come directly from this build's CLI source. Follow the source and proof links to inspect what each recommendation means.</p>
+  </div>
+  <nav class="recipe-index" aria-label="Recipe reference">
+    {recipes.map(recipe => <a href={`#recipe-${recipe.id}`} data-en={recipe.en.title} data-zh={recipe.zh.title}>{recipe.en.title}</a>)}
+  </nav>
+  <div class="recipe-reference-grid">
+    {recipes.map(recipe => <article class="recipe-entry" id={`recipe-${recipe.id}`}>
+      <span class="recipe-mode">{recipe.type} · {recipe.presentation.preset}</span>
+      <h3><a href={`#recipe-${recipe.id}`} data-en={recipe.en.title} data-zh={recipe.zh.title}>{recipe.en.title}</a></h3>
+      <p class="recipe-question" data-en={recipe.en.question} data-zh={recipe.zh.question}>{recipe.en.question}</p>
+      <p data-en={recipe.en.summary} data-zh={recipe.zh.summary}>{recipe.en.summary}</p>
+      <dl>
+        <dt data-en={labels.use[0]} data-zh={labels.use[1]}>{labels.use[0]}</dt>
+        <dd data-en={recipe.en.useWhen} data-zh={recipe.zh.useWhen}>{recipe.en.useWhen}</dd>
+        <dt data-en={labels.avoid[0]} data-zh={labels.avoid[1]}>{labels.avoid[0]}</dt>
+        <dd data-en={recipe.en.avoidWhen} data-zh={recipe.zh.avoidWhen}>{recipe.en.avoidWhen}</dd>
+      </dl>
+      <h4 data-en={labels.evidence[0]} data-zh={labels.evidence[1]}>{labels.evidence[0]}</h4>
+      <ul>{recipe.en.include.map((item, index) => <li data-en={item} data-zh={recipe.zh.include[index]}>{item}</li>)}</ul>
+      <h4 data-en={labels.prompt[0]} data-zh={labels.prompt[1]}>{labels.prompt[0]}</h4>
+      <p class="recipe-reference-prompt" data-en={recipe.en.prompt} data-zh={recipe.zh.prompt}>{recipe.en.prompt}</p>
+      <div class="recipe-reference-links">
+        <a href={recipeSourceUrl} data-en={`${productChannel === 'development' ? 'Development' : 'Stable'} recipe source ↗`} data-zh={`${productChannel === 'development' ? '开发版' : '稳定版'}配方源码 ↗`}>{productChannel === 'development' ? 'Development' : 'Stable'} recipe source ↗</a>
+        {recipe.proof && <a href={`gallery.html#proof-${recipe.proof}`} data-en="Inspect generated proof ↗" data-zh="检查生成成品 ↗">Inspect generated proof ↗</a>}
+        <a href={`start.html?type=${recipe.type}`} data-en="Start with this diagram type →" data-zh="从这种图表类型开始 →">Start with this diagram type →</a>
+      </div>
+    </article>)}
+  </div>
+</section>
+<style>
+  .recipe-reference { margin: 72px 0; scroll-margin-top: 100px; }
+  .recipe-index { display:flex; flex-wrap:wrap; gap:8px 18px; margin:24px 0; font-size:13px; }
+  .recipe-index a,.recipe-reference-links a { color:var(--hue-blue); text-decoration:none; }
+  .recipe-reference-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+  .recipe-entry { border:1px solid var(--line); border-radius:16px; padding:26px; scroll-margin-top:100px; min-width:0; }
+  .recipe-mode { font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.65; }
+  h3 { margin:10px 0; font-size:22px; } h3 a { color:inherit; text-decoration:none; }
+  p, dd, li { font-size:14px; line-height:1.65; } p { opacity:.8; } .recipe-question, .section-head > p { opacity:1; }
+  dt,h4 { margin:18px 0 6px; font-size:12px; font-weight:700; } dd { margin:0; opacity:.75; }
+  ul { padding-left:20px; } .recipe-reference-prompt { background:rgba(120,140,160,.07); padding:16px; border-radius:8px; overflow-wrap:anywhere; }
+  .recipe-reference-links { display:flex; flex-wrap:wrap; gap:12px; font-size:12px; margin-top:18px; }
+  @media(max-width:760px) { .recipe-reference-grid { grid-template-columns:1fr; } .recipe-entry { padding:20px; } }
+</style>

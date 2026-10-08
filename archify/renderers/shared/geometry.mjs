@@ -701,6 +701,10 @@ export function cleanCrossingProblems({
 // exception. Other callers keep their existing authored-junction contract.
 // The counterflow-only opt-in serves older workflow exports without a root
 // readable-v2 contract; full shared-endpoint checking takes precedence.
+// Relationships a renderer declares on one junction (a Lifecycle exit bracket)
+// may share that junction's horizontal bus, the first tick from a common
+// source port and, when they end at the same state, the merged drop into it;
+// other overlaps between them count.
 // Tiny overlaps below the route rhythm
 // floor are ignored to avoid turning sub-pixel rounding into a quality debt.
 export function collectAmbiguousCorridors({
@@ -719,6 +723,8 @@ export function collectAmbiguousCorridors({
       relation,
       relationIndex: Number.isInteger(entry.relationIndex) ? entry.relationIndex : fallbackIndex,
       points,
+      ...(entry.sourceEndpoint === false ? { sourceEndpoint: false } : {}),
+      ...(entry.targetEndpoint === false ? { targetEndpoint: false } : {}),
     };
   }).filter(Boolean);
   const hits = [];
@@ -727,6 +733,7 @@ export function collectAmbiguousCorridors({
     const left = routed[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < routed.length; rightIndex += 1) {
       const right = routed[rightIndex];
+      const sharedBus = Boolean(left.relation.junction) && left.relation.junction === right.relation.junction;
       const sharedEndpoint = [left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to);
       const counterflowOnly = sharedEndpoint && !includeSharedEndpoints(left.relation, right.relation);
       if (counterflowOnly && !includeSharedEndpointCounterflow(left.relation, right.relation)) continue;
@@ -742,6 +749,15 @@ export function collectAmbiguousCorridors({
           );
           if (!overlap || overlap.length + 0.0001 < minOverlapPx) continue;
           if (allowShortWorkflowTrunks && shortWorkflowTrunk(left, right, leftSegment, rightSegment, overlap.length)) continue;
+          // A multi-target bracket repeats its source tick for each target.
+          // Limit that exemption to the first segment at the same source port:
+          // a common source identity cannot waive an interior vertical overlap.
+          const sharedSourceTick = left.sourceEndpoint !== false && right.sourceEndpoint !== false
+            && left.relation.from === right.relation.from && leftSegment === 0 && rightSegment === 0
+            && Math.abs(left.points[0][0] - right.points[0][0]) < 0.0001
+            && Math.abs(left.points[0][1] - right.points[0][1]) < 0.0001;
+          if (sharedBus && (Math.abs(overlap.start[1] - overlap.end[1]) < 0.0001
+              || left.relation.to === right.relation.to || sharedSourceTick)) continue;
           if (counterflowOnly) {
             const leftDelta = left.points[leftSegment + 1].map((value, axis) => value - left.points[leftSegment][axis]);
             const rightDelta = right.points[rightSegment + 1].map((value, axis) => value - right.points[rightSegment][axis]);
@@ -773,9 +789,11 @@ function shortWorkflowTrunk(left, right, leftSegment, rightSegment, length) {
   const width = (edge) => edge.width || (variant(edge) === 'emphasis' ? 1.8 : 1.4);
   if (variant(a) !== variant(b) || width(a) !== width(b) || (a.role || '') !== (b.role || '')) return false;
   const same = (p, q) => Math.abs(p[0] - q[0]) < 0.0001 && Math.abs(p[1] - q[1]) < 0.0001;
-  const source = a.from === b.from && leftSegment === 0 && rightSegment === 0
+  const source = left.sourceEndpoint !== false && right.sourceEndpoint !== false
+    && a.from === b.from && leftSegment === 0 && rightSegment === 0
     && same(left.points[0], right.points[0]);
-  const target = a.to === b.to && leftSegment === left.points.length - 2 && rightSegment === right.points.length - 2
+  const target = left.targetEndpoint !== false && right.targetEndpoint !== false
+    && a.to === b.to && leftSegment === left.points.length - 2 && rightSegment === right.points.length - 2
     && same(left.points.at(-1), right.points.at(-1));
   if (!source && !target) return false;
   const p = left.points[leftSegment], q = left.points[leftSegment + 1];
@@ -784,7 +802,8 @@ function shortWorkflowTrunk(left, right, leftSegment, rightSegment, length) {
 }
 
 // Bundled arrow markers are 7 stroke-widths across the direction of travel.
-// Callers select the automatic routes they own; explicit junctions are preserved.
+// Callers select the automatic routes they own; explicit junctions are preserved,
+// and relations on one junction ending at the same state share a merged drop.
 export function collectArrowheadCollisions({ routedRelations, allowShortWorkflowTrunks = false }) {
   const incoming = new Map();
   const hits = [];
@@ -801,6 +820,9 @@ export function collectArrowheadCollisions({ routedRelations, allowShortWorkflow
     const siblings = incoming.get(key) || [];
     const current = { ...entry, tip, halfWidth };
     for (const sibling of siblings) {
+      // One junction's merged drop into a state carries a single arrowhead.
+      if (sibling.relation.junction && sibling.relation.junction === entry.relation.junction
+          && sibling.relation.to === entry.relation.to) continue;
       if (Math.abs(tip[1 - axis] - sibling.tip[1 - axis]) > 0.0001) continue;
       const distance = Math.abs(tip[axis] - sibling.tip[axis]);
       const minimum = halfWidth + sibling.halfWidth;
