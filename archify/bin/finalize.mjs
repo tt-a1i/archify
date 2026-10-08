@@ -974,14 +974,17 @@ export async function runFinalize({
         let repaired = null;
         try {
           repaired = await repairRoutes({
-            cliPath, quality, cwd, env,
+            cliPath, quality, cwd, env, crossings,
             candidate: JSON.parse(originalBytes.toString('utf8').replace(/^﻿/, '')),
           });
         } catch {
           repaired = null;
         }
-        routeRepair = repaired ? { originalBytes, record: repaired.record } : { none: true };
-        if (repaired) {
+        // A search that kept the routes is still reported, with what it cost.
+        routeRepair = repaired?.candidate
+          ? { originalBytes, record: repaired.record }
+          : { none: true, ...(repaired?.record ? { searched: repaired.record } : {}) };
+        if (routeRepair.record) {
           // Route repair is optional: if the candidate cannot be replaced, the
           // passing draft is untouched and the run continues to the browser gate.
           try {
@@ -1015,6 +1018,8 @@ export async function runFinalize({
         continue;
       }
       receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'applied' };
+    } else if (routeRepair?.searched && !receipt.autoRouteRepair) {
+      receipt.autoRouteRepair = { ...routeRepair.searched, outcome: 'unchanged' };
     }
     // Repairs chain: the evidence gate runs before layout, so a narrowed range
     // can reveal a width failure on the next attempt.

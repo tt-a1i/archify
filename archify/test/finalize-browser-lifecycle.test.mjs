@@ -357,3 +357,44 @@ test('a route repair that fails the browser gate is reverted and the restored dr
   assert.equal(fs.readFileSync(input, 'utf8'), original);
   assert.equal(finalized.summary.autoRouteRepair.outcome, 'reverted');
 });
+
+test('a route search that keeps the routes is reported with what it cost', async t => {
+  const { input, output, outDir } = inputs(t);
+  const original = '{"meta":{"quality_profile":"showcase"},"connections":[{"id":"ab"}]}';
+  fs.writeFileSync(input, original);
+  let delivered;
+  let searched;
+  const finalized = await runFinalize({
+    ...options({
+      input, output, outDir,
+      resolveChrome: () => '/fake/chrome',
+      createBrowser: () => browser([]),
+      runCommand: async ({ stage }) => {
+        if (stage === 'deliver') {
+          delivered = delivery({ input, output, source: fs.readFileSync(input, 'utf8') });
+          return stageResult(delivered);
+        }
+        const receipt = check(output, delivered);
+        const routeReview = { crossings: [{ left: { id: 'ab' }, right: { id: 'cd' } }], detours: [] };
+        return stageResult({ ...receipt, composition: { ...receipt.composition, routeReview } });
+      },
+      runBrowserCheck: async ({ browserFactory }) => {
+        const reusable = browserFactory();
+        await reusable.inspect();
+        await reusable.close();
+        return { exitCode: 0, receipt: browserReceipt(output, delivered, outDir) };
+      },
+    }),
+    repairRoutes: async ({ crossings }) => {
+      searched = crossings;
+      return { candidate: null, record: { reason: 'no-improvement', crossings: [1, 1], detours: [0, 0], trials: 16, durationMs: 4000 } };
+    },
+  });
+
+  assert.equal(finalized.exitCode, 0);
+  assert.equal(searched.length, 1, 'the search receives the crossings the check reported');
+  assert.equal(fs.readFileSync(input, 'utf8'), original);
+  assert.equal(finalized.summary.autoRouteRepair.outcome, 'unchanged');
+  assert.equal(finalized.summary.autoRouteRepair.reason, 'no-improvement');
+  assert.equal(finalized.summary.autoRouteRepair.durationMs, 4000);
+});

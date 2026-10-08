@@ -27,9 +27,44 @@ test('a variant that removes a crossing by adding a detour is not accepted', asy
   assert.ok(result.record.detours[1] <= result.record.detours[0]);
 });
 
-test('an exhausted search budget stops before any trial runs', async () => {
+test('an exhausted safety budget changes nothing and says why', async () => {
   const candidate = JSON.parse(fs.readFileSync(path.join(root, 'fixtures', 'route-repair-crossing.json'), 'utf8'));
   const started = Date.now();
-  assert.equal(await reduceCrossings({ cliPath, candidate, env: process.env, budgetMs: 0 }), null);
+  const result = await reduceCrossings({ cliPath, candidate, env: process.env, budgetMs: 0 });
+  assert.equal(result.candidate, null);
+  assert.equal(result.record.reason, 'time-limit');
+  assert.equal(result.record.trials, 0);
   assert.ok(Date.now() - started < 2000);
+});
+
+test('crossings between authored relationships are not searched', async () => {
+  const candidate = JSON.parse(fs.readFileSync(path.join(root, 'fixtures', 'route-repair-crossing.json'), 'utf8'));
+  for (const edge of candidate.connections) Object.assign(edge, { fromSide: 'right', toSide: 'left' });
+  const crossings = [{ left: { id: candidate.connections[0].id }, right: { id: candidate.connections[1].id } }];
+  const started = Date.now();
+  const result = await reduceCrossings({ cliPath, candidate, env: process.env, crossings });
+  assert.equal(result.candidate, null);
+  assert.equal(result.record.reason, 'no-adjustable-relationship');
+  assert.ok(Date.now() - started < 500, 'no trial is rendered');
+});
+
+test('a search that cannot finish inside the trial limit is not started', async () => {
+  const candidate = JSON.parse(fs.readFileSync(path.join(root, 'fixtures', 'route-repair-crossing.json'), 'utf8'));
+  const automatic = candidate.connections.filter((edge) => !edge.fromSide && !edge.toSide && !edge.via).slice(0, 3);
+  assert.equal(automatic.length, 3);
+  const crossings = [{ left: { id: automatic[0].id }, right: { id: automatic[1].id } }, { left: { id: automatic[1].id }, right: { id: automatic[2].id } }];
+  const result = await reduceCrossings({ cliPath, candidate, env: process.env, crossings, maxTrials: 32 });
+  assert.equal(result.candidate, null);
+  assert.equal(result.record.reason, 'search-too-large');
+  assert.equal(result.record.adjustable, 3);
+});
+
+test('the same draft gets the same repair on every run', async () => {
+  const candidate = JSON.parse(fs.readFileSync(path.join(root, 'fixtures', 'route-repair-crossing.json'), 'utf8'));
+  const first = await reduceCrossings({ cliPath, candidate, env: process.env });
+  const second = await reduceCrossings({ cliPath, candidate, env: process.env, workers: 1 });
+  assert.ok(first.candidate);
+  assert.deepEqual(second.candidate, first.candidate);
+  assert.deepEqual(second.record.pinned, first.record.pinned);
+  assert.equal(second.record.trials, first.record.trials);
 });
