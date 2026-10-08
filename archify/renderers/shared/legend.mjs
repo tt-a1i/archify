@@ -63,6 +63,28 @@ function measuredEntryWidth(entry, fontSize, swatchGap) {
   );
 }
 
+function legendTypography({ fontSize, renderedFontSize, titleFontSize, lineGap }) {
+  const explicit = renderedFontSize !== undefined || titleFontSize !== 12;
+  const rendered = renderedFontSize ?? (fontSize < 8 ? fontSize + 0.5 : fontSize + 2);
+  const entryAscent = explicit ? Math.max(10, Math.ceil(rendered * 1.2)) : 10;
+  const entryDescent = explicit ? Math.max(4, Math.ceil(rendered * 0.3)) : 4;
+  const titleAscent = explicit ? Math.max(10, Math.ceil(titleFontSize * 1.2)) : 10;
+  const titleDescent = explicit ? Math.max(4, Math.ceil(titleFontSize * 0.3)) : 4;
+  return {
+    // Existing callers intentionally retain their historical measurement and
+    // rendering. An explicit font makes both use the same advance width.
+    measuredFontSize: renderedFontSize ?? fontSize,
+    renderedFontSize: rendered,
+    entryAscent,
+    entryDescent,
+    titleAscent,
+    titleDescent,
+    titleWidth: explicit ? Math.ceil(titleFontSize * 4) : 48,
+    titleGap: explicit ? Math.max(20, entryAscent + titleDescent + 6) : 20,
+    lineGap: explicit ? Math.max(lineGap, entryAscent + entryDescent + 4) : lineGap,
+  };
+}
+
 // One pure footprint calculation owns both auto-viewBox sizing and final SVG
 // placement. Callers must not maintain a second approximation of legend width
 // or row count; that would make generated geometry disagree with validation.
@@ -72,13 +94,16 @@ export function legendFootprint(entries, {
   itemGap = DEFAULT_ITEM_GAP,
   lineGap = DEFAULT_LINE_GAP,
   swatchGap = DEFAULT_SWATCH_GAP,
+  renderedFontSize,
+  titleFontSize = 12,
 } = {}) {
   if (!entries.length) {
     return { measured: [], rows: [], rowCount: 0, minWidth: 0, extraHeight: 0 };
   }
+  const typography = legendTypography({ fontSize, renderedFontSize, titleFontSize, lineGap });
   const measured = entries.map((entry) => ({
     ...entry,
-    width: measuredEntryWidth(entry, fontSize, entry.swatchGap ?? swatchGap),
+    width: measuredEntryWidth(entry, typography.measuredFontSize, entry.swatchGap ?? swatchGap),
   }));
   const rows = [[]];
   let cursor = 0;
@@ -98,7 +123,7 @@ export function legendFootprint(entries, {
     rows,
     rowCount: rows.length,
     minWidth: measured.reduce((width, entry) => Math.max(width, entry.width), 0),
-    extraHeight: (rows.length - 1) * lineGap,
+    extraHeight: (rows.length - 1) * typography.lineGap,
   };
 }
 
@@ -114,9 +139,14 @@ export function measureLegend(entries, {
   obstacles = [],
   unfit = 'error',
   diagramType = 'diagram',
+  renderedFontSize,
+  titleFontSize = 12,
 } = {}) {
   if (!entries.length) return { entries: [], rowCount: 0, titleY: null };
-  const footprint = legendFootprint(entries, { width, fontSize, itemGap, lineGap, swatchGap });
+  const typography = legendTypography({ fontSize, renderedFontSize, titleFontSize, lineGap });
+  const footprint = legendFootprint(entries, {
+    width, fontSize, itemGap, lineGap, swatchGap, renderedFontSize, titleFontSize,
+  });
   const tooWide = footprint.measured.find((entry) => entry.width > width);
   if (tooWide) {
     if (unfit === 'hide') return null;
@@ -131,8 +161,8 @@ export function measureLegend(entries, {
     }]);
   }
 
-  const titleY = baselineY - footprint.extraHeight - 20;
-  const legendTopY = titleY - 10;
+  const titleY = baselineY - footprint.extraHeight - typography.titleGap;
+  const legendTopY = titleY - typography.titleAscent;
   if (legendTopY < minTitleY) {
     if (unfit === 'hide') return null;
     const message = `[legend/vertical-overflow] ${diagramType} legend needs ${footprint.rowCount} rows, which would start at y=${legendTopY} above the available legend band at y=${minTitleY}.`;
@@ -149,7 +179,7 @@ export function measureLegend(entries, {
   const positioned = [];
   footprint.rows.forEach((row, rowIndex) => {
     let entryX = x;
-    const baseline = baselineY - (footprint.rowCount - rowIndex - 1) * lineGap;
+    const baseline = baselineY - (footprint.rowCount - rowIndex - 1) * typography.lineGap;
     for (const entry of row) {
       positioned.push({ ...entry, x: entryX, baseline, row: rowIndex });
       entryX += entry.width + itemGap;
@@ -157,13 +187,13 @@ export function measureLegend(entries, {
   });
 
   const legendRects = [
-    { kind: 'title', x, y: legendTopY, width: 48, height: 14 },
+    { kind: 'title', x, y: legendTopY, width: typography.titleWidth, height: typography.titleAscent + typography.titleDescent },
     ...positioned.map((entry) => ({
       kind: entry.kind,
       x: entry.x,
-      y: entry.baseline - 10,
+      y: entry.baseline - typography.entryAscent,
       width: entry.width,
-      height: 14,
+      height: typography.entryAscent + typography.entryDescent,
     })),
   ];
   const collision = legendRects.find((legendRect) => obstacles.some((obstacle) => (
@@ -189,6 +219,9 @@ export function measureLegend(entries, {
     rowCount: footprint.rowCount,
     titleY,
     fontSize,
+    titleFontSize,
+    renderedFontSize: typography.renderedFontSize,
+    rects: legendRects,
   };
 }
 
@@ -200,11 +233,10 @@ export function renderLegend({ entries, layout, renderSwatch, locale, labelClass
   const measured = measureLegend(entries, layout);
   if (!measured) return '';
   const hasInteractiveEntries = measured.entries.some((entry) => entry.interactive);
-  const renderedFontSize = measured.fontSize < 8 ? measured.fontSize + 0.5 : measured.fontSize + 2;
   const rootAttributes = hasInteractiveEntries ? ' data-legend="" data-legend-bridge=""' : ' data-legend=""';
   const parts = [
     `        <g${rootAttributes}>`,
-    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="12" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
+    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="${measured.titleFontSize}" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
   ];
 
   for (const entry of measured.entries) {
@@ -213,7 +245,7 @@ export function renderLegend({ entries, layout, renderSwatch, locale, labelClass
       : '';
     parts.push(`          <g data-legend-semantic-kind="${esc(entry.kind)}"${interactive} data-legend-x="${entry.x}" data-legend-baseline="${entry.baseline}" data-legend-width="${entry.width}">`);
     parts.push(`            ${renderSwatch(entry)}`);
-    parts.push(`            <text x="${entry.x + (entry.swatchWidth ?? 14) + (entry.swatchGap ?? DEFAULT_SWATCH_GAP)}" y="${entry.baseline}" class="${labelClass}" font-size="${renderedFontSize}" font-weight="${labelWeight}">${esc(entry.label)}</text>`);
+    parts.push(`            <text x="${entry.x + (entry.swatchWidth ?? 14) + (entry.swatchGap ?? DEFAULT_SWATCH_GAP)}" y="${entry.baseline}" class="${labelClass}" font-size="${measured.renderedFontSize}" font-weight="${labelWeight}">${esc(entry.label)}</text>`);
     parts.push('          </g>');
   }
   parts.push('        </g>');

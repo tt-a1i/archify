@@ -1,0 +1,73 @@
+{
+  "base": "603bbb41ce69015797c2d4045a143c3fabc39230",
+  "sourceCommit": "853dbb21e75195ac2f32aa1c3010d9cd6251af15",
+  "node": "22.23.1",
+  "zlib": "1.3.1-e00f703",
+  "chrome": "154.0.8037.98",
+  "git": "2.39.5 (Apple Git-154)",
+  "focused": {
+    "passed": 199,
+    "failed": 0,
+    "skipped": 0
+  },
+  "placedLabel": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "newRegressions": 2
+  },
+  "browser": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0
+  },
+  "fullSuite": {
+    "passed": 2789,
+    "failed": 1,
+    "skipped": 100,
+    "durationMs": 181931.729,
+    "failure": "test/ci-scope.test.mjs:110: unexpected origin/HEAD symbolic alias",
+    "sameFailureReproducedOnBase": true,
+    "newPlacedLabelTestsIncluded": false
+  },
+  "package": {
+    "files": 150,
+    "sha256": "2bc54c4879f6a3940ac8f55fc7700e96862a324e61874c08de72cf78e5a353cd",
+    "repeatedBytesIdentical": true,
+    "smoke": "pass",
+    "extractedOutsideRepository": true
+  },
+  "logs": {
+    "focused.log": {
+      "sha256": "9b2f6ec0b61eb1b78959b9c64fd796ae47e5f259104b1c3d03bb5f9380c562b1"
+    },
+    "placed-label-regression.log": {
+      "sha256": "13d974473509152814f1c71c5c20c6ed3ae450e313bf913e7238f9b3c24218b8"
+    },
+    "browser.log": {
+      "sha256": "90407d0ee355e34bc34b9a165873a5aee351562b941cc90c9d9844ebea7ea233"
+    },
+    "full-test.log": {
+      "sha256": "39acacc1882ed2cf359ed0e6180f7828215205b5495bef0e6b7cb037a5a4b38c"
+    },
+    "base-ci-scope-failure.log": {
+      "sha256": "a83ced7d01ec1a165ef8ad1548f72d045c5ca98383901b8644d50ae61f0e430a"
+    },
+    "package-smoke-outside.log": {
+      "sha256": "f80a2fc8a5948fb702cb3aa54751f3abc53faa1dfedbd64d25bfccd667e3c34c"
+    },
+    "default-compatibility-final.log": {
+      "sha256": "67025f508c199d8b52751026304e94f4aaa52489a8659e593570bc7546c102a8"
+    }
+  },
+  "artifacts": {
+    "README.md": "bb642a885acfa85f3b5ed0f8a3fb1a17fd389df0cd58e43374287729fd8239be",
+    "browser-measurements.json": "d98701035f9f7370837b68d7cbf376a26b8c7f420c6578e7d42756293b8d2947",
+    "default-compatibility.json": "5b3a252df37a8c19c712811dc4b2af54c2473566c20d6c3cb8005673f51ebad8",
+    "dense-scale-1.5.png": "0dd43a9ce36f6b21fde55289a8e756184cd8c8e277ee15d51034a5e865d04763",
+    "dense-scale-1.png": "32558faa41c18276ee422d9f6c74af9fc78b57cb8e60148f913b5723ad942fe4",
+    "ordinary-scale-1.5.png": "fb680e927e182e9f8bb6797a67240980437e9fce2b00799b6f964dbe4ce36861",
+    "ordinary-scale-1.png": "13361dc481502469974370a222ccc11d283c15d8063e2f085d8d9e37a11b3e4d",
+    "source-brand-tag.png": "b418d121f869a3d6e1c9683cf8bb0e2c216c6576d73840bc443240141385da61"
+  }
+}

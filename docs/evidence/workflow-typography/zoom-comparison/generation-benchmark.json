@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-04T07:12:07.057Z",
+  "base": {
+    "commit": "98c839a43eedb95f38700aa5243ea778c0482777",
+    "runtimeSha256": "ebef86f24d0b5554751a8246c24137c03a5a86e804ee2a92834931a4cfde4304",
+    "runtimeFileCount": 63,
+    "dirtyRuntimeInputs": false
+  },
+  "candidate": {
+    "commit": "ae9255f7412799488544dc4910892a306da45caf",
+    "runtimeSha256": "384f7b6ae119c260f431918631273a621070686d4c22e285d70eeeb305b6edc8",
+    "runtimeFileCount": 64,
+    "dirtyRuntimeInputs": false
+  },
+  "toolchain": {
+    "node": "22.23.1",
+    "zlib": "1.3.1-e00f703",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "environment": {
+    "cpu": "Apple M2 Max",
+    "logicalCpuCount": 12,
+    "osRelease": "24.6.0"
+  },
+  "runsPerVariant": 15,
+  "warmupsPerVariant": 3,
+  "timingDefinition": "Serial fresh-process CLI render wall time; includes Node startup, parsing, validation, generation and output writing. Separate validate commands and browser work are excluded.",
+  "order": "The first variant rotates each round; warmup samples are discarded. External concurrent work is not controlled by this script.",
+  "cases": [
+    {
+      "name": "release-overview",
+      "variants": {
+        "before": {
+          "samplesMs": [
+            145.819,
+            155.386,
+            148.345,
+            151.606,
+            152.41,
+            153.637,
+            150.529,
+            152.377,
+            148.585,
+            149.924,
+            151.441,
+            157.116,
+            154.202,
+            151.785,
+            152.396
+          ],
+          "medianMs": 151.785,
+          "p95Ms": 155.905,
+          "minimumMs": 145.819,
+          "maximumMs": 157.116
+        },
+        "after": {
+          "samplesMs": [
+            152.037,
+            156.629,
+            154.289,
+            153.584,
+            152.155,
+            156.047,
+            155.751,
+            153.835,
+            155.364,
+            152.628,
+            154.804,
+            154.351,
+            152.637,
+            160.114,
+            152.234
+          ],
+          "medianMs": 154.289,
+          "p95Ms": 157.674,
+          "minimumMs": 152.037,
+          "maximumMs": 160.114
+        },
+        "candidate-default": {
+          "samplesMs": [
+            150.168,
+            151.338,
+            149.43,
+            154.311,
+            150.02,
+            149.567,
+            150.159,
+            153.495,
+            149.066,
+            152.501,
+            157.749,
+            152.867,
+            150.217,
+            152.928,
+            156.75
+          ],
+          "medianMs": 151.338,
+          "p95Ms": 157.05,
+          "minimumMs": 149.066,
+          "maximumMs": 157.749
+        }
+      }
+    },
+    {
+      "name": "stable-release-gates",
+      "variants": {
+        "before": {
+          "samplesMs": [
+            174.612,
+            170.701,
+            173.867,
+            172.462,
+            176.336,
+            175.645,
+            173.105,
+            173.01,
+            175.871,
+            175.315,
+            176.207,
+            173.745,
+            173.023,
+            175.562,
+            180.068
+          ],
+          "medianMs": 174.612,
+          "p95Ms": 177.456,
+          "minimumMs": 170.701,
+          "maximumMs": 180.068
+        },
+        "after": {
+          "samplesMs": [
+            179.109,
+            178.197,
+            177.42,
+            173.025,
+            175.048,
+            177.486,
+            180.58,
+            176.246,
+            180.756,
+            174.54,
+            174.645,
+            180.428,
+            173.437,
+            173.315,
+            174.528
+          ],
+          "medianMs": 176.246,
+          "p95Ms": 180.633,
+          "minimumMs": 173.025,
+          "maximumMs": 180.756
+        },
+        "candidate-default": {
+          "samplesMs": [
+            175.784,
+            172.253,
+            173.112,
+            176.118,
+            182.795,
+            176.905,
+            172.596,
+            174.64,
+            177.041,
+            176.448,
+            179.573,
+            175.119,
+            176.397,
+            178.279,
+            181.087
+          ],
+          "medianMs": 176.397,
+          "p95Ms": 181.599,
+          "minimumMs": 172.253,
+          "maximumMs": 182.795
+        }
+      }
+    }
+  ]
+}

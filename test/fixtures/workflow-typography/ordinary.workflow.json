@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": { "title": "Measured processing workflow", "output": "ordinary.html", "quality_profile": "showcase" },
+  "lanes": [{ "id": "processing", "label": "Processing" }],
+  "phases": [{ "id": "prepare", "label": "Prepare and record", "fromCol": 0, "toCol": 2 }],
+  "groups": [{ "id": "audit", "label": "Audit trail", "lane": "processing", "fromCol": 0, "toCol": 2 }],
+  "nodes": [
+    { "id": "receive", "type": "frontend", "lane": "processing", "col": 0, "label": "Receive", "sublabel": "request", "tag": "incoming" },
+    { "id": "validate", "type": "backend", "lane": "processing", "col": 1, "label": "Validate", "sublabel": "policy checks", "tag": "checked" },
+    { "id": "record", "type": "database", "lane": "processing", "col": 2, "label": "Record", "sublabel": "store evidence", "tag": "complete" }
+  ],
+  "edges": [
+    { "id": "submit", "from": "receive", "to": "validate", "label": "submit" },
+    { "id": "persist", "from": "validate", "to": "record", "label": "persist" }
+  ]
+}

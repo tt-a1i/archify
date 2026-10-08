@@ -1,0 +1,857 @@
+{
+  "definition": "Trusted browser clicks; first four warmup actions discarded per artifact; sixteen measured alternating 100%/125% zoom actions. Event-capture timestamp to first/second requestAnimationFrame callbacks and computed camera-transform settlement. Callback timings do not establish painted-pixel latency. Includes intended CSS transition; excludes automation transport time.",
+  "cases": [
+    {
+      "case": "release-overview",
+      "version": "before",
+      "warmupActions": 4,
+      "records": [
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.199999988079071,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 169.80000001192093,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.400000005960464
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.800000011920929,
+          "maximumFrameGapMs": 8.800000011920929,
+          "settledMs": 169,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.199999988079073
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5999999940395355,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 170.09999999403954,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.699999988079073
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.9000000059604645,
+          "maximumFrameGapMs": 9.099999994039536,
+          "settledMs": 169.5,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.199999988079073
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 1.9000000059604645,
+          "maximumFrameGapMs": 9.299999982118608,
+          "settledMs": 169.40000000596046,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.200000017881392
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 169.30000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 9.200000017881392,
+          "settledMs": 170,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.699999988079073
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.699999988079071,
+          "maximumFrameGapMs": 8.599999994039536,
+          "settledMs": 170.39999997615814,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.399999976158142,
+          "maximumFrameGapMs": 8.400000005960464,
+          "settledMs": 169.39999997615814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.699999988079073
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 9.299999982118608,
+          "settledMs": 169.59999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.799999982118608
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.300000011920929,
+          "maximumFrameGapMs": 8.599999994039536,
+          "settledMs": 170,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.700000017881392
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.699999988079071,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 169.30000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 9.100000023841858,
+          "settledMs": 170,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3,
+          "maximumFrameGapMs": 9,
+          "settledMs": 169.59999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.099999994039536
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 4.299999982118607,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 170.39999997615814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.199999988079073
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5999999940395355,
+          "maximumFrameGapMs": 9.099999994039536,
+          "settledMs": 169.09999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.899999976158142
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 1.5,
+          "maximumFrameGapMs": 9.400000005960464,
+          "settledMs": 169,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.700000017881392
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 8.900000005960464,
+          "settledMs": 170.10000002384186,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.800000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 170,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.799999982118608
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 9.200000017881392,
+          "settledMs": 169.90000000596046,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.700000017881392
+        }
+      ],
+      "reducedMotion": false,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "viewport": {
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "case": "release-overview",
+      "version": "after",
+      "warmupActions": 4,
+      "records": [
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.300000011920929,
+          "maximumFrameGapMs": 9.599999994039536,
+          "settledMs": 169.90000000596046,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.5
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.0999999940395355,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 169,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.400000005960464
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5999999940395355,
+          "maximumFrameGapMs": 8.899999976158142,
+          "settledMs": 170.30000001192093,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 168.59999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.399999976158142
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 9,
+          "settledMs": 168.59999999403954,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.800000011920927
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 1.4000000059604645,
+          "maximumFrameGapMs": 9.099999994039536,
+          "settledMs": 168.7000000178814,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.5
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 169.69999998807907,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.299999982118608
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.9000000059604645,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 168.7000000178814,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.800000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.0999999940395355,
+          "maximumFrameGapMs": 9.299999982118608,
+          "settledMs": 168.7000000178814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.300000011920927
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.600000023841858,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 170.30000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.900000005960464
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.2999999821186066,
+          "maximumFrameGapMs": 9.300000011920927,
+          "settledMs": 169.7999999821186,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.5
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.0999999940395355,
+          "maximumFrameGapMs": 8.900000005960464,
+          "settledMs": 169.30000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.300000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.0999999940395355,
+          "maximumFrameGapMs": 9,
+          "settledMs": 168.59999999403954,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 9.699999988079073
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.9000000059604645,
+          "maximumFrameGapMs": 9.299999982118608,
+          "settledMs": 169.69999998807907,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.5
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.0999999940395355,
+          "maximumFrameGapMs": 9.299999982118608,
+          "settledMs": 168.30000001192093,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.5
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.7000000178813934,
+          "maximumFrameGapMs": 8.400000005960464,
+          "settledMs": 170.30000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.900000005960464
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.7999999821186066,
+          "maximumFrameGapMs": 9.100000023841858,
+          "settledMs": 169.69999998807907,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.400000005960464
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.0999999940395355,
+          "maximumFrameGapMs": 9.200000017881392,
+          "settledMs": 169.80000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.400000005960464
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 8.400000005960464,
+          "settledMs": 170.09999999403954,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.799999982118608
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.5999999940395355,
+          "maximumFrameGapMs": 8.600000023841858,
+          "settledMs": 170.19999998807907,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.799999982118608
+        }
+      ],
+      "reducedMotion": false,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "viewport": {
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "case": "stable-release-gates",
+      "version": "before",
+      "warmupActions": 4,
+      "records": [
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.899999976158142,
+          "maximumFrameGapMs": 13.399999976158142,
+          "settledMs": 174.39999997615814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.899999976158142
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 8.700000017881393,
+          "settledMs": 170.19999998807907,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.699999988079073
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.0999999940395355,
+          "maximumFrameGapMs": 9,
+          "settledMs": 169,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.800000011920927
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 4,
+          "maximumFrameGapMs": 9.799999982118608,
+          "settledMs": 170.5,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.200000017881392
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3,
+          "maximumFrameGapMs": 8.900000005960464,
+          "settledMs": 169.60000002384186,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.300000011920927
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 9.300000011920927,
+          "settledMs": 170.09999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.799999982118608
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 4,
+          "maximumFrameGapMs": 9.400000005960464,
+          "settledMs": 170.60000002384186,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.200000017881392
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.800000011920929,
+          "maximumFrameGapMs": 8.699999988079071,
+          "settledMs": 169.30000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.099999994039536
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.800000011920929,
+          "maximumFrameGapMs": 9.300000011920927,
+          "settledMs": 170.5,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.100000023841858
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 1.5,
+          "maximumFrameGapMs": 9,
+          "settledMs": 168.90000000596046,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.5
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5999999940395355,
+          "maximumFrameGapMs": 9.300000011920927,
+          "settledMs": 170.19999998807907,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.799999982118608
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 9.200000017881392,
+          "settledMs": 169.09999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.800000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5999999940395355,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 170,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.900000005960464
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.4000000059604645,
+          "maximumFrameGapMs": 9.300000011920927,
+          "settledMs": 170,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.699999988079073
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 8.400000005960464,
+          "settledMs": 169,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.700000017881392
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.399999976158142,
+          "maximumFrameGapMs": 9.099999994039536,
+          "settledMs": 170,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.599999994039536
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.900000005960465,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 170.59999999403954,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.199999988079073
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5999999940395355,
+          "maximumFrameGapMs": 9.200000017881392,
+          "settledMs": 170.09999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.800000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 8.800000011920929,
+          "settledMs": 169.2000000178814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.900000005960464
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.9000000059604645,
+          "maximumFrameGapMs": 9.299999982118608,
+          "settledMs": 169.5,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.199999988079073
+        }
+      ],
+      "reducedMotion": false,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "viewport": {
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "case": "stable-release-gates",
+      "version": "after",
+      "warmupActions": 4,
+      "records": [
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 4.300000011920929,
+          "maximumFrameGapMs": 8.400000005960464,
+          "settledMs": 170.90000000596046,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.599999994039536
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 9.300000011920927,
+          "settledMs": 169.09999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.800000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.4000000059604645,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 170.2000000178814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.900000005960464
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 4.300000011920929,
+          "maximumFrameGapMs": 14.600000023841858,
+          "settledMs": 171,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.699999988079073
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.2000000178813934,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 169.7000000178814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.400000005960464
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.4000000059604645,
+          "maximumFrameGapMs": 9.200000017881392,
+          "settledMs": 170,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.099999994039536
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 9.099999994039536,
+          "settledMs": 169.7000000178814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.800000011920927
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.5,
+          "maximumFrameGapMs": 9.300000011920927,
+          "settledMs": 170,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 169.59999999403954,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.300000011920927
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5999999940395355,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 169.7000000178814,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.300000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.800000011920929,
+          "maximumFrameGapMs": 8.400000005960464,
+          "settledMs": 169.30000001192093,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.4000000059604645,
+          "maximumFrameGapMs": 9.099999994039536,
+          "settledMs": 170,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.800000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.0999999940395355,
+          "maximumFrameGapMs": 9.099999994039536,
+          "settledMs": 169.89999997615814,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.699999988079073
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 3.2000000178813934,
+          "maximumFrameGapMs": 8.799999982118607,
+          "settledMs": 169.80000001192093,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.400000005960464
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3.699999988079071,
+          "maximumFrameGapMs": 9.200000017881392,
+          "settledMs": 170.2999999821186,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 12.099999994039536
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.7999999821186066,
+          "maximumFrameGapMs": 9.199999988079073,
+          "settledMs": 170.09999999403954,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.599999994039536
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 3,
+          "maximumFrameGapMs": 8.800000011920929,
+          "settledMs": 169.69999998807907,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.399999976158142
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 8.800000011920929,
+          "settledMs": 169.19999998807907,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.800000011920927
+        },
+        {
+          "action": "in",
+          "completed": true,
+          "firstFrameMs": 2.5,
+          "maximumFrameGapMs": 9,
+          "settledMs": 169.10000002384186,
+          "targetScale": 1.25,
+          "trusted": true,
+          "twoFrameFeedbackMs": 10.800000011920927
+        },
+        {
+          "action": "out",
+          "completed": true,
+          "firstFrameMs": 2.9000000059604645,
+          "maximumFrameGapMs": 8.5,
+          "settledMs": 169.40000000596046,
+          "targetScale": 1,
+          "trusted": true,
+          "twoFrameFeedbackMs": 11.199999988079073
+        }
+      ],
+      "reducedMotion": false,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "viewport": {
+        "height": 900,
+        "width": 1440
+      }
+    }
+  ]
+}

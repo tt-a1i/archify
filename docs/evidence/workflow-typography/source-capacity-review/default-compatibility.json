@@ -1,0 +1,250 @@
+{
+  "base": "7112cc6d559f7b74fb156cfafe6aa501d1fdf120",
+  "candidate": "417282bf86a2ad071f5416cc1a68eef7bdd1a55a",
+  "node": "22.23.1",
+  "platform": "darwin",
+  "method": "两个版本使用相同输入和源码仓库；公开CLI validate/render成功后比较完整HTML及原始SVG字节。",
+  "cases": [
+    {
+      "name": "web-app.architecture.json",
+      "type": "architecture",
+      "inputSha256": "3e1882ae0b38dfc950b80e02f87f24fc5cb69f874509abbfe1cb90ef4cf849e4",
+      "base": {
+        "html": "273fdc8d4f0deb9b150d09d90ee914c5d235ffa9423eaea1a8ba24f9e13ca2cc",
+        "svg": "f93ebda0458029acd9b150bd6294edf5edb283cf6340d26d548212dfc9cebf28"
+      },
+      "candidate": {
+        "html": "273fdc8d4f0deb9b150d09d90ee914c5d235ffa9423eaea1a8ba24f9e13ca2cc",
+        "svg": "f93ebda0458029acd9b150bd6294edf5edb283cf6340d26d548212dfc9cebf28"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "agent-tool-call.workflow.json",
+      "type": "workflow",
+      "inputSha256": "67e4145be657371047e580ecdec2028a9eb52d43d3dadafaa585c054e4272087",
+      "base": {
+        "html": "428c18b6004de7d4ab581b8f3e4d7582bfc11adc74fcbc8bfffe4950f0822034",
+        "svg": "023070a4311b5b09d6f3432de4f6c5674afd805643fcf47a9ca53882c2f0a2e4"
+      },
+      "candidate": {
+        "html": "428c18b6004de7d4ab581b8f3e4d7582bfc11adc74fcbc8bfffe4950f0822034",
+        "svg": "023070a4311b5b09d6f3432de4f6c5674afd805643fcf47a9ca53882c2f0a2e4"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "cache-miss-request.sequence.json",
+      "type": "sequence",
+      "inputSha256": "cb356877bc03da64656a4abed25cfc6bd8512a7004c61c6aaac29b73b060c4b9",
+      "base": {
+        "html": "b63a836b8f5ce0f99e7d39fad0e2223219e6d3a134b31d9c1255a9bfe96fb253",
+        "svg": "ae77ee9fa4c97dba73203f382f6e4860856087695bf46f138708241483477f6d"
+      },
+      "candidate": {
+        "html": "b63a836b8f5ce0f99e7d39fad0e2223219e6d3a134b31d9c1255a9bfe96fb253",
+        "svg": "ae77ee9fa4c97dba73203f382f6e4860856087695bf46f138708241483477f6d"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "product-analytics.dataflow.json",
+      "type": "dataflow",
+      "inputSha256": "a802891f5c706e8f2ff2f7c32b7ef8567e018086088d06b27f519244f242cb1b",
+      "base": {
+        "html": "1ec638f17ae484fe658808f9122de3e83ca20e8d902f3dd8fd385a46baa69e54",
+        "svg": "a163c7184436dbf86b8c77d1fdbc1c59f9840bd26fb0c668af685acccd9af24b"
+      },
+      "candidate": {
+        "html": "1ec638f17ae484fe658808f9122de3e83ca20e8d902f3dd8fd385a46baa69e54",
+        "svg": "a163c7184436dbf86b8c77d1fdbc1c59f9840bd26fb0c668af685acccd9af24b"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "agent-run.lifecycle.json",
+      "type": "lifecycle",
+      "inputSha256": "638e2dcc1a9943c93dd6f2792aa271bf892bda0f7bee8bded09021255ae9959e",
+      "base": {
+        "html": "743fe24a07e115db5b86d3c36be1ee95e079d519932ccd89a1559313ceee3616",
+        "svg": "bedc596d951e1e08b7e55f9ecdc54e04f5a9127958efea3731ad0c74b3a7a446"
+      },
+      "candidate": {
+        "html": "743fe24a07e115db5b86d3c36be1ee95e079d519932ccd89a1559313ceee3616",
+        "svg": "bedc596d951e1e08b7e55f9ecdc54e04f5a9127958efea3731ad0c74b3a7a446"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "orders.erd.json",
+      "type": "erd",
+      "inputSha256": "f9e3c55b31fa67a752626e0770787fcf79c25beeef83d5344044f37939552472",
+      "base": {
+        "html": "1a28ccb106911ed2a76d3ee05859be44687ab99da8fe62d6e4ce717f02e827b0",
+        "svg": "b30080c7682e13cf52595bebfc460ff541aa89e4b8ace874bc9918002fd5c438"
+      },
+      "candidate": {
+        "html": "1a28ccb106911ed2a76d3ee05859be44687ab99da8fe62d6e4ce717f02e827b0",
+        "svg": "b30080c7682e13cf52595bebfc460ff541aa89e4b8ace874bc9918002fd5c438"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "payments.class.json",
+      "type": "class",
+      "inputSha256": "808a0457664a83be473c58d3954ec767c454a0b2325cc2f75c93e32bf910126c",
+      "base": {
+        "html": "db37a673ed5e84fd578dbbbe79f26b9fa72f00ea73ca0e7b02549d4a0a87d66c",
+        "svg": "a11f1d0eac296e37b7c9357e6a462a3b211d6b9c1d6850553435d3020bcd4ace"
+      },
+      "candidate": {
+        "html": "db37a673ed5e84fd578dbbbe79f26b9fa72f00ea73ca0e7b02549d4a0a87d66c",
+        "svg": "a11f1d0eac296e37b7c9357e6a462a3b211d6b9c1d6850553435d3020bcd4ace"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "payment-platform.tree.json",
+      "type": "tree",
+      "inputSha256": "63392b2d998f565e95c0f2298fd690206fe55bf8b9f1e3a60af8be52a9c42fe6",
+      "base": {
+        "html": "6e4cd4c089577de98411c4319e2f8ceceff46af62e96dcacf2e0addeb51c58a0",
+        "svg": "bcbedf0ab18cdccc2b453d5500ed9e0883d4c08e22d534d6580384a1a1762dda"
+      },
+      "candidate": {
+        "html": "6e4cd4c089577de98411c4319e2f8ceceff46af62e96dcacf2e0addeb51c58a0",
+        "svg": "bcbedf0ab18cdccc2b453d5500ed9e0883d4c08e22d534d6580384a1a1762dda"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "payment-incident.timeline.json",
+      "type": "timeline",
+      "inputSha256": "454b7c9c0d82c3a3cfa90174d4aedc2277eb93f7980b4da2ea18cbdb76aa70d7",
+      "base": {
+        "html": "54a6a4a67591b21038cc74a38b33969636c54660dabe7d05913797811f43e18c",
+        "svg": "98b8ea40309e529c4f1dc4d1ba28299e0d2f2baa134ca72e27d59611999b3464"
+      },
+      "candidate": {
+        "html": "54a6a4a67591b21038cc74a38b33969636c54660dabe7d05913797811f43e18c",
+        "svg": "98b8ea40309e529c4f1dc4d1ba28299e0d2f2baa134ca72e27d59611999b3464"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "checkout-request.waterfall.json",
+      "type": "waterfall",
+      "inputSha256": "a54e7b4fef0c8001858501b175bb4a91a5538d5c69be6c065775c396834bcfc2",
+      "base": {
+        "html": "c54c2f48cdb957b4d8a74e6156bcff671102f2863571bb58fe5d61d0b887f331",
+        "svg": "a26412645e0871fac863fe1ab7f8b432045c834d0f1f4be64a8ffb9cb6e837e7"
+      },
+      "candidate": {
+        "html": "c54c2f48cdb957b4d8a74e6156bcff671102f2863571bb58fe5d61d0b887f331",
+        "svg": "a26412645e0871fac863fe1ab7f8b432045c834d0f1f4be64a8ffb9cb6e837e7"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "typography-ordinary",
+      "type": "workflow",
+      "inputSha256": "aef9f47e93b11587748c6deb20f54f600476b91ef42d59d759e6ea96ee9a9c79",
+      "base": {
+        "html": "8618e810acbe841d74ecaf64c700bd7f0ac12e8e2bfa368c937eefdf1603ff61",
+        "svg": "5ad328ef6a7e52996e2dd7fdc0f63f77f79941660e87644d66ab91731805ac6c"
+      },
+      "candidate": {
+        "html": "8618e810acbe841d74ecaf64c700bd7f0ac12e8e2bfa368c937eefdf1603ff61",
+        "svg": "5ad328ef6a7e52996e2dd7fdc0f63f77f79941660e87644d66ab91731805ac6c"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "typography-dense",
+      "type": "workflow",
+      "inputSha256": "5d5997c57d962a4fe267322c705ae4cdd590e32fd15f490450a2070bb1554dec",
+      "base": {
+        "html": "8ac05b1565735d4af3060eb113872d551782222c3dd71fac4059b659ff3b5724",
+        "svg": "c17515df57f97e19d2578ea9aa6177e5ff6acdb9ca1ce8d577c905667269fa4a"
+      },
+      "candidate": {
+        "html": "8ac05b1565735d4af3060eb113872d551782222c3dd71fac4059b659ff3b5724",
+        "svg": "c17515df57f97e19d2578ea9aa6177e5ff6acdb9ca1ce8d577c905667269fa4a"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "typography-cjk",
+      "type": "workflow",
+      "inputSha256": "8d64eb264a1862da11a548653f43a0e191ad81c34b4d058a3d95cc385f1b63ec",
+      "base": {
+        "html": "9f0fc0fba9485e8e12c443a0df730b7fd36aeeb5d7f5bb7c4028263dfe481fbc",
+        "svg": "4d87a81b2dbf353d33fdecdde6e1d066f60755865efc98cee6adb2914c703ac6"
+      },
+      "candidate": {
+        "html": "9f0fc0fba9485e8e12c443a0df730b7fd36aeeb5d7f5bb7c4028263dfe481fbc",
+        "svg": "4d87a81b2dbf353d33fdecdde6e1d066f60755865efc98cee6adb2914c703ac6"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "workflow-v1",
+      "type": "workflow",
+      "inputSha256": "4a83435275bee6c29bc3a3ef8c5482b13a86712bdb65f8fe98d929d66f07cc0e",
+      "base": {
+        "html": "1c1358fc41b17b480ff6003debcd214acbe4dab2bfadf773e9b86c71cef685c6",
+        "svg": "213fb33727c430f74c5e2fcc220b3c7be82a52eb31849f54cb4ed5d3393549c1"
+      },
+      "candidate": {
+        "html": "1c1358fc41b17b480ff6003debcd214acbe4dab2bfadf773e9b86c71cef685c6",
+        "svg": "213fb33727c430f74c5e2fcc220b3c7be82a52eb31849f54cb4ed5d3393549c1"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "source-default",
+      "type": "workflow",
+      "inputSha256": "4f2839d27b20cf6290f5e2a95b655fea06ec4424aa46923a0e5af6a5bc32c591",
+      "base": {
+        "html": "aa34506555a6ff299f13165173331136403cf3c4aa503855b87cfd5f3f29e35c",
+        "svg": "4876c3086ffce17d5e4fc89dfce9dbb2d4568aeacfea063c851a7a2d29943677"
+      },
+      "candidate": {
+        "html": "aa34506555a6ff299f13165173331136403cf3c4aa503855b87cfd5f3f29e35c",
+        "svg": "4876c3086ffce17d5e4fc89dfce9dbb2d4568aeacfea063c851a7a2d29943677"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    },
+    {
+      "name": "source-brand-default",
+      "type": "workflow",
+      "inputSha256": "d53aaa7228e1668d1ac1b31be8e1530e86879fe056c19a24b5e3c7bb0383f0f7",
+      "base": {
+        "html": "1995c9e078c0f72a5fcbdec223092242c6b586108eb6d68fffd7f11aeeb9da23",
+        "svg": "718dc8a2e2add19a0972d858609d04f357751b1d04336e62e54ddae5ca3e718e"
+      },
+      "candidate": {
+        "html": "1995c9e078c0f72a5fcbdec223092242c6b586108eb6d68fffd7f11aeeb9da23",
+        "svg": "718dc8a2e2add19a0972d858609d04f357751b1d04336e62e54ddae5ca3e718e"
+      },
+      "htmlIdentical": true,
+      "svgIdentical": true
+    }
+  ],
+  "passed": true
+}

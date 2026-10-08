@@ -7,10 +7,13 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v3.0.2-dev.1`. Not a stable release.
 
 ### Added
+- **Workflow v2 字体与测量布局联动（#631）。** 新增可选 `meta.typography_scale`（1–2），让节点文本、泳道/阶段/分组标题、连线标签及图例共同参与布局测量；固定尺寸不足时返回结构化容量诊断。省略或设为 1 保持原有输出，schema v1 和其他图类型不变。
 - **Traditional Chinese (Taiwan) Viewer catalog.** `meta.locale: "zh-TW"` now selects a bundled catalog covering all 487 Viewer keys with Taiwan terminology (for example 循序圖, 資料流, 匯出, 檢視), instead of falling back to English. Enrollment is data only: `locales/zh-TW.json` plus one manifest entry. `zh-Hant` and `zh-HK` remain distinct, unbundled tags.
 - **GitLab source links.** Repository evidence on gitlab.com, or on a self-managed host declared with `provider: "gitlab"`, now generates revision-pinned web links (`/-/blob/<revision>/<path>#L<a>-<b>`, `/-/tree/<revision>`) instead of requiring `link_mode: "local-only"`. Nested groups are accepted, SSH and HTTPS origins on the same host match, paths compare case-insensitively, and cited Markdown line ranges open the plain view. Verification is unchanged and `local-only` remains available.
 
 ### Fixed
+
+- **Workflow 字体缩放的源码上下文容量检查（#649）。** 自动高度与容量校验共同考虑已验证的源码信息和品牌图标，布局各阶段使用一致尺寸；修复建议保留来源上下文，并通过真实 CLI 重放验证。默认倍率和作者明确指定的尺寸契约保持不变。
 
 - **SVG 路径检查（#641）。** 统一解析关系线和结构边界的 `M/L/H/V/Q/Z` 路径，正确保留子路径与闭合语义；截断参数、非法数值和不支持的命令现在有限失败并给出定位诊断，避免检查挂起、漏检或虚构跨子路径线段。非共线 `Q` 前后的直线保留真实连续性，避免虚假交叉、标签遮挡和漏检；曲线采样点不会增加微线段预算。普通有效产物的 9 项检查保持不变。
 - **Inactive brand icon declarations.** Capture ignores icon markup in comments, raw text (including `noscript` for `text/html`), quoted attributes and templates, so inactive page edits cannot replace the selected image or break its pinned digest. Complete link attributes keep quoted delimiters and distinguish `href` from `data-href`; XHTML `noscript` discovery and links after empty elements are preserved. Old pins to inactive markup may require inspecting and explicitly recapturing the intended icon; digest checking remains enforced.

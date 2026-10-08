@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Archify stable release: verification gates",
+    "subtitle": "Public release.yml, stable-channel path through artifact publication",
+    "output": "stable-release-gates.html",
+    "quality_profile": "showcase",
+    "locale": "en"
+  },
+  "lanes": [
+    { "id": "windows", "label": "Windows matrix" },
+    { "id": "validation", "label": "Ubuntu tests" },
+    { "id": "identity", "label": "Ubuntu identity" },
+    { "id": "artifact", "label": "Ubuntu artifact" }
+  ],
+  "mainPath": ["windows", "checks", "version", "channel", "tag", "manifest", "build", "smoke", "bytes", "publish"],
+  "nodes": [
+    { "id": "windows", "lane": "windows", "col": 0, "type": "backend", "label": "Windows paths", "sublabel": "Node 22 + 24" },
+    { "id": "checks", "lane": "validation", "col": 1, "type": "security", "label": "Regressions", "sublabel": "unit, WebM, browser" },
+    { "id": "version", "lane": "identity", "col": 2, "type": "security", "label": "Version match", "sublabel": "tag = package.json", "yOffset": -60 },
+    { "id": "channel", "lane": "identity", "col": 2, "type": "backend", "label": "Channel", "sublabel": "skill-release.json", "yOffset": 60 },
+    { "id": "tag", "lane": "identity", "col": 3, "type": "security", "label": "Stable tag", "sublabel": "annotated Git tag", "yOffset": -60 },
+    { "id": "manifest", "lane": "identity", "col": 3, "type": "security", "label": "Notifier guard", "sublabel": "stable.json < tag", "yOffset": 60 },
+    { "id": "build", "lane": "artifact", "col": 4, "type": "backend", "label": "Build archive", "sublabel": "build-zip.sh", "yOffset": -60 },
+    { "id": "smoke", "lane": "artifact", "col": 4, "type": "security", "label": "Package smoke", "sublabel": "package-smoke.mjs", "yOffset": 60 },
+    { "id": "bytes", "lane": "artifact", "col": 5, "type": "security", "label": "Byte identity", "sublabel": "built = committed", "yOffset": -60 },
+    { "id": "publish", "lane": "artifact", "col": 5, "type": "external", "label": "GitHub Release", "sublabel": "archify.zip asset", "yOffset": 60 }
+  ],
+  "edges": [
+    { "id": "windows-checks", "from": "windows", "to": "checks", "label": "needs", "role": "main" },
+    { "id": "checks-version", "from": "checks", "to": "version", "role": "main" },
+    { "id": "version-channel", "from": "version", "to": "channel", "role": "main" },
+    { "id": "channel-tag", "from": "channel", "to": "tag", "label": "stable", "role": "main" },
+    { "id": "tag-manifest", "from": "tag", "to": "manifest", "role": "main" },
+    { "id": "manifest-build", "from": "manifest", "to": "build", "role": "main" },
+    { "id": "build-smoke", "from": "build", "to": "smoke", "role": "main" },
+    { "id": "smoke-bytes", "from": "smoke", "to": "bytes", "role": "main" },
+    { "id": "bytes-publish", "from": "bytes", "to": "publish", "role": "main" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Stable-channel scope", "items": ["Triggered by a v* tag. Windows portability must pass before the Ubuntu job starts.", "The regression gate includes npm test, test:webm and test:browser; runtime provisioning is summarized."] },
+    { "dot": "amber", "title": "Publication contract", "items": ["This path chooses stable publication: annotated tag, older stable.json, exact archive smoke and byte identity.", "A failed gate prevents later normal steps. The development branch and post-publication follow-up reminder are outside the selected scope."] }
+  ]
+}

@@ -12,6 +12,10 @@
     "nodes",
     "edges"
   ],
+  "allOf": [{
+    "if": { "properties": { "schema_version": { "const": 1 } } },
+    "then": { "properties": { "meta": { "type": "object", "properties": { "typography_scale": false } } } }
+  }],
   "properties": {
     "schema_version": {
       "enum": [
@@ -39,6 +43,12 @@
         },
         "translations": {
           "$ref": "common.schema.json#/$defs/translations"
+        },
+        "typography_scale": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 2,
+          "description": "Workflow v2 only. Scale text and measured automatic layout; explicit geometry remains authoritative."
         },
         "subtitle": {
           "type": "string"
