@@ -2188,25 +2188,30 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
   };
 }
 
+const COMMAND_USAGE = {
+  render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
+  compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
+  deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
+  finalize: '<type> <input.json> <output.html> [--json] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
+  preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
+  validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
+  migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
+  inspect: '<type> <input.json>',
+  check: '<output.html> [--json] [--require-provenance]',
+  'browser-check': '<output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]',
+  'visual-check': '<output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]',
+  guide: '[scenario or question] [--json] [--lang en|zh]',
+  brands: ['[name, alias, domain, or category] [--json]', 'capture <url> [--json]'],
+  examples: '',
+  doctor: '',
+  demo: '[output-directory]',
+};
+
 function usage() {
+  const commands = Object.entries(COMMAND_USAGE).flatMap(([command, forms]) =>
+    (Array.isArray(forms) ? forms : [forms]).map(form => `  archify ${command}${form ? ` ${form}` : ''}`));
   return `Usage:
-  archify render <type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]
-  archify compare architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]
-  archify deliver <type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]
-  archify finalize <type> <input.json> <output.html> [--json] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]
-  archify preview <type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]
-  archify validate <type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]
-  archify migrate workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]
-  archify inspect <type> <input.json>
-  archify check <output.html> [--json] [--require-provenance]
-  archify browser-check <output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]
-  archify visual-check <output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]
-  archify guide [scenario or question] [--json] [--lang en|zh]
-  archify brands [name, alias, domain, or category] [--json]
-  archify brands capture <url> [--json]
-  archify examples
-  archify doctor
-  archify demo [output-directory]
+${commands.join('\n')}
 
 Types:
   architecture, workflow, sequence, dataflow, lifecycle, erd, tree, class, timeline, waterfall
@@ -7048,9 +7053,13 @@ async function commandValidate(args, invocation = {}) {
 }
 
 const [command, ...args] = process.argv.slice(2);
+// Reuse the canonical help metadata rather than a separate help registry.
+// Only the sole --help form bypasses command argument parsing and operations.
+const soleCommandHelp = args.length === 1 && args[0] === '--help'
+  && Object.hasOwn(COMMAND_USAGE, command);
 
 try {
-  switch (command) {
+  switch (soleCommandHelp ? '--help' : command) {
     case undefined:
     case '-h':
     case '--help':
