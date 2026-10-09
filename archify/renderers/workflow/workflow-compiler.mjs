@@ -4100,6 +4100,20 @@ function readablePresetVia(edge, from, to, start, end, fromSide, toSide) {
   const edgeIndex = workflow.edges.indexOf(edge);
   const edgeName = workflowEdgeName(edge);
   const supportedFixes = [];
+  if (discoverFixes && rejection.invariant === 'edge-label node clearance' && edge.label
+    && ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].every((field) => edge[field] === undefined)) {
+    for (let segment = 0; segment < Math.min(points.length - 1, 3); segment += 1) {
+      const fix = verifiedEdgeFix(
+        edge,
+        `set labelSegment on edge "${edgeName}" to ${segment}`,
+        (candidate) => { candidate.labelSegment = segment; },
+      );
+      if (fix) {
+        supportedFixes.push(fix);
+        break;
+      }
+    }
+  }
   for (const candidatePreset of ['straight', 'drop', 'outside-right', 'return-left', 'bottom-channel', 'up-channel']) {
     if (candidatePreset === preset) continue;
     if (acceptsFix((document) => {

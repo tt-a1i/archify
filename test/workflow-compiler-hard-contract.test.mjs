@@ -754,6 +754,129 @@ test('readable-v2 treats an infeasible route preset as a candidate-family confli
   }
 });
 
+function outsideRightLabelWorkflow() {
+  return workflow({
+    lanes: [{ id: 'undo', label: 'Undo' }, { id: 'return', label: 'Follow-up' }],
+    nodes: [
+      { id: 'receipt', lane: 'undo', col: 5, type: 'database', label: 'Receipt' },
+      { id: 'rescan', lane: 'return', col: 5, type: 'backend', label: 'Rescan' },
+    ],
+    edges: [{
+      id: 'follow-up', from: 'receipt', to: 'rescan', label: '成功后按需另行 Scan',
+      role: 'branch', variant: 'dashed', route: 'outside-right', fromSide: 'right', toSide: 'right',
+    }],
+  });
+}
+
+function presetLabelDiagnostic(result) {
+  assert.equal(result.ok, false);
+  const diagnostic = result.diagnostics.find(({ code }) => code === 'workflow/route-preset-conflict');
+  assert.ok(diagnostic, JSON.stringify(result.diagnostics, null, 2));
+  assert.equal(diagnostic.evidence.invariant, 'edge-label node clearance');
+  return diagnostic;
+}
+
+function applySegmentSuggestion(document, diagnostic) {
+  const suggestions = diagnostic.supportedFixes.filter((fix) => fix.startsWith('set labelSegment '));
+  assert.equal(suggestions.length, 1, JSON.stringify(diagnostic.supportedFixes));
+  assert.equal(diagnostic.supportedFixes[0], suggestions[0], 'prefer the verified local repair before route changes');
+  const match = suggestions[0].match(/^set labelSegment on edge "follow-up" to (\d+)$/);
+  assert.ok(match, `the segment repair must identify the edge and an executable index: ${suggestions[0]}`);
+  const segment = Number(match[1]);
+  assert.ok(segment < diagnostic.evidence.points.length - 1, 'only an actual route segment may be advertised');
+  const repaired = clone(document);
+  repaired.edges[0].labelSegment = segment;
+  return repaired;
+}
+
+for (const qualityProfile of ['standard', 'showcase']) {
+  test(`readable-v2 preset label repair preserves the explicit route and semantic content (${qualityProfile})`, () => {
+    const document = outsideRightLabelWorkflow();
+    const original = clone(document);
+    const diagnostic = presetLabelDiagnostic(compileWorkflow({ workflow: document, qualityProfile }));
+    const repaired = applySegmentSuggestion(document, diagnostic);
+    assert.ok(diagnostic.supportedFixes.slice(1).includes(
+      'remove route from edge "follow-up" so readable-v2 can use its verified automatic candidate',
+    ), 'retain the original verified route suggestion after the local repair');
+    const verified = compileWorkflow({ workflow: repaired, qualityProfile });
+    assert.equal(verified.ok, true, JSON.stringify(verified.diagnostics, null, 2));
+    assert.deepEqual(document, original, 'suggestion discovery must not mutate the authored input');
+    assert.deepEqual(repaired, {
+      ...original, edges: [{ ...original.edges[0], labelSegment: repaired.edges[0].labelSegment }],
+    }, 'applying the suggestion changes only labelSegment');
+    const unlabeled = clone(original);
+    delete unlabeled.edges[0].label;
+    const baseline = compileWorkflow({ workflow: unlabeled, qualityProfile });
+    assert.equal(baseline.ok, true);
+    assert.deepEqual(verified.receipt.edges, baseline.receipt.edges, 'the explicit preset route must remain intact');
+    assert.deepEqual(verified.receipt.nodes, baseline.receipt.nodes);
+    assert.match(verified.svg, />成功后按需另行 Scan<\/text>/);
+    const label = verified.receipt.labels[0];
+    const rect = { x: label.x - label.width / 2, y: label.y - 10, width: label.width, height: label.height };
+    for (const node of verified.receipt.nodes) {
+      assert.ok(rect.x + rect.width <= node.x || rect.x >= node.x + node.width
+        || rect.y + rect.height <= node.y || rect.y >= node.y + node.height,
+      `the complete semantic label mask must clear node ${node.id}`);
+    }
+  });
+}
+
+test('readable-v2 preset label repair requires a complete same-profile pass', () => {
+  const document = outsideRightLabelWorkflow();
+  document.nodes[0].width = 132;
+  document.nodes[0].sublabel = 'chain / debate / synthesis 调度';
+  for (const col of [0, 1, 2, 3, 4]) {
+    document.nodes.push({ id: `wide-${col}`, lane: 'undo', col, type: 'backend', label: `Step ${col}`, width: 200 });
+  }
+  const original = clone(document);
+  const manuallyRepaired = clone(document);
+  manuallyRepaired.edges[0].labelSegment = 1;
+  const stillFailing = compileWorkflow({ workflow: manuallyRepaired, qualityProfile: 'showcase' });
+  assert.equal(stillFailing.ok, false);
+  assert.ok(stillFailing.diagnostics.some(({ code }) => code === 'workflow/sublabel-readability'));
+  assert.ok(stillFailing.diagnostics.every(({ code }) => code !== 'workflow/route-preset-conflict'));
+  const diagnostic = presetLabelDiagnostic(compileWorkflow({ workflow: document, qualityProfile: 'showcase' }));
+  assert.ok(diagnostic.supportedFixes.every((fix) => !fix.startsWith('set labelSegment ')),
+    'clearing only the current label collision is not a verified full-workflow repair');
+  assert.deepEqual(document, original);
+});
+
+test('readable-v2 preset label repair respects authored zero-valued controls', () => {
+  for (const field of ['labelSegment', 'labelDx', 'labelDy']) {
+    const document = outsideRightLabelWorkflow();
+    document.edges[0][field] = 0;
+    const original = clone(document);
+    const diagnostic = presetLabelDiagnostic(compileWorkflow({ workflow: document, qualityProfile: 'standard' }));
+    assert.ok(diagnostic.supportedFixes.every((fix) => !fix.startsWith('set labelSegment ')), `${field}: 0 is authored`);
+    assert.deepEqual(document, original);
+  }
+});
+
+test('workflow validate JSON exposes an executable preset label repair', (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preset-label-repair-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const input = path.join(directory, 'workflow.json');
+  const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
+  const document = outsideRightLabelWorkflow();
+  const original = JSON.stringify(document);
+  fs.writeFileSync(input, original);
+  const validate = () => spawnSync(process.execPath, [
+    cli, 'validate', 'workflow', input, '--quality', 'showcase', '--json',
+  ], { encoding: 'utf8' });
+  const failed = validate();
+  assert.equal(failed.status, 1, failed.stdout + failed.stderr);
+  const receipt = JSON.parse(failed.stdout);
+  const diagnostic = receipt.diagnostics.find(({ code }) => code === 'workflow/route-preset-conflict');
+  assert.ok(diagnostic, failed.stdout);
+  assert.equal(fs.readFileSync(input, 'utf8'), original);
+  fs.writeFileSync(input, JSON.stringify(applySegmentSuggestion(document, diagnostic)));
+  const passed = validate();
+  assert.equal(passed.status, 0, passed.stdout + passed.stderr);
+  const verified = JSON.parse(passed.stdout);
+  assert.equal(verified.ok, true);
+  assert.ok(verified.checks.length > 0 && verified.checks.every((check) => check.ok));
+});
+
 test('readable-v2 never accepts a same-lane drop through the preset-only fallback', () => {
   const document = oneLaneWorkflow([{
     id: 'ab',
