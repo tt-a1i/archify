@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { canonicalFuturePath, pathsAlias, resolveNativeOutputDirectory, resolveOutputPath } from '../renderers/shared/output-path.mjs';
 import { boundedSidecarStem } from '../renderers/shared/sidecar-path.mjs';
+import { compactArchitectureWidth } from '../renderers/architecture/compact-width.mjs';
+import { reduceCrossings } from './route-repair.mjs';
 import {
   captureAtomicOutput, captureRegularFileBinding, publishRegularFileBinding,
   releaseRegularFileBinding, removeOwnedRegularFile, verifyAtomicOutput,
@@ -537,6 +539,36 @@ function defaultDeliveryPaths(output) {
   };
 }
 
+// A reverted specification must not retain the retry's current-delivery claim.
+// Preserve sidecars from other deliveries and remove only the verified inode.
+function invalidateRepairedDelivery(output, delivery, deliveryPaths) {
+  if (!delivery?.ok || !delivery.receiptId) return;
+  const file = deliveryPaths(output).provenance;
+  const captured = captureRegularFileBinding(file, {
+    subject: 'finalize-repaired-delivery', includeContent: true,
+  });
+  if (captured.reason?.systemCode === 'ENOENT') return;
+  if (captured.status !== 'captured') throw new Error('Cannot bind the repaired delivery sidecar.');
+  let owned = false;
+  try {
+    const sidecar = JSON.parse(captured.content.buffer.toString('utf8'));
+    if (sidecar.receiptId !== delivery.receiptId) return;
+    owned = sidecar.status === 'current' && sidecar.command === 'deliver'
+      && pathsAlias(sidecar.output, output)
+      && sidecar.artifact?.sha256 === delivery.artifact?.sha256
+      && sidecar.specification?.sha256 === delivery.specification?.sha256;
+    if (!owned) throw new Error('The repaired delivery sidecar changed before rollback.');
+  } finally {
+    releaseRegularFileBinding(captured.binding);
+  }
+  if (owned) {
+    const removed = removeOwnedRegularFile(file, captured.identity, { subject: 'finalize-repaired-delivery' });
+    if (!['removed', 'absent'].includes(removed.status)) {
+      throw new Error('Cannot invalidate the repaired delivery sidecar.');
+    }
+  }
+}
+
 function reservedFinalizePaths({ input, output, outDir, deliveryPaths }) {
   const browser = browserCheckSidecarPaths(output, { outDir });
   return [path.resolve(input), path.resolve(output), ...Object.values(deliveryPaths(output)), browser.receipt];
@@ -623,6 +655,8 @@ export function compactFinalizeReceipt(receipt) {
     artifact: receipt.artifact,
     gates,
     ...(receipt.failedStage ? { failedStage: receipt.failedStage } : {}),
+    ...(receipt.autoRepair ? { autoRepair: receipt.autoRepair } : {}),
+    ...(receipt.autoRouteRepair ? { autoRouteRepair: receipt.autoRouteRepair } : {}),
     diagnostics: selectedDiagnostics,
     diagnosticSummary: {
       total: allDiagnostics.length,
@@ -694,6 +728,92 @@ export function compactFinalizeReceipt(receipt) {
   return compact;
 }
 
+// Replaces the candidate through a verified sibling file and one rename, so a
+// failed or interrupted write never leaves a partial candidate: the file holds
+// either its previous bytes or the new ones. The staged file is private and
+// takes the candidate's own mode before it becomes visible.
+export function replaceCandidate(file, contents, { writeFile = fs.writeFileSync, rename = fs.renameSync } = {}) {
+  const bytes = Buffer.isBuffer(contents) ? contents : Buffer.from(contents);
+  const staged = path.join(path.dirname(file), `.archify-candidate-${randomUUID()}.json`);
+  let mode = null;
+  try { mode = fs.statSync(file).mode & 0o777; } catch {}
+  try {
+    writeFile(staged, bytes, { flag: 'wx', mode: 0o600 });
+    if (mode !== null) fs.chmodSync(staged, mode);
+    if (!fs.readFileSync(staged).equals(bytes)) throw new Error('The staged candidate does not match the prepared bytes.');
+    rename(staged, file);
+  } finally {
+    fs.rmSync(staged, { force: true });
+  }
+}
+
+function pointerTarget(document, pointer) {
+  const keys = String(pointer || '').split('/').slice(1).map((key) => key.replace(/~1/g, '/').replace(/~0/g, '~'));
+  let node = document;
+  for (const key of keys) {
+    if (node === null || typeof node !== 'object' || !Object.hasOwn(node, key)) return null;
+    node = node[key];
+  }
+  return node && typeof node === 'object' ? node : null;
+}
+
+// The two first-draft failures that need no judgement are repaired once in
+// place: an Architecture canvas that is only too wide for desktop reading has
+// its empty horizontal gaps narrowed, and a source citation whose end_line
+// runs past the end of an existing file is narrowed to the file's last line
+// (its start, and so the cited fact, is unchanged). Any other diagnostic in
+// the run leaves the draft for the author.
+function repairableDraft(candidatePath, type, diagnostics) {
+  if (!diagnostics?.length) return null;
+  const width = diagnostics.filter((d) => d.code === 'composition/desktop-readability');
+  const ranges = diagnostics.filter((d) => d.code === 'repository-evidence/line-out-of-range'
+    && Number.isInteger(d.evidence?.line) && Number.isInteger(d.evidence?.endLine)
+    && Number.isInteger(d.evidence?.lineCount) && d.evidence.line <= d.evidence.lineCount);
+  if (width.length + ranges.length !== diagnostics.length) return null;
+  if (width.length && type !== 'architecture') return null;
+  let originalBytes;
+  let candidate;
+  try {
+    originalBytes = fs.readFileSync(candidatePath);
+    candidate = JSON.parse(originalBytes.toString('utf8').replace(/^﻿/, ''));
+  } catch {
+    return null;
+  }
+  const record = {};
+  if (ranges.length) {
+    record.sourceRanges = [];
+    for (const diagnostic of ranges) {
+      const source = pointerTarget(candidate, diagnostic.subject?.path);
+      if (!source || source.end_line !== diagnostic.evidence.endLine) return null;
+      source.end_line = diagnostic.evidence.lineCount;
+      record.sourceRanges.push({ path: diagnostic.subject.path, endLine: [diagnostic.evidence.endLine, diagnostic.evidence.lineCount] });
+    }
+  }
+  if (width.length) {
+    let viewBoxWidth = 0;
+    let maximumViewBoxWidth = Infinity;
+    for (const { evidence = {} } of width) {
+      const { sourceFontPx, availableDiagramWidth, minimumProjectedFontPx } = evidence;
+      if (![sourceFontPx, availableDiagramWidth, minimumProjectedFontPx, evidence.viewBoxWidth].every(Number.isFinite)
+        || sourceFontPx < minimumProjectedFontPx) return null;
+      maximumViewBoxWidth = Math.min(maximumViewBoxWidth, Math.floor((sourceFontPx * availableDiagramWidth) / minimumProjectedFontPx));
+      viewBoxWidth = Math.max(viewBoxWidth, evidence.viewBoxWidth);
+    }
+    // Boundary padding and edge labels also set the width; keep a 20px margin.
+    const removedPx = Math.ceil(viewBoxWidth - maximumViewBoxWidth) + 20;
+    const compacted = compactArchitectureWidth(candidate, removedPx);
+    if (!compacted) return null;
+    candidate = compacted;
+    record.compaction = { viewBoxWidth, maximumViewBoxWidth, removedPx };
+  }
+  try {
+    replaceCandidate(candidatePath, `${JSON.stringify(candidate, null, 2)}\n`);
+  } catch {
+    return null;
+  }
+  return { originalBytes, record: { ...record, originalSha256: sha256(originalBytes) } };
+}
+
 export async function runFinalize({
   cliPath,
   type,
@@ -713,6 +833,7 @@ export async function runFinalize({
   startUpdateCheck = startDeliveryUpdateCheck,
   resolveChrome = findChrome,
   createBrowser = (chromePath, options) => new ChromeVisualBrowser(chromePath, options),
+  repairRoutes = reduceCrossings,
 } = {}) {
   if (!cliPath || !type || !input || !output) throw new Error('finalize requires cliPath, type, input, and output.');
   const started = process.hrtime.bigint();
@@ -720,7 +841,7 @@ export async function runFinalize({
   const resolvedInput = path.resolve(input);
   const resolvedOutput = resolveOutputPath({ requestedOutput: output, inputPaths: [resolvedInput] }).outputPath;
   const resolvedOutDir = outDir === undefined ? undefined : resolveNativeOutputDirectory(outDir);
-  const specification = identity(resolvedInput);
+  let specification = identity(resolvedInput);
   if (candidateSha256 && specification.sha256 !== candidateSha256) {
     const error = new Error(`The candidate changed after validation: expected sha256 ${candidateSha256}, found ${specification.sha256 || 'unreadable'}.`);
     error.finalizeCode = 'finalize/candidate-changed';
@@ -800,13 +921,38 @@ export async function runFinalize({
   }
   const browserFactory = () => {
     if (browserStartupError) throw browserStartupError;
+    // A restored draft after a failed route repair needs a second browser
+    // gate; the browser evidence runner closes each browser it is given.
+    if (browserTransferred && chromePath) return createBrowser(chromePath, { env });
     if (browserTransferred || !browser) throw new Error('The finalize browser is unavailable or already consumed.');
     browserTransferred = true;
     return browser;
   };
+  // A rerun replaces only the browser evidence this run wrote: any other
+  // receipt at the sidecar path stays a conflict for browser-check to report.
+  let ownBrowserEvidence = null;
+  const retireOwnBrowserEvidence = () => {
+    if (!ownBrowserEvidence) return;
+    const sidecar = browserCheckSidecarPaths(resolvedOutput, { outDir: resolvedOutDir }).receipt;
+    try {
+      if (JSON.stringify(JSON.parse(fs.readFileSync(sidecar, 'utf8'))) === JSON.stringify(ownBrowserEvidence)) fs.rmSync(sidecar);
+    } catch {}
+    ownBrowserEvidence = null;
+  };
 
   try {
     let exitCode = 0;
+    let repair = null;
+    let routeRepair = null;
+    let restartForRoutes = false;
+    const restart = () => {
+      specification = identity(resolvedInput);
+      Object.assign(receipt, { status: 'running', specification, stages: {}, diagnostics: [], artifact: { path: resolvedOutput } });
+      delete receipt.failedStage;
+      exitCode = 0;
+      persistReceipts();
+    };
+    for (let attempt = 0; attempt < 5; attempt++) {
     for (const stage of ['deliver', 'check', 'browser-check']) {
       const stageStarted = process.hrtime.bigint();
       const args = stageArguments({
@@ -819,6 +965,7 @@ export async function runFinalize({
         outDir: resolvedOutDir,
       });
       const inProcess = stage === 'browser-check' && runBrowserCheck;
+      if (stage === 'browser-check') retireOwnBrowserEvidence();
       let result;
       if (inProcess) {
         const checked = await runBrowserCheck({
@@ -834,6 +981,7 @@ export async function runFinalize({
           env: stage === 'deliver' ? { ...env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } : env });
       }
       const stageReceipt = parsedReceipt(result.stdout);
+      if (stage === 'browser-check' && stageReceipt?.command === 'browser-check') ownBrowserEvidence = stageReceipt;
       const code = result.status ?? 1;
       let status = stageStatus(stage, code, stageReceipt, quality);
       let stageDiagnostics;
@@ -934,6 +1082,107 @@ export async function runFinalize({
         break;
       }
       persistReceipts();
+      // Crossings that remain after a passing check are retried once with
+      // searched endpoint sides before the browser gate runs.
+      const crossings = stage === 'check' ? stageReceipt?.composition?.routeReview?.crossings : null;
+      if (crossings?.length && !routeRepair && type === 'architecture' && runBrowserCheck) {
+        const originalBytes = fs.readFileSync(resolvedInput);
+        let repaired = null;
+        try {
+          repaired = await repairRoutes({
+            cliPath, quality, cwd, env, crossings,
+            candidate: JSON.parse(originalBytes.toString('utf8').replace(/^﻿/, '')),
+          });
+        } catch {
+          repaired = null;
+        }
+        // A search that kept the routes is still reported, with what it cost.
+        routeRepair = repaired?.candidate
+          ? { originalBytes, record: repaired.record }
+          : { none: true, ...(repaired?.record ? { searched: repaired.record } : {}) };
+        if (routeRepair.record) {
+          // Route repair is optional: if the candidate cannot be replaced, the
+          // passing draft is untouched and the run continues to the browser gate.
+          try {
+            replaceCandidate(resolvedInput, `${JSON.stringify(repaired.candidate, null, 2)}\n`);
+            restartForRoutes = true;
+            break;
+          } catch {
+            routeRepair = { none: true };
+          }
+        }
+      }
+    }
+    if (restartForRoutes) {
+      restartForRoutes = false;
+      restart();
+      continue;
+    }
+    if (routeRepair?.record && !receipt.autoRouteRepair) {
+      if (exitCode !== 0) {
+        // The searched sides broke another gate: restore the passing draft.
+        const retryDiagnostics = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
+        try {
+          replaceCandidate(resolvedInput, routeRepair.originalBytes);
+        } catch {
+          // The repaired candidate stays complete on disk; report its failure.
+          receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'restore-failed', retryDiagnostics };
+          break;
+        }
+        receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'reverted', retryDiagnostics };
+        restart();
+        continue;
+      }
+      receipt.autoRouteRepair = { ...routeRepair.record, outcome: 'applied' };
+    } else if (routeRepair?.searched && !receipt.autoRouteRepair) {
+      receipt.autoRouteRepair = { ...routeRepair.searched, outcome: 'unchanged' };
+    }
+    // Repairs chain: the evidence gate runs before layout, so a narrowed range
+    // can reveal a width failure on the next attempt.
+    const failedAtValidate = exitCode !== 0 && receipt.failedStage === 'validate';
+    const next = failedAtValidate && attempt < 2 ? repairableDraft(resolvedInput, type, receipt.diagnostics) : null;
+    if (next) {
+      if (!repair) {
+        repair = {
+          originalBytes: next.originalBytes,
+          record: { originalSha256: next.record.originalSha256 },
+          firstExitCode: exitCode,
+          firstAttempt: {
+            stages: receipt.stages, diagnostics: receipt.diagnostics, failedStage: receipt.failedStage,
+            status: receipt.status, specification: receipt.specification, artifact: receipt.artifact,
+          },
+        };
+      }
+      if (next.record.compaction) repair.record.compaction = next.record.compaction;
+      if (next.record.sourceRanges) repair.record.sourceRanges = [...(repair.record.sourceRanges || []), ...next.record.sourceRanges];
+      specification = identity(resolvedInput);
+      Object.assign(receipt, { status: 'running', specification, stages: {}, diagnostics: [], artifact: { path: resolvedOutput } });
+      delete receipt.failedStage;
+      exitCode = 0;
+      persistReceipts();
+      continue;
+    }
+    if (repair && exitCode !== 0) {
+      // A repaired draft that fails any later gate (validate, check or the
+      // browser gate) is not delivered: restore the draft and report its
+      // original failure instead.
+      const retryDiagnostics = [...new Set(receipt.diagnostics.map((diagnostic) => diagnostic.code))];
+      try {
+        invalidateRepairedDelivery(resolvedOutput, receipt.stages.deliver?.receipt, deliveryPaths);
+        replaceCandidate(resolvedInput, repair.originalBytes);
+        retireOwnBrowserEvidence();
+        Object.assign(receipt, repair.firstAttempt);
+        specification = receipt.specification;
+        receipt.autoRepair = { ...repair.record, outcome: 'reverted', retryDiagnostics };
+        exitCode = repair.firstExitCode;
+      } catch {
+        // The repaired candidate stays complete on disk; report its failure.
+        receipt.autoRepair = { ...repair.record, outcome: 'restore-failed', retryDiagnostics };
+      }
+    } else if (repair) {
+      receipt.autoRepair = { ...repair.record, outcome: 'applied' };
+    }
+    break;
     }
 
     receipt.ok = exitCode === 0;
