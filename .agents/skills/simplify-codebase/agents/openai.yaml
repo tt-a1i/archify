@@ -1,0 +1,8 @@
+interface:
+  display_name: "Simplify Codebase"
+  short_description: "Prove and remove accidental codebase complexity"
+  default_prompt: "Use $simplify-codebase to audit this repository and rank the safest high-impact simplifications without editing files."
+
+policy:
+  allow_implicit_invocation: true
+

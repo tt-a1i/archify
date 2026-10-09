@@ -1,38 +1,38 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
   "diagram_type": "lifecycle",
   "meta": {
     "title": "Agent Run Lifecycle",
     "output": "examples/lifecycle-agent-run.html",
-    "viewBox": [1030, 630],
     "animation": "trace",
     "quality_profile": "showcase"
   },
-  "lanes": [
-    { "id": "main", "label": "Lifecycle phases" },
-    { "id": "waiting", "label": "Interruptions" },
-    { "id": "exceptions", "label": "Recovery loop" },
-    { "id": "terminal", "label": "Terminal exits" }
-  ],
+  "mainPath": ["queued", "planning", "executing", "reviewing", "completed"],
   "states": [
-    { "id": "queued", "type": "start", "label": "Queued", "sublabel": "request accepted", "lane": "main", "col": 0, "step": "01", "tag": "entry" },
-    { "id": "planning", "type": "active", "label": "Planning", "sublabel": "build task graph", "lane": "main", "col": 1, "step": "02", "tag": "model" },
-    { "id": "executing", "type": "active", "label": "Executing", "sublabel": "tool calls", "lane": "main", "col": 2, "step": "03", "tag": "work" },
-    { "id": "reviewing", "type": "decision", "label": "Reviewing", "sublabel": "quality gate", "lane": "main", "col": 3, "step": "04", "tag": "check" },
-    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "final response", "lane": "main", "col": 4, "step": "05", "tag": "done" },
-    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "human gate", "lane": "waiting", "col": 0, "tag": "pause" },
-    { "id": "blocked", "type": "waiting", "label": "Blocked", "sublabel": "missing input", "lane": "waiting", "col": 1, "tag": "wait" },
-    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "recoverable error", "lane": "exceptions", "col": 0, "yOffset": 78, "tag": "retryable" },
-    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "user stopped", "lane": "terminal", "col": 0, "tag": "terminal" },
-    { "id": "expired", "type": "failure", "label": "Expired", "sublabel": "timeout", "lane": "terminal", "col": 1, "tag": "terminal" }
+    { "id": "queued", "type": "start", "label": "Queued", "sublabel": "request accepted", "tag": "entry", "step": "01" },
+    { "id": "planning", "type": "active", "label": "Planning", "sublabel": "build task graph", "tag": "model", "step": "02" },
+    { "id": "executing", "type": "active", "label": "Executing", "sublabel": "tool calls", "tag": "work", "step": "03" },
+    { "id": "reviewing", "type": "decision", "label": "Reviewing", "sublabel": "quality gate", "tag": "check", "step": "04" },
+    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "final response", "tag": "done", "step": "05" },
+    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "human gate", "tag": "pause" },
+    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "recoverable error", "tag": "retryable" },
+    { "id": "blocked", "type": "waiting", "label": "Blocked", "sublabel": "missing input", "tag": "wait" },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "user stopped", "tag": "terminal" },
+    { "id": "expired", "type": "failure", "label": "Expired", "sublabel": "timeout", "tag": "terminal" }
   ],
   "transitions": [
-    { "id": "approval-needed", "from": "executing", "to": "approval", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
-    { "id": "review-blocked", "from": "reviewing", "to": "blocked", "variant": "default", "route": "drop" },
-    { "id": "execution-failed", "from": "executing", "to": "failed", "variant": "security", "fromSide": "left", "toSide": "left", "via": [[320, 157], [320, 385]] },
-    { "id": "failed-retry", "from": "failed", "to": "executing", "variant": "emphasis", "fromSide": "left", "toSide": "top", "via": [[20, 385], [20, 80], [402, 80]] },
-    { "id": "block-expired", "from": "blocked", "to": "expired", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
-    { "id": "approval-cancelled", "from": "approval", "to": "cancelled", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[480, 336], [480, 432], [402, 432]] }
+    { "id": "queued-planning", "from": "queued", "to": "planning", "label": "start" },
+    { "id": "planning-executing", "from": "planning", "to": "executing", "label": "plan ready" },
+    { "id": "executing-reviewing", "from": "executing", "to": "reviewing", "label": "steps done" },
+    { "id": "reviewing-completed", "from": "reviewing", "to": "completed", "label": "pass" },
+    { "id": "executing-approval", "from": "executing", "to": "approval", "label": "risky tool", "variant": "security" },
+    { "id": "approval-executing", "from": "approval", "to": "executing", "label": "approved" },
+    { "id": "approval-cancelled", "from": "approval", "to": "cancelled", "label": "user denies", "variant": "security" },
+    { "id": "executing-failed", "from": "executing", "to": "failed", "label": "tool error", "variant": "security" },
+    { "id": "failed-executing", "from": "failed", "to": "executing", "label": "retry", "variant": "dashed" },
+    { "id": "reviewing-blocked", "from": "reviewing", "to": "blocked", "label": "needs input" },
+    { "id": "blocked-reviewing", "from": "blocked", "to": "reviewing", "label": "input given" },
+    { "id": "blocked-expired", "from": "blocked", "to": "expired", "label": "no reply 24h", "variant": "security" }
   ],
   "cards": [
     {

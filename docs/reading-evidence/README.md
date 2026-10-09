@@ -22,7 +22,7 @@ Reproduce interaction evidence:
 
 ```sh
 ARCHIFY_CHROME="/path/to/chrome" ARCHIFY_READING_EVIDENCE="/tmp/reading-evidence" \
-  node --test archify/test/atlas-browser.test.mjs
+  node --test test/atlas-browser.test.mjs
 ```
 
 That test blocks HTTP/HTTPS and exercises Enter activation, explicit detail
@@ -30,7 +30,7 @@ choice, return camera/focus, shell/child theme synchronization, four desktop
 sizes, icon painting and canonical SVG export. Its second case deliberately
 shrinks message text to prove that browser readability detects the defect.
 
-Run `archify/test/desktop-reader-browser.test.mjs` with the same Chrome setting
+Run `test/desktop-reader-browser.test.mjs` with the same Chrome setting
 for all packaged diagrams and the production architecture readability case.
 
 Perceptual review: screenshots were inspected with an image-capable reviewer.

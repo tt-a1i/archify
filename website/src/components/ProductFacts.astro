@@ -1,0 +1,45 @@
+---
+const facts = [
+  {
+    question: ['What is Archify?', 'Archify 是什么？'],
+    answer: ['Archify is an open-source Agent Skill for turning a system, process, or plan into a diagram. The agent authors typed JSON, then Archify renders and validates a self-contained interactive HTML artifact. The Skill and renderers are licensed under MIT.', 'Archify 是一个开源 Agent Skill，把系统、流程或计划变成图表。Agent 编写类型化 JSON，再由 Archify 渲染、校验并交付独立的交互 HTML 成品。Skill 和渲染器采用 MIT 许可证。'],
+  },
+  {
+    question: ['What can I provide as input?', '可以提供哪些输入？'],
+    answer: ['Start with a plain-language description, a plan, existing Mermaid text, or repository evidence. A repository is optional. Your agent interprets the input and creates Archify JSON; Archify does not promise automatic parsing of every Mermaid construct. Missing facts should be marked or clarified.', '可以从自然语言描述、计划、已有 Mermaid 文本或代码库证据开始，代码库并非必需。Agent 理解输入后创建 Archify JSON；Archify 不承诺自动解析全部 Mermaid 语法。缺失的事实应标明或进一步确认。'],
+  },
+  {
+    question: ['Which agents can use it?', '哪些 Agent 可以使用？'],
+    answer: ['The installation examples cover Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. They use the same Archify Skill. Agent access to files, a local Node.js runtime, and any tools needed for the requested export remain part of your environment.', '安装示例覆盖 Claude Code、Codex、Cursor、OpenCode 和 GitHub Copilot，它们使用同一份 Archify Skill。Agent 的文件权限、本地 Node.js 运行时，以及所选导出功能需要的工具，由你的使用环境提供。'],
+  },
+  {
+    question: ['What do I receive, and what are the limits?', '会得到什么？有哪些边界？'],
+    answer: ['The primary deliverable is an HTML file with inline SVG and its typed JSON source. Open the HTML in a browser to inspect, search, trace routes, switch themes, and export. Validation checks the authored diagram; it does not prove runtime system behavior. Archify is not a hosted collaboration service or a general-purpose WYSIWYG editor.', '主要交付物是内含 SVG 的 HTML 文件和类型化 JSON 源。在浏览器里可以检查、搜索、追踪路径、切换主题和导出。校验检查的是编写出的图表，不证明系统的实际运行行为。Archify 不提供托管协作服务，也不是通用的所见即所得编辑器。'],
+  },
+];
+---
+<section class="product-facts" id="about-archify" aria-labelledby="product-facts-title">
+  <div class="container">
+    <div class="facts-heading"><span class="section-eyebrow" data-en="Product facts" data-zh="产品事实">Product facts</span><h2 id="product-facts-title" data-en="A diagram you can inspect and keep." data-zh="一张能检查、能保留的图。">A diagram you can inspect and keep.</h2></div>
+    <div class="facts-grid">
+      {facts.map(fact => <article><h3 data-en={fact.question[0]} data-zh={fact.question[1]}>{fact.question[0]}</h3><p data-en={fact.answer[0]} data-zh={fact.answer[1]}>{fact.answer[0]}</p></article>)}
+    </div>
+    <p class="facts-exports" data-en="Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format." data-zh="导出格式包含 PNG、JPEG、WebP、SVG 和 WebM。具体可用性取决于格式、浏览器或本地工具；选择交付格式前，可先打开成品检查导出菜单。">Exports include PNG, JPEG, WebP, SVG, and WebM. Availability depends on the format and browser or local tooling; open a proof artifact to check the export menu before choosing a delivery format.</p>
+    <nav class="facts-links" aria-label="Product sources">
+      <a href="https://github.com/tt-a1i/archify/blob/main/archify/SKILL.md" data-en="Read the stable Skill ↗" data-zh="阅读稳定版 Skill ↗">Read the stable Skill ↗</a>
+      <a href="https://github.com/tt-a1i/archify/releases" data-en="Published releases ↗" data-zh="已发布版本 ↗">Published releases ↗</a>
+      <a href="https://github.com/tt-a1i/archify/blob/main/LICENSE" data-en="MIT license ↗" data-zh="MIT 许可证 ↗">MIT license ↗</a>
+      <a href="gallery.html" data-en="Inspect real artifacts →" data-zh="检查真实成品 →">Inspect real artifacts →</a>
+    </nav>
+    <p class="facts-channel" data-en="The default installation command uses the stable main source. Development examples describe their own build and may include features not yet in a stable release." data-zh="默认安装命令使用稳定版 main 源码。开发版示例反映各自的构建，可能包含尚未稳定发布的功能。">The default installation command uses the stable main source. Development examples describe their own build and may include features not yet in a stable release.</p>
+  </div>
+</section>
+<style>
+ .product-facts { padding:80px 0; border-top:1px solid var(--line); }
+ .facts-heading h2 { margin:12px 0 32px; font-size:clamp(28px,3vw,40px); line-height:1.2; }
+ .facts-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:30px 48px; }
+ h3 { font-size:17px; margin:0 0 10px; } p { font-size:14px; line-height:1.8; color:var(--text-2); }
+ .facts-exports { margin-top:28px; } .facts-links { display:flex; flex-wrap:wrap; gap:14px 24px; margin-top:20px; font-size:13px; }
+ .facts-links a { color:var(--hue-blue); text-decoration:none; } .facts-channel { font-size:12px; margin-top:20px; }
+ @media(max-width:680px) { .facts-grid { grid-template-columns:1fr; gap:24px; } .product-facts { padding:56px 0; } }
+</style>

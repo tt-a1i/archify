@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "扫码支付回调流程",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "scan-to-pay.html"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "用户",
+      "sublabel": "手机微信"
+    },
+    {
+      "id": "pos",
+      "type": "frontend",
+      "label": "收银台",
+      "sublabel": "门店 POS"
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "支付服务",
+      "sublabel": "订单与对账"
+    },
+    {
+      "id": "wx",
+      "type": "external",
+      "label": "微信支付",
+      "sublabel": "统一下单"
+    },
+    {
+      "id": "mq",
+      "type": "messagebus",
+      "label": "消息队列",
+      "sublabel": "支付事件"
+    },
+    {
+      "id": "erp",
+      "type": "backend",
+      "label": "ERP",
+      "sublabel": "库存与财务"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "pos",
+      "to": "svc",
+      "y": 160,
+      "label": "创建支付单"
+    },
+    {
+      "id": "m2",
+      "from": "svc",
+      "to": "wx",
+      "y": 192,
+      "label": "统一下单 (NATIVE)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m3",
+      "from": "wx",
+      "to": "svc",
+      "y": 224,
+      "label": "返回 code_url",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "svc",
+      "to": "pos",
+      "y": 256,
+      "label": "展示二维码",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "user",
+      "to": "wx",
+      "y": 288,
+      "label": "扫码并确认支付"
+    },
+    {
+      "id": "m6",
+      "from": "wx",
+      "to": "svc",
+      "y": 320,
+      "label": "异步通知支付结果",
+      "variant": "dashed",
+      "note": "需验签，并按订单号幂等处理"
+    },
+    {
+      "id": "m7",
+      "from": "svc",
+      "to": "wx",
+      "y": 352,
+      "label": "返回 SUCCESS",
+      "variant": "return"
+    },
+    {
+      "id": "m8",
+      "from": "svc",
+      "to": "mq",
+      "y": 384,
+      "label": "发布 支付成功 事件",
+      "variant": "dashed"
+    },
+    {
+      "id": "m9",
+      "from": "mq",
+      "to": "erp",
+      "y": 416,
+      "label": "扣减库存 记账",
+      "variant": "dashed"
+    },
+    {
+      "id": "m10",
+      "from": "pos",
+      "to": "svc",
+      "y": 448,
+      "label": "轮询订单状态"
+    },
+    {
+      "id": "m11",
+      "from": "svc",
+      "to": "pos",
+      "y": 480,
+      "label": "已支付",
+      "variant": "return"
+    }
+  ],
+  "segments": [
+    {
+      "from": 140,
+      "to": 300,
+      "label": "下单"
+    },
+    {
+      "from": 300,
+      "to": 520,
+      "label": "支付与通知"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const schemasDir = path.join(root, 'schemas');
 const output = path.join(root, 'renderers/shared/generated-validators.mjs');
-const diagramTypes = ['workflow', 'sequence', 'dataflow', 'lifecycle', 'architecture', 'erd'];
+const diagramTypes = ['workflow', 'sequence', 'dataflow', 'lifecycle', 'architecture', 'erd', 'tree', 'class', 'timeline', 'waterfall'];
 
 const ajv = new Ajv2020({
   allErrors: true,
@@ -55,9 +55,15 @@ for (const type of diagramTypes) {
   validatorCode = validatorCode.replace(exportPattern, `const ${type}Schema = ${match[1]};`);
 }
 
-const portableOutputWrappers = diagramTypes.map((type) => `export function ${type}(data, context = undefined) {
+// A diagram type that is a reserved word (`class`) cannot name a function, so
+// it is defined under a safe local name and exported under the type itself.
+const RESERVED_TYPE_NAMES = new Set(['class']);
+const portableOutputWrappers = diagramTypes.map((type) => {
+  const name = RESERVED_TYPE_NAMES.has(type) ? `${type}Diagram` : type;
+  const exported = name === type ? '' : `\nexport { ${name} as ${type} };`;
+  return `${name === type ? 'export ' : ''}function ${name}(data, context = undefined) {
   if (!${type}Schema(data, context)) {
-    ${type}.errors = ${type}Schema.errors;
+    ${name}.errors = ${type}Schema.errors;
     return false;
   }
   const output = data?.meta?.output;
@@ -65,7 +71,7 @@ const portableOutputWrappers = diagramTypes.map((type) => `export function ${typ
     try {
       validatePortablePath(output, { profile: 'output' });
     } catch (error) {
-      ${type}.errors = [{
+      ${name}.errors = [{
         instancePath: \`${'${context?.instancePath || \'\'}'}/meta/output\`,
         schemaPath: 'common.schema.json#/$defs/portableOutputPath',
         keyword: 'portablePath',
@@ -75,10 +81,11 @@ const portableOutputWrappers = diagramTypes.map((type) => `export function ${typ
       return false;
     }
   }
-  ${type}.errors = null;
+  ${name}.errors = null;
   return true;
 }
-${type}.evaluated = ${type}Schema.evaluated;`).join('\n');
+${name}.evaluated = ${type}Schema.evaluated;${exported}`;
+}).join('\n');
 
 const generated = `${banner}import { validatePortablePath } from './portable-path.mjs';\n${validatorCode}\n${portableOutputWrappers}\n`;
 

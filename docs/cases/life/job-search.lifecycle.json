@@ -1,0 +1,189 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Where Each Job Application Stands",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "job-search.lifecycle.html"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Application path"
+    },
+    {
+      "id": "waiting",
+      "label": "Waiting on them"
+    },
+    {
+      "id": "terminal",
+      "label": "Outcomes"
+    }
+  ],
+  "states": [
+    {
+      "id": "saved",
+      "type": "start",
+      "label": "Saved",
+      "sublabel": "role bookmarked",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "icon": "flag"
+    },
+    {
+      "id": "applied",
+      "type": "active",
+      "label": "Applied",
+      "sublabel": "r\u00e9sum\u00e9 sent",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "icon": "briefcase"
+    },
+    {
+      "id": "screen",
+      "type": "decision",
+      "label": "Screen Call",
+      "sublabel": "30 min recruiter",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "icon": "person"
+    },
+    {
+      "id": "interviews",
+      "type": "active",
+      "label": "Interviews",
+      "sublabel": "3 rounds",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "icon": "calendar"
+    },
+    {
+      "id": "offer",
+      "type": "success",
+      "label": "Offer",
+      "sublabel": "negotiate terms",
+      "lane": "main",
+      "col": 4,
+      "step": "05"
+    },
+    {
+      "id": "silent",
+      "type": "waiting",
+      "label": "No Reply",
+      "sublabel": "2 weeks quiet",
+      "lane": "waiting",
+      "col": 1,
+      "icon": "clock"
+    },
+    {
+      "id": "deciding",
+      "type": "waiting",
+      "label": "Deciding",
+      "sublabel": "after final round",
+      "lane": "waiting",
+      "col": 3,
+      "icon": "clock"
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "Rejected",
+      "sublabel": "keep the notes",
+      "lane": "terminal",
+      "col": 2
+    },
+    {
+      "id": "accepted",
+      "type": "success",
+      "label": "Accepted",
+      "sublabel": "start date set",
+      "lane": "terminal",
+      "col": 4
+    }
+  ],
+  "transitions": [
+    {
+      "from": "saved",
+      "to": "applied",
+      "label": "apply"
+    },
+    {
+      "from": "applied",
+      "to": "screen",
+      "label": "callback"
+    },
+    {
+      "from": "screen",
+      "to": "interviews",
+      "label": "pass"
+    },
+    {
+      "from": "interviews",
+      "to": "deciding",
+      "variant": "dashed"
+    },
+    {
+      "from": "deciding",
+      "to": "offer",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "offer",
+      "to": "accepted",
+      "label": "sign"
+    },
+    {
+      "from": "applied",
+      "to": "silent",
+      "variant": "dashed"
+    },
+    {
+      "from": "silent",
+      "to": "applied",
+      "label": "follow up",
+      "variant": "emphasis"
+    },
+    {
+      "from": "screen",
+      "to": "rejected",
+      "variant": "security"
+    },
+    {
+      "from": "deciding",
+      "to": "rejected",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "The Path",
+      "items": [
+        "Five steps from a saved posting to an offer",
+        "Each application sits in exactly one state"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Waiting Is a State",
+      "items": [
+        "Two quiet weeks after applying means follow up, not give up",
+        "After the final round the decision is theirs; track it, don't refresh"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Endings",
+      "items": [
+        "A rejection ends one application, not the search",
+        "Accepting an offer closes the loop"
+      ]
+    }
+  ]
+}

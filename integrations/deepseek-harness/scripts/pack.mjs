@@ -59,7 +59,7 @@ try {
   }
   const files = packMeta.files.map((file) => ({ path: file.path }));
   const packagedPaths = new Set(files.map(({ path: filePath }) => filePath.replace(/^package\//, '')));
-  for (const required of ['package.json', 'release.json', 'cordis.patch.yml', 'README.md', 'LICENSE', 'lib/index.js', 'skills/archify/SKILL.md']) {
+  for (const required of ['package.json', 'release.json', 'cordis.patch.yml', 'README.md', 'CHANGELOG.md', 'LICENSE', 'lib/index.js', 'skills/archify/SKILL.md']) {
     if (!packagedPaths.has(required)) throw new Error(`DSH tarball is missing required file: ${required}`);
   }
   const destination = path.resolve(out || path.join(process.cwd(), produced));

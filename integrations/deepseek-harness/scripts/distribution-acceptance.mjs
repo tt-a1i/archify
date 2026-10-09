@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -18,6 +19,12 @@ const DSH_RELEASE_REF = release.sourceCommit;
 const DSH_PACKAGE_NAME = '@deepseek-ai/dsh';
 const DSH_SPEC = `${DSH_PACKAGE_NAME}@${release.dshVersion}`;
 const PROFILE = 'archify-dsh-acceptance';
+const UPGRADE_PROFILE = 'archify-dsh-upgrade';
+const PREVIOUS_RELEASE = Object.freeze({
+  version: '0.1.0',
+  skillVersion: '2.14.0',
+  integrity: 'sha512-D8fDqV6DV/vo80Gj/3rgidd+hwBbhTVncaVoD5Uhh+DbgYlEoQQOmBVbhU5HW33wE5OqJP/2HkTRPJ0hf7W0tA==',
+});
 const DSH_RUNTIME_INSTALL_TIMEOUT = process.platform === 'win32' ? 600_000 : 300_000;
 const PLUGIN_MUTATION_TIMEOUT = 180_000;
 
@@ -140,7 +147,6 @@ const dshHome = path.join(scratch, 'dsh-home');
 const agentsHome = path.join(scratch, 'agents-home');
 const dshRuntime = path.join(scratch, 'dsh-runtime');
 const workspace = path.join(scratch, 'workspace');
-const probeOut = path.join(scratch, 'skill-probe.json');
 fs.mkdirSync(dshHome);
 fs.mkdirSync(agentsHome);
 fs.mkdirSync(dshRuntime);
@@ -206,7 +212,6 @@ const dshEnv = {
   DSH_HOME: dshHome,
   DSH_AGENTS_HOME: agentsHome,
   DSH_TELEMETRY_DISABLED: '1',
-  ARCHIFY_DSH_PROBE_OUT: probeOut,
   npm_config_update_notifier: 'false',
 };
 
@@ -321,23 +326,29 @@ fs.writeFileSync(probePatch, `- insert:
       name: ${JSON.stringify(pathToFileURL(probeModule).href)}
       inject: [skills]
 `);
-const probeChild = spawnCli(process.execPath, [dshBin, '--profile', PROFILE, '--patch', probePatch], {
-  cwd: workspace,
-  env: dshEnv,
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
-let probeStdout = '';
-let probeStderr = '';
-probeChild.stdout.on('data', (chunk) => { probeStdout += chunk; });
-probeChild.stderr.on('data', (chunk) => { probeStderr += chunk; });
-try {
-  await waitForProbe(probeChild, probeOut, 90_000);
-} catch (error) {
-  probeChild.kill('SIGTERM');
-  fail('skill-discovery', error.message, { stdout: probeStdout, stderr: probeStderr });
+async function probeProfile(profile, stage) {
+  const probeOut = path.join(scratch, `${stage}-probe.json`);
+  const child = spawnCli(process.execPath, [dshBin, '--profile', profile, '--patch', probePatch], {
+    cwd: workspace,
+    env: { ...dshEnv, ARCHIFY_DSH_PROBE_OUT: probeOut },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', (chunk) => { stdout += chunk; });
+  child.stderr.on('data', (chunk) => { stderr += chunk; });
+  try {
+    await waitForProbe(child, probeOut, 90_000);
+  } catch (error) {
+    child.kill('SIGTERM');
+    fail(stage, error.message, { stdout, stderr });
+  } finally {
+    child.kill('SIGTERM');
+  }
+  return { probe: JSON.parse(fs.readFileSync(probeOut, 'utf8')), stdout, stderr };
 }
-probeChild.kill('SIGTERM');
-const probeReceipt = JSON.parse(fs.readFileSync(probeOut, 'utf8'));
+
+const { probe: probeReceipt, stdout: probeStdout, stderr: probeStderr } = await probeProfile(PROFILE, 'skill-discovery');
 const archifyHits = (probeReceipt.skills || []).filter((skill) => skill.name === 'archify');
 if (archifyHits.length !== 1 || archifyHits[0].provider !== 'archify-plugin') {
   fail('skill-discovery', 'public Skill registry did not discover archify only from archify-plugin', {
@@ -383,14 +394,37 @@ pass('resource-base', { resourcePath: resourceReal });
 const skillRoot = fs.existsSync(path.join(resourceReal, 'SKILL.md'))
   ? resourceReal
   : path.join(resourceReal, 'archify');
+// Exercise the installed CLI without writing into the package manager's store.
+const installedCli = path.join(skillRoot, 'bin', 'archify.mjs');
+for (const args of [['doctor'], ['demo', path.join(workspace, 'installed-smoke')]]) {
+  const installedSmoke = run(process.execPath, [installedCli, ...args], {
+    cwd: workspace,
+    timeout: 120_000,
+  });
+  requireStatus('installed-skill-smoke', installedSmoke, { command: `installed archify ${args[0]}` });
+}
+pass('installed-skill-smoke', { skillRoot, commands: ['doctor', 'demo'] });
+
 const sourceSnapshot = path.join(scratch, 'release-source');
 releaseSnapshot(sourceSnapshot);
-const smoke = run(process.execPath, [path.join(sourceSnapshot, 'scripts', 'package-smoke.mjs'), skillRoot], {
+// The source's full package smoke rewrites bundled example HTML. pnpm may
+// hard-link those files to its content store, and Archify correctly refuses
+// to replace a multiply linked output. Copy the installed bytes into an owned
+// scratch tree for this mutating suite; keep the actual installation intact.
+const smokeRoot = path.join(scratch, 'smoke-skill');
+fs.cpSync(skillRoot, smokeRoot, { recursive: true, errorOnExist: true, force: false });
+const smoke = run(process.execPath, [path.join(sourceSnapshot, 'scripts', 'package-smoke.mjs'), smokeRoot], {
   cwd: sourceSnapshot,
   timeout: 120_000,
 });
-requireStatus('package-smoke', smoke, { command: `${DSH_RELEASE_REF} package-smoke.mjs <installed-skill-root>` });
-pass('package-smoke', { skillRoot, source: DSH_RELEASE_REF, output: smoke.stdout.trim() });
+requireStatus('package-smoke', smoke, { command: `${DSH_RELEASE_REF} package-smoke.mjs <installed-skill-copy>` });
+pass('package-smoke', {
+  skillRoot,
+  smokeRoot,
+  source: DSH_RELEASE_REF,
+  mutatingExamples: 'isolated-copy-of-installed-skill',
+  output: smoke.stdout.trim(),
+});
 
 const remove = dsh(['plugin', '--profile', PROFILE, 'remove', PACKAGE_NAME], { timeout: PLUGIN_MUTATION_TIMEOUT });
 requireStatus('uninstall', remove, { command: `dsh plugin --profile ${PROFILE} remove ${PACKAGE_NAME}` });
@@ -410,6 +444,90 @@ if (leftover.length > 0) {
   fail('base-profile', 'uninstalled profile still contains the Archify provider', { leftover });
 }
 pass('base-profile', { bundles: removedManifest.dsh?.profile?.bundles || [] });
+
+// Exercise an existing published installation independently of the clean
+// installation above. Pin its registry bytes, not just an npm dist-tag.
+const previousSpec = `${PACKAGE_NAME}@${PREVIOUS_RELEASE.version}`;
+const previousPack = runWithTransientNetworkRetry(() => run('npm', [
+  'pack', previousSpec, '--ignore-scripts', '--json',
+  '--registry=https://registry.npmjs.org', '--pack-destination', scratch,
+], { cwd: scratch, env: dshEnv, timeout: 120_000 }));
+requireStatus('upgrade-baseline-download', previousPack.result, { command: `npm pack ${previousSpec}` });
+const previousTarball = path.join(scratch, `tt-a1i-archify-dsh-${PREVIOUS_RELEASE.version}.tgz`);
+const previousIntegrity = `sha512-${createHash('sha512').update(fs.readFileSync(previousTarball)).digest('base64')}`;
+if (previousIntegrity !== PREVIOUS_RELEASE.integrity) {
+  fail('upgrade-baseline-download', 'published baseline tarball integrity mismatch', { previousIntegrity });
+}
+const previousRoot = path.join(scratch, 'previous-package');
+fs.mkdirSync(previousRoot);
+requireStatus('upgrade-baseline-download', run('tar', ['-xzf', previousTarball, '-C', previousRoot]));
+pass('upgrade-baseline-download', { spec: previousSpec, integrity: previousIntegrity });
+
+async function verifyUpgradeProfile(stage, version, skillVersion, expectedRoot) {
+  const root = path.join(dshHome, 'profiles', UPGRADE_PROFILE);
+  const installed = path.join(root, 'node_modules', '@tt-a1i', 'archify-dsh');
+  const pkg = JSON.parse(fs.readFileSync(path.join(installed, 'package.json'), 'utf8'));
+  const skill = path.join(installed, 'skills', 'archify');
+  const skillPkg = JSON.parse(fs.readFileSync(path.join(skill, 'package.json'), 'utf8'));
+  if (pkg.name !== PACKAGE_NAME || pkg.version !== version || skillPkg.version !== skillVersion) {
+    fail(stage, 'installed upgrade identity mismatch', { version: pkg.version, skillVersion: skillPkg.version });
+  }
+  const expectedFiles = listRelativeFiles(expectedRoot);
+  if (JSON.stringify(listRelativeFiles(installed)) !== JSON.stringify(expectedFiles)
+    || expectedFiles.some((file) => !fs.readFileSync(path.join(installed, file)).equals(fs.readFileSync(path.join(expectedRoot, file))))) {
+    fail(stage, 'installed upgrade payload differs from the verified tarball');
+  }
+  const config = dsh(['--profile', UPGRADE_PROFILE, '--dump-config']);
+  requireStatus(stage, config);
+  const rows = parseDump(config.stdout).rows;
+  const providers = rows.filter((row) => row.config.providerName === 'archify-plugin');
+  if (providers.length !== 1 || providers[0].config.includeDefaultRoots !== false
+    || !rows.some((row) => row.id === 'skill-filesystem' && row.config.providerName !== 'archify-plugin')) {
+    fail(stage, 'upgrade duplicated the provider or replaced the base Skill provider');
+  }
+  const { probe } = await probeProfile(UPGRADE_PROFILE, stage);
+  const hits = (probe.skills || []).filter((entry) => entry.name === 'archify');
+  const resource = probe.definition?.resourceBase?.path || probe.definition?.path;
+  const expectedRoots = [path.join(installed, 'skills'), skill];
+  if (hits.length !== 1 || hits[0].provider !== 'archify-plugin'
+    || !probe.definition?.contentLength || probe.definition.provider !== 'archify-plugin'
+    || !resource || !expectedRoots.some((entry) => sameEntry(entry, resource).status === 'match')) {
+    fail(stage, 'upgrade did not discover and load exactly one installed Archify Skill', { probe });
+  }
+  pass(stage, { version, skillVersion, provider: 'archify-plugin', fileCount: expectedFiles.length });
+  return skill;
+}
+
+requireStatus('upgrade-baseline-install', dsh(['plugin', '--profile', UPGRADE_PROFILE, 'add', previousTarball], {
+  timeout: PLUGIN_MUTATION_TIMEOUT,
+}));
+await verifyUpgradeProfile('upgrade-baseline-load', PREVIOUS_RELEASE.version, PREVIOUS_RELEASE.skillVersion,
+  path.join(previousRoot, 'package'));
+requireStatus('plugin-upgrade', dsh(['plugin', '--profile', UPGRADE_PROFILE, 'add', tarball], {
+  timeout: PLUGIN_MUTATION_TIMEOUT,
+}));
+const upgradedSkill = await verifyUpgradeProfile('plugin-upgrade-load', PACKAGE_VERSION, release.skillVersion,
+  path.join(inspectRoot, 'package'));
+for (const args of [['doctor'], ['demo', path.join(workspace, 'upgraded-smoke')]]) {
+  requireStatus('upgraded-skill-smoke', run(process.execPath, [path.join(upgradedSkill, 'bin', 'archify.mjs'), ...args], {
+    cwd: workspace,
+    timeout: 120_000,
+  }));
+}
+pass('upgraded-skill-smoke', { from: PREVIOUS_RELEASE.version, to: PACKAGE_VERSION, commands: ['doctor', 'demo'] });
+requireStatus('upgrade-uninstall', dsh(['plugin', '--profile', UPGRADE_PROFILE, 'remove', PACKAGE_NAME], {
+  timeout: PLUGIN_MUTATION_TIMEOUT,
+}));
+const afterUpgrade = JSON.parse(fs.readFileSync(path.join(dshHome, 'profiles', UPGRADE_PROFILE, 'package.json'), 'utf8'));
+const afterUpgradeDump = dsh(['--profile', UPGRADE_PROFILE, '--dump-config']);
+requireStatus('upgrade-uninstall', afterUpgradeDump);
+const afterRows = parseDump(afterUpgradeDump.stdout).rows;
+if (afterUpgrade.dependencies?.[PACKAGE_NAME] || (afterUpgrade.dsh?.profile?.bundles || []).includes(PACKAGE_NAME)
+  || afterRows.some((row) => row.id === 'archify-skill-filesystem' || row.config.providerName === 'archify-plugin')
+  || !afterRows.some((row) => row.id === 'skill-filesystem')) {
+  fail('upgrade-uninstall', 'upgraded plugin did not uninstall cleanly while preserving the base profile');
+}
+pass('upgrade-uninstall', { profile: UPGRADE_PROFILE, bundles: afterUpgrade.dsh?.profile?.bundles || [] });
 
 const zipBlob = run('git', ['hash-object', 'archify.zip'], { cwd: repoRoot });
 const pkgBlob = run('git', ['hash-object', 'archify/package.json'], { cwd: repoRoot });

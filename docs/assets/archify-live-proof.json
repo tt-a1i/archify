@@ -7,35 +7,35 @@
   "fps": 10,
   "frameCount": 54,
   "durationSeconds": 5.4,
-  "bytes": 823003,
-  "sha256": "02631974ccff05d13a65cd784a859cca7f22352f3a4d53f3ef83149e266171b3",
+  "bytes": 818517,
+  "sha256": "d94b3b683c8bccadf48203d1f528b25c008da710c02f91d609f06da9cf2d4559",
   "scenes": [
     {
       "id": "signal-flow",
       "artifact": "docs/gallery/artifacts/agent-tool-call.workflow.html",
-      "artifactSha256": "40877f4ecceeb5c18377207bd9ec9ed6650525f7a7102a0bc9843097afc94dba",
+      "artifactSha256": "ddb093c15c3238ce69847b7c7cf5c2fe0469c3126361371ddc4e36160d296199",
       "hash": "#focus=planner&reach=downstream",
-      "eyebrow": "WORKFLOW \u00b7 SIGNAL FLOW",
+      "eyebrow": "WORKFLOW · SIGNAL FLOW",
       "title": "Agent Tool Call",
-      "receipt": "12 nodes \u00b7 11 edges \u00b7 9/9 checks"
+      "receipt": "12 nodes · 11 edges · 9/9 checks"
     },
     {
       "id": "blueprint",
       "artifact": "docs/gallery/artifacts/production-deployment.architecture.html",
-      "artifactSha256": "4fe166815e9ac4fd5c3428eda9a18a1b0b2dd27e4d3d7f13bf0fc160bcd1311d",
+      "artifactSha256": "9569b154d269f6c6b98c5482b5f3fc2d4712cd47cbdeea08f78f749c78ed4246",
       "hash": "#lens=backend~database",
-      "eyebrow": "ARCHITECTURE \u00b7 BLUEPRINT",
+      "eyebrow": "ARCHITECTURE · BLUEPRINT",
       "title": "Production Deployment",
-      "receipt": "12 nodes \u00b7 12 edges \u00b7 9/9 checks"
+      "receipt": "12 nodes · 12 edges · 9/9 checks"
     },
     {
       "id": "classic",
       "artifact": "docs/gallery/artifacts/cache-miss.sequence.html",
-      "artifactSha256": "c427ce5eae2c017f17686da3dc7a1522ef4f95f0dc9d754d21f66d2451550407",
+      "artifactSha256": "1f4e8c52dafb4858d64aca1b34573b6eac021b2a8980a60b3e499d47ffb07a3c",
       "hash": "#route=web~db",
-      "eyebrow": "SEQUENCE \u00b7 CLASSIC",
+      "eyebrow": "SEQUENCE · CLASSIC",
       "title": "Cache Miss Request",
-      "receipt": "7 participants \u00b7 12 messages \u00b7 9/9 checks"
+      "receipt": "7 participants · 12 messages · 9/9 checks"
     }
   ]
 }

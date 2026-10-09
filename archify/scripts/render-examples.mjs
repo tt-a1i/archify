@@ -17,6 +17,14 @@ const TARGETS = [
   ['architecture', 'web-app.architecture.json', 'web-app-rendered.html'],
   ['erd', 'orders.erd.json', 'erd-orders-rendered.html'],
   ['erd', 'subscription-billing.erd.json', 'subscription-billing-rendered.html'],
+  ['tree', 'payment-platform.tree.json', 'tree-payment-platform-rendered.html'],
+  ['tree', 'archify-repository.tree.json', 'tree-archify-repository-rendered.html'],
+  ['class', 'payments.class.json', 'class-payments-rendered.html'],
+  ['class', 'payment-processors.class.json', 'class-payment-processors-rendered.html'],
+  ['timeline', 'payment-incident.timeline.json', 'timeline-payment-incident-rendered.html'],
+  ['timeline', 'archify-dev-activity.timeline.json', 'timeline-archify-dev-activity-rendered.html'],
+  ['waterfall', 'checkout-request.waterfall.json', 'waterfall-checkout-request-rendered.html'],
+  ['waterfall', 'example-rebuild.waterfall.json', 'waterfall-example-rebuild-rendered.html'],
 ];
 
 for (const [mode, input, output] of TARGETS) {

@@ -16,7 +16,7 @@ Read this only when the user asks for a reader-facing capability. Ordinary gener
 
 ## Motion and presentation
 
-`meta.animation: "trace"` enables a finite reader-controlled Live/Still trace. Static is the default. Still, reduced motion, page hiding, print, and canonical export preserve complete static meaning. Presentation Stage changes viewer chrome and framing, never authored geometry. This is not a mobile product feature; narrow layouts get containment only.
+Every rendered diagram enables a finite reader-controlled Live/Still trace by default. Omit `meta.animation`; historical `"trace"` and `"none"` values remain accepted for input compatibility and do not change this default. Still, reduced motion, page hiding, print, and canonical export preserve complete static meaning. Presentation Stage changes viewer chrome and framing, never authored geometry. This is not a mobile product feature; narrow layouts get containment only.
 
 ## Canonical exports
 

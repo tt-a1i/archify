@@ -1,13 +1,56 @@
 ---
 import '../styles/utilities.css';
-interface Props { head: string; css: string }
-const { head, css } = Astro.props;
+import siteCss from '../styles/site.css?raw';
+import languageScript from '../scripts/site-language.js?raw';
+import { version, versioned, jsonScript, guide } from '../data/site';
+import { indexCopyFor, guideCopyFor } from '../data/site-translations.mjs';
+import { defaultProofLabels } from '../data/default-proof-labels.mjs';
+import { productChannel } from '../data/product-facts';
+import { canonicalUrl } from '../data/site-urls.mjs';
+import { pageMetadata } from '../data/site-metadata.mjs';
+import { localizeHtml } from '../data/localize-html.mjs';
+interface Props { head: string; css: string; page: 'index' | 'guide' | 'start' | 'gallery' | 'community'; lang?: 'en' | 'zh' }
+const { head, css, page, lang = 'en' } = Astro.props;
+const cloudflare = Astro.site?.origin === 'https://archify.si';
+const metadata = pageMetadata(page, lang, version);
+const copy = page === 'index' ? indexCopyFor(productChannel) : page === 'guide' ? guideCopyFor(guide, productChannel) : {};
+const body = localizeHtml(versioned(await Astro.slots.render('default')), { lang, page, cloudflare, copy: JSON.parse(versioned(JSON.stringify(copy))) });
+// Font loading and the favicon remain page resources; metadata has one source.
+const resourceHead = head.replace(/<meta\b[^>]*>/gi, '').replace(/<title>[\s\S]*?<\/title>/gi, '').replace(/<link\b[^>]*rel=["'](?:canonical|alternate)["'][^>]*>/gi, '');
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang={lang === 'zh' ? 'zh-Hans' : 'en'}>
 <head>
-  <Fragment set:html={head} />
-  <style is:inline set:html={css}></style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href={lang === 'zh' && page !== 'index' ? '../' : './'} />
+  <title>{metadata.title}</title>
+  <meta name="description" content={metadata.description} />
+  <meta name="theme-color" content="#07080a" />
+  <link rel="canonical" href={metadata.canonical} />
+  <link rel="alternate" hreflang="en" href={canonicalUrl(page, 'en')} />
+  <link rel="alternate" hreflang="zh-Hans" href={canonicalUrl(page, 'zh')} />
+  <link rel="alternate" hreflang="x-default" href={canonicalUrl(page, 'en')} />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Archify" />
+  <meta property="og:title" content={metadata.title} />
+  <meta property="og:description" content={metadata.description} />
+  <meta property="og:url" content={metadata.canonical} />
+  <meta property="og:image" content={metadata.image} />
+  <meta property="og:locale" content={lang === 'zh' ? 'zh_CN' : 'en_US'} />
+  <meta property="og:locale:alternate" content={lang === 'zh' ? 'en_US' : 'zh_CN'} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={metadata.title} />
+  <meta name="twitter:description" content={metadata.description} />
+  <meta name="twitter:image" content={metadata.image} />
+  <script is:inline type="application/ld+json" set:html={jsonScript(metadata.schema)}></script>
+  <Fragment set:html={resourceHead} />
+  <script is:inline id="site-route" type="application/json" set:html={jsonScript({ page, lang, cloudflare })}></script>
+  <script is:inline id="site-copy" type="application/json" set:html={versioned(jsonScript(copy))}></script>
+  {page === 'index' && <script is:inline id="site-proof-labels" type="application/json" set:html={jsonScript(defaultProofLabels)}></script>}
+  <script is:inline set:html={languageScript}></script>
+  <script is:inline>(function () { var t = 'light'; try { t = localStorage.getItem('archify-site-theme') || 'light'; } catch (_) {} document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light'); })();</script>
+  <style is:inline set:html={siteCss + css}></style>
 </head>
-<body><slot /></body>
+<body><Fragment set:html={body} /></body>
 </html>

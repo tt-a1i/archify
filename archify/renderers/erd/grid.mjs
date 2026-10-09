@@ -23,7 +23,13 @@ export const DEFAULT_ER_GRID = {
 
 export function erGridLayout(er) {
   const raw = er.layout;
-  if (!raw || raw.mode !== 'grid') return null;
+  // Grid cells without a layout block mean the default grid, not absolute
+  // coordinates that were never supplied.
+  if (!raw) {
+    const gridPlaced = (er.entities || []).some((entity) => Number.isFinite(entity?.row) && Number.isFinite(entity?.col));
+    return gridPlaced ? { ...DEFAULT_ER_GRID } : null;
+  }
+  if (raw.mode !== 'grid') return null;
   return { ...DEFAULT_ER_GRID, ...raw };
 }
 
@@ -45,23 +51,43 @@ export function entityHeight(entity, grid) {
 // Every raw column index owns the widest box placed in it and every raw row
 // index owns the tallest, so boxes in one band share a baseline without anyone
 // measuring by hand. Indices with no box still contribute their gap, which is
-// how an author asks for a routing channel between two bands.
-export function bandedLayout(entities, grid) {
+// how an author asks for a routing channel between two bands. A box on a half
+// column (a class grid's `col: 1.5`) is centred between two columns: it sizes
+// its row but neither column.
+const gridColumn = (col) => Number.isInteger(col * 2) && col >= 0;
+// `columnGaps` raises the gap after a column to a measured floor (see the
+// renderer's relationship-label demand); the authored or default gapX stays
+// the minimum everywhere, so an absent map reproduces the plain grid.
+export function bandedLayout(entities, grid, { columnGaps = null } = {}) {
   const widths = new Map();
   const heights = new Map();
+  let maxCol = -1;
   for (const entity of entities) {
-    if (!Number.isInteger(entity.row) || !Number.isInteger(entity.col)) continue;
-    widths.set(entity.col, Math.max(widths.get(entity.col) || 0, resolvedEntityWidth(entity, grid)));
+    if (!Number.isInteger(entity.row) || !gridColumn(entity.col)) continue;
+    maxCol = Math.max(maxCol, Math.ceil(entity.col));
+    if (Number.isInteger(entity.col)) widths.set(entity.col, Math.max(widths.get(entity.col) || 0, resolvedEntityWidth(entity, grid)));
     heights.set(entity.row, Math.max(heights.get(entity.row) || 0, entity.height));
   }
 
   const columnX = new Map();
   const rowY = new Map();
   let x = grid.origin[0];
-  const maxCol = Math.max(-1, ...widths.keys());
   for (let col = 0; col <= maxCol; col += 1) {
     columnX.set(col, x);
-    x += (widths.get(col) || 0) + grid.gapX;
+    x += (widths.get(col) || 0) + Math.max(grid.gapX, columnGaps?.get(col) || 0);
+  }
+  // A half-column box may be wider than its empty neighbouring bands. Keep
+  // every grid box inside the left margin without changing integer-only grids.
+  let leftInset = 0;
+  for (const entity of entities) {
+    if (!Number.isInteger(entity.row) || !gridColumn(entity.col) || Number.isInteger(entity.col)) continue;
+    const centre = (col) => columnX.get(col) + (widths.get(col) || 0) / 2;
+    const midpoint = (centre(Math.floor(entity.col)) + centre(Math.ceil(entity.col))) / 2;
+    leftInset = Math.max(leftInset, grid.origin[0] - midpoint + resolvedEntityWidth(entity, grid) / 2);
+  }
+  if (leftInset > 0) {
+    for (const [col, column] of columnX) columnX.set(col, column + leftInset);
+    x += leftInset;
   }
   let y = grid.origin[1];
   const maxRow = Math.max(-1, ...heights.keys());
@@ -76,13 +102,19 @@ export function bandedLayout(entities, grid) {
 export function resolveEntityPos(entity, grid, bands) {
   if (Array.isArray(entity.pos) && entity.pos.length === 2) return entity.pos;
   if (!grid || !bands) return [NaN, NaN];
-  if (!Number.isInteger(entity.row) || !Number.isInteger(entity.col)) return [NaN, NaN];
-  const columnX = bands.columnX.get(entity.col);
+  if (!Number.isInteger(entity.row) || !gridColumn(entity.col)) return [NaN, NaN];
+  const width = resolvedEntityWidth(entity, grid);
   const rowY = bands.rowY.get(entity.row);
+  if (!Number.isInteger(entity.col)) {
+    const centre = (col) => bands.columnX.get(col) + (bands.widths.get(col) || 0) / 2;
+    const [left, right] = [Math.floor(entity.col), Math.ceil(entity.col)];
+    if (![bands.columnX.get(left), bands.columnX.get(right), rowY].every(Number.isFinite)) return [NaN, NaN];
+    return [(centre(left) + centre(right)) / 2 - width / 2, rowY];
+  }
+  const columnX = bands.columnX.get(entity.col);
   if (!Number.isFinite(columnX) || !Number.isFinite(rowY)) return [NaN, NaN];
   // Centre each box in its column so the gaps on both sides stay equal; the
   // router reads those gaps as corridors.
-  const width = resolvedEntityWidth(entity, grid);
   const columnWidth = bands.widths.get(entity.col) || width;
   return [columnX + (columnWidth - width) / 2, rowY];
 }

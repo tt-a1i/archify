@@ -1,0 +1,76 @@
+{
+  "cssSource": "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+  "cssSha256": "44cd1d301367aaa546559484be54ae67474b18e8816b008d40d48d40126f110c",
+  "licenseCommit": "2eb0b48d5f760f62e286216f0859a8c540dbc1bd",
+  "fonts": [
+    {
+      "file": "fraunces-italic-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/fraunces/v38/6NUs8FyLNQOQZAnv9ZwNjucMHVn85Ni7emAe9lKqZTnbB-gzTK0K1ChJdt9hFwpX9W37ll9_mv0iQublWII.woff2",
+      "bytes": 42144,
+      "sha256": "f0c442fc4162c260ac42d234ec0f715e38977ca9e7da6a9703bbe003875c9692"
+    },
+    {
+      "file": "fraunces-normal-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeP2Xz5c.woff2",
+      "bytes": 67388,
+      "sha256": "48282a415ec22e31beaf0a0666e6fae0c8cbddcd0b1f6e729f27c3ade8a64e43"
+    },
+    {
+      "file": "inter-normal-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "bytes": 48432,
+      "sha256": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4"
+    },
+    {
+      "file": "jetbrains-mono-normal-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwgknk-4.woff2",
+      "bytes": 31340,
+      "sha256": "2c32b9b3ee358c119e210f6f5195f9bd34894d78a785ff2e95d60e718e400af4"
+    },
+    {
+      "file": "space-grotesk-normal-latin.woff2",
+      "source": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU.woff2",
+      "bytes": 22320,
+      "sha256": "a0d054c4af557de20afd6ca59f47ab353bcaec49c63ff04b6c9d39d0f8910557"
+    }
+  ],
+  "licenses": [
+    {
+      "file": "fraunces-OFL.txt",
+      "source": "https://raw.githubusercontent.com/google/fonts/2eb0b48d5f760f62e286216f0859a8c540dbc1bd/ofl/fraunces/OFL.txt",
+      "bytes": 4390,
+      "sha256": "6732d6cc72c5d09292ff754dc1f39d9ea14918f74e87a17afa3f00a5120c3d48",
+      "sourceBytes": 4391,
+      "sourceSha256": "bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b",
+      "normalization": "LF line endings and removal of trailing whitespace only; license text unchanged"
+    },
+    {
+      "file": "inter-OFL.txt",
+      "source": "https://raw.githubusercontent.com/google/fonts/2eb0b48d5f760f62e286216f0859a8c540dbc1bd/ofl/inter/OFL.txt",
+      "bytes": 4376,
+      "sha256": "5dd548d31a85f756e01d63e00d7faf1e324103ed3e9102fcbbabf2cc2db6dd39",
+      "sourceBytes": 4377,
+      "sourceSha256": "5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57",
+      "normalization": "LF line endings and removal of trailing whitespace only; license text unchanged"
+    },
+    {
+      "file": "spacegrotesk-OFL.txt",
+      "source": "https://raw.githubusercontent.com/google/fonts/2eb0b48d5f760f62e286216f0859a8c540dbc1bd/ofl/spacegrotesk/OFL.txt",
+      "bytes": 4401,
+      "sha256": "18a4de52385f6b988782639d5d0cc1326e5a8c2de9a7f01d7b20d9aedcc60943",
+      "sourceBytes": 4495,
+      "sourceSha256": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72",
+      "normalization": "LF line endings and removal of trailing whitespace only; license text unchanged"
+    },
+    {
+      "file": "jetbrainsmono-OFL.txt",
+      "source": "https://raw.githubusercontent.com/google/fonts/2eb0b48d5f760f62e286216f0859a8c540dbc1bd/ofl/jetbrainsmono/OFL.txt",
+      "bytes": 4399,
+      "sha256": "b2fe5e8987594e9ffd1d2ca52a2f5d73eb8335243893c5d6254b5ad69269591d",
+      "sourceBytes": 4399,
+      "sourceSha256": "b2fe5e8987594e9ffd1d2ca52a2f5d73eb8335243893c5d6254b5ad69269591d",
+      "normalization": "LF line endings and removal of trailing whitespace only; license text unchanged"
+    }
+  ]
+}

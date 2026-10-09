@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "AI Agent Tool Call",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "agent-tool-call.html"
+  },
+  "lanes": [
+    {
+      "id": "user_lane",
+      "label": "User"
+    },
+    {
+      "id": "agent_lane",
+      "label": "Agent"
+    },
+    {
+      "id": "policy_lane",
+      "label": "Approval",
+      "variant": "exception"
+    },
+    {
+      "id": "exec_lane",
+      "label": "Execution"
+    }
+  ],
+  "mainPath": [
+    "req",
+    "surface",
+    "plan",
+    "route",
+    "gate",
+    "exec",
+    "provider",
+    "reply"
+  ],
+  "nodes": [
+    {
+      "id": "req",
+      "lane": "user_lane",
+      "col": 0,
+      "type": "external",
+      "label": "User Request",
+      "sublabel": "asks the agent"
+    },
+    {
+      "id": "surface",
+      "lane": "user_lane",
+      "col": 1,
+      "type": "frontend",
+      "label": "Chat Surface",
+      "sublabel": "thread + context"
+    },
+    {
+      "id": "reply",
+      "lane": "user_lane",
+      "col": 5,
+      "type": "frontend",
+      "label": "Final Result",
+      "sublabel": "shown to user"
+    },
+    {
+      "id": "plan",
+      "lane": "agent_lane",
+      "col": 1,
+      "type": "backend",
+      "label": "Planner",
+      "sublabel": "decide next step"
+    },
+    {
+      "id": "route",
+      "lane": "agent_lane",
+      "col": 2,
+      "type": "backend",
+      "label": "Tool Router",
+      "sublabel": "pick tool + check risk"
+    },
+    {
+      "id": "gate",
+      "lane": "policy_lane",
+      "col": 2,
+      "type": "security",
+      "label": "Human Approval",
+      "sublabel": "approve or deny"
+    },
+    {
+      "id": "blocked",
+      "lane": "policy_lane",
+      "col": 3,
+      "type": "security",
+      "label": "Blocked",
+      "sublabel": "denied, waiting"
+    },
+    {
+      "id": "exec",
+      "lane": "exec_lane",
+      "col": 3,
+      "type": "backend",
+      "label": "Tool Execution",
+      "sublabel": "run the call"
+    },
+    {
+      "id": "provider",
+      "lane": "exec_lane",
+      "col": 4,
+      "type": "external",
+      "label": "External Provider",
+      "sublabel": "third-party API"
+    },
+    {
+      "id": "trace",
+      "lane": "exec_lane",
+      "col": 5,
+      "type": "database",
+      "label": "Trace Store",
+      "sublabel": "results + context"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_req",
+      "from": "req",
+      "to": "surface",
+      "label": "message"
+    },
+    {
+      "id": "e_plan",
+      "from": "surface",
+      "to": "plan",
+      "label": "prompt"
+    },
+    {
+      "id": "e_route",
+      "from": "plan",
+      "to": "route",
+      "label": "tool intent"
+    },
+    {
+      "id": "e_auto",
+      "from": "route",
+      "to": "exec",
+      "label": "no approval needed",
+      "role": "branch"
+    },
+    {
+      "id": "e_gate",
+      "from": "route",
+      "to": "gate",
+      "label": "needs approval",
+      "variant": "security"
+    },
+    {
+      "id": "e_approved",
+      "from": "gate",
+      "to": "exec",
+      "label": "approved",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e_denied",
+      "from": "gate",
+      "to": "blocked",
+      "label": "denied",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "e_retry",
+      "from": "blocked",
+      "to": "plan",
+      "label": "retry",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "id": "e_call",
+      "from": "exec",
+      "to": "provider",
+      "label": "API call"
+    },
+    {
+      "id": "e_result",
+      "from": "provider",
+      "to": "reply",
+      "label": "result",
+      "role": "return"
+    },
+    {
+      "id": "e_record",
+      "from": "provider",
+      "to": "trace",
+      "label": "record",
+      "role": "async",
+      "variant": "dashed"
+    }
+  ]
+}

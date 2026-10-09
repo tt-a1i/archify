@@ -25,10 +25,12 @@ import {
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import {
   createMappedWorkflowCandidate,
   intrinsicWorkflow,
   planningWorkflow,
+  preservesWorkflowAbsoluteGeometry,
 } from './workflow-migration-geometry.mjs';
 import {
   joinRoutePoints,
@@ -92,6 +94,14 @@ const GROUP_LABEL_MASK_ASCENT = 10;
 const GROUP_LABEL_MASK_H = 14;
 const GROUP_NODE_INSET = 4;
 
+const HARD_ROUTE_RHYTHM = Object.freeze({ direct: 28, endpoint: 8, interior: 16 });
+
+function hardRouteSegmentMinimum(points, index) {
+  if (points.length === 2) return HARD_ROUTE_RHYTHM.direct;
+  return index === 0 || index === points.length - 2
+    ? HARD_ROUTE_RHYTHM.endpoint : HARD_ROUTE_RHYTHM.interior;
+}
+
 class WorkflowLayoutFeedback extends Error {
   constructor(request) {
     super(`Workflow layout requires ${request.kind} feedback.`);
@@ -144,8 +154,22 @@ function usesIndependentLaneMeasurement(workflow) {
     && !hasAbsoluteWorkflowPins(workflow);
 }
 
+// A readable-v2 node without an authored width grows to fit its label, up to
+// 200px; longer labels still fail the label check. A sublabel or tag that
+// would not fit even at 6px also grows the node to fit it at its preferred 8px
+// or 7px. Keyed by the node object so the authored document is never rewritten.
+const automaticNodeWidths = new WeakMap();
+function automaticNodeWidth(node) {
+  const labelWidth = Math.max(92, Math.ceil((textUnits(node.label) * 6.8 - 6) / 4) * 4);
+  const secondaryWidths = [[node.sublabel, 8], [node.tag, 7]]
+    .filter(([text]) => text && minimumNodeTextWidth(text, 6) > availableNodeTextWidth(labelWidth))
+    .map(([text, size]) => Math.ceil((minimumNodeTextWidth(text, size) + labelWidth - availableNodeTextWidth(labelWidth)) / 4) * 4);
+  const fitted = Math.max(labelWidth, ...secondaryWidths);
+  return fitted > 92 ? Math.min(200, fitted) : null;
+}
+
 function authoredNodeWidth(node) {
-  return Number.isFinite(node?.width) ? node.width : 92;
+  return Number.isFinite(node?.width) ? node.width : automaticNodeWidths.get(node) ?? 92;
 }
 
 function nodeWidthContributor(node) {
@@ -209,6 +233,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   const widthContributors = new Set();
   const heightContributors = new Set();
   const nodes = asArray(workflow.nodes);
+  const nodeClearance = preservesWorkflowAbsoluteGeometry(workflow) ? 8 : 32;
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
 
   for (let col = 0; col < columnCount - 1; col += 1) {
@@ -233,10 +258,12 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
       if (!verticalIntervalsOverlap(leftNode, rightNode, 8)) continue;
       const fromNode = leftNode.col < rightNode.col ? leftNode : rightNode;
       const toNode = fromNode === leftNode ? rightNode : leftNode;
+      // Unpinned drafts reserve a route corridor; absolute assertions keep
+      // their existing rank plan, including migration planning projections.
       constraints.push({
         from: fromNode.col,
         to: toNode.col,
-        minimum: authoredNodeWidth(fromNode) / 2 + 8 + authoredNodeWidth(toNode) / 2,
+        minimum: authoredNodeWidth(fromNode) / 2 + nodeClearance + authoredNodeWidth(toNode) / 2,
         contributors: [
           `rank ${fromNode.col}→${toNode.col} node width clearance`,
           nodeWidthContributor(fromNode),
@@ -661,6 +688,12 @@ function cloneWorkflow(value) {
 
 function canonicalReadableWorkflow(workflow) {
   if (workflow.schema_version !== 2) return workflow;
+  for (const node of asArray(workflow.nodes)) {
+    const width = !preservesWorkflowAbsoluteGeometry(workflow)
+      && !Number.isFinite(node.width) && automaticNodeWidth(node);
+    if (width) automaticNodeWidths.set(node, width);
+    else automaticNodeWidths.delete(node);
+  }
   const laneOrder = new Map(asArray(workflow.lanes).map((lane, index) => [lane.id, index]));
   const nodes = [...asArray(workflow.nodes)].sort((left, right) => (
     (laneOrder.get(left.lane) ?? Number.MAX_SAFE_INTEGER) - (laneOrder.get(right.lane) ?? Number.MAX_SAFE_INTEGER)
@@ -939,7 +972,7 @@ function createWorkflowLaneGeometry(workflow, layout, legendExtraHeight, minimum
 function measureWorkflowNodes(workflow, layout, laneGeometry) {
   const { laneHeight, laneGroupHeaderH, laneGroupFooterH, laneTop } = laneGeometry;
   function measureNode(node) {
-    const width = node.width || layout.nodeW;
+    const width = node.width || (workflow.schema_version === 2 && automaticNodeWidths.get(node)) || layout.nodeW;
     const height = node.height || (node.tag ? 68 : layout.nodeH);
     const cx = layout.colXs[node.col];
     const groupHeaderH = laneGroupHeaderH(node.lane);
@@ -1517,6 +1550,33 @@ const edgeIndexByEdge = new Map(asArray(workflow.edges).map((edge, index) => [ed
       qualityProfile: resolvedQualityProfile,
       discoverFixes: false,
     }).ok);
+  }
+
+  function repointReferences(document, unknownId, nodeId) {
+    for (const entry of asArray(document.edges)) {
+      if (entry.from === unknownId) entry.from = nodeId;
+      if (entry.to === unknownId) entry.to = nodeId;
+    }
+    if (Array.isArray(document.mainPath)) {
+      document.mainPath = document.mainPath.map((id) => (id === unknownId ? nodeId : id));
+    }
+  }
+
+  // repointReferences verifies repointing every reference together; suggestions
+  // must list that same complete edit set so applying them verbatim is what was
+  // verified. Indexes follow the emitter conventions: edges use the
+  // sourceIndexes space, mainPath the canonical workflow's.
+  function unknownIdReferenceFixes(unknownId, nodeId) {
+    const fixes = [];
+    asArray(qualityResolvedWorkflow.edges).forEach((entry, index) => {
+      for (const field of ['from', 'to']) {
+        if (entry[field] === unknownId) fixes.push(`set /edges/${index}/${field} to verified node id "${nodeId}"`);
+      }
+    });
+    asArray(workflow.mainPath).forEach((id, index) => {
+      if (id === unknownId) fixes.push(`set /mainPath/${index} to verified node id "${nodeId}"`);
+    });
+    return fixes;
   }
 
 const { enforceLegacyColumnCapacity } = createLegacyCapacityRepair({
@@ -2214,6 +2274,42 @@ function routeContainsChannelPin(points, field, value) {
   });
 }
 
+function clearStraightAutomaticPlan(edge) {
+  if (!independentAutomaticRoute(edge) || edge.from === edge.to) return null;
+  // Relative label pins are not absolute, but they still participate in
+  // placed-label conflict evidence. Reserving a straight path for them first
+  // can change which edge owns the corridor and scramble supportedFixes.
+  if (edge.labelDx !== undefined || edge.labelDy !== undefined || edge.labelSegment !== undefined) {
+    return null;
+  }
+  const from = nodes.get(edge.from);
+  const to = nodes.get(edge.to);
+  const start = anchor(from, defaultFromSide(from, to));
+  const end = anchor(to, defaultToSide(from, to));
+  const aligned = Math.abs(start[0] - end[0]) < 0.0001 || Math.abs(start[1] - end[1]) < 0.0001;
+  if (!aligned || !routeClearsUnrelatedNodes(edge, [start, end])) return null;
+  // Facing centres are only a cheap filter. Port selection, labels and route
+  // costs can still select a bent route; reserving that route first would let
+  // a long branch displace a shorter one. Preview the ordinary planner and
+  // reserve only its selected straight route, without registering obstacles.
+  const hadSides = readableSideCache.has(edge);
+  const previousSides = readableSideCache.get(edge);
+  try {
+    const plan = withDiagnosticRecordingSuppressed(() => readableAutomaticRoute(
+      edge, from, to, edgeSides(edge), automaticPorts.get(edge),
+    ));
+    return plan.points.length === 2 ? plan : null;
+  } catch (error) {
+    // A preview does not own layout feedback or failure diagnostics. Let the
+    // ordinary routing order establish them with its complete preceding scene.
+    if (error instanceof WorkflowLayoutFeedback || Array.isArray(error?.archifyDiagnostics)) return null;
+    throw error;
+  } finally {
+    if (hadSides) readableSideCache.set(edge, previousSides);
+    else readableSideCache.delete(edge);
+  }
+}
+
 function validateReadablePinnedGeometry() {
   if (workflow.schema_version !== 2) return;
   // Reserve absolute geometry at contested nodes before automatic routing,
@@ -2223,6 +2319,36 @@ function validateReadablePinnedGeometry() {
     if (!workflow.edges.some(other => !hasAbsoluteRoutePins(other)
       && [edge.from, edge.to].some(id => id === other.from || id === other.to))) continue;
     validateReadableRouteControls(edge);
+    pathFor(edge);
+  }
+  // Reserve clear straight automatic routes before ID-ordered bending edges so
+  // a later edge cannot steal a corridor that already has one good straight path.
+  // Skip during discoverFixes probes (discoverFixes === false): those probes
+  // strip labelAt/via and would otherwise look "automatic", recreating the pin
+  // geometry and shrinking causal pin sets (round-23 regression).
+  // Skip when any edge carries a relative/absolute label pin: straight-first
+  // would reorder corridors and scramble placed-label conflict evidence.
+  const hasLabelPins = workflow.edges.some((edge) => (
+    edge.labelAt !== undefined
+    || edge.labelDx !== undefined
+    || edge.labelDy !== undefined
+    || edge.labelSegment !== undefined
+  ));
+  if (discoverFixes && !hasLabelPins) {
+    for (const edge of workflow.edges) {
+      if (!nodes.has(edge.from) || !nodes.has(edge.to)) continue;
+      const plan = clearStraightAutomaticPlan(edge);
+      if (!plan) continue;
+      validateReadableRouteControls(edge);
+      pathFor(edge, plan);
+    }
+  }
+  // Routing order feedback: an automatic edge that an earlier automatic edge
+  // forced into a shared corridor or crossing is planned first on a retry.
+  for (const index of asArray(layoutFeedback.routeFirst)) {
+    // Diagnostics name source indexes; the canonical edge order differs.
+    const edge = workflow.edges.find((candidate) => sourceIndexes.edges.get(candidate) === index);
+    if (!edge || !nodes.has(edge.from) || !nodes.has(edge.to) || !independentAutomaticRoute(edge)) continue;
     pathFor(edge);
   }
   for (const edge of workflow.edges) {
@@ -2500,6 +2626,8 @@ function validateReadablePinnedGeometry() {
 }
 
 function validateWorkflow() {
+  // Report edges by their authored index; the canonical order is internal.
+  const authoredEdges = asArray(qualityResolvedWorkflow.edges);
   const problems = [];
   if (workflow.schema_version !== 1 && workflow.schema_version !== 2) {
     problems.push('Workflow files must set "schema_version" to 1 or 2.');
@@ -2570,7 +2698,7 @@ function validateWorkflow() {
     }
     const estLabelW = textUnits(node.label) * 6.8;
     if (estLabelW > node.width + 6) {
-      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than node "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
+      problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than component "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
     }
     const brandRailProblem = brandTopRailProblem(node, node.width, nodeTextFit.labelMinimum);
     if (brandRailProblem) problems.push(brandRailProblem);
@@ -2672,7 +2800,7 @@ function validateWorkflow() {
   }
 
   problems.push(...cleanEndpointSideProblems({
-    relations: workflow.edges,
+    relations: authoredEdges,
     endpointIds: new Set(nodes.keys()),
     pathFor,
     diagramType: 'workflow',
@@ -2682,7 +2810,7 @@ function validateWorkflow() {
     routeHint: 'keep automatic routing, or choose fromSide/toSide and via points whose first and final segments cross node borders perpendicularly',
   }));
   problems.push(...cleanFlowProblems({
-    relations: workflow.edges,
+    relations: authoredEdges,
     obstacles: nodes.values(),
     pathFor,
     diagramType: 'workflow',
@@ -2691,7 +2819,7 @@ function validateWorkflow() {
     routeHint: 'adjust fromSide/toSide, set route/via or channel coordinates, or move the node to a clearer lane/column'
   }));
   problems.push(...cleanCrossingProblems({
-    relations: workflow.edges,
+    relations: authoredEdges,
     endpointIds: new Set(nodes.keys()),
     pathFor,
     diagramType: 'workflow',
@@ -2705,7 +2833,7 @@ function validateWorkflow() {
     routeHint: 'adjust route/via, bias, or channel coordinates so the edges use separate lane corridors'
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
-    relations: workflow.edges,
+    relations: authoredEdges,
     endpointIds: new Set(nodes.keys()),
     pathFor,
     diagramType: 'workflow',
@@ -2736,7 +2864,7 @@ function validateWorkflow() {
     }
   }
   problems.push(...cleanBorderRunProblems({
-    relations: workflow.edges,
+    relations: authoredEdges,
     endpointIds: new Set(nodes.keys()),
     frames: workflowCompositionFrames(),
     pathFor,
@@ -2747,7 +2875,7 @@ function validateWorkflow() {
     routeHint: 'adjust route/via, bias, or channel coordinates so the edge crosses the lane or group perpendicularly instead of following its border'
   }));
   problems.push(...cleanRouteRhythmProblems({
-    relations: workflow.edges,
+    relations: authoredEdges,
     endpointIds: new Set(nodes.keys()),
     pathFor,
     diagramType: 'workflow',
@@ -2758,9 +2886,31 @@ function validateWorkflow() {
   }));
 
   if (Array.isArray(workflow.mainPath)) {
-    for (const id of workflow.mainPath) {
+    for (let stepIndex = 0; stepIndex < workflow.mainPath.length; stepIndex += 1) {
+      const id = workflow.mainPath[stepIndex];
       if (!nodes.has(id)) {
-        problems.push(`mainPath references unknown node "${id}".`);
+        const message = `mainPath references unknown node "${id}".`;
+        problems.push(message);
+        const candidates = [...nodes.keys()].sort(stableCompare);
+        workflowDiagnostics.push({
+          code: 'workflow/unknown-endpoint',
+          severity: 'error',
+          message,
+          subject: {
+            diagramType: 'workflow',
+            mainPath: id,
+            path: `/mainPath/${stepIndex}`,
+          },
+          evidence: {
+            unknownNodeId: id,
+            availableNodeIds: candidates,
+            fixVerification: 'each candidate was verified by applying every listed repoint together and recompiling',
+          },
+          supportedFixes: candidates
+            .filter((nodeId) => acceptsFix((document) => repointReferences(document, id, nodeId)))
+            .slice(0, 3)
+            .flatMap((nodeId) => unknownIdReferenceFixes(id, nodeId)),
+        });
       }
     }
     for (let i = 0; i < workflow.mainPath.length - 1; i += 1) {
@@ -2799,7 +2949,7 @@ function validateWorkflow() {
     }
   }
   problems.push(...cleanLabelRouteClearanceProblems({
-    relations: workflow.edges,
+    relations: authoredEdges,
     labels: labelRects,
     endpointIds: new Set(nodes.keys()),
     pathFor,
@@ -2912,14 +3062,10 @@ function validateReadableInputsBeforeRouting() {
     for (const [field, endpoint] of [['from', 'source'], ['to', 'target']]) {
       if (nodes.has(edge[field])) continue;
       const message = `Workflow edge "${workflowEdgeName(edge)}" references unknown ${endpoint} "${edge[field]}".`;
-      const canonicalEdgeIndex = workflow.edges.indexOf(edge);
-      const supportedFixes = availableNodeIds.flatMap((nodeId) => (
-        acceptsFix((document) => {
-          document.edges[canonicalEdgeIndex][field] = nodeId;
-        })
-          ? [`set /edges/${edgeIndex}/${field} to verified node id "${nodeId}"`]
-          : []
-      ));
+      const supportedFixes = availableNodeIds
+        .filter((nodeId) => acceptsFix((document) => repointReferences(document, edge[field], nodeId)))
+        .slice(0, 3)
+        .flatMap((nodeId) => unknownIdReferenceFixes(edge[field], nodeId));
       fail({
         code: 'workflow/unknown-edge-endpoint',
         severity: 'error',
@@ -2935,6 +3081,7 @@ function validateReadableInputsBeforeRouting() {
           endpoint,
           unknownNodeId: edge[field],
           availableNodeIds,
+          fixVerification: 'each candidate was verified by applying every listed repoint together and recompiling',
         },
         supportedFixes,
       });
@@ -3237,13 +3384,14 @@ function routeClearsEndpointNodes(points, from, to) {
 
 function routeMeetsHardRhythm(points) {
   if (points.length === 2) {
-    return Math.hypot(points[1][0] - points[0][0], points[1][1] - points[0][1]) + 0.0001 >= 28;
+    return Math.hypot(points[1][0] - points[0][0], points[1][1] - points[0][1]) + 0.0001 >= hardRouteSegmentMinimum(points, 0);
   }
-  return points.slice(0, -1).every((point, index) => {
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const point = points[index];
     const length = Math.abs(points[index + 1][0] - point[0]) + Math.abs(points[index + 1][1] - point[1]);
-    const endpoint = index === 0 || index === points.length - 2;
-    return length + 0.0001 >= (endpoint ? 8 : 16);
-  });
+    if (!(length + 0.0001 >= hardRouteSegmentMinimum(points, index))) return false;
+  }
+  return true;
 }
 
 function routeLabelClearsNodes(edge, points) {
@@ -3315,7 +3463,38 @@ function labelRouteClearanceDeficit(edge, points, threshold = 8) {
   return deficit;
 }
 
-function routeClearsPlacedLabels(edge, points) {
+function placedLabelConflictEvidence(edge, candidateLabel, item, conflictType, points, segmentIndex, clearance) {
+  const edgeEvidence = (relation) => ({
+    edge: relation.id ?? null, from: relation.from, to: relation.to,
+    path: `/edges/${sourceIndexes.edges.get(relation)}`,
+  });
+  const labelEvidence = (relation, rect) => ({
+    label: relation.label,
+    rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+  });
+  return {
+    conflictType,
+    candidateEdge: edgeEvidence(edge),
+    otherEdge: edgeEvidence(item.edge),
+    ...(candidateLabel ? { candidateLabel: labelEvidence(edge, candidateLabel) } : {}),
+    ...(item.kind === 'label' ? { otherLabel: labelEvidence(item.edge, item.rect) } : {}),
+    ...(segmentIndex !== undefined ? {
+      segment: {
+        edge: conflictType === 'route-label' ? 'candidate' : 'other',
+        index: segmentIndex, from: [...points[segmentIndex]], to: [...points[segmentIndex + 1]],
+      },
+      measuredClearancePx: clearance, requiredClearancePx: 4,
+    } : {
+      rectangleMarginPx: -2,
+      overlapPx: {
+        x: Math.min(candidateLabel.x + candidateLabel.width, item.rect.x + item.rect.width) - Math.max(candidateLabel.x, item.rect.x),
+        y: Math.min(candidateLabel.y + candidateLabel.height, item.rect.y + item.rect.height) - Math.max(candidateLabel.y, item.rect.y),
+      },
+    }),
+  };
+}
+
+function routeClearsPlacedLabels(edge, points, evidence = null) {
   const candidateLabel = candidateLabelRect(edge, points);
   const candidateExtent = routeBounds(points);
   const queryBox = {
@@ -3331,7 +3510,10 @@ function routeClearsPlacedLabels(edge, points) {
   for (const item of obstacleGrid.query(queryBox)) {
     // A label may sit far from the route it annotates, so both boxes are queried.
     if (item.kind === 'label') {
-      if (candidateLabel && rectsOverlap(candidateLabel, item.rect, -2)) return false;
+      if (candidateLabel && rectsOverlap(candidateLabel, item.rect, -2)) {
+        if (evidence) Object.assign(evidence, placedLabelConflictEvidence(edge, candidateLabel, item, 'label-label'));
+        return false;
+      }
       const rect = item.rect;
       // Either axis further than the minimum clearance means no segment can reach it.
       if (Math.max(rect.x - candidateExtent.maxX, candidateExtent.minX - (rect.x + rect.width)) >= 4
@@ -3341,7 +3523,10 @@ function routeClearsPlacedLabels(edge, points) {
           start: points[index],
           end: points[index + 1],
         }, rect);
-        if (clearance != null && clearance + 0.0001 < 4) return false;
+        if (clearance != null && clearance + 0.0001 < 4) {
+          if (evidence) Object.assign(evidence, placedLabelConflictEvidence(edge, candidateLabel, item, 'route-label', points, index, clearance));
+          return false;
+        }
       }
     } else if (item.kind === 'route' && candidateLabel) {
       const otherBounds = item.bounds;
@@ -3353,7 +3538,10 @@ function routeClearsPlacedLabels(edge, points) {
           start: otherPoints[index],
           end: otherPoints[index + 1],
         }, candidateLabel);
-        if (clearance != null && clearance + 0.0001 < 4) return false;
+        if (clearance != null && clearance + 0.0001 < 4) {
+          if (evidence) Object.assign(evidence, placedLabelConflictEvidence(edge, candidateLabel, item, 'label-route', otherPoints, index, clearance));
+          return false;
+        }
       }
     }
   }
@@ -3444,22 +3632,63 @@ function routeFitsCanvasOrigin(edge, points) {
   return routeExtentCoordinates(edge, points).every(([x, y]) => x >= 0 && y >= 0);
 }
 
-// Predicates are pure, so their order does not change the result; they are
-// ordered by "cheap and selective first" so the expensive clearance work runs
-// on fewer candidates.
+// One ordered contract for acceptance and the first rejection. Cheap and
+// selective checks run before expensive clearance work. Direct calls need no
+// dispatch table, callbacks or context objects, and never collect evidence.
+function readableCandidateRejection(edge, points, from, to, fromSide, toSide) {
+  if (points.length < 2) return 'route endpoints';
+  if (!orthogonalRoute(points)) return 'orthogonal non-zero segments';
+  if (!routeMeetsHardRhythm(points)) return 'readable segment rhythm';
+  if (!routeHonorsEndpointSides(points, fromSide, toSide)) return 'perpendicular endpoint-side direction';
+  if (!routeClearsEndpointNodes(points, from, to)) return 'node clearance';
+  if (!routeLabelClearsNodes(edge, points)) return 'edge-label node clearance';
+  if (!routeClearsSceneLabelObstacles(edge, points)) return 'lane/phase/group label clearance';
+  if (!routeClearsUnrelatedNodes(edge, points)) return 'node clearance';
+  if (!routeClearsPlacedLabels(edge, points)) return 'placed edge-label clearance';
+  if (!routeFitsCanvasOrigin(edge, points)) return 'canvas origin';
+  if (!routeClearsFrameBorders(points)) return 'structural-frame border clearance';
+  if (!routeClearsLegend(edge, points)) return 'legend clearance';
+  return null;
+}
+
 function readableCandidateIsFeasible(edge, points, from, to, fromSide, toSide) {
-  return points.length >= 2
-    && orthogonalRoute(points)
-    && routeMeetsHardRhythm(points)
-    && routeHonorsEndpointSides(points, fromSide, toSide)
-    && routeClearsEndpointNodes(points, from, to)
-    && routeLabelClearsNodes(edge, points)
-    && routeClearsSceneLabelObstacles(edge, points)
-    && routeClearsUnrelatedNodes(edge, points)
-    && routeClearsPlacedLabels(edge, points)
-    && routeFitsCanvasOrigin(edge, points)
-    && routeClearsFrameBorders(points)
-    && routeClearsLegend(edge, points);
+  return readableCandidateRejection(edge, points, from, to, fromSide, toSide) === null;
+}
+
+// Inspect only a rejected preset. Keep successful routing and automatic
+// candidate enumeration on the short-circuit feasibility path above.
+function readablePresetRejection(edge, points, from, to, fromSide, toSide) {
+  const invariant = readableCandidateRejection(edge, points, from, to, fromSide, toSide)
+    ?? (!routeMatchesPresetFamily(edge.route, points, from, to) ? 'route preset compatibility' : undefined);
+  if (invariant === 'placed edge-label clearance') {
+    const evidence = {};
+    routeClearsPlacedLabels(edge, points, evidence);
+    return { invariant, ...evidence };
+  }
+  if (invariant === 'node clearance') {
+    return { invariant, ...firstRouteNodeCollision(edge, points) };
+  }
+  if (invariant === 'readable segment rhythm') {
+    const segmentIndex = points.slice(0, -1).findIndex((point, index) => {
+      const minimum = hardRouteSegmentMinimum(points, index);
+      return Math.hypot(points[index + 1][0] - point[0], points[index + 1][1] - point[1]) + 0.0001 < minimum;
+    });
+    return {
+      invariant,
+      segmentIndex,
+      actualSegmentPx: Math.hypot(
+        points[segmentIndex + 1][0] - points[segmentIndex][0],
+        points[segmentIndex + 1][1] - points[segmentIndex][1],
+      ),
+      requiredSegmentPx: hardRouteSegmentMinimum(points, segmentIndex),
+    };
+  }
+  if (invariant === 'edge-label node clearance') {
+    const labelRect = candidateLabelRect(edge, points);
+    const obstacle = [...nodes.values()].find((node) => rectsOverlap(labelRect, node, -2));
+    return { invariant, labelRect, obstacleNode: obstacle?.id };
+  }
+  return { invariant };
 }
 
 function corridorViaY(start, end, fromSide, toSide, y) {
@@ -3635,6 +3864,11 @@ function readableAutomaticCandidateSet(
     { family: 'outside-right', via: corridorViaX(start, end, fromSide, toSide, outsideRight) },
     { family: 'top-corridor', via: corridorViaY(start, end, fromSide, toSide, topY) },
     { family: 'bottom-corridor', via: corridorViaY(start, end, fromSide, toSide, bottomY) },
+    // Offset tracks let several routes through one gap run side by side.
+    ...[-12, 12, -24, 24].flatMap((offset) => [
+      { family: 'lane-gap-corridor', via: corridorViaY(start, end, fromSide, toSide, laneGapY + offset) },
+      { family: 'column-gap-corridor', via: corridorViaX(start, end, fromSide, toSide, midX + offset) },
+    ]),
   ];
   const candidates = rawCandidates.map((candidate, ordinal) => ({
     ...candidate,
@@ -3858,7 +4092,11 @@ function readablePresetVia(edge, from, to, start, end, fromSide, toSide) {
     && routeMatchesPresetFamily(preset, points, from, to)) {
     return points.slice(1, -1);
   }
-  const message = `Workflow edge "${workflowEdgeName(edge)}" cannot satisfy route preset "${preset}" under readable-v2 constraints (minimum 8px endpoint stubs, 16px interior turns, and 28px direct clearance).`;
+  const rejection = readablePresetRejection(edge, points, from, to, fromSide, toSide);
+  const obstacle = rejection.obstacleNode
+    ? `: ${rejection.segmentIndex === undefined ? 'its label' : `segment ${rejection.segmentIndex}`} intersects node "${rejection.obstacleNode}"`
+    : '';
+  const message = `Workflow edge "${workflowEdgeName(edge)}" cannot satisfy route preset "${preset}": candidate violates ${rejection.invariant}${obstacle}.`;
   const edgeIndex = workflow.edges.indexOf(edge);
   const edgeName = workflowEdgeName(edge);
   const supportedFixes = [];
@@ -3887,13 +4125,14 @@ function readablePresetVia(edge, from, to, start, end, fromSide, toSide) {
       route: preset,
     },
     evidence: {
+      ...rejection,
       attemptedCandidateFamily: preset,
       points,
       fromSide,
       toSide,
-      requiredEndpointStubPx: 8,
-      requiredInteriorSegmentPx: 16,
-      requiredDirectClearancePx: 28,
+      requiredEndpointStubPx: HARD_ROUTE_RHYTHM.endpoint,
+      requiredInteriorSegmentPx: HARD_ROUTE_RHYTHM.interior,
+      requiredDirectClearancePx: HARD_ROUTE_RHYTHM.direct,
     },
     supportedFixes,
   }]);
@@ -3996,10 +4235,36 @@ function workflowEdgeLabelPoint(edge, points) {
     || right.length - left.length
     || left.index - right.index
   ));
-  const labelSegment = segments[0]?.index ?? 0;
-  const point = labelPoint({ ...edge, labelSegment }, points);
-  if (points[labelSegment][0] === points[labelSegment + 1][0]) point[1] += 10;
-  return point;
+  const pointOn = (labelSegment) => {
+    const point = labelPoint({ ...edge, labelSegment }, points);
+    if (points[labelSegment][0] === points[labelSegment + 1][0]) point[1] += 10;
+    return point;
+  };
+  // The longest horizontal run is the preferred home, but a run shorter than
+  // its label pushes the label onto a node, and the planner then detours the
+  // whole edge to manufacture a longer run. When the preferred run is that
+  // short, use the next run that keeps the label clear of every node and
+  // inside one lane, off the lane dividers, before giving up on it.
+  const width = workflowLabelWidth(edge.label);
+  const clearOfNodes = ([lx, ly]) => {
+    const rect = { x: lx - width / 2, y: ly - 10, width, height: 14 };
+    return ![...nodes.values()].some((node) => rectsOverlap(rect, node, -2));
+  };
+  const insideOneLane = ([lx, ly]) => lx - width / 2 >= layout.laneX + 4
+    && lx + width / 2 <= layout.laneX + layout.laneW - 4
+    && asArray(workflow.lanes).some((lane, index) => {
+    const top = laneTop(lane.id);
+    return ly - 10 >= top + 4 && ly + 4 <= top + laneHeight(index) - 4;
+  });
+  const preferred = pointOn(segments[0]?.index ?? 0);
+  if (!edge.label || !segments[0]?.horizontal || segments[0].length >= width + 8
+      || clearOfNodes(preferred)) return preferred;
+  for (const segment of segments.slice(1)) {
+    if (segment.length < 28) continue;
+    const point = pointOn(segment.index);
+    if (clearOfNodes(point) && insideOneLane(point)) return point;
+  }
+  return preferred;
 }
 
 function edgeSides(edge) {
@@ -4038,7 +4303,7 @@ function automaticPortCandidates(edge, node, side, preferred, counterpart) {
       const ownWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
       const otherWidth = other.width || (other.variant === 'emphasis' ? 1.8 : 1.4);
       if (Math.abs(point[1 - axis] - center[1 - axis]) < 0.0001) {
-        occupied.push({ coordinate: point[axis], clearance: Math.max(12, 3.5 * (ownWidth + otherWidth)) });
+        occupied.push({ coordinate: point[axis], clearance: Math.max(16, 3.5 * (ownWidth + otherWidth)) });
       }
     }
   }
@@ -4056,6 +4321,70 @@ function automaticPortCandidates(edge, node, side, preferred, counterpart) {
     if (candidates.length >= 2) return candidates.slice(0, 2);
   }
   return candidates.length ? candidates : [preferred];
+}
+
+function automaticEndpointRepairs(edge, selected, from, to, naturalFromSide, naturalToSide) {
+  if (!independentAutomaticRoute(edge)
+    || ['labelDx', 'labelDy', 'labelSegment', 'bias'].some(field => edge[field] !== undefined)
+    || selected.cost.properCrossingCount !== 0 || selected.cost.sharedCorridorPx === 0
+    || selected.points.length < 3) return [];
+  const corridorHits = (points) => [...pathCache].flatMap(([relation, routed]) => (
+    collectAmbiguousCorridors({
+      routedRelations: [{ relation: edge, points }, { relation, points: routed.points }],
+      includeSharedEndpoints: () => true,
+      allowShortWorkflowTrunks: true,
+    })
+  ));
+  const originalHits = corridorHits(selected.points);
+  const originalNeighbours = new Set(originalHits.map(hit => hit.right.relation));
+  const strokeWidth = relation => relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.4);
+  const arrowRelation = relation => ({ ...relation, width: strokeWidth(relation) });
+  const ownArrow = arrowRelation(edge);
+  const incoming = [...(nodeRoutes.get(edge.to) ?? [])].map(([relation, routed]) => ({
+    relation: arrowRelation(relation), points: routed.points,
+  }));
+  const repairs = [];
+  for (const endpoint of ['from', 'to']) {
+    const first = endpoint === 'from';
+    const endpointIndex = first ? 0 : selected.points.length - 1;
+    const segmentIndex = first ? 0 : selected.points.length - 2;
+    if (!originalHits.some(hit => hit.leftSegment === segmentIndex)) continue;
+    const node = first ? from : to;
+    const side = first ? selected.fromSide : selected.toSide;
+    const axis = side === 'left' || side === 'right' ? 1 : 0;
+    const minimum = (axis ? node.y : node.x) + 16;
+    const maximum = (axis ? node.y + node.height : node.x + node.width) - 16;
+    // Keep the side, its perpendicular stub, and the existing corner gutter.
+    // Small slides can separate source strokes or a source from an arrow even
+    // when the normal 12px port-spread step cannot fit on a 52px node side.
+    for (const offset of [-8, 8, -10, 10]) {
+      const points = selected.points.map(point => [...point]);
+      points[endpointIndex][axis] += offset;
+      points[first ? 1 : points.length - 2][axis] += offset;
+      if (points[endpointIndex][axis] < minimum || points[endpointIndex][axis] > maximum) continue;
+      const endpointFootprint = (first ? 0.5 : 3.5) * strokeWidth(edge);
+      const clearPort = [...(nodeRoutes.get(node.id) ?? [])].every(([relation, routed]) => (
+        ['from', 'to'].every(otherEndpoint => {
+          if (relation[otherEndpoint] !== node.id) return true;
+          const point = otherEndpoint === 'from' ? routed.points[0] : routed.points.at(-1);
+          if (Math.abs(point[1 - axis] - points[endpointIndex][1 - axis]) > 0.0001) return true;
+          const otherFootprint = (otherEndpoint === 'from' ? 0.5 : 3.5) * strokeWidth(relation);
+          return Math.abs(point[axis] - points[endpointIndex][axis]) + 0.0001 >= endpointFootprint + otherFootprint;
+        })
+      ));
+      if (!clearPort) continue;
+      if (!readableCandidateIsFeasible(edge, points, from, to, selected.fromSide, selected.toSide)) continue;
+      const cost = readableCandidateCost(edge, points, selected.cost.stableCandidateOrdinal, naturalFromSide, naturalToSide);
+      if (cost.properCrossingCount !== 0 || cost.sharedCorridorPx >= selected.cost.sharedCorridorPx) continue;
+      if (corridorHits(points).some(hit => !originalNeighbours.has(hit.right.relation))) continue;
+      if (collectArrowheadCollisions({
+        routedRelations: [{ relation: ownArrow, points }, ...incoming],
+        allowShortWorkflowTrunks: true,
+      }).some(hit => hit.left.relation === ownArrow || hit.right.relation === ownArrow)) continue;
+      repairs.push({ ...selected, points, cost });
+    }
+  }
+  return repairs;
 }
 
 function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
@@ -4196,6 +4525,7 @@ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
 
   plans.sort((left, right) => compareCost(left.cost, right.cost));
   if (plans.length) {
+    const endpointRepairs = automaticEndpointRepairs(edge, plans[0], from, to, naturalFromSide, naturalToSide);
     const repairSeeds = plans[0].cost.sharedCorridorPx > 0
       ? plans.filter((plan, index) => plans.findIndex(other => (
         other.fromSide === plan.fromSide && other.toSide === plan.toSide
@@ -4223,6 +4553,7 @@ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
       alternatives.sort((a, b) => compareCost(a.cost, b.cost));
       if (alternatives.length) plans.push(alternatives[0]);
     }
+    plans.push(...endpointRepairs);
     plans.sort((a, b) => compareCost(a.cost, b.cost));
     const selected = plans[0];
     return {
@@ -4426,7 +4757,7 @@ function registerRouted(edge, routed) {
   return routed;
 }
 
-function pathFor(edge) {
+function pathFor(edge, automaticPlan = null) {
   if (pathCache.has(edge)) return pathCache.get(edge);
   const from = nodes.get(edge.from);
   const to = nodes.get(edge.to);
@@ -4449,7 +4780,7 @@ function pathFor(edge) {
     && edge.channelY === undefined
     && (!edge.route || edge.route === 'auto');
   if (readableAutomatic) {
-    const planned = readableAutomaticRoute(
+    const planned = automaticPlan || readableAutomaticRoute(
       edge,
       from,
       to,
@@ -4686,12 +5017,61 @@ function renderGroup(group, index) {
         <text x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
 }
 
+// Automatic showcase canvases stop sublabel shrinking at the desktop floor.
+// Standard and authored canvases retain the established text-fitting contract;
+// the preferred font remains the maximum supported by the fixed text rows.
+function readableSublabelMinimum() {
+  const minimum = nodeTextFit.sublabelMinimum;
+  if (workflow.schema_version !== 2 || resolvedQualityProfile !== 'showcase'
+      || workflow.meta?.viewBox) return minimum;
+  return Math.max(minimum, Math.ceil(minimumReadableSourceTextPx(viewBox[0]) * 10) / 10);
+}
+
+function validateReadableNodeText() {
+  const diagnostics = [];
+  const minimum = readableSublabelMinimum();
+  for (const node of nodes.values()) {
+    if (!node.sublabel) continue;
+    const maximumCanvasWidth = Math.floor(DESKTOP_READER_DIAGRAM_WIDTH
+      * nodeTextFit.sublabelPreferred / MIN_PROJECTED_NODE_TEXT_PX);
+    const fontBudgetExceeded = minimum > nodeTextFit.sublabelPreferred;
+    const minimumW = minimumNodeTextWidth(node.sublabel, minimum);
+    if (!fontBudgetExceeded && minimumW <= availableNodeTextWidth(node.width)) continue;
+    const message = fontBudgetExceeded
+      ? `Sublabel "${node.sublabel}" needs a ${minimum}px minimum that stays readable on this ${viewBox[0]}px canvas, above the supported ${nodeTextFit.sublabelPreferred}px text row — compact the column spacing or node widths so the canvas is at most ${maximumCanvasWidth}px wide; preserve the sublabel's role or protocol.`
+      : `Sublabel "${node.sublabel}" needs ~${Math.ceil(minimumW)}px at the ${minimum}px minimum that stays readable on this ${viewBox[0]}px canvas, but node "${node.id}" provides ${availableNodeTextWidth(node.width)}px — shorten the sublabel while preserving its role or protocol.`;
+    const authoredNode = workflow.nodes.find((authored) => authored.id === node.id);
+    diagnostics.push({
+      code: 'workflow/sublabel-readability',
+      severity: 'error',
+      message,
+      subject: {
+        diagramType: 'workflow', node: node.id,
+        path: `/nodes/${sourceIndexes.nodes.get(authoredNode)}/sublabel`,
+      },
+      evidence: {
+        requiredFontPx: minimum,
+        maximumSlotFontPx: nodeTextFit.sublabelPreferred,
+        canvasWidthPx: viewBox[0],
+        maximumCanvasWidthPx: maximumCanvasWidth,
+        requiredTextWidthPx: minimumW,
+        availableTextWidthPx: availableNodeTextWidth(node.width),
+      },
+      supportedFixes: fontBudgetExceeded
+        ? [`compact column spacing or node widths until the implicit canvas is at most ${maximumCanvasWidth}px wide, preserving every node and relationship`]
+        : [`shorten node "${node.id}" sublabel while preserving its role or protocol; move supplementary facts into a card`],
+    });
+  }
+  if (diagnostics.length) throwDiagnosticError('Workflow layout validation failed', diagnostics);
+}
+
 function renderNode(node) {
   const fill = componentFill[node.type] || 'c-external';
   const accent = componentText[node.type] || 't-muted';
   const hasSub = node.sublabel != null && node.sublabel !== '';
   const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), nodeTextFit.labelPreferred, nodeTextFit.labelMinimum);
-  const sublabelFontSize = fittedNodeFontSize(node.sublabel, node.width, nodeTextFit.sublabelPreferred, nodeTextFit.sublabelMinimum);
+  const sublabelMinimum = Math.min(nodeTextFit.sublabelPreferred, readableSublabelMinimum());
+  const sublabelFontSize = fittedNodeFontSize(node.sublabel, node.width, nodeTextFit.sublabelPreferred, sublabelMinimum);
   const tagFontSize = fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum);
   const textRows = [{ text: node.label, font: labelFontSize, y: 21 }];
   if (hasSub) textRows.push({ text: node.sublabel, font: sublabelFontSize, y: 38 });
@@ -4751,11 +5131,13 @@ function renderLegend() {
 }
 
 function renderSvg() {
+  // A renderer-sized canvas that would overflow the desktop page at full
+  // width reads at page width with vertical scroll, like a tall stack.
   const readerFit = workflow.schema_version === 2
     && !workflow.meta?.viewBox
-    && hasVerticalStack(workflow)
-    && asArray(layout.laneHeights).some((height) => height > 104)
-    ? ' data-reader-fit="intrinsic-height"'
+    && ((hasVerticalStack(workflow) && asArray(layout.laneHeights).some((height) => height > 104))
+      || predictedFixedWidthOverflow({ viewBoxWidth: viewBox[0], viewBoxHeight: viewBox[1], diagramType: 'workflow' }))
+    ? ' data-reader-fit="width-first"'
     : '';
   const contract = workflow.schema_version === 2 ? ' data-layout-contract="readable-v2"' : '';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit}${contract} ${svgRootAttrs(workflow.meta, resolvedQualityProfile)}>
@@ -4794,6 +5176,7 @@ ${renderLegend()}
     validateReadablePinnedGeometry();
     validateWorkflow();
     finalizeReadableViewBox();
+    validateReadableNodeText();
     const svg = renderSvg();
     const receipt = {
       contract: layout.contract,
@@ -4851,11 +5234,58 @@ function feedbackFailure(request) {
   return compilerFailure('readable-v2', diagnostics, message);
 }
 
+const ROUTE_ORDER_CODES = new Set(['composition/ambiguous-corridor', 'composition/proper-crossing']);
+const MAX_ROUTE_ORDER_RETRIES = 3;
+
+// Automatic routes are planned in source order, each against those already
+// placed, so an earlier edge can take the only clear corridor of a later one
+// (a long cross-lane branch dropping between two same-lane neighbours). When
+// the readable result fails only because two automatic edges share a corridor
+// or cross, plan the later edge first and keep the retry only if it removes
+// errors; the document itself is never changed.
+function errorCount(result) {
+  return result.ok ? 0 : result.diagnostics.filter((diagnostic) => diagnostic.severity !== 'warning').length;
+}
+function routeOrderRetryIndex(result, layoutFeedback) {
+  if (result.ok || !Array.isArray(result.diagnostics)) return null;
+  const errors = result.diagnostics.filter((diagnostic) => diagnostic.severity !== 'warning');
+  if (!errors.length || !errors.every((diagnostic) => ROUTE_ORDER_CODES.has(diagnostic.code))) return null;
+  const tried = new Set(asArray(layoutFeedback.routeFirst));
+  for (const diagnostic of errors) {
+    const indexes = [diagnostic.subject?.index, diagnostic.evidence?.otherRelationship?.index]
+      .filter(Number.isInteger);
+    if (indexes.length !== 2) continue;
+    const later = Math.max(...indexes);
+    if (!tried.has(later)) return later;
+  }
+  return null;
+}
+function compileWithRouteOrderFeedback(options) {
+  const first = compileWorkflowInternal(options);
+  if (options.workflow?.schema_version !== 2) return first;
+  let best = first;
+  let current = first;
+  let layoutFeedback = options.layoutFeedback;
+  for (let retry = 0; retry < MAX_ROUTE_ORDER_RETRIES && errorCount(best) > 0; retry += 1) {
+    const index = routeOrderRetryIndex(current, layoutFeedback);
+    if (index === null) break;
+    layoutFeedback = { ...layoutFeedback, routeFirst: [...asArray(layoutFeedback.routeFirst), index] };
+    try {
+      current = compileWorkflowInternal({ ...options, layoutFeedback });
+    } catch (error) {
+      if (error instanceof WorkflowLayoutFeedback) break;
+      throw error;
+    }
+    if (errorCount(current) < errorCount(best)) best = current;
+  }
+  return best;
+}
+
 function compileWorkflowWithFeedback({ workflow, qualityProfile, sourceEvidence, discoverFixes = true } = {}) {
   let layoutFeedback = {};
   for (let attempt = 0; attempt <= MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS; attempt += 1) {
     try {
-      return compileWorkflowInternal({
+      return compileWithRouteOrderFeedback({
         workflow,
         qualityProfile,
         sourceEvidence,

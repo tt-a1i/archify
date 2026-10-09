@@ -19,8 +19,8 @@
     { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "primary / encrypted", "pos": [840, 405], "size": [126, 62], "tag": "data team" },
     { "id": "events", "type": "messagebus", "label": "Event Bus", "sublabel": "orders.v1", "pos": [1040, 300], "size": [126, 60], "tag": "platform" },
     { "id": "worker", "type": "backend", "label": "Workers", "sublabel": "private workload", "pos": [1190, 300], "size": [126, 60], "tag": "app team" },
-    { "id": "replica", "type": "database", "label": "DR Replica", "sublabel": "eu-west-1", "pos": [1040, 578], "size": [126, 62], "tag": "data team" },
-    { "id": "audit", "type": "cloud", "label": "Audit Archive", "sublabel": "immutable objects", "pos": [1190, 450], "size": [126, 62], "tag": "security" },
+    { "id": "replica", "type": "database", "label": "DR Replica", "sublabel": "eu-west-1", "pos": [1040, 640], "size": [126, 62], "tag": "data team" },
+    { "id": "audit", "type": "cloud", "label": "Audit Archive", "sublabel": "immutable objects", "pos": [1190, 492], "size": [126, 62], "tag": "security" },
     { "id": "observability", "type": "external", "label": "Observability", "sublabel": "metrics + traces", "pos": [1190, 85], "size": [126, 62], "tag": "SRE" }
   ],
   "boundaries": [

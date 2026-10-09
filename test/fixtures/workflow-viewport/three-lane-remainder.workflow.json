@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": { "title": "Leave request", "quality_profile": "showcase", "output": "three-lane.html" },
+  "lanes": [
+    { "id": "staff", "label": "Employee" },
+    { "id": "lead", "label": "Team lead" },
+    { "id": "hr", "label": "HR" }
+  ],
+  "nodes": [
+    { "id": "apply", "lane": "staff", "col": 0, "type": "frontend", "label": "Request leave" },
+    { "id": "review", "lane": "lead", "col": 1, "type": "security", "label": "Approve" },
+    { "id": "record", "lane": "hr", "col": 2, "type": "backend", "label": "Record" },
+    { "id": "calendar", "lane": "hr", "col": 3, "type": "backend", "label": "Update calendar" },
+    { "id": "notify", "lane": "staff", "col": 4, "type": "frontend", "label": "Notified" }
+  ],
+  "edges": [
+    { "from": "apply", "to": "review", "label": "submit" },
+    { "from": "review", "to": "record", "label": "approved" },
+    { "from": "record", "to": "calendar" },
+    { "from": "calendar", "to": "notify", "label": "notify" }
+  ]
+}

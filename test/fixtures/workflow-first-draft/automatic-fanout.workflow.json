@@ -1,0 +1,88 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Automatic fan-out",
+    "output": "fan-out.html",
+    "quality_profile": "standard"
+  },
+  "lanes": [
+    {
+      "id": "ui",
+      "label": "Processing lane"
+    },
+    {
+      "id": "runtime",
+      "label": "Runtime workers and process management"
+    },
+    {
+      "id": "model",
+      "label": "Model execution workers"
+    },
+    {
+      "id": "tools",
+      "label": "Processing lane"
+    },
+    {
+      "id": "policy",
+      "label": "Processing lane",
+      "variant": "exception"
+    },
+    {
+      "id": "ledger",
+      "label": "Processing lane"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "runtime",
+      "col": 0,
+      "type": "backend",
+      "label": "Process task",
+      "sublabel": "Details"
+    },
+    {
+      "id": "begin",
+      "lane": "runtime",
+      "col": 1,
+      "type": "backend",
+      "label": "Process task",
+      "sublabel": "Details"
+    },
+    {
+      "id": "llm",
+      "lane": "model",
+      "col": 2,
+      "type": "backend",
+      "label": "Process task",
+      "sublabel": "Prepare the request",
+      "tag": "Process status"
+    },
+    {
+      "id": "messages",
+      "lane": "ledger",
+      "col": 1,
+      "type": "database",
+      "label": "Process task",
+      "sublabel": "Additional process detail"
+    }
+  ],
+  "edges": [
+    {
+      "id": "begin-messages",
+      "from": "begin",
+      "to": "messages",
+      "label": "Transfer data",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "begin-llm",
+      "from": "begin",
+      "to": "llm",
+      "label": "Transfer data",
+      "variant": "emphasis"
+    }
+  ]
+}

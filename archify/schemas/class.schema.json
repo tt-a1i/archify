@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tt-a1i/archify/schemas/class.schema.json",
+  "title": "Archify Class and Interface Diagram",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diagram_type",
+    "meta",
+    "types"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "class"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "animation": {
+          "$ref": "common.schema.json#/$defs/animation"
+        },
+        "visual_preset": {
+          "$ref": "common.schema.json#/$defs/visualPreset"
+        },
+        "quality_profile": {
+          "$ref": "common.schema.json#/$defs/qualityProfile"
+        },
+        "repository": {
+          "$ref": "common.schema.json#/$defs/repository"
+        },
+        "views": {
+          "$ref": "common.schema.json#/$defs/guidedViews"
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "$ref": "common.schema.json#/$defs/legendMode"
+            },
+            "entries": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "dependency": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "association": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "inheritance": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "realization": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "composition": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                },
+                "aggregation": {
+                  "$ref": "common.schema.json#/$defs/legendEntry"
+                }
+              }
+            }
+          }
+        },
+        "viewBox": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number",
+              "minimum": 320
+            },
+            {
+              "type": "number",
+              "minimum": 240
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "grid"
+          ]
+        },
+        "origin": {
+          "$ref": "common.schema.json#/$defs/point"
+        },
+        "gapX": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gapY": {
+          "type": "number",
+          "minimum": 0
+        },
+        "typeW": {
+          "type": "number",
+          "minimum": 120
+        },
+        "typeMaxW": {
+          "type": "number",
+          "minimum": 160
+        }
+      }
+    },
+    "types": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "class",
+              "abstract",
+              "interface",
+              "enum",
+              "record"
+            ]
+          },
+          "sublabel": {
+            "type": "string"
+          },
+          "row": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 12
+          },
+          "col": {
+            "type": "number",
+            "multipleOf": 0.5,
+            "minimum": 0,
+            "maximum": 12,
+            "description": "Grid column. A half step (e.g. 1.5) centres the type between two columns, such as a supertype over two subtypes."
+          },
+          "pos": {
+            "$ref": "common.schema.json#/$defs/point"
+          },
+          "width": {
+            "type": "number",
+            "minimum": 120
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/attribute"
+            }
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/method"
+            }
+          },
+          "sources": {
+            "$ref": "common.schema.json#/$defs/sourceReferences"
+          }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "to",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "from": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "to": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "kind": {
+            "enum": [
+              "dependency",
+              "association",
+              "inheritance",
+              "realization",
+              "composition",
+              "aggregation"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "fromSide": {
+            "$ref": "common.schema.json#/$defs/side"
+          },
+          "toSide": {
+            "$ref": "common.schema.json#/$defs/side"
+          },
+          "route": {
+            "enum": [
+              "auto",
+              "straight",
+              "orthogonal-h",
+              "orthogonal-v"
+            ]
+          },
+          "via": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/point"
+            }
+          },
+          "labelAt": {
+            "$ref": "common.schema.json#/$defs/point"
+          },
+          "labelDx": {
+            "type": "number"
+          },
+          "labelDy": {
+            "type": "number"
+          },
+          "labelSegment": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "cards": {
+      "$ref": "common.schema.json#/$defs/cards"
+    }
+  },
+  "$defs": {
+    "visibility": {
+      "enum": [
+        "public",
+        "protected",
+        "package",
+        "private"
+      ]
+    },
+    "attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "static": {
+          "type": "boolean"
+        }
+      }
+    },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "string"
+        },
+        "returns": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "static": {
+          "type": "boolean"
+        },
+        "abstract": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

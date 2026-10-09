@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, dev]
   pull_request:
+  workflow_dispatch:
 
 # Cancel obsolete PR runs, but never interrupt main verification/deployment.
 concurrency:
@@ -16,10 +17,36 @@ jobs:
     outputs:
       scope: ${{ steps.classify.outputs.scope }}
       website: ${{ steps.classify.outputs.website }}
+      generated: ${{ steps.classify.outputs.generated }}
+      browser: ${{ steps.classify.outputs.browser }}
+      webm: ${{ steps.classify.outputs.webm }}
+      package: ${{ steps.classify.outputs.package }}
+      windows: ${{ steps.classify.outputs.windows }}
+      manifest: ${{ steps.classify.outputs.manifest }}
+      owners: ${{ steps.classify.outputs.owners }}
+      changedTests: ${{ steps.classify.outputs.changedTests }}
     steps:
+      # Classification compares two trees, not their shared history.
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+      - name: Fetch PR comparison base
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          [[ "$CI_BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
+          git fetch --no-tags --depth=1 origin "$CI_BASE_SHA"
+      - name: Fetch dev push comparison base when available
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        shell: bash
+        env:
+          CI_BASE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$CI_BASE_SHA" =~ ^[0-9a-f]{40}$ ]] && [[ ! "$CI_BASE_SHA" =~ ^0+$ ]]; then
+            git fetch --no-tags --depth=1 origin "$CI_BASE_SHA" || echo 'Comparison base unavailable; classification requires full CI.'
+          fi
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
@@ -28,10 +55,11 @@ jobs:
         run: node scripts/ci-scope.mjs
         env:
           CI_EVENT_NAME: ${{ github.event_name }}
-          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_REF: ${{ github.ref }}
       - name: Check README content for documentation-only changes
         if: steps.classify.outputs.scope == 'docs'
-        run: node --test archify/test/readme-showcase.test.mjs
+        run: node --test test/readme-showcase.test.mjs
 
   test:
     needs: scope
@@ -49,28 +77,83 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.scope != 'docs'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.scope != 'docs'
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: archify/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            archify/package-lock.json
       - name: Install renderer dependencies
-        if: needs.scope.outputs.scope == 'full'
-        run: npm ci
-        working-directory: archify
-      - name: Golden-file + schema tests
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.scope != 'docs'
+        run: npm ci && npm --prefix archify ci
+      - name: Complete regression suite on canonical Node
+        if: needs.scope.outputs.scope == 'full' && matrix.node-version == 22
+        run: npm run test:full
+      - name: Core public CLI contracts
+        if: needs.scope.outputs.scope == 'core' && matrix.node-version == 22
         run: npm test
-        working-directory: archify
+      - name: Supported Node runtime compatibility
+        if: needs.scope.outputs.scope != 'docs' && matrix.node-version != 22
+        run: npm run test:compat
+      - name: Generated outputs and representative goldens
+        if: needs.scope.outputs.scope != 'full' && needs.scope.outputs.generated == 'true' && matrix.node-version == 22
+        run: npm run test:generated
+      - name: Changed tests and owned regression suites
+        if: needs.scope.outputs.scope == 'core' && matrix.node-version == 22
+        run: npm run test:affected
+        env:
+          CI_TEST_OWNERS: ${{ needs.scope.outputs.owners }}
+          CI_CHANGED_TESTS: ${{ needs.scope.outputs.changedTests }}
       - name: Verify community Hermes adapter
         if: needs.scope.outputs.scope == 'full' && matrix.node-version == 22
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
 
-  webm-artifact:
+  browser-regression:
+    needs: scope
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.browser == 'true'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.browser == 'true'
+        with:
+          node-version: 22
+      - name: Provision a known Chrome runtime
+        if: needs.scope.outputs.browser == 'true'
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - name: Install browser test dependencies
+        if: needs.scope.outputs.browser == 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund && npm --prefix archify ci --ignore-scripts
+      - name: Run shared browser regression gate
+        if: needs.scope.outputs.browser == 'true'
+        run: npm run test:browser -- --shard=${{ matrix.shard }}/2
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+
+  webm-decode:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
@@ -83,40 +166,46 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         with:
           node-version: 22
       - name: Provision a known Chrome runtime
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
           chrome-version: stable
           install-dependencies: true
       - name: Install the WebM decoder
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
       - name: Decode a real motion export and reject static frames
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         run: npm run test:webm
-        working-directory: archify
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-      - name: Install browser test dependencies
-        if: needs.scope.outputs.scope == 'full'
-        run: npm ci --ignore-scripts --no-audit --no-fund
-        working-directory: archify
-      - name: Run shared browser regression gate
-        if: needs.scope.outputs.scope == 'full'
-        run: npm run test:browser
-        working-directory: archify
+
+  webm-artifact:
+    needs: [scope, browser-regression, webm-decode]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every browser and WebM gate to succeed
         env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          BROWSER_RESULT: ${{ needs.browser-regression.result }}
+          WEBM_RESULT: ${{ needs.webm-decode.result }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+          test "$BROWSER_RESULT" = success
+          test "$WEBM_RESULT" = success
 
   zip-freshness:
     needs: scope
@@ -131,15 +220,15 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         with:
           node-version: 22
       - name: Rebuild archify.zip and compare exact bytes
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         run: |
           scripts/build-zip.sh /tmp/fresh.zip
           if ! cmp -s /tmp/fresh.zip archify.zip; then
@@ -160,15 +249,15 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.manifest == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.manifest == 'true'
         with:
           node-version: 22
       - name: Public notifier manifest must reference an existing stable Release
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.manifest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -234,15 +323,15 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         with:
           node-version: 22
       - name: Extract packaged skill
-        if: needs.scope.outputs.scope == 'full' && (runner.os != 'Windows')
+        if: needs.scope.outputs.package == 'true' && (runner.os != 'Windows')
         run: |
           set -euo pipefail
           package_root="$RUNNER_TEMP/archify-package"
@@ -250,33 +339,30 @@ jobs:
           mkdir -p "$package_root"
           unzip -q archify.zip -d "$package_root"
       - name: Extract packaged skill
-        if: needs.scope.outputs.scope == 'full' && (runner.os == 'Windows')
+        if: needs.scope.outputs.package == 'true' && (runner.os == 'Windows')
         shell: pwsh
         run: |
           $packageRoot = Join-Path $env:RUNNER_TEMP 'archify-package'
           if (Test-Path $packageRoot) { Remove-Item -Recurse -Force $packageRoot }
           Expand-Archive -Path archify.zip -DestinationPath $packageRoot
       - name: Validate packaged skill without installing dependencies
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         run: node scripts/package-smoke.mjs
       - name: Install delivery-lock test dependencies
-        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
-        run: npm ci --ignore-scripts
-        working-directory: archify
+        if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
+        run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
       - name: Verify delivery-lock ownership with real subprocesses
-        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
+        if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
         run: >-
           node --test
           --test-name-pattern="cli: portable delivery lock:"
           test/cli.test.mjs
-        working-directory: archify
       - name: Verify macOS opener stays behind delivery-lock release
-        if: needs.scope.outputs.scope == 'full' && runner.os == 'macOS'
+        if: needs.scope.outputs.windows == 'true' && runner.os == 'macOS'
         run: >-
           node --test
           --test-name-pattern="cli: lock release failure does not invoke the requested opener"
           test/cli.test.mjs
-        working-directory: archify
 
   website:
     needs: scope
@@ -301,9 +387,24 @@ jobs:
           chrome-version: stable
           install-dependencies: true
       - name: Verify built website navigation and language continuity
-        run: node --test --test-name-pattern='real Chrome' archify/test/site-language-continuity.test.mjs
+        run: npm run test:browser
+        working-directory: website
         env:
           ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist
+          ARCHIFY_SITE_INTEGRATION: '1'
+          ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - name: Build and validate the Cloudflare static website
+        run: npm run build && node scripts/check-cloudflare-output.mjs && node --test test/deployment-target.test.mjs
+        working-directory: website
+        env:
+          ARCHIFY_SITE_TARGET: cloudflare
+      - name: Verify Cloudflare navigation and language continuity
+        run: npm run test:browser
+        working-directory: website
+        env:
+          ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist-cloudflare
+          ARCHIFY_SITE_BASE: ''
           ARCHIFY_SITE_INTEGRATION: '1'
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
@@ -312,6 +413,12 @@ jobs:
           name: website-dist
           path: website/dist
           include-hidden-files: true
+      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: website-cloudflare-dist
+          path: website/dist-cloudflare
+          include-hidden-files: true
+          if-no-files-found: error
 
   windows-test-portability:
     needs: scope
@@ -331,29 +438,28 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install test dependencies
-        if: needs.scope.outputs.scope == 'full'
-        run: npm ci --ignore-scripts
-        working-directory: archify
+        if: needs.scope.outputs.windows == 'true'
+        run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
       - name: Provision controlled Windows path fixtures
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
       - name: Verify maintained Windows path contracts
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
         run: node scripts/run-windows-path-tests.mjs
         env:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
           ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
       - name: Clean up controlled Windows path fixtures
-        if: ${{ always() && needs.scope.outputs.scope == 'full' }}
+        if: ${{ always() && needs.scope.outputs.windows == 'true' }}
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
 
@@ -403,3 +509,63 @@ jobs:
         if: steps.deployment-head.outputs.current == 'true'
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+  # Enable after configuring a Pages project with production branch main.
+  # Disable Git-connected automatic deployments so they cannot bypass these gates.
+  deploy-cloudflare:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CLOUDFLARE_PAGES_PROJECT != ''
+    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability, website]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cloudflare-pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    environment:
+      name: cloudflare-pages
+      url: ${{ steps.deployment.outputs.deployment-url }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - name: Validate Cloudflare destination
+        env:
+          CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          [[ "$CLOUDFLARE_PAGES_PROJECT" =~ ^[a-z0-9][a-z0-9-]{0,57}[a-z0-9]$ ]] || exit 1
+          [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]] || exit 1
+          # Wrangler also discovers Functions relative to its working directory.
+          test ! -e functions
+      - name: Download verified Cloudflare website build
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: website-cloudflare-dist
+          path: website/dist-cloudflare
+      - name: Reject an obsolete deployment run
+        id: deployment-head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          current_main="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$current_main" == "$GITHUB_SHA" ]]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping obsolete Cloudflare deployment for ${GITHUB_SHA}; main is ${current_main}"
+          fi
+      - name: Deploy verified Cloudflare website
+        if: steps.deployment-head.outputs.current == 'true'
+        id: deployment
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.148.0'
+          packageManager: npm
+          command: pages deploy website/dist-cloudflare --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main --commit-hash=${{ github.sha }}

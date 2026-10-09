@@ -3,7 +3,7 @@
   "version": "3.0.2-dev.1",
   "private": true,
   "type": "module",
-  "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle).",
+  "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle / erd / class / tree / timeline / waterfall).",
   "license": "MIT",
   "bin": {
     "archify": "./bin/archify.mjs"
@@ -23,15 +23,13 @@
     "build:guide": "node ../scripts/build-guide.mjs ../docs/guide.html",
     "build:start": "node ../scripts/build-start.mjs ../docs/start.html",
     "build:readme-showcase": "node ../scripts/build-readme-showcase.mjs",
-    "test:webm": "node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs",
-    "test:browser": "node ../scripts/run-browser-tests.mjs",
-    "test": "npm run check:viewer && npm run check:brand-marks && npm run check:validators && npm run check:release-identity && node test/golden.mjs && node ../scripts/run-tests.mjs",
+    "test:webm": "npm --prefix .. run test:webm",
+    "test:browser": "npm --prefix .. run test:browser",
+    "test": "npm --prefix .. test",
     "render:examples": "node scripts/render-examples.mjs ../examples"
   },
   "devDependencies": {
     "ajv": "^8.17.1",
-    "parse5": "7.3.0",
-    "saxes": "6.0.0",
     "simple-icons": "16.28.0"
   },
   "overrides": {

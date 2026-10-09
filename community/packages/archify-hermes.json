@@ -1,0 +1,22 @@
+{
+  "name": "archify-hermes",
+  "type": "skill",
+  "summary": {
+    "en": "Hermes Agent integration: lets Hermes author Archify JSON IR and render through the Archify CLI — no code loaded into Archify.",
+    "zh": "Archify 的 Hermes Agent 集成。以目录插件形式让 Hermes 编写 Archify JSON IR 并通过 Archify CLI 渲染图，不向 Archify 本体加载任何代码。"
+  },
+  "author": {
+    "name": "tt-a1i",
+    "url": "https://github.com/tt-a1i"
+  },
+  "repository": "https://github.com/tt-a1i/archify/tree/main/integrations/hermes-agent",
+  "archify": ">=3.0.0 <4.0.0",
+  "schemaVersions": [1, 2],
+  "tags": ["hermes-agent", "integration", "opt-in"],
+  "evidence": [
+    {
+      "label": "Plugin contract tests",
+      "url": "https://github.com/tt-a1i/archify/tree/main/integrations/hermes-agent/test"
+    }
+  ]
+}

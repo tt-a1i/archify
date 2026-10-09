@@ -7,18 +7,30 @@ motion mode and ownership, `node-finder.js` for node search and endpoint picking
 `intent-trace.js` for hover/focus previews, `semantic-lens.js` for type selection
 and legend previews, `route-probe.js` for directed paths and Route Journey,
 `focus.js` for semantic selection, relationships, reachability and shared flow tokens,
+`tree-branches.js` for hierarchy expand/collapse (active only on tree diagrams),
 `export.js` for export menus, serialization, images, cards, clipboard and WebM,
 `export-cleanup.js` for its private SVG clone cleanup, `viewer.css` for the
 main Viewer stylesheet, and `template.source.html` for the remaining shell.
 `viewer.css` owns the complete main `<style>` block; the font-face block remains
 in the shell because it carries its license notice and embedded font data.
 `archify/assets/template.html` is the committed generated artifact, consumed
-unchanged by all five renderers and the installed Skill. These maintainer
+unchanged by all ten renderers and the installed Skill. These maintainer
 sources live outside the packaged `archify/` directory.
 
 From `archify/`, run `npm run generate:viewer` after editing any source.
-`npm run check:viewer` verifies freshness without writing; `npm test` includes
-that check. Assembly inserts JavaScript fragments verbatim at fixed markers.
+`npm run check:viewer` verifies freshness without writing; root
+`npm run test:generated` and `npm run test:full` include that check. Shared Viewer changes also require rebuilding the checked-in
+Checkout comparison from its tracked snapshots. From the repository root, run:
+
+```sh
+node archify/bin/archify.mjs compare architecture archify/examples/checkout-platform.base.architecture.json archify/examples/checkout-platform.head.architecture.json examples/checkout-platform-delta.html --receipt examples/checkout-platform-delta.receipt.json --quality showcase --json
+```
+
+`test/architecture-delta.test.mjs` verifies those artifact and receipt
+bytes. Rebuild other affected examples and distribution outputs according to
+[Contributing](../CONTRIBUTING.md#packages-and-generated-artifacts).
+
+Assembly inserts JavaScript fragments verbatim at fixed markers.
 The CSS fragment is authored at column zero and reindented four spaces when it
 is inserted into the shell's `<style>` block; this preserves the delivered
 template bytes while keeping the standalone source easy to edit.
@@ -132,7 +144,7 @@ and candidate; encoding bytes/timing are not a deterministic oracle for video.
 
 ## Focus / Semantic Explorer contract
 
-The complete IIFE initializes once after Source Evidence and installBeacons(),
+The complete IIFE initializes once after Source Evidence,
 before Intent Trace. Reader/Chrome Layout, Camera, Finder, Route
 and Lens keep their later positions. Required diagram SVG, Passport controls and
 relationship list remain required DOM. Shared viewerText/viewerCount/viewerKindLabel
@@ -163,10 +175,19 @@ provider is part of Focus ownership, not a second initialization step.
   record or null; reachability returns copied node/edge arrays. Snapshot results
   are constructed from current authored nodes, edges and validated Reach state.
 - Passport uses existing label/kind/detail/context/tag/brand/source metadata. The
-  Source Evidence provider owns repository/node lookup and beacon installation;
+  Source Evidence provider owns repository/node lookup; Finder searches source paths.
   Focus owns displaying or hiding evidence and building the existing safe links.
+  Source Evidence appends the localized verified source count to node ARIA
+  labels at initialization, preserving the original label for canonical export.
+  Only revision-verified payload sources contribute; zero counts add no hint.
+  Repeated initialization restores the original label first, so hints never
+  accumulate and disappeared evidence removes the old hint. This adds no SVG
+  badge, shape, or geometry and exposes no beacon installation interface.
   Relationship rows are grouped out/in/loop, retaining authored order within each
   group and deduplicating keys. Up/Down/Home/End clamp within the resulting rows.
+  A diagram-container ResizeObserver requests the existing placement frame while
+  Passport is visible, so manual positions are reclamped after Reader layout
+  settles. Active dragging retains its existing placement guard.
 - Relationship intent priority is pin, then focus, then hover. Clearing one intent
   may restore another. Pointer transitions within the same row/hit target do not
   reset intent; touch and non-fine-pointer hover retain their filters. Direct hover
@@ -199,7 +220,9 @@ provider is part of Focus ownership, not a second initialization step.
 - flowTokens consumes existing shape geometry, edge classes and node kinds. Kind
   priority remains security, event, data, state, call. create produces a detached
   token with the existing path, duration/class options and null behavior. Motion
-  ownership remains in its existing module.
+  ownership remains in its existing module. If the visual `d` runs in reverse,
+  `data-motion-path` supplies the canonical from→to semantic path shared by
+  Focus, Intent Trace, Semantic Lens, Route Probe and WebM.
 - Relationship pulse removes any previous pulse, clones existing shape geometry
   and installs at most one flow token, retaining overlay placement and animation
   end/cancel removal. Embed, hidden, paused Motion and reduced motion prevent new
@@ -472,7 +495,7 @@ Focus/Route active queries are runtime lookups; Route initializes later.
   never claims or releases an owner. Export Cleanup strips cloned Intent state,
   while Intent clears the live diagram. Neither dependency moves into this file.
 
-`intent-trace.test.mjs` retains generated-output checks. The browser test covers
+`intent-trace-browser.test.mjs` covers
 five-mode initialization, real pointer/native focus handoffs, bounded timer
 cleanup, isolated timer and SVG fixtures, blockers and actual callers, real CSS
 completion, Motion ownership, reduced motion, themes and SVG export. Fixtures
@@ -533,8 +556,7 @@ position. Its interface is `open`, `close`, `toggle`, `select`, `isOpen`,
   handling, Guide and Route callers remain outside Finder. The dialog stays
   non-modal; no focus trap or keyboard adapter is introduced.
 
-`finder.test.mjs` retains generated-output checks; `finder-browser.test.mjs`
-exercises five-mode initialization, trusted keyboard/mouse input, real Route
+`finder-browser.test.mjs` exercises five-mode initialization, trusted keyboard/mouse input, real Route
 source/target collaboration, retained context, panel cleanup, themes, constrained
 layout, reduced motion and SVG export. Its metadata fixture isolates search
 inputs; it does not claim repository verification or brand-rendering coverage.
@@ -547,13 +569,47 @@ The source split narrows maintenance scope while preserving runtime dependencies
   It captures `.container`, `.diagram-container` and its direct child SVG,
   optional header/card elements, and the initial viewBox ratio.
 - The public Interface remains `measure`, `schedule`, `whenStable`, `active`,
-  and `receipt`. Viewer Chrome Layout calls `schedule` after changing the
+  `receipt`, and `syncLegend`. Camera calls `syncLegend` while sampling its
+  rendered transform so a corner legend stays fixed through zoom transitions.
+  Viewer Chrome Layout calls `schedule` after changing the
   navigation reserve and `whenStable` while probing layout. The browser
   visual checker also uses `window.Archify.readerLayout.whenStable`.
 - Reader owns the outer width (`html`'s `--archify-reader-width`) and temporary
-  `data-reader-layout` / `data-reader-overflow` attributes. Ineligible measures
-  clear them and reset the recorded width. CSS consumes the width on `.container`.
+  `data-reader-layout` / `data-reader-overflow` attributes. Automatic canvases
+  whose enlargement cap binds also use `data-reader-area` and
+  `--archify-diagram-min-height` to keep a normal viewport-sized reading area.
+  Uncapped and ineligible measures clear these values
+  and reset the recorded width. CSS consumes the width on `.container`.
   Reader never writes canonical SVG geometry, viewBox or semantic IDs.
+- Renderers declare fitting independently of their UI or column metadata:
+  `data-reader-fit="width-first"` selects available desktop reading width;
+  `data-reader-fit="intrinsic-height"` selects height fitting. Both declare
+  automatic canvases and share the existing readability and enlargement limits.
+  Automatic Sequence and Waterfall canvases, and intrinsic v2 Workflow canvases
+  with expanded vertical stacks, declare `width-first`. A compact automatic
+  Sequence can fit the first screen while preserving authored text sizes;
+  longer sequences and the other width-first families retain vertical page
+  scroll, and overflow settling must not shrink them to viewport height.
+  Undeclared SVGs retain the ordinary ratio-based eligibility and fit; UI or
+  column attributes alone do not opt into either automatic fit. Other automatic
+  canvases retain height fitting. Explicit Workflow canvases retain their existing
+  fitting behavior. All automatic canvases cap
+  enlargement at 1.5 times the authored SVG width without reducing the outer
+  reading area. Capped SVGs are centered inside that area; uncapped diagrams
+  retain their existing natural flow. In a capped reader area, the original
+  SVG legend uses a temporary CSS transform to sit at the outer canvas's
+  bottom-left content corner, at its normal reading size through 25–100%
+  camera zoom. The group stays in the same SVG for hover/focus and export.
+  Compact automatic Sequences that fit the first screen also use this corner
+  placement, even when the enlargement cap does not bind. A legend that cannot
+  fit clear of the navigation dock keeps its original position. Camera zoom
+  above 100%, other uncapped diagrams, small screens, Embed,
+  Present and print restore ordinary in-SVG legend placement; canonical
+  exports remove the corner marker and transform without changing authored
+  coordinates or transforms. The 960px shell floor still serves the header and
+  controls. An explicit viewBox retains
+  its existing fixed-canvas fit. Present still provides the full overview;
+  camera 100% is relative to the fitted reading size, not intrinsic SVG pixels.
 - Initial wide-diagram classification sets `data-wide-diagram` on the diagram
   container and `data-diagram-shape` on `html`. These survive eligibility changes;
   CSS and camera/radar behavior still depend on the wide-diagram flag on narrow
@@ -563,8 +619,8 @@ The source split narrows maintenance scope while preserving runtime dependencies
   the page lifetime. `schedule` coalesces requests; deferred overflow settling
   rechecks eligibility. Leaving adaptive layout clears its state without
   unmounting the module or clearing another module's state.
-- Width eligibility, overflow fallback and optional-observer behavior are
-  unchanged. Shared `waitForStableLayout` waits for fonts, pending work and
+- Desktop eligibility and optional-observer behavior are unchanged. Shared
+  `waitForStableLayout` waits for fonts, pending work and
   consecutive stable dimensions; its default 240-frame sampling limit starts
   after font readiness. It is not a wall-clock timeout for stalled fonts or
   background pages. Keep this helper shared with Viewer Chrome Layout.
@@ -601,7 +657,10 @@ absent legend does not disable protection of the SVG stage. `stageRect` removes
 camera scale/translation from measured geometry; it never rewrites SVG geometry.
 
 Resize, load, print, font readiness and the existing observers retain their
-original roles. ResizeObserver watches navigation/SVG/legend size;
+original roles. ResizeObserver watches navigation/SVG/legend size; a separate
+container-size observation updates dock lift when Camera changes page flow,
+without remeasuring the baseline rail. The stability waiter includes that lift
+frame and its final value.
 MutationObserver watches legend content and the root embed/presentation/preset/
 theme attributes. Camera Reset preserves the established rail; viewport, mode
 and content changes are responsible for baseline reprobes. Optional observer
@@ -628,6 +687,26 @@ the modes are overview, manual and semantic. Zoom and Reset return undefined;
 `centerAt` returns a boolean, `logicalViewport` can return null, and `sync`
 delegates to `reveal` or returns false. Manual Reset interrupts callers, whereas
 `reset({ automatic: true })` stops camera motion without the manual takeover path.
+
+Manual zoom uses 25 percentage point steps from 25% through 300%, relative to
+the Reader's fitted size. Below 100%, the diagram centers within the visible
+horizontal scroll viewport; diagrams taller than the viewport stay top-aligned.
+Manual zoom adjusts page scrolling for those long diagrams to preserve the
+visible reading region, or reveal the whole diagram when it fits onscreen.
+Map detail and no camera dragging apply; wide mobile layouts retain
+their contained horizontal scroll. Reset restores 100% overview. Semantic reveal
+and Radar centering retain their existing minimum of 100%. Canonical exports
+retain the original geometry regardless of the manual zoom.
+
+For long ordinary diagrams below 100%, Camera also reduces the container's
+page-flow height to the painted SVG height plus its existing padding/borders.
+The SVG retains its intrinsic client size, so zoom and layout cannot repeatedly
+shrink the camera base. Size observation follows Reader width and Chrome reserve
+changes without requiring a window resize. Reset, short diagrams, Embed, Present
+and print restore the original inline container height and priority. Reaching
+a 100% target restores ordinary flow immediately, so Chrome cannot interpret
+a partly shrunk CSS-animation frame as a new baseline rail. This outer
+layout state is absent from canonical SVG exports.
 
 `reveal` returns a transaction or false, with branch-specific side effects.
 Desktop empty/unknown targets can return before changing the camera. At widths
@@ -811,7 +890,7 @@ Viewer capability or changes the live DOM. No new `Archify` interface is exposed
 | Focus, relationship preview, reachability, Intent Trace | Remove selection/preview markers and runtime overlays; reset node `aria-pressed` using the existing rule. |
 | Route Probe | Remove picking, result and journey markers/overlays and route step styles. |
 | Semantic Lens and legend preview | Remove filtering/preview decorations and runtime legend accessibility attributes. |
-| Source Evidence | Remove beacons/counts; restore recorded original labels. Missing or empty original labels remove `aria-label`, as before. |
+| Source Evidence | Remove beacons/counts; restore recorded original labels. Missing original labels remove `aria-label`; an authored empty label remains an empty attribute. |
 | Previous Route/Reach share decoration | Remove before applying the current export's explicit snapshot. |
 
 Original content, node/edge identity, geometry and authored animation metadata

@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "diagram_type": "lifecycle",
   "meta": {
     "title": "Deployment Release Lifecycle",
@@ -8,41 +8,65 @@
     "visual_preset": "signal-flow",
     "quality_profile": "showcase"
   },
-  "lanes": [
-    { "id": "main", "label": "Release phases" },
-    { "id": "waiting", "label": "Approval + health wait" },
-    { "id": "recovery", "label": "Rollback controller" },
-    { "id": "terminal", "label": "Terminal exits" }
-  ],
+  "mainPath": ["queued", "building", "verifying", "ready", "live"],
   "states": [
-    { "id": "queued", "type": "start", "label": "Queued", "sublabel": "change accepted", "lane": "main", "col": 0, "step": "01", "tag": "pending" },
-    { "id": "building", "type": "active", "label": "Building", "sublabel": "immutable image", "lane": "main", "col": 1, "step": "02", "tag": "running" },
-    { "id": "verifying", "type": "decision", "label": "Verifying", "sublabel": "tests + policy", "lane": "main", "col": 2, "step": "03", "tag": "gate" },
-    { "id": "ready", "type": "waiting", "label": "Ready", "sublabel": "promotion pending", "lane": "main", "col": 3, "step": "04", "tag": "approved" },
-    { "id": "live", "type": "success", "label": "Live", "sublabel": "production healthy", "lane": "main", "col": 4, "step": "05", "tag": "success" },
-    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "release owner", "lane": "waiting", "col": 2, "tag": "pause" },
-    { "id": "rollback", "type": "active", "label": "Rolling Back", "sublabel": "last good image", "lane": "recovery", "col": 3, "tag": "automatic" },
-    { "id": "paused", "type": "waiting", "label": "Health Paused", "sublabel": "SLO regression", "lane": "waiting", "col": 4, "tag": "observe" },
-    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "approval denied", "lane": "terminal", "col": 2, "tag": "terminal" },
-    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "rollback failed", "lane": "terminal", "col": 3, "tag": "terminal" },
-    { "id": "rolled_back", "type": "success", "label": "Rolled Back", "sublabel": "service restored", "lane": "terminal", "col": 4, "tag": "terminal" }
+    { "id": "queued", "type": "start", "label": "Queued", "sublabel": "change accepted", "tag": "pending", "step": "01" },
+    { "id": "building", "type": "active", "label": "Building", "sublabel": "immutable image", "tag": "running", "step": "02" },
+    { "id": "verifying", "type": "decision", "label": "Verifying", "sublabel": "tests + policy", "tag": "gate", "step": "03" },
+    { "id": "ready", "type": "waiting", "label": "Ready", "sublabel": "promotion pending", "tag": "approved", "step": "04" },
+    { "id": "live", "type": "success", "label": "Live", "sublabel": "production healthy", "tag": "success", "step": "05" },
+    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "release owner", "tag": "pause" },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "approval denied", "tag": "terminal" },
+    { "id": "paused", "type": "waiting", "label": "Health Paused", "sublabel": "SLO regression", "tag": "observe" },
+    { "id": "rollback", "type": "active", "label": "Rolling Back", "sublabel": "last good image", "tag": "automatic" },
+    { "id": "rolled_back", "type": "success", "label": "Rolled Back", "sublabel": "service restored", "tag": "terminal" },
+    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "rollback failed", "tag": "terminal" },
+    { "id": "aborted", "type": "neutral", "label": "Aborted", "sublabel": "change withdrawn", "tag": "terminal" }
   ],
   "transitions": [
-    { "from": "queued", "to": "building" },
-    { "from": "building", "to": "verifying" },
-    { "from": "verifying", "to": "ready" },
-    { "from": "ready", "to": "live" },
-    { "from": "verifying", "to": "approval", "variant": "security", "label": "needs sign-off" },
-    { "from": "approval", "to": "ready", "label": "approved" },
-    { "from": "approval", "to": "cancelled", "variant": "security" },
-    { "from": "ready", "to": "rollback", "variant": "security" },
-    { "from": "rollback", "to": "failed", "variant": "security" },
-    { "from": "live", "to": "paused", "variant": "dashed" },
-    { "from": "paused", "to": "rolled_back", "variant": "emphasis" }
+    { "id": "queued-building", "from": "queued", "to": "building", "label": "pick up" },
+    { "id": "building-verifying", "from": "building", "to": "verifying", "label": "image built" },
+    { "id": "verifying-ready", "from": "verifying", "to": "ready", "label": "checks pass" },
+    { "id": "ready-live", "from": "ready", "to": "live", "label": "promote" },
+    { "id": "verifying-building", "from": "verifying", "to": "building", "label": "tests fail" },
+    { "id": "verifying-approval", "from": "verifying", "to": "approval", "label": "needs sign-off", "variant": "security" },
+    { "id": "approval-ready", "from": "approval", "to": "ready", "label": "approved" },
+    { "id": "approval-cancelled", "from": "approval", "to": "cancelled", "label": "denied", "variant": "security" },
+    { "id": "live-paused", "from": "live", "to": "paused", "label": "SLO alert", "variant": "dashed" },
+    { "id": "paused-live", "from": "paused", "to": "live", "label": "recovered" },
+    { "id": "paused-rollback", "from": "paused", "to": "rollback", "label": "breach persists", "variant": "security" },
+    { "id": "rollback-rolled-back", "from": "rollback", "to": "rolled_back", "label": "restored", "variant": "emphasis" },
+    { "id": "rollback-failed", "from": "rollback", "to": "failed", "label": "rollback error", "variant": "security" },
+    { "id": "building-aborted", "from": "building", "to": "aborted", "label": "abort" },
+    { "id": "verifying-aborted", "from": "verifying", "to": "aborted", "label": "abort" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Promotion Rail", "items": ["The release object moves through five ordered phases", "Verification and approval remain distinct states", "Live means production health is currently proven"] },
-    { "dot": "amber", "title": "Wait States", "items": ["Human approval can pause without consuming a worker", "A health regression pauses further rollout", "Every wait exposes the event required to continue"] },
-    { "dot": "rose", "title": "Explicit Endings", "items": ["Denied approval ends as Cancelled", "Rollback controller failure ends as Failed", "Successful rollback is a terminal restored outcome"] }
+    {
+      "dot": "cyan",
+      "title": "Promotion Path",
+      "items": [
+        "The release object moves through five ordered phases",
+        "Verification and approval remain distinct states",
+        "Live means production health is currently proven"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Wait States",
+      "items": [
+        "Human approval can pause without consuming a worker",
+        "A health regression pauses further rollout",
+        "Every wait exposes the event required to continue"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Explicit Endings",
+      "items": [
+        "Denied approval ends as Cancelled",
+        "Rollback controller failure ends as Failed",
+        "Successful rollback is a terminal restored outcome"
+      ]
+    }
   ]
 }

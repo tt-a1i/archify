@@ -3,6 +3,7 @@
 /archify/examples/*.html linguist-generated=true
 /examples/*.html linguist-generated=true
 /docs/cases/*.html linguist-generated=true
+/docs/cases/life/*.html linguist-generated=true
 /docs/gallery.html linguist-generated=true
 /docs/gallery/artifacts/*.html linguist-generated=true
 /docs/guide.html linguist-generated=true

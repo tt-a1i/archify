@@ -1,0 +1,144 @@
+---
+import { version, versioned } from '../data/site';
+import { productChannel } from '../data/product-facts';
+import { packages, typeOrder, typeCounts, type PackageType } from '../data/community';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import Navigation from '../components/Navigation.astro';
+import head from '../data/community-head.html?raw';
+import css from '../styles/community.css?raw';
+import pageScript from '../scripts/community.js?raw';
+
+const typeLabels: Record<PackageType, { en: string; zh: string }> = {
+  skill: { en: 'Skill pack', zh: '技能包' },
+  recipe: { en: 'Recipes', zh: '场景配方' },
+  'brand-marks': { en: 'Brand kit', zh: '品牌套件' },
+  locale: { en: 'Locale', zh: '语言包' },
+  wrapper: { en: 'Wrapper', zh: '命令行封装' },
+};
+const activeTypes = typeOrder.filter((type) => typeCounts[type] > 0);
+const { lang = 'en' } = Astro.props;
+---
+<SiteLayout page="community" lang={lang} head={versioned(head)} css={css}>
+
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <Navigation page="community" />
+
+  <main>
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <div class="lead-label" data-en="Community registry / standalone packages" data-zh="社区注册表 / 独立包">Community registry / standalone packages</div>
+          <h1 data-translation-html data-en="Built on Archify.<br><em>Shared by everyone.</em>" data-zh="基于 Archify 构建，<br><em>由社区共享。</em>">Built on Archify.<br><em>Shared by everyone.</em></h1>
+          <p class="hero-copy" data-en="Community packages are standalone works that wrap the Archify CLI — skill packs, recipe libraries, brand kits, locales, and wrappers. Nothing here is a plugin: no third-party code ever runs inside the renderer." data-zh="社区包是围绕 Archify CLI 构建的独立产物——技能包、场景配方、品牌套件、语言包与命令行封装。这里没有插件：任何第三方代码都不会进入渲染器内部运行。">Community packages are standalone works that wrap the Archify CLI — skill packs, recipe libraries, brand kits, locales, and wrappers. Nothing here is a plugin: no third-party code ever runs inside the renderer.</p>
+          <a class="card-link submission-link" href="https://github.com/tt-a1i/archify/tree/main/community#submitting-a-package" target="_blank" rel="noopener noreferrer" data-en="Submit your package ↗" data-zh="提交你的包 ↗">Submit your package ↗</a>
+        </div>
+        <div class="proof-board" aria-label="Registry summary">
+          <div class="proof-row"><span class="proof-value">{packages.length}</span><span class="proof-label" data-translation-html data-en="packages listed<br>from the registry" data-zh="个已收录包<br>来自注册表">packages listed<br>from the registry</span></div>
+          <div class="proof-row"><span class="proof-value">{activeTypes.length}</span><span class="proof-label" data-translation-html data-en="package types<br>in the catalog" data-zh="种包类型<br>收录中">package types<br>in the catalog</span></div>
+          <div class="proof-row"><span class="proof-value proof-status">PASS</span><span class="proof-label" data-translation-html data-en="metadata validated<br>deterministically" data-zh="元数据通过<br>确定性校验">metadata validated<br>deterministically</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Catalog controls">
+      <div class="shell controls-inner">
+        <div class="filter-group" role="group" aria-label="Filter packages by type">
+          <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en={`All / ${typeCounts.all}`} data-zh={`全部 / ${typeCounts.all}`}>All / {typeCounts.all}</button>
+          {activeTypes.map((type) => (
+            <button class="filter-button" type="button" data-filter={type} aria-pressed="false" data-en={`${typeLabels[type].en} / ${typeCounts[type]}`} data-zh={`${typeLabels[type].zh} / ${typeCounts[type]}`}>{typeLabels[type].en} / {typeCounts[type]}</button>
+          ))}
+        </div>
+        <div class="controls-actions">
+          <div class="controls-note" data-en="Submitted by PR · maintained by their authors" data-zh="通过 PR 提交 · 由作者自行维护">Submitted by PR · maintained by their authors</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="catalog-section" id="catalog">
+      <div class="shell">
+        <div class="section-intro">
+          <h2 data-en="The catalog." data-zh="目录。">The catalog.</h2>
+          <p data-en="Every entry is a metadata file in the Archify repository, merged by PR and revalidated on every change. Listing is not endorsement — evidence links speak for each package." data-zh="每个条目都是 Archify 仓库中的一个元数据文件，经 PR 合并并在每次变更时重新校验。收录不代表官方背书——证据链接为每个包说话。">Every entry is a metadata file in the Archify repository, merged by PR and revalidated on every change. Listing is not endorsement — evidence links speak for each package.</p>
+        </div>
+        <div class="type-ledger" role="group" aria-label="Filter by package type">
+          {typeOrder.map((type) => (
+            <button type="button" class={`ledger-cell badge-${type} ${typeCounts[type] === 0 ? 'is-open' : ''}`} data-filter={type} aria-pressed="false">
+              <span class="ledger-label" data-en={typeLabels[type].en} data-zh={typeLabels[type].zh}>{typeLabels[type].en}</span>
+              <span class="ledger-count">{typeCounts[type] > 0
+                ? typeCounts[type]
+                : <em data-en="open" data-zh="虚位以待">open</em>}</span>
+            </button>
+          ))}
+        </div>
+        <div class="package-grid" id="package-grid">
+          {packages.map((entry, index) => (
+            <article class={`package-card badge-${entry.type}`} data-type={entry.type} style={`--stagger:${index}`}>
+              <div class="package-card-head">
+                <span class="package-index">{String(index + 1).padStart(2, '0')}</span>
+                <span class="package-name">{entry.name}</span>
+                <span class="type-badge" data-en={typeLabels[entry.type].en} data-zh={typeLabels[entry.type].zh}>{typeLabels[entry.type].en}</span>
+              </div>
+              <p class="package-summary" data-en={entry.summary.en} data-zh={entry.summary.zh}>{entry.summary.en}</p>
+              <div class="package-meta">
+                <span class="meta-chip" title="Author">
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="5" r="2.6"/><path d="M2.8 13.4c.7-2.6 2.8-4 5.2-4s4.5 1.4 5.2 4"/></svg>
+                  {entry.author.name}
+                </span>
+                <span class="meta-chip mono" title="Compatible Archify range">archify {entry.archify}</span>
+                <span class="meta-chip mono" title="Supported IR schema versions">IR v{entry.schemaVersions.join(' · v')}</span>
+              </div>
+              <div class="package-actions">
+                <a class="card-link" href={entry.repository} target="_blank" rel="noopener noreferrer" data-en="View source ↗" data-zh="查看源码 ↗">View source ↗</a>
+                {entry.evidence?.map((evidence) => (
+                  <a class="card-link subtle evidence-link" href={evidence.url} target="_blank" rel="noopener noreferrer" data-en={`${evidence.label} ↗`} data-zh={`${evidence.label} ↗`}>{evidence.label} ↗</a>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+        <div class="empty-state" id="empty-state" data-en="No packages match this filter." data-zh="当前筛选条件下没有收录包。">No packages match this filter.</div>
+      </div>
+    </section>
+
+    <section class="method">
+      <div class="shell method-grid">
+        <div>
+          <div class="lead-label" data-en="Join the registry" data-zh="加入注册表">Join the registry</div>
+          <h2 data-en="A pull request is the submission." data-zh="一次 PR 就是提交。">A pull request is the submission.</h2>
+          <div class="pipeline" aria-label="Submission pipeline">
+            <div class="pipeline-step"><span class="pipeline-num">01</span><span class="pipeline-label" data-en="Publish your package in your own repo" data-zh="在你自己的仓库发布你的包">Publish your package in your own repo</span><span class="pipeline-state you">YOU</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">02</span><span class="pipeline-label" data-en="Add one metadata file under community/packages/" data-zh="在 community/packages/ 下添加一个元数据文件">Add one metadata file under community/packages/</span><span class="pipeline-state you">YOU</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">03</span><span class="pipeline-label" data-en="Validate with check-community-packages.mjs" data-zh="运行 check-community-packages.mjs 校验">Validate with check-community-packages.mjs</span><span class="pipeline-state">PASS</span></div>
+            <div class="pipeline-step"><span class="pipeline-num">04</span><span class="pipeline-label" data-en="Open a PR targeting dev — publication follows main deployment" data-zh="向 dev 提 PR——进入 main 并部署后上线">Open a PR targeting dev — publication follows main deployment</span><span class="pipeline-state">PASS</span></div>
+          </div>
+        </div>
+        <div class="method-code">
+          <div class="method-code-bar"><span>submit locally</span><span>zero dependencies</span></div>
+          <pre># from your fork, track upstream dev
+<span class="accent">$ git fetch upstream dev</span>
+<span class="accent">$ git switch -c community/my-pack upstream/dev</span>
+
+# add community/packages/my-pack.json
+# validate from the repository root
+<span class="accent">$ node scripts/check-community-packages.mjs</span>
+
+# open PR to dev → review
+# promote to main → deploy → public catalog</pre>
+          <a class="card-link method-link" href="https://github.com/tt-a1i/archify/tree/main/community#submitting-a-package" target="_blank" rel="noopener noreferrer" data-en="Read the submission guide ↗" data-zh="阅读提交指南 ↗">Read the submission guide ↗</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <span data-en="Community packages are maintained by their authors. Listing is not endorsement; Archify never executes package code." data-zh="社区包由各自作者维护。收录不代表官方背书；Archify 绝不执行第三方包的代码。">Community packages are maintained by their authors. Listing is not endorsement; Archify never executes package code.</span>
+      <span data-en={`Archify v${version} · ${productChannel} · MIT`} data-zh={`Archify v${version} · ${productChannel === 'stable' ? '稳定版' : '开发版'} · MIT`}>Archify v{version} · {productChannel} · MIT</span>
+    </div>
+  </footer>
+
+  <script is:inline src="assets/site-language.js"></script>
+  <script is:inline set:html={versioned(pageScript)}></script>
+
+</SiteLayout>

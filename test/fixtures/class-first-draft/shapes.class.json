@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "class",
+  "meta": {
+    "title": "图形编辑器核心类",
+    "locale": "zh-CN",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "types": [
+    {
+      "id": "shape",
+      "label": "Shape",
+      "kind": "abstract",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "string",
+          "visibility": "protected"
+        }
+      ],
+      "methods": [
+        {
+          "name": "draw",
+          "visibility": "public",
+          "parameters": "ctx: Canvas",
+          "returns": "void"
+        },
+        {
+          "name": "bounds",
+          "visibility": "public",
+          "returns": "Rect"
+        }
+      ]
+    },
+    {
+      "id": "rect",
+      "label": "Rectangle",
+      "kind": "class",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "w",
+          "type": "number",
+          "visibility": "private"
+        },
+        {
+          "name": "h",
+          "type": "number",
+          "visibility": "private"
+        }
+      ]
+    },
+    {
+      "id": "circle",
+      "label": "Circle",
+      "kind": "class",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "r",
+          "type": "number",
+          "visibility": "private"
+        }
+      ]
+    },
+    {
+      "id": "group",
+      "label": "Group",
+      "kind": "class",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "children",
+          "type": "Shape[]",
+          "visibility": "private"
+        }
+      ],
+      "methods": [
+        {
+          "name": "add",
+          "visibility": "public",
+          "parameters": "s: Shape",
+          "returns": "void"
+        }
+      ]
+    },
+    {
+      "id": "doc",
+      "label": "Document",
+      "kind": "class",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "shapes",
+          "type": "Shape[]",
+          "visibility": "private"
+        }
+      ],
+      "methods": [
+        {
+          "name": "render",
+          "visibility": "public",
+          "returns": "void"
+        }
+      ]
+    },
+    {
+      "id": "history",
+      "label": "History",
+      "kind": "class",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "stack",
+          "type": "Command[]",
+          "visibility": "private"
+        }
+      ],
+      "methods": [
+        {
+          "name": "undo",
+          "visibility": "public",
+          "returns": "void"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rect_shape_inheritance",
+      "from": "rect",
+      "to": "shape",
+      "kind": "inheritance"
+    },
+    {
+      "id": "circle_shape_inheritance",
+      "from": "circle",
+      "to": "shape",
+      "kind": "inheritance"
+    },
+    {
+      "id": "group_shape_inheritance",
+      "from": "group",
+      "to": "shape",
+      "kind": "inheritance"
+    },
+    {
+      "id": "group_shape_composition",
+      "from": "group",
+      "to": "shape",
+      "kind": "composition",
+      "label": "包含"
+    },
+    {
+      "id": "doc_shape_aggregation",
+      "from": "doc",
+      "to": "shape",
+      "kind": "aggregation",
+      "label": "持有"
+    },
+    {
+      "id": "doc_history_composition",
+      "from": "doc",
+      "to": "history",
+      "kind": "composition",
+      "label": "撤销栈"
+    }
+  ]
+}

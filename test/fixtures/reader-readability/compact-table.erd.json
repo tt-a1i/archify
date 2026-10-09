@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "diagram.html",
+    "title": "Anonymous compact table"
+  },
+  "entities": [
+    {
+      "id": "record",
+      "label": "record",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "status",
+          "type": "text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "layout": {
+    "mode": "grid"
+  }
+}

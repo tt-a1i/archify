@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Customer refund",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "customer-refund.html"
+  },
+  "lanes": [
+    {
+      "id": "cust",
+      "label": "Customer"
+    },
+    {
+      "id": "cs",
+      "label": "Support"
+    },
+    {
+      "id": "fin",
+      "label": "Finance"
+    },
+    {
+      "id": "psp",
+      "label": "Processor"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ask",
+      "lane": "cust",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request refund",
+      "sublabel": "in app"
+    },
+    {
+      "id": "triage",
+      "lane": "cs",
+      "col": 1,
+      "type": "backend",
+      "label": "Triage",
+      "sublabel": "policy check"
+    },
+    {
+      "id": "approve",
+      "lane": "fin",
+      "col": 2,
+      "type": "security",
+      "label": "Approve",
+      "sublabel": "amount limits"
+    },
+    {
+      "id": "charge",
+      "lane": "psp",
+      "col": 3,
+      "type": "cloud",
+      "label": "Refund charge",
+      "sublabel": "Stripe"
+    },
+    {
+      "id": "notify",
+      "lane": "cust",
+      "col": 4,
+      "type": "frontend",
+      "label": "Notify",
+      "sublabel": "email + push"
+    },
+    {
+      "id": "deny",
+      "lane": "cust",
+      "col": 2,
+      "type": "frontend",
+      "label": "Denied",
+      "sublabel": "with reason"
+    }
+  ],
+  "edges": [
+    {
+      "from": "ask",
+      "to": "triage",
+      "label": "submit"
+    },
+    {
+      "from": "triage",
+      "to": "approve",
+      "label": "within policy"
+    },
+    {
+      "from": "approve",
+      "to": "charge",
+      "label": "approved"
+    },
+    {
+      "from": "charge",
+      "to": "notify",
+      "label": "settled"
+    },
+    {
+      "from": "triage",
+      "to": "deny",
+      "label": "out of policy",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "approve",
+      "to": "deny",
+      "label": "over limit",
+      "role": "error",
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "ask",
+    "triage",
+    "approve",
+    "charge",
+    "notify"
+  ]
+}

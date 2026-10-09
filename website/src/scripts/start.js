@@ -3,7 +3,7 @@
       'use strict';
 
       var DATA = JSON.parse(document.getElementById('start-data').textContent);
-      var KNOWN_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd']);
+      var KNOWN_TYPES = new Set(Object.keys(DATA));
       var KNOWN_AGENTS = new Set(['cursor', 'codex', 'claude-code', 'opencode', 'github-copilot']);
       var KNOWN_INPUTS = new Set(['description', 'repository']);
       var KNOWN_SOURCES = new Set(['artifact', 'gallery', 'readme', 'direct']);
@@ -36,7 +36,7 @@
       }
 
       function updateStaticCopy() {
-        document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+        document.documentElement.lang = language === 'zh' ? 'zh-Hans' : 'en';
         document.querySelectorAll('[data-en][data-zh]').forEach(function (element) {
           element.textContent = copyForElement(element);
         });
@@ -119,7 +119,7 @@
           entry.textContent = item;
           return entry;
         }));
-        proofLink.href = 'gallery.html#proof-' + encodeURIComponent(recipe.proof);
+        proofLink.href = ArchifySiteLanguage.page('gallery', '#proof-' + encodeURIComponent(recipe.proof));
         proofMeta.textContent = language === 'zh'
           ? '验证成品 · ' + recipe.presentation.preset + ' · ' + recipe.presentation.motion
           : 'Verified proof · ' + recipe.presentation.preset + ' · ' + recipe.presentation.motion;
@@ -231,10 +231,6 @@
         copyText(starterText(), 'starter_copy');
       });
       proofLink.addEventListener('click', function () { recordStep('proof_open'); });
-      languageButton.addEventListener('click', function () {
-        language = language === 'zh' ? 'en' : 'zh';
-        render();
-      });
 
       render();
       recordStep('start_view');

@@ -1,6 +1,6 @@
-# Repository-backed architecture authoring
+# Repository-backed authoring
 
-Use this reference when a diagram must explain a real repository. The source is
+Use this reference when a diagram of any type must explain a real repository. The source is
 the authority for responsibilities, calls, boundaries, and persistence. The
 diagram is complete when the requested meaning is covered and every asserted
 fact has supporting source evidence.
@@ -15,8 +15,10 @@ fact has supporting source evidence.
    forty-character revision in `meta.repository`. Use `link_mode: "local-only"`
    for an SSH origin, unsupported forge, intentionally local-only source links,
    or a local fixture whose HTTPS URL is only a repository identity; retain the
-   URL and revision. Web links require a supported GitHub or Gitee HTTPS origin. If the
-   worktree is dirty, record the changed paths. Repository evidence is verified
+   URL and revision. Web links require a supported GitHub, Gitee, or GitLab HTTPS
+   origin; GitHub, Gitee, gitlab.com, and a self-managed GitLab host declared with
+   `provider: "gitlab"` match their SSH origin on the same host. If the
+   worktree is dirty, note the changed paths in your reply; the candidate has no field for them. Repository evidence is verified
    against committed bytes at the pinned revision, not working-tree edits:
    inspect a clean checkout at that revision for any cited changed path. Do not
    present uncommitted bytes as evidence for `HEAD`; `local-only` does not record
@@ -67,6 +69,22 @@ Batch independent relevant files when known. Each additional read should answer
 an unresolved question that can change the diagram. Reuse concise facts and
 their source ranges already verified in this task; across revisions, recheck
 the affected entry points, configuration, dependencies, and evidence.
+
+## Evidence by diagram type
+
+Only the primary elements carry `sources`, at most three ranges each:
+Architecture components, Workflow, Dataflow and Tree nodes, Sequence
+participants, Lifecycle states, ERD entities, Class types, Timeline events and
+Waterfall spans. Relationships, messages, flows and transitions have none: cite
+the call, write or transition site on the element that owns it (the caller, the
+writer, the state being left) and keep further evidence in a note or card. A
+folder node cites its own README or entry file, or else the file that defines
+or runs it. A Timeline event cites a file at the pinned revision that records
+it, such as a changelog entry, and takes its time from a tag or commit in that
+history, or noon local time for a date-only record. A tag or commit outside
+that history is not citable. Say either in a card. A Waterfall without a
+recorded trace uses `meta.evidence: "illustrative"` and keeps its durations
+labelled as such; do not run the project only to time it.
 
 ## Choose an example by structure
 

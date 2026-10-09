@@ -3,448 +3,395 @@ import { version, versioned } from '../data/site';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
 import Brand from '../components/Brand';
+import ProductFacts from '../components/ProductFacts.astro';
+import { defaultProofLabels } from '../data/default-proof-labels.mjs';
 import head from '../data/index-head.html?raw';
 import css from '../styles/index.css?raw';
 import pageScript from '../scripts/index.js?raw';
----
-<SiteLayout head={versioned(head)} css={css}>
 
-  <div class="grid-bg" aria-hidden="true"></div>
+const installCommand = 'npx -y skills add tt-a1i/archify --skill archify --agent claude-code --global --copy --yes';
+const { lang = 'en' } = Astro.props;
+---
+<SiteLayout page="index" lang={lang} head={versioned(head)} css={css}>
 
   <!-- NAV -->
   <Navigation page="index" />
+  <main id="main-content">
 
-  <!-- HERO — bento: intro / live proof / specimen rail / stats -->
+  <!-- HERO — centered statement; the live artifact window peeks in below the fold line -->
   <section class="hero" data-proof-aperture="first-fold">
-    <div class="container">
-      <div class="hero-bento">
-        <div class="hero-intro">
-          <div class="hero-badge fade-up">
-            <div class="pulse-dot"></div>
-            <span data-i18n="hero-badge">Agent Skill &nbsp;·&nbsp; development &nbsp;·&nbsp; v{version}</span>
-          </div>
-          <h1 class="fade-up d1" data-i18n="hero-h1">From plain English<br>to architecture <em>you can trust.</em></h1>
-          <p class="hero-sub fade-up d2" data-i18n="hero-sub">Describe your system in chat. Archify generates a polished, explorable HTML diagram — with progressive MAP → READ → FULL detail, a semantic camera, path-aware stories, motion, and ultra-crisp export built in.</p>
-          <div class="hero-actions fade-up d3">
-            <a class="btn btn-primary" href="guide.html">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span data-i18n="hero-cta">Choose the right diagram</span>
-            </a>
-            <a class="btn btn-ghost" href="gallery.html">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="4" height="4" stroke="currentColor"/><rect x="8.5" y="1.5" width="4" height="4" stroke="currentColor"/><rect x="1.5" y="8.5" width="4" height="4" stroke="currentColor"/><rect x="8.5" y="8.5" width="4" height="4" stroke="currentColor"/></svg>
-              <span data-i18n="hero-gallery">Explore proof gallery</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- MAIN LIVE PROOF -->
-        <div class="proof-main fade-up d2" id="hero-proof-stage" data-proof-playback="first-fold-once">
-          <div class="proof-chrome">
-            <div class="proof-status">
-              <span class="proof-live" data-i18n="proof-live">Live proof</span>
-              <div class="proof-status-copy">
-                <strong data-i18n="proof-status">Generated, checked, interactive</strong>
-                <span data-i18n="proof-receipt">Real gallery artifact · 9/9 validation checks</span>
-              </div>
-            </div>
-            <a class="proof-open" id="proof-open" href="gallery/artifacts/agent-tool-call.workflow.html?present=1#focus=planner&amp;reach=downstream" target="_blank" rel="noopener">
-              <span data-i18n="proof-open">Open artifact</span><span aria-hidden="true">↗</span>
-            </a>
-          </div>
-          <div class="proof-viewport" id="hero-proof-panel" role="tabpanel" aria-labelledby="proof-tab-signal">
-            <iframe id="hero-proof-frame" data-proof="signal" src="gallery/artifacts/agent-tool-call.workflow.html?embed=1&amp;theme=dark#focus=planner&amp;reach=downstream" title="Agent Tool Call live Archify proof" loading="eager" sandbox="allow-scripts"></iframe>
-          </div>
-          <div class="proof-caption" aria-live="polite">
-            <div class="proof-caption-main">
-              <span id="proof-meta">Workflow · Signal Flow · 12 nodes · 11 edges</span>
-              <strong id="proof-title">Agent Tool Call — policy, execution, recovery, and evidence</strong>
-            </div>
-            <span class="proof-hint" data-i18n="proof-hint">Open a stable focus, lens, or route link and inspect the same authored relationship.</span>
-          </div>
-        </div>
-
-        <!-- SPECIMEN RAIL (tablist) -->
-        <div class="proof-rail fade-up d3" id="proof-tabs" role="tablist" aria-label="Choose a live Archify proof">
-          <div class="rail-label" data-i18n="rail-label">Live specimens — select to load</div>
-          <button class="spec-card" id="proof-tab-signal" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="true" tabindex="0" data-proof="signal">
-            <div class="spec-top">
-              <span class="spec-idx">S·01</span>
-              <span class="spec-glyph" aria-hidden="true">
-                <svg width="34" height="26" viewBox="0 0 34 26" fill="none">
-                  <path d="M1 5h32M1 13h32M1 21h32" stroke-width="1" opacity=".35"/>
-                  <rect x="4" y="3" width="7" height="4" rx="1" stroke-width="1.25"/>
-                  <rect x="14" y="11" width="7" height="4" rx="1" stroke-width="1.25"/>
-                  <rect x="23" y="19" width="7" height="4" rx="1" stroke-width="1.25"/>
-                  <path d="M11 5h6v6M21 13h4v6" stroke-width="1.25"/>
-                </svg>
-              </span>
-            </div>
-            <span class="spec-name">Agent Tool Call</span>
-            <span class="spec-meta">Workflow · Signal Flow · 12 nodes · 11 edges</span>
-          </button>
-          <button class="spec-card" id="proof-tab-blueprint" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="blueprint">
-            <div class="spec-top">
-              <span class="spec-idx">S·02</span>
-              <span class="spec-glyph" aria-hidden="true">
-                <svg width="34" height="26" viewBox="0 0 34 26" fill="none">
-                  <rect x="1" y="1" width="32" height="24" rx="2" stroke-width="1.25"/>
-                  <rect x="5" y="5" width="10" height="7" rx="1" stroke-width="1.25"/>
-                  <rect x="19" y="5" width="10" height="7" rx="1" stroke-width="1.25"/>
-                  <rect x="5" y="16" width="24" height="5" rx="1" stroke-width="1.25"/>
-                  <path d="M15 8.5h4M17 12v4" stroke-width="1.25"/>
-                </svg>
-              </span>
-            </div>
-            <span class="spec-name">Production Deployment</span>
-            <span class="spec-meta">Architecture · Blueprint · 12 nodes · 12 edges</span>
-          </button>
-          <button class="spec-card" id="proof-tab-classic" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="classic">
-            <div class="spec-top">
-              <span class="spec-idx">S·03</span>
-              <span class="spec-glyph" aria-hidden="true">
-                <svg width="34" height="26" viewBox="0 0 34 26" fill="none">
-                  <circle cx="6" cy="3.5" r="2.5" stroke-width="1.25"/>
-                  <circle cx="17" cy="3.5" r="2.5" stroke-width="1.25"/>
-                  <circle cx="28" cy="3.5" r="2.5" stroke-width="1.25"/>
-                  <path d="M6 6v18M17 6v18M28 6v18" stroke-width="1" stroke-dasharray="2.5 2.5" opacity=".45"/>
-                  <path d="M6 11h9.5M13 9l2.5 2-2.5 2" stroke-width="1.25"/>
-                  <path d="M17 17h9.5M24 15l2.5 2-2.5 2" stroke-width="1.25"/>
-                </svg>
-              </span>
-            </div>
-            <span class="spec-name">Cache Miss</span>
-            <span class="spec-meta">Sequence · Classic · 7 participants · 12 messages</span>
+    <div class="hero-aura" aria-hidden="true"><div class="hero-spot"></div><div class="hero-horizon"></div></div>
+    <div class="hero-copy">
+      <a class="hero-eyebrow fade-up" href="https://github.com/tt-a1i/archify/blob/main/CHANGELOG.md" target="_blank" rel="noopener">
+        <span class="eyebrow-tag">v{version}</span>
+        <span data-i18n="hero-badge">Development Agent Skill · see what's new</span>
+        <span class="eyebrow-arrow" aria-hidden="true">→</span>
+      </a>
+      <h1 data-i18n="hero-h1"><span class="l">Describe it in plain words.</span><span class="l">Get a map <em>you can trust.</em></span></h1>
+      <p class="hero-sub fade-up d2" data-i18n="hero-sub">A leave plan, a job hunt, a monthly budget, or a software system — if it has steps, parts, relationships, or states, your AI agent turns it into one explorable HTML map, validated before it ships.</p>
+      <div class="hero-actions fade-up d3">
+        <div class="cmd-chip">
+          <span class="cmd-prompt" aria-hidden="true">$</span>
+          <code>npx skills add tt-a1i/archify -g</code>
+          <button class="cmd-copy" type="button" data-copy-text="npx skills add tt-a1i/archify -g" aria-label="Copy install command">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 4.5V3A1.5 1.5 0 0 0 8 1.5H3A1.5 1.5 0 0 0 1.5 3v5A1.5 1.5 0 0 0 3 9.5h1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+            <span class="cmd-copy-label" data-i18n="copy">Copy</span>
           </button>
         </div>
-
-        <!-- STATS STRIP -->
-        <div class="hero-stats fade-up d4">
-          <div class="stat"><b>05</b><span data-i18n="stat-types">Diagram types</span></div>
-          <div class="stat"><b>04</b><span data-i18n="stat-presets">Visual presets</span></div>
-          <div class="stat"><b>02</b><span data-i18n="stat-themes">Coordinated themes</span></div>
-          <div class="stat"><b>4<sup>×</sup></b><span data-i18n="stat-export">Native export scale</span></div>
-          <div class="stat"><b>00</b><span data-i18n="stat-deps">Dependencies</span></div>
-        </div>
+        <a class="btn btn-primary" href="start.html">
+          <span data-i18n="hero-cta">Get started</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <button class="btn btn-ghost demo-trigger" id="demo-open" type="button" aria-haspopup="dialog">
+          <span class="play-ring" aria-hidden="true"><svg width="8" height="9" viewBox="0 0 9 10" fill="none"><path d="M1 1.2v7.6L8 5z" fill="currentColor"/></svg></span>
+          <span data-i18n="demo-watch">Watch the 35s demo</span>
+        </button>
       </div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- DIAGRAM TYPES — asymmetric bento deck -->
-  <section id="types">
-    <div class="container">
-      <div class="types-header">
-        <div class="fade-up">
-          <div class="section-label" data-i18n="label-types">Diagram Types</div>
-          <h2 class="section-heading" data-i18n="types-h2">Five ways to see your system.</h2>
-          <p class="section-body" data-i18n="types-body">Architecture, workflows, sequences, data flows, or state machines — describe what you need and Archify picks the right visual language.</p>
-        </div>
-      </div>
-
-      <div class="types-bento">
-        <div class="type-card big fade-up" data-type="arch">
-          <div class="type-media">
-            <span class="type-tag">T·01</span>
-            <img src="assets/archify-architecture.png" alt="Architecture diagram">
-          </div>
-          <div class="type-body">
-            <h3 data-i18n="arch-h">Architecture</h3>
-            <p data-i18n="arch-p">System components, cloud resources, databases, caches, services, security groups, and the connections between them.</p>
-            <ul class="type-uses">
-              <li data-i18n="arch-li1">AWS / GCP / Azure infra</li>
-              <li data-i18n="arch-li2">Microservices topology</li>
-              <li data-i18n="arch-li3">Security boundaries</li>
-              <li data-i18n="arch-li4">Network layout</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d1" data-type="wf">
-          <div class="type-media">
-            <span class="type-tag">T·02</span>
-            <img src="assets/archify-workflow.png" alt="Workflow diagram">
-          </div>
-          <div class="type-body">
-            <h3 data-i18n="wf-h">Workflow</h3>
-            <p data-i18n="wf-p">Swim-lane processes with semantic nodes and anchored edges — approval gates, async branches, and observability paths, lane by lane.</p>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d2" data-type="seq">
-          <div class="type-media">
-            <span class="type-tag">T·03</span>
-            <img src="assets/archify-sequence.png" alt="Sequence diagram">
-          </div>
-          <div class="type-body">
-            <h3 data-i18n="seq-h">Sequence</h3>
-            <p data-i18n="seq-p">API call chains, request lifecycles, cache fallback paths, auth checks, async traces — who calls whom, in what order, and what returns.</p>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d1" data-type="flow">
-          <div class="type-media">
-            <span class="type-tag">T·04</span>
-            <img src="assets/archify-dataflow.png" alt="Data flow diagram">
-          </div>
-          <div class="type-body">
-            <h3 data-i18n="flow-h">Data Flow</h3>
-            <p data-i18n="flow-p">Data pipelines, ETL/ELT, analytics events, PII isolation, warehouse sync, lineage, and downstream consumers — with governance boundaries.</p>
-          </div>
-        </div>
-
-        <div class="type-card sm fade-up d2" data-type="life">
-          <div class="type-media">
-            <span class="type-tag">T·05</span>
-            <img src="assets/archify-lifecycle.png" alt="Lifecycle diagram">
-          </div>
-          <div class="type-body">
-            <h3 data-i18n="life-h">Lifecycle</h3>
-            <p data-i18n="life-p">State machines, object lifecycles, run/order/deployment status transitions — with wait states, retries, cancellation, and terminal outcomes.</p>
-          </div>
-        </div>
-
-        <a class="type-card more fade-up d3" href="gallery.html">
-          <div>
-            <div class="more-kicker" data-i18n="label-gallery">Index</div>
-            <div class="more-title" data-i18n="types-more">Browse the full proof gallery</div>
-            <div class="more-sub" data-i18n="types-more-sub">Live artifacts · every preset · every type</div>
-          </div>
-          <span class="more-arrow" aria-hidden="true">↗</span>
+      <div class="hero-meta fade-up d4">
+        <span class="hero-works"><span data-i18n="hero-works">Works with</span> <b>Claude Code</b> · <b>Codex</b> · <b>Cursor</b> · <b>OpenCode</b> · <b>Copilot</b></span>
+        <a class="hero-stars" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.66 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 .2Z"/></svg>
+          <span class="stars-count" data-gh-stars hidden></span>
+          <span data-i18n="hero-stars">stars on GitHub</span>
         </a>
       </div>
     </div>
   </section>
 
-  <div class="divider"></div>
+  <!-- LIVE STAGE — one real artifact, pinned; scrolling drives its semantic camera -->
+  <section class="stage" id="tour" aria-labelledby="tour-title">
+    <h2 class="sr-only" id="tour-title" data-i18n="tour-title">Live artifact tour</h2>
+    <div class="stage-pin">
+      <div class="stage-window" id="hero-proof-stage" data-proof-playback="first-fold-once">
+        <div class="window-bar">
+          <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="proof-rail" id="proof-tabs" role="tablist" aria-label="Choose a live Archify proof">
+            <button class="spec-card" id="proof-tab-signal" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="true" tabindex="0" data-proof="signal">
+              <span class="spec-idx">01</span><span class="spec-name">Agent Tool Call</span>
+            </button>
+            <button class="spec-card" id="proof-tab-blueprint" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="blueprint">
+              <span class="spec-idx">02</span><span class="spec-name">Production Deployment</span>
+            </button>
+            <button class="spec-card" id="proof-tab-classic" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="classic">
+              <span class="spec-idx">03</span><span class="spec-name">Cache Miss</span>
+            </button>
+            <button class="spec-card" id="proof-tab-leave" type="button" role="tab" aria-controls="hero-proof-panel" aria-selected="false" tabindex="-1" data-proof="leave">
+              <span class="spec-idx">04</span><span class="spec-name">Annual Leave</span>
+            </button>
+          </div>
+          <div class="window-address" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="2" y="5.5" width="8" height="5.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M4 5.5V4a2 2 0 1 1 4 0v1.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            <span id="address-file">agent-tool-call.workflow.html</span><b id="address-hash"></b>
+          </div>
+          <a class="proof-open" id="proof-open" href="gallery/artifacts/agent-tool-call.workflow.html?present=1#focus=planner&amp;reach=downstream" target="_blank" rel="noopener" aria-label={lang === 'zh' ? '在新标签页打开交互图表' : 'Open the interactive diagram in a new tab'}>
+            <span data-i18n="proof-open">Open artifact</span><span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <div class="hero-frame" id="hero-proof-panel" role="tabpanel" aria-labelledby="proof-tab-signal">
+          <iframe id="hero-proof-frame" data-proof="signal" src="gallery/artifacts/agent-tool-call.workflow.html?embed=1&amp;theme=dark#focus=planner&amp;reach=downstream" title="Agent Tool Call live Archify proof" loading="eager" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+        <div class="beat-card" aria-live="polite">
+          <div class="beat-rail" role="group" aria-label="Camera beats">
+            <button class="beat-tick" type="button" data-beat="0" aria-pressed="true"><span data-i18n="beat-0-k">Map</span></button>
+            <button class="beat-tick" type="button" data-beat="1" aria-pressed="false"><span data-i18n="beat-1-k">Focus</span></button>
+            <button class="beat-tick" type="button" data-beat="2" aria-pressed="false"><span data-i18n="beat-2-k">Upstream</span></button>
+            <button class="beat-tick" type="button" data-beat="3" aria-pressed="false"><span data-i18n="beat-3-k">Lens</span></button>
+          </div>
+          <p class="beat-meta"><span class="proof-live" data-i18n="proof-live">Live proof</span><span id="proof-meta" data-en={defaultProofLabels.meta.en} data-zh={defaultProofLabels.meta.zh}>{defaultProofLabels.meta.en}</span></p>
+          <h3 class="beat-title" id="beat-title" data-i18n="beat-0-t">The whole system, in one readable frame.</h3>
+          <p class="beat-body" id="beat-body" data-i18n="beat-0-b">This is the real generated artifact, not a screenshot. Lanes, boundaries, and every authored edge — scroll to move its camera.</p>
+          <strong class="sr-only" id="proof-title" data-en={defaultProofLabels.title.en} data-zh={defaultProofLabels.title.zh}>{defaultProofLabels.title.en}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <!-- FEATURES — numbered text cards -->
+  <!-- PROOF STRIP — receipts, not adjectives -->
+  <section class="receipts" aria-label="Archify at a glance">
+    <div class="container receipts-row">
+      <div class="receipt fade-up"><b>5</b><span data-i18n="stat-types">Diagram types</span></div>
+      <div class="receipt fade-up d1"><b>4</b><span data-i18n="stat-presets">Visual presets</span></div>
+      <div class="receipt fade-up d2"><b>9/9</b><span data-i18n="stat-checks">Validation checks per artifact</span></div>
+      <div class="receipt fade-up d3"><b>4×</b><span data-i18n="stat-export">Native export scale</span></div>
+      <div class="receipt fade-up d4"><b>0</b><span data-i18n="stat-deps">Runtime dependencies</span></div>
+    </div>
+  </section>
+
+  <!-- EVERYDAY — the same validated artifacts, for life outside the codebase -->
+  <section id="everyday">
+    <div class="container">
+      <header class="section-head fade-up">
+        <p class="section-label"><span>01</span><span data-i18n="label-life">Beyond code</span></p>
+        <h2 class="section-heading" data-i18n="life-h2">Not just for code. <em>For anything with steps.</em></h2>
+        <p class="section-body" data-i18n="life-body">Leave plans, job hunts, renting, a monthly budget — each one below is a real Archify artifact, generated and validated exactly like a system diagram. Open one and click around.</p>
+      </header>
+      <div class="life-grid">
+        <a class="life-card fade-up" href="cases/life/leave-plan.workflow.html?present=1" target="_blank" rel="noopener">
+          <span class="life-plate"><img src="assets/life/leave-plan.workflow.webp" alt="一年的年假怎么排" loading="lazy" decoding="async" width="2160" height="1350"></span>
+          <span class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-i18n="life-leave-k">Workflow</span><span class="life-open" aria-hidden="true">↗</span></span>
+          <span class="life-q" data-i18n="life-leave-q">How should I spread my leave across the year?</span>
+          <span class="life-title">一年的年假怎么排</span>
+        </a>
+        <a class="life-card fade-up" href="cases/life/job-search.lifecycle.html?present=1" target="_blank" rel="noopener">
+          <span class="life-plate"><img src="assets/life/job-search.lifecycle.webp" alt="Where Each Job Application Stands" loading="lazy" decoding="async" width="2160" height="1350"></span>
+          <span class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-i18n="life-job-k">Lifecycle</span><span class="life-open" aria-hidden="true">↗</span></span>
+          <span class="life-q" data-i18n="life-job-q">Where does each job application stand?</span>
+          <span class="life-title">Where Each Job Application Stands</span>
+        </a>
+        <a class="life-card fade-up" href="cases/life/monthly-money.dataflow.html?present=1" target="_blank" rel="noopener">
+          <span class="life-plate"><img src="assets/life/monthly-money.dataflow.webp" alt="Where a Paycheck Goes Each Month" loading="lazy" decoding="async" width="2160" height="1350"></span>
+          <span class="life-meta"><span class="life-lang">EN</span><span class="life-kind" data-i18n="life-money-k">Data flow</span><span class="life-open" aria-hidden="true">↗</span></span>
+          <span class="life-q" data-i18n="life-money-q">Where does my paycheck go each month?</span>
+          <span class="life-title">Where a Paycheck Goes Each Month</span>
+        </a>
+        <a class="life-card fade-up" href="cases/life/renting.sequence.html?present=1" target="_blank" rel="noopener">
+          <span class="life-plate"><img src="assets/life/renting.sequence.webp" alt="租一套房，一来一回" loading="lazy" decoding="async" width="2160" height="1350"></span>
+          <span class="life-meta"><span class="life-lang">中文</span><span class="life-kind" data-i18n="life-rent-k">Sequence</span><span class="life-open" aria-hidden="true">↗</span></span>
+          <span class="life-q" data-i18n="life-rent-q">Who says what when I rent a flat?</span>
+          <span class="life-title">租一套房，一来一回</span>
+        </a>
+      </div>
+      <p class="life-note fade-up" data-i18n="life-note">Numbers in these examples are illustrative. Describe your own situation and your agent draws yours.</p>
+    </div>
+  </section>
+
+  <!-- DIAGRAM TYPES — index list + lightbox preview -->
+  <section id="types">
+    <div class="container">
+      <header class="section-head fade-up">
+        <p class="section-label"><span>02</span><span data-i18n="label-types">Diagram types</span></p>
+        <h2 class="section-heading" data-i18n="types-h2">Five questions. <em>Five kinds of map.</em></h2>
+        <p class="section-body" data-i18n="types-body">Ask the question you actually have. Archify picks the picture that answers it — for a software system, a plan, or something in your own life.</p>
+      </header>
+
+      <div class="types-index">
+        <ol class="types-list" id="types-list">
+          <li class="type-item is-active" data-type="arch">
+            <button type="button" aria-controls="type-preview" aria-pressed="true">
+              <span class="type-no">01</span><span class="type-name"><small class="type-kind" data-i18n="arch-k">Architecture</small><span data-i18n="arch-h">What is it made of?</span></span>
+            </button>
+            <div class="type-detail"><div>
+              <p data-i18n="arch-p">The parts of something and how they connect — a household's accounts and cards, a team's roles, or a cloud system's services, databases, and security boundaries.</p>
+              <ul class="type-uses"><li data-i18n="arch-li1">Household accounts</li><li data-i18n="arch-li2">Team roles</li><li data-i18n="arch-li3">Microservices topology</li><li data-i18n="arch-li4">Cloud + security boundaries</li></ul>
+            </div></div>
+          </li>
+          <li class="type-item" data-type="wf">
+            <button type="button" aria-controls="type-preview" aria-pressed="false">
+              <span class="type-no">02</span><span class="type-name"><small class="type-kind" data-i18n="wf-k">Workflow</small><span data-i18n="wf-h">What happens next?</span></span>
+            </button>
+            <div class="type-detail"><div><p data-i18n="wf-p">Steps across people or stages — a visa application, a leave plan, onboarding, an approval chain, or a CI/CD pipeline, lane by lane.</p></div></div>
+          </li>
+          <li class="type-item" data-type="seq">
+            <button type="button" aria-controls="type-preview" aria-pressed="false">
+              <span class="type-no">03</span><span class="type-name"><small class="type-kind" data-i18n="seq-k">Sequence</small><span data-i18n="seq-h">Who says what, in what order?</span></span>
+            </button>
+            <div class="type-detail"><div><p data-i18n="seq-p">Back-and-forth in order — renting a flat through an agent, an expense claim, or an API call chain with its returns.</p></div></div>
+          </li>
+          <li class="type-item" data-type="flow">
+            <button type="button" aria-controls="type-preview" aria-pressed="false">
+              <span class="type-no">04</span><span class="type-name"><small class="type-kind" data-i18n="flow-k">Data Flow</small><span data-i18n="flow-h">Where does it all go?</span></span>
+            </button>
+            <div class="type-detail"><div><p data-i18n="flow-p">Where something moves and where it lands — a paycheck into bills and savings, documents through review, or data through a pipeline.</p></div></div>
+          </li>
+          <li class="type-item" data-type="life">
+            <button type="button" aria-controls="type-preview" aria-pressed="false">
+              <span class="type-no">05</span><span class="type-name"><small class="type-kind" data-i18n="life-k">Lifecycle</small><span data-i18n="life-h">Where does it stand now?</span></span>
+            </button>
+            <div class="type-detail"><div><p data-i18n="life-p">States and what moves between them — job applications, an order, a passport renewal, or a deployment — with waits, retries, and endings.</p></div></div>
+          </li>
+        </ol>
+
+        <div class="type-preview fade-up d1" id="type-preview">
+          <div class="type-plate">
+            <img class="is-active" data-type="arch" src="assets/archify-architecture.png" alt="Architecture diagram" loading="lazy" decoding="async">
+            <img data-type="wf" src="assets/archify-workflow.png" alt="Workflow diagram" loading="lazy" decoding="async">
+            <img data-type="seq" src="assets/archify-sequence.png" alt="Sequence diagram" loading="lazy" decoding="async">
+            <img data-type="flow" src="assets/archify-dataflow.png" alt="Data flow diagram" loading="lazy" decoding="async">
+            <img data-type="life" src="assets/archify-lifecycle.png" alt="Lifecycle diagram" loading="lazy" decoding="async">
+          </div>
+          <a class="type-more" href="gallery.html">
+            <span data-i18n="types-more">Browse the full proof gallery</span>
+            <span class="type-more-sub" data-i18n="types-more-sub">Live artifacts · every preset · every type</span>
+            <span class="type-more-arrow" aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES — one interactive centerpiece + a tight grid -->
   <section id="features">
     <div class="container">
-      <div class="fade-up" style="margin-bottom:2.75rem">
-        <div class="section-label" data-i18n="label-features">Features</div>
-        <h2 class="section-heading" data-i18n="features-h2">Production-ready output,<br>zero configuration.</h2>
-      </div>
-      <div class="features-bento">
-        <div class="feature-card f-lg fade-up">
-          <h3 data-i18n="f1-h">Four visual identities</h3>
-          <p data-i18n="f1-p">Classic, Signal Flow, Blueprint, and Editorial share one geometry contract. Every preset includes coordinated dark/light themes and exports cleanly.</p>
-          <span class="feature-tag" data-i18n="f1-tag">4 PRESETS · 2 THEMES</span>
+      <header class="section-head fade-up">
+        <p class="section-label"><span>03</span><span data-i18n="label-features">Output</span></p>
+        <h2 class="section-heading" data-i18n="features-h2">One file. <em>Everything inside.</em></h2>
+      </header>
+
+      <div class="features-grid">
+        <figure class="feature compare fade-up">
+          <div class="compare-stage" id="compare-stage" style="--split:50%">
+            <img class="compare-dark" src="assets/archify-dark.png" alt="The same Archify diagram rendered in the dark theme" loading="lazy" decoding="async">
+            <img class="compare-light" src="assets/archify-light.png" alt="Archify architecture diagram rendered in the light theme" loading="lazy" decoding="async">
+            <span class="compare-handle" aria-hidden="true"><i></i></span>
+            <span class="compare-tag compare-tag-l" aria-hidden="true" data-i18n="cmp-light">Light</span>
+            <span class="compare-tag compare-tag-r" aria-hidden="true" data-i18n="cmp-dark">Dark</span>
+            <input class="compare-range" id="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare light and dark theme">
+          </div>
+          <figcaption class="feature-body">
+            <h3 data-i18n="fv1-h">Dual-theme output</h3>
+            <p data-i18n="fv1-p">Every diagram ships with coordinated dark and light variable sets. The HTML theme toggle and the SVG @media prefers-color-scheme rule switch together — one file follows the reader's theme.</p>
+            <span class="feature-tag" data-i18n="fv1-tag">LIGHT · DARK · ONE FILE</span>
+          </figcaption>
+        </figure>
+
+        <div class="feature export fade-up d1">
+          <div class="export-shot"><img src="assets/archify-menu.png" alt="Archify export menu listing PNG, JPEG, WebP, SVG, and WebM outputs" loading="lazy" decoding="async"></div>
+          <h3 data-i18n="fv2-h">One menu, every format</h3>
+          <p data-i18n="fv2-p">PNG, JPEG, WebP, dual-theme SVG, WebM motion, or straight to the clipboard — every export renders natively in the browser from the same menu.</p>
+          <ul class="formats" aria-label="Export formats">
+            <li>PNG</li><li>JPEG</li><li>WEBP</li><li>SVG</li><li>WEBM</li><li data-i18n="exp-clip-fmt">Clipboard</li>
+          </ul>
         </div>
-        <div class="feature-card f-lg fade-up d1">
+
+        <div class="feature cell fade-up">
+          <span class="cell-glyph" aria-hidden="true">4×</span>
           <h3 data-i18n="f2-h">Ultra-crisp 4× export</h3>
           <p data-i18n="f2-p">PNG, JPEG, WebP — all rasterized natively at up to 4× source resolution by the browser. No upsampling blur. Sharp on retina displays, slides, and print.</p>
-          <span class="feature-tag" data-i18n="f2-tag">PNG · JPEG · WEBP</span>
         </div>
-        <div class="feature-card f-sm fade-up d2">
-          <h3 data-i18n="f3-h">Dual-theme SVG</h3>
-          <p data-i18n="f3-p">The SVG export ships with both variable sets plus a @media prefers-color-scheme rule. Drop one file into a GitHub README — it follows the reader's theme.</p>
-          <span class="feature-tag" data-i18n="f3-tag">VECTOR · SELF-THEMED</span>
-        </div>
-        <div class="feature-card f-sm fade-up d3">
-          <h3 data-i18n="f4-h">Copy to clipboard</h3>
-          <p data-i18n="f4-p">One button puts a PNG straight on your clipboard. Paste directly into Slack, Notion, GitHub, or Figma — no intermediate save step.</p>
-          <span class="feature-tag" data-i18n="f4-tag">INSTANT SHARE</span>
-        </div>
-        <div class="feature-card f-sm fade-up d4">
+        <div class="feature cell fade-up d1">
+          <span class="cell-glyph" aria-hidden="true">&lt;/&gt;</span>
           <h3 data-i18n="f5-h">Self-contained HTML</h3>
           <p data-i18n="f5-p">One HTML file. Zero dependencies, no server, no runtime. Open it in any browser and it works. Share by attaching it to an email or PR comment.</p>
-          <span class="feature-tag" data-i18n="f5-tag">ZERO DEPS</span>
         </div>
-        <div class="feature-card f-sm fade-up d2">
+        <div class="feature cell fade-up d2">
+          <span class="cell-glyph" aria-hidden="true">“ ”</span>
           <h3 data-i18n="f6-h">Iterate by chat</h3>
-          <p data-i18n="f6-p">"Add Redis", "move auth to the left", "use emerald for the API" — refine in natural language. No diagram editor to learn.</p>
-          <span class="feature-tag" data-i18n="f6-tag">CONVERSATIONAL</span>
+          <p data-i18n="f6-p">"Move the summer trip to August", "add Redis", "make the deadline red" — refine in plain words. No diagram editor to learn.</p>
         </div>
-        <div class="feature-card f-sm fade-up d3">
+        <div class="feature cell fade-up d3">
+          <span class="cell-glyph" aria-hidden="true">→</span>
           <h3 data-i18n="f7-h">Inspect and play real routes</h3>
           <p data-i18n="f7-p">Route Journey keeps the complete authored path visible while you inspect any stop or play one finite, reader-controlled pass over each exact incoming relationship.</p>
           <span class="feature-tag" data-i18n="f7-tag">INSPECT · PLAY · PAUSE</span>
         </div>
-        <div class="feature-card f-sm fade-up d4">
-          <h3 data-i18n="f8-h">Anticipate and share the exact story moment</h3>
-          <p data-i18n="f8-p">Story Horizon distinguishes the exact next stop, while Semantic Story Carrier shows whether its one authored relationship is a call, data, event, security, or state transition. Pin any beat or share the same stable moment.</p>
-          <span class="feature-tag" data-i18n="f8-tag">FOLLOW · ANTICIPATE · SHARE</span>
-        </div>
-      </div>
-
-      <div class="fade-up d2">
-        <p class="export-label-row" data-i18n="export-label">Export formats</p>
-        <div class="export-grid">
-          <div class="export-item"><div class="fmt">PNG</div><div class="desc" data-i18n="exp-png">Transparent · 4× native</div></div>
-          <div class="export-item"><div class="fmt">JPEG</div><div class="desc" data-i18n="exp-jpg">Theme bg · 4× native</div></div>
-          <div class="export-item"><div class="fmt">WEBP</div><div class="desc" data-i18n="exp-webp">Small · 4× native</div></div>
-          <div class="export-item"><div class="fmt">SVG</div><div class="desc" data-i18n="exp-svg">Vector · dual-theme</div></div>
-          <div class="export-item"><div class="fmt">WEBM</div><div class="desc" data-i18n="exp-webm">Motion · browser-native</div></div>
-          <div class="export-item"><div class="fmt" data-i18n="exp-clip-fmt">Clipboard</div><div class="desc" data-i18n="exp-clip">Copy PNG · instant paste</div></div>
-        </div>
       </div>
     </div>
   </section>
 
-  <div class="divider"></div>
-
-  <!-- COLOR PALETTE — one specimen strip -->
+  <!-- PALETTE — semantic legend -->
   <section id="palette">
     <div class="container">
-      <div class="fade-up" style="margin-bottom:2.75rem">
-        <div class="section-label" data-i18n="label-palette">Design System</div>
-        <h2 class="section-heading" data-i18n="palette-h2">A semantic color language for infrastructure.</h2>
-        <p class="section-body" style="margin-top:.5rem" data-i18n="palette-body">Seven component types. Each with coordinated dark and light variants that switch together via the theme toggle.</p>
-      </div>
-      <div class="palette-card fade-up">
-        <div class="palette-chip" style="--node:var(--cyan);--node-fill:var(--cyan-fill);--node-dark:#22d3ee">
-          <div class="chip-nodes">
-            <div class="mini-node"><b>Web App</b><span>React SPA</span></div>
-            <div class="mini-node dark"><b>Web App</b><span>React SPA</span></div>
-          </div>
-          <div class="chip-label" style="color:var(--cyan)" data-i18n="chip-frontend">Frontend</div>
-          <div class="chip-use" data-i18n="chip-frontend-use">Client apps, browsers, mobile, UI</div>
+      <header class="section-head section-head-row fade-up">
+        <div>
+          <p class="section-label"><span>04</span><span data-i18n="label-palette">Design system</span></p>
+          <h2 class="section-heading" data-i18n="palette-h2">Color that <em>means something.</em></h2>
         </div>
-        <div class="palette-chip" style="--node:var(--emerald);--node-fill:var(--emerald-fill);--node-dark:#34d399">
-          <div class="chip-nodes">
-            <div class="mini-node"><b>API Server</b><span>Fastify :8080</span></div>
-            <div class="mini-node dark"><b>API Server</b><span>Fastify :8080</span></div>
-          </div>
-          <div class="chip-label" style="color:var(--emerald)" data-i18n="chip-backend">Backend</div>
-          <div class="chip-use" data-i18n="chip-backend-use">Services, APIs, workers, daemons</div>
-        </div>
-        <div class="palette-chip" style="--node:var(--violet);--node-fill:var(--violet-fill);--node-dark:#a78bfa">
-          <div class="chip-nodes">
-            <div class="mini-node"><b>Postgres</b><span>primary :5432</span></div>
-            <div class="mini-node dark"><b>Postgres</b><span>primary :5432</span></div>
-          </div>
-          <div class="chip-label" style="color:var(--violet)" data-i18n="chip-database">Database</div>
-          <div class="chip-use" data-i18n="chip-database-use">DBs, caches, stores, AI/ML</div>
-        </div>
-        <div class="palette-chip" style="--node:var(--amber);--node-fill:var(--amber-fill);--node-dark:#fbbf24">
-          <div class="chip-nodes">
-            <div class="mini-node"><b>CloudFront</b><span>CDN</span></div>
-            <div class="mini-node dark"><b>CloudFront</b><span>CDN</span></div>
-          </div>
-          <div class="chip-label" style="color:var(--amber)" data-i18n="chip-cloud">Cloud</div>
-          <div class="chip-use" data-i18n="chip-cloud-use">Managed services, infra</div>
-        </div>
-        <div class="palette-chip" style="--node:var(--rose);--node-fill:var(--rose-fill);--node-dark:#fb7185">
-          <div class="chip-nodes">
-            <div class="mini-node"><b>Auth Provider</b><span>OAuth 2.0</span></div>
-            <div class="mini-node dark"><b>Auth Provider</b><span>OAuth 2.0</span></div>
-          </div>
-          <div class="chip-label" style="color:var(--rose)" data-i18n="chip-security">Security</div>
-          <div class="chip-use" data-i18n="chip-security-use">Auth, secrets, guards</div>
-        </div>
-        <div class="palette-chip" style="--node:var(--orange);--node-fill:var(--orange-fill);--node-dark:#fb923c">
-          <div class="chip-nodes">
-            <div class="mini-node"><b>Kafka</b><span>events topic</span></div>
-            <div class="mini-node dark"><b>Kafka</b><span>events topic</span></div>
-          </div>
-          <div class="chip-label" style="color:var(--orange)" data-i18n="chip-bus">Message Bus</div>
-          <div class="chip-use" data-i18n="chip-bus-use">Kafka, RabbitMQ, SNS</div>
-        </div>
-        <div class="palette-chip" style="--node:var(--slate);--node-fill:var(--slate-fill);--node-dark:#94a3b8">
-          <div class="chip-nodes">
-            <div class="mini-node"><b>Users</b><span>browser · mobile</span></div>
-            <div class="mini-node dark"><b>Users</b><span>browser · mobile</span></div>
-          </div>
-          <div class="chip-label" style="color:var(--slate)" data-i18n="chip-external">External</div>
-          <div class="chip-use" data-i18n="chip-external-use">Users, 3rd parties, generic</div>
-        </div>
+        <p class="section-body" data-i18n="palette-body">Seven node colours, consistent in both themes. The legend renames them for your story — Backend can read as Vacation, Security as Rule.</p>
+      </header>
+      <div class="legend fade-up d1">
+        <div class="legend-chip" style="--node:var(--hue-cyan)"><span class="legend-node"><b>Web App</b><i>React SPA</i></span><span class="legend-label" data-i18n="chip-frontend">Frontend</span><span class="legend-use" data-i18n="chip-frontend-use">Client apps, browsers, mobile, UI</span></div>
+        <div class="legend-chip" style="--node:var(--hue-emerald)"><span class="legend-node"><b>API Server</b><i>Fastify :8080</i></span><span class="legend-label" data-i18n="chip-backend">Backend</span><span class="legend-use" data-i18n="chip-backend-use">Services, APIs, workers, daemons</span></div>
+        <div class="legend-chip" style="--node:var(--hue-violet)"><span class="legend-node"><b>Postgres</b><i>primary :5432</i></span><span class="legend-label" data-i18n="chip-database">Database</span><span class="legend-use" data-i18n="chip-database-use">DBs, caches, stores, AI/ML</span></div>
+        <div class="legend-chip" style="--node:var(--hue-amber)"><span class="legend-node"><b>CloudFront</b><i>CDN</i></span><span class="legend-label" data-i18n="chip-cloud">Cloud</span><span class="legend-use" data-i18n="chip-cloud-use">Managed services, infra</span></div>
+        <div class="legend-chip" style="--node:var(--hue-rose)"><span class="legend-node"><b>Auth Provider</b><i>OAuth 2.0</i></span><span class="legend-label" data-i18n="chip-security">Security</span><span class="legend-use" data-i18n="chip-security-use">Auth, secrets, guards</span></div>
+        <div class="legend-chip" style="--node:var(--hue-orange)"><span class="legend-node"><b>Kafka</b><i>events topic</i></span><span class="legend-label" data-i18n="chip-bus">Message Bus</span><span class="legend-use" data-i18n="chip-bus-use">Kafka, RabbitMQ, SNS</span></div>
+        <div class="legend-chip" style="--node:var(--hue-slate)"><span class="legend-node"><b>Users</b><i>browser · mobile</i></span><span class="legend-label" data-i18n="chip-external">External</span><span class="legend-use" data-i18n="chip-external-use">Users, 3rd parties, generic</span></div>
       </div>
     </div>
   </section>
-
-  <div class="divider"></div>
 
   <!-- QUICK START -->
   <section id="quickstart">
     <div class="container">
-      <div class="fade-up" style="margin-bottom:2.75rem">
-        <div class="section-label" data-i18n="label-qs">Quick Start</div>
-        <h2 class="section-heading" data-i18n="qs-h2">Up and running<br>in three steps.</h2>
-        <p class="section-body" data-i18n="qs-body">One checked Skill for Cursor, Claude Code, Codex, and OpenCode. Their switcher generates exact commands.</p>
-      </div>
-      <div class="quickstart-layout">
-        <div class="qs-card fade-up d1">
-          <div class="steps">
-            <div class="step">
-              <div class="step-num">1</div>
-              <div class="step-content">
-                <h4 data-i18n="step1-h">Install in one command</h4>
-                <p data-i18n="step1-p">Run <code>npx skills add tt-a1i/archify -g</code>, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for an exact Cursor, Codex, Claude Code, or OpenCode command.</p>
-              </div>
+      <header class="section-head fade-up">
+        <p class="section-label"><span>05</span><span data-i18n="label-qs">Quick start</span></p>
+        <h2 class="section-heading" data-i18n="qs-h2">Three steps. <em>One command.</em></h2>
+        <p class="section-body" data-i18n="qs-body">One checked Skill for Claude Code, Codex, Cursor, OpenCode, and GitHub Copilot. Pick your agent for the exact command.</p>
+      </header>
+
+      <div class="qs-layout">
+        <div class="terminal fade-up">
+          <div class="terminal-bar">
+            <div class="agent-tabs" role="tablist" aria-label="Choose your agent">
+              <button type="button" role="tab" aria-selected="true" tabindex="0" data-agent="claude-code">Claude Code</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-agent="codex">Codex</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-agent="cursor">Cursor</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-agent="opencode">OpenCode</button>
+              <button type="button" role="tab" aria-selected="false" tabindex="-1" data-agent="github-copilot">Copilot</button>
             </div>
-            <div class="step">
-              <div class="step-num">2</div>
-              <div class="step-content">
-                <h4 data-i18n="step2-h">Describe your system</h4>
-                <p data-i18n="step2-p">Describe components, connections, and cloud services — or ask your agent to analyze the repository first.</p>
-              </div>
+          </div>
+          <div class="terminal-body" role="tabpanel">
+            <p class="install-cmt" data-i18n="term-c1"># Install globally for your agent</p>
+            <div class="install-line">
+              <p class="install-cmd"><span aria-hidden="true">$ </span><code id="agent-command">{installCommand}</code></p>
+              <button class="cmd-copy" type="button" data-copy-from="agent-command" aria-label="Copy install command">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 4.5V3A1.5 1.5 0 0 0 8 1.5H3A1.5 1.5 0 0 0 1.5 3v5A1.5 1.5 0 0 0 3 9.5h1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+                <span class="cmd-copy-label" data-i18n="copy">Copy</span>
+              </button>
             </div>
-            <div class="step">
-              <div class="step-num">3</div>
-              <div class="step-content">
-                <h4 data-i18n="step3-h">Ask your agent to draw it</h4>
-                <p data-i18n="step3-p">Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.</p>
-              </div>
-            </div>
+            <p class="install-cmt" data-i18n="term-c2"># Or try it once with Codex, no permanent install</p>
+            <p class="install-cmd"><span aria-hidden="true">$ </span><code>npx skills use tt-a1i/archify@archify --agent codex</code></p>
+            <p class="install-cmt" data-i18n="term-c3"># Then just ask</p>
+            <p class="install-ask" data-i18n="term-ask">› Use Archify to plan my annual leave: 10 days, plus 2 comp days that expire at the end of June.</p>
           </div>
         </div>
 
-        <div class="fade-up d2">
-          <div class="shortcut-box">
-            <p class="shortcut-title" data-i18n="kbd-label">Keyboard shortcuts</p>
-            <div class="shortcut-rows">
-              <div class="shortcut-row"><span data-i18n="kbd-guide">Diagram guide</span><kbd>?</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-theme">Toggle theme</span><kbd>T</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-find">Find node / route endpoint</span><kbd>/</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-route">Trace, inspect, and play a route</span><kbd>R</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-radar">Semantic radar</span><kbd>M</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-lens">Compare semantic kinds</span><kbd>L</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-present">Presentation stage</span><kbd>F</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-export">Open export menu</span><kbd>E</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-focus">Focus node</span><kbd>Enter</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-zoom">Reading depth / reset</span><kbd>+ − 0</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-nav">Navigate menu</span><kbd>↑ ↓</kbd></div>
-              <div class="shortcut-row"><span data-i18n="kbd-close">Close menu</span><kbd>Esc</kbd></div>
-            </div>
-          </div>
-        </div>
+        <ol class="steps fade-up d1">
+          <li class="step">
+            <span class="step-num">1</span>
+            <div><h3 data-i18n="step1-h">Install in one command</h3>
+            <p data-i18n="step1-p">Run the command for your agent, or open the <a href="start.html?agent=cursor&amp;type=architecture">agent-aware quick start</a> for project-scoped installs.</p></div>
+          </li>
+          <li class="step">
+            <span class="step-num">2</span>
+            <div><h3 data-i18n="step2-h">Describe your system</h3>
+            <p data-i18n="step2-p">Describe the steps, people, parts, or states — or ask your agent to read a repository first.</p></div>
+          </li>
+          <li class="step">
+            <span class="step-num">3</span>
+            <div><h3 data-i18n="step3-h">Ask your agent to draw it</h3>
+            <p data-i18n="step3-p">Tell your agent to use Archify. It generates a self-contained HTML file you can open in any browser and refine in chat.</p></div>
+          </li>
+        </ol>
       </div>
-      <div class="fade-up d2">
-          <div class="install-strip">
-            <div id="code-en">
-              <p class="install-cmt"># Install globally for Cursor</p>
-              <p class="install-cmd">npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes</p>
-              <p class="install-cmt"># Or try with Codex, without a permanent install</p>
-              <p class="install-cmd">npx skills use tt-a1i/archify@archify --agent codex</p>
-            </div>
-            <div id="code-zh" style="display:none">
-              <p class="install-cmt"># 全局安装到 Cursor</p>
-              <p class="install-cmd">npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes</p>
-              <p class="install-cmt"># 或者用临时副本启动 Codex</p>
-              <p class="install-cmd">npx skills use tt-a1i/archify@archify --agent codex</p>
-            </div>
-          </div>
+
+      <div class="shortcut-box fade-up d2">
+        <p class="shortcut-title" data-i18n="kbd-label">Inside every artifact</p>
+        <div class="shortcut-rows">
+          <div class="shortcut-row"><span data-i18n="kbd-guide">Diagram guide</span><kbd>?</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-theme">Toggle theme</span><kbd>T</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-find">Find node / route endpoint</span><kbd>/</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-route">Trace, inspect, and play a route</span><kbd>R</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-radar">Semantic radar</span><kbd>M</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-lens">Compare semantic kinds</span><kbd>L</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-present">Presentation stage</span><kbd>F</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-export">Open export menu</span><kbd>E</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-focus">Focus node</span><kbd>Enter</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-zoom">Reading depth / reset</span><kbd>+ − 0</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-nav">Navigate menu</span><kbd>↑ ↓</kbd></div>
+          <div class="shortcut-row"><span data-i18n="kbd-close">Close menu</span><kbd>Esc</kbd></div>
+        </div>
       </div>
     </div>
   </section>
 
+  <ProductFacts />
+
   <!-- CLOSING CTA -->
   <section id="cta">
-    <div class="container">
-      <div class="cta-card fade-up">
-        <h2 class="cta-h" data-i18n="cta-h">Describe it once.<br><em>Share the map.</em></h2>
-        <p class="cta-sub" data-i18n="cta-sub">One command installs the checked skill for Cursor, Claude Code, Codex, or OpenCode — and your next diagram is a chat message away.</p>
-        <div class="cta-actions">
-          <a class="cta-install" href="start.html" data-i18n="cta-install">Install the skill</a>
-          <a class="cta-gh" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">github.com/tt-a1i/archify ↗</a>
-        </div>
-        <p class="cta-cmd">$ <b>npx skills add tt-a1i/archify -g</b></p>
+    <div class="cta-glow" aria-hidden="true"></div>
+    <div class="container cta-inner">
+      <h2 class="cta-h fade-up" data-i18n="cta-h">Describe it once.<br><em>Share the map.</em></h2>
+      <p class="cta-sub fade-up d1" data-i18n="cta-sub">One command installs the checked skill for your agent — and your next diagram is a chat message away.</p>
+      <div class="cta-actions fade-up d2">
+        <a class="btn btn-primary btn-lg" href="start.html" data-i18n="cta-install">Install the skill</a>
+        <a class="btn btn-ghost btn-lg" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener"><span data-i18n="cta-gh">Star on GitHub</span> <span aria-hidden="true">↗</span></a>
       </div>
     </div>
   </section>
 
   <!-- FOOTER -->
+  </main>
   <footer>
     <div class="footer-inner">
       <div class="footer-left">
@@ -454,12 +401,31 @@ import pageScript from '../scripts/index.js?raw';
         <p class="footer-meta" data-i18n="footer-meta">development &nbsp;·&nbsp; v{version} &nbsp;·&nbsp; MIT License<br>Based on Cocoon-AI/architecture-diagram-generator</p>
       </div>
       <div class="footer-links">
+        <a href="guide.html" data-i18n="nav-guide">Guide</a>
+        <a href="gallery.html" data-i18n="nav-gallery">Proof Lab</a>
+        <a href="community.html" data-i18n="footer-community">Community</a>
         <a href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/tt-a1i/archify/blob/main/CHANGELOG.md" target="_blank" rel="noopener" data-i18n="footer-changelog">Changelog</a>
         <a href="https://github.com/tt-a1i/archify/blob/main/LICENSE" target="_blank" rel="noopener" data-i18n="footer-license">License</a>
       </div>
     </div>
   </footer>
+
+  <!-- DEMO LIGHTBOX — video src is only assigned when the dialog opens -->
+  <dialog class="demo-dialog" id="demo-dialog" aria-labelledby="demo-title">
+    <div class="demo-frame">
+      <div class="demo-frame-bar">
+        <span class="demo-title" id="demo-title" data-i18n="demo-title">Archify 35-second demo</span>
+        <button class="demo-close" id="demo-close" type="button">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only" data-i18n="demo-close">Close demo</span>
+        </button>
+      </div>
+      <div class="demo-video-box">
+        <video id="demo-video" controls playsinline preload="none" poster="assets/archify-dark.png"></video>
+      </div>
+    </div>
+  </dialog>
 
   <script is:inline src="assets/site-language.js"></script>
   <script is:inline set:html={versioned(pageScript)}></script>

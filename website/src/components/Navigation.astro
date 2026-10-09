@@ -1,19 +1,21 @@
 ---
 import Brand from './Brand';
-interface Props { page: 'index' | 'gallery' | 'guide' | 'start' }
+interface Props { page: 'index' | 'gallery' | 'guide' | 'start' | 'community' }
 const { page } = Astro.props;
 const home = page === 'index';
 const identities = {
   gallery: { en: '/ proof lab', zh: '/ 验证作品集', label: 'Back to Archify home' },
   guide: { en: '/ guide', zh: '/ 场景指南', label: 'Archify home' },
   start: { en: '/ start', zh: '/ 快速上手', label: 'Archify project page' },
+  community: { en: '/ community', zh: '/ 社区包', label: 'Archify home' },
 };
 const identity = home ? undefined : identities[page];
-const guideKeys: Record<string, string> = { guide: 'navGuide', gallery: 'navProof', start: 'navStart' };
+const guideKeys: Record<string, string> = { guide: 'navGuide', gallery: 'navProof', start: 'navStart', community: 'navCommunity' };
 const links = [
   { page: 'guide', en: 'Guide', zh: '场景指南' },
   { page: 'gallery', en: 'Proof Lab', zh: '验证作品集' },
-  { page: 'start', en: 'Start', zh: '快速上手' },
+  { page: 'start', en: 'Get started', zh: '开始使用' },
+  { page: 'community', en: 'Community', zh: '社区包' },
 ];
 ---
 <nav class="site-nav" aria-label="Primary navigation">
@@ -22,9 +24,58 @@ const links = [
     {identity && <span class="nav-logo-path" data-en={identity.en} data-zh={identity.zh}>{identity.en}</span>}
   </a>
   <div class="nav-right">
+    <div class="nav-links">
     {links.map(link => <a class="nav-link" href={`${link.page}.html`} aria-current={page === link.page ? 'page' : undefined} {...(home ? { 'data-i18n': `nav-${link.page}` } : page === 'guide' ? { 'data-i18n': guideKeys[link.page] } : { 'data-en': link.en, 'data-zh': link.zh })}>{link.en}</a>)}
-    <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub</a>
-    <button class={home ? 'btn btn-lang' : 'btn-lang'} id={home ? 'btn-lang' : 'language'} type={home ? undefined : 'button'} aria-label={home ? undefined : 'Switch language'}>中文</button>
+    <a class="nav-link" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">GitHub<span class="nav-stars" data-gh-stars hidden></span></a>
+    </div>
+    <button class="btn-theme" type="button" data-theme-toggle aria-label="Switch to dark theme">
+      <svg class="theme-moon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      <svg class="theme-sun" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+    <a class={home ? 'btn btn-lang' : 'btn-lang'} id={home ? 'btn-lang' : 'language'} href="zh/" data-language-switch aria-label="切换到中文">中文</a>
     <a class="btn btn-primary nav-cta" href={home ? '#quickstart' : page === 'start' ? '#install' : 'start.html'} {...(home ? { 'data-i18n': 'nav-install' } : page === 'guide' ? { 'data-i18n': 'navInstall' } : { 'data-en': 'Install Skill', 'data-zh': '安装技能' })}>Install Skill</a>
   </div>
 </nav>
+<script is:inline>
+  (function () {
+    var body = document.body;
+    var sync = function () { body.classList.toggle('nav-scrolled', window.scrollY > 8); };
+    window.addEventListener('scroll', sync, { passive: true });
+    sync();
+    var root = document.documentElement;
+    var meta = document.querySelector('meta[name="theme-color"]');
+    var toggle = document.querySelector('[data-theme-toggle]');
+    var syncTheme = function () {
+      var dark = root.getAttribute('data-theme') === 'dark';
+      if (meta) meta.setAttribute('content', dark ? '#07080a' : '#f5f6f3');
+      toggle.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+      toggle.setAttribute('aria-pressed', String(dark));
+    };
+    toggle.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('archify-site-theme', next); } catch (_) {}
+      syncTheme();
+      window.dispatchEvent(new CustomEvent('archify:themechange', { detail: { theme: next } }));
+    });
+    syncTheme();
+    var KEY = 'archify-gh-stars';
+    var paint = function (n) {
+      if (!n) return;
+      var label = n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(n);
+      document.querySelectorAll('[data-gh-stars]').forEach(function (node) { node.textContent = label; node.hidden = false; });
+    };
+    var cached = null;
+    try { cached = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch (_) {}
+    if (cached && Date.now() - cached.at < 36e5) {
+      document.addEventListener('DOMContentLoaded', function () { paint(cached.n); });
+      return;
+    }
+    fetch('https://api.github.com/repos/tt-a1i/archify').then(function (r) { return r.ok ? r.json() : null; }).then(function (repo) {
+      var n = repo && repo.stargazers_count;
+      if (!n) return;
+      try { sessionStorage.setItem(KEY, JSON.stringify({ n: n, at: Date.now() })); } catch (_) {}
+      paint(n);
+    }).catch(function () {});
+  })();
+</script>

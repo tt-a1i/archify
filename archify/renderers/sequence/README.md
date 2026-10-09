@@ -55,7 +55,8 @@ not create edge facts.
 
 The legend sits below all timeline content: the last message and its note,
 activation bars, and segment frames, with a 12px gap. Without `meta.viewBox`
-the canvas grows to keep that gap. With an authored `viewBox` that is too short,
+the canvas height fits that content (no fixed 760px floor) and grows when late
+messages need more room. With an authored `viewBox` that is too short,
 `showcase` fails with the exact height to set, and `standard` hides the implicit
 legend rather than drawing it over content. Lifelines stop above the legend.
 Message labels use their line's color; gray default and return lines keep the
@@ -65,14 +66,15 @@ muted text color.
 
 | Constant | Value |
 |----------|-------|
-| viewBox | default `[920, 760]`, taller when late content needs legend room; schema minimum `[480, 480]` |
-| Participant boxes | `fixed` (default): 86×54 at y 72; `spread`: viewBox-relative width from 86px up to 190px |
-| Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width |
+| viewBox | automatic height fits content + legend (minimum 327px readable band); taller when late content needs more room; automatic width packs to 560–800px for 2–3 short-label participants (4+ default 920; long labels still widen). Schema minimum `[480, 480]` |
+| Participant boxes | `spread` (default): viewBox-relative width from 86px up to 190px; `fixed`: 86px wide; both 60px tall at y 72 |
+| Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width with at least a 16px card gutter |
 | Participant count | the last box must end at or before width − 40; layouts that cannot fit fail closed |
 | Lifelines | from y 142 down to height − 65 (drawn to just above the legend); band must be ≥120px tall |
 | Message `y` range | `[160, height − 83]` |
 | Message spacing | ≥28px vertical between messages that share horizontal space |
 | Arrow span | ≥60px horizontal between the two participants |
+| Message notes | 7px fine-detail text under the arrow, wrapped at 11px line spacing inside one gap between neighbouring lifelines (the widest gap the message spans; gaps within 0.5px count as equal and resolve to the left-most, where notes have always started), clear of activation bars; long unbroken text breaks after `/ . - ? & = # _`, otherwise at any character, so the full note is kept in every export. In `showcase`, a note that reaches a later message fails as `sequence/note-overlap` with the `y` that message needs, a note past the canvas content limit fails as `sequence/note-canvas-limit` with the `meta.viewBox[1]` it needs, and a segment label still covering a message label, route or note after its four upward steps fails as `sequence/segment-label-overlap`; each diagnostic names the source path and offers a verified `supportedFixes` edit when one exists |
 | Segments | y pixel ranges with `to > from`, inside `[72, lifeline bottom + 20]` |
 | Legend | last row baseline at height − 54; extra rows wrap upward and stay 12px below the timeline content |
 
@@ -81,21 +83,36 @@ participant ids; activations also require `to > from`.
 
 ### Column fit
 
-Sequence diagrams use `meta.column_fit: "fixed"` by default so existing
-documents keep their historical coordinates. Use `"spread"` when a wide
+Sequence diagrams default to `meta.column_fit: "spread"`, whether or not
+`meta.viewBox` is supplied.
+Explicit `"fixed"` preserves the historical 86px boxes and 108px column gap.
+To retain historical fixed coordinates, set `meta.column_fit: "fixed"` explicitly.
+Use `"spread"` when a wide
 viewBox would otherwise leave empty space on the right or when meaningful
 participant labels do not fit the fixed 86px boxes. Spread derives box width
 and column distance from the viewBox while preserving participant order,
-lifelines, and message semantics.
+lifelines, and message semantics. Participant cards retain at least a 16px
+gutter. Narrow canvases that can fit those cards may reduce the left margin
+from 62px down to 40px; ordinary canvases keep 62px and the right margin
+remains 40px. Frames too narrow for those margins and gutters fail rather than
+enlarge the authored viewBox.
 
 The artifact checker reports `composition.sequenceColumnSpace` from the rendered
 participants, routes and text. A large unused right-hand region in a fixed layout
 can produce an `inspect-sequence-width` recommendation in `finalize`; it is advice,
 not a new warning or failure. See [Sequence width review](../../references/delivery-contract.md#sequence-width-review)
-for the bounded authoring repair and explicit-fixed/legacy preservation rules.
+for the bounded authoring repair and explicit-fixed preservation rules.
 
 ## Design Rules
 
+- Messages currently require distinct `from` and `to` participants. Although
+  schema-v1 accepts matching IDs, this renderer does not draw self-call loops
+  and rejects them with `sequence/self-message-unsupported`, naming the message
+  path and participant. Increasing column distance cannot repair a self-message.
+  Preserve an internal step's wording, ownership, and order in a note on an
+  actual interaction or an explicitly ordered card. Do not invent another
+  participant or change the target merely to pass validation. These authoring
+  choices require semantic review and are not advertised as automatic fixes.
 - Put participants across the top, ordered by the story the reader should
   follow.
 - Time moves downward.
@@ -103,7 +120,7 @@ for the bounded authoring repair and explicit-fixed/legacy preservation rules.
 - Use `security` for auth, consent, permission, and policy calls.
 - Use `return` for quiet response messages.
 - Use `dashed` for async trace, event, logging, and non-blocking work.
-- Use segments as light background guides; keep segment labels short.
+- Use segments as light background guides; keep segment labels short and keep each frame edge at least 4px off every message arrow.
 - Keep labels concise, but try `meta.column_fit: "spread"` before shortening a
   meaningful participant label just to fit the fixed boxes.
 

@@ -10,13 +10,17 @@ against one of the schemas in this folder before any layout work happens.
 | `workflow.schema.json` | `diagram_type: "workflow"` | `lanes`, `phases`, `groups`, `mainPath`, `nodes`, `edges` |
 | `sequence.schema.json` | `diagram_type: "sequence"` | `participants`, `segments`, `messages`, `activations` |
 | `dataflow.schema.json` | `diagram_type: "dataflow"` | `stages`, `nodes`, `flows` |
-| `lifecycle.schema.json` | `diagram_type: "lifecycle"` | `lanes`, `states`, `transitions` |
+| `lifecycle.schema.json` | `diagram_type: "lifecycle"` | `mainPath`, `states`, `transitions` |
 | `architecture.schema.json` | `diagram_type: "architecture"` | `components`, `boundaries`, `connections` |
 | `erd.schema.json` | `diagram_type: "erd"` | `entities`, `relationships` |
+| `tree.schema.json` | `diagram_type: "tree"` | `nodes` (each with one `parent`) |
+| `class.schema.json` | `diagram_type: "class"` | `types`, `relationships` |
+| `timeline.schema.json` | `diagram_type: "timeline"` | `events` (`lanes` optional) |
+| `waterfall.schema.json` | `diagram_type: "waterfall"` | `spans` (each with optional `parent`) |
 | `common.schema.json` | shared `$defs` only (no top-level document) | — |
 
 Every diagram schema requires `schema_version`, `diagram_type`, `meta` (with
-`title` and a durable portable `output`), and its structural arrays — except `segments`, `activations`, ERD
+`title` and a durable portable `output`), and its structural arrays — except `segments`, `activations`, ERD and class
 `relationships`, and `cards`, which are optional — and sets `additionalProperties: false` at every
 level, so unknown fields are rejected rather than silently ignored.
 
@@ -26,7 +30,7 @@ It also accepts `locale`, any well-formed language tag (schema pattern
 `^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$`). The field selects the fixed Viewer UI,
 renderer-owned default legend and accessibility copy, document-title suffix,
 and `<html lang>` value; it does not translate authored strings. The bundled
-catalogs enrolled in `locales/manifest.json` (`en`, `zh-CN`, `es`, `ko`) are
+catalogs enrolled in `locales/manifest.json` (`en`, `zh-CN`, `zh-TW`, `es`, `ko`) are
 selected by tag, case-insensitively; region and script variants are distinct
 tags. Any other tag needs a matching `translations` object (see below) or the
 renderer falls back to English and discloses it.
@@ -45,10 +49,10 @@ report rejected entries and the final resolved coverage to stderr.
 motion-forward presentation), `blueprint` (high-contrast engineering review),
 or `editorial` (warm publication-style design review and documentation).
 Presets change only viewer styling; they do not alter semantic IDs or geometry.
-Sequence `meta` additionally accepts `column_fit`. The default `fixed` keeps
-the historical 108px column gap and 86px participant boxes, so an authored
-diagram renders at the same coordinates no matter how wide its viewBox is.
-`spread` derives the gap and box width from the viewBox instead, which turns a
+Sequence `meta` additionally accepts `column_fit`. The default `spread` applies whether or not `meta.viewBox` is supplied.
+Explicit `fixed` keeps the historical 108px column gap and 86px participant
+boxes. `spread` derives column distance and box width from the viewBox, with
+at least a 16px gutter between participant cards, which turns a
 wide canvas into column distance and label room rather than empty space on the
 right. Lane order, IDs, and message semantics are unchanged either way.
 
@@ -96,6 +100,7 @@ Supported keys are renderer-owned:
 | Dataflow | `emphasis`, `security`, `dashed`, `database`, `default` |
 | Lifecycle | `start`, `active`, `waiting`, `decision`, `success`, `failure`, `neutral`, `external` |
 | ERD | `pk`, `fk`, `uk`, `one`, `many`, `optional` |
+| Class | `dependency`, `association`, `inheritance`, `realization`, `composition`, `aggregation` |
 
 Labels are presentation only: they do not rename the stable kind, change
 nodes/relationships, or create Semantic Lens edge facts. Sequence message and
@@ -126,13 +131,8 @@ output.
 Workflow supports schema versions 1 and 2. Version 1 remains the fixed-layout
 compatibility contract; version 2 opts into the readable workflow compiler and
 can be produced explicitly with `archify migrate workflow ... --to-schema 2`.
-Lifecycle also supports versions 1 and 2 with the same fields. Version 1 keeps
-the fixed three-band layout; version 2 renders one row per lane on a shared
-column grid (see the [lifecycle renderer](../renderers/lifecycle/README.md)).
-Lifecycle has no migration command: to adopt v2, set `schema_version: 2`,
-re-place lower-lane `col` values on the shared grid (v1 column `N` sat under
-main column `N + 2`), and drop coordinates authored for the v1 canvas
-(`viewBox`, `via`, `channelX`, `channelY`, `labelAt`).
+Lifecycle accepts only version 3, an automatic main-path layout (see the
+[lifecycle renderer](../renderers/lifecycle/README.md)).
 The other three diagram schemas keep `schema_version` pinned to `1`; they have
 no schema-version migration command. For any of the five diagram types, repair
 a legacy missing or nonportable `meta.output` in the source and run `validate`.
@@ -208,7 +208,7 @@ relationship IDs within the mode's relationship collection.
 
 All five modes support opt-in, revision-pinned repository evidence.
 `meta.repository` names the repository URL and full commit SHA, with optional
-`provider` (`github` or `gitee`) and `link_mode` (`web` or `local-only`; see the
+`provider` (`github`, `gitee`, or `gitlab`) and `link_mode` (`web` or `local-only`; see the
 authoring contract); a node may carry one to three `sources` with repo-relative POSIX paths, optional line
 ranges, and optional labels. Sources are authored on the mode's own node
 collection — Architecture `components`, Workflow and Data Flow `nodes`,

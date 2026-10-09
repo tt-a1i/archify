@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "租一套房，一来一回都在这里",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "renting.sequence.html",
+    "viewBox": [
+      1080,
+      640
+    ],
+    "column_fit": "spread",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "我拍板"
+        },
+        "default": {
+          "label": "传话"
+        },
+        "return": {
+          "label": "回复"
+        },
+        "security": {
+          "label": "签字付款"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "me",
+      "type": "external",
+      "label": "我",
+      "sublabel": "找房的人",
+      "icon": "person"
+    },
+    {
+      "id": "agent",
+      "type": "frontend",
+      "label": "中介",
+      "sublabel": "带看 · 传话",
+      "icon": "briefcase"
+    },
+    {
+      "id": "owner",
+      "type": "backend",
+      "label": "房东",
+      "sublabel": "定价格",
+      "icon": "person"
+    },
+    {
+      "id": "contract",
+      "type": "security",
+      "label": "合同与押金",
+      "sublabel": "签字 · 付款",
+      "icon": "flag"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 245,
+      "label": "看房"
+    },
+    {
+      "from": 255,
+      "to": 400,
+      "label": "谈价"
+    },
+    {
+      "from": 410,
+      "to": 520,
+      "label": "签约入住"
+    }
+  ],
+  "messages": [
+    {
+      "id": "ask",
+      "from": "me",
+      "to": "agent",
+      "y": 165,
+      "label": "预约周六看房",
+      "variant": "default"
+    },
+    {
+      "id": "visit",
+      "from": "agent",
+      "to": "me",
+      "y": 195,
+      "label": "带看 3 套",
+      "variant": "return"
+    },
+    {
+      "id": "pick",
+      "from": "me",
+      "to": "agent",
+      "y": 228,
+      "label": "就要第 2 套",
+      "variant": "emphasis"
+    },
+    {
+      "id": "offer",
+      "from": "agent",
+      "to": "owner",
+      "y": 270,
+      "label": "租客出价 4800",
+      "variant": "default"
+    },
+    {
+      "id": "counter",
+      "from": "owner",
+      "to": "agent",
+      "y": 300,
+      "label": "最低 5000",
+      "variant": "return"
+    },
+    {
+      "id": "relay",
+      "from": "agent",
+      "to": "me",
+      "y": 330,
+      "label": "房东要 5000",
+      "variant": "return"
+    },
+    {
+      "id": "deal",
+      "from": "me",
+      "to": "agent",
+      "y": 360,
+      "label": "5000，押一付三",
+      "variant": "emphasis"
+    },
+    {
+      "id": "confirm",
+      "from": "agent",
+      "to": "owner",
+      "y": 388,
+      "label": "成交",
+      "variant": "default"
+    },
+    {
+      "id": "sign",
+      "from": "me",
+      "to": "contract",
+      "y": 428,
+      "label": "签合同 · 拍照留底",
+      "variant": "security"
+    },
+    {
+      "id": "deposit",
+      "from": "me",
+      "to": "contract",
+      "y": 458,
+      "label": "付押金 + 3 个月租金",
+      "variant": "security"
+    },
+    {
+      "id": "keys",
+      "from": "owner",
+      "to": "me",
+      "y": 495,
+      "label": "交钥匙 · 抄水电表",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "agent",
+      "from": 160,
+      "to": 394,
+      "type": "frontend"
+    },
+    {
+      "participant": "owner",
+      "from": 265,
+      "to": 394,
+      "type": "backend"
+    },
+    {
+      "participant": "contract",
+      "from": 423,
+      "to": 464,
+      "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "谁在传话",
+      "items": [
+        "中介在中间来回传价，你和房东不必直接谈",
+        "最终价格以房东的回复为准"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "签约要留证据",
+      "items": [
+        "合同拍照留底，押金走可追溯的转账",
+        "交钥匙时一起抄水电燃气表"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "示例",
+      "items": [
+        "价格和次数是示例，换成你的实际情况"
+      ]
+    }
+  ]
+}

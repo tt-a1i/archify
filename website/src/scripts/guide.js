@@ -2,23 +2,43 @@
     (function () {
       'use strict';
       var recipes = JSON.parse(document.getElementById('guide-data').textContent);
-      var types = ["architecture","workflow","sequence","dataflow","lifecycle","erd"];
-      var colors = { architecture:'#0891b2', workflow:'#047857', sequence:'#6d28d9', dataflow:'#b45309', lifecycle:'#be123c', erd:'#0f766e' };
+      var types = Array.from(new Set(recipes.map(function (recipe) { return recipe.type; })));
+      var colors = { architecture:'var(--hue-cyan)', workflow:'var(--hue-emerald)', sequence:'var(--hue-violet)', dataflow:'var(--hue-amber)', lifecycle:'var(--hue-rose)', erd:'var(--hue-emerald)' };
       var language = ArchifySiteLanguage.read();
       var activeType = 'all';
       var lastRecipe = null;
-      var copy = {
-        en: {
-          navGuide:'Guide',navProof:'Proof Lab',navStart:'Start',navInstall:'Install Skill',versionLabel:'Scenario guide / development / v[[ARCHIFY_VERSION]]',eyebrow:'Question-first diagramming', headline:'Choose the question.<br>Get the <em>right diagram.</em>', lede:'Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.',
-          metricRecipes:'real-world<br>recipes',metricModes:'typed diagram<br>modes',metricRuntime:'runtime<br>dependencies',chooserTitle:'What must the diagram explain?',chooserBody:'Write a situation, not a diagram type. Specific system facts produce a stronger recommendation.',placeholder:'Example: Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.',recommend:'Recommend a recipe →',clear:'Clear',libraryEyebrow:'Recipe library',libraryTitle:'13 small, opinionated starting points.',libraryBody:'Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.',footerLeft:'Generated from the same recipe source as the Archify CLI.',all:'All recipes',recommended:'Recommended recipe',use:'Use when',avoid:'Avoid when',must:'Evidence to include',presentation:'Presentation',prompt:'Copy-ready prompt',copyPrompt:'Copy prompt',copied:'Copied',alternatives:'Other possible fits:',confidence:'confidence',open:'Open recipe',proofReady:'Verified proof',proofLink:'Open verified example ↗',
-          samples:[['API + cache miss','Show an API request with JWT auth, a Redis cache miss, database fallback, and async tracing.'],['Kafka + DLQ','Map Kafka topics, ordered processors, consumer groups, replay, state stores, and the dead-letter queue.'],['Incident response','Show how responders detect, triage, mitigate, escalate, communicate, and verify recovery.']]
-        },
-        zh: {
-          navGuide:'场景指南',navProof:'验证作品集',navStart:'快速上手',navInstall:'安装技能',versionLabel:'场景指南 / 开发版 / v[[ARCHIFY_VERSION]]',eyebrow:'先问题，后图表',headline:'先选对问题，<br>再得到<em>对的图。</em>',lede:'描述受众真正需要理解的内容。Archify 会推荐一个有边界的视觉配方，同时给出证据清单、禁用条件和可复制提示词。',
-          metricRecipes:'个真实场景<br>配方',metricModes:'种类型化<br>图表模式',metricRuntime:'个运行时<br>依赖',chooserTitle:'这张图必须解释什么？',chooserBody:'写清场景，不要只写图表类型。系统事实越具体，推荐越可靠。',placeholder:'例如：展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。',recommend:'推荐配方 →',clear:'清空',libraryEyebrow:'配方库',libraryTitle:'13 个小而专的起点。',libraryBody:'每个配方只回答一个技术问题。清晰的边界让图更易读、可评审，也不会掩盖证据缺口。',footerLeft:'网页与 Archify CLI 使用同一份配方数据生成。',all:'全部配方',recommended:'推荐配方',use:'适合',avoid:'不要这样用',must:'必须包含的证据',presentation:'表现建议',prompt:'可直接复制的提示词',copyPrompt:'复制提示词',copied:'已复制',alternatives:'其他可能：',confidence:'置信度',open:'打开配方',proofReady:'已验证成品',proofLink:'打开验证成品 ↗',
-          samples:[['API + 缓存未命中','展示带 JWT 鉴权、Redis 缓存未命中、数据库回退和异步追踪的 API 请求。'],['Kafka + 死信','梳理 Kafka Topic、有序处理器、消费者组、重放、状态存储和死信队列。'],['事故处置','展示响应者如何发现、分诊、缓解、升级、沟通并验证恢复。']]
-        }
-      };
+      var copy = JSON.parse(document.getElementById('site-copy').textContent);
+      var languageStateKey = 'archify-guide-language-state.v1';
+
+      // A language navigation may carry one short-lived draft within this tab.
+      // Consume before validating so a stale or unrelated visit cannot reuse it.
+      function restoreLanguageState() {
+        try {
+          var raw = sessionStorage.getItem(languageStateKey);
+          sessionStorage.removeItem(languageStateKey);
+          var state = raw ? JSON.parse(raw) : null;
+          if (!state || state.to !== window.location.href || !Number.isFinite(state.at) || Date.now() - state.at > 30000 || state.at > Date.now()) return;
+          if (typeof state.scenario === 'string' && state.scenario.length <= 65536) document.getElementById('scenario').value = state.scenario;
+          if (state.activeType === 'all' || types.indexOf(state.activeType) >= 0) activeType = state.activeType;
+          lastRecipe = recipes.find(function (recipe) { return recipe.id === state.recipe; }) || null;
+        } catch (_) {}
+      }
+      function saveLanguageState(event) {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        try {
+          var scenario = document.getElementById('scenario').value;
+          if (scenario.length > 65536) return;
+          var destination = new URL(document.getElementById('language').href);
+          var current = new URL(window.location.href);
+          current.searchParams.delete('lang');
+          destination.search = current.search;
+          destination.hash = current.hash;
+          sessionStorage.setItem(languageStateKey, JSON.stringify({
+            to: destination.href, at: Date.now(), scenario: scenario,
+            activeType: activeType, recipe: lastRecipe ? lastRecipe.id : null,
+          }));
+        } catch (_) {}
+      }
 
       function t(key) { return copy[language][key]; }
       function local(recipe) { return Object.assign({}, recipe, recipe[language]); }
@@ -55,7 +75,7 @@
         var recipe = local(rawRecipe);
         lastRecipe = rawRecipe;
         var alt = alternatives || [];
-        var html = '<div class="result-main"><div><span class="result-kicker">'+escapeHtml(t('recommended'))+' · '+escapeHtml(confidence)+' '+escapeHtml(t('confidence'))+'</span><h3>'+escapeHtml(recipe.title)+'</h3><p class="result-question">'+escapeHtml(recipe.question)+'</p><p class="result-summary">'+escapeHtml(recipe.summary)+'</p>'+(recipe.proof ? '<a class="proof-link" href="gallery.html#proof-'+encodeURIComponent(recipe.proof)+'">'+escapeHtml(t('proofLink'))+'</a>' : '')+'</div><div class="boundary"><div class="boundary-item"><small>'+escapeHtml(t('use'))+'</small><p>'+escapeHtml(recipe.useWhen)+'</p></div><div class="boundary-item avoid"><small>'+escapeHtml(t('avoid'))+'</small><p>'+escapeHtml(recipe.avoidWhen)+'</p></div></div></div>';
+        var html = '<div class="result-main"><div><span class="result-kicker">'+escapeHtml(t('recommended'))+' · '+escapeHtml(confidence)+' '+escapeHtml(t('confidence'))+'</span><h3>'+escapeHtml(recipe.title)+'</h3><p class="result-question">'+escapeHtml(recipe.question)+'</p><p class="result-summary">'+escapeHtml(recipe.summary)+'</p>'+(recipe.proof ? '<a class="proof-link" href="'+ArchifySiteLanguage.page('gallery', '#proof-'+encodeURIComponent(recipe.proof))+'">'+escapeHtml(t('proofLink'))+'</a>' : '')+'</div><div class="boundary"><div class="boundary-item"><small>'+escapeHtml(t('use'))+'</small><p>'+escapeHtml(recipe.useWhen)+'</p></div><div class="boundary-item avoid"><small>'+escapeHtml(t('avoid'))+'</small><p>'+escapeHtml(recipe.avoidWhen)+'</p></div></div></div>';
         html += '<div class="result-grid"><div class="checklist"><div class="mini-heading">'+escapeHtml(t('must'))+'</div><ul>'+recipe.include.map(function (item) { return '<li>'+escapeHtml(item)+'</li>'; }).join('')+'</ul><div class="presentation"><span class="tag">'+escapeHtml(recipe.type)+'</span><span class="tag">'+escapeHtml(recipe.presentation.preset)+'</span><span class="tag">'+escapeHtml(recipe.presentation.motion)+'</span></div></div>';
         html += '<div class="prompt-box"><div class="prompt-bar"><div class="mini-heading" style="margin:0">'+escapeHtml(t('prompt'))+'</div><button class="copy" id="copy-prompt" type="button">'+escapeHtml(t('copyPrompt'))+'</button></div><p class="prompt-text">'+escapeHtml(recipe.prompt)+'</p></div></div>';
         if (alt.length) html += '<div class="alternatives">'+escapeHtml(t('alternatives'))+alt.map(function (entry) { var item=local(entry.recipe); return '<button type="button" data-alt="'+item.id+'">'+escapeHtml(item.title)+' ['+item.type+']</button>'; }).join('')+'</div>';
@@ -71,7 +91,7 @@
       }
       function applyLanguage(next) {
         language = ArchifySiteLanguage.write(next);
-        document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+        document.documentElement.lang = language === 'zh' ? 'zh-Hans' : 'en';
         document.getElementById('language').textContent = language === 'zh' ? 'EN' : '中文';
         document.getElementById('language').setAttribute('aria-label', language === 'zh' ? 'Switch to English' : '切换到中文');
         document.querySelectorAll('[data-en][data-zh]').forEach(function (node) { node.textContent=node.getAttribute(language === 'zh' ? 'data-zh' : 'data-en'); });
@@ -91,11 +111,12 @@
       }
       document.getElementById('recommend').addEventListener('click',runRecommendation);
       document.getElementById('clear').addEventListener('click',function () { document.getElementById('scenario').value=''; document.getElementById('result').classList.remove('visible'); lastRecipe=null; });
-      document.getElementById('language').addEventListener('click',function () { applyLanguage(language === 'en' ? 'zh':'en'); });
       document.getElementById('scenario').addEventListener('keydown',function (event) { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') runRecommendation(); });
       document.getElementById('samples').addEventListener('click',function (event) { var chip=event.target.closest('[data-query]'); if (!chip) return; document.getElementById('scenario').value=chip.dataset.query; runRecommendation(); });
       document.getElementById('filters').addEventListener('click',function (event) { var filter=event.target.closest('[data-filter]'); if (!filter) return; activeType=filter.dataset.filter; renderFilters(); renderCards(); });
       document.getElementById('cards').addEventListener('click',function (event) { var card=event.target.closest('[data-recipe]'); if (!card) return; var recipe=recipes.find(function (item) { return item.id === card.dataset.recipe; }); renderResult(recipe,'selected',[]); document.getElementById('result').scrollIntoView({behavior:'smooth',block:'center'}); });
       document.getElementById('result').addEventListener('click',function (event) { if (event.target.id === 'copy-prompt') copyPrompt(); var alt=event.target.closest('[data-alt]'); if (alt) renderResult(recipes.find(function (item) { return item.id === alt.dataset.alt; }),'selected',[]); });
+      document.getElementById('language').addEventListener('click', saveLanguageState);
+      restoreLanguageState();
       applyLanguage(language);
     }());

@@ -285,6 +285,7 @@
         var legendRect = legend ? legend.getBoundingClientRect() : { top: 0, left: 0 };
         return [
           reserve,
+          lift,
           Math.round(containerRect.width * 100) / 100,
           Math.round(containerRect.height * 100) / 100,
           Math.round(navRect.left * 100) / 100,
@@ -295,7 +296,7 @@
           lastReceipt ? lastReceipt.stageGap : ''
         ].join('|');
       }
-      function layoutPending() { return Boolean(frame || settleFrame || probingBaseline); }
+      function layoutPending() { return Boolean(frame || settleFrame || liftFrame || probingBaseline); }
       function whenStable() {
         return Archify.waitForStableLayout({
           schedule: schedule,
@@ -315,6 +316,10 @@
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
         [nav, svg, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+        // Camera zoom changes outer page flow without changing intrinsic SVG
+        // size. Follow that box for dock placement, independently of scrolling
+        // and the baseline stage-rail measurement.
+        new ResizeObserver(scheduleLift).observe(container);
       }
       if (typeof MutationObserver === 'function') {
         var contentObserver = new MutationObserver(function (records) {

@@ -11,7 +11,8 @@
     "build": "node scripts/stage-public.mjs && astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "node --test --test-name-pattern=\"real Chrome\" ../test/site-language-continuity.test.mjs test/community-browser.test.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.6",

@@ -3,12 +3,12 @@
       var cards = Array.prototype.slice.call(document.querySelectorAll('.showcase-card'));
       var filterButtons = Array.prototype.slice.call(document.querySelectorAll('[data-filter]'));
       var empty = document.getElementById('empty-state');
-      var previewTheme = 'dark';
+      var previewTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
       var language = ArchifySiteLanguage.read();
 
       function applyLanguage(next) {
         language = ArchifySiteLanguage.write(next);
-        document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+        document.documentElement.lang = language === 'zh' ? 'zh-Hans' : 'en';
         document.querySelectorAll('[data-en][data-zh]').forEach(function (node) {
           node.innerHTML = node.getAttribute(language === 'zh' ? 'data-zh' : 'data-en');
         });
@@ -48,13 +48,14 @@
       filterButtons.forEach(function (button) {
         button.addEventListener('click', function () { applyFilter(button.getAttribute('data-filter'), true); });
       });
-      document.getElementById('language').addEventListener('click', function () { applyLanguage(language === 'en' ? 'zh' : 'en'); });
       document.getElementById('preview-theme').addEventListener('click', function () { applyPreviewTheme(previewTheme === 'dark' ? 'light' : 'dark'); });
 
-      var allowed = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd'];
+      var allowed = filterButtons.map(function (button) { return button.getAttribute('data-filter'); });
       var requested = new URLSearchParams(location.search).get('type') || 'all';
       applyFilter(allowed.indexOf(requested) >= 0 ? requested : 'all', false);
       applyLanguage(language);
+      if (previewTheme === 'light') applyPreviewTheme('light');
+      window.addEventListener('archify:themechange', function (event) { applyPreviewTheme(event.detail.theme); });
 
       if ('IntersectionObserver' in window) {
         var observer = new IntersectionObserver(function (entries) {

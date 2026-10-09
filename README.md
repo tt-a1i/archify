@@ -13,9 +13,9 @@
 <p align="center">See what the community is creating—and imagine what you could make next.</p>
 
 <p align="center">
-  <a href="https://tt-a1i.github.io/archify/gallery.html"><strong>Live demos</strong></a> &nbsp;·&nbsp;
+  <a href="https://archify.si/gallery.html"><strong>Live demos</strong></a> &nbsp;·&nbsp;
   <a href="#start"><strong>Get started</strong></a> &nbsp;·&nbsp;
-  <a href="https://tt-a1i.github.io/archify/guide.html"><strong>Scenario guide</strong></a> &nbsp;·&nbsp;
+  <a href="https://archify.si/guide.html"><strong>Scenario guide</strong></a> &nbsp;·&nbsp;
   <a href="#community"><strong>Community</strong></a> &nbsp;·&nbsp;
   <a href="./README_ZH.md"><strong>简体中文</strong></a> &nbsp;·&nbsp;
   <a href="./README_JA.md"><strong>日本語</strong></a>
@@ -27,13 +27,14 @@
 
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
+  <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
-  <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
+  <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.0.2--dev.1-0891b2?style=flat-square" alt="Development version 3.0.2-dev.1" /></a>
 </p>
 
 <p align="center">
-  <a href="https://tt-a1i.github.io/archify/"><img src="https://img.shields.io/badge/Website-0891B2?style=for-the-badge" alt="Archify website" /></a>
+  <a href="https://archify.si/"><img src="https://img.shields.io/badge/Website-0891B2?style=for-the-badge" alt="Archify website" /></a>
   <a href="https://discord.gg/6xWMjgCeUq"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&amp;logo=discord&amp;logoColor=white" alt="Join Archify on Discord" /></a>
   <a href="#community"><img src="https://img.shields.io/badge/WeChat-07C160?style=for-the-badge&amp;logo=wechat&amp;logoColor=white" alt="Archify WeChat group" /></a>
   <a href="#community"><img src="https://img.shields.io/badge/QQ-1688D8?style=for-the-badge&amp;logo=qq&amp;logoColor=white" alt="Archify QQ group" /></a>
@@ -48,7 +49,7 @@
 
 https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 
-**One sentence. Your repo, mapped.** Watch the 35-second demo: explore the diagram, follow source links, and trace a path. [Try the interactive examples ↗](https://tt-a1i.github.io/archify/gallery.html)
+**One sentence. Your repo, mapped.** Watch the 35-second demo: explore the diagram, follow source links, and trace a path. [Try the interactive examples ↗](https://archify.si/gallery.html)
 
 <a id="start"></a>
 
@@ -71,7 +72,7 @@ Then continue: “Add authentication”, “Highlight the cache-miss path”, or
 
 **No repository is required:** start with a description, or ask your agent to read a repository for a source-backed architecture diagram.
 
-[Choose your agent](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) · [Installation details and update checks](#quick-start)
+[Choose your agent](https://archify.si/start.html?agent=cursor&type=architecture) · [Installation details and update checks](#quick-start)
 
 <a id="sponsors"></a>
 
@@ -101,18 +102,18 @@ Then continue: “Add authentication”, “Highlight the cache-miss path”, or
 
 | Explain an agent workflow | Follow a cache miss | Explore service relationships |
 |---|---|---|
-| [![Agent workflow tracing everything the planner drives](docs/assets/archify-demo-reach.png)](https://tt-a1i.github.io/archify/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1#focus=planner&reach=downstream) | [![Cache-miss sequence showing the Web App to Postgres route](docs/assets/archify-demo-route.png)](https://tt-a1i.github.io/archify/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![Production architecture comparing backend and database roles](docs/assets/archify-demo-lens.png)](https://tt-a1i.github.io/archify/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
+| [![Agent workflow tracing everything the planner drives](docs/assets/archify-demo-reach.png)](https://archify.si/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1#focus=planner&reach=downstream) | [![Cache-miss sequence showing the Web App to Postgres route](docs/assets/archify-demo-route.png)](https://archify.si/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![Production architecture comparing backend and database roles](docs/assets/archify-demo-lens.png)](https://archify.si/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
 | Trace everything downstream of one step. | Highlight the path from web app to database. | Focus on authored backend and database connections. |
 
-The [Proof Lab](https://tt-a1i.github.io/archify/gallery.html) contains all 11 checked-in scenarios, their JSON sources, and validation receipts.
+The [Proof Lab](https://archify.si/gallery.html) contains all 11 checked-in scenarios, their JSON sources, and validation receipts.
 
 ### Understand a real repository
 
 <sub>CODE → DIAGRAM · A source-backed system map</sub>
 
-[![MCO runtime architecture generated from the public mco-org/mco repository](docs/assets/mco-runtime-share-card.png)](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1)
+[![MCO runtime architecture generated from the public mco-org/mco repository](docs/assets/mco-runtime-share-card.png)](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)
 
-Archify traced [`mco-org/mco`](https://github.com/mco-org/mco) at `9f1a1cf` and produced this checked map. **[Open it ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [trace reach ↗](https://tt-a1i.github.io/archify/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [typed source](docs/cases/mco-runtime.architecture.json)
+Archify traced [`mco-org/mco`](https://github.com/mco-org/mco) at `9f1a1cf` and produced this checked map. **[Open it ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [trace reach ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [typed source](docs/cases/mco-runtime.architecture.json)
 
 ### Easy to extend. More ways to make it yours.
 
@@ -124,11 +125,11 @@ One user started with a hand-drawn multi-agent architecture, turned it into an i
 
 Another user turned a Shanghai CityWalk guide into a four-day itinerary: switch between days, inspect a stop, and jump to Amap, Xiaohongshu, or Dianping. The author also added arrival check-ins and stop notes, turning the itinerary into a small tool to use during the trip. These extensions were added by the community author for this particular artifact.
 
-**[▶ Explore the interactive Shanghai CityWalk](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)**
+**[▶ Explore the interactive Shanghai CityWalk](https://archify.si/cases/community/shanghai-citywalk.html)**
 
-[![A community-created four-day Shanghai CityWalk itinerary](docs/assets/community/shanghai-citywalk.png)](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)
+[![A community-created four-day Shanghai CityWalk itinerary](docs/assets/community/shanghai-citywalk.png)](https://archify.si/cases/community/shanghai-citywalk.html)
 
-**[▶ Try the interactive version](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · Switch between D1–D4 and click a place to explore.
+**[▶ Try the interactive version](https://archify.si/cases/community/shanghai-citywalk.html)** · Switch between D1–D4 and click a place to explore.
 
 <sub>Community artifact · Shanghai CityWalk · Four days of routes and place links</sub>
 
@@ -136,7 +137,7 @@ Another user turned a Shanghai CityWalk guide into a four-day itinerary: switch 
 
 The output is a self-contained HTML file. Download it and open it in your browser to use the node details and path exploration included in that artifact. No Archify installation is needed to view it. Send the HTML to someone else and the interactions go with it; external websites and map links need a network connection.
 
-**[Explore the Shanghai CityWalk ↗](https://tt-a1i.github.io/archify/cases/community/shanghai-citywalk.html)** · **[Download HTML ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
+**[Explore the Shanghai CityWalk ↗](https://archify.si/cases/community/shanghai-citywalk.html)** · **[Download HTML ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
 
 <sub>Try switching between D1–D4, opening a place card, or following a map link. Times and place information reflect the author's original itinerary.</sub>
 
@@ -200,13 +201,21 @@ To try without installing:
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
-[DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`
+[DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`
 
-The [agent switcher](https://tt-a1i.github.io/archify/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`.
+The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`.
 
 Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes.
 
 </details>
+
+### Stay updated
+
+- **Get release notifications:** select **Watch → Custom → Releases** at the top of this GitHub repository. Starring the project does not subscribe you to release notifications.
+- **See what changed:** [Release notes](https://github.com/tt-a1i/archify/releases).
+- **Use a feed reader:** [Subscribe to the release feed](https://github.com/tt-a1i/archify/releases.atom).
+
+Installations with the update checker also check for newer stable releases during diagram delivery and can show a reminder. Older installations without the checker need a manual update to gain this feature. You choose whether and when to upgrade; Archify never installs updates automatically.
 
 ### 2. Start from a description — no repository required
 
@@ -240,7 +249,7 @@ Continue with focused requests such as `add Redis`, `move auth to the left`, or 
 | **Data Flow** | Pipelines, lineage, PII, consumers | Sources, transforms, stores, boundaries |
 | **Lifecycle** | States, retries, waits, terminal outcomes | States, events, retry and cancellation paths |
 
-Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://tt-a1i.github.io/archify/gallery.html#proof-deployment-ownership).
+Architecture's optional `deployment-ownership` profile fails closed when authored owners, region placement, private database scope, or named crossings are missing; it is never implicit and does not inspect live infrastructure. See the [checked deployment proof](https://archify.si/gallery.html#proof-deployment-ownership).
 
 For design or PR review, Architecture Delta compares validated Before / Delta / After snapshots with a machine receipt. Select an authored change or play one finite, viewer-only Review; it infers no impact, risk, or merge safety.
 
@@ -248,7 +257,7 @@ For design or PR review, Architecture Delta compares validated Before / Delta / 
 
 [![Architecture Delta showing added, removed, changed, and moved authored facts](docs/assets/architecture-delta-proof.jpg)](examples/checkout-platform-delta.html)
 
-Not sure which one fits? Use the [interactive scenario guide](https://tt-a1i.github.io/archify/guide.html), or ask the zero-dependency CLI:
+Not sure which one fits? Use the [interactive scenario guide](https://archify.si/guide.html), or ask the zero-dependency CLI:
 
 ```bash
 node archify/bin/archify.mjs guide "Show an API request with Redis cache miss"
@@ -343,7 +352,7 @@ Settings:
 }
 ```
 
-`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `es`, and `ko` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
+`meta.locale` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. `en`, `zh-CN`, `zh-TW`, `es`, and `ko` are bundled and need only `meta.locale`; `meta.translations` (canonical message key → translated string) overrides individual keys and keeps the rest of the language. Other languages supply their catalog there (see `archify/examples/locales/`), or the renderer falls back to English and discloses it. Static omits `animation`; `classic` defaults.
 
 </details>
 
@@ -375,14 +384,14 @@ The complete generation and viewer contract lives in [`archify/SKILL.md`](archif
 | **Claude.ai** | Upload `archify.zip` under Settings → Capabilities → Skills | Depends on Node.js access in the sandbox |
 | **Project Knowledge** | Upload `archify.zip` to the project | Prompt-driven architecture fallback |
 | **Hermes Agent** | Opt-in: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | Community Skill-only integration; Node `>=18`; not a Nous official product. No telemetry. It is not a switcher target. [Details](integrations/hermes-agent/README.md). |
-| **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@0.1.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.1.0-rc.6`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
+| **DeepSeek Harness** | Opt-in: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`. Invoke: `Use the archify skill to map this repository's runtime architecture.` Remove: `dsh plugin --profile web remove @tt-a1i/archify-dsh`. | Community integration for developer-preview `@deepseek-ai/dsh@0.1.2-rc.1`; Node `^22.19.0 \|\| >=24.0.0`; not an official DeepSeek product. No telemetry. Shell files need exact workspace paths, not Web Produced Files. [Details](integrations/deepseek-harness/README.md). |
 
 ## Reference and scope
 
 - [Schema reference](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [Examples](archify/examples/) · [Agent cookbook](docs/authoring-cookbook.md)
 - [Changelog](CHANGELOG.md)
 - [Roadmap](ROADMAP.md)
-- [Generated Proof Lab](https://tt-a1i.github.io/archify/gallery.html)
+- [Generated Proof Lab](https://archify.si/gallery.html)
 
 Automatic Mermaid parsing, general-purpose auto-layout, hosted sharing, and WYSIWYG editing are intentionally outside the current scope.
 
@@ -408,6 +417,8 @@ Connect with other users and developers, share ideas, request features, report b
 [MIT](LICENSE) — free to use, modify, and distribute.
 
 ## Contributing
+
+Building a standalone package on Archify? [Submit it to the community catalog](community/README.md#submitting-a-package); the guide includes a collapsible example and complete Chinese steps.
 
 Issues, pull requests, and real-world diagrams are welcome. Start with the [contribution guide](CONTRIBUTING.md), use the reproducible bug form for failures, or submit a validated diagram through the [community showcase form](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml).&nbsp;·&nbsp;[LINUX&nbsp;DO](https://linux.do)
 

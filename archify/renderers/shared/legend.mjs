@@ -52,12 +52,18 @@ export function resolveLegend(config, catalog, presentKinds) {
   });
 }
 
+// Labels render slightly larger than the layout font size; measure the
+// rendered size so a long label cannot run into the next entry.
+function renderedLegendFontSize(fontSize) {
+  return fontSize < 8 ? fontSize + 0.5 : fontSize + 2;
+}
+
 function measuredEntryWidth(entry, fontSize, swatchGap) {
   const swatchWidth = entry.swatchWidth ?? 14;
   return Math.ceil(
     swatchWidth
     + swatchGap
-    + textUnits(entry.label) * fontSize * TEXT_ADVANCE_EM
+    + textUnits(entry.label) * renderedLegendFontSize(fontSize) * TEXT_ADVANCE_EM
     + (entry.interactive ? INTERACTIVE_BADGE_ALLOWANCE : 0)
     + (entry.trailingWidth ?? 0),
   );
@@ -200,7 +206,7 @@ export function renderLegend({ entries, layout, renderSwatch, locale, labelClass
   const measured = measureLegend(entries, layout);
   if (!measured) return '';
   const hasInteractiveEntries = measured.entries.some((entry) => entry.interactive);
-  const renderedFontSize = measured.fontSize < 8 ? measured.fontSize + 0.5 : measured.fontSize + 2;
+  const renderedFontSize = renderedLegendFontSize(measured.fontSize);
   const rootAttributes = hasInteractiveEntries ? ' data-legend="" data-legend-bridge=""' : ' data-legend=""';
   const parts = [
     `        <g${rootAttributes}>`,

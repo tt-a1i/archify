@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createOwnedTempDirectory } from '../renderers/shared/owned-temp-directory.mjs';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -1522,13 +1523,17 @@ async function evaluate(cdp, sessionId, expression, awaitPromise = false) {
 }
 
 export class ChromeVisualBrowser {
+  #profile;
   constructor(chromePath, {
     env = process.env,
     getuid = typeof process.getuid === 'function' ? () => process.getuid() : null,
     spawnImpl = spawn,
     startupTimeoutMs = CHROME_STARTUP_TIMEOUT_MS,
+    shutdownTimeoutMs = 1500,
   } = {}) {
-    this.profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-visual-check-profile-'));
+    this.#profile = createOwnedTempDirectory('archify-visual-check-profile-');
+    this.profileRoot = this.#profile.path;
+    this.shutdownTimeoutMs = shutdownTimeoutMs;
     this.stderr = '';
     const args = chromeVisualBrowserArgs(this.profileRoot, { env, getuid });
     this.child = spawnImpl(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
@@ -1819,24 +1824,33 @@ export class ChromeVisualBrowser {
     this.cdp.failAll(new Error('visual-check finished'));
     try {
       if (this.child.exitCode === null && this.child.signalCode === null) {
-        await new Promise((resolve) => {
-          let timer = null;
-          let settled = false;
+        const exited = () => this.child.exitCode !== null || this.child.signalCode !== null;
+        const signalAndWait = (signal) => new Promise((resolve, reject) => {
+          let timer;
           const finish = () => {
-            if (settled) return;
-            settled = true;
-            if (timer) clearTimeout(timer);
+            clearTimeout(timer);
             this.child.removeListener('exit', finish);
-            resolve();
+            resolve(true);
           };
           this.child.once('exit', finish);
-          this.child.kill('SIGTERM');
-          if (settled) return;
           timer = setTimeout(() => {
-            if (this.child.exitCode === null && this.child.signalCode === null) this.child.kill('SIGKILL');
-            finish();
-          }, 1500);
+            this.child.removeListener('exit', finish);
+            resolve(exited());
+          }, this.shutdownTimeoutMs);
+          try {
+            this.child.kill(signal);
+          } catch (error) {
+            clearTimeout(timer);
+            this.child.removeListener('exit', finish);
+            reject(error);
+          }
         });
+        if (!await signalAndWait('SIGTERM') && !await signalAndWait('SIGKILL')) {
+          const error = new Error(`Chrome did not exit; retained temporary profile "${this.#profile.path}".`);
+          error.code = 'ARCHIFY_TEMP_CLEANUP';
+          error.directory = this.#profile.path;
+          throw error;
+        }
       }
     } finally {
       // `exit` only reports that Chrome's main process is gone. A helper may
@@ -1846,11 +1860,7 @@ export class ChromeVisualBrowser {
         if (stream && !stream.destroyed) stream.destroy();
       }
     }
-    try {
-      fs.rmSync(this.profileRoot, { recursive: true, force: true });
-    } catch {
-      // Chrome may briefly retain profile files on Windows; evidence is done.
-    }
+    await this.#profile.cleanup();
   }
 }
 
@@ -1880,7 +1890,7 @@ function observation({ width, height, theme, metrics }) {
     && !overflowX
     && readabilityOk
     && Number.isFinite(minimumProjectedNodeTextPx)
-    && ((readerLayout === 'adaptive' && readerOverflow === 'authored' && readerFit === 'intrinsic-height')
+    && ((readerLayout === 'adaptive' && readerOverflow === 'authored' && (readerFit === 'intrinsic-height' || readerFit === 'width-first'))
       || (readerFit === 'authored-height' && metrics.diagramType === 'architecture'
         && metrics.documentScrollUnclipped === true))
   );
@@ -2071,7 +2081,7 @@ export function verticalBudgetFixes(entry) {
         ? `the page is ${excess}px too tall (${stacked}); the Reader already narrowed the stage to its ${entry.diagramWidth}px minimum, so the SVG height only follows meta.viewBox: keep every node and relationship and reduce the viewBox height to at most ${targetViewBoxHeight} (from ${page.viewBoxHeight}) by tightening vertical gaps and empty rows`
         : `the page is ${excess}px too tall (${stacked}) and the SVG alone exceeds the viewport at the minimum reader width; split the diagram into two`);
     } else {
-      fixes.push(`the page is ${excess}px too tall (${stacked}); the SVG spans the full ${entry.diagramWidth}px reader width because its viewBox ratio is below 1.55 and it declares no intrinsic-height fit, so the Reader can neither narrow it nor accept readable vertical scroll: either remove meta.viewBox so the renderer sizes the canvas and declares the fit, or make the viewBox at least 1.55x wider than tall`);
+      fixes.push(`the page is ${excess}px too tall (${stacked}); the SVG spans the full ${entry.diagramWidth}px reader width because its viewBox ratio is below 1.55 and it declares no automatic Reader fit, so the Reader can neither narrow it nor accept readable vertical scroll: either remove meta.viewBox so the renderer sizes the canvas and declares the fit, or make the viewBox at least 1.55x wider than tall`);
     }
   }
   if (page.cardsPx >= excess) {
@@ -2490,53 +2500,58 @@ async function runBrowserEvidence({
       { ...entry, stagedPath: ownership.stagedOutputs.screenshots[index].path },
     ]));
 
-    for (const viewport of VISUAL_CHECK_VIEWPORTS) {
-      const key = screenshotKey(viewport.width, viewport.height, 'light');
-      const screenshot = screenshotsByKey.get(key);
-      const metrics = await browser.inspect({
-        artifactPath: inspectionArtifact,
-        ...viewport,
-        theme: 'light',
-        ...(screenshot ? {
-          screenshotPath: screenshot.stagedPath,
-          writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
-        } : {}),
-      });
-      verifyInspectionArtifact();
-      if (screenshot) {
+    try {
+      for (const viewport of VISUAL_CHECK_VIEWPORTS) {
+        const key = screenshotKey(viewport.width, viewport.height, 'light');
+        const screenshot = screenshotsByKey.get(key);
+        const metrics = await browser.inspect({
+          artifactPath: inspectionArtifact,
+          ...viewport,
+          theme: 'light',
+          ...(screenshot ? {
+            screenshotPath: screenshot.stagedPath,
+            writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
+          } : {}),
+        });
+        verifyInspectionArtifact();
+        if (screenshot) {
+          if (screenshot && !ownership.stagedEntries.has(screenshot.path)) {
+            registerStagedEvidence(ownership, screenshot.path);
+          } else {
+            const staged = ownership.stagedEntries.get(screenshot.path);
+            if (!currentEvidenceMatches(staged.path, staged.identity, staged.evidence)) {
+              throw new Error('The staged visual-check screenshot changed after capture.');
+            }
+          }
+        }
+        observations.set(key, observation({ ...viewport, theme: 'light', metrics }));
+      }
+      for (const viewport of CAPTURE_VIEWPORTS) {
+        const key = screenshotKey(viewport.width, viewport.height, 'dark');
+        const screenshot = screenshotsByKey.get(key);
+        const metrics = await browser.inspect({
+          artifactPath: inspectionArtifact,
+          ...viewport,
+          theme: 'dark',
+          ...(screenshot ? {
+            screenshotPath: screenshot.stagedPath,
+            writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
+          } : {}),
+        });
+        verifyInspectionArtifact();
         if (screenshot && !ownership.stagedEntries.has(screenshot.path)) {
           registerStagedEvidence(ownership, screenshot.path);
-        } else {
+        } else if (screenshot) {
           const staged = ownership.stagedEntries.get(screenshot.path);
           if (!currentEvidenceMatches(staged.path, staged.identity, staged.evidence)) {
             throw new Error('The staged visual-check screenshot changed after capture.');
           }
         }
+        observations.set(key, observation({ ...viewport, theme: 'dark', metrics }));
       }
-      observations.set(key, observation({ ...viewport, theme: 'light', metrics }));
-    }
-    for (const viewport of CAPTURE_VIEWPORTS) {
-      const key = screenshotKey(viewport.width, viewport.height, 'dark');
-      const screenshot = screenshotsByKey.get(key);
-      const metrics = await browser.inspect({
-        artifactPath: inspectionArtifact,
-        ...viewport,
-        theme: 'dark',
-        ...(screenshot ? {
-          screenshotPath: screenshot.stagedPath,
-          writeScreenshot: (bytes) => writeStagedEvidence(ownership, screenshot.path, bytes),
-        } : {}),
-      });
-      verifyInspectionArtifact();
-      if (screenshot && !ownership.stagedEntries.has(screenshot.path)) {
-        registerStagedEvidence(ownership, screenshot.path);
-      } else if (screenshot) {
-        const staged = ownership.stagedEntries.get(screenshot.path);
-        if (!currentEvidenceMatches(staged.path, staged.identity, staged.evidence)) {
-          throw new Error('The staged visual-check screenshot changed after capture.');
-        }
-      }
-      observations.set(key, observation({ ...viewport, theme: 'dark', metrics }));
+
+    } finally {
+      if (browser?.close) await browser.close();
     }
 
     let artifactVerification = verifyRegularFileBinding(capturedArtifact.binding);
@@ -2624,13 +2639,18 @@ async function runBrowserEvidence({
     receipt.captures.contactSheet = null;
     if (error.deliveryProvenance) receipt.provenance = error.deliveryProvenance.status;
     receipt.diagnostics = error.archifyDiagnostics || [failureDiagnostic({
-      code: startupTimeout ? 'viewer/chrome-startup-timeout' : `viewer/${command}-runtime`,
-      message: startupTimeout
+      code: error.code === 'ARCHIFY_TEMP_CLEANUP' ? 'viewer/temp-cleanup-incomplete'
+        : startupTimeout ? 'viewer/chrome-startup-timeout' : `viewer/${command}-runtime`,
+      message: error.code === 'ARCHIFY_TEMP_CLEANUP'
+        ? 'Browser cleanup could not safely finish; inspect the reported retained path.'
+        : startupTimeout
         ? 'Chrome did not finish its initial DevTools handshake within the startup window.'
         : `${command} could not complete its Chrome inspection.`,
       subject: { artifact },
-      evidence: { reason: error.message },
-      supportedFixes: startupTimeout
+      evidence: { reason: error.message, ...(error.directory ? { retainedDirectory: error.directory } : {}) },
+      supportedFixes: error.code === 'ARCHIFY_TEMP_CLEANUP'
+        ? ['resolve the reported process or filesystem failure; verify directory ownership before manual cleanup']
+        : startupTimeout
         ? [
           'do not edit or simplify the artifact because this is a browser-startup failure',
           `retry ${command} once after host load subsides; if it repeats, stop and report the environment failure`,
@@ -2645,8 +2665,6 @@ async function runBrowserEvidence({
         ownership, command, capture,
       }),
     };
-  } finally {
-    if (browser?.close) await browser.close();
   }
   } finally {
     releaseRegularFileBinding(capturedArtifact.binding);

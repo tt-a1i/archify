@@ -1,0 +1,79 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const skillRoot = path.resolve(__dirname, '..', 'archify');
+const repoRoot = path.resolve(skillRoot, '..');
+
+test('guide page: checked-in HTML is reproducible from the shared recipe source', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-guide-page-'));
+  const generated = path.join(tmp, 'guide.html');
+  try {
+    execFileSync(process.execPath, [path.join(repoRoot, 'scripts/build-guide.mjs'), generated]);
+    assert.equal(
+      fs.readFileSync(generated, 'utf8'),
+      fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8'),
+    );
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('guide page: ships bilingual recipes and syntactically valid interaction code', () => {
+  const html = fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8');
+  const packageVersion = JSON.parse(
+    fs.readFileSync(path.join(skillRoot, 'package.json'), 'utf8'),
+  ).version;
+  const releaseIdentity = packageVersion.includes('-') ? 'development' : 'stable';
+  const staticVersionLabel = html.match(
+    /<span data-i18n="versionLabel">([^<]+)<\/span>/,
+  );
+  assert.doesNotMatch(html, /\[\[[A-Z0-9_]+\]\]/);
+  assert.equal(
+    staticVersionLabel?.[1],
+    `Scenario guide / ${releaseIdentity} / v${packageVersion}`,
+  );
+
+  const dataMatch = html.match(/<script id="guide-data" type="application\/json">([\s\S]*?)<\/script>/);
+  assert.ok(dataMatch);
+  const data = JSON.parse(dataMatch[1]);
+  assert.ok(data.every((recipe) => recipe.en.prompt && recipe.zh.prompt && recipe.proof));
+  assert.ok(data.some((recipe) => recipe.id === 'layout-repair'));
+  assert.match(html, /gallery\.html#proof-/);
+
+  const scriptMatch = html.match(/<script>\n([\s\S]*?)\n  <\/script>\n<\/body>/);
+  assert.ok(scriptMatch);
+  assert.doesNotThrow(() => new vm.Script(scriptMatch[1]));
+});
+
+test('guide search: preserves s in recipe IDs and matches whitespace-separated signals', () => {
+  const html = fs.readFileSync(path.join(repoRoot, 'docs/guide.html'), 'utf8');
+  const recipes = JSON.parse(html.match(/<script id="guide-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  for (const file of ['docs/guide.html', 'website/src/scripts/guide.js']) {
+    const source = fs.readFileSync(path.join(repoRoot, file), 'utf8');
+    const functions = source.slice(source.indexOf('function normalize('), source.indexOf('function recommendation('));
+    const context = vm.createContext({ recipes });
+    vm.runInContext(functions, context);
+    for (const recipe of recipes) {
+      for (const query of [recipe.id, recipe.id.replaceAll('-', '  \n\t')]) {
+        const winner = context.rank(query)[0];
+        assert.equal(winner.recipe.id, recipe.id, `${file}: ${query}`);
+        assert.equal(winner.score, 100, `${file}: exact ID match`);
+      }
+    }
+    assert.equal(context.normalize('  Ｓystem_STATE\t\n status  '), 'system state status');
+    for (const recipe of recipes) {
+      for (const [signal] of recipe.signals.filter(([signal]) => signal.includes(' '))) {
+        const spaced = signal.replaceAll(' ', '  \n\t');
+        const scores = query => JSON.stringify(context.rank(query).map(({ recipe, score }) => [recipe.id, score]));
+        assert.equal(scores(spaced), scores(signal), `${file}: ${signal}`);
+      }
+    }
+  }
+});

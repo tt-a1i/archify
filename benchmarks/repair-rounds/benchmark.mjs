@@ -179,6 +179,9 @@ function runCase(manifestCase, fixtures, config) {
       diagnostics: diagnostics.map((d) => ({
         code: d.code,
         severity: d.severity,
+        subject: { ...(d.subject || {}) },
+        evidenceKeys: Object.keys(d.evidence || {}).sort(),
+        supportedFixes: Array.isArray(d.supportedFixes) ? [...d.supportedFixes] : [],
         hasSubjectDetail: Object.keys(d.subject || {}).some((key) => key !== 'diagramType'),
         hasEvidence: Object.keys(d.evidence || {}).length > 0,
         hasSupportedFixes: (d.supportedFixes || []).length > 0,
@@ -392,6 +395,10 @@ function summarize(manifest, results) {
       total: diagnostics.length,
       fullyDescribed: actionable.length,
       unactionableRepairs: unactionable,
+      unattributed: results.reduce(
+        (sum, result) => sum + (result.rounds || []).reduce((s, round) => s + (round.unattributed || []).length, 0),
+        0,
+      ),
     },
     tokens: {
       meanEstimatePerCase: tokenTotals.length ? tokenTotals.reduce((a, b) => a + b, 0) / tokenTotals.length : 0,

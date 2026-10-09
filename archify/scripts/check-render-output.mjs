@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
+import { analyzeSvgPath } from '../renderers/shared/svg-path-analysis.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -39,6 +40,8 @@ try {
 }
 
 const checks = [];
+const pathDiagnostics = [];
+const pathAnalyses = new Map();
 let composition = {
   schemaVersion: 1,
   profile: 'standard',
@@ -150,22 +153,23 @@ if (svgMatches.length === 1) {
     frames: compositionFrames,
   });
   const routedRelationships = arrows
-    .filter((arrow) => arrow.from && arrow.to && arrow.routePoints.length)
+    .filter((arrow) => arrow.from && arrow.to && arrow.routeSubpaths.some(points => points.length > 1))
     .map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints }));
   const nodeRects = svgAttrs.transform ? [] : collectUntransformedNodeRects(beforeLegend);
-  const routeMetrics = routeBudgetMetrics({ routedRelations: routedRelationships });
+  const routeMetrics = subpathBudgetMetrics(routedRelationships);
   // Architecture marks only one of its two Reader fits with its type.
   const crowdedSides = svgAttrs['data-diagram-type'] === 'architecture' || svgAttrs['data-reader-primary-text'] === '14'
     ? crowdedNodeSides(arrows, nodeRects) : [];
-  const routeRhythmIssues = collectRouteRhythmIssues({ routedRelations: routedRelationships });
-  const ambiguousCorridors = collectAmbiguousCorridors({
+  const routeRhythmIssues = subpathRhythmIssues(routedRelationships);
+  const ambiguousCorridors = subpathCorridors({
     routedRelations: routedRelationships,
     includeSharedEndpoints: (left, right) => workflowV2 || (left.independentPorts && right.independentPorts),
     allowShortWorkflowTrunks: workflowV2,
     includeSharedEndpointCounterflow: (left, right) => left.automaticWorkflowRoute && right.automaticWorkflowRoute,
   });
   const arrowheadCollisions = collectArrowheadCollisions({
-    routedRelations: routedRelationships.filter((entry) => workflowV2 || entry.relation.independentPorts),
+    routedRelations: routedRelationships.filter((entry) => workflowV2 || entry.relation.independentPorts)
+      .flatMap(entry => routeParts(entry).filter(part => part.targetEndpoint)),
     allowShortWorkflowTrunks: workflowV2,
   });
   const relationshipLabels = collectRelationshipLabelMasks(beforeLegend, arrows);
@@ -175,12 +179,12 @@ if (svgMatches.length === 1) {
   });
   const sequenceColumnSpace = collectSequenceColumnSpace({ svgAttrs, fragment: beforeLegend, nodeRects, arrows });
   const labelClearanceThreshold = qualityProfile === 'showcase' ? 4 : 2;
-  const labelRouteMeasurements = collectLabelRouteClearance({
+  const labelRouteMeasurements = subpathLabelClearance({
     labels: relationshipLabels,
     routedRelations: arrows.map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints })),
     threshold: Number.MAX_VALUE,
   });
-  const labelRouteClearance = collectLabelRouteClearance({
+  const labelRouteClearance = subpathLabelClearance({
     labels: relationshipLabels,
     routedRelations: arrows.map((arrow) => ({ relation: arrow, relationIndex: arrow.index, points: arrow.routePoints })),
     threshold: labelClearanceThreshold,
@@ -254,7 +258,7 @@ if (svgMatches.length === 1) {
       }),
       ...(crowdedSides.length ? { crowdedSides } : {}),
       detours: routedRelationships.flatMap((entry) => {
-        const metrics = routeBudgetMetrics({ routedRelations: [entry] });
+        const metrics = subpathBudgetMetrics([entry]);
         const blockers = directCorridorBlockers(entry.relation, nodeRects);
         return metrics.routesOverSuggestedBends || metrics.routesOverSuggestedStretch ? [{
           relationship: relationshipRecord(entry.relation),
@@ -428,18 +432,26 @@ if (svgMatches.length === 1) {
   }
 }
 
+if (pathDiagnostics.length) addCheck('svg_path_data', false, pathDiagnostics.map(item => item.message));
+
 const ok = checks.every((check) => check.ok) && composition.status !== 'fail';
-console.log(JSON.stringify({ ok, file: htmlPath, artifact, checks, composition }, null, 2));
+console.log(JSON.stringify({ ok, file: htmlPath, artifact, checks, composition,
+  ...(pathDiagnostics.length ? { diagnostics: pathDiagnostics } : {}),
+}, null, 2));
 // Let pending stdout writes drain: large receipts are asynchronous when piped.
 process.exitCode = ok ? 0 : 1;
 
 function collectArrows(fragment, useActualPoints = false) {
   const arrows = [];
   let index = 0;
+  let pathIndex = 0;
   let previousTag = null;
   let previousTagEnd = 0;
 
-  for (const tag of fragment.matchAll(/<(path|line)\b[^>]*>/gi)) {
+  for (const tag of fragment.matchAll(SVG_TAG_TOKEN)) {
+    const name = tag[2]?.toLowerCase();
+    if (tag[1] || !['path', 'line'].includes(name)) continue;
+    if (name === 'path') pathIndex += 1;
     const tagStart = tag.index;
     const raw = tag[0];
     const gap = previousTag ? fragment.slice(previousTagEnd, tagStart) : '';
@@ -448,8 +460,8 @@ function collectArrows(fragment, useActualPoints = false) {
       && previousTag.name === 'path'
       && previousTag.underlayAttrs;
     previousTag = {
-      name: tag[1].toLowerCase(),
-      underlayAttrs: tag[1].toLowerCase() === 'path' && AUTOMATIC_CROSSOVER_UNDERLAY_TAG.test(raw)
+      name: name,
+      underlayAttrs: name === 'path' && AUTOMATIC_CROSSOVER_UNDERLAY_TAG.test(raw)
         ? parseAttrs(raw)
         : null,
     };
@@ -467,14 +479,19 @@ function collectArrows(fragment, useActualPoints = false) {
       && Number.isFinite(routeStrokeWidth)
       && Number.isFinite(underlayStrokeWidth)
       && underlayStrokeWidth >= routeStrokeWidth + 3;
-    const segments = tag[1].toLowerCase() === 'line'
-      ? lineSegments(attrs)
-      : pathSegments(attrs.d || '');
-    const borderSegments = tag[1].toLowerCase() === 'line'
-      ? segments
-      : straightPathSegments(attrs.d || '');
+    const line = name === 'line';
+    const parsed = line ? null : inspectedPath(attrs, tag.index, pathIndex, 'relationship');
+    const segments = line ? lineSegments(attrs) : parsed.subpaths.flatMap(part => part.segments);
+    const borderSegments = line ? segments : parsed.subpaths.flatMap(part => part.straightSegments);
+    let routeSubpaths = line ? continuousRoutePoints(segments)
+      : parsed.subpaths.flatMap(part => continuousRoutePoints(part.straightSegments));
+    // Legacy single-path metadata remains supported. It cannot bridge actual moveto boundaries.
+    if (!useActualPoints && (line || parsed.subpaths.length === 1)) {
+      const authoredPoints = parseRoutePoints(attrs['data-composition-points']);
+      if (authoredPoints) routeSubpaths = [authoredPoints];
+    }
     arrows.push({
-      kind: tag[1].toLowerCase(),
+      kind: name,
       index: index += 1,
       raw,
       // Trust route intent only for a semantic edge with one visible direct
@@ -482,21 +499,21 @@ function collectArrows(fragment, useActualPoints = false) {
       authoredStraight: attrs['data-composition-route'] === 'straight'
         && Boolean(attrs['data-edge-from'] && attrs['data-edge-to'])
         && segments.length === 1 && borderSegments.length === 1
-        && (tag[1].toLowerCase() === 'line' || /^\s*M\s+[-+\d.eE]+\s+[-+\d.eE]+\s+L\s+[-+\d.eE]+\s+[-+\d.eE]+\s*$/.test(attrs.d || '')),
+        && (name === 'line' || /^\s*M\s+[-+\d.eE]+\s+[-+\d.eE]+\s+L\s+[-+\d.eE]+\s+[-+\d.eE]+\s*$/.test(attrs.d || '')),
       crossoverHalo: verifiedCrossoverHalo,
       independentPorts: verifiedCrossoverHalo && attrs['data-composition-independent'] === 'true',
       // Compatibility with first-round exports lacking a root layout contract.
       // Readable-v2's root contract supersedes this narrower automatic-pair rule.
       // This marker never certifies a crossover halo or waives a quality rule.
       automaticWorkflowRoute: attrs['data-composition-routing'] === 'workflow-v2-auto',
+      junction: attrs['data-composition-junction'] || null,
       width: routeStrokeWidth,
       variant: raw.match(/\ba-(default|emphasis|security|dashed)\b/)?.[1] || 'default',
       role: attrs['data-edge-role'],
       segments,
       borderSegments,
-      routePoints: (!useActualPoints && parseRoutePoints(attrs['data-composition-points'])) || (
-        borderSegments.length ? [borderSegments[0].start, ...borderSegments.map((segment) => segment.end)] : []
-      ),
+      routePoints: routeSubpaths.length === 1 ? routeSubpaths[0] : [],
+      routeSubpaths,
       from: attrs['data-edge-from'] || attrs['data-composition-edge-from'],
       to: attrs['data-edge-to'] || attrs['data-composition-edge-to'],
       id: attrs['data-edge-id'] || attrs['data-composition-edge-id'],
@@ -507,6 +524,138 @@ function collectArrows(fragment, useActualPoints = false) {
   }
 
   return arrows;
+}
+
+function continuousRoutePoints(segments) {
+  const parts = [];
+  for (const { start, end } of segments) {
+    const previous = parts.at(-1);
+    // 非共线 Q 不参与直线预算；其两端也不能被拼接成一条虚构直线。
+    if (previous && previous.at(-1)[0] === start[0] && previous.at(-1)[1] === start[1]) {
+      previous.push(end);
+    } else {
+      parts.push([start, end]);
+    }
+  }
+  // 保留没有直线的子路径位置，避免把前一片段误认作语义终点。
+  return parts.length ? parts : [[]];
+}
+
+function inspectedPath(attrs, offset, pathIndex, role) {
+  if (pathAnalyses.has(offset)) return pathAnalyses.get(offset);
+  const result = analyzeSvgPath(decodeNumericReferences(attrs.d || ''));
+  if (result.ok) {
+    pathAnalyses.set(offset, result);
+    return result;
+  }
+  const { code, ...evidence } = result.error;
+  const id = attrs.id || attrs['data-edge-id'] || attrs['data-composition-frame-id'];
+  pathDiagnostics.push({
+    code,
+    severity: 'error',
+    message: `${role} path ${pathIndex}${id ? ` (${id})` : ''}: ${evidence.reason} at d offset ${evidence.tokenOffset}.`,
+    subject: { role, pathIndex, ...(id ? { id } : {}) },
+    evidence,
+    supportedFixes: [code === 'artifact/svg-path-unsupported'
+      ? 'regenerate the inspected relationship or frame using M/L/H/V/Q/Z commands'
+      : 'correct the path data at the reported offset or regenerate it from the original diagram'],
+  });
+  const invalid = { ok: false, subpaths: [] };
+  pathAnalyses.set(offset, invalid);
+  return invalid;
+}
+
+// Keep relationship identity separate from its disconnected drawing pieces.
+// Normalizing each piece also makes evidence segment indices stable across consumers.
+function routeParts(entry) {
+  const subpaths = entry.relation.routeSubpaths || [entry.points];
+  let segmentOffset = 0;
+  return subpaths.flatMap((points, subpathIndex) => {
+    const normalized = normalizeRoutePoints(points);
+    const part = { ...entry, points: normalized, segmentOffset,
+      sourceEndpoint: subpathIndex === 0, targetEndpoint: subpathIndex === subpaths.length - 1 };
+    segmentOffset += Math.max(0, normalized.length - 1);
+    return normalized.length > 1 ? [part] : [];
+  });
+}
+
+function subpathBudgetMetrics(entries) {
+  if (entries.every(entry => entry.relation.routeSubpaths.length <= 1)) {
+    return routeBudgetMetrics({ routedRelations: entries });
+  }
+  const total = routeBudgetMetrics({ routedRelations: [] });
+  for (const entry of entries) {
+    const parts = routeParts(entry);
+    const metrics = routeBudgetMetrics({ routedRelations: parts });
+    metrics.maxBends = parts.reduce((sum, part) => sum + Math.max(0, part.points.length - 2), 0);
+    // A relationship may exceed a budget in several pieces; count its identity once.
+    metrics.routesOverSuggestedBends = Number(metrics.maxBends > 2);
+    metrics.routesOverSuggestedStretch = Number(metrics.routesOverSuggestedStretch > 0);
+    for (const [key, value] of Object.entries(metrics)) {
+      if (key.startsWith('max')) total[key] = value == null ? total[key] : Math.max(total[key] ?? value, value);
+      else if (key.startsWith('min')) total[key] = value == null ? total[key] : Math.min(total[key] ?? value, value);
+      else total[key] += value;
+    }
+  }
+  return total;
+}
+
+function subpathRhythmIssues(entries) {
+  return entries.flatMap(entry => routeParts(entry).flatMap(part => (
+    collectRouteRhythmIssues({ routedRelations: [part] }).map(issue => ({
+      ...issue, segmentIndex: issue.segmentIndex + part.segmentOffset,
+    }))
+  )));
+}
+
+function subpathCorridors({ routedRelations, ...options }) {
+  if (routedRelations.every(entry => entry.relation.routeSubpaths.length <= 1)) {
+    return collectAmbiguousCorridors({ routedRelations, ...options });
+  }
+  const hits = [];
+  const parts = routedRelations.map(routeParts);
+  for (let left = 0; left < parts.length; left += 1) {
+    for (let right = left + 1; right < parts.length; right += 1) {
+      let longest;
+      for (const a of parts[left]) for (const b of parts[right]) {
+        const hit = collectAmbiguousCorridors({ routedRelations: [a, b], ...options })[0];
+        if (hit && (!longest || hit.overlapLength > longest.overlapLength + 0.0001)) {
+          longest = { ...hit, leftSegment: hit.leftSegment + a.segmentOffset,
+            rightSegment: hit.rightSegment + b.segmentOffset };
+        }
+      }
+      if (longest) hits.push(longest);
+    }
+  }
+  return hits;
+}
+
+function subpathLabelClearance({ routedRelations, labels, threshold }) {
+  if (routedRelations.every(entry => entry.relation.routeSubpaths.length <= 1)) {
+    return collectLabelRouteClearance({ routedRelations, labels, threshold });
+  }
+  // The shared helper deduplicates by relationship identity. Measure each piece
+  // independently, then preserve one nearest hit per label/relationship pair.
+  const hits = [];
+  const seen = new Set();
+  for (const entry of routedRelations) {
+    const relation = entry.relation;
+    const identity = relation.key !== undefined ? `key:${relation.key}`
+      : relation.id ? `id:${relation.from || ''}\0${relation.to || ''}\0${relation.id}` : `index:${entry.relationIndex}`;
+    if (seen.has(identity) || !routeParts(entry).length) continue;
+    seen.add(identity);
+    const nearest = new Map();
+    for (const part of routeParts(entry)) {
+      for (const hit of collectLabelRouteClearance({ routedRelations: [part], labels, threshold })) {
+        const current = nearest.get(hit.labelRelationIndex);
+        if (!current || hit.clearance < current.clearance) nearest.set(hit.labelRelationIndex, {
+          ...hit, segmentIndex: hit.segmentIndex + part.segmentOffset,
+        });
+      }
+    }
+    hits.push(...nearest.values());
+  }
+  return hits;
 }
 
 function collectRelationshipLabelMasks(fragment, arrows) {
@@ -580,7 +729,7 @@ function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
     ...arrow,
     // Readable-v2 routePoints come from the visible path, never its metadata.
     // A straight-through via is not a visual endpoint; preserve real bends.
-    segments: includeSharedEndpoints ? forwardCollinearAnalysisSegments(arrow.routePoints) : arrow.segments,
+    segments: includeSharedEndpoints ? arrow.routeSubpaths.flatMap(forwardCollinearAnalysisSegments) : arrow.segments,
   }));
   const crossings = [];
   for (let leftIndex = 0; leftIndex < relationships.length; leftIndex += 1) {
@@ -702,12 +851,16 @@ function relationshipRecord(arrow) {
 
 function collectCompositionFrames(fragment) {
   const frames = [];
-  for (const match of fragment.matchAll(/<(rect|path|line)\b[^>]*>/gi)) {
+  let pathIndex = 0;
+  for (const match of fragment.matchAll(SVG_TAG_TOKEN)) {
+    const name = match[2]?.toLowerCase();
+    if (match[1] || !['rect', 'path', 'line'].includes(name)) continue;
+    if (name === 'path') pathIndex += 1;
     const attrs = parseAttrs(match[0]);
     const kind = attrs['data-composition-frame-kind'];
     if (!kind) continue;
     const identity = attrs['data-composition-frame-id'] || frames.length;
-    if (match[1].toLowerCase() === 'rect') {
+    if (name === 'rect') {
       const frame = {
         kind,
         id: identity,
@@ -720,9 +873,9 @@ function collectCompositionFrames(fragment) {
       if ([frame.x, frame.y, frame.width, frame.height].every(Number.isFinite)) frames.push(frame);
       continue;
     }
-    const segments = match[1].toLowerCase() === 'line'
+    const segments = name === 'line'
       ? lineSegments(attrs)
-      : pathSegments(attrs.d || '');
+      : inspectedPath(attrs, match.index, pathIndex, 'structural-frame').subpaths.flatMap(part => part.segments);
     for (const [segmentIndex, segment] of segments.entries()) {
       frames.push({
         kind,
@@ -751,7 +904,7 @@ function collectArchitectureLeadingSpace({ svgAttrs, fragment, nodeRects, frames
   const nodeCount = [...fragment.matchAll(/<g\b[^>]*\bdata-node-id=/gi)].length;
   if (!nodeRects.length || nodeRects.length !== nodeCount) return evidence;
   const semanticArrows = arrows.filter((arrow) => arrow.from && arrow.to);
-  if (semanticArrows.some((arrow) => !arrow.routePoints.length)) return evidence;
+  if (semanticArrows.some((arrow) => !arrow.routeSubpaths.some(points => points.length))) return evidence;
 
   const occupied = nodeRects.map((node) => node.box[1]);
   for (const frame of frames) {
@@ -768,7 +921,7 @@ function collectArchitectureLeadingSpace({ svgAttrs, fragment, nodeRects, frames
     occupied.push(y);
   }
   for (const arrow of semanticArrows) {
-    for (const point of arrow.routePoints) occupied.push(point[1]);
+    for (const points of arrow.routeSubpaths) for (const point of points) occupied.push(point[1]);
   }
   for (const label of labels) occupied.push(label.rect.y);
   if (!occupied.every(Number.isFinite)) return evidence;
@@ -796,7 +949,7 @@ function collectSequenceColumnSpace({ svgAttrs, fragment, nodeRects, arrows }) {
   const columnFit = svgAttrs['data-sequence-column-fit'];
   if (!['fixed', 'spread'].includes(columnFit)) return null;
   const evidence = { measured: false, reviewSuggested: false, columnFit };
-  if (svgAttrs.transform || /<tspan\b/i.test(fragment)) return evidence;
+  if (svgAttrs.transform) return evidence;
   // Brand badges stay inside their participant box. Ignore only that subtree's
   // transforms, including the preset path or nested fallback icon's scale.
   const brandGroups = [];
@@ -820,10 +973,10 @@ function collectSequenceColumnSpace({ svgAttrs, fragment, nodeRects, arrows }) {
   const nodeCount = [...fragment.matchAll(/<g\b[^>]*\bdata-node-id=/gi)].length;
   if (!nodeRects.length || nodeCount !== nodeRects.length) return evidence;
   const semanticArrows = arrows.filter((arrow) => arrow.from && arrow.to);
-  if (semanticArrows.some((arrow) => !arrow.routePoints.length)) return evidence;
+  if (semanticArrows.some((arrow) => !arrow.routeSubpaths.some(points => points.length))) return evidence;
   const rightEdges = nodeRects.map((node) => node.box[0] + node.box[2]);
   for (const arrow of semanticArrows) {
-    for (const point of arrow.routePoints) rightEdges.push(point[0]);
+    for (const points of arrow.routeSubpaths) for (const point of points) rightEdges.push(point[0]);
   }
   // Label plates, activations and segment titles also reserve horizontal room.
   for (const match of fragment.matchAll(/<rect\b[^>]*>/gi)) {
@@ -832,9 +985,19 @@ function collectSequenceColumnSpace({ svgAttrs, fragment, nodeRects, arrows }) {
     rightEdges.push(numberAttr(attrs, 'x') + numberAttr(attrs, 'width'));
   }
   for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
-    const box = textBox(parseAttrs(match[1]), stripTags(match[2]).trim());
-    if (!box) return evidence;
-    rightEdges.push(box.x2);
+    const attrs = parseAttrs(match[1]);
+    // A wrapped note places each line in a <tspan> with its own x. Any other
+    // line offset is not measured here.
+    const lines = /<tspan\b/i.test(match[2])
+      ? [...match[2].matchAll(/<tspan\b([^>]*)>([\s\S]*?)<\/tspan>/gi)]
+        .map((line) => ({ attrs: { ...attrs, ...parseAttrs(line[1]) }, text: stripTags(line[2]).trim() }))
+      : [{ attrs, text: stripTags(match[2]).trim() }];
+    if (!lines.length || lines.some((line) => line.attrs.dx !== undefined)) return evidence;
+    for (const line of lines) {
+      const box = textBox(line.attrs, line.text);
+      if (!box) return evidence;
+      rightEdges.push(box.x2);
+    }
   }
   if (!rightEdges.every(Number.isFinite)) return evidence;
   const occupiedRight = Math.max(...rightEdges);
@@ -876,88 +1039,6 @@ function lineSegments(attrs) {
   const end = [numberAttr(attrs, 'x2'), numberAttr(attrs, 'y2')];
   if (!isPoint(start) || !isPoint(end)) return [];
   return [{ start, end }];
-}
-
-function pathSegments(d) {
-  const points = pointsFromPath(d);
-  const segments = [];
-  for (let i = 1; i < points.length; i += 1) {
-    segments.push({ start: points[i - 1], end: points[i] });
-  }
-  return segments;
-}
-
-// Border runs use exact visible primitives. Non-collinear Q curves are never
-// flattened into chords here: a tangent or sampled near-horizontal curve is
-// not a structural border run. A fully collinear Q remains a straight visible
-// primitive and is included.
-function straightPathSegments(d) {
-  const tokens = d.match(/[MLHVQZmlhvqz]|[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/g) || [];
-  const segments = [];
-  let i = 0;
-  let command = '';
-  let current = [0, 0];
-  let start = null;
-  while (i < tokens.length) {
-    if (isCommand(tokens[i])) command = tokens[i++];
-    if (!command) break;
-    const absolute = command === command.toUpperCase();
-    switch (command.toUpperCase()) {
-      case 'M':
-      case 'L': {
-        let first = true;
-        while (i + 1 < tokens.length && !isCommand(tokens[i])) {
-          const point = [Number.parseFloat(tokens[i++]), Number.parseFloat(tokens[i++])];
-          if (!point.every(Number.isFinite)) break;
-          const next = absolute ? point : [current[0] + point[0], current[1] + point[1]];
-          if (command.toUpperCase() === 'L' || !first) segments.push({ start: current, end: next });
-          current = next;
-          if (!start) start = current;
-          first = false;
-        }
-        break;
-      }
-      case 'H': {
-        while (i < tokens.length && !isCommand(tokens[i])) {
-          const value = Number.parseFloat(tokens[i++]);
-          if (!Number.isFinite(value)) break;
-          const next = [absolute ? value : current[0] + value, current[1]];
-          segments.push({ start: current, end: next });
-          current = next;
-        }
-        break;
-      }
-      case 'V': {
-        while (i < tokens.length && !isCommand(tokens[i])) {
-          const value = Number.parseFloat(tokens[i++]);
-          if (!Number.isFinite(value)) break;
-          const next = [current[0], absolute ? value : current[1] + value];
-          segments.push({ start: current, end: next });
-          current = next;
-        }
-        break;
-      }
-      case 'Q': {
-        while (i + 3 < tokens.length && !isCommand(tokens[i])) {
-          const values = [0, 0, 0, 0].map(() => Number.parseFloat(tokens[i++]));
-          if (!values.every(Number.isFinite)) break;
-          const control = absolute ? values.slice(0, 2) : [current[0] + values[0], current[1] + values[1]];
-          const end = absolute ? values.slice(2, 4) : [current[0] + values[2], current[1] + values[3]];
-          if (Math.abs(crossProduct(current, control, end)) <= 1e-9) segments.push({ start: current, end });
-          current = end;
-        }
-        break;
-      }
-      case 'Z':
-        if (start) segments.push({ start: current, end: start });
-        current = start || current;
-        command = '';
-        break;
-      default:
-        return [];
-    }
-  }
-  return segments.filter(({ start: a, end: b }) => isPoint(a) && isPoint(b));
 }
 
 function diagonalStraightSegments(arrow) {
@@ -1099,7 +1180,7 @@ function collectDesktopReadability(svgAttrs, fragment, contract) {
   }
   const minimumSourceTextPx = entries.length ? Math.min(...entries.map((entry) => entry.sourceFontPx)) : Number.NaN;
   const eligible = contract === DECLARED_WIDE_READER_CONTRACT
-    && svgAttrs['data-reader-fit'] === 'intrinsic-height'
+    && ['intrinsic-height', 'width-first'].includes(svgAttrs['data-reader-fit'])
     && Number.isFinite(requestedMinimumTextPx) && requestedMinimumTextPx > 0
     && !invalidSemanticText && entries.length > 0;
   const declared = eligible ? declaredWideReadabilityBudget({
@@ -1153,88 +1234,6 @@ function estimatedTextWidth(text, fontSize) {
   let units = 0;
   for (const char of text) units += char.charCodeAt(0) > 255 ? 1.8 : 0.62;
   return Math.max(fontSize, units * fontSize);
-}
-
-function pointsFromPath(d) {
-  const tokens = d.match(/[MLHVQZmlhvqz]|[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/g) || [];
-  const points = [];
-  let i = 0;
-  let command = '';
-  let current = [0, 0];
-  let start = null;
-
-  while (i < tokens.length) {
-    if (isCommand(tokens[i])) command = tokens[i++];
-    if (!command) break;
-
-    const absolute = command === command.toUpperCase();
-    switch (command.toUpperCase()) {
-      case 'M':
-      case 'L': {
-        while (i + 1 < tokens.length && !isCommand(tokens[i])) {
-          const x = Number.parseFloat(tokens[i++]);
-          const y = Number.parseFloat(tokens[i++]);
-          if (!Number.isFinite(x) || !Number.isFinite(y)) break;
-          current = absolute ? [x, y] : [current[0] + x, current[1] + y];
-          points.push(current);
-          if (!start) start = current;
-        }
-        break;
-      }
-      case 'H': {
-        while (i < tokens.length && !isCommand(tokens[i])) {
-          const x = Number.parseFloat(tokens[i++]);
-          if (!Number.isFinite(x)) break;
-          current = absolute ? [x, current[1]] : [current[0] + x, current[1]];
-          points.push(current);
-        }
-        break;
-      }
-      case 'V': {
-        while (i < tokens.length && !isCommand(tokens[i])) {
-          const y = Number.parseFloat(tokens[i++]);
-          if (!Number.isFinite(y)) break;
-          current = absolute ? [current[0], y] : [current[0], current[1] + y];
-          points.push(current);
-        }
-        break;
-      }
-      case 'Q': {
-        while (i + 3 < tokens.length && !isCommand(tokens[i])) {
-          const controlX = Number.parseFloat(tokens[i++]);
-          const controlY = Number.parseFloat(tokens[i++]);
-          const endX = Number.parseFloat(tokens[i++]);
-          const endY = Number.parseFloat(tokens[i++]);
-          if (![controlX, controlY, endX, endY].every(Number.isFinite)) break;
-          const control = absolute
-            ? [controlX, controlY]
-            : [current[0] + controlX, current[1] + controlY];
-          const end = absolute
-            ? [endX, endY]
-            : [current[0] + endX, current[1] + endY];
-          const startPoint = current;
-          for (let step = 1; step <= 8; step += 1) {
-            const amount = step / 8;
-            const remaining = 1 - amount;
-            points.push([
-              remaining * remaining * startPoint[0] + 2 * remaining * amount * control[0] + amount * amount * end[0],
-              remaining * remaining * startPoint[1] + 2 * remaining * amount * control[1] + amount * amount * end[1],
-            ]);
-          }
-          current = end;
-        }
-        break;
-      }
-      case 'Z': {
-        if (start) points.push(start);
-        break;
-      }
-      default:
-        return [];
-    }
-  }
-
-  return points.filter(isPoint);
 }
 
 function properSegmentIntersection(a, b, c, d) {
@@ -1373,10 +1372,6 @@ function parseAttrs(tag) {
 
 function numberAttr(attrs, name) {
   return Number.parseFloat(attrs[name]);
-}
-
-function isCommand(token) {
-  return /^[A-Za-z]$/.test(token);
 }
 
 function isPoint(point) {

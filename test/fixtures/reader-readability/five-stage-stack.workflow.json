@@ -1,0 +1,96 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Five-stage public workflow",
+    "subtitle": "Synthetic example: a small publishing pipeline",
+    "output": "five-stage-stack.html",
+    "visual_preset": "signal-flow",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    {
+      "id": "pipeline",
+      "label": "Publishing pipeline"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "collect",
+      "lane": "pipeline",
+      "col": 1,
+      "type": "backend",
+      "label": "Collect input",
+      "sublabel": "Public draft",
+      "yOffset": -180
+    },
+    {
+      "id": "check",
+      "lane": "pipeline",
+      "col": 1,
+      "type": "backend",
+      "label": "Check format",
+      "sublabel": "Schema rules",
+      "yOffset": -90
+    },
+    {
+      "id": "build",
+      "lane": "pipeline",
+      "col": 1,
+      "type": "backend",
+      "label": "Build preview",
+      "sublabel": "Local artifact",
+      "yOffset": 0
+    },
+    {
+      "id": "review",
+      "lane": "pipeline",
+      "col": 1,
+      "type": "backend",
+      "label": "Review output",
+      "sublabel": "Human inspection",
+      "yOffset": 90
+    },
+    {
+      "id": "publish",
+      "lane": "pipeline",
+      "col": 1,
+      "type": "backend",
+      "label": "Publish result",
+      "sublabel": "Public page",
+      "yOffset": 180
+    }
+  ],
+  "edges": [
+    {
+      "id": "collect-check",
+      "from": "collect",
+      "to": "check",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "check-build",
+      "from": "check",
+      "to": "build",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "build-review",
+      "from": "build",
+      "to": "review",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "review-publish",
+      "from": "review",
+      "to": "publish",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

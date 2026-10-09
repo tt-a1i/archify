@@ -819,13 +819,18 @@
 
           function samplesFor(element) {
             if (typeof element.getTotalLength !== 'function' || typeof element.getPointAtLength !== 'function') return [];
+            var geometry = element;
+            if (element.getAttribute('data-motion-path')) {
+              geometry = element.cloneNode(false);
+              geometry.setAttribute('d', element.getAttribute('data-motion-path'));
+            }
             var length;
-            try { length = element.getTotalLength(); } catch (_) { return []; }
+            try { length = geometry.getTotalLength(); } catch (_) { return []; }
             if (!Number.isFinite(length) || length <= 0) return [];
             var count = Math.max(12, Math.min(72, Math.ceil(length / 12)));
             var points = [];
             for (var i = 0; i <= count; i++) {
-              points.push(pointInRoot(element, element.getPointAtLength(length * i / count)));
+              points.push(pointInRoot(element, geometry.getPointAtLength(length * i / count)));
             }
             return points;
           }

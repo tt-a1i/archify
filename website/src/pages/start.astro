@@ -5,8 +5,9 @@ import Navigation from '../components/Navigation.astro';
 import head from '../data/start-head.html?raw';
 import css from '../styles/start.css?raw';
 import pageScript from '../scripts/start.js?raw';
+const { lang = 'en' } = Astro.props;
 ---
-<SiteLayout head={versioned(head)} css={css}>
+<SiteLayout page="start" lang={lang} head={versioned(head)} css={css}>
 
   <div class="grid-bg" aria-hidden="true"></div>
 
@@ -19,7 +20,7 @@ import pageScript from '../scripts/start.js?raw';
         <h1><span data-en="Describe it." data-zh="直接说，">Describe it.</span><span class="title-gap" aria-hidden="true"> </span><em data-en="Archify maps it." data-zh="Archify 就能画。">Archify maps it.</em></h1>
       </div>
       <div>
-        <p class="lead-copy" data-en="No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence." data-zh="不需要绑定代码库。在任意 Agent 对话里用自然语言描述系统或流程，Archify 就会把它变成经过校验的交互图；如果有代码，也可以再让它读取仓库作为证据。">No repository is required. Describe a system or flow in a normal agent chat and Archify will turn it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence.</p>
+        <p class="lead-copy" data-en="No repository is required. Describe a plan, a process, or a system in a normal agent chat and Archify turns it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence." data-zh="不需要绑定代码库。在任意 Agent 对话里用大白话描述一份计划、一个流程或一套系统，Archify 就会把它变成经过校验的交互图；如果有代码，也可以再让它读取仓库作为证据。">No repository is required. Describe a plan, a process, or a system in a normal agent chat and Archify turns it into a checked, interactive diagram. If code exists, the same skill can inspect it for evidence.</p>
         <div class="trust-line" data-en="Your description is enough to make the first diagram." data-zh="只有一段描述，也足够画出第一张图。">Your description is enough to make the first diagram.</div>
       </div>
     </header>
@@ -30,7 +31,7 @@ import pageScript from '../scripts/start.js?raw';
         <button class="input-path" type="button" role="tab" data-input="description"><strong data-en="Just describe it" data-zh="直接描述">直接描述</strong><span data-en="Start in any chat. No files or repository needed." data-zh="在任意对话里开始，不需要文件或代码库。">Start in any chat. No files or repository needed.</span></button>
         <button class="input-path" type="button" role="tab" data-input="repository"><strong data-en="Use a repository" data-zh="从代码库开始">Use a repository</strong><span data-en="Let the agent inspect code when source evidence matters." data-zh="需要源码证据时，再让 Agent 检查代码。">Let the agent inspect code when source evidence matters.</span></button>
       </div>
-      <p class="type-label" id="type-label"><span data-en="Choose the question shape" data-zh="选择问题形态">Choose the question shape</span><strong data-en="6 typed renderers" data-zh="6 种类型化渲染器">6 typed renderers</strong></p>
+      <p class="type-label" id="type-label"><span data-en="Choose the question shape" data-zh="选择问题形态">Choose the question shape</span><strong data-en={`${Object.keys(starts).length} typed renderers`} data-zh={`${Object.keys(starts).length} 种类型化渲染器`}>{Object.keys(starts).length} typed renderers</strong></p>
       <div class="type-tabs" role="tablist" aria-label="Diagram type">
         <button class="type-tab" type="button" role="tab" data-type="architecture" data-en="Architecture" data-zh="架构图">Architecture</button>
         <button class="type-tab" type="button" role="tab" data-type="workflow" data-en="Workflow" data-zh="工作流">Workflow</button>
@@ -71,17 +72,17 @@ import pageScript from '../scripts/start.js?raw';
 
       <article class="panel" aria-live="polite">
         <div class="panel-kicker"><b>02</b><span data-en="Ask one bounded question" data-zh="只问一个有边界的问题">Ask one bounded question</span></div>
-        <h2 id="recipe-title">System overview</h2>
-        <p class="question" id="recipe-question"></p>
-        <ul class="include-list" id="include-list" aria-label="Required evidence"></ul>
-        <p class="prompt-box" id="recipe-prompt"></p>
+        <h2 id="recipe-title" data-en={starts.architecture.en.title} data-zh={starts.architecture.zh.title}>{starts.architecture.en.title}</h2>
+        <p class="question" id="recipe-question" data-en={starts.architecture.en.question} data-zh={starts.architecture.zh.question}>{starts.architecture.en.question}</p>
+        <ul class="include-list" id="include-list" aria-label="Required evidence">{starts.architecture.en.include.map((item, index) => <li data-en={item} data-zh={starts.architecture.zh.include[index]}>{item}</li>)}</ul>
+        <p class="prompt-box" id="recipe-prompt" data-en={starts.architecture.en.descriptionPrompt} data-zh={starts.architecture.zh.descriptionPrompt}>{starts.architecture.en.descriptionPrompt}</p>
         <div class="actions">
           <button class="action action-primary" id="copy-starter" type="button" data-en="Copy install + prompt" data-zh="复制安装命令 + 提示词">Copy install + prompt</button>
           <button class="action" id="copy-prompt" type="button" data-en="Prompt only" data-zh="仅复制提示词">Prompt only</button>
-          <a class="action" id="proof-link" href="gallery.html" data-en="Open verified proof ↗" data-zh="打开验证成品 ↗">Open verified proof ↗</a>
+          <a class="action" id="proof-link" href={`gallery.html#proof-${starts.architecture.proof}`} data-en="Open verified proof ↗" data-zh="打开验证成品 ↗">Open verified proof ↗</a>
           <a class="action" href="guide.html" data-en="Need another recipe?" data-zh="需要其他配方？">Need another recipe?</a>
         </div>
-        <p class="proof-meta" id="proof-meta"></p>
+        <p class="proof-meta" id="proof-meta">{starts.architecture.type} · {starts.architecture.presentation.preset} · {starts.architecture.presentation.motion}</p>
       </article>
     </section>
 

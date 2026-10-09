@@ -2,6 +2,7 @@
   "catalogs": [
     { "locale": "en", "file": "en.json" },
     { "locale": "zh-CN", "file": "zh-CN.json" },
+    { "locale": "zh-TW", "file": "zh-TW.json" },
     { "locale": "es", "file": "es.json" },
     { "locale": "ko", "file": "ko.json" }
   ]

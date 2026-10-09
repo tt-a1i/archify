@@ -6,15 +6,15 @@ product
 
 ## Users
 
-Software engineers, architects, technical leads, reviewers, and AI coding agents who need to understand or explain a codebase, system, workflow, request path, data pipeline, or lifecycle. They usually work from a desktop in an engineering or review context and need a trustworthy artifact they can inspect, present, and share without adopting a hosted diagram editor.
+Anyone who needs to understand, plan, or explain something with steps, parts, relationships, or states, working through an AI agent. The core audience remains software engineers, architects, technical leads, reviewers, and AI coding agents explaining a codebase, system, workflow, request path, data pipeline, or lifecycle in an engineering or review context. The same audience, and people outside engineering, also map everyday subjects: a leave or travel plan, an application or approval process, a back-and-forth exchange, where money or documents go, or where something stands. They need a trustworthy artifact they can inspect, present, and share without adopting a hosted diagram editor.
 
 ## Product Purpose
 
-Archify turns repository evidence or a bounded system description into a polished, interactive technical map directly in an agent conversation. Success means a reader can understand the primary story quickly, inspect exact authored relationships and evidence when needed, and carry either the complete artifact or one explicitly scoped Route / Reach Share Card into review, documentation, or presentation.
+Archify turns repository evidence, a bounded system description, or a plain-language account of a plan or process into a polished, interactive map directly in an agent conversation. Success means a reader can understand the primary story quickly, inspect exact authored relationships and evidence when needed, and carry either the complete artifact or one explicitly scoped Route / Reach Share Card into review, documentation, presentation, or everyday use. Archify maps structure (parts, steps, exchanges, flows, and states); numeric charts and dashboards are outside its scope.
 
 ## Brand Personality
 
-Precise, composed, vivid. Archify should feel like a confident technical instrument: visually memorable enough to invite exploration, restrained enough to keep topology and evidence authoritative, and explicit about what is generated, verified, optional, or unavailable.
+Precise, composed, vivid. Archify should feel like a confident instrument for understanding—technical when the subject is a system, plain-spoken when it is a plan: visually memorable enough to invite exploration, restrained enough to keep topology and evidence authoritative, and explicit about what is generated, verified, optional, or unavailable.
 
 ## Anti-references
 

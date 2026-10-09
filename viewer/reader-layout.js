@@ -4,14 +4,20 @@
       var shell = document.querySelector('.container');
       var diagram = document.querySelector('.diagram-container');
       var svg = diagram && diagram.querySelector(':scope > svg');
+      var legend = svg && svg.querySelector('[data-legend]');
       var header = shell && shell.querySelector('.header');
       var cards = shell && shell.querySelector('.cards');
       var viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
-      var measuredHeightFit = svg && svg.getAttribute('data-reader-fit') === 'intrinsic-height';
+      var readerFit = svg && svg.getAttribute('data-reader-fit');
+      var widthFirstReading = readerFit === 'width-first';
+      var automaticSequence = widthFirstReading && svg.hasAttribute('data-sequence-column-fit');
+      var readingScroll = widthFirstReading;
+      var measuredHeightFit = readerFit === 'intrinsic-height' || widthFirstReading;
       var frame = 0;
       var settleFrame = 0;
       var lastWidth = 0;
+      var automaticAreaHeight = 0;
       // Widest reader the overflow settle has accepted for this viewport (0 =
       // uncapped). Card copy rewraps as the reader narrows, so recomputing
       // from fixed heights alone would widen again and oscillate; only a
@@ -21,6 +27,7 @@
       var MIN_DESKTOP_WIDTH = 1024;
       var MIN_READER_WIDTH = 960;
       var MAX_READER_WIDTH = 1920;
+      var MAX_AUTOMATIC_SCALE = 1.5;
       var MIN_PROJECTED_NODE_TEXT_PX = 6;
       var declaredMinimumText = svg ? parseFloat(svg.getAttribute('data-reader-min-text') || '') : null;
       var requestedMinimumText = Number.isFinite(declaredMinimumText)
@@ -132,12 +139,65 @@
       function clear() {
         html.style.removeProperty('--archify-reader-width');
         html.style.removeProperty('--archify-diagram-max-width');
+        html.style.removeProperty('--archify-diagram-min-height');
+        html.removeAttribute('data-reader-area');
         html.removeAttribute('data-reader-narrow');
         html.removeAttribute('data-reader-layout');
         html.removeAttribute('data-reader-overflow');
         setRail(false);
         lastWidth = 0;
+        automaticAreaHeight = 0;
         settledCap = 0;
+        clearLegend();
+      }
+      function clearLegend() {
+        if (!legend || !legend.hasAttribute('data-reader-legend-corner')) return;
+        legend.removeAttribute('data-reader-legend-corner');
+        legend.style.removeProperty('--archify-reader-legend-transform');
+      }
+      // Keep the original legend in its SVG: renderer hover/focus selectors and
+      // canonical export still own that same group. Ordinary capped reading
+      // and fitted automatic sequences borrow the outer corner at 25–100%.
+      function syncLegend() {
+        var cameraScale = Number(svg && svg.getAttribute('data-view-scale')) || 1;
+        var cornerReading = html.getAttribute('data-reader-area') === 'true' || automaticSequence && !readingScroll;
+        if (!legend || !eligible() || !cornerReading || cameraScale > 1.001) {
+          clearLegend();
+          return;
+        }
+        var box = legend.getBBox();
+        var parentMatrix = legend.parentNode.getScreenCTM();
+        if (!parentMatrix || !box.width || !box.height) {
+          clearLegend();
+          return;
+        }
+        var rect = diagram.getBoundingClientRect();
+        var style = window.getComputedStyle(diagram);
+        var scale = Math.min(svg.clientWidth / viewBox.width, svg.clientHeight / viewBox.height);
+        if (!Number.isFinite(scale) || scale <= 0) {
+          clearLegend();
+          return;
+        }
+        var left = rect.left + number(style.borderLeftWidth) + number(style.paddingLeft);
+        var right = rect.right - number(style.borderRightWidth) - number(style.paddingRight);
+        var bottom = rect.bottom - number(style.borderBottomWidth) - number(style.paddingBottom);
+        var top = bottom - box.height * scale;
+        var nav = diagram.querySelector('.diagram-nav');
+        var navRect = visible(nav) ? nav.getBoundingClientRect() : null;
+        // Long or multi-row legends retain their canonical position if the
+        // spare corner cannot hold them clear of the dock and content area.
+        if (left + box.width * scale > right || top < rect.top + number(style.paddingTop) + number(style.borderTopWidth) ||
+            (navRect && left < navRect.right + 10 && left + box.width * scale > navRect.left - 10 &&
+              top < navRect.bottom + 10 && bottom > navRect.top - 10)) {
+          clearLegend();
+          return;
+        }
+        var matrix = parentMatrix.inverse().translate(left, top).scale(scale).translate(-box.x, -box.y);
+        var value = 'matrix(' + [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f].join(',') + ')';
+        if (legend.style.getPropertyValue('--archify-reader-legend-transform') !== value) {
+          legend.style.setProperty('--archify-reader-legend-transform', value);
+        }
+        if (!legend.hasAttribute('data-reader-legend-corner')) legend.setAttribute('data-reader-legend-corner', '');
       }
       // Rail modes: "true" docks beside the diagram, "collapsed" leaves only the
       // reveal control, "overlay" opens a drawer when docking would break the
@@ -199,22 +259,36 @@
       // usable header, toolbar, and controls; its SVG is centred instead.
       function applyWidth(width, minWidth) {
         var rounded = Math.max(Math.ceil(minWidth || 0), Math.round(width));
-        if (Math.abs(rounded - lastWidth) < 1) return false;
+        var changed = Math.abs(rounded - lastWidth) >= 1;
         lastWidth = rounded;
         var shellFloor = Math.min(MIN_READER_WIDTH, Math.max(0, window.innerWidth - chromeMetrics().bodyX));
         html.style.setProperty('--archify-reader-width', Math.max(rounded, shellFloor) + 'px');
-        if (rounded < shellFloor) {
-          // `rounded` already includes a docked rail and its gap; the SVG cap
-          // is only the diagram's share, not the space beside it.
-          var railShare = html.getAttribute('data-reader-rail') === 'true' ? RAIL_WIDTH + RAIL_GAP : 0;
-          html.style.setProperty('--archify-diagram-max-width', Math.max(1, rounded - railShare - chromeMetrics().diagramX) + 'px');
+        var railShare = html.getAttribute('data-reader-rail') === 'true' ? RAIL_WIDTH + RAIL_GAP : 0;
+        var diagramWidth = Math.max(1, rounded - railShare - chromeMetrics().diagramX);
+        // Content fitting and automatic enlargement never reduce the outer
+        // reader region. The SVG alone takes the narrower reading width.
+        var automaticWidthCap = measuredHeightFit && viewBox && viewBox.width > 0
+          ? viewBox.width * MAX_AUTOMATIC_SCALE : 0;
+        if (automaticWidthCap && diagramWidth > automaticWidthCap) {
+          diagramWidth = automaticWidthCap;
+          html.style.setProperty('--archify-diagram-min-height', automaticAreaHeight + 'px');
+          html.setAttribute('data-reader-area', 'true');
+        } else {
+          // Ordinary automatic diagrams retain their existing document flow.
+          // Settling can also stop binding the cap without a new measure.
+          html.style.removeProperty('--archify-diagram-min-height');
+          html.removeAttribute('data-reader-area');
+        }
+        if (diagramWidth < Math.max(rounded, shellFloor) - railShare - chromeMetrics().diagramX) {
+          html.style.setProperty('--archify-diagram-max-width', diagramWidth + 'px');
           html.setAttribute('data-reader-narrow', 'true');
         } else {
           html.style.removeProperty('--archify-diagram-max-width');
           html.removeAttribute('data-reader-narrow');
         }
         html.setAttribute('data-reader-layout', 'adaptive');
-        return true;
+        syncLegend();
+        return changed;
       }
       function settleOverflow(minWidth) {
         if (settleFrame) cancelAnimationFrame(settleFrame);
@@ -226,11 +300,13 @@
             document.documentElement.scrollHeight,
             document.body.scrollHeight
           ) - window.innerHeight - belowFold();
-          if (overflow > 1 && lastWidth > Math.ceil(minWidth)) {
+          // visual-check fails any page whose rounded-up height exceeds the
+          // viewport, so even a 1px remainder must be reduced or declared.
+          if (overflow > 0 && !readingScroll && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute('data-reader-overflow', 'reduced');
-          } else if (overflow > 1) {
+          } else if (overflow > 0) {
             html.setAttribute('data-reader-overflow', 'authored');
           } else {
             html.removeAttribute('data-reader-overflow');
@@ -245,17 +321,21 @@
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+        // Sequence first-screen fitting preserves source text sizes instead
+        // of shrinking to the shared hard readability floor.
         var readableWidth = viewBox && viewBox.width > 0
-          ? viewBox.width * minimumReadableScale() + chrome.diagramX
+          ? viewBox.width * (automaticSequence ? 1 : minimumReadableScale()) + chrome.diagramX
           : MIN_READER_WIDTH;
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
-        var readableMinimumWidth = measuredHeightFit && ratio < WIDE_RATIO
+        var readableMinimumWidth = automaticSequence || measuredHeightFit && ratio < WIDE_RATIO
           ? readableWidth
           : measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)
             ? Math.max(MIN_READER_WIDTH, readableWidth)
             : MIN_READER_WIDTH;
         var minWidth;
-        if (measuredHeightFit && ratio < WIDE_RATIO) {
+        if (automaticSequence) {
+          minWidth = Math.min(readableMinimumWidth, maxWidth);
+        } else if (measuredHeightFit && ratio < WIDE_RATIO) {
           minWidth = Math.min(readableMinimumWidth, viewportCap);
         } else if (measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)) {
           minWidth = Math.min(readableMinimumWidth, maxWidth);
@@ -277,10 +357,9 @@
           if (collapsedPreference === '1' || (collapsedPreference !== '0' && !comfortable)) mode = 'collapsed';
           else mode = fitsReadable ? 'true' : 'overlay';
         }
-        // With notes below the fold, the first screen belongs to the whole
-        // diagram and its controls: it may shrink past the comfortable primary
-        // size down to the renderer's readable text floor, and zoom restores
-        // detail. Only a graph taller than that floor allows still scrolls.
+        // Height-fit families with notes below the fold may shrink to their
+        // readable floor. Width-first families choose their reading width
+        // below and retain page scrolling instead.
         if (mode === 'bottom') primaryWidth = 0;
         if (primaryWidth > 0) minWidth = Math.max(minWidth, Math.min(maxWidth, primaryWidth + chrome.diagramX));
         var docked = mode === 'true';
@@ -292,6 +371,16 @@
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
+        // Compact automatic sequences fit the first screen without shrinking
+        // their authored text. Longer sequences retain reading width and page
+        // scroll; other width-first families keep their existing strategy.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+          readableWidth + (docked ? railExtra : 0);
+        readingScroll = widthFirstReading && !sequenceFits;
+        if (readingScroll) desiredWidth = maxWidth;
+        // Only a binding enlargement cap needs a separate normal reader area.
+        // Uncapped diagrams keep their existing natural height and Chrome fit.
+        automaticAreaHeight = availableSvgHeight + chrome.diagramY;
         var width = Math.max(minWidth, Math.min(maxWidth, desiredWidth, settledCap || desiredWidth));
         applyWidth(width, minWidth);
         settleOverflow(minWidth);
@@ -320,7 +409,8 @@
           Math.round(shellRect.width * 100) / 100,
           Math.round(shellRect.height * 100) / 100,
           Math.round(diagramRect.width * 100) / 100,
-          Math.round(diagramRect.height * 100) / 100
+          Math.round(diagramRect.height * 100) / 100,
+          legend && legend.hasAttribute('data-reader-legend-corner') ? legend.style.getPropertyValue('--archify-reader-legend-transform') : ''
         ].join('|');
       }
       function layoutPending() { return Boolean(frame || settleFrame); }
@@ -339,6 +429,8 @@
         schedule();
       }, { passive: true });
       window.addEventListener('load', schedule, { once: true });
+      window.addEventListener('beforeprint', clearLegend);
+      window.addEventListener('afterprint', schedule);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule).catch(function () {});
       if (typeof ResizeObserver === 'function') {
         var resizeObserver = new ResizeObserver(schedule);
@@ -381,6 +473,7 @@
         measure: measure,
         schedule: schedule,
         whenStable: whenStable,
+        syncLegend: syncLegend,
         active: function () { return html.getAttribute('data-reader-layout') === 'adaptive'; },
         receipt: function () { return { ratio: ratio, width: lastWidth }; }
       };

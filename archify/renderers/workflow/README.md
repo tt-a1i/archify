@@ -147,6 +147,19 @@ a verified migration-to-v2 repair; v1 never falls through to adaptive layout.
 | Explicit viewBox | containment capacity; too-small input reports exact `requiredViewBox` and contributors |
 | Lane measurement | A same-column vertical stack (two or more distinct `yOffset` values) opts an implicit, unpinned workflow into per-lane measurement. Explicit `meta.viewBox`, `via`, `labelAt`, `channelX`, or `channelY`, and workflows without a stack retain shared-height v2 geometry for compatibility. |
 
+Unpinned v2 drafts reserve 32px between overlapping same-lane nodes for routes,
+and omitted node widths may grow from 92px to 200px to fit their text. Documents
+with an explicit `meta.viewBox` or absolute `via`, `labelAt`, `channelX`, or
+`channelY` pins retain the existing width defaults and 8px rank-clearance
+constraint, in both compilation and migration planning. Authored widths remain
+authoritative.
+
+Automatic showcase canvases check sublabels against the desktop reading floor
+without enlarging text beyond its existing 8px slot. If the canvas cannot keep
+that slot readable, `workflow/sublabel-readability` reports the required font
+and canvas width. Standard quality and explicit canvases retain their previous
+text-fitting behavior and the existing composition/browser quality checks.
+
 The compiler applies constraints only to actual related or overlapping
 same-lane nodes, so a wide node in an unrelated lane does not expand every
 rank. Legacy centers are a soft preference after correctness constraints, not
@@ -181,14 +194,15 @@ their offsets around zero:
 ```
 
 An implicit readable-v2 vertical stack whose measured lane height exceeds the
-104px baseline opts into the desktop Viewer's height budget. This decision
-comes from compiled geometry, not an authored sizing field. The Viewer changes only
-the outer reader width so the complete lane remains on screen; canonical SVG
-geometry and explicit `meta.viewBox` workflows retain their authored contracts.
-When necessary, the Viewer may scale below the intrinsic 1:1 width only as far
-as the 6px projected node-text floor. If the complete workflow still cannot fit
-at that readable scale, `visual-check` reports the remaining viewport overflow
-instead of clipping or introducing an internal scroller.
+104px baseline declares `data-reader-fit="width-first"`, as does any implicit
+readable-v2 canvas that would otherwise overflow the 1440×900 desktop page at
+full width. The desktop Viewer uses
+available reading width and normal page scrolling to keep tall stages readable,
+with the existing 1.5× automatic enlargement cap. This changes only displayed
+size: canonical SVG geometry and explicit `meta.viewBox` workflows retain their
+authored contracts. Embed, Present, and print retain their existing fitting modes.
+`visual-check` still checks readability, horizontal containment, and clipping;
+the declaration does not weaken node or route validation.
 
 Authored `via`, `labelAt`, `channelX`, and `channelY` are absolute hard pins in
 v2; an infeasible pin returns `workflow/explicit-pin-conflict` rather than being
@@ -196,6 +210,12 @@ silently moved. `fromSide` and `toSide` remain direction constraints. A route
 preset restricts the automatic candidate family but is not itself an absolute
 coordinate pin. When either endpoint side is omitted, the v2 compiler chooses
 a feasible side; an authored side restricts that endpoint to the named port.
+An infeasible preset returns `workflow/route-preset-conflict` with the actual
+rejected `evidence.invariant`. For node clearance it also identifies the node,
+segment, endpoint role, and required clearance. Use that obstacle to revise
+the connected placement or route constraints, then revalidate; minimum segment
+lengths alone do not establish a clear path. Advertised `supportedFixes` are
+verified against the complete workflow.
 
 ## Design Rules
 

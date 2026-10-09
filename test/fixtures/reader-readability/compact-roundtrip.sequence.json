@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Compact request roundtrip",
+    "locale": "en",
+    "output": "diagram.html",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "Client",
+      "sublabel": "Request sender"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "Queue and storage"
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker",
+      "sublabel": "Task runner"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 325,
+      "label": "Request and delivery"
+    },
+    {
+      "from": 355,
+      "to": 560,
+      "label": "Result and receipt"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send",
+      "from": "client",
+      "to": "service",
+      "y": 170,
+      "label": "Submit task",
+      "variant": "emphasis",
+      "note": "Validate the request and store the task before starting asynchronous delivery."
+    },
+    {
+      "id": "accepted",
+      "from": "service",
+      "to": "client",
+      "y": 230,
+      "label": "Accepted",
+      "variant": "return",
+      "note": "Confirm acceptance without waiting for completion; delivery can occur independently."
+    },
+    {
+      "id": "deliver",
+      "from": "service",
+      "to": "worker",
+      "y": 290,
+      "label": "Deliver task",
+      "variant": "dashed",
+      "note": "Wait for an available worker before delivering queued work to the task runner."
+    },
+    {
+      "id": "report",
+      "from": "worker",
+      "to": "service",
+      "y": 380,
+      "label": "Submit result",
+      "variant": "emphasis",
+      "note": "After execution, validate the open task and store the result and pending notification."
+    },
+    {
+      "id": "receipt",
+      "from": "service",
+      "to": "worker",
+      "y": 450,
+      "label": "Result accepted",
+      "variant": "return",
+      "note": "Acknowledge the stored result; this does not imply that the sender has read it."
+    },
+    {
+      "id": "notify",
+      "from": "service",
+      "to": "client",
+      "y": 520,
+      "label": "Deliver result",
+      "variant": "dashed",
+      "note": "Notify the sender when available; otherwise keep the result queued for later delivery."
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Request",
+      "items": [
+        "The service accepts a request before a worker completes it.",
+        "Vertical order describes logical steps rather than elapsed time."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Delivery",
+      "items": [
+        "Accepted work can remain queued until the worker becomes available.",
+        "Delivery failure does not imply that the request was never stored."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Result",
+      "items": [
+        "Results are stored before the sender receives a notification.",
+        "A successful response does not imply that the sender has read it."
+      ]
+    }
+  ]
+}

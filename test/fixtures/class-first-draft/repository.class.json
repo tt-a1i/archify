@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "diagram_type": "class",
+  "meta": {
+    "title": "Order repository layer",
+    "locale": "en",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "types": [
+    {
+      "id": "controller",
+      "label": "OrderController",
+      "kind": "class",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "service",
+          "type": "OrderService",
+          "visibility": "private"
+        }
+      ],
+      "methods": [
+        {
+          "name": "create",
+          "visibility": "public",
+          "parameters": "req: Request",
+          "returns": "Response"
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "label": "OrderService",
+      "kind": "class",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "repo",
+          "type": "OrderRepository",
+          "visibility": "private"
+        },
+        {
+          "name": "events",
+          "type": "EventBus",
+          "visibility": "private"
+        }
+      ],
+      "methods": [
+        {
+          "name": "place",
+          "visibility": "public",
+          "parameters": "cmd: PlaceOrder",
+          "returns": "Order"
+        }
+      ]
+    },
+    {
+      "id": "repo",
+      "label": "OrderRepository",
+      "kind": "interface",
+      "row": 0,
+      "col": 2,
+      "methods": [
+        {
+          "name": "save",
+          "visibility": "public",
+          "parameters": "o: Order",
+          "returns": "void"
+        },
+        {
+          "name": "find",
+          "visibility": "public",
+          "parameters": "id: OrderId",
+          "returns": "Order"
+        }
+      ]
+    },
+    {
+      "id": "pgrepo",
+      "label": "PgOrderRepository",
+      "kind": "class",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "pool",
+          "type": "Pool",
+          "visibility": "private"
+        }
+      ]
+    },
+    {
+      "id": "order",
+      "label": "Order",
+      "kind": "class",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "lines",
+          "type": "OrderLine[]",
+          "visibility": "private"
+        },
+        {
+          "name": "status",
+          "type": "Status",
+          "visibility": "private"
+        }
+      ],
+      "methods": [
+        {
+          "name": "total",
+          "visibility": "public",
+          "returns": "Money"
+        }
+      ]
+    },
+    {
+      "id": "line",
+      "label": "OrderLine",
+      "kind": "class",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "sku",
+          "type": "string",
+          "visibility": "public"
+        },
+        {
+          "name": "qty",
+          "type": "number",
+          "visibility": "public"
+        }
+      ]
+    },
+    {
+      "id": "bus",
+      "label": "EventBus",
+      "kind": "interface",
+      "row": 2,
+      "col": 1,
+      "methods": [
+        {
+          "name": "publish",
+          "visibility": "public",
+          "parameters": "e: Event",
+          "returns": "void"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "controller_service_dependency",
+      "from": "controller",
+      "to": "service",
+      "kind": "dependency",
+      "label": "calls"
+    },
+    {
+      "id": "service_repo_dependency",
+      "from": "service",
+      "to": "repo",
+      "kind": "dependency",
+      "label": "persists via"
+    },
+    {
+      "id": "pgrepo_repo_realization",
+      "from": "pgrepo",
+      "to": "repo",
+      "kind": "realization"
+    },
+    {
+      "id": "service_order_dependency",
+      "from": "service",
+      "to": "order",
+      "kind": "dependency",
+      "label": "creates"
+    },
+    {
+      "id": "order_line_composition",
+      "from": "order",
+      "to": "line",
+      "kind": "composition",
+      "label": "has"
+    },
+    {
+      "id": "service_bus_dependency",
+      "from": "service",
+      "to": "bus",
+      "kind": "dependency",
+      "label": "publishes"
+    }
+  ]
+}

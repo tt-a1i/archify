@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Execution and failure workflow",
+    "subtitle": "Synthetic example: execute a job or retain a failure record",
+    "output": "execution-failure-stack.html",
+    "visual_preset": "signal-flow",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    {
+      "id": "execution",
+      "label": "Job execution"
+    },
+    {
+      "id": "failure",
+      "label": "Failure recovery",
+      "variant": "exception"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "prepare",
+      "lane": "execution",
+      "col": 1,
+      "type": "backend",
+      "label": "Prepare job",
+      "sublabel": "Validated input",
+      "yOffset": -90
+    },
+    {
+      "id": "execute",
+      "lane": "execution",
+      "col": 1,
+      "type": "backend",
+      "label": "Execute job",
+      "sublabel": "Bounded work",
+      "yOffset": 0
+    },
+    {
+      "id": "finish",
+      "lane": "execution",
+      "col": 1,
+      "type": "backend",
+      "label": "Store result",
+      "sublabel": "Completed job",
+      "yOffset": 90
+    },
+    {
+      "id": "record",
+      "lane": "failure",
+      "col": 1,
+      "type": "security",
+      "label": "Record failure",
+      "sublabel": "Reason and trace",
+      "yOffset": -90
+    },
+    {
+      "id": "inspect",
+      "lane": "failure",
+      "col": 1,
+      "type": "security",
+      "label": "Inspect error",
+      "sublabel": "Manual diagnosis",
+      "yOffset": 0
+    },
+    {
+      "id": "retry",
+      "lane": "failure",
+      "col": 1,
+      "type": "security",
+      "label": "Queue retry",
+      "sublabel": "Fresh attempt",
+      "yOffset": 90
+    }
+  ],
+  "edges": [
+    {
+      "id": "prepare-execute",
+      "from": "prepare",
+      "to": "execute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "execute-finish",
+      "from": "execute",
+      "to": "finish",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "execute-record",
+      "from": "execute",
+      "to": "record",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "outside-right"
+    },
+    {
+      "id": "record-inspect",
+      "from": "record",
+      "to": "inspect",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "inspect-retry",
+      "from": "inspect",
+      "to": "retry",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

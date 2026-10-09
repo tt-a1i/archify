@@ -108,7 +108,7 @@ export async function loadDiagramWithBrandMarks(options) {
   return loaded;
 }
 
-const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd']);
+const START_TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'tree', 'class', 'timeline', 'waterfall']);
 
 function isFilesystemError(error) {
   return typeof error?.code === 'string'
@@ -306,6 +306,10 @@ const SEMANTIC_COLLECTIONS = {
   dataflow: 'nodes',
   lifecycle: 'states',
   erd: 'entities',
+  tree: 'nodes',
+  class: 'types',
+  timeline: 'events',
+  waterfall: 'spans',
 };
 
 const RELATIONSHIP_COLLECTIONS = {
@@ -315,6 +319,7 @@ const RELATIONSHIP_COLLECTIONS = {
   dataflow: 'flows',
   lifecycle: 'transitions',
   erd: 'relationships',
+  class: 'relationships',
 };
 
 // Relationship IDs are optional for backwards compatibility, but once an
@@ -351,7 +356,8 @@ export function validateCrossCollectionContracts(diagramType, diagram) {
 
 // Accessible name for the generated diagram SVG.
 export function svgRootAttrs(meta, explicitQualityProfile) {
-  const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
+  // Motion is a Viewer capability for every diagram; Live/Still controls playback.
+  const animation = ' data-animation="trace"';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const engineeringProfile = meta.engineering_profile
     ? ` data-engineering-profile="${esc(meta.engineering_profile)}"`
@@ -371,7 +377,6 @@ export function svgAccessibleText(meta, kind) {
 }
 
 export function animateAttr(meta, kind, step) {
-  if (meta.animation !== 'trace') return '';
   // Ambient trace must finish inside the fixed six-second WebM capture. The
   // cap affects visual delay only; authored order and semantic identity stay
   // untouched in the JSON, DOM, and relationship contracts.

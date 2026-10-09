@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "timeline",
+  "meta": {
+    "title": "Archify dev branch activity, 28 Sep \u2013 4 Oct 2026",
+    "subtitle": "Observed from this repository's git history: tag creation dates and merge commit times on origin/dev.",
+    "output": "archify-dev-activity-timeline.html",
+    "evidence": "observed",
+    "timezone": "Asia/Shanghai",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "width": 1400
+  },
+  "lanes": [
+    {
+      "id": "release",
+      "label": "Releases"
+    },
+    {
+      "id": "merge",
+      "label": "PR merges"
+    },
+    {
+      "id": "sync",
+      "label": "Branch syncs"
+    }
+  ],
+  "events": [
+    {
+      "id": "v3_0_0",
+      "at": "2026-09-28T19:13:16+08:00",
+      "title": "Tag v3.0.0",
+      "lane": "release",
+      "kind": "change",
+      "detail": "git tag v3.0.0"
+    },
+    {
+      "id": "v3_0_1",
+      "at": "2026-09-28T23:16:27+08:00",
+      "title": "Tag v3.0.1",
+      "lane": "release",
+      "kind": "change",
+      "detail": "git tag v3.0.1"
+    },
+    {
+      "id": "pr627",
+      "at": "2026-09-29T14:16:30+08:00",
+      "title": "Merge #627 restore Kimi poster",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr628",
+      "at": "2026-09-29T14:17:35+08:00",
+      "title": "Merge #628 restore Kimi poster",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr629",
+      "at": "2026-09-29T14:28:59+08:00",
+      "title": "Merge #629 README sponsor name",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr635",
+      "at": "2026-09-30T00:15:40+08:00",
+      "title": "Merge #635 README launch v4",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr636",
+      "at": "2026-09-30T00:23:38+08:00",
+      "title": "Merge #636 README support section",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr634",
+      "at": "2026-09-30T00:23:57+08:00",
+      "title": "Merge #634 repair-rounds bench",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr637",
+      "at": "2026-09-30T00:42:24+08:00",
+      "title": "Merge #637 README Alipay support",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "sync_main",
+      "at": "2026-09-30T14:36:59+08:00",
+      "title": "Merge main into dev",
+      "lane": "sync",
+      "kind": "action",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr615",
+      "at": "2026-09-30T18:19:15+08:00",
+      "title": "Merge #615 stable manifest v3.0.1",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "sync_upstream",
+      "at": "2026-10-01T16:28:51+05:30",
+      "title": "Merge upstream dev and regenerate artifacts",
+      "lane": "sync",
+      "kind": "action",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr655",
+      "at": "2026-10-02T20:49:57+08:00",
+      "title": "Merge #655 locale catalogs",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr587",
+      "at": "2026-10-02T21:13:51+08:00",
+      "title": "Merge #587 brand ICO bounds",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr399",
+      "at": "2026-10-02T21:36:46+08:00",
+      "title": "Merge #399 ERD diagrams",
+      "lane": "merge",
+      "kind": "recovery",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr632",
+      "at": "2026-10-02T22:08:03+08:00",
+      "title": "Merge #632 card note overflow",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr672",
+      "at": "2026-10-04T09:57:08+08:00",
+      "title": "Merge #672 repair-rounds blind spots",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr677",
+      "at": "2026-10-04T10:14:55+08:00",
+      "title": "Merge #677 release subscriptions",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr674",
+      "at": "2026-10-04T10:17:01+08:00",
+      "title": "Merge #674 community registry v0",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    },
+    {
+      "id": "pr668",
+      "at": "2026-10-04T13:18:18+08:00",
+      "title": "Merge #668 MCO artifact refresh",
+      "lane": "merge",
+      "detail": "Merge commit on dev"
+    }
+  ]
+}

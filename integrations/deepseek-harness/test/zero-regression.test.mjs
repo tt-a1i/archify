@@ -34,7 +34,6 @@ test('Archify core does not import, detect, or branch on DeepSeek Harness', () =
   // schemas, references, examples, and assets.
   const protectedPaths = [
     'archify',
-    ':(exclude)archify/test/**',
     'scripts/build-zip.sh',
     'scripts/package-smoke.mjs',
   ];

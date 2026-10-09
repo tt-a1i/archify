@@ -58,7 +58,7 @@ without a database node keeps it visual-only.
 
 | Constant | Value |
 |----------|-------|
-| viewBox | default `[940, 720]`; schema minimum `[360, 360]` |
+| viewBox | omitted width fits all stage frames and nodes, including authored widths, with 24px right padding and a 480px minimum (five default-width stages need 1068); height defaults to 720 and fits content in fully automatic showcase; schema minimum `[360, 360]` |
 | Stages (2–5) | centers at x = 100 + stage×215; stage band 168 wide, header at y 46 |
 | Row tops (`row` 0–4) | y = 128, 242, 356, 470, 584 (plus `yOffset`) |
 | Default node | 112×58 |
@@ -69,6 +69,30 @@ without a database node keeps it visual-only.
 
 Route presets for flows: `straight`, `vertical-channel`, `bottom-channel`,
 `top-channel`, explicit `via` points, or the default `auto` (midpoint elbow).
+
+An authored `meta.viewBox` remains authoritative. When it is omitted, canvas
+width fits stage frames and nodes in both `standard` and `showcase`, including
+explicit node widths. Enlarging width cannot repair left-edge overflow.
+
+Showcase node sizing, typography, automatic height, port bridges and label
+placement apply only when `meta.viewBox` and every node's `width` are omitted.
+An authored canvas or node width preserves those established layout behaviors,
+as does `standard`. The effective quality profile is
+`process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile`; the public CLI's
+`--quality standard|showcase` sets the environment override.
+
+For a fully automatic showcase, node widths can grow within their stage and
+canvas budget to keep supporting text readable at desktop projection. Height
+follows actual node bounds, routed points and rendered label plates, leaving
+24px below content plus the 74px stage/legend reserve. Rows and authored routes
+remain authoritative; inactive channel controls do not enlarge the canvas.
+
+Automatic routes use perpendicular bridges for vertical ports and small
+port-spread differences. Unpinned labels receive one bounded placement pass,
+with at most 36px mask clearance from their own route. Distant free space is
+rejected in favor of the original placement and its collision diagnostic.
+Explicit `labelAt`, `labelDx`, `labelDy` and `labelSegment` remain authoritative,
+including zero offsets. Existing valid labels are retained.
 
 ## Design Rules
 

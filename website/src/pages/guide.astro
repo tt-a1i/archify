@@ -2,11 +2,13 @@
 import { version, versioned, jsonScript, guide } from '../data/site';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
+import RecipeReference from '../components/RecipeReference.astro';
 import head from '../data/guide-head.html?raw';
 import css from '../styles/guide.css?raw';
 import pageScript from '../scripts/guide.js?raw';
+const { lang = 'en' } = Astro.props;
 ---
-<SiteLayout head={versioned(head)} css={css}>
+<SiteLayout page="guide" lang={lang} head={versioned(head)} css={css}>
 
   <div class="grid-bg" aria-hidden="true"></div>
 
@@ -20,8 +22,8 @@ import pageScript from '../scripts/guide.js?raw';
         <p class="lede" data-i18n="lede">Describe what your audience needs to understand. Archify recommends one bounded visual recipe—plus the evidence it must contain, when not to use it, and a prompt you can copy.</p>
       </div>
       <div class="metrics" aria-label="Guide metrics">
-        <div class="metric"><strong>13</strong><span data-i18n-html="metricRecipes">real-world<br>recipes</span></div>
-        <div class="metric"><strong>6</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
+        <div class="metric"><strong>{guide.length}</strong><span data-i18n-html="metricRecipes">real-world<br>recipes</span></div>
+        <div class="metric"><strong>{new Set(guide.map(recipe => recipe.type)).size}</strong><span data-i18n-html="metricModes">typed diagram<br>modes</span></div>
         <div class="metric"><strong>0</strong><span data-i18n-html="metricRuntime">runtime<br>dependencies</span></div>
       </div>
     </section>
@@ -42,12 +44,13 @@ import pageScript from '../scripts/guide.js?raw';
 
     <section class="library" id="library">
       <div class="section-head">
-        <div><div class="lead-label" data-i18n="libraryEyebrow">Recipe library</div><h2 data-i18n="libraryTitle">13 small, opinionated starting points.</h2></div>
+        <div><div class="lead-label" data-i18n="libraryEyebrow">Recipe library</div><h2 data-i18n="libraryTitle">{guide.length} small, opinionated starting points.</h2></div>
         <p data-i18n="libraryBody">Each recipe answers one technical question. That boundary keeps the result legible, reviewable, and honest about missing evidence.</p>
       </div>
       <div class="filters" id="filters" aria-label="Filter recipes"></div>
       <div class="cards" id="cards"></div>
     </section>
+    <RecipeReference recipes={guide} />
   </main>
 
   <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / development / v{version}</span></div></footer>
