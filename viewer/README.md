@@ -836,8 +836,9 @@ nonempty suspension table. Thus resume can return false while mode remains still
 setMode treats only `still` as a pause request, returns effective mode and honors
 `persist:false`. The storage key remains `archify-motion`; user pause writes
 `still`, resume removes it, and storage errors are ignored. System suspension
-does not become a persisted user preference. Becoming live does not restart
-Route playback or replay an already settled ambient pass.
+does not become a persisted user preference. Becoming live resumes continuous
+connection flow when no semantic owner is active; it does not restart Route
+playback or replay an already completed node entrance.
 
 Explicit claims override derived owners. Without a claim, SVG attributes select
 route, lens, relationship, intent, focus, legend,
@@ -853,27 +854,35 @@ Stale/repeated releases return false. Claims are not a stack of resumable owners
 | Reader pause, suspension table, previous effective-pause value | Governor owns these. Ordinary suspend keys count references; each returned release function succeeds once. Visibility directly sets/deletes the same table's `visibility` key, so a caller using that key does not have independent counting guarantees. |
 | Explicit/derived owner, token and cleanup callback | Governor owns arbitration. Route provides cleanup; their decorations and transaction state remain caller-owned. |
 | Root motion/owner/capable/document-hidden attributes and button hidden/disabled/ARIA/text/title | Governor writes them; CSS consumes them. System preference, suspension, reader pause and owner retain their existing label precedence. Only the system preference disables the button. |
-| Ambient started flag and pending element set | Governor starts at most one ambient pass and finishes it on the existing animation boundary or suppression paths. |
-| Button/media/visibility/mutation/animation subscriptions | Page lifetime, no destroy method. Owner observation is installed only when initially non-embed and supported; it watches the explicit SVG attribute list. |
+| Flow overlays, node-entry started flag and pending node set | Governor creates one decorative path per authored connection. CSS repeats its flow while eligible. Node entrance runs at most once and finishes on its animation boundary or suppression. |
+| Button/media/visibility/mutation/animation subscriptions | Page lifetime, no destroy method. Observers watch the explicit SVG owner attributes and root embed/share context. |
 
 Entering effective pause pauses Route Journey
 with elapsed time preserved, using the existing reason priority and call order.
 Route syncMotion retains its render-time notification. The previous-pause guard
 does not imply a universal once-only guarantee under synchronous caller reentry.
 
-Ambient starts from the initial edge/node animation targets. Animationend and
-animationcancel remove event targets from the pending set; unrelated targets
-are ignored, and an empty set settles and detaches those listeners. There is no
-animation-name filter, timeout or polling loop. Empty targets settle as empty;
-pause, owner, embed, share playback or document-hidden suppress the pass through
-the existing render paths. Settle reason can be overwritten by a later render;
-it is not immutable history. Runtime root-mode changes do not install additional
-listeners or guarantee immediate reevaluation without an existing render trigger.
+Connection flow uses adjacent runtime paths with the authored geometry and
+clipping, without graph identity or relationship attributes. Geometry queries
+exclude these paths. The authored lines, dashes and arrowheads remain visible.
+Pause, semantic ownership, reduced motion, embed/share mode and document hiding
+hide and stop flow; clearing those guards restores it. Print CSS independently
+hides and stops flow, leaving Route Journey's existing print policy in Route.
+Route retains its own beforeprint pause with elapsed time preserved and manual
+resume after printing.
+Folded tree edges
+hide their adjacent flow paths. No per-frame JavaScript or repeated DOM allocation
+is needed. Diagrams without connections retain bounded node entrance only.
+
+Animationend and animationcancel remove node-entry event targets from the pending
+set; unrelated targets are ignored, and an empty set detaches those listeners.
+Suppression finishes node entrance without exhausting connection flow. The
+ambient state describes current eligibility rather than immutable history.
 
 The Governor manages these Viewer signals, not every animation on the page.
 Camera retains its transactions and CSS transitions; Export retains its separate
-WebM canvas timeline. Authored geometry/IDs and canonical export cleanup remain
-unchanged by this source extraction.
+WebM canvas timeline. Canonical export cleanup removes flow overlays and preserves
+authored geometry/IDs and line styles.
 
 ## Export cleanup contract
 
@@ -887,6 +896,7 @@ Viewer capability or changes the live DOM. No new `Archify` interface is exposed
 | State owner | Clone treatment |
 | --- | --- |
 | Camera | Remove runtime transform, clipping and view scale. Preserve authored geometry and viewBox. |
+| Motion Governor | Remove decorative connection-flow overlays. Preserve authored lines, dashes, arrowheads and animation metadata. |
 | Focus, relationship preview, reachability, Intent Trace | Remove selection/preview markers and runtime overlays; reset node `aria-pressed` using the existing rule. |
 | Route Probe | Remove picking, result and journey markers/overlays and route step styles. |
 | Semantic Lens and legend preview | Remove filtering/preview decorations and runtime legend accessibility attributes. |

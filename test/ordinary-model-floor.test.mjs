@@ -106,6 +106,41 @@ test('benchmark verifies one first-pass architecture candidate through semantic,
   assert.equal(receipt.firstPassUsable, true);
 });
 
+test('benchmark rejects invalid run identities and preserves reportable valid identities', () => {
+  const caseFile = path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json');
+  const candidate = path.join(skillRoot, 'examples/web-app.architecture.json');
+  const validRun = {
+    schema_version: 1, case_id: 'web-runtime-architecture', attempt: 1,
+    agent: ' fixture-agent ', model: ' fixture-model ',
+    // Synthetic review metadata isolates identity validation; no visual review occurred.
+    visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects: [] },
+  };
+  for (const field of ['agent', 'model']) {
+    for (const value of [undefined, null, '', ' \t\n ', 42, false, {}, []]) {
+      const runFile = writeJson('invalid-identity.run.json', { ...validRun, [field]: value });
+      const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+      assert.equal(result.status, 2, `${field}=${JSON.stringify(value)}: ${result.stderr || result.stdout}`);
+      assert.deepEqual(JSON.parse(result.stdout).error, {
+        code: 'INVALID_RUN', message: 'run agent and model must be non-empty strings',
+      });
+    }
+  }
+  const runFile = writeJson('valid-identity.run.json', validRun);
+  const verified = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+  assert.equal(verified.status, 0, verified.stderr || verified.stdout);
+  const receipt = JSON.parse(verified.stdout);
+  assert.equal(receipt.firstPassUsable, true);
+  assert.deepEqual(receipt.run, { agent: validRun.agent, model: validRun.model, attempt: 1 });
+  const resultsFile = path.join(tmp, 'valid-identity.results.jsonl');
+  fs.writeFileSync(resultsFile, `${JSON.stringify(receipt)}\n`);
+  const reported = run(['report', '--results', resultsFile]);
+  assert.equal(reported.status, 0, reported.stderr || reported.stdout);
+  const report = JSON.parse(reported.stdout);
+  assert.equal(report.overall.firstPassUsableRate, 1);
+  assert.equal(report.byConfiguration[0].agent, validRun.agent);
+  assert.equal(report.byConfiguration[0].model, validRun.model);
+});
+
 test('benchmark rejects a renderer-valid candidate that changes required technical roles or relationship labels', () => {
   const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
   source.components.find((component) => component.id === 'cache').type = 'frontend';
@@ -186,6 +221,83 @@ test('benchmark checks accepted node labels even when an authored identity match
       assert.equal(receipt.firstPassUsable, accepted);
     }
   }
+});
+
+test('benchmark rejects one candidate node bound to distinct required identities', () => {
+  const caseSource = JSON.parse(fs.readFileSync(path.join(repoRoot, 'benchmarks/ordinary-model-floor/cases/web-runtime.architecture.case.json'), 'utf8'));
+  const runFile = writeJson('reused-binding.run.json', {
+    schema_version: 1, case_id: caseSource.id,
+    agent: 'fixture-agent', model: 'fixture-model', attempt: 1,
+    // Synthetic review metadata isolates the semantic gate; no visual review occurred.
+    visual_review: { status: 'passed', reviewer: 'fixture-reviewer', defects: [] },
+  });
+  for (const storageId of ['storage', 'cache']) {
+    const candidate = writeJson('reused-binding.architecture.json', {
+      schema_version: 1, diagram_type: 'architecture',
+      meta: { title: 'Distinct storage requirements', output: 'binding.html', quality_profile: 'showcase' },
+      components: [
+        { id: 'users', type: 'external', label: 'Users', pos: [40, 180], size: [220, 64] },
+        { id: 'cdn', type: 'cloud', label: 'CloudFront', pos: [400, 180], size: [220, 64] },
+        { id: 'api', type: 'backend', label: 'API Server', pos: [760, 180], size: [220, 64] },
+        { id: storageId, type: 'database', label: 'Redis PostgreSQL', pos: [1120, 180], size: [220, 64] },
+      ],
+      connections: [
+        { from: 'users', to: 'cdn', label: 'HTTPS' },
+        { from: 'cdn', to: 'api' },
+        { from: 'api', to: storageId, label: 'read-through SQL' },
+      ],
+    });
+    for (const identityField of ['key', 'id']) {
+      for (const reverse of [false, true]) {
+        const caseData = structuredClone(caseSource);
+        const cache = caseData.requirements.nodes.find((node) => node.key === 'cache');
+        if (identityField === 'id') {
+          // Exercise an explicit ID sharing its node with an alias-bound requirement.
+          delete cache.key;
+          cache.id = storageId;
+          caseData.requirements.relationships.find((edge) => edge.to === 'cache').to = storageId;
+        }
+        if (reverse) caseData.requirements.nodes.reverse();
+        const caseFile = writeJson('reused-binding.case.json', caseData);
+        const result = run(['verify', '--case', caseFile, '--candidate', candidate, '--run', runFile]);
+        const receipt = JSON.parse(result.stdout);
+        assert.equal(receipt.gates.validation.ok, true);
+        assert.equal(receipt.gates.validation.checksPassed, 9);
+        assert.deepEqual(receipt.gates.semantic.missingNodeIds, []);
+        assert.deepEqual(receipt.gates.semantic.missingRelationships, []);
+        assert.equal(receipt.gates.semantic.ok, false);
+        assert.equal(result.status, 1, result.stderr || result.stdout);
+        const identities = [identityField === 'id' ? storageId : 'cache', 'db'].sort();
+        assert.deepEqual(receipt.gates.semantic.mismatchedNodes.slice().sort((a, b) => a.id.localeCompare(b.id)),
+          identities.map((id) => ({ id, field: 'binding', expected: 'distinct candidate node', actual: storageId })));
+        assert.equal(receipt.firstPassUsable, false);
+        const resultsFile = path.join(tmp, 'reused-binding.results.jsonl');
+        fs.writeFileSync(resultsFile, `${JSON.stringify(receipt)}\n`);
+        const reportResult = run(['report', '--results', resultsFile]);
+        assert.equal(reportResult.status, 0, reportResult.stderr || reportResult.stdout);
+        const report = JSON.parse(reportResult.stdout);
+        assert.deepEqual(report.overall.failureClusters, { semantic: 1, validation: 0, visualReview: 0, operational: 0 });
+      }
+    }
+  }
+});
+
+test('benchmark preserves repeated constraints on the same required identity', () => {
+  const caseFile = writeJson('same-identity.case.json', {
+    schema_version: 1, id: 'same-identity', diagram_type: 'architecture', quality_profile: 'showcase',
+    requirements: { nodes: [{ id: 'cache', type: 'database' }, { key: 'cache', labels: ['Redis'] }] },
+  });
+  const runFile = writeJson('same-identity.run.json', {
+    schema_version: 1, case_id: 'same-identity', agent: 'fixture-agent', model: 'fixture-model', attempt: 1,
+    visual_review: { status: 'skipped', defects: [] },
+  });
+  const result = run(['verify', '--case', caseFile, '--candidate', path.join(skillRoot, 'examples/web-app.architecture.json'), '--run', runFile]);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.gates.semantic.ok, true);
+  assert.deepEqual(receipt.gates.semantic.mismatchedNodes, []);
+  assert.equal(receipt.gates.validation.ok, true);
+  assert.equal(receipt.firstPassUsable, false, 'an omitted visual review is still not a pass');
+  assert.equal(result.status, 1);
 });
 
 test('benchmark never accepts a visual pass without an identified reviewer', () => {

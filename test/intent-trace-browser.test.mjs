@@ -287,14 +287,17 @@ test('Intent Trace preserves input handoffs, transient geometry and cleanup', {
   });
 
   await t.test('real CSS completion, Motion ownership, reduced motion and themes preserve previews', async () => {
-    await load('trace'); await run(`intentWait(()=>document.documentElement.getAttribute('data-ambient-motion')==='settled')`);
+    await load('trace');
+    assert.equal(await run(`document.documentElement.getAttribute('data-ambient-motion')`), 'running');
     await move('api'); await run(`intentWait(()=>Archify.motionGovernor.owner()==='intent')`);
+    assert.equal(await run(`Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>e.getAnimations().length===0)`), true);
     await run(`intentWait(()=>intentEnds.some(e=>e.trusted&&e.name==='archify-intent-trace-flow'))`);
     assert.equal((await snapshot('animation-complete')).active, 'api');
     const direction = await run(`getComputedStyle(document.querySelector('.intent-trace-flow[data-direction="in"]')).animationDirection`);
     assert.equal(direction, 'normal');
     await move(); await run(`intentWait(()=>Archify.motionGovernor.owner()==='')`);
     await snapshot('owner-cleared');
+    assert.equal(await run(`document.querySelector('.ambient-edge-flow').getAnimations().some(a=>a.playState==='running')`), true);
     for (const theme of ['dark', 'light']) {
       await load('trace', { theme, reduced: true });
       const scheduled = await run(`intentTimerFixture(({over,queue,delays,fire})=>{over('api');const before=Archify.intentTrace.active();fire();return {before,after:Archify.intentTrace.active(),delays};})`);
