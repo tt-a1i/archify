@@ -100,7 +100,15 @@ node archify/bin/archify.mjs validate workflow input.workflow.json --layout-json
 
 The receipt reports the selected contract, measured `viewBox` and
 `requiredViewBox`, solved columns, nodes, edges, labels, and causal diagnostics.
-It deliberately omits solver iterations and candidate scores.
+It deliberately omits solver iterations and candidate scores. A complete plan
+rejected by a late layout, canvas, or text check also includes this geometry with
+`ok: false`; validation still exits non-zero and writes no HTML. Its `viewBox`
+is the attempted frame at rejection, while `requiredViewBox` is the measured
+footprint of that same rejected plan. Labels use their anchor coordinates,
+not the top-left corner of the label mask. Early or incomplete failures retain
+only the contract and causal diagnostics. Failed geometry is repair evidence,
+not acceptance; migration failure reports may also gain measured canvas evidence
+without accepting the rejected plan.
 
 ## Legend
 

@@ -1414,6 +1414,7 @@ const {
 } = laneGeometry;
 let viewBox = laneGeometry.initialViewBox;
 let requiredViewBox = [...viewBox];
+let measuredPlanReady = false;
 
 function workflowLegendLayout(obstacles = []) {
   return {
@@ -2977,6 +2978,7 @@ function validateWorkflow() {
     }));
   }
 
+  measuredPlanReady = hasCompleteMeasuredPlan();
   if (problems.length) {
     throwDiagnosticProblems('Workflow layout validation failed', problems, {
       subject: { diagramType: 'workflow' },
@@ -4884,8 +4886,9 @@ function measuredContentBounds() {
   for (const node of nodes.values()) includeRect(node, `node ${node.id}`);
   for (const [index, edge] of workflow.edges.entries()) {
     if (!nodes.has(edge.from) || !nodes.has(edge.to)) continue;
-    for (const point of pathFor(edge).points) includePoint(point, `edge ${edge.id || index}`);
-    const label = labelRectFor(edge, index);
+    const routed = pathCache.get(edge);
+    for (const point of routed.points) includePoint(point, `edge ${edge.id || index}`);
+    const label = LABEL_RECT_CACHE.get(routed);
     if (label) includeRect(label, `edge ${edge.id || index} label mask`);
   }
   for (const phase of asArray(workflow.phases)) {
@@ -4934,16 +4937,25 @@ function measuredContentBounds() {
   };
 }
 
+function measuredPlanFootprint() {
+  const bounds = measuredContentBounds();
+  return {
+    bounds,
+    requiredViewBox: [
+      Math.max(minimumCanvasWidth, Math.ceil(bounds.right + 16)),
+      Math.max(autoHeight, Math.ceil(bounds.bottom + 18)),
+    ],
+  };
+}
+
 function finalizeReadableViewBox() {
   if (workflow.schema_version !== 2) {
     requiredViewBox = [...viewBox];
     return;
   }
-  const bounds = measuredContentBounds();
-  requiredViewBox = [
-    Math.max(minimumCanvasWidth, Math.ceil(bounds.right + 16)),
-    Math.max(autoHeight, Math.ceil(bounds.bottom + 18)),
-  ];
+  const footprint = measuredPlanFootprint();
+  const { bounds } = footprint;
+  requiredViewBox = footprint.requiredViewBox;
   const outsideOrigin = bounds.left < 0 || bounds.top < 0;
   if (outsideOrigin) {
     const hasAbsolutePins = hasAbsoluteWorkflowPins(workflow);
@@ -5185,45 +5197,87 @@ ${renderLegend()}
 }
 
 
+function hasCompleteMeasuredPlan() {
+  if (nodes.size !== workflow.nodes.length || pathCache.size !== workflow.edges.length
+    || !layout.colXs.every(Number.isFinite) || !viewBox.every(Number.isFinite)) return false;
+  for (const node of nodes.values()) {
+    if (!isFinitePoint(node.x, node.y, node.width, node.height)
+      || node.width <= 0 || node.height <= 0) return false;
+  }
+  for (const edge of workflow.edges) {
+    if (!nodes.has(edge.from) || !nodes.has(edge.to)) return false;
+    const routed = pathCache.get(edge);
+    if (!Array.isArray(routed?.points) || routed.points.length < 2
+      || !routed.points.every((point) => Array.isArray(point)
+        && point.length === 2 && point.every(Number.isFinite))) return false;
+    if (!edge.label) continue;
+    const rect = LABEL_RECT_CACHE.get(routed);
+    if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height, rect.lx, rect.ly)
+      || rect.width <= 0 || rect.height <= 0) return false;
+  }
+  return true;
+}
+
+function measuredPlanReceipt(diagnostics, requiredFrame) {
+  return {
+    contract: layout.contract,
+    viewBox: [...viewBox],
+    requiredViewBox: [...requiredFrame],
+    columns: [...layout.colXs],
+    nodes: [...nodes.values()].map((node) => ({
+      id: node.id,
+      lane: node.lane,
+      col: node.col,
+      x: node.x,
+      y: node.y,
+      width: node.width,
+      height: node.height,
+    })),
+    edges: workflow.edges.map((edge) => ({
+      id: edge.id ?? null,
+      from: edge.from,
+      to: edge.to,
+      points: pathCache.get(edge).points.map((point) => [...point]),
+    })),
+    labels: workflow.edges.flatMap((edge) => {
+      if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) return [];
+      const { lx: x, ly: y } = LABEL_RECT_CACHE.get(pathCache.get(edge));
+      return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label), height: 14 }];
+    }),
+    diagnostics,
+  };
+}
+
+
   try {
     validateReadableInputsBeforeRouting();
     validateReadablePinnedGeometry();
     validateWorkflow();
     finalizeReadableViewBox();
     validateReadableNodeText();
+    // A rendering failure is not a measured validation rejection.
+    measuredPlanReady = false;
     const svg = renderSvg();
-    const receipt = {
-      contract: layout.contract,
-      viewBox: [...viewBox],
-      requiredViewBox: [...requiredViewBox],
-      columns: [...layout.colXs],
-      nodes: [...nodes.values()].map((node) => ({
-        id: node.id,
-        lane: node.lane,
-        col: node.col,
-        x: node.x,
-        y: node.y,
-        width: node.width,
-        height: node.height,
-      })),
-      edges: workflow.edges.map((edge) => ({
-        id: edge.id ?? null,
-        from: edge.from,
-        to: edge.to,
-        points: pathFor(edge).points.map((point) => [...point]),
-      })),
-      labels: workflow.edges.flatMap((edge) => {
-        if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) return [];
-        const [x, y] = workflowEdgeLabelPoint(edge, pathFor(edge).points);
-        return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label), height: 14 }];
-      }),
-      diagnostics: workflowDiagnostics,
-    };
+    const receipt = measuredPlanReceipt(workflowDiagnostics, requiredViewBox);
     return { ok: true, svg, receipt };
   } catch (error) {
     if (!Array.isArray(error?.archifyDiagnostics)) throw error;
     const diagnostics = error.archifyDiagnostics.map((diagnostic) => ({ ...diagnostic }));
-    return compilerFailure(layout.contract, diagnostics, error.message);
+    const failure = compilerFailure(layout.contract, diagnostics, error.message);
+    if (measuredPlanReady) {
+      try {
+        const footprint = measuredPlanFootprint();
+        if (footprint.requiredViewBox.every(Number.isFinite)) {
+          failure.receipt = {
+            ...measuredPlanReceipt(diagnostics, footprint.requiredViewBox),
+            ok: false,
+          };
+        }
+      } catch {
+        // Supplemental evidence must never replace the causal diagnostics.
+      }
+    }
+    return failure;
   }
 }
 
