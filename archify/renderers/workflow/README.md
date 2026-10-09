@@ -222,8 +222,9 @@ An infeasible preset returns `workflow/route-preset-conflict` with the actual
 rejected `evidence.invariant`. For node clearance it also identifies the node,
 segment, endpoint role, and required clearance. Use that obstacle to revise
 the connected placement or route constraints, then revalidate; minimum segment
-lengths alone do not establish a clear path. Advertised `supportedFixes` are
-verified against the complete workflow.
+lengths alone do not establish a clear path. Concrete alternatives for
+`workflow/route-preset-conflict` are checked by replanning the complete workflow
+at the active quality profile.
 
 ## Design Rules
 
@@ -283,10 +284,12 @@ pass-through containers. Text width is estimated CJK-aware: fullwidth glyphs
 count as two units.
 
 Diagnostics are causal: a rank-capacity failure suppresses derivative short
-edge, endpoint-direction, and label-overlap findings. Every
-`supportedFixes[]` entry is verified by replanning the proposed edit, and a
-diagnostic never proposes removing a semantic label when label presence does
-not cause the failed invariant.
+edge, endpoint-direction, and label-overlap findings. `supportedFixes[]` can
+contain concrete edits checked by the compiler's fix search or general repair
+guidance from shared composition checks. General guidance is not a verified
+edit. After any edit, rerun the complete `finalize` command. A diagnostic never
+proposes removing a semantic label when label presence does not cause the
+failed invariant.
 
 Set `meta.quality_profile` to `showcase` for polished delivery. Unrelated proper
 X crossings then fail with `composition/proper-crossing`; default `standard`
