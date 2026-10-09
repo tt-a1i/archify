@@ -80,7 +80,7 @@ function classForLabel(html, id, label) {
   return match[1];
 }
 
-test('edge labels use the same variant color contract as their paths in every shared renderer and preset', () => {
+test('edge labels retain variant colors with readable workflow default labels in every preset', () => {
   for (const [type, config] of Object.entries(CASES)) {
     for (const preset of PRESETS) {
       const html = render(type, config, preset);
@@ -89,7 +89,7 @@ test('edge labels use the same variant color contract as their paths in every sh
         assert.equal(classForEdge(html, id), `a-${variant}`, `${type}/${preset}/${variant} path`);
         assert.equal(
           classForLabel(html, id, `L${VARIANTS.indexOf(variant)}`),
-          `t-edge-${variant}`,
+          type === 'workflow' && variant === 'default' ? 't-muted' : `t-edge-${variant}`,
           `${type}/${preset}/${variant} label`,
         );
       }
