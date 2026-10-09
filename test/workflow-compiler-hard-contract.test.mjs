@@ -754,6 +754,64 @@ test('readable-v2 treats an infeasible route preset as a candidate-family confli
   }
 });
 
+test('readable-v2 verifies preset repairs with the public straight-route reservation', () => {
+  const document = workflow({
+    lanes: [{ id: 'top', label: 'Top' }, { id: 'middle', label: 'Middle' }, { id: 'bottom', label: 'Bottom' }],
+    nodes: [
+      { id: 'left', lane: 'middle', col: 0, type: 'backend', label: 'Left' },
+      { id: 'right', lane: 'middle', col: 3, type: 'backend', label: 'Right' },
+      { id: 'above', lane: 'top', col: 1, type: 'backend', label: 'Above' },
+      { id: 'below', lane: 'bottom', col: 1, type: 'backend', label: 'Below' },
+    ],
+    edges: [
+      { id: 'a-preset', from: 'left', to: 'right', label: 'PIN', route: 'outside-right', fromSide: 'right', toSide: 'right' },
+      { id: 'z-auto', from: 'above', to: 'below' },
+    ],
+  });
+  // Source indexes also differ from canonical edge order in the reversed input.
+  for (const edges of [document.edges, [...document.edges].reverse()]) {
+    const authored = { ...clone(document), edges: clone(edges) };
+    const original = clone(authored);
+    const result = compileWorkflow({ workflow: authored, qualityProfile: 'showcase' });
+    assert.equal(result.ok, false);
+    const diagnostic = result.diagnostics.find(({ code }) => code === 'workflow/route-preset-conflict');
+    assert.ok(diagnostic, JSON.stringify(result.diagnostics, null, 2));
+
+    const routeOnly = clone(authored);
+    const routeOnlyEdge = routeOnly.edges.find(({ id }) => id === 'a-preset');
+    delete routeOnlyEdge.route;
+    const retainedSides = compileWorkflow({ workflow: routeOnly, qualityProfile: 'showcase' });
+    assertExplicitPinConflict(retainedSides, 'removing the preset does not remove authored right/right sides');
+    assert.equal(retainedSides.diagnostics[0].evidence.invariant, 'explicit route-route crossing');
+    assert.equal(routeOnlyEdge.fromSide, 'right');
+    assert.equal(routeOnlyEdge.toSide, 'right');
+
+    for (const fix of diagnostic.supportedFixes) {
+      const repaired = clone(authored);
+      const target = repaired.edges.find(({ id }) => id === 'a-preset');
+      const replacement = fix.match(/^set edge "a-preset" route to verified preset "([^"\n]+)"$/);
+      if (replacement) target.route = replacement[1];
+      else {
+        assert.match(fix, /^remove route from edge "a-preset" so readable-v2 can use its verified automatic candidate$/);
+        delete target.route;
+      }
+      const { route: oldRoute, ...originalAssertions } = original.edges.find(({ id }) => id === 'a-preset');
+      const { route: newRoute, ...remainingAssertions } = target;
+      assert.deepEqual(remainingAssertions, originalAssertions, 'a route suggestion preserves sides, label and topology');
+      const verified = compileWorkflow({ workflow: repaired, qualityProfile: 'showcase' });
+      assert.equal(verified.ok, true, `advertised preset repair must pass public compilation: ${fix}\n${JSON.stringify(verified.diagnostics, null, 2)}`);
+    }
+
+    const automatic = clone(routeOnly);
+    const automaticEdge = automatic.edges.find(({ id }) => id === 'a-preset');
+    delete automaticEdge.fromSide;
+    delete automaticEdge.toSide;
+    const unpinned = compileWorkflow({ workflow: automatic, qualityProfile: 'showcase' });
+    assert.equal(unpinned.ok, true, 'the same topology and label are repairable when all route assertions are removed');
+    assert.deepEqual(authored, original, 'fix discovery preserves the authored input');
+  }
+});
+
 function outsideRightLabelWorkflow() {
   return workflow({
     lanes: [{ id: 'undo', label: 'Undo' }, { id: 'return', label: 'Follow-up' }],
@@ -1538,6 +1596,17 @@ test('readable-v2 derives both causal pins when label plans before the authored 
     diagnostic.supportedFixes.includes('remove via from edge "z-route" so readable-v2 can replan the remaining authored label-route pins'),
     JSON.stringify(diagnostic.supportedFixes, null, 2),
   );
+  for (const fix of diagnostic.supportedFixes) {
+    const repaired = clone(document);
+    const replacement = fix.match(/^set labelAt on edge "a-label" to \[(-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?)\]$/);
+    if (replacement) repaired.edges[1].labelAt = replacement.slice(1).map(Number);
+    else {
+      assert.equal(fix, 'remove via from edge "z-route" so readable-v2 can replan the remaining authored label-route pins');
+      delete repaired.edges[0].via;
+    }
+    const verified = compileWorkflow({ workflow: repaired });
+    assert.equal(verified.ok, true, `advertised causal pin repair must pass public compilation: ${fix}\n${JSON.stringify(verified.diagnostics, null, 2)}`);
+  }
 });
 
 test('readable-v2 classifies an authored labelAt colliding with an earlier automatic route', () => {

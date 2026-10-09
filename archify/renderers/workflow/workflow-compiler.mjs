@@ -1899,13 +1899,26 @@ function throwReadableLabelRoutePinConflict(hit, routePoints = null) {
   const routePinned = hasAuthoredRouteAssertions(routeEdge);
   if (!labelPinned && !routePinned) return false;
   const alternatives = verifiedLabelRoutePinAlternatives(labelEdge, routeEdge);
+  const labelNudges = labelPinned && discoverFixes ? verifiedLabelAtAlternatives(labelEdge) : [];
+  // A passing replacement proves the label pin is causal even if its removal
+  // recreates the collision under the ordinary automatic reservation policy.
+  const conflictingRefs = labelNudges.length
+    && !alternatives.conflictingRefs.some(({ edge, field }) => edge === labelEdge && field === 'labelAt')
+    ? [{ edge: labelEdge, edgeIndex: workflow.edges.indexOf(labelEdge), field: 'labelAt' }, ...alternatives.conflictingRefs]
+    : alternatives.conflictingRefs;
+  const supportedFixes = [
+    ...labelNudges,
+    ...alternatives.repairs.filter(({ removalSet }) => (
+      !labelNudges.length || removalSet.length !== 1 || removalSet[0].field !== 'labelAt'
+    )).map(({ message }) => message),
+  ];
   const actualRoutePoints = routePoints
     || pathCache.get(routeEdge)?.points
     || pathFor(routeEdge).points;
-  const diagnosticEdge = alternatives.conflictingRefs[0]?.edge
+  const diagnosticEdge = conflictingRefs[0]?.edge
     || (labelPinned ? labelEdge : routeEdge);
   throwExplicitPinConflict(diagnosticEdge, 'explicit label-route clearance', {
-    conflictingPins: alternatives.conflictingPins,
+    conflictingPins: conflictingRefs.map(({ edge, field }) => authoredPinEvidence(edge, field)),
     ...(labelPinned ? { labelAt: [...labelEdge.labelAt] } : {}),
     labelRect: {
       x: hit.rect.x,
@@ -1923,9 +1936,7 @@ function throwReadableLabelRoutePinConflict(hit, routePoints = null) {
     routeSegment: { from: [...hit.start], to: [...hit.end] },
     clearancePx: Math.round(hit.clearance * 10) / 10,
     minimumPx: hit.threshold,
-  }, [
-    ...verifiedRepairsWithLabelNudges(alternatives),
-  ]);
+  }, supportedFixes);
   return true;
 }
 
@@ -2324,9 +2335,9 @@ function validateReadablePinnedGeometry() {
   }
   // Reserve clear straight automatic routes before ID-ordered bending edges so
   // a later edge cannot steal a corridor that already has one good straight path.
-  // Skip during discoverFixes probes (discoverFixes === false): those probes
-  // strip labelAt/via and would otherwise look "automatic", recreating the pin
-  // geometry and shrinking causal pin sets (round-23 regression).
+  // Fix probes use the same reservation policy as public compilation. A
+  // verified labelAt replacement retains causal label-pin evidence even when
+  // deleting that pin lets automatic routing recreate its collision.
   // Skip when any edge carries a relative/absolute label pin: straight-first
   // would reorder corridors and scramble placed-label conflict evidence.
   const hasLabelPins = workflow.edges.some((edge) => (
@@ -2335,7 +2346,7 @@ function validateReadablePinnedGeometry() {
     || edge.labelDy !== undefined
     || edge.labelSegment !== undefined
   ));
-  if (discoverFixes && !hasLabelPins) {
+  if (!hasLabelPins) {
     for (const edge of workflow.edges) {
       if (!nodes.has(edge.from) || !nodes.has(edge.to)) continue;
       const plan = clearStraightAutomaticPlan(edge);
