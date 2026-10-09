@@ -8,6 +8,8 @@
 
 <p align="center"><img src="docs/assets/archify-readme-hero.png" alt="Archify — interactive diagrams" width="960" /></p>
 
+<p align="center"><strong>官方入口：</strong> <a href="https://archify.si">archify.si</a> · <a href="https://github.com/tt-a1i/archify">GitHub</a><br/>Archify 开源免费。第三方提供的在线服务、收费套餐由其运营方负责，不代表 Archify 官方。 <a href="#official-services">查看详细说明 →</a></p>
+
 <p align="center">从一个想法、一个问题或一份计划开始。把它描述给 AI Agent，Archify 就能生成可以探索、修改和分享的交互式 HTML。从旅行行程、知识地图到复杂系统，你都可以继续扩展，做成自己需要的样子。</p>
 
 <p align="center">看看社区正在创造什么，也想想你还能用它做些什么。</p>
@@ -419,6 +421,14 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
   <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ 群</strong><br/><img src="docs/assets/community/qq-qr.png" alt="Archify Official QQ 群二维码" width="300" height="300" /></td>
 </tr>
 </table>
+
+<a id="official-services"></a>
+
+## 官方入口与第三方服务
+
+- **开源项目：** 源码和安装包可按 [MIT 协议](LICENSE)免费使用。
+- **官方网站：** [archify.si](https://archify.si) 目前提供项目介绍、示例和安装指引。
+- **第三方服务：** 是否收费、如何处理数据、提供什么支持，由第三方运营方决定。名称或域名相似不代表官方合作。
 
 ## License
 

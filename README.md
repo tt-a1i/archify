@@ -8,6 +8,8 @@
 
 <p align="center"><img src="docs/assets/archify-readme-hero.png" alt="Archify — interactive diagrams" width="960" /></p>
 
+<p align="center"><strong>Official channels：</strong> <a href="https://archify.si">archify.si</a> · <a href="https://github.com/tt-a1i/archify">GitHub</a><br/>Archify is free and open source. Third-party online services and paid plans are operated by their respective providers and do not represent Archify. <a href="#official-services">Service details →</a></p>
+
 <p align="center">Start with an idea, a question, or a plan. Describe it to your AI agent, and Archify turns it into an interactive HTML you can explore, customize, and share. From travel itineraries and learning maps to complex systems—make it your own.</p>
 
 <p align="center">See what the community is creating—and imagine what you could make next.</p>
@@ -415,6 +417,14 @@ Connect with other users and developers, share ideas, request features, report b
   <td align="center"><strong><img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ</strong><br/><img src="docs/assets/community/qq-qr.png" alt="Archify Official QQ group QR code" width="300" height="300" /></td>
 </tr>
 </table>
+
+<a id="official-services"></a>
+
+## Official channels and third-party services
+
+- **Open-source project:** The source code and installation packages are free to use under the [MIT License](LICENSE).
+- **Official website:** [archify.si](https://archify.si) currently provides project information, examples, and installation guidance.
+- **Third-party services:** Pricing, data handling, and support are determined by the respective provider. A similar name or domain does not establish an official affiliation.
 
 ## License
 
