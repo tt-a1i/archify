@@ -53,9 +53,8 @@ const LEGEND_BLOCK_HEIGHT = 86;
 // desktop reading minimum; an inherently crowded row still fails below.
 const spreadParticipantWidth = (canvasWidth) => Math.max(86,
   Math.min(190, Math.round((canvasWidth - 124) / Math.max(1, asArray(sequence.participants).length)) - 24));
-function spreadColumnGeometry(canvasWidth) {
+function spreadColumnGeometry(canvasWidth, width = spreadParticipantWidth(canvasWidth)) {
   const count = Math.max(1, asArray(sequence.participants).length);
-  const width = spreadParticipantWidth(canvasWidth);
   const span = count * width + (count - 1) * 16;
   const margin = Math.max(40, Math.min(62, canvasWidth - 40 - span));
   return { width, margin, gap: count > 1 ? Math.max(width + 16, (canvasWidth - 40 - margin - width) / (count - 1)) : 108 };
@@ -113,8 +112,36 @@ const automaticWidth = sequence.meta?.viewBox ? null : automaticCanvasWidth();
 const canvasWidth = sequence.meta?.viewBox?.[0] ?? automaticWidth;
 const columnFit = sequence.meta?.column_fit || 'spread';
 const participantCount = Math.max(1, asArray(sequence.participants).length);
+// Resolve the actual final-canvas text floor before choosing header geometry.
+// Notes and automatic height must use the resulting column gaps below.
+const readableMessages = sequence.meta?.quality_profile === 'showcase';
+const readableAutomaticSublabel = readableMessages && automaticWidth !== null && columnFit === 'spread';
+const readableSublabelMinimum = readableAutomaticSublabel
+  ? Math.max(participantTextFit.sublabelMinimum, Math.ceil(minimumReadableSourceTextPx(canvasWidth) * 10) / 10)
+  : participantTextFit.sublabelMinimum;
+const readableSublabelPreferred = Math.max(participantTextFit.sublabelPreferred, readableSublabelMinimum);
+
+function participantSpreadGeometry() {
+  const nominal = spreadColumnGeometry(canvasWidth);
+  const participants = asArray(sequence.participants);
+  // Preserve every already-fitting row and all authored/fixed geometry. Only
+  // a failed primary label opens this bounded use of spare horizontal room.
+  if (automaticWidth === null || columnFit !== 'spread'
+    || !participants.some((participant) => textUnits(participant.label) * 6.8 > nominal.width + 6)) return nominal;
+  const required = Math.ceil(Math.max(nominal.width, ...participants.map((participant) => Math.max(
+    textUnits(participant.label) * 6.8 - 6,
+    participant.sublabel ? minimumNodeTextWidth(participant.sublabel, readableSublabelMinimum)
+      + nominal.width - availableNodeTextWidth(nominal.width) : 0,
+  ))));
+  const capacity = Math.floor(Math.min(190, (canvasWidth - 80 - (participantCount - 1) * 16) / participantCount));
+  // Keep the existing real failures if ordinary text or the brand rail cannot
+  // fit the minimum candidate. Do not clamp a demand into infeasible geometry.
+  if (required > capacity || participants.some((participant) => brandTopRailProblem(participant, required, 8, 'Participant'))) return nominal;
+  return spreadColumnGeometry(canvasWidth, required);
+}
+
 const preferredSideMargin = 62;
-const spreadGeometry = spreadColumnGeometry(canvasWidth);
+const spreadGeometry = participantSpreadGeometry();
 const participantW = columnFit === 'spread' ? spreadGeometry.width : 86;
 // Narrow feasible frames can reduce the left margin, while ordinary frames
 // keep 62px. Compute card width first so this does not change its sizing rule.
@@ -268,7 +295,6 @@ const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 // a shorter one shrinks the readable band (validated below) instead of clipping.
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
-const readableMessages = sequence.meta?.quality_profile === 'showcase';
 const messageFontSize = readableMessages ? 11 : 9;
 const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
@@ -286,15 +312,6 @@ const layout = {
   colGap,
   labelH: readableMessages ? 18 : 16,
 };
-
-// Automatic showcase spread can guarantee a readable fit within its bounded
-// canvas. Standard, fixed columns and authored canvases retain historical text
-// sizing; composition reports their projected readability under its own policy.
-const readableAutomaticSublabel = readableMessages && automaticWidth !== null && columnFit === 'spread';
-const readableSublabelMinimum = readableAutomaticSublabel
-  ? Math.max(participantTextFit.sublabelMinimum, Math.ceil(minimumReadableSourceTextPx(viewBox[0]) * 10) / 10)
-  : participantTextFit.sublabelMinimum;
-const readableSublabelPreferred = Math.max(participantTextFit.sublabelPreferred, readableSublabelMinimum);
 
 const participantBoxWidthNote = automaticWidth
   ? `participant boxes are ${participantW}px: the automatic ${viewBox[0]}px canvas cannot widen further without its 7px sublabels falling below the desktop reading minimum, so keep meta.viewBox omitted`
