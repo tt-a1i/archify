@@ -10,7 +10,7 @@ metadata:
 
 # Archify
 
-Create an interactive HTML diagram from typed JSON. Static output is the default; enable motion only when requested.
+Create an interactive HTML diagram from typed JSON.
 
 Run commands from your working directory. Unless the user names another location, give each new diagram request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once when the request starts): keep `candidate.json` and `<slug>.html` in it, set `meta.output` to that HTML path relative to the working directory, and reuse the folder for every repair rerun. A later request gets a new folder, so earlier versions stay intact. Replace `bin/archify.mjs` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
 
