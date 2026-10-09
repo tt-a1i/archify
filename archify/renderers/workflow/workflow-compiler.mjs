@@ -78,6 +78,7 @@ const READABLE_CANDIDATE_COST_PRIORITY = Object.freeze([
   'sharedCorridorPx',
   'automaticForwardReversePx',
   'labelRouteClearanceDeficit',
+  'oppositeParallelDeficit',
   'interiorPreferred28Deficit',
   'bendCount',
   'stretchMilli',
@@ -3737,6 +3738,14 @@ function properAxisCrossing(a, b, c, d) {
     && y < Math.max(vertical[0][1], vertical[1][1]) - 0.0001;
 }
 
+function isReadableAutomaticRoute(edge) {
+  return workflow.schema_version === 2
+    && !Array.isArray(edge.via)
+    && edge.channelX === undefined
+    && edge.channelY === undefined
+    && (!edge.route || edge.route === 'auto');
+}
+
 function independentAutomaticRoute(edge) {
   return workflow.schema_version === 2
     && !edge.via && edge.channelX === undefined && edge.channelY === undefined
@@ -3749,6 +3758,7 @@ function independentAutomaticRoute(edge) {
 function routeInteractionMetrics(edge, points) {
   let properCrossingCount = 0;
   let sharedCorridorPx = 0;
+  let oppositeParallelDeficit = 0;
   const extent = routeBounds(points);
   const nearbyRoutes = obstacleGrid.query({
     minX: extent.minX - 8, minY: extent.minY - 8,
@@ -3761,6 +3771,9 @@ function routeInteractionMetrics(edge, points) {
     const routed = item.routed;
     const sharedEndpoint = [edge.from, edge.to].some((id) => id === otherEdge.from || id === otherEdge.to);
     if (sharedEndpoint && workflow.schema_version !== 2) continue;
+    if (isReadableAutomaticRoute(edge)) {
+      oppositeParallelDeficit += longCounterflowDeficit(points, routed.points);
+    }
     sharedCorridorPx += collectAmbiguousCorridors({
       routedRelations: [{ relation: edge, points }, { relation: otherEdge, points: routed.points }],
       includeSharedEndpoints: () => workflow.schema_version === 2,
@@ -3774,7 +3787,33 @@ function routeInteractionMetrics(edge, points) {
       }
     }
   }
-  return { properCrossingCount, sharedCorridorPx };
+  return { properCrossingCount, sharedCorridorPx, oppositeParallelDeficit };
+}
+
+// Prefer a clear existing track for long, close counterflow. This is only a
+// candidate preference: same-direction trunks and short endpoint runs stay
+// under the existing route contracts, and authored geometry is never edited.
+function longCounterflowDeficit(points, otherPoints) {
+  const left = normalizeRoutePoints(points);
+  const right = normalizeRoutePoints(otherPoints);
+  let worst = 0;
+  for (let a = 1; a < left.length; a += 1) {
+    for (let b = 1; b < right.length; b += 1) {
+      const horizontal = Math.abs(left[a][1] - left[a - 1][1]) <= 0.0001
+        && Math.abs(right[b][1] - right[b - 1][1]) <= 0.0001;
+      const vertical = Math.abs(left[a][0] - left[a - 1][0]) <= 0.0001
+        && Math.abs(right[b][0] - right[b - 1][0]) <= 0.0001;
+      if (!horizontal && !vertical) continue;
+      const axis = horizontal ? 0 : 1;
+      if ((left[a][axis] - left[a - 1][axis]) * (right[b][axis] - right[b - 1][axis]) >= 0) continue;
+      const gap = Math.abs(left[a][1 - axis] - right[b][1 - axis]);
+      if (gap <= 0.0001 || gap >= 8) continue;
+      const overlap = Math.min(Math.max(left[a][axis], left[a - 1][axis]), Math.max(right[b][axis], right[b - 1][axis]))
+        - Math.max(Math.min(left[a][axis], left[a - 1][axis]), Math.min(right[b][axis], right[b - 1][axis]));
+      worst = Math.max(worst, Math.max(0, overlap - 24) * (8 - gap));
+    }
+  }
+  return worst;
 }
 
 function automaticForwardReversePx(edge, points) {
@@ -3830,6 +3869,7 @@ function readableCandidateCost(
     properCrossingCount: interaction.properCrossingCount,
     sharedCorridorPx: interaction.sharedCorridorPx,
     labelRouteClearanceDeficit: labelRouteClearanceDeficit(edge, points),
+    oppositeParallelDeficit: interaction.oppositeParallelDeficit,
     interiorPreferred28Deficit,
     bendCount: Math.max(0, points.length - 2),
     stretchMilli: Math.round((directLength > 0 ? routeLength / directLength : 1) * 1000),
@@ -4808,12 +4848,7 @@ function pathFor(edge, automaticPlan = null) {
   }
   const ports = automaticPorts.get(edge);
   const { fromSide, toSide } = edgeSides(edge);
-  const readableAutomatic = workflow.schema_version === 2
-    && !Array.isArray(edge.via)
-    && edge.channelX === undefined
-    && edge.channelY === undefined
-    && (!edge.route || edge.route === 'auto');
-  if (readableAutomatic) {
+  if (isReadableAutomaticRoute(edge)) {
     const planned = automaticPlan || readableAutomaticRoute(
       edge,
       from,
