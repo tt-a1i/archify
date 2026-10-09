@@ -122,7 +122,7 @@ Archify로 그려 줘: Browser -> API -> Redis cache -> PostgreSQL fallback.
 어떤 유형이 맞는지 모르겠다면 [인터랙티브 시나리오 가이드](https://tt-a1i.github.io/archify/guide.html)를 보거나 CLI에 물어보세요.
 
 ```bash
-node archify/bin/archify.mjs guide "Redis 캐시 미스가 있는 API 요청을 보여 줘"
+node archify/bin/archify.mjs guide "Show an API request with Redis cache miss"
 node archify/bin/archify.mjs guide "Kafka 토픽, 컨슈머 그룹, 재처리, DLQ를 지도처럼 보여 줘" --json
 ```
 
