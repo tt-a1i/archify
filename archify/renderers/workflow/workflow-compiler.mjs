@@ -686,11 +686,12 @@ function cloneWorkflow(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function canonicalReadableWorkflow(workflow) {
+function canonicalReadableWorkflow(workflow, widthOverrides) {
   if (workflow.schema_version !== 2) return workflow;
   for (const node of asArray(workflow.nodes)) {
     const width = !preservesWorkflowAbsoluteGeometry(workflow)
-      && !Number.isFinite(node.width) && automaticNodeWidth(node);
+      && !Number.isFinite(node.width)
+      && Math.max(automaticNodeWidth(node) || 0, widthOverrides?.get(node.id) || 0);
     if (width) automaticNodeWidths.set(node, width);
     else automaticNodeWidths.delete(node);
   }
@@ -1331,6 +1332,7 @@ function compileWorkflowInternal({
   sourceEvidence,
   discoverFixes = true,
   layoutFeedback = {},
+  widthOverrides,
 } = {}) {
   if (!inputWorkflow || typeof inputWorkflow !== 'object' || Array.isArray(inputWorkflow)) {
     const diagnostics = [{
@@ -1373,7 +1375,7 @@ function compileWorkflowInternal({
       inputDiagnostics,
     );
   }
-  const workflow = canonicalReadableWorkflow(qualityResolvedWorkflow);
+  const workflow = canonicalReadableWorkflow(qualityResolvedWorkflow, widthOverrides);
   const semanticDiagnostics = semanticContractDiagnostics(workflow);
   if (semanticDiagnostics.length) {
     return compilerFailure(
@@ -1545,6 +1547,11 @@ const edgeIndexByEdge = new Map(asArray(workflow.edges).map((edge, index) => [ed
   function acceptsFix(mutator) {
     if (!discoverFixes) return false;
     const candidate = cloneWorkflow(workflow);
+    // Migration projections carry geometry provenance outside their JSON.
+    // Keep that metadata without making ordinary authored pins sticky.
+    for (const symbol of Object.getOwnPropertySymbols(workflow)) {
+      candidate[symbol] = workflow[symbol];
+    }
     mutator(candidate);
     return withDiagnosticRecordingSuppressed(() => compileWorkflowWithFeedback({
       workflow: candidate,
@@ -5360,7 +5367,7 @@ function compileWithRouteOrderFeedback(options) {
   return best;
 }
 
-function compileWorkflowWithFeedback({ workflow, qualityProfile, sourceEvidence, discoverFixes = true } = {}) {
+function compileWithLayoutFeedback({ workflow, qualityProfile, sourceEvidence, discoverFixes, widthOverrides }) {
   let layoutFeedback = {};
   for (let attempt = 0; attempt <= MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS; attempt += 1) {
     try {
@@ -5370,6 +5377,7 @@ function compileWorkflowWithFeedback({ workflow, qualityProfile, sourceEvidence,
         sourceEvidence,
         discoverFixes,
         layoutFeedback,
+        widthOverrides,
       });
     } catch (error) {
       if (!(error instanceof WorkflowLayoutFeedback)) throw error;
@@ -5415,6 +5423,54 @@ function compileWorkflowWithFeedback({ workflow, qualityProfile, sourceEvidence,
     }
   }
   throw new Error('unreachable readable-v2 layout feedback state');
+}
+
+function compileWorkflowWithFeedback({ workflow, qualityProfile, sourceEvidence, discoverFixes = true } = {}) {
+  const options = { workflow, qualityProfile, sourceEvidence, discoverFixes };
+  let result = compileWithLayoutFeedback(options);
+  // Keep successful output and authored geometry exactly as before. Check the
+  // original migration policy before cloning, since its Symbol is not JSON.
+  if (result.ok || workflow?.schema_version !== 2
+    || (qualityProfile || workflow.meta?.quality_profile) !== 'showcase'
+    || preservesWorkflowAbsoluteGeometry(workflow)) return result;
+
+  let repairWorkflow;
+  const widthOverrides = new Map();
+  let minimumTick = 60;
+  // Each of the 6.1..8.0 minimum-font ticks can trigger at most one batch.
+  // Widths are fixed throughout a route/rank solver epoch; every new epoch
+  // starts with empty geometry feedback and measures its own final canvas.
+  // Only a complete measured receipt carries nodes; early diagnostic-only
+  // failures must never start sizing feedback.
+  while (!result.ok && result.receipt?.contract === 'readable-v2'
+    && Array.isArray(result.receipt.nodes)) {
+    const errors = result.diagnostics.filter(({ severity }) => severity !== 'warning');
+    if (!errors.length || errors.some(({ code }) => code !== 'workflow/sublabel-readability')) break;
+    const minimum = Math.max(...errors.map(({ evidence }) => evidence.requiredFontPx));
+    const maximum = Math.min(...errors.map(({ evidence }) => evidence.maximumSlotFontPx));
+    if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum > maximum) break;
+    const tick = Math.round(minimum * 10);
+    if (tick <= minimumTick || tick > 80) break;
+    minimumTick = tick;
+
+    const measuredWidths = new Map(result.receipt.nodes.map(({ id, width }) => [id, width]));
+    let changed = false;
+    for (const node of workflow.nodes) {
+      if (Number.isFinite(node.width) || !node.sublabel) continue;
+      const currentWidth = measuredWidths.get(node.id);
+      const needed = minimumNodeTextWidth(node.sublabel, minimum);
+      if (needed <= availableNodeTextWidth(currentWidth)) continue;
+      const padding = currentWidth - availableNodeTextWidth(currentWidth);
+      const width = Math.min(200, Math.ceil((needed + padding) / 4) * 4);
+      if (width <= currentWidth) continue;
+      widthOverrides.set(node.id, width);
+      changed = true;
+    }
+    if (!changed) break;
+    repairWorkflow ||= cloneWorkflow(workflow);
+    result = compileWithLayoutFeedback({ ...options, workflow: repairWorkflow, widthOverrides });
+  }
+  return result;
 }
 
 export function compileWorkflow({ workflow, qualityProfile, sourceEvidence } = {}) {
