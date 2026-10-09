@@ -367,7 +367,7 @@ function segmentLabelOccupants() {
   ]).filter((occupant) => occupant.rect);
 }
 
-function segmentLabelBox(segment) {
+function legacySegmentLabelBox(segment) {
   const labelW = Math.max(42, textUnits(segment.label) * 5.2 + 14);
   const occupied = segmentLabelOccupants();
   const label = { x: 56, y: segment.from - 22, width: labelW, height: 18 };
@@ -391,6 +391,34 @@ function segmentLabelBox(segment) {
     inside.y += 22;
   }
   return label;
+}
+
+function segmentLabelBox(segment) {
+  const label = legacySegmentLabelBox(segment);
+  const headers = [...participants.values()];
+  const coveredHeaders = headers.filter((header) => rectsOverlap(label, header, 0));
+  if (!coveredHeaders.length || label.y + label.height > segment.from) return label;
+
+  const others = asArray(sequence.segments).filter((other) => other !== segment);
+  // Only the unique first, non-overlapping phase gets this local adjustment.
+  // Nested phases keep their authored bounds and the existing title policy.
+  if (others.some((other) => other.from <= segment.from
+    || (other.from < segment.to && other.to > segment.from))) return label;
+
+  const candidate = { ...label, y: Math.max(...coveredHeaders.map((header) => header.y + header.height)) + 2 };
+  const bottom = candidate.y + candidate.height;
+  // The badge must still touch its own top border, before the first message;
+  // moving it deep into the phase would name the wrong part of the timeline.
+  if (candidate.y > segment.from || bottom < segment.from || bottom > segment.to - 2) return label;
+
+  const obstacles = [
+    ...segmentLabelOccupants().map(({ rect }) => rect),
+    ...headers,
+    // Use actual legacy placements: another title may have climbed above its
+    // nominal slot. Calling the unchanged helper keeps this non-recursive.
+    ...others.map(legacySegmentLabelBox),
+  ];
+  return obstacles.some((rect) => rectsOverlap(candidate, rect, 2)) ? label : candidate;
 }
 
 // Whether moving one message to `y` keeps it readable: inside the timeline,
