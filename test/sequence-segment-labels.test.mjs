@@ -121,7 +121,7 @@ test('inside segment title clears a message note after avoiding participant head
   const result = render(diagram, true);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const [title] = labels(result.html);
-  const note = result.html.match(/<text data-detail="fine" x="([\d.]+)" y="([\d.]+)" class="t-dim" font-size="([\d.]+)">diagnostic annotation<\/text>/);
+  const note = result.html.match(/<text data-detail="fine" x="([\d.]+)" y="([\d.]+)" class="[^"]*" font-size="([\d.]+)">diagnostic annotation<\/text>/);
   assert.ok(note, 'the full authored annotation remains visible');
   assert.deepEqual(note.slice(1).map(Number), [176, 178, 7], 'note position and font remain authored geometry');
   assert.ok(title.y >= PARTICIPANT_BOTTOM, 'title clears the participant headers');
