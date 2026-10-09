@@ -38,13 +38,32 @@ Use [the PR template](.github/PULL_REQUEST_TEMPLATE.md); link existing receipts 
 
 Skill instructions, authored examples, build inputs, and generated-site sources are behavioral inputs even when they look like documentation. Policy changes need process review; runtime evidence depends on whether they affect runtime inputs.
 
-Start with focused checks for the affected behavior. Use the full `npm test` suite from the repository root when shared behavior, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
+Start with `npm test` for the core product smoke or focused checks for the affected behavior. Use `npm run test:full` when shared infrastructure, broad changes, or findings require wider coverage. Final review needs sufficient evidence for the impact above; relevant CI results can supply that coverage without repeating the same run locally. Identify the revision and coverage of reused results, and explain material gaps. Required remote CI and branch protection still apply.
 
-### Documentation-only CI
+Tests should protect a user outcome or a real failure boundary. Prefer rendered
+content, successful interaction, preserved authored intent, and bounded work to
+matching implementation source or freezing automatic layout coordinates. A
+better automatic route, clearer copy, or equivalent refactor should not fail a
+test merely because it differs from the old implementation. Delete redundant
+source assertions when a behavior test owns that protection. Keep explicit
+geometry, compatibility, accessibility, failure cleanup, and protection against
+lost or corrupted output as observable contracts.
 
-Pull requests changing only `README.md`, `README_EN.md`, `README_ZH.md`, or PNG/SVG files directly under `docs/assets/community/` run the existing README checks once on Node 22. Required CI job names remain present, but their unrelated runtime, browser, and package steps do not run. A failed scope classification or README check fails those required jobs.
+### CI by affected responsibility
 
-Any other changed path (including tests, Skill instructions, templates, generated diagrams, dependencies, and workflow configuration) keeps full CI. Empty change sets also use full CI. Pushes to `main` always run the complete suite. New pushes cancel obsolete CI runs for the same PR; main runs are not cancelled.
+CI uses the ownership groups in `scripts/ci-scope.mjs`. Product changes run core
+CLI coverage on the maintained Node versions and the affected regression suites.
+Renderer and Viewer changes also run the real browser gate and generated-output
+checks. Filesystem, process, dependency, build, and workflow changes retain the
+full regression and relevant Windows/package gates. New or modified test files
+are executed; test helpers and fixtures take the conservative full path.
+Repository prose and website-only changes use their own checks.
+
+Unknown paths, an empty comparison, and an unavailable development-push base
+select full coverage. An invalid PR comparison fails classification. Required
+job names remain present, and a failed classification cannot turn into successful
+skips. Main pushes and manual CI runs use complete coverage; releases explicitly
+run `test:full`. New pushes cancel obsolete CI runs for the same PR.
 
 ## Product and compatibility contracts
 
@@ -62,6 +81,7 @@ The renderer package is in `archify/`; repository tests and their dependencies l
 ```sh
 npm ci
 npm --prefix archify ci
+npm test
 npm run test:focus -- test/geometry.test.mjs
 ```
 
@@ -82,28 +102,21 @@ npm run test:focus -- test/cli.test.mjs '--test-name-pattern=cli: validate'
 Nested tests follow Node's filtering rules: include their parent test names in
 the pattern as well. Check the reported pass/skip counts for the intended cases.
 
-`npm test` still runs all generated-output checks, golden comparisons, and every
-discovered test suite. CI runs that complete suite once on canonical Node 22.
-The Node 18, 20, and 24 checks run `npm run test:compat`: all golden comparisons
-across the ten diagram types, followed by the maintained whole suites for CLI,
-schema compatibility, processes, paths, atomic output, preview, update, and
-diagnostics. The compatibility inventory is in
-`scripts/compat-test-inventory.mjs`; it also retains the complete package-gate
-suite for filesystem failures and noncanonical archive-toolchain rejection.
-Repository content, generator, and installation regressions remain in the
-complete Node 22 run. This preserves every regression in its owning gate while
-testing the maintained Node runtimes; it does not repeat every regression on
-every Node major. Tags retain the complete Node 22 suite, and both workflows
-retain their real Windows path, browser, WebM, and package gates.
+| Command | What it establishes |
+| --- | --- |
+| `npm test` / `npm run test:core` | Ten diagram types run through the public CLI, frozen v1 inputs remain usable, delivery receipts bind the actual files, and failed delivery preserves the previous artifact. No browser or perceptual acceptance is implied. |
+| `npm run test:focus -- test/<name>.test.mjs` | Only the selected behavior or regression. |
+| `npm run test:generated` | Viewer, brand marks, validators, release identity, and checked-in examples match their authoritative sources. Freshness does not establish visual quality. |
+| `npm run test:full` | Generated checks followed by every discovered Node test file, including the detailed process, filesystem, installation, and failure matrices. |
 
-Use `npm run test:compat -- --list` to inspect the compatibility suites without
-running them; a normal compatibility run also runs the golden harness first.
-Exact file and test-name selections are supported through the shared runner,
-but a selected pass covers only that selection plus the golden harness.
-`test:focus` remains the development command that omits the golden pass.
+The Node 18, 20, and 24 compatibility lanes run the same core product smoke via
+`test:compat`. Detailed fault-injection matrices run on canonical Node 22 when
+their responsibility is affected and in complete verification. The separate
+browser, WebM, Windows, and package gates retain their distinct claims. Do not
+repeat an unchanged complete run locally just because CI is also running it.
 
 The test runners accept `--concurrency=N` to tune the number of simultaneous
-test files on Node 18.19+, for example `npm test -- --concurrency=4`. Headless
+test files on Node 18.19+, for example `npm run test:focus -- test/geometry.test.mjs --concurrency=4`. Headless
 repository and compatibility runs default to the available CPU count, capped
 at 4. Setting `ARCHIFY_CHROME` or running `test:browser` keeps the default at 2.
 Older Node versions that lack this concurrency option retain Node's default.
@@ -131,8 +144,8 @@ ARCHIFY_CHROME="/path/to/chrome" npm run test:browser
 ```
 
 This command requires a usable Chrome/Chromium and fails when none is available.
-Its maintained file list is in `scripts/run-browser-tests.mjs`; add new browser
-suites there so both workflows keep the same coverage. Ordinary `npm test`
+Its maintained file list is in `scripts/browser-test-inventory.mjs`; add new browser
+suites there so both workflows keep the same coverage. `npm run test:full`
 retains optional browser skips. Real WebM decoding and site-language integration
 remain in the separate `npm run test:webm` gate used by both workflows.
 
@@ -146,7 +159,7 @@ combined with explicit files or test-name filtering; every maintained file runs
 in exactly one shard, and every executing shard still requires Chrome.
 
 Only set `ARCHIFY_CHROME` for the browser run when you also plan to run the full
-browser gate: many browser suites are included in `npm test` and would otherwise
+browser gate: many browser suites are included in `test:full` and would otherwise
 execute again. The canonical regression suite, Node compatibility matrix, and
 required browser gate establish their respective coverage. Reuse the applicable
 final-head CI results instead of repeating an unchanged full suite locally.
@@ -155,7 +168,8 @@ final-head CI results instead of repeating an unchanged full suite locally.
 
 Viewer maintenance starts in [`viewer/`](viewer/README.md). Edit its source
 files, then run `npm run generate:viewer` from `archify/`; the delivered template
-is generated and its freshness is checked by `npm test`.
+is generated and its freshness is checked by `npm run test:generated` (also part
+of `test:full`).
 
 Published artifacts must be reproducible from tracked content. Use a tracked-only, symlink-safe staging path or explicit allowlist, with negative coverage for untracked files and external symlinks. Test the extracted package outside the repository on the affected advertised hosts.
 
@@ -183,7 +197,7 @@ Use this single checklist in the release PR or its linked release record. Link e
 
 1. [ ] **Scope and revision.** Record the intended version/channel, release scope, final source SHA, comparison base, release notes, known issues, and required integration follow-ups. Follow the `dev` trial-use → `main` promotion process below. Pin evidence to its tested SHA; refresh the record when the candidate changes.
 2. [ ] **Identity and build.** Verify package/Skill identity and generated outputs using the candidate revision's existing checks. Use the canonical Node/zlib toolchain above for `scripts/build-zip.sh`; confirm the committed `archify.zip` matches the clean tracked-source build. Do not change versions or regenerate unrelated artifacts in ordinary feature PRs. Preserve the previous stable manifest until the new stable Release exists.
-3. [ ] **Final-head validation.** Account for the latest target base and verify required CI at the final candidate: identity and ZIP gates, schema/renderer tests, installation parser and real Skills CLI discovery, package smoke on Linux/macOS/Windows, browser/WebM checks, and affected website checks. Record run URLs, SHA, real-use evidence, and any skipped or unavailable checks; an earlier green head or zero checks is not final acceptance. Use commands from that revision's manifests/workflows: current `dev` installs root and renderer dependencies and runs `npm test`, `npm run test:browser`, and `npm run test:webm` at the repository root (see [Local setup](#local-setup-and-verification)); older `main`/release revisions may run these from `archify/`. Website commands run in `website/`. Do not transplant a command or its working directory across revisions without checking.
+3. [ ] **Final-head validation.** Account for the latest target base and verify required CI at the final candidate: identity and ZIP gates, schema/renderer tests, installation parser and real Skills CLI discovery, package smoke on Linux/macOS/Windows, browser/WebM checks, and affected website checks. Record run URLs, SHA, real-use evidence, and any skipped or unavailable checks; an earlier green head or zero checks is not final acceptance. Use commands from that revision's manifests/workflows: current `dev` installs root and renderer dependencies and runs `npm run test:full`, `npm run test:browser`, and `npm run test:webm` at the repository root (see [Local setup](#local-setup-and-verification)); older `main`/release revisions may run these from `archify/`. Website commands run in `website/`. Do not transplant a command or its working directory across revisions without checking.
 4. [ ] **Authorized publication.** Confirm authorization for the exact release version/channel and source SHA before pushing a release tag. Stable `v<version>` tags must be annotated and resolve to the verified commit; the workflow checks tag/package identity and the release channel. Verify the resulting GitHub Release and its `archify.zip` asset, digest, and expected stable/prerelease status. Do not overwrite existing versions, tags, or assets to repair a release. Installing or updating a user's live installation requires its own authorization.
 5. [ ] **Manifest, website, and integrations.** After the stable Release exists, publish `docs/skill-updates/archify/stable.json` in a follow-up commit through the normal branch process. Retain the `published-update-manifest` result that compares the actual Release ZIP, tagged archive, digest, and tagged Skill tree; wait for the gated `main` Pages deployment. Development/prerelease tags do not advance the stable notifier. Complete the [DSH synchronization checklist](#release-checklist-dsh-synchronization) or record an explicit deferral. Evaluate other integrations by their actual distribution mechanism: [Hermes](integrations/hermes-agent/README.md#install-shows-up-in-available-skills) installs the main Skill identifier; do not invent a separate Hermes release simply because Archify changed. Record any documentation/compatibility update or indexing lag that needs follow-up.
 6. [ ] **Public acceptance and closure.** Check the public download and advertised installation/discovery paths against the released artifact in an isolated environment, without changing live user installations. Verify the public stable manifest, Pages version, installation instructions, and community catalog source/evidence/compatibility links describe what users can actually obtain; distinguish published, pending, and explicitly deferred integration versions. Record the final release/tag/SHA, asset digest, CI and deployment receipts, public acceptance result, and every remaining owner/follow-up. Only describe each channel as complete after its own verification.

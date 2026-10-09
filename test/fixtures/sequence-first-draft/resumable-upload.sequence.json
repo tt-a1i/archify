@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Resumable file upload",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "resumable-upload.html"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client",
+      "sublabel": "web uploader"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Upload API",
+      "sublabel": "tus server"
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Object store",
+      "sublabel": "S3 multipart"
+    },
+    {
+      "id": "scan",
+      "type": "backend",
+      "label": "Virus scan",
+      "sublabel": "ClamAV"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Metadata DB",
+      "sublabel": "Postgres"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "client",
+      "to": "api",
+      "y": 160,
+      "label": "POST /uploads (size, name)"
+    },
+    {
+      "id": "m2",
+      "from": "api",
+      "to": "s3",
+      "y": 192,
+      "label": "CreateMultipartUpload"
+    },
+    {
+      "id": "m3",
+      "from": "s3",
+      "to": "api",
+      "y": 224,
+      "label": "uploadId",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "api",
+      "to": "client",
+      "y": 256,
+      "label": "201 Location",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "client",
+      "to": "api",
+      "y": 300,
+      "label": "PATCH chunk 1..n"
+    },
+    {
+      "id": "m6",
+      "from": "api",
+      "to": "s3",
+      "y": 328,
+      "label": "UploadPart",
+      "variant": "dashed"
+    },
+    {
+      "id": "m7",
+      "from": "client",
+      "to": "api",
+      "y": 356,
+      "label": "HEAD (resume offset)"
+    },
+    {
+      "id": "m8",
+      "from": "api",
+      "to": "s3",
+      "y": 392,
+      "label": "CompleteMultipartUpload"
+    },
+    {
+      "id": "m9",
+      "from": "api",
+      "to": "scan",
+      "y": 420,
+      "label": "scan object",
+      "variant": "dashed"
+    },
+    {
+      "id": "m10",
+      "from": "scan",
+      "to": "api",
+      "y": 448,
+      "label": "clean",
+      "variant": "return"
+    },
+    {
+      "id": "m11",
+      "from": "api",
+      "to": "db",
+      "y": 476,
+      "label": "insert file row"
+    },
+    {
+      "id": "m12",
+      "from": "api",
+      "to": "client",
+      "y": 504,
+      "label": "204 done",
+      "variant": "return"
+    }
+  ],
+  "segments": [
+    {
+      "from": 140,
+      "to": 280,
+      "label": "Create"
+    },
+    {
+      "from": 286,
+      "to": 370,
+      "label": "Transfer + resume"
+    },
+    {
+      "from": 376,
+      "to": 530,
+      "label": "Finalize"
+    }
+  ]
+}

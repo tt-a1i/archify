@@ -357,7 +357,7 @@ test('readable-v2 separates approval branches in the checked-in workflow example
     // columns now keep a 32px route corridor, which widens the canvas by 12px,
     // and tags keep their 7px preferred size.
     sha256(result.svg.replace(/ data-(?:composition-routing|edge-role|layout-contract)="[^"]*"/g, '')),
-    '9254f1c5304ea0a2ba0db9399952988a6af8c768930fd47b7d8ba5935499a073',
+    '09ece2904db9a525bd5990f896ab6f335b48cd7617beb6a47868874a17e94774',
   );
 });
 
@@ -998,10 +998,10 @@ test('capacity-only viewBox failures preserve historical routes, labels, and req
   const referenceDocument = clone(document);
   referenceDocument.meta.viewBox = [1600, 1000];
   const intrinsic = compileSuccessfully(referenceDocument, 'showcase');
-  assert.deepEqual(intrinsic.receipt.requiredViewBox, [1034, 404]);
+  assert.deepEqual(intrinsic.receipt.requiredViewBox, [768, 404]);
 
   const insufficientDocument = clone(document);
-  insufficientDocument.meta.viewBox = [900, 1000];
+  insufficientDocument.meta.viewBox = [700, 1000];
   const insufficient = compileWorkflow({
     workflow: insufficientDocument,
     qualityProfile: 'showcase',
@@ -1011,7 +1011,7 @@ test('capacity-only viewBox failures preserve historical routes, labels, and req
   assert.equal(insufficient.diagnostics.length, 1, JSON.stringify(insufficient.diagnostics, null, 2));
   const [capacity] = insufficient.diagnostics;
   assert.equal(capacity.code, 'workflow/viewbox-capacity');
-  assert.deepEqual(capacity.evidence.actualViewBox, [900, 1000]);
+  assert.deepEqual(capacity.evidence.actualViewBox, [700, 1000]);
   assert.deepEqual(capacity.evidence.requiredViewBox, intrinsic.receipt.requiredViewBox);
 
   const sufficientDocument = clone(document);

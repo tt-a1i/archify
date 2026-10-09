@@ -342,11 +342,21 @@ function edgePoints(parent, child) {
   if (down) {
     const end = [child.x + child.width / 2, child.y];
     const midY = bandStart[child.depth] - depthGap / 2;
-    return Math.abs(start[0] - end[0]) < 0.5 ? [start, end] : [start, [start[0], midY], [end[0], midY], end];
+    // Rounded parent/child centres can differ by ~1px and draw a useless
+    // elbow. Snap near-aligned stems to a shared x so they stay straight.
+    if (Math.abs(start[0] - end[0]) < 2) {
+      const x = Math.round((start[0] + end[0]) / 2);
+      return [[x, start[1]], [x, end[1]]];
+    }
+    return [start, [start[0], midY], [end[0], midY], end];
   }
   const end = [child.x, child.y + child.height / 2];
   const midX = bandStart[child.depth] - depthGap / 2;
-  return Math.abs(start[1] - end[1]) < 0.5 ? [start, end] : [start, [midX, start[1]], [midX, end[1]], end];
+  if (Math.abs(start[1] - end[1]) < 2) {
+    const y = Math.round((start[1] + end[1]) / 2);
+    return [[start[0], y], [end[0], y]];
+  }
+  return [start, [midX, start[1]], [midX, end[1]], end];
 }
 
 const edges = all.filter((node) => node.parent !== undefined).map((node, index) => ({

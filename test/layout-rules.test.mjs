@@ -439,7 +439,9 @@ test('workflow: same-lane nodes the solver separated by its exact minimum keep p
 
 test('architecture: ordinary boundaries may express orthogonal overlapping memberships', () => {
   const d = load('architecture');
-  d.boundaries[1].wraps.push('auth');
+  // users sits outside the region and cdn inside it, so the frames overlap
+  // without either one drawing a component it does not wrap.
+  d.boundaries[1].wraps = ['users', 'cdn'];
   const { code, stderr, outPath } = render('architecture', d);
   assert.equal(code, 0, stderr);
   const html = fs.readFileSync(outPath, 'utf8');

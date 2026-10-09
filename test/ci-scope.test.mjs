@@ -1,134 +1,172 @@
-import { test } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyPaths } from '../scripts/ci-scope.mjs';
-
-test('community documentation takes the fast path', () => {
-  assert.equal(classifyPaths(['README.md', 'README_EN.md', 'README_ZH.md', 'docs/assets/community/qq.svg', 'docs/assets/community/wechat-qr.png']), 'docs');
-});
-
-test('unknown, mixed, and behavior-bearing changes retain full CI', () => {
-  for (const path of ['archify/SKILL.md', 'archify/assets/template.html', 'test/readme-showcase.test.mjs', '.github/workflows/ci.yml', 'scripts/ci-scope.mjs', 'docs/guide.html', 'docs/assets/community/script.js', 'README-other.md']) {
-    assert.equal(classifyPaths(['README.md', path]), 'full', path);
-  }
-  assert.equal(classifyPaths([]), 'full');
-  // --no-renames reports the old runtime path as well as the new documentation path.
-  assert.equal(classifyPaths(['archify/bin/archify.mjs', 'docs/assets/community/example.svg']), 'full');
-});
-
-// Exercise Git and output handling, not just the path allowlist.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-const script = fileURLToPath(new URL('../scripts/ci-scope.mjs', import.meta.url));
+import { parse } from 'yaml';
+import { classifyPaths, comparisonPlan } from '../scripts/ci-scope.mjs';
+import { selectAffectedTests } from '../scripts/run-affected-tests.mjs';
 
-test('scope CLI handles documentation, renames, main pushes, and invalid bases', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ci-scope-'));
-  try {
-    const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
-    git('init', '-q');
-    git('config', 'user.name', 'CI Test');
-    git('config', 'user.email', 'ci@example.invalid');
-    fs.writeFileSync(path.join(root, 'README.md'), 'before');
-    fs.writeFileSync(path.join(root, 'runtime.js'), 'runtime');
-    git('add', '.'); git('commit', '-qm', 'base');
-    const base = git('rev-parse', 'HEAD');
-    fs.writeFileSync(path.join(root, 'README.md'), 'after');
-    git('add', '.'); git('commit', '-qm', 'docs');
-    const output = path.join(root, 'output');
-    const run = (event, sha = base) => {
-      fs.writeFileSync(output, '');
-      const result = spawnSync(process.execPath, [script], { cwd: root, env: { ...process.env, CI_EVENT_NAME: event, CI_BASE_SHA: sha, GITHUB_OUTPUT: output } });
-      return { status: result.status, output: fs.readFileSync(output, 'utf8') };
-    };
-    assert.deepEqual(run('pull_request'), { status: 0, output: 'scope=docs\nwebsite=false\n' });
-    assert.deepEqual(run('push'), { status: 0, output: 'scope=full\nwebsite=true\n' });
-    assert.notEqual(run('pull_request', 'bad').status, 0);
-    assert.deepEqual(run('pull_request', 'f'.repeat(40)), { status: 1, output: '' });
-    git('mv', 'runtime.js', 'README_EN.md');
-    git('commit', '-qm', 'rename runtime into docs');
-    assert.deepEqual(run('pull_request'), { status: 0, output: 'scope=full\nwebsite=false\n' });
-    fs.mkdirSync(path.join(root, 'website'));
-    fs.writeFileSync(path.join(root, 'website', 'astro.config.mjs'), 'export default {};');
-    git('add', 'website'); git('commit', '-qm', 'website change');
-    assert.deepEqual(run('pull_request'), { status: 0, output: 'scope=full\nwebsite=true\n' });
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
+const workflow = parse(fs.readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8'));
+
+test('owned changes add their real gates without requiring every unrelated lane', () => {
+  assert.equal(classifyPaths(['README.md', 'docs/assets/community/qq.svg']).scope, 'docs');
+  const render = classifyPaths(['archify/renderers/workflow/render-workflow.mjs']);
+  assert.equal(render.scope, 'core');
+  assert.deepEqual(render.owners, ['workflow']);
+  assert.ok(render.generated && render.browser && render.package);
+  assert.equal(render.windows, false);
+  assert.equal(classifyPaths(['archify/renderers/workflow/render-workflow.mjs', 'archify.zip']).scope, 'core');
+  assert.equal(classifyPaths(['archify.zip']).scope, 'full');
+  const newBrowser = classifyPaths(['test/new-browser.test.mjs']);
+  assert.equal(newBrowser.browser, true);
+  assert.ok(newBrowser.changedTests.includes('test/browser-gate.test.mjs'));
+  const mixed = classifyPaths(['package-lock.json', 'test/new-browser.test.mjs']);
+  assert.equal(mixed.scope, 'full');
+  assert.ok(mixed.changedTests.includes('test/browser-gate.test.mjs'));
+  const viewer = classifyPaths(['viewer/toolbar.mjs', 'archify.zip']);
+  assert.ok(viewer.browser && viewer.webm);
+  const website = classifyPaths(['website/src/pages/index.astro']);
+  assert.ok(website.website);
+  assert.equal(website.browser, false);
+  assert.equal(website.package, false);
+  assert.ok(classifyPaths(['docs/skill-updates/archify/stable.json']).manifest);
+});
+
+test('recipe, schema and shared renderer owners include their real source consumers', () => {
+  const available = ['test/guide.test.mjs', 'test/guide-page.test.mjs', 'test/gallery.test.mjs', 'test/start-page.test.mjs', 'test/engineering-profile.test.mjs', 'test/legend-contract.test.mjs', 'test/generate-validators.test.mjs'];
+  const recipe = classifyPaths(['archify/recipes/scenarios.mjs']);
+  assert.equal(recipe.scope, 'core');
+  assert.equal(recipe.website, true);
+  assert.deepEqual(selectAffectedTests(recipe.owners, [], available), available.slice(0, 4).sort());
+  const shared = classifyPaths(['archify/renderers/shared/engineering-profiles.mjs', 'archify/renderers/shared/legend.mjs']);
+  const selected = selectAffectedTests(shared.owners, [], available);
+  assert.ok(selected.includes('test/engineering-profile.test.mjs'));
+  assert.ok(selected.includes('test/legend-contract.test.mjs'));
+  const schema = classifyPaths(['archify/schemas/workflow.schema.json']);
+  assert.equal(schema.scope, 'core');
+  assert.ok(selectAffectedTests(schema.owners, [], available).includes('test/generate-validators.test.mjs'));
+});
+
+test('Architecture grid changes retain explicit placement regression coverage', () => {
+  const available = ['test/grid.test.mjs', 'test/architecture-first-draft.test.mjs', 'test/cli.test.mjs'];
+  const plan = classifyPaths(['archify/renderers/architecture/grid.mjs']);
+  assert.equal(plan.scope, 'core');
+  assert.ok(plan.generated && plan.browser && plan.package);
+  const selected = selectAffectedTests(plan.owners, [], available);
+  assert.ok(selected.includes('test/grid.test.mjs'));
+  assert.ok(!selected.includes('test/cli.test.mjs'));
+});
+
+test('the grid shared by ERD and Class retains both modes and their compatibility checks', () => {
+  const available = ['test/erd-rendering.test.mjs', 'test/class-rendering.test.mjs', 'test/tree-rendering.test.mjs'];
+  const plan = classifyPaths(['archify/renderers/erd/grid.mjs']);
+  assert.equal(plan.scope, 'core');
+  assert.ok(plan.owners.includes('erd') && plan.owners.includes('class'));
+  assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, 2).sort());
+});
+
+test('the router shared by Architecture, ERD and Class retains all three callers', () => {
+  const available = ['test/architecture-first-draft.test.mjs', 'test/erd-rendering.test.mjs',
+    'test/class-rendering.test.mjs', 'test/tree-rendering.test.mjs'];
+  const plan = classifyPaths(['archify/renderers/architecture/routing.mjs']);
+  assert.equal(plan.scope, 'core');
+  assert.ok(plan.generated && plan.browser && plan.package);
+  assert.ok(['architecture', 'erd', 'class'].every(owner => plan.owners.includes(owner)));
+  assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice(0, 3).sort());
+});
+
+test('renderer changes retain cross-mode public regressions even without changing those tests', () => {
+  const regressions = ['test/automatic-port-spread.test.mjs', 'test/edge-label-color.test.mjs',
+    'test/label-clearance.test.mjs', 'test/vertical-edge.test.mjs', 'test/node-icons.test.mjs'];
+  const available = [...regressions, 'test/cli.test.mjs'];
+  for (const source of ['archify/renderers/dataflow/render-dataflow.mjs',
+    'archify/renderers/sequence/render-sequence.mjs', 'archify/renderers/shared/geometry.mjs']) {
+    const plan = classifyPaths([source]);
+    assert.equal(plan.scope, 'core');
+    assert.deepEqual(selectAffectedTests(plan.owners, [], available), regressions.slice().sort(), source);
   }
 });
 
-test('scope workflow fetches only the exact base for a shallow PR merge checkout', () => {
-  const workflow = fs.readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
-  const scopeJob = workflow.split('\n  test:')[0];
-  assert.match(scopeJob, /fetch-depth: 1/);
-  assert.doesNotMatch(scopeJob, /fetch-depth: 0/);
-  const fetchStep = scopeJob.match(/      - name: Fetch PR comparison base\n([\s\S]*?)      - uses:/)?.[1];
-  assert.ok(fetchStep, 'scope job must fetch the PR base before classification');
-  assert.match(fetchStep, /if: github.event_name == 'pull_request'/);
-  const fetchScript = fetchStep.split('        run: |\n')[1].split('\n')
-    .filter(line => line.trim()).map(line => line.slice(10)).join('\n');
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-ci-scope-shallow-'));
-  try {
-    const origin = path.join(root, 'origin');
-    const checkout = path.join(root, 'checkout');
-    fs.mkdirSync(origin);
-    const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-    git(origin, 'init', '-q');
-    git(origin, 'config', 'user.name', 'CI Test');
-    git(origin, 'config', 'user.email', 'ci@example.invalid');
-    fs.writeFileSync(path.join(origin, 'README.md'), 'before');
-    fs.writeFileSync(path.join(origin, 'runtime.js'), 'before');
-    fs.mkdirSync(path.join(origin, 'website'));
-    fs.writeFileSync(path.join(origin, 'website', 'config.js'), 'before');
-    git(origin, 'add', '.'); git(origin, 'commit', '-qm', 'common ancestor');
-    git(origin, 'branch', 'pr');
-    // The PR is behind the base: merge checkout incorporates base-only changes.
-    fs.writeFileSync(path.join(origin, 'runtime.js'), 'base change');
-    fs.writeFileSync(path.join(origin, 'website', 'config.js'), 'base change');
-    git(origin, 'add', '.'); git(origin, 'commit', '-qm', 'base advance');
-    const base = git(origin, 'rev-parse', 'HEAD');
-    git(origin, 'tag', 'unrelated-tag');
-    git(origin, 'checkout', '-q', 'pr');
-    fs.writeFileSync(path.join(origin, 'README.md'), 'PR docs change');
-    git(origin, 'add', '.'); git(origin, 'commit', '-qm', 'PR docs');
-    git(origin, 'merge', '--no-ff', '-qm', 'PR merge checkout', base);
-    git(root, 'clone', '-q', '--no-tags', '--depth=1', '--branch=pr', pathToFileURL(origin).href, checkout);
-    assert.equal(git(checkout, 'rev-parse', '--is-shallow-repository'), 'true');
-    assert.notEqual(spawnSync('git', ['cat-file', '-e', base], { cwd: checkout }).status, 0);
-    const output = path.join(root, 'output');
-    const run = (cwd, event = 'pull_request', sha = base, fetchBase = true) => {
-      fs.writeFileSync(output, '');
-      const env = { ...process.env, CI_EVENT_NAME: event, CI_BASE_SHA: sha, GITHUB_OUTPUT: output };
-      const fetch = event === 'pull_request' && fetchBase ? spawnSync('bash', ['-e', '-c', fetchScript], { cwd, env }) : { status: 0 };
-      const result = fetch.status === 0 ? spawnSync(process.execPath, [script], { cwd, env }) : fetch;
-      return { status: result.status, output: fs.readFileSync(output, 'utf8') };
-    };
-    assert.deepEqual(run(checkout), { status: 0, output: 'scope=docs\nwebsite=false\n' });
-    assert.deepEqual(run(checkout), run(origin, 'pull_request', base, false), 'shallow and full history must classify the same merge tree');
-    assert.equal(git(checkout, 'rev-parse', '--is-shallow-repository'), 'true');
-    assert.equal(git(checkout, 'branch', '-r'), 'origin/pr', 'fetch must not collect other branches');
-    assert.equal(git(checkout, 'tag'), '', 'fetch must not collect tags');
-    for (const sha of ['bad', 'f'.repeat(40)]) {
-      const result = run(checkout, 'pull_request', sha);
-      assert.notEqual(result.status, 0);
-      assert.equal(result.output, '', 'failed base fetch must not emit a successful classification');
-    }
-    assert.deepEqual(run(checkout, 'push', 'bad'), { status: 0, output: 'scope=full\nwebsite=true\n' });
-    git(checkout, 'config', 'user.name', 'CI Test');
-    git(checkout, 'config', 'user.email', 'ci@example.invalid');
-    fs.mkdirSync(path.join(checkout, 'docs', 'assets', 'community'), { recursive: true });
-    fs.writeFileSync(path.join(checkout, 'docs', 'assets', 'community', 'image.svg'), '<svg/>');
-    git(checkout, 'add', '.'); git(checkout, 'commit', '-qm', 'community image');
-    assert.deepEqual(run(checkout), { status: 0, output: 'scope=docs\nwebsite=true\n' });
-    fs.writeFileSync(path.join(checkout, 'website', 'config.js'), 'PR website change');
-    git(checkout, 'add', '.'); git(checkout, 'commit', '-qm', 'website');
-    assert.deepEqual(run(checkout), { status: 0, output: 'scope=full\nwebsite=true\n' });
-    git(checkout, 'remote', 'set-url', 'origin', pathToFileURL(path.join(root, 'unavailable')).href);
-    const unavailable = run(checkout);
-    assert.notEqual(unavailable.status, 0);
-    assert.equal(unavailable.output, '', 'unavailable remote must fail even with a cached base');
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
+test('checked artifacts retain XML integrity and compare artifact regression coverage', () => {
+  const available = ['test/generated-artifact-xml.test.mjs', 'test/architecture-delta.test.mjs'];
+  for (const name of ['examples/checkout-platform-delta.html', 'docs/guide.html', 'archify/examples/rendered.html', 'docs/assets/example.svg']) {
+    const plan = classifyPaths([name]);
+    assert.equal(plan.scope, 'core');
+    assert.ok(selectAffectedTests(plan.owners, [], available).includes('test/generated-artifact-xml.test.mjs'), name);
   }
+  const delta = classifyPaths(['examples/checkout-platform-delta.html']);
+  assert.ok(selectAffectedTests(delta.owners, [], available).includes('test/architecture-delta.test.mjs'));
+});
+
+test('generated site outputs retain proof and handoff consumer checks', () => {
+  const available = ['test/gallery.test.mjs', 'test/guide-page.test.mjs', 'test/start-page.test.mjs', 'test/generated-artifact-xml.test.mjs'];
+  for (const name of ['docs/gallery/manifest.json', 'docs/gallery.html', 'docs/guide.html', 'docs/start.html']) {
+    const plan = classifyPaths([name]);
+    assert.equal(plan.scope, 'core');
+    assert.equal(plan.website, true);
+    assert.deepEqual(selectAffectedTests(plan.owners, [], available), available.slice().sort(), name);
+  }
+  assert.ok(!classifyPaths(['docs/assets/ordinary.png']).owners.includes('site'));
+});
+
+test('unknown and delivery/build/fixture changes conservatively require every gate', () => {
+  for (const paths of [[], ['unknown.txt'], ['scripts/ci-scope.mjs'], ['package-lock.json'], ['.github/workflows/ci.yml'], ['archify/bin/archify.mjs'], ['archify/renderers/shared/atomic-output.mjs'], ['test/fixtures/input.json'], ['test/helpers.mjs']]) {
+    const plan = classifyPaths(paths);
+    assert.equal(plan.scope, 'full', `${paths}`);
+    for (const gate of ['generated', 'browser', 'webm', 'package', 'windows', 'manifest', 'website']) assert.equal(plan[gate], true, `${paths}: ${gate}`);
+  }
+});
+
+test('new changed tests run, deleted tests do not, and invalid selectors fail', () => {
+  const changed = ['test/new-behavior.test.mjs', 'test/deleted.test.mjs'];
+  const plan = classifyPaths(changed);
+  assert.equal(plan.scope, 'core');
+  const available = ['test/new-behavior.test.mjs', 'test/workflow-compiler.test.mjs', 'test/update-notifier.test.mjs'];
+  assert.deepEqual(selectAffectedTests([], plan.changedTests, available), ['test/new-behavior.test.mjs']);
+  assert.deepEqual(selectAffectedTests(['workflow'], changed, available), ['test/new-behavior.test.mjs', 'test/workflow-compiler.test.mjs']);
+  assert.throws(() => selectAffectedTests(['unknown'], [], available));
+  assert.throws(() => selectAffectedTests([], ['../outside.test.mjs'], available));
+});
+
+test('main/manual are exhaustive; invalid dev base falls back to full but PR base fails', () => {
+  const fail = () => { throw new Error('base not found'); };
+  assert.equal(comparisonPlan({ event: 'workflow_dispatch' }).scope, 'full');
+  assert.equal(comparisonPlan({ event: 'push', ref: 'refs/heads/main' }).scope, 'full');
+  assert.equal(comparisonPlan({ event: 'push', ref: 'refs/heads/dev', base: '0'.repeat(40) }).scope, 'full');
+  assert.equal(comparisonPlan({ event: 'push', ref: 'refs/heads/dev', base: 'a'.repeat(40) }, fail).scope, 'full');
+  assert.throws(() => comparisonPlan({ event: 'pull_request', base: 'bad' }));
+  assert.throws(() => comparisonPlan({ event: 'pull_request', base: 'a'.repeat(40) }, fail));
+});
+
+test('real Git comparison retains rename source ownership and detects added tests', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-scope-'));
+  try {
+    const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+    git(['init', '-q']); git(['config', 'user.name', 'Test']); git(['config', 'user.email', 'test@example.invalid']);
+    fs.writeFileSync(path.join(root, 'runtime.js'), 'runtime');
+    git(['add', '.']); git(['commit', '-qm', 'base']);
+    const base = git(['rev-parse', 'HEAD']).trim();
+    git(['mv', 'runtime.js', 'README.md']); git(['commit', '-qm', 'rename']);
+    assert.equal(comparisonPlan({ event: 'pull_request', base }, git).scope, 'full');
+    const renamed = git(['rev-parse', 'HEAD']).trim();
+    fs.mkdirSync(path.join(root, 'test')); fs.writeFileSync(path.join(root, 'test/new.test.mjs'), '// new');
+    git(['add', '.']); git(['commit', '-qm', 'new test']);
+    assert.deepEqual(comparisonPlan({ event: 'push', ref: 'refs/heads/dev', base: renamed }, git).changedTests, ['test/new.test.mjs']);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('required jobs fail when classification fails or returns an unknown scope', () => {
+  for (const name of ['test', 'browser-regression', 'webm-decode', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability']) {
+    const step = workflow.jobs[name].steps.find(step => step.name === 'Require successful scope checks');
+    assert.ok(step, name);
+    for (const [result, scope, status] of [['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
+      const run = spawnSync('bash', ['-e', '-c', step.run], { env: { ...process.env, SCOPE_RESULT: result, CI_SCOPE: scope } });
+      assert.equal(run.status, status, `${name}: ${result}/${scope}`);
+    }
+  }
+  const fetch = workflow.jobs.scope.steps.find(step => step.name === 'Fetch PR comparison base');
+  assert.ok(fetch.run.includes('--depth=1') && fetch.run.includes('--no-tags'));
+  assert.equal(fetch.if, "github.event_name == 'pull_request'");
 });

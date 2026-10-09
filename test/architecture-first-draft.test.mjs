@@ -92,6 +92,7 @@ function assertOnlyLabelDefects(receipt) {
   for (const issue of receipt.diagnostics) {
     assert.ok(issue.code === 'composition/label-gap'
       || issue.code === 'composition/label-route-clearance'
+      || issue.code === 'layout/boundary-encloses-non-member'
       || /^Label ".*" overlaps component /.test(issue.message), JSON.stringify(issue));
   }
 }
@@ -160,4 +161,36 @@ test('workflow: every overlapping node pair of a first draft is reported in one 
   const pairs = overlaps.map((entry) => entry.evidence.nodes.map((node) => node.id).join('>'));
   assert.ok(pairs.includes('test_join>staging_deploy'));
   assert.ok(pairs.includes('metric_gate>rollback_stable'));
+});
+
+// The same study's queue draft placed the tenant auth component, which only the
+// integration boundary wraps, inside the gateway-process frame as well. The
+// picture claimed a membership the source never stated.
+test('architecture: a component inside a boundary frame it is not wrapped by is reported', () => {
+  const { status, receipt } = validate('architecture', path.join(fixtures, 'queue-sol.architecture.json'));
+  assert.equal(status, 1);
+  const issue = receipt.diagnostics.find((entry) => entry.code === 'layout/boundary-encloses-non-member');
+  assert.ok(issue, JSON.stringify(receipt.diagnostics, null, 2));
+  assert.equal(issue.subject.component, 'auth');
+  assert.equal(issue.subject.boundary.label, 'Queue gateway process');
+  const example = validate('architecture', path.join(skillRoot, 'examples', 'production-deployment.architecture.json'));
+  assert.equal(example.status, 0, JSON.stringify(example.receipt?.diagnostics));
+});
+
+test('architecture: non-member enclosure keeps standard compatibility and rejects misleading showcase membership', (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-boundary-profile-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const candidate = JSON.parse(fs.readFileSync(path.join(fixtures, 'queue-sol.architecture.json'), 'utf8'));
+  // Isolate ownership from the source fixture's unrelated label-gap defects.
+  for (const connection of candidate.connections) delete connection.label;
+  const input = path.join(tmp, 'boundary.json');
+  for (const quality of ['standard', 'showcase']) {
+    candidate.meta.quality_profile = quality;
+    fs.writeFileSync(input, JSON.stringify(candidate));
+    const result = spawnSync(process.execPath, [cli, 'validate', 'architecture', input, '--quality', quality, '--json'], { encoding: 'utf8' });
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(result.status, quality === 'standard' ? 0 : 1, result.stdout + result.stderr);
+    const enclosure = receipt.diagnostics?.filter(issue => issue.code === 'layout/boundary-encloses-non-member') || [];
+    assert.equal(enclosure.length, quality === 'standard' ? 0 : 1);
+  }
 });

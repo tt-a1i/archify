@@ -113,19 +113,20 @@ text cannot fit inside the declared entity width.
 ## Domain bands
 
 `tag` names a table's functional domain, and a domain is drawn as a band when the
-tables carrying that tag fill a solid block of grid cells — every cell of their
-bounding box holds one of them. A single row, a single column, and a block are
-all that same claim, and a one-table domain is that claim at its smallest. The
+tables carrying that tag fill a solid rectangle of grid cells — every cell of
+their bounding box holds one of them. A single row, a single column, and a filled
+rectangular block are all that same claim (an L or diagonal is not); a one-table
+domain is that claim at its smallest. The
 band is measured from the placed boxes and carries the tag as its caption, which
 is what makes a grouped schema readable at a glance: the reader sees blocks
 instead of six equally weighted boxes.
 
-A tag whose members do not fill one block earns no band, because a band around
-them would enclose cells the domain does not own and claim a grouping the
+A tag whose members do not fill one rectangle earns no band, because a band
+around them would enclose cells the domain does not own and claim a grouping the
 placement contradicts. The band is the only place a domain name is drawn, so the
 renderer returns `erd/domain-not-drawn` rather than publishing a diagram whose
 tables are complete and whose domain cannot be named. Move the members into one
-block, split the tag, or drop it. The same diagnostic covers the other ways the
+rectangle, split the tag, or drop it. The same diagnostic covers the other ways the
 name can go missing: a member placed outside the grid, because a band is measured
 from cells and absolute coordinates have none; two members in one cell, which the
 grid placement check reports instead so the author gets the pair that has to move;

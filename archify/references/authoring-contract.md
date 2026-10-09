@@ -283,15 +283,16 @@ After every edit, rerun the complete `finalize` as the delivery contract require
 
 Choose overview or mechanism detail using [Composition and meaning](authoring-defaults.md#composition-and-meaning). Use one obvious primary reading path, which may step across meaningful rows when the requested topology needs room. Keep the overview readable at its chosen abstraction; expand implementation details when they answer the reader's question. Group only real ownership, trust, process, or deployment boundaries. Boundaries do not replace relationships.
 
-Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true.
+Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
 
 ### Workflow
 
 Lanes express responsibility or phase. Columns `0..5` express logical
-progression. Start new workflows on `readable-v2`; retain `fixed-v1` only for
-legacy geometry compatibility. Keep the happy path monotonic, preserve semantic
-edge labels, and route retries and exception returns outside the main lane
-corridor.
+progression. Each `(lane, col)` hosts at most one node — two nodes in the same
+cell fail with `workflow/node-overlap`. Start new workflows on `readable-v2`;
+retain `fixed-v1` only for legacy geometry compatibility. Keep the happy path
+monotonic, preserve semantic edge labels, and route retries and exception
+returns outside the main lane corridor.
 
 #### Workflow viewport repair
 
@@ -316,16 +317,20 @@ not settle viewport fit. These are repair directions, not guaranteed coordinates
 
 ### Sequence
 
-Participants are ordered by conversation role. Messages own their vertical order. Use return/async/security variants for meaning, not decoration; sequence does not use Automatic Port Spread.
+Participants are ordered by conversation role. Messages own their vertical order. Use return/async/security variants for meaning, not decoration; sequence does not use Automatic Port Spread. A segment's `from`/`to` edges must stay at least 4px off every message arrow (`message.y`): an edge along an arrow leaves the reader unable to tell which phase the message belongs to, and showcase quality reports `sequence/segment-message-border-run`. Standard retains its existing acceptance behavior.
+
+First-draft shape: every message needs an `id`, `from`, `to`, `label`, and integer `y` at least 160. `from` and `to` must be different participants — self-messages are unsupported (`sequence/self-message-unsupported`). Optional phase bands are `segments[]` with only `from`, `to`, and `label` (no segment `id`). Inventing `pos`/`size` on participants fails schema validation — order alone places them. Omit `meta.viewBox` so automatic height fits the timeline + legend (minimum 327px readable band) instead of a fixed 760px floor, and so 2–3 participant spreads pack below the 920px default when labels fit (4+ stay at 920px; long labels still widen).
 
 ### Dataflow
 
 Stages express transformation or custody. Rows separate parallel streams. Label only data contracts, classifications, or cross-boundary movement that is not obvious.
 
+First-draft shape: declare `stages[]` (each a `{label}`), then place every node with integer `stage` and `row` — not `pos`/`size`. Flows are `flows[]` with `from`, `to`, and optional `label`.
+
 Omit `meta.viewBox` to fit canvas width to all stages and nodes in either quality
-profile, including explicit node widths. The 940px minimum and 24px right padding
-remain; left-edge overflow still needs a node repair. An authored viewBox stays
-fixed. Showcase node growth, readable typography, content height, port bridges
+profile, including explicit node widths. Width uses content + 24px right padding
+with a 480px minimum (five default stages still need ~1068); left-edge overflow
+still needs a node repair. An authored viewBox stays fixed. Showcase node growth, readable typography, content height, port bridges
 and bounded label placement apply only when the canvas and all node widths are
 omitted. `--quality` overrides `meta.quality_profile`; without it, the renderer
 uses `ARCHIFY_QUALITY_PROFILE` when set, otherwise the JSON profile.
@@ -345,15 +350,17 @@ replace a field list.
 
 Before placing boxes, classify tables into functional domains using verified table
 names, comments, module paths, and foreign-key meaning. Put the domain name in
-`tag` and give each domain one solid block of grid cells: a single row, a single
-column, or a full block, with every cell of the block holding one of its tables.
+`tag` and give each domain one solid rectangle of grid cells: a single row, a
+single column, or a filled rectangular block — not an L or a diagonal — with
+every cell of the rectangle holding one of its tables.
 All tables with the same tag stay together; do not interleave unrelated tables
-between members. A domain that fills one such block is drawn as a labelled band
-behind its tables, so the
+between members. A domain that fills one such rectangle is drawn as a labelled
+band behind its tables, so the
 grouping is visible without reading every box;
-a tag whose tables do not fill one block earns no band, and because the band is
-the only place a domain name is drawn the renderer reports `erd/domain-not-drawn`
-rather than publishing a diagram that cannot name the domain. Absolute
+a tag whose tables do not fill one rectangle earns no band, and because the band
+is the only place a domain name is drawn the renderer reports
+`erd/domain-not-drawn` rather than publishing a diagram that cannot name the
+domain. Absolute
 coordinates have no grid cells at all, so a tagged table always needs `row`/`col`.
 Order parent/core tables
 toward the shared boundary and
@@ -361,7 +368,10 @@ place their direct children beside or beneath them. Columns read left to right a
 rows read top to bottom, so a relationship between neighbouring columns is one
 straight corridor. Never place an unrelated entity between two aligned anchors;
 the router can detour around it, but the clear corridor is shorter and reads
-better. Use `row`/`col` for this normal grouped layout, and only use explicit
+better. A junction table has two parents: put it in a cell beside or between
+both, not beneath one of them with tables stacked between it and the other,
+and keep every table that shares its domain tag in one solid rectangle of cells. A relationship must connect two different entities; a self-reference such as manager_id stays as a foreign-key column (and optionally a card), not an `employees`→`employees` edge.
+Use `row`/`col` for this normal grouped layout, and only use explicit
 `pos`/`via` after a diagnostic identifies a concrete geometry problem.
 
 State every key role a column carries in `key`, and the real references in
@@ -442,6 +452,11 @@ with a single triangle. Members never truncate: a type grows to its widest
 member up to `layout.typeMaxW` and longer members wrap at parameter boundaries.
 See [`../renderers/class/README.md`](../renderers/class/README.md).
 
+First-draft shape: types use `row`/`col` (not `pos`/`size`), fields go in
+`attributes[]`, operations in `methods[]` with `parameters` as one string such as
+`"msg: Message"` (not an array of objects). Enum members are attributes with only
+`name`. Relationships need an `id`, `from`, `to`, and `kind`.
+
 ### Timeline
 
 A timeline answers "when did what happen, and how far apart?". Every event
@@ -454,8 +469,9 @@ invented or approximate times as observed, and never fill gaps with events the
 input does not contain.
 
 Use `lanes` for sources or categories (release, monitoring, response); every
-event then names one. `kind` (`change`, `alert`, `action`, `recovery`) only
-colours the card. Events are drawn in time order whatever the authored order;
+event then names one. Each event's visible text is `title` (not `label`). `kind`
+(`default`, `change`, `alert`, `action`, `recovery`) only
+colours the card; inventing values such as `milestone` fails schema validation. Events are drawn in time order whatever the authored order;
 simultaneous and close events stack. By default a quiet period longer than 8×
 the median gap and 10% of the span is drawn as a fixed-width break labelled
 with the omitted duration; `layout.breaks: "none"` keeps one proportional axis.

@@ -55,7 +55,8 @@ not create edge facts.
 
 The legend sits below all timeline content: the last message and its note,
 activation bars, and segment frames, with a 12px gap. Without `meta.viewBox`
-the canvas grows to keep that gap. With an authored `viewBox` that is too short,
+the canvas height fits that content (no fixed 760px floor) and grows when late
+messages need more room. With an authored `viewBox` that is too short,
 `showcase` fails with the exact height to set, and `standard` hides the implicit
 legend rather than drawing it over content. Lifelines stop above the legend.
 Message labels use their line's color; gray default and return lines keep the
@@ -65,7 +66,7 @@ muted text color.
 
 | Constant | Value |
 |----------|-------|
-| viewBox | default `[920, 760]`, taller when late content needs legend room; schema minimum `[480, 480]` |
+| viewBox | automatic height fits content + legend (minimum 327px readable band); taller when late content needs more room; automatic width packs to 560–800px for 2–3 short-label participants (4+ default 920; long labels still widen). Schema minimum `[480, 480]` |
 | Participant boxes | `spread` (default): viewBox-relative width from 86px up to 190px; `fixed`: 86px wide; both 60px tall at y 72 |
 | Participant columns | `fixed`: centers at x = 62 + index×108; `spread`: columns distribute across the available viewBox width with at least a 16px card gutter |
 | Participant count | the last box must end at or before width − 40; layouts that cannot fit fail closed |
@@ -118,7 +119,7 @@ for the bounded authoring repair and explicit-fixed preservation rules.
 - Use `security` for auth, consent, permission, and policy calls.
 - Use `return` for quiet response messages.
 - Use `dashed` for async trace, event, logging, and non-blocking work.
-- Use segments as light background guides; keep segment labels short.
+- Use segments as light background guides; keep segment labels short and keep each frame edge at least 4px off every message arrow.
 - Keep labels concise, but try `meta.column_fit: "spread"` before shortening a
   meaningful participant label just to fit the fixed boxes.
 

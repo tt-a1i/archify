@@ -40,6 +40,7 @@ import {
   suggestLabelObstacleFix,
 } from '../shared/geometry.mjs';
 import { createRouter } from '../architecture/routing.mjs';
+import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { connectionPath as relationshipPath } from '../shared/layout-report.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -436,6 +437,15 @@ const busPaths = new Map();
 const router = createRouter(types, routable.filter((relationship) => !busPaths.has(relationship)), {
   sideFor,
   maxPortSpacing: PORT_SPACING,
+  // As for the ERD: re-plan a route against the complete scene when it crosses
+  // or bends needlessly, and look for a detour that crosses nothing before the
+  // obstacle search that may cross earlier routes. The showcase gate rejects
+  // any proper crossing, so the shorter crossing route only buys a repair.
+  preferReadableRoutes: true,
+  crossingFreeGridFirst: true,
+  // A detour keeps a readable gap from every type it only passes instead of
+  // running along its border at the grid's 2-unit clearance.
+  componentGapPx: 10,
 });
 function pathFor(relationship) {
   const points = busPaths.get(relationship);
@@ -460,7 +470,11 @@ function relationshipLabelWidth(relationship) {
 // A label sits on the segment with the most room unless the author picks one:
 // above a horizontal run, beside a vertical one, so it never covers its own
 // line or lands on the box the relationship leaves.
+const resolvedLabelPoints = new Map();
 function relationshipLabelPoint(relationship) {
+  return resolvedLabelPoints.get(relationship) ?? defaultRelationshipLabelPoint(relationship);
+}
+function defaultRelationshipLabelPoint(relationship) {
   if (relationship.labelAt) return relationship.labelAt;
   const points = pathFor(relationship).points;
   const width = relationshipLabelWidth(relationship);
@@ -482,6 +496,52 @@ function relationshipLabelBox(relationship) {
   const [lx, ly] = relationshipLabelPoint(relationship);
   const width = relationshipLabelWidth(relationship);
   return { x: lx - width / 2, y: ly - 10, width, height: 14 };
+}
+
+// The default point picks the roomiest segment but knows nothing about other
+// routes, markers, or types near it. A colliding unpinned label goes through the
+// shared bounded placer (architecture, dataflow, and erd use it too), with
+// every end marker reserved, so it moves beside its own route instead of
+// failing the gate; a clear default is kept as it is.
+const MARKER_REACH = 20;
+// Half the tallest marker plus the 2-unit overlap the placer tolerates.
+const MARKER_HALF = 10;
+function markerBox([x, y], side) {
+  if (side === 'left') return { x: x - MARKER_REACH, y: y - MARKER_HALF, width: MARKER_REACH, height: MARKER_HALF * 2 };
+  if (side === 'right') return { x, y: y - MARKER_HALF, width: MARKER_REACH, height: MARKER_HALF * 2 };
+  if (side === 'top') return { x: x - MARKER_HALF, y: y - MARKER_REACH, width: MARKER_HALF * 2, height: MARKER_REACH };
+  return { x: x - MARKER_HALF, y, width: MARKER_HALF * 2, height: MARKER_REACH };
+}
+{
+  const labels = routable.filter((relationship) => relationship.label).map((relationship) => {
+    const [lx, ly] = defaultRelationshipLabelPoint(relationship);
+    return { relation: relationship, relationIndex: relationships.indexOf(relationship), label: relationship.label,
+      ...relationshipLabelBox(relationship), lx, ly };
+  });
+  if (labels.length) {
+    const markers = routable.flatMap((relationship) => {
+      const { points } = pathFor(relationship);
+      return [
+        markerBox(points[0], connectionEndpointSide(relationship, 'source')),
+        markerBox(points.at(-1), connectionEndpointSide(relationship, 'target')),
+      ];
+    });
+    const footprint = legendEntries.length
+      ? layout.legendH + legendFootprint(legendEntries, { width: Math.max(1, viewBox[0] - layout.margin * 2) }).extraHeight
+      : 0;
+    const placed = placeAutomaticLabels({
+      labels,
+      routes: routable.map((relationship) => ({ relationIndex: relationships.indexOf(relationship), points: pathFor(relationship).points })),
+      components: [...types.values(), ...markers],
+      titles: [],
+      viewBox,
+      placementBottom: viewBox[1] - footprint,
+      keepFallbackNearRoute: true,
+    });
+    placed.forEach((rect, index) => {
+      if (rect !== labels[index]) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
+    });
+  }
 }
 
 // ---- Validation ----------------------------------------------------------------

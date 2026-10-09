@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Warehouse inventory schema",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "warehouse.html"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "entities": [
+    {
+      "id": "suppliers",
+      "label": "suppliers",
+      "tag": "purchasing",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "country",
+          "type": "char(2)"
+        }
+      ]
+    },
+    {
+      "id": "purchase_orders",
+      "label": "purchase_orders",
+      "tag": "purchasing",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "suppliers.id"
+        },
+        {
+          "name": "warehouse_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "warehouses.id"
+        },
+        {
+          "name": "ordered_at",
+          "type": "date"
+        },
+        {
+          "name": "status",
+          "type": "varchar(16)"
+        }
+      ]
+    },
+    {
+      "id": "po_lines",
+      "label": "po_lines",
+      "tag": "purchasing",
+      "row": 2,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "purchase_orders.id"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "products.id"
+        },
+        {
+          "name": "qty",
+          "type": "int"
+        },
+        {
+          "name": "unit_cost",
+          "type": "numeric(10,2)"
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "label": "products",
+      "tag": "stock",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "sku",
+          "type": "varchar(32)",
+          "key": "uk"
+        },
+        {
+          "name": "name",
+          "type": "varchar(160)"
+        },
+        {
+          "name": "uom",
+          "type": "varchar(8)"
+        }
+      ]
+    },
+    {
+      "id": "stock_levels",
+      "label": "stock_levels",
+      "tag": "stock",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "warehouse_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "warehouses.id"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "products.id"
+        },
+        {
+          "name": "on_hand",
+          "type": "int"
+        },
+        {
+          "name": "reserved",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "id": "warehouses",
+      "label": "warehouses",
+      "tag": "sites",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "code",
+          "type": "varchar(8)",
+          "key": "uk"
+        },
+        {
+          "name": "city",
+          "type": "varchar(80)"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "purchase_orders_suppliers",
+      "from": "purchase_orders",
+      "to": "suppliers",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "from supplier"
+    },
+    {
+      "id": "purchase_orders_warehouses",
+      "from": "purchase_orders",
+      "to": "warehouses",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "deliver to"
+    },
+    {
+      "id": "po_lines_purchase_orders",
+      "from": "po_lines",
+      "to": "purchase_orders",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "line of",
+      "identifying": true
+    },
+    {
+      "id": "po_lines_products",
+      "from": "po_lines",
+      "to": "products",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "orders",
+      "identifying": true
+    },
+    {
+      "id": "stock_levels_products",
+      "from": "stock_levels",
+      "to": "products",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "stock of",
+      "identifying": true
+    },
+    {
+      "id": "stock_levels_warehouses",
+      "from": "stock_levels",
+      "to": "warehouses",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "held at",
+      "identifying": true
+    }
+  ]
+}

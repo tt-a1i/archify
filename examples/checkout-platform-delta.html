@@ -14487,11 +14487,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             document.documentElement.scrollHeight,
             document.body.scrollHeight
           ) - window.innerHeight - belowFold();
-          if (overflow &gt; 1 &amp;&amp; !widthFirstReading &amp;&amp; lastWidth &gt; Math.ceil(minWidth)) {
+          // visual-check fails any page whose rounded-up height exceeds the
+          // viewport, so even a 1px remainder must be reduced or declared.
+          if (overflow &gt; 0 &amp;&amp; !widthFirstReading &amp;&amp; lastWidth &gt; Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;reduced&#39;);
-          } else if (overflow &gt; 1) {
+          } else if (overflow &gt; 0) {
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;authored&#39;);
           } else {
             html.removeAttribute(&#39;data-reader-overflow&#39;);
@@ -28817,11 +28819,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             document.documentElement.scrollHeight,
             document.body.scrollHeight
           ) - window.innerHeight - belowFold();
-          if (overflow &gt; 1 &amp;&amp; !widthFirstReading &amp;&amp; lastWidth &gt; Math.ceil(minWidth)) {
+          // visual-check fails any page whose rounded-up height exceeds the
+          // viewport, so even a 1px remainder must be reduced or declared.
+          if (overflow &gt; 0 &amp;&amp; !widthFirstReading &amp;&amp; lastWidth &gt; Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;reduced&#39;);
-          } else if (overflow &gt; 1) {
+          } else if (overflow &gt; 0) {
             html.setAttribute(&#39;data-reader-overflow&#39;, &#39;authored&#39;);
           } else {
             html.removeAttribute(&#39;data-reader-overflow&#39;);

@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, dev]
   pull_request:
+  workflow_dispatch:
 
 # Cancel obsolete PR runs, but never interrupt main verification/deployment.
 concurrency:
@@ -16,6 +17,14 @@ jobs:
     outputs:
       scope: ${{ steps.classify.outputs.scope }}
       website: ${{ steps.classify.outputs.website }}
+      generated: ${{ steps.classify.outputs.generated }}
+      browser: ${{ steps.classify.outputs.browser }}
+      webm: ${{ steps.classify.outputs.webm }}
+      package: ${{ steps.classify.outputs.package }}
+      windows: ${{ steps.classify.outputs.windows }}
+      manifest: ${{ steps.classify.outputs.manifest }}
+      owners: ${{ steps.classify.outputs.owners }}
+      changedTests: ${{ steps.classify.outputs.changedTests }}
     steps:
       # Classification compares two trees, not their shared history.
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -29,6 +38,15 @@ jobs:
         run: |
           [[ "$CI_BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
           git fetch --no-tags --depth=1 origin "$CI_BASE_SHA"
+      - name: Fetch dev push comparison base when available
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        shell: bash
+        env:
+          CI_BASE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$CI_BASE_SHA" =~ ^[0-9a-f]{40}$ ]] && [[ ! "$CI_BASE_SHA" =~ ^0+$ ]]; then
+            git fetch --no-tags --depth=1 origin "$CI_BASE_SHA" || echo 'Comparison base unavailable; classification requires full CI.'
+          fi
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
@@ -37,7 +55,8 @@ jobs:
         run: node scripts/ci-scope.mjs
         env:
           CI_EVENT_NAME: ${{ github.event_name }}
-          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_REF: ${{ github.ref }}
       - name: Check README content for documentation-only changes
         if: steps.classify.outputs.scope == 'docs'
         run: node --test test/readme-showcase.test.mjs
@@ -58,11 +77,11 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.scope != 'docs'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.scope != 'docs'
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -70,14 +89,26 @@ jobs:
             package-lock.json
             archify/package-lock.json
       - name: Install renderer dependencies
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.scope != 'docs'
         run: npm ci && npm --prefix archify ci
       - name: Complete regression suite on canonical Node
         if: needs.scope.outputs.scope == 'full' && matrix.node-version == 22
+        run: npm run test:full
+      - name: Core public CLI contracts
+        if: needs.scope.outputs.scope == 'core' && matrix.node-version == 22
         run: npm test
       - name: Supported Node runtime compatibility
-        if: needs.scope.outputs.scope == 'full' && matrix.node-version != 22
+        if: needs.scope.outputs.scope != 'docs' && matrix.node-version != 22
         run: npm run test:compat
+      - name: Generated outputs and representative goldens
+        if: needs.scope.outputs.scope != 'full' && needs.scope.outputs.generated == 'true' && matrix.node-version == 22
+        run: npm run test:generated
+      - name: Changed tests and owned regression suites
+        if: needs.scope.outputs.scope == 'core' && matrix.node-version == 22
+        run: npm run test:affected
+        env:
+          CI_TEST_OWNERS: ${{ needs.scope.outputs.owners }}
+          CI_CHANGED_TESTS: ${{ needs.scope.outputs.changedTests }}
       - name: Verify community Hermes adapter
         if: needs.scope.outputs.scope == 'full' && matrix.node-version == 22
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
@@ -98,25 +129,25 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.browser == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.browser == 'true'
         with:
           node-version: 22
       - name: Provision a known Chrome runtime
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.browser == 'true'
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
           chrome-version: stable
           install-dependencies: true
       - name: Install browser test dependencies
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.browser == 'true'
         run: npm ci --ignore-scripts --no-audit --no-fund && npm --prefix archify ci --ignore-scripts
       - name: Run shared browser regression gate
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.browser == 'true'
         run: npm run test:browser -- --shard=${{ matrix.shard }}/2
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
@@ -135,25 +166,25 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         with:
           node-version: 22
       - name: Provision a known Chrome runtime
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
         with:
           chrome-version: stable
           install-dependencies: true
       - name: Install the WebM decoder
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
       - name: Decode a real motion export and reject static frames
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.webm == 'true'
         run: npm run test:webm
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
@@ -172,7 +203,7 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
           test "$BROWSER_RESULT" = success
           test "$WEBM_RESULT" = success
 
@@ -189,15 +220,15 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         with:
           node-version: 22
       - name: Rebuild archify.zip and compare exact bytes
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         run: |
           scripts/build-zip.sh /tmp/fresh.zip
           if ! cmp -s /tmp/fresh.zip archify.zip; then
@@ -218,15 +249,15 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.manifest == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.manifest == 'true'
         with:
           node-version: 22
       - name: Public notifier manifest must reference an existing stable Release
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.manifest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -292,15 +323,15 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         with:
           node-version: 22
       - name: Extract packaged skill
-        if: needs.scope.outputs.scope == 'full' && (runner.os != 'Windows')
+        if: needs.scope.outputs.package == 'true' && (runner.os != 'Windows')
         run: |
           set -euo pipefail
           package_root="$RUNNER_TEMP/archify-package"
@@ -308,26 +339,26 @@ jobs:
           mkdir -p "$package_root"
           unzip -q archify.zip -d "$package_root"
       - name: Extract packaged skill
-        if: needs.scope.outputs.scope == 'full' && (runner.os == 'Windows')
+        if: needs.scope.outputs.package == 'true' && (runner.os == 'Windows')
         shell: pwsh
         run: |
           $packageRoot = Join-Path $env:RUNNER_TEMP 'archify-package'
           if (Test-Path $packageRoot) { Remove-Item -Recurse -Force $packageRoot }
           Expand-Archive -Path archify.zip -DestinationPath $packageRoot
       - name: Validate packaged skill without installing dependencies
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.package == 'true'
         run: node scripts/package-smoke.mjs
       - name: Install delivery-lock test dependencies
-        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
+        if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
         run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
       - name: Verify delivery-lock ownership with real subprocesses
-        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
+        if: needs.scope.outputs.windows == 'true' && runner.os != 'Linux'
         run: >-
           node --test
           --test-name-pattern="cli: portable delivery lock:"
           test/cli.test.mjs
       - name: Verify macOS opener stays behind delivery-lock release
-        if: needs.scope.outputs.scope == 'full' && runner.os == 'macOS'
+        if: needs.scope.outputs.windows == 'true' && runner.os == 'macOS'
         run: >-
           node --test
           --test-name-pattern="cli: lock release failure does not invoke the requested opener"
@@ -407,28 +438,28 @@ jobs:
         shell: bash
         run: |
           test "$SCOPE_RESULT" = success
-          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install test dependencies
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
         run: npm ci --ignore-scripts && npm --prefix archify ci --ignore-scripts
       - name: Provision controlled Windows path fixtures
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
       - name: Verify maintained Windows path contracts
-        if: needs.scope.outputs.scope == 'full'
+        if: needs.scope.outputs.windows == 'true'
         run: node scripts/run-windows-path-tests.mjs
         env:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
           ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
       - name: Clean up controlled Windows path fixtures
-        if: ${{ always() && needs.scope.outputs.scope == 'full' }}
+        if: ${{ always() && needs.scope.outputs.windows == 'true' }}
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
 

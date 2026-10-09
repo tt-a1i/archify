@@ -339,13 +339,21 @@ test('readable-v2 may expand an unlabeled edge around already placed labels', ()
   const route = first.receipt.edges.find(({ id }) => id === 'e04')?.points;
   assert.ok(route);
   assertOrthogonal(route);
-  assert.ok(Math.max(...route.map(([x]) => x)) > 764, JSON.stringify(route));
+  // Straight-first reservation may push the unlabeled edge left (return-left)
+  // or right (outside-right); either escape clears the labeled fan-out region.
+  assert.ok(
+    Math.max(...route.map(([x]) => x)) > 764
+      || Math.min(...route.map(([x]) => x)) < 40,
+    JSON.stringify(route),
+  );
 
+  // An authored canvas at least as large as the intrinsic requirement still
+  // compiles; the exact width may grow when straight-first reorders fan-out.
   const boundedDocument = clone(document);
-  boundedDocument.meta.viewBox = [1378, 692];
+  boundedDocument.meta.viewBox = [...first.receipt.requiredViewBox];
   const bounded = compileWorkflow({ workflow: boundedDocument, qualityProfile: 'standard' });
   assert.equal(bounded.ok, true, JSON.stringify(bounded.diagnostics, null, 2));
-  assert.deepEqual(bounded.receipt.viewBox, [1378, 692]);
+  assert.deepEqual(bounded.receipt.viewBox, first.receipt.requiredViewBox);
 });
 
 test('readable-v2 feeds a measured outside-channel constraint back into layout', () => {

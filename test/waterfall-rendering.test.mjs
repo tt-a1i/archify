@@ -99,3 +99,20 @@ test('waterfall: invalid timing and parent cycles are refused', () => {
   assert.match(failure((d) => { d.spans[1].parent = 'missing'; }), /waterfall\/missing-parent/);
   assert.match(failure((d) => { d.spans[0].parent = 'auth'; }), /waterfall\/cycle/);
 });
+
+test('waterfall: services past the five colours share a legend entry instead of a duplicated colour', () => {
+  const services = ['gateway', 'auth', 'cart', 'pricing', 'tax', 'inventory', 'postgres'];
+  const diagram = clone(small);
+  diagram.spans = [
+    { id: 'root', name: 'POST /checkout', service: services[0], start: 0, duration: 700 },
+    ...services.slice(1).map((service, index) => ({ id: `s${index}`, name: `${service} call`, service, parent: 'root', start: index * 100, duration: 80 })),
+  ];
+  const result = run(diagram);
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(result.output, 'utf8');
+  const labels = [...html.matchAll(/data-legend-semantic-kind="service:[^"]*"[\s\S]*?<text[^>]*>([^<]+)<\/text>/g)].map((match) => match[1]);
+  assert.equal(labels.length, 5, labels.join(' | '));
+  assert.ok(labels.includes('gateway · inventory'), labels.join(' | '));
+  assert.ok(labels.includes('auth · postgres'), labels.join(' | '));
+  assert.ok(labels.includes('cart'), labels.join(' | '));
+});

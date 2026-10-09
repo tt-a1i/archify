@@ -51,6 +51,7 @@ import {
   variantAccent,
 } from '../shared/geometry.mjs';
 import { createRouter } from '../architecture/routing.mjs';
+import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { entityBox, connectionPath as relationshipPath } from '../shared/layout-report.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -147,7 +148,49 @@ const measuredEntities = asArray(er.entities).map((entity) => {
   };
 });
 
-const bands = grid ? bandedLayout(measuredEntities, grid) : null;
+// A relationship label is semantic data and the smallest text the diagram
+// carries: at the shared 8-unit default it projects to ~7.0px on a tall canvas,
+// under the 7.5px the canvas declares.
+const RELATIONSHIP_LABEL_FONT = 9;
+// The label's advance is measured from that size, not from a literal: the mask
+// the renderer draws, the rect the layout checks measure, and the obstacle the
+// legend measures must be the same rectangle, or a label can sit on a table edge
+// with no diagnostic (the checks would be measuring a narrower box than the ink).
+const RELATIONSHIP_LABEL_ADVANCE = 0.62;
+const relationshipLabelWidth = (label) => Math.max(30, textUnits(label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10);
+
+// A label between two neighbouring columns is drawn in the gap between them:
+// on the straight line of a same-row relationship, or across the channel of a
+// bent one. The fixed gap was narrower than an ordinary two-word label plus the
+// cardinality glyph at each table edge, so most first drafts failed with a
+// label drawn over a table. When the grid owns every coordinate (no pinned
+// position, route, channel, or label point refers to absolute geometry), each
+// such gap widens just enough for its widest label to clear both glyphs.
+const LABEL_GLYPH_CLEARANCE = 24 + 4;
+function labelColumnGaps() {
+  if (!grid || Array.isArray(er.meta?.viewBox)) return null;
+  const rawEntities = asArray(er.entities);
+  const rawRelationships = asArray(er.relationships);
+  const absolute = rawEntities.some((entity) => Array.isArray(entity.pos))
+    || rawRelationships.some((relationship) => relationship.via?.length || relationship.labelAt
+      || (relationship.route && relationship.route !== 'auto')
+      || relationship.channelX !== undefined || relationship.channelY !== undefined);
+  if (absolute) return null;
+  const byId = new Map(rawEntities.map((entity) => [entity.id, entity]));
+  const gaps = new Map();
+  for (const relationship of rawRelationships) {
+    if (!relationship.label) continue;
+    const from = byId.get(relationship.from);
+    const to = byId.get(relationship.to);
+    if (![from?.col, to?.col].every(Number.isInteger) || Math.abs(from.col - to.col) !== 1) continue;
+    const gap = Math.min(from.col, to.col);
+    const demand = Math.ceil(relationshipLabelWidth(relationship.label) + LABEL_GLYPH_CLEARANCE * 2);
+    gaps.set(gap, Math.max(gaps.get(gap) || 0, demand));
+  }
+  return gaps.size ? gaps : null;
+}
+
+const bands = grid ? bandedLayout(measuredEntities, grid, { columnGaps: labelColumnGaps() }) : null;
 
 const entities = new Map(measuredEntities.map((entity) => {
   const [x, y] = resolveEntityPos(entity, grid, bands);
@@ -169,10 +212,10 @@ const DOMAIN_PAD_X = 12;
 const DOMAIN_PAD_TOP = 18;
 const DOMAIN_PAD_BOTTOM = 8;
 
-// A domain is drawn as a band when its members fill a solid block of grid cells:
-// every cell of the bounding box holds one of them, so the band encloses no cell
-// the domain does not own. A single row or column, the common case, is that same
-// claim with one dimension of one.
+// A domain is drawn as a band when its members fill a solid rectangle of grid
+// cells: every cell of the bounding box holds one of them, so the band encloses
+// no cell the domain does not own. A single row or column, the common case, is
+// that same claim with one dimension of one; an L or diagonal is not contiguous.
 function gridRunIsContiguous(members) {
   const cols = members.map((entity) => entity.col);
   const rows = members.map((entity) => entity.row);
@@ -476,18 +519,9 @@ const viewBox = Array.isArray(er.meta?.viewBox) ? er.meta.viewBox : autoViewBox(
 // skipped and the shared candidate families run unchanged.
 const LANE_STEP = 12;
 
-// A relationship label is semantic data and the smallest text the diagram
-// carries: at the shared 8-unit default it projects to ~7.0px on a tall canvas,
-// under the 7.5px the canvas declares.
-const RELATIONSHIP_LABEL_FONT = 9;
-// The label's advance is measured from that size, not from a literal: the mask
-// the renderer draws, the rect the layout checks measure, and the obstacle the
-// legend measures must be the same rectangle, or a label can sit on a table edge
-// with no diagnostic (the checks would be measuring a narrower box than the ink).
-const RELATIONSHIP_LABEL_ADVANCE = 0.62;
 function relationshipLabelBox(relationship) {
   const [lx, ly] = erLabelPoint(relationship);
-  const width = Math.max(30, textUnits(relationship.label) * RELATIONSHIP_LABEL_FONT * RELATIONSHIP_LABEL_ADVANCE + 10);
+  const width = relationshipLabelWidth(relationship.label);
   return { x: lx - width / 2, y: ly - 10, width, height: 14 };
 }
 
@@ -524,6 +558,21 @@ const { ports, pathFor, inferredSides, connectionEndpointSide } = createRouter(e
   // A cardinality glyph is 14 units tall, so ports must clear it (see
   // ERD_PORT_SPACING, which the trunk bridge is derived from).
   maxPortSpacing: ERD_PORT_SPACING,
+  // Greedy planning routes each relationship against only the earlier ones, so
+  // a later route could cross an earlier corridor while an empty side of the
+  // table was free. Architecture's bounded readability sweep re-plans one
+  // route at a time against the complete scene and keeps a change only when it
+  // removes crossings or bends at bounded extra length.
+  preferReadableRoutes: true,
+  // A proper crossing fails the showcase gate, so a relationship that needs
+  // the obstacle search first looks for a detour that crosses nothing.
+  crossingFreeGridFirst: true,
+  // A detour keeps a readable gap from every table it only passes instead of
+  // running along its border at the grid's 2-unit clearance.
+  componentGapPx: 10,
+  // Corners are drawn with a 6-unit radius; an end segment shorter than the
+  // radius plus the 8-unit micro-segment floor fails the drawn-route gate.
+  minimumTerminalSegmentPx: 14,
 });
 
 function corridorKey(relationship) {
@@ -739,7 +788,14 @@ function relationshipTrunkRuns(relationship) {
   const assignment = trunkAssignments.get(relationship);
   if (!assignment) return [];
   if (trunkRunCache.has(relationship)) return trunkRunCache.get(relationship);
-  const { axis, coordinate } = assignment.group;
+  const { axis, coordinate, role, side } = assignment.group;
+  // The readability sweep may move a member to another table side after the
+  // groups were formed. Such a route no longer leaves through the shared side,
+  // so it is drawn whole instead of losing a coincidental stretch to the bus.
+  if (connectionEndpointSide(relationship, role === 'in' ? 'target' : 'source') !== side) {
+    trunkRunCache.set(relationship, []);
+    return [];
+  }
   const points = pathFor(relationship).points;
   const runs = [];
   for (let index = 0; index < points.length - 1; index += 1) {
@@ -841,10 +897,93 @@ function bundledTrunkPaths() {
 
 // Bundled labels default to the source-side stub so they never sit on the
 // shared trunk, where they would read as annotating every branch at once.
-function erLabelPoint(relationship) {
+function defaultErLabelPoint(relationship) {
   const points = pathFor(relationship).points;
   if (!trunkAssignments.get(relationship)) return labelPoint(relationship, points);
   return labelPoint({ ...relationship, labelSegment: relationship.labelSegment ?? 0 }, points);
+}
+
+const resolvedLabelPoints = new Map();
+function erLabelPoint(relationship) {
+  return resolvedLabelPoints.get(relationship) ?? defaultErLabelPoint(relationship);
+}
+
+// ---- Automatic label placement ----------------------------------------------
+// The default point is the midpoint of one segment, which knows nothing about
+// the tables, glyphs, or other routes around it: a vertical relationship put
+// its label on the source table's cardinality glyph, and a label in a busy gap
+// sat over a neighbouring table or channel. The shared bounded placer (the one
+// architecture and dataflow use) keeps every clear default and moves only a
+// colliding unpinned label to the nearest clear spot beside its own route.
+// Each relationship end reserves its cardinality glyph, and a bundled member's
+// shared trunk counts as another route, so a moved label never annotates the
+// bus or covers a crow's foot.
+// Half the glyph's 16-unit height plus the 2-unit overlap the shared placer
+// tolerates before it moves a label, so even a default spot keeps clear ink.
+const GLYPH_HALF_HEIGHT = 10;
+function cardinalityGlyphBox(point, side) {
+  const [x, y] = point;
+  const reach = MARKER_GLYPH_WIDTH;
+  if (side === 'left') return { x: x - reach, y: y - GLYPH_HALF_HEIGHT, width: reach, height: GLYPH_HALF_HEIGHT * 2 };
+  if (side === 'right') return { x, y: y - GLYPH_HALF_HEIGHT, width: reach, height: GLYPH_HALF_HEIGHT * 2 };
+  if (side === 'top') return { x: x - GLYPH_HALF_HEIGHT, y: y - reach, width: GLYPH_HALF_HEIGHT * 2, height: reach };
+  return { x: x - GLYPH_HALF_HEIGHT, y, width: GLYPH_HALF_HEIGHT * 2, height: reach };
+}
+
+{
+  const placeable = relationships.filter(renderableRelationship);
+  const labels = placeable.filter((relationship) => relationship.label).map((relationship) => {
+    const [lx, ly] = defaultErLabelPoint(relationship);
+    const width = relationshipLabelWidth(relationship.label);
+    return {
+      relation: relationship, relationIndex: relationships.indexOf(relationship), label: relationship.label,
+      x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly,
+    };
+  });
+  if (labels.length) {
+    const routes = [];
+    const glyphs = [];
+    placeable.forEach((relationship) => {
+      const relationIndex = relationships.indexOf(relationship);
+      const { points } = pathFor(relationship);
+      glyphs.push(cardinalityGlyphBox(points[0], connectionEndpointSide(relationship, 'source')));
+      glyphs.push(cardinalityGlyphBox(points.at(-1), connectionEndpointSide(relationship, 'target')));
+      const runs = relationshipTrunkRuns(relationship);
+      if (!runs.length) {
+        routes.push({ relationIndex, points });
+        return;
+      }
+      const inRun = new Set(runs.flatMap((run) => Array.from({ length: run.endIndex - run.startIndex }, (_, step) => run.startIndex + step)));
+      let piece = [points[0]];
+      for (let index = 0; index < points.length - 1; index += 1) {
+        if (inRun.has(index)) {
+          if (piece.length > 1) routes.push({ relationIndex, points: piece });
+          routes.push({ relationIndex: -1 - routes.length, points: [points[index], points[index + 1]] });
+          piece = [points[index + 1]];
+        } else {
+          piece.push(points[index + 1]);
+        }
+      }
+      if (piece.length > 1) routes.push({ relationIndex, points: piece });
+    });
+    const titles = domainGroups.map(({ tag, members }) => {
+      const caption = domainBandCaption(domainBandBox(members));
+      return { x: caption.x - 2, y: caption.y - 10, width: textUnits(tag) * 9 * 0.65 + 4, height: 13 };
+    });
+    const footprint = legendFootprint(erLegendEntries, { width: Math.max(1, viewBox[0] - layout.margin * 2) });
+    const placed = placeAutomaticLabels({
+      labels,
+      routes,
+      components: [...entities.values(), ...glyphs],
+      titles,
+      viewBox,
+      placementBottom: viewBox[1] - layout.legendH - footprint.extraHeight,
+      keepFallbackNearRoute: true,
+    });
+    placed.forEach((rect, index) => {
+      if (rect !== labels[index]) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
+    });
+  }
 }
 
 function channelFallback({ conn, start, end, fromSide, toSide }) {
@@ -905,6 +1044,7 @@ function validateEr() {
     relationship.from === relationship.to ? null : relationship));
   const headerDetails = [];
   const domainDetails = [];
+  const attributeDetails = [];
   for (const entity of entities.values()) {
     const header = entityHeader(entity);
     if (!header.problem) continue;
@@ -927,7 +1067,7 @@ function validateEr() {
     const offGrid = domain.offGrid.map((id) => `"${id}"`).join(', ');
     const message = domain.reason === 'no-grid'
       ? `Domain "${domain.tag}" is named but cannot be drawn: ${offGrid} have no grid cells, and a band is measured from them. Give every member row/col cells, or drop the tag.`
-      : `Domain "${domain.tag}" is named but cannot be drawn: ${listed} do not fill a solid block of grid cells, and a band around them would enclose cells the domain does not own. Move them into one block, or split the tag.`;
+      : `Domain "${domain.tag}" is named but cannot be drawn: ${listed} do not fill a solid rectangle of grid cells (a row, a column, or a filled block — not an L or diagonal), and a band around them would enclose cells the domain does not own. Move them into one block, or split the tag.`;
     problems.push(message);
     domainDetails.push({
       code: 'erd/domain-not-drawn', severity: 'error', message,
@@ -935,7 +1075,7 @@ function validateEr() {
       evidence: { domain: domain.tag, entities: members, reason: domain.reason, offGrid: domain.offGrid },
       supportedFixes: domain.reason === 'no-grid'
         ? ['Give every domain member row/col cells.', 'Drop the tag to group nothing.']
-        : ['Give the domain members one solid block of grid cells.', 'Split the tag so each domain can be drawn as a band.', 'Drop the tag to group nothing.'],
+        : ['Give the domain members one solid rectangle of grid cells (a row, a column, or a filled block — not an L).', 'Split the tag so each domain can be drawn as a band.', 'Drop the tag to group nothing.'],
     });
   }
   // The band draws the domain name, so a band the canvas cannot show would put
@@ -976,7 +1116,7 @@ function validateEr() {
   }
   validateErGridPlacement(er, grid, bands, problems);
   const seenEntityIds = new Set();
-  for (const entity of asArray(er.entities)) {
+  for (const [entityIndex, entity] of asArray(er.entities).entries()) {
     if (seenEntityIds.has(entity.id)) problems.push(`Entity ids must be unique; "${entity.id}" is declared twice.`);
     seenEntityIds.add(entity.id);
 
@@ -996,9 +1136,21 @@ function validateEr() {
       const available = entityWidth(entity) - layout.padX * 2 - keyColumnWidth(entity);
       const needed = nameUnits * layout.rowFont + (typeUnits ? typeUnits * layout.typeFont + 8 : 0);
       if (needed > available) {
-        problems.push(
-          `Entity "${entity.id}" attribute ${attributeIndex} "${attribute.name}" needs ${Math.ceil(needed)}px of text but only ${Math.floor(available)}px is available — widen the entity, shorten the attribute name, or drop the type.`,
-        );
+        const requiredEntityWidth = Math.ceil(needed + layout.padX * 2 + keyColumnWidth(entity));
+        const fix = `For this attribute row's text capacity, set entities[${entityIndex}].width to at least ${requiredEntityWidth}px, preserving the attribute name, type and key roles.`;
+        const message = `Entity "${entity.id}" attribute ${attributeIndex} "${attribute.name}" needs ${Math.ceil(needed)}px of text but only ${Math.floor(available)}px is available — ${fix}`;
+        problems.push(message);
+        attributeDetails.push({
+          code: 'erd/attribute-text-capacity', severity: 'error', message,
+          subject: { diagramType: 'erd', entityId: entity.id, attributeIndex, attributeName: attribute.name },
+          evidence: {
+            entityWidth: entityWidth(entity), requiredEntityWidth,
+            availableTextWidth: available, requiredTextWidth: needed,
+            paddingWidth: layout.padX * 2, keyColumnWidth: keyColumnWidth(entity),
+            nameFontSize: layout.rowFont, typeFontSize: layout.typeFont,
+          },
+          supportedFixes: [fix],
+        });
       }
     }
   }
@@ -1110,7 +1262,7 @@ function validateEr() {
     diagramType: 'erd',
     relationCollection: 'relationships',
     profile: er.meta?.quality_profile,
-    routeHint: 'move the entities so unrelated relationships use separate corridors',
+    routeHint: 'move the entities so unrelated relationships use separate corridors — put a junction beside both parents inside one solid domain rectangle',
   }));
   problems.push(...cleanAmbiguousCorridorProblems({
     relations: routableRelationships,
@@ -1164,7 +1316,7 @@ function validateEr() {
     throwDiagnosticProblems('Entity-relationship layout validation failed', problems, {
       code: 'layout/constraint',
       subject: { diagramType: 'erd' },
-      diagnostics: [...headerDetails, ...domainDetails, ...portSpacingDetails],
+      diagnostics: [...headerDetails, ...domainDetails, ...portSpacingDetails, ...attributeDetails],
     });
   }
 }
@@ -1178,7 +1330,7 @@ function buildLayoutReport() {
     relationships: relationships
       .filter(renderableRelationship)
       .map((relationship) => ({
-        ...relationshipPath(relationship, pathFor(relationship), relationship.labelAt),
+        ...relationshipPath(relationship, pathFor(relationship), relationship.labelAt || resolvedLabelPoints.get(relationship)),
         fromCardinality: cardinalityOf(relationship, 'from'),
         toCardinality: cardinalityOf(relationship, 'to'),
       })),

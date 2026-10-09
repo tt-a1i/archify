@@ -189,7 +189,42 @@ test('Focus preserves semantic selection, relationships, reachability and shared
       assert.equal(r.copied,!['false','throw'].includes(mode));assert.equal(r.hash,'#focus=cdn&reach=downstream');assert.match(r.query,/keep=yes/);assert.equal(r.remaining,0);assert.equal(r.label,r.copied?'Copied':'Copy failed');records.push({scenario:'copy-'+mode,...r});
       await run(`focusWait(()=>document.getElementById('btn-focus-copy').textContent===viewerText('viewer.passport.copy'))`);
     }
-    await load();await run(`Archify.focus.inspectRelationshipById('edge-d');Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:value=>{window.copiedFocusUrl=value;return Promise.resolve();}}})`);assert.equal(await run('Archify.focus.copyLink()'),true);assert.equal(await run('new URL(copiedFocusUrl).hash'),'#relation=edge-d');await run('Archify.focus.clear()');await run('new Promise(resolve=>setTimeout(resolve,1650))');assert.equal(await run(`document.getElementById('btn-focus-copy').textContent`),await run(`viewerText('viewer.passport.copy')`));assert.equal(await run('Archify.focus.copyLink()'),false);
+    await load();
+    const clearedFeedback = await run(`(async () => {
+      Archify.focus.inspectRelationshipById('edge-d');
+      let copiedUrl;
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+        writeText: value => { copiedUrl = value; return Promise.resolve(); }
+      } });
+      // Capture only this copy call's delayed feedback. Replay production's
+      // callback after clear rather than prescribing its delay or navigating
+      // away before a stale callback can run.
+      const schedule = window.setTimeout, callbacks = [];
+      let copied, copiedLabel;
+      window.setTimeout = (callback, delay, ...args) => {
+        callbacks.push(() => callback(...args));
+        return callbacks.length;
+      };
+      try {
+        copied = await Archify.focus.copyLink();
+        copiedLabel = document.getElementById('btn-focus-copy').textContent;
+      } finally { window.setTimeout = schedule; }
+      Archify.focus.clear();
+      for (const callback of callbacks) callback();
+      const button = document.getElementById('btn-focus-copy');
+      return { copied, hash: new URL(copiedUrl).hash, copiedLabel,
+        callbackCount: callbacks.length, label: button.textContent,
+        aria: button.getAttribute('aria-label'), canCopy: await Archify.focus.copyLink(),
+        defaultLabel: viewerText('viewer.passport.copy'), defaultAria: viewerText('viewer.passport.copy.focus') };
+    })()`);
+    assert.equal(clearedFeedback.copied, true);
+    assert.equal(clearedFeedback.hash, '#relation=edge-d');
+    assert.equal(clearedFeedback.copiedLabel, 'Copied');
+    assert.ok(clearedFeedback.callbackCount > 0, 'copy feedback must actually execute after clear');
+    assert.equal(clearedFeedback.label, clearedFeedback.defaultLabel);
+    assert.equal(clearedFeedback.aria, clearedFeedback.defaultAria);
+    assert.equal(clearedFeedback.canCopy, false);
+
   });
   await t.test('real pulse completion and motion transitions preserve static relationship state',async()=>{
     await load('graph',{reduced:false});await run(`Archify.focus.inspectRelationshipById('edge-d')`);assert.equal(await run(`document.querySelectorAll('[data-relationship-pulse-overlay]').length`),1);

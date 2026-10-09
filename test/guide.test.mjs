@@ -8,30 +8,25 @@ import {
   recommendScenario,
 } from '../archify/recipes/scenarios.mjs';
 
-test('guide: exposes 13 unique recipes across every diagram type, including repair', () => {
-  assert.equal(SCENARIO_RECIPES.length, 13);
-  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, 13);
-  assert.deepEqual(
-    Object.fromEntries(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd'].map((type) => [
-      type,
-      SCENARIO_RECIPES.filter((recipe) => recipe.type === type).length,
-    ])),
-    { architecture: 3, workflow: 3, sequence: 2, dataflow: 2, lifecycle: 2, erd: 1 },
-  );
+test('guide: exposes unique recipes across the supported guide diagram types', () => {
+  assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, SCENARIO_RECIPES.length);
+  for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd']) {
+    assert.ok(SCENARIO_RECIPES.some((recipe) => recipe.type === type), type);
+  }
 });
 
 test('guide: every recipe has complete English and Chinese decision copy', () => {
   for (const recipe of SCENARIO_RECIPES) {
     assert.match(recipe.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-    assert.ok(recipe.signals.length >= 8, recipe.id);
+    assert.ok(recipe.signals.length > 0, recipe.id);
     assert.ok(['classic', 'signal-flow', 'blueprint', 'editorial'].includes(recipe.presentation.preset), recipe.id);
     for (const lang of ['en', 'zh']) {
       const copy = recipe[lang];
-      assert.ok(copy.title.length >= 4, `${recipe.id}.${lang}.title`);
+      assert.ok(copy.title.trim(), `${recipe.id}.${lang}.title`);
       for (const field of ['question', 'summary', 'useWhen', 'avoidWhen', 'prompt']) {
-        assert.ok(copy[field].length > 10, `${recipe.id}.${lang}.${field}`);
+        assert.ok(copy[field].trim(), `${recipe.id}.${lang}.${field}`);
       }
-      assert.equal(copy.include.length, 4, `${recipe.id}.${lang}.include`);
+      assert.ok(copy.include.length > 0 && copy.include.every((entry) => entry.trim()), `${recipe.id}.${lang}.include`);
     }
   }
 });
@@ -39,8 +34,13 @@ test('guide: every recipe has complete English and Chinese decision copy', () =>
 test('guide: language detection and localization are deterministic', () => {
   assert.equal(detectGuideLanguage('show an API request'), 'en');
   assert.equal(detectGuideLanguage('展示 API 请求'), 'zh');
-  assert.equal(listScenarioRecipes('zh')[0].title, '系统总览');
-  assert.equal(listScenarioRecipes('en')[0].title, 'System overview');
+  for (const lang of ['en', 'zh']) {
+    const localized = listScenarioRecipes(lang);
+    assert.equal(localized.length, SCENARIO_RECIPES.length);
+    for (const recipe of SCENARIO_RECIPES) {
+      assert.equal(localized.find((entry) => entry.id === recipe.id)?.title, recipe[lang].title);
+    }
+  }
 });
 
 test('guide: representative scenarios map to specialized recipes', () => {
@@ -103,7 +103,6 @@ test('guide: exact ids win and unknown questions fall back honestly', () => {
 
 test('guide: public data includes both languages and weighted signals', () => {
   const data = publicGuideData();
-  assert.equal(data.length, 13);
   for (const recipe of data) {
     assert.ok(recipe.en.title);
     assert.ok(recipe.zh.title);

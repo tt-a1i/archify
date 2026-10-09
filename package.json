@@ -6,11 +6,15 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "npm --prefix archify run check:viewer && npm --prefix archify run check:brand-marks && npm --prefix archify run check:validators && npm --prefix archify run check:release-identity && node test/golden.mjs && node scripts/run-tests.mjs",
+    "test": "npm run test:core",
     "test:focus": "node scripts/run-tests.mjs --require-files",
-    "test:compat": "node scripts/run-compat-tests.mjs",
+    "test:compat": "npm run test:core",
     "test:browser": "node scripts/run-browser-tests.mjs",
-    "test:webm": "node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs"
+    "test:webm": "node test/webm-artifact.smoke.mjs && node --test test/site-language-integration.mjs",
+    "test:core": "node scripts/run-tests.mjs test/core-smoke.test.mjs",
+    "test:generated": "npm --prefix archify run check:viewer && npm --prefix archify run check:brand-marks && npm --prefix archify run check:validators && npm --prefix archify run check:release-identity && node test/golden.mjs",
+    "test:full": "npm run test:generated && node scripts/run-tests.mjs",
+    "test:affected": "node scripts/run-affected-tests.mjs"
   },
   "devDependencies": {
     "ajv": "^8.17.1",

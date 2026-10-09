@@ -636,7 +636,7 @@ test('a contiguous domain draws a band and a scattered tag does not', () => {
   const scattered = render(scatteredDiagram, scatteredDirectory);
   assert.notEqual(scattered.status, 0, 'a tag split across the canvas must not render');
   assert.match(scattered.stderr + scattered.stdout, /erd\/domain-not-drawn/);
-  assert.match(scattered.stderr + scattered.stdout, /"alpha", "delta" do not fill a solid block/);
+  assert.match(scattered.stderr + scattered.stdout, /"alpha", "delta" do not fill a solid rectangle/);
   assert.equal(fs.existsSync(scattered.output), false, 'the diagram is not written at all');
 });
 
@@ -677,7 +677,9 @@ test('same-side ports clear the marker glyph and the markers carry the stronger 
 // obstacle the legend measures are one rectangle. When the checks measured a
 // narrower box than the ink, a label could sit on a table edge with nothing
 // reported: this corridor is 60 units wide and the label's drawn mask is 65.8,
-// an overlap the old 8-unit measurement (58.0) did not see.
+// an overlap the old 8-unit measurement (58.0) did not see. Absolute positions
+// keep the corridor at 60 (a grid-owned layout would widen it for the label),
+// and a zero labelDx pins the label so the automatic placer leaves it there.
 test('relationship labels are drawn and checked with one measured box', () => {
   const diagram = {
     schema_version: 1,
@@ -685,11 +687,11 @@ test('relationship labels are drawn and checked with one measured box', () => {
     meta: { title: 'Label corridor', locale: 'en' },
     layout: { mode: 'grid', gapX: 60, gapY: 44 },
     entities: [
-      { id: 'left', label: 'left', row: 0, col: 0, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
-      { id: 'right', label: 'right', row: 0, col: 1, attributes: [{ name: 'id', type: 'bigint', key: 'pk' }, { name: 'left_id', type: 'bigint', key: 'fk', references: 'left.id' }] },
+      { id: 'left', label: 'left', pos: [32, 40], attributes: [{ name: 'id', type: 'bigint', key: 'pk' }] },
+      { id: 'right', label: 'right', pos: [332, 40], attributes: [{ name: 'id', type: 'bigint', key: 'pk' }, { name: 'left_id', type: 'bigint', key: 'fk', references: 'left.id' }] },
     ],
     relationships: [
-      { id: 'right_left', from: 'right', to: 'left', fromCardinality: 'many', toCardinality: 'one', label: 'settles by' },
+      { id: 'right_left', from: 'right', to: 'left', fromCardinality: 'many', toCardinality: 'one', label: 'settles by', labelDx: 0 },
     ],
   };
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-er-label-box-'));
@@ -701,7 +703,7 @@ test('relationship labels are drawn and checked with one measured box', () => {
   // The same corridor with room for the drawn mask is accepted, and the mask the
   // renderer writes is the measured box.
   const roomy = clone(diagram);
-  roomy.layout.gapX = 88;
+  roomy.entities[1].pos = [360, 40];
   const accepted = render(roomy, directory);
   assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
   const html = fs.readFileSync(accepted.output, 'utf8');
@@ -1071,7 +1073,7 @@ test('a domain that cannot be drawn as a band stops the render instead of losing
   const ellRun = render(ell, ellDirectory);
   assert.notEqual(ellRun.status, 0, 'an L-shaped domain must not be banded');
   assert.match(ellRun.stderr + ellRun.stdout, /erd\/domain-not-drawn/);
-  assert.match(ellRun.stderr + ellRun.stdout, /"a", "b", "c" do not fill a solid block/);
+  assert.match(ellRun.stderr + ellRun.stdout, /"a", "b", "c" do not fill a solid rectangle/);
   assert.equal(fs.existsSync(ellRun.output), false, 'nothing is written when a domain cannot be named');
 
   // Absolute coordinates have no cells to group, so a tag cannot be drawn there.
@@ -1095,7 +1097,7 @@ test('a domain that cannot be drawn as a band stops the render instead of losing
   const sharedRun = render(shared, sharedDirectory);
   assert.notEqual(sharedRun.status, 0, 'two tables in one cell must not render');
   assert.match(sharedRun.stderr + sharedRun.stdout, /share grid cell/);
-  assert.doesNotMatch(sharedRun.stderr + sharedRun.stdout, /do not fill a solid block/,
+  assert.doesNotMatch(sharedRun.stderr + sharedRun.stdout, /do not fill a solid rectangle/,
     'the domain check defers to the placement error instead of blaming the block');
 
   // A table with no tag groups nothing and stays placeable by coordinates.

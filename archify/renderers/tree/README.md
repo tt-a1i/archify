@@ -47,7 +47,7 @@ Each generation shares one band: a row for `layout.direction: "down"` (the
 default) and a column for `"right"`. Along the other axis every subtree owns a
 contiguous span, so unequal branch widths and depths never overlap. A parent is
 centred over its first and last child (exactly over a middle child that sits
-within a few pixels of that midpoint, so the stem never jogs); going right,
+within a few pixels of that midpoint, so the stem never jogs; edge drawing also snaps stems aligned within 2px after rounding); going right,
 nodes are left-aligned in their column.
 
 Going down, a run of three or more consecutive leaf siblings is stacked as an

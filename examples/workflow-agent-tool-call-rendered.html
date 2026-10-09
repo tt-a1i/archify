@@ -5035,7 +5035,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Edge paths -->
         <path data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="659.2,279;659.2,302;577.2,302;577.2,387;593.2,387" d="M 659.2 279 L 659.2 302 L 577.2 302 L 577.2 387 L 593.2 387" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="659.2,421;659.2,442;838,442;838,413" d="M 659.2 421 L 659.2 442 L 838 442 L 838 413" class="a-security" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="approval" data-edge-to="tool" data-edge-key="2" data-edge-id="approved-tool" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="647.2,421;647.2,521;772,521" d="M 647.2 421 L 647.2 521 L 772 521" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="approval" data-edge-to="tool" data-edge-key="2" data-edge-id="approved-tool" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="635.2,421;635.2,521;772,521" d="M 635.2 421 L 635.2 521 L 772 521" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="external" data-edge-to="final" data-edge-key="3" data-edge-id="external-reply" data-edge-role="return" data-composition-points="1068,521;1092,521;1092,120;1068,120" d="M 1068 521 L 1092 521 L 1092 120 L 1068 120" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.2" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="278,146;278,253;429.2,253" d="M 278 146 L 278 253 L 429.2 253" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="planner" data-edge-to="router" data-edge-key="5" data-edge-id="planner-route" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="561.2,253;593.2,253" d="M 561.2 253 L 593.2 253" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead)"/>
@@ -9869,11 +9869,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             document.documentElement.scrollHeight,
             document.body.scrollHeight
           ) - window.innerHeight - belowFold();
-          if (overflow > 1 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
+          // visual-check fails any page whose rounded-up height exceeds the
+          // viewport, so even a 1px remainder must be reduced or declared.
+          if (overflow > 0 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute('data-reader-overflow', 'reduced');
-          } else if (overflow > 1) {
+          } else if (overflow > 0) {
             html.setAttribute('data-reader-overflow', 'authored');
           } else {
             html.removeAttribute('data-reader-overflow');

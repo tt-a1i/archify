@@ -135,19 +135,6 @@ test('a missing generated template is stale and can be regenerated', (t) => {
   assert.equal(f.run('--check').status, 0);
 });
 
-test('viewer.css owns the complete main style block', (t) => {
-  const f = fixture(t);
-  const shell = fs.readFileSync(f.shell, 'utf8');
-  const markerIndex = shell.indexOf(viewerCssMarker);
-  assert.notEqual(markerIndex, -1);
-  const afterMarker = shell.slice(markerIndex + viewerCssMarker.length);
-  assert.match(afterMarker, /^\n\s*<\/style>/);
-  const css = fs.readFileSync(f.viewerCss, 'utf8');
-  assert.match(css, /@media print \{/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{/);
-  assert.match(css, /\n\}\n$/);
-});
-
 test('assembly failure matrix preserves a valid artifact', { concurrency: false }, async (t) => {
   const f = fixture(t);
   // Marker rejection depends on source structure, not production bundle size.

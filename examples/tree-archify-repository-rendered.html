@@ -5027,7 +5027,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <path data-edge-from="repo" data-edge-to="site" data-edge-key="2" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1481,151;1481,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1473 151 Q 1481 151 1481 159 L 1481 179" class="a-default tree-edge" stroke-width="1.5"/>
         <path data-edge-from="repo" data-edge-to="scripts" data-edge-key="3" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1680.5,151;1680.5,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1672.5 151 Q 1680.5 151 1680.5 159 L 1680.5 179" class="a-default tree-edge" stroke-width="1.5"/>
         <path data-edge-from="skill" data-edge-to="renderers" data-edge-key="4" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;186,266;186,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 624.5 266 L 194 266 Q 186 266 186 274 L 186 294" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="skill" data-edge-to="schemas" data-edge-key="5" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;632,266;632,294" d="M 632.5 238 L 632.5 266 L 632 266 L 632 294" class="a-default tree-edge" stroke-width="1.5"/>
+        <path data-edge-from="skill" data-edge-to="schemas" data-edge-key="5" data-tree-ancestors="skill repo" data-composition-points="632,238;632,294" d="M 632 238 L 632 294" class="a-default tree-edge" stroke-width="1.5"/>
         <path data-edge-from="skill" data-edge-to="bin" data-edge-key="6" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;810,266;810,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 640.5 266 L 802 266 Q 810 266 810 274 L 810 294" class="a-default tree-edge" stroke-width="1.5"/>
         <path data-edge-from="skill" data-edge-to="references" data-edge-key="7" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;1066,266;1066,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 640.5 266 L 1058 266 Q 1066 266 1066 274 L 1066 294" class="a-default tree-edge" stroke-width="1.5"/>
         <path data-edge-from="renderers" data-edge-to="r_arch" data-edge-key="8" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,438.5;60,438.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 430.5 Q 44 438.5 52 438.5 L 60 438.5" class="a-default tree-edge" stroke-width="1.5"/>
@@ -9974,11 +9974,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             document.documentElement.scrollHeight,
             document.body.scrollHeight
           ) - window.innerHeight - belowFold();
-          if (overflow > 1 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
+          // visual-check fails any page whose rounded-up height exceeds the
+          // viewport, so even a 1px remainder must be reduced or declared.
+          if (overflow > 0 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute('data-reader-overflow', 'reduced');
-          } else if (overflow > 1) {
+          } else if (overflow > 0) {
             html.setAttribute('data-reader-overflow', 'authored');
           } else {
             html.removeAttribute('data-reader-overflow');

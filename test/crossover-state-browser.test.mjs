@@ -129,7 +129,7 @@ test('automatic crossover masks follow live relationship state without becoming 
   const focusTransition = await samplePairs(8);
   assertTimedPairs(focusTransition);
   assert.equal(focusTransition.some((sample) => sample.some((relation) => relation.edgeTransition)), true);
-  await run(`new Promise(resolve => setTimeout(resolve, 220))`, true);
+  await run(`Promise.all([...document.querySelectorAll('[data-graph-role="automatic-crossover"]')].flatMap(wrapper => wrapper.getAnimations({subtree:true})).filter(animation => animation.transitionProperty === 'opacity').map(animation => animation.finished))`, true);
   const focus = await pairedOpacity();
   assertPaired(focus, { horizontal: 1, vertical: 0.13 });
   assert.deepEqual(focus.map((relation) => relation.id), ['horizontal', 'vertical']);

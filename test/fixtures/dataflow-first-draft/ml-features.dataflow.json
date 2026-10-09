@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "ML feature pipeline",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "ml-features.html"
+  },
+  "stages": [
+    {
+      "label": "Raw data"
+    },
+    {
+      "label": "Features"
+    },
+    {
+      "label": "Training"
+    },
+    {
+      "label": "Serving"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "events",
+      "type": "database",
+      "label": "Event logs",
+      "sublabel": "S3",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "crm",
+      "type": "database",
+      "label": "CRM export",
+      "sublabel": "nightly",
+      "stage": 0,
+      "row": 2
+    },
+    {
+      "id": "fe",
+      "type": "backend",
+      "label": "Feature jobs",
+      "sublabel": "Spark",
+      "stage": 1,
+      "row": 1
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "Feature store",
+      "sublabel": "online + offline",
+      "stage": 1,
+      "row": 3
+    },
+    {
+      "id": "train",
+      "type": "backend",
+      "label": "Trainer",
+      "sublabel": "GPU pool",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Model registry",
+      "sublabel": "versions",
+      "stage": 2,
+      "row": 3
+    },
+    {
+      "id": "serve",
+      "type": "backend",
+      "label": "Inference API",
+      "sublabel": "p99 40ms",
+      "stage": 3,
+      "row": 2
+    }
+  ],
+  "flows": [
+    {
+      "from": "events",
+      "to": "fe",
+      "label": "click logs"
+    },
+    {
+      "from": "crm",
+      "to": "fe",
+      "label": "accounts"
+    },
+    {
+      "from": "fe",
+      "to": "store",
+      "label": "write features",
+      "variant": "emphasis"
+    },
+    {
+      "from": "store",
+      "to": "train",
+      "label": "training set"
+    },
+    {
+      "from": "train",
+      "to": "registry",
+      "label": "model"
+    },
+    {
+      "from": "registry",
+      "to": "serve",
+      "label": "deploy",
+      "variant": "dashed"
+    },
+    {
+      "from": "store",
+      "to": "serve",
+      "label": "online lookup"
+    }
+  ]
+}

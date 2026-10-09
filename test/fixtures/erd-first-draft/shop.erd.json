@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Online shop schema",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "shop.html"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "entities": [
+    {
+      "id": "customers",
+      "label": "customers",
+      "tag": "accounts",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "key": "uk"
+        },
+        {
+          "name": "name",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "addresses",
+      "label": "addresses",
+      "tag": "accounts",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "customers.id"
+        },
+        {
+          "name": "line1",
+          "type": "varchar(200)"
+        },
+        {
+          "name": "city",
+          "type": "varchar(80)"
+        },
+        {
+          "name": "postcode",
+          "type": "varchar(16)"
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "label": "orders",
+      "tag": "sales",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "customers.id"
+        },
+        {
+          "name": "shipping_address_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "addresses.id"
+        },
+        {
+          "name": "status",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "total",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "placed_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "order_items",
+      "label": "order_items",
+      "tag": "sales",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "order_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "orders.id"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "products.id"
+        },
+        {
+          "name": "quantity",
+          "type": "int"
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric(12,2)"
+        }
+      ]
+    },
+    {
+      "id": "payments",
+      "label": "payments",
+      "tag": "sales",
+      "row": 2,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "order_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "orders.id"
+        },
+        {
+          "name": "provider",
+          "type": "varchar(40)"
+        },
+        {
+          "name": "amount",
+          "type": "numeric(12,2)"
+        },
+        {
+          "name": "paid_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "label": "products",
+      "tag": "catalog",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "sku",
+          "type": "varchar(40)",
+          "key": "uk"
+        },
+        {
+          "name": "category_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "categories.id"
+        },
+        {
+          "name": "name",
+          "type": "varchar(200)"
+        },
+        {
+          "name": "price",
+          "type": "numeric(12,2)"
+        }
+      ]
+    },
+    {
+      "id": "categories",
+      "label": "categories",
+      "tag": "catalog",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "parent_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "categories.id"
+        },
+        {
+          "name": "name",
+          "type": "varchar(80)"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "addresses_customers",
+      "from": "addresses",
+      "to": "customers",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "belongs to"
+    },
+    {
+      "id": "orders_customers",
+      "from": "orders",
+      "to": "customers",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "placed by"
+    },
+    {
+      "id": "orders_addresses",
+      "from": "orders",
+      "to": "addresses",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "ships to"
+    },
+    {
+      "id": "order_items_orders",
+      "from": "order_items",
+      "to": "orders",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "line of",
+      "identifying": true
+    },
+    {
+      "id": "order_items_products",
+      "from": "order_items",
+      "to": "products",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "sells",
+      "identifying": true
+    },
+    {
+      "id": "payments_orders",
+      "from": "payments",
+      "to": "orders",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "pays",
+      "fromOptional": true
+    },
+    {
+      "id": "products_categories",
+      "from": "products",
+      "to": "categories",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "in category"
+    }
+  ]
+}

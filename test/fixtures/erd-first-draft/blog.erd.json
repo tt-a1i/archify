@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Blog platform schema",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "blog.html"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "entities": [
+    {
+      "id": "users",
+      "label": "users",
+      "tag": "accounts",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "key": "uk"
+        },
+        {
+          "name": "display_name",
+          "type": "varchar(80)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "profiles",
+      "label": "profiles",
+      "tag": "accounts",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "user_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "users.id"
+        },
+        {
+          "name": "bio",
+          "type": "text"
+        },
+        {
+          "name": "avatar_url",
+          "type": "varchar(512)"
+        }
+      ]
+    },
+    {
+      "id": "posts",
+      "label": "posts",
+      "tag": "content",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "author_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "users.id"
+        },
+        {
+          "name": "slug",
+          "type": "varchar(160)",
+          "key": "uk"
+        },
+        {
+          "name": "title",
+          "type": "varchar(200)"
+        },
+        {
+          "name": "body",
+          "type": "text"
+        },
+        {
+          "name": "published_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "comments",
+      "label": "comments",
+      "tag": "content",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "key": "pk"
+        },
+        {
+          "name": "post_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "posts.id"
+        },
+        {
+          "name": "author_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "users.id"
+        },
+        {
+          "name": "body",
+          "type": "text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "tags",
+      "label": "tags",
+      "tag": "taxonomy",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "int",
+          "key": "pk"
+        },
+        {
+          "name": "name",
+          "type": "varchar(60)",
+          "key": "uk"
+        }
+      ]
+    },
+    {
+      "id": "post_tags",
+      "label": "post_tags",
+      "tag": "taxonomy",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "post_id",
+          "type": "bigint",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "posts.id"
+        },
+        {
+          "name": "tag_id",
+          "type": "int",
+          "key": [
+            "pk",
+            "fk"
+          ],
+          "references": "tags.id"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "r_profile",
+      "from": "profiles",
+      "to": "users",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "label": "extends"
+    },
+    {
+      "id": "r_author",
+      "from": "posts",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "written by"
+    },
+    {
+      "id": "r_comment_post",
+      "from": "comments",
+      "to": "posts",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "fromOptional": true,
+      "label": "on"
+    },
+    {
+      "id": "r_comment_user",
+      "from": "comments",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "by"
+    },
+    {
+      "id": "r_pt_post",
+      "from": "post_tags",
+      "to": "posts",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "identifying": true
+    },
+    {
+      "id": "r_pt_tag",
+      "from": "post_tags",
+      "to": "tags",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "identifying": true
+    }
+  ]
+}

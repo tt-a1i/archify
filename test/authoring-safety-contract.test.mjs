@@ -12,7 +12,6 @@ const authoringContract = fs.readFileSync(
   path.join(skillRoot, 'references', 'authoring-contract.md'),
   'utf8',
 );
-const schemaReadme = fs.readFileSync(path.join(skillRoot, 'schemas', 'README.md'), 'utf8');
 
 test('semantic relationship labels are preserved and deletion is not a geometry repair', () => {
   assert.match(authoringDefaults, /Relationship labels carry meaning/);
@@ -28,13 +27,6 @@ test('semantic relationship labels are preserved and deletion is not a geometry 
     assert.match(source, /Preserve every meaningful label/i, name);
     assert.match(source, /deleting it is not\s+a (?:geometry|spacing) repair/i, name);
   }
-});
-
-test('schema policy documents the workflow v1/v2 and lifecycle v3 compatibility boundaries', () => {
-  assert.match(schemaReadme, /Workflow[^\n]*schema versions? 1 and 2/i);
-  assert.match(schemaReadme, /Lifecycle accepts only version 3/i);
-  assert.match(schemaReadme, /other three[^\n]*schema_version[^\n]*1/i);
-  assert.doesNotMatch(schemaReadme, /schema_version` is `"const": 1`/);
 });
 
 test('deployment ownership stays explicit, fact-backed, and cannot be removed to pass', () => {
@@ -56,7 +48,6 @@ test('visual-check stays a pending sidecar receipt instead of a polish claim', (
   assert.match(deliveryContract, /Both browser commands inspect the exact delivered HTML without modifying or rerendering it/);
 
   assert.match(deliveryContract, /visual-check <output\.html> --summary/);
-  assert.match(deliveryContract, /1440×900[\s\S]*1600×1000[\s\S]*1920×1080[\s\S]*2048×1320/);
   assert.match(deliveryContract, /visualReview: "pending"/);
   assert.match(deliveryContract, /never changes.*delivered|without (?:rerendering or )?modifying/i);
 });

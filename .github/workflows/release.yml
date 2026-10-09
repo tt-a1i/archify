@@ -53,7 +53,7 @@ jobs:
       - name: Install renderer dependencies
         run: npm ci && npm --prefix archify ci
       - name: Complete regression suite on canonical Node before releasing
-        run: npm test
+        run: npm run test:full
       - name: Provision a known Chrome runtime
         id: setup-chrome
         uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0

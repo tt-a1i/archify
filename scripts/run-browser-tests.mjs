@@ -6,43 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { findChrome } from '../archify/bin/visual-check.mjs';
 import { testRunnerOptions } from './test-runner-options.mjs';
 
+import { browserTestFiles as testFiles } from './browser-test-inventory.mjs';
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// Shared by PR CI and tag releases. WebM decoding stays in test:webm.
-// Adjacent heavy suites use opposite indices for CI's two modulo shards.
-const testFiles = [
-  'finalize-browser.test.mjs',
-  'desktop-reader-browser.test.mjs',
-  'reader-readability-maintained-browser.test.mjs',
-  'reader-layout-browser.test.mjs',
-  'reader-layout-settle-browser.test.mjs',
-  'reader-cards-overflow-browser.test.mjs',
-  'joint-layout-browser.test.mjs',
-  'sequence-header-clearance.test.mjs',
-  'sequence-width-default-browser.test.mjs',
-  'compact-header-clearance.test.mjs',
-  'architecture-reading-size-browser.test.mjs',
-  'export-cleanup-browser.test.mjs',
-  'i18n.test.mjs',
-  'offline-font-browser.test.mjs',
-  'viewer-chrome-layout.test.mjs',
-  'semantic-radar.test.mjs',
-  'viewer-camera-browser.test.mjs',
-  'motion-governor-browser.test.mjs',
-  'finder-browser.test.mjs',
-  'intent-trace-browser.test.mjs',
-  'semantic-lens-browser.test.mjs',
-  'route-probe-browser.test.mjs',
-  'focus-browser.test.mjs',
-  'crossover-state-browser.test.mjs',
-  'semantic-passport-move-browser.test.mjs',
-  'export-browser.test.mjs',
-  'viewer-identifiers-browser.test.mjs',
-  'repository-evidence.test.mjs',
-  'repository-evidence-types-browser.test.mjs',
-  'tree-branches-browser.test.mjs',
-  'class-motion-browser.test.mjs',
-  'dataflow-label-visibility-browser.test.mjs',
-];
 
 let options;
 let shard;

@@ -205,7 +205,7 @@ test('sharded browser gates retain Chrome requirements and propagate child failu
   }
 });
 
-test('CI media aggregate fails closed for either child and keeps docs-only scope validation', () => {
+test('CI media gates fail closed and run only for their affected responsibility', () => {
   const jobs = parse(fs.readFileSync(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8')).jobs;
   assert.equal(jobs['browser-regression'].strategy['fail-fast'], false);
   assert.deepEqual(jobs['browser-regression'].strategy.matrix.shard, [1, 2]);
@@ -221,7 +221,7 @@ test('CI media aggregate fails closed for either child and keeps docs-only scope
       BROWSER_RESULT: 'success', WEBM_RESULT: 'success', ...overrides,
     },
   });
-  for (const scope of ['full', 'docs']) assert.equal(runAggregate({ CI_SCOPE: scope }).status, 0);
+  for (const scope of ['full', 'core', 'docs']) assert.equal(runAggregate({ CI_SCOPE: scope }).status, 0);
   for (const key of ['SCOPE_RESULT', 'BROWSER_RESULT', 'WEBM_RESULT']) {
     for (const result of ['failure', 'skipped', 'cancelled', '']) {
       assert.notEqual(runAggregate({ [key]: result }).status, 0, `${key}=${result} must fail closed`);
@@ -233,9 +233,16 @@ test('CI media aggregate fails closed for either child and keeps docs-only scope
     assert.equal(job.needs, 'scope');
     assert.equal(job.if, 'always() && !cancelled()');
     assert.equal(job.steps[0].env.SCOPE_RESULT, '${{ needs.scope.result }}');
-    assert.match(job.steps[0].run, /test "\$SCOPE_RESULT" = success/);
-    assert.match(job.steps[0].run, /docs\|full/);
-    for (const runtimeStep of job.steps.slice(1)) assert.equal(runtimeStep.if, "needs.scope.outputs.scope == 'full'");
+    const scopeCheck = (scope, result = 'success') => spawnSync('bash', ['-e', '-c', job.steps[0].run], {
+      env: { ...process.env, SCOPE_RESULT: result, CI_SCOPE: scope },
+    }).status;
+    for (const scope of ['docs', 'core', 'full']) assert.equal(scopeCheck(scope), 0);
+    assert.notEqual(scopeCheck('unknown'), 0);
+    assert.notEqual(scopeCheck('core', 'failure'), 0);
+    const responsibility = name === 'browser-regression' ? 'browser' : 'webm';
+    for (const runtimeStep of job.steps.slice(1)) {
+      assert.equal(runtimeStep.if, `needs.scope.outputs.${responsibility} == 'true'`);
+    }
   }
 });
 

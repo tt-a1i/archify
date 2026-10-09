@@ -127,6 +127,22 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
       assert.deepEqual(await run('Object.keys(Archify.exportMenu).sort()'), ['close','downloadReachShareCard','downloadRouteShareCard','isOpen','open','run','shareCard','syncReachShare','syncRouteShare'].sort());
       assert.deepEqual(await run('Object.keys(Archify.motion).sort()'), ['canRecord','recordWebm']);
       assert.deepEqual(await run(`[...document.querySelectorAll('#export-menu [data-format="jpeg"],#export-menu [data-format="webp"],#export-menu [data-format="webm"],#export-menu [data-action="copy"]')].map(e=>e.disabled)`), [true,true,true,true]);
+      const controls = await run(`(() => {
+        const visible = element => { const r = element.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(element).visibility !== 'hidden'; };
+        const facts = element => { const r = element.getBoundingClientRect(); return { id: element.id, width: r.width, height: r.height, name: (element.getAttribute('aria-label') || element.textContent).trim(), tabIndex: element.tabIndex }; };
+        return {
+          toolbar: [...document.querySelectorAll('#btn-theme, #btn-preset, #btn-present, #btn-export')].filter(visible).map(facts),
+          dock: [...document.querySelectorAll('.diagram-nav button')].filter(visible).map(facts),
+        };
+      })()`);
+      assert.equal(controls.toolbar.length, 4, 'primary controls remain visible');
+      assert.ok(controls.toolbar.every(control => control.height >= 44 && control.name && control.tabIndex >= 0), JSON.stringify(controls));
+      if (width <= 720) assert.ok(controls.dock.every(control => control.width >= 44 && control.height >= 44 && control.name && control.tabIndex >= 0), JSON.stringify(controls));
+      await run("document.getElementById('btn-theme').focus()");
+      await key('Tab', 'Tab', 9);
+      const nextControl = await run('document.activeElement.id');
+      assert.ok(nextControl !== 'btn-theme' && controls.toolbar.some(control => control.id === nextControl),
+        'native Tab reaches another named toolbar control without freezing their order');
       await run(`document.getElementById('btn-export').focus()`);
       await key('ArrowUp', 'ArrowUp', 38);
       const last = await run(`document.activeElement.dataset.format||document.activeElement.dataset.action`);
@@ -154,6 +170,8 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
       assert.equal(await run('Archify.preset.isOpen()'), false);
       await run('Archify.semanticLens.open();Archify.exportMenu.open()');
       assert.equal(await run('Archify.semanticLens.isOpen()'), false);
+      const menu = await run(`(() => { const r = document.getElementById('export-menu').getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: innerWidth, height: innerHeight }; })()`);
+      assert.ok(menu.left >= -1 && menu.right <= menu.width + 1 && menu.top >= -1 && menu.bottom <= menu.height + 1, JSON.stringify(menu));
       const state = await record('menu-' + width);
       assert.equal(state.open, true);assert.equal(state.expanded, 'true');assert.deepEqual(state.console, []);
     }
@@ -170,6 +188,16 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
         const shot = await send('Page.captureScreenshot', { format: 'png' });
         fs.writeFileSync(path.join(evidence, theme + '-menu.png'), Buffer.from(shot.data, 'base64'));
       }
+      await run('Archify.exportMenu.close(false); Archify.view.zoomOut()');
+      await run('Archify.layoutStability.whenStable()');
+      const indicator = await run(`(() => { const detail = document.querySelector('[data-view-detail]'), percent = document.querySelector('[data-view-percent]'); return { detailVisible: !detail.hidden, detail: detail.textContent.trim(), percent: percent.textContent, scale: Archify.view.state().scale }; })()`);
+      assert.equal(indicator.detailVisible, true);
+      assert.ok(indicator.detail && !indicator.detail.includes('%'), 'detail has its own label');
+      assert.equal(indicator.percent, Math.round(indicator.scale * 100) + '%');
+      assert.notEqual(indicator.percent, '100%');
+      await click('[data-view="reset"]');
+      await run('Archify.layoutStability.whenStable()');
+      assert.deepEqual(await run("({detailHidden: document.querySelector('[data-view-detail]').hidden, percent: document.querySelector('[data-view-percent]').textContent})"), { detailHidden: true, percent: '100%' });
     }
   });
 
@@ -284,7 +312,9 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
           fs.writeFileSync(svgFile, svgText);
           const figure = await run(`(()=>{const v=document.querySelector('.diagram-container svg').viewBox.baseVal;const sub=(document.querySelector('.header .subtitle')||{}).textContent;const header=document.querySelector('.header h1')?32+(sub&&sub.trim()?24:0)+18:0;return [(v.width+104)*4,(v.height+104+header)*4];})()`);
           const rasterSizes = [];
-          for (const format of ['png', 'jpeg', 'webp']) {
+          // All modes exercise real raster sizing. Shared MIME/quality encoding
+          // branches additionally run on architecture in both themes.
+          for (const format of mode === 'architecture' ? ['png', 'jpeg', 'webp'] : ['png']) {
             await run(`Archify.exportMenu.run('${format}')`);
             const result = await run(`(async()=>{const blob=exportDownloads.at(-1).blob;const image=await createImageBitmap(blob);const dimensions=[image.width,image.height];image.close();return {dimensions,type:blob.type};})()`);
             assert.deepEqual(result.dimensions, figure, `${mode} ${theme} ${format}: native 4x framed raster`);

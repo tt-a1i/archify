@@ -193,8 +193,15 @@ const placed = rows.map((row, index) => {
 // that changes a bar's paint; a single-service trace with only ok spans needs
 // no key.
 const presentStatuses = new Set(placed.map((row) => row.status));
+// Past five services the palette repeats. Services that share a colour share
+// one entry, so the key never claims a colour belongs to a single service.
+const serviceLegendEntries = [...services.reduce((byTone, service) => {
+  const tone = serviceTone(service);
+  byTone.set(tone, [...(byTone.get(tone) || []), service]);
+  return byTone;
+}, new Map())].map(([tone, owners]) => ({ kind: `service:${owners[0]}`, label: owners.join(' · '), tone, interactive: false }));
 const legendEntries = [
-  ...(services.length > 1 ? services.map((service) => ({ kind: `service:${service}`, label: service, tone: serviceTone(service), interactive: false })) : []),
+  ...(services.length > 1 ? serviceLegendEntries : []),
   ...resolveLegend(undefined, ['error', 'cancelled', 'incomplete'].map((kind) => ({ kind, label: i18nText(locale, `legend.waterfall.${kind}`), tone: STATUS_TONE[kind] ?? 'external', interactive: false })), presentStatuses),
 ];
 const contentBottom = rowsTop + placed.length * layout.rowH + 8;

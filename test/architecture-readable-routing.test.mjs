@@ -33,7 +33,8 @@ test('architecture improves complete-scene crossings and bends without extra gri
   }));
   const routes = routers.map((router) => connections.map((conn) => router.pathFor(conn).points));
   assert.equal(crossings(routes[0]), 10, 'fixture exposes the first-legal-route regression');
-  assert.equal(crossings(routes[1]), 9);
+  assert.ok(crossings(routes[1]) <= 9 && crossings(routes[1]) < crossings(routes[0]),
+    'automatic routing may improve beyond the accepted crossing budget');
   const metrics = routes.map((points) => routeBudgetMetrics({ routedRelations: points.map((route) => ({ points: route })) }));
   assert.ok(metrics[1].routesOverSuggestedBends < metrics[0].routesOverSuggestedBends);
   assert.ok(metrics[1].maxStretch <= metrics[0].maxStretch);
@@ -42,7 +43,8 @@ test('architecture improves complete-scene crossings and bends without extra gri
     assert.ok(x >= Math.min(...scene.map((point) => point[0])) && x <= Math.max(...scene.map((point) => point[0])));
     assert.ok(y >= Math.min(...scene.map((point) => point[1])) && y <= Math.max(...scene.map((point) => point[1])));
   }
-  assert.equal(routers[1].routingMetrics().gridSearchCount, routers[0].routingMetrics().gridSearchCount);
+  assert.ok(routers[1].routingMetrics().gridSearchCount <= routers[0].routingMetrics().gridSearchCount,
+    'readability must not require extra grid searches');
   assert.ok(routers[1].routingMetrics().readabilityCandidateCount <= connections.length * 16);
   assert.equal(JSON.stringify({ boxes: [...boxes], connections }), before);
 });

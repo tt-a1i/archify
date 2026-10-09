@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "class",
+  "meta": {
+    "title": "Notification service types",
+    "locale": "en",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "types": [
+    {
+      "id": "dispatcher",
+      "label": "NotificationDispatcher",
+      "kind": "class",
+      "sublabel": "Routes a message to its channels",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "channels",
+          "type": "List<Channel>",
+          "visibility": "private"
+        },
+        {
+          "name": "store",
+          "type": "DeliveryStore",
+          "visibility": "private"
+        }
+      ],
+      "methods": [
+        {
+          "name": "dispatch",
+          "parameters": "message: Notification",
+          "returns": "DeliveryReport",
+          "visibility": "public"
+        }
+      ]
+    },
+    {
+      "id": "channel",
+      "label": "Channel",
+      "kind": "interface",
+      "sublabel": "One delivery transport",
+      "row": 0,
+      "col": 1.5,
+      "methods": [
+        {
+          "name": "send",
+          "parameters": "message: Notification",
+          "returns": "Result",
+          "visibility": "public",
+          "abstract": true
+        },
+        {
+          "name": "supports",
+          "parameters": "kind: Kind",
+          "returns": "boolean",
+          "visibility": "public",
+          "abstract": true
+        }
+      ]
+    },
+    {
+      "id": "notification",
+      "label": "Notification",
+      "kind": "record",
+      "sublabel": "Immutable message payload",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "UUID"
+        },
+        {
+          "name": "recipient",
+          "type": "UserId"
+        },
+        {
+          "name": "kind",
+          "type": "Kind"
+        },
+        {
+          "name": "body",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "id": "email",
+      "label": "EmailChannel",
+      "kind": "class",
+      "sublabel": "SMTP delivery",
+      "row": 1,
+      "col": 1,
+      "methods": [
+        {
+          "name": "send",
+          "parameters": "message: Notification",
+          "returns": "Result",
+          "visibility": "public"
+        }
+      ]
+    },
+    {
+      "id": "push",
+      "label": "PushChannel",
+      "kind": "class",
+      "sublabel": "Mobile push delivery",
+      "row": 1,
+      "col": 2,
+      "methods": [
+        {
+          "name": "send",
+          "parameters": "message: Notification",
+          "returns": "Result",
+          "visibility": "public"
+        }
+      ]
+    },
+    {
+      "id": "store",
+      "label": "DeliveryStore",
+      "kind": "abstract",
+      "sublabel": "Persists delivery attempts",
+      "row": 2,
+      "col": 0,
+      "methods": [
+        {
+          "name": "record",
+          "parameters": "attempt: Attempt",
+          "returns": "void",
+          "visibility": "public",
+          "abstract": true
+        }
+      ]
+    },
+    {
+      "id": "kind",
+      "label": "Kind",
+      "kind": "enum",
+      "sublabel": "Message category",
+      "row": 2,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "SECURITY"
+        },
+        {
+          "name": "MARKETING"
+        },
+        {
+          "name": "SYSTEM"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "r_channels",
+      "from": "dispatcher",
+      "to": "channel",
+      "kind": "aggregation",
+      "label": "fans out to"
+    },
+    {
+      "id": "r_email",
+      "from": "email",
+      "to": "channel",
+      "kind": "realization"
+    },
+    {
+      "id": "r_push",
+      "from": "push",
+      "to": "channel",
+      "kind": "realization"
+    },
+    {
+      "id": "r_msg",
+      "from": "dispatcher",
+      "to": "notification",
+      "kind": "dependency",
+      "label": "dispatches"
+    },
+    {
+      "id": "r_store",
+      "from": "dispatcher",
+      "to": "store",
+      "kind": "association",
+      "label": "records in"
+    },
+    {
+      "id": "r_kind",
+      "from": "notification",
+      "to": "kind",
+      "kind": "association",
+      "label": "has"
+    }
+  ]
+}

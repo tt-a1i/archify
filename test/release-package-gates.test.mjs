@@ -1694,7 +1694,7 @@ test('CI and tagged releases share the maintained Windows path contract on Node 
     assert.match(job, /npm ci --ignore-scripts/);
     assert.match(job, /node scripts\/run-windows-path-tests\.mjs/);
     assert.match(job, label === 'CI'
-      ? /name: Provision controlled Windows path fixtures\n\s+if: needs\.scope\.outputs\.scope == 'full'\n\s+shell: pwsh/
+      ? /name: Provision controlled Windows path fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
       : /name: Provision controlled Windows path fixtures\n\s+shell: pwsh/);
     assert.match(
       job,
@@ -1703,7 +1703,7 @@ test('CI and tagged releases share the maintained Windows path contract on Node 
     assert.match(
       job,
       label === 'CI'
-        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && needs\.scope\.outputs\.scope == 'full' \}\}/
+        ? /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) && needs\.scope\.outputs\.windows == 'true' \}\}/
         : /name: Clean up controlled Windows path fixtures\n\s+if: \$\{\{ always\(\) \}\}/,
     );
     assert.match(

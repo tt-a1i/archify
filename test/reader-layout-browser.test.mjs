@@ -144,9 +144,10 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
       assert.equal(state.shape, wide ? 'wide' : null);
     }
 
-    await t.test('five modes initialize, export clean SVG, and honor themes and reduced motion', async () => {
+    await t.test('five modes initialize and export clean SVG; a representative reader honors both themes and reduced motion', async () => {
       for (const [mode, file] of Object.entries(artifacts)) {
-        for (const theme of ['dark', 'light']) {
+        // Mode seams remain complete; shared theme/reduced-motion behavior uses one representative.
+        for (const theme of mode === 'architecture' ? ['dark', 'light'] : ['dark']) {
           await load(file, { theme, reduced: theme === 'light' });
           const state = await snapshot(`${mode}-${theme}`);
           assert.equal(state.theme, theme);
@@ -184,6 +185,31 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
           }
         }
       }
+    });
+
+    await t.test('Guide and presentation keyboard controls preserve focus, URL context and authored geometry', async () => {
+      await load(artifacts.architecture, { query: '&keep=yes#reader-context' });
+      const before = await snapshot('guide-presentation-before');
+      async function key(key, code, windowsVirtualKeyCode) {
+        await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode });
+        await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode });
+      }
+      await evaluate("document.getElementById('btn-present').focus()");
+      await key('?', 'Slash', 191);
+      await evaluate('new Promise(resolve => requestAnimationFrame(resolve))', true);
+      assert.equal(await evaluate("!document.getElementById('diagram-guide').hidden && document.getElementById('diagram-guide').contains(document.activeElement)"), true);
+      await key('Escape', 'Escape', 27);
+      assert.equal(await evaluate("document.getElementById('diagram-guide').hidden"), true);
+      assert.equal(await evaluate('document.activeElement.id'), 'btn-present');
+      await key('f', 'KeyF', 70);
+      await stable();
+      assert.deepEqual(await evaluate("({active: Archify.presentation.active(), pressed: document.getElementById('btn-present').getAttribute('aria-pressed'), present: new URL(location.href).searchParams.get('present'), keep: new URL(location.href).searchParams.get('keep'), hash: location.hash})"),
+        { active: true, pressed: 'true', present: '1', keep: 'yes', hash: '#reader-context' });
+      await key('Escape', 'Escape', 27);
+      await stable();
+      assert.equal(await evaluate('Archify.presentation.active()'), false);
+      assert.deepEqual(await evaluate("[new URL(location.href).searchParams.get('present'), new URL(location.href).searchParams.get('keep'), location.hash]"), [null, 'yes', '#reader-context']);
+      assert.deepEqual((await snapshot('guide-presentation-return')).geometry, before.geometry);
     });
 
     await t.test('ratio and desktop thresholds preserve shape while clearing temporary state', async () => {
@@ -504,7 +530,7 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
       assert.deepEqual(capped.geometry, initial.geometry);
     });
 
-    await t.test('long automatic sequences and waterfalls favor reading width while small canvases cap enlargement', async () => {
+    await t.test('automatic width-first content favors reading width while small canvases cap enlargement', async () => {
       function readerFixture(name, width, height, attributes) {
         const original = fs.readFileSync(artifacts.architecture, 'utf8');
         const svgStart = original.indexOf('<svg');
@@ -524,8 +550,9 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
         return file;
       }
       const samples = [
-        ['sequence', 1100, 2400, 'width-first'],
-        ['waterfall', 1100, 2400, 'width-first'],
+        // Family names do not alter this synthetic SVG. Real sequence and
+        // waterfall declarations are exercised by the following renderer case.
+        ['width-first-tall', 1100, 2400, 'width-first'],
         ['small-erd', 456, 270, 'intrinsic-height'],
       ];
       for (const [name, width, height, fit] of samples) {

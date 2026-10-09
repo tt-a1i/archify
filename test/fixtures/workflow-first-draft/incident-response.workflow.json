@@ -1,0 +1,135 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Incident response",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "incident-en.html"
+  },
+  "lanes": [
+    {
+      "id": "mon",
+      "label": "Monitoring"
+    },
+    {
+      "id": "oncall",
+      "label": "On-call"
+    },
+    {
+      "id": "eng",
+      "label": "Service team"
+    },
+    {
+      "id": "comms",
+      "label": "Comms"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "mon",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Alert fires",
+      "sublabel": "SLO burn"
+    },
+    {
+      "id": "ack",
+      "lane": "oncall",
+      "col": 1,
+      "type": "backend",
+      "label": "Acknowledge",
+      "sublabel": "within 5 min"
+    },
+    {
+      "id": "triage",
+      "lane": "oncall",
+      "col": 2,
+      "type": "backend",
+      "label": "Triage",
+      "sublabel": "severity"
+    },
+    {
+      "id": "fix",
+      "lane": "eng",
+      "col": 3,
+      "type": "backend",
+      "label": "Mitigate",
+      "sublabel": "rollback / flag"
+    },
+    {
+      "id": "status",
+      "lane": "comms",
+      "col": 3,
+      "type": "frontend",
+      "label": "Status page",
+      "sublabel": "public update"
+    },
+    {
+      "id": "verify",
+      "lane": "mon",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Verify recovery",
+      "sublabel": "SLO green"
+    },
+    {
+      "id": "review",
+      "lane": "eng",
+      "col": 5,
+      "type": "backend",
+      "label": "Postmortem",
+      "sublabel": "within 3 days"
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "ack",
+      "label": "page"
+    },
+    {
+      "from": "ack",
+      "to": "triage",
+      "label": "acknowledged"
+    },
+    {
+      "from": "triage",
+      "to": "fix",
+      "label": "SEV1/2"
+    },
+    {
+      "from": "triage",
+      "to": "status",
+      "label": "customer impact",
+      "role": "async",
+      "variant": "dashed"
+    },
+    {
+      "from": "fix",
+      "to": "verify",
+      "label": "deployed"
+    },
+    {
+      "from": "verify",
+      "to": "fix",
+      "label": "still failing",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "verify",
+      "to": "review",
+      "label": "resolved"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "ack",
+    "triage",
+    "fix",
+    "verify",
+    "review"
+  ]
+}

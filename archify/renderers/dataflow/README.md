@@ -58,7 +58,7 @@ without a database node keeps it visual-only.
 
 | Constant | Value |
 |----------|-------|
-| viewBox | omitted width fits all stage frames and nodes, including authored widths, with a 940px floor and 24px right padding (five default-width stages need 1068); height defaults to 720 and fits content in fully automatic showcase; schema minimum `[360, 360]` |
+| viewBox | omitted width fits all stage frames and nodes, including authored widths, with 24px right padding and a 480px minimum (five default-width stages need 1068); height defaults to 720 and fits content in fully automatic showcase; schema minimum `[360, 360]` |
 | Stages (2–5) | centers at x = 100 + stage×215; stage band 168 wide, header at y 46 |
 | Row tops (`row` 0–4) | y = 128, 242, 356, 470, 584 (plus `yOffset`) |
 | Default node | 112×58 |

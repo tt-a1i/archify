@@ -20,3 +20,14 @@ Rendered frame IDs are indices, not source ownership IDs. The diagnostic's
 contained node boxes and blank-space measurements are observations, not proof
 that headers, routing space, ownership boundaries or absolute pins can be moved.
 The repaired layout is one valid answer to this task, not a universal repair.
+
+## Three-lane remainder regression
+
+`three-lane-remainder.workflow.json` is a minimal unpinned three-lane, five-column
+workflow. It compiles to a 528-unit-tall width-first canvas, and the Reader's
+1.5× enlargement turns it into a page exactly 1px taller than a 1600×1000
+viewport. The Reader used to tolerate a 1px remainder while browser containment
+rounds every remainder up, so each first draft of this shape failed only the
+final browser gate, and the diagnostic told the author to pin a smaller viewBox.
+The browser regression checks that the remainder is either reduced or declared as
+authored reading overflow.
