@@ -241,6 +241,68 @@ Before adding manual routes, check whether unnecessary agent-added controls
 disable automatic port spread; preserve user-required route intent. Use the
 measured clearance rules above rather than guessing coordinates.
 
+### Viewport height budget
+
+When first-screen fit matters, budget for the whole page before choosing an
+explicit `meta.viewBox`. At a given viewport, a useful planning estimate is:
+
+```text
+rendered SVG height ≈ rendered SVG width × viewBox height / viewBox width
+available SVG height ≈ viewport height − body padding − header
+                       − diagram chrome − cards stacked below the diagram
+```
+
+Use the actual diagram reading width, not the window width. The Reader adapts
+that width to the canvas, readable text, and surrounding content. Title wrapping,
+card wrapping, margins, and Viewer chrome also change the budget. Cards beside
+the diagram or in the bottom reading rail do not consume the same first-screen
+budget as stacked cards. There is no universal reader width, chrome reserve,
+aspect ratio, or card-count limit that guarantees a fit.
+
+A passing standalone `validate` does not establish browser viewport containment.
+Use the normal `finalize` path for the delivered HTML. If its browser gate reports
+`viewer/viewport-overflow`, read that viewport's `evidence.pageComposition` and
+`supportedFixes`. The measured CSS-pixel fields are `bodyPaddingPx`, `headerPx`,
+`diagramChromePx`, `svgPx`, and `cardsPx`; `viewBoxHeight` remains in SVG units.
+Compare `scrollHeight` with `innerHeight` to find the excess. These measurements
+describe the gate's first-screen budget; bottom-rail reading material is excluded
+from it. Follow the canonical [automated browser evidence](delivery-contract.md#automated-browser-evidence)
+contract: `verticalScrollAccepted: true` with
+`overflowDisposition: "readable-vertical-scroll"` is an accepted readable page,
+not an overflow to eliminate. Horizontal overflow and clipping still fail.
+
+#### Worked budget example
+
+Consider this illustrative overflow receipt at 1440×900, with the Reader already
+at its minimum width. These numbers are example measurements, not authoring
+constants:
+
+| Page contribution | CSS pixels |
+| --- | ---: |
+| Body padding | 12 |
+| Header | 100 |
+| Diagram chrome | 76 |
+| SVG | 800 |
+| Stacked cards | 212 |
+| Total measured height | 1200 |
+
+The page exceeds the viewport by `1200 − 900 = 300px`. The cards occupy only
+212px, so even removing their entire row could not solve this overflow. With
+the other contributions and reading width held fixed, the SVG would have
+`900 − 12 − 100 − 76 − 212 = 500px` available. If its viewBox height is 1000,
+the corresponding height budget is `1000 × 500 / 800 = 625` SVG units.
+
+That is a target for reflowing real content, not permission to crop the viewBox.
+Inspect the measured contributions first: shorten only redundant title/card
+wording, then tighten empty rows and vertical gaps while preserving nodes,
+relationships, labels, and source facts. If fixed canvas dimensions are not
+required, consider the mode's documented automatic canvas behavior. Merely
+widening a canvas can make projected text smaller; shrinking typography, hiding
+overflow, or adding an internal scroller is not a fit repair. Recheck route
+clearance and readability after any geometry change, then rerun `finalize` at
+its checked viewports using the [candidate repair](delivery-contract.md#failed-finalize-and-candidate-repair)
+path. Card rewrapping and Reader width changes require a fresh measurement.
+
 ### Repair evidence
 
 For architecture, `validate architecture <input.json> --layout-json` exposes the
