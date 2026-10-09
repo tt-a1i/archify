@@ -261,9 +261,10 @@ aspect ratio, or card-count limit that guarantees a fit.
 
 A passing standalone `validate` does not establish browser viewport containment.
 Use the normal `finalize` path for the delivered HTML. If its browser gate reports
-`viewer/viewport-overflow`, read that viewport's `evidence.pageComposition` and
-`supportedFixes`. The measured CSS-pixel fields are `bodyPaddingPx`, `headerPx`,
-`diagramChromePx`, `svgPx`, and `cardsPx`; `viewBoxHeight` remains in SVG units.
+`viewer/viewport-overflow`, read that viewport's `supportedFixes`. When the report
+includes `evidence.pageComposition`, its measured CSS-pixel fields are
+`bodyPaddingPx`, `headerPx`, `diagramChromePx`, `svgPx`, and `cardsPx`;
+`viewBoxHeight` remains in SVG units.
 Compare `scrollHeight` with `innerHeight` to find the excess. These measurements
 describe the gate's first-screen budget; bottom-rail reading material is excluded
 from it. Follow the canonical [automated browser evidence](delivery-contract.md#automated-browser-evidence)
