@@ -78,7 +78,8 @@ function assertDiagnostic(receipt, code) {
 }
 
 test('core smoke: public CLI diagrams, compatibility and delivery safety', async (t) => {
-  const workspace = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'archify-core-')));
+  // Resolve Windows 8.3 temp aliases using the same native path semantics as delivery.
+  const workspace = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'archify-core-')));
   t.after(() => fs.rmSync(workspace, { recursive: true, force: true }));
   const runtimeTmp = path.join(workspace, 'runtime-temp');
   fs.mkdirSync(runtimeTmp);
