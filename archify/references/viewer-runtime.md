@@ -16,7 +16,7 @@ Read this only when the user asks for a reader-facing capability. Ordinary gener
 
 ## Motion and presentation
 
-`meta.animation: "trace"` enables a finite reader-controlled Live/Still trace. Static is the default. Still, reduced motion, page hiding, print, and canonical export preserve complete static meaning. Presentation Stage changes viewer chrome and framing, never authored geometry. This is not a mobile product feature; narrow layouts get containment only.
+Every rendered diagram enables reader-controlled Live/Still motion by default. In Live, connection flow repeats on a separate Viewer overlay while the original line styles and arrowheads remain intact. Still stops the flow; resuming Live starts it again. Semantic exploration temporarily owns the motion budget, and continuous flow resumes when that action releases it. Diagrams without connections retain their bounded node entrance rather than inventing a flow. Omit `meta.animation`; historical `"trace"` and `"none"` values remain accepted for input compatibility and do not change this default. Reduced motion, page hiding, print, and canonical export preserve complete static meaning. Presentation Stage changes viewer chrome and framing, never authored geometry. This is not a mobile product feature; narrow layouts get containment only.
 
 ## Canonical exports
 

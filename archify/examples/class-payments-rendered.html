@@ -599,7 +599,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--frontend-stroke);
     }
 
-    /* The reader owns only the outer scale. Long sequences and waterfall rows
+    /* The reader owns only the outer scale. Compact automatic sequences fit at
+       their authored text size or larger. Long sequences and waterfall rows
        favor reading width and page scroll; other diagrams keep height fitting.
        Small automatic canvases retain a modest scale inside a usable shell.
        Every strategy preserves the authored SVG/viewBox and semantic geometry. */
@@ -614,8 +615,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       align-items: center;
     }
     html[data-reader-area="true"] .diagram-container > svg { flex-shrink: 0; }
-    /* The original SVG legend can use the spare outer reader canvas while the
-       capped diagram stays centered. The container still clips all outer paint. */
+    /* The original SVG legend can use the outer corner while the capped or fitted
+       diagram stays centered. The container still clips all outer paint. */
     .diagram-container:has([data-reader-legend-corner]) > svg { overflow: visible; }
     .diagram-container [data-reader-legend-corner] {
       transform-origin: 0 0;
@@ -825,7 +826,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
-    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-motion="running"] .diagram-container::before {
+    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
       inset: 0;
@@ -4682,69 +4683,48 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
     .c-lane           { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-dasharray: 6,6; }
 
-    /* Optional trace animation, enabled only by meta.animation = "trace".
-       The ordinary viewer performs one ambient pass and then restores the
-       authored solid/security/async line language. WebM samples the same
-       authored geometry into an explicit canvas timeline. */
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="edge"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    /* Live flows continuously over authored paths; original line language and
+       markers remain static. Node entry is bounded to one pass per document. */
+    .ambient-edge-flow {
+      fill: none;
+      stroke: var(--arrow-emphasis);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-dasharray: 6 30;
+      opacity: 0.58;
+      pointer-events: none;
+      display: none;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) .ambient-edge-flow {
+      display: inline;
+      animation: archify-ambient-flow var(--ambient-flow-duration, 2.4s) linear infinite;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="node"] {
+    /* Collapsed tree descendants hide their adjacent decorative flow too. */
+    [data-tree-hidden] + .ambient-edge-flow { display: none !important; animation: none !important; }
+    svg[data-preset="signal-flow"] { --ambient-flow-duration: 2s; }
+    svg[data-preset="blueprint"] .ambient-edge-flow { stroke-linecap: square; }
+    svg[data-preset="editorial"] .ambient-edge-flow { opacity: 0.45; }
+    html[data-ambient-entry="running"] svg[data-animation="trace"] [data-animate="node"] {
       transform-box: fill-box;
       transform-origin: center;
       animation: archify-node-pulse 3.6s ease-in-out 1;
       animation-delay: calc(var(--step, 0) * 160ms);
     }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: round;
-      filter: drop-shadow(0 0 3px var(--arrow-emphasis));
-      animation-duration: 1.75s;
-    }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 1.75s; }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] {
-      animation-duration: 3.1s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: square;
-      filter: none;
-      animation-duration: 2.15s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.15s; }
+    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] { animation-duration: 3.1s; }
     svg[data-preset="blueprint"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-blueprint-node-pulse;
       animation-duration: 3.8s;
     }
-    svg[data-preset="editorial"][data-animation="trace"] [data-animate="edge"] {
-      filter: none;
-      animation-duration: 2.2s;
-    }
-    svg[data-preset="editorial"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.2s; }
     svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-editorial-node-pulse;
       animation-duration: 3.5s;
     }
-    /* Embedded proofs stay static so proof grids are calm instead of leaving
-       ambient trace loops on. */
-    html[data-embed="true"] svg[data-animation="trace"] [data-animate],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-animate] {
-      animation: none !important;
-      stroke-dashoffset: 0;
+    @keyframes archify-ambient-flow {
+      from { stroke-dashoffset: 36; }
+      to { stroke-dashoffset: 0; }
     }
-    html[data-embed="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: none !important;
-      stroke-dashoffset: 0;
-    }
-    @keyframes archify-edge-flow {
-      0% { stroke-dasharray: 10 8; stroke-dashoffset: 54; opacity: 0.42; }
-      88% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      99.9% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      100% { stroke-dashoffset: 0; opacity: 1; }
+    @media print {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
     }
     @keyframes archify-node-pulse {
       0%, 72%, 100% { filter: none; stroke-width: 1.5; }
@@ -4811,6 +4791,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       50% { opacity: 0.48; transform: scale(0.78); }
     }
     @media (prefers-reduced-motion: reduce) {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
       html[data-preset="signal-flow"] .diagram-container::before {
         animation: none !important;
       }
@@ -4973,7 +4954,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
-      <svg viewBox="0 0 972 430" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase" data-class-ui="" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
+      <svg viewBox="0 0 972 430" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-class-ui="" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
         <title id="archify-diagram-title">Payment module types</title>
         <desc id="archify-diagram-description">OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.</desc>
         <!-- Definitions -->
@@ -5031,16 +5012,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Relationships (before types for correct z-order) -->
-        <path data-edge-from="order_service" data-edge-to="payment_gateway" data-edge-label="pays through" data-edge-key="0" data-edge-id="uses_gateway" data-class-relationship="dependency" data-composition-points="274,97;570.5,97" d="M 274 97 L 570.5 97" class="a-default cl-relationship cl-dashed" stroke-width="1.5" marker-end="url(#cl-open)"/>
-        <path data-edge-from="order_service" data-edge-to="order" data-edge-label="creates" data-edge-key="1" data-edge-id="creates_order" data-class-relationship="dependency" data-composition-points="153,154;153,238" d="M 153 154 L 153 238" class="a-default cl-relationship cl-dashed" stroke-width="1.5" marker-end="url(#cl-open)"/>
-        <path data-edge-from="card_gateway" data-edge-to="payment_gateway" data-edge-key="2" data-edge-id="card_implements" data-class-relationship="realization" data-class-bus="payment_gateway" data-motion-path="M 506.5 273 L 506.5 212 Q 506.5 204 514.5 204 L 667 204 Q 675 204 675 196 L 675 134" data-composition-points="506.5,273;506.5,204;675,204;675,134" d="M 675 134 L 675 196 Q 675 204 667 204 L 514.5 204 Q 506.5 204 506.5 212 L 506.5 273" class="a-default cl-relationship cl-dashed" stroke-width="1.5" marker-start="url(#cl-triangle-start)"/>
-        <path data-edge-from="wallet_gateway" data-edge-to="payment_gateway" data-edge-key="3" data-edge-id="wallet_implements" data-class-relationship="realization" data-class-bus="payment_gateway" data-motion-path="M 843.5 273 L 843.5 212 Q 843.5 204 835.5 204 L 683 204 Q 675 204 675 196 L 675 134" data-composition-points="843.5,273;843.5,204;675,204;675,134" d="M 675 134 L 675 196 Q 675 204 683 204 L 835.5 204 Q 843.5 204 843.5 212 L 843.5 273" class="a-default cl-relationship cl-dashed" stroke-width="1.5" marker-start="url(#cl-triangle-start)"/>
+        <path data-edge-from="order_service" data-edge-to="payment_gateway" data-edge-label="pays through" data-edge-key="0" data-edge-id="uses_gateway" data-class-relationship="dependency" data-composition-points="274,97;570.5,97" d="M 274 97 L 570.5 97" class="a-default cl-relationship cl-dashed" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#cl-open)"/>
+        <path data-edge-from="order_service" data-edge-to="order" data-edge-label="creates" data-edge-key="1" data-edge-id="creates_order" data-class-relationship="dependency" data-composition-points="153,154;153,238" d="M 153 154 L 153 238" class="a-default cl-relationship cl-dashed" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#cl-open)"/>
+        <path data-edge-from="card_gateway" data-edge-to="payment_gateway" data-edge-key="2" data-edge-id="card_implements" data-class-relationship="realization" data-class-bus="payment_gateway" data-motion-path="M 506.5 273 L 506.5 212 Q 506.5 204 514.5 204 L 667 204 Q 675 204 675 196 L 675 134" data-composition-points="506.5,273;506.5,204;675,204;675,134" d="M 675 134 L 675 196 Q 675 204 667 204 L 514.5 204 Q 506.5 204 506.5 212 L 506.5 273" class="a-default cl-relationship cl-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-start="url(#cl-triangle-start)"/>
+        <path data-edge-from="wallet_gateway" data-edge-to="payment_gateway" data-edge-key="3" data-edge-id="wallet_implements" data-class-relationship="realization" data-class-bus="payment_gateway" data-motion-path="M 843.5 273 L 843.5 212 Q 843.5 204 835.5 204 L 683 204 Q 675 204 675 196 L 675 134" data-composition-points="843.5,273;843.5,204;675,204;675,134" d="M 675 134 L 675 196 Q 675 204 683 204 L 835.5 204 Q 843.5 204 843.5 212 L 843.5 273" class="a-default cl-relationship cl-dashed" data-animate="edge" style="--step:3" stroke-width="1.5" marker-start="url(#cl-triangle-start)"/>
 
         <!-- Types -->
         <g id="node-order_service" data-node-id="order_service" data-node-label="OrderService" tabindex="0" role="button" aria-label="Focus OrderService, Creates orders and starts payment, Class" aria-pressed="false" data-node-kind="class" data-node-sublabel="Creates orders and starts payment" data-node-context="Class" data-class-kind="class">
           <title>OrderService · Creates orders and starts payment · Class</title>
           <rect x="32" y="40" width="242" height="114" rx="6" class="c-mask"/>
-          <rect x="32" y="40" width="242" height="114" rx="6" class="c-backend cl-type" stroke-width="1.5"/>
+          <rect x="32" y="40" width="242" height="114" rx="6" class="c-backend cl-type" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <path class="cl-header c-backend" stroke="none" d="M 38 40 H 268 Q 274 40 274 46 V 74 H 32 V 46 Q 32 40 38 40 Z"/>
           <g aria-hidden="true" class="cl-badge">
             <circle cx="52" cy="57" r="8" class="c-backend" stroke-width="1.25"/>
@@ -5062,7 +5043,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-payment_gateway" data-node-id="payment_gateway" data-node-label="PaymentGateway" tabindex="0" role="button" aria-label="Focus PaymentGateway, Payment contract every channel fulfils, Interface" aria-pressed="false" data-node-kind="interface" data-node-sublabel="Payment contract every channel fulfils" data-node-context="Interface" data-class-kind="interface">
           <title>PaymentGateway · Payment contract every channel fulfils · Interface</title>
           <rect x="570.5" y="60" width="209" height="74" rx="6" class="c-mask"/>
-          <rect x="570.5" y="60" width="209" height="74" rx="6" class="c-frontend cl-type" stroke-width="1.5"/>
+          <rect x="570.5" y="60" width="209" height="74" rx="6" class="c-frontend cl-type" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <path class="cl-header c-frontend" stroke="none" d="M 576.5 60 H 773.5 Q 779.5 60 779.5 66 V 104 H 570.5 V 66 Q 570.5 60 576.5 60 Z"/>
           <g aria-hidden="true" class="cl-badge">
             <circle cx="590.5" cy="82" r="8" class="c-frontend" stroke-width="1.25"/>
@@ -5079,7 +5060,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-order" data-node-id="order" data-node-label="Order" tabindex="0" role="button" aria-label="Focus Order, Order identity, amount, and status, Class" aria-pressed="false" data-node-kind="class" data-node-sublabel="Order identity, amount, and status" data-node-context="Class" data-class-kind="class">
           <title>Order · Order identity, amount, and status · Class</title>
           <rect x="63" y="238" width="180" height="134" rx="6" class="c-mask"/>
-          <rect x="63" y="238" width="180" height="134" rx="6" class="c-backend cl-type" stroke-width="1.5"/>
+          <rect x="63" y="238" width="180" height="134" rx="6" class="c-backend cl-type" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <path class="cl-header c-backend" stroke="none" d="M 69 238 H 237 Q 243 238 243 244 V 272 H 63 V 244 Q 63 238 69 238 Z"/>
           <g aria-hidden="true" class="cl-badge">
             <circle cx="83" cy="255" r="8" class="c-backend" stroke-width="1.25"/>
@@ -5102,7 +5083,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-card_gateway" data-node-id="card_gateway" data-node-label="CardGateway" tabindex="0" role="button" aria-label="Focus CardGateway, Charges a bank card, Class" aria-pressed="false" data-node-kind="class" data-node-sublabel="Charges a bank card" data-node-context="Class" data-class-kind="class">
           <title>CardGateway · Charges a bank card · Class</title>
           <rect x="402" y="273" width="209" height="64" rx="6" class="c-mask"/>
-          <rect x="402" y="273" width="209" height="64" rx="6" class="c-backend cl-type" stroke-width="1.5"/>
+          <rect x="402" y="273" width="209" height="64" rx="6" class="c-backend cl-type" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <path class="cl-header c-backend" stroke="none" d="M 408 273 H 605 Q 611 273 611 279 V 307 H 402 V 279 Q 402 273 408 273 Z"/>
           <g aria-hidden="true" class="cl-badge">
             <circle cx="422" cy="290" r="8" class="c-backend" stroke-width="1.25"/>
@@ -5119,7 +5100,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-wallet_gateway" data-node-id="wallet_gateway" data-node-label="WalletGateway" tabindex="0" role="button" aria-label="Focus WalletGateway, Debits a stored wallet balance, Class" aria-pressed="false" data-node-kind="class" data-node-sublabel="Debits a stored wallet balance" data-node-context="Class" data-class-kind="class">
           <title>WalletGateway · Debits a stored wallet balance · Class</title>
           <rect x="739" y="273" width="209" height="64" rx="6" class="c-mask"/>
-          <rect x="739" y="273" width="209" height="64" rx="6" class="c-backend cl-type" stroke-width="1.5"/>
+          <rect x="739" y="273" width="209" height="64" rx="6" class="c-backend cl-type" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <path class="cl-header c-backend" stroke="none" d="M 745 273 H 942 Q 948 273 948 279 V 307 H 739 V 279 Q 739 273 745 273 Z"/>
           <g aria-hidden="true" class="cl-badge">
             <circle cx="759" cy="290" r="8" class="c-backend" stroke-width="1.25"/>
@@ -5379,11 +5360,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     function hasDrawableGeometry(element) {
-      if (!element) return false;
+      if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
       var geometries = /^(path|line|polyline)$/i.test(element.tagName)
         ? [element]
         : Array.prototype.slice.call(element.querySelectorAll('path, line, polyline'));
       return geometries.some(function (geometry) {
+        if (geometry.hasAttribute('data-ambient-flow-overlay')) return false;
         var source = geometry.tagName.toLowerCase() === 'path'
           ? geometry.getAttribute('d')
           : geometry.tagName.toLowerCase() === 'polyline'
@@ -5628,6 +5610,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-ambient-flow-overlay]'), function (el) {
+          el.remove();
+        });
+        // Route interaction rewrites CSS declarations through CSSOM. Normalize
+        // authored motion delays on the clone so exported bytes do not depend
+        // on whether the reader traced a route before downloading.
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (el) {
+          var step = el.style.getPropertyValue('--step');
+          if (step) el.setAttribute('style', el.style.cssText);
+        });
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
@@ -5789,7 +5781,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           !clone.hasAttribute('data-tree-any-collapsed') &&
           !clone.style.getPropertyValue('transform') &&
           !clone.style.getPropertyValue('clip-path') &&
-          clone.querySelectorAll('[data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
+          clone.querySelectorAll('[data-ambient-flow-overlay], [data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
       }
 
 
@@ -7150,38 +7142,54 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ownerToken = 0;
       var ownerCleanup = null;
       var lastEffectivePaused = null;
-      var ambientStarted = false;
-      var ambientPending = new Set();
+      var entryStarted = false;
+      var entryPending = new Set();
+      var flowCount = 0;
 
-      function detachAmbientBoundary() {
-        if (!svg) return;
-        svg.removeEventListener('animationend', onAmbientBoundary, true);
-        svg.removeEventListener('animationcancel', onAmbientBoundary, true);
+      // Runtime decoration carries geometry only. Keep each flow beside its
+      // authored edge so transforms, clipping and crossover paint order apply.
+      function createFlows() {
+        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape) {
+          var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
+          if (!d) return;
+          var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          flow.setAttribute('d', d);
+          ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
+            if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+          });
+          flow.setAttribute('class', 'ambient-edge-flow');
+          flow.setAttribute('data-ambient-flow-overlay', 'true');
+          flow.setAttribute('aria-hidden', 'true');
+          shape.parentNode.insertBefore(flow, shape.nextSibling);
+          flowCount += 1;
+        });
       }
-      function settleAmbient(reason) {
-        if (!capable) return false;
-        ambientStarted = true;
-        ambientPending.clear();
-        detachAmbientBoundary();
-        html.setAttribute('data-ambient-motion', 'settled');
-        html.setAttribute('data-ambient-settle-reason', reason || 'complete');
-        return true;
+      function settleEntry() {
+        entryPending.clear();
+        svg.removeEventListener('animationend', onEntryBoundary, true);
+        svg.removeEventListener('animationcancel', onEntryBoundary, true);
+        html.setAttribute('data-ambient-entry', 'settled');
       }
-      function onAmbientBoundary(event) {
-        if (!ambientPending.has(event.target)) return;
-        ambientPending.delete(event.target);
-        if (!ambientPending.size) settleAmbient('complete');
+      function onEntryBoundary(event) {
+        if (!entryPending.has(event.target)) return;
+        entryPending.delete(event.target);
+        if (!entryPending.size) settleEntry();
       }
-      function startAmbient() {
-        if (ambientStarted || !capable) return false;
-        ambientStarted = true;
-        ambientPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="edge"], [data-animate="node"]')));
-        if (!ambientPending.size) return settleAmbient('empty');
-        svg.addEventListener('animationend', onAmbientBoundary, true);
-        svg.addEventListener('animationcancel', onAmbientBoundary, true);
-        html.setAttribute('data-ambient-motion', 'running');
-        html.removeAttribute('data-ambient-settle-reason');
-        return true;
+      function renderAmbient(suppressed) {
+        html.setAttribute('data-ambient-motion', suppressed ? 'paused' : (flowCount ? 'running' : 'empty'));
+        if (suppressed) {
+          entryStarted = true;
+          settleEntry();
+        } else if (!entryStarted) {
+          entryStarted = true;
+          entryPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="node"]')));
+          if (!entryPending.size) settleEntry();
+          else {
+            svg.addEventListener('animationend', onEntryBoundary, true);
+            svg.addEventListener('animationcancel', onEntryBoundary, true);
+            html.setAttribute('data-ambient-entry', 'running');
+          }
+        }
       }
 
       function readStored() {
@@ -7216,11 +7224,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var systemPaused = reducedMotion();
         var paused = effectivePaused();
         html.setAttribute('data-motion', paused ? 'still' : 'live');
-        if (paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden')) {
-          settleAmbient('suppressed');
-        } else if (!ambientStarted) {
-          startAmbient();
-        }
+        renderAmbient(paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden'));
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
@@ -7325,7 +7329,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.removeAttribute('data-motion');
         html.removeAttribute('data-motion-owner');
         html.removeAttribute('data-ambient-motion');
-        html.removeAttribute('data-ambient-settle-reason');
+        html.removeAttribute('data-ambient-entry');
         return {
           capable: false,
           pause: function () { return false; },
@@ -7341,6 +7345,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
 
+      createFlows();
       html.setAttribute('data-motion-capable', 'true');
       btn.hidden = false;
       readerPaused = readStored() === 'still';
@@ -7350,6 +7355,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else if (typeof motionQuery.addListener === 'function') motionQuery.addListener(render);
       }
       document.addEventListener('visibilitychange', syncVisibility);
+      if (typeof MutationObserver !== 'undefined') {
+        var contextObserver = new MutationObserver(render);
+        contextObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-share-playback'] });
+      }
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
         ownerObserver.observe(svg, {
@@ -7978,7 +7987,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function relationshipEdgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
@@ -9227,7 +9236,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-intent-trace-overlay]'), function (overlay) {
@@ -9463,6 +9472,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var readerFit = svg && svg.getAttribute('data-reader-fit');
       var widthFirstReading = readerFit === 'width-first';
+      var automaticSequence = widthFirstReading && svg.hasAttribute('data-sequence-column-fit');
+      var readingScroll = widthFirstReading;
       var measuredHeightFit = readerFit === 'intrinsic-height' || widthFirstReading;
       var frame = 0;
       var settleFrame = 0;
@@ -9606,11 +9617,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         legend.style.removeProperty('--archify-reader-legend-transform');
       }
       // Keep the original legend in its SVG: renderer hover/focus selectors and
-      // canonical export still own that same group. Only ordinary capped
-      // reading at 25–100% borrows the spare outer canvas for its legend.
+      // canonical export still own that same group. Ordinary capped reading
+      // and fitted automatic sequences borrow the outer corner at 25–100%.
       function syncLegend() {
         var cameraScale = Number(svg && svg.getAttribute('data-view-scale')) || 1;
-        if (!legend || !eligible() || html.getAttribute('data-reader-area') !== 'true' || cameraScale > 1.001) {
+        var cornerReading = html.getAttribute('data-reader-area') === 'true' || automaticSequence && !readingScroll;
+        if (!legend || !eligible() || !cornerReading || cameraScale > 1.001) {
           clearLegend();
           return;
         }
@@ -9751,7 +9763,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ) - window.innerHeight - belowFold();
           // visual-check fails any page whose rounded-up height exceeds the
           // viewport, so even a 1px remainder must be reduced or declared.
-          if (overflow > 0 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
+          if (overflow > 0 && !readingScroll && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute('data-reader-overflow', 'reduced');
@@ -9770,17 +9782,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+        // Sequence first-screen fitting preserves source text sizes instead
+        // of shrinking to the shared hard readability floor.
         var readableWidth = viewBox && viewBox.width > 0
-          ? viewBox.width * minimumReadableScale() + chrome.diagramX
+          ? viewBox.width * (automaticSequence ? 1 : minimumReadableScale()) + chrome.diagramX
           : MIN_READER_WIDTH;
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
-        var readableMinimumWidth = measuredHeightFit && ratio < WIDE_RATIO
+        var readableMinimumWidth = automaticSequence || measuredHeightFit && ratio < WIDE_RATIO
           ? readableWidth
           : measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)
             ? Math.max(MIN_READER_WIDTH, readableWidth)
             : MIN_READER_WIDTH;
         var minWidth;
-        if (measuredHeightFit && ratio < WIDE_RATIO) {
+        if (automaticSequence) {
+          minWidth = Math.min(readableMinimumWidth, maxWidth);
+        } else if (measuredHeightFit && ratio < WIDE_RATIO) {
           minWidth = Math.min(readableMinimumWidth, viewportCap);
         } else if (measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)) {
           minWidth = Math.min(readableMinimumWidth, maxWidth);
@@ -9816,10 +9832,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
-        // Long sequences and waterfall rows use the available horizontal room;
-        // ordinary page scrolling keeps their text and row spacing readable.
-        // Other diagram families retain the existing height-fit strategy.
-        if (widthFirstReading) desiredWidth = maxWidth;
+        // Compact automatic sequences fit the first screen without shrinking
+        // their authored text. Longer sequences retain reading width and page
+        // scroll; other width-first families keep their existing strategy.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+          readableWidth + (docked ? railExtra : 0);
+        readingScroll = widthFirstReading && !sequenceFits;
+        if (readingScroll) desiredWidth = maxWidth;
         // Only a binding enlargement cap needs a separate normal reader area.
         // Uncapped diagrams keep their existing natural height and Chrome fit.
         automaticAreaHeight = availableSvgHeight + chrome.diagramY;
@@ -12114,7 +12133,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-route-probe-overlay]'), function (overlay) {
@@ -13108,7 +13127,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function edgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function legendSourceBounds(entry) {
         var bounds = null;

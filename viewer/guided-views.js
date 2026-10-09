@@ -1089,7 +1089,7 @@
 
       function storyGeometry(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
 
       function renderStoryTrail(view) {

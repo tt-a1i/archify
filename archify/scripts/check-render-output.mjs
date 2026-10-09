@@ -949,7 +949,7 @@ function collectSequenceColumnSpace({ svgAttrs, fragment, nodeRects, arrows }) {
   const columnFit = svgAttrs['data-sequence-column-fit'];
   if (!['fixed', 'spread'].includes(columnFit)) return null;
   const evidence = { measured: false, reviewSuggested: false, columnFit };
-  if (svgAttrs.transform || /<tspan\b/i.test(fragment)) return evidence;
+  if (svgAttrs.transform) return evidence;
   // Brand badges stay inside their participant box. Ignore only that subtree's
   // transforms, including the preset path or nested fallback icon's scale.
   const brandGroups = [];
@@ -985,9 +985,19 @@ function collectSequenceColumnSpace({ svgAttrs, fragment, nodeRects, arrows }) {
     rightEdges.push(numberAttr(attrs, 'x') + numberAttr(attrs, 'width'));
   }
   for (const match of fragment.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/gi)) {
-    const box = textBox(parseAttrs(match[1]), stripTags(match[2]).trim());
-    if (!box) return evidence;
-    rightEdges.push(box.x2);
+    const attrs = parseAttrs(match[1]);
+    // A wrapped note places each line in a <tspan> with its own x. Any other
+    // line offset is not measured here.
+    const lines = /<tspan\b/i.test(match[2])
+      ? [...match[2].matchAll(/<tspan\b([^>]*)>([\s\S]*?)<\/tspan>/gi)]
+        .map((line) => ({ attrs: { ...attrs, ...parseAttrs(line[1]) }, text: stripTags(line[2]).trim() }))
+      : [{ attrs, text: stripTags(match[2]).trim() }];
+    if (!lines.length || lines.some((line) => line.attrs.dx !== undefined)) return evidence;
+    for (const line of lines) {
+      const box = textBox(line.attrs, line.text);
+      if (!box) return evidence;
+      rightEdges.push(box.x2);
+    }
   }
   if (!rightEdges.every(Number.isFinite)) return evidence;
   const occupiedRight = Math.max(...rightEdges);

@@ -10,7 +10,7 @@ import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
-test('Motion Governor preserves mode, ownership, ambient completion and real callers', {
+test('Motion Governor preserves mode, ownership, continuous Live flow and real callers', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser motion checks.',
 }, async (t) => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-motion-'));
@@ -24,20 +24,22 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   const cases = {
     architecture: 'web-app.architecture.json', workflow: 'agent-tool-call.workflow.json',
     sequence: 'cache-miss-request.sequence.json', dataflow: 'product-analytics.dataflow.json',
-    lifecycle: 'agent-run.lifecycle.json',
+    lifecycle: 'agent-run.lifecycle.json', erd: 'orders.erd.json', class: 'payments.class.json',
+    tree: 'payment-platform.tree.json', timeline: 'payment-incident.timeline.json',
+    waterfall: 'checkout-request.waterfall.json',
   };
   const files = {};
   for (const [mode, example] of Object.entries(cases)) {
     const doc = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', example), 'utf8'));
-    doc.meta.animation = 'trace';
+    delete doc.meta.animation;
     const input = path.join(scratch, mode + '.json');
     fs.writeFileSync(input, JSON.stringify(doc));
     files[mode] = path.join(scratch, mode + '.html');
     execFileSync(process.execPath, [path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`), input, files[mode]]);
   }
+  // Old standalone static HTML still has an inert Governor. New renders default to motion.
   files.static = path.join(scratch, 'static.html');
-  execFileSync(process.execPath, [path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'),
-    path.join(skillRoot, 'examples', cases.architecture), files.static]);
+  fs.writeFileSync(files.static, fs.readFileSync(files.architecture, 'utf8').replace(' data-animation="trace"', ''));
   const browser = new ChromeVisualBrowser(chrome);
   t.after(() => browser.close());
   const session = await browser.sessionPromise;
@@ -92,7 +94,8 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
         return readStored.call(localStorage, 'archify-motion');
       };
       window.motionNavigation = ${expectedNavigation};
-      window.motionErrors = []; window.motionEnds = []; window.motionAmbient = [];
+      window.motionErrors = []; window.motionEnds = []; window.motionIterations = []; window.motionAmbient = [];
+      addEventListener('animationiteration', e => { if (e.target.matches('.ambient-edge-flow')) motionIterations.push({trusted:e.isTrusted,name:e.animationName}); }, true);
       addEventListener('error', e => motionErrors.push(e.message));
       addEventListener('unhandledrejection', e => motionErrors.push(String(e.reason)));
       addEventListener('animationend', e => {
@@ -133,7 +136,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
       const m = Archify.motionGovernor, root = document.documentElement, btn = document.getElementById('btn-motion');
       return { capable:m.capable, mode:m.mode(), paused:m.isPaused(), owner:m.owner(),
         rootMode:root.getAttribute('data-motion'), rootOwner:root.getAttribute('data-motion-owner'),
-        ambient:root.getAttribute('data-ambient-motion'), reason:root.getAttribute('data-ambient-settle-reason'),
+        ambient:root.getAttribute('data-ambient-motion'), entry:root.getAttribute('data-ambient-entry'),
         hidden:btn.hidden, disabled:btn.disabled, pressed:btn.getAttribute('aria-pressed'),
         label:document.getElementById('motion-label').textContent, aria:btn.getAttribute('aria-label'), errors:motionErrors };
     })()`);
@@ -148,31 +151,125 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     fs.writeFileSync(path.join(evidence, name + '.png'), Buffer.from(shot.data, 'base64'));
   }
 
-  await t.test('five trace modes initialize; representative CSS animation completes once; static methods remain inert', async () => {
+  await t.test('ten modes preserve authored geometry and semantics; representative flows keep cycling and resume', async () => {
     for (const mode of Object.keys(cases)) {
       await load(mode);
       const initial = await snapshot(mode + '-initial');
-      assert.equal(initial.capable, true); assert.equal(initial.mode, 'live');
-      // All modes share the same Governor/CSS. One real completion plus the
-      // five-mode initialization contract covers this seam without five waits.
+      assert.equal(initial.capable, true); assert.equal(initial.mode, 'live'); assert.equal(initial.hidden, false);
+      const contract = await run(`(() => {
+        const svg=document.querySelector('.diagram-container > svg'), edges=Array.from(svg.querySelectorAll('path[data-animate="edge"]'));
+        const flows=Array.from(svg.querySelectorAll('[data-ambient-flow-overlay]'));
+        window.authoredEdges=edges.map(e=>e.outerHTML);
+        return {edges:edges.length, flows:flows.length, valid:flows.every(e=>e.localName==='path'&&
+          e.getAttribute('d')===(e.previousElementSibling.getAttribute('data-motion-path')||e.previousElementSibling.getAttribute('d'))&&
+          Array.from(e.attributes).every(a=>!a.name.startsWith('data-')||a.name==='data-ambient-flow-overlay')&&
+          !e.id&&!e.hasAttribute('role')&&!e.hasAttribute('tabindex')&&!e.hasAttribute('marker-end')&&getComputedStyle(e).pointerEvents==='none'),
+          originalAnimations:edges.map(e=>getComputedStyle(e).animationName),
+          reverse:edges.filter(e=>e.hasAttribute('data-motion-path')&&e.getAttribute('data-motion-path')!==e.getAttribute('d')).length,
+          security:Array.from(svg.querySelectorAll('.a-security'), e=>getComputedStyle(e).strokeDasharray)};
+      })()`);
+      if(mode==='class') assert.ok(contract.reverse>0, 'Class bus exercises reversed visual paths.');
+      assert.equal(contract.flows, contract.edges); assert.equal(contract.valid, true);
+      assert.ok(contract.originalAnimations.every(name=>name==='none'));
+      assert.ok(contract.security.every(dash=>dash==='5px, 5px'));
+      assert.equal(initial.ambient, contract.edges ? 'running' : 'empty');
+      // One actual multi-cycle observation covers shared CSS timing. Every type
+      // above separately protects its renderer-to-runtime geometry contract.
       if (mode === 'architecture') {
-        await run(`motionWait(() => document.documentElement.getAttribute('data-ambient-motion') === 'settled')`);
-        const state = await snapshot(mode + '-settled');
-        assert.equal(state.capable, true); assert.equal(state.mode, 'live'); assert.equal(state.reason, 'complete');
-        const ambient = await run(`({ running:motionAmbient.some(r => r.after === 'running' || r.before === 'running'),
-          ended:motionEnds.some(e => e.trusted), animations:Array.from(document.querySelectorAll('[data-animate]'), e => getComputedStyle(e).animationName),
-          security:Array.from(document.querySelectorAll('.a-security'), e => getComputedStyle(e).strokeDasharray) })`);
-        assert.equal(ambient.running, true); assert.equal(ambient.ended, true);
-        assert.ok(ambient.animations.every(name => name === 'none'));
-        assert.ok(ambient.security.every(dash => dash === '5px, 5px'));
+        await run(`motionWait(() => motionIterations.filter(e=>e.trusted).length >= 1)`);
+        await run(`motionWait(() => document.querySelector('.ambient-edge-flow').getAnimations()[0].currentTime > 4900)`);
+        await run(`motionWait(() => document.documentElement.getAttribute('data-ambient-entry') === 'settled')`);
+        const cycle = await run(`({iterations:motionIterations.filter(e=>e.trusted).length,
+          active:document.querySelector('.ambient-edge-flow').getAnimations().some(a=>a.playState==='running'),
+          nodes:Array.from(document.querySelectorAll('[data-animate="node"]'), e=>e.getAnimations().length)})`);
+        const movement = await run(`(async () => {
+          const flow=document.querySelector('.ambient-edge-flow'), before=parseFloat(getComputedStyle(flow).strokeDashoffset), start=performance.now();
+          await motionWait(()=>performance.now()-start>100);
+          return {before,after:parseFloat(getComputedStyle(flow).strokeDashoffset)};
+        })()`);
+        const forward=(movement.before-movement.after+36)%36;
+        assert.ok(forward>0&&forward<12, JSON.stringify(movement));
+        assert.ok(cycle.iterations >= 2); assert.equal(cycle.active, true); assert.ok(cycle.nodes.every(n=>n===0));
       }
-      await run(`Archify.motionGovernor.pause(); Archify.motionGovernor.resume();`);
-      assert.equal((await snapshot(mode + '-resumed')).ambient, 'settled');
+      if(mode==='tree') {
+        const branch = await run(`(() => {
+          Archify.treeBranches.collapse('platform');
+          const hidden=Array.from(document.querySelectorAll('path[data-animate="edge"][data-tree-hidden]'));
+          const stopped=hidden.every(e=>getComputedStyle(e.nextElementSibling).display==='none'&&e.nextElementSibling.getAnimations().length===0);
+          Archify.treeBranches.expand('platform');
+          return {count:hidden.length,stopped,resumed:hidden.every(e=>getComputedStyle(e.nextElementSibling).display!=='none')};
+        })()`);
+        assert.ok(branch.count>0); assert.equal(branch.stopped,true); assert.equal(branch.resumed,true);
+      }
+      await run(`Archify.motionGovernor.pause()`);
+      assert.equal(await run(`Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>getComputedStyle(e).display==='none'&&e.getAnimations().length===0)`), true);
+      await run(`Archify.motionGovernor.resume()`);
+      assert.equal((await snapshot(mode + '-resumed')).ambient, contract.edges ? 'running' : 'empty');
+      assert.equal(await run(`Array.from(document.querySelectorAll('path[data-animate="edge"]'),e=>e.outerHTML).every((s,i)=>s===authoredEdges[i])`), true);
+      if (contract.edges) {
+        assert.equal(await run(`document.querySelector('.ambient-edge-flow').getAnimations().some(a=>a.playState==='running')`), true);
+      }
     }
     await load('static');
     const inert = await run(`(() => { const m=Archify.motionGovernor; return [m.capable,m.pause(),m.resume(),m.toggle(),m.setMode('live'),m.mode(),m.claim('story'),m.release(1),m.suspend('test')(),m.isPaused(),m.owner()]; })()`);
     assert.deepEqual(inert, [false,false,false,false,'still','still',0,false,false,true,'']);
     assert.equal((await snapshot('static')).hidden, true);
+    assert.equal(await run(`document.querySelectorAll('[data-ambient-flow-overlay]').length`), 0);
+  });
+
+  await t.test('grouped edges keep runtime flows out of semantic geometry copies', async () => {
+    await load('workflow', { fixture: `
+      // Preserve authored path geometry but put relationship metadata on a
+      // containing group before Viewer startup, exercising descendant copies.
+      const query=Document.prototype.querySelector;
+      let wrapped=false;
+      Document.prototype.querySelector=function(selector) {
+        const found=query.call(this,selector);
+        if(!wrapped&&found&&found.localName==='svg'&&found.closest('.diagram-container')) {
+          const shape=found.querySelector('path[data-edge-from][data-edge-to]');
+          if(shape) {
+            wrapped=true;
+            const wrapper=document.createElementNS('http://www.w3.org/2000/svg','g');
+            Array.from(shape.attributes).filter(a=>a.name.startsWith('data-edge-')).forEach(a=>{wrapper.setAttribute(a.name,a.value);shape.removeAttribute(a.name);});
+            wrapper.setAttribute('data-motion-test-group','true');
+            shape.parentNode.insertBefore(wrapper,shape); wrapper.appendChild(shape);
+          }
+        }
+        return found;
+      };
+    ` });
+    const copies = await run(`(async () => {
+      const svg=document.querySelector('.diagram-container > svg'), edge=svg.querySelector('[data-motion-test-group]'),
+        from=edge.getAttribute('data-edge-from'), to=edge.getAttribute('data-edge-to'), initial=svg.querySelectorAll('[data-ambient-flow-overlay]').length;
+      const rows=[];
+      function record(name,selector) { rows.push({name,geometry:svg.querySelectorAll(selector).length,flows:svg.querySelectorAll('[data-ambient-flow-overlay]').length}); }
+      Archify.intentTrace.show(from); record('intent','.intent-trace-flow'); Archify.intentTrace.clear();
+      Archify.routeProbe.begin({source:from}); Archify.routeProbe.choose(to); record('route','.route-probe-flow'); Archify.routeProbe.clear({updateUrl:false});
+      const kind=svg.querySelector('[data-node-kind]').getAttribute('data-node-kind');
+      Archify.semanticLens.select(kind); record('lens','.semantic-lens-flow'); Archify.semanticLens.clear({updateUrl:false});
+      Archify.focus.inspectRelationship(edge.getAttribute('data-edge-key'),{updateUrl:false}); record('relationship','.relationship-flow-pulse'); Archify.focus.clear({updateUrl:false});
+      Archify.routeProbe.begin({source:from}); Archify.routeProbe.choose(to);
+      const originalSnapshot=Archify.routeProbe.exportSnapshot(), authored=edge.querySelector('path[data-animate="edge"]'), flow=edge.querySelector('[data-ambient-flow-overlay]'), originalPath=authored.getAttribute('d');
+      let emptyRejected,exportError;
+      try {
+        authored.setAttribute('d','');
+        emptyRejected=Archify.routeProbe.exportSnapshot()===null;
+        try { await Archify.exportMenu.shareCard({variant:'route'}); }
+        catch(error) { exportError=String(error.message||error); }
+      } finally { authored.setAttribute('d',originalPath); }
+      const restoredSnapshot=Archify.routeProbe.exportSnapshot();
+      Archify.routeProbe.clear({updateUrl:false});
+      return {initial,rows,grouped:edge.localName==='g'&&flow!==null,
+        originalValid:originalSnapshot!==null,emptyRejected,exportError,
+        decorationStillDrawable:flow.getTotalLength()>0,directDecorationRejected:!hasDrawableGeometry(flow),
+        restored:restoredSnapshot!==null&&JSON.stringify(restoredSnapshot)===JSON.stringify(originalSnapshot)};
+    })()`);
+    assert.equal(copies.grouped,true); assert.ok(copies.initial>0);
+    assert.equal(copies.originalValid,true); assert.equal(copies.decorationStillDrawable,true);
+    assert.equal(copies.directDecorationRejected,true); assert.equal(copies.emptyRejected,true);
+    assert.match(copies.exportError,/Trace a route before exporting a Route Share Card/);
+    assert.equal(copies.restored,true);
+    for(const row of copies.rows) { assert.ok(row.geometry>0,JSON.stringify(row)); assert.equal(row.flows,copies.initial,row.name); }
   });
 
   await t.test('stored user intent remains distinct from reduced motion and suspension', async () => {
@@ -256,19 +353,14 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     await snapshot('visibility-key-fixture');
   });
 
-  await t.test('ambient cancellation, empty targets and optional platform interfaces keep their fallback', async () => {
+  await t.test('node entry cancellation and optional platform interfaces keep their fallback', async () => {
     await load();
     const cancelled = await run(`(() => {
       const root=document.documentElement, svg=document.querySelector('.diagram-container > svg');
-      const before=root.getAttribute('data-ambient-motion');
-      svg.dispatchEvent(new Event('animationcancel',{bubbles:true}));
-      const ignored=root.getAttribute('data-ambient-motion');
-      svg.querySelectorAll('[data-animate="edge"], [data-animate="node"]').forEach(e=>e.dispatchEvent(new Event('animationcancel',{bubbles:true})));
-      return {before,ignored,after:root.getAttribute('data-ambient-motion'),reason:root.getAttribute('data-ambient-settle-reason')};
+      svg.querySelectorAll('[data-animate="node"]').forEach(e=>e.dispatchEvent(new Event('animationcancel',{bubbles:true})));
+      return {ambient:root.getAttribute('data-ambient-motion'),entry:root.getAttribute('data-ambient-entry')};
     })()`);
-    assert.deepEqual(cancelled, {before:'running',ignored:'running',after:'settled',reason:'complete'});
-    await load('architecture', { fixture: `const query = Element.prototype.querySelectorAll; Element.prototype.querySelectorAll = function (s) { return s === '[data-animate="edge"], [data-animate="node"]' ? [] : query.call(this,s); };` });
-    assert.equal((await snapshot('empty-target-fixture')).reason, 'empty');
+    assert.deepEqual(cancelled, {ambient:'running',entry:'settled'});
     for (const [name, fixture] of [
       ['no-media', 'window.matchMedia = undefined;'],
       ['legacy-media', `const nativeMatch=window.matchMedia.bind(window); window.matchMedia=q=>{const m=nativeMatch(q); m.addEventListener=undefined; return m;};`],
@@ -285,12 +377,99 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     }
     for (const query of ['&embed=1']) {
       await load('architecture', { query });
-      // Share playback sets its root flag after Governor initialization.
-      await run(`motionWait(() => document.documentElement.getAttribute('data-ambient-settle-reason') === 'suppressed')`);
-      assert.equal((await snapshot('suppressed-' + query)).ambient, 'settled');
+      assert.equal((await snapshot('suppressed-' + query)).ambient, 'paused');
+      assert.equal(await run(`Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>e.getAnimations().length===0)`), true);
     }
     await load('architecture', { fixture: `Object.defineProperty(document,'hidden',{configurable:true,value:true});` });
     assert.equal((await snapshot('initial-hidden-fixture')).mode, 'still');
+  });
+
+  await t.test('guards hide Live immediately and automatically restore it without growing the SVG', async () => {
+    await load();
+    const guards = await run(`(async () => {
+      const m=Archify.motionGovernor, root=document.documentElement, count=document.querySelectorAll('.ambient-edge-flow').length;
+      const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const visible=()=>Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>getComputedStyle(e).display!=='none'&&e.getAnimations().some(a=>a.playState==='running'));
+      const hidden=()=>Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>getComputedStyle(e).display==='none'&&e.getAnimations().length===0);
+      const states=[];
+      for(const attr of ['data-embed','data-share-playback']) {
+        root.setAttribute(attr,'true'); await frame(); states.push(hidden());
+        root.removeAttribute(attr); await frame(); states.push(visible());
+      }
+      const token=m.claim('test'); states.push(hidden()); m.release(token); states.push(visible());
+      Object.defineProperty(document,'hidden',{configurable:true,value:true}); document.dispatchEvent(new Event('visibilitychange')); states.push(hidden());
+      Object.defineProperty(document,'hidden',{configurable:true,value:false}); document.dispatchEvent(new Event('visibilitychange')); states.push(visible()); delete document.hidden;
+      return {states,count:document.querySelectorAll('.ambient-edge-flow').length,initial:count};
+    })()`);
+    assert.ok(guards.states.every(Boolean), JSON.stringify(guards)); assert.equal(guards.count, guards.initial);
+    await media(true); await run(`motionWait(()=>document.getElementById('btn-motion').disabled)`);
+    assert.equal(await run(`document.querySelector('.ambient-edge-flow').getAnimations().length`), 0);
+    await media(false); await run(`motionWait(()=>document.querySelector('.ambient-edge-flow').getAnimations().length>0)`);
+    await send('Emulation.setEmulatedMedia', {media:'print'});
+    assert.equal(await run(`Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>getComputedStyle(e).display==='none'&&e.getAnimations().length===0)`), true);
+    assert.equal((await snapshot('print-css')).mode, 'live');
+    await media(false);
+    await run(`motionWait(()=>document.querySelector('.ambient-edge-flow').getAnimations().some(a=>a.playState==='running'))`);
+    assert.equal((await snapshot('screen-css-return')).mode, 'live');
+    assert.equal(await run(`document.querySelectorAll('.ambient-edge-flow').length`), guards.initial);
+  });
+
+  await t.test('printing keeps Governor Live and preserves the existing Route print policy', async () => {
+    await load();
+    assert.equal(await run(`(() => {
+      Archify.routeProbe.begin({source:'users'}); Archify.routeProbe.choose('db');
+      window.printPauses=[]; window.printPauseOriginal=Archify.routeProbe.pauseJourney;
+      Archify.routeProbe.pauseJourney=function(options){printPauses.push(options);return printPauseOriginal(options);};
+      return Archify.routeProbe.playJourney();
+    })()`), true);
+    await send('Emulation.setEmulatedMedia', {media:'print'});
+    const printing=await run(`({playing:Archify.routeProbe.isJourneyPlaying(),mode:Archify.motionGovernor.mode(),owner:Archify.motionGovernor.owner(),
+      pausedCalls:printPauses,flowHidden:Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>getComputedStyle(e).display==='none'&&e.getAnimations().length===0)})`);
+    assert.deepEqual(printing,{playing:true,mode:'live',owner:'route',pausedCalls:[],flowHidden:true});
+    // Route already pauses itself for print through its private handler. The
+    // Governor must neither add a hidden-page pause nor change reader intent.
+    const beforePrint=await run(`(() => {
+      window.dispatchEvent(new Event('beforeprint'));
+      return {playing:Archify.routeProbe.isJourneyPlaying(),mode:Archify.motionGovernor.mode(),pausedCalls:printPauses};
+    })()`);
+    assert.deepEqual(beforePrint,{playing:false,mode:'live',pausedCalls:[]});
+    await media(false);
+    const returned=await run(`(() => {
+      window.dispatchEvent(new Event('afterprint'));
+      const state={playing:Archify.routeProbe.isJourneyPlaying(),mode:Archify.motionGovernor.mode(),owner:Archify.motionGovernor.owner(),pausedCalls:printPauses,
+        yielding:Array.from(document.querySelectorAll('.ambient-edge-flow')).every(e=>e.getAnimations().length===0)};
+      Archify.routeProbe.pauseJourney=printPauseOriginal; Archify.routeProbe.clear({updateUrl:false});
+      return state;
+    })()`);
+    assert.deepEqual(returned,{playing:false,mode:'live',owner:'route',pausedCalls:[],yielding:true});
+    await run(`motionWait(()=>document.querySelector('.ambient-edge-flow').getAnimations().some(a=>a.playState==='running'))`);
+  });
+
+  await t.test('canonical SVG and PNG bytes are identical in Live, Still and resumed Live', async () => {
+    await load();
+    const exports = await run(`(async () => {
+      const m=Archify.motionGovernor, original=URL.createObjectURL;
+      let latest; URL.createObjectURL=function(blob){latest=blob;return original.call(URL,blob);};
+      const values=[];
+      try {
+        for (const state of ['live','still','live']) {
+          m.setMode(state); const formats={};
+          for(const format of ['svg','png']) {
+            await Archify.exportMenu.run(format);
+            if(!latest) throw new Error('Missing export blob');
+            const bytes=await latest.arrayBuffer(), digest=await crypto.subtle.digest('SHA-256',bytes);
+            formats[format]=Array.from(new Uint8Array(digest)).join(',');
+            if(format==='svg') {
+              const text=await latest.text();
+              if(text.includes('data-ambient-flow-overlay')) throw new Error('Live decoration escaped into export');
+            }
+          }
+          values.push(formats);
+        }
+      } finally { URL.createObjectURL=original; }
+      return values;
+    })()`);
+    assert.deepEqual(exports[1], exports[0]); assert.deepEqual(exports[2], exports[0]);
   });
 
   await t.test('Motion pauses actual Route without discarding elapsed dwell', async () => {
@@ -322,7 +501,7 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
   await t.test('dark and light modes expose the same controls and computed Still state', async () => {
     for (const theme of ['dark', 'light']) {
       await load('architecture', { theme });
-      await run(`motionWait(() => document.documentElement.getAttribute('data-ambient-motion') === 'settled')`);
+      assert.equal((await snapshot('running-' + theme)).ambient, 'running');
       const live = await snapshot('live-' + theme); assert.equal(live.pressed, 'true');
       await screenshot('live-' + theme);
       await run(`document.getElementById('btn-motion').click()`);

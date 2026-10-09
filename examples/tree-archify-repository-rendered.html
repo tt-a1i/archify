@@ -599,7 +599,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--frontend-stroke);
     }
 
-    /* The reader owns only the outer scale. Long sequences and waterfall rows
+    /* The reader owns only the outer scale. Compact automatic sequences fit at
+       their authored text size or larger. Long sequences and waterfall rows
        favor reading width and page scroll; other diagrams keep height fitting.
        Small automatic canvases retain a modest scale inside a usable shell.
        Every strategy preserves the authored SVG/viewBox and semantic geometry. */
@@ -614,8 +615,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       align-items: center;
     }
     html[data-reader-area="true"] .diagram-container > svg { flex-shrink: 0; }
-    /* The original SVG legend can use the spare outer reader canvas while the
-       capped diagram stays centered. The container still clips all outer paint. */
+    /* The original SVG legend can use the outer corner while the capped or fitted
+       diagram stays centered. The container still clips all outer paint. */
     .diagram-container:has([data-reader-legend-corner]) > svg { overflow: visible; }
     .diagram-container [data-reader-legend-corner] {
       transform-origin: 0 0;
@@ -825,7 +826,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
-    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-motion="running"] .diagram-container::before {
+    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
       inset: 0;
@@ -4682,69 +4683,48 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
     .c-lane           { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-dasharray: 6,6; }
 
-    /* Optional trace animation, enabled only by meta.animation = "trace".
-       The ordinary viewer performs one ambient pass and then restores the
-       authored solid/security/async line language. WebM samples the same
-       authored geometry into an explicit canvas timeline. */
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="edge"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    /* Live flows continuously over authored paths; original line language and
+       markers remain static. Node entry is bounded to one pass per document. */
+    .ambient-edge-flow {
+      fill: none;
+      stroke: var(--arrow-emphasis);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-dasharray: 6 30;
+      opacity: 0.58;
+      pointer-events: none;
+      display: none;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) .ambient-edge-flow {
+      display: inline;
+      animation: archify-ambient-flow var(--ambient-flow-duration, 2.4s) linear infinite;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="node"] {
+    /* Collapsed tree descendants hide their adjacent decorative flow too. */
+    [data-tree-hidden] + .ambient-edge-flow { display: none !important; animation: none !important; }
+    svg[data-preset="signal-flow"] { --ambient-flow-duration: 2s; }
+    svg[data-preset="blueprint"] .ambient-edge-flow { stroke-linecap: square; }
+    svg[data-preset="editorial"] .ambient-edge-flow { opacity: 0.45; }
+    html[data-ambient-entry="running"] svg[data-animation="trace"] [data-animate="node"] {
       transform-box: fill-box;
       transform-origin: center;
       animation: archify-node-pulse 3.6s ease-in-out 1;
       animation-delay: calc(var(--step, 0) * 160ms);
     }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: round;
-      filter: drop-shadow(0 0 3px var(--arrow-emphasis));
-      animation-duration: 1.75s;
-    }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 1.75s; }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] {
-      animation-duration: 3.1s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: square;
-      filter: none;
-      animation-duration: 2.15s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.15s; }
+    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] { animation-duration: 3.1s; }
     svg[data-preset="blueprint"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-blueprint-node-pulse;
       animation-duration: 3.8s;
     }
-    svg[data-preset="editorial"][data-animation="trace"] [data-animate="edge"] {
-      filter: none;
-      animation-duration: 2.2s;
-    }
-    svg[data-preset="editorial"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.2s; }
     svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-editorial-node-pulse;
       animation-duration: 3.5s;
     }
-    /* Embedded proofs stay static so proof grids are calm instead of leaving
-       ambient trace loops on. */
-    html[data-embed="true"] svg[data-animation="trace"] [data-animate],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-animate] {
-      animation: none !important;
-      stroke-dashoffset: 0;
+    @keyframes archify-ambient-flow {
+      from { stroke-dashoffset: 36; }
+      to { stroke-dashoffset: 0; }
     }
-    html[data-embed="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: none !important;
-      stroke-dashoffset: 0;
-    }
-    @keyframes archify-edge-flow {
-      0% { stroke-dasharray: 10 8; stroke-dashoffset: 54; opacity: 0.42; }
-      88% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      99.9% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      100% { stroke-dashoffset: 0; opacity: 1; }
+    @media print {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
     }
     @keyframes archify-node-pulse {
       0%, 72%, 100% { filter: none; stroke-width: 1.5; }
@@ -4811,6 +4791,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       50% { opacity: 0.48; transform: scale(0.78); }
     }
     @media (prefers-reduced-motion: reduce) {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
       html[data-preset="signal-flow"] .diagram-container::before {
         animation: none !important;
       }
@@ -4973,7 +4954,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
-      <svg viewBox="0 0 1841 927" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase" data-tree-ui="" data-tree-direction="down" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
+      <svg viewBox="0 0 1841 927" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-tree-ui="" data-tree-direction="down" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
         <title id="archify-diagram-title">Archify repository layout</title>
         <desc id="archify-diagram-description">Observed directory structure of this repository (selected files). Runs of three or more files are listed; the viewer/ branch starts collapsed.</desc>
         <!-- Definitions -->
@@ -5022,43 +5003,43 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Containment links -->
-        <path data-edge-from="repo" data-edge-to="skill" data-edge-key="0" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;632.5,151;632.5,179" d="M 1157 123 L 1157 143 Q 1157 151 1149 151 L 640.5 151 Q 632.5 151 632.5 159 L 632.5 179" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="repo" data-edge-to="viewer" data-edge-key="1" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1269.5,151;1269.5,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1261.5 151 Q 1269.5 151 1269.5 159 L 1269.5 179" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="repo" data-edge-to="site" data-edge-key="2" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1481,151;1481,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1473 151 Q 1481 151 1481 159 L 1481 179" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="repo" data-edge-to="scripts" data-edge-key="3" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1680.5,151;1680.5,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1672.5 151 Q 1680.5 151 1680.5 159 L 1680.5 179" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="skill" data-edge-to="renderers" data-edge-key="4" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;186,266;186,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 624.5 266 L 194 266 Q 186 266 186 274 L 186 294" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="skill" data-edge-to="schemas" data-edge-key="5" data-tree-ancestors="skill repo" data-composition-points="632,238;632,294" d="M 632 238 L 632 294" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="skill" data-edge-to="bin" data-edge-key="6" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;810,266;810,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 640.5 266 L 802 266 Q 810 266 810 274 L 810 294" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="skill" data-edge-to="references" data-edge-key="7" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;1066,266;1066,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 640.5 266 L 1058 266 Q 1066 266 1066 274 L 1066 294" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_arch" data-edge-key="8" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,438.5;60,438.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 430.5 Q 44 438.5 52 438.5 L 60 438.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_workflow" data-edge-key="9" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,507.5;60,507.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 499.5 Q 44 507.5 52 507.5 L 60 507.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_sequence" data-edge-key="10" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,576.5;60,576.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 568.5 Q 44 576.5 52 576.5 L 60 576.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_dataflow" data-edge-key="11" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,645.5;60,645.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 637.5 Q 44 645.5 52 645.5 L 60 645.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_lifecycle" data-edge-key="12" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,714.5;60,714.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 706.5 Q 44 714.5 52 714.5 L 60 714.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_erd" data-edge-key="13" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,783.5;60,783.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 775.5 Q 44 783.5 52 783.5 L 60 783.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_tree" data-edge-key="14" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,852.5;60,852.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 844.5 Q 44 852.5 52 852.5 L 60 852.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="renderers" data-edge-to="r_shared" data-edge-key="15" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;327,381;327,409" d="M 186 353 L 186 373 Q 186 381 194 381 L 319 381 Q 327 381 327 389 L 327 409" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="r_shared" data-edge-to="s_cli" data-edge-key="16" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,553.5;295,553.5" d="M 279 468 L 279 545.5 Q 279 553.5 287 553.5 L 295 553.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="r_shared" data-edge-to="s_geometry" data-edge-key="17" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,622.5;295,622.5" d="M 279 468 L 279 614.5 Q 279 622.5 287 622.5 L 295 622.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="r_shared" data-edge-to="s_i18n" data-edge-key="18" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,691.5;295,691.5" d="M 279 468 L 279 683.5 Q 279 691.5 287 691.5 L 295 691.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="r_shared" data-edge-to="s_validators" data-edge-key="19" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,760.5;295,760.5" d="M 279 468 L 279 752.5 Q 279 760.5 287 760.5 L 295 760.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="bin" data-edge-to="b_archify" data-edge-key="20" data-tree-ancestors="bin skill repo" data-composition-points="762,353;762,438.5;778,438.5" d="M 762 353 L 762 430.5 Q 762 438.5 770 438.5 L 778 438.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="bin" data-edge-to="b_finalize" data-edge-key="21" data-tree-ancestors="bin skill repo" data-composition-points="762,353;762,507.5;778,507.5" d="M 762 353 L 762 499.5 Q 762 507.5 770 507.5 L 778 507.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="bin" data-edge-to="b_preview" data-edge-key="22" data-tree-ancestors="bin skill repo" data-composition-points="762,353;762,576.5;778,576.5" d="M 762 353 L 762 568.5 Q 762 576.5 770 576.5 L 778 576.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="viewer" data-edge-to="v_focus" data-edge-key="23" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,323.5;1210,323.5" d="M 1194 238 L 1194 315.5 Q 1194 323.5 1202 323.5 L 1210 323.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="viewer" data-edge-to="v_export" data-edge-key="24" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,392.5;1210,392.5" d="M 1194 238 L 1194 384.5 Q 1194 392.5 1202 392.5 L 1210 392.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="viewer" data-edge-to="v_tree" data-edge-key="25" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,461.5;1210,461.5" d="M 1194 238 L 1194 453.5 Q 1194 461.5 1202 461.5 L 1210 461.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="viewer" data-edge-to="v_camera" data-edge-key="26" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,530.5;1210,530.5" d="M 1194 238 L 1194 522.5 Q 1194 530.5 1202 530.5 L 1210 530.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="scripts" data-edge-to="sc_viewer" data-edge-key="27" data-tree-ancestors="scripts repo" data-composition-points="1605,238;1605,323.5;1621,323.5" d="M 1605 238 L 1605 315.5 Q 1605 323.5 1613 323.5 L 1621 323.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="scripts" data-edge-to="sc_zip" data-edge-key="28" data-tree-ancestors="scripts repo" data-composition-points="1605,238;1605,392.5;1621,392.5" d="M 1605 238 L 1605 384.5 Q 1605 392.5 1613 392.5 L 1621 392.5" class="a-default tree-edge" stroke-width="1.5"/>
-        <path data-edge-from="scripts" data-edge-to="sc_gallery" data-edge-key="29" data-tree-ancestors="scripts repo" data-composition-points="1605,238;1605,461.5;1621,461.5" d="M 1605 238 L 1605 453.5 Q 1605 461.5 1613 461.5 L 1621 461.5" class="a-default tree-edge" stroke-width="1.5"/>
+        <path data-edge-from="repo" data-edge-to="skill" data-edge-key="0" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;632.5,151;632.5,179" d="M 1157 123 L 1157 143 Q 1157 151 1149 151 L 640.5 151 Q 632.5 151 632.5 159 L 632.5 179" class="a-default tree-edge" data-animate="edge" style="--step:1" stroke-width="1.5"/>
+        <path data-edge-from="repo" data-edge-to="viewer" data-edge-key="1" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1269.5,151;1269.5,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1261.5 151 Q 1269.5 151 1269.5 159 L 1269.5 179" class="a-default tree-edge" data-animate="edge" style="--step:1" stroke-width="1.5"/>
+        <path data-edge-from="repo" data-edge-to="site" data-edge-key="2" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1481,151;1481,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1473 151 Q 1481 151 1481 159 L 1481 179" class="a-default tree-edge" data-animate="edge" style="--step:1" stroke-width="1.5"/>
+        <path data-edge-from="repo" data-edge-to="scripts" data-edge-key="3" data-tree-ancestors="repo" data-composition-points="1157,123;1157,151;1680.5,151;1680.5,179" d="M 1157 123 L 1157 143 Q 1157 151 1165 151 L 1672.5 151 Q 1680.5 151 1680.5 159 L 1680.5 179" class="a-default tree-edge" data-animate="edge" style="--step:1" stroke-width="1.5"/>
+        <path data-edge-from="skill" data-edge-to="renderers" data-edge-key="4" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;186,266;186,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 624.5 266 L 194 266 Q 186 266 186 274 L 186 294" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="skill" data-edge-to="schemas" data-edge-key="5" data-tree-ancestors="skill repo" data-composition-points="632,238;632,294" d="M 632 238 L 632 294" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="skill" data-edge-to="bin" data-edge-key="6" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;810,266;810,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 640.5 266 L 802 266 Q 810 266 810 274 L 810 294" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="skill" data-edge-to="references" data-edge-key="7" data-tree-ancestors="skill repo" data-composition-points="632.5,238;632.5,266;1066,266;1066,294" d="M 632.5 238 L 632.5 258 Q 632.5 266 640.5 266 L 1058 266 Q 1066 266 1066 274 L 1066 294" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_arch" data-edge-key="8" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,438.5;60,438.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 430.5 Q 44 438.5 52 438.5 L 60 438.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_workflow" data-edge-key="9" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,507.5;60,507.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 499.5 Q 44 507.5 52 507.5 L 60 507.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_sequence" data-edge-key="10" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,576.5;60,576.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 568.5 Q 44 576.5 52 576.5 L 60 576.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_dataflow" data-edge-key="11" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,645.5;60,645.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 637.5 Q 44 645.5 52 645.5 L 60 645.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_lifecycle" data-edge-key="12" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,714.5;60,714.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 706.5 Q 44 714.5 52 714.5 L 60 714.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_erd" data-edge-key="13" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,783.5;60,783.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 775.5 Q 44 783.5 52 783.5 L 60 783.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_tree" data-edge-key="14" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;44,381;44,852.5;60,852.5" d="M 186 353 L 186 373 Q 186 381 178 381 L 52 381 Q 44 381 44 389 L 44 844.5 Q 44 852.5 52 852.5 L 60 852.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="renderers" data-edge-to="r_shared" data-edge-key="15" data-tree-ancestors="renderers skill repo" data-composition-points="186,353;186,381;327,381;327,409" d="M 186 353 L 186 373 Q 186 381 194 381 L 319 381 Q 327 381 327 389 L 327 409" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="r_shared" data-edge-to="s_cli" data-edge-key="16" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,553.5;295,553.5" d="M 279 468 L 279 545.5 Q 279 553.5 287 553.5 L 295 553.5" class="a-default tree-edge" data-animate="edge" style="--step:4" stroke-width="1.5"/>
+        <path data-edge-from="r_shared" data-edge-to="s_geometry" data-edge-key="17" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,622.5;295,622.5" d="M 279 468 L 279 614.5 Q 279 622.5 287 622.5 L 295 622.5" class="a-default tree-edge" data-animate="edge" style="--step:4" stroke-width="1.5"/>
+        <path data-edge-from="r_shared" data-edge-to="s_i18n" data-edge-key="18" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,691.5;295,691.5" d="M 279 468 L 279 683.5 Q 279 691.5 287 691.5 L 295 691.5" class="a-default tree-edge" data-animate="edge" style="--step:4" stroke-width="1.5"/>
+        <path data-edge-from="r_shared" data-edge-to="s_validators" data-edge-key="19" data-tree-ancestors="r_shared renderers skill repo" data-composition-points="279,468;279,760.5;295,760.5" d="M 279 468 L 279 752.5 Q 279 760.5 287 760.5 L 295 760.5" class="a-default tree-edge" data-animate="edge" style="--step:4" stroke-width="1.5"/>
+        <path data-edge-from="bin" data-edge-to="b_archify" data-edge-key="20" data-tree-ancestors="bin skill repo" data-composition-points="762,353;762,438.5;778,438.5" d="M 762 353 L 762 430.5 Q 762 438.5 770 438.5 L 778 438.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="bin" data-edge-to="b_finalize" data-edge-key="21" data-tree-ancestors="bin skill repo" data-composition-points="762,353;762,507.5;778,507.5" d="M 762 353 L 762 499.5 Q 762 507.5 770 507.5 L 778 507.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="bin" data-edge-to="b_preview" data-edge-key="22" data-tree-ancestors="bin skill repo" data-composition-points="762,353;762,576.5;778,576.5" d="M 762 353 L 762 568.5 Q 762 576.5 770 576.5 L 778 576.5" class="a-default tree-edge" data-animate="edge" style="--step:3" stroke-width="1.5"/>
+        <path data-edge-from="viewer" data-edge-to="v_focus" data-edge-key="23" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,323.5;1210,323.5" d="M 1194 238 L 1194 315.5 Q 1194 323.5 1202 323.5 L 1210 323.5" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="viewer" data-edge-to="v_export" data-edge-key="24" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,392.5;1210,392.5" d="M 1194 238 L 1194 384.5 Q 1194 392.5 1202 392.5 L 1210 392.5" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="viewer" data-edge-to="v_tree" data-edge-key="25" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,461.5;1210,461.5" d="M 1194 238 L 1194 453.5 Q 1194 461.5 1202 461.5 L 1210 461.5" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="viewer" data-edge-to="v_camera" data-edge-key="26" data-tree-ancestors="viewer repo" data-composition-points="1194,238;1194,530.5;1210,530.5" d="M 1194 238 L 1194 522.5 Q 1194 530.5 1202 530.5 L 1210 530.5" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="scripts" data-edge-to="sc_viewer" data-edge-key="27" data-tree-ancestors="scripts repo" data-composition-points="1605,238;1605,323.5;1621,323.5" d="M 1605 238 L 1605 315.5 Q 1605 323.5 1613 323.5 L 1621 323.5" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="scripts" data-edge-to="sc_zip" data-edge-key="28" data-tree-ancestors="scripts repo" data-composition-points="1605,238;1605,392.5;1621,392.5" d="M 1605 238 L 1605 384.5 Q 1605 392.5 1613 392.5 L 1621 392.5" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
+        <path data-edge-from="scripts" data-edge-to="sc_gallery" data-edge-key="29" data-tree-ancestors="scripts repo" data-composition-points="1605,238;1605,461.5;1621,461.5" d="M 1605 238 L 1605 453.5 Q 1605 461.5 1613 461.5 L 1621 461.5" class="a-default tree-edge" data-animate="edge" style="--step:2" stroke-width="1.5"/>
 
         <!-- Nodes -->
         <g id="node-repo" data-node-id="repo" data-node-label="archify repository" tabindex="0" role="button" aria-label="Focus archify repository, Skill, viewer, and site, Root" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Skill, viewer, and site" data-node-context="Root" data-tree-depth="0">
           <title>archify repository · Skill, viewer, and site · Root</title>
           <rect data-tree-stack="" x="1064" y="69" width="196" height="59" rx="8" class="tree-stack-frontend" stroke-width="1.2"/>
           <rect x="1059" y="64" width="196" height="59" rx="8" class="c-mask"/>
-          <rect x="1059" y="64" width="196" height="59" rx="8" class="c-frontend" stroke-width="1.8"/>
+          <rect x="1059" y="64" width="196" height="59" rx="8" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.8"/>
           <text data-node-label="" x="1157" class="t-primary" font-size="14.5" font-weight="750" text-anchor="middle"><tspan x="1157" y="88.5">archify repository</tspan></text>
           <text data-detail="context" x="1157" class="t-muted" font-size="11" text-anchor="middle"><tspan x="1157" y="107.5">Skill, viewer, and site</tspan></text>
         </g>
@@ -5066,7 +5047,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>archify/ · Installable Skill package · Branch</title>
           <rect data-tree-stack="" x="540" y="184" width="195" height="59" rx="8" class="tree-stack-backend" stroke-width="1.2"/>
           <rect x="535" y="179" width="195" height="59" rx="8" class="c-mask"/>
-          <rect x="535" y="179" width="195" height="59" rx="8" class="c-backend" stroke-width="1.3"/>
+          <rect x="535" y="179" width="195" height="59" rx="8" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.3"/>
           <text data-node-label="" x="632.5" class="t-primary" font-size="13" font-weight="700" text-anchor="middle"><tspan x="632.5" y="203.5">archify/</tspan></text>
           <text data-detail="context" x="632.5" class="t-muted" font-size="11" text-anchor="middle"><tspan x="632.5" y="222.5">Installable Skill package</tspan></text>
         </g>
@@ -5074,7 +5055,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>viewer/ · Inlined into the template · Branch</title>
           <rect data-tree-stack="" x="1177" y="184" width="195" height="59" rx="8" class="tree-stack-backend" stroke-width="1.2"/>
           <rect x="1172" y="179" width="195" height="59" rx="8" class="c-mask"/>
-          <rect x="1172" y="179" width="195" height="59" rx="8" class="c-backend" stroke-width="1.3"/>
+          <rect x="1172" y="179" width="195" height="59" rx="8" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.3"/>
           <text data-node-label="" x="1269.5" class="t-primary" font-size="13" font-weight="700" text-anchor="middle"><tspan x="1269.5" y="203.5">viewer/</tspan></text>
           <text data-detail="context" x="1269.5" class="t-muted" font-size="11" text-anchor="middle"><tspan x="1269.5" y="222.5">Inlined into the template</tspan></text>
         </g>
@@ -5082,7 +5063,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>website/ · Astro project site · Leaf</title>
           
           <rect x="1407" y="179" width="148" height="59" rx="8" class="c-mask"/>
-          <rect x="1407" y="179" width="148" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1407" y="179" width="148" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:1" stroke-width="1.3"/>
           <text data-node-label="" x="1481" class="t-primary" font-size="13" font-weight="600" text-anchor="middle"><tspan x="1481" y="203.5">website/</tspan></text>
           <text data-detail="context" x="1481" class="t-muted" font-size="11" text-anchor="middle"><tspan x="1481" y="222.5">Astro project site</tspan></text>
         </g>
@@ -5090,7 +5071,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>scripts/ · Build and freshness tools · Branch</title>
           <rect data-tree-stack="" x="1588" y="184" width="195" height="59" rx="8" class="tree-stack-backend" stroke-width="1.2"/>
           <rect x="1583" y="179" width="195" height="59" rx="8" class="c-mask"/>
-          <rect x="1583" y="179" width="195" height="59" rx="8" class="c-backend" stroke-width="1.3"/>
+          <rect x="1583" y="179" width="195" height="59" rx="8" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.3"/>
           <text data-node-label="" x="1680.5" class="t-primary" font-size="13" font-weight="700" text-anchor="middle"><tspan x="1680.5" y="203.5">scripts/</tspan></text>
           <text data-detail="context" x="1680.5" class="t-muted" font-size="11" text-anchor="middle"><tspan x="1680.5" y="222.5">Build and freshness tools</tspan></text>
         </g>
@@ -5098,7 +5079,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>renderers/ · One per diagram type · Branch</title>
           <rect data-tree-stack="" x="111" y="299" width="160" height="59" rx="8" class="tree-stack-backend" stroke-width="1.2"/>
           <rect x="106" y="294" width="160" height="59" rx="8" class="c-mask"/>
-          <rect x="106" y="294" width="160" height="59" rx="8" class="c-backend" stroke-width="1.3"/>
+          <rect x="106" y="294" width="160" height="59" rx="8" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="186" class="t-primary" font-size="13" font-weight="700" text-anchor="middle"><tspan x="186" y="318.5">renderers/</tspan></text>
           <text data-detail="context" x="186" class="t-muted" font-size="11" text-anchor="middle"><tspan x="186" y="337.5">One per diagram type</tspan></text>
         </g>
@@ -5106,7 +5087,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>schemas/ · Typed JSON contracts · Leaf</title>
           
           <rect x="552" y="294" width="160" height="59" rx="8" class="c-mask"/>
-          <rect x="552" y="294" width="160" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="552" y="294" width="160" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="632" class="t-primary" font-size="13" font-weight="600" text-anchor="middle"><tspan x="632" y="318.5">schemas/</tspan></text>
           <text data-detail="context" x="632" class="t-muted" font-size="11" text-anchor="middle"><tspan x="632" y="337.5">Typed JSON contracts</tspan></text>
         </g>
@@ -5114,7 +5095,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>bin/ · CLI entry points · Branch</title>
           <rect data-tree-stack="" x="745" y="299" width="140" height="59" rx="8" class="tree-stack-backend" stroke-width="1.2"/>
           <rect x="740" y="294" width="140" height="59" rx="8" class="c-mask"/>
-          <rect x="740" y="294" width="140" height="59" rx="8" class="c-backend" stroke-width="1.3"/>
+          <rect x="740" y="294" width="140" height="59" rx="8" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="810" class="t-primary" font-size="13" font-weight="700" text-anchor="middle"><tspan x="810" y="318.5">bin/</tspan></text>
           <text data-detail="context" x="810" class="t-muted" font-size="11" text-anchor="middle"><tspan x="810" y="337.5">CLI entry points</tspan></text>
         </g>
@@ -5122,7 +5103,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>references/ · Authoring contracts · Leaf</title>
           
           <rect x="988" y="294" width="156" height="59" rx="8" class="c-mask"/>
-          <rect x="988" y="294" width="156" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="988" y="294" width="156" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1066" class="t-primary" font-size="13" font-weight="600" text-anchor="middle"><tspan x="1066" y="318.5">references/</tspan></text>
           <text data-detail="context" x="1066" class="t-muted" font-size="11" text-anchor="middle"><tspan x="1066" y="337.5">Authoring contracts</tspan></text>
         </g>
@@ -5130,7 +5111,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>architecture/ · Boundaries and router · Leaf</title>
           
           <rect x="60" y="409" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="60" y="409" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="60" y="409" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="74" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="74" y="433.5">architecture/</tspan></text>
           <text data-detail="context" x="74" class="t-muted" font-size="11" text-anchor="start"><tspan x="74" y="452.5">Boundaries and router</tspan></text>
         </g>
@@ -5138,7 +5119,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>workflow/ · Workflow compiler · Leaf</title>
           
           <rect x="60" y="478" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="60" y="478" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="60" y="478" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="74" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="74" y="502.5">workflow/</tspan></text>
           <text data-detail="context" x="74" class="t-muted" font-size="11" text-anchor="start"><tspan x="74" y="521.5">Workflow compiler</tspan></text>
         </g>
@@ -5146,7 +5127,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>sequence/ · Leaf</title>
           
           <rect x="60" y="547" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="60" y="547" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="60" y="547" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="74" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="74" y="580.5">sequence/</tspan></text>
           
         </g>
@@ -5154,7 +5135,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>dataflow/ · Leaf</title>
           
           <rect x="60" y="616" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="60" y="616" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="60" y="616" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="74" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="74" y="649.5">dataflow/</tspan></text>
           
         </g>
@@ -5162,7 +5143,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>lifecycle/ · Leaf</title>
           
           <rect x="60" y="685" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="60" y="685" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="60" y="685" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="74" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="74" y="718.5">lifecycle/</tspan></text>
           
         </g>
@@ -5170,7 +5151,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>erd/ · Crow&#39;s foot markers · Leaf</title>
           
           <rect x="60" y="754" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="60" y="754" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="60" y="754" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="74" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="74" y="778.5">erd/</tspan></text>
           <text data-detail="context" x="74" class="t-muted" font-size="11" text-anchor="start"><tspan x="74" y="797.5">Crow&#39;s foot markers</tspan></text>
         </g>
@@ -5178,7 +5159,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>tree/ · This renderer · Leaf</title>
           
           <rect x="60" y="823" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="60" y="823" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="60" y="823" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="74" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="74" y="847.5">tree/</tspan></text>
           <text data-detail="context" x="74" class="t-muted" font-size="11" text-anchor="start"><tspan x="74" y="866.5">This renderer</tspan></text>
         </g>
@@ -5186,7 +5167,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>shared/ · Shared helpers · Branch</title>
           <rect data-tree-stack="" x="262" y="414" width="140" height="59" rx="8" class="tree-stack-backend" stroke-width="1.2"/>
           <rect x="257" y="409" width="140" height="59" rx="8" class="c-mask"/>
-          <rect x="257" y="409" width="140" height="59" rx="8" class="c-backend" stroke-width="1.3"/>
+          <rect x="257" y="409" width="140" height="59" rx="8" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="327" class="t-primary" font-size="13" font-weight="700" text-anchor="middle"><tspan x="327" y="433.5">shared/</tspan></text>
           <text data-detail="context" x="327" class="t-muted" font-size="11" text-anchor="middle"><tspan x="327" y="452.5">Shared helpers</tspan></text>
         </g>
@@ -5194,7 +5175,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>cli.mjs · Load, validate, write · Leaf</title>
           
           <rect x="295" y="524" width="229" height="59" rx="8" class="c-mask"/>
-          <rect x="295" y="524" width="229" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="295" y="524" width="229" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:4" stroke-width="1.3"/>
           <text data-node-label="" x="309" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="309" y="548.5">cli.mjs</tspan></text>
           <text data-detail="context" x="309" class="t-muted" font-size="11" text-anchor="start"><tspan x="309" y="567.5">Load, validate, write</tspan></text>
         </g>
@@ -5202,7 +5183,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>geometry.mjs · Composition gates · Leaf</title>
           
           <rect x="295" y="593" width="229" height="59" rx="8" class="c-mask"/>
-          <rect x="295" y="593" width="229" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="295" y="593" width="229" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:4" stroke-width="1.3"/>
           <text data-node-label="" x="309" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="309" y="617.5">geometry.mjs</tspan></text>
           <text data-detail="context" x="309" class="t-muted" font-size="11" text-anchor="start"><tspan x="309" y="636.5">Composition gates</tspan></text>
         </g>
@@ -5210,7 +5191,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>i18n.mjs · Locale catalogs · Leaf</title>
           
           <rect x="295" y="662" width="229" height="59" rx="8" class="c-mask"/>
-          <rect x="295" y="662" width="229" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="295" y="662" width="229" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:4" stroke-width="1.3"/>
           <text data-node-label="" x="309" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="309" y="686.5">i18n.mjs</tspan></text>
           <text data-detail="context" x="309" class="t-muted" font-size="11" text-anchor="start"><tspan x="309" y="705.5">Locale catalogs</tspan></text>
         </g>
@@ -5218,7 +5199,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>generated-validators.mjs · Schema validators · Leaf</title>
           
           <rect x="295" y="731" width="229" height="59" rx="8" class="c-mask"/>
-          <rect x="295" y="731" width="229" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="295" y="731" width="229" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:4" stroke-width="1.3"/>
           <text data-node-label="" x="309" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="309" y="755.5">generated-validators.mjs</tspan></text>
           <text data-detail="context" x="309" class="t-muted" font-size="11" text-anchor="start"><tspan x="309" y="774.5">Schema validators</tspan></text>
         </g>
@@ -5226,7 +5207,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>archify.mjs · CLI: validate, finalize · Leaf</title>
           
           <rect x="778" y="409" width="182" height="59" rx="8" class="c-mask"/>
-          <rect x="778" y="409" width="182" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="778" y="409" width="182" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="792" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="792" y="433.5">archify.mjs</tspan></text>
           <text data-detail="context" x="792" class="t-muted" font-size="11" text-anchor="start"><tspan x="792" y="452.5">CLI: validate, finalize</tspan></text>
         </g>
@@ -5234,7 +5215,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>finalize.mjs · Render, check, deliver · Leaf</title>
           
           <rect x="778" y="478" width="182" height="59" rx="8" class="c-mask"/>
-          <rect x="778" y="478" width="182" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="778" y="478" width="182" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="792" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="792" y="502.5">finalize.mjs</tspan></text>
           <text data-detail="context" x="792" class="t-muted" font-size="11" text-anchor="start"><tspan x="792" y="521.5">Render, check, deliver</tspan></text>
         </g>
@@ -5242,7 +5223,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>preview.mjs · Live preview server · Leaf</title>
           
           <rect x="778" y="547" width="182" height="59" rx="8" class="c-mask"/>
-          <rect x="778" y="547" width="182" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="778" y="547" width="182" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:3" stroke-width="1.3"/>
           <text data-node-label="" x="792" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="792" y="571.5">preview.mjs</tspan></text>
           <text data-detail="context" x="792" class="t-muted" font-size="11" text-anchor="start"><tspan x="792" y="590.5">Live preview server</tspan></text>
         </g>
@@ -5250,7 +5231,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>focus.js · Semantic passport · Leaf</title>
           
           <rect x="1210" y="294" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="1210" y="294" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1210" y="294" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1224" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="1224" y="318.5">focus.js</tspan></text>
           <text data-detail="context" x="1224" class="t-muted" font-size="11" text-anchor="start"><tspan x="1224" y="337.5">Semantic passport</tspan></text>
         </g>
@@ -5258,7 +5239,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>export.js · SVG, PNG, WebM export · Leaf</title>
           
           <rect x="1210" y="363" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="1210" y="363" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1210" y="363" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1224" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="1224" y="387.5">export.js</tspan></text>
           <text data-detail="context" x="1224" class="t-muted" font-size="11" text-anchor="start"><tspan x="1224" y="406.5">SVG, PNG, WebM export</tspan></text>
         </g>
@@ -5266,7 +5247,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>tree-branches.js · Expand and collapse · Leaf</title>
           
           <rect x="1210" y="432" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="1210" y="432" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1210" y="432" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1224" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="1224" y="456.5">tree-branches.js</tspan></text>
           <text data-detail="context" x="1224" class="t-muted" font-size="11" text-anchor="start"><tspan x="1224" y="475.5">Expand and collapse</tspan></text>
         </g>
@@ -5274,7 +5255,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>viewer-camera.js · Pan, zoom, reveal · Leaf</title>
           
           <rect x="1210" y="501" width="169" height="59" rx="8" class="c-mask"/>
-          <rect x="1210" y="501" width="169" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1210" y="501" width="169" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1224" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="1224" y="525.5">viewer-camera.js</tspan></text>
           <text data-detail="context" x="1224" class="t-muted" font-size="11" text-anchor="start"><tspan x="1224" y="544.5">Pan, zoom, reveal</tspan></text>
         </g>
@@ -5282,7 +5263,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>generate-viewer.mjs · Inlines viewer/ · Leaf</title>
           
           <rect x="1621" y="294" width="188" height="59" rx="8" class="c-mask"/>
-          <rect x="1621" y="294" width="188" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1621" y="294" width="188" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1635" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="1635" y="318.5">generate-viewer.mjs</tspan></text>
           <text data-detail="context" x="1635" class="t-muted" font-size="11" text-anchor="start"><tspan x="1635" y="337.5">Inlines viewer/</tspan></text>
         </g>
@@ -5290,7 +5271,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>build-zip.sh · Deterministic archive · Leaf</title>
           
           <rect x="1621" y="363" width="188" height="59" rx="8" class="c-mask"/>
-          <rect x="1621" y="363" width="188" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1621" y="363" width="188" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1635" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="1635" y="387.5">build-zip.sh</tspan></text>
           <text data-detail="context" x="1635" class="t-muted" font-size="11" text-anchor="start"><tspan x="1635" y="406.5">Deterministic archive</tspan></text>
         </g>
@@ -5298,7 +5279,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <title>build-gallery.mjs · Leaf</title>
           
           <rect x="1621" y="432" width="188" height="59" rx="8" class="c-mask"/>
-          <rect x="1621" y="432" width="188" height="59" rx="8" class="c-external tree-leaf" stroke-width="1.3"/>
+          <rect x="1621" y="432" width="188" height="59" rx="8" class="c-external tree-leaf" data-animate="node" style="--step:2" stroke-width="1.3"/>
           <text data-node-label="" x="1635" class="t-primary" font-size="13" font-weight="600" text-anchor="start"><tspan x="1635" y="465.5">build-gallery.mjs</tspan></text>
           
         </g>
@@ -5604,11 +5585,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     function hasDrawableGeometry(element) {
-      if (!element) return false;
+      if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
       var geometries = /^(path|line|polyline)$/i.test(element.tagName)
         ? [element]
         : Array.prototype.slice.call(element.querySelectorAll('path, line, polyline'));
       return geometries.some(function (geometry) {
+        if (geometry.hasAttribute('data-ambient-flow-overlay')) return false;
         var source = geometry.tagName.toLowerCase() === 'path'
           ? geometry.getAttribute('d')
           : geometry.tagName.toLowerCase() === 'polyline'
@@ -5853,6 +5835,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-ambient-flow-overlay]'), function (el) {
+          el.remove();
+        });
+        // Route interaction rewrites CSS declarations through CSSOM. Normalize
+        // authored motion delays on the clone so exported bytes do not depend
+        // on whether the reader traced a route before downloading.
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (el) {
+          var step = el.style.getPropertyValue('--step');
+          if (step) el.setAttribute('style', el.style.cssText);
+        });
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
@@ -6014,7 +6006,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           !clone.hasAttribute('data-tree-any-collapsed') &&
           !clone.style.getPropertyValue('transform') &&
           !clone.style.getPropertyValue('clip-path') &&
-          clone.querySelectorAll('[data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
+          clone.querySelectorAll('[data-ambient-flow-overlay], [data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
       }
 
 
@@ -7375,38 +7367,54 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ownerToken = 0;
       var ownerCleanup = null;
       var lastEffectivePaused = null;
-      var ambientStarted = false;
-      var ambientPending = new Set();
+      var entryStarted = false;
+      var entryPending = new Set();
+      var flowCount = 0;
 
-      function detachAmbientBoundary() {
-        if (!svg) return;
-        svg.removeEventListener('animationend', onAmbientBoundary, true);
-        svg.removeEventListener('animationcancel', onAmbientBoundary, true);
+      // Runtime decoration carries geometry only. Keep each flow beside its
+      // authored edge so transforms, clipping and crossover paint order apply.
+      function createFlows() {
+        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape) {
+          var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
+          if (!d) return;
+          var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          flow.setAttribute('d', d);
+          ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
+            if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+          });
+          flow.setAttribute('class', 'ambient-edge-flow');
+          flow.setAttribute('data-ambient-flow-overlay', 'true');
+          flow.setAttribute('aria-hidden', 'true');
+          shape.parentNode.insertBefore(flow, shape.nextSibling);
+          flowCount += 1;
+        });
       }
-      function settleAmbient(reason) {
-        if (!capable) return false;
-        ambientStarted = true;
-        ambientPending.clear();
-        detachAmbientBoundary();
-        html.setAttribute('data-ambient-motion', 'settled');
-        html.setAttribute('data-ambient-settle-reason', reason || 'complete');
-        return true;
+      function settleEntry() {
+        entryPending.clear();
+        svg.removeEventListener('animationend', onEntryBoundary, true);
+        svg.removeEventListener('animationcancel', onEntryBoundary, true);
+        html.setAttribute('data-ambient-entry', 'settled');
       }
-      function onAmbientBoundary(event) {
-        if (!ambientPending.has(event.target)) return;
-        ambientPending.delete(event.target);
-        if (!ambientPending.size) settleAmbient('complete');
+      function onEntryBoundary(event) {
+        if (!entryPending.has(event.target)) return;
+        entryPending.delete(event.target);
+        if (!entryPending.size) settleEntry();
       }
-      function startAmbient() {
-        if (ambientStarted || !capable) return false;
-        ambientStarted = true;
-        ambientPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="edge"], [data-animate="node"]')));
-        if (!ambientPending.size) return settleAmbient('empty');
-        svg.addEventListener('animationend', onAmbientBoundary, true);
-        svg.addEventListener('animationcancel', onAmbientBoundary, true);
-        html.setAttribute('data-ambient-motion', 'running');
-        html.removeAttribute('data-ambient-settle-reason');
-        return true;
+      function renderAmbient(suppressed) {
+        html.setAttribute('data-ambient-motion', suppressed ? 'paused' : (flowCount ? 'running' : 'empty'));
+        if (suppressed) {
+          entryStarted = true;
+          settleEntry();
+        } else if (!entryStarted) {
+          entryStarted = true;
+          entryPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="node"]')));
+          if (!entryPending.size) settleEntry();
+          else {
+            svg.addEventListener('animationend', onEntryBoundary, true);
+            svg.addEventListener('animationcancel', onEntryBoundary, true);
+            html.setAttribute('data-ambient-entry', 'running');
+          }
+        }
       }
 
       function readStored() {
@@ -7441,11 +7449,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var systemPaused = reducedMotion();
         var paused = effectivePaused();
         html.setAttribute('data-motion', paused ? 'still' : 'live');
-        if (paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden')) {
-          settleAmbient('suppressed');
-        } else if (!ambientStarted) {
-          startAmbient();
-        }
+        renderAmbient(paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden'));
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
@@ -7550,7 +7554,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.removeAttribute('data-motion');
         html.removeAttribute('data-motion-owner');
         html.removeAttribute('data-ambient-motion');
-        html.removeAttribute('data-ambient-settle-reason');
+        html.removeAttribute('data-ambient-entry');
         return {
           capable: false,
           pause: function () { return false; },
@@ -7566,6 +7570,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
 
+      createFlows();
       html.setAttribute('data-motion-capable', 'true');
       btn.hidden = false;
       readerPaused = readStored() === 'still';
@@ -7575,6 +7580,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else if (typeof motionQuery.addListener === 'function') motionQuery.addListener(render);
       }
       document.addEventListener('visibilitychange', syncVisibility);
+      if (typeof MutationObserver !== 'undefined') {
+        var contextObserver = new MutationObserver(render);
+        contextObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-share-playback'] });
+      }
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
         ownerObserver.observe(svg, {
@@ -8203,7 +8212,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function relationshipEdgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
@@ -9452,7 +9461,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-intent-trace-overlay]'), function (overlay) {
@@ -9688,6 +9697,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var readerFit = svg && svg.getAttribute('data-reader-fit');
       var widthFirstReading = readerFit === 'width-first';
+      var automaticSequence = widthFirstReading && svg.hasAttribute('data-sequence-column-fit');
+      var readingScroll = widthFirstReading;
       var measuredHeightFit = readerFit === 'intrinsic-height' || widthFirstReading;
       var frame = 0;
       var settleFrame = 0;
@@ -9831,11 +9842,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         legend.style.removeProperty('--archify-reader-legend-transform');
       }
       // Keep the original legend in its SVG: renderer hover/focus selectors and
-      // canonical export still own that same group. Only ordinary capped
-      // reading at 25–100% borrows the spare outer canvas for its legend.
+      // canonical export still own that same group. Ordinary capped reading
+      // and fitted automatic sequences borrow the outer corner at 25–100%.
       function syncLegend() {
         var cameraScale = Number(svg && svg.getAttribute('data-view-scale')) || 1;
-        if (!legend || !eligible() || html.getAttribute('data-reader-area') !== 'true' || cameraScale > 1.001) {
+        var cornerReading = html.getAttribute('data-reader-area') === 'true' || automaticSequence && !readingScroll;
+        if (!legend || !eligible() || !cornerReading || cameraScale > 1.001) {
           clearLegend();
           return;
         }
@@ -9976,7 +9988,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ) - window.innerHeight - belowFold();
           // visual-check fails any page whose rounded-up height exceeds the
           // viewport, so even a 1px remainder must be reduced or declared.
-          if (overflow > 0 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
+          if (overflow > 0 && !readingScroll && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute('data-reader-overflow', 'reduced');
@@ -9995,17 +10007,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+        // Sequence first-screen fitting preserves source text sizes instead
+        // of shrinking to the shared hard readability floor.
         var readableWidth = viewBox && viewBox.width > 0
-          ? viewBox.width * minimumReadableScale() + chrome.diagramX
+          ? viewBox.width * (automaticSequence ? 1 : minimumReadableScale()) + chrome.diagramX
           : MIN_READER_WIDTH;
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
-        var readableMinimumWidth = measuredHeightFit && ratio < WIDE_RATIO
+        var readableMinimumWidth = automaticSequence || measuredHeightFit && ratio < WIDE_RATIO
           ? readableWidth
           : measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)
             ? Math.max(MIN_READER_WIDTH, readableWidth)
             : MIN_READER_WIDTH;
         var minWidth;
-        if (measuredHeightFit && ratio < WIDE_RATIO) {
+        if (automaticSequence) {
+          minWidth = Math.min(readableMinimumWidth, maxWidth);
+        } else if (measuredHeightFit && ratio < WIDE_RATIO) {
           minWidth = Math.min(readableMinimumWidth, viewportCap);
         } else if (measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)) {
           minWidth = Math.min(readableMinimumWidth, maxWidth);
@@ -10041,10 +10057,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
-        // Long sequences and waterfall rows use the available horizontal room;
-        // ordinary page scrolling keeps their text and row spacing readable.
-        // Other diagram families retain the existing height-fit strategy.
-        if (widthFirstReading) desiredWidth = maxWidth;
+        // Compact automatic sequences fit the first screen without shrinking
+        // their authored text. Longer sequences retain reading width and page
+        // scroll; other width-first families keep their existing strategy.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+          readableWidth + (docked ? railExtra : 0);
+        readingScroll = widthFirstReading && !sequenceFits;
+        if (readingScroll) desiredWidth = maxWidth;
         // Only a binding enlargement cap needs a separate normal reader area.
         // Uncapped diagrams keep their existing natural height and Chrome fit.
         automaticAreaHeight = availableSvgHeight + chrome.diagramY;
@@ -12339,7 +12358,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-route-probe-overlay]'), function (overlay) {
@@ -13333,7 +13352,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function edgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function legendSourceBounds(entry) {
         var bounds = null;

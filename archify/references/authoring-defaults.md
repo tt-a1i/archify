@@ -28,9 +28,11 @@ Start with automatic routes and endpoint sides. Pin a side only for a necessary 
 
 For a real repository, follow [Repository authoring](repository-authoring.md) while inspecting source. Freeze its credential-free origin and 40-character commit in `meta.repository`, attach inspected repository-relative `sources` to each key semantic node, and pass `--repo-root` to the first `finalize`. Each reference proves only the fact visible at that location. Follow material relationships and conditions to their actual source; do not reuse a startup citation as protocol or persistence evidence.
 
-Examples show field shape, not legal values or source facts. They are finished showcases, so their optional presentation fields (`meta.subtitle`, `meta.viewBox`, `meta.column_fit`, `meta.animation`, `via`, `labelAt`) are not defaults; these defaults win. Read the mode schema and shared definition before adding a field, enum, or constrained text. In particular, inspect Architecture boundary kinds. Keep longer evidence in a card while retaining the fact. See [Schema lookup](authoring-contract.md#schema-lookup) for details.
+Examples show field shape, not legal values or source facts. They are finished showcases, so their optional presentation fields (`meta.subtitle`, `meta.viewBox`, `meta.column_fit`, `via`, `labelAt`) are not defaults; these defaults win. Read the mode schema and shared definition before adding a field, enum, or constrained text. In particular, inspect Architecture boundary kinds. Keep longer evidence in a card while retaining the fact. See [Schema lookup](authoring-contract.md#schema-lookup) for details.
 
 ## Presentation and modes
+
+Motion is enabled automatically. Omit `meta.animation`; use the Viewer’s Live/Still button to pause or resume playback.
 
 Use one primary authored language from the user's choice or the request/conversation. Set `meta.locale`; `en`, `zh-CN`, `zh-TW`, `es`, and `ko` select a bundled Viewer catalog with nothing further. For other languages, supply `meta.translations` with reusable UI translations, or disclose the fixed Viewer UI and `<html lang>` English fallback. Keep exact product, code, protocol, command, API, and environment names while localizing surrounding explanation. See [Language consistency](authoring-contract.md#language-consistency) for bilingual cases.
 

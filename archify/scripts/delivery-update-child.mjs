@@ -19,5 +19,8 @@ const result = await checkForUpdate({
   // Leave time to record a failed fetch, so a slow network backs off instead
   // of being killed before its result reaches the cache.
   timeoutMs: Math.max(1, Math.floor(remainingMs - 150)),
+  // Recompute the remaining fetch budget after cache preparation, so that
+  // startup work cannot consume the failure-recording reserve unnoticed.
+  fetchDeadlineNs: deadlineAt - 150_000_000n,
 });
 process.stdout.write(`${JSON.stringify(result)}\n`);

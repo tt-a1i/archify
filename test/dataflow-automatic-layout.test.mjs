@@ -425,7 +425,7 @@ for (const [name, mutate, expectedSha256] of [
   ['explicit-one-width', diagram => { diagram.nodes[0].width = 152; }, '0533eb9cfbd3a6a5bbd99c01342a3cf07429dc834fd2d446409eb35448a601ec'],
   ['explicit-both', diagram => { diagram.meta.viewBox = [1080, 720]; diagram.nodes[0].width = 152; }, '0d2ee82e89eeb9e1c83e2002f72b004adfe876fb6d50dc91d465f8e778d3e8dd'],
 ]) {
-  test(`dev byte compatibility for ${name}`, t => {
+  test(`dev geometry compatibility outside default motion for ${name}`, t => {
     const diagram = smallFootprintDiagram({ id: 'f' });
     diagram.nodes[0].sublabel = 'context text for processing';
     mutate(diagram);
@@ -433,7 +433,9 @@ for (const [name, mutate, expectedSha256] of [
     assert.equal(result.status, name === 'explicit-viewbox' ? 1 : 0, result.stdout + result.stderr);
     const render = spawnSync(process.execPath, [cli, 'render', 'dataflow', input, output], { encoding: 'utf8', env });
     assert.equal(render.status, 0, render.stderr);
-    const svg = fs.readFileSync(output, 'utf8').match(/<svg\b[^]*?<\/svg>/)[0];
+    const svg = fs.readFileSync(output, 'utf8').match(/<svg\b[^]*?<\/svg>/)[0]
+      .replace(/ data-animation="trace"/g, '')
+      .replace(/ data-animate="(?:node|edge)" style="--step:[^"]*"/g, '');
     assert.equal(crypto.createHash('sha256').update(svg).digest('hex'), expectedSha256);
   });
 }

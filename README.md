@@ -370,7 +370,7 @@ Settings:
 | Choose visual style (`S` cycles) / toggle theme / open Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | Zoom or reset | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
-Stable links can restore `#focus=<id>`, `#focus=<id>&reach=upstream|downstream`, `#relation=<id>`, `#route=<source>~<target>`, and `#lens=<kind>~<kind>`. Reader-driven motion is finite, respects `prefers-reduced-motion`, and never enters canonical exports.
+Stable links can restore `#focus=<id>`, `#focus=<id>&reach=upstream|downstream`, `#relation=<id>`, `#route=<source>~<target>`, and `#lens=<kind>~<kind>`. Live repeats connection flow until paused; semantic previews remain bounded. Motion respects `prefers-reduced-motion` and never enters canonical exports.
 
 The complete generation and viewer contract lives in [`archify/SKILL.md`](archify/SKILL.md).
 

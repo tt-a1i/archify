@@ -116,15 +116,16 @@ test('automatic crossover masks follow live relationship state without becoming 
   assert.equal(await run(`CSS.supports('selector(g:has(> path))')`), true);
   const trace = await samplePairs(8);
   assertTimedPairs(trace);
-  assert.equal(trace.some((sample) => sample.some((relation) => relation.edgeAnimation === 'archify-edge-flow' && relation.edge < 0.99)), true);
-  await run(`new Promise((resolve, reject) => {
-    const start = performance.now();
-    (function waitForAmbientSettle() {
-      if (document.documentElement.getAttribute('data-ambient-motion') === 'settled') return resolve();
-      if (performance.now() - start > 6500) return reject(new Error('Ambient trace did not settle'));
-      requestAnimationFrame(waitForAmbientSettle);
-    })();
-  })`, true);
+  assert.ok(trace.every(sample=>sample.every(relation=>relation.edgeAnimation==='none')));
+  const liveCrossings = await run(`(() => [...document.querySelectorAll('[data-graph-role="automatic-crossover"]')].map(wrapper=>{
+    const edge=wrapper.querySelector('[data-edge-from]'), underlay=wrapper.querySelector('[data-graph-role="automatic-crossover-underlay"]'), flow=edge.nextElementSibling;
+    return {sameLayer:flow?.parentElement===wrapper, afterEdge:flow?.hasAttribute('data-ambient-flow-overlay'),
+      underlayFirst:underlay.compareDocumentPosition(edge)&Node.DOCUMENT_POSITION_FOLLOWING,
+      decorative:flow&&!flow.hasAttribute('data-edge-from')&&!flow.hasAttribute('marker-end'),
+      running:flow?.getAnimations().some(a=>a.playState==='running')};
+  }))()`);
+  assert.equal(liveCrossings.length, 2);
+  assert.ok(liveCrossings.every(c=>c.sameLayer&&c.afterEdge&&c.underlayFirst&&c.decorative&&c.running), JSON.stringify(liveCrossings));
   await run(`Archify.focus.set('left', { toggle: false, updateUrl: false })`);
   const focusTransition = await samplePairs(8);
   assertTimedPairs(focusTransition);

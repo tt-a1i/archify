@@ -27,6 +27,34 @@ Before requesting final review, explain:
 
 Use [the PR template](.github/PULL_REQUEST_TEMPLATE.md); link existing receipts or CI output instead of transcribing long logs. Classify impact by behavior and callers, not file extension or diff size.
 
+## PR improvement check
+
+Before requesting final review of a behavior-changing PR, assess the changed
+behavior, direct callers, and affected tests with the project Skills:
+
+- [test-value](.agents/skills/test-value/SKILL.md): use its implementation or
+  pre-commit review mode to decide which tests to add, adapt, reuse, or retire.
+  Protect user outcomes and real failure boundaries at proportionate cost.
+- [simplify-codebase](.agents/skills/simplify-codebase/SKILL.md): use Focused
+  Survey mode when the diff introduces or touches duplicate logic/state, dead
+  paths, redundant layers, or another concrete complexity concern. Trace the
+  relevant consumers before recommending a cut.
+
+Keep this check within the PR's changed ownership boundaries. A conclusion of
+“no worthwhile improvement” is valid. Pure prose or generated-only refreshes
+with no behavior change may skip it; authored Skill instructions and behavioral
+build inputs still need assessment. Apply proved improvements within the task's
+existing authorization. Report changes that would retire a supported capability
+or compatibility contract for maintainer decision.
+
+Summarize useful findings, implemented improvements, or the reason for skipping
+in the PR's existing problem/impact and test sections. Reuse applicable evidence
+under [Choose evidence by impact](#choose-evidence-by-impact); this check adds no
+separate audit report or CI gate. Repository instructions govern scope and
+publication authority. Treat the two vendored Skills as read-only guidance in
+ordinary PRs; update their pinned sources through a dedicated reviewed change.
+See [Skill sources](.agents/README.md) for provenance and update procedure.
+
 ## Choose evidence by impact
 
 | Impact | Typical change | Evidence to prepare |

@@ -46,10 +46,17 @@ function svgBlock(html) {
   return html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
 }
 
-test('static output omits animation attributes', () => {
-  const svg = svgBlock(render('workflow', CASES.workflow, null, null));
-  assert.doesNotMatch(svg, /data-animation=/);
-  assert.doesNotMatch(svg, /data-animate=/);
+test('all ten diagram modes enable motion without an authoring switch', () => {
+  const examples = { ...CASES, erd: 'orders.erd.json', class: 'payments.class.json',
+    tree: 'payment-platform.tree.json', timeline: 'payment-incident.timeline.json',
+    waterfall: 'checkout-request.waterfall.json' };
+  for (const [mode, example] of Object.entries(examples)) {
+    const defaultSvg = svgBlock(render(mode, example, null, null));
+    assert.match(defaultSvg, /data-animation="trace"/, mode);
+    assert.match(defaultSvg, /data-animate="node"/, mode);
+    assert.equal(defaultSvg, svgBlock(render(mode, example, 'trace', null)), `${mode}: unchanged geometry`);
+    assert.equal(defaultSvg, svgBlock(render(mode, example, 'none', null)), `${mode}: legacy input remains accepted`);
+  }
 });
 
 test('classic preset remains the default for existing diagrams', () => {

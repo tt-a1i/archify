@@ -1473,6 +1473,7 @@ export async function checkForUpdate({
   now = Date.now,
   random = Math.random,
   timeoutMs = DEFAULT_TIMEOUT_MS,
+  fetchDeadlineNs,
 } = {}) {
   if (updatesDisabled()) return silent('disabled');
   if (typeof fetchImpl !== 'function') return silent('runtime-unavailable');
@@ -1529,10 +1530,13 @@ export async function checkForUpdate({
     }
     let fetched;
     try {
+      const remainingFetchMs = fetchDeadlineNs === undefined ? timeoutMs
+        : Math.min(timeoutMs, Number(fetchDeadlineNs - process.hrtime.bigint()) / 1_000_000);
+      if (remainingFetchMs <= 0) throw new Error('update fetch deadline expired during cache preparation');
       fetched = await fetchCandidate({
         fetchImpl,
         manifestUrl: localRelease.updateManifestUrl,
-        timeoutMs,
+        timeoutMs: remainingFetchMs,
       });
     } catch (error) {
       const withdrawn = error instanceof ManifestWithdrawnError;

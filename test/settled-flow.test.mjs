@@ -13,6 +13,6 @@ test('trace animation delay stays finite, ordered and within the existing waitin
       return step;
     });
     assert.ok(steps.every((step, index) => index === 0 || step >= steps[index - 1]), `${kind}: authored order`);
-    assert.equal(animateAttr({}, kind, 99), '');
+    assert.equal(animateAttr({}, kind, 99), animateAttr({ animation: 'trace' }, kind, 99));
   }
 });

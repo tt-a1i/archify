@@ -599,7 +599,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--frontend-stroke);
     }
 
-    /* The reader owns only the outer scale. Long sequences and waterfall rows
+    /* The reader owns only the outer scale. Compact automatic sequences fit at
+       their authored text size or larger. Long sequences and waterfall rows
        favor reading width and page scroll; other diagrams keep height fitting.
        Small automatic canvases retain a modest scale inside a usable shell.
        Every strategy preserves the authored SVG/viewBox and semantic geometry. */
@@ -614,8 +615,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       align-items: center;
     }
     html[data-reader-area="true"] .diagram-container > svg { flex-shrink: 0; }
-    /* The original SVG legend can use the spare outer reader canvas while the
-       capped diagram stays centered. The container still clips all outer paint. */
+    /* The original SVG legend can use the outer corner while the capped or fitted
+       diagram stays centered. The container still clips all outer paint. */
     .diagram-container:has([data-reader-legend-corner]) > svg { overflow: visible; }
     .diagram-container [data-reader-legend-corner] {
       transform-origin: 0 0;
@@ -825,7 +826,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
-    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-motion="running"] .diagram-container::before {
+    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
       inset: 0;
@@ -4682,69 +4683,48 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
     .c-lane           { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-dasharray: 6,6; }
 
-    /* Optional trace animation, enabled only by meta.animation = "trace".
-       The ordinary viewer performs one ambient pass and then restores the
-       authored solid/security/async line language. WebM samples the same
-       authored geometry into an explicit canvas timeline. */
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="edge"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    /* Live flows continuously over authored paths; original line language and
+       markers remain static. Node entry is bounded to one pass per document. */
+    .ambient-edge-flow {
+      fill: none;
+      stroke: var(--arrow-emphasis);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-dasharray: 6 30;
+      opacity: 0.58;
+      pointer-events: none;
+      display: none;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) .ambient-edge-flow {
+      display: inline;
+      animation: archify-ambient-flow var(--ambient-flow-duration, 2.4s) linear infinite;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="node"] {
+    /* Collapsed tree descendants hide their adjacent decorative flow too. */
+    [data-tree-hidden] + .ambient-edge-flow { display: none !important; animation: none !important; }
+    svg[data-preset="signal-flow"] { --ambient-flow-duration: 2s; }
+    svg[data-preset="blueprint"] .ambient-edge-flow { stroke-linecap: square; }
+    svg[data-preset="editorial"] .ambient-edge-flow { opacity: 0.45; }
+    html[data-ambient-entry="running"] svg[data-animation="trace"] [data-animate="node"] {
       transform-box: fill-box;
       transform-origin: center;
       animation: archify-node-pulse 3.6s ease-in-out 1;
       animation-delay: calc(var(--step, 0) * 160ms);
     }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: round;
-      filter: drop-shadow(0 0 3px var(--arrow-emphasis));
-      animation-duration: 1.75s;
-    }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 1.75s; }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] {
-      animation-duration: 3.1s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: square;
-      filter: none;
-      animation-duration: 2.15s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.15s; }
+    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] { animation-duration: 3.1s; }
     svg[data-preset="blueprint"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-blueprint-node-pulse;
       animation-duration: 3.8s;
     }
-    svg[data-preset="editorial"][data-animation="trace"] [data-animate="edge"] {
-      filter: none;
-      animation-duration: 2.2s;
-    }
-    svg[data-preset="editorial"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.2s; }
     svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-editorial-node-pulse;
       animation-duration: 3.5s;
     }
-    /* Embedded proofs stay static so proof grids are calm instead of leaving
-       ambient trace loops on. */
-    html[data-embed="true"] svg[data-animation="trace"] [data-animate],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-animate] {
-      animation: none !important;
-      stroke-dashoffset: 0;
+    @keyframes archify-ambient-flow {
+      from { stroke-dashoffset: 36; }
+      to { stroke-dashoffset: 0; }
     }
-    html[data-embed="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: none !important;
-      stroke-dashoffset: 0;
-    }
-    @keyframes archify-edge-flow {
-      0% { stroke-dasharray: 10 8; stroke-dashoffset: 54; opacity: 0.42; }
-      88% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      99.9% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      100% { stroke-dashoffset: 0; opacity: 1; }
+    @media print {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
     }
     @keyframes archify-node-pulse {
       0%, 72%, 100% { filter: none; stroke-width: 1.5; }
@@ -4811,6 +4791,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       50% { opacity: 0.48; transform: scale(0.78); }
     }
     @media (prefers-reduced-motion: reduce) {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
       html[data-preset="signal-flow"] .diagram-container::before {
         animation: none !important;
       }
@@ -4973,7 +4954,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
-      <svg viewBox="0 0 1580 924" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase" data-timeline-ui="" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
+      <svg viewBox="0 0 1580 924" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-timeline-ui="" data-reader-fit="intrinsic-height" data-reader-min-text="7.5">
         <title id="archify-diagram-title">Archify dev branch activity, 28 Sep – 4 Oct 2026</title>
         <desc id="archify-diagram-description">Observed from this repository&#39;s git history: tag creation dates and merge commit times on origin/dev.</desc>
         <!-- Definitions -->
@@ -5163,7 +5144,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-v3_0_0" data-node-id="v3_0_0" data-node-label="Tag v3.0.0" tabindex="0" role="button" aria-label="Focus Tag v3.0.0, git tag v3.0.0, Releases › 09-28 19:13:16 UTC+08:00" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="git tag v3.0.0" data-node-context="Releases › 09-28 19:13:16 UTC+08:00" data-timeline-at="2026-09-28T19:13:16+08:00" data-timeline-ms="1790593996000" data-timeline-x="238">
           <title>Tag v3.0.0 · git tag v3.0.0 · Releases › 09-28 19:13:16 UTC+08:00</title>
           <rect x="181.5" y="152" width="113" height="43" rx="7" class="c-mask"/>
-          <rect x="181.5" y="152" width="113" height="43" rx="7" class="c-frontend tl-card" stroke-width="1"/>
+          <rect x="181.5" y="152" width="113" height="43" rx="7" class="c-frontend tl-card" data-animate="node" style="--step:0" stroke-width="1"/>
           <line x1="187.5" y1="159" x2="187.5" y2="188" class="tl-accent tl-accent-frontend" stroke-width="3" stroke-linecap="round"/>
           <text x="195.5" y="171" class="t-muted tl-time" font-size="10.5" font-weight="600">09-28 19:13:16</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="195.5" y="188">Tag v3.0.0</tspan></text>
@@ -5172,7 +5153,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-v3_0_1" data-node-id="v3_0_1" data-node-label="Tag v3.0.1" tabindex="0" role="button" aria-label="Focus Tag v3.0.1, git tag v3.0.1, Releases › 09-28 23:16:27 UTC+08:00" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="git tag v3.0.1" data-node-context="Releases › 09-28 23:16:27 UTC+08:00" data-timeline-at="2026-09-28T23:16:27+08:00" data-timeline-ms="1790608587000" data-timeline-x="361.67">
           <title>Tag v3.0.1 · git tag v3.0.1 · Releases › 09-28 23:16:27 UTC+08:00</title>
           <rect x="305.17" y="152" width="113" height="43" rx="7" class="c-mask"/>
-          <rect x="305.17" y="152" width="113" height="43" rx="7" class="c-frontend tl-card" stroke-width="1"/>
+          <rect x="305.17" y="152" width="113" height="43" rx="7" class="c-frontend tl-card" data-animate="node" style="--step:1" stroke-width="1"/>
           <line x1="311.17" y1="159" x2="311.17" y2="188" class="tl-accent tl-accent-frontend" stroke-width="3" stroke-linecap="round"/>
           <text x="319.17" y="171" class="t-muted tl-time" font-size="10.5" font-weight="600">09-28 23:16:27</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="319.17" y="188">Tag v3.0.1</tspan></text>
@@ -5181,7 +5162,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr627" data-node-id="pr627" data-node-label="Merge #627 restore Kimi poster" tabindex="0" role="button" aria-label="Focus Merge #627 restore Kimi poster, Merge commit on dev, PR merges › 09-29 14:16:30 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-29 14:16:30 UTC+08:00" data-timeline-at="2026-09-29T14:16:30+08:00" data-timeline-ms="1790662590000" data-timeline-x="449.67">
           <title>Merge #627 restore Kimi poster · Merge commit on dev · PR merges › 09-29 14:16:30 UTC+08:00</title>
           <rect x="349.67" y="455" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="349.67" y="455" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="349.67" y="455" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:2" stroke-width="1"/>
           <line x1="355.67" y1="462" x2="355.67" y2="506" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="363.67" y="474" class="t-muted tl-time" font-size="10.5" font-weight="600">09-29 14:16:30</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="363.67" y="491">Merge #627 restore</tspan><tspan x="363.67" y="506">Kimi poster</tspan></text>
@@ -5190,7 +5171,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr628" data-node-id="pr628" data-node-label="Merge #628 restore Kimi poster" tabindex="0" role="button" aria-label="Focus Merge #628 restore Kimi poster, Merge commit on dev, PR merges › 09-29 14:17:35 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-29 14:17:35 UTC+08:00" data-timeline-at="2026-09-29T14:17:35+08:00" data-timeline-ms="1790662655000" data-timeline-x="450.22">
           <title>Merge #628 restore Kimi poster · Merge commit on dev · PR merges › 09-29 14:17:35 UTC+08:00</title>
           <rect x="350.22" y="365" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="350.22" y="365" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="350.22" y="365" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:3" stroke-width="1"/>
           <line x1="356.22" y1="372" x2="356.22" y2="416" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="364.22" y="384" class="t-muted tl-time" font-size="10.5" font-weight="600">09-29 14:17:35</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="364.22" y="401">Merge #628 restore</tspan><tspan x="364.22" y="416">Kimi poster</tspan></text>
@@ -5199,7 +5180,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr629" data-node-id="pr629" data-node-label="Merge #629 README sponsor name" tabindex="0" role="button" aria-label="Focus Merge #629 README sponsor name, Merge commit on dev, PR merges › 09-29 14:28:59 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-29 14:28:59 UTC+08:00" data-timeline-at="2026-09-29T14:28:59+08:00" data-timeline-ms="1790663339000" data-timeline-x="456.01">
           <title>Merge #629 README sponsor name · Merge commit on dev · PR merges › 09-29 14:28:59 UTC+08:00</title>
           <rect x="356.01" y="521" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="356.01" y="521" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="356.01" y="521" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:4" stroke-width="1"/>
           <line x1="362.01" y1="528" x2="362.01" y2="572" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="370.01" y="540" class="t-muted tl-time" font-size="10.5" font-weight="600">09-29 14:28:59</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="370.01" y="557">Merge #629 README</tspan><tspan x="370.01" y="572">sponsor name</tspan></text>
@@ -5208,7 +5189,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr635" data-node-id="pr635" data-node-label="Merge #635 README launch v4" tabindex="0" role="button" aria-label="Focus Merge #635 README launch v4, Merge commit on dev, PR merges › 09-30 00:15:40 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-30 00:15:40 UTC+08:00" data-timeline-at="2026-09-30T00:15:40+08:00" data-timeline-ms="1790698540000" data-timeline-x="754.36">
           <title>Merge #635 README launch v4 · Merge commit on dev · PR merges › 09-30 00:15:40 UTC+08:00</title>
           <rect x="654.36" y="455" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="654.36" y="455" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="654.36" y="455" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:5" stroke-width="1"/>
           <line x1="660.36" y1="462" x2="660.36" y2="506" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="668.36" y="474" class="t-muted tl-time" font-size="10.5" font-weight="600">09-30 00:15:40</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="668.36" y="491">Merge #635 README</tspan><tspan x="668.36" y="506">launch v4</tspan></text>
@@ -5217,7 +5198,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr636" data-node-id="pr636" data-node-label="Merge #636 README support section" tabindex="0" role="button" aria-label="Focus Merge #636 README support section, Merge commit on dev, PR merges › 09-30 00:23:38 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-30 00:23:38 UTC+08:00" data-timeline-at="2026-09-30T00:23:38+08:00" data-timeline-ms="1790699018000" data-timeline-x="758.41">
           <title>Merge #636 README support section · Merge commit on dev · PR merges › 09-30 00:23:38 UTC+08:00</title>
           <rect x="658.41" y="365" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="658.41" y="365" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="658.41" y="365" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:6" stroke-width="1"/>
           <line x1="664.41" y1="372" x2="664.41" y2="416" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="672.41" y="384" class="t-muted tl-time" font-size="10.5" font-weight="600">09-30 00:23:38</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="672.41" y="401">Merge #636 README</tspan><tspan x="672.41" y="416">support section</tspan></text>
@@ -5226,7 +5207,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr634" data-node-id="pr634" data-node-label="Merge #634 repair-rounds bench" tabindex="0" role="button" aria-label="Focus Merge #634 repair-rounds bench, Merge commit on dev, PR merges › 09-30 00:23:57 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-30 00:23:57 UTC+08:00" data-timeline-at="2026-09-30T00:23:57+08:00" data-timeline-ms="1790699037000" data-timeline-x="758.57">
           <title>Merge #634 repair-rounds bench · Merge commit on dev · PR merges › 09-30 00:23:57 UTC+08:00</title>
           <rect x="658.57" y="521" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="658.57" y="521" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="658.57" y="521" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:7" stroke-width="1"/>
           <line x1="664.57" y1="528" x2="664.57" y2="572" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="672.57" y="540" class="t-muted tl-time" font-size="10.5" font-weight="600">09-30 00:23:57</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="672.57" y="557">Merge #634</tspan><tspan x="672.57" y="572">repair-rounds bench</tspan></text>
@@ -5235,7 +5216,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr637" data-node-id="pr637" data-node-label="Merge #637 README Alipay support" tabindex="0" role="button" aria-label="Focus Merge #637 README Alipay support, Merge commit on dev, PR merges › 09-30 00:42:24 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-30 00:42:24 UTC+08:00" data-timeline-at="2026-09-30T00:42:24+08:00" data-timeline-ms="1790700144000" data-timeline-x="767.96">
           <title>Merge #637 README Alipay support · Merge commit on dev · PR merges › 09-30 00:42:24 UTC+08:00</title>
           <rect x="667.96" y="299" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="667.96" y="299" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="667.96" y="299" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:8" stroke-width="1"/>
           <line x1="673.96" y1="306" x2="673.96" y2="350" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="681.96" y="318" class="t-muted tl-time" font-size="10.5" font-weight="600">09-30 00:42:24</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="681.96" y="335">Merge #637 README</tspan><tspan x="681.96" y="350">Alipay support</tspan></text>
@@ -5244,7 +5225,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-sync_main" data-node-id="sync_main" data-node-label="Merge main into dev" tabindex="0" role="button" aria-label="Focus Merge main into dev, Merge commit on dev, Branch syncs › 09-30 14:36:59 UTC+08:00" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="Merge commit on dev" data-node-context="Branch syncs › 09-30 14:36:59 UTC+08:00" data-timeline-at="2026-09-30T14:36:59+08:00" data-timeline-ms="1790750219000" data-timeline-x="895.96">
           <title>Merge main into dev · Merge commit on dev · Branch syncs › 09-30 14:36:59 UTC+08:00</title>
           <rect x="808.96" y="790" width="174" height="43" rx="7" class="c-mask"/>
-          <rect x="808.96" y="790" width="174" height="43" rx="7" class="c-messagebus tl-card" stroke-width="1"/>
+          <rect x="808.96" y="790" width="174" height="43" rx="7" class="c-messagebus tl-card" data-animate="node" style="--step:9" stroke-width="1"/>
           <line x1="814.96" y1="797" x2="814.96" y2="826" class="tl-accent tl-accent-messagebus" stroke-width="3" stroke-linecap="round"/>
           <text x="822.96" y="809" class="t-muted tl-time" font-size="10.5" font-weight="600">09-30 14:36:59</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="822.96" y="826">Merge main into dev</tspan></text>
@@ -5253,7 +5234,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr615" data-node-id="pr615" data-node-label="Merge #615 stable manifest v3.0.1" tabindex="0" role="button" aria-label="Focus Merge #615 stable manifest v3.0.1, Merge commit on dev, PR merges › 09-30 18:19:15 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 09-30 18:19:15 UTC+08:00" data-timeline-at="2026-09-30T18:19:15+08:00" data-timeline-ms="1790763555000" data-timeline-x="1008.98">
           <title>Merge #615 stable manifest v3.0.1 · Merge commit on dev · PR merges › 09-30 18:19:15 UTC+08:00</title>
           <rect x="908.98" y="455" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="908.98" y="455" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="908.98" y="455" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:10" stroke-width="1"/>
           <line x1="914.98" y1="462" x2="914.98" y2="506" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="922.98" y="474" class="t-muted tl-time" font-size="10.5" font-weight="600">09-30 18:19:15</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="922.98" y="491">Merge #615 stable</tspan><tspan x="922.98" y="506">manifest v3.0.1</tspan></text>
@@ -5262,7 +5243,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-sync_upstream" data-node-id="sync_upstream" data-node-label="Merge upstream dev and regenerate artifacts" tabindex="0" role="button" aria-label="Focus Merge upstream dev and regenerate artifacts, Merge commit on dev, Branch syncs › 10-01 18:58:51 UTC+08:00" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="Merge commit on dev" data-node-context="Branch syncs › 10-01 18:58:51 UTC+08:00" data-timeline-at="2026-10-01T16:28:51+05:30" data-timeline-ms="1790852331000" data-timeline-x="1111.98">
           <title>Merge upstream dev and regenerate artifacts · Merge commit on dev · Branch syncs › 10-01 18:58:51 UTC+08:00</title>
           <rect x="1011.98" y="790" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1011.98" y="790" width="200" height="58" rx="7" class="c-messagebus tl-card" stroke-width="1"/>
+          <rect x="1011.98" y="790" width="200" height="58" rx="7" class="c-messagebus tl-card" data-animate="node" style="--step:11" stroke-width="1"/>
           <line x1="1017.98" y1="797" x2="1017.98" y2="841" class="tl-accent tl-accent-messagebus" stroke-width="3" stroke-linecap="round"/>
           <text x="1025.98" y="809" class="t-muted tl-time" font-size="10.5" font-weight="600">10-01 18:58:51</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1025.98" y="826">Merge upstream dev and</tspan><tspan x="1025.98" y="841">regenerate artifacts</tspan></text>
@@ -5271,7 +5252,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr655" data-node-id="pr655" data-node-label="Merge #655 locale catalogs" tabindex="0" role="button" aria-label="Focus Merge #655 locale catalogs, Merge commit on dev, PR merges › 10-02 20:49:57 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-02 20:49:57 UTC+08:00" data-timeline-at="2026-10-02T20:49:57+08:00" data-timeline-ms="1790945397000" data-timeline-x="1214.98">
           <title>Merge #655 locale catalogs · Merge commit on dev · PR merges › 10-02 20:49:57 UTC+08:00</title>
           <rect x="1114.98" y="365" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1114.98" y="365" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="1114.98" y="365" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1120.98" y1="372" x2="1120.98" y2="416" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="1128.98" y="384" class="t-muted tl-time" font-size="10.5" font-weight="600">10-02 20:49:57</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1128.98" y="401">Merge #655 locale</tspan><tspan x="1128.98" y="416">catalogs</tspan></text>
@@ -5280,7 +5261,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr587" data-node-id="pr587" data-node-label="Merge #587 brand ICO bounds" tabindex="0" role="button" aria-label="Focus Merge #587 brand ICO bounds, Merge commit on dev, PR merges › 10-02 21:13:51 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-02 21:13:51 UTC+08:00" data-timeline-at="2026-10-02T21:13:51+08:00" data-timeline-ms="1790946831000" data-timeline-x="1227.14">
           <title>Merge #587 brand ICO bounds · Merge commit on dev · PR merges › 10-02 21:13:51 UTC+08:00</title>
           <rect x="1127.14" y="455" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1127.14" y="455" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="1127.14" y="455" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1133.14" y1="462" x2="1133.14" y2="506" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="1141.14" y="474" class="t-muted tl-time" font-size="10.5" font-weight="600">10-02 21:13:51</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1141.14" y="491">Merge #587 brand ICO</tspan><tspan x="1141.14" y="506">bounds</tspan></text>
@@ -5289,7 +5270,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr399" data-node-id="pr399" data-node-label="Merge #399 ERD diagrams" tabindex="0" role="button" aria-label="Focus Merge #399 ERD diagrams, Merge commit on dev, PR merges › 10-02 21:36:46 UTC+08:00" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-02 21:36:46 UTC+08:00" data-timeline-at="2026-10-02T21:36:46+08:00" data-timeline-ms="1790948206000" data-timeline-x="1238.79">
           <title>Merge #399 ERD diagrams · Merge commit on dev · PR merges › 10-02 21:36:46 UTC+08:00</title>
           <rect x="1138.79" y="521" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1138.79" y="521" width="200" height="58" rx="7" class="c-backend tl-card" stroke-width="1"/>
+          <rect x="1138.79" y="521" width="200" height="58" rx="7" class="c-backend tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1144.79" y1="528" x2="1144.79" y2="572" class="tl-accent tl-accent-backend" stroke-width="3" stroke-linecap="round"/>
           <text x="1152.79" y="540" class="t-muted tl-time" font-size="10.5" font-weight="600">10-02 21:36:46</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1152.79" y="557">Merge #399 ERD</tspan><tspan x="1152.79" y="572">diagrams</tspan></text>
@@ -5298,7 +5279,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr632" data-node-id="pr632" data-node-label="Merge #632 card note overflow" tabindex="0" role="button" aria-label="Focus Merge #632 card note overflow, Merge commit on dev, PR merges › 10-02 22:08:03 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-02 22:08:03 UTC+08:00" data-timeline-at="2026-10-02T22:08:03+08:00" data-timeline-ms="1790950083000" data-timeline-x="1254.7">
           <title>Merge #632 card note overflow · Merge commit on dev · PR merges › 10-02 22:08:03 UTC+08:00</title>
           <rect x="1154.7" y="299" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1154.7" y="299" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="1154.7" y="299" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1160.7" y1="306" x2="1160.7" y2="350" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="1168.7" y="318" class="t-muted tl-time" font-size="10.5" font-weight="600">10-02 22:08:03</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1168.7" y="335">Merge #632 card note</tspan><tspan x="1168.7" y="350">overflow</tspan></text>
@@ -5307,7 +5288,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr672" data-node-id="pr672" data-node-label="Merge #672 repair-rounds blind spots" tabindex="0" role="button" aria-label="Focus Merge #672 repair-rounds blind spots, Merge commit on dev, PR merges › 10-04 09:57:08 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-04 09:57:08 UTC+08:00" data-timeline-at="2026-10-04T09:57:08+08:00" data-timeline-ms="1791079028000" data-timeline-x="1363.7">
           <title>Merge #672 repair-rounds blind spots · Merge commit on dev · PR merges › 10-04 09:57:08 UTC+08:00</title>
           <rect x="1263.7" y="587" width="200" height="73" rx="7" class="c-mask"/>
-          <rect x="1263.7" y="587" width="200" height="73" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="1263.7" y="587" width="200" height="73" rx="7" class="c-external tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1269.7" y1="594" x2="1269.7" y2="653" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="1277.7" y="606" class="t-muted tl-time" font-size="10.5" font-weight="600">10-04 09:57:08</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1277.7" y="623">Merge #672</tspan><tspan x="1277.7" y="638">repair-rounds blind</tspan><tspan x="1277.7" y="653">spots</tspan></text>
@@ -5316,7 +5297,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr677" data-node-id="pr677" data-node-label="Merge #677 release subscriptions" tabindex="0" role="button" aria-label="Focus Merge #677 release subscriptions, Merge commit on dev, PR merges › 10-04 10:14:55 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-04 10:14:55 UTC+08:00" data-timeline-at="2026-10-04T10:14:55+08:00" data-timeline-ms="1791080095000" data-timeline-x="1372.74">
           <title>Merge #677 release subscriptions · Merge commit on dev · PR merges › 10-04 10:14:55 UTC+08:00</title>
           <rect x="1272.74" y="233" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1272.74" y="233" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="1272.74" y="233" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1278.74" y1="240" x2="1278.74" y2="284" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="1286.74" y="252" class="t-muted tl-time" font-size="10.5" font-weight="600">10-04 10:14:55</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1286.74" y="269">Merge #677 release</tspan><tspan x="1286.74" y="284">subscriptions</tspan></text>
@@ -5325,7 +5306,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr674" data-node-id="pr674" data-node-label="Merge #674 community registry v0" tabindex="0" role="button" aria-label="Focus Merge #674 community registry v0, Merge commit on dev, PR merges › 10-04 10:17:01 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-04 10:17:01 UTC+08:00" data-timeline-at="2026-10-04T10:17:01+08:00" data-timeline-ms="1791080221000" data-timeline-x="1373.81">
           <title>Merge #674 community registry v0 · Merge commit on dev · PR merges › 10-04 10:17:01 UTC+08:00</title>
           <rect x="1273.81" y="668" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1273.81" y="668" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="1273.81" y="668" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1279.81" y1="675" x2="1279.81" y2="719" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="1287.81" y="687" class="t-muted tl-time" font-size="10.5" font-weight="600">10-04 10:17:01</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1287.81" y="704">Merge #674 community</tspan><tspan x="1287.81" y="719">registry v0</tspan></text>
@@ -5334,7 +5315,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-pr668" data-node-id="pr668" data-node-label="Merge #668 MCO artifact refresh" tabindex="0" role="button" aria-label="Focus Merge #668 MCO artifact refresh, Merge commit on dev, PR merges › 10-04 13:18:18 UTC+08:00" aria-pressed="false" data-node-kind="external" data-node-sublabel="Merge commit on dev" data-node-context="PR merges › 10-04 13:18:18 UTC+08:00" data-timeline-at="2026-10-04T13:18:18+08:00" data-timeline-ms="1791091098000" data-timeline-x="1466">
           <title>Merge #668 MCO artifact refresh · Merge commit on dev · PR merges › 10-04 13:18:18 UTC+08:00</title>
           <rect x="1348" y="455" width="200" height="58" rx="7" class="c-mask"/>
-          <rect x="1348" y="455" width="200" height="58" rx="7" class="c-external tl-card" stroke-width="1"/>
+          <rect x="1348" y="455" width="200" height="58" rx="7" class="c-external tl-card" data-animate="node" style="--step:12" stroke-width="1"/>
           <line x1="1354" y1="462" x2="1354" y2="506" class="tl-accent tl-accent-external" stroke-width="3" stroke-linecap="round"/>
           <text x="1362" y="474" class="t-muted tl-time" font-size="10.5" font-weight="600">10-04 13:18:18</text>
           <text data-node-label="" class="t-primary" font-size="12.5" font-weight="650"><tspan x="1362" y="491">Merge #668 MCO</tspan><tspan x="1362" y="506">artifact refresh</tspan></text>
@@ -5585,11 +5566,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     function hasDrawableGeometry(element) {
-      if (!element) return false;
+      if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
       var geometries = /^(path|line|polyline)$/i.test(element.tagName)
         ? [element]
         : Array.prototype.slice.call(element.querySelectorAll('path, line, polyline'));
       return geometries.some(function (geometry) {
+        if (geometry.hasAttribute('data-ambient-flow-overlay')) return false;
         var source = geometry.tagName.toLowerCase() === 'path'
           ? geometry.getAttribute('d')
           : geometry.tagName.toLowerCase() === 'polyline'
@@ -5834,6 +5816,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-ambient-flow-overlay]'), function (el) {
+          el.remove();
+        });
+        // Route interaction rewrites CSS declarations through CSSOM. Normalize
+        // authored motion delays on the clone so exported bytes do not depend
+        // on whether the reader traced a route before downloading.
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (el) {
+          var step = el.style.getPropertyValue('--step');
+          if (step) el.setAttribute('style', el.style.cssText);
+        });
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
@@ -5995,7 +5987,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           !clone.hasAttribute('data-tree-any-collapsed') &&
           !clone.style.getPropertyValue('transform') &&
           !clone.style.getPropertyValue('clip-path') &&
-          clone.querySelectorAll('[data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
+          clone.querySelectorAll('[data-ambient-flow-overlay], [data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
       }
 
 
@@ -7356,38 +7348,54 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ownerToken = 0;
       var ownerCleanup = null;
       var lastEffectivePaused = null;
-      var ambientStarted = false;
-      var ambientPending = new Set();
+      var entryStarted = false;
+      var entryPending = new Set();
+      var flowCount = 0;
 
-      function detachAmbientBoundary() {
-        if (!svg) return;
-        svg.removeEventListener('animationend', onAmbientBoundary, true);
-        svg.removeEventListener('animationcancel', onAmbientBoundary, true);
+      // Runtime decoration carries geometry only. Keep each flow beside its
+      // authored edge so transforms, clipping and crossover paint order apply.
+      function createFlows() {
+        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape) {
+          var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
+          if (!d) return;
+          var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          flow.setAttribute('d', d);
+          ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
+            if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+          });
+          flow.setAttribute('class', 'ambient-edge-flow');
+          flow.setAttribute('data-ambient-flow-overlay', 'true');
+          flow.setAttribute('aria-hidden', 'true');
+          shape.parentNode.insertBefore(flow, shape.nextSibling);
+          flowCount += 1;
+        });
       }
-      function settleAmbient(reason) {
-        if (!capable) return false;
-        ambientStarted = true;
-        ambientPending.clear();
-        detachAmbientBoundary();
-        html.setAttribute('data-ambient-motion', 'settled');
-        html.setAttribute('data-ambient-settle-reason', reason || 'complete');
-        return true;
+      function settleEntry() {
+        entryPending.clear();
+        svg.removeEventListener('animationend', onEntryBoundary, true);
+        svg.removeEventListener('animationcancel', onEntryBoundary, true);
+        html.setAttribute('data-ambient-entry', 'settled');
       }
-      function onAmbientBoundary(event) {
-        if (!ambientPending.has(event.target)) return;
-        ambientPending.delete(event.target);
-        if (!ambientPending.size) settleAmbient('complete');
+      function onEntryBoundary(event) {
+        if (!entryPending.has(event.target)) return;
+        entryPending.delete(event.target);
+        if (!entryPending.size) settleEntry();
       }
-      function startAmbient() {
-        if (ambientStarted || !capable) return false;
-        ambientStarted = true;
-        ambientPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="edge"], [data-animate="node"]')));
-        if (!ambientPending.size) return settleAmbient('empty');
-        svg.addEventListener('animationend', onAmbientBoundary, true);
-        svg.addEventListener('animationcancel', onAmbientBoundary, true);
-        html.setAttribute('data-ambient-motion', 'running');
-        html.removeAttribute('data-ambient-settle-reason');
-        return true;
+      function renderAmbient(suppressed) {
+        html.setAttribute('data-ambient-motion', suppressed ? 'paused' : (flowCount ? 'running' : 'empty'));
+        if (suppressed) {
+          entryStarted = true;
+          settleEntry();
+        } else if (!entryStarted) {
+          entryStarted = true;
+          entryPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="node"]')));
+          if (!entryPending.size) settleEntry();
+          else {
+            svg.addEventListener('animationend', onEntryBoundary, true);
+            svg.addEventListener('animationcancel', onEntryBoundary, true);
+            html.setAttribute('data-ambient-entry', 'running');
+          }
+        }
       }
 
       function readStored() {
@@ -7422,11 +7430,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var systemPaused = reducedMotion();
         var paused = effectivePaused();
         html.setAttribute('data-motion', paused ? 'still' : 'live');
-        if (paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden')) {
-          settleAmbient('suppressed');
-        } else if (!ambientStarted) {
-          startAmbient();
-        }
+        renderAmbient(paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden'));
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
@@ -7531,7 +7535,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.removeAttribute('data-motion');
         html.removeAttribute('data-motion-owner');
         html.removeAttribute('data-ambient-motion');
-        html.removeAttribute('data-ambient-settle-reason');
+        html.removeAttribute('data-ambient-entry');
         return {
           capable: false,
           pause: function () { return false; },
@@ -7547,6 +7551,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
 
+      createFlows();
       html.setAttribute('data-motion-capable', 'true');
       btn.hidden = false;
       readerPaused = readStored() === 'still';
@@ -7556,6 +7561,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else if (typeof motionQuery.addListener === 'function') motionQuery.addListener(render);
       }
       document.addEventListener('visibilitychange', syncVisibility);
+      if (typeof MutationObserver !== 'undefined') {
+        var contextObserver = new MutationObserver(render);
+        contextObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-share-playback'] });
+      }
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
         ownerObserver.observe(svg, {
@@ -8184,7 +8193,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function relationshipEdgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
@@ -9433,7 +9442,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-intent-trace-overlay]'), function (overlay) {
@@ -9669,6 +9678,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var readerFit = svg && svg.getAttribute('data-reader-fit');
       var widthFirstReading = readerFit === 'width-first';
+      var automaticSequence = widthFirstReading && svg.hasAttribute('data-sequence-column-fit');
+      var readingScroll = widthFirstReading;
       var measuredHeightFit = readerFit === 'intrinsic-height' || widthFirstReading;
       var frame = 0;
       var settleFrame = 0;
@@ -9812,11 +9823,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         legend.style.removeProperty('--archify-reader-legend-transform');
       }
       // Keep the original legend in its SVG: renderer hover/focus selectors and
-      // canonical export still own that same group. Only ordinary capped
-      // reading at 25–100% borrows the spare outer canvas for its legend.
+      // canonical export still own that same group. Ordinary capped reading
+      // and fitted automatic sequences borrow the outer corner at 25–100%.
       function syncLegend() {
         var cameraScale = Number(svg && svg.getAttribute('data-view-scale')) || 1;
-        if (!legend || !eligible() || html.getAttribute('data-reader-area') !== 'true' || cameraScale > 1.001) {
+        var cornerReading = html.getAttribute('data-reader-area') === 'true' || automaticSequence && !readingScroll;
+        if (!legend || !eligible() || !cornerReading || cameraScale > 1.001) {
           clearLegend();
           return;
         }
@@ -9957,7 +9969,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ) - window.innerHeight - belowFold();
           // visual-check fails any page whose rounded-up height exceeds the
           // viewport, so even a 1px remainder must be reduced or declared.
-          if (overflow > 0 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
+          if (overflow > 0 && !readingScroll && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute('data-reader-overflow', 'reduced');
@@ -9976,17 +9988,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+        // Sequence first-screen fitting preserves source text sizes instead
+        // of shrinking to the shared hard readability floor.
         var readableWidth = viewBox && viewBox.width > 0
-          ? viewBox.width * minimumReadableScale() + chrome.diagramX
+          ? viewBox.width * (automaticSequence ? 1 : minimumReadableScale()) + chrome.diagramX
           : MIN_READER_WIDTH;
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
-        var readableMinimumWidth = measuredHeightFit && ratio < WIDE_RATIO
+        var readableMinimumWidth = automaticSequence || measuredHeightFit && ratio < WIDE_RATIO
           ? readableWidth
           : measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)
             ? Math.max(MIN_READER_WIDTH, readableWidth)
             : MIN_READER_WIDTH;
         var minWidth;
-        if (measuredHeightFit && ratio < WIDE_RATIO) {
+        if (automaticSequence) {
+          minWidth = Math.min(readableMinimumWidth, maxWidth);
+        } else if (measuredHeightFit && ratio < WIDE_RATIO) {
           minWidth = Math.min(readableMinimumWidth, viewportCap);
         } else if (measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)) {
           minWidth = Math.min(readableMinimumWidth, maxWidth);
@@ -10022,10 +10038,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
-        // Long sequences and waterfall rows use the available horizontal room;
-        // ordinary page scrolling keeps their text and row spacing readable.
-        // Other diagram families retain the existing height-fit strategy.
-        if (widthFirstReading) desiredWidth = maxWidth;
+        // Compact automatic sequences fit the first screen without shrinking
+        // their authored text. Longer sequences retain reading width and page
+        // scroll; other width-first families keep their existing strategy.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+          readableWidth + (docked ? railExtra : 0);
+        readingScroll = widthFirstReading && !sequenceFits;
+        if (readingScroll) desiredWidth = maxWidth;
         // Only a binding enlargement cap needs a separate normal reader area.
         // Uncapped diagrams keep their existing natural height and Chrome fit.
         automaticAreaHeight = availableSvgHeight + chrome.diagramY;
@@ -12320,7 +12339,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-route-probe-overlay]'), function (overlay) {
@@ -13314,7 +13333,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function edgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function legendSourceBounds(entry) {
         var bounds = null;

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Test Value"
+  short_description: "Improve test protection, feedback speed and maintenance cost"
+  default_prompt: "Use $test-value to assess tests relevant to this task, improve them within the authorized scope, and verify the behavior they retain."
+policy:
+  allow_implicit_invocation: true

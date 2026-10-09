@@ -356,7 +356,8 @@ export function validateCrossCollectionContracts(diagramType, diagram) {
 
 // Accessible name for the generated diagram SVG.
 export function svgRootAttrs(meta, explicitQualityProfile) {
-  const animation = meta.animation === 'trace' ? ' data-animation="trace"' : '';
+  // Motion is a Viewer capability for every diagram; Live/Still controls playback.
+  const animation = ' data-animation="trace"';
   const preset = ` data-preset="${esc(meta.visual_preset || 'classic')}"`;
   const engineeringProfile = meta.engineering_profile
     ? ` data-engineering-profile="${esc(meta.engineering_profile)}"`
@@ -376,7 +377,6 @@ export function svgAccessibleText(meta, kind) {
 }
 
 export function animateAttr(meta, kind, step) {
-  if (meta.animation !== 'trace') return '';
   // Ambient trace must finish inside the fixed six-second WebM capture. The
   // cap affects visual delay only; authored order and semantic identity stay
   // untouched in the JSON, DOM, and relationship contracts.

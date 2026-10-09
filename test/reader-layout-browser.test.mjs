@@ -631,6 +631,181 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
       assert.ok(await evaluate("document.querySelector('.diagram-container > svg').clientWidth > 456 * 1.5"),
         'an authored canvas retains its previous enlargement behavior');
     });
+    await t.test('compact automatic Sequence fits the initial desktop stage without shrinking source text', async () => {
+      const compact = JSON.parse(fs.readFileSync(path.resolve(skillRoot,
+        '../test/fixtures/reader-readability/compact-roundtrip.sequence.json'), 'utf8'));
+      // Wrapped notes need 6px more room before the Accepted label. Preserve
+      // all annotations and the remaining timeline while exercising Reader fit.
+      compact.messages.find(message => message.id === 'accepted').y = 236;
+      function renderSequence(name, doc) {
+        const input = path.join(scratch, `${name}.json`);
+        const output = path.join(scratch, `${name}.html`);
+        fs.writeFileSync(input, JSON.stringify(doc));
+        execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'sequence', input, output]);
+        return output;
+      }
+      async function stage(label) {
+        const value = await evaluate(`(function () {
+          var svg = document.querySelector('.diagram-container > svg');
+          function bounds(element) {
+            var rect = element.getBoundingClientRect();
+            return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right };
+          }
+          var textScales = Array.from(svg.querySelectorAll('text')).map(function (text) {
+            var matrix = text.getScreenCTM();
+            return Math.hypot(matrix.a, matrix.b);
+          });
+          var legend = svg.querySelector('[data-legend]');
+          var legendRect = legend.getBoundingClientRect();
+          var containerRect = svg.parentElement.getBoundingClientRect();
+          var containerStyle = getComputedStyle(svg.parentElement);
+          var navRect = document.querySelector('.diagram-nav').getBoundingClientRect();
+          return { svg: bounds(svg), stage: bounds(svg.parentElement),
+            controls: bounds(document.querySelector('.diagram-nav')),
+            legend: { corner: legend.hasAttribute('data-reader-legend-corner'),
+              bounds: bounds(legend),
+              originalSvg: legend.ownerSVGElement === svg, count: document.querySelectorAll('[data-legend]').length,
+              leftGap: legendRect.left - containerRect.left - parseFloat(containerStyle.borderLeftWidth) - parseFloat(containerStyle.paddingLeft),
+              bottomGap: containerRect.bottom - parseFloat(containerStyle.borderBottomWidth) - parseFloat(containerStyle.paddingBottom) - legendRect.bottom,
+              navOverlap: Math.max(0, Math.min(navRect.right, legendRect.right) - Math.max(navRect.left, legendRect.left)) *
+                Math.max(0, Math.min(navRect.bottom, legendRect.bottom) - Math.max(navRect.top, legendRect.top)) },
+            width: svg.clientWidth, sourceWidth: svg.viewBox.baseVal.width,
+            minimumTextScale: Math.min.apply(Math, textScales),
+            viewportWidth: innerWidth, viewportHeight: innerHeight,
+            geometry: ['viewBox', 'width', 'height'].map(function (name) { return svg.getAttribute(name); }) };
+        })()`);
+        records.push({ label, ...value });
+        return value;
+      }
+      function fits(value) {
+        for (const region of [value.svg, value.stage, value.controls]) {
+          assert.ok(region.top >= -1 && region.bottom <= value.viewportHeight + 1 &&
+            region.left >= -1 && region.right <= value.viewportWidth + 1, JSON.stringify(value));
+        }
+        assert.ok(value.minimumTextScale >= 1 - 0.01, 'initial fitting must retain source text size: ' + JSON.stringify(value));
+        assert.ok(value.width <= value.sourceWidth * 1.5 + 1, 'automatic enlargement remains capped: ' + JSON.stringify(value));
+      }
+      function legendPlacement(value, corner) {
+        assert.equal(value.legend.corner, corner, JSON.stringify(value));
+        assert.equal(value.legend.originalSvg, true, 'legend remains in the original SVG');
+        assert.equal(value.legend.count, 1, 'legend is never duplicated');
+        if (corner) {
+          assert.ok(Math.abs(value.legend.leftGap) <= 1 && Math.abs(value.legend.bottomGap) <= 1,
+            'legend sits in the outer stage padding corner: ' + JSON.stringify(value));
+          assert.equal(value.legend.navOverlap, 0, 'legend must not overlap navigation');
+        }
+      }
+      async function exportedLegend() {
+        return evaluate(`(async function () {
+          var svg = document.querySelector('.diagram-container > svg');
+          var before = svg.outerHTML, original = URL.createObjectURL, captured;
+          URL.createObjectURL = function (blob) {
+            if (blob.type.indexOf('image/svg+xml') === 0) captured = blob;
+            return original.call(URL, blob);
+          };
+          try {
+            await Archify.exportMenu.run('svg');
+            var text = await captured.text();
+            var clone = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
+            return { legend: clone.querySelector('[data-legend]').outerHTML.replace(' style=""', ''),
+              geometry: ['viewBox', 'width', 'height'].map(function (name) { return clone.getAttribute(name); }),
+              count: clone.querySelectorAll('[data-legend]').length, liveUnchanged: before === svg.outerHTML,
+              runtime: Boolean(clone.querySelector('[data-reader-legend-corner]')) || text.includes('--archify-reader-legend-transform') };
+          } finally { URL.createObjectURL = original; }
+        })()`, true);
+      }
+      const file = renderSequence('compact-roundtrip', compact);
+      await load(file, { width: 1396, height: 540 });
+      const canonical = await exportedLegend();
+      assert.equal(canonical.count, 1);
+      assert.equal(canonical.liveUnchanged, true);
+      assert.equal(canonical.runtime, false);
+      await load(file, { width: 1396, height: 830 });
+      const initial = await stage('compact-sequence-initial');
+      fits(initial);
+      legendPlacement(initial, true);
+      if (evidence) {
+        assert.equal(await evaluate('scrollY'), 0, 'initial screenshot uses the top of the document');
+        assert.equal(await evaluate('Archify.view.state().scale'), 1);
+        const capture = await send('Page.captureScreenshot', { format: 'png' });
+        fs.writeFileSync(path.join(evidence, 'compact-sequence-initial.png'), Buffer.from(capture.data, 'base64'));
+      }
+      assert.deepEqual(await exportedLegend(), canonical, 'initial fitting exports canonical geometry and legend placement');
+      assert.ok((await snapshot('compact-sequence-shell')).shellWidth >= 960, 'height fitting preserves the desktop shell');
+      await evaluate('Archify.view.zoomIn(); Archify.view.zoomIn()');
+      await stable();
+      const zoomed = await stage('compact-sequence-legend-150');
+      assert.equal(await evaluate('Archify.view.state().scale'), 1.5);
+      legendPlacement(zoomed, false);
+      assert.deepEqual(zoomed.geometry, initial.geometry);
+      assert.deepEqual(await exportedLegend(), canonical, 'zoom exports canonical legend placement without changing live SVG');
+      await evaluate('Archify.view.reset()');
+      await stable();
+      const reset = await stage('compact-sequence-legend-reset');
+      fits(reset);
+      legendPlacement(reset, true);
+      assert.deepEqual(reset.geometry, initial.geometry);
+      await viewport(1396, 540);
+      await stable();
+      const short = await stage('compact-sequence-short-window');
+      assert.ok(short.stage.bottom > short.viewportHeight, 'insufficient height retains page scrolling');
+      assert.ok(short.minimumTextScale >= 1 - 0.01, 'short windows do not shrink source text');
+      assert.ok(short.width >= initial.width, 'short windows recover reading width');
+      await viewport(1396, 830);
+      await stable();
+      const resizedBack = await stage('compact-sequence-resized-back');
+      fits(resizedBack);
+      legendPlacement(resizedBack, true);
+      await evaluate('Archify.presentation.enter()');
+      await stable();
+      const presented = await stage('compact-sequence-presentation');
+      legendPlacement(presented, false);
+      assert.deepEqual(presented.geometry, initial.geometry);
+      assert.deepEqual(await exportedLegend(), canonical, 'presentation exports canonical legend placement');
+      assert.ok(presented.svg.top >= -1 && presented.svg.bottom <= presented.viewportHeight + 1, JSON.stringify(presented));
+      await evaluate('Archify.presentation.exit()');
+      await stable();
+      const returned = await stage('compact-sequence-return');
+      fits(returned);
+      legendPlacement(returned, true);
+      assert.deepEqual(returned.geometry, initial.geometry, 'fitting never rewrites authored SVG geometry');
+      await media('dark', false, true);
+      await stable();
+      const printed = await stage('compact-sequence-print');
+      legendPlacement(printed, false);
+      assert.deepEqual(printed.geometry, initial.geometry);
+      assert.deepEqual(await exportedLegend(), canonical, 'print exports canonical legend placement');
+      await media();
+      await stable();
+      legendPlacement(await stage('compact-sequence-print-return'), true);
+
+      const wide = { ...compact, segments: [], cards: [],
+        messages: [{ from: 'client', to: 'worker', y: 160, label: 'Check status' }] };
+      await load(renderSequence('short-wide-sequence', wide), { width: 1396, height: 480 });
+      const shortWide = await stage('short-wide-sequence');
+      assert.ok(shortWide.sourceWidth < 960 && shortWide.sourceWidth /
+        Number(shortWide.geometry[0].split(/\s+/)[3]) >= 1.55, 'exercise a small wide canvas');
+      fits(shortWide);
+
+      const long = { ...compact, segments: [], cards: [], messages: Array.from({ length: 20 }, (_, index) => ({
+        from: index % 2 ? 'service' : 'client', to: index % 2 ? 'client' : 'service',
+        y: 160 + index * 100, label: `Message ${index + 1}`,
+      })) };
+      await load(renderSequence('long-automatic-sequence', long), { width: 1396, height: 830 });
+      const reading = await stage('long-automatic-sequence');
+      assert.ok(reading.stage.bottom > reading.viewportHeight, 'long automatic Sequence retains page scrolling');
+      assert.ok(reading.minimumTextScale >= 1 - 0.01, 'long Sequence preserves readable text');
+      assert.ok(reading.width >= reading.sourceWidth * 1.4, 'long Sequence retains reading-width enlargement');
+
+      const explicit = structuredClone(compact);
+      explicit.meta.viewBox = initial.geometry[0].split(/\s+/).slice(2).map(Number);
+      await load(renderSequence('explicit-roundtrip', explicit), { width: 1396, height: 830 });
+      const authored = await stage('explicit-roundtrip');
+      assert.deepEqual(authored.geometry, initial.geometry);
+      assert.equal((await snapshot('explicit-sequence')).readerFit, null, 'explicit canvases retain their previous eligibility');
+      assert.ok(authored.stage.bottom > authored.viewportHeight, 'explicit geometry retains its original desktop layout');
+    });
+
     await t.test('public renderers declare automatic reading width while undeclared canvases retain their fit', async () => {
       const sequence = { schema_version: 1, diagram_type: 'sequence', meta: { title: 'Reader sequence', output: 'reader-sequence.html' },
         participants: [{ id: 'a', type: 'external', label: 'Client' }, { id: 'b', type: 'backend', label: 'Server' }],

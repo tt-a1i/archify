@@ -371,7 +371,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 | 选择视觉风格（<kbd>S</kbd> 循环）/ 切换主题 / 打开 Export | <kbd>S</kbd> / <kbd>T</kbd> / <kbd>E</kbd> |
 | 缩放或复位 | <kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd> |
 
-稳定链接可以恢复 `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>` 和 `#lens=<kind>~<kind>`。读者触发的动态有限运行、遵守 `prefers-reduced-motion`，并且不会进入标准导出。
+稳定链接可以恢复 `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>` 和 `#lens=<kind>~<kind>`。动态模式持续播放连线流动，直到读者暂停；语义预览仍有限运行。动效遵守 `prefers-reduced-motion`，并且不会进入标准导出。
 
 完整生成与 Viewer 契约请查看 [`archify/SKILL.md`](archify/SKILL.md)。
 

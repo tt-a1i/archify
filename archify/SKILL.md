@@ -97,7 +97,7 @@ Report artifact checks, browser evidence, captures, and actual perceptual review
 
 ## Optional viewer capabilities
 
-`meta.animation: "trace"` is opt-in.
+Live motion is enabled by default for every rendered diagram; omit `meta.animation`. The Viewer’s Live/Still button controls playback.
 
 Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, deep links, presentation, search/focus, or another Viewer Runtime feature.
 

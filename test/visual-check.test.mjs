@@ -32,7 +32,11 @@ const png = Buffer.from('89504e470d0a1a0a', 'hex');
 
 test('summary indexes every captured viewport/theme and preserves failed diagnostics', async () => {
   const input = artifact('summary-captures.html');
-  const result = await runVisualCheck({ artifactPath: input, browserFactory: () => fakeBrowser() });
+  const result = await runVisualCheck({
+    artifactPath: input,
+    chromePath: '/fake/chrome',
+    browserFactory: () => fakeBrowser(),
+  });
   const receipt = result.receipt;
   const summary = summarizeBrowserEvidence(receipt);
   assert.equal(summary.visualReview, 'pending');

@@ -15,6 +15,16 @@ const cli = path.resolve(__dirname, '..', 'archify', 'bin', 'archify.mjs');
 const fixture = path.join(__dirname, 'fixtures', 'sequence-first-draft', 'scan-to-pay.sequence.json');
 const PARTICIPANT_BOTTOM = 72 + 60;
 
+// The draft's note at y320 touches the reply label at y352. Title-placement
+// cases retain the annotation and give that reply plus later messages 12px
+// more room; the unedited draft is tested separately as a diagnostic failure.
+function spacedScanToPay() {
+  const diagram = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  for (const message of diagram.messages) if (message.y >= 352) message.y += 12;
+  diagram.segments.at(-1).to += 12;
+  return diagram;
+}
+
 function render(diagram, publicCli = false) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-sequence-segments-'));
   const input = path.join(directory, 'candidate.json');
@@ -29,7 +39,7 @@ const labels = (html) => [...html.matchAll(/data-segment-id="(\d+)">\s*<rect x="
   .map((match) => ({ index: +match[1], x: +match[2], y: +match[3], width: +match[4], height: +match[5] }));
 
 test('abutting segment labels stay in their own phase and clear of the participant headers', () => {
-  const diagram = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  const diagram = spacedScanToPay();
   const result = render(diagram);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const placed = labels(result.html);
@@ -47,7 +57,7 @@ test('abutting segment labels stay in their own phase and clear of the participa
 });
 
 test('a label that fits above a spaced frame keeps its place above it', () => {
-  const diagram = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  const diagram = spacedScanToPay();
   diagram.segments = [{ from: 330, to: 520, label: 'pay' }];
   for (const message of diagram.messages) message.y += message.y >= 300 ? 40 : 0;
   diagram.segments[0].from = 340;
@@ -93,7 +103,7 @@ test('a segment edge running along a message arrow is reported with the move tha
 });
 
 test('inside title candidates stay below low participant headers', () => {
-  const diagram = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  const diagram = spacedScanToPay();
   diagram.segments = [{ from: 120, to: 300, label: 'Phase' }];
   const result = render(diagram);
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -148,3 +158,23 @@ for (const profile of ['standard', 'showcase']) {
     }
   });
 }
+
+
+test('the unedited payment draft reports its note overlap with a valid spacing repair', () => {
+  const diagram = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  const rejected = render(diagram, true);
+  assert.notEqual(rejected.status, 0);
+  const validated = spawnSync(process.execPath, [cli, 'validate', 'sequence', rejected.input, '--json'], { encoding: 'utf8' });
+  const diagnostic = JSON.parse(validated.stdout).diagnostics.find(entry => entry.code === 'sequence/note-overlap');
+  assert.ok(diagnostic, validated.stdout);
+  assert.equal(diagnostic.subject.path, '/messages/5/note');
+  assert.equal(diagnostic.evidence.blocker.path, '/messages/6/y');
+  assert.equal(diagnostic.evidence.requiredY, 364);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'moving only the reply would crowd the following message');
+  const repaired = render(spacedScanToPay(), true);
+  assert.equal(repaired.status, 0, repaired.stdout + repaired.stderr);
+  assert.match(repaired.html, /需验签，并按订单号幂等处理/, 'repair preserves the authored annotation');
+  diagram.meta.quality_profile = 'standard';
+  const compatible = render(diagram, true);
+  assert.equal(compatible.status, 0, compatible.stdout + compatible.stderr);
+});

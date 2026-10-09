@@ -47,18 +47,7 @@ function legendEntries() {
 // needs LEGEND_BLOCK_HEIGHT (title glyphs, row, and the 54px baseline inset).
 const LEGEND_CONTENT_GAP = 12;
 const LEGEND_BLOCK_HEIGHT = 86;
-const contentBottom = Math.max(
-  0,
-  ...asArray(sequence.messages).map((message) => message.y + (message.note ? 22 : 6)),
-  ...asArray(sequence.activations).map((activation) => activation.to),
-  ...asArray(sequence.segments).map((segment) => segment.to),
-);
-function legendRequiredHeight(width) {
-  const entries = legendEntries();
-  if (!entries.length) return 0;
-  return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
-    + legendFootprint(entries, { width: width - 80 }).extraHeight);
-}
+
 // A renderer-sized spread canvas widens until every participant label fits,
 // but never past the width where 7px sublabels would project below the
 // desktop reading minimum; an inherently crowded row still fails below.
@@ -112,29 +101,20 @@ function automaticCanvasWidth() {
   )));
   return Math.min(readableCanvasWidth, Math.max(920, Math.ceil((Math.min(190, needed) + 25) * count + 124)));
 }
-// A renderer-sized canvas grows to keep the legend clear of late messages and
-// shrinks when the timeline is short: the old 760px floor left ~600px of empty
-// lifeline under typical 4–8 message drafts. Keep a readable minimum band
-// (lifelineTop 142 + 120px timeline + 65px footer = 327) so short diagrams stay
-// usable; an authored viewBox is honored and validated below.
-const SEQUENCE_MIN_AUTO_HEIGHT = 327;
 const automaticWidth = sequence.meta?.viewBox ? null : automaticCanvasWidth();
-// Timeline clearance is independent of legend visibility. Messages need 18px
-// before the lifeline bottom; notes, activations and frames need their footer.
-const timelineRequiredHeight = Math.max(contentBottom + 65,
-  ...asArray(sequence.messages).map((message) => message.y + 18 + 65));
-const automaticHeight = Math.max(SEQUENCE_MIN_AUTO_HEIGHT, timelineRequiredHeight, legendRequiredHeight(automaticWidth));
-const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
-// The timeline scales with viewBox height: a taller viewBox gains message room,
-// a shorter one shrinks the readable band (validated below) instead of clipping.
+
+// Column geometry depends only on the canvas width, which is known before the
+// automatic height is: notes wrap inside lane gaps, and their wrapped height
+// feeds that automatic height.
 // `column_fit: "spread"` widens the lanes with the viewBox instead of keeping
 // the fixed 108px gap, so a wide canvas gains column distance and label room
 // rather than dead space on the right. Spread is the default on both automatic
 // and authored canvases; explicit fixed retains historical coordinates.
+const canvasWidth = sequence.meta?.viewBox?.[0] ?? automaticWidth;
 const columnFit = sequence.meta?.column_fit || 'spread';
 const participantCount = Math.max(1, asArray(sequence.participants).length);
 const preferredSideMargin = 62;
-const spreadGeometry = spreadColumnGeometry(viewBox[0]);
+const spreadGeometry = spreadColumnGeometry(canvasWidth);
 const participantW = columnFit === 'spread' ? spreadGeometry.width : 86;
 // Narrow feasible frames can reduce the left margin, while ordinary frames
 // keep 62px. Compute card width first so this does not change its sizing rule.
@@ -146,6 +126,146 @@ const sideMargin = columnFit === 'spread'
 const colGap = columnFit === 'spread' && participantCount > 1
   ? spreadGeometry.gap
   : 108;
+const leftX = columnFit === 'spread' ? sideMargin + participantW / 2 : sideMargin;
+const participantIndexById = new Map(asArray(sequence.participants).map((participant, index) => [participant.id, index]));
+
+function participantX(index) {
+  return leftX + index * colGap;
+}
+
+// A note wraps inside one gap between neighbouring lifelines, so it never
+// crosses an unrelated lifeline or activation bar (#676). Every character
+// stays visible, including in image exports: long unbroken text (a URL or
+// path) breaks after its punctuation, otherwise at any character.
+const NOTE_FONT_SIZE = 7;
+const NOTE_LINE_HEIGHT = NOTE_FONT_SIZE + 4;
+// The first line keeps its original position: 12px past the arrow start,
+// which sits 7px from the lifeline.
+const NOTE_ARROW_INSET = 7;
+const NOTE_TEXT_INSET = 12;
+// Activation bars reach 5px past a lifeline; keep 6px of air beyond them.
+const NOTE_LIFELINE_CLEARANCE = 11;
+// Spread columns share one computed gap, but subtracting floating-point column
+// centres can differ in the last digits; such gaps still count as equal.
+const NOTE_GAP_TOLERANCE = 0.5;
+const NOTE_BREAK_AFTER = new Set(['/', '.', '-', '?', '&', '=', '#', '_']);
+const noteSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+const noteLayouts = new Map();
+
+function noteTextWidth(text) {
+  return minimumNodeTextWidth(text, NOTE_FONT_SIZE);
+}
+
+// Index after the last punctuation break in `piece`, or its full length.
+function noteBreakIndex(piece) {
+  for (let index = piece.length - 1; index > 0; index -= 1) {
+    if (NOTE_BREAK_AFTER.has(piece[index - 1])) return index;
+  }
+  return piece.length;
+}
+
+function wrapNoteText(text, width) {
+  const lines = [];
+  let line = '';
+  const flush = () => {
+    const trimmed = line.trimEnd();
+    if (trimmed) lines.push(trimmed);
+    line = '';
+  };
+  for (const word of String(text).match(/\s+|\S+/gu) || []) {
+    if (/^\s+$/u.test(word)) {
+      if (line) line += ' ';
+      continue;
+    }
+    if (noteTextWidth(line + word) <= width) {
+      line += word;
+      continue;
+    }
+    flush();
+    let piece = '';
+    for (const { segment } of noteSegmenter.segment(word)) {
+      while (piece && noteTextWidth(piece + segment) > width) {
+        const cut = noteBreakIndex(piece);
+        lines.push(piece.slice(0, cut));
+        piece = piece.slice(cut);
+      }
+      piece += segment;
+    }
+    line = piece;
+  }
+  flush();
+  return lines;
+}
+
+// The widest gap the message spans; equal gaps resolve to the left-most one,
+// where a note has always started, so notes keep their original position.
+function noteGapIndex(fromIndex, toIndex) {
+  const low = Math.min(fromIndex, toIndex);
+  const high = Math.max(fromIndex, toIndex);
+  let best = null;
+  for (let gap = low; gap < high; gap += 1) {
+    const width = participantX(gap + 1) - participantX(gap);
+    if (!best || width > best.width + NOTE_GAP_TOLERANCE) best = { gap, width };
+  }
+  return best?.gap ?? null;
+}
+
+function noteRect(message) {
+  const note = noteLayout(message);
+  return note && { x: note.x, y: note.top, width: note.width, height: note.bottom - note.top };
+}
+
+function noteLayout(message) {
+  if (noteLayouts.has(message)) return noteLayouts.get(message);
+  let result = null;
+  const fromIndex = participantIndexById.get(message.from);
+  const toIndex = participantIndexById.get(message.to);
+  if (message.note && typeof message.y === 'number' && fromIndex !== undefined && toIndex !== undefined && fromIndex !== toIndex) {
+    const gap = noteGapIndex(fromIndex, toIndex);
+    const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
+    const maxWidth = Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x);
+    const lines = noteTextWidth(message.note) <= maxWidth ? [message.note] : wrapNoteText(message.note, maxWidth);
+    const baseline = message.y + 18;
+    result = {
+      x,
+      baseline,
+      lines,
+      width: Math.max(...lines.map(noteTextWidth)),
+      // Include fallback-font ascent in the same bounds used for title clearance.
+      top: baseline - NOTE_FONT_SIZE * 1.2,
+      bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
+    };
+  }
+  noteLayouts.set(message, result);
+  return result;
+}
+
+const contentBottom = Math.max(
+  0,
+  ...asArray(sequence.messages).map((message) => (message.note
+    ? noteLayout(message)?.bottom ?? message.y + 22
+    : message.y + 6)),
+  ...asArray(sequence.activations).map((activation) => activation.to),
+  ...asArray(sequence.segments).map((segment) => segment.to),
+);
+function legendRequiredHeight(width) {
+  const entries = legendEntries();
+  if (!entries.length) return 0;
+  return Math.ceil(contentBottom + LEGEND_CONTENT_GAP + LEGEND_BLOCK_HEIGHT
+    + legendFootprint(entries, { width: width - 80 }).extraHeight);
+}
+// A renderer-sized canvas grows to keep the legend clear of late messages and
+// shrinks when the timeline is short. Keep a readable minimum band (lifelineTop
+// 142 + 120px timeline + 65px footer = 327); honor authored canvases below.
+const SEQUENCE_MIN_AUTO_HEIGHT = 327;
+// Timeline clearance is independent of legend visibility. Messages need 18px
+// before the lifeline bottom; notes, activations and frames need their footer.
+const timelineRequiredHeight = Math.max(contentBottom + 65,
+  ...asArray(sequence.messages).map((message) => message.y + 18 + 65));
+const automaticHeight = Math.max(SEQUENCE_MIN_AUTO_HEIGHT, timelineRequiredHeight, legendRequiredHeight(automaticWidth));
+const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
+// The timeline scales with viewBox height: a taller viewBox gains message room,
+// a shorter one shrinks the readable band (validated below) instead of clipping.
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
 const readableMessages = sequence.meta?.quality_profile === 'showcase';
@@ -162,11 +282,9 @@ const layout = {
   lifelineTop: 142,
   lifelineBottom: viewBox[1] - 65,
   legendY: viewBox[1] - 54,
-  leftX: columnFit === 'spread' ? sideMargin + participantW / 2 : sideMargin,
+  leftX,
   colGap,
   labelH: readableMessages ? 18 : 16,
-  noteFontSize: 7,
-  noteBaselineOffset: 18,
 };
 
 // Automatic showcase spread can guarantee a readable fit within its bounded
@@ -188,10 +306,6 @@ const arrowClass = {
   ...arrowClassMap,
   return: ['a-default', 'arrowhead']
 };
-
-function participantX(index) {
-  return layout.leftX + index * layout.colGap;
-}
 
 const participants = new Map(asArray(sequence.participants).map((participant, index) => [
   participant.id,
@@ -243,31 +357,22 @@ function messageRouteBox(message) {
   };
 }
 
-function messageNoteBox(message) {
-  const geometry = messageGeometry(message);
-  if (!message.note || !geometry) return null;
-  const font = layout.noteFontSize;
-  const baseline = message.y + layout.noteBaselineOffset;
-  return {
-    x: Math.min(geometry.start, geometry.end) + 12,
-    // Include conservative ascent/descent for CJK and fallback fonts, as in
-    // the shared node text geometry. Rendering uses this same baseline/font.
-    y: baseline - font * 1.2,
-    width: minimumNodeTextWidth(message.note, font),
-    height: font * 1.5,
-    baseline,
-    font,
-  };
+// Message labels, routes and notes a segment label must not cover, with the
+// source path of each so a failure can name what it hides.
+function segmentLabelOccupants() {
+  return asArray(sequence.messages).flatMap((message, messageIndex) => [
+    { kind: 'message label', path: `/messages/${messageIndex}/label`, message, rect: messageLabelBox(message) },
+    { kind: 'message route', path: `/messages/${messageIndex}/y`, message, rect: messageRouteBox(message) },
+    { kind: 'note', path: `/messages/${messageIndex}/note`, message, rect: noteRect(message) },
+  ]).filter((occupant) => occupant.rect);
 }
 
 function segmentLabelBox(segment) {
   const labelW = Math.max(42, textUnits(segment.label) * 5.2 + 14);
-  const occupied = asArray(sequence.messages)
-    .flatMap((message) => [messageLabelBox(message), messageRouteBox(message), messageNoteBox(message)])
-    .filter(Boolean);
+  const occupied = segmentLabelOccupants();
   const label = { x: 56, y: segment.from - 22, width: labelW, height: 18 };
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    if (!occupied.some((rect) => rectsOverlap(label, rect, 2))) break;
+    if (!occupied.some(({ rect }) => rectsOverlap(label, rect, 2))) break;
     label.y -= 22;
   }
   if (!segmentLabelMisplaced(label, segment)) return label;
@@ -281,10 +386,43 @@ function segmentLabelBox(segment) {
     .map((other) => ({ x: 56, y: other.from - 22, width: Math.max(42, textUnits(other.label) * 5.2 + 14), height: 18 }));
   const inside = { x: 56, y: segment.from + 4, width: labelW, height: 18 };
   for (let attempt = 0; attempt < 4 && inside.y + inside.height <= segment.to - 2; attempt += 1) {
-    if (![...occupied, ...otherTitles, ...participants.values()].some((rect) => rectsOverlap(inside, rect, 2))) return inside;
+    if (!segmentLabelMisplaced(inside, segment)
+      && ![...occupied.map(({ rect }) => rect), ...otherTitles, ...participants.values()].some((rect) => rectsOverlap(inside, rect, 2))) return inside;
     inside.y += 22;
   }
   return label;
+}
+
+// Whether moving one message to `y` keeps it readable: inside the timeline,
+// 28px from messages sharing its horizontal span, and clear of every other
+// label, route and note. Used to offer only repairs that hold.
+function messageFitsAt(messageIndex, y) {
+  const messages = asArray(sequence.messages);
+  if (y < layout.lifelineTop + 18) return false;
+  // An automatic canvas recalculates its height after this edit; an authored
+  // canvas must still fit the suggested position without a second repair.
+  if (sequence.meta?.viewBox && y > layout.lifelineBottom - 18) return false;
+  const span = (message) => {
+    const from = participants.get(message.from)?.cx;
+    const to = participants.get(message.to)?.cx;
+    return [Math.min(from, to), Math.max(from, to)];
+  };
+  const moved = { ...messages[messageIndex], y };
+  const [left, right] = span(moved);
+  const movedRects = [messageLabelBox(moved), messageRouteBox(moved), noteRect(moved)].filter(Boolean);
+  return messages.every((other, otherIndex) => {
+    if (otherIndex === messageIndex || typeof other.y !== 'number') return true;
+    const [otherLeft, otherRight] = span(other);
+    if (Math.abs(other.y - y) < 28 && left < otherRight && otherLeft < right) return false;
+    const otherRects = [messageLabelBox(other), messageRouteBox(other), noteRect(other)].filter(Boolean);
+    return !movedRects.some((rect) => otherRects.some((otherRect) => rectsOverlap(rect, otherRect, 2)));
+  });
+}
+
+// The first occupant the segment label still covers after its upward steps.
+function segmentLabelBlocker(segment) {
+  const label = segmentLabelBox(segment);
+  return segmentLabelOccupants().find(({ rect }) => rectsOverlap(label, rect, 2)) || null;
 }
 
 // A badge on its frame's top border is the intended title. It stops naming
@@ -527,7 +665,79 @@ function validateSequence() {
     routeHint: 'shorten the label, reorder participants, or enlarge meta.viewBox',
   }));
 
-  for (const segment of asArray(sequence.segments)) {
+  // A wrapped note keeps every character (#676), so a note that still reaches a
+  // later message or the canvas bottom needs the diagram changed; authored y
+  // values and viewBox stay as written. Showcase only, so standard keeps
+  // accepting existing diagrams.
+  const report = (problem, detail) => {
+    problems.push(problem);
+    diagnostics.push({ severity: 'error', message: problem, ...detail });
+  };
+  const bounds = (rect) => ({
+    x: Math.round(rect.x * 10) / 10,
+    y: Math.round(rect.y * 10) / 10,
+    width: Math.round(rect.width * 10) / 10,
+    height: Math.round(rect.height * 10) / 10,
+  });
+  if (readableMessages) {
+    const messages = asArray(sequence.messages);
+    const noteFloor = layout.lifelineBottom + 20;
+    messages.forEach((message, messageIndex) => {
+      const note = noteLayout(message);
+      if (!note) return;
+      const lines = note.lines.length === 1 ? '1 line' : `${note.lines.length} lines`;
+      const bottom = Math.ceil(note.bottom);
+      const ownRect = noteRect(message);
+      const subject = {
+        diagramType: 'sequence',
+        message: message.label ?? null,
+        path: `/messages/${messageIndex}/note`,
+        from: message.from,
+        to: message.to,
+      };
+      if (note.bottom > noteFloor) {
+        // A visible legend needs its own room below the note as well.
+        const requiredHeight = Math.max(Math.ceil(viewBox[1] + note.bottom - noteFloor), legendRequiredHeight(viewBox[0]));
+        const fix = sequence.meta?.viewBox
+          ? `set /meta/viewBox/1 to ${requiredHeight}`
+          : `set /meta/viewBox to [${viewBox[0]}, ${requiredHeight}]`;
+        report(`Note on message "${message.label}" wraps to ${lines} and ends at y=${bottom}, below the canvas content limit y=${noteFloor} — set meta.viewBox[1] to at least ${requiredHeight}, move the message up, or shorten the note.`, {
+          code: 'sequence/note-canvas-limit',
+          subject,
+          evidence: { lines: note.lines.length, note: bounds(ownRect), canvasLimitY: noteFloor, viewBoxHeight: viewBox[1], requiredViewBoxHeight: requiredHeight },
+          supportedFixes: [fix],
+        });
+      }
+      const blocker = messages
+        .map((other, otherIndex) => {
+          if (otherIndex === messageIndex || typeof other.y !== 'number' || other.y <= message.y) return null;
+          const hit = [
+            ['message label', messageLabelBox(other)],
+            ['message route', messageRouteBox(other)],
+            ['note', noteRect(other)],
+          ].find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
+          return hit ? { message: other, index: otherIndex, kind: hit[0], rect: hit[1] } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.message.y - b.message.y)[0];
+      if (!blocker) return;
+      const requiredY = Math.ceil(note.bottom + 22);
+      const blockerPath = `/messages/${blocker.index}/y`;
+      report(`Note on message "${message.label}" wraps to ${lines} (down to y=${bottom}) and reaches message "${blocker.message.label}" at y=${blocker.message.y} — move "${blocker.message.label}" and later messages down so it sits at y=${requiredY} or below, or shorten the note.`, {
+        code: 'sequence/note-overlap',
+        subject,
+        evidence: {
+          lines: note.lines.length,
+          note: bounds(ownRect),
+          blocker: { message: blocker.message.label ?? null, path: blockerPath, y: blocker.message.y, kind: blocker.kind, bounds: bounds(blocker.rect) },
+          requiredY,
+        },
+        supportedFixes: messageFitsAt(blocker.index, requiredY) ? [`set ${blockerPath} to ${requiredY}`] : [],
+      });
+    });
+  }
+
+  asArray(sequence.segments).forEach((segment, segmentIndex) => {
     if (segment.to <= segment.from) {
       problems.push(`Segment "${segment.label}" has invalid y range (from ${segment.from} to ${segment.to}) — "to" must be greater than "from".`);
     }
@@ -567,7 +777,34 @@ function validateSequence() {
       const requiredWidth = Math.ceil(labelBox.x + labelBox.width + 48);
       problems.push(`Segment "${segment.label}" label (~${Math.round(labelBox.width)}px) exceeds the segment frame's available width (${availableWidth}px) — shorten the label or increase meta.viewBox[0] to at least ${requiredWidth}.`);
     }
-  }
+    // Segment labels are drawn above messages and notes and step up to stay
+    // clear of them; in showcase, a label left covering any of them fails.
+    const covered = readableMessages ? segmentLabelBlocker(segment) : null;
+    if (covered) {
+      // Offer the nearest start whose label lands clear, inside the segment.
+      let clearFrom = null;
+      for (let distance = 1; distance <= 300 && clearFrom === null; distance += 1) {
+        for (const candidate of [segment.from + distance, segment.from - distance]) {
+          if (candidate < layout.topY || candidate >= segment.to) continue;
+          if (!segmentLabelBlocker({ ...segment, from: candidate })) {
+            clearFrom = candidate;
+            break;
+          }
+        }
+      }
+      const fromPath = `/segments/${segmentIndex}/from`;
+      report(`Segment "${segment.label}" label would cover the ${covered.kind} of message "${covered.message.label}" — move the segment start (from: ${segment.from}) or that message so they are further apart${covered.kind === 'note' ? ', or shorten the note' : ''}.`, {
+        code: 'sequence/segment-label-overlap',
+        subject: { diagramType: 'sequence', segment: segment.label ?? null, path: fromPath },
+        evidence: {
+          label: bounds(labelBox),
+          attempts: 4,
+          covered: { kind: covered.kind, message: covered.message.label ?? null, path: covered.path, bounds: bounds(covered.rect) },
+        },
+        supportedFixes: clearFrom === null ? [] : [`set ${fromPath} to ${clearFrom}`],
+      });
+    }
+  });
 
   for (const activation of asArray(sequence.activations)) {
     if (!participants.has(activation.participant)) problems.push(`Activation references unknown participant "${activation.participant}".`);
@@ -670,9 +907,12 @@ function renderMessage(message, index) {
   const [cls, marker] = arrowClass[message.variant || 'default'] || arrowClass.default;
   const strokeWidth = message.variant === 'emphasis' ? 1.8 : 1.4;
   const dash = message.variant === 'return' ? ' stroke-dasharray="3,5"' : '';
-  const noteBox = messageNoteBox(message);
+  const noteBox = noteLayout(message);
+  const noteContent = noteBox?.lines.length > 1
+    ? noteBox.lines.map((line, lineIndex) => `<tspan x="${noteBox.x}" dy="${lineIndex ? NOTE_LINE_HEIGHT : 0}">${esc(line)}</tspan>`).join('')
+    : esc(message.note);
   const note = noteBox
-    ? `\n        <text data-detail="fine" x="${noteBox.x}" y="${noteBox.baseline}" class="t-dim" font-size="${noteBox.font}">${esc(message.note)}</text>`
+    ? `\n        <text data-detail="fine" x="${noteBox.x}" y="${noteBox.baseline}" class="t-dim" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
     : '';
   return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}>
           <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>

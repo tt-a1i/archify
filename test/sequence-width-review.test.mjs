@@ -165,17 +165,27 @@ test('small conversations and a compact fixed canvas are not advised to stretch'
   assert.equal(check(render(t, compact).output).report.composition.sequenceColumnSpace.reviewSuggested, false);
 });
 
-test('meaningful CJK message labels and notes occupy the right-hand region', t => {
-  for (const field of ['label', 'note']) {
-    const spec = sequence();
-    spec.meta.column_fit = 'fixed';
-    spec.messages = [{ from: 'p4', to: 'p5', y: 200, label: '结果', [field]: '这是需要保留的中文说明'.repeat(field === 'label' ? 4 : 3) }];
-    const { report } = check(render(t, spec).output);
-    const space = report.composition.sequenceColumnSpace;
-    assert.equal(space.measured, true);
-    assert.ok(space.occupiedRight > 810);
-    assert.equal(space.reviewSuggested, false, `${field} reserves the apparent blank area`);
-  }
+test('meaningful CJK message labels occupy the right-hand region', t => {
+  const spec = sequence();
+  spec.meta.column_fit = 'fixed';
+  spec.messages = [{ from: 'p4', to: 'p5', y: 200, label: '这是需要保留的中文说明'.repeat(4) }];
+  const { report } = check(render(t, spec).output);
+  const space = report.composition.sequenceColumnSpace;
+  assert.equal(space.measured, true);
+  assert.ok(space.occupiedRight > 810);
+  assert.equal(space.reviewSuggested, false, 'label reserves the apparent blank area');
+});
+
+test('a long CJK note wraps inside its lane gap, so the unused width stays measurable', t => {
+  const spec = sequence();
+  spec.meta.column_fit = 'fixed';
+  spec.messages = [{ from: 'p4', to: 'p5', y: 200, label: '结果', note: '这是需要保留的中文说明'.repeat(3) }];
+  const { output, html } = render(t, spec);
+  assert.match(html, /<tspan /, 'the note wraps onto several lines');
+  const space = check(output).report.composition.sequenceColumnSpace;
+  assert.equal(space.measured, true);
+  assert.ok(space.occupiedRight <= 645, `the note stays left of the last column (${space.occupiedRight})`);
+  assert.equal(space.reviewSuggested, true);
 });
 
 test('segment frames are structural but their text still reserves width', t => {

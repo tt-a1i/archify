@@ -280,7 +280,8 @@ test('Route Probe preserves directed paths, Journey and export contracts', {
       if (name === 'hidden-fixture') { await run(`delete document.hidden;document.dispatchEvent(new Event('visibilitychange'))`); assert.equal(await run('Archify.routeProbe.isJourneyPlaying()'), false); }
       if (name === 'still') { await run('Archify.motionGovernor.resume()'); assert.equal(await run('Archify.routeProbe.isJourneyPlaying()'), false); }
     }
-    await load(); await route(); assert.equal(await run('Archify.routeProbe.playJourney()'), false);
+    await load(); await route(); assert.equal(await run('Archify.routeProbe.playJourney()'), true);
+    await run('Archify.routeProbe.pauseJourney()');
     await run('Archify.view.zoomIn()'); const view = await run('Archify.view.state()');
     assert.equal(await run('Archify.routeProbe.clear({preserveView:true,updateUrl:false})===undefined'), true);
     assert.deepEqual(await run('Archify.view.state()'), view); assert.equal((await snapshot('clear-preserved')).hash, '#route=users~db');

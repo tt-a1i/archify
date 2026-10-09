@@ -30,7 +30,10 @@ function sha256(value) {
 // Pin every other SVG byte to the pre-fix baseline, including labels, fonts,
 // node bounds, icon shapes, edges, ports, viewBox and accessibility metadata.
 function withoutNodeTextPositions(svg) {
-  return svg.replace(/<text\b(?=[^>]*\bdata-(?:node-label|detail)=)[^>]*>/g,
+  // Default motion adds presentation hooks; keep the original geometry digest.
+  return svg.replace(/ data-animation="trace"/g, '')
+    .replace(/ data-animate="(?:node|edge)" style="--step:[^"]*"/g, '')
+    .replace(/<text\b(?=[^>]*\bdata-(?:node-label|detail)=)[^>]*>/g,
     tag => tag.replace(/\s[xy]="[^"]*"/g, ''));
 }
 

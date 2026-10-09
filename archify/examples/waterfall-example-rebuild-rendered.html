@@ -599,7 +599,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--frontend-stroke);
     }
 
-    /* The reader owns only the outer scale. Long sequences and waterfall rows
+    /* The reader owns only the outer scale. Compact automatic sequences fit at
+       their authored text size or larger. Long sequences and waterfall rows
        favor reading width and page scroll; other diagrams keep height fitting.
        Small automatic canvases retain a modest scale inside a usable shell.
        Every strategy preserves the authored SVG/viewBox and semantic geometry. */
@@ -614,8 +615,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       align-items: center;
     }
     html[data-reader-area="true"] .diagram-container > svg { flex-shrink: 0; }
-    /* The original SVG legend can use the spare outer reader canvas while the
-       capped diagram stays centered. The container still clips all outer paint. */
+    /* The original SVG legend can use the outer corner while the capped or fitted
+       diagram stays centered. The container still clips all outer paint. */
     .diagram-container:has([data-reader-legend-corner]) > svg { overflow: visible; }
     .diagram-container [data-reader-legend-corner] {
       transform-origin: 0 0;
@@ -825,7 +826,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
-    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-motion="running"] .diagram-container::before {
+    html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
       inset: 0;
@@ -4682,69 +4683,48 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
     .c-lane           { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-dasharray: 6,6; }
 
-    /* Optional trace animation, enabled only by meta.animation = "trace".
-       The ordinary viewer performs one ambient pass and then restores the
-       authored solid/security/async line language. WebM samples the same
-       authored geometry into an explicit canvas timeline. */
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="edge"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    /* Live flows continuously over authored paths; original line language and
+       markers remain static. Node entry is bounded to one pass per document. */
+    .ambient-edge-flow {
+      fill: none;
+      stroke: var(--arrow-emphasis);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-dasharray: 6 30;
+      opacity: 0.58;
+      pointer-events: none;
+      display: none;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: archify-edge-flow 2.4s linear 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) .ambient-edge-flow {
+      display: inline;
+      animation: archify-ambient-flow var(--ambient-flow-duration, 2.4s) linear infinite;
     }
-    html[data-ambient-motion="running"] svg[data-animation="trace"] [data-animate="node"] {
+    /* Collapsed tree descendants hide their adjacent decorative flow too. */
+    [data-tree-hidden] + .ambient-edge-flow { display: none !important; animation: none !important; }
+    svg[data-preset="signal-flow"] { --ambient-flow-duration: 2s; }
+    svg[data-preset="blueprint"] .ambient-edge-flow { stroke-linecap: square; }
+    svg[data-preset="editorial"] .ambient-edge-flow { opacity: 0.45; }
+    html[data-ambient-entry="running"] svg[data-animation="trace"] [data-animate="node"] {
       transform-box: fill-box;
       transform-origin: center;
       animation: archify-node-pulse 3.6s ease-in-out 1;
       animation-delay: calc(var(--step, 0) * 160ms);
     }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: round;
-      filter: drop-shadow(0 0 3px var(--arrow-emphasis));
-      animation-duration: 1.75s;
-    }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 1.75s; }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] {
-      animation-duration: 3.1s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-animate="edge"] {
-      stroke-linecap: square;
-      filter: none;
-      animation-duration: 2.15s;
-    }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.15s; }
+    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] { animation-duration: 3.1s; }
     svg[data-preset="blueprint"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-blueprint-node-pulse;
       animation-duration: 3.8s;
     }
-    svg[data-preset="editorial"][data-animation="trace"] [data-animate="edge"] {
-      filter: none;
-      animation-duration: 2.2s;
-    }
-    svg[data-preset="editorial"][data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] { animation-duration: 2.2s; }
     svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
       animation-name: archify-editorial-node-pulse;
       animation-duration: 3.5s;
     }
-    /* Embedded proofs stay static so proof grids are calm instead of leaving
-       ambient trace loops on. */
-    html[data-embed="true"] svg[data-animation="trace"] [data-animate],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-animate] {
-      animation: none !important;
-      stroke-dashoffset: 0;
+    @keyframes archify-ambient-flow {
+      from { stroke-dashoffset: 36; }
+      to { stroke-dashoffset: 0; }
     }
-    html[data-embed="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"],
-    html[data-share-playback="true"] svg[data-animation="trace"] [data-graph-role="automatic-crossover"]:has(> [data-animate="edge"]) > [data-graph-role="automatic-crossover-underlay"] {
-      animation: none !important;
-      stroke-dashoffset: 0;
-    }
-    @keyframes archify-edge-flow {
-      0% { stroke-dasharray: 10 8; stroke-dashoffset: 54; opacity: 0.42; }
-      88% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      99.9% { stroke-dasharray: 10 8; stroke-dashoffset: 0; opacity: 1; }
-      100% { stroke-dashoffset: 0; opacity: 1; }
+    @media print {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
     }
     @keyframes archify-node-pulse {
       0%, 72%, 100% { filter: none; stroke-width: 1.5; }
@@ -4811,6 +4791,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       50% { opacity: 0.48; transform: scale(0.78); }
     }
     @media (prefers-reduced-motion: reduce) {
+      .ambient-edge-flow { display: none !important; animation: none !important; }
       html[data-preset="signal-flow"] .diagram-container::before {
         animation: none !important;
       }
@@ -4973,7 +4954,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
-      <svg viewBox="0 0 1216 783" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase" data-waterfall-ui="" data-waterfall-unit="ms" data-reader-fit="width-first" data-reader-min-text="7.5">
+      <svg viewBox="0 0 1216 783" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase" data-waterfall-ui="" data-waterfall-unit="ms" data-reader-fit="width-first" data-reader-min-text="7.5">
         <title id="archify-diagram-title">Rebuilding the bundled examples</title>
         <desc id="archify-diagram-description">Measured on one local run: render and artifact check of eight examples across three concurrent workers (process start to exit, ms from batch start).</desc>
         <!-- Definitions -->
@@ -5090,7 +5071,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-batch" data-node-id="batch" data-node-label="Rebuild bundled examples (3 workers)" tabindex="0" role="button" aria-label="Focus Rebuild bundled examples (3 workers), 0–1,286.2 ms · 1,286.2 ms · 100% of 1,286.2 ms wall-clock" aria-pressed="false" data-node-kind="external" data-node-sublabel="0–1,286.2 ms · 1,286.2 ms · 100% of 1,286.2 ms wall-clock" data-waterfall-start="0" data-waterfall-end="1286.2" data-waterfall-duration="1286.2" data-waterfall-depth="0" data-waterfall-status="ok">
           <title>Rebuild bundled examples (3 workers) · 0–1,286.2 ms · 1,286.2 ms · 100% of 1,286.2 ms wall-clock</title>
           <rect x="20" y="89" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="351" y="93.5" width="760" height="14" rx="4" class="c-external wf-span" stroke-width="1.2"/>
+          <rect x="351" y="93.5" width="760" height="14" rx="4" class="c-external wf-span" data-animate="node" style="--step:0" stroke-width="1.2"/>
           
           <circle cx="32" cy="100.5" r="4.5" class="t-external wf-dot"/>
           <text data-node-label="" x="42" y="104.8" class="t-primary" font-size="12.5" font-weight="750">Rebuild bundled examples (3 workers)</text>
@@ -5099,7 +5080,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex0" data-node-id="ex0" data-node-label="web-app.architecture" tabindex="0" role="button" aria-label="Focus web-app.architecture, 0.2–429.7 ms · 429.5 ms · 33% of 1,286.2 ms wall-clock, worker 1 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="0.2–429.7 ms · 429.5 ms · 33% of 1,286.2 ms wall-clock" data-node-context="worker 1 › Rebuild bundled examples (3 workers)" data-waterfall-start="0.2" data-waterfall-end="429.7" data-waterfall-duration="429.5" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>web-app.architecture · 0.2–429.7 ms · 429.5 ms · 33% of 1,286.2 ms wall-clock · worker 1 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="114" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="351.12" y="118.5" width="253.77999999999997" height="14" rx="4" class="c-frontend wf-span" stroke-width="1.2"/>
+          <rect x="351.12" y="118.5" width="253.77999999999997" height="14" rx="4" class="c-frontend wf-span" data-animate="node" style="--step:1" stroke-width="1.2"/>
           
           <circle cx="50" cy="125.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="60" y="129.8" class="t-primary" font-size="12.5" font-weight="650">web-app.architecture</text>
@@ -5108,7 +5089,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex0_render" data-node-id="ex0_render" data-node-label="render-architecture.mjs" tabindex="0" role="button" aria-label="Focus render-architecture.mjs, 0.2–263.3 ms · 263.1 ms · 20% of 1,286.2 ms wall-clock, worker 1 › web-app.architecture" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="0.2–263.3 ms · 263.1 ms · 20% of 1,286.2 ms wall-clock" data-node-context="worker 1 › web-app.architecture" data-waterfall-start="0.2" data-waterfall-end="263.3" data-waterfall-duration="263.1" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>render-architecture.mjs · 0.2–263.3 ms · 263.1 ms · 20% of 1,286.2 ms wall-clock · worker 1 › web-app.architecture</title>
           <rect x="20" y="139" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="351.12" y="143.5" width="155.45999999999998" height="14" rx="4" class="c-frontend wf-solid" stroke-width="1.2"/>
+          <rect x="351.12" y="143.5" width="155.45999999999998" height="14" rx="4" class="c-frontend wf-solid" data-animate="node" style="--step:2" stroke-width="1.2"/>
           
           <circle cx="68" cy="150.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="78" y="154.8" class="t-primary" font-size="12.5" font-weight="500">render-architecture.mjs</text>
@@ -5117,7 +5098,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex0_check" data-node-id="ex0_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 263.3–429.7 ms · 166.4 ms · 13% of 1,286.2 ms wall-clock, worker 1 › web-app.architecture" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="263.3–429.7 ms · 166.4 ms · 13% of 1,286.2 ms wall-clock" data-node-context="worker 1 › web-app.architecture" data-waterfall-start="263.3" data-waterfall-end="429.7" data-waterfall-duration="166.39999999999998" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>check-render-output.mjs · 263.3–429.7 ms · 166.4 ms · 13% of 1,286.2 ms wall-clock · worker 1 › web-app.architecture</title>
           <rect x="20" y="164" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="506.58" y="168.5" width="98.32" height="14" rx="4" class="c-frontend wf-solid" stroke-width="1.2"/>
+          <rect x="506.58" y="168.5" width="98.32" height="14" rx="4" class="c-frontend wf-solid" data-animate="node" style="--step:3" stroke-width="1.2"/>
           
           <circle cx="68" cy="175.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="78" y="179.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5126,7 +5107,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex1" data-node-id="ex1" data-node-label="agent-tool-call.workflow" tabindex="0" role="button" aria-label="Focus agent-tool-call.workflow, 1.6–445.2 ms · 443.6 ms · 34% of 1,286.2 ms wall-clock, worker 2 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="1.6–445.2 ms · 443.6 ms · 34% of 1,286.2 ms wall-clock" data-node-context="worker 2 › Rebuild bundled examples (3 workers)" data-waterfall-start="1.6" data-waterfall-end="445.2" data-waterfall-duration="443.59999999999997" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 2">
           <title>agent-tool-call.workflow · 1.6–445.2 ms · 443.6 ms · 34% of 1,286.2 ms wall-clock · worker 2 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="189" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="351.95" y="193.5" width="262.10999999999996" height="14" rx="4" class="c-backend wf-span" stroke-width="1.2"/>
+          <rect x="351.95" y="193.5" width="262.10999999999996" height="14" rx="4" class="c-backend wf-span" data-animate="node" style="--step:4" stroke-width="1.2"/>
           
           <circle cx="50" cy="200.5" r="3.5" class="t-backend wf-dot"/>
           <text data-node-label="" x="60" y="204.8" class="t-primary" font-size="12.5" font-weight="650">agent-tool-call.workflow</text>
@@ -5135,7 +5116,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex1_render" data-node-id="ex1_render" data-node-label="render-workflow.mjs" tabindex="0" role="button" aria-label="Focus render-workflow.mjs, 1.6–298.5 ms · 296.9 ms · 23% of 1,286.2 ms wall-clock, worker 2 › agent-tool-call.workflow" aria-pressed="false" data-node-kind="backend" data-node-sublabel="1.6–298.5 ms · 296.9 ms · 23% of 1,286.2 ms wall-clock" data-node-context="worker 2 › agent-tool-call.workflow" data-waterfall-start="1.6" data-waterfall-end="298.5" data-waterfall-duration="296.9" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 2">
           <title>render-workflow.mjs · 1.6–298.5 ms · 296.9 ms · 23% of 1,286.2 ms wall-clock · worker 2 › agent-tool-call.workflow</title>
           <rect x="20" y="214" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="351.95" y="218.5" width="175.43" height="14" rx="4" class="c-backend wf-solid" stroke-width="1.2"/>
+          <rect x="351.95" y="218.5" width="175.43" height="14" rx="4" class="c-backend wf-solid" data-animate="node" style="--step:5" stroke-width="1.2"/>
           
           <circle cx="68" cy="225.5" r="3.5" class="t-backend wf-dot"/>
           <text data-node-label="" x="78" y="229.8" class="t-primary" font-size="12.5" font-weight="500">render-workflow.mjs</text>
@@ -5144,7 +5125,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex1_check" data-node-id="ex1_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 298.5–445.2 ms · 146.7 ms · 11% of 1,286.2 ms wall-clock, worker 2 › agent-tool-call.workflow" aria-pressed="false" data-node-kind="backend" data-node-sublabel="298.5–445.2 ms · 146.7 ms · 11% of 1,286.2 ms wall-clock" data-node-context="worker 2 › agent-tool-call.workflow" data-waterfall-start="298.5" data-waterfall-end="445.2" data-waterfall-duration="146.7" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 2">
           <title>check-render-output.mjs · 298.5–445.2 ms · 146.7 ms · 11% of 1,286.2 ms wall-clock · worker 2 › agent-tool-call.workflow</title>
           <rect x="20" y="239" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="527.38" y="243.5" width="86.67999999999995" height="14" rx="4" class="c-backend wf-solid" stroke-width="1.2"/>
+          <rect x="527.38" y="243.5" width="86.67999999999995" height="14" rx="4" class="c-backend wf-solid" data-animate="node" style="--step:6" stroke-width="1.2"/>
           
           <circle cx="68" cy="250.5" r="3.5" class="t-backend wf-dot"/>
           <text data-node-label="" x="78" y="254.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5153,7 +5134,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex2" data-node-id="ex2" data-node-label="cache-miss-request.sequence" tabindex="0" role="button" aria-label="Focus cache-miss-request.sequence, 2.2–398.4 ms · 396.2 ms · 31% of 1,286.2 ms wall-clock, worker 3 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="database" data-node-sublabel="2.2–398.4 ms · 396.2 ms · 31% of 1,286.2 ms wall-clock" data-node-context="worker 3 › Rebuild bundled examples (3 workers)" data-waterfall-start="2.2" data-waterfall-end="398.4" data-waterfall-duration="396.2" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>cache-miss-request.sequence · 2.2–398.4 ms · 396.2 ms · 31% of 1,286.2 ms wall-clock · worker 3 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="264" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="352.3" y="268.5" width="234.10999999999996" height="14" rx="4" class="c-database wf-span" stroke-width="1.2"/>
+          <rect x="352.3" y="268.5" width="234.10999999999996" height="14" rx="4" class="c-database wf-span" data-animate="node" style="--step:7" stroke-width="1.2"/>
           
           <circle cx="50" cy="275.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="60" y="279.8" class="t-primary" font-size="12.5" font-weight="650">cache-miss-request.sequence</text>
@@ -5162,7 +5143,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex2_render" data-node-id="ex2_render" data-node-label="render-sequence.mjs" tabindex="0" role="button" aria-label="Focus render-sequence.mjs, 2.2–224.4 ms · 222.2 ms · 17% of 1,286.2 ms wall-clock, worker 3 › cache-miss-request.sequence" aria-pressed="false" data-node-kind="database" data-node-sublabel="2.2–224.4 ms · 222.2 ms · 17% of 1,286.2 ms wall-clock" data-node-context="worker 3 › cache-miss-request.sequence" data-waterfall-start="2.2" data-waterfall-end="224.4" data-waterfall-duration="222.20000000000002" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>render-sequence.mjs · 2.2–224.4 ms · 222.2 ms · 17% of 1,286.2 ms wall-clock · worker 3 › cache-miss-request.sequence</title>
           <rect x="20" y="289" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="352.3" y="293.5" width="131.3" height="14" rx="4" class="c-database wf-solid" stroke-width="1.2"/>
+          <rect x="352.3" y="293.5" width="131.3" height="14" rx="4" class="c-database wf-solid" data-animate="node" style="--step:8" stroke-width="1.2"/>
           
           <circle cx="68" cy="300.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="78" y="304.8" class="t-primary" font-size="12.5" font-weight="500">render-sequence.mjs</text>
@@ -5171,7 +5152,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex2_check" data-node-id="ex2_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 224.4–398.4 ms · 174 ms · 14% of 1,286.2 ms wall-clock, worker 3 › cache-miss-request.sequence" aria-pressed="false" data-node-kind="database" data-node-sublabel="224.4–398.4 ms · 174 ms · 14% of 1,286.2 ms wall-clock" data-node-context="worker 3 › cache-miss-request.sequence" data-waterfall-start="224.4" data-waterfall-end="398.4" data-waterfall-duration="173.99999999999997" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>check-render-output.mjs · 224.4–398.4 ms · 174 ms · 14% of 1,286.2 ms wall-clock · worker 3 › cache-miss-request.sequence</title>
           <rect x="20" y="314" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="483.6" y="318.5" width="102.80999999999995" height="14" rx="4" class="c-database wf-solid" stroke-width="1.2"/>
+          <rect x="483.6" y="318.5" width="102.80999999999995" height="14" rx="4" class="c-database wf-solid" data-animate="node" style="--step:9" stroke-width="1.2"/>
           
           <circle cx="68" cy="325.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="78" y="329.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5180,7 +5161,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex3" data-node-id="ex3" data-node-label="product-analytics.dataflow" tabindex="0" role="button" aria-label="Focus product-analytics.dataflow, 398.4–830.7 ms · 432.3 ms · 34% of 1,286.2 ms wall-clock, worker 3 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="database" data-node-sublabel="398.4–830.7 ms · 432.3 ms · 34% of 1,286.2 ms wall-clock" data-node-context="worker 3 › Rebuild bundled examples (3 workers)" data-waterfall-start="398.4" data-waterfall-end="830.7" data-waterfall-duration="432.30000000000007" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>product-analytics.dataflow · 398.4–830.7 ms · 432.3 ms · 34% of 1,286.2 ms wall-clock · worker 3 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="339" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="586.41" y="343.5" width="255.44000000000005" height="14" rx="4" class="c-database wf-span" stroke-width="1.2"/>
+          <rect x="586.41" y="343.5" width="255.44000000000005" height="14" rx="4" class="c-database wf-span" data-animate="node" style="--step:10" stroke-width="1.2"/>
           
           <circle cx="50" cy="350.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="60" y="354.8" class="t-primary" font-size="12.5" font-weight="650">product-analytics.dataflow</text>
@@ -5189,7 +5170,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex3_render" data-node-id="ex3_render" data-node-label="render-dataflow.mjs" tabindex="0" role="button" aria-label="Focus render-dataflow.mjs, 398.4–593.4 ms · 195 ms · 15% of 1,286.2 ms wall-clock, worker 3 › product-analytics.dataflow" aria-pressed="false" data-node-kind="database" data-node-sublabel="398.4–593.4 ms · 195 ms · 15% of 1,286.2 ms wall-clock" data-node-context="worker 3 › product-analytics.dataflow" data-waterfall-start="398.4" data-waterfall-end="593.4" data-waterfall-duration="195" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>render-dataflow.mjs · 398.4–593.4 ms · 195 ms · 15% of 1,286.2 ms wall-clock · worker 3 › product-analytics.dataflow</title>
           <rect x="20" y="364" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="586.41" y="368.5" width="115.22000000000003" height="14" rx="4" class="c-database wf-solid" stroke-width="1.2"/>
+          <rect x="586.41" y="368.5" width="115.22000000000003" height="14" rx="4" class="c-database wf-solid" data-animate="node" style="--step:11" stroke-width="1.2"/>
           
           <circle cx="68" cy="375.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="78" y="379.8" class="t-primary" font-size="12.5" font-weight="500">render-dataflow.mjs</text>
@@ -5198,7 +5179,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex3_check" data-node-id="ex3_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 593.4–830.7 ms · 237.3 ms · 18% of 1,286.2 ms wall-clock, worker 3 › product-analytics.dataflow" aria-pressed="false" data-node-kind="database" data-node-sublabel="593.4–830.7 ms · 237.3 ms · 18% of 1,286.2 ms wall-clock" data-node-context="worker 3 › product-analytics.dataflow" data-waterfall-start="593.4" data-waterfall-end="830.7" data-waterfall-duration="237.30000000000007" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>check-render-output.mjs · 593.4–830.7 ms · 237.3 ms · 18% of 1,286.2 ms wall-clock · worker 3 › product-analytics.dataflow</title>
           <rect x="20" y="389" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="701.63" y="393.5" width="140.22000000000003" height="14" rx="4" class="c-database wf-solid" stroke-width="1.2"/>
+          <rect x="701.63" y="393.5" width="140.22000000000003" height="14" rx="4" class="c-database wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="400.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="78" y="404.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5207,7 +5188,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex4" data-node-id="ex4" data-node-label="agent-run.lifecycle" tabindex="0" role="button" aria-label="Focus agent-run.lifecycle, 429.8–862.8 ms · 433 ms · 34% of 1,286.2 ms wall-clock, worker 1 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="429.8–862.8 ms · 433 ms · 34% of 1,286.2 ms wall-clock" data-node-context="worker 1 › Rebuild bundled examples (3 workers)" data-waterfall-start="429.8" data-waterfall-end="862.8" data-waterfall-duration="432.99999999999994" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>agent-run.lifecycle · 429.8–862.8 ms · 433 ms · 34% of 1,286.2 ms wall-clock · worker 1 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="414" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="604.96" y="418.5" width="255.86" height="14" rx="4" class="c-frontend wf-span" stroke-width="1.2"/>
+          <rect x="604.96" y="418.5" width="255.86" height="14" rx="4" class="c-frontend wf-span" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="50" cy="425.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="60" y="429.8" class="t-primary" font-size="12.5" font-weight="650">agent-run.lifecycle</text>
@@ -5216,7 +5197,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex4_render" data-node-id="ex4_render" data-node-label="render-lifecycle.mjs" tabindex="0" role="button" aria-label="Focus render-lifecycle.mjs, 429.8–643.7 ms · 213.9 ms · 17% of 1,286.2 ms wall-clock, worker 1 › agent-run.lifecycle" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="429.8–643.7 ms · 213.9 ms · 17% of 1,286.2 ms wall-clock" data-node-context="worker 1 › agent-run.lifecycle" data-waterfall-start="429.8" data-waterfall-end="643.7" data-waterfall-duration="213.90000000000003" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>render-lifecycle.mjs · 429.8–643.7 ms · 213.9 ms · 17% of 1,286.2 ms wall-clock · worker 1 › agent-run.lifecycle</title>
           <rect x="20" y="439" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="604.96" y="443.5" width="126.38999999999999" height="14" rx="4" class="c-frontend wf-solid" stroke-width="1.2"/>
+          <rect x="604.96" y="443.5" width="126.38999999999999" height="14" rx="4" class="c-frontend wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="450.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="78" y="454.8" class="t-primary" font-size="12.5" font-weight="500">render-lifecycle.mjs</text>
@@ -5225,7 +5206,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex4_check" data-node-id="ex4_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 643.7–862.8 ms · 219.1 ms · 17% of 1,286.2 ms wall-clock, worker 1 › agent-run.lifecycle" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="643.7–862.8 ms · 219.1 ms · 17% of 1,286.2 ms wall-clock" data-node-context="worker 1 › agent-run.lifecycle" data-waterfall-start="643.7" data-waterfall-end="862.8" data-waterfall-duration="219.0999999999999" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>check-render-output.mjs · 643.7–862.8 ms · 219.1 ms · 17% of 1,286.2 ms wall-clock · worker 1 › agent-run.lifecycle</title>
           <rect x="20" y="464" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="731.35" y="468.5" width="129.47000000000003" height="14" rx="4" class="c-frontend wf-solid" stroke-width="1.2"/>
+          <rect x="731.35" y="468.5" width="129.47000000000003" height="14" rx="4" class="c-frontend wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="475.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="78" y="479.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5234,7 +5215,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex5" data-node-id="ex5" data-node-label="orders.erd" tabindex="0" role="button" aria-label="Focus orders.erd, 445.2–868.3 ms · 423.1 ms · 33% of 1,286.2 ms wall-clock, worker 2 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="445.2–868.3 ms · 423.1 ms · 33% of 1,286.2 ms wall-clock" data-node-context="worker 2 › Rebuild bundled examples (3 workers)" data-waterfall-start="445.2" data-waterfall-end="868.3" data-waterfall-duration="423.09999999999997" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 2">
           <title>orders.erd · 445.2–868.3 ms · 423.1 ms · 33% of 1,286.2 ms wall-clock · worker 2 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="489" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="614.06" y="493.5" width="250.0100000000001" height="14" rx="4" class="c-backend wf-span" stroke-width="1.2"/>
+          <rect x="614.06" y="493.5" width="250.0100000000001" height="14" rx="4" class="c-backend wf-span" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="50" cy="500.5" r="3.5" class="t-backend wf-dot"/>
           <text data-node-label="" x="60" y="504.8" class="t-primary" font-size="12.5" font-weight="650">orders.erd</text>
@@ -5243,7 +5224,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex5_render" data-node-id="ex5_render" data-node-label="render-erd.mjs" tabindex="0" role="button" aria-label="Focus render-erd.mjs, 445.2–645.9 ms · 200.7 ms · 16% of 1,286.2 ms wall-clock, worker 2 › orders.erd" aria-pressed="false" data-node-kind="backend" data-node-sublabel="445.2–645.9 ms · 200.7 ms · 16% of 1,286.2 ms wall-clock" data-node-context="worker 2 › orders.erd" data-waterfall-start="445.2" data-waterfall-end="645.9" data-waterfall-duration="200.7" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 2">
           <title>render-erd.mjs · 445.2–645.9 ms · 200.7 ms · 16% of 1,286.2 ms wall-clock · worker 2 › orders.erd</title>
           <rect x="20" y="514" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="614.06" y="518.5" width="118.59000000000003" height="14" rx="4" class="c-backend wf-solid" stroke-width="1.2"/>
+          <rect x="614.06" y="518.5" width="118.59000000000003" height="14" rx="4" class="c-backend wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="525.5" r="3.5" class="t-backend wf-dot"/>
           <text data-node-label="" x="78" y="529.8" class="t-primary" font-size="12.5" font-weight="500">render-erd.mjs</text>
@@ -5252,7 +5233,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex5_check" data-node-id="ex5_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 645.9–868.3 ms · 222.4 ms · 17% of 1,286.2 ms wall-clock, worker 2 › orders.erd" aria-pressed="false" data-node-kind="backend" data-node-sublabel="645.9–868.3 ms · 222.4 ms · 17% of 1,286.2 ms wall-clock" data-node-context="worker 2 › orders.erd" data-waterfall-start="645.9" data-waterfall-end="868.3" data-waterfall-duration="222.39999999999998" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 2">
           <title>check-render-output.mjs · 645.9–868.3 ms · 222.4 ms · 17% of 1,286.2 ms wall-clock · worker 2 › orders.erd</title>
           <rect x="20" y="539" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="732.65" y="543.5" width="131.42000000000007" height="14" rx="4" class="c-backend wf-solid" stroke-width="1.2"/>
+          <rect x="732.65" y="543.5" width="131.42000000000007" height="14" rx="4" class="c-backend wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="550.5" r="3.5" class="t-backend wf-dot"/>
           <text data-node-label="" x="78" y="554.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5261,7 +5242,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex6" data-node-id="ex6" data-node-label="subscription-billing.erd" tabindex="0" role="button" aria-label="Focus subscription-billing.erd, 830.7–1,231.3 ms · 400.6 ms · 31% of 1,286.2 ms wall-clock, worker 3 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="database" data-node-sublabel="830.7–1,231.3 ms · 400.6 ms · 31% of 1,286.2 ms wall-clock" data-node-context="worker 3 › Rebuild bundled examples (3 workers)" data-waterfall-start="830.7" data-waterfall-end="1231.3" data-waterfall-duration="400.5999999999999" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>subscription-billing.erd · 830.7–1,231.3 ms · 400.6 ms · 31% of 1,286.2 ms wall-clock · worker 3 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="564" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="841.85" y="568.5" width="236.70999999999992" height="14" rx="4" class="c-database wf-span" stroke-width="1.2"/>
+          <rect x="841.85" y="568.5" width="236.70999999999992" height="14" rx="4" class="c-database wf-span" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="50" cy="575.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="60" y="579.8" class="t-primary" font-size="12.5" font-weight="650">subscription-billing.erd</text>
@@ -5270,7 +5251,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex6_render" data-node-id="ex6_render" data-node-label="render-erd.mjs" tabindex="0" role="button" aria-label="Focus render-erd.mjs, 830.7–1,022.2 ms · 191.5 ms · 15% of 1,286.2 ms wall-clock, worker 3 › subscription-billing.erd" aria-pressed="false" data-node-kind="database" data-node-sublabel="830.7–1,022.2 ms · 191.5 ms · 15% of 1,286.2 ms wall-clock" data-node-context="worker 3 › subscription-billing.erd" data-waterfall-start="830.7" data-waterfall-end="1022.2" data-waterfall-duration="191.5" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>render-erd.mjs · 830.7–1,022.2 ms · 191.5 ms · 15% of 1,286.2 ms wall-clock · worker 3 › subscription-billing.erd</title>
           <rect x="20" y="589" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="841.85" y="593.5" width="113.15999999999997" height="14" rx="4" class="c-database wf-solid" stroke-width="1.2"/>
+          <rect x="841.85" y="593.5" width="113.15999999999997" height="14" rx="4" class="c-database wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="600.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="78" y="604.8" class="t-primary" font-size="12.5" font-weight="500">render-erd.mjs</text>
@@ -5279,7 +5260,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex6_check" data-node-id="ex6_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 1,022.2–1,231.3 ms · 209.1 ms · 16% of 1,286.2 ms wall-clock, worker 3 › subscription-billing.erd" aria-pressed="false" data-node-kind="database" data-node-sublabel="1,022.2–1,231.3 ms · 209.1 ms · 16% of 1,286.2 ms wall-clock" data-node-context="worker 3 › subscription-billing.erd" data-waterfall-start="1022.2" data-waterfall-end="1231.3" data-waterfall-duration="209.0999999999999" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 3">
           <title>check-render-output.mjs · 1,022.2–1,231.3 ms · 209.1 ms · 16% of 1,286.2 ms wall-clock · worker 3 › subscription-billing.erd</title>
           <rect x="20" y="614" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="955.01" y="618.5" width="123.54999999999995" height="14" rx="4" class="c-database wf-solid" stroke-width="1.2"/>
+          <rect x="955.01" y="618.5" width="123.54999999999995" height="14" rx="4" class="c-database wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="625.5" r="3.5" class="t-database wf-dot"/>
           <text data-node-label="" x="78" y="629.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5288,7 +5269,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex7" data-node-id="ex7" data-node-label="checkout-request.waterfall" tabindex="0" role="button" aria-label="Focus checkout-request.waterfall, 862.8–1,286.2 ms · 423.4 ms · 33% of 1,286.2 ms wall-clock, worker 1 › Rebuild bundled examples (3 workers)" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="862.8–1,286.2 ms · 423.4 ms · 33% of 1,286.2 ms wall-clock" data-node-context="worker 1 › Rebuild bundled examples (3 workers)" data-waterfall-start="862.8" data-waterfall-end="1286.2" data-waterfall-duration="423.4000000000001" data-waterfall-depth="1" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>checkout-request.waterfall · 862.8–1,286.2 ms · 423.4 ms · 33% of 1,286.2 ms wall-clock · worker 1 › Rebuild bundled examples (3 workers)</title>
           <rect x="20" y="639" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="860.82" y="643.5" width="250.17999999999995" height="14" rx="4" class="c-frontend wf-span" stroke-width="1.2"/>
+          <rect x="860.82" y="643.5" width="250.17999999999995" height="14" rx="4" class="c-frontend wf-span" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="50" cy="650.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="60" y="654.8" class="t-primary" font-size="12.5" font-weight="650">checkout-request.waterfall</text>
@@ -5297,7 +5278,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex7_render" data-node-id="ex7_render" data-node-label="render-waterfall.mjs" tabindex="0" role="button" aria-label="Focus render-waterfall.mjs, 862.8–1,082.5 ms · 219.7 ms · 17% of 1,286.2 ms wall-clock, worker 1 › checkout-request.waterfall" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="862.8–1,082.5 ms · 219.7 ms · 17% of 1,286.2 ms wall-clock" data-node-context="worker 1 › checkout-request.waterfall" data-waterfall-start="862.8" data-waterfall-end="1082.5" data-waterfall-duration="219.70000000000005" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>render-waterfall.mjs · 862.8–1,082.5 ms · 219.7 ms · 17% of 1,286.2 ms wall-clock · worker 1 › checkout-request.waterfall</title>
           <rect x="20" y="664" width="1176" height="23" rx="6" class="c-mask wf-row wf-row-alt"/>
-          <rect x="860.82" y="668.5" width="129.81999999999994" height="14" rx="4" class="c-frontend wf-solid" stroke-width="1.2"/>
+          <rect x="860.82" y="668.5" width="129.81999999999994" height="14" rx="4" class="c-frontend wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="675.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="78" y="679.8" class="t-primary" font-size="12.5" font-weight="500">render-waterfall.mjs</text>
@@ -5306,7 +5287,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <g id="node-ex7_check" data-node-id="ex7_check" data-node-label="check-render-output.mjs" tabindex="0" role="button" aria-label="Focus check-render-output.mjs, 1,082.5–1,286.2 ms · 203.7 ms · 16% of 1,286.2 ms wall-clock, worker 1 › checkout-request.waterfall" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="1,082.5–1,286.2 ms · 203.7 ms · 16% of 1,286.2 ms wall-clock" data-node-context="worker 1 › checkout-request.waterfall" data-waterfall-start="1082.5" data-waterfall-end="1286.2" data-waterfall-duration="203.70000000000005" data-waterfall-depth="2" data-waterfall-status="ok" data-waterfall-service="worker 1">
           <title>check-render-output.mjs · 1,082.5–1,286.2 ms · 203.7 ms · 16% of 1,286.2 ms wall-clock · worker 1 › checkout-request.waterfall</title>
           <rect x="20" y="689" width="1176" height="23" rx="6" class="c-mask wf-row"/>
-          <rect x="990.64" y="693.5" width="120.36000000000001" height="14" rx="4" class="c-frontend wf-solid" stroke-width="1.2"/>
+          <rect x="990.64" y="693.5" width="120.36000000000001" height="14" rx="4" class="c-frontend wf-solid" data-animate="node" style="--step:12" stroke-width="1.2"/>
           
           <circle cx="68" cy="700.5" r="3.5" class="t-frontend wf-dot"/>
           <text data-node-label="" x="78" y="704.8" class="t-primary" font-size="12.5" font-weight="500">check-render-output.mjs</text>
@@ -5553,11 +5534,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     function hasDrawableGeometry(element) {
-      if (!element) return false;
+      if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
       var geometries = /^(path|line|polyline)$/i.test(element.tagName)
         ? [element]
         : Array.prototype.slice.call(element.querySelectorAll('path, line, polyline'));
       return geometries.some(function (geometry) {
+        if (geometry.hasAttribute('data-ambient-flow-overlay')) return false;
         var source = geometry.tagName.toLowerCase() === 'path'
           ? geometry.getAttribute('d')
           : geometry.tagName.toLowerCase() === 'polyline'
@@ -5802,6 +5784,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-ambient-flow-overlay]'), function (el) {
+          el.remove();
+        });
+        // Route interaction rewrites CSS declarations through CSSOM. Normalize
+        // authored motion delays on the clone so exported bytes do not depend
+        // on whether the reader traced a route before downloading.
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-animate]'), function (el) {
+          var step = el.style.getPropertyValue('--step');
+          if (step) el.setAttribute('style', el.style.cssText);
+        });
         // View transforms and neighborhood focus are HTML exploration state,
         // never part of a downloaded full-diagram artifact.
         clone.style.removeProperty('transform');
@@ -5963,7 +5955,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           !clone.hasAttribute('data-tree-any-collapsed') &&
           !clone.style.getPropertyValue('transform') &&
           !clone.style.getPropertyValue('clip-path') &&
-          clone.querySelectorAll('[data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
+          clone.querySelectorAll('[data-ambient-flow-overlay], [data-reader-legend-corner], [data-focus-match], [data-focus-selected], [data-reach-match], [data-reach-origin], [data-reach-depth], [data-semantic-lens-overlay], [data-lens-match], [data-lens-selected], [data-lens-peer], [data-legend-bridge], [data-legend-kind], [data-legend-bridge-runtime], [data-legend-count], [data-legend-zero], [data-legend-selected], [data-legend-preview-match], [data-legend-preview-selected], [data-legend-preview-peer], [data-relationship-hit-overlay], [data-relationship-pulse-overlay], [data-relationship-preview], [data-relationship-preview-node], [data-relationship-preview-source], [data-relationship-preview-target], [data-intent-trace-overlay], [data-intent-trace-match], [data-intent-trace-selected], [data-route-probe-overlay], [data-route-journey-overlay], [data-route-match], [data-route-start], [data-route-end], [data-route-step], [data-route-candidate], [data-route-journey-state], [data-route-journey-current], [data-share-route-match], [data-share-route-step], [data-share-route-start], [data-share-route-end], [data-share-route-middle], [data-share-reach-match], [data-share-reach-origin], [data-share-reach-depth], [data-source-evidence-beacon], [data-source-evidence-count], [data-source-evidence-original-label], [data-detail], [data-detail-anchor], [data-tree-hidden], [data-tree-collapsed]').length === 0;
       }
 
 
@@ -7324,38 +7316,54 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ownerToken = 0;
       var ownerCleanup = null;
       var lastEffectivePaused = null;
-      var ambientStarted = false;
-      var ambientPending = new Set();
+      var entryStarted = false;
+      var entryPending = new Set();
+      var flowCount = 0;
 
-      function detachAmbientBoundary() {
-        if (!svg) return;
-        svg.removeEventListener('animationend', onAmbientBoundary, true);
-        svg.removeEventListener('animationcancel', onAmbientBoundary, true);
+      // Runtime decoration carries geometry only. Keep each flow beside its
+      // authored edge so transforms, clipping and crossover paint order apply.
+      function createFlows() {
+        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape) {
+          var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
+          if (!d) return;
+          var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          flow.setAttribute('d', d);
+          ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
+            if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+          });
+          flow.setAttribute('class', 'ambient-edge-flow');
+          flow.setAttribute('data-ambient-flow-overlay', 'true');
+          flow.setAttribute('aria-hidden', 'true');
+          shape.parentNode.insertBefore(flow, shape.nextSibling);
+          flowCount += 1;
+        });
       }
-      function settleAmbient(reason) {
-        if (!capable) return false;
-        ambientStarted = true;
-        ambientPending.clear();
-        detachAmbientBoundary();
-        html.setAttribute('data-ambient-motion', 'settled');
-        html.setAttribute('data-ambient-settle-reason', reason || 'complete');
-        return true;
+      function settleEntry() {
+        entryPending.clear();
+        svg.removeEventListener('animationend', onEntryBoundary, true);
+        svg.removeEventListener('animationcancel', onEntryBoundary, true);
+        html.setAttribute('data-ambient-entry', 'settled');
       }
-      function onAmbientBoundary(event) {
-        if (!ambientPending.has(event.target)) return;
-        ambientPending.delete(event.target);
-        if (!ambientPending.size) settleAmbient('complete');
+      function onEntryBoundary(event) {
+        if (!entryPending.has(event.target)) return;
+        entryPending.delete(event.target);
+        if (!entryPending.size) settleEntry();
       }
-      function startAmbient() {
-        if (ambientStarted || !capable) return false;
-        ambientStarted = true;
-        ambientPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="edge"], [data-animate="node"]')));
-        if (!ambientPending.size) return settleAmbient('empty');
-        svg.addEventListener('animationend', onAmbientBoundary, true);
-        svg.addEventListener('animationcancel', onAmbientBoundary, true);
-        html.setAttribute('data-ambient-motion', 'running');
-        html.removeAttribute('data-ambient-settle-reason');
-        return true;
+      function renderAmbient(suppressed) {
+        html.setAttribute('data-ambient-motion', suppressed ? 'paused' : (flowCount ? 'running' : 'empty'));
+        if (suppressed) {
+          entryStarted = true;
+          settleEntry();
+        } else if (!entryStarted) {
+          entryStarted = true;
+          entryPending = new Set(Array.prototype.slice.call(svg.querySelectorAll('[data-animate="node"]')));
+          if (!entryPending.size) settleEntry();
+          else {
+            svg.addEventListener('animationend', onEntryBoundary, true);
+            svg.addEventListener('animationcancel', onEntryBoundary, true);
+            html.setAttribute('data-ambient-entry', 'running');
+          }
+        }
       }
 
       function readStored() {
@@ -7390,11 +7398,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var systemPaused = reducedMotion();
         var paused = effectivePaused();
         html.setAttribute('data-motion', paused ? 'still' : 'live');
-        if (paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden')) {
-          settleAmbient('suppressed');
-        } else if (!ambientStarted) {
-          startAmbient();
-        }
+        renderAmbient(paused || owner || html.hasAttribute('data-embed') || html.hasAttribute('data-share-playback') || html.hasAttribute('data-document-hidden'));
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
@@ -7499,7 +7503,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         html.removeAttribute('data-motion');
         html.removeAttribute('data-motion-owner');
         html.removeAttribute('data-ambient-motion');
-        html.removeAttribute('data-ambient-settle-reason');
+        html.removeAttribute('data-ambient-entry');
         return {
           capable: false,
           pause: function () { return false; },
@@ -7515,6 +7519,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
 
+      createFlows();
       html.setAttribute('data-motion-capable', 'true');
       btn.hidden = false;
       readerPaused = readStored() === 'still';
@@ -7524,6 +7529,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else if (typeof motionQuery.addListener === 'function') motionQuery.addListener(render);
       }
       document.addEventListener('visibilitychange', syncVisibility);
+      if (typeof MutationObserver !== 'undefined') {
+        var contextObserver = new MutationObserver(render);
+        contextObserver.observe(html, { attributes: true, attributeFilter: ['data-embed', 'data-share-playback'] });
+      }
       if (document.documentElement.getAttribute('data-embed') !== 'true' && typeof MutationObserver !== 'undefined' && typeof Node !== 'undefined' && svg instanceof Node) {
         var ownerObserver = new MutationObserver(function () { publishOwner(); });
         ownerObserver.observe(svg, {
@@ -8152,7 +8161,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function relationshipEdgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function relationshipHitRecords() {
         var recordsByKey = {};
@@ -9401,7 +9410,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-intent-trace-overlay]'), function (overlay) {
@@ -9637,6 +9646,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var ratio = viewBox && viewBox.height > 0 ? viewBox.width / viewBox.height : 0;
       var readerFit = svg && svg.getAttribute('data-reader-fit');
       var widthFirstReading = readerFit === 'width-first';
+      var automaticSequence = widthFirstReading && svg.hasAttribute('data-sequence-column-fit');
+      var readingScroll = widthFirstReading;
       var measuredHeightFit = readerFit === 'intrinsic-height' || widthFirstReading;
       var frame = 0;
       var settleFrame = 0;
@@ -9780,11 +9791,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         legend.style.removeProperty('--archify-reader-legend-transform');
       }
       // Keep the original legend in its SVG: renderer hover/focus selectors and
-      // canonical export still own that same group. Only ordinary capped
-      // reading at 25–100% borrows the spare outer canvas for its legend.
+      // canonical export still own that same group. Ordinary capped reading
+      // and fitted automatic sequences borrow the outer corner at 25–100%.
       function syncLegend() {
         var cameraScale = Number(svg && svg.getAttribute('data-view-scale')) || 1;
-        if (!legend || !eligible() || html.getAttribute('data-reader-area') !== 'true' || cameraScale > 1.001) {
+        var cornerReading = html.getAttribute('data-reader-area') === 'true' || automaticSequence && !readingScroll;
+        if (!legend || !eligible() || !cornerReading || cameraScale > 1.001) {
           clearLegend();
           return;
         }
@@ -9925,7 +9937,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ) - window.innerHeight - belowFold();
           // visual-check fails any page whose rounded-up height exceeds the
           // viewport, so even a 1px remainder must be reduced or declared.
-          if (overflow > 0 && !widthFirstReading && lastWidth > Math.ceil(minWidth)) {
+          if (overflow > 0 && !readingScroll && lastWidth > Math.ceil(minWidth)) {
             applyWidth(Math.max(minWidth, lastWidth - overflow * ratio - 4), minWidth);
             settledCap = lastWidth;
             html.setAttribute('data-reader-overflow', 'reduced');
@@ -9944,17 +9956,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         var chrome = chromeMetrics();
         var viewportCap = Math.max(0, window.innerWidth - chrome.bodyX);
+        // Sequence first-screen fitting preserves source text sizes instead
+        // of shrinking to the shared hard readability floor.
         var readableWidth = viewBox && viewBox.width > 0
-          ? viewBox.width * minimumReadableScale() + chrome.diagramX
+          ? viewBox.width * (automaticSequence ? 1 : minimumReadableScale()) + chrome.diagramX
           : MIN_READER_WIDTH;
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
-        var readableMinimumWidth = measuredHeightFit && ratio < WIDE_RATIO
+        var readableMinimumWidth = automaticSequence || measuredHeightFit && ratio < WIDE_RATIO
           ? readableWidth
           : measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)
             ? Math.max(MIN_READER_WIDTH, readableWidth)
             : MIN_READER_WIDTH;
         var minWidth;
-        if (measuredHeightFit && ratio < WIDE_RATIO) {
+        if (automaticSequence) {
+          minWidth = Math.min(readableMinimumWidth, maxWidth);
+        } else if (measuredHeightFit && ratio < WIDE_RATIO) {
           minWidth = Math.min(readableMinimumWidth, viewportCap);
         } else if (measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)) {
           minWidth = Math.min(readableMinimumWidth, maxWidth);
@@ -9990,10 +10006,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           outerHeight(header) + stackedBelow;
         var availableSvgHeight = Math.max(1, window.innerHeight - fixedHeight);
         var desiredWidth = availableSvgHeight * ratio + chrome.diagramX + (docked ? railExtra : 0);
-        // Long sequences and waterfall rows use the available horizontal room;
-        // ordinary page scrolling keeps their text and row spacing readable.
-        // Other diagram families retain the existing height-fit strategy.
-        if (widthFirstReading) desiredWidth = maxWidth;
+        // Compact automatic sequences fit the first screen without shrinking
+        // their authored text. Longer sequences retain reading width and page
+        // scroll; other width-first families keep their existing strategy.
+        var sequenceFits = automaticSequence && Math.min(desiredWidth, maxWidth) >=
+          readableWidth + (docked ? railExtra : 0);
+        readingScroll = widthFirstReading && !sequenceFits;
+        if (readingScroll) desiredWidth = maxWidth;
         // Only a binding enlargement cap needs a separate normal reader area.
         // Uncapped diagrams keep their existing natural height and Chrome fit.
         automaticAreaHeight = availableSvgHeight + chrome.diagramY;
@@ -12288,7 +12307,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function edgeShapes(edge) {
         if (/^(path|line|polyline)$/i.test(edge.tagName)) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function removeOverlay() {
         Array.prototype.forEach.call(svg.querySelectorAll('[data-route-probe-overlay]'), function (overlay) {
@@ -13282,7 +13301,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       function edgeShapes(edge) {
         if (!edge) return [];
         if (/^(path|line|polyline)$/i.test(edge.tagName || '')) return [edge];
-        return Array.prototype.slice.call(edge.querySelectorAll('path, line, polyline'));
+        return Array.prototype.slice.call(edge.querySelectorAll('path:not([data-ambient-flow-overlay]), line, polyline'));
       }
       function legendSourceBounds(entry) {
         var bounds = null;

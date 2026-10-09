@@ -1,0 +1,353 @@
+{
+  "base": "9ef09617bd9ed2fe7bb4ad17fba7c8fce6b0ce76",
+  "input": "test/fixtures/reader-readability/compact-roundtrip.sequence.json",
+  "theme": "dark",
+  "preset": "classic",
+  "detail": "read",
+  "cameraScale": 1,
+  "records": [
+    {
+      "name": "before",
+      "viewport": [
+        1396,
+        830
+      ],
+      "viewBox": "0 0 560 658",
+      "svg": {
+        "top": 67,
+        "bottom": 1054,
+        "width": 840,
+        "height": 987
+      },
+      "stage": {
+        "top": 58,
+        "bottom": 1123,
+        "width": 1317,
+        "height": 1065
+      },
+      "controls": {
+        "top": 772,
+        "bottom": 814,
+        "width": 313.7421875,
+        "height": 42
+      },
+      "scale": 1.5
+    },
+    {
+      "name": "after",
+      "viewport": [
+        1396,
+        830
+      ],
+      "viewBox": "0 0 560 658",
+      "svg": {
+        "top": 67,
+        "bottom": 742.625,
+        "width": 575,
+        "height": 675.625
+      },
+      "stage": {
+        "top": 58,
+        "bottom": 811.625,
+        "width": 960,
+        "height": 753.625
+      },
+      "controls": {
+        "top": 752.625,
+        "bottom": 794.625,
+        "width": 313.7421875,
+        "height": 42
+      },
+      "scale": 1.0267857142857142,
+      "legend": {
+        "corner": true,
+        "bounds": {
+          "top": 706.0892333984375,
+          "bottom": 742.625,
+          "left": 233,
+          "right": 594.3795166015625
+        },
+        "originalSvg": true,
+        "count": 1,
+        "leftGap": 0,
+        "bottomGap": 0,
+        "navOverlap": 0
+      }
+    }
+  ],
+  "legendRegressionBase": "5e2c7ef671bbb0d5c3fa0f690167d39a0cce4715",
+  "legendRoundtripRecords": [
+    {
+      "label": "compact-sequence-legend-150",
+      "svg": {
+        "top": -102,
+        "bottom": 911.4375,
+        "left": 266.75,
+        "right": 1129.25
+      },
+      "stage": {
+        "top": 58,
+        "bottom": 811.625,
+        "left": 218,
+        "right": 1178
+      },
+      "controls": {
+        "top": 752.625,
+        "bottom": 794.625,
+        "left": 780.359375,
+        "right": 1161
+      },
+      "legend": {
+        "corner": false,
+        "bounds": {
+          "top": 778.4642944335938,
+          "bottom": 833.2677612304688,
+          "left": 328.3571472167969,
+          "right": 870.4888610839844
+        },
+        "originalSvg": true,
+        "count": 1,
+        "leftGap": 95.35714721679688,
+        "bottomGap": -90.64276123046875,
+        "navOverlap": 1456.556087454781
+      },
+      "width": 575,
+      "sourceWidth": 560,
+      "minimumTextScale": 1.5401785714285712,
+      "viewportWidth": 1396,
+      "viewportHeight": 830,
+      "geometry": [
+        "0 0 560 658",
+        null,
+        null
+      ]
+    },
+    {
+      "label": "compact-sequence-legend-reset",
+      "svg": {
+        "top": 67,
+        "bottom": 741.4375,
+        "left": 411,
+        "right": 985
+      },
+      "stage": {
+        "top": 58,
+        "bottom": 811.4375,
+        "left": 218,
+        "right": 1178
+      },
+      "controls": {
+        "top": 752.4375,
+        "bottom": 794.4375,
+        "left": 847.265625,
+        "right": 1161
+      },
+      "legend": {
+        "corner": true,
+        "bounds": {
+          "top": 704.951171875,
+          "bottom": 741.4375,
+          "left": 233,
+          "right": 593.5481567382812
+        },
+        "originalSvg": true,
+        "count": 1,
+        "leftGap": 0,
+        "bottomGap": 0,
+        "navOverlap": 0
+      },
+      "width": 574,
+      "sourceWidth": 560,
+      "minimumTextScale": 1.0243160724639893,
+      "viewportWidth": 1396,
+      "viewportHeight": 830,
+      "geometry": [
+        "0 0 560 658",
+        null,
+        null
+      ]
+    },
+    {
+      "label": "compact-sequence-presentation",
+      "svg": {
+        "top": 85,
+        "bottom": 745,
+        "left": 29,
+        "right": 1367
+      },
+      "stage": {
+        "top": 76,
+        "bottom": 814,
+        "left": 16,
+        "right": 1380
+      },
+      "controls": {
+        "top": 755,
+        "bottom": 797,
+        "left": 1049.265625,
+        "right": 1363
+      },
+      "legend": {
+        "corner": false,
+        "bounds": {
+          "top": 658.775146484375,
+          "bottom": 693.8358764648438,
+          "left": 457.2705078125,
+          "right": 810.3429565429688
+        },
+        "originalSvg": true,
+        "count": 1,
+        "leftGap": 428.2705078125,
+        "bottomGap": 51.16412353515625,
+        "navOverlap": 0
+      },
+      "width": 1338,
+      "sourceWidth": 560,
+      "minimumTextScale": 1.0030395136778116,
+      "viewportWidth": 1396,
+      "viewportHeight": 830,
+      "geometry": [
+        "0 0 560 658",
+        null,
+        null
+      ]
+    },
+    {
+      "label": "compact-sequence-return",
+      "svg": {
+        "top": 67,
+        "bottom": 742.625,
+        "left": 410.5,
+        "right": 985.5
+      },
+      "stage": {
+        "top": 58,
+        "bottom": 811.625,
+        "left": 218,
+        "right": 1178
+      },
+      "controls": {
+        "top": 752.625,
+        "bottom": 794.625,
+        "left": 847.265625,
+        "right": 1161
+      },
+      "legend": {
+        "corner": true,
+        "bounds": {
+          "top": 706.0892333984375,
+          "bottom": 742.625,
+          "left": 233,
+          "right": 594.3795166015625
+        },
+        "originalSvg": true,
+        "count": 1,
+        "leftGap": 0,
+        "bottomGap": 0,
+        "navOverlap": 0
+      },
+      "width": 575,
+      "sourceWidth": 560,
+      "minimumTextScale": 1.0267857142857142,
+      "viewportWidth": 1396,
+      "viewportHeight": 830,
+      "geometry": [
+        "0 0 560 658",
+        null,
+        null
+      ]
+    },
+    {
+      "label": "compact-sequence-print",
+      "svg": {
+        "top": 73,
+        "bottom": 1678.046875,
+        "left": 15,
+        "right": 1381
+      },
+      "stage": {
+        "top": 58,
+        "bottom": 1693.046875,
+        "left": 0,
+        "right": 1396
+      },
+      "controls": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "legend": {
+        "corner": false,
+        "bounds": {
+          "top": 1467.5400390625,
+          "bottom": 1553.3255615234375,
+          "left": 112.57257080078125,
+          "right": 971.1912841796875
+        },
+        "originalSvg": true,
+        "count": 1,
+        "leftGap": 97.57257080078125,
+        "bottomGap": 124.7213134765625,
+        "navOverlap": 0
+      },
+      "width": 1366,
+      "sourceWidth": 560,
+      "minimumTextScale": 2.439280965045593,
+      "viewportWidth": 1396,
+      "viewportHeight": 830,
+      "geometry": [
+        "0 0 560 658",
+        null,
+        null
+      ]
+    },
+    {
+      "label": "compact-sequence-print-return",
+      "svg": {
+        "top": 67,
+        "bottom": 742.625,
+        "left": 410.5,
+        "right": 985.5
+      },
+      "stage": {
+        "top": 58,
+        "bottom": 811.625,
+        "left": 218,
+        "right": 1178
+      },
+      "controls": {
+        "top": 752.625,
+        "bottom": 794.625,
+        "left": 847.265625,
+        "right": 1161
+      },
+      "legend": {
+        "corner": true,
+        "bounds": {
+          "top": 706.0892333984375,
+          "bottom": 742.625,
+          "left": 233,
+          "right": 594.3795166015625
+        },
+        "originalSvg": true,
+        "count": 1,
+        "leftGap": 0,
+        "bottomGap": 0,
+        "navOverlap": 0
+      },
+      "width": 575,
+      "sourceWidth": 560,
+      "minimumTextScale": 1.0267857142857142,
+      "viewportWidth": 1396,
+      "viewportHeight": 830,
+      "geometry": [
+        "0 0 560 658",
+        null,
+        null
+      ]
+    }
+  ],
+  "targetBase": "8a1ef5c875a2eec5fc6de9eb17e45746c92c56d3",
+  "afterMotion": "live"
+}
