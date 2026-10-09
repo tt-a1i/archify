@@ -266,7 +266,7 @@ validation result, then runs strict `check --require-provenance` and
 and preserves that stage's full receipt. Its stdout is one compact JSON
 object with gate statuses, bounded actionable diagnostics, artifact identity,
 and evidence paths. The same compact object is written atomically to
-`<output-stem>.finalize-summary.json`; use that file for normal failure repair.
+`<output-stem>.finalize-summary.json`; use that file for normal failure repair. When diagnostics are truncated, `diagnosticSummary.omittedByCode` counts the unshown entries by diagnostic code without replacing their full subject and repair evidence in the full receipt.
 Complete stage receipts and timings remain available for auditing in
 `<output-stem>.finalize.json`. With `--out-dir`, both files are written there;
 `--receipt <path.json>` overrides the full receipt path and derives a distinct
