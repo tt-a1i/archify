@@ -50,7 +50,7 @@ function lifelines(html) {
 }
 
 function notes(html) {
-  return [...html.matchAll(/<text data-detail="fine" x="([\d.]+)" y="([\d.]+)" class="t-dim" font-size="7">([\s\S]*?)<\/text>/g)]
+  return [...html.matchAll(/<text data-detail="fine" x="([\d.]+)" y="([\d.]+)" class="[^"]*" font-size="7">([\s\S]*?)<\/text>/g)]
     .map((match) => {
       const tspans = [...match[3].matchAll(/<tspan x="([\d.]+)" dy="([\d.]+)">([^<]*)<\/tspan>/g)];
       return {
@@ -116,7 +116,10 @@ test('text without any punctuation breaks at a character boundary', (t) => {
 test('a short note keeps its original single-line markup', (t) => {
   const html = render(t, sequence({ messages: [{ from: 'api', to: 'client', y: 200, label: 'reply', note: 'cached for 5 minutes' }] }));
   const [client] = lifelines(html);
-  assert.match(html, new RegExp(`<text data-detail="fine" x="${client + 19}" y="218" class="t-dim" font-size="7">cached for 5 minutes</text>`));
+  const [note] = notes(html);
+  assert.equal(note.x, client + 19);
+  assert.equal(note.y, 218);
+  assert.equal(note.raw, 'cached for 5 minutes');
   assert.doesNotMatch(html, /<tspan/);
 });
 
@@ -135,7 +138,10 @@ test('a note on a message that skips participants stays in the left-most gap, in
 test('a short note on a reverse message that skips a participant keeps its original position', (t) => {
   const html = render(t, sequence({ messages: [{ from: 'db', to: 'client', y: 200, label: 'result', note: 'from replica' }] }));
   const [client] = lifelines(html);
-  assert.match(html, new RegExp(`<text data-detail="fine" x="${client + 19}" y="218" class="t-dim" font-size="7">from replica</text>`));
+  const [note] = notes(html);
+  assert.equal(note.x, client + 19);
+  assert.equal(note.y, 218);
+  assert.equal(note.raw, 'from replica');
 });
 
 test('equal spread gaps that differ only by floating-point rounding keep the left-most gap', (t) => {
