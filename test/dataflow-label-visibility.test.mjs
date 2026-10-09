@@ -127,3 +127,24 @@ test('an exhausted label search preserves the previous accepted placement instea
   assert.deepEqual(launch.mask, { x: 164.75, y: 136, width: 85.5, height: 27 });
   for (const index of anchors.keys()) assert.ok(!rectsOverlap(launch.mask, flow(html, `block${index}`).mask, -2));
 });
+
+test('unpinned reciprocal two-line labels remain readable beside their own routes', t => {
+  const diagram = JSON.parse(fs.readFileSync(new URL('./fixtures/dataflow-bidirectional-labels.json', import.meta.url)));
+  const html = render(t, diagram);
+  const svg = html.match(/<svg\b[^]*?<\/svg>/)[0];
+  const rendered = diagram.flows.map(relation => ({ id: relation.id, ...flow(html, relation.id) }));
+  for (const [index, relation] of diagram.flows.entries()) {
+    const { points, mask } = rendered[index];
+    assert.ok(svg.includes(`>${relation.label}</text>`), relation.label);
+    assert.ok(svg.includes(`>${relation.classification}</text>`), relation.classification);
+    assert.equal(mask.height, 27);
+    assert.ok(points.slice(1).some((end, segmentIndex) =>
+      segmentRectClearanceWithin({ start: points[segmentIndex], end }, mask, 36) <= 36),
+    JSON.stringify(rendered[index]));
+    for (const other of rendered) {
+      if (other.id === relation.id) continue;
+      assert.ok(clearRoute(mask, other.points), JSON.stringify({ label: rendered[index], other }));
+      assert.ok(!rectsOverlap(mask, other.mask), JSON.stringify({ label: rendered[index], other }));
+    }
+  }
+});
