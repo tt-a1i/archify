@@ -91,6 +91,34 @@ test('clean staging rejects a packaged notice that diverges from the repository 
   }
 });
 
+test('clean staging rejects untracked required release inputs before creating output', () => {
+  const root = repositoryFixture();
+  const destination = path.join(root, 'staged-skill');
+  try {
+    git(root, ['add', '.']);
+    for (const relative of [
+      'THIRD_PARTY_NOTICES.md',
+      'archify/LICENSE',
+      'archify/THIRD_PARTY_NOTICES.md',
+      'archify/skill-release.json',
+      'archify/scripts/check-update.mjs',
+      'archify/scripts/update-contract.mjs',
+      'archify/renderers/shared/generated-validators.mjs',
+    ]) {
+      git(root, ['rm', '--cached', '-f', relative]);
+      assert.throws(() => stageCleanSkill({ repoRoot: root, destination }), error => {
+        assert.ok(error.message.includes(relative), error.message);
+        assert.match(error.message, /not tracked by Git/);
+        return true;
+      });
+      assert.equal(fs.existsSync(destination), false, relative);
+      git(root, ['add', relative]);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('clean staging requires shared path runtimes only when packaged code imports them', () => {
   const root = repositoryFixture();
   const destination = path.join(root, 'staged-skill');

@@ -15,7 +15,8 @@ const skillsPackage = require.resolve('skills/package.json');
 const skillsCli = path.join(path.dirname(skillsPackage), 'bin', 'cli.mjs');
 const [major, minor] = process.versions.node.split('.').map(Number);
 // Archify supports Node 18+, while this external installer's own minimum is 22.20.
-// CI's Node 22 and 24 lanes exercise the real CLI; metadata tests run on all lanes.
+// Canonical Node 22 regression lanes exercise the real installer. Other Node
+// compatibility lanes run Archify's core smoke, not this installer matrix.
 const installerSkip = major > 22 || (major === 22 && minor >= 20)
   ? false : 'skills 1.7.0 requires Node >=22.20.0';
 

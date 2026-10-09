@@ -20,7 +20,7 @@ try {
   // ceiling when a full run explicitly enables browser cases.
   const parallelism = os.availableParallelism?.() ?? os.cpus().length;
   const defaultConcurrency = process.env.ARCHIFY_CHROME ? 2 : Math.max(1, Math.min(4, parallelism));
-  options = testRunnerOptions(process.argv.slice(2), { repoRoot, testFiles, allowRequireFiles: true, defaultConcurrency });
+  options = testRunnerOptions(process.argv.slice(2), { repoRoot, testFiles, allowRequireFiles: true, defaultConcurrency, allowShards: true });
 } catch (error) {
   console.error(error.message);
   process.exit(1);
@@ -29,7 +29,7 @@ if (options.list) {
   console.log(options.files.join('\n'));
   process.exit(0);
 }
-console.error(`Repository tests: ${options.files.length} files, concurrency ${options.concurrency}`);
+console.error(`Repository tests: ${options.files.length} files, concurrency ${options.concurrency}${options.shard ? `, shard ${options.shard.index}/${options.shard.count}` : ''}`);
 
 // Delivery commands check for updates; keep that state out of the user's cache.
 const updateCache = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'archify-test-update-')));

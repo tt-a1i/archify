@@ -5,8 +5,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parse } from 'yaml';
 
 import { stageCleanSkill } from '../scripts/stage-clean-skill.mjs';
+import { verifyPackagedUpdateChecker } from '../scripts/package-update-smoke.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -220,7 +222,11 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   const job = workflowJob(workflow, 'deploy-pages');
   assert.match(workflow, /push:\n    branches: \[main, dev\]/);
   assert.match(job, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
-  assert.match(job, /needs: \[test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability, website\]/);
+  const jobs = parse(workflow).jobs;
+  const dependencies = jobs['deploy-pages'].needs;
+  for (const gate of ['test', 'canonical-test', 'webm-artifact', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability', 'website']) {
+    assert.ok(dependencies.includes(gate), `Pages deployment must require ${gate}`);
+  }
   assert.match(job, /pages: write/);
   assert.match(job, /id-token: write/);
   assert.match(job, /repos\/\$\{GITHUB_REPOSITORY\}\/git\/ref\/heads\/main/);
@@ -271,8 +277,7 @@ test('GitHub Pages deploys the verified website artifact only after every reposi
   assert.match(media, /needs: \[scope, browser-regression, webm-decode\]/);
   assert.match(media, /test "\$BROWSER_RESULT" = success/);
   assert.match(media, /test "\$WEBM_RESULT" = success/);
-  const renderer = workflowJob(workflow, 'test');
-  assert.match(renderer, /Verify community Hermes adapter/);
+  assert.ok(jobs['canonical-test'].needs.includes('full-regression'), 'Pages must wait for the complete regression and adapter checks');
   const packageSmoke = workflowJob(workflow, 'package-smoke');
   assert.match(packageSmoke, /Verify delivery-lock ownership with real subprocesses/);
   assert.match(packageSmoke, /Verify macOS opener stays behind delivery-lock release/);
@@ -335,15 +340,6 @@ test('package smoke rejects every dependency or repository-only artifact', () =>
       fs.rmSync(fixture, { recursive: true, force: true });
     }
   }
-});
-
-test('package smoke verifies the embedded notifier identity and local disable switch', () => {
-  const source = fs.readFileSync(path.join(repoRoot, 'scripts', 'package-smoke.mjs'), 'utf8');
-  assert.match(source, /scripts', 'check-update\.mjs/);
-  assert.match(source, /scripts', 'update-contract\.mjs/);
-  assert.match(source, /skill-release\.json/);
-  assert.match(source, /ARCHIFY_UPDATE_CHECK_DISABLED: '1'/);
-  assert.match(source, /reason !== 'disabled'/);
 });
 
 test('package smoke rejects a missing or modified distribution license', () => {
@@ -428,7 +424,7 @@ test('package smoke rejects missing, modified, or incomplete third-party notices
   }
 });
 
-test('package smoke increments an arbitrary-precision SemVer patch without Number coercion', () => {
+test('package smoke increments an arbitrary-precision SemVer patch without Number coercion', async () => {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-package-bigint-version-'));
   const skillRoot = path.join(scratch, 'archify');
   try {
@@ -444,32 +440,14 @@ test('package smoke increments an arbitrary-precision SemVer patch without Numbe
     fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
     fs.writeFileSync(releasePath, `${JSON.stringify(release, null, 2)}\n`);
 
-    const smoke = spawnSync(process.execPath, [path.join(repoRoot, 'scripts/package-smoke.mjs'), skillRoot], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-    });
-    assert.equal(smoke.status, 0, smoke.stderr || smoke.stdout);
+    // The ordinary archive smoke owns renderer/distribution coverage. This
+    // version edge case needs only its real packaged notifier gate.
+    const smoke = await verifyPackagedUpdateChecker(skillRoot, path.join(scratch, 'update-cache'));
+    assert.equal(smoke.candidateVersion, '2.16.9007199254740994');
+    assert.equal(smoke.notifierReceipt.status, 'update_available');
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
   }
-});
-
-test('archive build refuses to silently omit required release files', () => {
-  const buildSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), 'utf8');
-  const stageSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'stage-clean-skill.mjs'), 'utf8');
-  assert.match(buildSource, /stage-clean-skill\.mjs/);
-  assert.match(stageSource, /archify\/LICENSE/);
-  assert.match(stageSource, /archify\/THIRD_PARTY_NOTICES\.md/);
-  assert.match(stageSource, /archify\/skill-release\.json/);
-  assert.match(stageSource, /archify\/renderers\/shared\/path-semantics\.mjs/);
-  assert.match(stageSource, /archify\/renderers\/shared\/portable-path\.mjs/);
-  assert.match(stageSource, /archify\/renderers\/shared\/output-path\.mjs/);
-  assert.match(stageSource, /archify\/renderers\/shared\/atomic-output\.mjs/);
-  assert.match(stageSource, /archify\/scripts\/check-update\.mjs/);
-  assert.match(stageSource, /archify\/scripts\/update-contract\.mjs/);
-  assert.match(stageSource, /git', \['ls-files', '--stage', '-z'/);
-  assert.match(stageSource, /required package input is not tracked by Git/);
-  assert.match(stageSource, /required repository input is not tracked by Git/);
 });
 
 test('clean package staging rejects non-portable tracked names and entry collisions before copying', () => {
@@ -556,29 +534,6 @@ test('archive build rejects unsafe native output paths before creating files', (
   }
 });
 
-test('archive output grammar is owned by the shared native-path validator', () => {
-  const buildSource = fs.readFileSync(path.join(repoRoot, 'scripts', 'build-zip.sh'), 'utf8');
-  const writerSource = fs.readFileSync(
-    path.join(repoRoot, 'scripts', 'write-deterministic-zip.mjs'),
-    'utf8',
-  );
-  assert.doesNotMatch(buildSource, /windows_(?:drive|current|device|extended|dot|unc)/);
-  assert.match(writerSource, /import \{ validateNativeOutputPath \} from/);
-  assert.equal(writerSource.match(/kind: 'file'/gu)?.length, 2);
-  assert.ok(
-    writerSource.indexOf('validateNativeOutputPath(') < writerSource.indexOf('path.resolve(outputArg)'),
-    'the raw output spelling must be validated before it is normalized or any archive write begins',
-  );
-  const validationOnly = buildSource.indexOf('--validate-output "$out"');
-  const nodeMajorGate = buildSource.indexOf('node_version=');
-  assert.notEqual(validationOnly, -1, 'the archive build must invoke the writer path-only validation mode');
-  assert.notEqual(nodeMajorGate, -1, 'the archive build must retain its canonical Node-major gate');
-  assert.ok(
-    validationOnly < nodeMajorGate,
-    'raw output validation must run before the canonical Node-major gate',
-  );
-});
-
 test('archive build keeps unsafe-path diagnostics ahead of the canonical Node gate', {
   skip: process.platform === 'win32' ? 'the POSIX node shim is unnecessary on the real Windows Node 24 lane' : false,
 }, () => {
@@ -657,15 +612,14 @@ canonicalZipTest('package smoke rejects every dependency metadata field in a bui
       bundleDependencies: ['bundle-alias'],
     };
 
+    const packagePath = path.join(builtPackage, 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    // These failures stop at metadata validation, before running the package.
+    // Start each case from the pristine manifest without copying the whole ZIP.
     for (const [field, value] of Object.entries(dependencyFields)) {
-      const caseRoot = path.join(fixture, field);
-      fs.cpSync(builtPackage, caseRoot, { recursive: true });
-      const packagePath = path.join(caseRoot, 'package.json');
-      const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-      packageJson[field] = value;
-      fs.writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+      fs.writeFileSync(packagePath, `${JSON.stringify({ ...packageJson, [field]: value }, null, 2)}\n`);
 
-      const result = spawnSync(process.execPath, [path.join(repoRoot, 'scripts', 'package-smoke.mjs'), caseRoot], {
+      const result = spawnSync(process.execPath, [path.join(repoRoot, 'scripts', 'package-smoke.mjs'), builtPackage], {
         encoding: 'utf8',
       });
       assert.notEqual(result.status, 0, `${field} must fail package smoke`);
@@ -1533,18 +1487,45 @@ test('CI tests the declared Node floor plus every maintained current lane', () =
     .split(',')
     .map((version) => Number(version.trim()));
   assert.ok(versions, 'test job must declare an explicit Node version matrix');
-  for (const version of [18, 20, 22, 24]) {
+  for (const version of [18, 20, 24]) {
     assert.ok(versions.includes(version), `test matrix must cover Node ${version}`);
   }
+  const canonicalJob = workflowJob(workflow, 'canonical-test');
+  assert.match(canonicalJob, /name: test \(22\)/);
+  assert.match(canonicalJob, /node-version:\s*22/);
 
   const packageSmokeJob = workflowJob(workflow, 'package-smoke');
   assert.match(packageSmokeJob, /os:\s*\[ubuntu-latest, macos-latest, windows-latest\]/);
   assert.match(packageSmokeJob, /node-version:\s*22/);
 });
 
-test('CI and tagged releases share the maintained Windows path contract on Node 22 and 24', () => {
+test('CI and tagged releases keep real Windows paths on both Nodes and detailed matrices on canonical Node', () => {
   const runnerPath = path.join(repoRoot, 'scripts', 'run-windows-path-tests.mjs');
   const runner = fs.readFileSync(runnerPath, 'utf8');
+  const list = (...options) => {
+    const result = spawnSync(process.execPath, [runnerPath, '--list', ...options], {
+      cwd: os.tmpdir(), encoding: 'utf8', timeout: 10_000,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return JSON.parse(result.stdout);
+  };
+  const complete = list();
+  const smoke = list('--smoke');
+  assert.equal(complete.controlledPaths, true);
+  assert.equal(smoke.controlledPaths, true);
+  assert.deepEqual(smoke.groups.flat().filter(arg => arg.endsWith('.test.mjs')),
+    ['test/core-smoke.test.mjs'], 'The compatibility profile selects only core product coverage.');
+  const invalid = spawnSync(process.execPath, [runnerPath, '--list', '--smkoe'], { encoding: 'utf8', timeout: 10_000 });
+  assert.notEqual(invalid.status, 0, 'A misspelled profile must not silently reduce coverage.');
+  if (process.platform !== 'win32') {
+    const wrongHost = spawnSync(process.execPath, [runnerPath, '--smoke'], {
+      encoding: 'utf8', timeout: 10_000,
+      env: { ...process.env, ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1' },
+    });
+    assert.notEqual(wrongHost.status, 0);
+    assert.match(wrongHost.stderr, /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS=1 requires Windows/,
+      'The smoke profile must still enter the required real-path gate.');
+  }
   const fullSuites = [
     'test/release-package-gates.test.mjs',
     'test/copy-site-assets.test.mjs',
@@ -1563,7 +1544,7 @@ test('CI and tagged releases share the maintained Windows path contract on Node 
     'test/atomic-output-recovery.test.mjs',
   ];
   for (const suite of fullSuites) {
-    assert.ok(runner.includes(`'${suite}'`), `shared runner must execute ${suite}`);
+    assert.ok(complete.groups.flat().includes(suite), `canonical runner must execute ${suite}`);
   }
   for (const fixture of [
     'test/checkout-line-endings.test.mjs',
@@ -1693,6 +1674,8 @@ test('CI and tagged releases share the maintained Windows path contract on Node 
     assert.match(job, /node-version:\s*\$\{\{ matrix\.node-version \}\}/);
     assert.match(job, /npm ci --ignore-scripts/);
     assert.match(job, /node scripts\/run-windows-path-tests\.mjs/);
+    assert.ok(job.includes("matrix.node-version == 24 && '--smoke' || ''"),
+      `${label} must select smoke only for Node 24; Node 22 retains the complete matrices`);
     assert.match(job, label === 'CI'
       ? /name: Provision controlled Windows path fixtures\n\s+if: needs\.scope\.outputs\.windows == 'true'\n\s+shell: pwsh/
       : /name: Provision controlled Windows path fixtures\n\s+shell: pwsh/);

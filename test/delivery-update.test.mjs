@@ -84,21 +84,33 @@ test('service deadline kills a blocked child and leaves no later result', async 
   assert.deepEqual(fs.readdirSync(root).sort(), ['blocker.mjs', 'skill-release.json']);
 });
 
-test('a slow network records its failed check before the deadline and backs off', async (t) => {
+test('a network timeout persists failure backoff for subsequent checks and deliveries', async (t) => {
   const testFixture = fixture(t);
   const calls = path.join(testFixture.root, 'fetch-calls');
+  const fetchImpl = (_url, { signal }) => {
+    fs.appendFileSync(calls, 'x');
+    return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+  };
+  // Exercise the real network abort and persistence without assuming that a
+  // child can start, abort its request and publish under a 600ms CPU/I/O budget.
+  // The separate blocked-child test retains the service's hard deadline.
+  const first = await checkForUpdate({ ...testFixture, fetchImpl, timeoutMs: 25 });
+  assert.equal(first.reason, 'check-failed');
+  const second = await checkForUpdate({ ...testFixture, fetchImpl, timeoutMs: 25 });
+  assert.equal(second.status, 'silent');
+  assert.equal(second.reason, 'cache-valid');
+  assert.equal(fs.readFileSync(calls, 'utf8'), 'x');
   const preload = path.join(testFixture.root, 'slow-fetch.mjs');
   fs.writeFileSync(preload, `import fs from 'node:fs';
-globalThis.fetch = (_url, { signal }) => {
+globalThis.fetch = () => {
   fs.appendFileSync(${JSON.stringify(calls)}, 'x');
-  return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+  throw new Error('a recorded failure must back off before another delivery fetch');
 };
 `);
   const slowEnv = { ...env(testFixture), NODE_OPTIONS: `--import=${pathToFileURL(preload).href}` };
-  const first = await startDeliveryUpdateCheck({ env: slowEnv, deadlineMs: 600 });
-  assert.equal(first.reason, 'check-failed');
-  const second = await startDeliveryUpdateCheck({ env: slowEnv, deadlineMs: 600 });
-  assert.equal(second.status, 'unavailable');
+  const delivered = await startDeliveryUpdateCheck({ env: slowEnv });
+  assert.equal(delivered.status, 'unavailable');
+  assert.equal(delivered.reason, 'cache-valid');
   assert.equal(fs.readFileSync(calls, 'utf8'), 'x');
 });
 

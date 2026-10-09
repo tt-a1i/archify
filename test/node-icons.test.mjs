@@ -32,8 +32,10 @@ for (const [mode, [example, collection, index = 0]] of Object.entries(cases)) {
       const sigil = /<g aria-hidden="true" data-semantic-sigil="[^"]+"[^>]*>[\s\S]*?<\/g>/;
       const old = baseline.match(sigil)?.[0];
       assert.ok(old);
-      const icons = JSON.parse(fs.readFileSync(path.join(root, 'schemas/common.schema.json'))).$defs.nodeIcon.enum;
-      for (const icon of icons) {
+      // geometry.test.mjs covers the full shared icon catalog. Every renderer
+      // still proves override/hiding, unchanged non-icon output, brand
+      // coexistence and schema rejection through its real entrypoint.
+      for (const icon of ['calendar', 'none']) {
         spec[collection][index].icon = icon;
         const html = render();
         if (icon === 'none') {

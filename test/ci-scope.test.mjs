@@ -158,7 +158,7 @@ test('real Git comparison retains rename source ownership and detects added test
 });
 
 test('required jobs fail when classification fails or returns an unknown scope', () => {
-  for (const name of ['test', 'browser-regression', 'webm-decode', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability']) {
+  for (const name of ['test', 'canonical-test', 'browser-regression', 'webm-decode', 'zip-freshness', 'published-update-manifest', 'package-smoke', 'windows-test-portability']) {
     const step = workflow.jobs[name].steps.find(step => step.name === 'Require successful scope checks');
     assert.ok(step, name);
     for (const [result, scope, status] of [['success', 'core', 0], ['success', 'full', 0], ['failure', 'core', 1], ['success', '', 1], ['success', 'unknown', 1]]) {
@@ -169,4 +169,20 @@ test('required jobs fail when classification fails or returns an unknown scope',
   const fetch = workflow.jobs.scope.steps.find(step => step.name === 'Fetch PR comparison base');
   assert.ok(fetch.run.includes('--depth=1') && fetch.run.includes('--no-tags'));
   assert.equal(fetch.if, "github.event_name == 'pull_request'");
+});
+
+test('canonical Node cannot pass full CI with failed, cancelled or skipped regression shards', () => {
+  const step = workflow.jobs['canonical-test'].steps.find(step => step.name === 'Require complete regression shards');
+  assert.equal(step.if, undefined, 'every canonical check must validate its complete regression dependency');
+  assert.equal(step.env.REGRESSION_RESULT, '${{ needs.full-regression.result }}');
+  assert.equal(step.env.CI_SCOPE, '${{ needs.scope.outputs.scope }}');
+  for (const scope of ['full', 'core', 'docs', '', 'unknown']) {
+    for (const result of ['success', 'failure', 'cancelled', 'skipped', '']) {
+      const expected = scope === 'full' ? result === 'success' : ['core', 'docs'].includes(scope) && result === 'skipped';
+      const run = spawnSync('bash', ['-e', '-c', step.run], {
+        env: { ...process.env, CI_SCOPE: scope, REGRESSION_RESULT: result },
+      });
+      assert.equal(run.status, expected ? 0 : 1, `${scope}/${result}`);
+    }
+  }
 });

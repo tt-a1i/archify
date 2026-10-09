@@ -1,60 +1,37 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
 import { startPreview } from '../archify/bin/preview.mjs';
-import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 import { verifyRepositoryEvidence } from '../archify/renderers/shared/repository-evidence.mjs';
+import { skillRoot, cli, git, fixture, run, evidencePayload } from './helpers/repository-evidence-fixture.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const skillRoot = path.resolve(here, '..', 'archify');
-const cli = path.join(skillRoot, 'bin', 'archify.mjs');
-
-function git(repo, ...args) {
-  return execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8' }).trim();
-}
-
-function fixture() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-evidence-repo-'));
-  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'src', 'router.js'), 'export function route(input) {\n  return input.kind;\n}\n');
-  fs.writeFileSync(path.join(root, 'src', 'store.js'), 'export const store = new Map();\n');
-  git(root, 'init');
-  git(root, 'config', 'user.name', 'Archify Tests');
-  git(root, 'config', 'user.email', 'archify@example.test');
-  git(root, 'remote', 'add', 'origin', 'git@github.com:example/evidence-repo.git');
-  git(root, 'add', '.');
-  git(root, 'commit', '-m', 'fixture');
-  const revision = git(root, 'rev-parse', 'HEAD');
-
-  const diagram = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json'), 'utf8'));
-  diagram.meta.repository = {
-    url: 'https://github.com/example/evidence-repo',
-    revision,
-  };
-  diagram.components[0].sources = [
-    { path: 'src/router.js', line: 1, end_line: 3, label: 'Request router' },
-    { path: 'src/store.js', line: 1 },
-  ];
-  const input = path.join(root, 'diagram.architecture.json');
-  fs.writeFileSync(input, JSON.stringify(diagram, null, 2));
-  return { root, revision, diagram, input };
-}
-
-function run(args) {
-  return spawnSync(process.execPath, [cli, ...args], {
-    cwd: skillRoot,
-    encoding: 'utf8',
-  });
-}
-
-function evidencePayload(html) {
-  const match = html.match(/<script id="archify-source-evidence-data" type="application\/json">([\s\S]*?)<\/script>/);
-  assert.ok(match, 'verified evidence payload missing');
-  return JSON.parse(match[1]);
+// Address variants exercise the same real Git verifier. Keep representative
+// CLI paths to prove that the verified payload reaches HTML and delivery receipts,
+// instead of rendering the same diagram again for every spelling of its origin.
+function verifyRemoteEvidence(data, output, { cli: throughCli = false, command = 'deliver' } = {}) {
+  if (!throughCli) {
+    const evidence = verifyRepositoryEvidence('architecture', data.diagram, data.root);
+    assert.equal(evidence.verified, true);
+    return evidence;
+  }
+  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
+  const args = [command, 'architecture', data.input, output, '--repo-root', data.root];
+  if (command === 'deliver') args.push('--json');
+  const result = run(args);
+  assert.equal(result.status, 0, `${data.diagram.meta.repository.url}: ${result.stderr || result.stdout}`);
+  const html = fs.readFileSync(output, 'utf8');
+  const evidence = evidencePayload(html);
+  assert.equal(evidence.verified, true);
+  assert.doesNotMatch(html, /SYNTHETIC_TOKEN|not-a-real-token/);
+  if (command === 'deliver') {
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.evidence.verified, true);
+    assert.equal(receipt.evidence.linkMode, evidence.repository.linkMode);
+  }
+  return evidence;
 }
 
 test('evidence prefetch preserves the first source diagnostic in JSON output', (t) => {
@@ -194,28 +171,28 @@ test('repository root fails closed when physical identity is indeterminate', (t)
   );
 });
 
-test('Gitee evidence generates provider-specific revision and line links', () => {
+test('Gitee evidence generates provider-specific revision and line links', (t) => {
   const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
   data.diagram.meta.repository.url = 'https://gitee.com/example/evidence-repo';
   fs.writeFileSync(data.input, JSON.stringify(data.diagram));
   const output = path.join(data.root, 'gitee.html');
-  for (const remote of [
+  for (const [index, remote] of [
     'https://gitee.com/example/evidence-repo.git/',
     'git@gitee.com:example/evidence-repo.git',
     'ssh://git@gitee.com/example/evidence-repo.git',
-  ]) {
+  ].entries()) {
     git(data.root, 'remote', 'set-url', 'origin', remote);
-    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
-    assert.equal(result.status, 0, result.stderr || result.stdout);
-    const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    const evidence = verifyRemoteEvidence(data, output, { cli: index === 0 });
     assert.equal(evidence.repository.href, `https://gitee.com/example/evidence-repo/tree/${data.revision}`);
     assert.equal(evidence.nodes.users[0].href, `https://gitee.com/example/evidence-repo/blob/${data.revision}/src/router.js#L1-3`);
     assert.equal(evidence.nodes.users[1].href, `https://gitee.com/example/evidence-repo/blob/${data.revision}/src/store.js#L1`);
   }
 });
 
-test('GitLab evidence links nested groups and accepts SSH, HTTPS, suffix and case variants', () => {
+test('GitLab evidence links nested groups and accepts SSH, HTTPS, suffix and case variants', (t) => {
   const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(data.root, 'docs'));
   fs.writeFileSync(path.join(data.root, 'docs', 'guide.md'), '# Guide\n\nRoute requests.\n');
   git(data.root, 'add', '.');
@@ -227,18 +204,15 @@ test('GitLab evidence links nested groups and accepts SSH, HTTPS, suffix and cas
   fs.writeFileSync(data.input, JSON.stringify(data.diagram));
   const output = path.join(data.root, 'gitlab.html');
   const base = 'https://gitlab.com/example/platform/evidence-repo';
-  for (const remote of [
+  for (const [index, remote] of [
     'https://gitlab.com/example/platform/evidence-repo.git/',
     'https://oauth2:not-a-real-token@gitlab.com/example/platform/evidence-repo.git',
     'git@gitlab.com:example/platform/evidence-repo.git',
     'ssh://git@gitlab.com/example/platform/evidence-repo',
     'git@gitlab.com:Example/Platform/evidence-repo.git',
-  ]) {
+  ].entries()) {
     git(data.root, 'remote', 'set-url', 'origin', remote);
-    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
-    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
-    assert.equal(JSON.parse(result.stdout).evidence.linkMode, undefined);
-    const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    const evidence = verifyRemoteEvidence(data, output, { cli: index === 1 || index === 2 });
     assert.equal(evidence.repository.href, `${base}/-/tree/${revision}`);
     assert.deepEqual(evidence.nodes.users.map((source) => source.href), [
       `${base}/-/blob/${revision}/src/router.js#L1-3`,
@@ -251,17 +225,16 @@ test('GitLab evidence links nested groups and accepts SSH, HTTPS, suffix and cas
   }
 });
 
-test('self-managed GitLab links require an explicit provider and keep endpoint identity', () => {
+test('self-managed GitLab links require an explicit provider and keep endpoint identity', (t) => {
   const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
   const url = 'https://git.example.internal/Platform/Services/evidence-repo';
   const output = path.join(data.root, 'self-managed.html');
-  for (const remote of [url, 'git@git.example.internal:Platform/Services/evidence-repo.git']) {
+  for (const [index, remote] of [url, 'git@git.example.internal:Platform/Services/evidence-repo.git'].entries()) {
     data.diagram.meta.repository = { url, revision: data.revision, provider: 'gitlab' };
     fs.writeFileSync(data.input, JSON.stringify(data.diagram));
     git(data.root, 'remote', 'set-url', 'origin', remote);
-    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
-    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
-    const evidence = evidencePayload(fs.readFileSync(output, 'utf8'));
+    const evidence = verifyRemoteEvidence(data, output, { cli: index === 0 });
     assert.equal(evidence.repository.href, `${url}/-/tree/${data.revision}`);
     assert.equal(evidence.nodes.users[0].href, `${url}/-/blob/${data.revision}/src/router.js#L1-3`);
   }
@@ -307,10 +280,11 @@ test('local-only evidence verifies HTTP self-hosted origins without generating l
   assert.ok(evidence.nodes.users.every((source) => !Object.hasOwn(source, 'href')));
 });
 
-test('local-only supports nested HTTPS and Git SSH identities with bounded port equivalence', () => {
+test('local-only supports nested HTTPS and Git SSH identities with bounded port equivalence', (t) => {
   const data = fixture();
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
   const output = path.join(data.root, 'portable.html');
-  for (const [url, remote] of [
+  for (const [index, [url, remote]] of [
     ['https://git.internal/Platform/Services/repo.git', 'https://git.internal:443/Platform/Services/repo.git'],
     ['ssh://git@git.internal/Platform/Services/repo', 'ssh://git@git.internal:22/Platform/Services/repo'],
     ['ssh://git@git.internal:2222/Platform/repo.git', 'ssh://git@git.internal:2222/Platform/repo.git'],
@@ -320,15 +294,13 @@ test('local-only supports nested HTTPS and Git SSH identities with bounded port 
     ['https://git.internal/Platform/repo.git', 'https://user:SYNTHETIC_TOKEN@git.internal/Platform/repo.git'],
     ['git@git.internal:Platform/repo%41', 'git@git.internal:Platform/repo%41'],
     ['ssh://git@git.internal/Platform/repo%41', 'ssh://git@git.internal/Platform/repoA'],
-  ]) {
+  ].entries()) {
     data.diagram.meta.repository = { url, revision: data.revision, link_mode: 'local-only' };
     fs.writeFileSync(data.input, JSON.stringify(data.diagram));
     git(data.root, 'remote', 'set-url', 'origin', remote);
-    const result = run(['render', 'architecture', data.input, output, '--repo-root', data.root]);
-    assert.equal(result.status, 0, `${url}: ${result.stderr}`);
-    const html = fs.readFileSync(output, 'utf8');
-    assert.doesNotMatch(html, /SYNTHETIC_TOKEN/);
-    assert.equal(evidencePayload(html).repository.href, undefined);
+    const evidence = verifyRemoteEvidence(data, output, { cli: index === 1 || index === 5, command: 'render' });
+    assert.doesNotMatch(JSON.stringify(evidence), /SYNTHETIC_TOKEN/);
+    assert.equal(evidence.repository.href, undefined);
   }
 });
 
@@ -499,219 +471,21 @@ test('local-only preview and compare publish only revision-verified evidence', {
   } finally { await preview.stop(); }
 });
 
-test('browser renders local-only sources as searchable text and web sources as links', {
-  skip: process.env.ARCHIFY_CHROME ? false : 'Set ARCHIFY_CHROME to run evidence browser checks.',
-  timeout: 60000,
-}, async () => {
-  const data = fixture();
-  const browser = new ChromeVisualBrowser(findChrome());
-  try {
-    for (const mode of ['github', 'gitee', 'gitlab', 'local-only']) {
-      const local = mode === 'local-only';
-      const url = local ? 'http://git.internal/Team/repo' : `https://${mode}.com/example/evidence-repo`;
-      data.diagram.meta.repository = { url, revision: data.revision, ...(local ? { link_mode: mode } : {}) };
-      git(data.root, 'remote', 'set-url', 'origin', url);
-      fs.writeFileSync(data.input, JSON.stringify(data.diagram));
-      const artifactPath = path.join(data.root, `${mode}.html`);
-      const result = run(['deliver', 'architecture', data.input, artifactPath, '--repo-root', data.root, '--json']);
-      assert.equal(result.status, 0, result.stderr || result.stdout);
-      for (const theme of ['light', 'dark']) {
-        await browser.inspect({ artifactPath, width: 1440, height: 900, theme });
-        const sessionId = await browser.sessionPromise;
-        const response = await browser.cdp.send('Runtime.evaluate', {
-          expression: `(() => {
-            document.querySelector('[data-node-id="users"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            const panel = document.getElementById('focus-evidence');
-            const rows = [...panel.querySelectorAll('.semantic-passport-source')];
-            const input = document.getElementById('node-finder-input');
-            input.value = 'src/router.js';
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            return {
-              visible: !panel.hidden,
-              links: rows.filter(row => row.tagName === 'A').map(row => row.getAttribute('href')),
-              paths: rows.map(row => row.querySelector('small').textContent),
-              locations: rows.map(row => row.querySelector('code').textContent),
-              repositoryHref: document.getElementById('focus-repository').getAttribute('href'),
-              scope: panel.title,
-              badges: document.querySelectorAll('[data-source-evidence-beacon]').length,
-              sourceCount: document.querySelector('[data-node-id="users"]').getAttribute('data-source-evidence-count'),
-              sourceAria: document.querySelector('[data-node-id="users"]').getAttribute('aria-label'),
-              invalidLinks: [...panel.querySelectorAll('a[href]')].some(a => /undefined|javascript:/.test(a.getAttribute('href'))),
-              search: document.getElementById('node-finder-results').textContent
-            };
-          })()`, returnByValue: true,
-        }, sessionId);
-        assert.equal(response.exceptionDetails, undefined);
-        const observed = response.result.value;
-        assert.equal(observed.visible, true);
-        assert.equal(observed.badges, 0);
-        assert.equal(observed.sourceCount, '2');
-        assert.match(observed.sourceAria, /2 verified source references/);
-        assert.equal(observed.invalidLinks, false);
-        assert.deepEqual(observed.paths, ['src/router.js', 'src/store.js']);
-        assert.match(observed.scope, /local Git/);
-        assert.match(observed.search, /Users/);
-        assert.equal(observed.links.length, local ? 0 : 2);
-        assert.equal(observed.locations[0], local ? 'L1–3' : 'L1–3 ↗');
-        assert.equal(observed.repositoryHref, local ? null : `${url}/${mode === 'gitlab' ? '-/' : ''}tree/${data.revision}`);
-      }
-    }
-  } finally { await browser.close(); }
-});
-
-test('browser announces verified source counts without visual marks and restores canonical export labels', {
-  skip: process.env.ARCHIFY_CHROME ? false : 'Set ARCHIFY_CHROME to run evidence browser checks.',
-  timeout: 30000,
-}, async (t) => {
+test('repository evidence accepts canonical HTTPS and common SSH remotes', (t) => {
   const data = fixture();
   t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
-  data.diagram.meta.locale = 'zh-CN';
-  fs.writeFileSync(data.input, JSON.stringify(data.diagram));
-  const artifactPath = path.join(data.root, 'source-aria.html');
-  const delivered = run(['deliver', 'architecture', data.input, artifactPath, '--repo-root', data.root, '--json']);
-  assert.equal(delivered.status, 0, delivered.stderr || delivered.stdout);
-  const html = fs.readFileSync(artifactPath, 'utf8');
-  const initialization = html.match(/Archify\.sourceEvidence = \(function \(\) \{[\s\S]*?\}\)\(\);/)?.[0];
-  assert.ok(initialization);
-  const browser = new ChromeVisualBrowser(findChrome());
-  try {
-    await browser.inspect({ artifactPath, width: 1440, height: 900, theme: 'light' });
-    const sessionId = await browser.sessionPromise;
-    async function accessibleNodeName() {
-      const remote = await browser.cdp.send('Runtime.evaluate', {
-        expression: `document.querySelector('[data-node-id="users"]')`,
-      }, sessionId);
-      const tree = await browser.cdp.send('Accessibility.getPartialAXTree', {
-        objectId: remote.result.objectId, fetchRelatives: false,
-      }, sessionId);
-      const name = tree.nodes.find(node => !node.ignored)?.name?.value;
-      assert.equal(typeof name, 'string', JSON.stringify(tree));
-      return name;
-    }
-    assert.match(await accessibleNodeName(), /2 个已验证来源引用/);
-    const response = await browser.cdp.send('Runtime.evaluate', {
-      expression: `(async () => {
-        const reinitialize = () => { ${initialization} };
-        const svg = document.querySelector('.diagram-container > svg');
-        const node = svg.querySelector('[data-node-id="users"]');
-        const element = document.getElementById('archify-source-evidence-data');
-        const payload = JSON.parse(element.textContent);
-        const originalSources = payload.nodes.users.slice();
-        const authoredLabel = node.getAttribute('data-source-evidence-original-label');
-        const geometry = [...svg.querySelectorAll('rect,path,line,polyline,text')].map(el => el.outerHTML).join('');
-        const initial = node.getAttribute('aria-label');
-        reinitialize();
-        const repeated = node.getAttribute('aria-label');
-        const noVisualMarks = !svg.querySelector('[data-source-evidence-beacon], .source-evidence-beacon');
-        const geometryPreserved = geometry === [...svg.querySelectorAll('rect,path,line,polyline,text')].map(el => el.outerHTML).join('');
-        Archify.focus.set('users', { toggle: false });
-        const passportLinks = document.querySelectorAll('#focus-evidence a[href]').length;
-        const before = svg.outerHTML;
-        const originalCreate = URL.createObjectURL;
-        let exportedBlob;
-        URL.createObjectURL = function(blob) {
-          if (blob.type.startsWith('image/svg+xml')) exportedBlob = blob;
-          return originalCreate.call(URL, blob);
-        };
-        let exportPreservesLive;
-        try {
-          const pending = Archify.exportMenu.run('svg');
-          exportPreservesLive = before === svg.outerHTML;
-          await pending;
-        } finally { URL.createObjectURL = originalCreate; }
-        const exported = new DOMParser().parseFromString(await exportedBlob.text(), 'image/svg+xml');
-        const exportedLabel = exported.querySelector('[data-node-id="users"]').getAttribute('aria-label');
-        const exportClean = !exported.querySelector('[data-source-evidence-count], [data-source-evidence-original-label], [data-reader-legend-corner], [data-source-evidence-beacon]');
-        // The download anchor can clear Focus through its existing outside-click
-        // behavior. Reopen via the public interface to verify sources survive.
-        Archify.focus.set('users', { toggle: false });
-        const passportLinksAfter = document.querySelectorAll('#focus-evidence a[href]').length;
-        payload.nodes.users = [];
-        element.textContent = JSON.stringify(payload);
-        reinitialize();
-        const zeroRestored = node.getAttribute('aria-label') === authoredLabel && !node.hasAttribute('data-source-evidence-count');
-        const results = [];
-        for (const label of [null, '', 'Authored focus label']) {
-          node.removeAttribute('data-source-evidence-count');
-          node.removeAttribute('data-source-evidence-original-label');
-          if (label === null) node.removeAttribute('aria-label'); else node.setAttribute('aria-label', label);
-          payload.nodes.users = [originalSources[0]];
-          payload.verified = true;
-          element.textContent = JSON.stringify(payload);
-          reinitialize();
-          const once = node.getAttribute('aria-label');
-          reinitialize();
-          const twice = node.getAttribute('aria-label');
-          let labelBlob;
-          URL.createObjectURL = function(blob) {
-            if (blob.type.startsWith('image/svg+xml')) labelBlob = blob;
-            return originalCreate.call(URL, blob);
-          };
-          try { await Archify.exportMenu.run('svg'); }
-          finally { URL.createObjectURL = originalCreate; }
-          const exportedNode = new DOMParser().parseFromString(await labelBlob.text(), 'image/svg+xml').querySelector('[data-node-id="users"]');
-          payload.nodes.users = [];
-          element.textContent = JSON.stringify(payload);
-          reinitialize();
-          const zeroRestored = node.getAttribute('aria-label');
-          payload.nodes.users = [originalSources[0]];
-          element.textContent = JSON.stringify(payload);
-          reinitialize();
-          payload.verified = false;
-          element.textContent = JSON.stringify(payload);
-          reinitialize();
-          results.push({ once, twice, zeroRestored, exportedLabel: exportedNode.getAttribute('aria-label'), restored: node.getAttribute('aria-label'), count: node.getAttribute('data-source-evidence-count') });
-        }
-        return { initial, repeated, noVisualMarks, geometryPreserved, authoredLabel, exportedLabel,
-          exportClean, exportPreservesLive, passportLinks, passportLinksAfter,
-          zeroRestored, results };
-      })()`, returnByValue: true, awaitPromise: true,
-    }, sessionId);
-    assert.equal(response.exceptionDetails, undefined);
-    const observed = response.result.value;
-    assert.match(observed.initial, /2 个已验证来源引用/);
-    assert.equal(observed.repeated, observed.initial);
-    for (const key of ['noVisualMarks', 'geometryPreserved', 'exportClean', 'exportPreservesLive', 'zeroRestored']) assert.equal(observed[key], true, key);
-    assert.equal(observed.exportedLabel, observed.authoredLabel);
-    assert.equal(observed.passportLinks, 3);
-    assert.equal(observed.passportLinksAfter, 3);
-    for (const [index, result] of observed.results.entries()) {
-      assert.match(result.once, /1 个已验证来源引用/);
-      assert.equal(result.twice, result.once);
-      assert.equal(result.restored, [null, '', 'Authored focus label'][index]);
-      assert.equal(result.zeroRestored, [null, '', 'Authored focus label'][index]);
-      assert.equal(result.exportedLabel, [null, '', 'Authored focus label'][index]);
-      assert.equal(result.count, null);
-    }
-    const restored = await browser.cdp.send('Runtime.evaluate', {
-      expression: `(() => {
-        const element = document.getElementById('archify-source-evidence-data');
-        const payload = JSON.parse(element.textContent);
-        payload.verified = true;
-        element.textContent = JSON.stringify(payload);
-        ${initialization}
-        return document.querySelector('[data-node-id="users"]').getAttribute('aria-labelledby');
-      })()`, returnByValue: true,
-    }, sessionId);
-    assert.equal(restored.exceptionDetails, undefined);
-    assert.equal(restored.result.value, null, 'node has no competing aria-labelledby');
-    assert.equal(await accessibleNodeName(), 'Authored focus label, 1 个已验证来源引用');
-  } finally { await browser.close(); }
-});
-
-test('repository evidence accepts canonical HTTPS and common SSH remotes', () => {
-  const data = fixture();
   const output = path.join(data.root, 'remote-form.html');
-  for (const remote of [
+  for (const [index, remote] of [
     'https://github.com/example/evidence-repo.git/',
     'https://x-access-token:not-a-real-token@github.com/example/evidence-repo.git',
     'https://oauth2:not-a-real-token@github.com/example/evidence-repo',
     'git@github.com:example/evidence-repo.git',
     'ssh://git@github.com/example/evidence-repo.git',
-  ]) {
+  ].entries()) {
     git(data.root, 'remote', 'set-url', 'origin', remote);
-    const result = run(['deliver', 'architecture', data.input, output, '--repo-root', data.root, '--json']);
-    assert.equal(result.status, 0, `${remote}: ${result.stderr || result.stdout}`);
+    const evidence = verifyRemoteEvidence(data, output, { cli: index === 1 || index === 3 });
+    assert.equal(evidence.repository.href, `https://github.com/example/evidence-repo/tree/${data.revision}`);
+    assert.equal(evidence.nodes.users[0].href, `https://github.com/example/evidence-repo/blob/${data.revision}/src/router.js#L1-L3`);
   }
 });
 

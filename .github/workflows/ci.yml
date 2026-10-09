@@ -61,13 +61,43 @@ jobs:
         if: steps.classify.outputs.scope == 'docs'
         run: node --test test/readme-showcase.test.mjs
 
+  full-regression:
+    needs: scope
+    if: needs.scope.outputs.scope == 'full'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            archify/package-lock.json
+      - name: Install regression dependencies
+        run: npm ci && npm --prefix archify ci
+      # Reuse a shard's installed runtime instead of bootstrapping after all
+      # shards finish. These checks still run exactly once in complete CI.
+      - name: Generated outputs and representative goldens
+        if: matrix.shard == 2
+        run: npm run test:generated
+      - name: Verify community Hermes adapter
+        if: matrix.shard == 2
+        run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
+      - name: Run a complete regression shard
+        run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
+
   test:
     needs: scope
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22, 24]
+        node-version: [18, 20, 24]
     steps:
       # Keep every required matrix check present; fail closed if classification/checks fail.
       - name: Require successful scope checks
@@ -91,27 +121,60 @@ jobs:
       - name: Install renderer dependencies
         if: needs.scope.outputs.scope != 'docs'
         run: npm ci && npm --prefix archify ci
-      - name: Complete regression suite on canonical Node
-        if: needs.scope.outputs.scope == 'full' && matrix.node-version == 22
-        run: npm run test:full
-      - name: Core public CLI contracts
-        if: needs.scope.outputs.scope == 'core' && matrix.node-version == 22
-        run: npm test
       - name: Supported Node runtime compatibility
-        if: needs.scope.outputs.scope != 'docs' && matrix.node-version != 22
+        if: needs.scope.outputs.scope != 'docs'
         run: npm run test:compat
+
+  canonical-test:
+    name: test (22)
+    needs: [scope, full-regression]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      # Keep every required matrix check present; fail closed if classification/checks fail.
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|core|full) ;; *) exit 1 ;; esac
+      - name: Require complete regression shards
+        env:
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+          REGRESSION_RESULT: ${{ needs.full-regression.result }}
+        shell: bash
+        run: |
+          case "$CI_SCOPE:$REGRESSION_RESULT" in
+            full:success|core:skipped|docs:skipped) ;;
+            *) exit 1 ;;
+          esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.scope == 'core'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.scope == 'core'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            archify/package-lock.json
+      - name: Install renderer dependencies
+        if: needs.scope.outputs.scope == 'core'
+        run: npm ci && npm --prefix archify ci
+      - name: Core public CLI contracts
+        if: needs.scope.outputs.scope == 'core'
+        run: npm test
       - name: Generated outputs and representative goldens
-        if: needs.scope.outputs.scope != 'full' && needs.scope.outputs.generated == 'true' && matrix.node-version == 22
+        if: needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'
         run: npm run test:generated
       - name: Changed tests and owned regression suites
-        if: needs.scope.outputs.scope == 'core' && matrix.node-version == 22
+        if: needs.scope.outputs.scope == 'core'
         run: npm run test:affected
         env:
           CI_TEST_OWNERS: ${{ needs.scope.outputs.owners }}
           CI_CHANGED_TESTS: ${{ needs.scope.outputs.changedTests }}
-      - name: Verify community Hermes adapter
-        if: needs.scope.outputs.scope == 'full' && matrix.node-version == 22
-        run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
 
   browser-regression:
     needs: scope
@@ -454,7 +517,7 @@ jobs:
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
       - name: Verify maintained Windows path contracts
         if: needs.scope.outputs.windows == 'true'
-        run: node scripts/run-windows-path-tests.mjs
+        run: node scripts/run-windows-path-tests.mjs ${{ matrix.node-version == 24 && '--smoke' || '' }}
         env:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
           ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
@@ -465,7 +528,7 @@ jobs:
 
   deploy-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability, website]
+    needs: [test, canonical-test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability, website]
     runs-on: ubuntu-latest
     concurrency:
       group: github-pages
@@ -514,7 +577,7 @@ jobs:
   # Disable Git-connected automatic deployments so they cannot bypass these gates.
   deploy-cloudflare:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CLOUDFLARE_PAGES_PROJECT != ''
-    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability, website]
+    needs: [test, canonical-test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability, website]
     runs-on: ubuntu-latest
     concurrency:
       group: cloudflare-pages

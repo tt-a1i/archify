@@ -7,6 +7,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   rectsOverlap,
   segmentIntersectsRect,
@@ -951,6 +952,23 @@ test('unknown semantic sigils fail closed to a neutral role stamp', () => {
   assert.match(sigil, /data-semantic-sigil="neutral"/);
   assert.match(sigil, /class="semantic-sigil s-external"/);
   assert.match(sigil, /scale\(1\)/);
+});
+
+test('every authored icon has SVG geometry while keeping its node tone and placement', () => {
+  const icons = JSON.parse(readFileSync(new URL('../archify/schemas/common.schema.json', import.meta.url), 'utf8')).$defs.nodeIcon.enum;
+  for (const icon of icons) {
+    const svg = renderSemanticSigil('frontend', { x: 12, y: 18, icon });
+    if (icon === 'none') {
+      assert.equal(svg, '', 'hidden icons must not reserve SVG content');
+    } else {
+      assert.match(svg, new RegExp(`data-semantic-sigil="${icon}"`), icon);
+      assert.match(svg, /<(?:path|circle|ellipse|rect)\b/, `${icon}: accepted icons need visible geometry`);
+      assert.match(svg, /aria-hidden="true"/);
+      assert.match(svg, /class="semantic-sigil s-frontend"/, `${icon}: icon override must not change the node's tone`);
+      assert.match(svg, /transform="translate\(12 18\) scale\(0\.6875\)"/);
+      assert.doesNotMatch(svg, /#[0-9a-f]{3,8}|rgba?\(/i, `${icon}: colors must follow the theme`);
+    }
+  }
 });
 
 test('suggestLabelObstacleFix includes rects and labelAt/labelDy hints', () => {

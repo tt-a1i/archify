@@ -32,23 +32,36 @@ test('browser gate rejects an unavailable explicit browser instead of skipping',
 function interceptedRun(t, outcome, args = []) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-browser-gate-'));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const userCache = path.join(directory, 'user-cache');
+  fs.mkdirSync(userCache);
+  fs.writeFileSync(path.join(userCache, 'preserved'), 'existing cache');
   const preload = path.join(directory, 'capture-runner.cjs');
   fs.writeFileSync(preload, `
 const childProcess = require('node:child_process');
 childProcess.spawnSync = (command, args, options) => {
-  console.log(JSON.stringify({ command, args, cwd: options.cwd, chrome: options.env.ARCHIFY_CHROME }));
+  const updateCache = options.env.ARCHIFY_UPDATE_CACHE_DIRECTORY;
+  require('node:fs').writeFileSync(require('node:path').join(updateCache, 'fixture-update'), 'test receipt');
+  console.log(JSON.stringify({ command, args, cwd: options.cwd, chrome: options.env.ARCHIFY_CHROME, updateCache }));
   return ${JSON.stringify(outcome)};
 };
 require('node:module').syncBuiltinESMExports();
 `);
-  return spawnSync(process.execPath, ['--require', preload, runner, ...args], {
+  const result = spawnSync(process.execPath, ['--require', preload, runner, ...args], {
     cwd: directory,
     encoding: 'utf8',
-    env: { ...process.env, ARCHIFY_CHROME: process.execPath },
+    env: { ...process.env, ARCHIFY_CHROME: process.execPath, ARCHIFY_UPDATE_CACHE_DIRECTORY: userCache },
   });
+  assert.equal(fs.readFileSync(path.join(userCache, 'preserved'), 'utf8'), 'existing cache');
+  assert.deepEqual(fs.readdirSync(userCache), ['preserved']);
+  if (result.stdout.startsWith('{')) {
+    const call = JSON.parse(result.stdout);
+    assert.notEqual(call.updateCache, userCache, 'the browser gate must isolate update state');
+    assert.equal(fs.existsSync(call.updateCache), false, 'temporary cache must be cleaned on success, failure and child termination');
+  }
+  return result;
 }
 
-test('browser gate includes dedicated and mixed browser suites and enables them', (t) => {
+test('browser gate includes every browser suite without repeating ordinary Node suites', (t) => {
   const result = interceptedRun(t, { status: 0, signal: null });
   assert.equal(result.status, 0, result.stderr);
   const call = JSON.parse(result.stdout);
@@ -65,13 +78,16 @@ test('browser gate includes dedicated and mixed browser suites and enables them'
   for (const file of files) assert.ok(fs.existsSync(path.join(repoRoot, file)), file);
   const required = [
     ...fs.readdirSync(path.join(skillRoot, '..', 'test')).filter((file) => file.endsWith('-browser.test.mjs')),
-    'sequence-header-clearance.test.mjs', 'repository-evidence.test.mjs', 'i18n.test.mjs', 'semantic-radar.test.mjs', 'viewer-chrome-layout.test.mjs',
+    'sequence-header-clearance.test.mjs', 'semantic-radar.test.mjs', 'viewer-chrome-layout.test.mjs',
   ];
   for (const file of required) assert.ok(files.includes(path.join('test', file)), `${file} must run in the browser gate`);
+  for (const file of ['i18n.test.mjs', 'repository-evidence.test.mjs']) {
+    assert.ok(!files.includes(path.join('test', file)), `${file} belongs to the ordinary Node gate`);
+  }
 });
 
-test('browser gate focuses maintained mixed suites and supports explicit concurrency', (t) => {
-  const files = ['test/i18n.test.mjs', 'test/desktop-reader-browser.test.mjs'];
+test('browser gate focuses maintained browser suites and supports explicit concurrency', (t) => {
+  const files = ['test/i18n-browser.test.mjs', 'test/desktop-reader-browser.test.mjs'];
   const result = interceptedRun(t, { status: 0 }, [files[0], path.join(repoRoot, files[1]),
     ...(supportsConcurrency ? ['--concurrency=1'] : [])]);
   assert.equal(result.status, 0, result.stderr);
@@ -81,7 +97,7 @@ test('browser gate focuses maintained mixed suites and supports explicit concurr
 });
 
 test('browser gate forwards a validated test name pattern', (t) => {
-  const result = interceptedRun(t, { status: 0 }, ['test/i18n.test.mjs', '--test-name-pattern=locale.*日本語']);
+  const result = interceptedRun(t, { status: 0 }, ['test/i18n-browser.test.mjs', '--test-name-pattern=locale.*日本語']);
   if (!supportsNamePattern) {
     assert.equal(result.status, 1);
     assert.equal(result.stdout, '');
@@ -91,7 +107,7 @@ test('browser gate forwards a validated test name pattern', (t) => {
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout).args, [
     '--test', ...(supportsConcurrency ? ['--test-concurrency=2'] : []),
-    '--test-name-pattern=locale.*日本語', 'test/i18n.test.mjs',
+    '--test-name-pattern=locale.*日本語', 'test/i18n-browser.test.mjs',
   ]);
 });
 
@@ -115,7 +131,7 @@ test('browser inventory can be listed without Chrome or child execution', (t) =>
 });
 
 test('selected browser execution still requires Chrome', () => {
-  const result = spawnSync(process.execPath, [runner, 'test/i18n.test.mjs'], {
+  const result = spawnSync(process.execPath, [runner, 'test/i18n-browser.test.mjs'], {
     encoding: 'utf8', env: { ...process.env, ARCHIFY_CHROME: '' },
   });
   assert.equal(result.status, 1, result.stderr);
@@ -161,7 +177,7 @@ test('browser shards are deterministic, nonempty, disjoint and cover the full ma
   assert.equal(shards.flat().length, full.length);
   assert.deepEqual(shards.flat().sort(), [...full].sort());
   const owner = file => shards.findIndex(files => files.includes(`test/${file}`));
-  assert.notEqual(owner('desktop-reader-browser.test.mjs'), owner('i18n.test.mjs'));
+  assert.notEqual(owner('desktop-reader-browser.test.mjs'), owner('i18n-browser.test.mjs'));
   assert.notEqual(owner('viewer-chrome-layout.test.mjs'), owner('reader-layout-browser.test.mjs'));
 });
 
@@ -184,7 +200,7 @@ test('browser shards reject invalid, duplicate, empty or partially selected cove
     ['--shard'], ['--shard=0/2'], ['--shard=1/0'], ['--shard=3/2'],
     ['--shard=01/2'], ['--shard=1/2.0'], ['--shard=1/999'],
     ['--shard=1/9007199254740992'], ['--shard=1/2', '--shard=2/2'],
-    ['--shard=1/2', 'test/i18n.test.mjs'],
+    ['--shard=1/2', 'test/i18n-browser.test.mjs'],
     ['--shard=1/2', '--test-name-pattern=locale'],
   ]) {
     const result = interceptedRun(t, { status: 0 }, args);

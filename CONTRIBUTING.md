@@ -143,6 +143,24 @@ their responsibility is affected and in complete verification. The separate
 browser, WebM, Windows, and package gates retain their distinct claims. Do not
 repeat an unchanged complete run locally just because CI is also running it.
 
+For full CI, Node 22 runs every discovered test file across two independent
+machines using `node scripts/run-tests.mjs --shard=1/2` and `--shard=2/2`.
+One shard also runs generated checks and the Hermes adapter contract once,
+using the same installed dependencies. The existing `test (22)` check requires
+both shards to succeed without reinstalling dependencies afterward. Other scopes do not
+start these shards. Node 18, 20 and 24 compatibility checks start after scope
+classification, without waiting for the complete regression shards.
+`--list --shard=1/2` shows the selected files; shards cannot
+be combined with explicit files or test-name filtering. Locally and in tagged
+releases, `npm run test:full` still runs the complete inventory without sharding.
+
+The Windows Node 22 lane owns the complete filesystem and fault-injection
+matrices. Node 24 runs the core CLI smoke instead of repeating those matrices.
+Both lanes, including tagged releases, still run the controlled case-sensitive
+NTFS, UNC, extended-path, and 8.3-path scenarios. Use
+`node scripts/run-windows-path-tests.mjs --list` (or `--smoke --list`) to inspect
+the selected groups without running tests or creating Windows fixtures.
+
 The test runners accept `--concurrency=N` to tune the number of simultaneous
 test files on Node 18.19+, for example `npm run test:focus -- test/geometry.test.mjs --concurrency=4`. Headless
 repository and compatibility runs default to the available CPU count, capped

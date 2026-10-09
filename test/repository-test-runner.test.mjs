@@ -126,6 +126,46 @@ test('focus alias requires files and invalid options never launch a child', (t) 
   }
 });
 
+test('repository shards execute exactly their listed inventory and together cover every suite once', (t) => {
+  const full = interceptedRun(t, ['--list']).stdout.trim().split('\n');
+  for (const count of [2, 3]) {
+    const shards = [];
+    for (let index = 1; index <= count; index++) {
+      const argument = `--shard=${index}/${count}`;
+      const listed = interceptedRun(t, ['--list', argument]);
+      assert.equal(listed.status, 0, listed.stderr);
+      assert.equal(listed.stderr, '');
+      const files = listed.stdout.trim().split('\n');
+      assert.ok(files.length > 0);
+      const executed = interceptedRun(t, [argument]);
+      assert.equal(executed.status, 0, executed.stderr);
+      assert.deepEqual(JSON.parse(executed.stdout).args.filter(arg => !arg.startsWith('--')), files);
+      assert.ok(executed.stderr.includes(`shard ${index}/${count}`));
+      shards.push(...files);
+    }
+    assert.equal(new Set(shards).size, shards.length, 'no test may execute in two shards');
+    assert.deepEqual(shards.sort(), full, 'new and existing suites must all be dispatched');
+  }
+});
+
+test('repository shards reject invalid or partial coverage before launching tests', (t) => {
+  const count = fs.readdirSync(path.join(repoRoot, 'test')).filter(file => file.endsWith('.test.mjs')).length;
+  for (const args of [
+    ['--shard'], ['--shard=0/2'], ['--shard=1/0'], ['--shard=3/2'],
+    ['--shard=01/2'], ['--shard=1/2.0'], [`--shard=1/${count + 1}`],
+    ['--shard=1/9007199254740992'], ['--shard=1/2', '--shard=2/2'],
+    ['--shard=1/2', 'test/cli.test.mjs'], ['--shard=1/2', '--test-name-pattern=validate'],
+    ['--shard=1/2', '--require-files'],
+  ]) {
+    const result = interceptedRun(t, args);
+    assert.equal(result.status, 1, `${args}: ${result.stderr}`);
+    assert.equal(result.stdout, '', 'an invalid shard must never execute a partial green run');
+  }
+  const failed = interceptedRun(t, ['--shard=2/2'], { status: 7 });
+  assert.equal(failed.status, 7, failed.stderr);
+  assert.equal(fs.existsSync(JSON.parse(failed.stdout).cache), false);
+});
+
 for (const outcome of [{ status: 7 }, { status: null, signal: 'SIGTERM' }, { error: { message: 'spawn failed' } }]) {
   test(`repository runner cleans cache and propagates child failure (${outcome.signal || outcome.status || 'error'})`, (t) => {
     const result = interceptedRun(t, ['test/repository-test-runner.test.mjs'], outcome);

@@ -26,7 +26,7 @@ jobs:
         shell: pwsh
         run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
       - name: Verify maintained Windows path contracts
-        run: node scripts/run-windows-path-tests.mjs
+        run: node scripts/run-windows-path-tests.mjs ${{ matrix.node-version == 24 && '--smoke' || '' }}
         env:
           ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
           ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'

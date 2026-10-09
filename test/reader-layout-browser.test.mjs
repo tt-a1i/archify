@@ -959,7 +959,8 @@ test('Reader Layout preserves final-artifact behavior across its ownership bound
       assert.deepEqual(fontGate, { beforeReady: false, afterReady: true });
       await stable();
       assert.equal((await snapshot('delayed-fonts-and-content')).active, true);
-      await load(wide);
+      // The pending-frame budget belongs to the shared waiter, not a second
+      // diagram fixture. Reuse the now-settled real page and its original fonts.
       const result = await evaluate(`(async function () {
         var original = document.fonts;
         var release;

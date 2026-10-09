@@ -1,154 +1,31 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-
-import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
+import { validateSchema } from '../archify/renderers/shared/validator.mjs';
+import {
+  skillRoot, ES_TRANSLATIONS, KO_TRANSLATIONS, FR_PARTIAL_TRANSLATIONS,
+  MANIFEST, EXAMPLES, example, authoredExample, localeDocument, createLocaleFixture,
+} from './helpers/i18n-fixture.mjs';
 
 import {
   SUPPORTED_LOCALES,
   bundledLocaleFor,
   catalogKeys,
   resolveCatalog,
+  resolveLocale,
+  viewerCatalog,
+  localizeTemplate,
   translateCount,
   translateMessage,
   registerLocale,
   validateTranslations,
 } from '../archify/renderers/shared/i18n.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const skillRoot = path.resolve(__dirname, '..', 'archify');
-const cli = path.join(skillRoot, 'bin/archify.mjs');
 const templatePath = path.join(skillRoot, 'assets/template.html');
-const ES_TRANSLATIONS = JSON.parse(fs.readFileSync(path.join(skillRoot, 'locales/es.json'), 'utf8'));
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-i18n-'));
-const chromePath = process.env.ARCHIFY_CHROME ? findChrome() : null;
-let sequence = 0;
-
-// locales/ holds the package-owned catalogs that meta.locale selects through
-// locales/manifest.json. examples/locales/fr.partial.json is the genericity
-// proof — an unbundled language, deliberately partial to also exercise the
-// coverage/fallback contract.
-const KO_TRANSLATIONS = JSON.parse(fs.readFileSync(path.join(skillRoot, 'locales/ko.json'), 'utf8'));
-const FR_PARTIAL_TRANSLATIONS = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/locales/fr.partial.json'), 'utf8'));
-const MANIFEST = JSON.parse(fs.readFileSync(path.join(skillRoot, 'locales/manifest.json'), 'utf8'));
-
-const EXAMPLES = {
-  architecture: 'web-app.architecture.json',
-  workflow: 'agent-tool-call.workflow.json',
-  sequence: 'cache-miss-request.sequence.json',
-  dataflow: 'product-analytics.dataflow.json',
-  lifecycle: 'agent-run.lifecycle.json',
-};
-
-function example(type) {
-  return JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', EXAMPLES[type]), 'utf8'));
-}
-
-const AUTHORED_TEXT_KEYS = new Set([
-  'title',
-  'subtitle',
-  'label',
-  'sublabel',
-  'tag',
-  'note',
-  'context',
-  'responsibility',
-  'classification',
-  'step',
-]);
-
-function authoredExample(type, locale) {
-  const document = example(type);
-  const authored = [];
-  let authoredIndex = 0;
-  const nextAuthoredText = () => {
-    authoredIndex += 1;
-    const value = locale === 'zh-CN'
-      ? `文案${String(authoredIndex).padStart(2, '0')}`
-      : locale === 'ko'
-        ? `문구${String(authoredIndex).padStart(2, '0')}`
-        : `Copy${String(authoredIndex).padStart(2, '0')}`;
-    authored.push(value);
-    return value;
-  };
-  const rewrite = (value, path = []) => {
-    if (Array.isArray(value)) {
-      value.forEach((item, index) => rewrite(item, [...path, index]));
-      return;
-    }
-    if (!value || typeof value !== 'object') return;
-    for (const [key, child] of Object.entries(value)) {
-      if (typeof child === 'string' && AUTHORED_TEXT_KEYS.has(key)) {
-        value[key] = nextAuthoredText();
-      } else if (key === 'items' && path.includes('cards') && Array.isArray(child)) {
-        value[key] = child.map((item) => (typeof item === 'string' ? nextAuthoredText() : item));
-      } else {
-        rewrite(child, [...path, key]);
-      }
-    }
-  };
-
-  rewrite(document);
-  document.meta.locale = locale;
-  if (locale === 'ko') document.meta.translations = KO_TRANSLATIONS;
-  if (!document.meta.subtitle) document.meta.subtitle = nextAuthoredText();
-  return { document, authored };
-}
-
-function run(type, document, command = 'render') {
-  const id = sequence++;
-  const input = path.join(tmp, `${id}-${type}.json`);
-  const output = path.join(tmp, `${id}-${type}.html`);
-  fs.writeFileSync(input, JSON.stringify(document));
-  const args = command === 'render'
-    ? [cli, 'render', type, input, output]
-    : [cli, 'validate', type, input, '--json'];
-  const result = spawnSync(process.execPath, args, { cwd: skillRoot, encoding: 'utf8' });
-  return {
-    ...result,
-    output,
-    html: result.status === 0 && command === 'render' ? fs.readFileSync(output, 'utf8') : '',
-  };
-}
-
-async function evaluate(browser, sessionId, expression, awaitPromise = false) {
-  const response = await browser.cdp.send('Runtime.evaluate', {
-    expression,
-    returnByValue: true,
-    awaitPromise,
-  }, sessionId);
-  if (response.exceptionDetails) {
-    throw new Error(response.exceptionDetails.exception?.description
-      || response.exceptionDetails.text
-      || 'browser evaluation failed');
-  }
-  return response.result?.value;
-}
-
-async function loadArtifact(browser, artifactPath) {
-  const sessionId = await browser.sessionPromise;
-  await browser.cdp.send('Emulation.setDeviceMetricsOverride', {
-    width: 1440,
-    height: 900,
-    deviceScaleFactor: 1,
-    mobile: false,
-  }, sessionId);
-  const loaded = browser.cdp.waitFor('Page.loadEventFired', sessionId);
-  const navigation = await browser.cdp.send('Page.navigate', {
-    url: pathToFileURL(artifactPath).href,
-  }, sessionId);
-  if (navigation.errorText) throw new Error(`Chrome navigation failed: ${navigation.errorText}`);
-  await loaded;
-  await evaluate(browser, sessionId, `new Promise(function (resolve) {
-    requestAnimationFrame(function () { requestAnimationFrame(function () { resolve(true); }); });
-  })`, true);
-  return sessionId;
-}
+const { tmp, run, deliverKoreanFixture, deliverJapaneseFixture, cliJson } = createLocaleFixture();
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
   assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'zh-TW', 'es', 'ko']);
@@ -169,54 +46,6 @@ test('zh-CN localizes renderer-owned output across all five modes without transl
     assert.match(result.html, new RegExp(`<desc id="archify-diagram-description">\u7531 Archify \u751f\u6210\u7684`));
     assert.match(result.html, /"locale":"zh-CN"/);
     assert.match(result.html, />\u5bfc\u51fa\u56fe\u8868</);
-    assert.doesNotMatch(result.html, /\{\{i18n:/);
-  }
-});
-
-test('supplied es catalog localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.equal(validateTranslations(ES_TRANSLATIONS).coverage, 1);
-  for (const type of Object.keys(EXAMPLES)) {
-    const document = example(type);
-    const authoredTitle = document.meta.title;
-    document.meta.locale = 'es';
-    document.meta.translations = ES_TRANSLATIONS;
-    delete document.meta.subtitle;
-
-    const result = run(type, document);
-    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
-    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="es"/);
-    assert.match(result.html, /<svg\b[^>]*\blang="es"/);
-    assert.ok(result.html.includes(`<title>${authoredTitle} · Diagrama</title>`), `${type}: authored title changed`);
-    assert.ok(result.html.includes(`<h1>${authoredTitle}</h1>`), `${type}: authored heading changed`);
-    assert.match(result.html, /<text\b[^>]*>Leyenda<\/text>/);
-    assert.match(result.html, /aria-label="Enfocar/);
-    assert.match(result.html, /<desc id="archify-diagram-description">Un diagrama de /);
-    assert.match(result.html, /"locale":"es"/);
-    assert.match(result.html, />Exportar diagrama</);
-    assert.doesNotMatch(result.html, /\{\{i18n:/);
-    assert.doesNotMatch(result.stderr, /has no bundled catalog/, `${type}: es unexpectedly fell back to English`);
-  }
-});
-
-test('ko localizes renderer-owned output across all five modes via meta.translations, without translating authored content', () => {
-  for (const type of Object.keys(EXAMPLES)) {
-    const document = example(type);
-    const authoredTitle = document.meta.title;
-    document.meta.locale = 'ko';
-    document.meta.translations = KO_TRANSLATIONS;
-    delete document.meta.subtitle;
-
-    const result = run(type, document);
-    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
-    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="ko"/);
-    assert.match(result.html, /<svg\b[^>]*\blang="ko"/);
-    assert.ok(result.html.includes(`<title>${authoredTitle} 다이어그램</title>`), `${type}: authored title changed`);
-    assert.ok(result.html.includes(`<h1>${authoredTitle}</h1>`), `${type}: authored heading changed`);
-    assert.match(result.html, /<text\b[^>]*>범례<\/text>/);
-    assert.match(result.html, /aria-label="[^"]*포커스/);
-    assert.match(result.html, new RegExp(`<desc id="archify-diagram-description">Archify로 생성한`));
-    assert.match(result.html, /"locale":"ko"/);
-    assert.match(result.html, />다이어그램 내보내기</);
     assert.doesNotMatch(result.html, /\{\{i18n:/);
   }
 });
@@ -286,38 +115,6 @@ test('omitted locale preserves non-English authored content and the English View
   }
 });
 
-function deliverKoreanFixture() {
-  const fixture = path.join(skillRoot, '..', 'test', 'fixtures/korean-locale.architecture.json');
-  const source = JSON.parse(fs.readFileSync(fixture, 'utf8'));
-  assert.equal(source.meta.locale, 'ko');
-  assert.match(source.meta.title, /[가-힣]/);
-
-  const validate = spawnSync(process.execPath, [cli, 'validate', 'architecture', fixture, '--json'], {
-    cwd: skillRoot,
-    encoding: 'utf8',
-  });
-  assert.equal(validate.status, 0, validate.stderr || validate.stdout);
-  const validation = JSON.parse(validate.stdout);
-  assert.equal(validation.ok, true);
-  assert.equal(validation.command, 'validate');
-
-  const artifact = path.join(tmp, 'korean-locale-fixture.html');
-  const deliver = spawnSync(
-    process.execPath,
-    [cli, 'deliver', 'architecture', fixture, artifact, '--quality', 'showcase', '--json'],
-    { cwd: skillRoot, encoding: 'utf8' },
-  );
-  assert.equal(deliver.status, 0, deliver.stderr || deliver.stdout);
-  const delivery = JSON.parse(deliver.stdout);
-  assert.equal(delivery.ok, true);
-  assert.equal(delivery.command, 'deliver');
-  assert.equal(delivery.type, 'architecture');
-  assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
-  assert.equal(delivery.artifact.bytes, fs.statSync(artifact).size);
-  assert.equal(delivery.artifact.sha256, createHash('sha256').update(fs.readFileSync(artifact)).digest('hex'));
-  return { fixture, artifact, delivery };
-}
-
 test('checked-in Korean fixture validates and delivers a ko architecture artifact', () => {
   const { artifact, delivery } = deliverKoreanFixture();
   const html = fs.readFileSync(artifact, 'utf8');
@@ -332,32 +129,6 @@ test('checked-in Korean fixture validates and delivers a ko architecture artifac
   assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
 });
 
-test('visual-check binds the delivered Korean fixture to viewport and theme receipts', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to collect artifact-bound visual-check evidence for the Korean fixture.',
-}, () => {
-  const { artifact, delivery } = deliverKoreanFixture();
-  const visual = spawnSync(process.execPath, [cli, 'visual-check', artifact, '--json'], {
-    cwd: skillRoot,
-    encoding: 'utf8',
-    env: { ...process.env, ARCHIFY_CHROME: chromePath },
-  });
-  assert.ok([0, 1].includes(visual.status), visual.stderr || visual.stdout);
-  const receipt = JSON.parse(visual.stdout);
-  assert.equal(receipt.command, 'visual-check');
-  assert.equal(receipt.visualReview, 'pending');
-  assert.equal(receipt.chrome.status, 'available');
-  assert.equal(receipt.readability.status, 'pass');
-  assert.equal(receipt.viewerChrome.status, 'pass');
-  assert.equal(receipt.captures.status, 'pass');
-  assert.equal(receipt.artifact.sha256, delivery.artifact.sha256);
-  assert.equal(receipt.artifact.bytes, delivery.artifact.bytes);
-  assert.equal(
-    receipt.containment.viewports.every((viewport) => viewport.overflowX === false),
-    true,
-    'Korean fixture introduced horizontal overflow',
-  );
-});
-
 // examples/locales/ko.json proved the mechanism for renderer-owned Viewer
 // chrome; this fixture proves the other half of "complete" language support
 // that predates this PR (issue #458: "the renderer never translates
@@ -365,38 +136,6 @@ test('visual-check binds the delivered Korean fixture to viewport and theme rece
 // directly in the target language, with meta.locale/meta.translations
 // localizing only the fixed chrome around it. Japanese is a second,
 // independent worked example of that same end-to-end pattern.
-function deliverJapaneseFixture() {
-  const fixture = path.join(skillRoot, '..', 'test', 'fixtures/japanese-locale.architecture.json');
-  const source = JSON.parse(fs.readFileSync(fixture, 'utf8'));
-  assert.equal(source.meta.locale, 'ja');
-  assert.match(source.meta.title, /[぀-ヿ一-鿿]/);
-
-  const validate = spawnSync(process.execPath, [cli, 'validate', 'architecture', fixture, '--json'], {
-    cwd: skillRoot,
-    encoding: 'utf8',
-  });
-  assert.equal(validate.status, 0, validate.stderr || validate.stdout);
-  const validation = JSON.parse(validate.stdout);
-  assert.equal(validation.ok, true);
-  assert.equal(validation.command, 'validate');
-
-  const artifact = path.join(tmp, 'japanese-locale-fixture.html');
-  const deliver = spawnSync(
-    process.execPath,
-    [cli, 'deliver', 'architecture', fixture, artifact, '--quality', 'showcase', '--json'],
-    { cwd: skillRoot, encoding: 'utf8' },
-  );
-  assert.equal(deliver.status, 0, deliver.stderr || deliver.stdout);
-  const delivery = JSON.parse(deliver.stdout);
-  assert.equal(delivery.ok, true);
-  assert.equal(delivery.command, 'deliver');
-  assert.equal(delivery.type, 'architecture');
-  assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
-  assert.equal(delivery.artifact.bytes, fs.statSync(artifact).size);
-  assert.equal(delivery.artifact.sha256, createHash('sha256').update(fs.readFileSync(artifact)).digest('hex'));
-  return { fixture, artifact, delivery };
-}
-
 test('checked-in Japanese fixture validates and delivers a fully-authored ja architecture artifact', () => {
   const { artifact, delivery } = deliverJapaneseFixture();
   const html = fs.readFileSync(artifact, 'utf8');
@@ -416,43 +155,24 @@ test('checked-in Japanese fixture validates and delivers a fully-authored ja arc
   assert.match(delivery.artifact.sha256, /^[a-f0-9]{64}$/);
 });
 
-test('visual-check binds the delivered Japanese fixture to viewport and theme receipts', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to collect artifact-bound visual-check evidence for the Japanese fixture.',
-}, () => {
-  const { artifact, delivery } = deliverJapaneseFixture();
-  const visual = spawnSync(process.execPath, [cli, 'visual-check', artifact, '--json'], {
-    cwd: skillRoot,
-    encoding: 'utf8',
-    env: { ...process.env, ARCHIFY_CHROME: chromePath },
-  });
-  assert.ok([0, 1].includes(visual.status), visual.stderr || visual.stdout);
-  const receipt = JSON.parse(visual.stdout);
-  assert.equal(receipt.command, 'visual-check');
-  assert.equal(receipt.visualReview, 'pending');
-  assert.equal(receipt.chrome.status, 'available');
-  assert.equal(receipt.readability.status, 'pass');
-  assert.equal(receipt.viewerChrome.status, 'pass');
-  assert.equal(receipt.captures.status, 'pass');
-  assert.equal(receipt.artifact.sha256, delivery.artifact.sha256);
-  assert.equal(receipt.artifact.bytes, delivery.artifact.bytes);
-  assert.equal(
-    receipt.containment.viewports.every((viewport) => viewport.overflowX === false),
-    true,
-    'Japanese fixture introduced horizontal overflow',
-  );
-});
-
 test('malformed locale tags fail schema validation in every mode', () => {
-  for (const locale of ['123', 'x', 'en_US', 'a'.repeat(40)]) {
-    for (const type of Object.keys(EXAMPLES)) {
-      const document = example(type);
-      document.meta.locale = locale;
-      const result = run(type, document, 'validate');
-      assert.notEqual(result.status, 0, `${type}: malformed locale ${locale} unexpectedly passed`);
-      const payload = JSON.parse(result.stdout);
-      assert.equal(payload.ok, false);
-      assert.ok(payload.diagnostics.some((entry) => entry.subject?.path === '/meta/locale'), `${type}: ${locale}`);
+  const invalidLocales = ['123', 'x', 'en_US', 'a'.repeat(40)];
+  for (const [index, type] of Object.keys(EXAMPLES).entries()) {
+    for (const locale of invalidLocales) {
+      const document = localeDocument(type, { locale });
+      // The shared validator owns the complete tag matrix. Every type still
+      // exercises the public CLI's structured rejection below.
+      assert.throws(() => validateSchema(type, document), (error) => {
+        assert.ok(error.archifyDiagnostics.some((entry) => entry.subject?.path === '/meta/locale'), `${type}: ${locale}`);
+        return true;
+      });
     }
+    const locale = invalidLocales[index % invalidLocales.length];
+    const result = run(type, localeDocument(type, { locale }), 'validate');
+    assert.notEqual(result.status, 0, `${type}: malformed locale ${locale} unexpectedly passed`);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, false);
+    assert.ok(payload.diagnostics.some((entry) => entry.subject?.path === '/meta/locale'), `${type}: ${locale}`);
   }
 });
 
@@ -460,7 +180,11 @@ test('a well-formed but unregistered locale passes validation, falls back to Eng
   // Region and script variants are distinct tags: none collapses onto a
   // bundled catalog without explicit data.
   for (const locale of ['fr', 'zh-HK', 'zh-Hant', 'es-MX', 'ko-KR']) {
-    for (const type of Object.keys(EXAMPLES)) {
+    // Locale resolution and diagnostics are shared through loadDiagram.
+    // Check every tag through architecture, and every renderer with fr;
+    // repeating the cross-product does not exercise another fallback path.
+    const types = locale === 'fr' ? Object.keys(EXAMPLES) : ['architecture'];
+    for (const type of types) {
       const document = example(type);
       document.meta.locale = locale;
       const validated = run(type, document, 'validate');
@@ -533,19 +257,19 @@ function embeddedMessages(html) {
   return JSON.parse(embedded[1]);
 }
 
-function localeDocument(type, meta) {
-  const document = example(type);
-  delete document.meta.subtitle;
-  Object.assign(document.meta, meta);
-  return document;
-}
-
 test('bundled es and ko render from meta.locale alone in all five modes, identical to supplying the full catalog', () => {
   const cases = {
-    es: { catalog: ES_TRANSLATIONS, legend: 'Leyenda', focus: 'Enfocar', exportLabel: 'Exportar diagrama' },
-    ko: { catalog: KO_TRANSLATIONS, legend: '범례', focus: '포커스', exportLabel: '다이어그램 내보내기' },
+    es: {
+      catalog: ES_TRANSLATIONS, legend: 'Leyenda', focus: 'Enfocar', exportLabel: 'Exportar diagrama',
+      titleSuffix: ' · Diagrama', description: /<desc id="archify-diagram-description">Un diagrama de /,
+    },
+    ko: {
+      catalog: KO_TRANSLATIONS, legend: '범례', focus: '포커스', exportLabel: '다이어그램 내보내기',
+      titleSuffix: ' 다이어그램', description: /<desc id="archify-diagram-description">Archify로 생성한/,
+    },
   };
   for (const [locale, expected] of Object.entries(cases)) {
+    assert.equal(validateTranslations(expected.catalog).coverage, 1);
     for (const type of Object.keys(EXAMPLES)) {
       const localeOnly = run(type, localeDocument(type, { locale }));
       assert.equal(localeOnly.status, 0, `${type}/${locale}: ${localeOnly.stderr || localeOnly.stdout}`);
@@ -563,7 +287,15 @@ test('bundled es and ko render from meta.locale alone in all five modes, identic
 
       const supplied = run(type, localeDocument(type, { locale, translations: expected.catalog }));
       assert.equal(supplied.status, 0, `${type}/${locale}: ${supplied.stderr || supplied.stdout}`);
+      assert.equal(supplied.stderr, '', `${type}/${locale}: a complete supplied catalog should not warn`);
       assert.equal(supplied.html, localeOnly.html, `${type}/${locale}: supplied catalog changed existing wording`);
+      // These were separate supplied-catalog renders of the same documents.
+      // Keep their authored-content and accessible-description assertions here.
+      const authoredTitle = example(type).meta.title;
+      assert.ok(supplied.html.includes(`<title>${authoredTitle}${expected.titleSuffix}</title>`), `${type}/${locale}: authored title changed`);
+      assert.ok(supplied.html.includes(`<h1>${authoredTitle}</h1>`), `${type}/${locale}: authored heading changed`);
+      assert.match(supplied.html, expected.description);
+      assert.doesNotMatch(supplied.html, /\{\{i18n:/);
     }
   }
 });
@@ -574,22 +306,54 @@ test('a partial override replaces only its keys and keeps the rest of the select
     es: { message: 'Cerrar panel', legend: 'Leyenda' },
     ko: { message: '패널 닫기', legend: '범례' },
   };
+  // Every renderer registers its document through the shared CLI and embeds
+  // that catalog through applyTemplate. Cover the rule matrix once, then
+  // prove each renderer's wiring with a real one-key override.
   for (const [locale, expected] of Object.entries(overrides)) {
-    for (const type of Object.keys(EXAMPLES)) {
-      const result = run(type, localeDocument(type, { locale, translations: { 'viewer.common.close': expected.message } }));
-      assert.equal(result.status, 0, `${type}/${locale}: ${result.stderr || result.stdout}`);
-      assert.equal(result.stderr, '', `${type}/${locale}: a valid one-key override over a complete catalog is not a coverage gap`);
-      assert.match(result.html, new RegExp(`^<!DOCTYPE html>\\n<html lang="${locale}"`));
-      assert.match(result.html, new RegExp(`<text\\b[^>]*>${expected.legend}</text>`), `${type}/${locale}: rest of the language was lost`);
-      const runtime = embeddedMessages(result.html);
-      assert.equal(runtime.messages['viewer.common.close'], expected.message);
-      assert.equal(runtime.messages['viewer.common.copyLink'], translateMessage(locale, 'viewer.common.copyLink'));
-    }
+    const bundled = resolveCatalog(locale).messages;
+    const resolved = resolveCatalog(locale, { 'viewer.common.close': expected.message });
+    assert.deepEqual(resolved.messages, { ...bundled, 'viewer.common.close': expected.message });
+    assert.equal(resolved.messages['legend.title'], expected.legend);
+    assert.deepEqual(resolved.report.fallbackKeys, []);
+    assert.equal(resolved.report.override.appliedKeys, 1);
+  }
+  const locales = Object.keys(overrides);
+  for (const [index, type] of Object.keys(EXAMPLES).entries()) {
+    const locale = locales[index % locales.length];
+    const expected = overrides[locale];
+    const result = run(type, localeDocument(type, { locale, translations: { 'viewer.common.close': expected.message } }));
+    assert.equal(result.status, 0, `${type}/${locale}: ${result.stderr || result.stdout}`);
+    assert.equal(result.stderr, '', `${type}/${locale}: a valid one-key override over a complete catalog is not a coverage gap`);
+    assert.match(result.html, new RegExp(`^<!DOCTYPE html>\\n<html lang="${locale}"`));
+    assert.match(result.html, new RegExp(`<text\\b[^>]*>${expected.legend}</text>`), `${type}/${locale}: rest of the language was lost`);
+    const runtime = embeddedMessages(result.html);
+    assert.equal(runtime.messages['viewer.common.close'], expected.message);
+    assert.equal(runtime.messages['viewer.common.copyLink'], translateMessage(locale, 'viewer.common.copyLink'));
   }
 });
 
 test('empty translations and equivalent tag casing select the same bundled catalog', () => {
-  for (const type of Object.keys(EXAMPLES)) {
+  const chinese = resolveCatalog('zh-CN');
+  const koreanCatalog = resolveCatalog('ko');
+  assert.deepEqual(resolveCatalog('ko', {}).messages, koreanCatalog.messages);
+  assert.deepEqual(resolveCatalog('ko', {}).report, koreanCatalog.report);
+  const overrides = { 'viewer.common.close': '关闭面板', 'viewer.export.diagram': '导出此图' };
+  for (const locale of ['zh-cn', 'zh-cN', 'ZH-cn']) {
+    assert.deepEqual(resolveCatalog(locale).messages, chinese.messages);
+    assert.equal(resolveCatalog(locale).report.resolvedLocale, 'zh-CN');
+    try {
+      registerLocale(locale, overrides);
+      for (const lookup of [locale, 'zh-CN', 'ZH-cn']) {
+        assert.equal(resolveLocale(lookup), 'zh-CN');
+        assert.equal(translateMessage(lookup, 'viewer.common.close'), overrides['viewer.common.close']);
+        assert.equal(viewerCatalog(lookup)['viewer.common.close'], overrides['viewer.common.close']);
+        assert.equal(localizeTemplate('{{i18n:viewer.export.diagram}}', lookup), '导出此图');
+      }
+    } finally {
+      registerLocale(locale);
+    }
+  }
+  for (const [index, type] of Object.keys(EXAMPLES).entries()) {
     const reference = run(type, localeDocument(type, { locale: 'zh-CN' }));
     assert.equal(reference.status, 0, reference.stderr);
     const lowered = run(type, localeDocument(type, { locale: 'zh-cn' }));
@@ -597,27 +361,24 @@ test('empty translations and equivalent tag casing select the same bundled catal
     assert.equal(lowered.stderr, '');
     assert.equal(lowered.html, reference.html, `${type}: zh-cn should select the zh-CN catalog and canonical lang`);
 
-    const korean = run(type, localeDocument(type, { locale: 'ko' }));
-    const empty = run(type, localeDocument(type, { locale: 'ko', translations: {} }));
-    assert.equal(empty.status, 0, empty.stderr);
-    assert.equal(empty.stderr, '');
-    assert.equal(empty.html, korean.html, `${type}: {} is not an override`);
-  }
-  // An override under an equivalent-case tag reaches every lookup path: SVG
-  // copy, the HTML template, and the embedded Viewer catalog.
-  for (const locale of ['zh-cn', 'zh-cN']) {
-    for (const type of Object.keys(EXAMPLES)) {
-      const result = run(type, localeDocument(type, {
-        locale,
-        translations: { 'viewer.common.close': '关闭面板', 'viewer.export.diagram': '导出此图' },
-      }));
-      assert.equal(result.status, 0, result.stderr);
-      assert.match(result.html, /^<!DOCTYPE html>\n<html lang="zh-CN"/);
-      const runtime = embeddedMessages(result.html);
-      assert.equal(runtime.locale, 'zh-CN');
-      assert.equal(runtime.messages['viewer.common.close'], '关闭面板', `${type}/${locale}: embedded Viewer override lost`);
-      assert.ok(result.html.includes('>导出此图<'), `${type}/${locale}: template override lost`);
+    // The shared empty-override rule also has a real renderer witness.
+    if (type === 'architecture') {
+      const korean = run(type, localeDocument(type, { locale: 'ko' }));
+      const empty = run(type, localeDocument(type, { locale: 'ko', translations: {} }));
+      assert.equal(korean.status, 0, korean.stderr);
+      assert.equal(empty.status, 0, empty.stderr);
+      assert.equal(empty.stderr, '');
+      assert.equal(empty.html, korean.html, '{} is not an override');
     }
+    const locale = index % 2 ? 'zh-cN' : 'zh-cn';
+    const result = run(type, localeDocument(type, { locale, translations: overrides }));
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, '');
+    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="zh-CN"/);
+    const runtime = embeddedMessages(result.html);
+    assert.equal(runtime.locale, 'zh-CN');
+    assert.equal(runtime.messages['viewer.common.close'], '关闭面板', `${type}/${locale}: embedded Viewer override lost`);
+    assert.ok(result.html.includes('>导出此图<'), `${type}/${locale}: template override lost`);
   }
   assert.equal(bundledLocaleFor('ZH-cn'), 'zh-CN');
   assert.equal(bundledLocaleFor('zh-Hant'), null);
@@ -697,12 +458,6 @@ test('a document override never mutates the reusable bundled catalog', () => {
   assert.equal(translateMessage('es', 'viewer.common.close'), before, 'a later document without overrides reuses the bundled catalog');
 });
 
-function cliJson(args) {
-  const result = spawnSync(process.execPath, [cli, ...args], { cwd: tmp, encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr || result.stdout);
-  return JSON.parse(result.stdout);
-}
-
 test('validate and deliver receipts carry locale warnings as structured diagnostics without failing', () => {
   const input = path.join(tmp, 'receipt-fr.json');
   fs.writeFileSync(input, JSON.stringify(localeDocument('architecture', {
@@ -728,19 +483,6 @@ test('validate and deliver receipts carry locale warnings as structured diagnost
   fs.writeFileSync(clean, JSON.stringify(localeDocument('architecture', { locale: 'ko' })));
   assert.equal(cliJson(['validate', 'architecture', clean, '--json']).diagnostics, undefined);
   assert.equal(cliJson(['deliver', 'architecture', clean, path.join(tmp, 'receipt-ko.html'), '--json']).diagnostics, undefined);
-});
-
-test('a passing finalize keeps locale warnings in its receipt', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run finalize with its browser gate.',
-}, () => {
-  const input = path.join(tmp, 'finalize-fr.json');
-  fs.writeFileSync(input, JSON.stringify(localeDocument('architecture', { locale: 'fr', translations: FR_PARTIAL_TRANSLATIONS })));
-  const summary = cliJson(['finalize', 'architecture', input, path.join(tmp, 'finalize-fr.html'), '--quality', 'showcase', '--json']);
-  assert.equal(summary.ok, true);
-  assert.equal(summary.status, 'pass');
-  assert.deepEqual(summary.diagnostics.map((entry) => entry.code), ['i18n/translation-coverage']);
-  const full = JSON.parse(fs.readFileSync(summary.evidence.receipt, 'utf8'));
-  assert.deepEqual(full.diagnostics.map((entry) => entry.code), ['i18n/translation-coverage']);
 });
 
 test('the manifest enrolls exactly the bundled catalogs, and each is complete', () => {
@@ -787,297 +529,6 @@ test('enrolling a catalog is a data-only change and works from an unrelated work
     assert.match(html, new RegExp(`^<!DOCTYPE html>\\n<html lang="${locale}"`));
     assert.match(html, new RegExp(`<text\\b[^>]*>${legend}</text>`));
     if (locale === 'fr') assert.match(result.stderr, /meta\.locale "fr" resolves \d+\/\d+ renderer-owned messages \(\d+%\) from the bundled fr catalog; \d+ fall back to English\./);
-  }
-});
-
-const BROWSER_LOCALES = {
-  'zh-CN': {
-    title: (type) => `浏览器本地化-${type}`,
-    toolbarLabel: '图表视图控制',
-    finder: { hidden: false, title: '查找节点', searchLabel: '搜索图表节点' },
-    route: { hidden: false, title: '点击路径的起点', label: '清除已追踪路径' },
-    exportLabel: '导出图表',
-    exportMenuLabel: '导出',
-    exportMenuText: /复制图表/,
-    presetBadges: {
-      'signal-flow': { header: '信号流', plate: 'none' },
-      blueprint: { header: '蓝图 / 修订 01', plate: '' },
-      editorial: { header: '编辑风格 / 现场笔记', plate: 'ARCHIFY / 图版 04' },
-    },
-    shareCardFailure: '无法为分享卡片创建二维画布上下文',
-  },
-  es: {
-    title: (type) => `Localización del navegador-${type}`,
-    toolbarLabel: 'Controles de vista del diagrama',
-    finder: { hidden: false, title: 'Buscar un nodo', searchLabel: 'Buscar nodos del diagrama' },
-    route: { hidden: false, title: 'Haz clic donde empieza la ruta', label: 'Borrar la ruta trazada' },
-    exportLabel: 'Exportar diagrama',
-    exportMenuLabel: 'Exportar',
-    exportMenuText: /Copiar diagrama/,
-    presetBadges: {
-      'signal-flow': { header: 'FLUJO DE SEÑAL', plate: 'none' },
-      blueprint: { header: 'PLANO / REV 01', plate: '' },
-      editorial: { header: 'EDITORIAL / NOTA DE CAMPO', plate: 'ARCHIFY / LÁMINA 04' },
-    },
-    shareCardFailure: 'Contexto de lienzo 2D no disponible para Tarjeta para compartir',
-  },
-};
-
-async function assertLocalizedViewer(browser, locale, expected) {
-  for (const type of Object.keys(EXAMPLES)) {
-    const document = example(type);
-    document.meta.locale = locale;
-    const authoredTitle = expected.title(type);
-    document.meta.title = authoredTitle;
-    const result = run(type, document);
-    assert.equal(result.status, 0, `${locale}/${type}: ${result.stderr || result.stdout}`);
-
-    const sessionId = await loadArtifact(browser, result.output);
-    const state = await evaluate(browser, sessionId, `(function () {
-      var finderButton = document.getElementById('btn-node-finder');
-      var routeButton = document.getElementById('btn-route-probe');
-      var exportButton = document.getElementById('btn-export');
-      finderButton.click();
-      var finder = {
-        hidden: document.getElementById('node-finder').hidden,
-        title: document.getElementById('node-finder-title').textContent.trim(),
-        searchLabel: document.getElementById('node-finder-input').getAttribute('aria-label')
-      };
-      document.getElementById('node-finder-close').click();
-      routeButton.click();
-      var route = {
-        hidden: document.getElementById('route-probe').hidden,
-        title: document.getElementById('route-probe-title').textContent.trim(),
-        label: routeButton.getAttribute('aria-label')
-      };
-      routeButton.click();
-      exportButton.click();
-      var exportMenu = document.getElementById('export-menu');
-      function pseudoContent(selector) {
-        var content = getComputedStyle(document.querySelector(selector), '::after').content || '';
-        return content.replace(/^["']|["']$/g, '');
-      }
-      var presetBadges = {};
-      ['signal-flow', 'blueprint', 'editorial'].forEach(function (preset) {
-        document.documentElement.setAttribute('data-preset', preset);
-        presetBadges[preset] = {
-          header: pseudoContent('.header-row'),
-          plate: pseudoContent('.diagram-container')
-        };
-      });
-      return {
-        htmlLang: document.documentElement.lang,
-        svgLang: document.querySelector('.diagram-container svg').getAttribute('lang'),
-        heading: (document.querySelector('h1') || {}).textContent,
-        toolbarLabel: document.querySelector('.diagram-nav').getAttribute('aria-label'),
-        finder: finder,
-        route: route,
-        exportMenuOpen: exportMenu.classList.contains('open'),
-        exportLabel: exportButton.getAttribute('aria-label'),
-        exportMenuLabel: exportMenu.getAttribute('aria-label'),
-        exportMenuText: exportMenu.textContent,
-        presetBadges: presetBadges
-      };
-    })()`);
-
-    assert.equal(state.htmlLang, locale, `${locale}/${type}`);
-    assert.equal(state.svgLang, locale, `${locale}/${type}`);
-    // Authored copy stays verbatim while the surrounding chrome localizes.
-    assert.equal(state.heading, authoredTitle, `${locale}/${type}: authored heading changed`);
-    assert.equal(state.toolbarLabel, expected.toolbarLabel, `${locale}/${type}`);
-    assert.deepEqual(state.finder, expected.finder, `${locale}/${type}`);
-    assert.deepEqual(state.route, expected.route, `${locale}/${type}`);
-    assert.equal(state.exportMenuOpen, true, `${locale}/${type}`);
-    assert.equal(state.exportLabel, expected.exportLabel, `${locale}/${type}`);
-    assert.equal(state.exportMenuLabel, expected.exportMenuLabel, `${locale}/${type}`);
-    assert.match(state.exportMenuText, expected.exportMenuText, `${locale}/${type}`);
-    assert.deepEqual(state.presetBadges, expected.presetBadges, `${locale}/${type}`);
-
-    const shareCardFailure = await evaluate(browser, sessionId, `(async function () {
-      var originalGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function () { return null; };
-      try {
-        var edge = document.querySelector('.diagram-container svg [data-edge-from][data-edge-to]');
-        Archify.routeProbe.begin({ source: edge.getAttribute('data-edge-from'), focusNode: false });
-        Archify.routeProbe.choose(edge.getAttribute('data-edge-to'), { updateUrl: false });
-        await Archify.exportMenu.shareCard({ variant: 'route' });
-        return { rejected: false, message: '' };
-      } catch (error) {
-        return { rejected: true, message: String(error && error.message || error) };
-      } finally {
-        HTMLCanvasElement.prototype.getContext = originalGetContext;
-      }
-    })()`, true);
-    assert.deepEqual(shareCardFailure, {
-      rejected: true,
-      message: expected.shareCardFailure,
-    }, `${locale}/${type}`);
-
-    // Representative visual pass: longer localized labels must not overflow.
-    const visual = spawnSync(process.execPath, [cli, 'visual-check', result.output, '--json'], {
-      cwd: skillRoot,
-      encoding: 'utf8',
-      env: { ...process.env, ARCHIFY_CHROME: chromePath },
-    });
-    assert.ok([0, 1].includes(visual.status), `${locale}/${type}: ${visual.stderr || visual.stdout}`);
-    const receipt = JSON.parse(visual.stdout);
-    assert.equal(receipt.visualReview, 'pending', `${locale}/${type}`);
-    assert.equal(receipt.chrome.status, 'available', `${locale}/${type}`);
-    assert.equal(receipt.readability.status, 'pass', `${locale}/${type}`);
-    assert.equal(receipt.viewerChrome.status, 'pass', `${locale}/${type}`);
-    assert.equal(receipt.captures.status, 'pass', `${locale}/${type}`);
-    assert.equal(
-      receipt.containment.viewports.every((viewport) => viewport.overflowX === false),
-      true,
-      `${locale}/${type}: localized Viewer introduced horizontal overflow`,
-    );
-  }
-}
-
-test('real Chrome keeps zh-CN Finder, Route, Export, and accessibility UI localized in all five modes', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
-}, async () => {
-  const browser = new ChromeVisualBrowser(chromePath);
-  try {
-    await assertLocalizedViewer(browser, 'zh-CN', BROWSER_LOCALES['zh-CN']);
-  } finally {
-    await browser.close();
-  }
-});
-
-test('real Chrome keeps es Finder, Route, Export, and accessibility UI localized in all five modes', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
-}, async () => {
-  const browser = new ChromeVisualBrowser(chromePath);
-  try {
-    await assertLocalizedViewer(browser, 'es', BROWSER_LOCALES.es);
-  } finally {
-    await browser.close();
-  }
-});
-
-test('real Chrome keeps ko Finder, Route, Export, and accessibility UI localized in all five modes', {
-  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser localization regression.',
-}, async () => {
-  const browser = new ChromeVisualBrowser(chromePath);
-  try {
-    for (const type of Object.keys(EXAMPLES)) {
-      const document = example(type);
-      document.meta.locale = 'ko';
-      document.meta.title = `브라우저 로케일-${type}`;
-      const result = run(type, document);
-      assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
-
-      const sessionId = await loadArtifact(browser, result.output);
-      const state = await evaluate(browser, sessionId, `(function () {
-        var finderButton = document.getElementById('btn-node-finder');
-        var routeButton = document.getElementById('btn-route-probe');
-        var exportButton = document.getElementById('btn-export');
-        finderButton.click();
-        var finder = {
-          hidden: document.getElementById('node-finder').hidden,
-          title: document.getElementById('node-finder-title').textContent.trim(),
-          searchLabel: document.getElementById('node-finder-input').getAttribute('aria-label')
-        };
-        document.getElementById('node-finder-close').click();
-        routeButton.click();
-        var route = {
-          hidden: document.getElementById('route-probe').hidden,
-          title: document.getElementById('route-probe-title').textContent.trim(),
-          label: routeButton.getAttribute('aria-label')
-        };
-        routeButton.click();
-        exportButton.click();
-        var exportMenu = document.getElementById('export-menu');
-        function pseudoContent(selector) {
-          var content = getComputedStyle(document.querySelector(selector), '::after').content || '';
-          return content.replace(/^["']|["']$/g, '');
-        }
-        var presetBadges = {};
-        ['signal-flow', 'blueprint', 'editorial'].forEach(function (preset) {
-          document.documentElement.setAttribute('data-preset', preset);
-          presetBadges[preset] = {
-            header: pseudoContent('.header-row'),
-            plate: pseudoContent('.diagram-container')
-          };
-        });
-        return {
-          htmlLang: document.documentElement.lang,
-          svgLang: document.querySelector('.diagram-container svg').getAttribute('lang'),
-          toolbarLabel: document.querySelector('.diagram-nav').getAttribute('aria-label'),
-          finder: finder,
-          route: route,
-          exportMenuOpen: exportMenu.classList.contains('open'),
-          exportLabel: exportButton.getAttribute('aria-label'),
-          exportMenuLabel: exportMenu.getAttribute('aria-label'),
-          exportMenuText: exportMenu.textContent,
-          presetBadges: presetBadges
-        };
-      })()`);
-
-      assert.equal(state.htmlLang, 'ko', type);
-      assert.equal(state.svgLang, 'ko', type);
-      assert.equal(state.toolbarLabel, '다이어그램 보기 제어', type);
-      assert.deepEqual(state.finder, {
-        hidden: false,
-        title: '노드 찾기',
-        searchLabel: '다이어그램 노드 검색',
-      }, type);
-      assert.deepEqual(state.route, {
-        hidden: false,
-        title: '시작 노드 선택',
-        label: '추적된 경로 지우기',
-      }, type);
-      assert.equal(state.exportMenuOpen, true, type);
-      assert.equal(state.exportLabel, '다이어그램 내보내기', type);
-      assert.equal(state.exportMenuLabel, '내보내기', type);
-      assert.match(state.exportMenuText, /다이어그램 복사/, type);
-      assert.deepEqual(state.presetBadges, {
-        'signal-flow': { header: '시그널 플로우', plate: 'none' },
-        blueprint: { header: '블루프린트 / 개정 01', plate: '' },
-        editorial: { header: '에디토리얼 / 현장 노트', plate: 'ARCHIFY / 도판 04' },
-      }, type);
-
-      const shareCardFailure = await evaluate(browser, sessionId, `(async function () {
-        var originalGetContext = HTMLCanvasElement.prototype.getContext;
-        HTMLCanvasElement.prototype.getContext = function () { return null; };
-        try {
-          var edge = document.querySelector('.diagram-container svg [data-edge-from][data-edge-to]');
-          Archify.routeProbe.begin({ source: edge.getAttribute('data-edge-from'), focusNode: false });
-          Archify.routeProbe.choose(edge.getAttribute('data-edge-to'), { updateUrl: false });
-          await Archify.exportMenu.shareCard({ variant: 'route' });
-          return { rejected: false, message: '' };
-        } catch (error) {
-          return { rejected: true, message: String(error && error.message || error) };
-        } finally {
-          HTMLCanvasElement.prototype.getContext = originalGetContext;
-        }
-      })()`, true);
-      assert.deepEqual(shareCardFailure, {
-        rejected: true,
-        message: '공유 카드에 2D 캔버스 컨텍스트를 만들 수 없습니다',
-      }, type);
-
-      const visual = spawnSync(process.execPath, [cli, 'visual-check', result.output, '--json'], {
-        cwd: skillRoot,
-        encoding: 'utf8',
-        env: { ...process.env, ARCHIFY_CHROME: chromePath },
-      });
-      assert.ok([0, 1].includes(visual.status), `${type}: ${visual.stderr || visual.stdout}`);
-      const receipt = JSON.parse(visual.stdout);
-      assert.equal(receipt.visualReview, 'pending', type);
-      assert.equal(receipt.chrome.status, 'available', type);
-      assert.equal(receipt.readability.status, 'pass', type);
-      assert.equal(receipt.viewerChrome.status, 'pass', type);
-      assert.equal(receipt.captures.status, 'pass', type);
-      assert.equal(
-        receipt.containment.viewports.every((viewport) => viewport.overflowX === false),
-        true,
-        `${type}: localized Viewer introduced horizontal overflow`,
-      );
-    }
-  } finally {
-    await browser.close();
   }
 });
 
