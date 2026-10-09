@@ -2602,7 +2602,7 @@ test('early causal failures retain diagnostic-only receipts after a complete rej
 });
 
 
-test('rejected layout receipt belongs to the selected best route-order attempt', () => {
+test('rejected layout receipt belongs to the selected best route-order attempt', (t) => {
   // The first plan crosses; retrying the later edge trades it for one shared
   // corridor. Equal error counts retain the first result, not the last routes.
   const document = workflow({
@@ -2644,6 +2644,29 @@ test('rejected layout receipt belongs to the selected best route-order attempt',
   assert.ok(crossing[1] > Math.min(other[j][1], other[j + 1][1])
     && crossing[1] < Math.max(other[j][1], other[j + 1][1]));
   assert.deepEqual(document, original);
+
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-selected-workflow-attempt-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const input = path.join(directory, 'workflow.json');
+  const inputBytes = JSON.stringify(document);
+  fs.writeFileSync(input, inputBytes);
+  const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
+  const failures = [[], ['--layout-json']].map((flags) => {
+    const validation = spawnSync(process.execPath, [
+      cli, 'validate', 'workflow', input, '--quality', 'showcase', '--json', ...flags,
+    ], { encoding: 'utf8', cwd: directory });
+    assert.equal(validation.status, 1, validation.stdout + validation.stderr);
+    assert.equal(validation.stderr, '');
+    const failure = JSON.parse(validation.stdout);
+    assert.equal(failure.ok, false);
+    assert.equal(fs.readFileSync(input, 'utf8'), inputBytes);
+    assert.deepEqual(fs.readdirSync(directory), ['workflow.json']);
+    return failure;
+  });
+  // Both public views must describe the selected routes. Discarded attempts
+  // cannot contribute a repair target absent from the returned layout.
+  assert.deepEqual(failures[1].diagnostics, result.diagnostics);
+  assert.deepEqual(failures[0].diagnostics, failures[1].diagnostics);
 });
 
 

@@ -161,6 +161,115 @@ test('a recorded layout diagnostic cannot hide a later unclassified exception', 
   assert.deepEqual(JSON.parse(classified.stderr).diagnostics.map(d => d.message), ['earlier layout problem', 'final layout problem']);
 });
 
+test('isolated diagnostic work preserves typed lookup without polluting later failures', t => {
+  const script = `import assert from 'node:assert/strict';
+    import { recordDiagnostic, throwDiagnosticProblems, rendererFailure, withIsolatedDiagnosticRecording } from ${JSON.stringify(diagnosticModule)};
+    const local = { code: 'composition/proper-crossing', severity: 'error', message: 'same problem',
+      subject: { id: 'local' }, evidence: { point: [12, 34] }, supportedFixes: ['move local route'] };
+    const outer = { ...local, subject: { id: 'outer' }, evidence: { point: [56, 78] }, supportedFixes: ['move outer route'] };
+    function recover() {
+      try { throwDiagnosticProblems('rejected', [local.message]); }
+      catch (error) { return error; }
+    }
+    let captured;
+    const result = withIsolatedDiagnosticRecording(() => {
+      recordDiagnostic(local);
+      captured = recover();
+      return captured;
+    });
+    assert.equal(result, captured);
+    assert.deepEqual(result.archifyDiagnostics, [local]);
+    recordDiagnostic(outer);
+    const terminal = recover();
+    assert.deepEqual(terminal.archifyDiagnostics, [outer]);
+    // Exact local repeats must record after leaving the speculative scope.
+    recordDiagnostic(local);
+    assert.deepEqual(rendererFailure(terminal).diagnostics, [outer, local]);`;
+  const result = run(['--input-type=module', '-e', script], workspace(t), true);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('nested isolated diagnostics restore each caller and retain earlier plus terminal failures', t => {
+  const script = `import assert from 'node:assert/strict';
+    import { recordDiagnostic, throwDiagnosticError, throwDiagnosticProblems, rendererFailure, withIsolatedDiagnosticRecording } from ${JSON.stringify(diagnosticModule)};
+    const detail = id => ({ code: 'layout/constraint', severity: 'error', message: 'same problem',
+      subject: { id }, evidence: { node: id }, supportedFixes: ['move ' + id] });
+    const outer = detail('outer'), local = detail('local'), nested = detail('nested');
+    function recover(expected) {
+      try { throwDiagnosticProblems('rejected', [expected.message]); assert.fail('problem must throw'); }
+      catch (error) { assert.deepEqual(error.archifyDiagnostics, [expected]); }
+    }
+    recordDiagnostic(outer);
+    withIsolatedDiagnosticRecording(() => {
+      recordDiagnostic(local);
+      withIsolatedDiagnosticRecording(() => { recordDiagnostic(nested); recover(nested); });
+      recover(local);
+    });
+    recover(outer);
+    const terminal = { ...detail('terminal'), message: 'terminal problem' };
+    try { throwDiagnosticError('rejected', [terminal]); assert.fail('terminal must throw'); }
+    catch (error) { assert.deepEqual(rendererFailure(error).diagnostics, [outer, terminal]); }`;
+  const result = run(['--input-type=module', '-e', script], workspace(t), true);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('isolated diagnostic exceptions restore recording and preserve error identity', t => {
+  const script = `import assert from 'node:assert/strict';
+    import { recordDiagnostic, throwDiagnosticError, rendererFailure, withIsolatedDiagnosticRecording } from ${JSON.stringify(diagnosticModule)};
+    const detail = id => ({ code: 'layout/constraint', severity: 'error', message: id + ' problem',
+      subject: { id }, evidence: { node: id }, supportedFixes: ['move ' + id] });
+    const earlier = detail('earlier'), abandoned = detail('abandoned'), terminal = detail('terminal');
+    recordDiagnostic(earlier);
+    const untyped = new TypeError('implementation defect');
+    try {
+      withIsolatedDiagnosticRecording(() => { recordDiagnostic(abandoned); throw untyped; });
+      assert.fail('exception must escape');
+    } catch (error) {
+      assert.equal(error, untyped);
+      assert.equal(rendererFailure(error).diagnostics[0].code, 'internal/unclassified');
+    }
+    try { throwDiagnosticError('rejected', [terminal]); assert.fail('terminal must throw'); }
+    catch (error) { assert.deepEqual(rendererFailure(error).diagnostics, [earlier, terminal]); }
+    const typed = Object.assign(new Error('typed escape'), { archifyDiagnostics: [detail('escape')] });
+    try {
+      withIsolatedDiagnosticRecording(() => { recordDiagnostic(abandoned); throw typed; });
+      assert.fail('typed exception must escape');
+    } catch (error) {
+      assert.equal(error, typed);
+      // The caller publishes only the escaped error after recording is restored.
+      for (const diagnostic of error.archifyDiagnostics) recordDiagnostic(diagnostic);
+      assert.deepEqual(rendererFailure(error).diagnostics, [earlier, terminal, detail('escape')]);
+    }`;
+  const result = run(['--input-type=module', '-e', script], workspace(t), true);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('isolated diagnostic scopes compose with recording suppression in either order', t => {
+  for (const composition of ['scope inside suppression', 'suppression inside scope']) {
+    const script = `import assert from 'node:assert/strict';
+      import { recordDiagnostic, throwDiagnosticError, rendererFailure, withIsolatedDiagnosticRecording, withDiagnosticRecordingSuppressed } from ${JSON.stringify(diagnosticModule)};
+      const detail = id => ({ code: 'layout/constraint', severity: 'error', message: id + ' problem',
+        subject: { id }, evidence: {}, supportedFixes: [] });
+      const earlier = detail('earlier'), terminal = detail('terminal');
+      recordDiagnostic(earlier);
+      const localWork = () => {
+        recordDiagnostic(detail('local'));
+        withDiagnosticRecordingSuppressed(() => recordDiagnostic(detail('suppressed')));
+        recordDiagnostic(detail('later local'));
+      };
+      ${composition === 'scope inside suppression'
+        ? `withDiagnosticRecordingSuppressed(() => {
+            withIsolatedDiagnosticRecording(localWork);
+            recordDiagnostic(detail('still suppressed'));
+          });`
+        : 'withIsolatedDiagnosticRecording(localWork);'}
+      try { throwDiagnosticError('rejected', [terminal]); assert.fail('terminal must throw'); }
+      catch (error) { assert.deepEqual(rendererFailure(error).diagnostics, [earlier, terminal]); }`;
+    const result = run(['--input-type=module', '-e', script], workspace(t), true);
+    assert.equal(result.status, 0, `${composition}: ${result.stderr}`);
+  }
+});
+
 test('repeated problem messages keep their own subject and evidence', t => {
   const cwd = workspace(t);
   const message = 'Connection "ghost" references unknown target "ghost".';
