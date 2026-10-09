@@ -2056,7 +2056,7 @@ test('sequence: lifelines and activation bars remain intentional pass-through ge
   assert.doesNotMatch(stderr, /Clean Flow Gate/);
 });
 
-test('sequence: segment titles render as foreground badges above their borders', () => {
+test('sequence: segment titles render as foreground badges near their borders and clear of headers', () => {
   const d = load('sequence');
   const { code, stderr, outPath } = render('sequence', d);
   assert.equal(code, 0, stderr);
@@ -2066,10 +2066,26 @@ test('sequence: segment titles render as foreground badges above their borders',
   const activationsAt = html.indexOf('<!-- Activations -->');
   const messagesAt = html.indexOf('<!-- Messages -->');
 
-  assert.ok(segmentLabelsAt > activationsAt, 'segment labels should stay above lifelines, messages, and activations');
+  assert.ok(segmentLabelsAt > messagesAt, 'segment labels should stay above lifelines, messages, and activations');
   assert.ok(messagesAt > activationsAt, 'message arrows and labels should stay above activation bars');
-  assert.match(html, new RegExp(`data-graph-role="segment-label"[^>]*data-segment-id="0"`));
-  assert.match(html, new RegExp(`<text x="62" y="${firstSegment.from - 9}"[^>]*>${firstSegment.label}</text>`));
+  const badge = html.match(/<g data-graph-role="segment-label" data-segment-id="0">([\s\S]*?)<\/g>/);
+  assert.ok(badge, 'the first phase keeps its foreground badge');
+  assert.match(badge[1], new RegExp(`<text [^>]*>${firstSegment.label}</text>`), 'the full phase title stays visible');
+  const mask = badge[1].match(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"[^>]*class="c-mask"/);
+  assert.ok(mask, 'the title keeps a background mask above the frame');
+  const [x, y, width, height] = mask.slice(1).map(Number);
+  assert.ok(y <= firstSegment.from && y + height >= firstSegment.from - 4,
+    'the automatic title remains attached to its own top border');
+  assert.ok(y + height < firstSegment.to, 'the title does not drift beyond its own phase');
+
+  const headers = [...html.matchAll(/<g [^>]*data-node-id="[^"]+"[^>]*>[\s\S]*?<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"[^>]*class="c-mask"/g)];
+  assert.equal(headers.length, d.participants.length, 'all participant header masks are checked');
+  for (const header of headers) {
+    const [headerX, headerY, headerWidth, headerHeight] = header.slice(1).map(Number);
+    const overlap = x < headerX + headerWidth && x + width > headerX
+      && y < headerY + headerHeight && y + height > headerY;
+    assert.equal(overlap, false, 'the full title badge clears participant cards, not only their main labels');
+  }
 });
 
 test('sequence: segment title badge clears a nearby first message label', () => {
