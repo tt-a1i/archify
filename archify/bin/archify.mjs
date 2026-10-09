@@ -6814,7 +6814,10 @@ async function commandMigrate(args) {
   }
 }
 
-async function commandValidate(args) {
+// `inspect` delegates here in layout-JSON mode, so argument failures must be
+// attributed to the command the caller actually invoked.
+async function commandValidate(args, invocation = {}) {
+  const invokingCommand = invocation.command || 'validate';
   const qualityArgs = extractQualityArgs(args);
   const repoArgs = extractRepoRootArgs(qualityArgs.rest);
   args = repoArgs.rest;
@@ -6822,7 +6825,7 @@ async function commandValidate(args) {
   const repoRoot = repoArgs.repoRoot;
   const knownOptions = new Set(['--json', '--layout-json']);
   const unknown = args.filter((arg) => arg.startsWith('--') && !knownOptions.has(arg));
-  if (unknown.length) rejectCliArgument(`Unknown validate option "${unknown[0]}".`, {
+  if (unknown.length) rejectCliArgument(`Unknown ${invokingCommand} option "${unknown[0]}".`, {
     code: 'cli/unknown-option',
     subject: { option: unknown[0] },
     supportedFixes: ['remove the unknown option and retry'],
@@ -6833,7 +6836,7 @@ async function commandValidate(args) {
   const [type, input] = rest;
   if (!type || !input || rest.length !== 2) rejectCliArgument(usage(), {
     code: 'cli/usage',
-    supportedFixes: ['use: archify validate <type> <input.json> [options]'],
+    supportedFixes: [`use: archify ${invokingCommand} <type> <input.json> [options]`],
   });
   const renderer = rendererPath(type);
 
@@ -7077,9 +7080,13 @@ try {
       break;
     case 'inspect':
       if (args[0] !== 'architecture') {
-        fail('inspect is currently supported for architecture diagrams only.');
+        rejectCliArgument('inspect is currently supported for architecture diagrams only.', {
+          code: 'cli/unsupported-option',
+          subject: { command: 'inspect', type: args[0] },
+          supportedFixes: ['use an architecture diagram', 'use validate <type> <input.json> --layout-json for workflow diagrams'],
+        });
       }
-      commandValidate([...args, '--layout-json']);
+      await commandValidate([...args, '--layout-json'], { command: 'inspect' });
       break;
     case 'check':
       await commandCheck(args);
@@ -7110,7 +7117,7 @@ try {
   }
 } catch (error) {
   if (!error.archifyArgument) throw error;
-  if (['validate', 'deliver', 'finalize'].includes(command) && args.includes('--json')) {
+  if (['validate', 'deliver', 'finalize', 'inspect'].includes(command) && args.includes('--json')) {
     reportArtifactArgumentFailure(command, error);
   } else {
     fail(error.message);

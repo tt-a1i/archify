@@ -114,6 +114,40 @@ globalThis.fetch = () => {
   assert.equal(fs.readFileSync(calls, 'utf8'), 'x');
 });
 
+test('cache startup time is deducted before the update fetch timeout starts', async (t) => {
+  const testFixture = fixture(t);
+  const calls = path.join(testFixture.root, 'fetch-calls');
+  const startup = path.join(testFixture.root, 'startup-delay');
+  const preload = path.join(testFixture.root, 'delayed-cache.mjs');
+  fs.writeFileSync(preload, `import fs from 'node:fs/promises';
+import syncFs from 'node:fs';
+const open = fs.open;
+let delayed = false;
+fs.open = async (...args) => {
+  if (!delayed && String(args[0]) === ${JSON.stringify(testFixture.releasePath)}) {
+    delayed = true;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    syncFs.appendFileSync(${JSON.stringify(startup)}, 'delayed');
+  }
+  return open.apply(fs, args);
+};
+globalThis.fetch = (_url, { signal }) => {
+  syncFs.appendFileSync(${JSON.stringify(calls)}, 'x');
+  return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+};
+`);
+  const slowEnv = { ...env(testFixture), NODE_OPTIONS: `--import=${pathToFileURL(preload).href}` };
+  const first = await startDeliveryUpdateCheck({ env: slowEnv, deadlineMs: 800 });
+  assert.equal(fs.readFileSync(startup, 'utf8'), 'delayed');
+  assert.equal(first.reason, 'check-failed');
+  const firstCalls = fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8') : '';
+  assert.ok(firstCalls === '' || firstCalls === 'x', 'an expired budget may skip the fetch');
+  let retryCalls = 0;
+  const second = await checkForUpdate({ ...testFixture, fetchImpl: async () => { retryCalls += 1; throw new Error('unexpected retry'); } });
+  assert.equal(second.status, 'silent');
+  assert.equal(retryCalls, 0, 'the failed check must persist backoff');
+});
+
 test('a synchronous renderer delay does not turn a completed check into a timeout', async (t) => {
   const testFixture = fixture(t);
   await seed(testFixture);
