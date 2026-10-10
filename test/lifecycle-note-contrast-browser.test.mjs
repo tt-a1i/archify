@@ -21,7 +21,11 @@ test('Lifecycle notes retain their content and reading depth with readable Full-
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-lifecycle-note-contrast-'));
   t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
   const artifact = path.join(scratch, 'lifecycle.html');
-  execFileSync(process.execPath, [cli, 'render', 'lifecycle', fixture, artifact]);
+  const input = path.join(scratch, 'lifecycle.json');
+  const document = JSON.parse(source);
+  document.transitions.find(edge => edge.id === 'advance-0').variant = 'default';
+  fs.writeFileSync(input, JSON.stringify(document));
+  execFileSync(process.execPath, [cli, 'render', 'lifecycle', input, artifact]);
   assert.deepEqual(fs.readFileSync(fixture), source, 'rendering preserves the authored notes');
   const browser = new ChromeVisualBrowser(chrome);
   t.after(() => browser.close());
@@ -33,6 +37,30 @@ test('Lifecycle notes retain their content and reading depth with readable Full-
     assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
     return result.result?.value;
   }
+  // Sample the same primary label in both depths without another browser session.
+  const primaryLabel = `(() => {
+    const label = document.querySelector('g[data-edge-id="advance-0"] text:not([data-detail="fine"])');
+    const ink = getComputedStyle(label);
+    const muted = getComputedStyle(document.querySelector('g[data-edge-id] text[data-detail="fine"]'));
+    const ancestors = [];
+    for (let node = label; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      ancestors.push({ opacity: Number(style.opacity), display: style.display, visibility: style.visibility });
+    }
+    return { text: label.textContent, role: label.getAttribute('class'), fill: ink.fill,
+      mutedFill: muted.fill, fillOpacity: Number(ink.fillOpacity), ancestors };
+  })()`;
+  function assertPrimaryLabel(label) {
+    assert.equal(label.text, 'assign worker');
+    assert.equal(label.role, 't-muted', 'default primary label uses readable neutral text');
+    assert.equal(label.fill, label.mutedFill, 'default label resolves to the existing readable muted ink');
+    assert.equal(label.fillOpacity, 1);
+    for (const ancestor of label.ancestors) {
+      assert.equal(ancestor.opacity, 1, 'primary label and every ancestor remain opaque');
+      assert.notEqual(ancestor.visibility, 'hidden');
+      assert.notEqual(ancestor.display, 'none');
+    }
+  }
   for (const theme of ['light', 'dark']) {
     await t.test(`${theme} Read hides notes and Full meets opaque-plate contrast`, async () => {
       await browser.inspect({ artifactPath: artifact, width: 1440, height: 1100, theme });
@@ -41,7 +69,7 @@ test('Lifecycle notes retain their content and reading depth with readable Full-
         await Archify.readerLayout.whenStable();
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const panel = document.querySelector('.diagram-container');
-        return { detail: panel.dataset.detailLevel, notes: [...panel.querySelectorAll('g[data-edge-id] text[data-detail="fine"]')].map(note => ({
+        return { primary: ${primaryLabel}, detail: panel.dataset.detailLevel, notes: [...panel.querySelectorAll('g[data-edge-id] text[data-detail="fine"]')].map(note => ({
           id: note.parentElement.dataset.edgeId, note: note.textContent,
           noteOpacity: getComputedStyle(note).opacity,
           label: note.parentElement.querySelector('text:not([data-detail="fine"])').textContent,
@@ -50,6 +78,7 @@ test('Lifecycle notes retain their content and reading depth with readable Full-
         })) };
       })()`);
       assert.equal(read.detail, 'read');
+      assertPrimaryLabel(read.primary);
       assert.deepEqual(read.notes.map(({ id, label, note }) => ({ id, label, note })), expected);
       for (const note of read.notes) {
         assert.equal(note.noteOpacity, '0', 'Read hides auxiliary notes');
@@ -68,7 +97,7 @@ test('Lifecycle notes retain their content and reading depth with readable Full-
           c /= 255;
           return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
         }).reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
-        return { theme: document.documentElement.dataset.theme, preset: document.documentElement.dataset.preset,
+        return { primary: ${primaryLabel}, theme: document.documentElement.dataset.theme, preset: document.documentElement.dataset.preset,
           detail: panel.dataset.detailLevel, notes: [...panel.querySelectorAll('g[data-edge-id] text[data-detail="fine"]')].map(note => {
             const group = note.parentElement, mask = group.querySelector(':scope > rect.c-mask');
             const ink = getComputedStyle(note), plate = getComputedStyle(mask);
@@ -92,6 +121,7 @@ test('Lifecycle notes retain their content and reading depth with readable Full-
       assert.equal(full.theme, theme);
       assert.equal(full.preset, 'classic');
       assert.equal(full.detail, 'full');
+      assertPrimaryLabel(full.primary);
       assert.deepEqual(full.notes.map(({ id, label, note }) => ({ id, label, note })), expected);
       for (const note of full.notes) {
         for (const ancestor of note.ancestors) {

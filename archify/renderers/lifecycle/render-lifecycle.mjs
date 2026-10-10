@@ -1042,7 +1042,8 @@ function renderTransition(transition, index) {
 function renderLabel(transition, index) {
   const rect = geometry.placedLabels.get(transition);
   if (!rect) return '';
-  const accent = edgeLabelAccent(variantOf(transition));
+  const variant = variantOf(transition);
+  const accent = variant === 'default' ? 't-muted' : edgeLabelAccent(variant);
   const baseline = rect.y + (transition.label ? 11.5 : 11);
   const label = transition.label
     ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${esc(transition.label)}</text>`
