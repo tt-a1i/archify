@@ -1871,9 +1871,9 @@ function recordDeliveryFailure(options) {
   return recorded;
 }
 
-// Locale warnings for a successfully rendered candidate. The renderer prints
-// them to stderr; receipts carry the same diagnostics from the same pure
-// resolver so an agent can repair a translation gap from structured output.
+// Locale warnings for a successfully rendered candidate. Diagnostic renderers
+// record them without printing text; validate/deliver disclose them before
+// checking the artifact and reuse the same diagnostics in successful receipts.
 async function specificationLocaleDiagnostics(type, specification) {
   let meta;
   try {
@@ -4831,6 +4831,8 @@ async function commandDeliver(args) {
       return;
     }
     if (render.stderr) process.stderr.write(render.stderr);
+    const localeWarnings = await specificationLocaleDiagnostics(type, specification);
+    for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
     try {
       const renderedCandidate = fs.readFileSync(candidatePath);
       if (preparedDeliveryTargets.artifact.mode !== null) {
@@ -4948,7 +4950,6 @@ async function commandDeliver(args) {
       return;
     }
     const engineeringProfile = engineeringProfileFromArtifact(artifact);
-    const localeWarnings = await specificationLocaleDiagnostics(type, specification);
     const receipt = {
       schemaVersion: 1,
       receiptId,
@@ -6941,6 +6942,8 @@ async function commandValidate(args, invocation = {}) {
       exitCode = render.status ?? 1;
     } else {
       if (render.stderr) process.stderr.write(render.stderr);
+      const localeWarnings = await specificationLocaleDiagnostics(type, specification);
+      for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
       const checkMaxBuffer = artifactCheckMaxBuffer();
       const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
         stdio: 'pipe',
@@ -6987,7 +6990,6 @@ async function commandValidate(args, invocation = {}) {
             ...artifactIdentity(specification),
           };
           const resolvedQuality = quality || result.composition.profile || 'standard';
-          const localeWarnings = await specificationLocaleDiagnostics(type, specification);
           const receipt = {
             schemaVersion: 1,
             ok: true,

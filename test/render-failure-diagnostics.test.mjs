@@ -125,6 +125,102 @@ test('render layout rejection exposes the existing diagnostic and preserves an e
     assert.deepEqual(failure.diagnostics[0].subject, { diagramType: 'architecture' });
   }
   assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+
+  // A locale warning must not replace the classified layout error or make
+  // the renderer's single JSON failure receipt unparsable.
+  const withWarning = JSON.parse(fs.readFileSync(input, 'utf8'));
+  withWarning.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(withWarning));
+  for (const command of ['validate', 'deliver']) {
+    const machine = run([cli, command, 'architecture', input, ...(command === 'deliver' ? [output] : []), '--json'], cwd);
+    assert.equal(machine.status, 1);
+    assert.equal(machine.stderr, '');
+    const failure = JSON.parse(machine.stdout);
+    assert.equal(failure.ok, false);
+    const warning = failure.diagnostics.find(entry => entry.code === 'i18n/locale-fallback');
+    const layout = failure.diagnostics.find(entry => entry.code === 'layout/constraint');
+    assert.equal(warning?.severity, 'warning');
+    assert.equal(layout?.severity, 'error');
+    assert.deepEqual(layout.subject, { diagramType: 'architecture' });
+    assert.match(layout.message, /shorten the label or widen size/);
+    assert.ok(Array.isArray(layout.supportedFixes));
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+  }
+  const direct = run([path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, output], cwd, true);
+  assert.equal(direct.status, 1);
+  assert.equal(direct.stdout, '');
+  const receipt = JSON.parse(direct.stderr);
+  assert.ok(receipt.diagnostics.some(entry => entry.code === 'i18n/locale-fallback'));
+  assert.ok(receipt.diagnostics.some(entry => entry.code === 'layout/constraint'));
+  assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+});
+
+test('locale warnings cannot classify an unrelated native renderer error', t => {
+  const cwd = workspace(t);
+  const input = path.join(cwd, 'warning.json');
+  const output = path.join(cwd, 'diagram.html');
+  const document = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  document.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(document));
+  const helper = new URL('../archify/renderers/shared/cli.mjs', import.meta.url).href;
+  const script = `import { loadDiagram } from ${JSON.stringify(helper)};
+    loadDiagram({ rendererDir: ${JSON.stringify(path.join(skillRoot, 'renderers/architecture'))}, diagramType: 'architecture', argv: ['node', 'renderer', ${JSON.stringify(input)}, ${JSON.stringify(output)}] });
+    throw new TypeError('unrelated implementation defect');`;
+  const human = run(['--input-type=module', '-e', script], cwd);
+  assert.equal(human.status, 1);
+  assert.match(human.stderr, /archify: meta\.locale "en-US"/);
+  assert.match(human.stderr, /TypeError: unrelated implementation defect/);
+  const machine = run(['--input-type=module', '-e', script], cwd, true);
+  assert.equal(machine.status, 1);
+  const receipt = JSON.parse(machine.stderr);
+  assert.deepEqual(receipt.diagnostics.map(entry => entry.code), ['internal/unclassified']);
+  assert.equal(fs.existsSync(output), false);
+});
+
+test('direct renderer warning modes preserve the successful artifact contract', t => {
+  const cwd = workspace(t);
+  const input = path.join(cwd, 'warning.json');
+  const output = path.join(cwd, 'diagram.html');
+  const document = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  document.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(document));
+  const renderer = path.join(skillRoot, 'renderers/architecture/render-architecture.mjs');
+  const human = run([renderer, input, output], cwd);
+  assert.equal(human.status, 0, human.stderr);
+  assert.equal(human.stdout, `${output}\n`);
+  assert.equal(human.stderr.trim().split('\n').length, 1);
+  assert.match(human.stderr, /^archify: meta\.locale "en-US"/);
+  const artifact = fs.readFileSync(output);
+  const machine = run([renderer, input, output], cwd, true);
+  assert.equal(machine.status, 0, machine.stderr);
+  assert.equal(machine.stdout, `${output}\n`);
+  assert.equal(machine.stderr, '');
+  assert.deepEqual(fs.readFileSync(output), artifact);
+});
+
+test('public post-render checker failures retain the locale warning once', t => {
+  const cwd = workspace(t);
+  const input = path.join(cwd, 'warning.json');
+  const output = path.join(cwd, 'diagram.html');
+  const document = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  document.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(document));
+  fs.writeFileSync(output, 'trusted artifact');
+  for (const command of ['validate', 'deliver']) {
+    const result = spawnSync(process.execPath, [cli, command, 'architecture', input, ...(command === 'deliver' ? [output] : []), '--json'], {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, ARCHIFY_CHECK_MAX_BUFFER: '1' },
+    });
+    assert.notEqual(result.status, 0);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.ok, false);
+    assert.equal(receipt.stage, 'check');
+    assert.ok(receipt.diagnostics.some(entry => entry.code === 'artifact/check-output-limit'));
+    assert.equal(result.stderr.trim().split('\n').length, 1);
+    assert.match(result.stderr, /^archify: meta\.locale "en-US"/);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+  }
 });
 
 test('unexpected renderer exceptions keep native debugging information and are not relabelled as input errors', t => {
