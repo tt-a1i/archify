@@ -810,7 +810,7 @@ svg {
 .diagram-nav button:disabled { opacity: 0.38; cursor: default; }
 /* The Guide stays on the ? shortcut; Map only earns dock space once the
    reader has zoomed past the full diagram (or opened it from the keyboard). */
-.diagram-nav button[hidden] { display: none; }
+.diagram-nav button[hidden] { display: none !important; }
 .diagram-container:not(.is-pannable) #btn-overview-map:not([data-radar-requested]):not(:focus) { display: none; }
 .diagram-nav button:disabled:hover { background: transparent; }
 .diagram-nav #btn-route-probe,
@@ -2032,6 +2032,7 @@ html[data-preset="blueprint"] .diagram-guide { border-radius: 0.28rem; }
   cursor: pointer;
   transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
+.diagram-guide-action[hidden] { display: none; }
 .diagram-guide-action[data-guide-action="route"] { --guide-accent: var(--backend-stroke); }
 .diagram-guide-action[data-guide-action="map"] { --guide-accent: var(--database-stroke); }
 .diagram-guide-action[data-guide-action="lens"] { --guide-accent: var(--messagebus-stroke); }

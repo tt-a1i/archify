@@ -40,6 +40,7 @@
       }
 
       function connectionsFor(id) {
+        if (!relationshipQueriesAvailable(svg)) return null;
         var count = 0;
         var seen = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
@@ -143,7 +144,7 @@
           button.type = 'button';
           button.className = 'node-finder-result';
           button.setAttribute('data-node-id', item.id);
-          var badge = context.badges && context.badges[item.id]
+          var badge = item.links === null ? '' : context.badges && context.badges[item.id]
             ? context.badges[item.id]
             : context.kind === 'focus'
               ? viewerCount('viewer.finder.link', item.links)
@@ -152,13 +153,16 @@
             ? viewerText('viewer.finder.result.routeStart', { label: item.label })
             : context.kind === 'route-target'
               ? viewerText('viewer.finder.result.routeTarget', { label: item.label, links: badge })
-              : viewerCount('viewer.finder.result.focus', item.links, { label: item.label });
+              : item.links === null
+                ? viewerText('viewer.finder.result.focus', { label: item.label })
+                : viewerCount('viewer.finder.result.focus', item.links, { label: item.label });
           button.setAttribute('aria-label', action);
 
           var name = document.createElement('strong');
           name.textContent = item.label;
           var links = document.createElement('em');
           links.textContent = badge;
+          links.hidden = item.links === null;
           links.title = context.kind === 'focus' ? badge : action;
           if (item.links === 0) links.setAttribute('data-zero', 'true');
           var meta = document.createElement('small');

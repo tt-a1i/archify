@@ -979,7 +979,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .diagram-nav button:disabled { opacity: 0.38; cursor: default; }
     /* The Guide stays on the ? shortcut; Map only earns dock space once the
        reader has zoomed past the full diagram (or opened it from the keyboard). */
-    .diagram-nav button[hidden] { display: none; }
+    .diagram-nav button[hidden] { display: none !important; }
     .diagram-container:not(.is-pannable) #btn-overview-map:not([data-radar-requested]):not(:focus) { display: none; }
     .diagram-nav button:disabled:hover { background: transparent; }
     .diagram-nav #btn-route-probe,
@@ -2201,6 +2201,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       cursor: pointer;
       transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
     }
+    .diagram-guide-action[hidden] { display: none; }
     .diagram-guide-action[data-guide-action="route"] { --guide-accent: var(--backend-stroke); }
     .diagram-guide-action[data-guide-action="map"] { --guide-accent: var(--database-stroke); }
     .diagram-guide-action[data-guide-action="lens"] { --guide-accent: var(--messagebus-stroke); }
@@ -5547,6 +5548,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
     }
 
+    function relationshipQueriesAvailable(svg) {
+      var declaration = svg && svg.getAttribute('data-relationship-queries');
+      return !!svg && (declaration === null || declaration === 'complete');
+    }
+
     function hasDrawableGeometry(element) {
       if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
       var geometries = /^(path|line|polyline)$/i.test(element.tagName)
@@ -7919,6 +7925,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return Array.prototype.slice.call(svg.querySelectorAll('[data-node-id]'));
       }
       function edges() {
+        if (!relationshipQueriesAvailable(svg)) return [];
         return Array.prototype.slice.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'));
       }
       function nodeLabel(node, fallback) {
@@ -8104,6 +8111,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return true;
       }
       function reachabilitySnapshot() {
+        if (!relationshipQueriesAvailable(svg)) return null;
         if (!activeReachability || activeIds.length !== 1 ||
             (reachabilityMode !== 'upstream' && reachabilityMode !== 'downstream') ||
             activeReachability.direction !== reachabilityMode ||
@@ -8813,6 +8821,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         focusedRelationship = null;
         clearRelationshipPreview({ clearPin: true });
         renderPassport(id, byId[id]);
+        if (!relationshipQueriesAvailable(svg)) {
+          relationsBtn.hidden = true;
+          summary.textContent = viewerText('viewer.guide.facts', {
+            nodes: viewerCount('viewer.query.occurrence', 1),
+            relationships: viewerText('viewer.query.unavailable')
+          });
+          clearReachability();
+          reachSection.hidden = true;
+          relationshipList.textContent = '';
+          return;
+        }
+        relationsBtn.hidden = false;
         var relationships = relationshipsFor(id, byId);
         chip.removeAttribute('data-relations-expanded');
         relationsBtn.setAttribute('aria-expanded', 'false');
@@ -9165,6 +9185,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         copyBtn.textContent = viewerText('viewer.passport.copy');
         copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
         relationsBtn.textContent = viewerText('viewer.passport.relations');
+        relationsBtn.hidden = !relationshipQueriesAvailable(svg);
         relationsBtn.setAttribute('aria-label', viewerText('viewer.passport.relations.show'));
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');
@@ -11966,6 +11987,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function connectionsFor(id) {
+        if (!relationshipQueriesAvailable(svg)) return null;
         var count = 0;
         var seen = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
@@ -12069,7 +12091,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           button.type = 'button';
           button.className = 'node-finder-result';
           button.setAttribute('data-node-id', item.id);
-          var badge = context.badges && context.badges[item.id]
+          var badge = item.links === null ? '' : context.badges && context.badges[item.id]
             ? context.badges[item.id]
             : context.kind === 'focus'
               ? viewerCount('viewer.finder.link', item.links)
@@ -12078,13 +12100,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             ? viewerText('viewer.finder.result.routeStart', { label: item.label })
             : context.kind === 'route-target'
               ? viewerText('viewer.finder.result.routeTarget', { label: item.label, links: badge })
-              : viewerCount('viewer.finder.result.focus', item.links, { label: item.label });
+              : item.links === null
+                ? viewerText('viewer.finder.result.focus', { label: item.label })
+                : viewerCount('viewer.finder.result.focus', item.links, { label: item.label });
           button.setAttribute('aria-label', action);
 
           var name = document.createElement('strong');
           name.textContent = item.label;
           var links = document.createElement('em');
           links.textContent = badge;
+          links.hidden = item.links === null;
           links.title = context.kind === 'focus' ? badge : action;
           if (item.links === 0) links.setAttribute('data-zero', 'true');
           var meta = document.createElement('small');
@@ -12187,6 +12212,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         count: items.length
       };
     })();
+
 
     /* ============================================================
        Node Outline — a rail index of the semantic nodes, grouped by their
@@ -12385,6 +12411,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '').split(',')[0];
       }
       function exportSnapshot() {
+        if (!relationshipQueriesAvailable(svg)) return null;
         if (mode !== 'result' || activeNodeIds.length < 2 || activeEdges.length !== activeNodeIds.length - 1) return null;
         var allNodes = nodes();
         var byId = nodesById();
@@ -13094,6 +13121,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return true;
       }
       function choose(id, options) {
+        if (!relationshipQueriesAvailable(svg)) return false;
         options = options || {};
         var byId = nodesById();
         if (!byId[id]) return false;
@@ -13118,6 +13146,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return showResult(result, options);
       }
       function begin(options) {
+        if (!relationshipQueriesAvailable(svg)) return false;
         options = options || {};
         if (html.getAttribute('data-embed') === 'true') return false;
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
@@ -13335,6 +13364,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         else removeJourneyPulse();
       });
       window.addEventListener('hashchange', function () { requestAnimationFrame(syncFromHash); });
+      trigger.hidden = !relationshipQueriesAvailable(svg);
       syncFromHash();
 
       return {
@@ -13415,6 +13445,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
       }
       function edgeGroups() {
+        if (!relationshipQueriesAvailable(svg)) return [];
         var groups = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
           var from = edge.getAttribute('data-edge-from');
@@ -13795,7 +13826,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         svg.setAttribute('data-lens-active', selectedKinds.join(' '));
         renderFlowOverlay(matchedFlow);
-        if (crossKind) {
+        if (!relationshipQueriesAvailable(svg)) {
+          var occurrences = Object.keys(byId).filter(function (id) { return chosen[nodeKind[id]]; }).length;
+          status.textContent = viewerText('viewer.guide.facts', {
+            nodes: viewerCount('viewer.query.occurrence', occurrences),
+            relationships: viewerText('viewer.query.unavailable')
+          });
+        } else if (crossKind) {
           var total = forward + reverse;
           status.textContent = viewerCount('viewer.lens.compare', total, {
             first: viewerKindLabel(selectedKinds[0]),
@@ -14061,6 +14098,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var returnFocus = null;
 
       function relationshipCount() {
+        if (!relationshipQueriesAvailable(svg)) return null;
         var seen = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
           var key = edge.getAttribute('data-edge-key') || [
@@ -14076,12 +14114,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var nodes = svg.querySelectorAll('[data-node-id]').length;
         var relationships = relationshipCount();
         stats.textContent = viewerText('viewer.guide.facts', {
-          nodes: viewerCount('viewer.guide.fact.node', nodes),
-          relationships: viewerCount('viewer.guide.fact.relationship', relationships)
+          nodes: viewerCount(relationships === null ? 'viewer.query.occurrence' : 'viewer.guide.fact.node', nodes),
+          relationships: relationships === null
+            ? viewerText('viewer.query.unavailable')
+            : viewerCount('viewer.guide.fact.relationship', relationships)
         });
+        actions.querySelector('[data-guide-action="route"]').hidden = relationships === null;
       }
       function actionButtons() {
-        return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled)'));
+        return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled):not([hidden])'));
       }
       function close(options) {
         options = options || {};

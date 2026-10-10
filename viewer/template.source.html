@@ -697,6 +697,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         .replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
     }
 
+    function relationshipQueriesAvailable(svg) {
+      var declaration = svg && svg.getAttribute('data-relationship-queries');
+      return !!svg && (declaration === null || declaration === 'complete');
+    }
+
     function hasDrawableGeometry(element) {
       if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
       var geometries = /^(path|line|polyline)$/i.test(element.tagName)
@@ -1154,6 +1159,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var returnFocus = null;
 
       function relationshipCount() {
+        if (!relationshipQueriesAvailable(svg)) return null;
         var seen = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
           var key = edge.getAttribute('data-edge-key') || [
@@ -1169,12 +1175,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var nodes = svg.querySelectorAll('[data-node-id]').length;
         var relationships = relationshipCount();
         stats.textContent = viewerText('viewer.guide.facts', {
-          nodes: viewerCount('viewer.guide.fact.node', nodes),
-          relationships: viewerCount('viewer.guide.fact.relationship', relationships)
+          nodes: viewerCount(relationships === null ? 'viewer.query.occurrence' : 'viewer.guide.fact.node', nodes),
+          relationships: relationships === null
+            ? viewerText('viewer.query.unavailable')
+            : viewerCount('viewer.guide.fact.relationship', relationships)
         });
+        actions.querySelector('[data-guide-action="route"]').hidden = relationships === null;
       }
       function actionButtons() {
-        return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled)'));
+        return Array.prototype.slice.call(actions.querySelectorAll('.diagram-guide-action:not(:disabled):not([hidden])'));
       }
       function close(options) {
         options = options || {};

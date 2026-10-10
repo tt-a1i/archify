@@ -55,6 +55,7 @@
           (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '').split(',')[0];
       }
       function exportSnapshot() {
+        if (!relationshipQueriesAvailable(svg)) return null;
         if (mode !== 'result' || activeNodeIds.length < 2 || activeEdges.length !== activeNodeIds.length - 1) return null;
         var allNodes = nodes();
         var byId = nodesById();
@@ -764,6 +765,7 @@
         return true;
       }
       function choose(id, options) {
+        if (!relationshipQueriesAvailable(svg)) return false;
         options = options || {};
         var byId = nodesById();
         if (!byId[id]) return false;
@@ -788,6 +790,7 @@
         return showResult(result, options);
       }
       function begin(options) {
+        if (!relationshipQueriesAvailable(svg)) return false;
         options = options || {};
         if (html.getAttribute('data-embed') === 'true') return false;
         if (Archify.semanticLens && typeof Archify.semanticLens.clearPreview === 'function') Archify.semanticLens.clearPreview();
@@ -1005,6 +1008,7 @@
         else removeJourneyPulse();
       });
       window.addEventListener('hashchange', function () { requestAnimationFrame(syncFromHash); });
+      trigger.hidden = !relationshipQueriesAvailable(svg);
       syncFromHash();
 
       return {

@@ -51,6 +51,7 @@
         return Array.prototype.slice.call(svg.querySelectorAll('[data-node-id]'));
       }
       function edges() {
+        if (!relationshipQueriesAvailable(svg)) return [];
         return Array.prototype.slice.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'));
       }
       function nodeLabel(node, fallback) {
@@ -236,6 +237,7 @@
         return true;
       }
       function reachabilitySnapshot() {
+        if (!relationshipQueriesAvailable(svg)) return null;
         if (!activeReachability || activeIds.length !== 1 ||
             (reachabilityMode !== 'upstream' && reachabilityMode !== 'downstream') ||
             activeReachability.direction !== reachabilityMode ||
@@ -945,6 +947,18 @@
         focusedRelationship = null;
         clearRelationshipPreview({ clearPin: true });
         renderPassport(id, byId[id]);
+        if (!relationshipQueriesAvailable(svg)) {
+          relationsBtn.hidden = true;
+          summary.textContent = viewerText('viewer.guide.facts', {
+            nodes: viewerCount('viewer.query.occurrence', 1),
+            relationships: viewerText('viewer.query.unavailable')
+          });
+          clearReachability();
+          reachSection.hidden = true;
+          relationshipList.textContent = '';
+          return;
+        }
+        relationsBtn.hidden = false;
         var relationships = relationshipsFor(id, byId);
         chip.removeAttribute('data-relations-expanded');
         relationsBtn.setAttribute('aria-expanded', 'false');
@@ -1297,6 +1311,7 @@
         copyBtn.textContent = viewerText('viewer.passport.copy');
         copyBtn.setAttribute('aria-label', viewerText('viewer.passport.copy.focus'));
         relationsBtn.textContent = viewerText('viewer.passport.relations');
+        relationsBtn.hidden = !relationshipQueriesAvailable(svg);
         relationsBtn.setAttribute('aria-label', viewerText('viewer.passport.relations.show'));
         relationsBtn.setAttribute('aria-expanded', 'false');
         chip.removeAttribute('data-relations-expanded');

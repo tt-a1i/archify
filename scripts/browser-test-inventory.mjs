@@ -22,6 +22,7 @@ export const browserTestFiles = [
   'finder-browser.test.mjs',
   'intent-trace-browser.test.mjs',
   'semantic-lens-browser.test.mjs',
+  'reader-query-availability-browser.test.mjs',
   'route-probe-browser.test.mjs',
   'focus-browser.test.mjs',
   'crossover-state-browser.test.mjs',

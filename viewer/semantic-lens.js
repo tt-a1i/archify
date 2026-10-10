@@ -48,6 +48,7 @@
         });
       }
       function edgeGroups() {
+        if (!relationshipQueriesAvailable(svg)) return [];
         var groups = {};
         Array.prototype.forEach.call(svg.querySelectorAll('[data-edge-from][data-edge-to]'), function (edge) {
           var from = edge.getAttribute('data-edge-from');
@@ -428,7 +429,13 @@
 
         svg.setAttribute('data-lens-active', selectedKinds.join(' '));
         renderFlowOverlay(matchedFlow);
-        if (crossKind) {
+        if (!relationshipQueriesAvailable(svg)) {
+          var occurrences = Object.keys(byId).filter(function (id) { return chosen[nodeKind[id]]; }).length;
+          status.textContent = viewerText('viewer.guide.facts', {
+            nodes: viewerCount('viewer.query.occurrence', occurrences),
+            relationships: viewerText('viewer.query.unavailable')
+          });
+        } else if (crossKind) {
           var total = forward + reverse;
           status.textContent = viewerCount('viewer.lens.compare', total, {
             first: viewerKindLabel(selectedKinds[0]),

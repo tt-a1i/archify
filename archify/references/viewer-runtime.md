@@ -32,4 +32,13 @@ After a non-empty authored reachability query, the reader may use **Export → R
 
 ## Truth boundary
 
+A custom SVG assembled with the native template may declare
+`data-relationship-queries="unavailable"` on its root when its graphic occurrences
+do not provide a complete queryable relationship graph. Finder and type selection
+remain available. Passport, Lens and Guide report unavailability rather than zero;
+Route, Reach and semantic Share Cards refuse graph queries. Omission of the
+attribute, or the explicit value `complete`, preserves existing typed-diagram
+behavior. Any other declared value fails closed. This declaration does not alter
+geometry, infer missing relationships or make a partial graph complete.
+
 Viewer exports are communication assets. They do not replace the checked HTML, the deterministic delivery receipt, or a real visual review. Do not add a hosted service, storage surface, dependency, schema branch, or mobile product surface for these viewer-only capabilities.
