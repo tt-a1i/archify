@@ -7,6 +7,7 @@ export const browserTestFiles = [
   'reader-layout-browser.test.mjs',
   'reader-layout-settle-browser.test.mjs',
   'reader-cards-overflow-browser.test.mjs',
+  'bottom-node-index-browser.test.mjs',
   'joint-layout-browser.test.mjs',
   'sequence-header-clearance.test.mjs',
   'sequence-width-default-browser.test.mjs',

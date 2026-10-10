@@ -2701,19 +2701,31 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     html[data-reader-rail="bottom"] .node-outline-head { padding: 1rem 2.5rem 0.375rem 0.25rem; }
     html[data-reader-rail="bottom"] .node-outline-list {
-      columns: 15rem;
-      column-gap: 1.75rem;
+      display: grid;
+      gap: 0.5rem;
       padding: 0;
       overflow: visible;
       -webkit-mask-image: none;
       mask-image: none;
     }
-    /* Named groups stay whole; a single unnamed group may split across columns,
-       where a continuous spine would read as a broken line. */
     html[data-reader-rail="bottom"] .node-outline-group + .node-outline-group { margin-top: 0; }
-    html[data-reader-rail="bottom"] .node-outline-group:has(> .node-outline-heading) { break-inside: avoid; padding-bottom: 0.25rem; }
-    html[data-reader-rail="bottom"] .node-outline-group:not(:has(> .node-outline-heading)) > ul::before { display: none; }
-    html[data-reader-rail="bottom"] .node-outline-group li { break-inside: avoid; }
+    html[data-reader-rail="bottom"] .node-outline-group:has(> .node-outline-heading) { padding-bottom: 0.25rem; }
+    html[data-reader-rail="bottom"] .node-outline-group > ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem 0.5rem;
+    }
+    html[data-reader-rail="bottom"] .node-outline-group > ul::before { display: none; }
+    html[data-reader-rail="bottom"] .node-outline-group li {
+      flex: 0 1 auto;
+      min-width: min(100%, 12rem);
+      max-width: min(100%, 32rem);
+    }
+    html[data-reader-rail="bottom"] .node-outline-heading {
+      justify-content: flex-start;
+      gap: 0.5rem;
+    }
+    html[data-reader-rail="bottom"] .node-outline-heading > span { overflow-wrap: anywhere; }
     .rail-controls { display: none; }
     html:is([data-reader-rail="true"], [data-reader-rail="overlay"], [data-reader-rail="bottom"]) .rail-controls {
       display: flex;
@@ -2929,6 +2941,42 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .node-outline-item:hover small,
     .node-outline-item[data-previewing] small,
     .node-outline-item[aria-current="true"] small { color: var(--text-muted); }
+
+    /* The desktop bottom rail is an index: compact rows keep related nodes
+       together while allowing full names and descriptions to wrap naturally. */
+    html[data-reader-rail="bottom"] .node-outline-item {
+      grid-template-columns: 0.625rem minmax(0, 1fr) minmax(0, 1fr) 0.75rem;
+      align-items: first baseline;
+      column-gap: 0.375rem;
+      min-height: 0;
+      padding-block: 0.375rem;
+    }
+    html[data-reader-rail="bottom"] .node-outline-item strong,
+    html[data-reader-rail="bottom"] .node-outline-item small {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    html[data-reader-rail="bottom"] .node-outline-item strong { grid-column: 2; }
+    html[data-reader-rail="bottom"] .node-outline-item small {
+      grid-column: 3;
+      text-align: left;
+    }
+    html[data-reader-rail="bottom"] .node-outline-item::after { align-self: center; }
+    @media (max-width: 767px) {
+      html[data-reader-rail="bottom"] .node-outline-item {
+        grid-template-columns: 0.625rem minmax(0, 1fr) 0.75rem;
+      }
+      html[data-reader-rail="bottom"] .node-outline-item small {
+        grid-column: 2;
+        grid-row: 2;
+      }
+      html[data-reader-rail="bottom"] .node-outline-item::after {
+        grid-column: 3;
+        grid-row: 1;
+      }
+    }
 
     .card-header {
       display: flex;

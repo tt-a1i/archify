@@ -1,0 +1,12 @@
+/* One group heading spans its columns; DOM order flows down then right. */
+html[data-reader-rail="bottom"] .node-outline-list { columns: auto; display: grid; gap: 0.75rem; }
+html[data-reader-rail="bottom"] .node-outline-group > ul { display: block; columns: 18rem; column-gap: 1rem; }
+html[data-reader-rail="bottom"] .node-outline-group > ul::before { display: none; }
+html[data-reader-rail="bottom"] .node-outline-group > ul > li { break-inside: avoid; margin-bottom: 0.25rem; }
+html[data-reader-rail="bottom"] .node-outline-heading { justify-content: flex-start; gap: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.375rem; }
+html[data-reader-rail="bottom"] .node-outline-heading > span { overflow-wrap: anywhere; }
+html[data-reader-rail="bottom"] .node-outline-item { grid-template-columns: 0.625rem minmax(0, 1fr) 0.75rem; align-content: start; padding-block: 0.5rem; }
+html[data-reader-rail="bottom"] .node-outline-item strong,
+html[data-reader-rail="bottom"] .node-outline-item small { grid-column: 2; white-space: normal; overflow-wrap: anywhere; }
+html[data-reader-rail="bottom"] .node-outline-item small { grid-row: 2; text-align: left; }
+html[data-reader-rail="bottom"] .node-outline-item::after { grid-column: 3; grid-row: 1; }
