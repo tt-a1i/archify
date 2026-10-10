@@ -373,12 +373,39 @@ test('compact failure receipts retain diverse actionable subjects without embedd
   const compact = compactFinalizeReceipt(receipt);
   assert.equal(compact.diagnostics.length, 8);
   assert.equal(new Set(compact.diagnostics.map(({ subject }) => subject.id)).size, 8);
-  assert.deepEqual(compact.diagnosticSummary, { total: 20, shown: 8, truncated: true });
+  assert.deepEqual(compact.diagnosticSummary, { total: 20, shown: 8, truncated: true, omittedByCode: { 'composition/proper-crossing': 12 } });
   assert.equal(compact.nextAction.action, 'edit-in-place');
   assert.match(compact.nextAction.constraint, /Preserve all semantics and user-fixed geometry/);
   assert.match(compact.nextAction.constraint, /local repair or connected-scene reflow/);
   assert.equal('stages' in compact, false);
   assert.ok(JSON.stringify(compact).length < JSON.stringify(receipt).length / 4);
+});
+
+test('compact failure summaries count omitted entries by code with repeated subjects', () => {
+  const codes = ['composition/proper-crossing', 'layout/constraint', '__proto__'];
+  const diagnostics = Array.from({ length: 14 }, (_, index) => ({
+    code: codes[index % codes.length],
+    message: `Failure ${index}`,
+    subject: { id: `edge-${Math.floor(index / 3)}` },
+  }));
+  const receipt = { ok: false, status: 'fail', diagnostics };
+  const originalDiagnostics = structuredClone(diagnostics);
+  const compact = compactFinalizeReceipt(receipt);
+  assert.deepEqual(compact.diagnostics.map(({ message }) => message),
+    [0, 1, 2, 3, 6, 9, 12, 4].map(index => `Failure ${index}`));
+  const omitted = diagnostics.filter(entry => !compact.diagnostics.some(shown => shown.message === entry.message));
+  assert.equal(omitted.length, compact.diagnosticSummary.total - compact.diagnosticSummary.shown);
+  assert.deepEqual(compact.diagnosticSummary.omittedByCode, { 'layout/constraint': 3, ['__proto__']: 3 });
+  assert.deepEqual(Object.entries(compact.diagnosticSummary.omittedByCode), [
+    ['layout/constraint', omitted.filter(({ code }) => code === 'layout/constraint').length],
+    ['__proto__', omitted.filter(({ code }) => code === '__proto__').length],
+  ]);
+  assert.equal(Object.values(compact.diagnosticSummary.omittedByCode).reduce((sum, count) => sum + count, 0), omitted.length);
+  assert.deepEqual(receipt.diagnostics, originalDiagnostics);
+  for (const entries of [[], diagnostics.slice(0, 8)]) {
+    const summary = compactFinalizeReceipt({ ...receipt, diagnostics: entries }).diagnosticSummary;
+    assert.equal('omittedByCode' in summary, false);
+  }
 });
 
 test('merged viewport-overflow diagnostics preserve each subject, evidence, and detection source', async t => {

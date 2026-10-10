@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { textUnits } from '../archify/renderers/shared/utils.mjs';
+import { minimumNodeTextWidth } from '../archify/renderers/shared/text-fit.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..', 'archify');
@@ -351,9 +352,115 @@ test('automatic spread canvas widens for participant labels up to the readable w
   for (const box of participantBoxes(html)) assert.ok(box.width + 6 >= textUnits('Team operations') * 6.8, JSON.stringify(box));
 
   doc.participants[6].label = 'Stdin dispatcher queue';
+  const requiredBox = Math.ceil(textUnits(doc.participants[6].label) * 6.8 - 6);
+  assert.ok(8 * requiredBox + 7 * 16 + 80 > 1085,
+    'even the entire bounded row cannot hold these uniform boxes with real gutters and margins');
   const crowded = renderOutcome(doc);
   assert.notEqual(crowded.code, 0);
   assert.match(crowded.stderr, /shorten it to at most \d+ text units[^]*keep meta\.viewBox omitted/);
+});
+
+function sevenParticipantCapacity() {
+  return {
+    schema_version: 1, diagram_type: 'sequence',
+    meta: { title: 'Seven participant capacity', quality_profile: 'showcase' },
+    participants: Array.from({ length: 7 }, (_, index) => ({
+      id: `p${index}`, type: 'backend',
+      label: index === 0 ? 'ParticipantEndpoint' : index === 6 ? '中文参与者终端接口' : `P${index}`,
+      sublabel: index === 6 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZab' : `context ${index}`,
+      ...(index === 2 ? { brand: 'redis' } : {}),
+    })),
+    messages: [{ id: 'send', from: 'p0', to: 'p6', y: 200, label: 'send' }],
+  };
+}
+
+test('automatic spread uses feasible header capacity without losing endpoint text or sublabel readability', () => {
+  const doc = sevenParticipantCapacity();
+  const original = JSON.stringify(doc);
+  const html = render(doc, true);
+  const boxes = participantBoxes(html);
+  const width = Number(html.match(/<svg viewBox="0 0 (\d+) /)[1]);
+  assert.equal(boxes.length, doc.participants.length);
+  assert.ok(width <= 1085);
+  assert.ok(boxes[0].x >= 40 && boxes.at(-1).x + boxes.at(-1).width <= width - 40);
+  for (let index = 0; index < boxes.length; index++) {
+    const box = boxes[index];
+    const participant = doc.participants[index];
+    assert.ok(box.width >= 86 && box.width <= 190);
+    assert.ok(textUnits(participant.label) * 6.8 <= box.width + 6);
+    if (index) assert.ok(box.x - boxes[index - 1].x - boxes[index - 1].width >= 16);
+    assert.ok(html.includes(`>${participant.label}</text>`));
+    const sublabel = html.match(new RegExp(`font-size="([\\d.]+)"[^>]*>${participant.sublabel}</text>`));
+    assert.ok(sublabel, participant.sublabel);
+    const font = Number(sublabel[1]);
+    assert.ok(font * Math.min(1, 930 / width) >= 6);
+    assert.ok(minimumNodeTextWidth(participant.sublabel, font) <= box.width - 8);
+  }
+  assert.match(html, /data-brand-mark="redis"/);
+  assert.deepEqual([...html.matchAll(/<g id="node-([^"]+)"/g)].map(match => match[1]), doc.participants.map(p => p.id));
+  assert.equal(JSON.stringify(doc), original, 'rendering preserves all authored content');
+  assert.equal(html, render({ ...doc, meta: { ...doc.meta, column_fit: 'spread' } }, true));
+});
+
+test('feasible automatic header fallback preserves authored viewBox and fixed rejection', () => {
+  const doc = sevenParticipantCapacity();
+  const authored = renderOutcome({ ...doc, meta: { ...doc.meta, viewBox: [1085, 620] } }, true);
+  assert.notEqual(authored.code, 0);
+  assert.match(authored.stderr, /wider than component "p0" \(113px\)/);
+  const fixed = renderOutcome({ ...doc, meta: { ...doc.meta, column_fit: 'fixed' } }, true);
+  assert.notEqual(fixed.code, 0);
+  assert.match(fixed.stderr, /participant boxes are 86px/);
+});
+
+test('automatic header fallback retains failure when actual sublabel or brand rail cannot fit', () => {
+  const sublabel = sevenParticipantCapacity();
+  sublabel.participants[6].sublabel += 'c';
+  const outcome = renderOutcome(sublabel, true);
+  assert.notEqual(outcome.code, 0);
+  assert.match(outcome.stderr, /7px minimum that stays readable on this 1085px canvas/);
+  assert.match(outcome.stderr, /participant boxes are 113px/);
+  const standard = structuredClone(sublabel);
+  standard.meta.quality_profile = 'standard';
+  assert.equal(renderOutcome(standard, true).code, 0, 'standard retains its historical 6px minimum');
+
+  const branded = sevenParticipantCapacity();
+  branded.participants[0].brand = 'redis';
+  const brandOutcome = renderOutcome(branded, true);
+  assert.notEqual(brandOutcome.code, 0);
+  assert.match(brandOutcome.stderr, /Participant "p0" brand top rail/);
+  assert.match(brandOutcome.stderr, /participant boxes are 113px/);
+});
+
+test('automatic header fallback wraps boundary notes before height while preserving timeline y and real collisions', () => {
+  const doc = sevenParticipantCapacity();
+  const token = `${'x'.repeat(25)}文`;
+  doc.messages[0].y = 700;
+  doc.messages[0].note = token;
+  doc.segments = [{ from: 160, to: 720, label: 'Phase' }];
+  doc.activations = [{ participant: 'p2', from: 680, to: 710 }];
+  const original = JSON.stringify(doc);
+  const html = render(doc, true);
+  const boxes = participantBoxes(html);
+  const lanes = boxes.map(box => box.x + box.width / 2);
+  const note = html.match(/<text data-detail="fine" x="([\d.]+)" y="([\d.]+)"[^>]*>(.*?)<\/text>/);
+  assert.ok(note);
+  const lines = [...note[3].matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map(match => match[1]);
+  assert.ok(lines.length > 1, 'the note crosses the final gap wrapping boundary');
+  assert.equal(lines.join(''), token);
+  assert.equal(Number(note[1]), lanes[0] + 19);
+  assert.equal(Number(note[2]), doc.messages[0].y + 18);
+  for (const line of lines) assert.ok(Number(note[1]) + minimumNodeTextWidth(line, 7) <= lanes[1] - 11);
+  const height = Number(html.match(/<svg viewBox="0 0 \d+ (\d+)"/)[1]);
+  assert.ok(height - 65 >= Number(note[2]) + (lines.length - 1) * 11 + 4);
+  assert.match(html, /data-composition-points="[^\"]*,700;/);
+  assert.match(html, /y="680" width="10" height="30"/);
+  assert.match(html, /y="160"[^>]*height="560"/);
+  assert.equal(JSON.stringify(doc), original);
+
+  doc.messages.push({ id: 'reply', from: 'p1', to: 'p0', y: 730, label: 'reply' });
+  const collision = renderOutcome(doc, true);
+  assert.notEqual(collision.code, 0);
+  assert.match(collision.stderr, /Note on message "send"[^]*reaches message "reply" at y=730/);
 });
 
 test('a widened automatic canvas reports sublabels at the size that stays readable there', () => {

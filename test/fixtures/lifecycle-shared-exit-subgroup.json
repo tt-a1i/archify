@@ -1,0 +1,75 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "One shared exit subgroup",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "single-subgroup.html"
+  },
+  "mainPath": [
+    "phase-one",
+    "phase-two",
+    "phase-three"
+  ],
+  "states": [
+    {
+      "id": "phase-one",
+      "type": "start",
+      "label": "First"
+    },
+    {
+      "id": "phase-two",
+      "type": "active",
+      "label": "Second"
+    },
+    {
+      "id": "phase-three",
+      "type": "success",
+      "label": "Third"
+    },
+    {
+      "id": "held",
+      "type": "waiting",
+      "label": "Held"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "advance-one",
+      "from": "phase-one",
+      "to": "phase-two",
+      "label": "next"
+    },
+    {
+      "id": "advance-two",
+      "from": "phase-two",
+      "to": "phase-three",
+      "label": "next"
+    },
+    {
+      "id": "hold-first",
+      "from": "phase-one",
+      "to": "held",
+      "label": "hold",
+      "note": "Team check",
+      "variant": "dashed"
+    },
+    {
+      "id": "hold-second",
+      "from": "phase-two",
+      "to": "held",
+      "label": "hold",
+      "note": "Team check",
+      "variant": "dashed"
+    },
+    {
+      "id": "hold-third",
+      "from": "phase-three",
+      "to": "held",
+      "label": "hold",
+      "note": "Owner check",
+      "variant": "dashed"
+    }
+  ]
+}

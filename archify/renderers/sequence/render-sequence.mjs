@@ -53,9 +53,8 @@ const LEGEND_BLOCK_HEIGHT = 86;
 // desktop reading minimum; an inherently crowded row still fails below.
 const spreadParticipantWidth = (canvasWidth) => Math.max(86,
   Math.min(190, Math.round((canvasWidth - 124) / Math.max(1, asArray(sequence.participants).length)) - 24));
-function spreadColumnGeometry(canvasWidth) {
+function spreadColumnGeometry(canvasWidth, width = spreadParticipantWidth(canvasWidth)) {
   const count = Math.max(1, asArray(sequence.participants).length);
-  const width = spreadParticipantWidth(canvasWidth);
   const span = count * width + (count - 1) * 16;
   const margin = Math.max(40, Math.min(62, canvasWidth - 40 - span));
   return { width, margin, gap: count > 1 ? Math.max(width + 16, (canvasWidth - 40 - margin - width) / (count - 1)) : 108 };
@@ -113,8 +112,36 @@ const automaticWidth = sequence.meta?.viewBox ? null : automaticCanvasWidth();
 const canvasWidth = sequence.meta?.viewBox?.[0] ?? automaticWidth;
 const columnFit = sequence.meta?.column_fit || 'spread';
 const participantCount = Math.max(1, asArray(sequence.participants).length);
+// Resolve the actual final-canvas text floor before choosing header geometry.
+// Notes and automatic height must use the resulting column gaps below.
+const readableMessages = sequence.meta?.quality_profile === 'showcase';
+const readableAutomaticSublabel = readableMessages && automaticWidth !== null && columnFit === 'spread';
+const readableSublabelMinimum = readableAutomaticSublabel
+  ? Math.max(participantTextFit.sublabelMinimum, Math.ceil(minimumReadableSourceTextPx(canvasWidth) * 10) / 10)
+  : participantTextFit.sublabelMinimum;
+const readableSublabelPreferred = Math.max(participantTextFit.sublabelPreferred, readableSublabelMinimum);
+
+function participantSpreadGeometry() {
+  const nominal = spreadColumnGeometry(canvasWidth);
+  const participants = asArray(sequence.participants);
+  // Preserve every already-fitting row and all authored/fixed geometry. Only
+  // a failed primary label opens this bounded use of spare horizontal room.
+  if (automaticWidth === null || columnFit !== 'spread'
+    || !participants.some((participant) => textUnits(participant.label) * 6.8 > nominal.width + 6)) return nominal;
+  const required = Math.ceil(Math.max(nominal.width, ...participants.map((participant) => Math.max(
+    textUnits(participant.label) * 6.8 - 6,
+    participant.sublabel ? minimumNodeTextWidth(participant.sublabel, readableSublabelMinimum)
+      + nominal.width - availableNodeTextWidth(nominal.width) : 0,
+  ))));
+  const capacity = Math.floor(Math.min(190, (canvasWidth - 80 - (participantCount - 1) * 16) / participantCount));
+  // Keep the existing real failures if ordinary text or the brand rail cannot
+  // fit the minimum candidate. Do not clamp a demand into infeasible geometry.
+  if (required > capacity || participants.some((participant) => brandTopRailProblem(participant, required, 8, 'Participant'))) return nominal;
+  return spreadColumnGeometry(canvasWidth, required);
+}
+
 const preferredSideMargin = 62;
-const spreadGeometry = spreadColumnGeometry(canvasWidth);
+const spreadGeometry = participantSpreadGeometry();
 const participantW = columnFit === 'spread' ? spreadGeometry.width : 86;
 // Narrow feasible frames can reduce the left margin, while ordinary frames
 // keep 62px. Compute card width first so this does not change its sizing rule.
@@ -268,7 +295,6 @@ const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 // a shorter one shrinks the readable band (validated below) instead of clipping.
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
-const readableMessages = sequence.meta?.quality_profile === 'showcase';
 const messageFontSize = readableMessages ? 11 : 9;
 const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
@@ -286,15 +312,6 @@ const layout = {
   colGap,
   labelH: readableMessages ? 18 : 16,
 };
-
-// Automatic showcase spread can guarantee a readable fit within its bounded
-// canvas. Standard, fixed columns and authored canvases retain historical text
-// sizing; composition reports their projected readability under its own policy.
-const readableAutomaticSublabel = readableMessages && automaticWidth !== null && columnFit === 'spread';
-const readableSublabelMinimum = readableAutomaticSublabel
-  ? Math.max(participantTextFit.sublabelMinimum, Math.ceil(minimumReadableSourceTextPx(viewBox[0]) * 10) / 10)
-  : participantTextFit.sublabelMinimum;
-const readableSublabelPreferred = Math.max(participantTextFit.sublabelPreferred, readableSublabelMinimum);
 
 const participantBoxWidthNote = automaticWidth
   ? `participant boxes are ${participantW}px: the automatic ${viewBox[0]}px canvas cannot widen further without its 7px sublabels falling below the desktop reading minimum, so keep meta.viewBox omitted`
@@ -367,7 +384,7 @@ function segmentLabelOccupants() {
   ]).filter((occupant) => occupant.rect);
 }
 
-function segmentLabelBox(segment) {
+function legacySegmentLabelBox(segment) {
   const labelW = Math.max(42, textUnits(segment.label) * 5.2 + 14);
   const occupied = segmentLabelOccupants();
   const label = { x: 56, y: segment.from - 22, width: labelW, height: 18 };
@@ -389,6 +406,62 @@ function segmentLabelBox(segment) {
     if (!segmentLabelMisplaced(inside, segment)
       && ![...occupied.map(({ rect }) => rect), ...otherTitles, ...participants.values()].some((rect) => rectsOverlap(inside, rect, 2))) return inside;
     inside.y += 22;
+  }
+  return label;
+}
+
+function segmentLabelBox(segment) {
+  const label = legacySegmentLabelBox(segment);
+  const headers = [...participants.values()];
+  const coveredHeaders = headers.filter((header) => rectsOverlap(label, header, 0));
+  if (!coveredHeaders.length || label.y + label.height > segment.from) return label;
+
+  const others = asArray(sequence.segments).filter((other) => other !== segment);
+  // Only the unique first, non-overlapping phase gets this local adjustment.
+  // Nested phases keep their authored bounds and the existing title policy.
+  if (others.some((other) => other.from <= segment.from
+    || (other.from < segment.to && other.to > segment.from))) return label;
+
+  const candidate = { ...label, y: Math.max(...coveredHeaders.map((header) => header.y + header.height)) + 2 };
+  const bottom = candidate.y + candidate.height;
+  // The badge must still touch its own top border, before the first message;
+  // moving it deep into the phase would name the wrong part of the timeline.
+  if (candidate.y > segment.from || bottom < segment.from || bottom > segment.to - 2) return label;
+
+  const obstacles = [
+    ...segmentLabelOccupants().map(({ rect }) => rect),
+    ...headers,
+    // Use actual legacy placements: another title may have climbed above its
+    // nominal slot. Calling the unchanged helper keeps this non-recursive.
+    ...others.map(legacySegmentLabelBox),
+  ];
+  if (!obstacles.some((rect) => rectsOverlap(candidate, rect, 2))) return candidate;
+
+  // Only this blocked header-clear strip gains a horizontal fallback. Keep
+  // successful legacy placements intact, including their activation policy.
+  const fallbackObstacles = [
+    ...obstacles,
+    ...asArray(sequence.activations).flatMap((activation) => {
+      const participant = participants.get(activation.participant);
+      return participant ? [{
+        x: participant.cx - 5, y: activation.from,
+        width: 10, height: activation.to - activation.from,
+      }] : [];
+    }),
+  ];
+  // Every free interval on this strip starts at the left frame inset or just
+  // beyond an obstacle. Scan those finite boundaries instead of pixel steps.
+  const boundaries = [...new Set([
+    candidate.x,
+    ...fallbackObstacles
+      .filter((rect) => candidate.y < rect.y + rect.height + 2
+        && rect.y < candidate.y + candidate.height + 2)
+      .map((rect) => rect.x + rect.width + 2),
+  ])].filter((x) => x >= candidate.x && x + candidate.width <= viewBox[0] - 48)
+    .sort((a, b) => a - b);
+  for (const x of boundaries) {
+    const shifted = { ...candidate, x };
+    if (!fallbackObstacles.some((rect) => rectsOverlap(shifted, rect, 2))) return shifted;
   }
   return label;
 }
@@ -875,7 +948,7 @@ function renderSegmentLabel(segment, index) {
   const label = segmentLabelBox(segment);
   return `        <g data-graph-role="segment-label" data-segment-id="${index}">
           <rect x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="3" class="c-mask"/>
-          <text x="${label.x + 6}" y="${label.y + 13}" class="t-dim" font-size="9" font-weight="600">${esc(segment.label)}</text>
+          <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>
         </g>`;
 }
 
@@ -912,7 +985,7 @@ function renderMessage(message, index) {
     ? noteBox.lines.map((line, lineIndex) => `<tspan x="${noteBox.x}" dy="${lineIndex ? NOTE_LINE_HEIGHT : 0}">${esc(line)}</tspan>`).join('')
     : esc(message.note);
   const note = noteBox
-    ? `\n        <text data-detail="fine" x="${noteBox.x}" y="${noteBox.baseline}" class="t-dim" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
+    ? `\n        <text data-detail="fine" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
     : '';
   return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}>
           <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>

@@ -110,6 +110,85 @@ test('inside title candidates stay below low participant headers', () => {
   assert.ok(labels(result.html)[0].y >= PARTICIPANT_BOTTOM);
 });
 
+// The real history drafts started their first frame at 144/145 and their
+// first arrow at 174/175. The renderer's 18px title was partly behind the
+// participant cards, even though the strip below those cards was free.
+function headerDraft(from = 145, firstY = 175) {
+  return {
+    schema_version: 1, diagram_type: 'sequence',
+    meta: { title: 'History phases', output: 'phase.html', quality_profile: 'showcase', viewBox: [920, 760] },
+    participants: ['build', 'snapshot', 'page', 'browser', 'reader']
+      .map((id) => ({ id, type: 'backend', label: id })),
+    messages: [{ from: 'build', to: 'snapshot', y: firstY, label: 'ping', note: 'keep this annotation' }],
+    segments: [{ from, to: 400, label: '构建期：读取固定文件；两种构建分支' }],
+  };
+}
+
+function assertAuthoredTimeline(html, diagram) {
+  const frames = [...html.matchAll(/data-composition-frame-id="(\d+)" x="48" y="([\d.]+)" width="[\d.]+" height="([\d.]+)"/g)]
+    .map((match) => ({ from: +match[2], to: +match[2] + +match[3] }));
+  assert.deepEqual(frames, diagram.segments.map(({ from, to }) => ({ from, to })), 'authored phase bounds stay fixed');
+  const routes = [...html.matchAll(/<path data-composition-edge-from="[^"]+"[^>]* d="M [\d.]+ ([\d.]+) L [\d.]+ \1"/g)]
+    .map((match) => +match[1]);
+  assert.deepEqual(routes, diagram.messages.map(({ y }) => y), 'authored arrows stay fixed');
+  const note = html.match(/<text data-detail="fine" x="[\d.]+" y="([\d.]+)"[^>]*font-size="([\d.]+)">keep this annotation<\/text>/);
+  assert.ok(note, 'the authored note stays complete');
+  assert.deepEqual(note.slice(1).map(Number), [diagram.messages.find((message) => message.note).y + 18, 7],
+    'the annotation keeps its authored baseline and font');
+}
+
+for (const from of [145, 144]) {
+  test(`first phase from ${from} clears headers without moving its frame, arrows or note`, () => {
+    const diagram = headerDraft(from, from + 30);
+    if (from === 144) {
+      // These arrows defeat all four legacy inside slots near the frame top.
+      diagram.messages[0].note = undefined;
+      diagram.messages.push(
+        { from: 'snapshot', to: 'build', y: 211, label: 'missing' },
+        { from: 'build', to: 'page', y: 252, label: 'guide', note: 'keep this annotation' },
+      );
+    }
+    const result = render(diagram);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const [title] = labels(result.html);
+    assert.ok(title.y >= PARTICIPANT_BOTTOM + 2, 'the full title clears the participant cards');
+    assert.ok(title.y <= from && title.y + title.height >= from, 'the title still names its own top border');
+    assert.ok(title.y + title.height + 2 <= diagram.messages[0].y - 20, 'the first message label stays clear');
+    assertAuthoredTimeline(result.html, diagram);
+  });
+}
+
+test('a header-adjacent title cannot cover an earlier first message', () => {
+  const diagram = headerDraft(145, 160);
+  const result = render(diagram);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const [title] = labels(result.html);
+  assert.ok(title.y >= 160 + 22 + 2, 'the occupied header strip retains the safe inside fallback');
+  assertAuthoredTimeline(result.html, diagram);
+});
+
+test('a nested frame keeps the existing title placement', () => {
+  const diagram = headerDraft();
+  diagram.segments.push({ from: 250, to: 350, label: 'Nested detail' });
+  const result = render(diagram);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.ok(labels(result.html)[0].y + 18 < diagram.segments[0].from,
+    'the header-only adjustment does not reinterpret nested phase bounds');
+  assertAuthoredTimeline(result.html, diagram);
+});
+
+test('a header-adjacent title keeps clear of another title that moved above its nominal slot', () => {
+  const diagram = headerDraft();
+  diagram.messages[0].note = undefined;
+  diagram.segments[0].to = 154;
+  diagram.segments.push({ from: 194, to: 350, label: '读取快照与生成页面' });
+  const result = render(diagram);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const [first, next] = labels(result.html);
+  assert.ok(next.y < diagram.segments[1].from - 22, 'the other title actually moved up from its nominal slot');
+  assert.ok(!rectOverlaps(first, next), 'the new header strip does not introduce a title collision');
+});
+
 test('inside segment title clears a message note after avoiding participant headers', () => {
   const diagram = {
     schema_version: 1, diagram_type: 'sequence',
@@ -121,7 +200,7 @@ test('inside segment title clears a message note after avoiding participant head
   const result = render(diagram, true);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const [title] = labels(result.html);
-  const note = result.html.match(/<text data-detail="fine" x="([\d.]+)" y="([\d.]+)" class="t-dim" font-size="([\d.]+)">diagnostic annotation<\/text>/);
+  const note = result.html.match(/<text data-detail="fine" x="([\d.]+)" y="([\d.]+)" class="[^"]*" font-size="([\d.]+)">diagnostic annotation<\/text>/);
   assert.ok(note, 'the full authored annotation remains visible');
   assert.deepEqual(note.slice(1).map(Number), [176, 178, 7], 'note position and font remain authored geometry');
   assert.ok(title.y >= PARTICIPANT_BOTTOM, 'title clears the participant headers');
@@ -177,4 +256,84 @@ test('the unedited payment draft reports its note overlap with a valid spacing r
   diagram.meta.quality_profile = 'standard';
   const compatible = render(diagram, true);
   assert.equal(compatible.status, 0, compatible.stdout + compatible.stderr);
+});
+
+function neutralTitleDraft() {
+  return {
+    schema_version: 1, diagram_type: 'sequence',
+    meta: { title: 'Segment title clearance probe', output: 'diagram.html', quality_profile: 'showcase', locale: 'zh-CN' },
+    participants: [
+      { id: 'a', type: 'external', label: '甲方' },
+      { id: 'b', type: 'backend', label: '乙方' },
+      { id: 'c', type: 'cloud', label: '丙方' },
+      { id: 'd', type: 'backend', label: '丁方' },
+    ],
+    segments: [{ from: 145, to: 205, label: '准备阶段确认目标以后开始前' }],
+    messages: [{ from: 'a', to: 'b', y: 170, label: '请求开始以后等待返回值' }],
+  };
+}
+
+const rectOverlaps = (a, b, gap = 2) => a.x < b.x + b.width + gap && b.x < a.x + a.width + gap
+  && a.y < b.y + b.height + gap && b.y < a.y + a.height + gap;
+
+function maskRects(html) {
+  return [...html.matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)" rx="[\d.]+" class="c-mask"\/>/g)]
+    .map((match) => ({ x: +match[1], y: +match[2], width: +match[3], height: +match[4] }));
+}
+
+function assertClearTitle(result, diagram) {
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const [title] = labels(result.html);
+  for (const rect of maskRects(result.html)) {
+    if (JSON.stringify(rect) === JSON.stringify({ x: title.x, y: title.y, width: title.width, height: title.height })) continue;
+    assert.ok(!rectOverlaps(title, rect), `title must clear mask ${JSON.stringify(rect)}`);
+  }
+  assert.ok(title.y <= diagram.segments[0].from && title.y + title.height >= diagram.segments[0].from,
+    'the title remains on its own top border');
+  assert.match(result.html, /font-size="9" font-weight="600">准备阶段确认目标以后开始前<\/text>/);
+  assert.match(result.html, /font-size="(?:9|11)" text-anchor="middle">请求开始以后等待返回值<\/text>/);
+  const frame = result.html.match(/data-composition-frame-id="0" x="48" y="([\d.]+)" width="[\d.]+" height="([\d.]+)"/);
+  assert.deepEqual(frame.slice(1).map(Number), [145, 60]);
+  const arrow = result.html.match(/data-composition-edge-from="a"[^>]*d="M [\d.]+ ([\d.]+) L [\d.]+ \1"/);
+  assert.ok(arrow, 'the authored request arrow stays at y170');
+  assert.equal(+arrow[1], 170);
+}
+
+test('first title clears participants and the request mask without editing authored geometry', () => {
+  const diagram = neutralTitleDraft();
+  assertClearTitle(render(diagram), diagram);
+});
+
+for (const column_fit of ['fixed', 'spread']) {
+  for (const quality_profile of ['standard', 'showcase']) {
+    test(`blocked first title finds a clear strip with ${column_fit} columns and ${quality_profile} acceptance`, () => {
+      const diagram = neutralTitleDraft();
+      Object.assign(diagram.meta, { column_fit, quality_profile, viewBox: [920, 760] });
+      const result = render(diagram);
+      assertClearTitle(result, diagram);
+    });
+  }
+}
+
+test('horizontal fallback clears activation bars without changing their geometry', () => {
+  const diagram = neutralTitleDraft();
+  diagram.activations = [{ participant: 'b', from: 145, to: 200 }];
+  const result = render(diagram);
+  assertClearTitle(result, diagram);
+  const activation = maskRects(result.html).find((rect) => rect.width === 10 && rect.y === 145);
+  assert.ok(activation);
+  assert.equal(activation.height, 55, 'activation keeps its authored time bounds and width');
+});
+
+test('an exhausted horizontal strip preserves compatible legacy placement', () => {
+  const diagram = neutralTitleDraft();
+  diagram.segments[0].label = '阶段'.repeat(35);
+  const result = render(diagram);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const [title] = labels(result.html);
+  assert.equal(title.x, 56, 'no out-of-frame slot is forced');
+  assert.equal(title.y, 123, 'exhaustion does not introduce a new acceptance failure');
+  assert.ok(title.x + title.width <= 872);
+  assert.ok(maskRects(result.html).some((rect) => rect.y === 72 && rectOverlaps(title, rect)),
+    'the retained overlap remains unresolved rather than being called repaired');
 });

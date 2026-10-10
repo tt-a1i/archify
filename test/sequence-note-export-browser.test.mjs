@@ -98,4 +98,59 @@ test('SVG and PNG exports keep every line of a wrapped sequence note', {
     const png = await run(`noteExport('png').then(blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=reject;reader.readAsDataURL(blob);}))`);
     fs.writeFileSync(process.env.ARCHIFY_NOTE_EXPORT_EVIDENCE, Buffer.from(png, 'base64'));
   }
+
+  // This fixture has no segment overlays: the note sits on the panel over
+  // the body background. Measure computed colors in Full detail, not a class
+  // name, and retain the default Read/export checks above.
+  await run(`for(let i=0;i<3;i++) Archify.view.zoomIn();
+    new Promise((resolve,reject)=>{
+      const deadline=performance.now()+2000;
+      function settled(){
+        if(getComputedStyle(document.querySelector('text[data-detail="fine"]')).opacity==='1') return resolve();
+        if(performance.now()>deadline) return reject(new Error('Full-detail note did not become visible'));
+        requestAnimationFrame(settled);
+      }
+      settled();
+    })`);
+  for (const theme of ['dark', 'light']) {
+    await t.test(`${theme} Full-detail note has at least 4.5:1 contrast`, async () => {
+      await run(`document.documentElement.setAttribute('data-theme', ${JSON.stringify(theme)});
+        new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+      const colors = await run(`(() => {
+        const note = document.querySelector('text[data-detail="fine"]');
+        const panel = document.querySelector('.diagram-container');
+        const style = getComputedStyle(note);
+        const rgba = value => {
+          const parts = value.match(/[\\d.]+/g).map(Number);
+          return [...parts.slice(0, 3), parts[3] ?? 1];
+        };
+        const over = (front, back) => front.slice(0, 3).map((c, i) => c * front[3] + back[i] * (1 - front[3]));
+        const body = rgba(getComputedStyle(document.body).backgroundColor);
+        const background = over(rgba(getComputedStyle(panel).backgroundColor), body);
+        const fill = rgba(style.fill);
+        fill[3] *= Number(style.fillOpacity);
+        const foreground = over(fill, background);
+        const luminance = rgb => rgb.map(c => {
+          c /= 255;
+          return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+        }).reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+        const a = luminance(foreground), b = luminance(background);
+        return { ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
+          foreground, background, bodyAlpha: body[3], opacity: style.opacity,
+          visibility: style.visibility, display: style.display,
+          detail: panel.getAttribute('data-detail-level'),
+          svgBackgroundAlpha: rgba(getComputedStyle(note.ownerSVGElement).backgroundColor)[3],
+          segments: document.querySelectorAll('[data-composition-frame-kind="segment"]').length };
+      })()`);
+      assert.equal(colors.detail, 'full');
+      assert.equal(colors.opacity, '1', 'contrast is measured on a visible note');
+      assert.notEqual(colors.visibility, 'hidden');
+      assert.notEqual(colors.display, 'none');
+      assert.equal(colors.bodyAlpha, 1, 'body provides the opaque background');
+      assert.equal(colors.svgBackgroundAlpha, 0, 'SVG leaves the panel background visible');
+      assert.equal(colors.segments, 0, 'no segment overlay changes the note background');
+      t.diagnostic(`${theme} note contrast ${colors.ratio.toFixed(3)}:1; foreground ${colors.foreground}; background ${colors.background}`);
+      assert.ok(colors.ratio >= 4.5, `${theme} note contrast ${colors.ratio.toFixed(3)}:1 must be at least 4.5:1`);
+    });
+  }
 });

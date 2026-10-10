@@ -34,4 +34,7 @@ export const browserTestFiles = [
   'tree-branches-browser.test.mjs',
   'class-motion-browser.test.mjs',
   'dataflow-label-visibility-browser.test.mjs',
+  'workflow-edge-label-contrast-browser.test.mjs',
+  'lifecycle-note-contrast-browser.test.mjs',
+  'sequence-segment-contrast-browser.test.mjs',
 ];

@@ -612,6 +612,13 @@ export function compactFinalizeReceipt(receipt) {
     addDiagnostic(entry, index);
   }
   for (const [index, entry] of allDiagnostics.entries()) addDiagnostic(entry, index);
+  const truncated = allDiagnostics.length > selectedDiagnostics.length;
+  const omittedCounts = new Map();
+  if (truncated) {
+    for (const [index, entry] of allDiagnostics.entries()) {
+      omittedCounts.set(entry.code, (omittedCounts.get(entry.code) || 0) + (selectedIndexes.has(index) ? 0 : 1));
+    }
+  }
   const compact = {
     schemaVersion: 1,
     ok: receipt.ok,
@@ -627,7 +634,8 @@ export function compactFinalizeReceipt(receipt) {
     diagnosticSummary: {
       total: allDiagnostics.length,
       shown: selectedDiagnostics.length,
-      truncated: allDiagnostics.length > selectedDiagnostics.length,
+      truncated,
+      ...(truncated ? { omittedByCode: Object.fromEntries([...omittedCounts].filter(([, count]) => count > 0)) } : {}),
     },
     evidence: receipt.evidence,
     ...(receipt.update && receipt.update.status !== 'unavailable'

@@ -125,6 +125,102 @@ test('render layout rejection exposes the existing diagnostic and preserves an e
     assert.deepEqual(failure.diagnostics[0].subject, { diagramType: 'architecture' });
   }
   assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+
+  // A locale warning must not replace the classified layout error or make
+  // the renderer's single JSON failure receipt unparsable.
+  const withWarning = JSON.parse(fs.readFileSync(input, 'utf8'));
+  withWarning.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(withWarning));
+  for (const command of ['validate', 'deliver']) {
+    const machine = run([cli, command, 'architecture', input, ...(command === 'deliver' ? [output] : []), '--json'], cwd);
+    assert.equal(machine.status, 1);
+    assert.equal(machine.stderr, '');
+    const failure = JSON.parse(machine.stdout);
+    assert.equal(failure.ok, false);
+    const warning = failure.diagnostics.find(entry => entry.code === 'i18n/locale-fallback');
+    const layout = failure.diagnostics.find(entry => entry.code === 'layout/constraint');
+    assert.equal(warning?.severity, 'warning');
+    assert.equal(layout?.severity, 'error');
+    assert.deepEqual(layout.subject, { diagramType: 'architecture' });
+    assert.match(layout.message, /shorten the label or widen size/);
+    assert.ok(Array.isArray(layout.supportedFixes));
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+  }
+  const direct = run([path.join(skillRoot, 'renderers/architecture/render-architecture.mjs'), input, output], cwd, true);
+  assert.equal(direct.status, 1);
+  assert.equal(direct.stdout, '');
+  const receipt = JSON.parse(direct.stderr);
+  assert.ok(receipt.diagnostics.some(entry => entry.code === 'i18n/locale-fallback'));
+  assert.ok(receipt.diagnostics.some(entry => entry.code === 'layout/constraint'));
+  assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+});
+
+test('locale warnings cannot classify an unrelated native renderer error', t => {
+  const cwd = workspace(t);
+  const input = path.join(cwd, 'warning.json');
+  const output = path.join(cwd, 'diagram.html');
+  const document = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  document.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(document));
+  const helper = new URL('../archify/renderers/shared/cli.mjs', import.meta.url).href;
+  const script = `import { loadDiagram } from ${JSON.stringify(helper)};
+    loadDiagram({ rendererDir: ${JSON.stringify(path.join(skillRoot, 'renderers/architecture'))}, diagramType: 'architecture', argv: ['node', 'renderer', ${JSON.stringify(input)}, ${JSON.stringify(output)}] });
+    throw new TypeError('unrelated implementation defect');`;
+  const human = run(['--input-type=module', '-e', script], cwd);
+  assert.equal(human.status, 1);
+  assert.match(human.stderr, /archify: meta\.locale "en-US"/);
+  assert.match(human.stderr, /TypeError: unrelated implementation defect/);
+  const machine = run(['--input-type=module', '-e', script], cwd, true);
+  assert.equal(machine.status, 1);
+  const receipt = JSON.parse(machine.stderr);
+  assert.deepEqual(receipt.diagnostics.map(entry => entry.code), ['internal/unclassified']);
+  assert.equal(fs.existsSync(output), false);
+});
+
+test('direct renderer warning modes preserve the successful artifact contract', t => {
+  const cwd = workspace(t);
+  const input = path.join(cwd, 'warning.json');
+  const output = path.join(cwd, 'diagram.html');
+  const document = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  document.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(document));
+  const renderer = path.join(skillRoot, 'renderers/architecture/render-architecture.mjs');
+  const human = run([renderer, input, output], cwd);
+  assert.equal(human.status, 0, human.stderr);
+  assert.equal(human.stdout, `${output}\n`);
+  assert.equal(human.stderr.trim().split('\n').length, 1);
+  assert.match(human.stderr, /^archify: meta\.locale "en-US"/);
+  const artifact = fs.readFileSync(output);
+  const machine = run([renderer, input, output], cwd, true);
+  assert.equal(machine.status, 0, machine.stderr);
+  assert.equal(machine.stdout, `${output}\n`);
+  assert.equal(machine.stderr, '');
+  assert.deepEqual(fs.readFileSync(output), artifact);
+});
+
+test('public post-render checker failures retain the locale warning once', t => {
+  const cwd = workspace(t);
+  const input = path.join(cwd, 'warning.json');
+  const output = path.join(cwd, 'diagram.html');
+  const document = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  document.meta.locale = 'en-US';
+  fs.writeFileSync(input, JSON.stringify(document));
+  fs.writeFileSync(output, 'trusted artifact');
+  for (const command of ['validate', 'deliver']) {
+    const result = spawnSync(process.execPath, [cli, command, 'architecture', input, ...(command === 'deliver' ? [output] : []), '--json'], {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, ARCHIFY_CHECK_MAX_BUFFER: '1' },
+    });
+    assert.notEqual(result.status, 0);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.ok, false);
+    assert.equal(receipt.stage, 'check');
+    assert.ok(receipt.diagnostics.some(entry => entry.code === 'artifact/check-output-limit'));
+    assert.equal(result.stderr.trim().split('\n').length, 1);
+    assert.match(result.stderr, /^archify: meta\.locale "en-US"/);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'trusted artifact');
+  }
 });
 
 test('unexpected renderer exceptions keep native debugging information and are not relabelled as input errors', t => {
@@ -159,6 +255,115 @@ test('a recorded layout diagnostic cannot hide a later unclassified exception', 
   const classified = run(['--input-type=module', '-e', setup + `throwDiagnosticError('layout rejected', [{ code: 'layout/constraint', message: 'final layout problem' }]);`], cwd, true);
   assert.equal(classified.status, 1);
   assert.deepEqual(JSON.parse(classified.stderr).diagnostics.map(d => d.message), ['earlier layout problem', 'final layout problem']);
+});
+
+test('isolated diagnostic work preserves typed lookup without polluting later failures', t => {
+  const script = `import assert from 'node:assert/strict';
+    import { recordDiagnostic, throwDiagnosticProblems, rendererFailure, withIsolatedDiagnosticRecording } from ${JSON.stringify(diagnosticModule)};
+    const local = { code: 'composition/proper-crossing', severity: 'error', message: 'same problem',
+      subject: { id: 'local' }, evidence: { point: [12, 34] }, supportedFixes: ['move local route'] };
+    const outer = { ...local, subject: { id: 'outer' }, evidence: { point: [56, 78] }, supportedFixes: ['move outer route'] };
+    function recover() {
+      try { throwDiagnosticProblems('rejected', [local.message]); }
+      catch (error) { return error; }
+    }
+    let captured;
+    const result = withIsolatedDiagnosticRecording(() => {
+      recordDiagnostic(local);
+      captured = recover();
+      return captured;
+    });
+    assert.equal(result, captured);
+    assert.deepEqual(result.archifyDiagnostics, [local]);
+    recordDiagnostic(outer);
+    const terminal = recover();
+    assert.deepEqual(terminal.archifyDiagnostics, [outer]);
+    // Exact local repeats must record after leaving the speculative scope.
+    recordDiagnostic(local);
+    assert.deepEqual(rendererFailure(terminal).diagnostics, [outer, local]);`;
+  const result = run(['--input-type=module', '-e', script], workspace(t), true);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('nested isolated diagnostics restore each caller and retain earlier plus terminal failures', t => {
+  const script = `import assert from 'node:assert/strict';
+    import { recordDiagnostic, throwDiagnosticError, throwDiagnosticProblems, rendererFailure, withIsolatedDiagnosticRecording } from ${JSON.stringify(diagnosticModule)};
+    const detail = id => ({ code: 'layout/constraint', severity: 'error', message: 'same problem',
+      subject: { id }, evidence: { node: id }, supportedFixes: ['move ' + id] });
+    const outer = detail('outer'), local = detail('local'), nested = detail('nested');
+    function recover(expected) {
+      try { throwDiagnosticProblems('rejected', [expected.message]); assert.fail('problem must throw'); }
+      catch (error) { assert.deepEqual(error.archifyDiagnostics, [expected]); }
+    }
+    recordDiagnostic(outer);
+    withIsolatedDiagnosticRecording(() => {
+      recordDiagnostic(local);
+      withIsolatedDiagnosticRecording(() => { recordDiagnostic(nested); recover(nested); });
+      recover(local);
+    });
+    recover(outer);
+    const terminal = { ...detail('terminal'), message: 'terminal problem' };
+    try { throwDiagnosticError('rejected', [terminal]); assert.fail('terminal must throw'); }
+    catch (error) { assert.deepEqual(rendererFailure(error).diagnostics, [outer, terminal]); }`;
+  const result = run(['--input-type=module', '-e', script], workspace(t), true);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('isolated diagnostic exceptions restore recording and preserve error identity', t => {
+  const script = `import assert from 'node:assert/strict';
+    import { recordDiagnostic, throwDiagnosticError, rendererFailure, withIsolatedDiagnosticRecording } from ${JSON.stringify(diagnosticModule)};
+    const detail = id => ({ code: 'layout/constraint', severity: 'error', message: id + ' problem',
+      subject: { id }, evidence: { node: id }, supportedFixes: ['move ' + id] });
+    const earlier = detail('earlier'), abandoned = detail('abandoned'), terminal = detail('terminal');
+    recordDiagnostic(earlier);
+    const untyped = new TypeError('implementation defect');
+    try {
+      withIsolatedDiagnosticRecording(() => { recordDiagnostic(abandoned); throw untyped; });
+      assert.fail('exception must escape');
+    } catch (error) {
+      assert.equal(error, untyped);
+      assert.equal(rendererFailure(error).diagnostics[0].code, 'internal/unclassified');
+    }
+    try { throwDiagnosticError('rejected', [terminal]); assert.fail('terminal must throw'); }
+    catch (error) { assert.deepEqual(rendererFailure(error).diagnostics, [earlier, terminal]); }
+    const typed = Object.assign(new Error('typed escape'), { archifyDiagnostics: [detail('escape')] });
+    try {
+      withIsolatedDiagnosticRecording(() => { recordDiagnostic(abandoned); throw typed; });
+      assert.fail('typed exception must escape');
+    } catch (error) {
+      assert.equal(error, typed);
+      // The caller publishes only the escaped error after recording is restored.
+      for (const diagnostic of error.archifyDiagnostics) recordDiagnostic(diagnostic);
+      assert.deepEqual(rendererFailure(error).diagnostics, [earlier, terminal, detail('escape')]);
+    }`;
+  const result = run(['--input-type=module', '-e', script], workspace(t), true);
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('isolated diagnostic scopes compose with recording suppression in either order', t => {
+  for (const composition of ['scope inside suppression', 'suppression inside scope']) {
+    const script = `import assert from 'node:assert/strict';
+      import { recordDiagnostic, throwDiagnosticError, rendererFailure, withIsolatedDiagnosticRecording, withDiagnosticRecordingSuppressed } from ${JSON.stringify(diagnosticModule)};
+      const detail = id => ({ code: 'layout/constraint', severity: 'error', message: id + ' problem',
+        subject: { id }, evidence: {}, supportedFixes: [] });
+      const earlier = detail('earlier'), terminal = detail('terminal');
+      recordDiagnostic(earlier);
+      const localWork = () => {
+        recordDiagnostic(detail('local'));
+        withDiagnosticRecordingSuppressed(() => recordDiagnostic(detail('suppressed')));
+        recordDiagnostic(detail('later local'));
+      };
+      ${composition === 'scope inside suppression'
+        ? `withDiagnosticRecordingSuppressed(() => {
+            withIsolatedDiagnosticRecording(localWork);
+            recordDiagnostic(detail('still suppressed'));
+          });`
+        : 'withIsolatedDiagnosticRecording(localWork);'}
+      try { throwDiagnosticError('rejected', [terminal]); assert.fail('terminal must throw'); }
+      catch (error) { assert.deepEqual(rendererFailure(error).diagnostics, [earlier, terminal]); }`;
+    const result = run(['--input-type=module', '-e', script], workspace(t), true);
+    assert.equal(result.status, 0, `${composition}: ${result.stderr}`);
+  }
 });
 
 test('repeated problem messages keep their own subject and evidence', t => {

@@ -100,7 +100,15 @@ node archify/bin/archify.mjs validate workflow input.workflow.json --layout-json
 
 The receipt reports the selected contract, measured `viewBox` and
 `requiredViewBox`, solved columns, nodes, edges, labels, and causal diagnostics.
-It deliberately omits solver iterations and candidate scores.
+It deliberately omits solver iterations and candidate scores. A complete plan
+rejected by a late layout, canvas, or text check also includes this geometry with
+`ok: false`; validation still exits non-zero and writes no HTML. Its `viewBox`
+is the attempted frame at rejection, while `requiredViewBox` is the measured
+footprint of that same rejected plan. Labels use their anchor coordinates,
+not the top-left corner of the label mask. Early or incomplete failures retain
+only the contract and causal diagnostics. Failed geometry is repair evidence,
+not acceptance; migration failure reports may also gain measured canvas evidence
+without accepting the rejected plan.
 
 ## Legend
 
@@ -214,8 +222,9 @@ An infeasible preset returns `workflow/route-preset-conflict` with the actual
 rejected `evidence.invariant`. For node clearance it also identifies the node,
 segment, endpoint role, and required clearance. Use that obstacle to revise
 the connected placement or route constraints, then revalidate; minimum segment
-lengths alone do not establish a clear path. Advertised `supportedFixes` are
-verified against the complete workflow.
+lengths alone do not establish a clear path. Concrete alternatives for
+`workflow/route-preset-conflict` are checked by replanning the complete workflow
+at the active quality profile.
 
 ## Design Rules
 
@@ -275,10 +284,12 @@ pass-through containers. Text width is estimated CJK-aware: fullwidth glyphs
 count as two units.
 
 Diagnostics are causal: a rank-capacity failure suppresses derivative short
-edge, endpoint-direction, and label-overlap findings. Every
-`supportedFixes[]` entry is verified by replanning the proposed edit, and a
-diagnostic never proposes removing a semantic label when label presence does
-not cause the failed invariant.
+edge, endpoint-direction, and label-overlap findings. `supportedFixes[]` can
+contain concrete edits checked by the compiler's fix search or general repair
+guidance from shared composition checks. General guidance is not a verified
+edit. After any edit, rerun the complete `finalize` command. A diagnostic never
+proposes removing a semantic label when label presence does not cause the
+failed invariant.
 
 Set `meta.quality_profile` to `showcase` for polished delivery. Unrelated proper
 X crossings then fail with `composition/proper-crossing`; default `standard`

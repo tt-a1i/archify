@@ -191,6 +191,46 @@ test('cli: help lists commands and diagram types', () => {
   assert.match(result.stdout, /architecture, workflow, sequence, dataflow, lifecycle/);
 });
 
+test('cli: sole subcommand --help returns canonical usage without operations', (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-cli-help-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const global = run(['--help'], { cwd: scratch });
+  assert.equal(global.status, 0, global.stderr);
+  const commands = ['render', 'compare', 'deliver', 'finalize', 'preview', 'validate',
+    'migrate', 'inspect', 'check', 'browser-check', 'visual-check', 'guide', 'brands',
+    'examples', 'doctor', 'demo'];
+  for (const command of commands) {
+    const result = run([command, '--help'], { cwd: scratch });
+    assert.equal(result.status, 0, `${command}: ${result.stderr}`);
+    assert.equal(result.stderr, '', command);
+    assert.equal(result.stdout, global.stdout, `${command} uses canonical help bytes`);
+    assert.deepEqual(fs.readdirSync(scratch), [], `${command} help creates no artifact or evidence`);
+  }
+});
+
+test('cli: subcommand help keeps unknown and mixed arguments failing', () => {
+  const unknown = run(['not-a-command', '--help']);
+  assert.equal(unknown.status, 2);
+  assert.equal(unknown.stdout, '');
+  assert.match(unknown.stderr, /Unknown command "not-a-command"/);
+  const mixed = run(['visual-check', '--help', 'missing.html']);
+  assert.equal(mixed.status, 1);
+  assert.equal(mixed.stdout, '');
+  assert.equal(mixed.stderr, 'Unknown visual-check option "--help".\n');
+  const json = run(['validate', '--help', '--json']);
+  assert.equal(json.status, 2);
+  assert.equal(json.stderr, '');
+  const receipt = JSON.parse(json.stdout);
+  assert.equal(receipt.ok, false);
+  assert.equal(receipt.stage, 'arguments');
+  assert.equal(receipt.diagnostics[0].code, 'cli/unknown-option');
+  assert.equal(receipt.diagnostics[0].subject.option, '--help');
+  const bogus = run(['visual-check', '--bogus']);
+  assert.equal(bogus.status, 1);
+  assert.equal(bogus.stdout, '');
+  assert.equal(bogus.stderr, 'Unknown visual-check option "--bogus".\n');
+});
+
 test('cli: doctor reports a complete installation is ready', () => {
   const result = run(['doctor']);
   assert.equal(result.status, 0, result.stderr);

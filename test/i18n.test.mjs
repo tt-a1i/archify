@@ -464,9 +464,12 @@ test('validate and deliver receipts carry locale warnings as structured diagnost
     locale: 'fr',
     translations: { ...FR_PARTIAL_TRANSLATIONS, 'viewer.common.closee': 'Fermer' },
   })));
-  const validated = cliJson(['validate', 'architecture', input, '--json']);
-  const delivered = cliJson(['deliver', 'architecture', input, path.join(tmp, 'receipt-fr.html'), '--json']);
-  for (const receipt of [validated, delivered]) {
+  const cli = path.join(skillRoot, 'bin/archify.mjs');
+  for (const command of ['validate', 'deliver']) {
+    const args = [cli, command, 'architecture', input, ...(command === 'deliver' ? [path.join(tmp, 'receipt-fr.html')] : [])];
+    const machine = spawnSync(process.execPath, [...args, '--json'], { cwd: tmp, encoding: 'utf8' });
+    assert.equal(machine.status, 0, machine.stderr || machine.stdout);
+    const receipt = JSON.parse(machine.stdout);
     assert.equal(receipt.ok, true);
     assert.deepEqual(receipt.diagnostics.map((entry) => [entry.code, entry.severity]), [
       ['i18n/invalid-translation', 'warning'],
@@ -477,6 +480,12 @@ test('validate and deliver receipts carry locale warnings as structured diagnost
     assert.equal(coverage.missingKeys.length, 10);
     for (const key of coverage.missingKeys) assert.equal(coverage.englishSource[key], translateMessage('en', key));
     assert.deepEqual(receipt.diagnostics[0].evidence.unknownKeys, ['viewer.common.closee']);
+    const expectedWarnings = receipt.diagnostics.map(entry => `archify: ${entry.message}\n`).join('');
+    assert.equal(machine.stderr, expectedWarnings, `${command}: JSON success discloses each warning once`);
+    const human = spawnSync(process.execPath, args, { cwd: tmp, encoding: 'utf8' });
+    assert.equal(human.status, 0, human.stderr || human.stdout);
+    assert.equal(human.stderr, expectedWarnings, `${command}: human success discloses each warning once`);
+    assert.ok(human.stdout.trim());
   }
 
   const clean = path.join(tmp, 'receipt-ko.json');

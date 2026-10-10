@@ -45,12 +45,15 @@ The geometry follows from the structure alone:
 | Loops and skips | A transition between two non-consecutive main-path states (or back to an earlier one, or a self-transition) is an arc above the row. Shorter arcs nest inside longer ones; ports order so an outer riser never crosses an inner arc. |
 | Other states | One row per distance from the main path. A state starts under the states it connects to in the row above; overlapping states pack side by side. |
 | Between rows | Orthogonal routes through a shared gap. Horizontal runs take separate tracks, chosen to minimise crossings; near-vertical routes snap straight or widen to a readable jog. |
-| Shared exits | When one state is entered from several main-path phases through transitions that share label, note and variant, consecutive phases receive a dashed composite frame and one exit per target, as in a UML superstate; non-consecutive phases share a bus with junction dots. Exits that differ stay separate connectors with their own labels. |
+| Shared exits | A target with exactly one group of identical label, note and variant from at least two main-path phases shares an exit: consecutive phases receive a dashed composite frame, as in a UML superstate; non-consecutive phases share a bus with junction dots. Other exits keep separate connectors and their own labels. If several groups qualify for the same target, all exits stay separate. |
 | Same lower row | Neighbours connect side to side, parallel transitions fanning out around the shared edge (at most five per pair of states). Dense parallel labels and notes increase their lane spacing and the height of that lower row to keep clear; other pairs loop under the row. |
-| Labels | Above main-path arrows, on arc and loop runs, otherwise beside the segment next to the lower state. Every label keeps clear of other routes, states and labels; if one cannot, all spacing grows and layout repeats. |
+| Labels | Above main-path arrows, on arc and loop runs, otherwise beside the segment next to the lower state. Every label keeps clear of other routes, states and labels; if one cannot, lower-row and route spacing grow and layout repeats, for at most five rounds. Main-path gaps stop growing before their minimum row width exceeds the text readability budget; gaps still fit their transition text. |
 
 Every route carries a crossover halo, so an unavoidable crossing (for example,
 two overlapping loops) stays legible. Lines are orthogonal with rounded corners.
+Keep a distinct note on its original transition. Do not remove or copy notes to
+make different exits qualify for sharing. The final width and label-clearance
+checks still apply after layout retries.
 
 ## Legend and state marks
 

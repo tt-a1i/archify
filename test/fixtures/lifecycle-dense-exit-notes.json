@@ -1,0 +1,157 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Request processing exits",
+    "locale": "en",
+    "output": "request-lifecycle.html",
+    "quality_profile": "showcase"
+  },
+  "mainPath": [
+    "queued",
+    "preparing",
+    "parsing",
+    "working",
+    "complete"
+  ],
+  "states": [
+    {
+      "id": "queued",
+      "type": "start",
+      "label": "Queued",
+      "sublabel": "Request saved"
+    },
+    {
+      "id": "preparing",
+      "type": "active",
+      "label": "Preparing",
+      "sublabel": "Worker assigned"
+    },
+    {
+      "id": "parsing",
+      "type": "active",
+      "label": "Parsing",
+      "sublabel": "Input decoded"
+    },
+    {
+      "id": "working",
+      "type": "active",
+      "label": "Working",
+      "sublabel": "Task active"
+    },
+    {
+      "id": "complete",
+      "type": "success",
+      "label": "Complete",
+      "sublabel": "Result checked"
+    },
+    {
+      "id": "cancelled",
+      "type": "failure",
+      "label": "Cancelled"
+    },
+    {
+      "id": "expired",
+      "type": "failure",
+      "label": "Expired"
+    },
+    {
+      "id": "failed",
+      "type": "failure",
+      "label": "Failed"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "advance-0",
+      "from": "queued",
+      "to": "preparing",
+      "label": "assign worker"
+    },
+    {
+      "id": "advance-1",
+      "from": "preparing",
+      "to": "parsing",
+      "label": "decode input"
+    },
+    {
+      "id": "advance-2",
+      "from": "parsing",
+      "to": "working",
+      "label": "start work"
+    },
+    {
+      "id": "advance-3",
+      "from": "working",
+      "to": "complete",
+      "label": "finish result"
+    },
+    {
+      "id": "cancel-0",
+      "from": "queued",
+      "to": "cancelled",
+      "label": "cancel",
+      "variant": "dashed"
+    },
+    {
+      "id": "cancel-1",
+      "from": "preparing",
+      "to": "cancelled",
+      "label": "cancel",
+      "variant": "dashed"
+    },
+    {
+      "id": "cancel-2",
+      "from": "working",
+      "to": "cancelled",
+      "label": "cancel",
+      "variant": "dashed",
+      "note": "worker confirms cancellation"
+    },
+    {
+      "id": "deadline-0",
+      "from": "queued",
+      "to": "expired",
+      "label": "deadline",
+      "variant": "security",
+      "note": "deadline reached before work"
+    },
+    {
+      "id": "deadline-1",
+      "from": "preparing",
+      "to": "expired",
+      "label": "deadline",
+      "variant": "security"
+    },
+    {
+      "id": "deadline-2",
+      "from": "working",
+      "to": "expired",
+      "label": "deadline",
+      "variant": "security",
+      "note": "idle deadline resets on progress"
+    },
+    {
+      "id": "fail-0",
+      "from": "preparing",
+      "to": "failed",
+      "label": "failed",
+      "variant": "security"
+    },
+    {
+      "id": "fail-1",
+      "from": "working",
+      "to": "failed",
+      "label": "failed",
+      "variant": "security",
+      "note": "decode or execution failed"
+    },
+    {
+      "id": "fail-2",
+      "from": "parsing",
+      "to": "failed",
+      "label": "failed",
+      "variant": "security"
+    }
+  ]
+}
