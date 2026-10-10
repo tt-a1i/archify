@@ -241,6 +241,38 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.equal(await run(`document.querySelectorAll('[data-ambient-flow-overlay]').length`), 0);
   });
 
+  await t.test('long-edge echoes stay dimmer than their main comets across presets and themes', async () => {
+    for (const theme of ['dark', 'light']) {
+      await load('architecture', { theme });
+      for (const preset of ['classic', 'editorial']) {
+        const peaks = await run(`(() => {
+          const svg=document.querySelector('.diagram-container > svg');
+          document.documentElement.setAttribute('data-preset', ${JSON.stringify(preset)});
+          svg.setAttribute('data-preset', ${JSON.stringify(preset)});
+          const echoes=Array.from(svg.querySelectorAll('.ambient-flow-head.echo, .ambient-flow-tail.echo'));
+          return echoes.map(echo=>{
+            const kind=echo.classList.contains('ambient-flow-head')?'head':'tail';
+            let main=echo.previousElementSibling;
+            while(main&&(!main.classList.contains('ambient-flow-'+kind)||main.classList.contains('echo'))) main=main.previousElementSibling;
+            function peak(flow) {
+              const animation=flow.getAnimations()[0];
+              animation.pause();
+              const timing=animation.effect.getTiming();
+              animation.currentTime=timing.delay+timing.duration*0.04;
+              return Number(getComputedStyle(flow).opacity);
+            }
+            return {kind,main:peak(main),echo:peak(echo)};
+          });
+        })()`);
+        assert.ok(peaks.length > 0, 'Architecture fixture must exercise long-edge echoes.');
+        for (const peak of peaks) {
+          assert.ok(peak.echo > 0 && peak.echo < peak.main,
+            `${preset}/${theme} ${peak.kind} echo must remain visible and dimmer: ${JSON.stringify(peak)}`);
+        }
+      }
+    }
+  });
+
   await t.test('collapsing Orders hides only its descendant flow overlays', async () => {
     for (const mode of ['tree', 'treeCollapsed']) {
       await load(mode);

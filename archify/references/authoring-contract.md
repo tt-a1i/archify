@@ -502,9 +502,15 @@ the initial state; every consecutive pair needs a transition. The renderer owns
 all geometry: the main path is one row, transitions back to an earlier phase
 (or skipping ahead) become arcs above it, and every other state sits below the
 state it branches from, one row deeper per step away from the main path.
-Exits that several consecutive phases share (for example “cancel” from any
-running phase) are drawn once from a composite frame around those phases; give
-them the same label. There are no lanes, columns, sizes, or routing controls.
+Equivalent exits share one arrow only when their labels, notes and variants
+match and exactly one group from at least two main-path phases qualifies for
+that target. Consecutive phases receive a composite frame; non-consecutive
+phases share a bus. Other exits stay separate, including distinct notes on
+their original transitions. Do not remove or copy notes to force sharing.
+There are no lanes, columns, sizes, or routing controls. Layout retries retain
+the transition text's minimum gap and stop widening the main-path row when its
+minimum width would exceed the original text readability budget; the final
+width and label-clearance checks still apply.
 
 Keep the main path to the phases a reader follows, at most about six states,
 and keep transition labels short. A recoverable failure needs a real transition

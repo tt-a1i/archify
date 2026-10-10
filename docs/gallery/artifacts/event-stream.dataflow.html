@@ -4730,7 +4730,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        step order — source-node rank, or chronological order in sequence
        diagrams — so the whole diagram ripples downstream instead of marching
        uniformly. Node entry is bounded to one pass per document, then a soft
-       receive glow keeps time with the passing wave. */
+       node glow follows the authored step order. */
     svg[data-animation="trace"] {
       --flow-cycle: 6.4s;
       --flow-step-delay: 0.2s;
@@ -4769,6 +4769,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       stroke-dasharray: var(--flow-dash, 6px) calc(var(--flow-len, 0px) - var(--flow-dash, 6px));
       animation-name: archify-cascade-head;
     }
+    .ambient-flow-head.echo { --flow-echo-scale: 0.76; }
+    .ambient-flow-tail.echo { --flow-echo-scale: 0.53; }
     .ambient-flow-ripple {
       stroke: color-mix(in srgb, var(--arrow-emphasis) 55%, white);
       stroke-width: 2;
@@ -4827,10 +4829,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       animation: archify-editorial-node-pulse 3.5s ease-in-out 1 calc(var(--step, 0) * 160ms),
         archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
     }
-    /* Receive glow rides the same cycle and per-step phase as the comets, so a
-       node lights up as the wave passes through it. During the bounded entrance
-       all three animations run; the entrance pulse is listed after the receive
-       glow and wins on filter until it completes. */
+    /* Node glow follows each node's authored step on the shared cycle; it does
+       not track incoming edge arrivals. During the bounded entrance all three
+       animations run; the entrance pulse is listed after the repeating glow and
+       wins on filter until it completes. */
     html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) svg[data-animation="trace"] [data-animate="node"] {
       animation: archify-node-receive var(--flow-cycle, 6.4s) ease-in-out infinite calc(var(--step, 0) * var(--flow-step-delay, 0.2s));
     }
@@ -4870,18 +4872,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     @keyframes archify-cascade-tail {
       0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 20px)); opacity: 0; }
-      4% { opacity: var(--flow-tail-peak, 0.34); }
+      4% { opacity: calc(var(--flow-tail-peak, 0.34) * var(--flow-echo-scale, 1)); }
       15% { stroke-dashoffset: calc((var(--flow-len, 0px) + var(--flow-shift, 20px)) * 0.88); }
       48% { stroke-dashoffset: calc((var(--flow-len, 0px) + var(--flow-shift, 20px)) * 0.22); }
-      62% { stroke-dashoffset: var(--flow-shift, 20px); opacity: var(--flow-tail-peak, 0.34); }
+      62% { stroke-dashoffset: var(--flow-shift, 20px); opacity: calc(var(--flow-tail-peak, 0.34) * var(--flow-echo-scale, 1)); }
       68%, 100% { stroke-dashoffset: var(--flow-shift, 20px); opacity: 0; }
     }
     @keyframes archify-cascade-head {
       0% { stroke-dashoffset: var(--flow-len, 0px); opacity: 0; }
-      4% { opacity: var(--flow-head-peak, 0.95); }
+      4% { opacity: calc(var(--flow-head-peak, 0.95) * var(--flow-echo-scale, 1)); }
       15% { stroke-dashoffset: calc(var(--flow-len, 0px) * 0.88); }
       48% { stroke-dashoffset: calc(var(--flow-len, 0px) * 0.22); }
-      62% { stroke-dashoffset: 0; opacity: var(--flow-head-peak, 0.95); }
+      62% { stroke-dashoffset: 0; opacity: calc(var(--flow-head-peak, 0.95) * var(--flow-echo-scale, 1)); }
       68%, 100% { stroke-dashoffset: 0; opacity: 0; }
     }
     @keyframes archify-flow-ripple {
@@ -7578,8 +7580,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ];
           // Long edges earn a dimmer echo comet half a travel window behind.
           if (len > 340) {
-            configs.push({ flow: addPath('tail echo'), dash: trail.length, shift: trail.length - headLen, delay: phase + cycle * 0.31, dasharray: trail.pattern, peak: ['--flow-tail-peak', '0.18'] });
-            configs.push({ flow: addPath('head echo'), dash: headLen, shift: 0, delay: phase + cycle * 0.31, peak: ['--flow-head-peak', '0.72'] });
+            configs.push({ flow: addPath('tail echo'), dash: trail.length, shift: trail.length - headLen, delay: phase + cycle * 0.31, dasharray: trail.pattern });
+            configs.push({ flow: addPath('head echo'), dash: headLen, shift: 0, delay: phase + cycle * 0.31 });
           }
           configs.forEach(function (cfg) {
             cfg.flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
@@ -7587,7 +7589,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             cfg.flow.style.setProperty('--flow-dash', cfg.dash.toFixed(1) + 'px');
             cfg.flow.style.setProperty('--flow-shift', cfg.shift.toFixed(1) + 'px');
             if (cfg.dasharray) cfg.flow.style.setProperty('--flow-dasharray', cfg.dasharray);
-            if (cfg.peak) cfg.flow.style.setProperty(cfg.peak[0], cfg.peak[1]);
           });
           // The sonar pair lands where the comet does; keep it out of the
           // edge's mask so it can bloom over the node boundary.

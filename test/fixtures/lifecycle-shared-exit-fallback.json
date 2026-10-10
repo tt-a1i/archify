@@ -1,0 +1,83 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Two exit signatures",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "multiple-subgroups.html"
+  },
+  "mainPath": [
+    "phase-one",
+    "phase-two",
+    "phase-three"
+  ],
+  "states": [
+    {
+      "id": "phase-one",
+      "type": "start",
+      "label": "First"
+    },
+    {
+      "id": "phase-two",
+      "type": "active",
+      "label": "Second"
+    },
+    {
+      "id": "phase-three",
+      "type": "success",
+      "label": "Third"
+    },
+    {
+      "id": "held",
+      "type": "waiting",
+      "label": "Held"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "advance-one",
+      "from": "phase-one",
+      "to": "phase-two",
+      "label": "next"
+    },
+    {
+      "id": "advance-two",
+      "from": "phase-two",
+      "to": "phase-three",
+      "label": "next"
+    },
+    {
+      "id": "team-first",
+      "from": "phase-one",
+      "to": "held",
+      "label": "hold",
+      "note": "Team check",
+      "variant": "dashed"
+    },
+    {
+      "id": "team-second",
+      "from": "phase-three",
+      "to": "held",
+      "label": "hold",
+      "note": "Team check",
+      "variant": "dashed"
+    },
+    {
+      "id": "owner-second",
+      "from": "phase-one",
+      "to": "held",
+      "label": "hold",
+      "note": "Owner check",
+      "variant": "dashed"
+    },
+    {
+      "id": "owner-third",
+      "from": "phase-three",
+      "to": "held",
+      "label": "hold",
+      "note": "Owner check",
+      "variant": "dashed"
+    }
+  ]
+}

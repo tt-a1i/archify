@@ -27,15 +27,17 @@ let renderCandidateSequence = 0;
 // meta.locale is renderer-owned Viewer UI, not authored content. Each message
 // resolves as: valid meta.translations value → bundled catalog enrolled in
 // locales/manifest.json → English (see i18n.mjs). Every fallback is disclosed
-// on stderr unconditionally so render/deliver/validate report it even without
-// ARCHIFY_DIAGNOSTIC_FORMAT; the CLI receipts carry the same diagnostics.
+// by human renderers on stderr. Diagnostic JSON mode records warnings without
+// mixing text into failure receipts; validate/deliver disclose them publicly.
 function applyLocaleTranslations(diagramType, diagram) {
   const locale = diagram.meta?.locale;
   if (!locale) return;
   registerLocale(locale, diagram.meta.translations);
   for (const diagnostic of localeDiagnostics(diagramType, diagram.meta)) {
     recordDiagnostic(diagnostic);
-    console.warn(`archify: ${diagnostic.message}`);
+    if (process.env.ARCHIFY_DIAGNOSTIC_FORMAT !== 'json') {
+      console.warn(`archify: ${diagnostic.message}`);
+    }
   }
 }
 

@@ -120,8 +120,8 @@
           ];
           // Long edges earn a dimmer echo comet half a travel window behind.
           if (len > 340) {
-            configs.push({ flow: addPath('tail echo'), dash: trail.length, shift: trail.length - headLen, delay: phase + cycle * 0.31, dasharray: trail.pattern, peak: ['--flow-tail-peak', '0.18'] });
-            configs.push({ flow: addPath('head echo'), dash: headLen, shift: 0, delay: phase + cycle * 0.31, peak: ['--flow-head-peak', '0.72'] });
+            configs.push({ flow: addPath('tail echo'), dash: trail.length, shift: trail.length - headLen, delay: phase + cycle * 0.31, dasharray: trail.pattern });
+            configs.push({ flow: addPath('head echo'), dash: headLen, shift: 0, delay: phase + cycle * 0.31 });
           }
           configs.forEach(function (cfg) {
             cfg.flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
@@ -129,7 +129,6 @@
             cfg.flow.style.setProperty('--flow-dash', cfg.dash.toFixed(1) + 'px');
             cfg.flow.style.setProperty('--flow-shift', cfg.shift.toFixed(1) + 'px');
             if (cfg.dasharray) cfg.flow.style.setProperty('--flow-dasharray', cfg.dasharray);
-            if (cfg.peak) cfg.flow.style.setProperty(cfg.peak[0], cfg.peak[1]);
           });
           // The sonar pair lands where the comet does; keep it out of the
           // edge's mask so it can bloom over the node boundary.

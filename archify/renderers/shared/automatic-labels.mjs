@@ -5,7 +5,7 @@ import { createSpatialGrid } from './spatial-grid.mjs';
 // It never routes an edge, moves a node, expands the canvas, or rewrites input.
 export function placeAutomaticLabels({
   labels, routes, components, titles, viewBox, placementBottom = viewBox[1], fallbackRing = true, keepFallbackNearRoute = false,
-  gridSweep = false,
+  gridSweep = false, maxOwnRouteDistance = Infinity,
 }) {
   const placed = [...labels];
   const obstacles = [...components, ...titles];
@@ -47,6 +47,9 @@ export function placeAutomaticLabels({
     inside(rect) && rect.y + rect.height <= placementBottom
     && !obstacles.some(obstacle => rectsOverlap(rect, obstacle, 2))
     && !overlapsLabel(rect, index, 2) && !masksRoute(rect)
+    && (!Number.isFinite(maxOwnRouteDistance) || segments.some(segment =>
+      segment.relationIndex === rect.relationIndex
+      && segmentRectClearanceWithin(segment, rect, maxOwnRouteDistance) <= maxOwnRouteDistance))
   );
   const rectAt = (label, lx, ly) => ({
     ...label, lx, ly, x: lx - label.width / 2, y: ly - 10,

@@ -87,6 +87,11 @@ for (const state of states.values()) {
   state.width = preferredWidth(state);
   state.height = STATE_H;
 }
+const smallestText = Math.min(LABEL_FONT, ...[...states.values()].flatMap((state) => {
+  const fitted = fonts(state, state.width);
+  return [fitted.label, state.sublabel ? fitted.sublabel : Infinity];
+}));
+const readableWidthBudget = Math.floor(DESKTOP_READER_DIAGRAM_WIDTH * smallestText / MIN_PROJECTED_NODE_TEXT_PX);
 
 function labelBox(transition) {
   const text = transition.label || '';
@@ -109,6 +114,11 @@ for (const transition of transitions) {
   const to = spineIndex.get(transition.to);
   if (from !== undefined && to === from + 1 && !spineEdges.has(from)) spineEdges.set(from, transition);
 }
+const mainPathStateWidth = mainPath.reduce((sum, id) => sum + states.get(id).width, 0);
+const minimumSpineGaps = mainPath.slice(0, -1).map((_, index) => {
+  const edge = spineEdges.get(index);
+  return (edge && hasLabel(edge) ? labelBox(edge).width : 0) + 26;
+});
 
 // Every other state sits in a row below the main path at its distance from
 // it, so each transition stays within one row or joins two adjacent rows.
@@ -149,18 +159,25 @@ for (const transition of ofKind('between')) {
   if (!downByTarget.has(transition.to)) downByTarget.set(transition.to, []);
   downByTarget.get(transition.to).push(transition);
 }
-// A merged exit promises one meaning, so a target joins a bracket only when
-// every transition into it shares label, note and variant; differing exits
-// keep separate connectors instead of painting over each other.
+// A merged exit promises one meaning. Only a target with one eligible
+// complete-signature bucket joins a bracket; all other exits stay singles.
 const exitSignature = (transition) => [transition.label ?? '', transition.note ?? '', variantOf(transition)].join('\u0000');
 const brackets = new Map();
 for (const [target, list] of downByTarget) {
-  const sources = [...new Set(list.map((transition) => transition.from))].sort((a, b) => spineIndex.get(a) - spineIndex.get(b));
-  if (sources.length < 2 || new Set(list.map(exitSignature)).size > 1) continue;
+  const buckets = new Map();
+  for (const transition of list) {
+    const signature = exitSignature(transition);
+    if (!buckets.has(signature)) buckets.set(signature, []);
+    buckets.get(signature).push(transition);
+  }
+  const eligible = [...buckets.values()].filter((bucket) => new Set(bucket.map((transition) => transition.from)).size >= 2);
+  if (eligible.length !== 1) continue;
+  const [group] = eligible;
+  const sources = [...new Set(group.map((transition) => transition.from))].sort((a, b) => spineIndex.get(a) - spineIndex.get(b));
   const key = sources.join('\u0000');
   if (!brackets.has(key)) brackets.set(key, { key, sources, targets: [], transitions: [] });
   brackets.get(key).targets.push(target);
-  brackets.get(key).transitions.push(...list);
+  brackets.get(key).transitions.push(...group);
 }
 const bracketOf = new Map();
 for (const bracket of brackets.values()) {
@@ -190,7 +207,7 @@ const isFinal = (state) => !outgoing.has(state.id);
 // and keeps the placed layout with the fewest bends and short jogs.
 let spacing = { spineGap: 72, rowGap: 44, drop: 58, firstTrack: 34 };
 let geometry;
-// Labels that could not be placed at a tighter spacing, which widened every gap.
+// Labels that could not be placed at tighter spacing and prompted retries.
 const spacingWideners = new Set();
 for (let round = 0; round < SPACING_ROUNDS; round += 1) {
   const candidates = ['partner', 'even'].map((ports) => ({ ports, ...layout({ ...spacing, ports }) }));
@@ -203,7 +220,13 @@ for (let round = 0; round < SPACING_ROUNDS; round += 1) {
     const closest = [...candidates].sort((a, b) => a.unplacedLabels.length - b.unplacedLabels.length)[0];
     for (const transition of closest.unplacedLabels) spacingWideners.add(transition);
   }
-  spacing = { spineGap: spacing.spineGap + 28, rowGap: spacing.rowGap + 28, drop: spacing.drop + 14, firstTrack: spacing.firstTrack + 6 };
+  const nextSpineGap = spacing.spineGap + 28;
+  // The canvas includes this whole row. Widening beyond its text budget
+  // cannot succeed; keep its current gaps while other spacing still grows.
+  const nextMainPathWidth = MARGIN_X * 2 + mainPathStateWidth
+    + minimumSpineGaps.reduce((sum, minimum) => sum + Math.max(nextSpineGap, minimum), 0);
+  spacing = { spineGap: nextMainPathWidth > readableWidthBudget ? spacing.spineGap : nextSpineGap,
+    rowGap: spacing.rowGap + 28, drop: spacing.drop + 14, firstTrack: spacing.firstTrack + 6 };
 }
 
 function routeCost(routes) {
@@ -225,9 +248,7 @@ function layout({ spineGap, rowGap, drop, firstTrack, ports: portMode }) {
     const state = states.get(id);
     state.x = cursor;
     state.cx = cursor + state.width / 2;
-    const edge = spineEdges.get(index);
-    const labelWidth = edge && hasLabel(edge) ? labelBox(edge).width : 0;
-    cursor += state.width + Math.max(spineGap, labelWidth + 26);
+    cursor += state.width + Math.max(spineGap, minimumSpineGaps[index] ?? 26);
   });
   for (let row = 1; row < rowCount; row += 1) placeRow(row, rowGap);
 
@@ -883,39 +904,41 @@ function validateStructure() {
 function validateLayout() {
   const problems = [];
   const diagnostics = [];
-  const smallest = Math.min(LABEL_FONT, ...[...states.values()].flatMap((state) => {
-    const fitted = fonts(state, state.width);
-    return [fitted.label, state.sublabel ? fitted.sublabel : Infinity];
-  }));
-  const budget = Math.floor(DESKTOP_READER_DIAGRAM_WIDTH * smallest / MIN_PROJECTED_NODE_TEXT_PX);
-  if (viewBox[0] > budget) {
+  // The common width factor cancels when comparing the two text lines.
+  const widthDriver = (transition) => {
+    const label = textUnits(transition.label || '') * LABEL_FONT;
+    const note = textUnits(transition.note || '') * NOTE_FONT;
+    return label === note ? 'label+note' : label > note ? 'label' : 'note';
+  };
+  const preserveConditions = 'preserve every condition; shorten wording only, or move complete detail to a card explicitly associated with the same transition; shorter wording may not resolve other layout constraints';
+  if (viewBox[0] > readableWidthBudget) {
     // A labelled main-path step widens its gap past the default spacing.
     const wideStepLabels = mainPath.slice(0, -1).flatMap((id, index) => {
       const edge = spineEdges.get(index);
       const excessPx = edge && hasLabel(edge) ? Math.round(labelBox(edge).width + 26 - spacing.spineGap) : 0;
-      return excessPx > 0 ? [{ from: edge.from, to: edge.to, label: edge.label || edge.note, excessPx }] : [];
+      return excessPx > 0 ? [{ from: edge.from, to: edge.to, label: edge.label || edge.note, excessPx, widthDriver: widthDriver(edge) }] : [];
     }).sort((a, b) => b.excessPx - a.excessPx);
     const widenerLabels = [...spacingWideners].map((transition) => `"${transition.label || transition.note}"`);
     const labelFixes = [
-      ...(widenerLabels.length ? [`relieve the routes crowding ${widenerLabels.join(', ')}: those labels found no clear spot at the base spacing, so every gap widened by 28px; drop labels both endpoints imply, merge exits that share a target, or move a secondary transition elsewhere`] : []),
-      ...(wideStepLabels.length ? [`shorten the main-path transition labels that widen their gaps: ${wideStepLabels.map((step) => `"${step.label}" (+${step.excessPx}px)`).join(', ')}`] : []),
+      ...(widenerLabels.length ? [`relieve the routes crowding ${widenerLabels.join(', ')}: those label/note boxes found no clear spot at the base spacing, so lower-row and route spacing grew; main-path gap growth is bounded by the text readability budget. Only equivalent exits with identical labels, notes and variants can share an arrow; keep distinct notes separate, or move a secondary transition elsewhere`] : []),
+      ...(wideStepLabels.length ? [`review the width-driving main-path transition text: ${wideStepLabels.map((step) => `"${step.from}" -> "${step.to}" ${step.widthDriver.replace('+', ' and ')} (+${step.excessPx}px)`).join(', ')}; ${preserveConditions}`] : []),
     ];
-    const message = `The lifecycle is ${viewBox[0]}px wide; at ${smallest}px text it stays readable on a desktop only up to ${budget}px.${labelFixes.length ? ` Transition labels set most of that width.` : ''}`;
+    const message = `The lifecycle is ${viewBox[0]}px wide; at ${smallestText}px text it stays readable on a desktop only up to ${readableWidthBudget}px.${wideStepLabels.length ? ` Transition labels or notes widen their main-path gaps.` : ''}`;
     diagnostics.push({
       code: 'lifecycle/too-wide', severity: 'error', message,
       subject: { diagramType: 'lifecycle', path: '/mainPath' },
-      evidence: { viewBoxWidth: viewBox[0], budgetPx: budget, mainPathStates: mainPath.length, lowerRowStates: offStates.length, wideStepLabels, spacingWideners: [...spacingWideners].map((transition) => ({ from: transition.from, to: transition.to, label: transition.label || transition.note })) },
+      evidence: { viewBoxWidth: viewBox[0], budgetPx: readableWidthBudget, mainPathStates: mainPath.length, lowerRowStates: offStates.length, wideStepLabels, spacingWideners: [...spacingWideners].map((transition) => ({ from: transition.from, to: transition.to, label: transition.label || transition.note, widthDriver: widthDriver(transition) })) },
       supportedFixes: [...labelFixes, 'shorten state labels and sublabels', 'move secondary phases off mainPath or merge adjacent phases', 'split the lifecycle into two diagrams'],
     });
     problems.push(message);
   }
   for (const transition of geometry.unplacedLabels) {
-    const message = `Transition "${transition.from}" -> "${transition.to}" label "${transition.label || transition.note}" cannot be placed clear of nearby routes.`;
+    const message = `Transition "${transition.from}" -> "${transition.to}" label "${transition.label || transition.note}" cannot be placed clear of nearby routes.${transition.note ? ' Its note contributes to the label box; the box size and nearby geometry both affect placement.' : ''}`;
     diagnostics.push({
       code: 'lifecycle/label-unplaced', severity: 'error', message,
       subject: { diagramType: 'lifecycle', collection: 'transitions', index: transitions.indexOf(transition), from: transition.from, to: transition.to },
-      evidence: {},
-      supportedFixes: ['shorten the transition label', 'give exits that share a target the same label so they share one arrow'],
+      evidence: { widthDriver: widthDriver(transition) },
+      supportedFixes: [`review the transition ${transition.note ? transition.label ? 'label and note' : 'note' : 'label'} wording; ${preserveConditions}`, 'only equivalent exits with identical labels, notes and variants can share one arrow; keep distinct notes on separate exits without removing them to force sharing'],
     });
     problems.push(message);
   }
@@ -1019,13 +1042,14 @@ function renderTransition(transition, index) {
 function renderLabel(transition, index) {
   const rect = geometry.placedLabels.get(transition);
   if (!rect) return '';
-  const accent = edgeLabelAccent(variantOf(transition));
+  const variant = variantOf(transition);
+  const accent = variant === 'default' ? 't-muted' : edgeLabelAccent(variant);
   const baseline = rect.y + (transition.label ? 11.5 : 11);
   const label = transition.label
     ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${esc(transition.label)}</text>`
     : '';
   const note = transition.note
-    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-dim" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
+    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
     : '';
   return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}>
           <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}

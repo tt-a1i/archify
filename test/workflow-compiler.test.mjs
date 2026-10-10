@@ -27,7 +27,8 @@ function sha256(value) {
 }
 
 // #199 intentionally changes only text positions inside fixed-v1 nodes.
-// Pin every other SVG byte to the pre-fix baseline, including labels, fonts,
+// Compatibility digests also include the approved ordinary lane-heading ink.
+// Pin every other SVG byte, including labels, fonts,
 // node bounds, icon shapes, edges, ports, viewBox and accessibility metadata.
 function withoutNodeTextPositions(svg) {
   // Default motion adds presentation hooks; keep the original geometry digest.
@@ -328,7 +329,7 @@ test('fixed-v1 preserves baseline SVG except repaired node text positions', () =
   assert.equal(result.receipt.contract, 'fixed-v1');
   assert.equal(
     sha256(withoutNodeTextPositions(result.svg)),
-    'e64795a4521e8568718981bf053c6e8f4e0cf714e27f70f0087d1850ae1fe633',
+    '92b23cf7eadf0420afe7a9e7f11e29f08ed69cd4be4450656ab6e54d43ccee92',
   );
 });
 
@@ -345,7 +346,7 @@ test('fixed-v1 compiler preserves the exact 700x400 compatibility geometry', () 
   assert.deepEqual(svgViewBox(result.svg), [0, 0, 700, 400]);
   assert.equal(
     sha256(withoutNodeTextPositions(result.svg)),
-    '79ac3e30f9e81263f9c7941339a6fe684f3a33dd2ac3ce4f7281a03fa2ee1c6b',
+    '26529a40e65f18d246e9129af0e57aca09cc3561539dc0cdac3e38310c248cea',
     'the clearance repair must not move or reserialize legacy geometry outside node text',
   );
 });
@@ -358,9 +359,10 @@ test('readable-v2 separates approval branches in the checked-in workflow example
   assert.equal(
     // approval-denied and approved-tool keep separate trunks. Neighbouring
     // columns now keep a 32px route corridor, which widens the canvas by 12px,
-    // and tags keep their 7px preferred size.
+    // and tags keep their 7px preferred size. The digest includes the approved
+    // ordinary lane-heading ink.
     sha256(result.svg.replace(/ data-(?:composition-routing|edge-role|layout-contract)="[^"]*"/g, '')),
-    '09ece2904db9a525bd5990f896ab6f335b48cd7617beb6a47868874a17e94774',
+    '23257ef301e6ac7385010960d531b55416361883ac0c87f7b3ed8f5f62294d24',
   );
 });
 

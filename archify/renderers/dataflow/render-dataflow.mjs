@@ -601,7 +601,8 @@ function fitAutomaticWidthToLabels(labels) {
 // Give the shared placer room for complete initial plates before its search;
 // width growth here does not recompute the measured nodes or cached routes.
 fitAutomaticWidthToLabels(initialLabelRects);
-if (automaticShowcase) viewBox[1] = heightForLabels(initialLabelRects);
+if (automaticShowcase) viewBox[1] = heightForLabels(initialLabelRects)
+  + Math.max(0, ...initialLabelRects.map(rect => rect.height - layout.labelH));
 const compositionFrames = asArray(dataflow.stages).map(stageFrame);
 
 const resolvedLabelRects = (automaticShowcase ? placeAutomaticLabels({
@@ -614,6 +615,7 @@ const resolvedLabelRects = (automaticShowcase ? placeAutomaticLabels({
   titles: compositionFrames.map(frame => ({ ...frame, height: layout.stageH })),
   viewBox,
   placementBottom: viewBox[1] - layout.stageBottomPad,
+  maxOwnRouteDistance: 36,
 }) : initialLabelRects).map(rect => {
   // Dataflow has compact 16px plates. Permit one clearance gutter beyond
   // two plate heights (36px), which covers a label immediately above a node,
@@ -661,6 +663,7 @@ for (const [index, rect] of resolvedLabelRects.entries()) {
     viewBox,
     placementBottom: viewBox[1] - layout.stageBottomPad,
     keepFallbackNearRoute: true,
+    maxOwnRouteDistance: 36,
   })[index];
   // An exhausted shared search returns its supplied preferred rect. That is
   // not proof of a safe replacement: preserve the previously accepted label

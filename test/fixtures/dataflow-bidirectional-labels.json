@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Client and service exchange",
+    "output": "diagram.html",
+    "locale": "en",
+    "quality_profile": "showcase"
+  },
+  "stages": [
+    {
+      "label": "Client"
+    },
+    {
+      "label": "Service"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "stage": 1,
+      "row": 1
+    }
+  ],
+  "flows": [
+    {
+      "id": "request",
+      "from": "client",
+      "to": "service",
+      "label": "request payload",
+      "classification": "JSON request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "response",
+      "from": "service",
+      "to": "client",
+      "label": "response payload v1",
+      "classification": "JSON response",
+      "variant": "default"
+    }
+  ]
+}

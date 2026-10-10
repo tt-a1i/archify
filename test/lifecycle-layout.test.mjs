@@ -57,6 +57,16 @@ function box(svg, id) {
   return { x: Number(group[1]), y: Number(group[2]), width: Number(group[3]), height: Number(group[4]) };
 }
 
+function edgePath(svg, id) {
+  const tags = [...svg.matchAll(new RegExp(`<path [^>]*data-edge-id="${id}"[^>]*>`, 'g'))];
+  assert.equal(tags.length, 1, `one visible route for ${id}`);
+  return tags[0][0];
+}
+function edgeLabels(svg) {
+  return [...svg.matchAll(/<g data-detail="(?:context|fine)" [^>]*data-edge-id="([^"]+)"[^>]*>[\s\S]*?<\/g>/g)]
+    .map((match) => ({ id: match[1], markup: match[0] }));
+}
+
 test('bundled examples pass the showcase artifact check without crossings', () => {
   for (const name of ['agent-run.lifecycle.json', 'deployment-release.lifecycle.json']) {
     const doc = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', name), 'utf8'));
@@ -274,6 +284,53 @@ test('exits to one target with different labels or variants stay separate connec
   assert.match(result.svg, />after 24h<\/text>/);
 });
 
+test('one eligible shared-exit subgroup preserves the independent note and every relationship', () => {
+  const fixture = path.join(__dirname, 'fixtures/lifecycle-shared-exit-subgroup.json');
+  const bytes = fs.readFileSync(fixture, 'utf8');
+  const doc = JSON.parse(bytes);
+  const result = render(doc);
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(result.check.ok, true, JSON.stringify(result.check.composition.issues));
+  for (const transition of doc.transitions) {
+    assert.match(edgePath(result.svg, transition.id), new RegExp(`data-edge-from="${transition.from}" data-edge-to="${transition.to}"`));
+  }
+  for (const item of doc.states) assert.match(result.svg, new RegExp(`data-node-id="${item.id}"`));
+  const first = edgePath(result.svg, 'hold-first');
+  const second = edgePath(result.svg, 'hold-second');
+  const junction = first.match(/data-composition-junction="([^"]+)"/)?.[1];
+  assert.ok(junction, 'equivalent exits declare their shared junction');
+  assert.equal(second.match(/data-composition-junction="([^"]+)"/)?.[1], junction);
+  assert.equal(first.match(/data-composition-points="([^"]+)"/)[1], second.match(/data-composition-points="([^"]+)"/)[1]);
+  assert.doesNotMatch(edgePath(result.svg, 'hold-third'), /data-composition-junction/);
+  const labels = edgeLabels(result.svg);
+  const team = labels.filter(({ markup }) => markup.includes('>Team check</text>'));
+  const owner = labels.filter(({ markup }) => markup.includes('>Owner check</text>'));
+  assert.equal(team.length, 1, 'the shared note has one visible owner');
+  assert.ok(['hold-first', 'hold-second'].includes(team[0].id));
+  assert.deepEqual(owner.map(({ id }) => id), ['hold-third'], 'the distinct note belongs only to its original relationship');
+  assert.equal((result.svg.match(/>hold<\/text>/g) || []).length, 2);
+  assert.equal(fs.readFileSync(fixture, 'utf8'), bytes);
+});
+
+test('multiple eligible shared-exit signatures fall back to complete independent connectors', () => {
+  const fixture = path.join(__dirname, 'fixtures/lifecycle-shared-exit-fallback.json');
+  const doc = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+  const result = render(doc);
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(result.check.ok, true, JSON.stringify(result.check.composition.issues));
+  assert.doesNotMatch(result.svg, /data-composition-junction/);
+  const labels = edgeLabels(result.svg);
+  for (const transition of doc.transitions) {
+    assert.match(edgePath(result.svg, transition.id), new RegExp(`data-edge-from="${transition.from}" data-edge-to="${transition.to}"`));
+    if (!transition.note) continue;
+    const owned = labels.filter(({ id }) => id === transition.id);
+    assert.equal(owned.length, 1, `one label owner for ${transition.id}`);
+    assert.ok(owned[0].markup.includes(`>${transition.label}</text>`) && owned[0].markup.includes(`>${transition.note}</text>`));
+  }
+  assert.equal((result.svg.match(/>Team check<\/text>/g) || []).length, 2);
+  assert.equal((result.svg.match(/>Owner check<\/text>/g) || []).length, 2);
+});
+
 test('the artifact checker flags identical overlapping lifecycle routes', () => {
   const result = render(neighbourCase([
     { from: 'w', to: 'f', label: 'retry' },
@@ -357,14 +414,83 @@ test('nodeLabelLayout reserves the source badge footprint on the right rail', ()
   assert.ok(both.ys[0] >= 19 + 2);
 });
 
-test('a too-wide lifecycle names the crowded labels that widened every gap', async () => {
-  const { spawnSync } = await import('node:child_process');
-  const { fileURLToPath } = await import('node:url');
+test('dense automatic exit notes pass public readability validation without losing authored content', () => {
+  const fixture = path.join(__dirname, 'fixtures/lifecycle-dense-exit-notes.json');
+  const bytes = fs.readFileSync(fixture, 'utf8');
+  const doc = JSON.parse(bytes);
+  const validated = spawnSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'validate', 'lifecycle', fixture,
+    '--quality', 'showcase', '--json'], { encoding: 'utf8' });
+  assert.equal(validated.status, 0, validated.stdout + validated.stderr);
+  const receipt = JSON.parse(validated.stdout);
+  assert.equal(receipt.ok, true);
+  assert.ok(receipt.checks.length && receipt.checks.every((entry) => entry.ok));
+  const result = render(doc);
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(result.check.ok, true, JSON.stringify(result.check.composition.issues));
+  for (const item of doc.states) {
+    assert.match(result.svg, new RegExp(`data-node-id="${item.id}"`));
+    assert.ok(result.svg.includes(`>${item.label}</text>`));
+    if (item.sublabel) assert.ok(result.svg.includes(`>${item.sublabel}</text>`));
+  }
+  const labels = edgeLabels(result.svg);
+  for (const transition of doc.transitions) {
+    assert.match(edgePath(result.svg, transition.id), new RegExp(`data-edge-from="${transition.from}" data-edge-to="${transition.to}"`));
+    assert.ok(result.svg.includes(`>${transition.label}</text>`));
+    if (!transition.note) continue;
+    const owned = labels.filter(({ id }) => id === transition.id);
+    assert.equal(owned.length, 1, `one note owner for ${transition.id}`);
+    assert.ok(owned[0].markup.includes(`>${transition.note}</text>`));
+  }
+  assert.equal(fs.readFileSync(fixture, 'utf8'), bytes);
+});
+
+test('long transition notes are identified in width and placement diagnostics without discarding conditions', () => {
+  const condition = 'Only proceed when the request is confirmed and the worker owns the active lease. ';
+  const spine = { from: 'ready', to: 'done', label: 'go', note: condition.repeat(5) };
+  const exit = { from: 'ready', to: 'stopped', label: 'stop', note: condition.repeat(15) };
+  const doc = base({
+    meta: { title: 'Transition note diagnostics', output: 'note-diagnostics.html', quality_profile: 'showcase' },
+    mainPath: ['ready', 'done'],
+    states: [state('ready', 'start', 'Ready'), state('done', 'success', 'Done'), state('stopped', 'failure', 'Stopped')],
+    transitions: [spine, exit],
+  });
+  const input = path.join(tmp, 'long-note-diagnostics.json');
+  const source = JSON.stringify(doc);
+  fs.writeFileSync(input, source);
+  const cli = path.join(skillRoot, 'bin/archify.mjs');
+  const result = spawnSync(process.execPath, [cli, 'validate', 'lifecycle', input, '--json'], { encoding: 'utf8' });
+  assert.notEqual(result.status, 0, 'the diagnostic change does not make this layout valid');
+  const receipt = JSON.parse(result.stdout);
+  const wide = receipt.diagnostics.find(entry => entry.code === 'lifecycle/too-wide');
+  const unplaced = receipt.diagnostics.find(entry => entry.code === 'lifecycle/label-unplaced' && entry.subject.to === exit.to);
+  assert.ok(wide && unplaced, result.stdout);
+  assert.deepEqual(wide.subject, { diagramType: 'lifecycle', path: '/mainPath' });
+  const step = wide.evidence.wideStepLabels.find(entry => entry.from === spine.from && entry.to === spine.to);
+  assert.equal(step.label, spine.label, 'the existing label evidence remains compatible');
+  assert.ok(step.excessPx > 0);
+  assert.equal(step.widthDriver, 'note');
+  assert.deepEqual(unplaced.subject, { diagramType: 'lifecycle', collection: 'transitions', index: 1, from: exit.from, to: exit.to });
+  assert.equal(unplaced.evidence.widthDriver, 'note');
+  for (const diagnostic of [wide, unplaced]) {
+    const advice = diagnostic.supportedFixes.join('\n');
+    assert.match(advice, /note/);
+    assert.match(advice, /preserve.*condition|without removing conditions/);
+    assert.match(advice, /detail.*same transition/);
+    assert.match(advice, /may not.*(?:constraints|placement)/);
+  }
+  assert.equal(fs.readFileSync(input, 'utf8'), source, 'diagnosis preserves every authored condition');
+});
+
+test('an inherently too-wide lifecycle reports its budget and bounded spacing advice', () => {
   const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
   const fixture = fileURLToPath(new URL('./fixtures/lifecycle-crowded-wide.json', import.meta.url));
   const result = spawnSync(process.execPath, [cli, 'validate', 'lifecycle', fixture, '--json'], { encoding: 'utf8' });
+  assert.notEqual(result.status, 0);
   const diagnostic = JSON.parse(result.stdout).diagnostics.find((entry) => entry.code === 'lifecycle/too-wide');
   assert.ok(diagnostic, result.stdout);
+  assert.ok(diagnostic.evidence.viewBoxWidth > diagnostic.evidence.budgetPx);
   assert.ok(diagnostic.evidence.spacingWideners.length > 0);
-  assert.match(diagnostic.supportedFixes[0], /found no clear spot at the base spacing, so every gap widened by 28px/);
+  assert.match(diagnostic.supportedFixes[0], /main-path gap growth is bounded by the text readability budget/);
+  assert.match(diagnostic.supportedFixes[0], /identical labels, notes and variants/);
+  assert.doesNotMatch(diagnostic.supportedFixes[0], /every gap widened/);
 });

@@ -80,7 +80,7 @@ function classForLabel(html, id, label) {
   return match[1];
 }
 
-test('edge labels use the same variant color contract as their paths in every shared renderer and preset', () => {
+test('edge labels retain variant colors with readable workflow and Lifecycle default labels in every preset', () => {
   for (const [type, config] of Object.entries(CASES)) {
     for (const preset of PRESETS) {
       const html = render(type, config, preset);
@@ -89,12 +89,39 @@ test('edge labels use the same variant color contract as their paths in every sh
         assert.equal(classForEdge(html, id), `a-${variant}`, `${type}/${preset}/${variant} path`);
         assert.equal(
           classForLabel(html, id, `L${VARIANTS.indexOf(variant)}`),
-          `t-edge-${variant}`,
+          ['workflow', 'lifecycle'].includes(type) && variant === 'default' ? 't-muted' : `t-edge-${variant}`,
           `${type}/${preset}/${variant} label`,
         );
       }
     }
   }
+});
+
+test('Lifecycle default labels respect explicit variants, implicit spine emphasis and note-only content', () => {
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, CASES.lifecycle.input), 'utf8'));
+  source.meta.quality_profile = 'standard';
+  source.transitions[0].variant = 'default'; // Explicit default overrides spine emphasis.
+  delete source.transitions[1].variant; // The next spine step still defaults to emphasis.
+  delete source.transitions[13].variant; // An ordinary branch defaults to neutral text.
+  Object.assign(source.transitions[14], { variant: 'default', note: 'withdrawn' });
+  delete source.transitions[14].label;
+  const input = path.join(tmp, 'lifecycle-default-boundaries.json');
+  const output = path.join(tmp, 'lifecycle-default-boundaries.html');
+  fs.writeFileSync(input, JSON.stringify(source));
+  const result = spawnSync(process.execPath, [cli, 'render', 'lifecycle', input, output], { cwd: skillRoot, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const html = fs.readFileSync(output, 'utf8');
+  for (const [index, variant, labelClass] of [[0, 'default', 't-muted'], [1, 'emphasis', 't-edge-emphasis'], [13, 'default', 't-muted']]) {
+    const edge = source.transitions[index];
+    assert.equal(classForEdge(html, edge.id), `a-${variant}`, `${edge.id} path`);
+    assert.equal(classForLabel(html, edge.id, edge.label), labelClass, `${edge.id} label`);
+  }
+  const noteOnly = source.transitions[14];
+  assert.equal(classForEdge(html, noteOnly.id), 'a-default');
+  const group = html.match(new RegExp(`<g data-detail="fine"[^>]*data-edge-id="${escapePattern(noteOnly.id)}"[^>]*>([\\s\\S]*?)</g>`));
+  assert.ok(group, 'note-only default retains its fine-detail label group');
+  assert.equal([...group[1].matchAll(/<text\b/g)].length, 1, 'note-only edge does not acquire a primary label');
+  assert.match(group[1], /<text data-detail="fine"[^>]*class="t-muted"[^>]*>withdrawn<\/text>/);
 });
 
 test('sequence message labels match their line color and lifelines stop above the legend', () => {

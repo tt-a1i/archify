@@ -39,13 +39,58 @@ reviews:
       enabled: false
   slop_detection:
     enabled: false
+  # Exact generated examples checked by test/golden.mjs in the generated CI gate.
+  # Filters also affect sparse checkout: keep runtime resources and authored inputs.
+  # New outputs remain reviewable until their generation/freshness proof is checked.
+  path_filters:
+    - "!archify/examples/class-payment-processors-rendered.html"
+    - "!archify/examples/class-payments-rendered.html"
+    - "!archify/examples/dataflow-product-analytics.html"
+    - "!archify/examples/erd-orders-rendered.html"
+    - "!archify/examples/lifecycle-agent-run.html"
+    - "!archify/examples/sequence-cache-miss-request.html"
+    - "!archify/examples/subscription-billing-rendered.html"
+    - "!archify/examples/timeline-archify-dev-activity-rendered.html"
+    - "!archify/examples/timeline-payment-incident-rendered.html"
+    - "!archify/examples/tree-archify-repository-rendered.html"
+    - "!archify/examples/tree-payment-platform-rendered.html"
+    - "!archify/examples/waterfall-checkout-request-rendered.html"
+    - "!archify/examples/waterfall-example-rebuild-rendered.html"
+    - "!archify/examples/web-app-rendered.html"
+    - "!archify/examples/workflow-agent-tool-call-rendered.html"
+    - "!examples/class-payment-processors-rendered.html"
+    - "!examples/class-payments-rendered.html"
+    - "!examples/dataflow-product-analytics.html"
+    - "!examples/erd-orders-rendered.html"
+    - "!examples/lifecycle-agent-run.html"
+    - "!examples/sequence-cache-miss-request.html"
+    - "!examples/subscription-billing-rendered.html"
+    - "!examples/timeline-archify-dev-activity-rendered.html"
+    - "!examples/timeline-payment-incident-rendered.html"
+    - "!examples/tree-archify-repository-rendered.html"
+    - "!examples/tree-payment-platform-rendered.html"
+    - "!examples/waterfall-checkout-request-rendered.html"
+    - "!examples/waterfall-example-rebuild-rendered.html"
+    - "!examples/web-app-rendered.html"
+    - "!examples/workflow-agent-tool-call-rendered.html"
   path_instructions:
     - path: "**"
       instructions: >-
         Use .agents/skills/archify-review/SKILL.md for value, cost, and impact
-        judgments, and consult its linked repository guidance as needed. Apply
+        judgments, and consult its linked repository guidance as needed. For changed
+        tests or testing decisions, use .agents/skills/test-value/SKILL.md in scoped
+        review mode and read its references when relevant. Identify the concrete
+        mistake a proposed test catches, existing protection, and whether an
+        equivalent valid result would fail. Recommend added coverage for a
+        specific uncovered risk at the cheapest effective layer; account for
+        surviving protection when tests are consolidated or removed. Apply
         the base branch's rules when evaluating proposed policy changes.
-        Review the base-to-head source diff before generated output. For each
+        Review the base-to-head source diff before generated output. The exact
+        golden HTML copies listed in path_filters are excluded from review and
+        may be absent from the sparse checkout. Use final-revision generated CI
+        evidence for their freshness; request the specific missing evidence if
+        unavailable. Source review and freshness checks do not establish visual
+        acceptance. For each
         actionable finding, identify the trigger or material evidence gap, its
         consequence, and the smallest useful correction. Distinguish defects,
         unresolved claims, and optional suggestions. Accept equivalent prose
@@ -64,6 +109,19 @@ reviews:
         separation of automated browser checks from perceptual review. For Viewer
         extraction, inspect initialization, shared state, cleanup, exports, and
         standalone HTML delivery. Do not propose a broad rewrite for a local fix.
+    - path: ".github/workflows/**"
+      instructions: >-
+        Trace changed test dispatch through scope classification, shards,
+        aggregation, and deployment or release consumers. Check that required
+        coverage is complete, overlap is justified, and failed, cancelled or
+        missing required work cannot become a successful aggregate. Accept
+        intentional skips when the scope makes that work unnecessary. Distinguish
+        runtime compatibility from native platform protection; inventory or mock
+        checks prove dispatch, not real browser, OS or packaged execution.
+        Evaluate speed claims using comparable measurements, including serial
+        setup, uneven shard costs and resource contention; distinguish critical
+        path from total compute. Recommend extra caching or orchestration only
+        for an evidenced bottleneck, with proportionate maintenance cost.
     - path: "integrations/**"
       instructions: >-
         Check the package and release contracts in CONTRIBUTING.md. Examine
@@ -125,6 +183,7 @@ knowledge_base:
     enabled: true
     filePatterns:
       - .agents/skills/archify-review/SKILL.md
+      - .agents/skills/test-value/SKILL.md
       - CONTRIBUTING.md
       - REVIEWING.md
       - .github/PULL_REQUEST_TEMPLATE.md
