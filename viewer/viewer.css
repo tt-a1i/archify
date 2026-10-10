@@ -3928,10 +3928,12 @@ html[data-preset="classic"] .diagram-container {
 }
 html[data-preset="classic"] .diagram-container > svg .c-grid { stroke: transparent; }
 html[data-preset="classic"][data-theme="light"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
-  filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
+  --ambient-node-base-filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
+  filter: var(--ambient-node-base-filter);
 }
 html[data-preset="classic"][data-theme="dark"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+  --ambient-node-base-filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+  filter: var(--ambient-node-base-filter);
 }
 html[data-preset="classic"] .diagram-container > svg [data-edge-from] {
   stroke-linecap: round;
@@ -4728,8 +4730,8 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   84%, 100% { r: 26px; opacity: 0; }
 }
 @keyframes archify-node-receive {
-  0%, 100% { filter: none; }
-  5%, 12% { filter: drop-shadow(0 0 9px var(--arrow-emphasis)); }
+  0%, 100% { filter: var(--ambient-node-base-filter, none); }
+  5%, 12% { filter: var(--ambient-node-base-filter,) drop-shadow(0 0 9px var(--arrow-emphasis)); }
 }
 @keyframes archify-node-enter {
   from { opacity: 0; }

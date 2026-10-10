@@ -273,6 +273,47 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     }
   });
 
+  await t.test('settled Live node glow preserves Classic card depth across themes', async () => {
+    const samples=[];
+    for (const theme of ['dark', 'light']) {
+      await load('architecture', { theme });
+      await run(`motionWait(()=>document.documentElement.getAttribute('data-ambient-entry')==='settled')`);
+      for (const preset of ['classic', 'editorial']) {
+        const filters=await run(`(() => {
+          const svg=document.querySelector('.diagram-container > svg');
+          document.documentElement.setAttribute('data-preset', ${JSON.stringify(preset)});
+          svg.setAttribute('data-preset', ${JSON.stringify(preset)});
+          const node=svg.querySelector('[data-node-id] > rect[data-animate="node"]:not(.c-mask)');
+          Archify.motionGovernor.pause();
+          const baseline=getComputedStyle(node).filter;
+          Archify.motionGovernor.resume();
+          const animation=node.getAnimations().find(a=>a.animationName==='archify-node-receive');
+          animation.pause();
+          const timing=animation.effect.getTiming();
+          animation.currentTime=timing.delay;
+          // Chrome pads interpolated filter lists with transparent identity shadows.
+          const neutral=getComputedStyle(node).filter.replaceAll('drop-shadow(rgba(0, 0, 0, 0) 0px 0px 0px)', '').trim() || 'none';
+          animation.currentTime=timing.delay+timing.duration*0.08;
+          const peak=getComputedStyle(node).filter;
+          return {baseline,neutral,peak};
+        })()`);
+        samples.push({preset,theme,...filters});
+      }
+    }
+    t.diagnostic(JSON.stringify(samples));
+    for (const filters of samples) {
+      const {preset,theme}=filters;
+      assert.equal(filters.neutral, filters.baseline, `${preset}/${theme}: neutral Live retains Still card depth`);
+      if (preset === 'classic') {
+        assert.notEqual(filters.baseline, 'none', `${theme}: fixture exercises Classic depth`);
+        assert.ok(filters.peak.startsWith(filters.baseline + ' '), `${theme}: glow composes with card depth: ${JSON.stringify(filters)}`);
+      } else {
+        assert.equal(filters.baseline, 'none', 'Editorial retains its flat card styling.');
+      }
+      assert.notEqual(filters.peak, filters.neutral, `${preset}/${theme}: Live still glows`);
+    }
+  });
+
   await t.test('collapsing Orders hides only its descendant flow overlays', async () => {
     for (const mode of ['tree', 'treeCollapsed']) {
       await load(mode);
