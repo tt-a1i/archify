@@ -4731,8 +4731,8 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   5%, 12% { filter: drop-shadow(0 0 9px var(--arrow-emphasis)); }
 }
 @keyframes archify-node-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @media print {
   .ambient-edge-flow { display: none !important; animation: none !important; }
