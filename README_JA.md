@@ -18,7 +18,8 @@
   <a href="https://archify.si/guide.html"><strong>シナリオガイド</strong></a> &nbsp;·&nbsp;
   <a href="#コミュニティ"><strong>コミュニティ</strong></a> &nbsp;·&nbsp;
   <a href="./README.md"><strong>English</strong></a> &nbsp;·&nbsp;
-  <a href="./README_ZH.md"><strong>简体中文</strong></a>
+  <a href="./README_ZH.md"><strong>简体中文</strong></a> &nbsp;·&nbsp;
+  <a href="./README_KO.md"><strong>한국어</strong></a>
 </p>
 
 <p align="center">
