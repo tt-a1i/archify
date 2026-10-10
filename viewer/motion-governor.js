@@ -22,8 +22,9 @@
       var entryPending = new Set();
       var flowCount = 0;
 
-      // Runtime decoration carries geometry only. Keep each flow beside its
-      // authored edge so transforms, clipping and crossover paint order apply.
+      // Runtime decoration carries geometry and tree visibility only. Keep each
+      // flow beside its authored edge so transforms, clipping and crossover
+      // paint order apply.
       // Each edge carries a small light show: a comet (halo, tail, head)
       // cascading downstream on one shared cycle, a lingering wake, and a
       // ripple where the comet lands. Phases follow the authored step order:
@@ -58,6 +59,15 @@
           var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
           if (!d) return;
           var anchor = shape;
+          // Tree Branches initializes after these overlays and includes their
+          // inherited ancestors in its existing collapse/expand lifecycle.
+          function tagOverlay(flow) {
+            flow.setAttribute('data-ambient-flow-overlay', 'true');
+            flow.setAttribute('aria-hidden', 'true');
+            if (shape.hasAttribute('data-tree-ancestors')) {
+              flow.setAttribute('data-tree-ancestors', shape.getAttribute('data-tree-ancestors'));
+            }
+          }
           function addPath(cls) {
             var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             flow.setAttribute('d', d);
@@ -65,8 +75,7 @@
               if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
             });
             flow.setAttribute('class', 'ambient-edge-flow ambient-flow-' + cls);
-            flow.setAttribute('data-ambient-flow-overlay', 'true');
-            flow.setAttribute('aria-hidden', 'true');
+            tagOverlay(flow);
             shape.parentNode.insertBefore(flow, anchor.nextSibling);
             anchor = flow;
             return flow;
@@ -132,8 +141,7 @@
               ripple.setAttribute('r', '2');
               if (shape.hasAttribute('transform')) ripple.setAttribute('transform', shape.getAttribute('transform'));
               ripple.setAttribute('class', 'ambient-edge-flow ambient-flow-' + kind);
-              ripple.setAttribute('data-ambient-flow-overlay', 'true');
-              ripple.setAttribute('aria-hidden', 'true');
+              tagOverlay(ripple);
               ripple.style.setProperty('--flow-delay', phase.toFixed(3) + 's');
               shape.parentNode.insertBefore(ripple, anchor.nextSibling);
               anchor = ripple;

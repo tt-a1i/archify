@@ -4725,8 +4725,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     /* Live turns each edge into a small light show on one shared cycle: a comet
        (halo, tail, head — plus a dimmer echo on long edges) cascades downstream,
-       leaves a soft wake, and lands as a ripple on the target node; on load a
-       one-shot trace draws every edge before the cascade begins. Original line
+       leaves a soft wake, and lands as a ripple on the target node. Original line
        language and markers remain static. Each edge's phase follows the authored
        step order — source-node rank, or chronological order in sequence
        diagrams — so the whole diagram ripples downstream instead of marching
@@ -4789,8 +4788,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          (fully lit) until its phase arrives. */
       animation-fill-mode: backwards;
     }
-    /* Collapsed tree descendants hide their adjacent decorative flow too. */
-    [data-tree-hidden] ~ .ambient-edge-flow { display: none !important; animation: none !important; }
+    /* Each decorative flow follows its owning edge through tree visibility. */
+    .ambient-edge-flow[data-tree-hidden] { display: none !important; animation: none !important; }
     svg[data-preset="signal-flow"] { --flow-cycle: 5.2s; --flow-step-delay: 0.18s; }
     svg[data-preset="blueprint"] .ambient-edge-flow { stroke-linecap: square; }
     svg[data-preset="editorial"] { --flow-halo-peak: 0.07; --flow-tail-peak: 0.2; --flow-head-peak: 0.7; --flow-wake-peak: 0.05; --flow-ripple-peak: 0.3; --flow-ripple-echo-peak: 0.12; }
@@ -4905,6 +4904,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     @media print {
       .ambient-edge-flow { display: none !important; animation: none !important; }
+      svg[data-animation="trace"] [data-animate="node"] { animation: none !important; }
     }
     @keyframes archify-node-pulse {
       0%, 72%, 100% { filter: none; stroke-width: 1.5; }
@@ -7501,8 +7501,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var entryPending = new Set();
       var flowCount = 0;
 
-      // Runtime decoration carries geometry only. Keep each flow beside its
-      // authored edge so transforms, clipping and crossover paint order apply.
+      // Runtime decoration carries geometry and tree visibility only. Keep each
+      // flow beside its authored edge so transforms, clipping and crossover
+      // paint order apply.
       // Each edge carries a small light show: a comet (halo, tail, head)
       // cascading downstream on one shared cycle, a lingering wake, and a
       // ripple where the comet lands. Phases follow the authored step order:
@@ -7537,6 +7538,15 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
           if (!d) return;
           var anchor = shape;
+          // Tree Branches initializes after these overlays and includes their
+          // inherited ancestors in its existing collapse/expand lifecycle.
+          function tagOverlay(flow) {
+            flow.setAttribute('data-ambient-flow-overlay', 'true');
+            flow.setAttribute('aria-hidden', 'true');
+            if (shape.hasAttribute('data-tree-ancestors')) {
+              flow.setAttribute('data-tree-ancestors', shape.getAttribute('data-tree-ancestors'));
+            }
+          }
           function addPath(cls) {
             var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             flow.setAttribute('d', d);
@@ -7544,8 +7554,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
             });
             flow.setAttribute('class', 'ambient-edge-flow ambient-flow-' + cls);
-            flow.setAttribute('data-ambient-flow-overlay', 'true');
-            flow.setAttribute('aria-hidden', 'true');
+            tagOverlay(flow);
             shape.parentNode.insertBefore(flow, anchor.nextSibling);
             anchor = flow;
             return flow;
@@ -7611,8 +7620,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               ripple.setAttribute('r', '2');
               if (shape.hasAttribute('transform')) ripple.setAttribute('transform', shape.getAttribute('transform'));
               ripple.setAttribute('class', 'ambient-edge-flow ambient-flow-' + kind);
-              ripple.setAttribute('data-ambient-flow-overlay', 'true');
-              ripple.setAttribute('aria-hidden', 'true');
+              tagOverlay(ripple);
               ripple.style.setProperty('--flow-delay', phase.toFixed(3) + 's');
               shape.parentNode.insertBefore(ripple, anchor.nextSibling);
               anchor = ripple;

@@ -36,6 +36,12 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     fs.writeFileSync(input, JSON.stringify(doc));
     files[mode] = path.join(scratch, mode + '.html');
     execFileSync(process.execPath, [path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`), input, files[mode]]);
+    if (mode === 'tree') {
+      doc.nodes.find(n=>n.id==='orders').collapsed=true;
+      fs.writeFileSync(input, JSON.stringify(doc));
+      files.treeCollapsed = path.join(scratch, 'tree-collapsed.html');
+      execFileSync(process.execPath, [path.join(skillRoot, 'renderers/tree/render-tree.mjs'), input, files.treeCollapsed]);
+    }
   }
   // Old standalone static HTML still has an inert Governor. New renders default to motion.
   files.static = path.join(scratch, 'static.html');
@@ -165,7 +171,7 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
         return {edges:edges.length, flows:flows.length, paths:paths.length, circles:circles.length, longEdges,
           valid:paths.every(e=>e.getAttribute('d')===(e.previousElementSibling.getAttribute('data-motion-path')||e.previousElementSibling.getAttribute('d')))&&
           circles.every(e=>e.getAttribute('cx')!==null&&e.getAttribute('cy')!==null)&&
-          flows.every(e=>Array.from(e.attributes).every(a=>!a.name.startsWith('data-')||a.name==='data-ambient-flow-overlay')&&
+          flows.every(e=>Array.from(e.attributes).every(a=>!a.name.startsWith('data-')||['data-ambient-flow-overlay','data-tree-ancestors'].includes(a.name))&&
           !e.id&&!e.hasAttribute('role')&&!e.hasAttribute('tabindex')&&!e.hasAttribute('marker-end')&&getComputedStyle(e).pointerEvents==='none'),
           originalAnimations:edges.map(e=>getComputedStyle(e).animationName),
           reverse:edges.filter(e=>e.hasAttribute('data-motion-path')&&e.getAttribute('data-motion-path')!==e.getAttribute('d')).length,
@@ -233,6 +239,48 @@ test('Motion Governor preserves mode, ownership, continuous Live flow and real c
     assert.deepEqual(inert, [false,false,false,false,'still','still',0,false,false,true,'']);
     assert.equal((await snapshot('static')).hidden, true);
     assert.equal(await run(`document.querySelectorAll('[data-ambient-flow-overlay]').length`), 0);
+  });
+
+  await t.test('collapsing Orders hides only its descendant flow overlays', async () => {
+    for (const mode of ['tree', 'treeCollapsed']) {
+      await load(mode);
+      const branch = await run(`(() => {
+        const overlaysOf=e=>{const out=[];for(let s=e.nextElementSibling;s&&s.hasAttribute('data-ambient-flow-overlay');s=s.nextElementSibling)out.push(s);return out;};
+        const edges=Array.from(document.querySelectorAll('path[data-animate="edge"]'));
+        const unaffected=edges.filter(e=>['payments','operations'].includes(e.getAttribute('data-edge-from')));
+        if (!Archify.treeBranches.collapsedIds().includes('orders')) Archify.treeBranches.collapse('orders');
+        const hidden=edges.filter(e=>e.hasAttribute('data-tree-hidden'));
+        const stopped=hidden.every(e=>overlaysOf(e).length>0&&overlaysOf(e).every(o=>getComputedStyle(o).display==='none'&&o.getAnimations().length===0));
+        const neighborsRunning=unaffected.every(e=>overlaysOf(e).length>0&&overlaysOf(e).every(o=>getComputedStyle(o).display!=='none'&&o.getAnimations().some(a=>a.playState==='running')));
+        Archify.treeBranches.expand('orders');
+        return {hidden:hidden.length,neighbors:unaffected.length,stopped,neighborsRunning,
+          resumed:hidden.every(e=>overlaysOf(e).every(o=>getComputedStyle(o).display!=='none'&&o.getAnimations().some(a=>a.playState==='running')))};
+      })()`);
+      assert.equal(branch.hidden, 2);
+      assert.equal(branch.neighbors, 4);
+      assert.equal(branch.stopped, true);
+      assert.equal(branch.neighborsRunning, true, 'Payments and Operations keep their Live flow when Orders collapses');
+      assert.equal(branch.resumed, true);
+    }
+  });
+
+  await t.test('printing settled Live nodes preserves static styling then restores screen Live', async () => {
+    for (const mode of ['architecture', 'tree']) {
+      await load(mode);
+      await run(`motionWait(()=>document.documentElement.getAttribute('data-ambient-entry')==='settled')`);
+      const nodeState=()=>run(`Array.from(document.querySelectorAll('[data-animate="node"]'),e=>({animations:e.getAnimations().map(a=>a.animationName),filter:getComputedStyle(e).filter,opacity:getComputedStyle(e).opacity}))`);
+      assert.ok((await nodeState()).every(n=>n.animations.includes('archify-node-receive')));
+      await send('Emulation.setEmulatedMedia', {media:'print'});
+      await run(`Archify.motionGovernor.pause()`);
+      const staticPrint=await nodeState();
+      assert.ok(staticPrint.length>0&&staticPrint.every(n=>n.animations.length===0));
+      await run(`Archify.motionGovernor.resume()`);
+      assert.deepEqual(await nodeState(), staticPrint, mode + ': printed Live nodes retain Still print styling and no animations');
+      assert.equal((await snapshot(mode + '-settled-print')).mode, 'live');
+      await media(false);
+      await run(`motionWait(()=>Array.from(document.querySelectorAll('[data-animate="node"]')).every(e=>e.getAnimations().some(a=>a.animationName==='archify-node-receive'&&a.playState==='running')))`);
+      assert.equal((await snapshot(mode + '-settled-screen-return')).mode, 'live');
+    }
   });
 
   await t.test('grouped edges keep runtime flows out of semantic geometry copies', async () => {

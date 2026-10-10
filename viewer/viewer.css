@@ -4556,8 +4556,7 @@ svg[data-preset="blueprint"][data-relationship-preview-active] [data-relationshi
 
 /* Live turns each edge into a small light show on one shared cycle: a comet
    (halo, tail, head — plus a dimmer echo on long edges) cascades downstream,
-   leaves a soft wake, and lands as a ripple on the target node; on load a
-   one-shot trace draws every edge before the cascade begins. Original line
+   leaves a soft wake, and lands as a ripple on the target node. Original line
    language and markers remain static. Each edge's phase follows the authored
    step order — source-node rank, or chronological order in sequence
    diagrams — so the whole diagram ripples downstream instead of marching
@@ -4620,8 +4619,8 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
      (fully lit) until its phase arrives. */
   animation-fill-mode: backwards;
 }
-/* Collapsed tree descendants hide their adjacent decorative flow too. */
-[data-tree-hidden] ~ .ambient-edge-flow { display: none !important; animation: none !important; }
+/* Each decorative flow follows its owning edge through tree visibility. */
+.ambient-edge-flow[data-tree-hidden] { display: none !important; animation: none !important; }
 svg[data-preset="signal-flow"] { --flow-cycle: 5.2s; --flow-step-delay: 0.18s; }
 svg[data-preset="blueprint"] .ambient-edge-flow { stroke-linecap: square; }
 svg[data-preset="editorial"] { --flow-halo-peak: 0.07; --flow-tail-peak: 0.2; --flow-head-peak: 0.7; --flow-wake-peak: 0.05; --flow-ripple-peak: 0.3; --flow-ripple-echo-peak: 0.12; }
@@ -4736,6 +4735,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
 }
 @media print {
   .ambient-edge-flow { display: none !important; animation: none !important; }
+  svg[data-animation="trace"] [data-animate="node"] { animation: none !important; }
 }
 @keyframes archify-node-pulse {
   0%, 72%, 100% { filter: none; stroke-width: 1.5; }
