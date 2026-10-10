@@ -66,7 +66,7 @@ test('signal-flow preset reaches the page, SVG, and motion export surface', () =
   assert.match(html, /data-preset-badge-signal-flow="SIGNAL FLOW"/);
   assert.match(html, /data-format="webm"/);
   assert.match(html, /data-last-motion-bytes/);
-  assert.match(html, /Archify\.motion = \{ canRecord: canRecordMotion, recordWebm: recordWebm \}/);
+  assert.match(html, /Archify\.motion = \{ canRecord: canRecordMotion, recordWebm: recordWebm, recordGif: recordGif \}/);
   assert.match(html, /recorder\.requestData\(\)/);
   assert.match(html, /aria-label="Diagram view controls"/);
   assert.match(html, /Archify\.focus = \(function \(\)/);
@@ -84,14 +84,18 @@ test('signal-flow preset reaches the page, SVG, and motion export surface', () =
 
 test('webm renders an explicit time-varying canvas scene instead of replaying one cached SVG bitmap', () => {
   const html = render('architecture', CASES.architecture, 'trace', 'signal-flow');
+  // The per-frame motion scene is built once in prepareMotionSession() and
+  // shared by both the WebM and GIF exporters; recordWebm() samples it.
+  const sessionBlock = html.match(/function prepareMotionSession\(options\) \{[\s\S]*?\n      function recordWebm\(/) ?.[0] || '';
   const recordBlock = html.match(/function recordWebm\(options\) \{[\s\S]*?\n      var menu =/)?.[0] || '';
 
-  assert.match(recordBlock, /var motionScene = createMotionScene\(svg\)/);
-  assert.match(recordBlock, /drawMotionFrame\(ctx, backgroundImage, motionScene, elapsed\)/);
-  assert.match(recordBlock, /getPointAtLength/);
+  assert.match(sessionBlock, /var motionScene = createMotionScene\(svg\)/);
+  assert.match(sessionBlock, /drawMotionFrame\(ctx, backgroundImage, motionScene, elapsed\)/);
+  assert.match(sessionBlock, /getPointAtLength/);
+  assert.match(recordBlock, /session\.draw\(elapsed\)/);
   assert.match(recordBlock, /performance\.now\(\)/);
   assert.doesNotMatch(
-    recordBlock,
+    sessionBlock + recordBlock,
     /function draw\(\) \{[\s\S]*?ctx\.drawImage\(img, 0, 0, canvas\.width, canvas\.height\);[\s\S]*?requestAnimationFrame\(draw\)/,
   );
 });

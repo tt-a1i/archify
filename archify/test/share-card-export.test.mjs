@@ -37,7 +37,7 @@ test('all five renderers remove ordinary share cards while retaining other expor
     const html = render(mode);
     assert.doesNotMatch(html, /data-format="share-card"|data-action="copy-share-card"|copyShareCard|runCopyShareCard/, mode);
     assert.deepEqual([...html.matchAll(/<button data-format="([^"]+)"/g)].map(match => match[1]),
-      ['png', 'jpeg', 'webp', 'svg', 'svg-light', 'svg-dark', 'webm'], mode);
+      ['png', 'jpeg', 'webp', 'svg', 'svg-light', 'svg-dark', 'webm', 'gif'], mode);
     for (const action of ['copy', 'route-share-card', 'reach-share-card']) {
       assert.ok(html.includes('data-action="' + action + '"'), mode);
     }

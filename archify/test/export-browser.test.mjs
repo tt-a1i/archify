@@ -125,7 +125,7 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     for (const width of [390, 720, 1440]) {
       await load({ width, extra: '&fault=unsupported' });
       assert.deepEqual(await run('Object.keys(Archify.exportMenu).sort()'), ['close','downloadReachShareCard','downloadRouteShareCard','isOpen','open','run','shareCard','syncReachShare','syncRouteShare'].sort());
-      assert.deepEqual(await run('Object.keys(Archify.motion).sort()'), ['canRecord','recordWebm']);
+      assert.deepEqual(await run('Object.keys(Archify.motion).sort()'), ['canRecord','recordGif','recordWebm']);
       assert.deepEqual(await run(`[...document.querySelectorAll('#export-menu [data-format="jpeg"],#export-menu [data-format="webp"],#export-menu [data-format="webm"],#export-menu [data-action="copy"]')].map(e=>e.disabled)`), [true,true,true,true]);
       await run(`document.getElementById('btn-export').focus()`);
       await key('ArrowUp', 'ArrowUp', 38);
