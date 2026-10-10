@@ -218,7 +218,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     [data-theme="light"] {
       --bg: #f4f5f7;
       --grid: #e9edf2;
-      --canvas-dot: #d9dee5;
+      --canvas-dot: #e2e7ec;
       --text: #111827;
       --text-muted: #5b6474;
       --text-dim: #9aa3b2;
@@ -1008,8 +1008,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
     .diagram-nav-icon {
       display: block;
-      width: 0.875rem;
-      height: 0.875rem;
+      width: 0.95rem;
+      height: 0.95rem;
       margin: auto;
       background: currentColor;
       -webkit-mask-position: center;
@@ -1073,8 +1073,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .diagram-nav #btn-overview-map::before,
     .diagram-nav #btn-semantic-lens::before {
       flex: none;
-      width: 0.875rem;
-      height: 0.875rem;
+      width: 0.95rem;
+      height: 0.95rem;
       background: currentColor;
       content: "";
       opacity: 0.85;
@@ -1088,21 +1088,33 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .diagram-nav [data-view="out"],
     .diagram-nav [data-view="reset"],
     .diagram-nav [data-view="in"] {
+      position: relative;
       border-radius: 0;
-      background: color-mix(in srgb, var(--text) 4.5%, transparent);
+      background: color-mix(in srgb, var(--panel-border) 38%, transparent);
     }
     .diagram-nav [data-view="out"] { margin-left: 0.375rem; border-radius: 0.5rem 0 0 0.5rem; }
     .diagram-nav [data-view="out"]::before { display: none; }
     .diagram-nav [data-view="reset"],
     .diagram-nav [data-view="in"] { margin-left: -0.0625rem; }
     .diagram-nav [data-view="in"] { border-radius: 0 0.5rem 0.5rem 0; }
+    .diagram-nav [data-view="reset"]::after,
+    .diagram-nav [data-view="in"]::after {
+      position: absolute;
+      top: 0.55rem;
+      bottom: 0.55rem;
+      left: 0;
+      width: 1px;
+      background: color-mix(in srgb, var(--panel-border) 75%, transparent);
+      content: "";
+      pointer-events: none;
+    }
     .diagram-nav [data-view="out"]:hover,
     .diagram-nav [data-view="reset"]:hover,
-    .diagram-nav [data-view="in"]:hover { background: color-mix(in srgb, var(--text) 9%, transparent); }
+    .diagram-nav [data-view="in"]:hover { background: color-mix(in srgb, var(--panel-border) 60%, transparent); }
     .diagram-nav [data-view="out"]:disabled,
     .diagram-nav [data-view="in"]:disabled { opacity: 1; color: color-mix(in srgb, var(--text-muted) 40%, transparent); }
     .diagram-nav [data-view="out"]:disabled:hover,
-    .diagram-nav [data-view="in"]:disabled:hover { background: color-mix(in srgb, var(--text) 4.5%, transparent); }
+    .diagram-nav [data-view="in"]:disabled:hover { background: color-mix(in srgb, var(--panel-border) 38%, transparent); }
     .diagram-nav [data-view="reset"] { min-width: 3.25rem; }
     .diagram-container[data-camera-indicator="true"] .diagram-nav-detail,
     .diagram-container[data-camera-indicator="true"] .diagram-nav-percent { color: var(--frontend-stroke); }
@@ -2346,7 +2358,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       gap: 0.55rem;
       margin: 0 0.55rem 0.55rem;
       padding: 0 0.7rem;
-      min-height: 2.6rem;
+      min-height: 2.35rem;
       border: 1px solid var(--toolbar-border);
       border-radius: 0.55rem;
       background: color-mix(in srgb, var(--panel) 78%, transparent);
@@ -2356,7 +2368,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .node-finder-search > span { color: var(--frontend-stroke); font-size: 0.875rem; }
     .node-finder-search:focus-within {
       border-color: var(--frontend-stroke);
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--frontend-stroke) 20%, transparent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--frontend-stroke) 14%, transparent);
     }
     .node-finder-input {
       appearance: none;
@@ -2394,6 +2406,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       background: color-mix(in srgb, var(--panel) 54%, transparent);
       scroll-padding-block: 0.25rem;
       scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--panel-border) 90%, transparent) transparent;
+    }
+    /* Slim overlay-style thumb instead of the chunky platform default. */
+    .node-finder-results::-webkit-scrollbar { width: 10px; }
+    .node-finder-results::-webkit-scrollbar-track { background: transparent; }
+    .node-finder-results::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--panel-border) 85%, transparent);
+      border: 3px solid transparent;
+      border-radius: 999px;
+      background-clip: padding-box;
+    }
+    .node-finder-results::-webkit-scrollbar-thumb:hover {
+      background: color-mix(in srgb, var(--text-muted) 65%, transparent);
+      border: 3px solid transparent;
+      background-clip: padding-box;
     }
     html[data-preset="blueprint"] .node-finder-results { border-radius: 0.18rem; }
     .node-finder-result {
@@ -2401,8 +2428,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 0.2rem 0.75rem;
       width: 100%;
-      min-height: 3.25rem;
-      padding: 0.58rem 0.65rem;
+      min-height: 3rem;
+      padding: 0.52rem 0.65rem;
       border: 0;
       border-radius: 0;
       background: transparent;
@@ -2443,6 +2470,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       font-size: 0.625rem;
       font-style: normal;
     }
+    /* A zero count is absence, not information — let it recede. */
+    .node-finder-result em[data-zero] { color: var(--text-faint); }
     .node-finder[data-context^="route-"] .node-finder-result em {
       padding: 0.1rem 0.3rem;
       border: 1px solid color-mix(in srgb, currentColor 52%, transparent);
@@ -3520,6 +3549,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     #btn-motion[aria-pressed="false"] .motion-control-dot {
       background: transparent;
       box-shadow: none;
+    }
+    /* The motion button breathes on the same shared cycle as the cascade, so the
+       chrome keeps time with the wave it controls. The cycle length lives on the
+       diagram SVG, so chrome presets mirror it here. */
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) #btn-motion .motion-control-dot {
+      animation: archify-motion-dot-breathe var(--flow-cycle-chrome, 6.4s) ease-in-out infinite;
+    }
+    html[data-preset="signal-flow"] #btn-motion .motion-control-dot { --flow-cycle-chrome: 5.2s; }
+    @keyframes archify-motion-dot-breathe {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      46% { opacity: 0.55; transform: scale(0.72); }
     }
     .toolbar .export-menu {
       position: absolute;
@@ -4683,45 +4723,185 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .c-region         { fill: rgba(251, 191, 36, 0.05); stroke: var(--cloud-stroke); stroke-dasharray: 8,4; }
     .c-lane           { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-dasharray: 6,6; }
 
-    /* Live flows continuously over authored paths; original line language and
-       markers remain static. Node entry is bounded to one pass per document. */
+    /* Live turns each edge into a small light show on one shared cycle: a comet
+       (halo, tail, head — plus a dimmer echo on long edges) cascades downstream,
+       leaves a soft wake, and lands as a ripple on the target node; on load a
+       one-shot trace draws every edge before the cascade begins. Original line
+       language and markers remain static. Each edge's phase follows the authored
+       step order — source-node rank, or chronological order in sequence
+       diagrams — so the whole diagram ripples downstream instead of marching
+       uniformly. Node entry is bounded to one pass per document, then a soft
+       receive glow keeps time with the passing wave. */
+    svg[data-animation="trace"] {
+      --flow-cycle: 6.4s;
+      --flow-step-delay: 0.2s;
+      --flow-halo-peak: 0.13;
+      --flow-tail-peak: 0.34;
+      --flow-head-peak: 0.95;
+      --flow-wake-peak: 0.08;
+      --flow-ripple-peak: 0.55;
+      --flow-ripple-echo-peak: 0.22;
+    }
     .ambient-edge-flow {
       fill: none;
       stroke: var(--arrow-emphasis);
-      stroke-width: 1.8;
       stroke-linecap: round;
-      stroke-dasharray: 6 30;
-      opacity: 0.58;
       pointer-events: none;
       display: none;
     }
+    .ambient-flow-wake {
+      stroke-width: 3.2;
+      stroke-dasharray: var(--flow-dasharray, none);
+      animation-name: archify-flow-wake;
+    }
+    .ambient-flow-halo {
+      stroke-width: 5;
+      stroke-dasharray: var(--flow-dash, 12px) calc(var(--flow-len, 0px) - var(--flow-dash, 12px));
+      animation-name: archify-cascade-halo;
+    }
+    .ambient-flow-tail {
+      stroke-width: 2.4;
+      stroke-dasharray: var(--flow-dasharray, var(--flow-dash, 20px) calc(var(--flow-len, 0px) - var(--flow-dash, 20px)));
+      animation-name: archify-cascade-tail;
+    }
+    .ambient-flow-head {
+      stroke: color-mix(in srgb, var(--arrow-emphasis) 45%, white);
+      stroke-width: 2.2;
+      stroke-dasharray: var(--flow-dash, 6px) calc(var(--flow-len, 0px) - var(--flow-dash, 6px));
+      animation-name: archify-cascade-head;
+    }
+    .ambient-flow-ripple {
+      stroke: color-mix(in srgb, var(--arrow-emphasis) 55%, white);
+      stroke-width: 2;
+      animation-name: archify-flow-ripple;
+    }
+    .ambient-flow-ripple-echo {
+      stroke-width: 1.2;
+      animation-name: archify-flow-ripple-echo;
+    }
     html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) .ambient-edge-flow {
       display: inline;
-      animation: archify-ambient-flow var(--ambient-flow-duration, 2.4s) linear infinite;
+      animation-duration: var(--flow-cycle, 6.4s);
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      animation-delay: var(--flow-delay, 0s);
+      /* Without backwards fill a delayed layer would sit at its natural opacity
+         (fully lit) until its phase arrives. */
+      animation-fill-mode: backwards;
     }
     /* Collapsed tree descendants hide their adjacent decorative flow too. */
-    [data-tree-hidden] + .ambient-edge-flow { display: none !important; animation: none !important; }
-    svg[data-preset="signal-flow"] { --ambient-flow-duration: 2s; }
+    [data-tree-hidden] ~ .ambient-edge-flow { display: none !important; animation: none !important; }
+    svg[data-preset="signal-flow"] { --flow-cycle: 5.2s; --flow-step-delay: 0.18s; }
     svg[data-preset="blueprint"] .ambient-edge-flow { stroke-linecap: square; }
-    svg[data-preset="editorial"] .ambient-edge-flow { opacity: 0.45; }
+    svg[data-preset="editorial"] { --flow-halo-peak: 0.07; --flow-tail-peak: 0.2; --flow-head-peak: 0.7; --flow-wake-peak: 0.05; --flow-ripple-peak: 0.3; --flow-ripple-echo-peak: 0.12; }
+    /* On light canvases the cascade reads by saturation instead of bloom: the
+       head and inner ripple mix toward ink instead of white, and every layer's
+       peak rises so the wave survives the bright background. */
+    html[data-theme="light"] svg[data-animation="trace"] {
+      --flow-halo-peak: 0.22;
+      --flow-tail-peak: 0.5;
+      --flow-wake-peak: 0.13;
+      --flow-ripple-echo-peak: 0.3;
+    }
+    html[data-theme="light"] .ambient-flow-head {
+      stroke: color-mix(in srgb, var(--arrow-emphasis) 55%, black);
+      stroke-width: 2.4;
+    }
+    html[data-theme="light"] .ambient-flow-ripple {
+      stroke: color-mix(in srgb, var(--arrow-emphasis) 65%, black);
+    }
     html[data-ambient-entry="running"] svg[data-animation="trace"] [data-animate="node"] {
       transform-box: fill-box;
       transform-origin: center;
-      animation: archify-node-pulse 3.6s ease-in-out 1;
-      animation-delay: calc(var(--step, 0) * 160ms);
+      animation: archify-node-pulse 3.6s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
     }
-    svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] { animation-duration: 3.1s; }
-    svg[data-preset="blueprint"][data-animation="trace"] [data-animate="node"] {
-      animation-name: archify-blueprint-node-pulse;
-      animation-duration: 3.8s;
+    html[data-ambient-entry="running"] svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] {
+      animation: archify-node-pulse 3.1s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
     }
-    svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
-      animation-name: archify-editorial-node-pulse;
-      animation-duration: 3.5s;
+    html[data-ambient-entry="running"] svg[data-preset="blueprint"][data-animation="trace"] [data-animate="node"] {
+      animation: archify-blueprint-node-pulse 3.8s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
     }
-    @keyframes archify-ambient-flow {
-      from { stroke-dashoffset: 36; }
-      to { stroke-dashoffset: 0; }
+    html[data-ambient-entry="running"] svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
+      animation: archify-editorial-node-pulse 3.5s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
+    }
+    /* Receive glow rides the same cycle and per-step phase as the comets, so a
+       node lights up as the wave passes through it. During the bounded entrance
+       all three animations run; the entrance pulse is listed after the receive
+       glow and wins on filter until it completes. */
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden]) svg[data-animation="trace"] [data-animate="node"] {
+      animation: archify-node-receive var(--flow-cycle, 6.4s) ease-in-out infinite calc(var(--step, 0) * var(--flow-step-delay, 0.2s));
+    }
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden])[data-ambient-entry="running"] svg[data-animation="trace"] [data-animate="node"] {
+      animation: archify-node-receive var(--flow-cycle, 6.4s) ease-in-out infinite calc(var(--step, 0) * var(--flow-step-delay, 0.2s)),
+        archify-node-pulse 3.6s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
+    }
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden])[data-ambient-entry="running"] svg[data-preset="signal-flow"][data-animation="trace"] [data-animate="node"] {
+      animation: archify-node-receive var(--flow-cycle, 6.4s) ease-in-out infinite calc(var(--step, 0) * var(--flow-step-delay, 0.2s)),
+        archify-node-pulse 3.1s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
+    }
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden])[data-ambient-entry="running"] svg[data-preset="blueprint"][data-animation="trace"] [data-animate="node"] {
+      animation: archify-node-receive var(--flow-cycle, 6.4s) ease-in-out infinite calc(var(--step, 0) * var(--flow-step-delay, 0.2s)),
+        archify-blueprint-node-pulse 3.8s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
+    }
+    html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner]):not([data-embed]):not([data-share-playback]):not([data-document-hidden])[data-ambient-entry="running"] svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] {
+      animation: archify-node-receive var(--flow-cycle, 6.4s) ease-in-out infinite calc(var(--step, 0) * var(--flow-step-delay, 0.2s)),
+        archify-editorial-node-pulse 3.5s ease-in-out 1 calc(var(--step, 0) * 160ms),
+        archify-node-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards calc(var(--step, 0) * 160ms);
+    }
+    @keyframes archify-flow-wake {
+      0% { opacity: 0; }
+      24% { opacity: var(--flow-wake-peak, 0.08); }
+      62% { opacity: var(--flow-wake-peak, 0.08); }
+      82%, 100% { opacity: 0; }
+    }
+    @keyframes archify-cascade-halo {
+      0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 3px)); opacity: 0; }
+      4% { opacity: var(--flow-halo-peak, 0.13); }
+      15% { stroke-dashoffset: calc((var(--flow-len, 0px) + var(--flow-shift, 3px)) * 0.88); }
+      48% { stroke-dashoffset: calc((var(--flow-len, 0px) + var(--flow-shift, 3px)) * 0.22); }
+      62% { stroke-dashoffset: var(--flow-shift, 3px); opacity: var(--flow-halo-peak, 0.13); }
+      68%, 100% { stroke-dashoffset: var(--flow-shift, 3px); opacity: 0; }
+    }
+    @keyframes archify-cascade-tail {
+      0% { stroke-dashoffset: calc(var(--flow-len, 0px) + var(--flow-shift, 20px)); opacity: 0; }
+      4% { opacity: var(--flow-tail-peak, 0.34); }
+      15% { stroke-dashoffset: calc((var(--flow-len, 0px) + var(--flow-shift, 20px)) * 0.88); }
+      48% { stroke-dashoffset: calc((var(--flow-len, 0px) + var(--flow-shift, 20px)) * 0.22); }
+      62% { stroke-dashoffset: var(--flow-shift, 20px); opacity: var(--flow-tail-peak, 0.34); }
+      68%, 100% { stroke-dashoffset: var(--flow-shift, 20px); opacity: 0; }
+    }
+    @keyframes archify-cascade-head {
+      0% { stroke-dashoffset: var(--flow-len, 0px); opacity: 0; }
+      4% { opacity: var(--flow-head-peak, 0.95); }
+      15% { stroke-dashoffset: calc(var(--flow-len, 0px) * 0.88); }
+      48% { stroke-dashoffset: calc(var(--flow-len, 0px) * 0.22); }
+      62% { stroke-dashoffset: 0; opacity: var(--flow-head-peak, 0.95); }
+      68%, 100% { stroke-dashoffset: 0; opacity: 0; }
+    }
+    @keyframes archify-flow-ripple {
+      0%, 60% { r: 2px; opacity: 0; }
+      63% { r: 2px; opacity: var(--flow-ripple-peak, 0.55); }
+      78%, 100% { r: 17px; opacity: 0; }
+    }
+    @keyframes archify-flow-ripple-echo {
+      0%, 63% { r: 2px; opacity: 0; }
+      66% { r: 2px; opacity: var(--flow-ripple-echo-peak, 0.22); }
+      84%, 100% { r: 26px; opacity: 0; }
+    }
+    @keyframes archify-node-receive {
+      0%, 100% { filter: none; }
+      5%, 12% { filter: drop-shadow(0 0 9px var(--arrow-emphasis)); }
+    }
+    @keyframes archify-node-enter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     @media print {
       .ambient-edge-flow { display: none !important; animation: none !important; }
@@ -4796,6 +4976,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         animation: none !important;
       }
       .pulse-dot { animation: none !important; }
+      .motion-control-dot { animation: none !important; }
       svg[data-animation="trace"] [data-animate] {
         animation: none !important;
         stroke-dashoffset: 0;
@@ -7151,19 +7332,121 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       // Runtime decoration carries geometry only. Keep each flow beside its
       // authored edge so transforms, clipping and crossover paint order apply.
+      // Each edge carries a small light show: a comet (halo, tail, head)
+      // cascading downstream on one shared cycle, a lingering wake, and a
+      // ripple where the comet lands. Phases follow the authored step order:
+      // source-node rank where known, chronological message order in sequence
+      // diagrams.
+      function readSecondsVar(name, fallback) {
+        var value = '';
+        try { value = window.getComputedStyle(svg).getPropertyValue(name); } catch (_) {}
+        var seconds = parseFloat(value);
+        return Number.isFinite(seconds) && seconds > 0 ? seconds : fallback;
+      }
+      function nodeStep(from) {
+        // Authored IDs follow the schema's conservative identifier pattern, so
+        // direct selector interpolation stays safe here. The semantic wrapper
+        // groups the animated shape; its authored step ranks the node.
+        var node = from ? svg.querySelector('[data-node-id="' + from + '"]') : null;
+        var shape = node ? node.querySelector('[data-animate="node"]') : null;
+        return shape && shape.style ? shape.style.getPropertyValue('--step') : '';
+      }
+      function edgePhase(shape, fallbackStep) {
+        // Sequence messages have no data-edge-from; their own authored step is
+        // already chronological, which is the right phase there.
+        var raw = nodeStep(shape.getAttribute('data-edge-from'));
+        if (raw === '' && shape.style) raw = shape.style.getPropertyValue('--step');
+        var step = parseFloat(raw);
+        return Number.isFinite(step) ? step : fallbackStep;
+      }
       function createFlows() {
-        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape) {
+        var stepDelay = readSecondsVar('--flow-step-delay', 0.2);
+        var cycle = readSecondsVar('--flow-cycle', 6.4);
+        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape, index) {
           var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
           if (!d) return;
-          var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          flow.setAttribute('d', d);
-          ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
-            if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+          var anchor = shape;
+          function addPath(cls) {
+            var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            flow.setAttribute('d', d);
+            ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
+              if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+            });
+            flow.setAttribute('class', 'ambient-edge-flow ambient-flow-' + cls);
+            flow.setAttribute('data-ambient-flow-overlay', 'true');
+            flow.setAttribute('aria-hidden', 'true');
+            shape.parentNode.insertBefore(flow, anchor.nextSibling);
+            anchor = flow;
+            return flow;
+          }
+          var wake = addPath('wake');
+          var len = 0;
+          try { len = wake.getTotalLength(); } catch (_) {}
+          if (!(len > 0)) {
+            wake.remove();
+            return;
+          }
+          var halo = addPath('halo');
+          var tail = addPath('tail');
+          var head = addPath('head');
+          var end = null;
+          try { end = head.getPointAtLength(len); } catch (_) {}
+          // Dashed authored lines keep their dash language through the show:
+          // the wake brightens only the authored segments and never fills the
+          // gaps back into a solid line.
+          var authoredDash = '';
+          try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+          if (authoredDash && authoredDash !== 'none') {
+            wake.style.setProperty('--flow-dasharray', authoredDash);
+          }
+          // Absolute caps keep the comet a slim streak on long edges instead
+          // of growing into a bright slab; the tail disintegrates into a
+          // sparkle of fragments behind the head, and --flow-shift trails
+          // each layer behind the head tip by its own length.
+          var headLen = Math.min(10, Math.max(4, len * 0.016));
+          var haloLen = Math.min(14, Math.max(8, len * 0.045));
+          var trail = len >= 120
+            ? { pattern: '2.5 2 4 3 5.5 4.5 8 ' + (len - 30).toFixed(1), length: 30 }
+            : (len >= 60
+              ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
+              : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
+          var phase = edgePhase(shape, index) * stepDelay;
+          var configs = [
+            { flow: wake, dash: len, shift: 0, delay: phase },
+            { flow: halo, dash: haloLen, shift: (haloLen - headLen) / 2, delay: phase },
+            { flow: tail, dash: trail.length, shift: trail.length - headLen, delay: phase, dasharray: trail.pattern },
+            { flow: head, dash: headLen, shift: 0, delay: phase },
+          ];
+          // Long edges earn a dimmer echo comet half a travel window behind.
+          if (len > 340) {
+            configs.push({ flow: addPath('tail echo'), dash: trail.length, shift: trail.length - headLen, delay: phase + cycle * 0.31, dasharray: trail.pattern, peak: ['--flow-tail-peak', '0.18'] });
+            configs.push({ flow: addPath('head echo'), dash: headLen, shift: 0, delay: phase + cycle * 0.31, peak: ['--flow-head-peak', '0.72'] });
+          }
+          configs.forEach(function (cfg) {
+            cfg.flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
+            cfg.flow.style.setProperty('--flow-delay', cfg.delay.toFixed(3) + 's');
+            cfg.flow.style.setProperty('--flow-dash', cfg.dash.toFixed(1) + 'px');
+            cfg.flow.style.setProperty('--flow-shift', cfg.shift.toFixed(1) + 'px');
+            if (cfg.dasharray) cfg.flow.style.setProperty('--flow-dasharray', cfg.dasharray);
+            if (cfg.peak) cfg.flow.style.setProperty(cfg.peak[0], cfg.peak[1]);
           });
-          flow.setAttribute('class', 'ambient-edge-flow');
-          flow.setAttribute('data-ambient-flow-overlay', 'true');
-          flow.setAttribute('aria-hidden', 'true');
-          shape.parentNode.insertBefore(flow, shape.nextSibling);
+          // The sonar pair lands where the comet does; keep it out of the
+          // edge's mask so it can bloom over the node boundary.
+          if (end) {
+            ['ripple', 'ripple-echo'].forEach(function (kind) {
+              var ripple = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              ripple.setAttribute('cx', end.x.toFixed(1));
+              ripple.setAttribute('cy', end.y.toFixed(1));
+              ripple.setAttribute('r', '2');
+              if (shape.hasAttribute('transform')) ripple.setAttribute('transform', shape.getAttribute('transform'));
+              ripple.setAttribute('class', 'ambient-edge-flow ambient-flow-' + kind);
+              ripple.setAttribute('data-ambient-flow-overlay', 'true');
+              ripple.setAttribute('aria-hidden', 'true');
+              ripple.style.setProperty('--flow-delay', phase.toFixed(3) + 's');
+              shape.parentNode.insertBefore(ripple, anchor.nextSibling);
+              anchor = ripple;
+            });
+          }
           flowCount += 1;
         });
       }
@@ -7175,6 +7458,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       function onEntryBoundary(event) {
         if (!entryPending.has(event.target)) return;
+        // The entrance settles only when each node's pulse finishes; the
+        // shorter fade-rise enter animation may end first without ending it.
+        if (event.animationName && !/node-pulse/.test(event.animationName)) return;
         entryPending.delete(event.target);
         if (!entryPending.size) settleEntry();
       }
@@ -11789,6 +12075,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           var links = document.createElement('em');
           links.textContent = badge;
           links.title = context.kind === 'focus' ? badge : action;
+          if (item.links === 0) links.setAttribute('data-zero', 'true');
           var meta = document.createElement('small');
           meta.textContent = [viewerKindLabel(item.type), item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
           meta.title = [viewerKindLabel(item.type), item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');

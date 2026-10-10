@@ -393,7 +393,7 @@
   "viewer.nav.controls": "Diagram view controls",
   "viewer.nav.route": "Trace a directed route",
   "viewer.nav.route.title": "Trace route (R)",
-  "viewer.nav.route.short": "PATH",
+  "viewer.nav.route.short": "ROUTE",
   "viewer.nav.radar": "Open semantic radar",
   "viewer.nav.radar.title": "Semantic radar (M)",
   "viewer.nav.radar.short": "MAP",

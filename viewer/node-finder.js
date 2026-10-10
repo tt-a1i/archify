@@ -160,6 +160,7 @@
           var links = document.createElement('em');
           links.textContent = badge;
           links.title = context.kind === 'focus' ? badge : action;
+          if (item.links === 0) links.setAttribute('data-zero', 'true');
           var meta = document.createElement('small');
           meta.textContent = [viewerKindLabel(item.type), item.id, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');
           meta.title = [viewerKindLabel(item.type), item.id, item.context, item.sublabel, item.tag].filter(Boolean).join(' \u00b7 ');

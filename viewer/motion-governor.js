@@ -24,19 +24,121 @@
 
       // Runtime decoration carries geometry only. Keep each flow beside its
       // authored edge so transforms, clipping and crossover paint order apply.
+      // Each edge carries a small light show: a comet (halo, tail, head)
+      // cascading downstream on one shared cycle, a lingering wake, and a
+      // ripple where the comet lands. Phases follow the authored step order:
+      // source-node rank where known, chronological message order in sequence
+      // diagrams.
+      function readSecondsVar(name, fallback) {
+        var value = '';
+        try { value = window.getComputedStyle(svg).getPropertyValue(name); } catch (_) {}
+        var seconds = parseFloat(value);
+        return Number.isFinite(seconds) && seconds > 0 ? seconds : fallback;
+      }
+      function nodeStep(from) {
+        // Authored IDs follow the schema's conservative identifier pattern, so
+        // direct selector interpolation stays safe here. The semantic wrapper
+        // groups the animated shape; its authored step ranks the node.
+        var node = from ? svg.querySelector('[data-node-id="' + from + '"]') : null;
+        var shape = node ? node.querySelector('[data-animate="node"]') : null;
+        return shape && shape.style ? shape.style.getPropertyValue('--step') : '';
+      }
+      function edgePhase(shape, fallbackStep) {
+        // Sequence messages have no data-edge-from; their own authored step is
+        // already chronological, which is the right phase there.
+        var raw = nodeStep(shape.getAttribute('data-edge-from'));
+        if (raw === '' && shape.style) raw = shape.style.getPropertyValue('--step');
+        var step = parseFloat(raw);
+        return Number.isFinite(step) ? step : fallbackStep;
+      }
       function createFlows() {
-        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape) {
+        var stepDelay = readSecondsVar('--flow-step-delay', 0.2);
+        var cycle = readSecondsVar('--flow-cycle', 6.4);
+        Array.prototype.forEach.call(svg.querySelectorAll('path[data-animate="edge"]'), function (shape, index) {
           var d = shape.getAttribute('data-motion-path') || shape.getAttribute('d');
           if (!d) return;
-          var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          flow.setAttribute('d', d);
-          ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
-            if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+          var anchor = shape;
+          function addPath(cls) {
+            var flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            flow.setAttribute('d', d);
+            ['transform', 'mask', 'clip-path', 'vector-effect'].forEach(function (name) {
+              if (shape.hasAttribute(name)) flow.setAttribute(name, shape.getAttribute(name));
+            });
+            flow.setAttribute('class', 'ambient-edge-flow ambient-flow-' + cls);
+            flow.setAttribute('data-ambient-flow-overlay', 'true');
+            flow.setAttribute('aria-hidden', 'true');
+            shape.parentNode.insertBefore(flow, anchor.nextSibling);
+            anchor = flow;
+            return flow;
+          }
+          var wake = addPath('wake');
+          var len = 0;
+          try { len = wake.getTotalLength(); } catch (_) {}
+          if (!(len > 0)) {
+            wake.remove();
+            return;
+          }
+          var halo = addPath('halo');
+          var tail = addPath('tail');
+          var head = addPath('head');
+          var end = null;
+          try { end = head.getPointAtLength(len); } catch (_) {}
+          // Dashed authored lines keep their dash language through the show:
+          // the wake brightens only the authored segments and never fills the
+          // gaps back into a solid line.
+          var authoredDash = '';
+          try { authoredDash = window.getComputedStyle(shape).strokeDasharray; } catch (_) {}
+          if (authoredDash && authoredDash !== 'none') {
+            wake.style.setProperty('--flow-dasharray', authoredDash);
+          }
+          // Absolute caps keep the comet a slim streak on long edges instead
+          // of growing into a bright slab; the tail disintegrates into a
+          // sparkle of fragments behind the head, and --flow-shift trails
+          // each layer behind the head tip by its own length.
+          var headLen = Math.min(10, Math.max(4, len * 0.016));
+          var haloLen = Math.min(14, Math.max(8, len * 0.045));
+          var trail = len >= 120
+            ? { pattern: '2.5 2 4 3 5.5 4.5 8 ' + (len - 30).toFixed(1), length: 30 }
+            : (len >= 60
+              ? { pattern: '3 3 7 ' + (len - 13).toFixed(1), length: 13 }
+              : { pattern: '5 ' + Math.max(4, len - 5).toFixed(1), length: 5 });
+          var phase = edgePhase(shape, index) * stepDelay;
+          var configs = [
+            { flow: wake, dash: len, shift: 0, delay: phase },
+            { flow: halo, dash: haloLen, shift: (haloLen - headLen) / 2, delay: phase },
+            { flow: tail, dash: trail.length, shift: trail.length - headLen, delay: phase, dasharray: trail.pattern },
+            { flow: head, dash: headLen, shift: 0, delay: phase },
+          ];
+          // Long edges earn a dimmer echo comet half a travel window behind.
+          if (len > 340) {
+            configs.push({ flow: addPath('tail echo'), dash: trail.length, shift: trail.length - headLen, delay: phase + cycle * 0.31, dasharray: trail.pattern, peak: ['--flow-tail-peak', '0.18'] });
+            configs.push({ flow: addPath('head echo'), dash: headLen, shift: 0, delay: phase + cycle * 0.31, peak: ['--flow-head-peak', '0.72'] });
+          }
+          configs.forEach(function (cfg) {
+            cfg.flow.style.setProperty('--flow-len', len.toFixed(1) + 'px');
+            cfg.flow.style.setProperty('--flow-delay', cfg.delay.toFixed(3) + 's');
+            cfg.flow.style.setProperty('--flow-dash', cfg.dash.toFixed(1) + 'px');
+            cfg.flow.style.setProperty('--flow-shift', cfg.shift.toFixed(1) + 'px');
+            if (cfg.dasharray) cfg.flow.style.setProperty('--flow-dasharray', cfg.dasharray);
+            if (cfg.peak) cfg.flow.style.setProperty(cfg.peak[0], cfg.peak[1]);
           });
-          flow.setAttribute('class', 'ambient-edge-flow');
-          flow.setAttribute('data-ambient-flow-overlay', 'true');
-          flow.setAttribute('aria-hidden', 'true');
-          shape.parentNode.insertBefore(flow, shape.nextSibling);
+          // The sonar pair lands where the comet does; keep it out of the
+          // edge's mask so it can bloom over the node boundary.
+          if (end) {
+            ['ripple', 'ripple-echo'].forEach(function (kind) {
+              var ripple = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              ripple.setAttribute('cx', end.x.toFixed(1));
+              ripple.setAttribute('cy', end.y.toFixed(1));
+              ripple.setAttribute('r', '2');
+              if (shape.hasAttribute('transform')) ripple.setAttribute('transform', shape.getAttribute('transform'));
+              ripple.setAttribute('class', 'ambient-edge-flow ambient-flow-' + kind);
+              ripple.setAttribute('data-ambient-flow-overlay', 'true');
+              ripple.setAttribute('aria-hidden', 'true');
+              ripple.style.setProperty('--flow-delay', phase.toFixed(3) + 's');
+              shape.parentNode.insertBefore(ripple, anchor.nextSibling);
+              anchor = ripple;
+            });
+          }
           flowCount += 1;
         });
       }
@@ -48,6 +150,9 @@
       }
       function onEntryBoundary(event) {
         if (!entryPending.has(event.target)) return;
+        // The entrance settles only when each node's pulse finishes; the
+        // shorter fade-rise enter animation may end first without ending it.
+        if (event.animationName && !/node-pulse/.test(event.animationName)) return;
         entryPending.delete(event.target);
         if (!entryPending.size) settleEntry();
       }

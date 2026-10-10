@@ -616,7 +616,7 @@ for (const locale of ['fr', 'pt', 'ja', 'de', 'it', 'ru']) {
       'viewer.nav.radar.short': 'MAP',
       'viewer.nav.level.map': 'MAP',
       'viewer.nav.lens.short': 'LENS',
-      'viewer.nav.route.short': 'PATH',
+      'viewer.nav.route.short': 'ROUTE',
       'viewer.nav.read': 'READ',
       'viewer.nav.level.read': 'READ',
       'viewer.nav.level.full': 'FULL',
