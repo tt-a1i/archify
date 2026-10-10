@@ -38,7 +38,9 @@ The test-value check retains topology, containment and compatibility protection.
 - [Baseline regression](regression-before.log) fails the unused-rank case; [candidate regression](regression-after.log) passes both #747 cases. The labeled-route control passes on both revisions.
 - [Timings](timings.json): compiler including routing, 5 warmups and 31 alternating samples per revision. Medians are comparable on these small cases; labeled-route p95 rises from 0.423 to 0.763ms. No general speedup is claimed.
 
-Local environment: macOS arm64, Node 26.11.0, Chrome 154.0.8037.98. Prior visual review inspected the twelve page-top screenshots. Full repository/platform CI, mobile, animation/export interaction and final generated-artifact freshness remain outside this prototype's evidence. Distribution ZIP/gallery rebuilding is deferred until the approach is agreed.
+Local environment for the original prototype evidence: macOS arm64, Node 26.11.0, Chrome 154.0.8037.98. Prior visual review inspected the twelve page-top screenshots. Mobile and full animation/export interaction remain outside this prototype's evidence.
+
+CI follow-up: rebuilt the distribution ZIP with official Node 22.23.3 and bundled zlib 1.3.1-e00f703; only the Workflow compiler entry changed. The release-package and update-notifier suites passed locally with 120 passes, zero failures and four platform/toolchain skips. The stale-claim race test now allows its deliberately pending mock fetch 2 seconds instead of the fixture's 50ms, while preserving its one-request assertions and the separate timeout tests. Remote CI must qualify the updated candidate. Gallery outputs are unchanged; the bundled Workflow example controls retained byte-identical SVGs.
 
 ## Reproduce
 
