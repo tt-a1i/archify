@@ -435,7 +435,35 @@ function segmentLabelBox(segment) {
     // nominal slot. Calling the unchanged helper keeps this non-recursive.
     ...others.map(legacySegmentLabelBox),
   ];
-  return obstacles.some((rect) => rectsOverlap(candidate, rect, 2)) ? label : candidate;
+  if (!obstacles.some((rect) => rectsOverlap(candidate, rect, 2))) return candidate;
+
+  // Only this blocked header-clear strip gains a horizontal fallback. Keep
+  // successful legacy placements intact, including their activation policy.
+  const fallbackObstacles = [
+    ...obstacles,
+    ...asArray(sequence.activations).flatMap((activation) => {
+      const participant = participants.get(activation.participant);
+      return participant ? [{
+        x: participant.cx - 5, y: activation.from,
+        width: 10, height: activation.to - activation.from,
+      }] : [];
+    }),
+  ];
+  // Every free interval on this strip starts at the left frame inset or just
+  // beyond an obstacle. Scan those finite boundaries instead of pixel steps.
+  const boundaries = [...new Set([
+    candidate.x,
+    ...fallbackObstacles
+      .filter((rect) => candidate.y < rect.y + rect.height + 2
+        && rect.y < candidate.y + candidate.height + 2)
+      .map((rect) => rect.x + rect.width + 2),
+  ])].filter((x) => x >= candidate.x && x + candidate.width <= viewBox[0] - 48)
+    .sort((a, b) => a - b);
+  for (const x of boundaries) {
+    const shifted = { ...candidate, x };
+    if (!fallbackObstacles.some((rect) => rectsOverlap(shifted, rect, 2))) return shifted;
+  }
+  return label;
 }
 
 // Whether moving one message to `y` keeps it readable: inside the timeline,
