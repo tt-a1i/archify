@@ -120,6 +120,8 @@ export function measureLegend(entries, {
   obstacles = [],
   unfit = 'error',
   diagramType = 'diagram',
+  titleFontSize = 12,
+  renderedFontSize = fontSize < 8 ? fontSize + 0.5 : fontSize + 2,
 } = {}) {
   if (!entries.length) return { entries: [], rowCount: 0, titleY: null };
   const footprint = legendFootprint(entries, { width, fontSize, itemGap, lineGap, swatchGap });
@@ -137,8 +139,8 @@ export function measureLegend(entries, {
     }]);
   }
 
-  const titleY = baselineY - footprint.extraHeight - 20;
-  const legendTopY = titleY - 10;
+  const titleY = baselineY - footprint.extraHeight - (titleFontSize + 8);
+  const legendTopY = titleY - Math.ceil(titleFontSize * 5 / 6);
   if (legendTopY < minTitleY) {
     if (unfit === 'hide') return null;
     const message = `[legend/vertical-overflow] ${diagramType} legend needs ${footprint.rowCount} rows, which would start at y=${legendTopY} above the available legend band at y=${minTitleY}.`;
@@ -163,13 +165,13 @@ export function measureLegend(entries, {
   });
 
   const legendRects = [
-    { kind: 'title', x, y: legendTopY, width: 48, height: 14 },
+    { kind: 'title', x, y: legendTopY, width: titleFontSize * 4, height: Math.ceil(titleFontSize * 7 / 6) },
     ...positioned.map((entry) => ({
       kind: entry.kind,
       x: entry.x,
-      y: entry.baseline - 10,
+      y: entry.baseline - Math.ceil(renderedFontSize),
       width: entry.width,
-      height: 14,
+      height: Math.ceil(renderedFontSize * 1.4),
     })),
   ];
   const collision = legendRects.find((legendRect) => obstacles.some((obstacle) => (
@@ -195,6 +197,8 @@ export function measureLegend(entries, {
     rowCount: footprint.rowCount,
     titleY,
     fontSize,
+    titleFontSize,
+    renderedFontSize,
   };
 }
 
@@ -206,11 +210,10 @@ export function renderLegend({ entries, layout, renderSwatch, locale, labelClass
   const measured = measureLegend(entries, layout);
   if (!measured) return '';
   const hasInteractiveEntries = measured.entries.some((entry) => entry.interactive);
-  const renderedFontSize = renderedLegendFontSize(measured.fontSize);
   const rootAttributes = hasInteractiveEntries ? ' data-legend="" data-legend-bridge=""' : ' data-legend=""';
   const parts = [
     `        <g${rootAttributes}>`,
-    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="12" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
+    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="${measured.titleFontSize}" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
   ];
 
   for (const entry of measured.entries) {
@@ -219,7 +222,7 @@ export function renderLegend({ entries, layout, renderSwatch, locale, labelClass
       : '';
     parts.push(`          <g data-legend-semantic-kind="${esc(entry.kind)}"${interactive} data-legend-x="${entry.x}" data-legend-baseline="${entry.baseline}" data-legend-width="${entry.width}">`);
     parts.push(`            ${renderSwatch(entry)}`);
-    parts.push(`            <text x="${entry.x + (entry.swatchWidth ?? 14) + (entry.swatchGap ?? DEFAULT_SWATCH_GAP)}" y="${entry.baseline}" class="${labelClass}" font-size="${renderedFontSize}" font-weight="${labelWeight}">${esc(entry.label)}</text>`);
+    parts.push(`            <text x="${entry.x + (entry.swatchWidth ?? 14) + (entry.swatchGap ?? DEFAULT_SWATCH_GAP)}" y="${entry.baseline}" class="${labelClass}" font-size="${measured.renderedFontSize}" font-weight="${labelWeight}">${esc(entry.label)}</text>`);
     parts.push('          </g>');
   }
   parts.push('        </g>');

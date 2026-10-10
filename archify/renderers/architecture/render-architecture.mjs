@@ -39,13 +39,6 @@ import {
   edgeLabelAccent,
 } from '../shared/geometry.mjs';
 
-const componentTextFit = {
-  sublabelPreferred: 9,
-  sublabelMinimum: 6,
-  tagPreferred: 7,
-  tagMinimum: 6,
-};
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
 const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
@@ -55,6 +48,28 @@ const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWi
   defaultExample: 'web-app.architecture.json',
   argv: cliArgs,
 });
+
+const typographyScale = arch.meta?.typography_scale ?? 1;
+const typography = (size) => size * typographyScale;
+const componentTextFit = {
+  sublabelPreferred: typography(9),
+  sublabelMinimum: typography(6),
+  tagPreferred: typography(7),
+  tagMinimum: typography(6),
+};
+const connectionLabelFontSize = typography(8);
+const legendRenderedFontSize = typography(10);
+const legendLayout = {
+  // The default layout keeps its historical 8px measurement. Once typography
+  // is scaled, measure at the emitted text size so auto viewBox sizing cannot
+  // accept an entry that the final SVG overruns.
+  fontSize: typographyScale === 1 ? typography(8) : legendRenderedFontSize,
+  itemGap: typography(22),
+  lineGap: typography(22),
+  swatchGap: typography(8),
+  titleFontSize: typography(12),
+  renderedFontSize: legendRenderedFontSize,
+};
 
 const grid = gridLayout(arch);
 
@@ -66,14 +81,14 @@ const layout = {
   // (CHANGELOG v2.2.1): 30px on top/left/right, plus 20px extra at the bottom.
   boundaryPad: 30,
   boundaryExtraBottom: 20,
-  boundaryLabelBaseline: 18,
-  boundaryLabelClearance: 4,
-  boundaryLabelFontPreferred: 9,
-  boundaryLabelFontMinimum: 6,
-  boundaryLabelMaskHeight: 16,
-  boundaryLabelRailGap: 2,
+  boundaryLabelBaseline: typography(18),
+  boundaryLabelClearance: typography(4),
+  boundaryLabelFontPreferred: typography(9),
+  boundaryLabelFontMinimum: typography(6),
+  boundaryLabelMaskHeight: typography(16),
+  boundaryLabelRailGap: typography(2),
   boundaryLabelFrameInset: 4,
-  legendH: 28,
+  legendH: typography(28),
 };
 
 const LEGEND_CATALOG = [
@@ -161,8 +176,16 @@ function connectionLabelBox(conn) {
 }
 
 function connectionLabelBoxAt(conn, [lx, ly]) {
-  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
-  return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
+  const width = Math.max(30, textUnits(conn.label) * typography(4.8) + 10);
+  const topInset = connectionLabelFontSize + 2;
+  return {
+    x: lx - width / 2,
+    y: ly - topInset,
+    width,
+    height: Math.ceil(connectionLabelFontSize + 6),
+    lx,
+    ly,
+  };
 }
 
 function connectionLabelRects() {
@@ -176,6 +199,105 @@ function connectionLabelRects() {
   return rects;
 }
 
+function componentTextRows(c) {
+  const hasSub = c.sublabel != null && c.sublabel !== '';
+  const labelMinimum = typography(8);
+  let labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), typography(11), labelMinimum);
+  let subFontSize = hasSub
+    ? fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)
+    : 0;
+  let tagFontSize = c.tag
+    ? fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)
+    : 0;
+  const labelY = typographyScale === 1
+    ? (hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4)
+    : (hasSub ? c.y + c.height / 2 - typography(2) : c.y + c.height / 2 + typography(4));
+
+  // The historical positions are part of the v1 rendering contract. Scaled
+  // secondary rows are instead fitted to the actual component height.
+  if (typographyScale === 1 || !c.tag) {
+    return {
+      hasSub,
+      labelFontSize,
+      subFontSize,
+      tagFontSize,
+      labelY,
+      subY: typographyScale === 1 ? c.y + c.height / 2 + 14 : labelY + typography(16),
+      tagY: typographyScale === 1 ? c.y + c.height - 8 : c.y + c.height - typography(5),
+    };
+  }
+
+  if (!hasSub) {
+    const rowClearance = 3;
+    const preferredTagY = c.y + c.height - typography(5);
+    const placement = (labelSize, tagSize) => ({
+      minTagY: labelY + labelSize * 0.2 + tagSize * 0.8 + rowClearance,
+      maxTagY: c.y + c.height - tagSize * 0.2 - rowClearance,
+    });
+    let tagPlacement = placement(labelFontSize, tagFontSize);
+    if (tagPlacement.minTagY > tagPlacement.maxTagY) {
+      labelFontSize = labelMinimum;
+      tagFontSize = componentTextFit.tagMinimum;
+      tagPlacement = placement(labelFontSize, tagFontSize);
+      if (tagPlacement.minTagY > tagPlacement.maxTagY) {
+        return {
+          hasSub,
+          labelFontSize,
+          subFontSize,
+          tagFontSize,
+          labelY,
+          problem: `Component \"${c.id}\" is too short for its scaled label and tag at their legible minimums — increase its height or remove the tag.`,
+        };
+      }
+    }
+    return {
+      hasSub,
+      labelFontSize,
+      subFontSize,
+      tagFontSize,
+      labelY,
+      tagY: Math.max(tagPlacement.minTagY, Math.min(preferredTagY, tagPlacement.maxTagY)),
+    };
+  }
+
+  const preferredSubY = labelY + typography(16);
+  const preferredTagY = c.y + c.height - typography(5);
+  const rowClearance = 3;
+  const subBottom = (baseline, fontSize) => baseline + fontSize * 0.2;
+  const tagTop = (baseline, fontSize) => baseline - fontSize * 0.8;
+  if (tagTop(preferredTagY, tagFontSize) >= subBottom(preferredSubY, subFontSize) + rowClearance) {
+    return { hasSub, labelFontSize, subFontSize, tagFontSize, labelY, subY: preferredSubY, tagY: preferredTagY };
+  }
+
+  const labelBottom = labelY + labelFontSize * 0.2;
+  const maxTagY = c.y + c.height - tagFontSize * 0.2 - rowClearance;
+  const minSubY = (fontSize) => labelBottom + fontSize * 0.8 + rowClearance;
+  const maxSubY = (fontSize) => maxTagY - tagFontSize * 0.8 - rowClearance - fontSize * 0.2;
+  if (maxSubY(subFontSize) < minSubY(subFontSize)) {
+    const verticalFit = Math.floor(((maxTagY - tagFontSize * 0.8 - rowClearance - labelBottom - rowClearance) / 1) * 10) / 10;
+    subFontSize = Math.max(componentTextFit.sublabelMinimum, Math.min(subFontSize, verticalFit));
+  }
+  if (maxSubY(subFontSize) < minSubY(subFontSize)) {
+    return {
+      hasSub,
+      labelFontSize,
+      subFontSize,
+      tagFontSize,
+      labelY,
+      problem: `Component "${c.id}" is too short for its scaled label, sublabel, and tag at their legible minimums — increase its height or remove a secondary text row.`,
+    };
+  }
+  return {
+    hasSub,
+    labelFontSize,
+    subFontSize,
+    tagFontSize,
+    labelY,
+    subY: Math.max(minSubY(subFontSize), Math.min(preferredSubY, maxSubY(subFontSize))),
+    tagY: maxTagY,
+  };
+}
+
 function autoViewBoxFor(candidateBoundaries, extraRects = []) {
   let maxX = 0;
   let maxY = 0;
@@ -187,12 +309,12 @@ function autoViewBoxFor(candidateBoundaries, extraRects = []) {
   }
   let width = Math.ceil(maxX + layout.margin);
   let footprint = legendFootprint(architectureLegendEntries, {
-    width: Math.max(1, width - layout.margin * 2),
+    width: Math.max(1, width - layout.margin * 2), ...legendLayout,
   });
   if (footprint.minWidth > width - layout.margin * 2) {
     width = Math.ceil(footprint.minWidth + layout.margin * 2);
     footprint = legendFootprint(architectureLegendEntries, {
-      width: width - layout.margin * 2,
+      width: width - layout.margin * 2, ...legendLayout,
     });
   }
   return [
@@ -459,7 +581,9 @@ if (arch.meta?.quality_profile === 'showcase') {
     // Leave the resolved legend band available; moving a label must not hide
     // an otherwise visible legend. Existing labels keep their placement.
     placementBottom: architectureLegendEntries.length
-      ? legendY() - 32 - legendFootprint(architectureLegendEntries, { width: viewBox[0] - layout.margin * 2 }).extraHeight
+      ? legendY() - typography(32) - legendFootprint(architectureLegendEntries, {
+        width: viewBox[0] - layout.margin * 2, ...legendLayout,
+      }).extraHeight
       : viewBox[1],
   });
   for (const rect of connectionLabels) resolvedLabelPoints.set(rect.relation, [rect.lx, rect.ly]);
@@ -496,9 +620,17 @@ function validateArchitecture() {
     if (c.x < 0 || c.y < 0 || c.x + c.width > viewBox[0] || c.y + c.height > viewBox[1]) {
       problems.push(`Component "${c.id}" falls outside the viewBox ${viewBox[0]}x${viewBox[1]} — adjust pos/size or set a larger meta.viewBox.`);
     }
-    const estLabelW = textUnits(c.label) * 6.6;
-    if (estLabelW > c.width + 8) {
-      problems.push(`Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`);
+    if (typographyScale === 1) {
+      const estLabelW = textUnits(c.label) * typography(6.6);
+      if (estLabelW > c.width + 8) {
+        problems.push(`Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`);
+      }
+    } else {
+      const labelWidth = availableNodeTextWidth(brandLabelFitWidth(c, c.width));
+      const minimumW = minimumNodeTextWidth(c.label, typography(8));
+      if (minimumW > labelWidth) {
+        problems.push(`Label "${c.label}" needs ~${Math.ceil(minimumW)}px at the ${typography(8)}px legible minimum, but component "${c.id}" provides ${labelWidth}px — shorten the label or widen size.`);
+      }
     }
     const brandRailProblem = brandTopRailProblem(c, c.width, 8, 'Component');
     if (brandRailProblem) problems.push(brandRailProblem);
@@ -515,6 +647,8 @@ function validateArchitecture() {
         problems.push(`${field} "${value}" needs ~${Math.ceil(minimumW)}px at the ${minimum}px legible minimum, but component "${c.id}" provides ${availableTextW}px — shorten the ${field.toLowerCase()} or widen size.`);
       }
     }
+    const rows = componentTextRows(c);
+    if (rows.problem) problems.push(rows.problem);
   }
 
   // Component overlap — the highest-traffic hand-placement failure mode.
@@ -916,7 +1050,7 @@ function buildLayoutReport() {
     x: Math.round(rect.x),
     y: Math.round(rect.y),
     width: Math.round(rect.width),
-    height: 14,
+    height: Math.round(rect.height),
     labelAt: [Math.round(rect.lx), Math.round(rect.ly)],
   }));
   return {
@@ -974,7 +1108,7 @@ function renderConnectionLabel(conn, index) {
   if (!box) return '';
   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="${connectionLabelFontSize}" text-anchor="middle">${esc(conn.label)}</text>
         </g>`;
 }
 
@@ -982,23 +1116,21 @@ function renderComponent(c) {
   const fill = componentFill[c.type] || 'c-external';
   const accent = componentText[c.type] || 't-muted';
   const cx = c.cx;
-  const hasSub = c.sublabel != null && c.sublabel !== '';
-  const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
-  const sub = hasSub
-    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
+  const rows = componentTextRows(c);
+  const sub = rows.hasSub
+    ? `\n        <text data-detail="context" x="${cx}" y="${rows.subY}" class="t-muted" font-size="${rows.subFontSize}" text-anchor="middle">${esc(c.sublabel)}</text>`
     : '';
   const tag = c.tag
-    ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
+    ? `\n        <text data-detail="fine" x="${cx}" y="${rows.tagY}" class="${accent}" font-size="${rows.tagFontSize}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
-  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
   return `        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="c-mask"/>
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="6" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
-          <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
+          <text data-node-label=""${rows.hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${rows.labelY}" class="t-primary" font-size="${rows.labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}
         </g>`;
 }
 
@@ -1022,12 +1154,13 @@ function renderLegend() {
       x: layout.margin,
       baselineY: legendY(),
       width: viewBox[0] - layout.margin * 2,
+      ...legendLayout,
       minTitleY: contentBottom + 8,
       obstacles: relationshipObstacles,
       unfit: arch.meta?.legend === undefined ? 'hide' : 'error',
       diagramType: 'architecture',
     },
-    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
+    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - typography(9)}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
   });
 }
 

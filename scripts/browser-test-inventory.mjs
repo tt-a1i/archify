@@ -34,4 +34,5 @@ export const browserTestFiles = [
   'tree-branches-browser.test.mjs',
   'class-motion-browser.test.mjs',
   'dataflow-label-visibility-browser.test.mjs',
+  'architecture-typography-scale-browser.test.mjs',
 ];
