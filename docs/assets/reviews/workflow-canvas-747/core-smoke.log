@@ -1,0 +1,36 @@
+
+> test
+> npm run test:core
+
+
+> test:core
+> node scripts/run-tests.mjs test/core-smoke.test.mjs
+
+Repository tests: 1 files, concurrency 4
+▶ core smoke: public CLI diagrams, compatibility and delivery safety
+  ✔ architecture: validate, render and deliver the official example (626.223583ms)
+  ✔ workflow: validate, render and deliver the official example (705.148917ms)
+  ✔ sequence: validate, render and deliver the official example (951.582167ms)
+  ✔ dataflow: validate, render and deliver the official example (627.441958ms)
+  ✔ lifecycle: validate, render and deliver the official example (584.467458ms)
+  ✔ erd: validate, render and deliver the official example (560.852917ms)
+  ✔ tree: validate, render and deliver the official example (528.437917ms)
+  ✔ class: validate, render and deliver the official example (557.989667ms)
+  ✔ timeline: validate, render and deliver the official example (606.004125ms)
+  ✔ waterfall: validate, render and deliver the official example (563.844875ms)
+  ✔ architecture: frozen schema-v1 input remains valid and renderable (354.801333ms)
+  ✔ workflow: frozen schema-v1 input remains valid and renderable (329.816208ms)
+  ✔ sequence: frozen schema-v1 input remains valid and renderable (343.649292ms)
+  ✔ dataflow: frozen schema-v1 input remains valid and renderable (335.727125ms)
+  ✔ unknown diagram types return a structured diagnostic (53.135541ms)
+  ✔ strict provenance binds the delivered artifact bytes (176.480959ms)
+  ✔ invalid schema preserves the last artifact and marks its delivery as failed (325.006958ms)
+✔ core smoke: public CLI diagrams, compatibility and delivery safety (8238.252042ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8323.481083

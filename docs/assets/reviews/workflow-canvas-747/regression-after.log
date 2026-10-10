@@ -1,0 +1,10 @@
+✔ issue #747: single-column automatic stacks omit unused right-hand ranks without clipping routes (13.974916ms)
+✔ issue #747: compact stacks reserve space for a labeled outside-right route (2.452042ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.059
