@@ -444,6 +444,43 @@ test('dense automatic exit notes pass public readability validation without losi
   assert.equal(fs.readFileSync(fixture, 'utf8'), bytes);
 });
 
+test('long transition notes are identified in width and placement diagnostics without discarding conditions', () => {
+  const condition = 'Only proceed when the request is confirmed and the worker owns the active lease. ';
+  const spine = { from: 'ready', to: 'done', label: 'go', note: condition.repeat(5) };
+  const exit = { from: 'ready', to: 'stopped', label: 'stop', note: condition.repeat(15) };
+  const doc = base({
+    meta: { title: 'Transition note diagnostics', output: 'note-diagnostics.html', quality_profile: 'showcase' },
+    mainPath: ['ready', 'done'],
+    states: [state('ready', 'start', 'Ready'), state('done', 'success', 'Done'), state('stopped', 'failure', 'Stopped')],
+    transitions: [spine, exit],
+  });
+  const input = path.join(tmp, 'long-note-diagnostics.json');
+  const source = JSON.stringify(doc);
+  fs.writeFileSync(input, source);
+  const cli = path.join(skillRoot, 'bin/archify.mjs');
+  const result = spawnSync(process.execPath, [cli, 'validate', 'lifecycle', input, '--json'], { encoding: 'utf8' });
+  assert.notEqual(result.status, 0, 'the diagnostic change does not make this layout valid');
+  const receipt = JSON.parse(result.stdout);
+  const wide = receipt.diagnostics.find(entry => entry.code === 'lifecycle/too-wide');
+  const unplaced = receipt.diagnostics.find(entry => entry.code === 'lifecycle/label-unplaced' && entry.subject.to === exit.to);
+  assert.ok(wide && unplaced, result.stdout);
+  assert.deepEqual(wide.subject, { diagramType: 'lifecycle', path: '/mainPath' });
+  const step = wide.evidence.wideStepLabels.find(entry => entry.from === spine.from && entry.to === spine.to);
+  assert.equal(step.label, spine.label, 'the existing label evidence remains compatible');
+  assert.ok(step.excessPx > 0);
+  assert.equal(step.widthDriver, 'note');
+  assert.deepEqual(unplaced.subject, { diagramType: 'lifecycle', collection: 'transitions', index: 1, from: exit.from, to: exit.to });
+  assert.equal(unplaced.evidence.widthDriver, 'note');
+  for (const diagnostic of [wide, unplaced]) {
+    const advice = diagnostic.supportedFixes.join('\n');
+    assert.match(advice, /note/);
+    assert.match(advice, /preserve.*condition|without removing conditions/);
+    assert.match(advice, /detail.*same transition/);
+    assert.match(advice, /may not.*(?:constraints|placement)/);
+  }
+  assert.equal(fs.readFileSync(input, 'utf8'), source, 'diagnosis preserves every authored condition');
+});
+
 test('an inherently too-wide lifecycle reports its budget and bounded spacing advice', () => {
   const cli = fileURLToPath(new URL('../archify/bin/archify.mjs', import.meta.url));
   const fixture = fileURLToPath(new URL('./fixtures/lifecycle-crowded-wide.json', import.meta.url));
