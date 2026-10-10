@@ -99,6 +99,14 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 <td align="center" width="240"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="200" /></a><br/><strong><a href="https://zturbo.top">ZTURBO</a></strong></td>
 <td>为开发者和 AI 用户提供高速、稳定的连接体验。<br/>新用户注册即可免费体验，首次充值还有专属加赠；支持 Windows、macOS、iOS 和 Android 多端使用，长期套餐折算每天不到 ¥1。<br/><br/>免费体验 · 首充加赠 · 多端畅连<br/><br/><a href="https://zturbo.top">立即体验 ZTURBO →</a></td>
 </tr>
+<tr>
+<td align="center" width="240"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc 无限星河" width="200" /></a><br/><strong><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">Infistar.cc 无限星河</a></strong></td>
+<td>感谢 Infistar.cc 无限星河赞助 Archify！一个 API Key 覆盖文案、图片与视频创作，支持 GPT、Claude、Gemini、DeepSeek、通义千问、可灵等主流模型，无需分组。大模型低至官方 0.1 折，AI 生图低至 ¥0.06/张。<br/><br/>Archify 专属福利：通过专属链接注册即送 $5 体验额度，并享首充特惠。<br/><br/><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link">立即体验 Infistar →</a></td>
+</tr>
+<tr>
+<td align="center" width="240"><a href="https://www.packyapi.ai/register?aff=bN97"><img src="docs/assets/sponsors/packycode-logo.png" alt="PackyCode" width="200" /></a><br/><strong><a href="https://www.packyapi.ai/register?aff=bN97">PackyCode</a></strong></td>
+<td>PackyCode 提供统一域名、统一密钥和智能容灾切换，一句话接入主流大模型，提供专属 Codex / Claude Code 高速通道。<br/><br/>新用户可获 $1 免费体验额度，首充享折扣，多分组折扣低至 2 折起。支持人民币 1:1 充值，无汇率加价或额外充值手续费。<br/><br/><a href="https://www.packyapi.ai/register?aff=bN97">立即体验 PackyCode →</a></td>
+</tr>
 <tr><td align="center" width="240"><a href="https://github.com/EverMind-AI/Raven"><img src="docs/assets/sponsors/evermind-archify-raven.png" alt="Archify × Raven" width="200" /></a><br/><strong><a href="https://github.com/EverMind-AI">EverMind</a> · <a href="https://github.com/EverMind-AI/Raven">Raven</a></strong></td><td>感谢 EverMind 赞助 Archify。EverMind 专注 Agent 记忆基础设施，旗下 <a href="https://github.com/EverMind-AI/Raven"><strong>Raven</strong></a> 已支持 Archify Skill，让 Raven 工作流可以直接生成经过验证的交互式系统地图。</td></tr>
 </table>
 
