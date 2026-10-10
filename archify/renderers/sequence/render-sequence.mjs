@@ -948,7 +948,7 @@ function renderSegmentLabel(segment, index) {
   const label = segmentLabelBox(segment);
   return `        <g data-graph-role="segment-label" data-segment-id="${index}">
           <rect x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="3" class="c-mask"/>
-          <text x="${label.x + 6}" y="${label.y + 13}" class="t-dim" font-size="9" font-weight="600">${esc(segment.label)}</text>
+          <text x="${label.x + 6}" y="${label.y + 13}" class="t-muted" font-size="9" font-weight="600">${esc(segment.label)}</text>
         </g>`;
 }
 

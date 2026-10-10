@@ -36,4 +36,5 @@ export const browserTestFiles = [
   'dataflow-label-visibility-browser.test.mjs',
   'workflow-edge-label-contrast-browser.test.mjs',
   'lifecycle-note-contrast-browser.test.mjs',
+  'sequence-segment-contrast-browser.test.mjs',
 ];
