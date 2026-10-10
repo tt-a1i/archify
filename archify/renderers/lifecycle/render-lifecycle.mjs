@@ -1041,7 +1041,7 @@ function renderLabel(transition, index) {
     ? `\n          <text x="${rect.cx}" y="${baseline}" class="${accent}" font-size="${LABEL_FONT}" text-anchor="middle">${esc(transition.label)}</text>`
     : '';
   const note = transition.note
-    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-dim" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
+    ? `\n          <text data-detail="fine" x="${rect.cx}" y="${baseline + (transition.label ? 12 : 0)}" class="t-muted" font-size="${NOTE_FONT}" text-anchor="middle">${esc(transition.note)}</text>`
     : '';
   return `        <g data-detail="${transition.label ? 'context' : 'fine'}" ${focusEdgeAttrs(transition.from, transition.to, transition.label || transition.note, index, transition.id)}>
           <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" rx="4" class="c-mask"/>${label}${note}
