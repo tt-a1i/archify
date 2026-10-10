@@ -1,0 +1,42 @@
+
+> test:browser
+> node scripts/run-browser-tests.mjs test/desktop-reader-browser.test.mjs test/reader-layout-browser.test.mjs
+
+Browser tests: 2 files, concurrency 2
+✔ all packaged HTML examples pass the real visual-check desktop gate (22906.425708ms)
+✔ default sequence and dataflow canvases fit the real desktop reader without changing explicit geometry (6252.301541ms)
+✔ visual-check collects nested ID-less semantic edge text for every renderer family (8443.177167ms)
+✔ production showcase is readable in the real 1440 by 900 adaptive reader (4799.789958ms)
+✔ route-expanded intrinsic architecture preserves reading size with ordinary page scroll (2457.602167ms)
+✔ extreme intrinsic architecture keeps readable page scroll below first-screen fit (1630.871ms)
+✔ offline intrinsic workflows fit while authored overflow still identifies lane frames (4989.270208ms)
+✔ a 1px width-first remainder is declared instead of failing browser containment (1586.313583ms)
+✔ issue #250 tall intrinsic workflow uses reading width and permits readable page scroll (1447.914667ms)
+✔ issue #250 five-stage stack retains reading scale within the automatic enlargement cap (1555.359167ms)
+✔ authored Architecture canvas keeps its scale and accepts readable document scrolling (6256.918958ms)
+▶ Reader Layout preserves final-artifact behavior across its ownership boundaries
+  ✔ five modes initialize and export clean SVG; a representative reader honors both themes and reduced motion (7288.294167ms)
+  ✔ Guide and presentation keyboard controls preserve focus, URL context and authored geometry (1117.555417ms)
+  ✔ ratio and desktop thresholds preserve shape while clearing temporary state (7131.513ms)
+  ✔ capped canvas keeps its original legend in the outer corner through camera, input and canonical export (13031.854959ms)
+  ✔ zero-size SVG clears corner legend placement and recovers without nonfinite transforms (1014.843542ms)
+  ✔ compact real ERD keeps the normal canvas while SVG enlargement remains capped (7001.009584ms)
+  ✔ automatic compact ERD clears its reader area in specialized modes and restores it on return (2433.100542ms)
+  ✔ compact ERD resize clears and restores its area across desktop eligibility and binding cap boundaries (1783.639208ms)
+  ✔ automatic width-first content favors reading width while small canvases cap enlargement (13665.255292ms)
+  ✔ compact automatic Sequence fits the initial desktop stage without shrinking source text (5582.9685ms)
+  ✔ public renderers declare automatic reading width while undeclared canvases retain their fit (5483.405ms)
+  ✔ desktop budgets, extreme content and limited horizontal space preserve geometry (2935.204584ms)
+  ✔ embed, presentation and print return to ordinary layout without clearing shape (6497.318083ms)
+  ✔ content observers and burst scheduling converge while camera state remains usable (1568.009167ms)
+  ✔ optional content and browser interfaces retain their fallback behavior (1082.481125ms)
+  ✔ font readiness gates sampling and pending-frame timeout remains explicit (881.096ms)
+✔ Reader Layout preserves final-artifact behavior across its ownership boundaries (79592.41375ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 79651.2825

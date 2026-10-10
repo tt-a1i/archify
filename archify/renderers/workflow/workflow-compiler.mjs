@@ -485,8 +485,14 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     for (let col = 0; col < colXs.length; col += 1) colXs[col] += measuredContentLeftShift;
   }
 
-  let rightmost = colXs.at(-1) + 50;
-  let rightmostContributors = new Set(colProvenance.at(-1));
+  // Single-column automatic stacks need no reserved width for unused ranks.
+  // Keep the rank coordinates: groups and phases may still span other ranks,
+  // and final containment includes routed edges, labels and legend bounds.
+  const measureSingleColumn = !preservesWorkflowAbsoluteGeometry(workflow)
+    && hasVerticalStack(workflow)
+    && new Set(nodes.map((node) => node.col)).size === 1;
+  let rightmost = measureSingleColumn ? 40 : colXs.at(-1) + 50;
+  let rightmostContributors = new Set(measureSingleColumn ? [] : colProvenance.at(-1));
   for (const node of nodes) {
     if (!Number.isInteger(node.col) || node.col < 0 || node.col >= columnCount) continue;
     const nodeRight = colXs[node.col] + authoredNodeWidth(node) / 2;
@@ -521,6 +527,19 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
       for (const contributor of groupContributors) rightmostContributors.add(contributor);
     }
   }
+  if (measureSingleColumn) {
+    // An outside-right label needs a horizontal run, not just a canvas that
+    // contains its eventual bounds. Reserve it before routing the compact frame.
+    for (const edge of asArray(workflow.edges)) {
+      if (!edge.label || !['auto', 'outside-right'].includes(edge.route || 'auto')) continue;
+      const endpointRight = Math.max(...[edge.from, edge.to].map((id) => {
+        const node = nodesById.get(id);
+        return node ? colXs[node.col] + authoredNodeWidth(node) / 2 : 40;
+      }));
+      rightmost = Math.max(rightmost, endpointRight + workflowLabelWidth(edge.label)
+        + 2 * Math.abs(Number(edge.labelDx) || 0));
+    }
+  }
   const widestLaneLabel = asArray(workflow.lanes).reduce((widest, lane, index) => {
     const width = textUnits(`${String(index + 1).padStart(2, '0')} / ${lane.label}`) * 6.2 + 30;
     return width > widest.width ? { width, lane } : widest;
@@ -528,7 +547,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   const laneLabelWidth = widestLaneLabel.width;
   const rightmostLaneWidth = Math.ceil(rightmost - 40 + 8);
   const laneW = Math.max(
-    640,
+    measureSingleColumn ? 0 : 640,
     rightmostLaneWidth,
     Math.ceil(laneLabelWidth),
   );

@@ -1,0 +1,28 @@
+✖ issue #747: single-column automatic stacks omit unused right-hand ranks without clipping routes (10.729875ms)
+✔ issue #747: compact stacks reserve space for a labeled outside-right route (4.754292ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.891666
+
+✖ failing tests:
+
+test at ../baseline/test/workflow-compiler.test.mjs:436:1
+✖ issue #747: single-column automatic stacks omit unused right-hand ranks without clipping routes (10.729875ms)
+  AssertionError [ERR_ASSERTION]: short lane labels must not retain empty ranks
+      at TestContext.<anonymous> (file://<workspace>/work/baseline/test/workflow-compiler.test.mjs:445:14)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -1,0 +1,1294 @@
+{
+  "baselineCompilerSha256": "79bde22a7558a610a2d7ec0a585a8709244505cc64408fa4da37f5891063eadc",
+  "candidateCompilerSha256": "fa005afe70c3b95d60ba45b929e77a5edceabd8f56f5d16eecd19dcd766b52da",
+  "node": "v26.11.0",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.98",
+    "revision": "@b859317bf11f6be47f9b7799ec690a0a42a1fb33",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.20"
+  },
+  "records": [
+    {
+      "name": "five-stage-stack",
+      "revision": "before",
+      "theme": "light",
+      "screenshot": "five-stage-stack-before-light.png",
+      "artifact": "five-stage-stack-before.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        768,
+        626
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        214,
+        446
+      ],
+      "primary": [
+        {
+          "text": "Build preview",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Check format",
+          "px": 16.5
+        },
+        {
+          "text": "Collect input",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Publish result",
+          "px": 15
+        },
+        {
+          "text": "Review output",
+          "px": 16.049999999999997
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Local artifact",
+          "px": 12
+        },
+        {
+          "text": "Schema rules",
+          "px": 12
+        },
+        {
+          "text": "Public draft",
+          "px": 12
+        },
+        {
+          "text": "Public page",
+          "px": 12
+        },
+        {
+          "text": "Human inspection",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Publishing pipeline",
+        "Build preview",
+        "Local artifact",
+        "Check format",
+        "Schema rules",
+        "Collect input",
+        "Public draft",
+        "Publish result",
+        "Public page",
+        "Review output",
+        "Human inspection"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 289,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 1152,
+      "svgRenderedHeight": 939,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 1.2268370607028753,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 289,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "b6b99a35441337d9390e665c342ce1e96ba61f3cefc962dc58cdd1db32531113"
+    },
+    {
+      "name": "five-stage-stack",
+      "revision": "before",
+      "theme": "dark",
+      "screenshot": "five-stage-stack-before-dark.png",
+      "artifact": "five-stage-stack-before.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        768,
+        626
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        214,
+        446
+      ],
+      "primary": [
+        {
+          "text": "Build preview",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Check format",
+          "px": 16.5
+        },
+        {
+          "text": "Collect input",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Publish result",
+          "px": 15
+        },
+        {
+          "text": "Review output",
+          "px": 16.049999999999997
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Local artifact",
+          "px": 12
+        },
+        {
+          "text": "Schema rules",
+          "px": 12
+        },
+        {
+          "text": "Public draft",
+          "px": 12
+        },
+        {
+          "text": "Public page",
+          "px": 12
+        },
+        {
+          "text": "Human inspection",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Publishing pipeline",
+        "Build preview",
+        "Local artifact",
+        "Check format",
+        "Schema rules",
+        "Collect input",
+        "Public draft",
+        "Publish result",
+        "Public page",
+        "Review output",
+        "Human inspection"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 289,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 1152,
+      "svgRenderedHeight": 939,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 1.2268370607028753,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 289,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "b6b99a35441337d9390e665c342ce1e96ba61f3cefc962dc58cdd1db32531113"
+    },
+    {
+      "name": "five-stage-stack",
+      "revision": "after",
+      "theme": "light",
+      "screenshot": "five-stage-stack-after-light.png",
+      "artifact": "five-stage-stack-after.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        284,
+        626
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        214,
+        446
+      ],
+      "primary": [
+        {
+          "text": "Build preview",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Check format",
+          "px": 16.5
+        },
+        {
+          "text": "Collect input",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Publish result",
+          "px": 15
+        },
+        {
+          "text": "Review output",
+          "px": 16.049999999999997
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Local artifact",
+          "px": 12
+        },
+        {
+          "text": "Schema rules",
+          "px": 12
+        },
+        {
+          "text": "Public draft",
+          "px": 12
+        },
+        {
+          "text": "Public page",
+          "px": 12
+        },
+        {
+          "text": "Human inspection",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Publishing pipeline",
+        "Build preview",
+        "Local artifact",
+        "Check format",
+        "Schema rules",
+        "Collect input",
+        "Public draft",
+        "Publish result",
+        "Public page",
+        "Review output",
+        "Human inspection"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 289,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 426,
+      "svgRenderedHeight": 939,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 0.4536741214057508,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 289,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "8ffa29cdf5565ea53cc7f2c1792d7fa4ba5a16060e0e0d977168d2b96494f604"
+    },
+    {
+      "name": "five-stage-stack",
+      "revision": "after",
+      "theme": "dark",
+      "screenshot": "five-stage-stack-after-dark.png",
+      "artifact": "five-stage-stack-after.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        284,
+        626
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        214,
+        446
+      ],
+      "primary": [
+        {
+          "text": "Build preview",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Check format",
+          "px": 16.5
+        },
+        {
+          "text": "Collect input",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Publish result",
+          "px": 15
+        },
+        {
+          "text": "Review output",
+          "px": 16.049999999999997
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Local artifact",
+          "px": 12
+        },
+        {
+          "text": "Schema rules",
+          "px": 12
+        },
+        {
+          "text": "Public draft",
+          "px": 12
+        },
+        {
+          "text": "Public page",
+          "px": 12
+        },
+        {
+          "text": "Human inspection",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Publishing pipeline",
+        "Build preview",
+        "Local artifact",
+        "Check format",
+        "Schema rules",
+        "Collect input",
+        "Public draft",
+        "Publish result",
+        "Public page",
+        "Review output",
+        "Human inspection"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 289,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 426,
+      "svgRenderedHeight": 939,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 0.4536741214057508,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 289,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "8ffa29cdf5565ea53cc7f2c1792d7fa4ba5a16060e0e0d977168d2b96494f604"
+    },
+    {
+      "name": "execution-failure-stack",
+      "revision": "before",
+      "theme": "light",
+      "screenshot": "execution-failure-stack-before-light.png",
+      "artifact": "execution-failure-stack-before.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        780,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        764,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 1170,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 1.059782608695652,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "a8f8e1eac35a49115317223ca25406e33893b0a9383dcdb17994dfe7c0cf18cf"
+    },
+    {
+      "name": "execution-failure-stack",
+      "revision": "before",
+      "theme": "dark",
+      "screenshot": "execution-failure-stack-before-dark.png",
+      "artifact": "execution-failure-stack-before.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        780,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        764,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 1170,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 1.059782608695652,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "a8f8e1eac35a49115317223ca25406e33893b0a9383dcdb17994dfe7c0cf18cf"
+    },
+    {
+      "name": "execution-failure-stack",
+      "revision": "after",
+      "theme": "light",
+      "screenshot": "execution-failure-stack-after-light.png",
+      "artifact": "execution-failure-stack-after.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        296,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        280,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 444,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 0.40217391304347827,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "f06f3388c07abd25a474358c94e1ac0df11580d74c6d02b8d88fea8c88d739df"
+    },
+    {
+      "name": "execution-failure-stack",
+      "revision": "after",
+      "theme": "dark",
+      "screenshot": "execution-failure-stack-after-dark.png",
+      "artifact": "execution-failure-stack-after.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        296,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        280,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 444,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 0.40217391304347827,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "f06f3388c07abd25a474358c94e1ac0df11580d74c6d02b8d88fea8c88d739df"
+    },
+    {
+      "name": "labeled-outside-right",
+      "revision": "before",
+      "theme": "light",
+      "screenshot": "labeled-outside-right-before-light.png",
+      "artifact": "labeled-outside-right-before.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        780,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        764,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt",
+        "Recover after execution failure"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 1170,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 1.059782608695652,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "6e5c195426613cfe86969c049625fa4171f8426a9b9d1087c1b879363c667553"
+    },
+    {
+      "name": "labeled-outside-right",
+      "revision": "before",
+      "theme": "dark",
+      "screenshot": "labeled-outside-right-before-dark.png",
+      "artifact": "labeled-outside-right-before.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        780,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        764,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt",
+        "Recover after execution failure"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 1170,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 1.059782608695652,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "6e5c195426613cfe86969c049625fa4171f8426a9b9d1087c1b879363c667553"
+    },
+    {
+      "name": "labeled-outside-right",
+      "revision": "after",
+      "theme": "light",
+      "screenshot": "labeled-outside-right-after-light.png",
+      "artifact": "labeled-outside-right-after.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        455,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        439,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt",
+        "Recover after execution failure"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 682.5,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 0.6182065217391305,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "57ffe3d1533965e2ef554f3f7c9cabe1dbc9615f45e069bc8095783be24b1f75"
+    },
+    {
+      "name": "labeled-outside-right",
+      "revision": "after",
+      "theme": "dark",
+      "screenshot": "labeled-outside-right-after-dark.png",
+      "artifact": "labeled-outside-right-after.html",
+      "viewport": [
+        1440,
+        1000
+      ],
+      "preset": "signal-flow",
+      "quality": "showcase",
+      "viewBox": [
+        455,
+        736
+      ],
+      "readerFit": "width-first",
+      "minimumPrimaryPx": 15,
+      "minimumAuxiliaryPx": 12,
+      "routeBounds": [
+        214,
+        138,
+        439,
+        556
+      ],
+      "primary": [
+        {
+          "text": "Execute job",
+          "px": 16.5
+        },
+        {
+          "text": "Store result",
+          "px": 16.5
+        },
+        {
+          "text": "Prepare job",
+          "px": 16.5
+        },
+        {
+          "text": "Inspect error",
+          "px": 16.049999999999997
+        },
+        {
+          "text": "Record failure",
+          "px": 15
+        },
+        {
+          "text": "Queue retry",
+          "px": 16.5
+        }
+      ],
+      "auxiliary": [
+        {
+          "text": "Bounded work",
+          "px": 12
+        },
+        {
+          "text": "Completed job",
+          "px": 12
+        },
+        {
+          "text": "Validated input",
+          "px": 12
+        },
+        {
+          "text": "Manual diagnosis",
+          "px": 12
+        },
+        {
+          "text": "Reason and trace",
+          "px": 12
+        },
+        {
+          "text": "Fresh attempt",
+          "px": 12
+        }
+      ],
+      "allText": [
+        "01 / Job execution",
+        "EX / Failure recovery",
+        "Execute job",
+        "Bounded work",
+        "Store result",
+        "Completed job",
+        "Prepare job",
+        "Validated input",
+        "Inspect error",
+        "Manual diagnosis",
+        "Record failure",
+        "Reason and trace",
+        "Queue retry",
+        "Fresh attempt",
+        "Recover after execution failure"
+      ],
+      "scrollY": 0,
+      "pageScrollPx": 549,
+      "overflowX": false,
+      "zoom": "100%",
+      "svgRenderedWidth": 682.5,
+      "svgRenderedHeight": 1104,
+      "fontStatus": "loaded",
+      "reader": {
+        "ratio": 0.6182065217391305,
+        "width": 1376
+      },
+      "bottomScroll": {
+        "scrollY": 549,
+        "allNodesReachable": true
+      },
+      "htmlSha256": "57ffe3d1533965e2ef554f3f7c9cabe1dbc9615f45e069bc8095783be24b1f75"
+    }
+  ]
+}

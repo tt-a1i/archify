@@ -1,0 +1,546 @@
+[
+  {
+    "name": "five-stage-stack",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      284,
+      626
+    ]
+  },
+  {
+    "name": "five-stage-stack",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      284,
+      626
+    ]
+  },
+  {
+    "name": "execution-failure-stack",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      780,
+      736
+    ],
+    "after": [
+      296,
+      736
+    ]
+  },
+  {
+    "name": "execution-failure-stack",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      780,
+      736
+    ],
+    "after": [
+      296,
+      736
+    ]
+  },
+  {
+    "name": "labeled-outside-right",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      780,
+      736
+    ],
+    "after": [
+      455,
+      736
+    ]
+  },
+  {
+    "name": "labeled-outside-right",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      780,
+      736
+    ],
+    "after": [
+      455,
+      736
+    ]
+  },
+  {
+    "name": "explicit-viewbox",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      1000,
+      1000
+    ],
+    "after": [
+      1000,
+      1000
+    ]
+  },
+  {
+    "name": "explicit-viewbox",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      1000,
+      1000
+    ],
+    "after": [
+      1000,
+      1000
+    ]
+  },
+  {
+    "name": "long-lane-label",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      1113,
+      626
+    ],
+    "after": [
+      629,
+      626
+    ]
+  },
+  {
+    "name": "long-lane-label",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      1113,
+      626
+    ],
+    "after": [
+      629,
+      626
+    ]
+  },
+  {
+    "name": "wide-node",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      334,
+      626
+    ]
+  },
+  {
+    "name": "wide-node",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      334,
+      626
+    ]
+  },
+  {
+    "name": "wide-phase-span",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      756,
+      626
+    ]
+  },
+  {
+    "name": "wide-phase-span",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      756,
+      626
+    ]
+  },
+  {
+    "name": "wide-group-span",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      632
+    ],
+    "after": [
+      648,
+      632
+    ]
+  },
+  {
+    "name": "wide-group-span",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": false,
+    "expectedUnchanged": false,
+    "before": [
+      768,
+      632
+    ],
+    "after": [
+      648,
+      632
+    ]
+  },
+  {
+    "name": "explicit-wide-channel",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      1016,
+      736
+    ],
+    "after": [
+      1016,
+      736
+    ]
+  },
+  {
+    "name": "explicit-wide-channel",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      1016,
+      736
+    ],
+    "after": [
+      1016,
+      736
+    ]
+  },
+  {
+    "name": "explicit-via",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      768,
+      626
+    ]
+  },
+  {
+    "name": "explicit-via",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      768,
+      626
+    ]
+  },
+  {
+    "name": "explicit-labelAt",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      768,
+      626
+    ]
+  },
+  {
+    "name": "explicit-labelAt",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      768,
+      626
+    ],
+    "after": [
+      768,
+      626
+    ]
+  },
+  {
+    "name": "explicit-channelY",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      768,
+      280
+    ],
+    "after": [
+      768,
+      280
+    ]
+  },
+  {
+    "name": "explicit-channelY",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      768,
+      280
+    ],
+    "after": [
+      768,
+      280
+    ]
+  },
+  {
+    "name": "example-agent-tool-call",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      1108,
+      684
+    ],
+    "after": [
+      1108,
+      684
+    ]
+  },
+  {
+    "name": "example-agent-tool-call",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      1108,
+      684
+    ],
+    "after": [
+      1108,
+      684
+    ]
+  },
+  {
+    "name": "example-holiday-planning",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      802,
+      408
+    ],
+    "after": [
+      802,
+      408
+    ]
+  },
+  {
+    "name": "example-holiday-planning",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      802,
+      408
+    ],
+    "after": [
+      802,
+      408
+    ]
+  },
+  {
+    "name": "example-incident-response",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      720,
+      900
+    ],
+    "after": [
+      720,
+      900
+    ]
+  },
+  {
+    "name": "example-incident-response",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      720,
+      900
+    ],
+    "after": [
+      720,
+      900
+    ]
+  },
+  {
+    "name": "example-release-delivery",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      720,
+      900
+    ],
+    "after": [
+      720,
+      900
+    ]
+  },
+  {
+    "name": "example-release-delivery",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      720,
+      900
+    ],
+    "after": [
+      720,
+      900
+    ]
+  },
+  {
+    "name": "frozen-v1",
+    "quality": "standard",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      720,
+      900
+    ],
+    "after": [
+      720,
+      900
+    ]
+  },
+  {
+    "name": "frozen-v1",
+    "quality": "showcase",
+    "baselinePass": true,
+    "candidatePass": true,
+    "svgIdentical": true,
+    "expectedUnchanged": true,
+    "before": [
+      720,
+      900
+    ],
+    "after": [
+      720,
+      900
+    ]
+  }
+]

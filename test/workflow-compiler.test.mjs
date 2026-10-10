@@ -423,12 +423,51 @@ test('issue #250: implicit readable-v2 measures a stacked lane independently', (
   const result = compileSuccessfully(workflow);
   assert.equal(result.receipt.contract, 'readable-v2');
   assert.deepEqual([0, 1, 2].map((index) => laneFrameRect(result.svg, index).height), [276, 104, 104]);
-  assert.deepEqual(result.receipt.viewBox, [768, 700]);
+  assert.equal(result.receipt.viewBox[1], 700);
   const group = groupFrameRect(result.svg);
+  assertRectInsideViewBox(group, svgViewBox(result.svg), 'authored group span');
   for (const id of ['a', 'b', 'c']) {
     const node = nodeRect(result.svg, id);
     assertRectInsideRect(node, group, `stacked node ${id}`);
     assertRectInsideViewBox(node, svgViewBox(result.svg), `stacked node ${id}`);
+  }
+});
+
+test('issue #747: single-column automatic stacks omit unused right-hand ranks without clipping routes', () => {
+  for (const name of ['five-stage-stack', 'execution-failure-stack']) {
+    const workflow = readJson(path.join(__dirname, 'fixtures/reader-readability', `${name}.workflow.json`));
+    const original = JSON.stringify(workflow);
+    for (const quality of ['standard', 'showcase']) {
+      const result = compileSuccessfully(workflow, quality);
+      const viewBox = svgViewBox(result.svg);
+      const lane = laneFrameRect(result.svg);
+      const nodeRight = Math.max(...result.receipt.nodes.map((node) => node.x + node.width));
+      assert.ok(lane.x + lane.width - nodeRight <= 32, 'short lane labels must not retain empty ranks');
+      assert.deepEqual(result.receipt.nodes.map(({ id }) => id).sort(), workflow.nodes.map(({ id }) => id).sort());
+      assert.deepEqual(result.receipt.edges.map(({ from, to }) => `${from}:${to}`).sort(), workflow.edges.map(({ from, to }) => `${from}:${to}`).sort());
+      for (const node of result.receipt.nodes) assertRectInsideViewBox(node, viewBox, node.id);
+      for (const edge of result.receipt.edges) {
+        for (const [x, y] of edge.points) assertRectInsideViewBox({ x, y, width: 0, height: 0 }, viewBox, edge.id);
+      }
+      const outside = result.receipt.edges.find(({ id }) => id === 'execute-record');
+      if (outside) {
+        assert.ok(Math.max(...outside.points.map(([x]) => x)) > lane.x + lane.width, 'the outside-right corridor stays outside the frame');
+      }
+    }
+    assert.equal(JSON.stringify(workflow), original, 'compilation must not rewrite the input');
+  }
+});
+
+test('issue #747: compact stacks reserve space for a labeled outside-right route', () => {
+  const workflow = readJson(path.join(__dirname, 'fixtures/reader-readability/execution-failure-stack.workflow.json'));
+  workflow.edges.find(({ id }) => id === 'execute-record').label = 'Recover after execution failure';
+  for (const quality of ['standard', 'showcase']) {
+    const result = compileSuccessfully(workflow, quality);
+    const label = edgeLabelRect(result.svg, 'execute-record');
+    assertRectInsideViewBox(label, svgViewBox(result.svg), 'outside route label');
+    for (const node of result.receipt.nodes) {
+      assert.equal(rectsOverlap(label, node), false, `outside label must clear ${node.id}`);
+    }
   }
 });
 

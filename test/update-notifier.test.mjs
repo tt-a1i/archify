@@ -1813,7 +1813,9 @@ test('two promoters cannot replace and then steal a stale empty active claim', a
     staleTime,
     staleTime,
   );
-  const claimedCheck = checkForUpdate(options(testFixture, fetchImpl));
+  // Keep the mocked fetch pending while the competing retirement finishes;
+  // this tests claim ownership, not the short fixture's fetch timeout.
+  const claimedCheck = checkForUpdate(options(testFixture, fetchImpl, { timeoutMs: 2_000 }));
   await fetchStarted;
   pause.release();
   assert.deepEqual(await delayedRetirement, { status: 'silent', reason: 'check-in-progress' });

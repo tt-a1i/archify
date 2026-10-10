@@ -1,0 +1,14 @@
+{
+  "baseCommit": "0c5550a6e5c7c3fc42ab6f2ed2c96d223461dbe3",
+  "branch": "prototype/747-single-column-canvas",
+  "sourceSha256": {
+    "archify/renderers/workflow/workflow-compiler.mjs": "fa005afe70c3b95d60ba45b929e77a5edceabd8f56f5d16eecd19dcd766b52da",
+    "test/workflow-compiler.test.mjs": "08616741ac185ba5403d651be16b5ffffcb630e6c31f0cd0ce62cc28353c6f0d",
+    "scripts/capture-workflow-canvas.mjs": "4bff3b8fd3b0ed11109b251431615974abb2128ef8047b4eeaa2d305216eef19"
+  },
+  "node": "v26.11.0",
+  "browser": "Chrome/154.0.8037.98",
+  "platform": "macOS arm64",
+  "generatedReleaseArtifacts": "deferred at prototype stage",
+  "candidate": "baseCommit plus this branch compiler, test and capture-script changes; source hashes below identify tested bytes"
+}
