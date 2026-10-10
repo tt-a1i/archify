@@ -537,4 +537,22 @@ test('authored Architecture canvas keeps its scale and accepts readable document
     assert.equal(failed.exitCode, 1);
     assert.ok(failed.receipt.diagnostics.some(d => d.code === 'viewer/diagram-clipped'), JSON.stringify(failed.receipt.diagnostics));
   }
+
+  // Workflow with explicit viewBox: tall swimlane must accept vertical scroll without unexpected overflow (#616)
+  const wfInput = path.join(tmp, 'wf-input.json');
+  const wfArtifact = path.join(tmp, 'wf-authored.html');
+  const wfDoc = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/agent-tool-call.workflow.json'), 'utf8'));
+  wfDoc.meta.viewBox = [1240, 838];
+  fs.writeFileSync(wfInput, JSON.stringify(wfDoc));
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'workflow', wfInput, wfArtifact]);
+  const wfHtml = fs.readFileSync(wfArtifact, 'utf8');
+  assert.match(wfHtml, /data-diagram-type="workflow"/);
+  assert.match(wfHtml, /data-reader-fit="authored-height"/);
+  const wfResult = await runVisualCheck({ artifactPath: wfArtifact, chromePath });
+  assert.equal(wfResult.exitCode, 0, JSON.stringify(wfResult.receipt.diagnostics));
+  for (const viewport of wfResult.receipt.containment.viewports) {
+    assert.equal(viewport.readerFit, 'authored-height');
+    assert.equal(viewport.overflowX, false);
+    if (viewport.overflowY) assert.equal(viewport.verticalScrollAccepted, true);
+  }
 });

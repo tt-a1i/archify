@@ -4751,12 +4751,18 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  const readerFit = workflow.schema_version === 2
-    && !workflow.meta?.viewBox
-    && hasVerticalStack(workflow)
-    && asArray(layout.laneHeights).some((height) => height > 104)
-    ? ' data-reader-fit="intrinsic-height"'
-    : '';
+  const isAuthoredHeight = Boolean(workflow.schema_version === 2
+    && workflow.meta?.viewBox
+    && workflow.lanes?.length >= 2
+    && viewBox[1] > 800);
+  const readerFit = isAuthoredHeight
+    ? ' data-diagram-type="workflow" data-reader-fit="authored-height"'
+    : (workflow.schema_version === 2
+      && !workflow.meta?.viewBox
+      && hasVerticalStack(workflow)
+      && asArray(layout.laneHeights).some((height) => height > 104)
+      ? ' data-reader-fit="intrinsic-height"'
+      : '');
   const contract = workflow.schema_version === 2 ? ' data-layout-contract="readable-v2"' : '';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit}${contract} ${svgRootAttrs(workflow.meta, resolvedQualityProfile)}>
 ${svgAccessibleText(workflow.meta, 'workflow')}

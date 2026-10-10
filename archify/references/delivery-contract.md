@@ -388,8 +388,8 @@ Horizontal overflow always fails. Normal document-level vertical scrolling is
 accepted only with a renderer-declared contract and measured readable text.
 Automatic canvases declare `data-reader-fit="intrinsic-height"`; their adaptive
 Reader must reach its readable width and expose `data-reader-overflow="authored"`.
-Architecture with an explicit `meta.viewBox` instead declares
-`data-diagram-type="architecture"` and `data-reader-fit="authored-height"`:
+Architecture and workflow with an explicit `meta.viewBox` instead declare
+`data-diagram-type="architecture"` (or `"workflow"`) and `data-reader-fit="authored-height"`:
 its SVG coordinates, aspect ratio and existing Reader width behavior stay
 unchanged. Its full SVG must remain inside the diagram panel without internal
 scrolling or clipping, and the document must permit vertical scrolling.
