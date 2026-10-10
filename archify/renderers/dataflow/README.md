@@ -62,7 +62,7 @@ without a database node keeps it visual-only.
 | Stages (2–5) | centers at x = 100 + stage×215; stage band 168 wide, header at y 46 |
 | Row tops (`row` 0–4) | y = 128, 242, 356, 470, 584 (plus `yOffset`) |
 | Default node | 112×58 |
-| Node area | x within `[24, width − 24]`; y within `[104, height − 74]` |
+| Node area | x within `[24, width − 24]`; y within `[104, height − 74 − node height]` |
 | Node spacing | ≥10px between any two nodes (checked across stages and rows) |
 | Flow length | ≥34px between endpoints |
 | Legend row | y = height − 36 |
@@ -112,7 +112,12 @@ including zero offsets. Existing valid labels are retained.
 Schema violations exit non-zero with path-prefixed messages annotated with the
 element's id or label. The renderer additionally fails when it can detect
 layout problems, including missing stages, duplicate node IDs, nodes outside
-the readable diagram area, node overlap, labels colliding with nodes or other
+the readable diagram area (`dataflow/node-above-area` / `dataflow/node-below-area`;
+the below-area diagnostic offers `meta.viewBox[1]` raises only while the raised
+page still fits the target viewport, and names the height range that does —
+page containment is the modeled axis, while projected text readability is
+reported separately by the delivery checks (`viewer/projected-text-readability`)),
+node overlap, labels colliding with nodes or other
 labels, labels wider than their node, unknown flow endpoints, missing flow
 labels, unreadably short flows, flows crossing unrelated nodes (2px Clean Flow
 clearance), or stages that exceed the viewBox. Stage frames remain intentional

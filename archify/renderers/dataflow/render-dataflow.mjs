@@ -7,7 +7,7 @@ import { resolveLegend, renderLegend as renderResolvedLegend, legendFootprint } 
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
+import { DECLARED_WIDE_READER_RATIO, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
 import {
@@ -71,6 +71,9 @@ const layout = {
   rowYs: [128, 242, 356, 470, 584],
   labelH: 16
 };
+// Mirrors the authored minimum in schemas/dataflow.schema.json: a repair that
+// would need a node shorter than the schema allows cannot be offered.
+const minimumNodeHeight = 36;
 
 // Explicit geometry preserves established node sizing, typography, height,
 // routing and label placement. An omitted canvas width still fits its content
@@ -176,8 +179,107 @@ function validateDataflow() {
     if (node.x < 24 || node.x + node.width > viewBox[0] - 24) {
       problems.push(`Node "${node.id}" exceeds the horizontal bounds of the viewBox — reduce node.width or increase meta.viewBox[0].`);
     }
-    if (node.y < layout.stageY + layout.stageH + 22 || node.y + node.height > viewBox[1] - layout.stageBottomPad) {
-      problems.push(`Node "${node.id}" exceeds the readable diagram area — keep y between ${layout.stageY + layout.stageH + 22} and ${viewBox[1] - layout.stageBottomPad} (adjust row/yOffset or increase meta.viewBox[1]).`);
+    const diagramAreaTop = layout.stageY + layout.stageH + 22;
+    const diagramAreaBottom = viewBox[1] - layout.stageBottomPad;
+    // y is the node's top edge, so the top bound moves only with yOffset —
+    // height cannot repair it. Both bounds are reported independently, because
+    // a node tall enough to cross the whole area violates both at once.
+    if (node.y < diagramAreaTop) {
+      const message = `Node "${node.id}" starts above the readable diagram area — keep y at or above ${diagramAreaTop}.`;
+      diagnostics.push({
+        code: 'dataflow/node-above-area',
+        severity: 'error',
+        message,
+        subject: { diagramType: 'dataflow', node: node.id },
+        evidence: { y: node.y, areaTop: diagramAreaTop, yOffset: node.yOffset || 0 },
+        supportedFixes: [
+          `raise or remove the negative yOffset on node "${node.id}"`,
+        ],
+      });
+      problems.push(message);
+    }
+    if (node.y + node.height > diagramAreaBottom) {
+      const nodeBottom = node.y + node.height;
+      const requiredViewBoxHeight = nodeBottom + layout.stageBottomPad;
+      // Only offer a repair that can clear this bound on its own. Lowering
+      // yOffset moves the whole node, which reaches the bound only while the
+      // node is short enough to fit between them at all; reducing height moves
+      // only the bottom edge, and only reaches the bound while a node short
+      // enough to do it is still legal to author.
+      const supportedFixes = [];
+      const roomForNode = diagramAreaBottom - diagramAreaTop;
+      // The height that clears the bound at the node's current y. The room
+      // between the bounds is the cap only while the node can still move; once
+      // it sits below the area, the cap is what remains below it.
+      const heightCapAtY = Math.min(roomForNode, diagramAreaBottom - node.y);
+      if (node.height <= roomForNode) {
+        supportedFixes.push(`lower yOffset on node "${node.id}"`);
+      }
+      if (heightCapAtY >= minimumNodeHeight) {
+        supportedFixes.push(`reduce node "${node.id}" height to at most ${heightCapAtY}`);
+      }
+      // A dataflow canvas with an authored meta.viewBox gets no readable-scroll
+      // exception, so the raised canvas is offered as a standalone repair only
+      // while the delivered page still fits the target viewport — the same
+      // page-fit math the checker applies for composition/viewport-height. The
+      // raise is bounded above too: growing the height lowers the canvas ratio,
+      // and under the wide threshold the Reader can no longer narrow the page,
+      // so advice that stopped at the minimum let an author overshoot into a
+      // certain visual-check failure.
+      const raisedOverflow = predictedFixedWidthOverflow({
+        viewBoxWidth: viewBox[0],
+        viewBoxHeight: requiredViewBoxHeight,
+        readerFit: null,
+        diagramType: null,
+      });
+      const raisedCanvasFits = raisedOverflow === null;
+      let maximumViewBoxHeight = Math.floor(viewBox[0] / DECLARED_WIDE_READER_RATIO);
+      // The ratio boundary can land between integers; step down until the same
+      // predicate the checker uses accepts the height.
+      while (maximumViewBoxHeight > 1 && predictedFixedWidthOverflow({
+        viewBoxWidth: viewBox[0],
+        viewBoxHeight: maximumViewBoxHeight,
+        readerFit: null,
+        diagramType: null,
+      }) !== null) {
+        maximumViewBoxHeight -= 1;
+      }
+      const raiseTarget = maximumViewBoxHeight > requiredViewBoxHeight
+        ? `to at least ${requiredViewBoxHeight} and at most ${maximumViewBoxHeight}`
+        : `to ${requiredViewBoxHeight}`;
+      if (raisedCanvasFits) {
+        supportedFixes.push(`raise meta.viewBox[1] ${raiseTarget}, then rerun deliver and visual-check`);
+      }
+      // The bound belongs to y + height, so name the y that satisfies it. The
+      // unadjusted "keep y between 104 and areaBottom" let an author follow the
+      // message exactly and still fail.
+      const extent = node.height <= roomForNode
+        ? `keep y within [${diagramAreaTop}, ${diagramAreaBottom - node.height}] so that y + height does not pass ${diagramAreaBottom}`
+        : heightCapAtY >= minimumNodeHeight
+          ? `it is taller than the area from y = ${diagramAreaTop} to y = ${diagramAreaBottom}, so no yOffset can fit it — reduce node height to at most ${heightCapAtY} and keep y within [${diagramAreaTop}, ${diagramAreaBottom - heightCapAtY}] so that y + height does not pass ${diagramAreaBottom}`
+          : `it is taller than the area from y = ${diagramAreaTop} to y = ${diagramAreaBottom} and sits too low for any legal height, so no single change clears this bound — reduce node height to at most ${roomForNode} and move it up so that y + height does not pass ${diagramAreaBottom}`;
+      const raiseClause = raisedCanvasFits
+        ? ` Raising meta.viewBox[1] ${raiseTarget} also fits it and still fits the target viewport.`
+        : ` Raising meta.viewBox[1] to ${requiredViewBoxHeight} would fit the node, but the page then reaches at least ~${raisedOverflow.pageHeightPx}px in the 1440x900 viewport, so the raise cannot stand on its own — compact the node instead.`;
+      const message = `Node "${node.id}" exceeds the readable diagram area — ${extent}.${raiseClause}`;
+      diagnostics.push({
+        code: 'dataflow/node-below-area',
+        severity: 'error',
+        message,
+        subject: { diagramType: 'dataflow', node: node.id },
+        evidence: {
+          y: node.y,
+          height: node.height,
+          areaBottom: diagramAreaBottom,
+          requiredViewBoxHeight,
+          requiredViewBoxFitsViewport: raisedCanvasFits,
+          maximumViewBoxHeight,
+          ...(raisedCanvasFits ? {} : { requiredViewBoxPageHeightPx: raisedOverflow.pageHeightPx }),
+          viewBoxHeight: viewBox[1],
+        },
+        supportedFixes,
+      });
+      problems.push(message);
     }
     const estLabelW = textUnits(node.label) * 6.2;
     if (estLabelW > node.width + 6) {
