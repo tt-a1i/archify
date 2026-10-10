@@ -43,6 +43,8 @@
 
 <p align="center"><a href="#sponsors"><strong>❤️ 合作与赞助伙伴：Kimi Work · Supercode · OpenLux</strong></a></p>
 
+<p align="center"><sub><strong>官方渠道：</strong>Archify 只有 <a href="https://archify.si/zh">archify.si</a> 和 <a href="https://github.com/tt-a1i/archify">github.com/tt-a1i/archify</a> 两个官方入口。Archify 基于 MIT 协议完全免费开源，作者没有提供任何付费在线版；其他以 Archify 名义收费的网站均与本项目无关。</sub></p>
+
 ## 看看 Archify 能做什么
 
 <!-- archify-launch-video -->

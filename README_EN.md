@@ -43,6 +43,8 @@
 
 <p align="center"><a href="#sponsors"><strong>❤️ Partners & sponsors: Kimi Work · Supercode · OpenLux</strong></a></p>
 
+<p align="center"><sub><strong>Official sources:</strong> <a href="https://archify.si/">archify.si</a> and <a href="https://github.com/tt-a1i/archify">github.com/tt-a1i/archify</a> are the only official homes of Archify. Archify is free and open source under the MIT License; the author does not offer any paid hosted version. Sites that charge for Archify are not affiliated with this project.</sub></p>
+
 ## See Archify in action
 
 <!-- archify-launch-video -->

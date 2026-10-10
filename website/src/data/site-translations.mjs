@@ -79,6 +79,7 @@ export const indexCopy = {
       'cta-h':'Describe it once.<br><em>Share the map.</em>',
       'cta-sub':'One command installs the checked skill for your agent — and your next diagram is a chat message away.',
       'cta-install':'Install the skill','cta-gh':'Star on GitHub',
+      'footer-official':'Official: archify.si &nbsp;·&nbsp; github.com/tt-a1i/archify<br>Free and open source. No paid hosted version is offered by the author.',
       'footer-changelog':'Changelog','footer-license':'License','footer-community':'Community'
     },
     zh: {
@@ -161,6 +162,7 @@ export const indexCopy = {
       'cta-h':'描述一次，<br><em>分享这张图。</em>',
       'cta-sub':'一条命令为你的 Agent 安装经过检查的技能——下一张架构图，只差一句对话。',
       'cta-install':'安装技能','cta-gh':'在 GitHub 上 Star',
+      'footer-official':'官方渠道：archify.si &nbsp;·&nbsp; github.com/tt-a1i/archify<br>免费开源，作者未提供任何付费在线版。',
       'footer-changelog':'更新日志','footer-license':'许可证','footer-community':'社区包'
     }
   };

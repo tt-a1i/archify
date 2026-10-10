@@ -41,6 +41,8 @@
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
 </p>
 
+<p align="center"><sub><strong>公式の入口：</strong>Archify の公式サイトは <a href="https://archify.si/">archify.si</a>、公式リポジトリは <a href="https://github.com/tt-a1i/archify">github.com/tt-a1i/archify</a> のみです。Archify は MIT ライセンスの無料オープンソースで、作者が有料のオンライン版を提供することはありません。Archify の名前で料金を請求するサイトは、本プロジェクトとは無関係です。</sub></p>
+
 ## 実際の Archify
 
 <!-- archify-launch-video -->
