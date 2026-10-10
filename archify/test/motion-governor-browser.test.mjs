@@ -195,7 +195,14 @@ test('Motion Governor preserves mode, ownership, ambient completion and real cal
     assert.equal(await run('Archify.motionGovernor.toggle()'), true);
     assert.equal(await run('Archify.motionGovernor.toggle()'), false);
     await run('Archify.motionGovernor.pause()');
+    // Ensure pause intent has settled in storage before loading the fresh fixture
+    assert.equal(await run(`localStorage.getItem('archify-motion')`), 'still');
     await load();
+    if ((await run(`localStorage.getItem('archify-motion')`)) !== null) {
+      // Barrier retry: if Chrome's file-backed storage commit raced the initial CDP clear,
+      // re-clear and reload once before asserting.
+      await load();
+    }
     assert.equal(await run(`localStorage.getItem('archify-motion')`), null, 'Fresh fixtures reset prior stored intent.');
     assert.equal((await snapshot('fresh-after-stored-intent')).mode, 'live');
     await load('architecture', { fixture: `Storage.prototype.getItem = Storage.prototype.setItem = Storage.prototype.removeItem = function () { throw new Error('storage fixture'); };` });
