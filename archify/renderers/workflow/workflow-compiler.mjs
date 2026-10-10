@@ -393,14 +393,32 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     }
   }
 
+  const laneOrder = new Map(asArray(workflow.lanes).map((lane, index) => [lane.id, index]));
   const unpinnedTopEndpointIds = new Set();
   for (const edge of asArray(workflow.edges)) {
     const preservesHorizontalPins = Array.isArray(edge.via) || edge.channelX !== undefined;
     if (preservesHorizontalPins) continue;
     if (edge.fromSide === 'top') unpinnedTopEndpointIds.add(edge.from);
     if (edge.toSide === 'top') unpinnedTopEndpointIds.add(edge.to);
+
+    const fromNode = nodesById.get(edge.from);
+    const toNode = nodesById.get(edge.to);
+    if (!fromNode || !toNode || fromNode.lane === toNode.lane || fromNode.col !== toNode.col) continue;
+
+    const fromLaneIndex = laneOrder.get(fromNode.lane);
+    const toLaneIndex = laneOrder.get(toNode.lane);
+    if (fromLaneIndex === undefined || toLaneIndex === undefined) continue;
+
+    const isStraight = edge.route === 'straight';
+    if (!isStraight) continue;
+
+    if ((!edge.toSide || edge.toSide === 'auto') && toLaneIndex > fromLaneIndex) {
+      unpinnedTopEndpointIds.add(edge.to);
+    }
+    if ((!edge.fromSide || edge.fromSide === 'auto') && fromLaneIndex > toLaneIndex) {
+      unpinnedTopEndpointIds.add(edge.from);
+    }
   }
-  const laneOrder = new Map(asArray(workflow.lanes).map((lane, index) => [lane.id, index]));
   let laneHeaderShift = 0;
   const laneHeaderShiftContributors = new Set();
   for (const nodeId of unpinnedTopEndpointIds) {
