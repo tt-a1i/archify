@@ -454,6 +454,10 @@ test('portable origin failures redact HTTP credentials and query tokens', () => 
     'http://user:SYNTHETIC_TOKEN@git.internal/Team/other',
     'http://git.internal/Team/repo?token=SYNTHETIC_TOKEN',
     'https://user:SYNTHETIC_TOKEN@git.internal/Team/repo',
+    ' http://user:SYNTHETIC_TOKEN@git.internal/Team/other',
+    '\thttp://user:SYNTHETIC_TOKEN@git.internal/Team/other',
+    ' https://user:SYNTHETIC_TOKEN@git.internal/Team/other',
+    '\thttps://user:SYNTHETIC_TOKEN@git.internal/Team/other',
   ]) {
     git(data.root, 'remote', 'set-url', 'origin', origin);
     const result = run(['validate', 'architecture', data.input, '--repo-root', data.root, '--json']);
@@ -763,4 +767,17 @@ test('live preview forwards repo-root and publishes only verified evidence', { t
   } finally {
     await preview.stop();
   }
+});
+
+// POSIX permits trailing whitespace in a directory component; it belongs to
+// the repository identity rather than Git's newline-delimited output framing.
+test('repository evidence preserves trailing whitespace in the Git top-level path', { skip: process.platform === 'win32' }, (t) => {
+  const data = fixture();
+  const renamedRoot = `${data.root} `;
+  fs.renameSync(data.root, renamedRoot);
+  t.after(() => fs.rmSync(renamedRoot, { recursive: true, force: true }));
+  const evidence = verifyRepositoryEvidence('architecture', data.diagram, renamedRoot);
+  assert.equal(evidence.verified, true);
+  assert.equal(evidence.repository.revision, data.revision);
+  assert.equal(evidence.referenceCount, 2);
 });
