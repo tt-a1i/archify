@@ -31,7 +31,7 @@
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-22c55e?style=flat-square" alt="AGPL-3.0 License" /></a>
   <a href="#installation-options"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.1.1--dev.1-0891b2?style=flat-square" alt="Development version 3.1.1-dev.1" /></a>
 </p>
@@ -464,13 +464,15 @@ Connect with other users and developers, share ideas, request features, report b
 
 ## Official channels and third-party services
 
-- **Open-source project:** The source code and installation packages are free to use under the [MIT License](LICENSE).
+- **Open-source project:** The source code and installation packages are free to use under the [AGPL-3.0 License](LICENSE) (releases before 4.0.0: MIT).
 - **Official website:** [archify.si](https://archify.si) currently provides project information, examples, and installation guidance.
 - **Third-party services:** Pricing, data handling, and support are determined by the respective provider. A similar name or domain does not establish an official affiliation.
 
 ## License
 
-[MIT](LICENSE) — free to use, modify, and distribute.
+[AGPL-3.0](LICENSE) starting with Archify 4.0.0. Releases before 4.0.0 remain available under the MIT License, and the original Cocoon AI MIT notice is preserved in [LICENSE](LICENSE).
+
+**Why AGPL?** Copies of Archify have been repackaged as paid hosted services. AGPL keeps Archify fully open source but requires anyone who offers a modified Archify as a network service to publish their source under the same license. Normal use is unaffected: installing the Skill, generating diagrams, and using or sharing the diagrams you create, including at work, need nothing extra. Diagrams you generate are your own content.
 
 ## Contributing
 

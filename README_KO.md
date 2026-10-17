@@ -22,7 +22,7 @@
 
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-22c55e?style=flat-square" alt="AGPL-3.0 License" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
 </p>
 
@@ -201,7 +201,9 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 
 ## 라이선스
 
-[MIT](LICENSE) — 자유롭게 사용, 수정, 배포할 수 있습니다.
+Archify 4.0.0부터 [AGPL-3.0](LICENSE)으로 제공됩니다. 4.0.0 이전 릴리스는 계속 MIT 라이선스로 이용할 수 있으며, Cocoon AI의 원본 MIT 저작권 고지는 [LICENSE](LICENSE)에 보존되어 있습니다.
+
+**왜 AGPL인가요?** Archify를 유료 호스팅 서비스로 재판매하는 사례가 생겼기 때문입니다. AGPL은 여전히 완전한 오픈소스 라이선스이지만, 수정한 Archify를 네트워크 서비스로 제공하는 경우 같은 라이선스로 소스 코드를 공개해야 합니다. 일반적인 사용에는 영향이 없습니다. Skill 설치, 다이어그램 생성, 생성한 다이어그램을 업무에서 사용하거나 공유하는 데 추가 조치가 필요하지 않습니다. 생성한 다이어그램은 사용자 자신의 콘텐츠입니다.
 
 ## 기여하기
 

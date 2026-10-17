@@ -47,7 +47,7 @@ test('publishable manifest is @tt-a1i/archify-dsh@1.0.0 with a DSH bundle patch 
   const pkg = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(pkg.name, '@tt-a1i/archify-dsh');
   assert.equal(pkg.version, '1.0.0');
-  assert.equal(pkg.license, 'MIT');
+  assert.equal(pkg.license, 'AGPL-3.0-only');
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.main, './lib/index.js');
   assert.equal(pkg.dsh?.bundle?.patch, './cordis.patch.yml');

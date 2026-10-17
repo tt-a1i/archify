@@ -31,7 +31,7 @@
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-22c55e?style=flat-square" alt="AGPL-3.0 License" /></a>
   <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.1.1--dev.1-0891b2?style=flat-square" alt="Development version 3.1.1-dev.1" /></a>
 </p>
@@ -468,13 +468,15 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 ## 官方入口与第三方服务
 
-- **开源项目：** 源码和安装包可按 [MIT 协议](LICENSE)免费使用。
+- **开源项目：** 源码和安装包可按 [AGPL-3.0 协议](LICENSE)免费使用（4.0.0 之前的版本为 MIT）。
 - **官方网站：** [archify.si](https://archify.si) 目前提供项目介绍、示例和安装指引。
 - **第三方服务：** 是否收费、如何处理数据、提供什么支持，由第三方运营方决定。名称或域名相似不代表官方合作。
 
 ## License
 
-[MIT](LICENSE) —— 可以自由使用、修改和分发。
+从 Archify 4.0.0 起采用 [AGPL-3.0](LICENSE)。4.0.0 之前的版本仍按 MIT 协议提供，Cocoon AI 原始的 MIT 版权声明保留在 [LICENSE](LICENSE) 中。
+
+**为什么换成 AGPL？** 已经有人把 Archify 包装成收费的在线服务。AGPL 仍是完整的开源协议，但要求把修改后的 Archify 作为网络服务提供的人，必须以同样的协议公开源码。正常使用不受影响：安装 Skill、生成图表、在工作中使用或分享你生成的图表，都不需要额外做任何事。你生成的图表属于你自己的内容。
 
 ## 参与贡献
 

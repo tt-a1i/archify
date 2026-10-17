@@ -5,7 +5,7 @@ are provided only to identify technologies and services in user-authored
 diagrams. Their inclusion does not imply sponsorship, endorsement, partnership,
 or affiliation with Archify.
 
-The Archify MIT license applies to Archify's own code and content. It does not
+The Archify license (AGPL-3.0-only from 4.0.0; MIT for earlier releases) applies to Archify's own code and content. It does not
 replace the copyright licenses, trademark policies, or brand guidelines that
 apply to third-party marks. Users are responsible for confirming that their
 particular use is permitted.

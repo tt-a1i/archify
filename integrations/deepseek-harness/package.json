@@ -2,7 +2,7 @@
   "name": "@tt-a1i/archify-dsh",
   "version": "1.0.0",
   "description": "Opt-in DeepSeek Harness Skill-only bundle for the Archify architecture-diagram skill.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {

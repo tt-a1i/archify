@@ -75,7 +75,7 @@ test('initial homepage product facts explain identity, inputs, delivery, license
   const page = read('index', 'en');
   const section = find(page, 'about-archify');
   const content = clean(text(section));
-  for (const fact of ['open-source Agent Skill', 'typed JSON', 'interactive HTML', 'Mermaid', 'MIT', 'Codex', 'PNG', 'runtime system behavior', 'stable main']) assert.ok(content.includes(fact), fact);
+  for (const fact of ['open-source Agent Skill', 'typed JSON', 'interactive HTML', 'Mermaid', 'AGPL-3.0', 'Codex', 'PNG', 'runtime system behavior', 'stable main']) assert.ok(content.includes(fact), fact);
   const hrefs = links(section).map(link => attr(link, 'href'));
   assert.ok(hrefs.includes('https://github.com/tt-a1i/archify/releases'));
   assert.ok(hrefs.includes('https://github.com/tt-a1i/archify/blob/main/LICENSE'));

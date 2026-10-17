@@ -31,7 +31,7 @@
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-22c55e?style=flat-square" alt="AGPL-3.0 License" /></a>
   <a href="#インストール方法"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.1.1--dev.1-0891b2?style=flat-square" alt="Development version 3.1.1-dev.1" /></a>
 </p>
@@ -430,13 +430,15 @@ Mermaid の自動パース、汎用オートレイアウト、ホスティング
 
 ## 公式リンクと第三者サービス
 
-- **オープンソースプロジェクト：** ソースコードとインストールパッケージは [MIT ライセンス](LICENSE)に従って無料で利用できます。
+- **オープンソースプロジェクト：** ソースコードとインストールパッケージは [AGPL-3.0 ライセンス](LICENSE)（4.0.0 より前は MIT）に従って無料で利用できます。
 - **公式サイト：** [archify.si](https://archify.si) は現在、プロジェクトの紹介、サンプル、インストール手順を提供しています。
 - **第三者サービス：** 料金、データの取り扱い、サポートは各運営者が決定します。名称やドメインが似ていても、公式の提携を意味するものではありません。
 
 ## ライセンス
 
-[MIT](LICENSE) — 自由に利用・改変・配布できます。
+Archify 4.0.0 以降は [AGPL-3.0](LICENSE) で提供されます。4.0.0 より前のリリースは引き続き MIT ライセンスで利用でき、Cocoon AI のオリジナル MIT 著作権表示は [LICENSE](LICENSE) に保持されています。
+
+**なぜ AGPL なのか？** Archify を有料のホスティングサービスとして再販売する事例が出てきたためです。AGPL は完全なオープンソースライセンスのままですが、改変した Archify をネットワークサービスとして提供する場合、同じライセンスでソースコードを公開することを求めます。通常の利用には影響しません。Skill のインストール、図の生成、作成した図の業務での利用や共有に追加の手続きは不要です。生成した図はあなた自身のコンテンツです。
 
 ## コントリビュート
 

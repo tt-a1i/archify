@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "JSON-IR diagram renderers (architecture / workflow / sequence / dataflow / lifecycle / erd / class / tree / timeline / waterfall).",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "bin": {
     "archify": "./bin/archify.mjs"
   },

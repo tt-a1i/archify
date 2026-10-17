@@ -323,4 +323,4 @@ For retriggering or pausing reviews, use the official [review commands](https://
 
 ## License
 
-By contributing, you agree to the repository's [MIT License](LICENSE). Submit only work you created or have the right to contribute.
+By contributing, you agree that your contribution is licensed under the repository's [AGPL-3.0 License](LICENSE) (contributions to releases before 4.0.0 were made under MIT). Submit only work you created or have the right to contribute.
