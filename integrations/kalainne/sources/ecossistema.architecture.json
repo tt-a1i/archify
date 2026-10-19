@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ecossistema Kalainne",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pedido-marca",
+        "label": "Pedido e marca",
+        "focus": ["kairo", "primary", "studio", "guardian", "drive"],
+        "note": "O pedido entra no Primary, a criação fica no Studio e a marca passa pelo Guardian antes de qualquer publicação."
+      },
+      {
+        "id": "engenharia",
+        "label": "Engenharia e apps",
+        "focus": ["primary", "eng", "lovable", "notion"],
+        "note": "Eng cuida de código e do drift entre Lovable e o site. O Notion continua sendo a fonte de verdade."
+      },
+      {
+        "id": "ides",
+        "label": "IDEs e Archify",
+        "focus": ["cursor_local", "cursor_cloud", "archify", "notion"],
+        "note": "Cursor local e Cursor Cloud chamam o mesmo CLI. O artefato volta como mapa, sem virar memória de chat."
+      }
+    ]
+  },
+  "components": [
+    { "id": "kairo", "type": "external", "label": "Kairo", "sublabel": "CEO, aprovação humana", "pos": [40, 210], "size": [180, 72] },
+    { "id": "primary", "type": "backend", "label": "Grok Bot Primary", "sublabel": "triagem e roteamento", "pos": [300, 210], "size": [190, 72], "tag": "camada 1" },
+    { "id": "studio", "type": "frontend", "label": "Kalainne Studio", "sublabel": "criação visual", "pos": [580, 40], "size": [190, 72], "tag": "existente 06/10" },
+    { "id": "eng", "type": "backend", "label": "Kalainne Eng", "sublabel": "código e deploy", "pos": [580, 210], "size": [190, 72], "tag": "fase 1" },
+    { "id": "guardian", "type": "security", "label": "Brand Guardian", "sublabel": "compliance de marca", "pos": [880, 40], "size": [200, 72], "tag": "antes de publicar" },
+    { "id": "lovable", "type": "frontend", "label": "Apps Lovable", "sublabel": "Expert Guide, Salon Pro", "pos": [880, 210], "size": [200, 72], "tag": "drift manual" },
+    { "id": "notion", "type": "database", "label": "Notion", "sublabel": "hubs e CRM", "pos": [300, 400], "size": [190, 72], "tag": "fonte de verdade" },
+    { "id": "drive", "type": "cloud", "label": "Drive empresa", "sublabel": "SOP e artes", "pos": [580, 400], "size": [190, 72] },
+    { "id": "cursor_local", "type": "frontend", "label": "Cursor local", "sublabel": "IDE e skill", "pos": [40, 590], "size": [180, 72] },
+    { "id": "archify", "type": "backend", "label": "Archify", "sublabel": "mapas verificados", "pos": [300, 590], "size": [190, 72], "tag": "este repositório" },
+    { "id": "cursor_cloud", "type": "cloud", "label": "Cursor Cloud", "sublabel": "agentes na nuvem", "pos": [580, 590], "size": [190, 72] },
+    { "id": "hermes", "type": "messagebus", "label": "Hermes", "sublabel": "n8n + WhatsApp", "pos": [1000, 590], "size": [168, 72], "tag": "modo spec" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Agentes setoriais", "wraps": ["studio", "eng", "guardian", "lovable"] },
+    { "kind": "region", "label": "Fontes de verdade", "wraps": ["notion", "drive"] },
+    { "kind": "region", "label": "Execução local e nuvem", "wraps": ["cursor_local", "archify", "cursor_cloud"] },
+    { "kind": "security-group", "label": "Fora de produção", "wraps": ["hermes"] }
+  ],
+  "connections": [
+    { "id": "pedido", "from": "kairo", "to": "primary", "label": "pedido", "variant": "emphasis" },
+    { "id": "criar", "from": "primary", "to": "studio", "label": "criação", "variant": "default", "fromSide": "top", "toSide": "left" },
+    { "id": "codigo", "from": "primary", "to": "eng", "label": "código", "variant": "default" },
+    { "id": "validar", "from": "studio", "to": "guardian", "label": "validar", "variant": "security" },
+    { "id": "drift", "from": "eng", "to": "lovable", "label": "drift a vigiar", "variant": "dashed" },
+    { "id": "cli-local", "from": "cursor_local", "to": "archify", "label": "CLI local", "variant": "emphasis" },
+    { "id": "cli-nuvem", "from": "cursor_cloud", "to": "archify", "label": "mesmo contrato", "variant": "emphasis" },
+    { "id": "mapas", "from": "archify", "to": "notion", "label": "mapas, não chat", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Confirmado em 06/10/2026",
+      "items": [
+        "Teammates vivos: Primary, Studio, Kairós Grokado e dr eggbot",
+        "Notion e Drive empresa são as fontes; Excel Master diverge e não entra neste mapa",
+        "Publicar, gastar ou enviar continua exigindo aprovação humana"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Papel do Archify",
+      "items": [
+        "Compila JSON tipado em HTML verificável para Cursor local e Cloud",
+        "Guarda a forma do sistema, não o histórico de conversa",
+        "O modelo escolhe o layout; o CLI recusa topologia inválida"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Fora deste caminho",
+      "items": [
+        "Hermes segue em modo spec: sem aresta operacional",
+        "Canva, Vercel, Supabase e GitHub plugin estavam sem autenticação",
+        "Ops, Growth, Comercial, Care e Kairós ficam nas fichas, não como nós extras"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "kalainne",
+  "role": "verified-system-maps",
+  "quality_profile": "showcase",
+  "evidence": {
+    "read_on": "2026-10-19",
+    "registry": "https://app.notion.com/p/3fe8ee796579814381c8e482bf2120bf",
+    "pages": [
+      {
+        "title": "Projeto Intellig Kalainne",
+        "url": "https://app.notion.com/p/3208ee7965798065ab8afc50ab3f1396",
+        "edited": "2026-10-14"
+      },
+      {
+        "title": "Grok Bot — Plano Estratégico de Agentes Kalainne 2026",
+        "url": "https://app.notion.com/p/3f28ee79657981888c7cd18ce128f144",
+        "edited": "2026-10-07"
+      },
+      {
+        "title": "Hermes — Spec da Stack (modo spec)",
+        "url": "https://app.notion.com/p/3f28ee79657981de9be4e792ed793a98",
+        "edited": "2026-10-07"
+      }
+    ]
+  },
+  "maps": [
+    {
+      "id": "ecossistema",
+      "type": "architecture",
+      "source": "integrations/kalainne/sources/ecossistema.architecture.json",
+      "artifact": "integrations/kalainne/artifacts/ecossistema.architecture.html"
+    },
+    {
+      "id": "roteamento",
+      "type": "workflow",
+      "source": "integrations/kalainne/sources/roteamento.workflow.json",
+      "artifact": "integrations/kalainne/artifacts/roteamento.workflow.html"
+    },
+    {
+      "id": "conhecimento",
+      "type": "dataflow",
+      "source": "integrations/kalainne/sources/conhecimento.dataflow.json",
+      "artifact": "integrations/kalainne/artifacts/conhecimento.dataflow.html"
+    }
+  ]
+}

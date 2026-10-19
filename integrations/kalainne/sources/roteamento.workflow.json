@@ -1,0 +1,103 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Roteamento Kalainne",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "caminho-mapa",
+        "label": "Pedido até o registro",
+        "focus": ["pedido", "triagem", "leitura", "mapa", "entrega", "registro"],
+        "note": "Um pedido estrutural lê a fonte, gera um mapa validado e só então o agente dono executa."
+      },
+      {
+        "id": "marca",
+        "label": "Marca e rascunho",
+        "focus": ["entrega", "guardian", "rascunho"],
+        "note": "Se a saída toca a marca, o Guardian emite parecer. Sem aprovação, a saída permanece rascunho."
+      },
+      {
+        "id": "prova",
+        "label": "Prova Archify",
+        "focus": ["leitura", "mapa", "entrega"],
+        "note": "O mapa só segue adiante depois que o CLI aceita o JSON."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "fluxo", "label": "Pedido até o registro" },
+    { "id": "parada", "label": "Marca e parada", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "entrada", "label": "Entrada", "fromCol": 0, "toCol": 1 },
+    { "id": "contexto", "label": "Contexto e prova", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "saida", "label": "Entrega", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "prova", "label": "Prova do mapa", "lane": "fluxo", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "bloqueio", "label": "Sem envio automático", "lane": "parada", "fromCol": 4, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": ["pedido", "triagem", "leitura", "mapa", "entrega", "registro"],
+  "semanticChecks": {
+    "allowedRoots": ["pedido"],
+    "allowedTerminals": ["registro", "rascunho"],
+    "requiredEdges": [
+      { "from": "leitura", "to": "mapa" },
+      { "from": "mapa", "to": "entrega" },
+      { "from": "entrega", "to": "guardian" }
+    ],
+    "requiredPaths": [
+      { "from": "pedido", "to": "registro" }
+    ]
+  },
+  "nodes": [
+    { "id": "pedido", "lane": "fluxo", "col": 0, "type": "external", "label": "Pedido", "sublabel": "Kairo" },
+    { "id": "triagem", "lane": "fluxo", "col": 1, "type": "backend", "label": "Triagem", "sublabel": "Primary" },
+    { "id": "leitura", "lane": "fluxo", "col": 2, "type": "database", "label": "Leitura", "sublabel": "Notion ou Drive" },
+    { "id": "mapa", "lane": "fluxo", "col": 3, "type": "backend", "label": "Mapa", "sublabel": "Archify", "tag": "showcase" },
+    { "id": "entrega", "lane": "fluxo", "col": 4, "type": "frontend", "label": "Execução", "sublabel": "agente dono" },
+    { "id": "registro", "lane": "fluxo", "col": 5, "type": "database", "label": "Registro", "sublabel": "link no Notion" },
+    { "id": "guardian", "lane": "parada", "col": 4, "type": "security", "label": "Guardian", "sublabel": "se toca marca" },
+    { "id": "rascunho", "lane": "parada", "col": 5, "type": "security", "label": "Rascunho", "sublabel": "sem envio", "tag": "handoff" }
+  ],
+  "edges": [
+    { "id": "pedir", "from": "pedido", "to": "triagem", "variant": "emphasis" },
+    { "id": "contexto", "from": "triagem", "to": "leitura", "label": "contexto", "variant": "default" },
+    { "id": "estrutura", "from": "leitura", "to": "mapa", "label": "estrutura", "variant": "emphasis" },
+    { "id": "artefato", "from": "mapa", "to": "entrega", "label": "artefato", "variant": "emphasis" },
+    { "id": "link", "from": "entrega", "to": "registro", "label": "link", "variant": "default" },
+    { "id": "marca", "from": "entrega", "to": "guardian", "label": "marca", "variant": "security", "role": "branch" },
+    { "id": "ajustar", "from": "guardian", "to": "rascunho", "label": "ajustar", "variant": "security", "role": "error" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Caminho feliz",
+      "items": [
+        "Primary escolhe um dono e não executa o trabalho especializado",
+        "Mapa estrutural só segue depois da validação do Archify",
+        "O registro no Notion guarda o link do artefato"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Parada obrigatória",
+      "items": [
+        "Marca, publicação, gasto e mensagem externa não seguem sozinhos",
+        "O Guardian bloqueia nome antigo, desconto e claim sem base",
+        "A saída padrão continua sendo rascunho ou handoff"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "O que este fluxo não afirma",
+      "items": [
+        "Não descreve um runtime já ligado aos Grok Bots",
+        "Não depende de Hermes, n8n ou WhatsApp",
+        "Não transforma o diagrama em fonte de verdade no lugar do Notion"
+      ]
+    }
+  ]
+}

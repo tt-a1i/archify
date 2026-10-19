@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Conhecimento Kalainne",
+    "viewBox": [1068, 560],
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "fontes",
+        "label": "Fontes até o roteador",
+        "focus": ["notion", "drive", "primary"],
+        "note": "Os fatos saem do Notion e do Drive. O Primary só encaminha; não reescreve a fonte."
+      },
+      {
+        "id": "prova",
+        "label": "Julgamento e prova",
+        "focus": ["primary", "modelo", "cli", "html"],
+        "note": "O modelo propõe o IR. O CLI é o único caminho até o HTML."
+      },
+      {
+        "id": "uso",
+        "label": "O mesmo artefato",
+        "focus": ["html", "local", "nuvem"],
+        "note": "Cursor local e Cursor Cloud leem o mesmo arquivo verificado."
+      }
+    ]
+  },
+  "stages": [
+    { "label": "Fontes" },
+    { "label": "Roteamento" },
+    { "label": "Julgamento" },
+    { "label": "Prova" },
+    { "label": "Uso" }
+  ],
+  "nodes": [
+    { "id": "notion", "type": "database", "label": "Notion", "sublabel": "hubs e CRM", "stage": 0, "row": 0, "tag": "fatos" },
+    { "id": "drive", "type": "cloud", "label": "Drive", "sublabel": "SOP e artes", "stage": 0, "row": 2, "tag": "guardrail" },
+    { "id": "primary", "type": "backend", "label": "Primary", "sublabel": "escolhe o dono", "stage": 1, "row": 1 },
+    { "id": "modelo", "type": "backend", "label": "Modelo", "sublabel": "layout e IR", "stage": 2, "row": 0, "tag": "proposta" },
+    { "id": "cli", "type": "security", "label": "CLI Archify", "sublabel": "validate e deliver", "stage": 2, "row": 2, "tag": "bloqueia inválido" },
+    { "id": "html", "type": "frontend", "label": "HTML verificado", "sublabel": "arquivo único", "stage": 3, "row": 1, "tag": "showcase" },
+    { "id": "local", "type": "frontend", "label": "Cursor local", "sublabel": "skill no projeto", "stage": 4, "row": 0 },
+    { "id": "nuvem", "type": "cloud", "label": "Cursor Cloud", "sublabel": "mesmo contrato", "stage": 4, "row": 2 }
+  ],
+  "flows": [
+    { "id": "fatos", "from": "notion", "to": "primary", "label": "fatos", "classification": "plano e hubs", "variant": "emphasis" },
+    { "id": "sop", "from": "drive", "to": "primary", "label": "SOP", "classification": "guardrail de artes", "variant": "default" },
+    { "id": "pedido-mapa", "from": "primary", "to": "modelo", "label": "pedido de mapa", "classification": "intenção", "variant": "emphasis" },
+    { "id": "ir", "from": "modelo", "to": "cli", "label": "JSON IR", "classification": "proposta", "variant": "security", "labelDy": 24 },
+    { "id": "entrega", "from": "cli", "to": "html", "label": "entrega atômica", "classification": "só se passar", "variant": "emphasis" },
+    { "id": "abrir-local", "from": "html", "to": "local", "label": "abrir", "classification": "artefato", "variant": "default" },
+    { "id": "abrir-nuvem", "from": "html", "to": "nuvem", "label": "mesmo arquivo", "classification": "artefato", "variant": "default" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Quatro memórias, quatro donos",
+      "items": [
+        "Notion guarda decisão, PMO, marca e CRM",
+        "Drive guarda SOP e o portfólio de artes",
+        "O modelo guarda só o raciocínio da sessão",
+        "Archify guarda a forma verificada do sistema"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "O que aumenta a assertividade",
+      "items": [
+        "Um job por agente e uma fonte por tema",
+        "O CLI recusa mapa que não fecha no schema",
+        "Local e nuvem consomem o mesmo HTML"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "O que não entra neste fluxo",
+      "items": [
+        "Supermemory estava em erro em 06/10 e não é dependência",
+        "Hermes não lê nem escreve neste caminho",
+        "Chat solto não substitui o hub do Notion"
+      ]
+    }
+  ]
+}

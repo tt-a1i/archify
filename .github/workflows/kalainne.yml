@@ -1,0 +1,29 @@
+name: Kalainne maps
+
+on:
+  pull_request:
+    paths:
+      - 'integrations/kalainne/**'
+      - '.github/workflows/kalainne.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'integrations/kalainne/**'
+      - '.github/workflows/kalainne.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: kalainne-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  maps:
+    name: Showcase maps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Validate Kalainne maps
+        run: node --test integrations/kalainne/test/maps.test.mjs
