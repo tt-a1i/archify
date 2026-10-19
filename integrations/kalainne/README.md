@@ -27,6 +27,20 @@ Os três mapas foram validados com `archify validate --quality showcase` (9 chec
 
 Abra o HTML no navegador. A interface do viewer continua em inglês; os rótulos destes mapas estão em português. O schema atual aceita `locale` `en` ou `zh-CN` e não traduz a cópia autoral.
 
+## Desktop, outros projetos e nuvem
+
+O instalador grava o skill `kalainne-archify` sem copiar o renderer. No desktop, rode a partir deste checkout:
+
+```bash
+node integrations/kalainne/bin/install.mjs install --scope user --home "$HOME" --json
+node integrations/kalainne/bin/install.mjs install --scope project --target /caminho/do/outro/projeto --json
+node integrations/kalainne/bin/install.mjs doctor --target . --json
+```
+
+O escopo `user` escreve `~/.agents/skills/kalainne-archify` e `~/.cursor/skills/kalainne-archify`. O escopo `project` escreve `.agents/skills/kalainne-archify` e `.cursor/rules/kalainne-archify.mdc`. Claude Code, Codex e OpenCode leem o skill de projeto em `.agents/skills/`.
+
+Neste repositório a resolução é `workspace`: o CLI é `archify/bin/archify.mjs` do clone. O Cloud Agent recebe esses arquivos no checkout e não precisa do home do desktop. Em outro projeto, `archify-root.json` guarda o caminho absoluto deste checkout.
+
 ## Como pedir um mapa
 
 No Cursor, local ou na nuvem, a partir da raiz deste repositório:

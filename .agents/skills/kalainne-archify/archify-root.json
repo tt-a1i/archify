@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "resolution": "workspace",
+  "archifyBin": "archify/bin/archify.mjs"
+}

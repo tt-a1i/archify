@@ -1,0 +1,12 @@
+---
+description: Mapas verificados da Kalainne com Archify no Cursor local, em outros projetos e na nuvem.
+alwaysApply: true
+---
+
+# Kalainne Archify
+
+Quando a tarefa pedir arquitetura, fluxo, sequência, linhagem de dados ou ciclo de vida da Kalainne, use o skill `kalainne-archify` e o CLI em `archify/bin/archify.mjs` deste workspace. Se esse arquivo não existir, siga o `archify-root.json` do skill.
+
+Valide e entregue com `--quality showcase`. Saída diferente de zero não é entrega. Notion e Drive continuam as fontes. Hermes permanece em modo spec, sem aresta operacional. Publicação, gasto e mensagem externa continuam com aprovação humana.
+
+Os mapas aceitos estão em `integrations/kalainne/sources/` quando este for o repositório Archify da Kalainne.
