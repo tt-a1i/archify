@@ -557,6 +557,11 @@ test('portable compare retains link settings and uses the same repository identi
   assert.throws(() => compareArchitecture(base, head), (error) => error.code === 'delta/repository-mismatch');
   base.meta.repository = { url: 'https://gitee.com/Team/repo', revision: 'a'.repeat(40), provider: 'gitee' };
   assert.equal(JSON.parse(canonicalArchitectureJson(base)).meta.repository.provider, 'gitee');
+  base.meta.repository = { url: 'https://gitea.com/Gitea/Tea', revision: 'a'.repeat(40) };
+  const sameGitea = structuredClone(base);
+  sameGitea.meta.repository = { url: 'https://gitea.com/gitea/tea', revision: 'a'.repeat(40) };
+  assert.equal(canonicalArchitectureJson(base), canonicalArchitectureJson(sameGitea));
+  assert.equal(compareArchitecture(base, sameGitea, { baseVerified: true, headVerified: true }).summary.provenanceChanged, false);
   base.meta.repository = { url: 'https://gitlab.com/Team/Group/repo.git', revision: 'a'.repeat(40) };
   head.meta.repository = { url: 'git@gitlab.com:team/group/repo', revision: 'b'.repeat(40) };
   assert.equal(compareArchitecture(base, head, { baseVerified: true, headVerified: true }).proofLevel, 'revision-pinned');

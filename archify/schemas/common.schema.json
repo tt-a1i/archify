@@ -140,7 +140,7 @@
           "type": "string",
           "minLength": 1
         },
-        "provider": { "enum": ["github", "gitee", "gitlab"] },
+        "provider": { "enum": ["github", "gitee", "gitea", "gitlab"] },
         "link_mode": { "enum": ["web", "local-only"] },
         "revision": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" }
       }

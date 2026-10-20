@@ -38,7 +38,7 @@ function normalizeRepository(repository) {
   const location = parseRepositoryRemote(repository.url, { authored: true, provider: repository.provider });
   const url = location?.url || String(repository.url || '');
   return {
-    url: location?.provider === 'github' || location?.provider === 'gitlab' ? url.toLowerCase() : url,
+    url: location?.provider === 'github' || location?.provider === 'gitlab' || location?.provider === 'gitea' ? url.toLowerCase() : url,
     revision: String(repository.revision || '').toLowerCase(),
     ...(repository.provider !== undefined ? { provider: repository.provider } : {}),
     ...(repository.link_mode !== undefined ? { link_mode: repository.link_mode } : {}),

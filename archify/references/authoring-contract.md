@@ -556,10 +556,10 @@ blob, and valid line range are required in every link mode. Verification is
 local and makes no remote requests; it establishes neither public availability
 nor the current reader's access rights.
 
-`link_mode` defaults to `web`. GitHub, Gitee, and GitLab HTTPS repository URLs
-generate revision-pinned links; the public hosts github.com, gitee.com, and
-gitlab.com select the provider automatically. Optional `provider: "github"`,
-`"gitee"`, or `"gitlab"` must agree with a public host. A self-managed GitLab
+`link_mode` defaults to `web`. GitHub, Gitee, Gitea, and GitLab HTTPS repository URLs
+generate revision-pinned links; the public hosts github.com, gitee.com, gitea.com,
+and gitlab.com select the provider automatically. Optional `provider: "github"`,
+`"gitee"`, `"gitea"`, or `"gitlab"` must agree with a public host. A self-managed GitLab
 host declares `provider: "gitlab"`; Archify never contacts the host to detect
 its forge. Existing GitHub declarations and default delivery receipt fields
 remain compatible.
@@ -569,7 +569,8 @@ GitLab URLs may name nested groups (`group/subgroup/project`). Source links use
 uses `<url>/-/tree/<revision>`. A Markdown source (`.md`, `.markdown`) with a
 line range links to the plain view (`?plain=1`) so the cited lines are
 highlighted instead of the rendered document. GitLab repository paths compare
-case-insensitively, like GitHub.
+case-insensitively, like GitHub. Public Gitea repository paths do as well; this
+normalization applies only to `gitea.com`, not to self-hosted Gitea origins.
 
 ```json
 {
@@ -607,7 +608,7 @@ addresses, including nested namespaces. Declare a credential-free address;
 HTTP(S) credentials on the checkout's origin are ignored for identity and
 redacted from diagnostics. Hostnames compare case-insensitively; repository
 paths retain case except for GitHub and GitLab. A trailing slash
-normalizes away. Only GitHub, Gitee, and GitLab (gitlab.com, or a host declared
+normalizes away. Only GitHub, Gitee, Gitea, and GitLab (gitlab.com, or a host declared
 with `provider: "gitlab"`) normalize a terminal `.git` and match standard
 HTTPS/443 with Git SSH/22 on the same host; a GitLab SSH endpoint on another host
 or port is not inferred. For other hosts, use the actual clone address:
@@ -616,9 +617,12 @@ match. For example, `git@host:Team/repo` differs from
 `ssh://git@host/Team/repo`; `git@host:/Team/repo` matches the latter. SCP-style
 paths preserve literal percent escapes, while URI paths decode them. SSH host
 aliases and forge-specific browse/clone prefixes are not guessed.
-Gitea/Forgejo/Bitbucket web links are not implemented in this version;
-use local-only until a tested link provider is available. Unknown web providers
-fail with a diagnostic rather than emitting a guessed link.
+Forgejo and Bitbucket web links are not implemented in this version; use
+local-only until a tested link provider is available. Public `gitea.com` links
+use `<url>/src/commit/<revision>` for the repository and
+`<url>/src/commit/<revision>/<path>#L<line>-L<end_line>` for source lines.
+Self-hosted Gitea remains local-only. Unknown web providers fail with a
+diagnostic rather than emitting a guessed link.
 
 ## Hand-placed fallback
 

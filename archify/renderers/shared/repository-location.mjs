@@ -2,7 +2,12 @@
 // This module never contacts a remote server or reads the user's SSH config.
 // Public forge hosts select their provider automatically. GitLab is also
 // self-hosted, so an explicit `provider: "gitlab"` hint selects it on any host.
-const PROVIDER_HOSTS = { 'github.com': 'github', 'gitee.com': 'gitee', 'gitlab.com': 'gitlab' };
+const PROVIDER_HOSTS = {
+  'github.com': 'github',
+  'gitee.com': 'gitee',
+  'gitea.com': 'gitea',
+  'gitlab.com': 'gitlab',
+};
 
 export function parseRepositoryRemote(value, { authored = false, provider: providerHint } = {}) {
   if (typeof value !== 'string') return null;
@@ -40,8 +45,8 @@ export function parseRepositoryRemote(value, { authored = false, provider: provi
   const endpoint = provider && ((protocol === 'https:' && port === '443') || (protocol === 'ssh:' && port === '22'))
     ? 'standard' : `${protocol}${port}`;
   const pathKind = provider ? 'repository' : scp && !scpAbsolute ? 'relative' : 'absolute';
-  // path-contract-allow: url-path -- GitHub and GitLab repository paths are case-insensitive URL identities.
-  const identityPath = provider === 'github' || provider === 'gitlab' ? repositoryPath.toLowerCase() : repositoryPath;
+  // path-contract-allow: url-path -- Public forge repository paths use case-insensitive URL identities.
+  const identityPath = ['github', 'gitlab', 'gitea'].includes(provider) ? repositoryPath.toLowerCase() : repositoryPath;
   const encodedPath = segments.map(encodeURIComponent).join('/');
   const canonicalUrl = scp ? `git@${hostname}:${scpAbsolute ? '/' : ''}${repositoryPath}`
     : `${protocol}//${protocol === 'ssh:' ? 'git@' : ''}${url.host}/${encodedPath}`;
@@ -57,8 +62,14 @@ export function redactRepositoryRemote(value) {
 export function repositorySourceHref(provider, url, revision, source) {
   const encodedPath = source.path.split('/').map(encodeURIComponent).join('/');
   const end = source.endLine && source.endLine !== source.line
-    ? `-${provider === 'github' ? 'L' : ''}${source.endLine}` : '';
+    ? `-${provider === 'github' || provider === 'gitea' ? 'L' : ''}${source.endLine}` : '';
   const fragment = source.line ? `#L${source.line}${end}` : '';
+  if (provider === 'gitea') {
+    // Gitea renders Markdown by default. Line anchors only select rows in the
+    // source table, so a cited line must request that view.
+    const sourceView = source.line && /\.(?:md|markdown)$/i.test(source.path) ? '?display=source' : '';
+    return `${url}/src/commit/${revision}/${encodedPath}${sourceView}${fragment}`;
+  }
   if (provider !== 'gitlab') return `${url}/blob/${revision}/${encodedPath}${fragment}`;
   // GitLab renders Markdown blobs, where line anchors select nothing; the
   // plain view keeps the cited lines highlighted.
@@ -67,5 +78,6 @@ export function repositorySourceHref(provider, url, revision, source) {
 }
 
 export function repositoryTreeHref(provider, url, revision) {
+  if (provider === 'gitea') return `${url}/src/commit/${revision}`;
   return `${url}/${provider === 'gitlab' ? '-/' : ''}tree/${revision}`;
 }

@@ -181,8 +181,8 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   }
   const linkMode = repository.link_mode ?? 'web';
   if (!['web', 'local-only'].includes(linkMode)) evidenceFailure('repository-evidence/link-mode-invalid', 'Repository link_mode must be web or local-only.');
-  if (repository.provider !== undefined && (!['github', 'gitee', 'gitlab'].includes(repository.provider) || repository.provider !== location.provider)) {
-    evidenceFailure('repository-evidence/provider-invalid', 'Repository provider must match its supported public host (github.com, gitee.com or gitlab.com); gitlab also names a self-managed GitLab host.', {
+  if (repository.provider !== undefined && (!['github', 'gitee', 'gitea', 'gitlab'].includes(repository.provider) || repository.provider !== location.provider)) {
+    evidenceFailure('repository-evidence/provider-invalid', 'Repository provider must match its supported public host (github.com, gitee.com, gitea.com or gitlab.com); gitlab also names a self-managed GitLab host.', {
       subject: { path: '/meta/repository/provider' },
       supportedFixes: ['use the matching provider or omit provider and select link_mode: local-only'],
     });
@@ -190,9 +190,9 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   // GitLab projects may sit in nested groups; GitHub and Gitee are owner/repository.
   const webPath = location.provider === 'gitlab' ? /^[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+$/ : /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
   if (linkMode === 'web' && (!location.provider || location.protocol !== 'https:' || location.endpoint !== 'standard' || !webPath.test(location.path))) {
-    evidenceFailure('repository-evidence/links-unsupported', 'Web source links require a canonical GitHub, Gitee, or GitLab HTTPS repository URL.', {
+    evidenceFailure('repository-evidence/links-unsupported', 'Web source links require a canonical GitHub, Gitee, Gitea, or GitLab HTTPS repository URL.', {
       subject: { path: '/meta/repository/url' },
-      supportedFixes: ['use a canonical GitHub, Gitee, or GitLab HTTPS URL; declare provider: gitlab for a self-managed GitLab host', 'select link_mode: local-only to retain local verification without web links'],
+      supportedFixes: ['use a canonical GitHub, Gitee, Gitea, or GitLab HTTPS URL; declare provider: gitlab for a self-managed GitLab host', 'select link_mode: local-only to retain local verification without web links'],
     });
   }
   if (!repoRootInput) {
