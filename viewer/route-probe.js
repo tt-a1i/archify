@@ -889,11 +889,13 @@
         if (mode !== 'result') return Promise.resolve(false);
         var value = readerLink('route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
         return (value === null ? Promise.resolve(false) : copyReaderText(value)).then(function (copied) {
+          if (copyBtn._archifyCopyFeedbackTimer) window.clearTimeout(copyBtn._archifyCopyFeedbackTimer);
           copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', viewerText(copied ? 'viewer.route.copy.success' : 'viewer.route.copy.failed'));
-          window.setTimeout(function () {
+          copyBtn._archifyCopyFeedbackTimer = window.setTimeout(function () {
             copyBtn.textContent = viewerText('viewer.route.copy');
             copyBtn.setAttribute('aria-label', viewerText('viewer.route.copy.aria'));
+            copyBtn._archifyCopyFeedbackTimer = null;
           }, 1600);
           return copied;
         });

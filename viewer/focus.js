@@ -1401,12 +1401,14 @@
           ? 'relation=' + encodeURIComponent(relationId)
           : 'focus=' + encodeURIComponent(activeIds[0]) + (reachabilityMode ? '&reach=' + reachabilityMode : ''));
         return (value === null ? Promise.resolve(false) : copyReaderText(value)).then(function (copied) {
+          if (copyBtn._archifyCopyFeedbackTimer) window.clearTimeout(copyBtn._archifyCopyFeedbackTimer);
           copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', copied
             ? viewerText(relationId ? 'viewer.passport.copy.pinned.success' : 'viewer.passport.copy.focused.success')
             : viewerText(relationId ? 'viewer.passport.copy.pinned.failed' : 'viewer.passport.copy.focused.failed'));
-          window.setTimeout(function () {
+          copyBtn._archifyCopyFeedbackTimer = window.setTimeout(function () {
             renderRelationshipCopyAction();
+            copyBtn._archifyCopyFeedbackTimer = null;
           }, 1600);
           return copied;
         });

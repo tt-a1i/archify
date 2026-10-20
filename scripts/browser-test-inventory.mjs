@@ -16,6 +16,7 @@ export const browserTestFiles = [
   'i18n-browser.test.mjs',
   'offline-font-browser.test.mjs',
   'viewer-chrome-layout.test.mjs',
+  'architecture-typography-scale-browser.test.mjs',
   'semantic-radar.test.mjs',
   'viewer-camera-browser.test.mjs',
   'viewer-radar-scroll-browser.test.mjs',

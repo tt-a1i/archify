@@ -9934,12 +9934,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ? 'relation=' + encodeURIComponent(relationId)
           : 'focus=' + encodeURIComponent(activeIds[0]) + (reachabilityMode ? '&reach=' + reachabilityMode : ''));
         return (value === null ? Promise.resolve(false) : copyReaderText(value)).then(function (copied) {
+          if (copyBtn._archifyCopyFeedbackTimer) window.clearTimeout(copyBtn._archifyCopyFeedbackTimer);
           copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', copied
             ? viewerText(relationId ? 'viewer.passport.copy.pinned.success' : 'viewer.passport.copy.focused.success')
             : viewerText(relationId ? 'viewer.passport.copy.pinned.failed' : 'viewer.passport.copy.focused.failed'));
-          window.setTimeout(function () {
+          copyBtn._archifyCopyFeedbackTimer = window.setTimeout(function () {
             renderRelationshipCopyAction();
+            copyBtn._archifyCopyFeedbackTimer = null;
           }, 1600);
           return copied;
         });
@@ -13908,11 +13910,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (mode !== 'result') return Promise.resolve(false);
         var value = readerLink('route=' + encodeURIComponent(startId) + '~' + encodeURIComponent(endId));
         return (value === null ? Promise.resolve(false) : copyReaderText(value)).then(function (copied) {
+          if (copyBtn._archifyCopyFeedbackTimer) window.clearTimeout(copyBtn._archifyCopyFeedbackTimer);
           copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', viewerText(copied ? 'viewer.route.copy.success' : 'viewer.route.copy.failed'));
-          window.setTimeout(function () {
+          copyBtn._archifyCopyFeedbackTimer = window.setTimeout(function () {
             copyBtn.textContent = viewerText('viewer.route.copy');
             copyBtn.setAttribute('aria-label', viewerText('viewer.route.copy.aria'));
+            copyBtn._archifyCopyFeedbackTimer = null;
           }, 1600);
           return copied;
         });
@@ -14564,11 +14568,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (!selectedKinds.length) return Promise.resolve(false);
         var value = readerLink('lens=' + selectedKinds.map(encodeURIComponent).join('~'));
         return (value === null ? Promise.resolve(false) : copyReaderText(value)).then(function (copied) {
+          if (copyBtn._archifyCopyFeedbackTimer) window.clearTimeout(copyBtn._archifyCopyFeedbackTimer);
           copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed'));
-          window.setTimeout(function () {
+          copyBtn._archifyCopyFeedbackTimer = window.setTimeout(function () {
             copyBtn.textContent = viewerText('viewer.common.copyLink');
             copyBtn.setAttribute('aria-label', viewerText('viewer.lens.copy'));
+            copyBtn._archifyCopyFeedbackTimer = null;
           }, 1600);
           return copied;
         });

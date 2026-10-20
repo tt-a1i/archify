@@ -58,12 +58,12 @@ function renderedLegendFontSize(fontSize) {
   return fontSize < 8 ? fontSize + 0.5 : fontSize + 2;
 }
 
-function measuredEntryWidth(entry, fontSize, swatchGap) {
+function measuredEntryWidth(entry, fontSize, swatchGap, renderedFontSize) {
   const swatchWidth = entry.swatchWidth ?? 14;
   return Math.ceil(
     swatchWidth
     + swatchGap
-    + textUnits(entry.label) * renderedLegendFontSize(fontSize) * TEXT_ADVANCE_EM
+    + textUnits(entry.label) * (renderedFontSize ?? renderedLegendFontSize(fontSize)) * TEXT_ADVANCE_EM
     + (entry.interactive ? INTERACTIVE_BADGE_ALLOWANCE : 0)
     + (entry.trailingWidth ?? 0),
   );
@@ -75,6 +75,7 @@ function measuredEntryWidth(entry, fontSize, swatchGap) {
 export function legendFootprint(entries, {
   width,
   fontSize = DEFAULT_FONT_SIZE,
+  renderedFontSize,
   itemGap = DEFAULT_ITEM_GAP,
   lineGap = DEFAULT_LINE_GAP,
   swatchGap = DEFAULT_SWATCH_GAP,
@@ -84,7 +85,7 @@ export function legendFootprint(entries, {
   }
   const measured = entries.map((entry) => ({
     ...entry,
-    width: measuredEntryWidth(entry, fontSize, entry.swatchGap ?? swatchGap),
+    width: measuredEntryWidth(entry, fontSize, entry.swatchGap ?? swatchGap, renderedFontSize),
   }));
   const rows = [[]];
   let cursor = 0;
@@ -113,6 +114,7 @@ export function measureLegend(entries, {
   baselineY,
   width,
   fontSize = DEFAULT_FONT_SIZE,
+  renderedFontSize,
   itemGap = DEFAULT_ITEM_GAP,
   lineGap = DEFAULT_LINE_GAP,
   swatchGap = DEFAULT_SWATCH_GAP,
@@ -122,7 +124,7 @@ export function measureLegend(entries, {
   diagramType = 'diagram',
 } = {}) {
   if (!entries.length) return { entries: [], rowCount: 0, titleY: null };
-  const footprint = legendFootprint(entries, { width, fontSize, itemGap, lineGap, swatchGap });
+  const footprint = legendFootprint(entries, { width, fontSize, renderedFontSize, itemGap, lineGap, swatchGap });
   const tooWide = footprint.measured.find((entry) => entry.width > width);
   if (tooWide) {
     if (unfit === 'hide') return null;
@@ -206,11 +208,11 @@ export function renderLegend({ entries, layout, renderSwatch, locale, labelClass
   const measured = measureLegend(entries, layout);
   if (!measured) return '';
   const hasInteractiveEntries = measured.entries.some((entry) => entry.interactive);
-  const renderedFontSize = renderedLegendFontSize(measured.fontSize);
+  const renderedFontSize = layout.renderedFontSize ?? renderedLegendFontSize(measured.fontSize);
   const rootAttributes = hasInteractiveEntries ? ' data-legend="" data-legend-bridge=""' : ' data-legend=""';
   const parts = [
     `        <g${rootAttributes}>`,
-    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="12" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
+    `          <text x="${layout.x}" y="${measured.titleY}" class="t-primary" font-size="${layout.titleFontSize ?? 12}" font-weight="650">${esc(translateMessage(locale, 'legend.title'))}</text>`,
   ];
 
   for (const entry of measured.entries) {

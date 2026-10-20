@@ -523,11 +523,13 @@
         if (!selectedKinds.length) return Promise.resolve(false);
         var value = readerLink('lens=' + selectedKinds.map(encodeURIComponent).join('~'));
         return (value === null ? Promise.resolve(false) : copyReaderText(value)).then(function (copied) {
+          if (copyBtn._archifyCopyFeedbackTimer) window.clearTimeout(copyBtn._archifyCopyFeedbackTimer);
           copyBtn.textContent = viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed');
           copyBtn.setAttribute('aria-label', viewerText(copied ? 'viewer.common.copied' : 'viewer.common.copyFailed'));
-          window.setTimeout(function () {
+          copyBtn._archifyCopyFeedbackTimer = window.setTimeout(function () {
             copyBtn.textContent = viewerText('viewer.common.copyLink');
             copyBtn.setAttribute('aria-label', viewerText('viewer.lens.copy'));
+            copyBtn._archifyCopyFeedbackTimer = null;
           }, 1600);
           return copied;
         });

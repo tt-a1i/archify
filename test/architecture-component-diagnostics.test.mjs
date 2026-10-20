@@ -74,7 +74,7 @@ test('component-level failures carry structured, actionable diagnostics', t => {
   const label = byCode.get('architecture/component-label-overflow');
   assert.ok(label, 'an over-wide label reports a typed diagnostic');
   assert.equal(label.subject.nodeId, 'narrow');
-  assert.equal(label.evidence.availableWidthPx, 56);
+  assert.equal(label.evidence.availableWidthPx, 64);
   assert.ok(label.supportedFixes[1].startsWith('or widen component "narrow" to at least '));
 
   const sublabel = byCode.get('architecture/component-sublabel-overflow');
