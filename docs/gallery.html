@@ -251,8 +251,8 @@
           <p class="hero-copy" data-en="Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it." data-zh="下面每一帧都是可运行的 Archify 成品，不是效果图。它们全部由版本化 JSON IR 重新生成、经过结构检查，并链接到产生它的精确源数据。">Every frame below is a live Archify artifact—not a mockup. Each one is regenerated from versioned JSON IR, checked for structural integrity, and linked to the exact source that produced it.</p>
         </div>
         <div class="proof-board" aria-label="Gallery quality summary">
-          <div class="proof-row"><span class="proof-value">12</span><span class="proof-label" data-en="scenario proofs<br>from real IR" data-zh="个场景成品<br>来自真实 IR">scenario proofs<br>from real IR</span></div>
-          <div class="proof-row"><span class="proof-value">108</span><span class="proof-label" data-en="structural checks<br>passed" data-zh="项结构检查<br>全部通过">structural checks<br>passed</span></div>
+          <div class="proof-row"><span class="proof-value">16</span><span class="proof-label" data-en="scenario proofs<br>from real IR" data-zh="个场景成品<br>来自真实 IR">scenario proofs<br>from real IR</span></div>
+          <div class="proof-row"><span class="proof-value">144</span><span class="proof-label" data-en="structural checks<br>passed" data-zh="项结构检查<br>全部通过">structural checks<br>passed</span></div>
           <div class="proof-row"><span class="proof-value proof-status">PASS</span><span class="proof-label" data-en="generated from<br>source of truth" data-zh="从源数据<br>自动生成">generated from<br>source of truth</span></div>
         </div>
       </div>
@@ -261,13 +261,17 @@
     <section class="controls" aria-label="Gallery controls">
       <div class="shell controls-inner">
         <div class="filter-group" role="group" aria-label="Filter diagrams by type">
-          <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en="All / 12" data-zh="全部配方 / 12">All / 12</button>
+          <button class="filter-button" type="button" data-filter="all" aria-pressed="true" data-en="All / 16" data-zh="全部配方 / 16">All / 16</button>
           <button class="filter-button" type="button" data-filter="architecture" aria-pressed="false" data-en="Architecture" data-zh="架构图">Architecture</button>
           <button class="filter-button" type="button" data-filter="workflow" aria-pressed="false" data-en="Workflow" data-zh="工作流">Workflow</button>
           <button class="filter-button" type="button" data-filter="sequence" aria-pressed="false" data-en="Sequence" data-zh="时序图">Sequence</button>
           <button class="filter-button" type="button" data-filter="dataflow" aria-pressed="false" data-en="Data flow" data-zh="数据流">Data flow</button>
           <button class="filter-button" type="button" data-filter="lifecycle" aria-pressed="false" data-en="Lifecycle" data-zh="生命周期">Lifecycle</button>
           <button class="filter-button" type="button" data-filter="erd" aria-pressed="false" data-en="Entity-relationship" data-zh="实体关系图">Entity-relationship</button>
+          <button class="filter-button" type="button" data-filter="class" aria-pressed="false" data-en="Class" data-zh="类图">Class</button>
+          <button class="filter-button" type="button" data-filter="tree" aria-pressed="false" data-en="Tree" data-zh="树图">Tree</button>
+          <button class="filter-button" type="button" data-filter="timeline" aria-pressed="false" data-en="Timeline" data-zh="时间线">Timeline</button>
+          <button class="filter-button" type="button" data-filter="waterfall" aria-pressed="false" data-en="Waterfall" data-zh="瀑布图">Waterfall</button>
         </div>
         <div class="controls-actions">
           <button class="filter-button" id="preview-theme" type="button">Preview: dark</button>
@@ -279,7 +283,7 @@
     <section class="gallery-section" id="gallery">
       <div class="shell">
         <div class="section-intro">
-          <h2 data-en="Six lenses. Twelve real stories." data-zh="六种视角，十二个真实故事。">Six lenses. Twelve real stories.</h2>
+          <h2 data-en="Ten lenses. Sixteen real stories." data-zh="十种视角，十六个真实故事。">Ten lenses. Sixteen real stories.</h2>
           <p data-en="Every scenario has focus, reach, and path exploration, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt." data-zh="每个场景都支持聚焦、上下游与路径探索、可分享链接、深浅主题、自包含导出和机器可读质量凭证。">Every scenario has focus, reach, and path exploration, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt.</p>
         </div>
         <div class="gallery-grid" id="gallery-grid">
@@ -632,6 +636,122 @@
               </div>
             </div>
           </article>
+          <article class="showcase-card" id="proof-payments" data-proof-id="payments" data-type="class" style="--accent:#c2410c">
+            <header class="card-header">
+              <div class="card-index">13</div>
+              <div class="card-title-wrap">
+                <div class="card-kicker">Class / 5 nodes</div>
+                <h3 class="card-title" data-en="Payment Module Types" data-zh="支付模块类型">Payment Module Types</h3>
+              </div>
+              <div class="card-mode">classic</div>
+            </header>
+            <div class="preview-shell">
+              <div class="live-flag">Live artifact</div>
+              <iframe src="gallery/artifacts/payments.class.html?embed=1&amp;theme=dark" data-src-base="gallery/artifacts/payments.class.html" title="Payment Module Types live Archify preview" loading="lazy"></iframe>
+            </div>
+            <div class="card-body">
+              <p class="card-description" data-en="OrderService depends on the PaymentGateway contract; card and wallet gateways implement it, with key members and explicit implements arrows." data-zh="OrderService 依赖 PaymentGateway 契约，卡支付与钱包网关分别实现该契约，关键成员与实现箭头一目了然。">OrderService depends on the PaymentGateway contract; card and wallet gateways implement it, with key members and explicit implements arrows.</p>
+              <div class="receipt" aria-label="Validation receipt">
+                <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">5N · 4E</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="6ffa5367e1342118d5e6197f0aeacb4feda43d3db21abb107595591c411e619d">6ffa5367e134</span></div>
+              </div>
+              <div class="card-actions">
+                <a class="card-link primary" href="gallery/artifacts/payments.class.html#focus=payment_gateway" target="_blank" rel="noopener" data-en="Explore focus ↗" data-zh="探索聚焦路径 ↗">Explore focus ↗</a>
+                <a class="card-link" href="gallery/artifacts/payments.class.html" target="_blank" rel="noopener" data-en="Full artifact" data-zh="完整成品">Full artifact</a>
+                <a class="card-link" href="gallery/sources/payments.class.json" target="_blank" rel="noopener">JSON IR</a>
+                <a class="card-link create-link" href="start.html?type=class&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
+              </div>
+            </div>
+          </article>
+          <article class="showcase-card" id="proof-payment-platform" data-proof-id="payment-platform" data-type="tree" style="--accent:#4d7c0f">
+            <header class="card-header">
+              <div class="card-index">14</div>
+              <div class="card-title-wrap">
+                <div class="card-kicker">Tree / 10 nodes</div>
+                <h3 class="card-title" data-en="Payment Platform Hierarchy" data-zh="支付平台层级">Payment Platform Hierarchy</h3>
+              </div>
+              <div class="card-mode">classic</div>
+            </header>
+            <div class="preview-shell">
+              <div class="live-flag">Live artifact</div>
+              <iframe src="gallery/artifacts/payment-platform.tree.html?embed=1&amp;theme=dark" data-src-base="gallery/artifacts/payment-platform.tree.html" title="Payment Platform Hierarchy live Archify preview" loading="lazy"></iframe>
+            </div>
+            <div class="card-body">
+              <p class="card-description" data-en="A single-parent capability tree: orders, payments, and operations branches with the services each one contains." data-zh="单亲能力树：订单、支付与运维分支，以及每个分支包含的服务。">A single-parent capability tree: orders, payments, and operations branches with the services each one contains.</p>
+              <div class="receipt" aria-label="Validation receipt">
+                <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">10N · 0E</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="c857fd7fe4dc7180d63f0ecc3e53d6a4955722097ce69c551d9f5147fc5fec00">c857fd7fe4dc</span></div>
+              </div>
+              <div class="card-actions">
+                <a class="card-link primary" href="gallery/artifacts/payment-platform.tree.html#focus=payments" target="_blank" rel="noopener" data-en="Explore focus ↗" data-zh="探索聚焦路径 ↗">Explore focus ↗</a>
+                <a class="card-link" href="gallery/artifacts/payment-platform.tree.html" target="_blank" rel="noopener" data-en="Full artifact" data-zh="完整成品">Full artifact</a>
+                <a class="card-link" href="gallery/sources/payment-platform.tree.json" target="_blank" rel="noopener">JSON IR</a>
+                <a class="card-link create-link" href="start.html?type=tree&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
+              </div>
+            </div>
+          </article>
+          <article class="showcase-card" id="proof-payment-incident" data-proof-id="payment-incident" data-type="timeline" style="--accent:#0369a1">
+            <header class="card-header">
+              <div class="card-index">15</div>
+              <div class="card-title-wrap">
+                <div class="card-kicker">Timeline / 5 nodes</div>
+                <h3 class="card-title" data-en="Payment Incident Timeline" data-zh="支付事故时间线">Payment Incident Timeline</h3>
+              </div>
+              <div class="card-mode">classic</div>
+            </header>
+            <div class="preview-shell">
+              <div class="live-flag">Live artifact</div>
+              <iframe src="gallery/artifacts/payment-incident.timeline.html?embed=1&amp;theme=dark" data-src-base="gallery/artifacts/payment-incident.timeline.html" title="Payment Incident Timeline live Archify preview" loading="lazy"></iframe>
+            </div>
+            <div class="card-body">
+              <p class="card-description" data-en="An illustrative incident review on one timestamped axis: deploy, alert, rollback, and recovery across release, on-call, and business lanes." data-zh="示意性事故复盘，一条带时间戳的主轴：部署、告警、回滚与恢复，分布在发布、值班与业务泳道。">An illustrative incident review on one timestamped axis: deploy, alert, rollback, and recovery across release, on-call, and business lanes.</p>
+              <div class="receipt" aria-label="Validation receipt">
+                <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">5N · 0E</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="19c6354bc7b083f55b904a4c61b9feaee641c36edca6bc35dbc0fbff75b48dfb">19c6354bc7b0</span></div>
+              </div>
+              <div class="card-actions">
+                <a class="card-link primary" href="gallery/artifacts/payment-incident.timeline.html#focus=rollback" target="_blank" rel="noopener" data-en="Explore focus ↗" data-zh="探索聚焦路径 ↗">Explore focus ↗</a>
+                <a class="card-link" href="gallery/artifacts/payment-incident.timeline.html" target="_blank" rel="noopener" data-en="Full artifact" data-zh="完整成品">Full artifact</a>
+                <a class="card-link" href="gallery/sources/payment-incident.timeline.json" target="_blank" rel="noopener">JSON IR</a>
+                <a class="card-link create-link" href="start.html?type=timeline&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
+              </div>
+            </div>
+          </article>
+          <article class="showcase-card" id="proof-checkout-request" data-proof-id="checkout-request" data-type="waterfall" style="--accent:#9333ea">
+            <header class="card-header">
+              <div class="card-index">16</div>
+              <div class="card-title-wrap">
+                <div class="card-kicker">Waterfall / 6 nodes</div>
+                <h3 class="card-title" data-en="Checkout Request Execution" data-zh="结账请求执行">Checkout Request Execution</h3>
+              </div>
+              <div class="card-mode">classic</div>
+            </header>
+            <div class="preview-shell">
+              <div class="live-flag">Live artifact</div>
+              <iframe src="gallery/artifacts/checkout-request.waterfall.html?embed=1&amp;theme=dark" data-src-base="gallery/artifacts/checkout-request.waterfall.html" title="Checkout Request Execution live Archify preview" loading="lazy"></iframe>
+            </div>
+            <div class="card-body">
+              <p class="card-description" data-en="Illustrative timings for one checkout request: a nested parent span, sequential critical path, and concurrent inventory and discount lookups." data-zh="一次结账请求的示意耗时：嵌套父时间段、顺序关键路径，以及并发的库存与折扣查询。">Illustrative timings for one checkout request: a nested parent span, sequential critical path, and concurrent inventory and discount lookups.</p>
+              <div class="receipt" aria-label="Validation receipt">
+                <div class="receipt-cell"><span class="receipt-label">Artifact</span><span class="receipt-value ok">9/9 pass</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Composition</span><span class="receipt-value ok" title="0 crossings · 0 border runs · 0 micro segments · 0 cramped turns">SHOWCASE · PASS</span></div>
+                <div class="receipt-cell"><span class="receipt-label">Graph</span><span class="receipt-value">6N · 0E</span></div>
+                <div class="receipt-cell"><span class="receipt-label">SHA-256</span><span class="receipt-value" title="ca351fc640968f27951383d62397a66267769f4b66d1cf9cd19983cc214f59a4">ca351fc64096</span></div>
+              </div>
+              <div class="card-actions">
+                <a class="card-link primary" href="gallery/artifacts/checkout-request.waterfall.html#focus=payment" target="_blank" rel="noopener" data-en="Explore focus ↗" data-zh="探索聚焦路径 ↗">Explore focus ↗</a>
+                <a class="card-link" href="gallery/artifacts/checkout-request.waterfall.html" target="_blank" rel="noopener" data-en="Full artifact" data-zh="完整成品">Full artifact</a>
+                <a class="card-link" href="gallery/sources/checkout-request.waterfall.json" target="_blank" rel="noopener">JSON IR</a>
+                <a class="card-link create-link" href="start.html?type=waterfall&amp;source=gallery" data-en="Create this type" data-zh="按此类型开始">Create this type</a>
+              </div>
+            </div>
+          </article>
         </div>
         <div class="empty-state" id="empty-state" data-en="No proof cards match this filter." data-zh="当前筛选条件下没有成品。">No proof cards match this filter.</div>
         <div class="community-callout">
@@ -667,7 +787,7 @@ render  lifecycle      ✓
 render  architecture   ✓
 render  erd            ✓
 
-receipt 108 checks / 12 artifacts / deterministic hashes</pre>
+receipt 144 checks / 16 artifacts / deterministic hashes</pre>
         </div>
       </div>
     </section>
@@ -684,8 +804,8 @@ receipt 108 checks / 12 artifacts / deterministic hashes</pre>
   "schemaVersion": 1,
   "generator": "scripts/build-gallery.mjs",
   "archifyVersion": "3.2.1-dev.1",
-  "entryCount": 12,
-  "checkCount": 108,
+  "entryCount": 16,
+  "checkCount": 144,
   "entries": [
     {
       "id": "agent-tool-call",
@@ -2355,6 +2475,508 @@ receipt 108 checks / 12 artifacts / deterministic hashes</pre>
         },
         "issues": []
       }
+    },
+    {
+      "id": "payments",
+      "type": "class",
+      "title": "Payment module types",
+      "subtitle": "OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+      "input": "gallery/sources/payments.class.json",
+      "artifact": "gallery/artifacts/payments.class.html",
+      "focus": "payment_gateway",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "static",
+      "engineeringProfile": null,
+      "nodeCount": 5,
+      "edgeCount": 4,
+      "artifactBytes": 822346,
+      "artifactSha256": "6ffa5367e1342118d5e6197f0aeacb4feda43d3db21abb107595591c411e619d",
+      "sourceBytes": 2828,
+      "sourceSha256": "afba837f97a041e14687cbe8893523232c4afad7afd922d9b128606d1b3f12c8",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": 114.8,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 8.897280966767372,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": 1,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": 84,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "edge",
+            "id": "uses_gateway",
+            "from": "order_service",
+            "to": "payment_gateway"
+          },
+          "minimumSourceTextPx": 9.5,
+          "minimumProjectedTextPx": 8.897280966767372,
+          "semanticTextCount": 37
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "payment-platform",
+      "type": "tree",
+      "title": "Payment platform capabilities",
+      "subtitle": "Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+      "input": "gallery/sources/payment-platform.tree.json",
+      "artifact": "gallery/artifacts/payment-platform.tree.html",
+      "focus": "payments",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "static",
+      "engineeringProfile": null,
+      "nodeCount": 10,
+      "edgeCount": 0,
+      "artifactBytes": 821290,
+      "artifactSha256": "c857fd7fe4dc7180d63f0ecc3e53d6a4955722097ce69c551d9f5147fc5fec00",
+      "sourceBytes": 1214,
+      "sourceSha256": "1e99f37b3845d67fa97c9a2ff33109981c23bfdb0d03ba05b7d92944dcdfc61f",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": null,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 9.569691300280637,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": null,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": null,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "platform"
+          },
+          "minimumSourceTextPx": 11,
+          "minimumProjectedTextPx": 9.569691300280637,
+          "semanticTextCount": 14
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "payment-incident",
+      "type": "timeline",
+      "title": "Payment failure incident",
+      "subtitle": "Illustrative incident: release, monitoring, and response events on one clock.",
+      "input": "gallery/sources/payment-incident.timeline.json",
+      "artifact": "gallery/artifacts/payment-incident.timeline.html",
+      "focus": "rollback",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "static",
+      "engineeringProfile": null,
+      "nodeCount": 5,
+      "edgeCount": 0,
+      "artifactBytes": 815668,
+      "artifactSha256": "19c6354bc7b083f55b904a4c61b9feaee641c36edca6bc35dbc0fbff75b48dfb",
+      "sourceBytes": 1445,
+      "sourceSha256": "c1f535b3cc915ddd47ecd7df4e3ef02c441c8c3191daced5cf4422cff8dec95f",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": null,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 10.35173642030276,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": null,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": null,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "deploy"
+          },
+          "minimumSourceTextPx": 12.5,
+          "minimumProjectedTextPx": 10.35173642030276,
+          "semanticTextCount": 5
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "checkout-request",
+      "type": "waterfall",
+      "title": "Checkout request execution",
+      "subtitle": "Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+      "input": "gallery/sources/checkout-request.waterfall.json",
+      "artifact": "gallery/artifacts/checkout-request.waterfall.html",
+      "focus": "payment",
+      "schemaVersion": 1,
+      "visualPreset": "classic",
+      "animation": "static",
+      "engineeringProfile": null,
+      "nodeCount": 6,
+      "edgeCount": 0,
+      "artifactBytes": 814957,
+      "artifactSha256": "ca351fc640968f27951383d62397a66267769f4b66d1cf9cd19983cc214f59a4",
+      "sourceBytes": 1209,
+      "sourceSha256": "55a5f74699a0f0e44018a4a000556d43c90430b95f39accac6141af8318b5133",
+      "checks": [
+        {
+          "name": "single_svg",
+          "ok": true
+        },
+        {
+          "name": "finite_svg",
+          "ok": true
+        },
+        {
+          "name": "orthogonal_arrows",
+          "ok": true
+        },
+        {
+          "name": "label_route_clearance",
+          "ok": true
+        },
+        {
+          "name": "relationship_crossings",
+          "ok": true
+        },
+        {
+          "name": "relationship_corridors",
+          "ok": true
+        },
+        {
+          "name": "container_border_runs",
+          "ok": true
+        },
+        {
+          "name": "route_rhythm",
+          "ok": true
+        },
+        {
+          "name": "legend_clearance",
+          "ok": true
+        }
+      ],
+      "composition": {
+        "schemaVersion": 1,
+        "profile": "showcase",
+        "status": "pass",
+        "summary": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "metrics": {
+          "properCrossings": 0,
+          "resolvedCrossovers": 0,
+          "ambiguousCorridors": 0,
+          "arrowheadCollisions": 0,
+          "containerBorderRuns": 0,
+          "labelRouteClearanceIssues": 0,
+          "labelCanvasOverflowIssues": 0,
+          "minLabelRouteClearance": null,
+          "desktopReadabilityIssues": 0,
+          "viewportHeightIssues": 0,
+          "minProjectedNodeTextPx": 10.674931129476583,
+          "maxBends": 0,
+          "routesOverSuggestedBends": 0,
+          "maxStretch": null,
+          "routesOverSuggestedStretch": 0,
+          "minSegmentPx": null,
+          "minInteriorSegmentPx": null,
+          "shortSegmentCount": 0,
+          "shortEndpointSegmentCount": 0,
+          "shortInteriorSegmentCount": 0,
+          "microSegmentCount": 0
+        },
+        "suggestedLimits": {
+          "bendsPerRelationship": 2,
+          "stretch": 1.35,
+          "segmentPx": 16,
+          "microSegmentPx": 8
+        },
+        "routeReview": {
+          "crossings": [],
+          "detours": []
+        },
+        "leadingSpace": {
+          "measured": false,
+          "reviewSuggested": false
+        },
+        "desktopReadability": {
+          "budgetBasis": "recognized-declared-wide",
+          "readerContract": "declared-wide-v1",
+          "availableDiagramWidth": 930,
+          "actualBudgetPx": 930,
+          "actualReaderWidth": 960,
+          "desiredReaderWidth": 960,
+          "viewportCap": 1376,
+          "limit": "source-size",
+          "requestedTargetPx": 7.5,
+          "requestedTargetMet": true,
+          "hardFloorPx": 6,
+          "hardFloorMet": true,
+          "minimumOwner": {
+            "kind": "node",
+            "id": "request"
+          },
+          "minimumSourceTextPx": 12.5,
+          "minimumProjectedTextPx": 10.674931129476583,
+          "semanticTextCount": 6
+        },
+        "issues": []
+      }
     }
   ]
 }</script>
@@ -2412,7 +3034,7 @@ receipt 108 checks / 12 artifacts / deterministic hashes</pre>
       document.getElementById('language').addEventListener('click', function () { applyLanguage(language === 'en' ? 'zh' : 'en'); });
       document.getElementById('preview-theme').addEventListener('click', function () { applyPreviewTheme(previewTheme === 'dark' ? 'light' : 'dark'); });
 
-      var allowed = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd'];
+      var allowed = filterButtons.map(function (button) { return button.getAttribute('data-filter'); });
       var requested = new URLSearchParams(location.search).get('type') || 'all';
       applyFilter(allowed.indexOf(requested) >= 0 ? requested : 'all', false);
       applyLanguage(language);

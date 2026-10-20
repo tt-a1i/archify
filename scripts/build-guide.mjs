@@ -13,7 +13,9 @@ const templatePath = path.join(__dirname, 'guide-template.html');
 const outputPath = path.resolve(process.argv[2] || path.join(repoRoot, 'docs/guide.html'));
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'archify/package.json'), 'utf8'));
 
-const guideJson = JSON.stringify(publicGuideData())
+const guideData = publicGuideData();
+
+const guideJson = JSON.stringify(guideData)
   .replaceAll('&', '\\u0026')
   .replaceAll('<', '\\u003c')
   .replaceAll('>', '\\u003e');
@@ -21,7 +23,8 @@ const guideJson = JSON.stringify(publicGuideData())
 const replacements = {
   ...diagramTypeCopyReplacements(),
   '[[ARCHIFY_VERSION]]': packageJson.version,
-  '[[RECIPE_COUNT]]': String(publicGuideData().length),
+  '[[RECIPE_COUNT]]': String(guideData.length),
+  '[[TYPE_MODE_COUNT]]': String(new Set(guideData.map((recipe) => recipe.type)).size),
   '[[GUIDE_JSON]]': guideJson,
 };
 
@@ -37,4 +40,4 @@ if (/\[\[[A-Z0-9_]+\]\]/.test(output)) {
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 copySiteAssets(outputPath);
 fs.writeFileSync(outputPath, output);
-console.log(`Built ${outputPath} with ${publicGuideData().length} scenario recipes.`);
+console.log(`Built ${outputPath} with ${guideData.length} scenario recipes.`);

@@ -27,6 +27,10 @@ const SHAPES = {
   dataflow: ['nodes', 'flows'],
   lifecycle: ['states', 'transitions'],
   erd: ['entities', 'relationships'],
+  class: ['types', 'relationships'],
+  tree: ['nodes', 'edges'],
+  timeline: ['events', 'transitions'],
+  waterfall: ['spans', 'phases'],
 };
 
 function digest(buffer) {

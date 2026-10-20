@@ -10,7 +10,7 @@ import {
 
 test('guide: exposes unique recipes across the supported guide diagram types', () => {
   assert.equal(new Set(SCENARIO_RECIPES.map((recipe) => recipe.id)).size, SCENARIO_RECIPES.length);
-  for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd']) {
+  for (const type of ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']) {
     assert.ok(SCENARIO_RECIPES.some((recipe) => recipe.type === type), type);
   }
 });

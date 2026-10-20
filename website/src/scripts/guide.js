@@ -3,7 +3,7 @@
       'use strict';
       var recipes = JSON.parse(document.getElementById('guide-data').textContent);
       var types = Array.from(new Set(recipes.map(function (recipe) { return recipe.type; })));
-      var colors = { architecture:'var(--hue-cyan)', workflow:'var(--hue-emerald)', sequence:'var(--hue-violet)', dataflow:'var(--hue-amber)', lifecycle:'var(--hue-rose)', erd:'var(--hue-emerald)' };
+      var colors = { architecture:'var(--hue-cyan)', workflow:'var(--hue-emerald)', sequence:'var(--hue-violet)', dataflow:'var(--hue-amber)', lifecycle:'var(--hue-rose)', erd:'var(--hue-emerald)', class:'var(--hue-rose)', tree:'var(--hue-emerald)', timeline:'var(--hue-cyan)', waterfall:'var(--hue-violet)' };
       var language = ArchifySiteLanguage.read();
       var activeType = 'all';
       var lastRecipe = null;
@@ -61,7 +61,7 @@
         document.getElementById('samples').innerHTML = t('samples').map(function (sample) { return '<button class="chip" type="button" data-query="'+escapeHtml(sample[1])+'">'+escapeHtml(sample[0])+'</button>'; }).join('');
       }
       function renderFilters() {
-        var labels = {"en":{"architecture":"Architecture","workflow":"Workflow","sequence":"Sequence","dataflow":"Data flow","lifecycle":"Lifecycle","erd":"Entity-relationship"},"zh":{"architecture":"架构图","workflow":"工作流","sequence":"时序图","dataflow":"数据流","lifecycle":"生命周期","erd":"实体关系图"}};
+        var labels = {"en":{"architecture":"Architecture","workflow":"Workflow","sequence":"Sequence","dataflow":"Data flow","lifecycle":"Lifecycle","erd":"Entity-relationship","class":"Class","tree":"Tree","timeline":"Timeline","waterfall":"Waterfall"},"zh":{"architecture":"架构图","workflow":"工作流","sequence":"时序图","dataflow":"数据流","lifecycle":"生命周期","erd":"实体关系图","class":"类图","tree":"树图","timeline":"时间线","waterfall":"瀑布图"}};
         document.getElementById('filters').innerHTML = ['all'].concat(types).map(function (type) { return '<button class="filter '+(activeType === type ? 'active':'')+'" type="button" data-filter="'+type+'">'+escapeHtml(type === 'all' ? t('all') : labels[language][type])+'</button>'; }).join('');
       }
       function renderCards() {

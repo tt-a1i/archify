@@ -20,6 +20,10 @@ const START_RECIPE_IDS = Object.freeze({
   dataflow: 'event-stream',
   lifecycle: 'object-lifecycle',
   erd: 'database-schema',
+  class: 'payment-modules',
+  tree: 'platform-hierarchy',
+  timeline: 'incident-timeline',
+  waterfall: 'checkout-timings',
 });
 
 const startData = Object.fromEntries(Object.entries(START_RECIPE_IDS).map(([type, id]) => {

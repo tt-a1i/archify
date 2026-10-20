@@ -268,6 +268,10 @@
           <button class="filter-button" type="button" data-filter="dataflow" aria-pressed="false" data-en="[[DIAGRAM_TYPE_DATAFLOW_EN]]" data-zh="[[DIAGRAM_TYPE_DATAFLOW_ZH]]">[[DIAGRAM_TYPE_DATAFLOW_EN]]</button>
           <button class="filter-button" type="button" data-filter="lifecycle" aria-pressed="false" data-en="[[DIAGRAM_TYPE_LIFECYCLE_EN]]" data-zh="[[DIAGRAM_TYPE_LIFECYCLE_ZH]]">[[DIAGRAM_TYPE_LIFECYCLE_EN]]</button>
           <button class="filter-button" type="button" data-filter="erd" aria-pressed="false" data-en="[[DIAGRAM_TYPE_ERD_EN]]" data-zh="[[DIAGRAM_TYPE_ERD_ZH]]">[[DIAGRAM_TYPE_ERD_EN]]</button>
+          <button class="filter-button" type="button" data-filter="class" aria-pressed="false" data-en="[[DIAGRAM_TYPE_CLASS_EN]]" data-zh="[[DIAGRAM_TYPE_CLASS_ZH]]">[[DIAGRAM_TYPE_CLASS_EN]]</button>
+          <button class="filter-button" type="button" data-filter="tree" aria-pressed="false" data-en="[[DIAGRAM_TYPE_TREE_EN]]" data-zh="[[DIAGRAM_TYPE_TREE_ZH]]">[[DIAGRAM_TYPE_TREE_EN]]</button>
+          <button class="filter-button" type="button" data-filter="timeline" aria-pressed="false" data-en="[[DIAGRAM_TYPE_TIMELINE_EN]]" data-zh="[[DIAGRAM_TYPE_TIMELINE_ZH]]">[[DIAGRAM_TYPE_TIMELINE_EN]]</button>
+          <button class="filter-button" type="button" data-filter="waterfall" aria-pressed="false" data-en="[[DIAGRAM_TYPE_WATERFALL_EN]]" data-zh="[[DIAGRAM_TYPE_WATERFALL_ZH]]">[[DIAGRAM_TYPE_WATERFALL_EN]]</button>
         </div>
         <div class="controls-actions">
           <button class="filter-button" id="preview-theme" type="button">Preview: dark</button>
@@ -279,7 +283,7 @@
     <section class="gallery-section" id="gallery">
       <div class="shell">
         <div class="section-intro">
-          <h2 data-en="Six lenses. Twelve real stories." data-zh="六种视角，十二个真实故事。">Six lenses. Twelve real stories.</h2>
+          <h2 data-en="Ten lenses. Sixteen real stories." data-zh="十种视角，十六个真实故事。">Ten lenses. Sixteen real stories.</h2>
           <p data-en="Every scenario has focus, reach, and path exploration, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt." data-zh="每个场景都支持聚焦、上下游与路径探索、可分享链接、深浅主题、自包含导出和机器可读质量凭证。">Every scenario has focus, reach, and path exploration, shareable links, dark/light rendering, self-contained export, and a machine-readable quality receipt.</p>
         </div>
         <div class="gallery-grid" id="gallery-grid">
@@ -387,7 +391,7 @@ receipt [[CHECK_COUNT]] checks / [[ENTRY_COUNT]] artifacts / deterministic hashe
       document.getElementById('language').addEventListener('click', function () { applyLanguage(language === 'en' ? 'zh' : 'en'); });
       document.getElementById('preview-theme').addEventListener('click', function () { applyPreviewTheme(previewTheme === 'dark' ? 'light' : 'dark'); });
 
-      var allowed = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd'];
+      var allowed = filterButtons.map(function (button) { return button.getAttribute('data-filter'); });
       var requested = new URLSearchParams(location.search).get('type') || 'all';
       applyFilter(allowed.indexOf(requested) >= 0 ? requested : 'all', false);
       applyLanguage(language);
