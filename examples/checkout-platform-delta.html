@@ -10903,9 +10903,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           .replace(/\s+Architecture(\s+Diagram)?$/i, &#39;&#39;)
           .replace(/\s+Diagram$/i, &#39;&#39;)
           .trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, &#39;-&#39;)
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, &#39;&#39;) || &#39;diagram&#39;;
+        // A mark is kept only while attached to a letter or number base;
+        // a detached mark (the variation selector after an emoji, say)
+        // would otherwise survive as an invisible filename.
+        var name = title.replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, &#39;$1$2&#39;)
+                        .replace(/[^\p{L}\p{M}\p{N}_\-]+/gu, &#39;-&#39;)
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, &#39;&#39;);
+        return /[\p{L}\p{N}]/u.test(name) ? name : &#39;diagram&#39;;
       }
 
       function currentBg() {
@@ -26089,9 +26094,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           .replace(/\s+Architecture(\s+Diagram)?$/i, &#39;&#39;)
           .replace(/\s+Diagram$/i, &#39;&#39;)
           .trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, &#39;-&#39;)
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, &#39;&#39;) || &#39;diagram&#39;;
+        // A mark is kept only while attached to a letter or number base;
+        // a detached mark (the variation selector after an emoji, say)
+        // would otherwise survive as an invisible filename.
+        var name = title.replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, &#39;$1$2&#39;)
+                        .replace(/[^\p{L}\p{M}\p{N}_\-]+/gu, &#39;-&#39;)
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, &#39;&#39;);
+        return /[\p{L}\p{N}]/u.test(name) ? name : &#39;diagram&#39;;
       }
 
       function currentBg() {

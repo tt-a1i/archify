@@ -6067,9 +6067,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           .replace(/\s+Architecture(\s+Diagram)?$/i, '')
           .replace(/\s+Diagram$/i, '')
           .trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, '-')
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, '') || 'diagram';
+        // A mark is kept only while attached to a letter or number base;
+        // a detached mark (the variation selector after an emoji, say)
+        // would otherwise survive as an invisible filename.
+        var name = title.replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, '$1$2')
+                        .replace(/[^\p{L}\p{M}\p{N}_\-]+/gu, '-')
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, '');
+        return /[\p{L}\p{N}]/u.test(name) ? name : 'diagram';
       }
 
       function currentBg() {
