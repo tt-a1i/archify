@@ -44,4 +44,5 @@ export const browserTestFiles = [
   'toolbar-keyboard-browser.test.mjs',
   'bottom-node-index-browser.test.mjs',
   'explainer-browser.test.mjs',
+  'story-browser.test.mjs',
 ];

@@ -1705,6 +1705,12 @@ try {
   assert.ok(hashes.length >= 4, `decoded only ${hashes.length} WebM frames`);
   assert.ok(uniqueFrames.size >= 2, 'decoded WebM frames are static');
   console.log(`ok WebM artifact: ${payload.size} bytes, ${hashes.length} sampled frames, ${uniqueFrames.size} unique`);
+  // Story uses a separate offline encoder and muxer from the live motion export.
+  execFileSync(process.execPath, ['--test', path.join(__dirname, 'story-browser.test.mjs')], {
+    env: { ...process.env, ARCHIFY_CHROME: chrome, ARCHIFY_FFMPEG: ffmpeg },
+    stdio: 'inherit',
+    timeout: 60_000,
+  });
 } finally {
   if (cdp && targetId) await withTimeout(cdp.send('Target.closeTarget', { targetId }), 500, 'target close').catch(() => {});
   if (cdp) cdp.socket.close();

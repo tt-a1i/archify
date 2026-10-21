@@ -1,0 +1,18 @@
+:root{--story-accent:var(--arrow-emphasis,#477bbe)}
+.story-panel[hidden],.story-export-status[hidden]{display:none!important}
+.story-panel{width:100%;overflow:hidden;border:1px solid var(--panel-border);border-radius:1rem;background:var(--panel)}
+.story-panel iframe{display:block;width:100%;aspect-ratio:16/9;height:auto;border:0;background:var(--bg)}
+.story-notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(15rem,100%),1fr));gap:1rem;margin-top:1rem}
+html:is([data-preset="blueprint"],[data-preset="editorial"]) .story-panel{border-radius:.3rem}
+.story-panel-controls{display:flex;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--panel-border);color:var(--text-muted);font-family:inherit;font-size:12px;line-height:1.5}
+.story-panel-controls button{background:none;border:0;color:var(--text);font:inherit;cursor:pointer;padding:4px;white-space:nowrap}
+.story-panel-controls :disabled{cursor:default;opacity:.5}
+.story-panel-controls input{flex:1;min-width:60px;accent-color:var(--story-accent);cursor:pointer}.story-panel-clock{font:11px/1.5 ui-monospace,monospace;white-space:nowrap;opacity:.7}
+html[data-story-active] .container>.diagram-container{position:absolute!important;left:-12000px!important;top:0!important;width:var(--story-native-width)!important;opacity:0!important;pointer-events:none!important}
+html[data-story-active] #reader-rail{display:none!important}
+html[data-story-active] .container{display:block!important}
+.story-panel:fullscreen{display:flex;flex-direction:column;justify-content:center;border:0;border-radius:0;background:#080f19}.story-panel:fullscreen iframe{flex:0 1 auto;max-height:calc(100vh - 60px)}
+.toolbar .export-menu button[data-action="story-video"]::before{-webkit-mask-image:var(--story-export-icon);mask-image:var(--story-export-icon)}
+.story-export-status{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:18px;max-width:90vw;border:1px solid var(--panel-border);border-radius:.875rem;background:var(--toolbar-menu-bg);color:var(--text);padding:13px 18px;box-shadow:0 10px 35px #0003;z-index:220;font-size:12px;line-height:1.5}
+.story-export-status button{font:inherit;border:0;background:none;color:var(--story-accent);cursor:pointer}
+.story-render-frame{position:fixed;left:-12000px;top:0;width:1920px;height:1080px;border:0;pointer-events:none}

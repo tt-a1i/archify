@@ -2190,6 +2190,7 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
+  story: ['scan <native.html> [--json]', 'draft <native.html> <brief.json> [--json]', 'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]'],
   render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
   compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
   deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
@@ -6168,6 +6169,10 @@ async function commandDoctor(args) {
   const missingExplainerRuntime = explainerRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'explainer', file))).length;
   checks.push({label:'Explainer runtime and reader assets',ok:missingExplainerRuntime===0,missing:missingExplainerRuntime});
 
+  const storyRuntime = ['cli.mjs','tool.mjs','output.mjs','story-plan.mjs','story.js','story.css','story-audio.js','story-webm.js','story-export.js','story-attachment.mjs','story-attachment.js','story-attachment.css','messages.json','scope-field.js','brand.svg','native-motion.js','vendor/html-parser.mjs'];
+  const missingStoryRuntime = storyRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'story', file))).length;
+  checks.push({label:'Story runtime and playback assets',ok:missingStoryRuntime===0,missing:missingStoryRuntime});
+
   console.log('Archify doctor\n');
   for (const check of checks) {
     console.log(`[${check.ok ? 'ok' : (check.failureLabel || 'missing')}] ${check.label}`);
@@ -7219,6 +7224,9 @@ try {
       break;
     case 'render':
       commandRender(args);
+      break;
+    case 'story':
+      (await import('../story/cli.mjs')).commandStory(args);
       break;
     case 'compare':
       await commandCompare(args);

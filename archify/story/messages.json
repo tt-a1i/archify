@@ -1,0 +1,32 @@
+{
+  "en": {
+    "viewer.story.label": "Story",
+    "viewer.story.switch": "Switch view: {view}",
+    "viewer.story.next": "Switch to {view}"
+  },
+  "zh-CN": {
+    "viewer.story.label": "讲解",
+    "viewer.story.switch": "切换视图：{view}",
+    "viewer.story.next": "切换到{view}"
+  },
+  "zh-TW": {
+    "viewer.story.label": "講解",
+    "viewer.story.switch": "切換檢視：{view}",
+    "viewer.story.next": "切換至{view}"
+  },
+  "es": {
+    "viewer.story.label": "Recorrido",
+    "viewer.story.switch": "Cambiar vista: {view}",
+    "viewer.story.next": "Cambiar a {view}"
+  },
+  "ko": {
+    "viewer.story.label": "해설",
+    "viewer.story.switch": "보기 전환: {view}",
+    "viewer.story.next": "{view} 보기로 전환"
+  },
+  "ar": {
+    "viewer.story.label": "الشرح",
+    "viewer.story.switch": "تبديل العرض: {view}",
+    "viewer.story.next": "التبديل إلى {view}"
+  }
+}

@@ -12466,6 +12466,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var btn = document.getElementById(&#39;btn-motion&#39;);
       var label = document.getElementById(&#39;motion-label&#39;);
       var motionQuery = window.matchMedia ? window.matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;) : null;
+      var rendering = html.hasAttribute(&#39;data-motion-render&#39;);
+      if (rendering) {
+        // Render frames seek native animations, including styles from earlier HTML.
+        function prepareRules(rules) {
+          Array.prototype.forEach.call(rules, function (rule) {
+            if (rule.media &amp;&amp; rule.media.mediaText === &#39;(prefers-reduced-motion: reduce)&#39;) rule.media.mediaText = &#39;not all&#39;;
+            if (rule.cssRules) prepareRules(rule.cssRules);
+          });
+        }
+        Array.prototype.forEach.call(document.styleSheets, function (sheet) {
+          var rules;
+          try { rules = sheet.cssRules; } catch (_) { return; }
+          prepareRules(rules);
+        });
+      }
       var capable = !!(svg &amp;&amp; svg.getAttribute(&#39;data-animation&#39;) === &#39;trace&#39;);
       var readerPaused = false;
       var suspensions = Object.create(null);
@@ -12978,7 +12993,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         } catch (_) {}
       }
       function reducedMotion() {
-        return !!(motionQuery &amp;&amp; motionQuery.matches);
+        return !rendering &amp;&amp; !!(motionQuery &amp;&amp; motionQuery.matches);
       }
       function hasSuspension() {
         return Object.keys(suspensions).length &gt; 0;
@@ -13089,7 +13104,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
       function syncVisibility() {
-        if (document.hidden) {
+        if (document.hidden &amp;&amp; !rendering) {
           suspensions.visibility = true;
           html.setAttribute(&#39;data-document-hidden&#39;, &#39;true&#39;);
         } else {
@@ -13117,6 +13132,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           release: function () { return false; },
           suspend: function () { return function () { return false; }; },
           isPaused: function () { return true; },
+          reducedMotion: reducedMotion,
           owner: function () { return &#39;&#39;; }
         };
       }
@@ -13164,9 +13180,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         release: release,
         suspend: suspend,
         isPaused: effectivePaused,
+        reducedMotion: reducedMotion,
         owner: function () { return owner; }
       };
     })();
+
 
     /* Verified repository evidence is emitted only after the renderer checks
        the authored GitHub revision, source blobs, and optional line ranges
@@ -27652,6 +27670,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var btn = document.getElementById(&#39;btn-motion&#39;);
       var label = document.getElementById(&#39;motion-label&#39;);
       var motionQuery = window.matchMedia ? window.matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;) : null;
+      var rendering = html.hasAttribute(&#39;data-motion-render&#39;);
+      if (rendering) {
+        // Render frames seek native animations, including styles from earlier HTML.
+        function prepareRules(rules) {
+          Array.prototype.forEach.call(rules, function (rule) {
+            if (rule.media &amp;&amp; rule.media.mediaText === &#39;(prefers-reduced-motion: reduce)&#39;) rule.media.mediaText = &#39;not all&#39;;
+            if (rule.cssRules) prepareRules(rule.cssRules);
+          });
+        }
+        Array.prototype.forEach.call(document.styleSheets, function (sheet) {
+          var rules;
+          try { rules = sheet.cssRules; } catch (_) { return; }
+          prepareRules(rules);
+        });
+      }
       var capable = !!(svg &amp;&amp; svg.getAttribute(&#39;data-animation&#39;) === &#39;trace&#39;);
       var readerPaused = false;
       var suspensions = Object.create(null);
@@ -28164,7 +28197,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         } catch (_) {}
       }
       function reducedMotion() {
-        return !!(motionQuery &amp;&amp; motionQuery.matches);
+        return !rendering &amp;&amp; !!(motionQuery &amp;&amp; motionQuery.matches);
       }
       function hasSuspension() {
         return Object.keys(suspensions).length &gt; 0;
@@ -28275,7 +28308,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
       function syncVisibility() {
-        if (document.hidden) {
+        if (document.hidden &amp;&amp; !rendering) {
           suspensions.visibility = true;
           html.setAttribute(&#39;data-document-hidden&#39;, &#39;true&#39;);
         } else {
@@ -28303,6 +28336,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           release: function () { return false; },
           suspend: function () { return function () { return false; }; },
           isPaused: function () { return true; },
+          reducedMotion: reducedMotion,
           owner: function () { return &#39;&#39;; }
         };
       }
@@ -28350,9 +28384,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         release: release,
         suspend: suspend,
         isPaused: effectivePaused,
+        reducedMotion: reducedMotion,
         owner: function () { return owner; }
       };
     })();
+
 
     /* Verified repository evidence is emitted only after the renderer checks
        the authored GitHub revision, source blobs, and optional line ranges
