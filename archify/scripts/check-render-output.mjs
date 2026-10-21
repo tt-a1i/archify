@@ -82,7 +82,11 @@ let composition = {
 
 const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
 // Consume comments/CDATA as whole tokens, including any tag-like prose.
-const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+// A quote opens a quoted attribute value only right after '='; anywhere
+// else (for example the apostrophe in data-note=it's) it is literal text,
+// so the tag pattern anchors quoted spans to '=' and lets a lone quote
+// through as an ordinary character.
+const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:=\s*"[^"]*"|=\s*'[^']*'|[^>"']|["'])*>/g;
 const AUTOMATIC_CROSSOVER_UNDERLAY_TAG = /<path\b[^>]*\bdata-graph-role="automatic-crossover-underlay"[^>]*\/>/i;
 const HTML_VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 const SVG_HTML_INTEGRATION_POINTS = new Set(['foreignobject', 'desc', 'title']);
@@ -112,12 +116,209 @@ function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
 
-const svgMatches = [...html.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)];
-addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <svg> block(s)`]);
+// A '/' that ends an unquoted attribute value (for example data-note=value/>)
+// is value text per HTML, not the self-closing flag: parse5 keeps it, and the
+// finite_svg tests document x1="NaN/" for <line x1=NaN/>. A quote inside an
+// unquoted value is literal text too (data-note=it's/>), so a strip-the-quoted-
+// spans shortcut misreads that '/' as the flag. Walk the token with the same
+// value tracking as extractSvgBlocks: the flag is only a '/' that sits outside
+// every attribute value, immediately before the '>'.
+function isSelfClosingTag(token) {
+  let quote = null;
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'pending' (just after '=') | 'unquoted'
+  let slash = false; // the previous char was a '/' outside any attribute value
+  for (let k = 1; k < token.length; k += 1) {
+    const ch = token[k];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; value = 'none'; }
+      slash = false;
+    } else if (ch === '>') {
+      return slash;
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      else if (/[ \t\n\f\r/]/.test(ch)) value = 'none';
+      slash = false;
+    } else if (value === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+      slash = false;
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+      slash = false;
+    } else {
+      if (ch === '=') value = 'aname';
+      else if (!/[ \t\n\f\r/]/.test(ch)) value = 'aname';
+      slash = ch === '/';
+    }
+  }
+  return false;
+}
 
-if (svgMatches.length === 1) {
-  const svg = svgMatches[0][0];
-  const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
+// The root opener of a block: everything through the first '>' that sits
+// outside a quoted attribute value, walked with the same value tracking as
+// extractSvgBlocks. A quoted-spans pattern cannot express that rule: a lone
+// quote inside an unquoted value (data-note=x") opens a span there that
+// swallows the rest of the tag, the match fails, and every root attribute
+// (data-quality-profile included) is lost.
+function svgRootTag(block) {
+  let quote = null;
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'pending' (just after '=') | 'unquoted'
+  for (let k = 0; k < block.length; k += 1) {
+    const ch = block[k];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; value = 'none'; }
+    } else if (ch === '>') {
+      return block.slice(0, k + 1);
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      else if (/[ \t\n\f\r/]/.test(ch)) value = 'none';
+    } else if (value === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+    } else if (ch === '=') {
+      value = 'aname';
+    } else if (!/[ \t\n\f\r/]/.test(ch)) {
+      value = 'aname';
+    }
+  }
+  return '';
+}
+
+// Collect each top-level <svg> block. Matching lazily to the first </svg>
+// would cut a root short at a nested <svg> (for example inside foreignObject)
+// and drop the rest of the root from every check below; markup inside HTML
+// comments is not an element and must not count as a block either.
+//
+// The scan walks the source once, left to right, with the same quote- and
+// CDATA-aware token rules the other static checks use, so `<svg>` text inside
+// comments, CDATA sections, or quoted attribute values never moves the depth
+// counter. Case-insensitive like the HTML parser: <SVG> is the same element
+// as <svg>. A regex tokenizer is not used here: it retries its tag pattern
+// at every '<', so on a truncated candidate ending in unterminated quoted
+// tags each retry rescans the remaining suffix (quadratic overall), while
+// this scan consumes every position once.
+function extractSvgBlocks(source) {
+  const blocks = [];
+  let depth = 0;
+  let start = -1;
+  let i = 0;
+  while (i < source.length) {
+    const lt = source.indexOf('<', i);
+    if (lt === -1) break;
+    if (source.startsWith('<!--', lt)) {
+      // HTML also ends a comment on --!> and closes <!--> / <!---> outright.
+      let end = -1;
+      if (source[lt + 4] === '>') end = lt + 5;
+      else if (source.startsWith('->', lt + 4)) end = lt + 6;
+      else {
+        // Walk each '--' once instead of probing for --!> with a fresh
+        // suffix search per comment: with no --!> anywhere, that probe
+        // rescans the remaining suffix from every comment (quadratic).
+        let p = lt + 4;
+        while ((p = source.indexOf('--', p)) !== -1) {
+          if (source[p + 2] === '>') { end = p + 3; break; }
+          if (source[p + 2] === '!' && source[p + 3] === '>') { end = p + 4; break; }
+          p += 1;
+        }
+      }
+      i = end === -1 ? source.length : end;
+      continue;
+    }
+    if (source.startsWith('<![CDATA[', lt)) {
+      if (depth > 0) {
+        const end = source.indexOf(']]>', lt + 9);
+        i = end === -1 ? source.length : end + 3;
+      } else {
+        // Outside foreign content, <![CDATA[ is a bogus comment in HTML: it
+        // ends at the first '>' and the markup after it is real.
+        const end = source.indexOf('>', lt + 9);
+        i = end === -1 ? source.length : end + 1;
+      }
+      continue;
+    }
+    if (source.startsWith('<?', lt)) {
+      // A processing instruction is a bogus comment in HTML too: it ends
+      // at the first '>', so an <svg> inside it opens no element and the
+      // markup after that '>' stays real.
+      const end = source.indexOf('>', lt + 2);
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+    if (source.startsWith('<!', lt)) {
+      // Any other <!...> (a doctype, or a declaration like <!x) is a bogus
+      // comment in HTML: it ends at the first '>', so a <!-- inside it
+      // opens no comment and the markup after that '>' stays real.
+      const end = source.indexOf('>', lt + 2);
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+    let j = lt + 1;
+    const closing = source[j] === '/';
+    if (closing) j += 1;
+    const nameStart = j;
+    while (j < source.length && /[\w:-]/.test(source[j])) j += 1;
+    const name = source.slice(nameStart, j);
+    const after = source[j];
+    // Tag names end only at ASCII whitespace, '/' or '>' — JavaScript \s
+    // would also accept U+00A0 and friends, which HTML joins into the name.
+    if (!/^[A-Za-z]/.test(name) || (after !== undefined && !/[ \t\n\f\r/>]/.test(after))) {
+      i = lt + 1;
+      continue;
+    }
+    // Consume the tag through its '>', honoring quoted attribute values.
+    // Per HTML, a quote opens a quoted value only right after '='; inside a
+    // name or an unquoted value it is literal text and the tag still ends
+    // at its '>'. An '=' in before-attribute-name position starts an
+    // attribute whose name is '=' (it does not open a value), so '=' moves
+    // to the attribute-name state instead of value-pending.
+    let quote = null;
+    let value = 'none'; // 'none' | 'aname' (in attribute name) | 'pending' (just after '=') | 'unquoted'
+    let k = j;
+    while (k < source.length) {
+      const ch = source[k];
+      if (quote !== null) {
+        if (ch === quote) { quote = null; value = 'none'; }
+      } else if (ch === '>') {
+        break;
+      } else if (value === 'aname') {
+        if (ch === '=') value = 'pending';
+        else if (/[ \t\n\f\r/]/.test(ch)) value = 'none';
+      } else if (value === 'pending') {
+        if (ch === '"' || ch === "'") quote = ch;
+        else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+      } else if (value === 'unquoted') {
+        if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+      } else if (ch === '=') {
+        value = 'aname';
+      } else if (!/[ \t\n\f\r/]/.test(ch)) {
+        value = 'aname';
+      }
+      k += 1;
+    }
+    if (k >= source.length) break; // unterminated tag: the rest is its text
+    const token = source.slice(lt, k + 1);
+    i = k + 1;
+    if (name.toLowerCase() !== 'svg') continue;
+    if (closing) {
+      if (depth > 0 && --depth === 0) blocks.push(source.slice(start, k + 1));
+    } else if (isSelfClosingTag(token)) {
+      if (depth === 0) blocks.push(token);
+    } else {
+      if (depth === 0) start = lt;
+      depth += 1;
+    }
+  }
+  return blocks;
+}
+
+const svgBlocks = extractSvgBlocks(html);
+addCheck('single_svg', svgBlocks.length === 1, [`found ${svgBlocks.length} <svg> block(s)`]);
+
+if (svgBlocks.length === 1) {
+  const svg = svgBlocks[0];
+  const svgRoot = svgRootTag(svg);
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
   const workflowV2 = svgAttrs['data-layout-contract'] === 'readable-v2';
@@ -1422,7 +1623,9 @@ function collectNonFiniteAttrs(svg) {
     }
     // HTML void elements do not open a context; SVG self-closing tags do not
     // either. A nested <svg> inside foreignObject restores SVG checking.
-    if (!(inSvg ? /\/\s*>$/.test(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
+    // The self-closing test is attribute-aware: a '/' ending an unquoted
+    // attribute value is value text, not the self-closing flag.
+    if (!(inSvg ? isSelfClosingTag(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
       stack.push({ element, inSvg });
     }
   }
