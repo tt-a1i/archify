@@ -188,6 +188,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #94a3b8;
       --arrow-emphasis: #34d399;
+      --edge-label: var(--arrow);
 
       /* Opaque mask color used behind semi-transparent component fills
          so the arrows drawn underneath are properly hidden. */
@@ -231,6 +232,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #64748b;
       --arrow-emphasis: #059669;
+      --edge-label: var(--text-muted);
 
       --mask: #ffffff;
 
@@ -289,6 +291,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a5b4c7;
       --arrow: #7890ad;
       --arrow-emphasis: #2dd4bf;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 16, 30, 0.86);
       --toolbar-border: #29415f;
       --toolbar-menu-bg: #07101e;
@@ -322,6 +325,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #607a8c;
       --arrow: #7b97aa;
       --arrow-emphasis: #0d9488;
+      --edge-label: var(--text-muted);
     }
 
     /* ==========================================================
@@ -358,6 +362,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a7cad9;
       --arrow: #78a3b7;
       --arrow-emphasis: #64dfc1;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 28, 45, 0.92);
       --toolbar-border: #34799a;
       --toolbar-text: #d8f3ff;
@@ -393,6 +398,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #506f7e;
       --arrow: #6d93a5;
       --arrow-emphasis: #087f69;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(247, 252, 254, 0.94);
       --toolbar-border: #8ab5c5;
       --toolbar-text: #294f61;
@@ -435,6 +441,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #b8ad99;
       --arrow: #948978;
       --arrow-emphasis: #dd6b3d;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(35, 31, 24, 0.92);
       --toolbar-border: #625a4a;
       --toolbar-text: #eee5d5;
@@ -470,6 +477,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #746b5e;
       --arrow: #8a806f;
       --arrow-emphasis: #bb4c23;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(251, 248, 241, 0.94);
       --toolbar-border: #c4b9a6;
       --toolbar-text: #40392f;
@@ -3091,6 +3099,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         --lane-stroke: #cbd5e1;
         --arrow: #94a3b8;
         --arrow-emphasis: #059669;
+        --edge-label: var(--text-muted);
         --frontend-fill:    rgba(34, 211, 238, 0.15);
         --frontend-stroke:  #0891b2;
         --backend-fill:     rgba(52, 211, 153, 0.18);
@@ -4158,8 +4167,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
-    /* Relationship labels share the exact color token used by their path. */
-    .t-edge-default  { fill: var(--arrow); }
+    /* Colored relationship labels share the exact color token used by their path.
+       Default labels use --edge-label so light palettes can keep a quiet stroke
+       while the text stays readable on the label mask. */
+    .t-edge-default  { fill: var(--edge-label); }
     .t-edge-emphasis { fill: var(--arrow-emphasis); }
     .t-edge-security { fill: var(--security-stroke); }
     .t-edge-dashed   { fill: var(--database-stroke); }
