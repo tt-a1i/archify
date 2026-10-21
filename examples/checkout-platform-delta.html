@@ -11465,7 +11465,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
 
-      function download(blob, filename) {
+      function anchorDownload(blob, filename) {
         var url = URL.createObjectURL(blob);
         var a = document.createElement(&#39;a&#39;);
         a.href = url;
@@ -11476,6 +11476,27 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         a.click();
         a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        return { saved: true, transport: &#39;anchor&#39; };
+      }
+
+      // Claude Artifacts expose an optional, user-confirmed save capability.
+      // Resolve capability discovery once, while preserving standalone download
+      // behavior whenever the host bridge is absent or unavailable.
+      var hostDownloads = window.claude &amp;&amp; typeof window.claude.use === &#39;function&#39;
+        ? Promise.resolve().then(function () { return window.claude.use(&#39;downloads&#39;); }).catch(function () { return null; })
+        : Promise.resolve(null);
+
+      function download(blob, filename) {
+        return hostDownloads.then(function (downloads) {
+          if (!downloads || typeof downloads.save !== &#39;function&#39;) return anchorDownload(blob, filename);
+          return Promise.resolve(downloads.save({ filename: filename, data: blob })).then(function () {
+            return { saved: true, transport: &#39;host&#39; };
+          }).catch(function (error) {
+            if (error &amp;&amp; error.code === &#39;declined&#39;) return { saved: false, cancelled: true, transport: &#39;host&#39; };
+            if (error &amp;&amp; typeof error === &#39;object&#39;) error.archifyDownloadFailure = true;
+            throw error;
+          });
+        });
       }
 
       // Conservative upper bound on total canvas pixels. Older Safari on iOS
@@ -12253,19 +12274,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return (svgTheme
           ? Promise.resolve(serializeSvg(1, { theme: svgTheme })).then(function (d) {
               var blob = new Blob([d.svgString], { type: &#39;image/svg+xml;charset=utf-8&#39; });
-              recordExportReceipt(&#39;svg&#39;, blob, d.canonicalStateClean);
-              download(blob, base + (svgTheme === &#39;auto&#39; ? &#39;&#39; : &#39;-&#39; + svgTheme) + &#39;.svg&#39;);
+              return download(blob, base + (svgTheme === &#39;auto&#39; ? &#39;&#39; : &#39;-&#39; + svgTheme) + &#39;.svg&#39;).then(function (result) {
+                if (result.saved) recordExportReceipt(&#39;svg&#39;, blob, d.canonicalStateClean);
+              });
             })
           : format === &#39;webm&#39;
             ? recordWebm().then(function (blob) {
                 document.documentElement.setAttribute(&#39;data-last-motion-bytes&#39;, String(blob.size));
-                recordExportReceipt(&#39;webm&#39;, blob, true);
-                download(blob, base + &#39;.webm&#39;);
-                toast(viewerText(&#39;viewer.export.downloadedWebm&#39;));
+                return download(blob, base + &#39;.webm&#39;).then(function (result) {
+                  if (!result.saved) return;
+                  recordExportReceipt(&#39;webm&#39;, blob, true);
+                  toast(viewerText(&#39;viewer.export.downloadedWebm&#39;));
+                });
               })
           : rasterize(format).then(function (blob) {
-              recordExportReceipt(format, blob, true);
-              download(blob, base + &#39;.&#39; + format);
+              return download(blob, base + &#39;.&#39; + format).then(function (result) {
+                if (result.saved) recordExportReceipt(format, blob, true);
+              });
             })
         ).catch(function (err) {
           console.error(err);
@@ -12274,6 +12299,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           document.documentElement.setAttribute(&#39;data-last-export-error-format&#39;, format);
           document.documentElement.setAttribute(&#39;data-last-export-error&#39;, technicalMessage);
           if (format === &#39;webm&#39;) {
+            if (err &amp;&amp; err.archifyDownloadFailure) {
+              alert(viewerText(&#39;viewer.export.failed&#39;, { message: message }));
+              return;
+            }
             var motionItem = menu.querySelector(&#39;button[data-format=&quot;webm&quot;]&#39;);
             if (motionItem) {
               motionItem.disabled = true;
@@ -12295,10 +12324,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ? renderShareCard({ routeSnapshot: snapshot })
           : Promise.reject(exportError(&#39;viewer.export.routeRequired&#39;));
         return blobPromise.then(function (blob) {
-          recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;route&#39;, true);
-          download(blob, diagramFilename() + &#39;-route-share-card.png&#39;);
-          toast(viewerText(&#39;viewer.export.downloadedRoute&#39;));
-          return blob;
+          return download(blob, diagramFilename() + &#39;-route-share-card.png&#39;).then(function (result) {
+            if (result.saved) {
+              recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;route&#39;, true);
+              toast(viewerText(&#39;viewer.export.downloadedRoute&#39;));
+            }
+            return blob;
+          });
         }).catch(function (err) {
           console.error(err);
           var technicalMessage = err &amp;&amp; err.message ? err.message : &#39;share-card&#39;;
@@ -12319,10 +12351,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ? renderShareCard({ reachSnapshot: snapshot })
           : Promise.reject(exportError(&#39;viewer.export.reachRequired&#39;));
         return blobPromise.then(function (blob) {
-          recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;reach&#39;, false, true);
-          download(blob, diagramFilename() + &#39;-&#39; + snapshot.direction + &#39;-reach-share-card.png&#39;);
-          toast(viewerText(&#39;viewer.export.downloadedReach&#39;));
-          return blob;
+          return download(blob, diagramFilename() + &#39;-&#39; + snapshot.direction + &#39;-reach-share-card.png&#39;).then(function (result) {
+            if (result.saved) {
+              recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;reach&#39;, false, true);
+              toast(viewerText(&#39;viewer.export.downloadedReach&#39;));
+            }
+            return blob;
+          });
         }).catch(function (err) {
           console.error(err);
           var technicalMessage = err &amp;&amp; err.message ? err.message : &#39;share-card&#39;;
@@ -26651,7 +26686,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
 
-      function download(blob, filename) {
+      function anchorDownload(blob, filename) {
         var url = URL.createObjectURL(blob);
         var a = document.createElement(&#39;a&#39;);
         a.href = url;
@@ -26662,6 +26697,27 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         a.click();
         a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        return { saved: true, transport: &#39;anchor&#39; };
+      }
+
+      // Claude Artifacts expose an optional, user-confirmed save capability.
+      // Resolve capability discovery once, while preserving standalone download
+      // behavior whenever the host bridge is absent or unavailable.
+      var hostDownloads = window.claude &amp;&amp; typeof window.claude.use === &#39;function&#39;
+        ? Promise.resolve().then(function () { return window.claude.use(&#39;downloads&#39;); }).catch(function () { return null; })
+        : Promise.resolve(null);
+
+      function download(blob, filename) {
+        return hostDownloads.then(function (downloads) {
+          if (!downloads || typeof downloads.save !== &#39;function&#39;) return anchorDownload(blob, filename);
+          return Promise.resolve(downloads.save({ filename: filename, data: blob })).then(function () {
+            return { saved: true, transport: &#39;host&#39; };
+          }).catch(function (error) {
+            if (error &amp;&amp; error.code === &#39;declined&#39;) return { saved: false, cancelled: true, transport: &#39;host&#39; };
+            if (error &amp;&amp; typeof error === &#39;object&#39;) error.archifyDownloadFailure = true;
+            throw error;
+          });
+        });
       }
 
       // Conservative upper bound on total canvas pixels. Older Safari on iOS
@@ -27439,19 +27495,23 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         return (svgTheme
           ? Promise.resolve(serializeSvg(1, { theme: svgTheme })).then(function (d) {
               var blob = new Blob([d.svgString], { type: &#39;image/svg+xml;charset=utf-8&#39; });
-              recordExportReceipt(&#39;svg&#39;, blob, d.canonicalStateClean);
-              download(blob, base + (svgTheme === &#39;auto&#39; ? &#39;&#39; : &#39;-&#39; + svgTheme) + &#39;.svg&#39;);
+              return download(blob, base + (svgTheme === &#39;auto&#39; ? &#39;&#39; : &#39;-&#39; + svgTheme) + &#39;.svg&#39;).then(function (result) {
+                if (result.saved) recordExportReceipt(&#39;svg&#39;, blob, d.canonicalStateClean);
+              });
             })
           : format === &#39;webm&#39;
             ? recordWebm().then(function (blob) {
                 document.documentElement.setAttribute(&#39;data-last-motion-bytes&#39;, String(blob.size));
-                recordExportReceipt(&#39;webm&#39;, blob, true);
-                download(blob, base + &#39;.webm&#39;);
-                toast(viewerText(&#39;viewer.export.downloadedWebm&#39;));
+                return download(blob, base + &#39;.webm&#39;).then(function (result) {
+                  if (!result.saved) return;
+                  recordExportReceipt(&#39;webm&#39;, blob, true);
+                  toast(viewerText(&#39;viewer.export.downloadedWebm&#39;));
+                });
               })
           : rasterize(format).then(function (blob) {
-              recordExportReceipt(format, blob, true);
-              download(blob, base + &#39;.&#39; + format);
+              return download(blob, base + &#39;.&#39; + format).then(function (result) {
+                if (result.saved) recordExportReceipt(format, blob, true);
+              });
             })
         ).catch(function (err) {
           console.error(err);
@@ -27460,6 +27520,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           document.documentElement.setAttribute(&#39;data-last-export-error-format&#39;, format);
           document.documentElement.setAttribute(&#39;data-last-export-error&#39;, technicalMessage);
           if (format === &#39;webm&#39;) {
+            if (err &amp;&amp; err.archifyDownloadFailure) {
+              alert(viewerText(&#39;viewer.export.failed&#39;, { message: message }));
+              return;
+            }
             var motionItem = menu.querySelector(&#39;button[data-format=&quot;webm&quot;]&#39;);
             if (motionItem) {
               motionItem.disabled = true;
@@ -27481,10 +27545,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ? renderShareCard({ routeSnapshot: snapshot })
           : Promise.reject(exportError(&#39;viewer.export.routeRequired&#39;));
         return blobPromise.then(function (blob) {
-          recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;route&#39;, true);
-          download(blob, diagramFilename() + &#39;-route-share-card.png&#39;);
-          toast(viewerText(&#39;viewer.export.downloadedRoute&#39;));
-          return blob;
+          return download(blob, diagramFilename() + &#39;-route-share-card.png&#39;).then(function (result) {
+            if (result.saved) {
+              recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;route&#39;, true);
+              toast(viewerText(&#39;viewer.export.downloadedRoute&#39;));
+            }
+            return blob;
+          });
         }).catch(function (err) {
           console.error(err);
           var technicalMessage = err &amp;&amp; err.message ? err.message : &#39;share-card&#39;;
@@ -27505,10 +27572,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           ? renderShareCard({ reachSnapshot: snapshot })
           : Promise.reject(exportError(&#39;viewer.export.reachRequired&#39;));
         return blobPromise.then(function (blob) {
-          recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;reach&#39;, false, true);
-          download(blob, diagramFilename() + &#39;-&#39; + snapshot.direction + &#39;-reach-share-card.png&#39;);
-          toast(viewerText(&#39;viewer.export.downloadedReach&#39;));
-          return blob;
+          return download(blob, diagramFilename() + &#39;-&#39; + snapshot.direction + &#39;-reach-share-card.png&#39;).then(function (result) {
+            if (result.saved) {
+              recordExportReceipt(&#39;share-card&#39;, blob, false, { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }, &#39;reach&#39;, false, true);
+              toast(viewerText(&#39;viewer.export.downloadedReach&#39;));
+            }
+            return blob;
+          });
         }).catch(function (err) {
           console.error(err);
           var technicalMessage = err &amp;&amp; err.message ? err.message : &#39;share-card&#39;;
@@ -35435,7 +35505,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     return title + suffix;
   }
 
+  // Claude Artifacts suppresses anchor downloads. Use its optional save bridge
+  // when present while keeping a normal standalone-file fallback.
+  const hostDownloads = window.claude && typeof window.claude.use === 'function'
+    ? Promise.resolve().then(() => window.claude.use('downloads')).catch(() => null)
+    : Promise.resolve(null);
+
   function downloadBlob(blob, name) {
+    return hostDownloads.then((downloads) => {
+      if (downloads && typeof downloads.save === 'function') {
+        return Promise.resolve(downloads.save({ filename: name, data: blob })).then(() => ({ saved: true, transport: 'host' }))
+          .catch((error) => {
+            if (error && error.code === 'declined') return { saved: false, cancelled: true, transport: 'host' };
+            throw error;
+          });
+      }
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -35444,6 +35528,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return { saved: true, transport: 'anchor' };
+    });
   }
 
   function recordExport(format, blob, dimensions) {
@@ -35458,9 +35544,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   function exportCanonicalSvg() {
     const blob = new Blob([canonicalDeltaSvg()], { type: 'image/svg+xml;charset=utf-8' });
-    downloadBlob(blob, artifactName('-architecture-delta.svg'));
-    recordExport('svg', blob);
-    return blob;
+    return downloadBlob(blob, artifactName('-architecture-delta.svg')).then((result) => {
+      if (result.saved) recordExport('svg', blob);
+      return blob;
+    });
   }
 
   function loadSvgImage(blob) {
@@ -35556,8 +35643,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   async function downloadShareCard() {
     const blob = await shareCard();
-    downloadBlob(blob, artifactName('-architecture-delta-share-card.png'));
-    recordExport('share-card', blob, { width: 1200, height: 630 });
+    const result = await downloadBlob(blob, artifactName('-architecture-delta-share-card.png'));
+    if (result.saved) recordExport('share-card', blob, { width: 1200, height: 630 });
     return blob;
   }
 
@@ -35624,7 +35711,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   document.querySelector('#theme').addEventListener('click', () => { document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; });
   const presets = ['classic', 'signal-flow', 'blueprint'];
   document.querySelector('#preset').addEventListener('click', () => { const now = document.documentElement.dataset.preset; document.documentElement.dataset.preset = presets[(presets.indexOf(now) + 1) % presets.length]; });
-  document.querySelector('#export-svg').addEventListener('click', exportCanonicalSvg);
+  document.querySelector('#export-svg').addEventListener('click', () => { exportCanonicalSvg().catch((error) => window.alert(error.message)); });
   document.querySelector('#share-card').addEventListener('click', () => { downloadShareCard().catch((error) => window.alert(error.message)); });
 
   reviewAvailable = validateReview();

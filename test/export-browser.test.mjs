@@ -46,6 +46,17 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
     window.alert=message=>exportAlerts.push(message);
     console.error=(...args)=>exportConsole.push(args.map(String).join(' '));
     window.exportUrls=new Map();window.exportDownloads=[];window.exportTracks=[];window.exportCancelled=[];
+    window.hostSaves=[];
+    const hostMode=new URL(location.href).searchParams.get('host');
+    if(hostMode){window.claude={use(name){
+      if(hostMode==='throws')throw new Error('host bridge unavailable');
+      if(name!=='downloads'||hostMode==='unavailable')return Promise.resolve(null);
+      return Promise.resolve({save(payload){window.hostSaves.push({filename:payload.filename,size:payload.data.size});
+        if(hostMode==='declined')return Promise.reject({code:'declined'});
+        if(hostMode==='rejected')return Promise.reject(new Error('host save failed'));
+        return Promise.resolve();
+      }});
+    }};}
     const create=URL.createObjectURL.bind(URL),revoke=URL.revokeObjectURL.bind(URL);
     URL.createObjectURL=blob=>{const url=create(blob);exportUrls.set(url,{blob,revoked:false,revocations:0});return url;};
     URL.revokeObjectURL=url=>{const item=exportUrls.get(url);if(item){item.revoked=true;item.revocations++;}revoke(url);};
@@ -228,6 +239,36 @@ test('Export preserves menu, clipboard, semantic cards and recording lifecycles'
       assert.equal(await run(`Archify.exportMenu.shareCard({variant:${JSON.stringify(variant)}}).then(()=>false,()=>true)`), true);
       assert.equal((await record(variant + '-malformed')).downloads.length, 1);
     }
+  });
+
+  await t.test('optional Artifact downloads await host save and preserve standalone fallback', async () => {
+    for (const [host, expected] of [
+      ['available', { saves: 1, downloads: 0, receipt: true, alerts: 0 }],
+      ['unavailable', { saves: 0, downloads: 1, receipt: true, alerts: 0 }],
+      ['throws', { saves: 0, downloads: 1, receipt: true, alerts: 0 }],
+      ['declined', { saves: 1, downloads: 0, receipt: false, alerts: 0 }],
+      ['rejected', { saves: 1, downloads: 0, receipt: false, alerts: 1 }],
+    ]) {
+      await load({ extra: '&host=' + host });
+      await run(`Archify.exportMenu.run('svg')`);
+      const state = await record('artifact-download-' + host);
+      assert.equal((await run('hostSaves')).length, expected.saves, host);
+      assert.equal(state.downloads.length, expected.downloads, host);
+      assert.equal(Boolean(state.receipt['data-last-export-format']), expected.receipt, host);
+      assert.equal(state.alerts.length, expected.alerts, host);
+      if (expected.saves) assert.match((await run('hostSaves[0].filename')), /\.svg$/);
+    }
+  });
+
+  await t.test('a rejected Artifact WebM save leaves recording available for retry', async () => {
+    await load({ extra: '&host=rejected' });
+    await run(`Archify.motion.recordWebm=()=>Promise.resolve(new Blob(['motion'],{type:'video/webm'}));Archify.exportMenu.run('webm')`);
+    const state = await record('artifact-webm-save-rejected');
+    assert.equal((await run('hostSaves')).length, 1);
+    assert.equal(await run(`document.querySelector('[data-format="webm"]').disabled`), false);
+    assert.equal(state.receipt['data-last-export-error-format'], 'webm');
+    assert.equal(state.receipt['data-last-export-format'], undefined);
+    assert.equal(state.alerts.length, 1);
   });
 
   await t.test('clipboard keeps promise construction in the click and distinct fallback/error receipts', async () => {

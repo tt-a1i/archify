@@ -1030,7 +1030,21 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     return title + suffix;
   }
 
+  // Claude Artifacts suppresses anchor downloads. Use its optional save bridge
+  // when present while keeping a normal standalone-file fallback.
+  const hostDownloads = window.claude && typeof window.claude.use === 'function'
+    ? Promise.resolve().then(() => window.claude.use('downloads')).catch(() => null)
+    : Promise.resolve(null);
+
   function downloadBlob(blob, name) {
+    return hostDownloads.then((downloads) => {
+      if (downloads && typeof downloads.save === 'function') {
+        return Promise.resolve(downloads.save({ filename: name, data: blob })).then(() => ({ saved: true, transport: 'host' }))
+          .catch((error) => {
+            if (error && error.code === 'declined') return { saved: false, cancelled: true, transport: 'host' };
+            throw error;
+          });
+      }
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -1039,6 +1053,8 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return { saved: true, transport: 'anchor' };
+    });
   }
 
   function recordExport(format, blob, dimensions) {
@@ -1053,9 +1069,10 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
   function exportCanonicalSvg() {
     const blob = new Blob([canonicalDeltaSvg()], { type: 'image/svg+xml;charset=utf-8' });
-    downloadBlob(blob, artifactName('-architecture-delta.svg'));
-    recordExport('svg', blob);
-    return blob;
+    return downloadBlob(blob, artifactName('-architecture-delta.svg')).then((result) => {
+      if (result.saved) recordExport('svg', blob);
+      return blob;
+    });
   }
 
   function loadSvgImage(blob) {
@@ -1151,8 +1168,8 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
   async function downloadShareCard() {
     const blob = await shareCard();
-    downloadBlob(blob, artifactName('-architecture-delta-share-card.png'));
-    recordExport('share-card', blob, { width: 1200, height: 630 });
+    const result = await downloadBlob(blob, artifactName('-architecture-delta-share-card.png'));
+    if (result.saved) recordExport('share-card', blob, { width: 1200, height: 630 });
     return blob;
   }
 
@@ -1219,7 +1236,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   document.querySelector('#theme').addEventListener('click', () => { document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; });
   const presets = ['classic', 'signal-flow', 'blueprint'];
   document.querySelector('#preset').addEventListener('click', () => { const now = document.documentElement.dataset.preset; document.documentElement.dataset.preset = presets[(presets.indexOf(now) + 1) % presets.length]; });
-  document.querySelector('#export-svg').addEventListener('click', exportCanonicalSvg);
+  document.querySelector('#export-svg').addEventListener('click', () => { exportCanonicalSvg().catch((error) => window.alert(error.message)); });
   document.querySelector('#share-card').addEventListener('click', () => { downloadShareCard().catch((error) => window.alert(error.message)); });
 
   reviewAvailable = validateReview();

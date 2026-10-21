@@ -622,6 +622,9 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.match(firstHtml, /id="export-svg"[^>]*>Export SVG</);
   assert.match(firstHtml, /id="share-card"[^>]*>Share Card</);
   assert.match(firstHtml, /window\.Archify\.deltaExport = \{ canonicalSvg: canonicalDeltaSvg, shareCard/);
+  assert.match(firstHtml, /window\.claude && typeof window\.claude\.use === 'function'/);
+  assert.match(firstHtml, /downloads\.save\(\{ filename: name, data: blob \}\)/);
+  assert.match(firstHtml, /if \(result\.saved\) recordExport\('svg', blob\)/);
   assert.match(firstHtml, /canvas\.width = 1200;[\s\S]*canvas\.height = 630;/);
   assert.match(firstHtml, /structural-frame.*stroke:var\(--delta\)!important/);
   assert.match(firstHtml, /structural-frame.*data-delta-state="changed".*stroke-dasharray:2 3!important/);
