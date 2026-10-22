@@ -2201,6 +2201,7 @@ const COMMAND_USAGE = {
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
   inspect: '<type> <input.json>',
   check: '<output.html> [--json] [--require-provenance]',
+  evidence: '<artifact.html> [--json] [--require-delivery-current]',
   'browser-check': '<output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]',
   'visual-check': '<output.html> [--json|--summary] [--require-provenance] [--out-dir <dir>]',
   guide: '[scenario or question] [--json] [--lang en|zh]',
@@ -5660,6 +5661,34 @@ async function commandCheck(args) {
   if (result.status !== 0) process.exitCode = result.status ?? 1;
 }
 
+async function commandEvidence(args) {
+  const knownOptions = new Set(['--json', '--require-delivery-current']);
+  const unknown = args.find(arg => arg.startsWith('--') && !knownOptions.has(arg));
+  if (unknown) fail(`Unknown evidence option "${unknown}".`);
+  const positional = args.filter(arg => !knownOptions.has(arg));
+  const [html] = positional;
+  if (!html || positional.length !== 1) fail(usage());
+
+  const artifactPath = path.resolve(html);
+  const pathIdentityRuntime = await loadPathIdentityRuntime();
+  const provenance = inspectArtifactDeliveryProvenance(artifactPath, false, pathIdentityRuntime);
+  if (!provenance?.artifact) {
+    const message = provenance?.diagnostics?.[0]?.message
+      || 'Could not capture the HTML artifact for evidence indexing.';
+    fail(message);
+  }
+
+  const { createEvidenceIndex, formatEvidenceIndex } = await import('./evidence-index.mjs');
+  const report = createEvidenceIndex({ artifactPath, provenance });
+  if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
+  else console.log(formatEvidenceIndex(report));
+
+  if (args.includes('--require-delivery-current')
+    && report.dimensions.delivery.status !== 'current') {
+    process.exitCode = 1;
+  }
+}
+
 async function executeBrowserEvidence({
   artifactPath, outDir, requireProvenance, command, capture, ...browserOptions
 }) {
@@ -7261,6 +7290,9 @@ try {
       break;
     case 'check':
       await commandCheck(args);
+      break;
+    case 'evidence':
+      await commandEvidence(args);
       break;
     case 'visual-check':
       await commandVisualCheck(args);

@@ -197,6 +197,30 @@ node bin/archify.mjs check <output.html> --require-provenance
 node bin/archify.mjs browser-check <output.html> --json --require-provenance
 ```
 
+## Artifact evidence index
+
+`evidence` is a read-only delivery-provenance report for one existing HTML
+artifact. It reuses the same physical-path identity, artifact capture, sidecar
+discovery, and receipt validation as strict delivery checks. It does not run
+the static checker or browser, and it does not create, repair, remove, lock, or
+otherwise mutate artifacts or sidecars.
+
+```bash
+node bin/archify.mjs evidence <output.html>
+node bin/archify.mjs evidence <output.html> --json --require-delivery-current
+```
+
+JSON schema version 1 reports the artifact path, SHA-256 digest, byte count,
+and a `dimensions.delivery` result. Delivery is `current` only when the
+existing delivery receipt is valid and bound to the captured artifact bytes.
+Missing sidecars are `not-run`; changed bytes, an unfinished journal, or a
+delivery lock are `stale`; a foreign receipt, unreadable, malformed,
+unsupported, or otherwise invalid sidecar is `malformed`. Its outcome is respectively
+`pass`, `not-run`, `unknown`, or `unknown`; a recorded failed delivery is
+`stale` with outcome `fail`. `--require-delivery-current` changes only the
+exit code to 1 when delivery is not current. Unsafe or unreadable artifacts and
+invalid arguments exit 2 without a complete report on stdout.
+
 ## Output path contracts
 
 Archify intentionally separates durable authored paths from command-line paths:

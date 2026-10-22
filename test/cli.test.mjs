@@ -182,6 +182,7 @@ test('cli: help lists commands and diagram types', () => {
   assert.match(result.stdout, /archify preview <type>/);
   assert.match(result.stdout, /archify browser-check <output\.html>/);
   assert.match(result.stdout, /archify visual-check <output\.html>/);
+  assert.match(result.stdout, /archify evidence <artifact\.html>/);
   assert.match(result.stdout, /--open/);
   assert.match(result.stdout, /archify validate <type> <input\.json> .*\[--repo-root path\]/);
   assert.doesNotMatch(result.stdout, /architecture only/);
@@ -197,7 +198,7 @@ test('cli: sole subcommand --help returns canonical usage without operations', (
   const global = run(['--help'], { cwd: scratch });
   assert.equal(global.status, 0, global.stderr);
   const commands = ['render', 'compare', 'deliver', 'finalize', 'preview', 'validate',
-    'migrate', 'inspect', 'check', 'browser-check', 'visual-check', 'guide', 'brands',
+    'migrate', 'inspect', 'check', 'evidence', 'browser-check', 'visual-check', 'guide', 'brands',
     'examples', 'doctor', 'demo'];
   for (const command of commands) {
     const result = run([command, '--help'], { cwd: scratch });
@@ -1360,6 +1361,159 @@ test('cli: check accepts --json and emits the receipt', () => {
   const receipt = JSON.parse(checked.stdout);
   assert.equal(receipt.ok, true);
   assert.equal(receipt.provenance, 'current');
+});
+
+test('cli: evidence reports delivery provenance without writing artifacts or sidecars', (t) => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-evidence-current-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const out = path.join(directory, 'diagram.html');
+  const delivered = run(['deliver', 'workflow', input, out, '--json']);
+  assert.equal(delivered.status, 0, delivered.stderr);
+  const before = new Map(fs.readdirSync(directory).sort().map(name => [
+    name,
+    fs.readFileSync(path.join(directory, name)),
+  ]));
+
+  const result = run(['evidence', out, '--json', '--require-delivery-current']);
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.schemaVersion, 1);
+  assert.equal(report.command, 'evidence');
+  assert.equal(report.readOnly, true);
+  assert.equal(report.artifact.path, path.resolve(out));
+  assert.match(report.artifact.sha256, /^[0-9a-f]{64}$/);
+  assert.ok(Number.isSafeInteger(report.artifact.bytes));
+  assert.equal(report.dimensions.delivery.status, 'current');
+  assert.equal(report.dimensions.delivery.outcome, 'pass');
+  assert.match(report.dimensions.delivery.receiptId, /^[0-9a-f-]{36}$/i);
+  const after = new Map(fs.readdirSync(directory).sort().map(name => [
+    name,
+    fs.readFileSync(path.join(directory, name)),
+  ]));
+  assert.deepEqual(after, before);
+
+  const human = run(['evidence', out]);
+  assert.equal(human.status, 0, human.stderr);
+  assert.match(human.stdout, /delivery: current \(pass\)/);
+});
+
+test('cli: evidence resolves an artifact symlink through the delivery identity seam', (t) => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-evidence-alias-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const out = path.join(directory, 'diagram.html');
+  const alias = path.join(directory, 'diagram-alias.html');
+  assert.equal(run(['deliver', 'workflow', input, out, '--json']).status, 0);
+  try {
+    fs.symlinkSync(out, alias, 'file');
+  } catch (error) {
+    if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error.code)) {
+      t.skip('symlink creation requires permission');
+      return;
+    }
+    throw error;
+  }
+
+  const result = run(['evidence', alias, '--json', '--require-delivery-current']);
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.artifact.path, path.resolve(alias));
+  assert.equal(report.dimensions.delivery.status, 'current');
+  assert.equal(report.dimensions.delivery.outcome, 'pass');
+});
+
+test('cli: evidence classifies absent, stale, and malformed delivery provenance', (t) => {
+  const input = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-evidence-states-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const notRun = path.join(directory, 'not-run.html');
+  assert.equal(run(['render', 'workflow', input, notRun]).status, 0);
+  const absent = run(['evidence', notRun, '--json', '--require-delivery-current']);
+  assert.equal(absent.status, 1, absent.stderr);
+  assert.deepEqual(JSON.parse(absent.stdout).dimensions.delivery, {
+    status: 'not-run', outcome: 'not-run', diagnostics: [],
+  });
+
+  const stale = path.join(directory, 'stale.html');
+  assert.equal(run(['deliver', 'workflow', input, stale, '--json']).status, 0);
+  fs.appendFileSync(stale, '<!-- changed after delivery -->');
+  const staleResult = run(['evidence', stale, '--json']);
+  assert.equal(staleResult.status, 0, staleResult.stderr);
+  const staleDelivery = JSON.parse(staleResult.stdout).dimensions.delivery;
+  assert.equal(staleDelivery.status, 'stale');
+  assert.equal(staleDelivery.outcome, 'unknown');
+  assert.equal(staleDelivery.diagnostics[0].code, 'delivery/provenance-mismatch');
+
+  const malformed = path.join(directory, 'malformed.html');
+  assert.equal(run(['deliver', 'workflow', input, malformed, '--json']).status, 0);
+  fs.writeFileSync(deliveryProvenancePath(malformed), '{not-json}\n');
+  const malformedResult = run(['evidence', malformed, '--json']);
+  assert.equal(malformedResult.status, 0, malformedResult.stderr);
+  const malformedDelivery = JSON.parse(malformedResult.stdout).dimensions.delivery;
+  assert.equal(malformedDelivery.status, 'malformed');
+  assert.equal(malformedDelivery.outcome, 'unknown');
+  assert.equal(malformedDelivery.diagnostics[0].code, 'delivery/provenance-invalid');
+
+  const foreign = path.join(directory, 'foreign.html');
+  const foreignSource = path.join(directory, 'foreign-source.html');
+  assert.equal(run(['deliver', 'workflow', input, foreign, '--json']).status, 0);
+  assert.equal(run(['deliver', 'workflow', input, foreignSource, '--json']).status, 0);
+  fs.copyFileSync(deliveryProvenancePath(foreignSource), deliveryProvenancePath(foreign));
+  const foreignResult = run(['evidence', foreign, '--json', '--require-delivery-current']);
+  assert.equal(foreignResult.status, 1, foreignResult.stderr);
+  const foreignDelivery = JSON.parse(foreignResult.stdout).dimensions.delivery;
+  assert.equal(foreignDelivery.status, 'malformed');
+  assert.equal(foreignDelivery.outcome, 'unknown');
+  assert.equal(foreignDelivery.diagnostics[0].code, 'delivery/provenance-invalid');
+
+  const failed = path.join(directory, 'failed.html');
+  assert.equal(run(['render', 'workflow', input, failed]).status, 0);
+  fs.writeFileSync(deliveryPendingPath(failed), '{"schemaVersion":1}\n');
+  const failedResult = run(['evidence', failed, '--json']);
+  assert.equal(failedResult.status, 0, failedResult.stderr);
+  const failedDelivery = JSON.parse(failedResult.stdout).dimensions.delivery;
+  assert.equal(failedDelivery.status, 'stale');
+  assert.equal(failedDelivery.outcome, 'fail');
+  assert.equal(failedDelivery.diagnostics[0].code, 'delivery/provenance-failed');
+
+  const recordedFailure = path.join(directory, 'recorded-failure.html');
+  assert.equal(run(['deliver', 'workflow', input, recordedFailure, '--json']).status, 0);
+  const recordedFailureSidecar = deliveryProvenancePath(recordedFailure);
+  const recordedFailureReceipt = JSON.parse(fs.readFileSync(recordedFailureSidecar, 'utf8'));
+  fs.writeFileSync(recordedFailureSidecar, `${JSON.stringify({
+    ...recordedFailureReceipt,
+    status: 'failed',
+    stage: 'test-fixture',
+  })}\n`);
+  const recordedFailureResult = run(['evidence', recordedFailure, '--json']);
+  assert.equal(recordedFailureResult.status, 0, recordedFailureResult.stderr);
+  const recordedFailureDelivery = JSON.parse(recordedFailureResult.stdout).dimensions.delivery;
+  assert.equal(recordedFailureDelivery.status, 'stale');
+  assert.equal(recordedFailureDelivery.outcome, 'fail');
+  assert.equal(recordedFailureDelivery.diagnostics[0].code, 'delivery/provenance-failed');
+
+  const locked = path.join(directory, 'locked.html');
+  assert.equal(run(['render', 'workflow', input, locked]).status, 0);
+  fs.writeFileSync(deliveryLockPath(locked), '{"schemaVersion":1}\n');
+  const lockedResult = run(['evidence', locked, '--json']);
+  assert.equal(lockedResult.status, 0, lockedResult.stderr);
+  const lockedDelivery = JSON.parse(lockedResult.stdout).dimensions.delivery;
+  assert.equal(lockedDelivery.status, 'stale');
+  assert.equal(lockedDelivery.outcome, 'unknown');
+  assert.equal(lockedDelivery.diagnostics[0].code, 'delivery/provenance-locked');
+});
+
+test('cli: evidence rejects invalid input without a partial report', () => {
+  const result = run(['evidence', '--require-current']);
+  assert.equal(result.status, 2);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Unknown evidence option "--require-current"/);
+
+  const missing = run(['evidence', path.join(tmp, 'missing-artifact.html'), '--json']);
+  assert.equal(missing.status, 2);
+  assert.equal(missing.stdout, '');
+  assert.match(missing.stderr, /Could not read the HTML artifact/);
 });
 
 test('cli: delivery pair rollback restores the previous HTML and marks it stale', () => {
