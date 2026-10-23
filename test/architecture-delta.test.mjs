@@ -244,6 +244,57 @@ test('compare reports locale-only changes as presentation changes', () => {
   assert.deepEqual(receipt.changes, { components: [], connections: [], boundaries: [] });
 });
 
+test('compare reports meta.translations changes as presentation changes', () => {
+  const base = read(baseFixture);
+  base.meta.locale = 'en';
+  base.meta.translations = { 'legend.architecture.backend': 'First backend wording' };
+  const basePath = path.join(tmp, 'translations-base.json');
+  fs.writeFileSync(basePath, JSON.stringify(base));
+
+  const head = structuredClone(base);
+  head.meta.translations['legend.architecture.backend'] = 'Second backend wording';
+  const headPath = path.join(tmp, 'translations-head.json');
+  const output = path.join(tmp, 'translations-delta.html');
+  fs.writeFileSync(headPath, JSON.stringify(head));
+
+  const result = run(['compare', 'architecture', basePath, headPath, output, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.summary.presentationChanged, true);
+  assert.deepEqual(receipt.changes, { components: [], connections: [], boundaries: [] });
+
+  const embeddedMatch = fs.readFileSync(output, 'utf8')
+    .match(/<script id="archify-compare-receipt" type="application\/json">([\s\S]*?)<\/script>/);
+  assert.ok(embeddedMatch, 'embedded receipt missing');
+  const embeddedReceipt = JSON.parse(embeddedMatch[1]);
+  assert.equal(embeddedReceipt.summary.presentationChanged, true);
+
+  const added = structuredClone(base);
+  added.meta.translations['legend.architecture.database'] = 'Storage';
+  const addReceipt = compareArchitecture(base, added);
+  assert.equal(addReceipt.summary.presentationChanged, true);
+
+  const removed = structuredClone(base);
+  delete removed.meta.translations;
+  const removeReceipt = compareArchitecture(base, removed);
+  assert.equal(removeReceipt.summary.presentationChanged, true);
+});
+
+test('compare treats key-reordered meta.translations as unchanged presentation', () => {
+  const base = read(baseFixture);
+  base.meta.translations = {
+    'legend.architecture.backend': 'Services',
+    'legend.architecture.database': 'Datastores',
+  };
+  const head = structuredClone(base);
+  head.meta.translations = {
+    'legend.architecture.database': 'Datastores',
+    'legend.architecture.backend': 'Services',
+  };
+  const receipt = compareArchitecture(base, head);
+  assert.equal(receipt.summary.presentationChanged, false);
+});
+
 test('change navigator order is exact-ID based, complete, unique, and stable', () => {
   const receipt = compareArchitecture(read(baseFixture), read(headFixture));
   const rows = architectureDeltaChangeRows(receipt);

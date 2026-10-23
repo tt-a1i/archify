@@ -229,6 +229,7 @@ function presentationChanged(base, head) {
   const basePresentation = {
     title: base.meta?.title,
     locale: base.meta?.locale,
+    translations: base.meta?.translations,
     subtitle: base.meta?.subtitle,
     animation: base.meta?.animation,
     visual_preset: base.meta?.visual_preset,
@@ -242,6 +243,7 @@ function presentationChanged(base, head) {
   const headPresentation = {
     title: head.meta?.title,
     locale: head.meta?.locale,
+    translations: head.meta?.translations,
     subtitle: head.meta?.subtitle,
     animation: head.meta?.animation,
     visual_preset: head.meta?.visual_preset,
