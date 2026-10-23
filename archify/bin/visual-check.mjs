@@ -1965,10 +1965,10 @@ function observation({ width, height, theme, metrics }) {
     && readabilityOk
     && Number.isFinite(minimumProjectedNodeTextPx)
     && ((readerLayout === 'adaptive' && readerOverflow === 'authored' && (readerFit === 'intrinsic-height' || readerFit === 'width-first'))
-      || (readerFit === 'authored-height' && metrics.diagramType === 'architecture'
+      || (readerFit === 'authored-height' && (metrics.diagramType === 'architecture' || metrics.diagramType === 'workflow')
         && metrics.documentScrollUnclipped === true))
   );
-  const authoredClipped = readerFit === 'authored-height' && metrics.diagramType === 'architecture'
+  const authoredClipped = readerFit === 'authored-height' && (metrics.diagramType === 'architecture' || metrics.diagramType === 'workflow')
     && metrics.documentScrollUnclipped !== true;
   const containmentOk = !authoredClipped && !overflowX && (!overflowY || verticalScrollAccepted);
   const legendDockIntersectionArea = Number(metrics.legendDockIntersectionArea) || 0;
@@ -2182,7 +2182,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
       }));
     }
     if (!entry.ok) {
-      const authoredClipped = entry.readerFit === 'authored-height' && entry.diagramType === 'architecture'
+      const authoredClipped = entry.readerFit === 'authored-height' && (entry.diagramType === 'architecture' || entry.diagramType === 'workflow')
         && !entry.documentScrollUnclipped;
       const budgetFixes = authoredClipped
         ? ['restore the full SVG inside the diagram panel and allow normal document scrolling; remove internal scrollers and clipping without changing authored geometry']
@@ -2190,7 +2190,7 @@ function observationDiagnostics({ artifact, allObservations, readabilityObservat
       diagnostics.push(failureDiagnostic({
         code: authoredClipped ? 'viewer/diagram-clipped' : 'viewer/viewport-overflow',
         message: authoredClipped
-          ? `The authored Architecture canvas is clipped or cannot scroll in the document at ${entry.width}x${entry.height} (${entry.theme}).`
+          ? `The authored ${entry.diagramType === 'workflow' ? 'Workflow' : 'Architecture'} canvas is clipped or cannot scroll in the document at ${entry.width}x${entry.height} (${entry.theme}).`
           : `The rendered artifact overflows the ${entry.width}x${entry.height} ${entry.theme} viewport.`,
         subject: viewportSubject(artifact, entry),
         evidence: {

@@ -1339,6 +1339,18 @@ test('architecture: measured auto canvases opt into height-aware reader fitting'
   assert.doesNotMatch(authoredSvg, /data-reader-min-text=/);
 });
 
+test('workflow: explicit meta.viewBox declares authored-height and data-diagram-type', () => {
+  const examplePath = path.join(skillRoot, 'examples/agent-tool-call.workflow.json');
+  const doc = JSON.parse(fs.readFileSync(examplePath, 'utf8'));
+  doc.meta.viewBox = [1240, 838];
+  const rendered = render('workflow', doc);
+  assert.equal(rendered.code, 0, rendered.stderr);
+  const svg = fs.readFileSync(rendered.outPath, 'utf8').match(/<svg\b[^>]*>/)?.[0];
+  assert.ok(svg, 'expected an SVG root for the authored workflow canvas');
+  assert.match(svg, /data-diagram-type="workflow"/);
+  assert.match(svg, /data-reader-fit="authored-height"/);
+});
+
 // Automatic Sequence declares width-first; Dataflow declares intrinsic-height.
 // Both default canvases need an explicit automatic Reader fit below the wide ratio.
 for (const [mode, doc, authoredViewBox] of [

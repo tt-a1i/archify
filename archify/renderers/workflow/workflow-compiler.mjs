@@ -5476,14 +5476,18 @@ function renderLegend() {
 }
 
 function renderSvg() {
-  // A renderer-sized canvas that would overflow the desktop page at full
-  // width reads at page width with vertical scroll, like a tall stack.
-  const readerFit = workflow.schema_version === 2
-    && !workflow.meta?.viewBox
-    && ((hasVerticalStack(workflow) && asArray(layout.laneHeights).some((height) => height > 104))
-      || predictedFixedWidthOverflow({ viewBoxWidth: viewBox[0], viewBoxHeight: viewBox[1], diagramType: 'workflow' }))
-    ? ' data-reader-fit="width-first"'
-    : '';
+  const isAuthoredHeight = Boolean(workflow.schema_version === 2
+    && workflow.meta?.viewBox
+    && workflow.lanes?.length >= 2
+    && viewBox[1] > 800);
+  const readerFit = isAuthoredHeight
+    ? ' data-diagram-type="workflow" data-reader-fit="authored-height"'
+    : (workflow.schema_version === 2
+      && !workflow.meta?.viewBox
+      && ((hasVerticalStack(workflow) && asArray(layout.laneHeights).some((height) => height > 104))
+        || predictedFixedWidthOverflow({ viewBoxWidth: viewBox[0], viewBoxHeight: viewBox[1], diagramType: 'workflow' }))
+      ? ' data-reader-fit="width-first"'
+      : '');
   const contract = workflow.schema_version === 2 ? ' data-layout-contract="readable-v2"' : '';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}"${readerFit}${contract} ${svgRootAttrs(workflow.meta, resolvedQualityProfile)} ${NODE_CARD_ATTR}>
 ${svgAccessibleText(workflow.meta, 'workflow')}
