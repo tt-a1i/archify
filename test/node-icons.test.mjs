@@ -15,6 +15,10 @@ const cases = {
   // The first lifecycle state is a start state, which has no default sigil.
   lifecycle: ['agent-run.lifecycle.json', 'states', 3],
 };
+// The artifact update payload intentionally contains a digest of the rendered
+// semantic content. Changing an icon changes that identity but must not affect
+// any other renderer output covered by this regression test.
+const withoutContentIdentity = (html) => html.replace(/"contentSha256":"[a-f0-9]{64}"/, '"contentSha256":"<content-identity>"');
 for (const [mode, [example, collection, index = 0]] of Object.entries(cases)) {
   test(`${mode}: icon overrides and hiding preserve all non-icon output`, () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-icons-'));
@@ -39,12 +43,12 @@ for (const [mode, [example, collection, index = 0]] of Object.entries(cases)) {
         spec[collection][index].icon = icon;
         const html = render();
         if (icon === 'none') {
-          assert.equal(html, baseline.replace(old, ''));
+          assert.equal(withoutContentIdentity(html), withoutContentIdentity(baseline.replace(old, '')));
         } else {
           const current = html.match(sigil)?.[0];
           assert.ok(current.includes(`data-semantic-sigil="${icon}"`));
           assert.equal(current.match(/class="([^"]+)"/)[1], old.match(/class="([^"]+)"/)[1]);
-          assert.equal(html.replace(current, ''), baseline.replace(old, ''));
+          assert.equal(withoutContentIdentity(html.replace(current, '')), withoutContentIdentity(baseline.replace(old, '')));
         }
       }
       delete spec[collection][index].icon;
@@ -55,7 +59,10 @@ for (const [mode, [example, collection, index = 0]] of Object.entries(cases)) {
         spec[collection][index].icon = icon;
         const html = render();
         assert.match(html, /data-brand-mark="openai"/);
-        assert.equal(icon === 'none' ? html : html.replace(html.match(sigil)[0], ''), branded.replace(brandedSigil, ''));
+        assert.equal(
+          withoutContentIdentity(icon === 'none' ? html : html.replace(html.match(sigil)[0], '')),
+          withoutContentIdentity(branded.replace(brandedSigil, '')),
+        );
       }
       spec[collection][index].icon = '<svg onload="alert(1)">';
       fs.writeFileSync(input, JSON.stringify(spec));

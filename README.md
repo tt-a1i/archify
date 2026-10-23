@@ -178,6 +178,11 @@ The output is a self-contained HTML file. Download it and open it in your browse
 
 <sub>Try switching between D1–D4, opening a place card, or following a map link. Times and place information reflect the author's original itinerary.</sub>
 
+### Standalone artifact updates
+
+A forwarded artifact remains offline-first: opening it performs no update request or background polling. A reader can explicitly open **Artifact version** and choose **Check for update**; only a strictly validated newer stable release changes the control to **New version X** and exposes up to three release summaries with the release-notes link. Reader feedback, diagnostic copying, and recipient routing are intentionally deferred to a future, separate issue.
+
+
 ## Community and recognition
 
 - **#1 on GitHub Trending's weekly, all-language repository list.** [Ranking screenshot published by the creator on September 1, 2026](https://x.com/t20000622yy/status/2094656813576880285), with all languages and “This week” selected.

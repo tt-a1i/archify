@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { applyTemplate, renderCards, esc } from './utils.mjs';
+import { createReaderUpdateDisclosure } from './reader-disclosure.mjs';
 import { validateSchema } from './validator.mjs';
 import { verifyRepositoryEvidence } from './repository-evidence.mjs';
 import { installRendererDiagnosticBoundary, throwDiagnosticError, throwDiagnosticProblems, recordDiagnostic } from './diagnostics.mjs';
@@ -241,6 +242,10 @@ export function writeDiagram({ outPath, template, diagramType, meta, svg, cards,
     locale: meta.locale,
     visualPreset: meta.visual_preset || 'classic',
     sourceEvidence,
+    readerUpdate: createReaderUpdateDisclosure({
+      artifactType: diagramType,
+      content: JSON.stringify({ diagramType, title: meta.title, subtitle: meta.subtitle || '', svg, cards }),
+    }),
   });
   let candidatePath;
   let candidateIdentity;

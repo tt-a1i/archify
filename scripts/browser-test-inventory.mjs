@@ -45,4 +45,5 @@ export const browserTestFiles = [
   'bottom-node-index-browser.test.mjs',
   'explainer-browser.test.mjs',
   'story-browser.test.mjs',
+  'reader-disclosure-browser.test.mjs',
 ];

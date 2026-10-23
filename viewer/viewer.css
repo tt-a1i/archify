@@ -808,6 +808,9 @@ svg {
   outline-offset: 1px;
 }
 .diagram-nav button:disabled { opacity: 0.38; cursor: default; }
+.reader-disclosure{width:min(34rem,calc(100vw - 2rem));padding:0;border:1px solid var(--panel-border);border-radius:.75rem;background:var(--page);color:var(--text);box-shadow:0 1.5rem 4rem rgb(0 0 0/.35)}
+.reader-disclosure::backdrop{background:rgb(0 0 0/.48)}
+.reader-disclosure form{padding:1rem 1.1rem}.reader-disclosure header{display:flex;align-items:center;justify-content:space-between;gap:1rem}.reader-disclosure h2{margin:0;font-size:1rem}.reader-disclosure header button,.reader-disclosure-actions :is(button,a){border:1px solid var(--panel-border);border-radius:.4rem;background:var(--toolbar-bg);color:var(--text);padding:.45rem .65rem;font:inherit;text-decoration:none;cursor:pointer}.reader-disclosure dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:.35rem .75rem}.reader-disclosure dt{color:var(--text-muted)}.reader-disclosure dd{margin:0;overflow-wrap:anywhere}.reader-disclosure-actions{display:flex;flex-wrap:wrap;gap:.5rem}.reader-disclosure-status{min-height:1.4em;color:var(--text-muted)}
 /* The Guide stays on the ? shortcut; Map only earns dock space once the
    reader has zoomed past the full diagram (or opened it from the keyboard). */
 .diagram-nav button[hidden] { display: none; }
