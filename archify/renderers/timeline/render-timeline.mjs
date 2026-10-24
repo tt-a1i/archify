@@ -163,7 +163,10 @@ function durationLabel(ms) {
     rest -= value * size;
     if (parts.length === 2) break;
   }
-  return parts.join(' ') || '0 s';
+  // Sub-second gaps are representable (timestamps keep milliseconds); state
+  // them instead of reporting "0 s". Longer durations keep their existing
+  // whole-unit labels.
+  return parts.join(' ') || `${Math.round(ms)} ms`;
 }
 
 // The visible break label is approximate (it carries ≈), so it rounds to the
@@ -171,7 +174,7 @@ function durationLabel(ms) {
 function approximateDuration(ms) {
   const units = [['d', DAY], ['h', HOUR], ['min', MINUTE], ['s', 1000]];
   const index = units.findIndex(([, size]) => ms >= size);
-  if (index === -1) return '0 s';
+  if (index === -1) return `${Math.round(ms)} ms`;
   const [major, majorSize] = units[index];
   if (index === units.length - 1) return `${Math.round(ms / majorSize)} ${major}`;
   const [minor, minorSize] = units[index + 1];
