@@ -95,6 +95,15 @@ while the mean barely moved. What is the likely cause, and how should we investi
 
 Live examples: [First HTTPS visit](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 latency (Chinese)](https://archify.si/cases/explainer/p99-tail-latency.html) · [How Archify finalize keeps the last good file, read from this repository (Chinese)](https://archify.si/cases/explainer/finalize-delivery.html) · [First rental checklist (Chinese)](https://archify.si/cases/explainer/first-rental.html)
 
+### Before/after example
+
+A plain weekly ops page, before and after an Archify explainer rendered with `finalize explainer`: the conclusion first, a workflow panel with steps, a chart, a status table and a checklist.
+
+- Before: https://skill-fixture-before.theroost.dev
+- After: https://archify-after.theroost.dev
+
+_Illustrative, community-contributed example; not an official demo or benchmark._
+
 <a id="sponsors"></a>
 
 ## ❤️ Sponsors
