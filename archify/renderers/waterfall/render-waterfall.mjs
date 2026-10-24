@@ -70,8 +70,18 @@ for (const [index, span] of raw.entries()) {
     timing('has a derived end outside the finite numeric range.', ['Rescale the recorded timing and unit to a representable range.']);
   }
   if (hasEnd && span.end < span.start) timing(`ends (${span.end}) before it starts (${span.start}).`, ['Correct start or end from the recorded timing.']);
-  if (hasEnd && hasDuration && Math.abs(span.end - span.start - span.duration) > 1e-9) {
-    timing(`states end ${span.end} and duration ${span.duration}, which disagree with start ${span.start}.`, ['Keep only one of end or duration.']);
+  if (hasEnd && hasDuration) {
+    // end, start and duration are parsed independently as binary64, so three
+    // roundings plus the subtraction can leave a residual even when the
+    // decimal values agree exactly (1700000000.3 - 1700000000.1 - 0.2 is
+    // 4.8e-8, not 0). Rounding noise is bounded by 2 epsilons of the largest
+    // operand, so that is the agreement window; the 1e-9 floor keeps ordinary
+    // strictness for small values. A genuine disagreement above the window is
+    // still diagnosed.
+    const scale = Math.max(Math.abs(span.start), Math.abs(span.end), Math.abs(span.duration));
+    if (Math.abs(span.end - span.start - span.duration) > Math.max(1e-9, 2 * Number.EPSILON * scale)) {
+      timing(`states end ${span.end} and duration ${span.duration}, which disagree with start ${span.start}.`, ['Keep only one of end or duration.']);
+    }
   }
   if (!hasEnd && !hasDuration && span.status !== 'incomplete') {
     timing('has neither end nor duration. A span without a recorded end must be marked status "incomplete".', ['Add the recorded end or duration.', 'Set status to "incomplete" if the trace has no end for it.']);

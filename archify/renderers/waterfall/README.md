@@ -25,7 +25,9 @@ geometry instead of HTML.
 
 A span states `start` and either `end` or `duration` (both only if they agree),
 in `meta.unit` (`us`, `ms`, or `s`; default `ms`), measured from a common trace
-origin. `parent`, `status` (`ok`, `error`, `cancelled`, `incomplete`),
+origin. The agreement check allows binary64 parse noise scaled to the value
+magnitude (two epsilons of the largest operand), so epoch-sized starts keep
+decimal-equal values valid. `parent`, `status` (`ok`, `error`, `cancelled`, `incomplete`),
 `service`, `detail`, and `sources` are optional. `meta.evidence`
 (`measured` / `illustrative`) is required and drawn as a badge.
 

@@ -180,6 +180,19 @@ test('waterfall: invalid timing and parent cycles are refused', () => {
   assert.match(failure((d) => { d.spans[0].parent = 'auth'; }), /waterfall\/cycle/);
 });
 
+test('waterfall: epoch-sized starts keep end and duration agreement in floating point', () => {
+  const diagram = clone(small);
+  diagram.spans = [{ id: 'job', name: 'Nightly job', start: 1700000000.1, end: 1700000000.3, duration: 0.2 }];
+  const result = run(diagram);
+  assert.equal(result.status, 0, result.stderr);
+  // The same magnitude still refuses a duration that genuinely disagrees.
+  const wrong = clone(diagram);
+  wrong.spans[0].duration = 0.25;
+  const rejected = run(wrong);
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /disagree/);
+});
+
 test('waterfall: services past the five colours share a legend entry instead of a duplicated colour', () => {
   const services = ['gateway', 'auth', 'cart', 'pricing', 'tax', 'inventory', 'postgres'];
   const diagram = clone(small);
