@@ -141,7 +141,7 @@ test('activation delegates to Semantic Lens and supports roving keyboard navigat
 test('bridge state is print-safe, reduced-motion-safe, and absent from canonical export', () => {
   const html = render('architecture');
   assert.match(html, /\[data-legend-bridge-runtime\] \{ display: none !important; \}/);
-  assert.match(html, /html:not\(\[data-embed="true"\]\) \.diagram-container \{\s*padding: 0\.75rem 0\.75rem 4\.25rem;/);
+  assert.match(html, /html:not\(\[data-embed="true"\]\) \.diagram-container \{\s*padding: 0\.75rem 0\.75rem calc\(1rem \+ var\(--archify-dock-h\)\);/);
   assert.match(html, /data-legend-hit[^}]*transition/s);
   assert.match(html, /prefers-reduced-motion: reduce[\s\S]*\[data-legend-hit\]/);
   assert.match(html, /clone\.removeAttribute\('data-legend-preview-active'\)/);

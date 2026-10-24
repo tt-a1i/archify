@@ -79,6 +79,18 @@
           height: height
         };
       }
+      /* The mobile dock can wrap to more than one row, so its height is a
+         measured value, not a constant. Publish it before the desktop-only
+         stage-rail gate so every phone surface (stage pad, probe, lens, finder)
+         can clear the real dock instead of guessing a row count. */
+      var dockHeight = -1;
+      function publishDockHeight() {
+        if (!nav || !container) return;
+        var height = visible(nav) ? Math.ceil(nav.getBoundingClientRect().height) : 0;
+        if (height === dockHeight) return;
+        dockHeight = height;
+        container.style.setProperty('--archify-dock-h', height + 'px');
+      }
       function eligible() {
         return Boolean(
           container && svg && nav &&
@@ -170,6 +182,7 @@
       }
       function measure() {
         frame = 0;
+        publishDockHeight();
         scheduleLift();
         if (probingBaseline) return null;
         if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });

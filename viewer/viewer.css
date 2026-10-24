@@ -412,13 +412,18 @@ html[data-present="true"]:not([data-embed="true"]) .diagram-container {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  justify-content: center;
+  /* Centring an oversized scene makes its start-side overflow unreachable.
+     Start alignment plus auto inline margins centres the scene when it fits
+     and collapses to zero when it overflows, so the first edge stays
+     scrollable without a keyword the delta validator reads as a claim. */
+  justify-content: flex-start;
   min-height: 0;
   padding: 0.75rem;
   padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
 }
 html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
   flex: 1 1 auto;
+  margin-inline: auto;
   height: 100%;
   min-height: 0;
   width: 100%;
@@ -1205,6 +1210,8 @@ html[data-preset="blueprint"] .overview-map-surface { border-radius: 0.1rem; }
    direct authored relationships. Geometry and the canonical SVG stay put. */
 .semantic-lens {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   right: 1rem;
   bottom: calc(4.15rem + var(--archify-nav-reserve));
   z-index: 24;
@@ -1271,6 +1278,8 @@ html[data-preset="blueprint"] .semantic-lens { border-radius: 0.28rem; }
 .semantic-lens-kinds {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 0.3rem;
   max-height: min(15rem, 40vh);
   padding: 0 0.5rem 0.5rem;
@@ -2942,7 +2951,7 @@ html[data-reader-rail="bottom"] .node-outline-item::after {
   .toolbar, .diagram-nav, .focus-chip, .archify-toast, .no-print { display: none !important; }
   
   .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
-  .diagram-container { --archify-nav-reserve: 0px !important; }
+  .diagram-container { --archify-nav-reserve: 0px !important; --archify-dock-h: 0px !important; }
   html[data-preset="signal-flow"] .diagram-container,
   html[data-preset="signal-flow"] .card { background: #ffffff; }
   .cards { grid-template-columns: 1fr 1fr; }
@@ -3728,8 +3737,9 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     padding: 0.75rem;
     border-radius: 0.75rem;
   }
+  .diagram-container { --archify-dock-h: 6.25rem; }
   html:not([data-embed="true"]) .diagram-container {
-    padding: 0.75rem 0.75rem 4.25rem;
+    padding: 0.75rem 0.75rem calc(1rem + var(--archify-dock-h));
   }
   html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] {
     overflow-x: auto;
@@ -3750,7 +3760,15 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] .node-finder {
     transform: translateX(var(--archify-scroll-x, 0px));
   }
-  .diagram-nav { right: 0.5rem; bottom: 0.5rem; }
+  .diagram-nav {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    /* A single scrolling row hid the zoom-in button past the edge; wrap the
+       controls so every action stays reachable. */
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: calc(100% - 1rem);
+  }
   .diagram-nav button {
     min-width: 2.75rem;
     height: 2.75rem;
@@ -3759,7 +3777,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   .diagram-nav [data-view="reset"][data-detail-visible] { min-width: 4.35rem; }
   .overview-map {
     right: 0.5rem;
-    bottom: 3.7rem;
+    bottom: calc(1rem + var(--archify-dock-h));
     width: min(10.25rem, calc(100% - 1rem));
   }
   .overview-map[data-docked="true"] {
@@ -3773,12 +3791,12 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     left: var(--archify-radar-left, 0.5rem);
   }
   .overview-map-surface { height: 4rem; }
-  .overview-map-feedback { right: 0.5rem; bottom: 3.7rem; }
+  .overview-map-feedback { right: 0.5rem; bottom: calc(1rem + var(--archify-dock-h)); }
   .semantic-lens {
     right: 0.5rem;
-    bottom: 3.7rem;
+    bottom: calc(1rem + var(--archify-dock-h));
     width: calc(100% - 1rem);
-    max-height: calc(100% - 4.2rem);
+    max-height: calc(100% - var(--archify-dock-h) - 2rem);
   }
   .semantic-lens[data-dock-side] { left: auto; right: 0.5rem; }
   .semantic-lens-kinds { max-height: min(12rem, 34vh); }
@@ -3850,7 +3868,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   .node-finder-results { max-height: min(16rem, 38vh); }
   .route-probe {
     left: 0.5rem;
-    bottom: 3.7rem;
+    bottom: calc(1rem + var(--archify-dock-h));
     width: calc(100% - 1rem);
     min-width: 0;
   }
@@ -3933,7 +3951,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     white-space: nowrap;
   }
   
-  html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem 3.75rem; }
+  html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem calc(1rem + var(--archify-dock-h)); }
   html[data-present="true"]:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] > svg {
     width: 720px;
     height: auto;
