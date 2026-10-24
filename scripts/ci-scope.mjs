@@ -27,7 +27,7 @@ export function classifyPaths(paths) {
       }
       continue;
     }
-    if (/^README(?:_EN|_ZH)?\.md$/.test(name)) { own('readme'); continue; }
+    if (/^README(?:_EN|_ZH|_JA)?\.md$/.test(name)) { own('readme'); continue; }
     if (/^(CONTRIBUTING|REVIEWING|AGENTS|CODE_OF_CONDUCT|SECURITY)\.md$/.test(name)) continue;
     if (/^docs\/assets\/community\/[^/]+\.(png|svg)$/.test(name)) continue;
     if (/^(website\/|docs\/)/.test(name)) {
