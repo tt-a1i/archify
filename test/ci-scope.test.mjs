@@ -92,10 +92,11 @@ test('the router shared by Architecture, ERD and Class retains all three callers
 
 test('renderer changes retain cross-mode public regressions even without changing those tests', () => {
   const regressions = ['test/automatic-port-spread.test.mjs', 'test/edge-label-color.test.mjs',
-    'test/label-clearance.test.mjs', 'test/vertical-edge.test.mjs', 'test/node-icons.test.mjs'];
+    'test/label-clearance.test.mjs', 'test/vertical-edge.test.mjs', 'test/node-icons.test.mjs', 'test/route-automatic-label-proximity.test.mjs'];
   const available = [...regressions, 'test/cli.test.mjs'];
   for (const source of ['archify/renderers/dataflow/render-dataflow.mjs',
-    'archify/renderers/sequence/render-sequence.mjs', 'archify/renderers/shared/geometry.mjs']) {
+    'archify/renderers/sequence/render-sequence.mjs', 'archify/renderers/architecture/render-architecture.mjs',
+    'archify/renderers/shared/automatic-labels.mjs', 'archify/renderers/shared/geometry.mjs']) {
     const plan = classifyPaths([source]);
     assert.equal(plan.scope, 'core');
     assert.deepEqual(selectAffectedTests(plan.owners, [], available), regressions.slice().sort(), source);
