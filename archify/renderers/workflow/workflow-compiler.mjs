@@ -3753,9 +3753,9 @@ function corridorViaY(start, end, fromSide, toSide, y) {
   return [startStub, [startStub[0], y], [endStub[0], y], endStub];
 }
 
-function corridorViaX(start, end, fromSide, toSide, x) {
-  const startStub = outwardStub(start, fromSide);
-  const endStub = outwardStub(end, toSide);
+function corridorViaX(start, end, fromSide, toSide, x, stub = 16) {
+  const startStub = outwardStub(start, fromSide, stub);
+  const endStub = outwardStub(end, toSide, stub);
   return [startStub, [x, startStub[1]], [x, endStub[1]], endStub];
 }
 
@@ -4010,6 +4010,11 @@ function readableAutomaticCandidateSet(
     { family: 'outside-right', via: corridorViaX(start, end, fromSide, toSide, outsideRight) },
     { family: 'top-corridor', via: corridorViaY(start, end, fromSide, toSide, topY) },
     { family: 'bottom-corridor', via: corridorViaY(start, end, fromSide, toSide, bottomY) },
+    // A full 16px stub may put a cross-lane arrival through a lane title.
+    // Try the existing hard minimum too; the same feasibility and route
+    // interaction checks decide whether this opens a clear outer corridor.
+    ...(layoutFeedback.reverseSourcePorts ? [{ family: 'outside-left-short-stubs', via: corridorViaX(start, end, fromSide, toSide, outsideLeft, HARD_ROUTE_RHYTHM.endpoint) },
+    { family: 'outside-right-short-stubs', via: corridorViaX(start, end, fromSide, toSide, outsideRight, HARD_ROUTE_RHYTHM.endpoint) }] : []),
     // Offset tracks let several routes through one gap run side by side.
     ...[-12, 12, -24, 24].flatMap((offset) => [
       { family: 'lane-gap-corridor', via: corridorViaY(start, end, fromSide, toSide, laneGapY + offset) },
@@ -4463,12 +4468,45 @@ function edgeSides(edge) {
   };
 }
 
-const automaticPorts = automaticPortSpread(workflow.edges, nodes, {
-  sideFor: (edge, endpoint) => edgeSides(edge)[endpoint === 'source' ? 'fromSide' : 'toSide'],
+// Drop is a relative family, not an absolute endpoint coordinate. Include it
+// in port allocation without changing the authored edge or shared v1 policy.
+const portOriginals = new Map();
+const portRelations = workflow.edges.map(edge => {
+  if (!layoutFeedback.reverseSourcePorts || workflow.schema_version !== 2
+    || edge.route !== 'drop' || hasAbsoluteRoutePins(edge) || edge.labelAt) return edge;
+  const relative = { ...edge, route: 'auto' };
+  portOriginals.set(relative, edge);
+  return relative;
 });
+function allocatedPortSides(edge) {
+  if (workflow.schema_version === 2 && edge.route === 'drop' && !hasAbsoluteRoutePins(edge)) {
+    const down = nodes.get(edge.to).cy >= nodes.get(edge.from).cy;
+    return { fromSide: chosenSide(edge.fromSide, down ? 'bottom' : 'top'),
+      toSide: chosenSide(edge.toSide, down ? 'top' : 'bottom') };
+  }
+  return edgeSides(edge);
+}
+const automaticPorts = new Map([...automaticPortSpread(portRelations, nodes, {
+  spacingFor: (left, right) => portOriginals.has(left) || portOriginals.has(right)
+    ? Math.max(HARD_ROUTE_RHYTHM.interior,
+      (workflowLabelWidth(left.label) + workflowLabelWidth(right.label)) / 2 + 8) : 14,
+  sideFor: (edge, endpoint) => allocatedPortSides(portOriginals.get(edge) || edge)[endpoint === 'source' ? 'fromSide' : 'toSide'],
+})].map(([edge, ports]) => [portOriginals.get(edge) || edge, ports]));
+
+if (layoutFeedback.reverseSourcePorts) {
+  for (const [edge, ports] of automaticPorts) {
+    if (edge.from !== layoutFeedback.reverseSourcePorts || !ports.from) continue;
+    const node = nodes.get(edge.from);
+    const side = allocatedPortSides(edge).fromSide;
+    const axis = side === 'left' || side === 'right' ? 1 : 0;
+    ports.from = [...ports.from];
+    ports.from[axis] = 2 * (axis === 0 ? node.cx : node.cy) - ports.from[axis];
+  }
+}
 
 function automaticPortCandidates(edge, node, side, preferred, counterpart) {
-  if (!independentAutomaticRoute(edge)) return [preferred];
+  if ((!independentAutomaticRoute(edge) && !layoutFeedback.reverseSourcePorts)
+    || !isReadableAutomaticRoute(edge) || edge.labelAt) return [preferred];
   const verticalSide = side === 'left' || side === 'right';
   const axis = verticalSide ? 1 : 0;
   const center = anchor(node, side);
@@ -4970,12 +5008,17 @@ function readableControlledRoute(edge, from, to) {
   const hasAbsoluteRoutePins = Array.isArray(edge.via)
     || edge.channelX !== undefined
     || edge.channelY !== undefined;
+  // Relative presets constrain the route family and endpoint directions, not
+  // one shared center point. Reuse the already measured spread only on its
+  // matching side; absolute geometry retains its original anchors.
+  const ports = hasAbsoluteRoutePins ? null : automaticPorts.get(edge);
+  const portSides = ports ? allocatedPortSides(edge) : null;
   const candidates = [];
   const diagnosticCandidates = [];
   const materializedCandidates = [];
   for (const [ordinal, { fromSide, toSide }] of sidePairs.entries()) {
-    const start = anchor(from, fromSide);
-    const end = anchor(to, toSide);
+    const start = ports?.from && fromSide === portSides.fromSide ? ports.from : anchor(from, fromSide);
+    const end = ports?.to && toSide === portSides.toSide ? ports.to : anchor(to, toSide);
     const via = routeVia(
       edge,
       from,
@@ -5715,6 +5758,29 @@ function canRepairAutomaticSublabels(result, { workflow, qualityProfile }) {
 function compileWithRouteOrderFeedback(options) {
   const first = compileWorkflowInternal(options);
   if (options.workflow?.schema_version !== 2) return first;
+  // A relative drop preset leaves endpoint positions to the renderer. When
+  // ordinary routing fails, test the other ordering at at most four forks.
+  // Keep an alternative only after the complete compile passes unchanged
+  // validation; successful scenes and absolute authored geometry stay intact.
+  const errors = first.ok ? [] : first.diagnostics.filter(d => d.severity !== 'warning');
+  if (errors.length && errors.every(d => ROUTE_ORDER_CODES.has(d.code)
+    || d.code === 'workflow/explicit-pin-conflict' || d.code === 'workflow/route-preset-conflict')
+    && !preservesWorkflowAbsoluteGeometry(options.workflow)) {
+    const forks = options.workflow.nodes.filter(node => {
+      const outgoing = options.workflow.edges.filter(edge => edge.from === node.id);
+      return outgoing.length > 1 && outgoing.some(edge => edge.route === 'drop'
+        && !edge.via && edge.channelX === undefined && edge.channelY === undefined && !edge.labelAt);
+    }).slice(0, 4);
+    for (const node of forks) {
+      try {
+        const candidate = compileWorkflowInternal({ ...options,
+          layoutFeedback: { ...options.layoutFeedback, reverseSourcePorts: node.id } });
+        if (candidate.ok) return candidate;
+      } catch (error) {
+        if (!(error instanceof WorkflowLayoutFeedback)) throw error;
+      }
+    }
+  }
   let best = first;
   let current = first;
   let layoutFeedback = options.layoutFeedback;
