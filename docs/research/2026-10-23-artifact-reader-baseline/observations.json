@@ -1,0 +1,681 @@
+{
+  "input": "archify/examples/delivery.explainer.json",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "revisions": [
+    {
+      "id": "dev-b71d1b3",
+      "sha": "b71d1b3e38f71d0f7fe91207b750cc307357c91a",
+      "hasVersionControl": false
+    },
+    {
+      "id": "bd524438",
+      "sha": "bd5244388fedd4e74462fb04c588bbbea5c18956",
+      "hasVersionControl": true
+    }
+  ],
+  "records": [
+    {
+      "revision": "dev-b71d1b3",
+      "sha": "b71d1b3e38f71d0f7fe91207b750cc307357c91a",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "state": "initial",
+      "screenshot": "screenshots/dev-b71d1b3-1440x900-initial.png",
+      "measurement": {
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 947,
+        "overflowX": false,
+        "tools": {
+          "left": 1020,
+          "right": 1360,
+          "top": 39,
+          "bottom": 69,
+          "width": 340,
+          "height": 30
+        },
+        "controls": [
+          {
+            "text": "系统",
+            "label": null,
+            "rect": {
+              "left": 1023,
+              "right": 1068,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "浅色",
+            "label": null,
+            "rect": {
+              "left": 1070,
+              "right": 1115,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "深色",
+            "label": null,
+            "rect": {
+              "left": 1117,
+              "right": 1162,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "简洁",
+            "label": "样式",
+            "rect": {
+              "left": 1173,
+              "right": 1262,
+              "top": 39,
+              "bottom": 69,
+              "width": 89,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "导出",
+            "label": null,
+            "rect": {
+              "left": 1270,
+              "right": 1360,
+              "top": 39,
+              "bottom": 69,
+              "width": 90,
+              "height": 30
+            },
+            "fullyVisible": true
+          }
+        ],
+        "dialog": null
+      }
+    },
+    {
+      "revision": "dev-b71d1b3",
+      "sha": "b71d1b3e38f71d0f7fe91207b750cc307357c91a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "initial",
+      "screenshot": "screenshots/dev-b71d1b3-390x844-initial.png",
+      "measurement": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 1691,
+        "overflowX": false,
+        "tools": {
+          "left": 12,
+          "right": 352,
+          "top": 98,
+          "bottom": 128,
+          "width": 340,
+          "height": 30
+        },
+        "controls": [
+          {
+            "text": "系统",
+            "label": null,
+            "rect": {
+              "left": 15,
+              "right": 60,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "浅色",
+            "label": null,
+            "rect": {
+              "left": 62,
+              "right": 107,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "深色",
+            "label": null,
+            "rect": {
+              "left": 109,
+              "right": 154,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "简洁",
+            "label": "样式",
+            "rect": {
+              "left": 165,
+              "right": 254,
+              "top": 98,
+              "bottom": 128,
+              "width": 89,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "导出",
+            "label": null,
+            "rect": {
+              "left": 262,
+              "right": 352,
+              "top": 98,
+              "bottom": 128,
+              "width": 90,
+              "height": 30
+            },
+            "fullyVisible": true
+          }
+        ],
+        "dialog": null
+      }
+    },
+    {
+      "revision": "bd524438",
+      "sha": "bd5244388fedd4e74462fb04c588bbbea5c18956",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "state": "initial",
+      "screenshot": "screenshots/bd524438-1440x900-initial.png",
+      "measurement": {
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 947,
+        "overflowX": false,
+        "tools": {
+          "left": 934,
+          "right": 1360,
+          "top": 39,
+          "bottom": 69,
+          "width": 426,
+          "height": 30
+        },
+        "controls": [
+          {
+            "text": "系统",
+            "label": null,
+            "rect": {
+              "left": 937,
+              "right": 982,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "浅色",
+            "label": null,
+            "rect": {
+              "left": 984,
+              "right": 1029,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "深色",
+            "label": null,
+            "rect": {
+              "left": 1031,
+              "right": 1076,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "简洁",
+            "label": "样式",
+            "rect": {
+              "left": 1087,
+              "right": 1176,
+              "top": 39,
+              "bottom": 69,
+              "width": 89,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "导出",
+            "label": null,
+            "rect": {
+              "left": 1184,
+              "right": 1274,
+              "top": 39,
+              "bottom": 69,
+              "width": 90,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "版本 3.2.1",
+            "label": null,
+            "rect": {
+              "left": 1282,
+              "right": 1360,
+              "top": 39,
+              "bottom": 69,
+              "width": 78,
+              "height": 30
+            },
+            "fullyVisible": true
+          }
+        ],
+        "dialog": {
+          "open": false,
+          "rect": {
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "bottom": 0,
+            "width": 0,
+            "height": 0
+          },
+          "status": ""
+        }
+      }
+    },
+    {
+      "revision": "bd524438",
+      "sha": "bd5244388fedd4e74462fb04c588bbbea5c18956",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "state": "update-available",
+      "screenshot": "screenshots/bd524438-1440x900-update-available.png",
+      "measurement": {
+        "innerWidth": 1440,
+        "innerHeight": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 947,
+        "overflowX": false,
+        "tools": {
+          "left": 921,
+          "right": 1360,
+          "top": 39,
+          "bottom": 69,
+          "width": 439,
+          "height": 30
+        },
+        "controls": [
+          {
+            "text": "系统",
+            "label": null,
+            "rect": {
+              "left": 924,
+              "right": 969,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "浅色",
+            "label": null,
+            "rect": {
+              "left": 971,
+              "right": 1016,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "深色",
+            "label": null,
+            "rect": {
+              "left": 1018,
+              "right": 1063,
+              "top": 42,
+              "bottom": 66,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "简洁",
+            "label": "样式",
+            "rect": {
+              "left": 1074,
+              "right": 1163,
+              "top": 39,
+              "bottom": 69,
+              "width": 89,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "导出",
+            "label": null,
+            "rect": {
+              "left": 1171,
+              "right": 1261,
+              "top": 39,
+              "bottom": 69,
+              "width": 90,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "新版本 3.2.2",
+            "label": null,
+            "rect": {
+              "left": 1269,
+              "right": 1360,
+              "top": 39,
+              "bottom": 69,
+              "width": 91,
+              "height": 30
+            },
+            "fullyVisible": true
+          }
+        ],
+        "dialog": {
+          "open": true,
+          "rect": {
+            "left": 410,
+            "right": 1030,
+            "top": 56,
+            "bottom": 880,
+            "width": 620,
+            "height": 824
+          },
+          "status": "有新的稳定版本可用。"
+        }
+      }
+    },
+    {
+      "revision": "bd524438",
+      "sha": "bd5244388fedd4e74462fb04c588bbbea5c18956",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "initial",
+      "screenshot": "screenshots/bd524438-390x844-initial.png",
+      "measurement": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "scrollWidth": 438,
+        "scrollHeight": 1691,
+        "overflowX": true,
+        "tools": {
+          "left": 12,
+          "right": 438,
+          "top": 98,
+          "bottom": 128,
+          "width": 426,
+          "height": 30
+        },
+        "controls": [
+          {
+            "text": "系统",
+            "label": null,
+            "rect": {
+              "left": 15,
+              "right": 60,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "浅色",
+            "label": null,
+            "rect": {
+              "left": 62,
+              "right": 107,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "深色",
+            "label": null,
+            "rect": {
+              "left": 109,
+              "right": 154,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "简洁",
+            "label": "样式",
+            "rect": {
+              "left": 165,
+              "right": 254,
+              "top": 98,
+              "bottom": 128,
+              "width": 89,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "导出",
+            "label": null,
+            "rect": {
+              "left": 262,
+              "right": 352,
+              "top": 98,
+              "bottom": 128,
+              "width": 90,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "版本 3.2.1",
+            "label": null,
+            "rect": {
+              "left": 360,
+              "right": 438,
+              "top": 98,
+              "bottom": 128,
+              "width": 78,
+              "height": 30
+            },
+            "fullyVisible": false
+          }
+        ],
+        "dialog": {
+          "open": false,
+          "rect": {
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "bottom": 0,
+            "width": 0,
+            "height": 0
+          },
+          "status": ""
+        }
+      }
+    },
+    {
+      "revision": "bd524438",
+      "sha": "bd5244388fedd4e74462fb04c588bbbea5c18956",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "update-available",
+      "screenshot": "screenshots/bd524438-390x844-update-available.png",
+      "measurement": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "scrollWidth": 451,
+        "scrollHeight": 1691,
+        "overflowX": true,
+        "tools": {
+          "left": 12,
+          "right": 451,
+          "top": 98,
+          "bottom": 128,
+          "width": 439,
+          "height": 30
+        },
+        "controls": [
+          {
+            "text": "系统",
+            "label": null,
+            "rect": {
+              "left": 15,
+              "right": 60,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "浅色",
+            "label": null,
+            "rect": {
+              "left": 62,
+              "right": 107,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "深色",
+            "label": null,
+            "rect": {
+              "left": 109,
+              "right": 154,
+              "top": 101,
+              "bottom": 125,
+              "width": 45,
+              "height": 24
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "简洁",
+            "label": "样式",
+            "rect": {
+              "left": 165,
+              "right": 254,
+              "top": 98,
+              "bottom": 128,
+              "width": 89,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "导出",
+            "label": null,
+            "rect": {
+              "left": 262,
+              "right": 352,
+              "top": 98,
+              "bottom": 128,
+              "width": 90,
+              "height": 30
+            },
+            "fullyVisible": true
+          },
+          {
+            "text": "新版本 3.2.2",
+            "label": null,
+            "rect": {
+              "left": 360,
+              "right": 451,
+              "top": 98,
+              "bottom": 128,
+              "width": 91,
+              "height": 30
+            },
+            "fullyVisible": false
+          }
+        ],
+        "dialog": {
+          "open": true,
+          "rect": {
+            "left": 18,
+            "right": 373,
+            "top": 56,
+            "bottom": 824,
+            "width": 355,
+            "height": 768
+          },
+          "status": "有新的稳定版本可用。"
+        }
+      }
+    }
+  ]
+}
