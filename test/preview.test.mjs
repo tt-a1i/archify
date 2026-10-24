@@ -1598,3 +1598,27 @@ test('preview: native watch-target resolution failure closes startup resources',
     'failed startup left its staging directory behind',
   );
 });
+
+test('preview: HEAD returns GET representation metadata without a response body', { timeout: 30000 }, async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-preview-head-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const input = path.join(directory, 'diagram.architecture.json');
+  const output = path.join(directory, 'diagram.html');
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json'), 'utf8'));
+  source.meta.title = 'Preview metadata · 中文';
+  fs.writeFileSync(input, JSON.stringify(source));
+  const preview = await startPreview({ type: 'architecture', input, output, open: false, watch: false });
+  try {
+    await waitForState(preview.url, (state) => state.status === 'verified', 'HEAD fixture did not verify');
+    for (const pathname of ['/', '/state', '/artifact.html']) {
+      const get = await rawRequest(preview.url, { pathname });
+      const head = await rawRequest(preview.url, { pathname, method: 'HEAD' });
+      assert.equal(head.status, 200, pathname);
+      assert.equal(head.body, '', `${pathname}: HEAD must not expose a body`);
+      assert.equal(head.headers['content-type'], get.headers['content-type'], pathname);
+      assert.equal(Number(head.headers['content-length']), Buffer.byteLength(get.body), pathname);
+    }
+  } finally {
+    await preview.stop();
+  }
+});
