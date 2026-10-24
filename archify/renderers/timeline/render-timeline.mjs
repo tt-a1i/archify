@@ -12,6 +12,7 @@ import {
 } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, measureLegend, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
+import { DECLARED_WIDE_READER_MAX_WIDTH } from '../shared/desktop-readability.mjs';
 import { nodeTextFit } from '../shared/text-fit.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { asArray } from '../shared/geometry.mjs';
@@ -147,10 +148,17 @@ const multiDay = (() => {
   const b = wall(last);
   return a.y !== b.y || a.mo !== b.mo || a.d !== b.d;
 })();
-function clockLabel(ms, { seconds = showSeconds, date = multiDay } = {}) {
+// A multi-day span that crosses a year boundary needs the year in every date
+// it prints; otherwise two instants a year apart share the same label (#1019).
+const multiYear = wall(first).y !== wall(last).y;
+// wall() returns the raw numeric year; pad it so every printed date is
+// YYYY-MM-DD (BC years keep their sign, e.g. -0001).
+const dateYear = (w) => `${w.y.startsWith('-') ? '-' : ''}${w.y.replace(/^[-+]/, '').padStart(4, '0')}`;
+function clockLabel(ms, { seconds = showSeconds, date = multiDay, year = multiYear } = {}) {
   const w = wall(ms);
   const fraction = new Date(ms).getUTCMilliseconds();
-  return `${date ? `${w.mo}-${w.d} ` : ''}${w.h}:${w.mi}${seconds ? `:${w.s}${fraction ? `.${String(fraction).padStart(3, '0')}` : ''}` : ''}`;
+  const day = year ? `${dateYear(w)}-${w.mo}-${w.d}` : `${w.mo}-${w.d}`;
+  return `${date ? `${day} ` : ''}${w.h}:${w.mi}${seconds ? `:${w.s}${fraction ? `.${String(fraction).padStart(3, '0')}` : ''}` : ''}`;
 }
 
 function durationLabel(ms) {
@@ -385,13 +393,97 @@ const legendEntries = resolveLegend(undefined,
   .filter((entry, _, all) => all.length > 1);
 
 const contentBottom = laneLayout.at(-1).y + laneLayout.at(-1).height;
-const width = Math.ceil(axisX1 + layout.margin);
-const footprint = legendFootprint(legendEntries, { width: width - layout.margin * 2, fontSize: 11 });
+// The header is left-anchored and unmeasured, so the canvas reserves its width.
+// At the narrowest axis a long IANA zone would otherwise clip the date/range.
+function headerText() {
+  const evidence = i18nText(locale, `timeline.evidence.${tl.meta.evidence}`);
+  const axis = i18nText(locale, 'timeline.axis');
+  const date = multiYear
+    // A dense multi-year axis can suppress individual tick labels, so the
+    // header states the year range once (#1019).
+    ? ` · ${dateYear(wall(first))}–${dateYear(wall(last))}`
+    : multiDay ? '' : ` · ${dateYear(wall(first))}-${wall(first).mo}-${wall(first).d}`;
+  const zone = `${timezone === 'UTC' ? 'UTC' : `${timezone} (${offsetLabel(first)})`}${date}`;
+  const disclosure = breaks.length ? ` · ${i18nText(locale, 'timeline.compressed', { count: breaks.length })}` : '';
+  return { evidence, axis, suffix: `${zone}${disclosure}`, caption: `${axis}: ${zone}${disclosure}` };
+}
+const header = headerText();
+const canvasWidth = axisX1 + layout.margin;
+// Chrome lays fallback emoji out about 14% wider than the mono-face metric
+// textUnits assumes, so reserve that much for each header string that has one.
+const PICTOGRAPHIC = /\p{Extended_Pictographic}/u;
+const FALLBACK_ADVANCE = 1.15;
+const evidenceAdvance = PICTOGRAPHIC.test(header.evidence) ? FALLBACK_ADVANCE : 1;
+const captionAdvance = PICTOGRAPHIC.test(header.caption) ? FALLBACK_ADVANCE : 1;
+const evidenceNaturalW = Math.ceil(textUnits(header.evidence) * 10.5 * ADVANCE * evidenceAdvance + 24);
+const captionNaturalW = textUnits(header.caption) * 11.5 * ADVANCE * captionAdvance;
+const captionRight = layout.margin + evidenceNaturalW + 14 + captionNaturalW;
+// Keep the authored canvas whenever the caption fits with a small inset, so
+// existing output never moves; a clipped caption earns the trailing margin.
+// The inset absorbs fallback-font variance (the bundled mono face has no
+// Arabic/CJK glyphs, so those captions are laid out in a system fallback).
+const desiredWidth = Math.ceil(captionRight > canvasWidth - 4 ? captionRight + layout.margin : canvasWidth);
+// The viewer scales a canvas wider than its pane width (the same 1920px the
+// readability contract declares), which can shrink card labels below the
+// declared minimum. meta.translations allows 400-character messages, so header
+// growth stops there and the header strings are ellipsized instead; their full
+// text stays in a <title>. Legend labels and the legend title are authored
+// legend content, not header copy: they keep whatever width they already
+// require so the cap cannot turn a renderable document into a legend error.
+const legendTitle = i18nText(locale, 'legend.title');
+const legendAdvance = (label) => (PICTOGRAPHIC.test(label) ? FALLBACK_ADVANCE : 1);
+const legendTitleAdvance = PICTOGRAPHIC.test(legendTitle) ? FALLBACK_ADVANCE : 1;
+const legendMinWidth = legendEntries.length
+  ? Math.max(
+    legendFootprint(legendEntries, { width: canvasWidth, fontSize: 11, textAdvance: legendAdvance }).minWidth,
+    textUnits(legendTitle) * 12 * ADVANCE * legendTitleAdvance,
+  ) + layout.margin * 2
+  : 0;
+const width = Math.ceil(Math.max(legendMinWidth, Math.min(desiredWidth, Math.max(canvasWidth, DECLARED_WIDE_READER_MAX_WIDTH))));
+// Grapheme clusters keep a truncated family/flag sequence from ending in a
+// dangling joiner before the ellipsis.
+const GRAPHEME = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+function ellipsize(text, maxUnits) {
+  if (textUnits(text) <= maxUnits) return text;
+  let out = '';
+  for (const { segment } of GRAPHEME.segment(text)) {
+    if (textUnits(`${out}${segment}…`) > maxUnits) break;
+    out += segment;
+  }
+  return `${out}…`;
+}
+const headerView = (() => {
+  if (desiredWidth <= width) {
+    return { evidence: header.evidence, evidenceW: evidenceNaturalW, caption: header.caption, truncated: false };
+  }
+  const evidenceUnitsPerPx = 1 / (10.5 * ADVANCE);
+  const captionUnitsPerPx = 1 / (11.5 * ADVANCE);
+  const room = Math.max(0, width - layout.margin * 2 - 14);
+  // The caption gets priority for its renderer-owned zone/date suffix; the
+  // evidence chip keeps a floor and takes any slack the caption leaves, so a
+  // long evidence override does not truncate while the header sits half empty.
+  const evidenceFloor = Math.min(evidenceNaturalW, Math.max(120, room * 0.2));
+  const evidenceBudgetPx = Math.max(evidenceFloor, room - 14 - captionNaturalW);
+  const evidence = ellipsize(header.evidence, Math.max(0, (evidenceBudgetPx - 24) * evidenceUnitsPerPx / evidenceAdvance));
+  const evidenceW = Math.ceil(textUnits(evidence) * 10.5 * ADVANCE * evidenceAdvance + 24);
+  const captionBudgetPx = Math.max(0, room - evidenceW - 14);
+  const suffixW = textUnits(header.suffix) * 11.5 * ADVANCE * captionAdvance;
+  const separatorW = textUnits(': ') * 11.5 * ADVANCE * captionAdvance;
+  let caption;
+  if (suffixW + separatorW <= captionBudgetPx) {
+    const axis = ellipsize(header.axis, Math.max(0, (captionBudgetPx - suffixW - separatorW) * captionUnitsPerPx / captionAdvance));
+    caption = axis ? `${axis}: ${header.suffix}` : header.suffix;
+  } else {
+    caption = ellipsize(header.caption, Math.max(0, captionBudgetPx * captionUnitsPerPx / captionAdvance));
+  }
+  return { evidence, evidenceW, caption, fullEvidence: header.evidence, fullCaption: header.caption, truncated: true };
+})();
+const footprint = legendFootprint(legendEntries, { width: width - layout.margin * 2, fontSize: 11, textAdvance: legendAdvance });
 const height = Math.ceil(contentBottom + layout.margin + (legendEntries.length ? 34 + footprint.extraHeight : 0));
 const viewBox = [width, height];
 
 function legendLayout() {
-  return { x: layout.margin, baselineY: height - 16, width: width - layout.margin * 2, fontSize: 11, minTitleY: contentBottom + 8, diagramType: 'timeline' };
+  return { x: layout.margin, baselineY: height - 16, width: width - layout.margin * 2, fontSize: 11, textAdvance: legendAdvance, minTitleY: contentBottom + 8, diagramType: 'timeline' };
 }
 
 // ---- Rendering ------------------------------------------------------------------
@@ -406,7 +498,7 @@ function renderAxis() {
   let lastDate = null;
   const shown = ticks.flatMap((tick) => {
     const w = wall(tick.t);
-    const date = `${w.mo}-${w.d}`;
+    const date = multiYear ? `${w.y}-${w.mo}-${w.d}` : `${w.mo}-${w.d}`;
     const label = clockLabel(tick.t, { seconds: tickSeconds, date: multiDay && date !== lastDate });
     const half = textUnits(label) * 10.5 * ADVANCE / 2 + 5;
     const box = [tick.x - half, tick.x + half];
@@ -438,19 +530,27 @@ function renderAxis() {
 }
 
 function renderHeader() {
-  const evidence = i18nText(locale, `timeline.evidence.${tl.meta.evidence}`);
-  const evidenceW = Math.ceil(textUnits(evidence) * 10.5 * ADVANCE + 24);
-  const date = multiDay ? '' : ` · ${wall(first).y}-${wall(first).mo}-${wall(first).d}`;
-  const zone = `${timezone === 'UTC' ? 'UTC' : `${timezone} (${offsetLabel(first)})`}${date}`;
-  const disclosure = breaks.length ? ` · ${i18nText(locale, 'timeline.compressed', { count: breaks.length })}` : '';
-  const caption = `${i18nText(locale, 'timeline.axis')}: ${zone}${disclosure}`;
+  const { evidence, evidenceW, caption, truncated, fullEvidence, fullCaption } = headerView;
+  const evidenceTruncated = truncated && evidence !== fullEvidence;
+  const captionTruncated = truncated && caption !== fullCaption;
+  // Role="img" carries the diagram's accessible text; a visible ellipsis
+  // should not also become the text node's name, so the truncated string is
+  // the aria-label and <title> keeps the full copy as its description.
+  const evidenceContent = evidenceTruncated
+    ? `<title>${esc(fullEvidence)}</title>${esc(evidence)}`
+    : esc(evidence);
+  const captionContent = captionTruncated
+    ? `<title>${esc(fullCaption)}</title>${esc(caption)}`
+    : esc(caption);
+  const evidenceAttrs = evidenceTruncated ? ` aria-label="${esc(evidence)}"` : '';
+  const captionAttrs = captionTruncated ? ` aria-label="${esc(caption)}"` : '';
   const tone = tl.meta.evidence === 'observed' ? 'backend' : 'messagebus';
   return `        <g data-timeline-evidence="${esc(tl.meta.evidence)}">
           <rect x="${layout.margin}" y="14" width="${evidenceW}" height="22" rx="11" class="c-${tone}" stroke-width="1"/>
           <circle cx="${layout.margin + 11}" cy="25" r="3" class="t-${tone}"/>
-          <text x="${layout.margin + evidenceW / 2 + 5}" y="29" class="t-${tone}" font-size="10.5" font-weight="700" text-anchor="middle">${esc(evidence)}</text>
+          <text x="${layout.margin + evidenceW / 2 + 5}" y="29" class="t-${tone}" font-size="10.5" font-weight="700" text-anchor="middle"${evidenceAttrs}>${evidenceContent}</text>
         </g>
-        <text data-timeline-axis-caption="" x="${layout.margin + evidenceW + 14}" y="29.5" class="t-muted" font-size="11.5">${esc(caption)}</text>`;
+        <text data-timeline-axis-caption="" x="${layout.margin + evidenceW + 14}" y="29.5" class="t-muted" font-size="11.5"${captionAttrs}>${captionContent}</text>`;
 }
 
 function renderLanes() {
