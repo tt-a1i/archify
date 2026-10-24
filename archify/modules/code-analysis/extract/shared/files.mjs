@@ -14,10 +14,12 @@ export function toPosix(p) {
 // inventory as the sources, so grouping never mixes two tree states;
 // directories the config excludes stay excluded.
 export const PACKAGE_MARKERS = ['package.json', 'pyproject.toml', '__init__.py'];
+// Java module boundaries: Maven and Gradle build files, collected for Java runs only.
+export const JAVA_BUILD_MARKERS = ['pom.xml', 'build.gradle', 'build.gradle.kts'];
 
-export function packageMarkersIn(names, config) {
+export function packageMarkersIn(names, config, markers = PACKAGE_MARKERS) {
   const exclude = matcher(config.exclude || []);
-  return names.filter(rel => PACKAGE_MARKERS.includes(rel.slice(rel.lastIndexOf('/') + 1))
+  return names.filter(rel => markers.includes(rel.slice(rel.lastIndexOf('/') + 1))
     && !exclude(rel)
     && !rel.split('/').slice(0, -1).some((_, i, parts) => exclude(`${parts.slice(0, i + 1).join('/')}/`)))
     .sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
@@ -35,11 +37,11 @@ export function snapshotFiles(root, config, accept = () => true) {
 
 // One enumeration yields both the captured sources and the package markers,
 // so a marker created or removed after it cannot regroup the captured bytes.
-export function snapshotSources(root, config, accept = () => true) {
+export function snapshotSources(root, config, accept = () => true, markers = PACKAGE_MARKERS) {
   const include = matcher(config.include);
-  const entries = collectFiles(root, { ...config, include: [...(config.include || []), ...PACKAGE_MARKERS.map(name => `**/${name}`)] });
+  const entries = collectFiles(root, { ...config, include: [...(config.include || []), ...markers.map(name => `**/${name}`)] });
   const contents = captureEntries(entries.filter(entry => include(entry.rel) && accept(entry.rel)));
-  return { contents, packageMarkers: packageMarkersIn(entries.map(entry => entry.rel), config) };
+  return { contents, packageMarkers: packageMarkersIn(entries.map(entry => entry.rel), config, markers) };
 }
 
 // Resolution needs a frozen inventory even for files excluded from analysis.

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { DiagnosticError, fail, receipt } from '../extract/shared/diagnostics.mjs';
 
 export const USAGE = `Usage:
-  archify code-analysis check <repo-root> [--language ts|py] [--config file.json]
+  archify code-analysis check <repo-root> [--language ts|py|java] [--config file.json]
                               [--baseline baseline.json] [--compare findings.json] [--out dir]
                               [--fail-on error|warning|info|never] [--new-only]
                               [--update-baseline] [--reason text] [--json]
@@ -124,7 +124,7 @@ export function formatText(r) {
   const lines = [];
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
-  lines.push(`  ${r.language === 'py' ? 'Python' : 'JS/TS'} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
   if (r.review.comparison) {
     const c = r.review.comparison;
     lines.push(`  Since the previous run: ${c.new} new, ${c.notDetected} no longer detected, ${c.evidenceChanged} with changed evidence`);

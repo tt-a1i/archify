@@ -2,12 +2,14 @@
   "schema_version": 1,
   "include": [
     "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-    "**/*.py"
+    "**/*.py",
+    "**/*.java"
   ],
   "exclude": [
     "**/node_modules/**",
     "**/dist/**",
     "**/build/**",
+    "**/target/**/*.java",
     "**/coverage/**",
     "**/*.d.ts",
     "**/venv/**",

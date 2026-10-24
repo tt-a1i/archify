@@ -88,6 +88,10 @@ jobs:
       - name: Verify community Hermes adapter
         if: matrix.shard == 2
         run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
+      # The root runner enumerates only test/; the module suite lives with the module.
+      - name: Code Analysis module suite
+        if: matrix.shard == 1
+        run: npm --prefix archify run test:code-analysis
       - name: Run a complete regression shard
         run: node scripts/run-tests.mjs --shard=${{ matrix.shard }}/2
 

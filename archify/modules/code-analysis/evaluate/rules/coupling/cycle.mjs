@@ -19,6 +19,7 @@ const isEager = (e) => e.kinds.eager !== undefined ? e.kinds.eager > 0
   : !['lazy', 'typeOnly', 'conditional'].some((flag) => e.kinds[flag] > 0);
 
 export function run({ graph }) {
+  const java = graph.repository?.language === 'java';
   const ids = graph.modules.map((m) => m.id).sort();
   const sccsOf = (edges) => cyclicComponents(ids, edges);
   const all = sccsOf(graph.edges);
@@ -35,7 +36,7 @@ export function run({ graph }) {
     // nested inside it, so a mixed component is never described as safe.
     const eagerSurvives = eagerKey.has(scc.join(' ')) || eager.some((e) => e.length > 1 && e.every((m) => set.has(m)) && e.length === scc.length);
     const lazyEdges = internal.filter(lazyOnly);
-    const kind = eagerSurvives ? 'eager' : 'mixed';
+    const kind = java ? 'structural' : eagerSurvives ? 'eager' : 'mixed';
     const pathEdges = eagerSurvives ? internal.filter(isEager) : internal;
     const pathOut = new Map(scc.map((id) => [id, []]));
     for (const edge of pathEdges) pathOut.get(edge.from).push(edge.to);
@@ -43,14 +44,16 @@ export function run({ graph }) {
     const path = shortestCycle(scc[0], pathOut, set);
     return {
       code, dimension, severity, confidence,
-      message: eagerSurvives
+      message: java
+        ? `${scc.length} modules form a structural Java dependency cycle: ${path.map(id => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. Directory grouping does not establish file cycles or class initialization behavior.`
+        : eagerSurvives
         ? `${scc.length} modules depend on each other at package level: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. See coupling/import-cycle for whether any file actually cycles.`
         : `${scc.length} modules form a package-level dependency component containing deferred, conditional, or type-only edges: ${path.map((id) => labelOf.get(id)).join(' → ')} → ${labelOf.get(path[0])}. This grouping does not establish initialization behavior; it may also contain module-scope subcycles.`,
       subject: { modules: scc },
       evidence: {
         kind,
         path,
-        edges: internal.map((e) => ({ from: e.from, to: e.to, weight: e.weight, lazy: e.kinds.lazy || 0, deferred: !isEager(e) })),
+        edges: internal.map((e) => ({ from: e.from, to: e.to, weight: e.weight, lazy: e.kinds.lazy || 0, ...(!java ? { deferred: !isEager(e) } : {}) })),
         closingLazyImports: lazyEdges.flatMap((e) => e.evidence.map((v) => ({ file: v.file, line: v.line, to: v.to }))).slice(0, 8),
         imports: internal.flatMap((e) => e.evidence.slice(0, 2).map((v) => ({ file: v.file, line: v.line, to: v.to, ...Object.fromEntries(['lazy', 'conditional', 'typeOnly', 'deferred'].filter((flag) => v[flag]).map((flag) => [flag, true])) }))).slice(0, 12),
         totalImports: internal.reduce((n, e) => n + e.weight, 0),
@@ -59,7 +62,7 @@ export function run({ graph }) {
       supportedFixes: [
         'move the shared piece both sides need into a new leaf module',
         'invert one edge by passing the dependency in as a parameter',
-        'if one direction is a single import, check whether it is a convenience re-export that can be dropped',
+        java ? 'review package boundaries and public APIs before moving types' : 'if one direction is a single import, check whether it is a convenience re-export that can be dropped',
       ],
     };
   });

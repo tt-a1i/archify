@@ -165,16 +165,19 @@ function indicators(set, mods, findings, mapping, filePaths) {
   const fileCycles = findings.filter((f) => f.code === 'coupling/import-cycle' && f.subject.files.some((p) => filePaths.has(p)));
   const proven = fileCycles.filter((f) => f.severity === 'error');
   const eagerFileCycles = fileCycles.filter((f) => f.evidence.kind === 'eager' && f.severity !== 'error');
-  const lazyFileCycles = fileCycles.filter((f) => f.evidence.kind !== 'eager');
+  const structuralFileCycles = fileCycles.filter((f) => f.evidence.kind === 'structural');
+  const lazyFileCycles = fileCycles.filter((f) => !['eager', 'structural'].includes(f.evidence.kind));
   const cycles = findings.filter((f) => f.code === 'coupling/cycle' && f.subject.modules.some((m) => set.has(m)));
   const partners = new Set();
   for (const f of cycles) for (const m of f.subject.modules) if (!set.has(m)) partners.add(owner.get(m) ? `component:${owner.get(m)}` : `module:${m}`);
   const internalOnly = cycles.length > 0 && partners.size === 0;
-  const cycleStatus = proven.length ? 'red' : eagerFileCycles.length ? 'amber' : (lazyFileCycles.length || cycles.length) ? 'blue' : 'green';
+  const cycleStatus = proven.length ? 'red' : eagerFileCycles.length ? 'amber' : (structuralFileCycles.length || lazyFileCycles.length || cycles.length) ? 'blue' : 'green';
   const cycleValue = proven.length
     ? `reported import-cycle error (${proven.map((f) => f.subject.files.length).join(', ')} files) ${proven[0].evidence.risk ? ` — ${proven[0].evidence.risk.loadingNote}` : ""}`
     : eagerFileCycles.length
       ? `module-scope import cycle (${eagerFileCycles.map((f) => f.subject.files.length).join(', ')} files); load-time behavior unverified`
+      : structuralFileCycles.length
+        ? `structural Java dependency cycle (${structuralFileCycles.map(f => f.subject.files.length).join(', ')} files); class initialization not assessed`
       : lazyFileCycles.length
         ? `cycle with deferred or conditional imports (${lazyFileCycles.map((f) => f.subject.files.length).join(', ')} files); initialization behavior not proven`
         : cycles.length
@@ -784,15 +787,16 @@ const JS = `
       ev += '<div class="ev" style="margin-top:4px">' + (isCycle ? 'Imports on the cycle — click one to see the code:' : crossing ? 'Imports that cross the boundary — click one to see the code:' : 'Evidence — click to see the code:') + '</div>';
       f.evidence.imports.slice(0, 8).forEach(function (v) {
         if (crossing) {
-          var kind = v.typeOnly ? 'type-only import' : (v.lazy || v.conditional) ? 'deferred or conditional import' : 'module-scope import';
+          var kind = data.repository.language === 'java' ? 'Java source dependency' : v.typeOnly ? 'type-only import' : (v.lazy || v.conditional) ? 'deferred or conditional import' : 'module-scope import';
           ev += ref(v.file, v.line, '<span>→ ' + esc(short(v.to)) + '</span> <em>· ' + kind + '</em>',
             'This import makes ' + crossing.from + ' depend on ' + crossing.to + ', which the configured rule forbids.' + (v.typeOnly ? ' It is type-only: nothing is loaded at runtime, but the layer still depends on code in the other layer.' : ''), tone);
           return;
         }
         var deferred = v.lazy || v.conditional || v.deferred || v.typeOnly;
-        var kindText = deferred ? 'deferred / conditional / type-only import · dashed' : 'recorded module-scope import · solid';
+        var structural = f.evidence.kind === 'structural';
+        var kindText = structural ? 'Java source dependency · solid' : deferred ? 'deferred / conditional / type-only import · dashed' : 'recorded module-scope import · solid';
         ev += ref(v.file, v.line, '<span>→ ' + esc(short(v.to)) + '</span> <em>· ' + kindText + '</em>',
-          deferred ? 'Execution timing is not proven; deferred functions may be called during initialization. Type-only imports are not runtime dependencies.' : 'Recorded at module scope; execution order and runtime behavior are not verified.', tone);
+          structural ? 'A recorded Java import or type reference; class initialization behavior was not assessed.' : deferred ? 'Execution timing is not proven; deferred functions may be called during initialization. Type-only imports are not runtime dependencies.' : 'Recorded at module scope; execution order and runtime behavior are not verified.', tone);
       });
       if (f.evidence.imports.length > 8) ev += '<div class="ev">… ' + (f.evidence.imports.length - 8) + ' more in findings.json</div>';
     }
@@ -887,7 +891,7 @@ const JS = `
     'none-found': { tone: 'green', text: 'No findings within the checks that ran' }
   };
   var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
-  var LANGS = { py: 'Python', ts: 'JS/TS' };
+  var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java' };
   function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
   function toneOf(severity) { return severity === 'error' ? 'red' : severity === 'warning' ? 'amber' : 'blue'; }
   function modLabel(id) { return moduleInfo[id] ? moduleInfo[id].label : id; }
@@ -897,7 +901,8 @@ const JS = `
     if (f.code === 'coupling/cycle' && s.modules) return 'Module cycle · ' + plural(s.modules.length, 'module');
     if (f.code === 'coupling/hub' && s.module) return modLabel(s.module) + ' connects many modules';
     if (f.code === 'architecture/boundary' && s.boundary) return s.boundary.from + ' depends on ' + s.boundary.to;
-    if (f.code === 'complexity/function' && s.function) return s.function + '() is complex';
+    // Java names carry their parameter types to tell overloads apart.
+    if (f.code === 'complexity/function' && s.function) return s.function + (s.function.endsWith(')') ? '' : '()') + ' is complex';
     return f.code;
   }
   function findingWhat(f) {
@@ -935,7 +940,8 @@ const JS = `
     var pe = files.parseErrors || [];
     if (pe.length) lines.push(plural(pe.length, 'file') + ' could not be parsed: ' + pe.slice(0, 3).join(', ') + (pe.length > 3 ? ' …' : ''));
     var u = c.unresolved || {}, unresolved = (u.unknown || 0) + (u.opaque || 0);
-    if (unresolved) lines.push(plural(unresolved, 'import') + ' could not be resolved');
+    // Java counts each unresolved type reference as well as imports.
+    if (unresolved) lines.push(plural(unresolved, c.language === 'java' ? 'dependency record' : 'import') + ' could not be resolved');
     if ((c.unmappedModules || []).length) lines.push(plural(c.unmappedModules.length, 'module') + ' not on this diagram');
     var run = (c.rules && c.rules.run) || [], off = (c.rules && c.rules.suppressed) || [];
     lines.push('Checked: ' + (run.length ? run.map(function (r) { return (GROUPS[r] || r).toLowerCase(); }).join(', ') : 'nothing') + (off.length ? ' · switched off: ' + off.join(', ') : ''));
@@ -1310,7 +1316,7 @@ const JS = `
     nodes.forEach(function (n) { svg += nodeRect(pos[n].x, pos[n].y, bw, bh, short(n), mine[n] ? 'focus' : ''); });
     svg += '</svg>';
     return svg + '<div class="caption">' + (isFile ? 'Representative file cycle.' : 'Representative package-level cycle.') + ' Runtime failure is not proven.</div><details><summary>How to read this diagram</summary><div class="caption">Solid = recorded module-scope dependency; dashed = deferred, conditional, type-only or asynchronous dependency. Green box = belongs to this component. Line numbers are in the findings below. ' +
-      (f.evidence.kind !== 'eager' ? 'This dependency component contains deferred, conditional, or type-only edges. The drawing does not prove import-time safety.' : 'Module-scope dependency cycle. Inspect execution order and binding access; a graph alone does not prove failure.') + '</div></details>';
+      (f.evidence.kind === 'structural' ? 'Structural Java source dependencies. Class initialization order and runtime failure were not assessed.' : f.evidence.kind !== 'eager' ? 'This dependency component contains deferred, conditional, or type-only edges. The drawing does not prove import-time safety.' : 'Module-scope dependency cycle. Inspect execution order and binding access; a graph alone does not prove failure.') + '</div></details>';
   }
   // Star: dependents on the left, dependencies on the right.
   function hubDiagram(c, fl) {

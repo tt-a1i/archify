@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "ajv": "^8.17.1",
+    "java-parser": "3.0.1",
     "typescript": "^5.6.0"
   },
   "repository": {

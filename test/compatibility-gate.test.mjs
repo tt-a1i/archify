@@ -39,6 +39,8 @@ test('all maintained Node check names remain and publication uses exhaustive ver
   assert.equal(generated.if, 'matrix.shard == 2', 'complete generated checks run once inside a regression shard');
   const hermes = full.steps.find(step => step.run === 'node --test integrations/hermes-agent/test/plugin-contract.test.mjs');
   assert.equal(hermes.if, 'matrix.shard == 2');
+  const moduleSuite = full.steps.find(step => step.run === 'npm --prefix archify run test:code-analysis');
+  assert.equal(moduleSuite?.if, 'matrix.shard == 1', 'the Code Analysis module suite runs once, outside the root runner');
   assert.equal(full.steps.filter(step => step.run === 'npm run test:generated').length, 1);
   const coreGenerated = canonical.steps.find(step => step.run === 'npm run test:generated');
   assert.equal(coreGenerated.if, "needs.scope.outputs.scope == 'core' && needs.scope.outputs.generated == 'true'");

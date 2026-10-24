@@ -49,13 +49,12 @@ export function runWorker(options) {
   });
 }
 
-// The module's two dependencies (typescript for the JS/TS extractor, ajv for
-// schema checks) live in its own package. Archify itself needs no install, and
+// Parser and schema dependencies live in the module's own package. Archify itself needs no install, and
 // the skill is often used from a plain copy of the folder, so the first `serve`
 // installs them on demand instead of asking for a separate setup step.
 export async function ensureDependencies(root = moduleRoot) {
   root = fs.realpathSync(root);
-  const missingPackages = () => ['typescript', 'ajv'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
+  const missingPackages = () => ['typescript', 'ajv', 'java-parser'].filter(name => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json')));
   // Installed, read-only copies need no lock file. An active installer must
   // finish even if its package manifests have already appeared.
   if (!missingPackages().length && !fs.existsSync(path.join(root, '.code-analysis-install.lock'))) return false;
@@ -78,7 +77,7 @@ export async function ensureDependencies(root = moduleRoot) {
 
 export const USAGE = `Usage:
   archify code-analysis serve <repo-root> --ir <architecture.json> --out <dir>
-                              [--language ts|py] [--map overlay-map.json] [--config file.json]
+                              [--language ts|py|java] [--map overlay-map.json] [--config file.json]
                               [--baseline baseline.json] [--quality standard|showcase]
 
 Delivers the authored diagram with Archify, serves it on a local port, and runs the

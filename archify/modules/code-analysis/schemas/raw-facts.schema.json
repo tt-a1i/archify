@@ -18,7 +18,7 @@
         "sourceKind": { "enum": ["working-tree"] },
         "snapshotId": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Digest identifying the extracted facts and captured source text." },
         "url": { "type": ["string", "null"], "description": "Git origin URL as configured; null when there is no Git repository or no origin." },
-        "language": { "enum": ["ts", "py"] },
+        "language": { "enum": ["ts", "py", "java"] },
         "adapter": { "type": "string" }
       }
     },
@@ -38,6 +38,7 @@
     },
     "imports": {
       "type": "array",
+      "description": "Recorded source dependencies. Java also records type references that may denote an analyzed type; static describes a statically recorded edge, not specifically Java's import static keyword.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -66,7 +67,7 @@
     },
     "functions": {
       "type": "array",
-      "description": "Function-level measurements (Python adapter). Absent when the adapter does not measure functions, which the complexity rule treats as not checked rather than clean.",
+      "description": "Function-level measurements from Python, JS/TS or Java. Absent when the adapter does not measure functions, which the complexity rule treats as not checked rather than clean.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -101,7 +102,7 @@
     "calls": { "type": "array", "description": "Reserved for M2 (Call Graph).", "items": { "type": "object" } },
     "packageMarkers": {
       "type": "array",
-      "description": "Package marker files (package.json, pyproject.toml, __init__.py) under the analyzed root, relative POSIX paths. Module grouping uses them as package boundaries; adapters do not parse them.",
+      "description": "Package marker files (package.json, pyproject.toml, __init__.py; for Java also pom.xml, build.gradle, build.gradle.kts) under the analyzed root, relative POSIX paths. Module grouping uses them as package boundaries; adapters do not parse them.",
       "items": { "type": "string", "minLength": 1 }
     },
     "parse_errors": {
@@ -119,9 +120,9 @@
       "additionalProperties": false,
       "required": ["external", "outside", "unknown", "opaque"],
       "properties": {
-        "external": { "type": "integer", "minimum": 0, "description": "Bare or node: specifiers." },
+        "external": { "type": "integer", "minimum": 0, "description": "Third-party or standard-library dependencies: bare or node: specifiers, Python modules outside the tree, Java imports of packages no analyzed file declares." },
         "outside": { "type": "integer", "minimum": 0, "description": "Resolved to a file outside the analyzed root." },
-        "unknown": { "type": "integer", "minimum": 0, "description": "Path-like specifier that could not be resolved." },
+        "unknown": { "type": "integer", "minimum": 0, "description": "Dependencies that look internal but could not be resolved: path-like or in-tree specifiers, Java names in an analyzed package or matching an analyzed type." },
         "opaque": { "type": "integer", "minimum": 0, "description": "Dynamic import/require whose specifier is not a string literal (recorded as \"<computed>\")." }
       }
     }

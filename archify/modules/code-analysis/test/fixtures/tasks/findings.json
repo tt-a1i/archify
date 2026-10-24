@@ -30,7 +30,7 @@
     },
     "language": "py",
     "adapter": "python@3.13.16",
-    "configDigest": "324b819276b800bdabf528ab74208d2c7b906330003b9c94627a196856f6d4a4",
+    "configDigest": "716da75c0e50bafceba14d3fee738f6e39d6a0d7a725f7122fe7eed031c4187e",
     "ruleVersions": {
       "architecture/boundary": 1,
       "complexity/function": 1,

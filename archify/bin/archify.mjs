@@ -2190,10 +2190,10 @@ function invalidProvenance(artifactPath, sidecar, reason, evidence = {}) {
 }
 
 const COMMAND_USAGE = {
-  start: '<repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+  start: '<repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
   'code-analysis': [
-    'serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
-    'check <repo-root> [--language ts|py] [--config file] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline] [--reason text] [--json]',
+    'serve <repo-root> --ir <architecture.json> --out <dir> [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]',
+    'check <repo-root> [--language ts|py|java] [--config file] [--baseline file] [--compare findings.json] [--out dir] [--fail-on error|warning|info|never] [--new-only] [--update-baseline] [--reason text] [--json]',
     'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
     'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
   ],
@@ -7227,7 +7227,7 @@ try {
       break;
     case 'start': {
       if (!args.length || args[0] === '--help' || args[0] === '-h') {
-        console.log('Usage: archify start <repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
+        console.log('Usage: archify start <repo-root> --ir <architecture.json> [--out <dir>] [--language ts|py|java] [--map file] [--config file] [--baseline file] [--quality standard|showcase]');
         break;
       }
       const { startAnalysisView } = await import('../modules/code-analysis/bin/serve.mjs');

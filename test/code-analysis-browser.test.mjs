@@ -8,6 +8,66 @@ import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs
 import { startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
 
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
+
+test('Code Analysis presents Java cycles as structural dependencies in the browser', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-java-browser-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const root = path.join(scratch, 'repo');
+  for (const name of ['a', 'b']) fs.mkdirSync(path.join(root, name), { recursive: true });
+  fs.writeFileSync(path.join(root, 'a/A.java'), 'package a; import b.B; class A { B b; b.Gone gone; }');
+  fs.writeFileSync(path.join(root, 'b/B.java'), 'package b; import a.A; class B { A a; }');
+  const ir = path.join(scratch, 'input.json');
+  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Java dependency cycle', output: 'architecture.html' },
+    components: [{ id: 'app', type: 'backend', label: 'Java app', pos: [40, 40], size: [180, 64] }], connections: [] }));
+  const map = path.join(scratch, 'map.json');
+  fs.writeFileSync(map, JSON.stringify({ app: ['a', 'b'] }));
+  const view = await startAnalysisView([root, '--ir', ir, '--map', map, '--out', path.join(scratch, 'view'), '--language', 'java']);
+  const sockets = new Set();
+  view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
+  t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: view.url });
+  await loaded;
+  await run("document.getElementById('code-analysis-start').click()");
+  await run(`new Promise((resolve, reject) => { const deadline = Date.now() + 15000; const poll = () => {
+    if (document.documentElement.getAttribute('data-bauify') === 'on') return resolve(true);
+    if (Date.now() > deadline) return reject(new Error('Java analysis did not open'));
+    setTimeout(poll, 25);
+  }; poll(); })`);
+  assert.match(await run("document.querySelector('details.coverage summary').textContent"), /^Coverage · Java · 2 files/);
+  // Java counts unresolved type references too, so the page does not call them imports.
+  const coverage = await run("document.querySelector('details.coverage').textContent");
+  assert.match(coverage, /1 dependency record could not be resolved/);
+  assert.doesNotMatch(coverage, /imports? could not be resolved/);
+  for (const title of ['Module cycle', 'Import cycle']) {
+    await run(`[...document.querySelectorAll('#bauify-overview .bauify-item')].find(el => el.querySelector('b').textContent.startsWith(${JSON.stringify(title)})).click()`);
+    await run(`new Promise((resolve, reject) => { const deadline = Date.now() + 5000; const poll = () => {
+      if (document.querySelector('#bauify-detail h3')?.textContent.startsWith(${JSON.stringify(title)})) return resolve();
+      if (Date.now() > deadline) return reject(new Error('Cycle detail did not open'));
+      setTimeout(poll, 25);
+    }; poll(); })`);
+    const detail = await run("document.getElementById('bauify-detail').textContent");
+    assert.match(detail, /structural (Java )?dependency cycle/);
+    assert.doesNotMatch(detail, /partially initialized|module-scope import|deferred or conditional imports|\bundefined\b/);
+    if (title === 'Import cycle') {
+      assert.match(detail, /import risk: not-assessed/);
+      const risk = await run("[...document.querySelectorAll('#bauify-detail .ev')].find(el => el.textContent.startsWith('import risk:')).textContent");
+      assert.match(risk, /initialization.*not assessed/i);
+    }
+  }
+});
+
 test('Code Analysis refuses changed IR and preserves captured source in the current Viewer', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
 }, async t => {

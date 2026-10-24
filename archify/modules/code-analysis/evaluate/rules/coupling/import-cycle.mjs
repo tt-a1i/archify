@@ -22,6 +22,31 @@ export function run({ graph, facts }) {
   const edges = facts.imports.filter((i) => i.resolved && !i.typeOnly && !skip.has(i.from) && !skip.has(i.to)).map((e) => ({ ...e, ...(e.names ? { names: [...e.names].sort() } : {}) })).sort(compareImport);
   const files = [...new Set(edges.flatMap((e) => [e.from, e.to]))].sort();
   const all = cyclicComponents(files, edges, true);
+  if (facts.repository.language === 'java') return all.map(scc => {
+    const set = new Set(scc);
+    const internal = edges.filter(e => set.has(e.from) && set.has(e.to));
+    const path = shortestCycle(scc[0], internal, set);
+    return {
+      code, dimension, confidence, severity: 'info',
+      message: `${scc.length} Java files form a structural dependency cycle: ${path.join(' → ')} → ${path[0]}. Imports and type references do not establish class initialization order or runtime failure.`,
+      subject: { files: scc },
+      evidence: {
+        kind: 'structural',
+        risk: {
+          loading: 'not-assessed', coupling: 'present',
+          loadingNote: 'Class initialization order and runtime failure were not assessed.',
+        },
+        path,
+        pathImports: path.map((from, i) => {
+          const to = path[(i + 1) % path.length];
+          return { file: from, to, line: internal.find(e => e.from === from && e.to === to).line };
+        }),
+        imports: internal.slice(0, 16).map(e => ({ file: e.from, to: e.to, line: e.line, kind: e.kind })),
+        totalImports: internal.length, lazyImports: 0, threshold: null,
+      },
+      supportedFixes: ['review whether the mutual source dependency is intentional', 'extract a shared interface or value type if it separates responsibilities', 'preserve public APIs and initialization behavior when changing dependencies'],
+    };
+  });
   const eagerEdges = edges.filter((e) => !e.lazy && !e.conditional && !(facts.repository.language === 'ts' && e.kind === 'dynamic'));
   const eager = cyclicComponents(files, eagerEdges, true);
   const eagerKeys = new Set(eager.map((s) => s.join('\n')));

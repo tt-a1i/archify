@@ -89,3 +89,63 @@ test('Code Analysis shows complex Python functions in the overview, problem page
   await wait("!document.getElementById('bauify-panel').hidden && /Web/.test(document.getElementById('bauify-panel').innerText)");
   assert.doesNotMatch(await run("document.getElementById('bauify-panel').innerText"), /Complex functions/);
 });
+
+for (const fixture of [
+  {
+    language: 'ts', file: 'handlers.mjs',
+    source: `server.on('request', req => { if (req) return 1; return 0; });
+server.on('request', req => { if (req) return 2; return 0; });`,
+    titles: ['<callback of server.on("request")>() is complex', '<callback of server.on("request")>#2() is complex'],
+  },
+  {
+    language: 'java', file: 'Service.java',
+    source: `class Service {
+  boolean remove(Object value) { if (value == null) return false; return true; }
+  boolean remove(String value) { if (value == null) return false; return true; }
+}`,
+    titles: ['Service.remove(Object) is complex', 'Service.remove(String) is complex'],
+  },
+]) test(`Code Analysis preserves complexity titles for ${fixture.language} callbacks and signatures`, {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-complexity-title-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const root = path.join(scratch, 'repo');
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'src', fixture.file), fixture.source);
+  const ir = path.join(scratch, 'input.json');
+  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Complexity titles', output: 'architecture.html' },
+    components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [180, 64] }], connections: [] }));
+  const map = path.join(scratch, 'map.json');
+  fs.writeFileSync(map, JSON.stringify({ app: ['src'] }));
+  const config = path.join(scratch, 'config.json');
+  fs.writeFileSync(config, JSON.stringify({ rules: { complexity: { function: { info: { complexity: 2 } } } } }));
+  const view = await startAnalysisView([root, '--ir', ir, '--map', map, '--config', config, '--out', path.join(scratch, 'view'), '--language', fixture.language]);
+  const sockets = new Set();
+  view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
+  t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: view.url });
+  await loaded;
+  await run("document.getElementById('code-analysis-start').click()");
+  await run(`new Promise((resolve, reject) => { const deadline = Date.now() + 15000; const poll = () => {
+    if (document.documentElement.getAttribute('data-bauify') === 'on') return resolve();
+    if (Date.now() > deadline) return reject(new Error('Analysis did not open'));
+    setTimeout(poll, 25);
+  }; poll(); })`);
+  const titles = await run("[...document.querySelectorAll('#bauify-overview .bauify-item > b')].map(el => el.textContent)");
+  assert.deepEqual([...new Set(titles)].sort(), fixture.titles.slice().sort());
+  for (const title of fixture.titles) {
+    await run(`[...document.querySelectorAll('#bauify-overview .bauify-item')].find(el => el.querySelector('b').textContent === ${JSON.stringify(title)}).click()`);
+    assert.equal(await run("document.querySelector('#bauify-detail h3').textContent"), title);
+  }
+});

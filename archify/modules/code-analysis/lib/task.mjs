@@ -131,7 +131,9 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
     source: sourceOf(findings, facts),
     locations,
     facts: selected.map((d) => ({ findingId: d.id, statement: d.message, evidence: keyEvidence(d) })),
-    impact: selected.map((d) => ({ findingId: d.id, statement: IMPACT[d.code] || 'See the finding message.' })),
+    impact: selected.map((d) => ({ findingId: d.id, statement: facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
+      ? 'These Java files depend on each other structurally. This can couple changes and tests; class initialization order and runtime failure were not assessed.'
+      : IMPACT[d.code] || 'See the finding message.' })),
     suggestions: selected.flatMap((d) => (d.supportedFixes || []).map((text) => ({ findingId: d.id, text }))),
     scope: {
       modify,
@@ -140,7 +142,9 @@ export function buildTask({ findings, facts, ids, commands = [], review = null }
         ? 'Change the files under "modify"; "read" lists files the finding was computed from, for context. Before changing any other file, say which and why.'
         : 'No line evidence: read the listed files and propose a scope before changing anything.',
     },
-    preserve: [...new Set(selected.flatMap((d) => (PRESERVE[d.code] || (() => ['Existing behaviour of the code involved.']))(d)))],
+    preserve: [...new Set(selected.flatMap((d) => facts.repository?.language === 'java' && d.code === 'coupling/import-cycle'
+      ? ['Public Java type names, packages and APIs used by callers.', 'Class initialization behavior and observable side effects.']
+      : (PRESERVE[d.code] || (() => ['Existing behaviour of the code involved.']))(d)))],
     acceptance: [
       ...selected.flatMap((d) => (ACCEPTANCE[d.code] || (() => [`Re-analysis no longer reports ${d.id}.`]))(d)),
       'A re-analysis with the same language and configuration reports no new finding in the files changed, and its comparison is marked comparable.',
@@ -369,7 +373,7 @@ export function renderTaskMarkdown(task) {
     else if (status) line(status.slice(3));
     if (!loc.excerpt) { line(); line(loc.kind === 'file' ? '_No line evidence for this file; read it in the working tree._' : '_Source text was not captured; read the file in the working tree._'); line(); continue; }
     line();
-    const lang = task.source.language === 'py' ? 'python' : task.source.language === 'ts' ? 'ts' : '';
+    const lang = ({ py: 'python', ts: 'ts', java: 'java' })[task.source.language] || '';
     const width = String(loc.excerpt.segments[loc.excerpt.segments.length - 1].endLine).length;
     const body = [];
     loc.excerpt.segments.forEach((seg, i) => {
