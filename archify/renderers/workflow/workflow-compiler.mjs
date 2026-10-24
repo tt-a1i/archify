@@ -5770,7 +5770,7 @@ function compileWithRouteOrderFeedback(options) {
       const outgoing = options.workflow.edges.filter(edge => edge.from === node.id);
       return outgoing.length > 1 && outgoing.some(edge => edge.route === 'drop'
         && !edge.via && edge.channelX === undefined && edge.channelY === undefined && !edge.labelAt);
-    }).slice(0, 4);
+    }).sort((left, right) => stableCompare(left.id, right.id)).slice(0, 4);
     for (const node of forks) {
       try {
         const candidate = compileWorkflowInternal({ ...options,

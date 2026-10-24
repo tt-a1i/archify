@@ -199,9 +199,35 @@ test('relative drop forks recover without changing source constraints or semanti
   assert.ok(constrained.at(-2)[1] < constrained.at(-1)[1], 'authored top arrival');
 });
 
-test('relative drop recovery is stable under authored array reordering', () => {
-  const first = compileWorkflow({ workflow: structuredClone(fixture), qualityProfile: 'showcase' });
-  const reordered = structuredClone(fixture);
+test('relative drop recovery is stable when eligible forks exceed the retry limit', () => {
+  const workflow = structuredClone(fixture);
+  // Four already-routable forks must not push the original repairable fork
+  // outside the retry budget when authored arrays are reversed.
+  for (const prefix of ['z_first_', 'z_second_']) {
+    const copy = structuredClone(fixture);
+    for (const lane of copy.lanes) lane.id = prefix + lane.id;
+    for (const node of copy.nodes) {
+      node.id = prefix + node.id;
+      node.lane = prefix + node.lane;
+    }
+    for (const edge of copy.edges) {
+      edge.id = prefix + edge.id;
+      edge.from = prefix + edge.from;
+      edge.to = prefix + edge.to;
+      delete edge.fromSide;
+      delete edge.toSide;
+    }
+    workflow.lanes.push(...copy.lanes);
+    workflow.nodes.push(...copy.nodes);
+    workflow.edges.push(...copy.edges);
+    workflow.semanticChecks.allowedRoots.push(...copy.semanticChecks.allowedRoots.map(id => prefix + id));
+    workflow.semanticChecks.allowedTerminals.push(...copy.semanticChecks.allowedTerminals.map(id => prefix + id));
+    workflow.semanticChecks.requiredEdges.push(...copy.semanticChecks.requiredEdges.map(edge => ({
+      from: prefix + edge.from, to: prefix + edge.to,
+    })));
+  }
+  const first = compileWorkflow({ workflow: structuredClone(workflow), qualityProfile: 'showcase' });
+  const reordered = structuredClone(workflow);
   reordered.edges.reverse();
   reordered.nodes.reverse();
   const second = compileWorkflow({ workflow: reordered, qualityProfile: 'showcase' });
