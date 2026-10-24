@@ -64,3 +64,11 @@ test('Cloudflare output resolves nested-page assets against the HTML base', t =>
   fs.rmSync(path.join(root, 'site.css'));
   assert.throws(() => checkCloudflareOutput(root), /missing local target site\.css/);
 });
+
+test('Cloudflare output verifies assets inside deferred HTML templates', t => {
+  const root = fixture(t);
+  fs.appendFileSync(path.join(root, 'index.html'), '<template><section><img src="card-preview.png"></section></template>');
+  assert.throws(() => checkCloudflareOutput(root), /missing local target card-preview\.png/);
+  fs.writeFileSync(path.join(root, 'card-preview.png'), 'preview fixture');
+  assert.equal(checkCloudflareOutput(root), 11);
+});
