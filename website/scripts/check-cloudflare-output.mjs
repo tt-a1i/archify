@@ -15,6 +15,7 @@ export function checkCloudflareOutput(root) {
       assert.ok(!entry.isSymbolicLink(), `Static output must not contain a symlink: ${file}`);
       if (entry.isDirectory()) checkAssets(file);
       else {
+        assert.ok(entry.isFile(), `Static output asset must be a regular file: ${file}`);
         fileCount += 1;
         assert.ok(fs.statSync(file).size <= 25 * 1024 * 1024, `Cloudflare Pages asset exceeds 25 MiB: ${file}`);
       }
