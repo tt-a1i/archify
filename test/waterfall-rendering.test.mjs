@@ -196,3 +196,24 @@ test('waterfall: services past the five colours share a legend entry instead of 
   assert.ok(labels.includes('auth · postgres'), labels.join(' | '));
   assert.ok(labels.includes('cart'), labels.join(' | '));
 });
+
+test('waterfall: nested spans inherit service ownership before applying error paint', () => {
+  const diagram = clone(small);
+  diagram.spans = [
+    { id: 'failed', name: 'Failure', parent: 'child', start: 20, duration: 10, status: 'error' },
+    { id: 'child', name: 'Child', parent: 'root', start: 10, duration: 30 },
+    { id: 'root', name: 'Root', service: 'gateway', start: 0, duration: 100 },
+    { id: 'other', name: 'Other', service: 'database', parent: 'root', start: 50, duration: 20 },
+    { id: 'unowned', name: 'Unowned root', start: 80, duration: 20 },
+  ];
+  const result = run(diagram);
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(result.output, 'utf8');
+  const node = id => html.match(new RegExp(`<g [^>]*data-node-id="${id}"[^>]*>`))?.[0];
+  assert.match(node('child'), /data-waterfall-service="gateway"/);
+  assert.match(node('failed'), /data-waterfall-service="gateway"/);
+  assert.match(node('failed'), /data-node-kind="security"/);
+  assert.match(node('other'), /data-waterfall-service="database"/);
+  assert.doesNotMatch(node('unowned'), /data-waterfall-service=/);
+  assert.match(node('unowned'), /data-node-kind="external"/);
+});
