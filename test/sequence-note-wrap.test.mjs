@@ -331,6 +331,236 @@ test('a wrapped note that reaches the next message names the message and the y i
   assert.equal(decode(notes(html)[0].lines.join(' ')), LONG_NOTE);
 });
 
+// The issue fixture (#903): one wrapped note reaches two later messages. The
+// receipt must carry the whole ordered adjustment — moving only the first
+// blocker leaves the second one reached with no offered repair.
+test('a note that reaches several messages emits the whole ordered adjustment', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+        { from: 'client', to: 'api', y: 490, label: 'unaffected later reply' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  const requiredY = diagnostic.evidence.requiredY;
+  assert.equal(diagnostic.evidence.blocker.path, '/messages/1/y');
+  assert.deepEqual(
+    diagnostic.evidence.reached.map((entry) => entry.path),
+    ['/messages/1/y', '/messages/2/y'],
+    'the receipt lists every message the note reaches',
+  );
+  assert.match(diagnostic.message, /and 1 more message below/);
+  assert.deepEqual(diagnostic.supportedFixes, [
+    `set /messages/1/y to ${requiredY}`,
+    `set /messages/2/y to ${requiredY + 28}`,
+  ]);
+  let repaired = spec;
+  for (const fix of diagnostic.supportedFixes) repaired = applyFix(repaired, fix);
+  assert.deepEqual(repaired.messages[3], spec.messages[3], 'a clear later message stays unchanged (#924)');
+  const after = run(t, 'validate', repaired).result;
+  assert.equal(after.status, 0, after.stdout + after.stderr);
+});
+
+test('the ordered adjustment withholds rather than reordering the timeline', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+        { from: 'client', to: 'api', y: 430, label: 'later reply' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  // The second blocker can only clear the first by passing "later reply" at
+  // 430; moving a message past an unrelated one would reorder the timeline, so
+  // the adjustment is withheld instead.
+  assert.deepEqual(diagnostic.supportedFixes, []);
+});
+
+test('a note that reaches several messages withholds the adjustment without authored room', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 500], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'no arrangement fits the authored canvas, so no edit is advertised');
+});
+
+test('a reached message with its own note is checked at its moved position', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker', note: 'alpha beta gamma delta epsilon zeta eta theta iota' },
+        { from: 'client', to: 'api', y: 380, label: 'second blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  // The first blocker takes the first clear slot 399: the row at 380 is
+  // vacated by this same adjustment, so it must not veto the scan. The second
+  // then clears the first blocker's note at its new position
+  // (399 + 22 + 20 + 2 = 443), which a scan reading the note's stale y
+  // would miss.
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /messages/1/y to 399',
+    'set /messages/2/y to 443',
+  ]);
+  let repaired = spec;
+  for (const fix of diagnostic.supportedFixes) repaired = applyFix(repaired, fix);
+  const after = run(t, 'validate', repaired).result;
+  assert.equal(after.status, 0, after.stdout + after.stderr);
+});
+
+test('a note on the moved message that cannot clear the content limit withholds the adjustment', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'mid' },
+        { from: 'client', to: 'api', y: 366, label: 'tail', note: Array(60).fill('word').join(' ') },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 520], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  // At this height the tail's own wrapped note breaches the authored content
+  // limit from every reachable slot, which would trade this failure for
+  // sequence/note-canvas-limit, so no edit is advertised.
+  assert.deepEqual(diagnostic.supportedFixes, []);
+});
+
+test('the ordered adjustment keeps off a segment frame edge', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'mid', note: 'short blurb' },
+        { from: 'client', to: 'api', y: 374, label: 'tail' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  spec.segments = [{ label: 'Phase', from: 402, to: 540 }];
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  // requiredY 399 is inside the edge's 4px clearance (402); the first clear
+  // slot is 406, and the next message follows 28px later on the same lane.
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /messages/1/y to 406',
+    'set /messages/2/y to 434',
+  ]);
+  let repaired = spec;
+  for (const fix of diagnostic.supportedFixes) repaired = applyFix(repaired, fix);
+  const after = run(t, 'validate', repaired).result;
+  assert.equal(after.status, 0, after.stdout + after.stderr);
+});
+
+test('disjoint lanes may keep a closer row in the ordered adjustment', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api', 'db'],
+      messages: [
+        { from: 'client', to: 'db', y: 300, label: 'owner', note: 'x'.repeat(240) },
+        { from: 'client', to: 'api', y: 330, label: 'mid' },
+        { from: 'api', to: 'db', y: 380, label: 't'.repeat(36) },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 529], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  // The two arrows only touch at one lifeline, so the 28px crowding rule does
+  // not bind between them; the second slot sits 24px below the first.
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /messages/1/y to 421',
+    'set /messages/2/y to 445',
+  ]);
+  let repaired = spec;
+  for (const fix of diagnostic.supportedFixes) repaired = applyFix(repaired, fix);
+  const after = run(t, 'validate', repaired).result;
+  assert.equal(after.status, 0, after.stdout + after.stderr);
+});
+
+test('a single move steps past a segment edge but not past a message', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  spec.segments = [{ label: 'Phase', from: 401, to: 520 }];
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  // requiredY 399 is inside the edge's 4px clearance (401); 405 is the first
+  // slot that clears it, and nothing sits below the blocker to cross.
+  assert.deepEqual(diagnostic.supportedFixes, ['set /messages/1/y to 405']);
+  const repaired = applyFix(spec, diagnostic.supportedFixes[0]);
+  const after = run(t, 'validate', repaired).result;
+  assert.equal(after.status, 0, after.stdout + after.stderr);
+
+  const blocked = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'blocker' },
+        { from: 'client', to: 'api', y: 420, label: 'unrelated reply' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  const crossing = failure(t, blocked, 'sequence/note-overlap');
+  // The note does not reach the reply at 420, and every slot that clears the
+  // 28px spacing with it would have to sit below it, so no edit is offered.
+  assert.deepEqual(crossing.supportedFixes, []);
+});
+
+test('the ordered adjustment covers a long chain of reached messages', (t) => {
+  const spec = sequence({
+    participants: ['client', 'api'],
+    messages: [
+      { from: 'client', to: 'api', y: 160, label: 'owner', note: Array(800).fill('word').join(' ') },
+      ...Array.from({ length: 23 }, (_, index) => ({ from: 'client', to: 'api', y: 188 + 28 * index, label: `m${index}` })),
+    ],
+  });
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  const requiredY = diagnostic.evidence.requiredY;
+  assert.equal(diagnostic.evidence.reached.length, 23);
+  assert.equal(diagnostic.supportedFixes.length, 23, 'every reached message gets its own slot');
+  assert.equal(diagnostic.supportedFixes[0], `set /messages/1/y to ${requiredY}`);
+  assert.equal(diagnostic.supportedFixes[22], `set /messages/23/y to ${requiredY + 28 * 22}`);
+  let repaired = spec;
+  for (const fix of diagnostic.supportedFixes) repaired = applyFix(repaired, fix);
+  const after = run(t, 'validate', repaired).result;
+  assert.equal(after.status, 0, after.stdout + after.stderr);
+});
+
 test('standard keeps accepting a crowded note', (t) => {
   const spec = sequence({
     quality: 'standard',
@@ -450,4 +680,187 @@ test('notes that fit their phase, or messages outside it, do not request a phase
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.ok(!(JSON.parse(result.stdout).composition?.sequenceNoteBorders || []).some(d => d.code === 'sequence/note-segment-border'));
   }
+});
+// A later reached row still sits on the slot this same adjustment vacates, so
+// it must not veto the scan: with rows at 330 and 397, the first clear slot
+// is 399 — not 425 past the stale row.
+test('the ordered adjustment ignores rows the same repair vacates', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 397, label: 'second blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.deepEqual(diagnostic.supportedFixes, [
+    'set /messages/1/y to 399',
+    'set /messages/2/y to 427',
+  ]);
+  let repaired = spec;
+  for (const fix of diagnostic.supportedFixes) repaired = applyFix(repaired, fix);
+  const after = run(t, 'validate', repaired).result;
+  assert.equal(after.status, 0, after.stdout + after.stderr);
+});
+
+// Applying only the first edit of a joint plan strands the rest without room
+// (the moved row becomes their ceiling), so the receipt must say the listed
+// edits are one atomic adjustment instead of alternatives.
+test('the ordered adjustment is advertised as one atomic repair', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 600], legend: { mode: 'hidden' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.ok(diagnostic.supportedFixes.length > 1);
+  assert.match(diagnostic.message, /one atomic adjustment, apply them all before revalidating/);
+});
+// A joint move that would push content into the implicit legend band on an
+// authored canvas is withheld: the follow-up layout/constraint offers no fix,
+// so advertising the move strands the repair loop.
+test('the ordered adjustment withholds a move that strands the implicit legend', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 520] },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'the move fails on apply with an unfixable legend diagnostic');
+});
+
+// Rows may be fractional while the scan steps in whole pixels: the ceiling
+// keeps the last integer slot below a fractional row instead of discarding it.
+test('the ordered adjustment keeps the last integer slot below fractional rows', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api', 'db'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'blocker' },
+        { from: 'api', to: 'db', y: 443.5, label: 'disjoint' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread' },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.requiredY, 443);
+  assert.deepEqual(diagnostic.supportedFixes, ['set /messages/1/y to 443']);
+  const repaired = run(t, 'validate', applyFix(spec, diagnostic.supportedFixes[0])).result;
+  assert.equal(repaired.status, 0, repaired.stdout);
+});
+
+// A reached row can own a note taller than the bounded scan window: the repair
+// is withheld honestly at the bound instead of extending the search for
+// pathological notes (#923 review).
+test('the ordered adjustment withholds past its bounded scan window', (t) => {
+  const spec = sequence({
+    participants: ['client', 'api'],
+    messages: [
+      { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+      { from: 'client', to: 'api', y: 330, label: 'first', note: Array(620).fill('word').join(' ') },
+      { from: 'client', to: 'api', y: 380, label: 'second' },
+    ],
+  });
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.requiredY, 399);
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'the bounded scan withholds rather than reach past a pathological note');
+});
+
+// A segment frame edge rejects every integer slot within 4px; the repair is
+// withheld honestly instead of searching subpixel positions for one (#923
+// review).
+test('the single repair withholds when only a subpixel slot would clear a segment edge', (t) => {
+  const spec = sequence({
+    messages: [
+      { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+      { from: 'client', to: 'api', y: 330, label: 'blocker' },
+      { from: 'api', to: 'db', y: 443.5, label: 'disjoint' },
+    ],
+  });
+  spec.segments = [{ label: 'Phase', from: 200, to: 439.2 }];
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.requiredY, 443);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'no subpixel search is required; honest refusal');
+});
+
+// An explicitly configured legend that is over-wide fails on apply for a
+// reason the note cannot fix; the repair is withheld rather than claimed
+// verified (#923 review).
+test('the ordered adjustment withholds when the explicit legend cannot fit the canvas width', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+      ],
+    }),
+    meta: {
+      title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread',
+      viewBox: [560, 700], legend: { mode: 'all', entries: { default: { label: 'x'.repeat(75) } } },
+    },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'an over-wide explicit legend cannot take a claimed verified repair');
+});
+// Activations and segment frames set the legend floor too; an explicit legend
+// already stranded by those constant terms must not take a claimed verified
+// repair either (#923 review).
+test('the ordered adjustment withholds when static content already strands the explicit legend', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 700], legend: { mode: 'all' } },
+  };
+  spec.segments = [{ label: 'Late', from: 500, to: 600 }];
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'a legend already stranded by the phase cannot take a claimed verified repair');
+});
+
+// An explicitly configured visible legend is a hard error when it cannot fit,
+// so a move that strands it must withhold exactly like the implicit case; the
+// hidden-mode bypass only applies when nothing is visible (#923 review).
+test('the ordered adjustment withholds a move that strands an explicit visible legend', (t) => {
+  const spec = {
+    ...sequence({
+      participants: ['client', 'api'],
+      messages: [
+        { from: 'client', to: 'api', y: 300, label: 'owner', note: Array(60).fill('word').join(' ') },
+        { from: 'client', to: 'api', y: 330, label: 'first blocker' },
+        { from: 'client', to: 'api', y: 366, label: 'second blocker' },
+      ],
+    }),
+    meta: { title: 'Note wrap', output: 'note.html', quality_profile: 'showcase', column_fit: 'spread', viewBox: [560, 520], legend: { mode: 'all' } },
+  };
+  const diagnostic = failure(t, spec, 'sequence/note-overlap');
+  assert.equal(diagnostic.evidence.reached.length, 2);
+  assert.deepEqual(diagnostic.supportedFixes, [], 'the move fails on apply with an unfixable legend diagnostic');
 });

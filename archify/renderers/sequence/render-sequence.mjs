@@ -492,12 +492,17 @@ function segmentLabelBox(segment) {
 // Whether moving one message to `y` keeps it readable: inside the timeline,
 // 28px from messages sharing its horizontal span, and clear of every other
 // label, route and note. Used to offer only repairs that hold.
-function messageFitsAt(messageIndex, y) {
+function messageFitsAt(messageIndex, y, ignore = null) {
   const messages = asArray(sequence.messages);
   if (y < layout.lifelineTop + 18) return false;
   // An automatic canvas recalculates its height after this edit; an authored
   // canvas must still fit the suggested position without a second repair.
   if (sequence.meta?.viewBox && y > layout.lifelineBottom - 18) return false;
+  // A message on a segment frame edge makes its route run along the border:
+  // sequence/segment-message-border-run within 4px, and
+  // composition/container-border-run when the route is exactly collinear.
+  if (asArray(sequence.segments).some((segment) => [segment.from, segment.to]
+    .some((border) => Math.abs(border - y) < 4))) return false;
   const span = (message) => {
     const from = participants.get(message.from)?.cx;
     const to = participants.get(message.to)?.cx;
@@ -505,14 +510,181 @@ function messageFitsAt(messageIndex, y) {
   };
   const moved = { ...messages[messageIndex], y };
   const [left, right] = span(moved);
-  const movedRects = [messageLabelBox(moved), messageRouteBox(moved), noteRect(moved)].filter(Boolean);
+  const movedNote = noteRect(moved);
+  const movedRects = [messageLabelBox(moved), messageRouteBox(moved), movedNote].filter(Boolean);
+  // The clone only exists to read candidate geometry; drop its memoized note
+  // layout so a long scan does not accumulate dead entries.
+  noteLayouts.delete(moved);
+  // A note on the moved message must still end above the content limit; an
+  // automatic canvas regrows for it but an authored one cannot.
+  if (sequence.meta?.viewBox && movedNote && movedNote.y + movedNote.height > layout.lifelineBottom + 20) return false;
   return messages.every((other, otherIndex) => {
     if (otherIndex === messageIndex || typeof other.y !== 'number') return true;
+    if (ignore !== null && ignore.has(otherIndex)) return true;
     const [otherLeft, otherRight] = span(other);
     if (Math.abs(other.y - y) < 28 && left < otherRight && otherLeft < right) return false;
     const otherRects = [messageLabelBox(other), messageRouteBox(other), noteRect(other)].filter(Boolean);
     return !movedRects.some((rect) => otherRects.some((otherRect) => rectsOverlap(rect, otherRect, 2)));
   });
+}
+
+// Every message below `owner` whose label, route or note the wrapped note
+// reaches, in timeline order. A note that reaches several messages needs all
+// of them cleared: moving only the first leaves the next one reached with no
+// offered repair (#903).
+function noteReachedMessages(messages, ownerIndex, ownRect) {
+  return messages
+    .map((other, otherIndex) => {
+      if (otherIndex === ownerIndex || typeof other.y !== 'number' || other.y <= messages[ownerIndex].y) return null;
+      const hit = [
+        ['message label', messageLabelBox(other)],
+        ['message route', messageRouteBox(other)],
+        ['note', noteRect(other)],
+      ].find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
+      return hit ? { message: other, index: otherIndex, kind: hit[0], rect: hit[1] } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.message.y - b.message.y);
+}
+
+// The highest y a moved message may take without passing a message the note
+// does not reach: a move past an unrelated message would reorder the timeline,
+// so such an arrangement is withheld instead (the unedited payment draft pins
+// this in `test/sequence-segment-labels.test.mjs`).
+function moveCeiling(reached, entry) {
+  const raw = rawRowBound(reached, entry);
+  // Rows may be fractional while the scan steps in whole pixels: ceil the bound
+  // so a valid integer slot just below a fractional row survives (ceil(m) - 1 is
+  // still strictly below m, and identical to m - 1 for integer rows).
+  return raw === Infinity ? Infinity : Math.ceil(raw) - 1;
+}
+
+// The raw timeline bound behind moveCeiling: the lowest unreached row below
+// the entry, exclusive. Fractional placements may sit anywhere strictly below
+// it (y=443.25 keeps order below a row at 443.5) even past the integer ceiling.
+function rawRowBound(reached, entry) {
+  const moved = new Set(reached.map((candidate) => candidate.index));
+  const below = asArray(sequence.messages)
+    .filter((message, index) => !moved.has(index) && typeof message.y === 'number' && message.y > entry.message.y)
+    .map((message) => message.y);
+  return below.length ? Math.min(...below) : Infinity;
+}
+
+// The joint scan stays deliberately bounded: a reached note taller than this
+// window withholds the whole repair (an honest refusal) instead of letting
+// pathological input stall validation (#923 review).
+const JOINT_SCAN_ALLOWANCE = 600;
+
+// A whole joint adjustment may evaluate at most this many candidates. The
+// per-entry window already scales with the reached count, so a document that
+// reaches a pathological number of messages must still refuse honestly at a
+// constant budget instead of stalling (#923 review).
+const MAX_ADJUSTMENT_CANDIDATES = 4096;
+
+// Whether a fully assigned joint or single move keeps the visible legend on an
+// authored showcase canvas: content pushed into the legend band leaves a repair
+// that fails on apply (an implicit legend can only hide, which showcase rejects,
+// and an explicit legend is a hard error), so withhold it instead. Call with
+// every moved message already placed; the caller restores positions afterwards.
+// Mirrors the layout/constraint predicate exactly.
+function assignedLegendBudgetHolds() {
+  if (sequence.meta?.quality_profile !== 'showcase') return true;
+  // An explicit `{ mode: 'hidden' }` config resolves to no entries; only a
+  // visible legend (implicit or explicitly configured) can be stranded.
+  const entries = legendEntries();
+  if (!entries.length) return true;
+  // An automatic canvas regrows around the moved content (its height already
+  // reserves the legend), so only an authored viewBox can strand the legend.
+  if (!sequence.meta?.viewBox) return true;
+  // Mirror contentBottom() with the moved notes: activations and segment
+  // frames set the legend floor too, and those terms do not move (#923 review).
+  const bottom = Math.max(
+    0,
+    ...asArray(sequence.messages).map((message) => (message.note
+      ? noteLayout(message)?.bottom ?? message.y + 22
+      : message.y + 6)),
+    ...asArray(sequence.activations).map((activation) => activation.to),
+    ...asArray(sequence.segments).map((segment) => segment.to),
+  );
+  // legendLayout() closes over the pre-move content bottom, so re-anchor its
+  // title floor to the simulated bottom: otherwise the fit check would read
+  // stale rows and approve content standing in the legend band. The probe must
+  // not throw for an explicitly configured legend, and it also reports an
+  // over-wide entry, which an explicit legend treats as a hard error on apply.
+  const simulated = {
+    ...legendLayout(),
+    minTitleY: Math.max(layout.lifelineTop, bottom + LEGEND_CONTENT_GAP),
+    unfit: 'hide',
+  };
+  return Boolean(measureLegend(entries, simulated));
+}
+
+// The single-message case keeps the one-slot spirit: prefer requiredY, then
+// step past a segment edge or another near miss, never past the next message.
+function noteSingleAdjustment(blocker, requiredY) {
+  const ceiling = Math.min(moveCeiling([blocker], blocker), requiredY + 600);
+  const previousY = blocker.message.y;
+  const attempt = (y) => {
+    if (!messageFitsAt(blocker.index, y)) return null;
+    blocker.message.y = y;
+    noteLayouts.delete(blocker.message);
+    const holds = assignedLegendBudgetHolds();
+    blocker.message.y = previousY;
+    noteLayouts.delete(blocker.message);
+    return holds ? [{ index: blocker.index, y }] : null;
+  };
+  for (let y = requiredY; y <= ceiling; y += 1) {
+    const hit = attempt(y);
+    if (hit) return hit;
+  }
+  return [];
+}
+
+// Places every reached message on the first clear slot at or below requiredY,
+// in order, verifying each placement through the same readability predicate a
+// single move uses (which enforces the 28px spacing wherever the horizontal
+// spans overlap, so disjoint lanes may keep a closer row). No move passes a
+// message the note does not reach — crossing one would reorder the timeline.
+// Earlier candidates stay bound while later ones are ignored until placed;
+// note layouts are refreshed for the moved positions, and every y value is
+// restored afterwards.
+// Returns the ordered edits, or [] when no arrangement holds (an authored
+// canvas without room, or a crossing), so the repair is advertised only when
+// applying the whole adjustment clears the diagnostic.
+function noteOverlapAdjustment(reached, requiredY) {
+  const previousY = reached.map((entry) => entry.message.y);
+  const assigned = [];
+  let budget = MAX_ADJUSTMENT_CANDIDATES;
+  // Entries placed later still sit on the rows this same adjustment vacates,
+  // so they must not veto the current scan — only bound earlier placements
+  // and unrelated messages are obstacles. Every pair is still verified: when
+  // a later entry is placed, the earlier ones already sit at their final rows.
+  // Note geometry is memoized per message object and depends on y; refresh the
+  // entry on every move so later checks read the candidate position.
+  const place = (entry, y) => {
+    entry.message.y = y;
+    noteLayouts.delete(entry.message);
+  };
+  try {
+    for (const [order, entry] of reached.entries()) {
+      const minimum = assigned.length === 0 ? requiredY : assigned[assigned.length - 1] + 1;
+      const ceiling = Math.min(moveCeiling(reached, entry), requiredY + 28 * reached.length + JOINT_SCAN_ALLOWANCE);
+      let chosen = null;
+      const floating = new Set(reached.slice(order + 1).map((later) => later.index));
+      for (let y = minimum; y <= ceiling && chosen === null; y += 1) {
+        if (budget-- <= 0) return [];
+        place(entry, y);
+        if (messageFitsAt(entry.index, y, floating)) chosen = y;
+      }
+      if (chosen === null) return [];
+      place(entry, chosen);
+      assigned.push(chosen);
+    }
+    if (!assignedLegendBudgetHolds()) return [];
+  } finally {
+    reached.forEach((entry, index) => place(entry, previousY[index]));
+  }
+  return reached.map((entry, index) => ({ index: entry.index, y: assigned[index] }));
 }
 
 // The first occupant the segment label still covers after its upward steps.
@@ -804,31 +976,32 @@ function validateSequence() {
           supportedFixes: [fix],
         });
       }
-      const blocker = messages
-        .map((other, otherIndex) => {
-          if (otherIndex === messageIndex || typeof other.y !== 'number' || other.y <= message.y) return null;
-          const hit = [
-            ['message label', messageLabelBox(other)],
-            ['message route', messageRouteBox(other)],
-            ['note', noteRect(other)],
-          ].find(([, rect]) => rect && rectsOverlap(ownRect, rect, 2));
-          return hit ? { message: other, index: otherIndex, kind: hit[0], rect: hit[1] } : null;
-        })
-        .filter(Boolean)
-        .sort((a, b) => a.message.y - b.message.y)[0];
-      if (!blocker) return;
+      const reached = noteReachedMessages(messages, messageIndex, ownRect);
+      if (reached.length === 0) return;
+      const blocker = reached[0];
       const requiredY = Math.ceil(note.bottom + 22);
       const blockerPath = `/messages/${blocker.index}/y`;
-      report(`Note on message "${message.label}" wraps to ${lines} (down to y=${bottom}) and reaches message "${blocker.message.label}" at y=${blocker.message.y} — move "${blocker.message.label}" and later messages down so it sits at y=${requiredY} or below, or shorten the note.`, {
+      // The note can reach several messages, so the repair is one ordered
+      // adjustment that moves all of them below it; the receipt carries the
+      // whole verified set, and an arrangement that cannot hold — or that would
+      // reorder the timeline — yields [].
+      const adjustment = reached.length === 1
+        ? noteSingleAdjustment(blocker, requiredY)
+        : noteOverlapAdjustment(reached, requiredY);
+      const extra = reached.length - 1;
+      report(`Note on message "${message.label}" wraps to ${lines} (down to y=${bottom}) and reaches message "${blocker.message.label}" at y=${blocker.message.y}${extra > 0 ? ` and ${extra} more message${extra > 1 ? 's' : ''} below` : ''} — move "${blocker.message.label}" and later messages down so it sits at y=${requiredY} or below${reached.length > 1 && adjustment.length > 1 ? '; the listed edits are one atomic adjustment, apply them all before revalidating' : ''}, or shorten the note.`, {
         code: 'sequence/note-overlap',
         subject,
         evidence: {
           lines: note.lines.length,
           note: bounds(ownRect),
           blocker: { message: blocker.message.label ?? null, path: blockerPath, y: blocker.message.y, kind: blocker.kind, bounds: bounds(blocker.rect) },
+          ...(reached.length > 1 ? {
+            reached: reached.map((entry) => ({ message: entry.message.label ?? null, path: `/messages/${entry.index}/y`, y: entry.message.y, kind: entry.kind, bounds: bounds(entry.rect) })),
+          } : {}),
           requiredY,
         },
-        supportedFixes: messageFitsAt(blocker.index, requiredY) ? [`set ${blockerPath} to ${requiredY}`] : [],
+        supportedFixes: adjustment.map((entry) => `set /messages/${entry.index}/y to ${entry.y}`),
       });
     });
   }
