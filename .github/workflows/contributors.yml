@@ -1,0 +1,30 @@
+name: Contributors
+
+on:
+  schedule:
+    # Weekly, after the Monday star-history refresh, so the two publishers do not overlap.
+    - cron: '15 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: contributors-svg
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - name: Render contributors wall
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/generate-contributors-svg.mjs --out "$RUNNER_TEMP/contributors.svg"
+      - name: Publish wall with linear history
+        run: bash scripts/publish-contributors-svg.sh contributors "$RUNNER_TEMP/contributors.svg"

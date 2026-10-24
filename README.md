@@ -64,6 +64,12 @@ Works with Cursor, Claude Code, Codex CLI, and OpenCode. See installation option
 npx skills add tt-a1i/archify -g
 ```
 
+**With an AI agent.** Paste this:
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
 Send this to your agent:
 
 ```text
@@ -223,14 +229,23 @@ Open [`examples/web-app.html`](examples/web-app.html) locally to try the complet
 npx skills add tt-a1i/archify -g
 ```
 
-<details>
-<summary>More installation options and update-check details</summary>
+**With an AI agent**
 
-For an explicit, non-interactive Cursor install:
+Paste this to your agent:
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
+Or install without prompts. Pass one agent, or repeat `--agent` for every switcher target (`cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`). `--copy` copies the skill instead of symlinking:
 
 ```bash
 npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
+
+<details>
+<summary>More installation options and update-check details</summary>
 
 To try without installing:
 
@@ -240,7 +255,7 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 [DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`
 
-The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, and `opencode`.
+The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, `opencode`, and `github-copilot`.
 
 Archify may GET the fixed stable manifest solely to show an optional reminder; it never downloads or installs updates. Successful checks wait about 24 hours (±20%); active use retries failures after 6, then 24 hours. The server sees normal HTTP metadata (IP and time), but receives no version, Agent, project data, prompts, account/device ID, or ETag. You decide whether and when to update. Set `ARCHIFY_UPDATE_CHECK_DISABLED=1` to disable networking and reminder-state writes.
 
@@ -519,6 +534,12 @@ Scan the QR code below with Alipay, or save it and open it in Alipay to scan.
 </details>
 
 Using Archify, sharing it, reporting bugs, and contributing improvements are also ways to help.
+
+## Contributors
+
+Thanks to everyone who helped build Archify. [Go follow them.](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
+
+<p align="center"><a href="https://github.com/tt-a1i/archify/graphs/contributors"><img alt="Archify contributors" src="https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg" width="1000" /></a></p>
 
 ## Star History
 

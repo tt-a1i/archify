@@ -44,6 +44,12 @@ Cursor, Claude Code, Codex CLI, OpenCode에서 사용할 수 있습니다.
 npx skills add tt-a1i/archify -g
 ```
 
+**AI 에이전트에게 맡기기.** 다음 문장을 그대로 붙여 넣으세요.
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
 에이전트에게 다음과 같이 요청하세요.
 
 ```text
@@ -98,14 +104,23 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 npx skills add tt-a1i/archify -g
 ```
 
-<details>
-<summary>다른 설치 방법과 업데이트 확인 동작</summary>
+**AI 에이전트에게 맡기기**
 
-비대화형 Cursor 설치:
+다음 문장을 그대로 붙여 넣으세요.
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
+확인 없이 설치할 수도 있습니다. `--agent`는 하나, 또는 전환 대상마다 반복합니다 (`cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`). `--copy`는 심볼릭 링크 대신 파일을 복사합니다.
 
 ```bash
 npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
+npx -y skills add tt-a1i/archify --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
+
+<details>
+<summary>다른 설치 방법과 업데이트 확인 동작</summary>
 
 설치하지 않고 사용해 보기:
 
@@ -224,6 +239,12 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 ## 기여하기
 
 Issue, Pull Request, 실제 사용 사례 다이어그램을 환영합니다. [기여 가이드](CONTRIBUTING.md)에서 시작하세요. 실패는 재현 가능한 버그 양식으로 제보하고, 검증된 다이어그램은 [커뮤니티 Showcase 양식](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)으로 제출할 수 있습니다.
+
+## 기여자
+
+Archify를 함께 만들어 준 모든 분께 감사합니다. [팔로우해 보세요.](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
+
+<p align="center"><a href="https://github.com/tt-a1i/archify/graphs/contributors"><img alt="Archify 기여자" src="https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg" width="1000" /></a></p>
 
 ## Star History
 

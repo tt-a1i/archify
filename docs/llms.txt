@@ -1,0 +1,40 @@
+# Archify
+
+> Turn a description, a question, or a repository into an interactive diagram or a one-page explainer. Ten diagram types: architecture, workflow, sequence, dataflow, lifecycle, ERD, class, tree, timeline, and waterfall. The result is one standalone HTML file. Free and open source (MIT).
+
+Version: 3.2.1-dev.1
+Repository: https://github.com/tt-a1i/archify
+Website: https://archify.si
+
+## Install for the user
+
+If you are an agent asked to install Archify, do only the steps below. Tell the user what each command will run, then wait for them to confirm the scope before you install. Do not generate a diagram, scan a repository, or update anything else as part of installation.
+
+Confirm this scope first:
+
+- Global (`--global`) or the current project only.
+- Target agent: the agent you are running in, unless the user names others. Switcher ids: `cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`.
+
+1. Discover the skill. This only lists the package; it does not install it.
+
+   `npx -y skills add tt-a1i/archify --list --full-depth`
+
+   Stop unless the listing contains exactly one skill named `archify`.
+
+2. Install that skill for the confirmed agent. `--copy` copies files instead of symlinking. Leave unmanaged files in place. If the installer reports a conflict with existing unmanaged files, stop and tell the user; do not delete them. `--yes` only skips prompts for the scope they already confirmed.
+
+   One agent:
+
+   `npx -y skills add tt-a1i/archify --skill archify --agent <agent> --global --copy --yes`
+
+   Several agents, by repeating `--agent`:
+
+   `npx -y skills add tt-a1i/archify --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes`
+
+   Omit `--global` for a project-only install. Do not add other skills, agents, sources, or force flags.
+
+3. Verify with the installed package. `<installed-path>` is the directory the installer reported (a global copy is often under a `skills/archify` directory the agent already scans; a project copy is often `.agents/skills/archify`).
+
+   `node <installed-path>/bin/archify.mjs doctor`
+
+   Tell the user Archify is ready. They can ask for any of the ten diagram types, or a one-page explainer.
