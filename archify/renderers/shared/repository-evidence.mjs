@@ -182,7 +182,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   const linkMode = repository.link_mode ?? 'web';
   if (!['web', 'local-only'].includes(linkMode)) evidenceFailure('repository-evidence/link-mode-invalid', 'Repository link_mode must be web or local-only.');
   if (repository.provider !== undefined && (!['github', 'gitee', 'gitlab'].includes(repository.provider) || repository.provider !== location.provider)) {
-    evidenceFailure('repository-evidence/provider-invalid', 'Repository provider must match its supported public host (github.com, gitee.com or gitlab.com); gitlab also names a self-managed GitLab host.', {
+    evidenceFailure('repository-evidence/provider-invalid', 'Repository provider must match its supported public host (github.com, gitee.com or gitlab.com); gitlab also names a self-managed GitLab host, and github also names a GitHub Enterprise host.', {
       subject: { path: '/meta/repository/provider' },
       supportedFixes: ['use the matching provider or omit provider and select link_mode: local-only'],
     });
@@ -192,7 +192,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   if (linkMode === 'web' && (!location.provider || location.protocol !== 'https:' || location.endpoint !== 'standard' || !webPath.test(location.path))) {
     evidenceFailure('repository-evidence/links-unsupported', 'Web source links require a canonical GitHub, Gitee, or GitLab HTTPS repository URL.', {
       subject: { path: '/meta/repository/url' },
-      supportedFixes: ['use a canonical GitHub, Gitee, or GitLab HTTPS URL; declare provider: gitlab for a self-managed GitLab host', 'select link_mode: local-only to retain local verification without web links'],
+      supportedFixes: ['use a canonical GitHub, Gitee, or GitLab HTTPS URL; declare provider: gitlab for a self-managed GitLab host or provider: github for a GitHub Enterprise host', 'use an owner/repository path on the standard HTTPS port for GitHub, Gitee, or GitHub Enterprise hosts, and let a GitLab path name nested groups', 'select link_mode: local-only to retain local verification without web links'],
     });
   }
   if (!repoRootInput) {
@@ -385,7 +385,12 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
       url: location.url,
       revision,
       shortRevision: revision.slice(0, 7),
-      label: location.provider === 'github' ? location.path : location.url.replace(/^(?:https?:\/\/|ssh:\/\/git@|git@)/, ''),
+      // A GitHub Enterprise host keeps its own name in the label: an
+      // owner/repository path alone would read as a github.com repository.
+      // Only github.com is a public GitHub host.
+      label: location.provider === 'github' && location.publicHost
+        ? location.path
+        : location.url.replace(/^(?:https?:\/\/|ssh:\/\/git@|git@)/, ''),
       ...(linkMode === 'web' ? { href: repositoryTreeHref(location.provider, location.url, revision) } : { linkMode }),
     },
     referenceCount,

@@ -559,8 +559,9 @@ nor the current reader's access rights.
 `link_mode` defaults to `web`. GitHub, Gitee, and GitLab HTTPS repository URLs
 generate revision-pinned links; the public hosts github.com, gitee.com, and
 gitlab.com select the provider automatically. Optional `provider: "github"`,
-`"gitee"`, or `"gitlab"` must agree with a public host. A self-managed GitLab
-host declares `provider: "gitlab"`; Archify never contacts the host to detect
+`"gitee"`, or `"gitlab"` must agree with the host's provider. A self-managed GitLab
+host declares `provider: "gitlab"`, and a GitHub Enterprise Server or GHE.com
+host declares `provider: "github"`; Archify never contacts the host to detect
 its forge. Existing GitHub declarations and default delivery receipt fields
 remain compatible.
 
@@ -587,6 +588,19 @@ case-insensitively, like GitHub.
 }
 ```
 
+```json
+{
+  "url": "https://ghe.example.com/platform/payments",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "provider": "github"
+}
+```
+
+A GitHub Enterprise host serves the github.com layout, so its source links use
+`<url>/blob/<revision>/<path>#L<line>-L<end_line>` and its repository link uses
+`<url>/tree/<revision>`. Its repository path is `owner/repository`, like
+github.com; only GitLab names nested groups.
+
 For an internal or unsupported forge, select `link_mode: "local-only"`. The
 Viewer retains SRC markers, searchable file paths, line ranges, and revision
 labels without repository or source hyperlinks. The evidence receipt adds
@@ -606,10 +620,12 @@ Local-only accepts HTTP(S), `git@host:path`, and `ssh://git@host[:port]/path`
 addresses, including nested namespaces. Declare a credential-free address;
 HTTP(S) credentials on the checkout's origin are ignored for identity and
 redacted from diagnostics. Hostnames compare case-insensitively; repository
-paths retain case except for GitHub and GitLab. A trailing slash
-normalizes away. Only GitHub, Gitee, and GitLab (gitlab.com, or a host declared
-with `provider: "gitlab"`) normalize a terminal `.git` and match standard
-HTTPS/443 with Git SSH/22 on the same host; a GitLab SSH endpoint on another host
+paths retain case except for GitHub and GitLab, and for a host declared with
+`provider: "github"` or `provider: "gitlab"`. A trailing slash
+normalizes away. Only GitHub, Gitee, and GitLab hosts (github.com, gitee.com,
+gitlab.com, or a host declared with `provider: "gitlab"` or `provider: "github"`)
+normalize a terminal `.git` and
+match standard HTTPS/443 with Git SSH/22 on the same host; a GitLab SSH endpoint on another host
 or port is not inferred. For other hosts, use the actual clone address:
 transport, port, `.git` suffix, and remote-relative versus absolute paths must
 match. For example, `git@host:Team/repo` differs from

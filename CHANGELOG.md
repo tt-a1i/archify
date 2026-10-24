@@ -6,6 +6,10 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v3.2.1-dev.1`. Not a stable release.
 
+### Added
+
+- **GitHub Enterprise source links (#1034).** Repository evidence on a GitHub Enterprise Server or GHE.com host declared with `provider: "github"` now generates revision-pinned web links (`<url>/blob/<revision>/<path>#L<a>-L<b>` and `<url>/tree/<revision>`) instead of failing with `repository-evidence/provider-invalid`. The declared host keeps its own name in the evidence label, SSH and HTTPS origins on the same host match, and verification against the local checkout is unchanged.
+
 ### Fixed
 
 - **Explainer chart data (#1008, #1011).** Preserve quotes and backslashes in labels, parse quoted multiline CSV records, and normalize ordinary display whitespace without rewriting source data. Malformed records, missing values and unsupported control characters still fail before replacing an existing delivery.
