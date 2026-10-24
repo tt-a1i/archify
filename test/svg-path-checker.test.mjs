@@ -31,18 +31,18 @@ function killTree(child) {
   }
 }
 
-async function check(t, body, { publicCli = false, rootAttrs = '', profile = 'showcase' } = {}) {
+async function check(t, body, { publicCli = false, rootAttrs = '', profile = 'showcase', env = {} } = {}) {
   const file = path.join(scratch, `${sequence++}.html`);
   fs.writeFileSync(file, `<!doctype html><html><body><svg viewBox="0 0 400 250" data-quality-profile="${profile}" ${rootAttrs}>${body}</svg></body></html>`);
   const args = publicCli ? [cli, 'check', file, '--json'] : [checker, file];
-  return execute(t, args, body);
+  return execute(t, args, body, deadlineMs, env);
 }
 
-async function execute(t, args, description, timeoutMs = deadlineMs) {
+async function execute(t, args, description, timeoutMs = deadlineMs, env = {}) {
   const child = spawn(process.execPath, args, {
     detached: process.platform !== 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' },
+    env: { ...process.env, ARCHIFY_UPDATE_CHECK_DISABLED: '1', ...env },
   });
   let stdout = '', stderr = '', timedOut = false, exited = false, spawnError, cleanupError;
   child.stdout.on('data', chunk => { stdout += chunk; });
@@ -195,6 +195,109 @@ for (const rootAttrs of ['', 'data-layout-contract="readable-v2"']) {
     assert.deepEqual(result.receipt.composition.issues.find(item => item.code === 'composition/proper-crossing').point, [100, 60]);
   });
 }
+
+test('交叉分析预算耗尽时以失败回执结束，不把未完成检查当作通过', async t => {
+  const body = [
+    arrow('M20 20H80', { id: 'one', from: 'a', to: 'b' }),
+    arrow('M20 60H80', { id: 'two', from: 'c', to: 'd' }),
+    arrow('M20 100H80', { id: 'three', from: 'e', to: 'f' }),
+  ].join('');
+  const result = await check(t, body, {
+    env: { ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS: '1' },
+  });
+  assert.equal(result.code, 1);
+  const crossingCheck = result.receipt.checks.find(item => item.name === 'relationship_crossings');
+  assert.equal(crossingCheck.ok, false);
+  assert.match(crossingCheck.details.join('\n'), /crossing-analysis-budget.*limit 1/);
+  assert.equal(
+    result.receipt.composition.issues.find(item => item.code === 'composition/crossing-analysis-budget')?.attemptedPairs,
+    1,
+  );
+  assert.match(
+    result.receipt.composition.issues.find(item => item.code === 'composition/crossing-analysis-budget')?.supportedFixes?.join('\n') || '',
+    /ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS/,
+  );
+});
+
+test('交叉分析关系对预算只接受安全正整数环境变量', async t => {
+  // 318 relationships produce 50,403 eligible pairs, so invalid overrides
+  // must fall back to the production 50,000-pair limit rather than merely
+  // differing from an explicitly tiny valid override.
+  const body = Array.from({ length: 318 }, (_, index) => arrow('M20 20H80', {
+    id: `fallback-${index}`,
+    from: `source-${index}`,
+    to: `target-${index}`,
+  })).join('');
+  for (const [value, expectedLimit] of [
+    ['', 50_000],
+    ['not-a-number', 50_000],
+    ['0', 50_000],
+    ['1.5', 50_000],
+    ['9007199254740992', 50_000],
+    ['1', 1],
+  ]) {
+    const result = await check(t, body, {
+      env: { ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS: value },
+    });
+    assert.equal(result.code, 1);
+    const issue = result.receipt.composition.issues.find(item => item.code === 'composition/crossing-analysis-budget');
+    assert.equal(issue?.exhaustedBudget, 'relationship-pairs');
+    assert.equal(issue?.attemptedPairs, expectedLimit);
+    assert.match(issue?.detail || '', new RegExp(`relationship pairs \\(limit ${expectedLimit}\\)`));
+  }
+});
+
+test('交叉分析限制每个关系对内的线段乘积，并给出可执行的恢复指引', async t => {
+  const result = await check(t, [
+    arrow('M20 20H100V40H20V60H100', { id: 'many-left', from: 'a', to: 'b' }),
+    arrow('M200 120H280V140H200V160H280', { id: 'many-right', from: 'c', to: 'd' }),
+  ].join(''), {
+    env: { ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS: '1' },
+    publicCli: true,
+  });
+  assert.equal(result.code, 1);
+  const issue = result.receipt.composition.issues.find(item => item.code === 'composition/crossing-analysis-budget');
+  assert.equal(issue?.exhaustedBudget, 'segment-pairs');
+  assert.equal(issue?.attemptedPairs, 1);
+  assert.equal(issue?.attemptedSegmentPairs, 1);
+  assert.match(issue?.detail || '', /segment pairs \(limit 1\)/);
+  assert.match(issue?.supportedFixes?.join('\n') || '', /ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS/);
+});
+
+test('公共 deliver CLI 将交叉预算恢复指引写入诊断', async t => {
+  const output = path.join(scratch, `${sequence++}-event-stream.html`);
+  const result = await execute(t, [
+    cli,
+    'deliver',
+    'dataflow',
+    path.join(skillRoot, 'examples', 'event-stream.dataflow.json'),
+    output,
+    '--json',
+  ], 'event-stream dataflow with an intentionally exhausted crossing budget', deadlineMs, {
+    ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS: '1',
+  });
+  assert.equal(result.code, 1);
+  const diagnostic = result.receipt.diagnostics.find(item => item.code === 'composition/crossing-analysis-budget');
+  assert.match(diagnostic?.supportedFixes?.join('\n') || '', /ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS/);
+});
+
+test('公共 deliver CLI 保留线段对预算的特定恢复指引', async t => {
+  const output = path.join(scratch, `${sequence++}-event-stream-segment-budget.html`);
+  const result = await execute(t, [
+    cli,
+    'deliver',
+    'dataflow',
+    path.join(skillRoot, 'examples', 'event-stream.dataflow.json'),
+    output,
+    '--json',
+  ], 'event-stream dataflow with an intentionally exhausted segment-pair budget', deadlineMs, {
+    ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS: '1',
+  });
+  assert.equal(result.code, 1);
+  const diagnostic = result.receipt.diagnostics.find(item => item.code === 'composition/crossing-analysis-budget');
+  assert.match(diagnostic?.supportedFixes?.join('\n') || '', /ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS/);
+  assert.doesNotMatch(diagnostic?.supportedFixes?.join('\n') || '', /ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS/);
+});
 
 test('Z 回到当前子路径起点，后续相对 m 不沿旧终点移动', async t => {
   const d = 'M20 20H100V100H20Z m0 120h60';

@@ -900,7 +900,7 @@ test('cli: deliver preserves the previous artifact when the final check fails', 
 
 test('cli: deliver accepts a dense artifact whose checker receipt exceeds the 1 MiB default buffer', { timeout: 60000 }, () => {
   const input = path.join(tmp, 'dense-receipt.architecture.json');
-  fs.writeFileSync(input, JSON.stringify(bipartiteArchitectureSpec(8)));
+  fs.writeFileSync(input, JSON.stringify(bipartiteArchitectureSpec(10)));
   const out = path.join(tmp, 'dense-receipt.html');
   // Scrub the knob so this test exercises the default limit even when a
   // developer or CI environment overrides it.

@@ -19,6 +19,16 @@ import {
 } from '../renderers/shared/desktop-readability.mjs';
 
 const input = process.argv[2];
+const DEFAULT_MAX_CROSSING_PAIR_CHECKS = 50_000;
+const DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS = 3_000_000;
+const maxCrossingPairChecks = positiveIntegerEnvironment(
+  'ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS',
+  DEFAULT_MAX_CROSSING_PAIR_CHECKS,
+);
+const maxCrossingSegmentPairChecks = positiveIntegerEnvironment(
+  'ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS',
+  DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS,
+);
 
 if (!input || input === '-h' || input === '--help') {
   console.error('Usage: node scripts/check-render-output.mjs <diagram.html>');
@@ -142,7 +152,13 @@ if (svgMatches.length === 1) {
     diagonal.length === 0,
     diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: expected an orthogonal segment or an explicitly authored direct straight route; ${arrow.raw}`),
   );
-  const measuredRelationshipCrossings = collectRelationshipCrossings(arrows, workflowV2);
+  const crossingAnalysis = collectRelationshipCrossings(
+    arrows,
+    workflowV2,
+    maxCrossingPairChecks,
+    maxCrossingSegmentPairChecks,
+  );
+  const measuredRelationshipCrossings = crossingAnalysis.crossings;
   const resolvedCrossovers = measuredRelationshipCrossings.filter((hit) => (
     hit.left.crossoverHalo && hit.right.crossoverHalo
   ));
@@ -213,7 +229,8 @@ if (svgMatches.length === 1) {
   const desktopReadabilityIsError = qualityProfile === 'showcase';
   // Certain geometry, but new: surface it as evidence first (CONTRIBUTING.md#product-and-compatibility-contracts).
   const viewportHeightIsError = false;
-  const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
+  const compositionErrors = (crossingAnalysis.exhausted ? 1 : 0)
+    + (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length + arrowheadCollisions.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
@@ -328,6 +345,17 @@ if (svgMatches.length === 1) {
         otherRelationship: relationshipRecord(hit.right),
         point: hit.point.map((value) => Math.round(value * 10) / 10),
       })),
+      ...(crossingAnalysis.exhausted ? [{
+        severity: 'error',
+        code: 'composition/crossing-analysis-budget',
+        attemptedPairs: crossingAnalysis.attemptedPairs,
+        attemptedSegmentPairs: crossingAnalysis.attemptedSegmentPairs,
+        pairLimit: maxCrossingPairChecks,
+        segmentPairLimit: maxCrossingSegmentPairChecks,
+        exhaustedBudget: crossingAnalysis.exhaustedBudget,
+        detail: crossingBudgetDetail(crossingAnalysis),
+        supportedFixes: crossingBudgetFixes(crossingAnalysis),
+      }] : []),
       ...ambiguousCorridors.map((hit) => ({
         severity: corridorIsError ? 'error' : 'warning',
         code: 'composition/ambiguous-corridor',
@@ -399,10 +427,10 @@ if (svgMatches.length === 1) {
   );
   addCheck(
     'relationship_crossings',
-    !crossingIsError || relationshipCrossings.length === 0,
-    relationshipCrossings.map((hit) => (
+    !crossingAnalysis.exhausted && (!crossingIsError || relationshipCrossings.length === 0),
+    [...relationshipCrossings.map((hit) => (
       `[composition/proper-crossing] ${qualityProfile} ${relationshipName(hit.left)} crosses ${relationshipName(hit.right)} at [${formatPoint(hit.point)}]`
-    )),
+    )), ...(crossingAnalysis.exhausted ? [`[composition/crossing-analysis-budget] ${crossingBudgetDetail(crossingAnalysis)}`] : [])],
   );
   addCheck(
     'relationship_corridors',
@@ -734,7 +762,12 @@ function parseRoutePoints(value) {
   return points.length >= 2 && points.every(isPoint) ? points : null;
 }
 
-function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
+function collectRelationshipCrossings(
+  arrows,
+  includeSharedEndpoints = false,
+  pairLimit = DEFAULT_MAX_CROSSING_PAIR_CHECKS,
+  segmentPairLimit = DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS,
+) {
   const relationships = arrows.filter((arrow) => arrow.from && arrow.to && arrow.segments.length).map(arrow => ({
     ...arrow,
     // Readable-v2 routePoints come from the visible path, never its metadata.
@@ -742,6 +775,8 @@ function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
     segments: includeSharedEndpoints ? arrow.routeSubpaths.flatMap(forwardCollinearAnalysisSegments) : arrow.segments,
   }));
   const crossings = [];
+  let attemptedPairs = 0;
+  let attemptedSegmentPairs = 0;
   for (let leftIndex = 0; leftIndex < relationships.length; leftIndex += 1) {
     const left = relationships[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
@@ -752,9 +787,17 @@ function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
           && !includeSharedEndpoints
           && !(left.independentPorts && right.independentPorts)
           && !(left.automaticWorkflowRoute && right.automaticWorkflowRoute)) continue;
+      if (attemptedPairs >= pairLimit) {
+        return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: true, exhaustedBudget: 'relationship-pairs' };
+      }
+      attemptedPairs += 1;
       let point = null;
       for (const leftSegment of left.segments) {
         for (const rightSegment of right.segments) {
+          if (attemptedSegmentPairs >= segmentPairLimit) {
+            return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: true, exhaustedBudget: 'segment-pairs' };
+          }
+          attemptedSegmentPairs += 1;
           point = properSegmentIntersection(leftSegment.start, leftSegment.end, rightSegment.start, rightSegment.end);
           if (point) break;
         }
@@ -763,7 +806,26 @@ function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
       if (point) crossings.push({ left, right, point });
     }
   }
-  return crossings;
+  return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: false, exhaustedBudget: null };
+}
+
+function crossingBudgetDetail(analysis) {
+  const attempted = analysis.exhaustedBudget === 'segment-pairs'
+    ? `${analysis.attemptedSegmentPairs} segment pairs (limit ${maxCrossingSegmentPairChecks}) after ${analysis.attemptedPairs} relationship pairs`
+    : `${analysis.attemptedPairs} relationship pairs (limit ${maxCrossingPairChecks}) after ${analysis.attemptedSegmentPairs} segment pairs`;
+  return `Crossing analysis stopped after ${attempted}; inspection is incomplete.`;
+}
+
+function crossingBudgetFixes(analysis) {
+  return analysis.exhaustedBudget === 'segment-pairs'
+    ? ['increase ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS for this known-large artifact and rerun the check']
+    : ['increase ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS for this known-large artifact and rerun the check'];
+}
+
+function positiveIntegerEnvironment(name, fallback) {
+  const value = process.env[name];
+  if (value === undefined || value === '') return fallback;
+  return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : fallback;
 }
 
 function relationshipName(arrow) {
