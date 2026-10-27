@@ -43,8 +43,15 @@ try {
 
 if (isExplainerHtml(html)) {
   const result = checkExplainerHtml(html, { file: htmlPath });
-  console.log(JSON.stringify(result, null, 2));
-  process.exit(result.ok ? 0 : 1);
+  // On macOS a piped stdout is asynchronous, so process.exit() right after the
+  // write truncates a large receipt (~8 KiB) and deliver/finalize then report
+  // "Could not parse the successful artifact-check receipt". Exit from the
+  // write callback once the receipt has flushed, and hold the module here so
+  // the diagram path below does not run and print a second receipt.
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`, () => {
+    process.exit(result.ok ? 0 : 1);
+  });
+  await new Promise(() => {});
 }
 
 const checks = [];
