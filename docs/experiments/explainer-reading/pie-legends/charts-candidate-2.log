@@ -1,0 +1,63 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-charts.test.mjs
+
+Repository tests: 1 files, concurrency 4
+TAP version 13
+# Subtest: explainer chart fences render static themed SVG without shipping the chart library
+ok 1 - explainer chart fences render static themed SVG without shipping the chart library
+  ---
+  duration_ms: 1062.302084
+  type: 'test'
+  ...
+# Subtest: explainer chart fences send native diagram types to shorthand and locate syntax errors
+ok 2 - explainer chart fences send native diagram types to shorthand and locate syntax errors
+  ---
+  duration_ms: 890.228542
+  type: 'test'
+  ...
+# Subtest: explainer chart CJK axis titles stand upright and task lists become checklists
+ok 3 - explainer chart CJK axis titles stand upright and task lists become checklists
+  ---
+  duration_ms: 1204.967458
+  type: 'test'
+  ...
+# Subtest: explainer charts label bar values and give pie slices their value and share
+ok 4 - explainer charts label bar values and give pie slices their value and share
+  ---
+  duration_ms: 2097.413166
+  type: 'test'
+  ...
+# Subtest: configured pie legends retain each value and share
+ok 5 - configured pie legends retain each value and share
+  ---
+  duration_ms: 18.724542
+  type: 'test'
+  ...
+# Subtest: a data chart reads its CSV next to the draft, freezes it, and names a missing column
+ok 6 - a data chart reads its CSV next to the draft, freezes it, and names a missing column
+  ---
+  duration_ms: 1201.569375
+  type: 'test'
+  ...
+# Subtest: a blank data cell is missing data, never drawn as zero
+ok 7 - a blank data cell is missing data, never drawn as zero
+  ---
+  duration_ms: 1.57825
+  type: 'test'
+  ...
+# Subtest: pie diagnostics retain authored blank and showData lines
+ok 8 - pie diagnostics retain authored blank and showData lines
+  ---
+  duration_ms: 2.963292
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6594.38

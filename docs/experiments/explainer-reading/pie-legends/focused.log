@@ -1,0 +1,339 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-charts.test.mjs test/explainer-chart-data.test.mjs test/explainer-renderer.test.mjs test/explainer-validation.test.mjs test/explainer-sources.test.mjs
+
+Repository tests: 5 files, concurrency 4
+TAP version 13
+# Subtest: CSV bar labels, series names and units preserve quotes and backslashes in rendered SVG
+ok 1 - CSV bar labels, series names and units preserve quotes and backslashes in rendered SVG
+  ---
+  duration_ms: 1167.596167
+  type: 'test'
+  ...
+# Subtest: JSON line labels retain literal escapes and entity-like text without becoming chart syntax
+ok 2 - JSON line labels retain literal escapes and entity-like text without becoming chart syntax
+  ---
+  duration_ms: 1082.145834
+  type: 'test'
+  ...
+# Subtest: JSON pie legends preserve authored labels alongside the value and share
+ok 3 - JSON pie legends preserve authored labels alongside the value and share
+  ---
+  duration_ms: 1032.797042
+  type: 'test'
+  ...
+# Subtest: CSV bar labels resembling icons or comments remain literal text
+ok 4 - CSV bar labels resembling icons or comments remain literal text
+  ---
+  duration_ms: 1028.080917
+  type: 'test'
+  ...
+# Subtest: CSV quoted multiline cells keep their lines, commas and doubled quotes under LF and CRLF
+ok 5 - CSV quoted multiline cells keep their lines, commas and doubled quotes under LF and CRLF
+  ---
+  duration_ms: 2060.241084
+  type: 'test'
+  ...
+# Subtest: malformed CSV is rejected with a chart location and preserves the prior artifact
+ok 6 - malformed CSV is rejected with a chart location and preserves the prior artifact
+  ---
+  duration_ms: 1935.53125
+  type: 'test'
+  ...
+# Subtest: labels that cannot be displayed faithfully fail before replacing a previous chart
+ok 7 - labels that cannot be displayed faithfully fail before replacing a previous chart
+  ---
+  duration_ms: 2097.049375
+  type: 'test'
+  ...
+# Subtest: ordinary label whitespace is normalized for display without changing data
+ok 8 - ordinary label whitespace is normalized for display without changing data
+  ---
+  duration_ms: 3169.185625
+  type: 'test'
+  ...
+# Subtest: unrepresentable series names and units are diagnosed without publishing a modified label
+ok 9 - unrepresentable series names and units are diagnosed without publishing a modified label
+  ---
+  duration_ms: 293.442
+  type: 'test'
+  ...
+# Subtest: explainer chart fences render static themed SVG without shipping the chart library
+ok 10 - explainer chart fences render static themed SVG without shipping the chart library
+  ---
+  duration_ms: 1144.197833
+  type: 'test'
+  ...
+# Subtest: explainer chart fences send native diagram types to shorthand and locate syntax errors
+ok 11 - explainer chart fences send native diagram types to shorthand and locate syntax errors
+  ---
+  duration_ms: 882.415417
+  type: 'test'
+  ...
+# Subtest: explainer chart CJK axis titles stand upright and task lists become checklists
+ok 12 - explainer chart CJK axis titles stand upright and task lists become checklists
+  ---
+  duration_ms: 1192.038625
+  type: 'test'
+  ...
+# Subtest: explainer charts label bar values and give pie slices their value and share
+ok 13 - explainer charts label bar values and give pie slices their value and share
+  ---
+  duration_ms: 2036.587625
+  type: 'test'
+  ...
+# Subtest: configured pie legends retain each value and share
+ok 14 - configured pie legends retain each value and share
+  ---
+  duration_ms: 18.848167
+  type: 'test'
+  ...
+# Subtest: pie legend decoration preserves accepted category identity
+ok 15 - pie legend decoration preserves accepted category identity
+  ---
+  duration_ms: 0.79975
+  type: 'test'
+  ...
+# Subtest: a data chart reads its CSV next to the draft, freezes it, and names a missing column
+ok 16 - a data chart reads its CSV next to the draft, freezes it, and names a missing column
+  ---
+  duration_ms: 1183.852792
+  type: 'test'
+  ...
+# Subtest: a blank data cell is missing data, never drawn as zero
+ok 17 - a blank data cell is missing data, never drawn as zero
+  ---
+  duration_ms: 1.073625
+  type: 'test'
+  ...
+# Subtest: pie diagnostics retain authored blank and showData lines
+ok 18 - pie diagnostics retain authored blank and showData lines
+  ---
+  duration_ms: 2.449542
+  type: 'test'
+  ...
+# Subtest: renderer: every shape remains statically readable and authored text cannot become markup
+ok 19 - renderer: every shape remains statically readable and authored text cannot become markup
+  ---
+  duration_ms: 44.370916
+  type: 'test'
+  ...
+# Subtest: renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+ok 20 - renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+  ---
+  duration_ms: 15.949542
+  type: 'test'
+  ...
+# Subtest: renderer: resources fail closed and native previews preserve identity without leaking styles
+ok 21 - renderer: resources fail closed and native previews preserve identity without leaking styles
+  ---
+  duration_ms: 10.368875
+  type: 'test'
+  ...
+# Subtest: renderer: no-script content includes scope, system theme and inert operation controls
+ok 22 - renderer: no-script content includes scope, system theme and inert operation controls
+  ---
+  duration_ms: 7.858209
+  type: 'test'
+  ...
+# Subtest: renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+ok 23 - renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+  ---
+  duration_ms: 9.349208
+  type: 'test'
+  ...
+# Subtest: renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+ok 24 - renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+  ---
+  duration_ms: 60.745708
+  type: 'test'
+  ...
+# Subtest: renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+ok 25 - renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+  ---
+  duration_ms: 6.900041
+  type: 'test'
+  ...
+# Subtest: renderer: only Chinese pages get Chinese controls; other languages fall back to English
+ok 26 - renderer: only Chinese pages get Chinese controls; other languages fall back to English
+  ---
+  duration_ms: 15.073
+  type: 'test'
+  ...
+# Subtest: renderer: native diagram panels receive responsive space without changing the frozen native diagram
+ok 27 - renderer: native diagram panels receive responsive space without changing the frozen native diagram
+  ---
+  duration_ms: 6.458667
+  type: 'test'
+  ...
+# Subtest: renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+ok 28 - renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+  ---
+  duration_ms: 10.82375
+  type: 'test'
+  ...
+# Subtest: renderer: source markers number first appearances including blank labels and remain plain text
+ok 29 - renderer: source markers number first appearances including blank labels and remain plain text
+  ---
+  duration_ms: 5.202166
+  type: 'test'
+  ...
+# Subtest: literal snippets render as copyable code and table corners keep their header
+ok 30 - literal snippets render as copyable code and table corners keep their header
+  ---
+  duration_ms: 6.912417
+  type: 'test'
+  ...
+# Subtest: renderer: shared pages omit disposable native checker filenames but retain evidence
+ok 31 - renderer: shared pages omit disposable native checker filenames but retain evidence
+  ---
+  duration_ms: 7.224959
+  type: 'test'
+  ...
+# Subtest: renderer: manifest warnings use the same portable locations as the prepared bundle
+ok 32 - renderer: manifest warnings use the same portable locations as the prepared bundle
+  ---
+  duration_ms: 6.186958
+  type: 'test'
+  ...
+# Subtest: renderer: Windows cross-volume source locations are omitted instead of exposed
+ok 33 - renderer: Windows cross-volume source locations are omitted instead of exposed
+  ---
+  duration_ms: 9.576583
+  type: 'test'
+  ...
+# Subtest: explainer sources bind real pinned Git lines and freeze bytes without mutating authorship
+ok 34 - explainer sources bind real pinned Git lines and freeze bytes without mutating authorship
+  ---
+  duration_ms: 308.764875
+  type: 'test'
+  ...
+# Subtest: explainer derives a credential-free origin and HEAD; private credentials never reach source links
+ok 35 - explainer derives a credential-free origin and HEAD; private credentials never reach source links
+  ---
+  duration_ms: 467.884667
+  type: 'test'
+  ...
+# Subtest: secret and escaping paths reject before Git can read any declared sources
+ok 36 - secret and escaping paths reject before Git can read any declared sources
+  ---
+  duration_ms: 1.435166
+  type: 'test'
+  ...
+# Subtest: repository verification rejects wrong ranges, origin and source revisions
+ok 37 - repository verification rejects wrong ranges, origin and source revisions
+  ---
+  duration_ms: 342.344333
+  type: 'test'
+  ...
+# Subtest: secret-like code never appears in results or diagnostics
+ok 38 - secret-like code never appears in results or diagnostics
+  ---
+  duration_ms: 375.877917
+  type: 'test'
+  ...
+# Subtest: unquoted config credentials are blocked while environment and code references remain usable
+ok 39 - unquoted config credentials are blocked while environment and code references remain usable
+  ---
+  duration_ms: 688.053167
+  type: 'test'
+  ...
+# Subtest: cited repository locations carry their pinned lines, unverifiable ones stay plain, and code blocks cannot trust web/example sources
+ok 40 - cited repository locations carry their pinned lines, unverifiable ones stay plain, and code blocks cannot trust web/example sources
+  ---
+  duration_ms: 343.996458
+  type: 'test'
+  ...
+# Subtest: local image bytes are embedded, digest-bound and preserved after the original changes
+ok 41 - local image bytes are embedded, digest-bound and preserved after the original changes
+  ---
+  duration_ms: 151.198667
+  type: 'test'
+  ...
+# Subtest: image containment rejects symlink files and directories, traversal, unsupported formats and oversize files
+ok 42 - image containment rejects symlink files and directories, traversal, unsupported formats and oversize files
+  ---
+  duration_ms: 157.812083
+  type: 'test'
+  ...
+# Subtest: resource ids are required and diagnostics use caller source positions without content leaks
+ok 43 - resource ids are required and diagnostics use caller source positions without content leaks
+  ---
+  duration_ms: 0.527834
+  type: 'test'
+  ...
+# Subtest: generated schema rejects injected execution, resources and author approval fields
+ok 44 - generated schema rejects injected execution, resources and author approval fields
+  ---
+  duration_ms: 3.843459
+  type: 'test'
+  ...
+# Subtest: comparison assessments remain per cell and invalid widths locate the offending row
+ok 45 - comparison assessments remain per cell and invalid widths locate the offending row
+  ---
+  duration_ms: 5.205667
+  type: 'test'
+  ...
+# Subtest: inline safety keeps literal code and diff untouched while rejecting HTML and unsafe links
+ok 46 - inline safety keeps literal code and diff untouched while rejecting HTML and unsafe links
+  ---
+  duration_ms: 4.34525
+  type: 'test'
+  ...
+# Subtest: diagram references name real diagram blocks and inline topology nodes
+ok 47 - diagram references name real diagram blocks and inline topology nodes
+  ---
+  duration_ms: 9.061709
+  type: 'test'
+  ...
+# Subtest: native collection errors stay structured before resolving forward node references
+ok 48 - native collection errors stay structured before resolving forward node references
+  ---
+  duration_ms: 22.830792
+  type: 'test'
+  ...
+# Subtest: writing warnings are configurable and literal code is excluded from prose rules
+ok 49 - writing warnings are configurable and literal code is excluded from prose rules
+  ---
+  duration_ms: 3.268708
+  type: 'test'
+  ...
+# Subtest: global interactive IDs and source anchors cannot collide
+ok 50 - global interactive IDs and source anchors cannot collide
+  ---
+  duration_ms: 0.549125
+  type: 'test'
+  ...
+# Subtest: built-in answer is a legitimate block target while chrome IDs remain reserved
+ok 51 - built-in answer is a legitimate block target while chrome IDs remain reserved
+  ---
+  duration_ms: 0.284916
+  type: 'test'
+  ...
+# Subtest: steps never silently discard a simultaneous node and route selection
+ok 52 - steps never silently discard a simultaneous node and route selection
+  ---
+  duration_ms: 2.07575
+  type: 'test'
+  ...
+# Subtest: source links resolve forward IDs and code requires a repository location
+ok 53 - source links resolve forward IDs and code requires a repository location
+  ---
+  duration_ms: 0.832
+  type: 'test'
+  ...
+# Subtest: answer accepts four reasons and local qualifications remain valid in strict writing mode
+ok 54 - answer accepts four reasons and local qualifications remain valid in strict writing mode
+  ---
+  duration_ms: 1.534208
+  type: 'test'
+  ...
+1..54
+# tests 54
+# suites 0
+# pass 54
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14009.532791

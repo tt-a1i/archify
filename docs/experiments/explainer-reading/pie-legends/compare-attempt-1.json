@@ -1,0 +1,297 @@
+[
+  {
+    "name": "plain",
+    "input": "pie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "identical": true,
+    "base": {
+      "width": 373,
+      "height": 256,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"332.23\" y=\"105.85\" text-anchor=\"middle\">A · 10 (48%)</text>",
+        "<text x=\"329.17\" y=\"131.85\" text-anchor=\"middle\">B · 3 (14%)</text>",
+        "<text x=\"329.47\" y=\"157.85\" text-anchor=\"middle\">C · 8 (38%)</text>"
+      ]
+    },
+    "candidate": {
+      "width": 373,
+      "height": 256,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"332.23\" y=\"105.85\" text-anchor=\"middle\">A · 10 (48%)</text>",
+        "<text x=\"329.17\" y=\"131.85\" text-anchor=\"middle\">B · 3 (14%)</text>",
+        "<text x=\"329.47\" y=\"157.85\" text-anchor=\"middle\">C · 8 (38%)</text>"
+      ]
+    }
+  },
+  {
+    "name": "showData",
+    "input": "pie showData\n \"字体\":0.2\n \"Viewer\":0.8",
+    "identical": true,
+    "base": {
+      "width": 402,
+      "height": 256,
+      "labels": [
+        "<text x=\"52.9\" y=\"-68.96\">20%</text>",
+        "<text x=\"-52.9\" y=\"76.66\">80%</text>",
+        "<text x=\"346.9\" y=\"118.85\" text-anchor=\"middle\">字体 · 0.2（20%）</text>",
+        "<text x=\"346.9\" y=\"144.85\" text-anchor=\"middle\">Viewer · 0.8 (80%)</text>"
+      ]
+    },
+    "candidate": {
+      "width": 402,
+      "height": 256,
+      "labels": [
+        "<text x=\"52.9\" y=\"-68.96\">20%</text>",
+        "<text x=\"-52.9\" y=\"76.66\">80%</text>",
+        "<text x=\"346.9\" y=\"118.85\" text-anchor=\"middle\">字体 · 0.2（20%）</text>",
+        "<text x=\"346.9\" y=\"144.85\" text-anchor=\"middle\">Viewer · 0.8 (80%)</text>"
+      ]
+    }
+  },
+  {
+    "name": "entities",
+    "input": "pie\n \"A &amp; B\":3\n \"C &lt; D\":7",
+    "identical": true,
+    "base": {
+      "width": 388,
+      "height": 256,
+      "labels": [
+        "<text x=\"72.81\" y=\"-49.05\">30%</text>",
+        "<text x=\"-72.81\" y=\"56.75\">70%</text>",
+        "<text x=\"339.57\" y=\"118.85\" text-anchor=\"middle\">A &amp; B · 3 (30%)</text>",
+        "<text x=\"339.72\" y=\"144.85\" text-anchor=\"middle\">C &lt; D · 7 (70%)</text>"
+      ]
+    },
+    "candidate": {
+      "width": 388,
+      "height": 256,
+      "labels": [
+        "<text x=\"72.81\" y=\"-49.05\">30%</text>",
+        "<text x=\"-72.81\" y=\"56.75\">70%</text>",
+        "<text x=\"339.57\" y=\"118.85\" text-anchor=\"middle\">A &amp; B · 3 (30%)</text>",
+        "<text x=\"339.72\" y=\"144.85\" text-anchor=\"middle\">C &lt; D · 7 (70%)</text>"
+      ]
+    }
+  },
+  {
+    "name": "zero",
+    "input": "pie showData\n \"A\":0\n \"B\":0",
+    "identical": true,
+    "base": {
+      "width": 331,
+      "height": 256,
+      "labels": [
+        "<text x=\"311.31\" y=\"118.85\" text-anchor=\"middle\">A [0]</text>",
+        "<text x=\"311.31\" y=\"144.85\" text-anchor=\"middle\">B [0]</text>"
+      ]
+    },
+    "candidate": {
+      "width": 331,
+      "height": 256,
+      "labels": [
+        "<text x=\"311.31\" y=\"118.85\" text-anchor=\"middle\">A [0]</text>",
+        "<text x=\"311.31\" y=\"144.85\" text-anchor=\"middle\">B [0]</text>"
+      ]
+    }
+  },
+  {
+    "name": "negative",
+    "input": "pie\n \"A\":-1\n \"B\":3",
+    "identical": false,
+    "base": {
+      "error": "\"A · -1 (-50%)\" has invalid value: -1. Negative values are not allowed in pie charts. All slice values must be >= 0.",
+      "line": 0
+    },
+    "candidate": {
+      "error": "\"A\" has invalid value: -1. Negative values are not allowed in pie charts. All slice values must be >= 0.",
+      "line": 0
+    }
+  },
+  {
+    "name": "duplicate",
+    "input": "pie\n \"A\":1\n \"A\":9\n \"B\":1",
+    "identical": false,
+    "base": {
+      "width": 367,
+      "height": 256,
+      "labels": [
+        "<text x=\"25.36\" y=\"-82.5\">9%</text>",
+        "<text x=\"0\" y=\"93.85\">82%</text>",
+        "<text x=\"-25.36\" y=\"-82.5\">9%</text>",
+        "<text x=\"326.11\" y=\"105.85\" text-anchor=\"middle\">A · 1 (9%)</text>",
+        "<text x=\"329.17\" y=\"131.85\" text-anchor=\"middle\">A · 9 (82%)</text>",
+        "<text x=\"326.11\" y=\"157.85\" text-anchor=\"middle\">B · 1 (9%)</text>"
+      ]
+    },
+    "candidate": {
+      "width": 367,
+      "height": 256,
+      "labels": [
+        "<text x=\"90\" y=\"3.85\">50%</text>",
+        "<text x=\"-90\" y=\"3.85\">50%</text>",
+        "<text x=\"329.17\" y=\"118.85\" text-anchor=\"middle\">A · 1 (50%)</text>",
+        "<text x=\"329.17\" y=\"144.85\" text-anchor=\"middle\">B · 1 (50%)</text>"
+      ]
+    }
+  },
+  {
+    "name": "comment",
+    "input": "%% comment\npie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "identical": false,
+    "base": {
+      "width": 316,
+      "height": 256,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"303.67\" y=\"105.85\" text-anchor=\"middle\">A</text>",
+        "<text x=\"303.67\" y=\"131.85\" text-anchor=\"middle\">B</text>",
+        "<text x=\"303.97\" y=\"157.85\" text-anchor=\"middle\">C</text>"
+      ]
+    },
+    "candidate": {
+      "width": 373,
+      "height": 256,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"332.23\" y=\"105.85\" text-anchor=\"middle\">A · 10 (48%)</text>",
+        "<text x=\"329.17\" y=\"131.85\" text-anchor=\"middle\">B · 3 (14%)</text>",
+        "<text x=\"329.47\" y=\"157.85\" text-anchor=\"middle\">C · 8 (38%)</text>"
+      ]
+    }
+  },
+  {
+    "name": "frontmatter",
+    "input": "---\nconfig:\n  pie:\n    legendPosition: bottom\n---\npie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "identical": false,
+    "base": {
+      "width": 256,
+      "height": 354,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"137.7\" y=\"284.85\" text-anchor=\"middle\">A</text>",
+        "<text x=\"137.7\" y=\"310.85\" text-anchor=\"middle\">B</text>",
+        "<text x=\"138\" y=\"336.85\" text-anchor=\"middle\">C</text>"
+      ]
+    },
+    "candidate": {
+      "width": 256,
+      "height": 354,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"138\" y=\"284.85\" text-anchor=\"middle\">A · 10 (48%)</text>",
+        "<text x=\"134.94\" y=\"310.85\" text-anchor=\"middle\">B · 3 (14%)</text>",
+        "<text x=\"135.24\" y=\"336.85\" text-anchor=\"middle\">C · 8 (38%)</text>"
+      ]
+    }
+  },
+  {
+    "name": "directive",
+    "input": "%%{init: {\"pie\":{\"legendPosition\":\"bottom\"}}}%%\npie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "identical": false,
+    "base": {
+      "width": 256,
+      "height": 354,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"137.7\" y=\"284.85\" text-anchor=\"middle\">A</text>",
+        "<text x=\"137.7\" y=\"310.85\" text-anchor=\"middle\">B</text>",
+        "<text x=\"138\" y=\"336.85\" text-anchor=\"middle\">C</text>"
+      ]
+    },
+    "candidate": {
+      "width": 256,
+      "height": 354,
+      "labels": [
+        "<text x=\"89.75\" y=\"-2.88\">48%</text>",
+        "<text x=\"-26.53\" y=\"89.85\">14%</text>",
+        "<text x=\"-83.78\" y=\"-29.03\">38%</text>",
+        "<text x=\"138\" y=\"284.85\" text-anchor=\"middle\">A · 10 (48%)</text>",
+        "<text x=\"134.94\" y=\"310.85\" text-anchor=\"middle\">B · 3 (14%)</text>",
+        "<text x=\"135.24\" y=\"336.85\" text-anchor=\"middle\">C · 8 (38%)</text>"
+      ]
+    }
+  },
+  {
+    "name": "bar",
+    "input": "xychart-beta\n x-axis [A,B,C]\n bar [10,3,8]",
+    "identical": true,
+    "base": {
+      "width": 480,
+      "height": 260,
+      "labels": [
+        "<text x=\"20.23\" y=\"230.85\" text-anchor=\"end\">0</text>",
+        "<text x=\"20.23\" y=\"130.85\" text-anchor=\"end\">5</text>",
+        "<text x=\"20.23\" y=\"30.85\" text-anchor=\"end\">10</text>",
+        "<text x=\"103.86\" y=\"247.35\" text-anchor=\"middle\">A</text>",
+        "<text x=\"251.12\" y=\"247.35\" text-anchor=\"middle\">B</text>",
+        "<text x=\"398.37\" y=\"247.35\" text-anchor=\"middle\">C</text>",
+        "<text x=\"103.86\" y=\"21\" text-anchor=\"middle\">10</text>",
+        "<text x=\"251.12\" y=\"161\" text-anchor=\"middle\">3</text>",
+        "<text x=\"398.37\" y=\"61\" text-anchor=\"middle\">8</text>"
+      ]
+    },
+    "candidate": {
+      "width": 480,
+      "height": 260,
+      "labels": [
+        "<text x=\"20.23\" y=\"230.85\" text-anchor=\"end\">0</text>",
+        "<text x=\"20.23\" y=\"130.85\" text-anchor=\"end\">5</text>",
+        "<text x=\"20.23\" y=\"30.85\" text-anchor=\"end\">10</text>",
+        "<text x=\"103.86\" y=\"247.35\" text-anchor=\"middle\">A</text>",
+        "<text x=\"251.12\" y=\"247.35\" text-anchor=\"middle\">B</text>",
+        "<text x=\"398.37\" y=\"247.35\" text-anchor=\"middle\">C</text>",
+        "<text x=\"103.86\" y=\"21\" text-anchor=\"middle\">10</text>",
+        "<text x=\"251.12\" y=\"161\" text-anchor=\"middle\">3</text>",
+        "<text x=\"398.37\" y=\"61\" text-anchor=\"middle\">8</text>"
+      ]
+    }
+  },
+  {
+    "name": "line",
+    "input": "xychart-beta\n x-axis [A,B,C]\n line [10,3,8]",
+    "identical": true,
+    "base": {
+      "width": 480,
+      "height": 260,
+      "labels": [
+        "<text x=\"20.23\" y=\"230.85\" text-anchor=\"end\">2</text>",
+        "<text x=\"20.23\" y=\"180.85\" text-anchor=\"end\">4</text>",
+        "<text x=\"20.23\" y=\"130.85\" text-anchor=\"end\">6</text>",
+        "<text x=\"20.23\" y=\"80.85\" text-anchor=\"end\">8</text>",
+        "<text x=\"20.23\" y=\"30.85\" text-anchor=\"end\">10</text>",
+        "<text x=\"103.86\" y=\"247.35\" text-anchor=\"middle\">A</text>",
+        "<text x=\"251.12\" y=\"247.35\" text-anchor=\"middle\">B</text>",
+        "<text x=\"398.37\" y=\"247.35\" text-anchor=\"middle\">C</text>"
+      ]
+    },
+    "candidate": {
+      "width": 480,
+      "height": 260,
+      "labels": [
+        "<text x=\"20.23\" y=\"230.85\" text-anchor=\"end\">2</text>",
+        "<text x=\"20.23\" y=\"180.85\" text-anchor=\"end\">4</text>",
+        "<text x=\"20.23\" y=\"130.85\" text-anchor=\"end\">6</text>",
+        "<text x=\"20.23\" y=\"80.85\" text-anchor=\"end\">8</text>",
+        "<text x=\"20.23\" y=\"30.85\" text-anchor=\"end\">10</text>",
+        "<text x=\"103.86\" y=\"247.35\" text-anchor=\"middle\">A</text>",
+        "<text x=\"251.12\" y=\"247.35\" text-anchor=\"middle\">B</text>",
+        "<text x=\"398.37\" y=\"247.35\" text-anchor=\"middle\">C</text>"
+      ]
+    }
+  }
+]

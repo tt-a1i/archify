@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-30",
+  "queries": [
+    "open PRs: pie legend",
+    "open PRs: explainer frontmatter"
+  ],
+  "results": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "issues": []
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "issues": []
+        },
+        "isError": false
+      }
+    }
+  ],
+  "limit": "Bounded open-PR searches only; empty results do not prove absence of related work. No PR was modified or approved."
+}

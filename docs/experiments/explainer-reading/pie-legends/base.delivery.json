@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "069c62c2-1f03-42d8-9610-097b392c52bc",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round19/configured-pie.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round19/base.html",
+  "specification": {
+    "sha256": "043a9eaa0911eb9a77b8875251243d927e3d4c5976e1cce5a1829795a8d2e665",
+    "bytes": 3136
+  },
+  "artifact": {
+    "sha256": "0592192369cc8d659333b93059492dd10a7c36adc2a5061179593910e109aa28",
+    "bytes": 158533
+  },
+  "explainer": {
+    "preparedSha256": "f141c8c210dc6cbfc0913d5671ea4db69016677f0d2c92a53d0e26bf7997e818",
+    "dependencies": []
+  }
+}

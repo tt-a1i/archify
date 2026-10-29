@@ -1,0 +1,15 @@
+# Preserve configured pie values and percentages
+
+Round18 was progress: narrow-layout evidence and a reproduced wrapper defect, pushed87747b86e. Goal active. Product source currently unchanged; latest dev5ecbd1bfdbf83ea747072112493c940e707569cb.
+
+Problem: legal Mermaid frontmatter/init prefixes bypass the wrapper's anchored pie-text transformation. Plain pie labels include value/share, prefixed pie labels omit them. Bottom legend is supported already; changing its position must not silently remove numerical information. Reproduction is committed in chart-narrow/prefix-probe.mjs and prefix-probe-base.json.
+
+Scope: the compileExplainerChart pie legend preparation path only. Hypothesis: parse the pie once using the existing vendored parser and decorate its accepted sections, then render the same model. This avoids a second partial parser, retains parsed configuration and authored diagnostics, and leaves all non-pie rendering unchanged. A direct probe already verified that the same parsed model keeps bottom-legend configuration. No vendor edits/dependencies/schema/new authoring option/responsive default.
+
+Compatibility to inspect: plain and showData pies, LF/CRLF and split tokens, escaped/entity labels, comments/frontmatter/init, zero total, negative values, syntax-line diagnostics. Parsing before decoration also preserves the upstream parser's accepted sections instead of allowing label decoration to change duplicate category identity; inspect this behavior explicitly and record any changed case. Do not silently reclassify errors.
+
+Evidence: add one focused rendered-output regression for configuration plus numbers and one only if a distinct accepted-section integrity gap is verified; reproduce failure on base. Reuse existing pie whitespace/diagnostic tests. Compare plain old/new SVG outputs and a complete prefixed bottom-legend page on390/1440 light/dark; verify caption/data/labels, no new page overflow. Run focused chart/integration suites, core, generated checks; update officialNode22 ZIP and outside-repo extracted smoke if adopted. Existing full-browser/Windows/CI limits remain separate. Fixed authored inputs isolate compiler output, a recorded narrow exemption from the five-project generation pilot, not fresh authoring/human gains.
+
+Test-value: current tests cover plain legends and line preservation but not prefixed valid input. Assert visible numerical legend content and relative bottom placement, not arbitrary coordinates or whole-page snapshots. Simplification Focused Survey: compile callers are renderer and source preparation; eliminate pie source-text rewriting in favor of existing parse/render owner, preserve all other types and current static SVG packaging. No need for new observer, framework or test family.
+
+Budget:30minutes implementation/focused verification, then20minutes package and evidence only if accepted. If a new compatibility issue is unresolved, retain it and defer adoption instead of resetting expected output blindly. No merge, live install, publication beyond the authorized experimental branch, or external messaging.

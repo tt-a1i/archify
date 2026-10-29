@@ -1,0 +1,11 @@
+{
+  "baseCommit": "87747b86e145c03ab3aca7a559f4759a48913302",
+  "sourceCommit": "e5e03d185ce0617aa4fc7645bac0317e4079f421",
+  "compilerSha256": "c4b1c3e6b0f0f4c6cfc9729a4b538b10558fab49c0349618ee0dc84c3afe6227",
+  "artifacts": {
+    "base.html": "0592192369cc8d659333b93059492dd10a7c36adc2a5061179593910e109aa28",
+    "candidate.html": "366b866d94fc8f0f653e74f8ddeb58ee451e08e5d895c46f4d1622e05a015d35"
+  },
+  "originalCandidateSha256": "366b866d94fc8f0f653e74f8ddeb58ee451e08e5d895c46f4d1622e05a015d35",
+  "currentCandidateMarkupOutsideScriptsIdenticalToInspectedOriginal": true
+}

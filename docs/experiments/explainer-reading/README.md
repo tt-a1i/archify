@@ -147,3 +147,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 18
 
 [Chart-native narrow layouts](chart-narrow/README.md) make the three-category comparisons readable at 390 px without scrolling, but remove half the category labels in a six-batch counterexample; at the narrower cap, all bar-value labels disappear. Universal compact defaults are rejected. The pie's bottom legend preserves its values but costs vertical space. A separate configured-pie legend defect is now reproduced for a focused follow-up. Product source remains unchanged.
+
+## Continued exploration — round 19
+
+[Configured pie legends](pie-legends/README.md) now retain values and percentages after comments, frontmatter and init directives. Parsing before decoration also prevents repeated category names from turning into extra slices. The first attempt failed existing multiline compatibility coverage; the retained normalizer fixes that regression. Two new tests fail base, 54 focused and 19 core tests pass, generated checks pass, and the rebuilt package passes an extracted smoke. Matching phone/desktop and light/dark pages preserve panel height. No universal narrow-layout default is adopted.

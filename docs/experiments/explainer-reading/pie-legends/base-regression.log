@@ -1,0 +1,33 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-charts.test.mjs --test-name-pattern=configured pie
+
+Repository tests: 1 files, concurrency 4
+TAP version 13
+# Subtest: configured pie legends retain each value and share
+not ok 1 - configured pie legends retain each value and share
+  ---
+  duration_ms: 18.256417
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-charts.test.mjs:71:1'
+  failureType: 'testCodeFailure'
+  error: 'configuration must not remove the numerical legend'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<svg xmlns="http://www.w3.org/2000/svg" class="pele pele-pie" viewBox="0 0 358 256" width="358" height="256" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_fm:var(--pele-font-mono,monospace);font:13px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="pie"><g class="pele-slices" transform="translate(128,128)" stroke="var(--_bg)" stroke-width="1.5" stroke-linejoin="round"><path class="pele-slice" data-id="A &amp; B" d="M0,0L0,-120A120,120 0 0 1 114.13,-37.08Z" fill="var(--pele-series-1,#4c78a8)"/><path class="pele-slice" data-id="字体" d="M0,0L114.13,-37.08A120,120 0 1 1 0,-120Z" fill="var(--pele-series-2,#f58518)"/></g><g class="pele-slice-labels" transform="translate(128,128)" font-size="11" text-anchor="middle" fill="var(--_bg)"><text x="52.9" y="-68.96">20%</text><text x="-52.9" y="76.66">80%</text></g><g class="pele-legend" font-size="11"><g class="pele-legend-item" data-id="A &amp; B"><rect x="280" y="109" width="12" height="12" rx="2" fill="var(--pele-series-1,#4c78a8)"/><text x="324.77" y="118.85" text-anchor="middle">A &amp; B [20]</text></g><g class="pele-legend-item" data-id="字体"><rect x="280" y="135" width="12" height="12" rx="2" fill="var(--pele-series-2,#f58518)"/><text x="321.7" y="144.85" text-anchor="middle">字体 [80]</text></g></g></svg>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-charts.test.mjs:81:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 130.455042
