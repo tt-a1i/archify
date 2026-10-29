@@ -1,0 +1,21 @@
+{
+  "variants": [
+    {
+      "iframe": "mobile-tools/taskgroup-candidate.html",
+      "open": "mobile-tools/taskgroup-candidate.html",
+      "width": 390,
+      "pageWidth": 390,
+      "caseCount": 7,
+      "versionCount": 3
+    },
+    {
+      "iframe": "mobile-tools/curl-candidate.html",
+      "open": "mobile-tools/curl-candidate.html",
+      "width": 390,
+      "pageWidth": 390,
+      "caseCount": 7,
+      "versionCount": 3
+    }
+  ],
+  "reused": "Previous fourteen variant-load observations retain their round 8/9 scope; only the two toolbar candidates were loaded here."
+}

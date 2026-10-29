@@ -1,0 +1,16 @@
+[
+  {
+    "case": "taskgroup",
+    "sourceSha256": "a1aa742ebde1627bdfab8412fcae934d596fc2b94cc2f6015ea7e874e00a3078",
+    "candidateRuleOccurrences": 1,
+    "baseRuleOccurrences": 0,
+    "htmlEqualAfterRemovingCandidateRule": true
+  },
+  {
+    "case": "curl",
+    "sourceSha256": "dd39471d66e39f3dee45d9ec6ed3820947ab1fea27bfb20d83c69a3189eea4a5",
+    "candidateRuleOccurrences": 1,
+    "baseRuleOccurrences": 0,
+    "htmlEqualAfterRemovingCandidateRule": true
+  }
+]

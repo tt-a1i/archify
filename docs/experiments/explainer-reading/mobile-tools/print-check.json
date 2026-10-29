@@ -1,0 +1,26 @@
+[
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "tools": "none",
+    "body": "rgb(255, 255, 255)"
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "tools": "none",
+    "body": "rgb(255, 255, 255)"
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "tools": "none",
+    "body": "rgb(255, 255, 255)"
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "tools": "none",
+    "body": "rgb(255, 255, 255)"
+  }
+]

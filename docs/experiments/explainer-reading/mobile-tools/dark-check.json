@@ -1,0 +1,12 @@
+{
+  "width": 390,
+  "pageWidth": 390,
+  "theme": "dark",
+  "style": "clean",
+  "menu": {
+    "left": 12,
+    "right": 160,
+    "visible": true
+  },
+  "focusInside": true
+}

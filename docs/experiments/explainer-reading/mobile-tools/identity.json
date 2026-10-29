@@ -1,0 +1,9 @@
+{
+  "base": "87f48891a055c1f3e27f3f1f84c1d4d209ea3ced",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "proposal": "https://github.com/tt-a1i/archify/pull/1076",
+  "proposalHead": "cd50794b794fc9f6ec4c9914dee78df0b7fddde3",
+  "author": "BlueboxC",
+  "scope": "Exact reader.css media-rule addition only, applied to frozen candidate snapshot. No product source or owner PR changed.",
+  "patchSha256": "0324620793ade553c0b0b0caff737f14ab058cf1f4f9fc5a5b39303119b181ff"
+}

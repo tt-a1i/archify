@@ -109,3 +109,9 @@ Next bounded direction: a curl explanation of request method versus output forma
 [Curl request/download/output](curl-headers/README.md) adds the seventh project to the review index. Two loopback probe runs show that HEAD and GET-with-discarded-body can print identical headers while downloading different body lengths. A two-column content repair makes all four operations visible in the phone table; source semantics and local fixture limits remain beside the claims. The independent first draft, its relocated-receipt failure and the repaired artifact's passing current-path check are retained.
 
 The index now has fourteen variants. The original twelve-load evidence remains at round 8's revision; round 9 checks the two added curl variants and local links separately. This round changes no runtime or authoring rule and makes no general generation-quality claim.
+
+## Continued exploration — round 10
+
+[Existing mobile-toolbar proposal](mobile-tools/README.md) replays #1076's exact CSS addition on the current runtime and complete TaskGroup/curl pages. Baseline: 12 of 24 light-theme states overflow. Candidate: all 24 keep controls and menus visible, with checked keyboard opening and Escape focus return. The clean desktop screenshot is byte-identical, and the checked print controls remain hidden. This is independent transfer evidence for the existing proposal, not a new implementation PR or product integration.
+
+The review index adds these two experimental variants, for sixteen variants across seven projects. Existing content and runtime remain unchanged; the candidate rule lives in the frozen replay and its generated pages only. Human acceptance and broader integration checks remain separate.

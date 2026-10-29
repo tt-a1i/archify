@@ -1,0 +1,13 @@
+{
+  "base": {
+    "cases": 24,
+    "failures": 12
+  },
+  "candidate": {
+    "cases": 24,
+    "failures": 0
+  },
+  "matrix": "Two complete documents \u00d7 three widths (320,390,1440) \u00d7 four styles. Two menus per state, keyboard opening and Escape. Light theme.",
+  "desktopScreenshotBytesIdentical": true,
+  "boundary": "Menu interaction does not establish image/PDF export success or natural Tab traversal."
+}

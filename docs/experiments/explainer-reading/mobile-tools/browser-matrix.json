@@ -1,0 +1,3554 @@
+[
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 320,
+    "style": "clean",
+    "pageWidth": 400,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Clean",
+        "left": 191.84375,
+        "right": 289.109375,
+        "top": 127.390625,
+        "bottom": 157.390625
+      },
+      {
+        "text": "Export",
+        "left": 297.109375,
+        "right": 400.3359375,
+        "top": 127.390625,
+        "bottom": 157.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 141.109375,
+        "right": 289.109375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 400,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 224.3359375,
+        "right": 400.3359375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 400,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 320,
+    "style": "editorial",
+    "pageWidth": 414,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Editorial",
+        "left": 191.84375,
+        "right": 303.4765625,
+        "top": 189.5,
+        "bottom": 219.5
+      },
+      {
+        "text": "Export",
+        "left": 311.4765625,
+        "right": 414.703125,
+        "top": 189.5,
+        "bottom": 219.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 155.4765625,
+        "right": 303.4765625,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 414,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 238.703125,
+        "right": 414.703125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 414,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 320,
+    "style": "product",
+    "pageWidth": 413,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Product",
+        "left": 191.84375,
+        "right": 302.125,
+        "top": 189.5,
+        "bottom": 219.5
+      },
+      {
+        "text": "Export",
+        "left": 310.125,
+        "right": 413.3515625,
+        "top": 189.5,
+        "bottom": 219.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 154.125,
+        "right": 302.125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 413,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 237.3515625,
+        "right": 413.3515625,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 413,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 320,
+    "style": "swiss",
+    "pageWidth": 395,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 76.9140625,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Light",
+        "left": 78.9140625,
+        "right": 129.0078125,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Dark",
+        "left": 131.0078125,
+        "right": 177.171875,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Swiss",
+        "left": 188.171875,
+        "right": 285.0234375,
+        "top": 190.390625,
+        "bottom": 220.390625
+      },
+      {
+        "text": "Export",
+        "left": 293.0234375,
+        "right": 394.828125,
+        "top": 190.390625,
+        "bottom": 220.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 137.0234375,
+        "right": 285.0234375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 395,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 218.828125,
+        "right": 394.828125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 395,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 390,
+    "style": "clean",
+    "pageWidth": 400,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Clean",
+        "left": 191.84375,
+        "right": 289.109375,
+        "top": 127.390625,
+        "bottom": 157.390625
+      },
+      {
+        "text": "Export",
+        "left": 297.109375,
+        "right": 400.3359375,
+        "top": 127.390625,
+        "bottom": 157.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 141.109375,
+        "right": 289.109375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 400,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 224.3359375,
+        "right": 400.3359375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 400,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 390,
+    "style": "editorial",
+    "pageWidth": 414,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "Editorial",
+        "left": 191.84375,
+        "right": 303.4765625,
+        "top": 149,
+        "bottom": 179
+      },
+      {
+        "text": "Export",
+        "left": 311.4765625,
+        "right": 414.703125,
+        "top": 149,
+        "bottom": 179
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 155.4765625,
+        "right": 303.4765625,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 414,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 238.703125,
+        "right": 414.703125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 414,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 390,
+    "style": "product",
+    "pageWidth": 413,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Product",
+        "left": 191.84375,
+        "right": 302.125,
+        "top": 189.5,
+        "bottom": 219.5
+      },
+      {
+        "text": "Export",
+        "left": 310.125,
+        "right": 413.3515625,
+        "top": 189.5,
+        "bottom": 219.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 154.125,
+        "right": 302.125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 413,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 237.3515625,
+        "right": 413.3515625,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 413,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 390,
+    "style": "swiss",
+    "pageWidth": 395,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 76.9140625,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Light",
+        "left": 78.9140625,
+        "right": 129.0078125,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Dark",
+        "left": 131.0078125,
+        "right": 177.171875,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Swiss",
+        "left": 188.171875,
+        "right": 285.0234375,
+        "top": 190.390625,
+        "bottom": 220.390625
+      },
+      {
+        "text": "Export",
+        "left": 293.0234375,
+        "right": 394.828125,
+        "top": 190.390625,
+        "bottom": 220.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 137.0234375,
+        "right": 285.0234375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 395,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 218.828125,
+        "right": 394.828125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 395,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 1440,
+    "style": "clean",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 974.6640625,
+        "right": 1037.96875,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "Light",
+        "left": 1039.96875,
+        "right": 1091.125,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "Dark",
+        "left": 1093.125,
+        "right": 1140.5078125,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "Clean",
+        "left": 1151.5078125,
+        "right": 1248.7734375,
+        "top": 38.546875,
+        "bottom": 68.546875
+      },
+      {
+        "text": "Export",
+        "left": 1256.7734375,
+        "right": 1360,
+        "top": 38.546875,
+        "bottom": 68.546875
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1100.7734375,
+        "right": 1248.7734375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 1440,
+    "style": "editorial",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 960.296875,
+        "right": 1023.6015625,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Light",
+        "left": 1025.6015625,
+        "right": 1076.7578125,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Dark",
+        "left": 1078.7578125,
+        "right": 1126.140625,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Editorial",
+        "left": 1137.140625,
+        "right": 1248.7734375,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "Export",
+        "left": 1256.7734375,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1100.7734375,
+        "right": 1248.7734375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 1440,
+    "style": "product",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 961.6484375,
+        "right": 1024.953125,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Light",
+        "left": 1026.953125,
+        "right": 1078.109375,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Dark",
+        "left": 1080.109375,
+        "right": 1127.4921875,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Product",
+        "left": 1138.4921875,
+        "right": 1248.7734375,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "Export",
+        "left": 1256.7734375,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1100.7734375,
+        "right": 1248.7734375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "base",
+    "width": 1440,
+    "style": "swiss",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 980.171875,
+        "right": 1042.0859375,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "Light",
+        "left": 1044.0859375,
+        "right": 1094.1796875,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "Dark",
+        "left": 1096.1796875,
+        "right": 1142.34375,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "Swiss",
+        "left": 1153.34375,
+        "right": 1250.1953125,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      },
+      {
+        "text": "Export",
+        "left": 1258.1953125,
+        "right": 1360,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1102.1953125,
+        "right": 1250.1953125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 320,
+    "style": "clean",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Clean",
+        "left": 191.84375,
+        "right": 289.109375,
+        "top": 127.390625,
+        "bottom": 157.390625
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 115.2265625,
+        "top": 165.390625,
+        "bottom": 195.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 320,
+    "style": "editorial",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Editorial",
+        "left": 191.84375,
+        "right": 303.4765625,
+        "top": 189.5,
+        "bottom": 219.5
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 115.2265625,
+        "top": 227.5,
+        "bottom": 257.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 320,
+    "style": "product",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Product",
+        "left": 191.84375,
+        "right": 302.125,
+        "top": 189.5,
+        "bottom": 219.5
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 115.2265625,
+        "top": 227.5,
+        "bottom": 257.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 320,
+    "style": "swiss",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 76.9140625,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Light",
+        "left": 78.9140625,
+        "right": 129.0078125,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Dark",
+        "left": 131.0078125,
+        "right": 177.171875,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Swiss",
+        "left": 188.171875,
+        "right": 285.0234375,
+        "top": 190.390625,
+        "bottom": 220.390625
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 113.8046875,
+        "top": 228.390625,
+        "bottom": 258.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 390,
+    "style": "clean",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 130.390625,
+        "bottom": 154.390625
+      },
+      {
+        "text": "Clean",
+        "left": 191.84375,
+        "right": 289.109375,
+        "top": 127.390625,
+        "bottom": 157.390625
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 115.2265625,
+        "top": 165.390625,
+        "bottom": 195.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 390,
+    "style": "editorial",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "Editorial",
+        "left": 191.84375,
+        "right": 303.4765625,
+        "top": 149,
+        "bottom": 179
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 115.2265625,
+        "top": 187,
+        "bottom": 217
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 390,
+    "style": "product",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 78.3046875,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Light",
+        "left": 80.3046875,
+        "right": 131.4609375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Dark",
+        "left": 133.4609375,
+        "right": 180.84375,
+        "top": 192.5,
+        "bottom": 216.5
+      },
+      {
+        "text": "Product",
+        "left": 191.84375,
+        "right": 302.125,
+        "top": 189.5,
+        "bottom": 219.5
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 115.2265625,
+        "top": 227.5,
+        "bottom": 257.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 390,
+    "style": "swiss",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "System",
+        "left": 15,
+        "right": 76.9140625,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Light",
+        "left": 78.9140625,
+        "right": 129.0078125,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Dark",
+        "left": 131.0078125,
+        "right": 177.171875,
+        "top": 193.390625,
+        "bottom": 217.390625
+      },
+      {
+        "text": "Swiss",
+        "left": 188.171875,
+        "right": 285.0234375,
+        "top": 190.390625,
+        "bottom": 220.390625
+      },
+      {
+        "text": "Export",
+        "left": 12,
+        "right": 113.8046875,
+        "top": 228.390625,
+        "bottom": 258.390625
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "clean",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 974.6640625,
+        "right": 1037.96875,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "Light",
+        "left": 1039.96875,
+        "right": 1091.125,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "Dark",
+        "left": 1093.125,
+        "right": 1140.5078125,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "Clean",
+        "left": 1151.5078125,
+        "right": 1248.7734375,
+        "top": 38.546875,
+        "bottom": 68.546875
+      },
+      {
+        "text": "Export",
+        "left": 1256.7734375,
+        "right": 1360,
+        "top": 38.546875,
+        "bottom": 68.546875
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1100.7734375,
+        "right": 1248.7734375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "editorial",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 960.296875,
+        "right": 1023.6015625,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Light",
+        "left": 1025.6015625,
+        "right": 1076.7578125,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Dark",
+        "left": 1078.7578125,
+        "right": 1126.140625,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Editorial",
+        "left": 1137.140625,
+        "right": 1248.7734375,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "Export",
+        "left": 1256.7734375,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1100.7734375,
+        "right": 1248.7734375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "product",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 961.6484375,
+        "right": 1024.953125,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Light",
+        "left": 1026.953125,
+        "right": 1078.109375,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Dark",
+        "left": 1080.109375,
+        "right": 1127.4921875,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "Product",
+        "left": 1138.4921875,
+        "right": 1248.7734375,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "Export",
+        "left": 1256.7734375,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1100.7734375,
+        "right": 1248.7734375,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "taskgroup",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "swiss",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "System",
+        "left": 980.171875,
+        "right": 1042.0859375,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "Light",
+        "left": 1044.0859375,
+        "right": 1094.1796875,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "Dark",
+        "left": 1096.1796875,
+        "right": 1142.34375,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "Swiss",
+        "left": 1153.34375,
+        "right": 1250.1953125,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      },
+      {
+        "text": "Export",
+        "left": 1258.1953125,
+        "right": 1360,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1102.1953125,
+        "right": 1250.1953125,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 320,
+    "style": "clean",
+    "pageWidth": 352,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "简洁",
+        "left": 165,
+        "right": 254,
+        "top": 97.6953125,
+        "bottom": 127.6953125
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 97.6953125,
+        "bottom": 127.6953125
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 320,
+    "style": "editorial",
+    "pageWidth": 352,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "杂志",
+        "left": 165,
+        "right": 254,
+        "top": 149,
+        "bottom": 179
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 149,
+        "bottom": 179
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 320,
+    "style": "product",
+    "pageWidth": 352,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "产品",
+        "left": 165,
+        "right": 254,
+        "top": 149,
+        "bottom": 179
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 149,
+        "bottom": 179
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 320,
+    "style": "swiss",
+    "pageWidth": 352,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 152.59375,
+        "bottom": 176.59375
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 152.59375,
+        "bottom": 176.59375
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 152.59375,
+        "bottom": 176.59375
+      },
+      {
+        "text": "网格",
+        "left": 165,
+        "right": 254,
+        "top": 149.59375,
+        "bottom": 179.59375
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 149.59375,
+        "bottom": 179.59375
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 352,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 390,
+    "style": "clean",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "简洁",
+        "left": 165,
+        "right": 254,
+        "top": 97.6953125,
+        "bottom": 127.6953125
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 97.6953125,
+        "bottom": 127.6953125
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 390,
+    "style": "editorial",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "杂志",
+        "left": 165,
+        "right": 254,
+        "top": 108.5,
+        "bottom": 138.5
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 108.5,
+        "bottom": 138.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 390,
+    "style": "product",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "产品",
+        "left": 165,
+        "right": 254,
+        "top": 108.5,
+        "bottom": 138.5
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 108.5,
+        "bottom": 138.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 390,
+    "style": "swiss",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 111.796875,
+        "bottom": 135.796875
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 111.796875,
+        "bottom": 135.796875
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 111.796875,
+        "bottom": 135.796875
+      },
+      {
+        "text": "网格",
+        "left": 165,
+        "right": 254,
+        "top": 108.796875,
+        "bottom": 138.796875
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 108.796875,
+        "bottom": 138.796875
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 106,
+        "right": 254,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 176,
+        "right": 352,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 1440,
+    "style": "clean",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "简洁",
+        "left": 1173,
+        "right": 1262,
+        "top": 38.546875,
+        "bottom": 68.546875
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 38.546875,
+        "bottom": 68.546875
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 1440,
+    "style": "editorial",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "杂志",
+        "left": 1173,
+        "right": 1262,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 1440,
+    "style": "product",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "产品",
+        "left": 1173,
+        "right": 1262,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "base",
+    "width": 1440,
+    "style": "swiss",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "网格",
+        "left": 1173,
+        "right": 1262,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 320,
+    "style": "clean",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "简洁",
+        "left": 165,
+        "right": 254,
+        "top": 97.6953125,
+        "bottom": 127.6953125
+      },
+      {
+        "text": "导出",
+        "left": 12,
+        "right": 102,
+        "top": 135.6953125,
+        "bottom": 165.6953125
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 320,
+    "style": "editorial",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "杂志",
+        "left": 165,
+        "right": 254,
+        "top": 149,
+        "bottom": 179
+      },
+      {
+        "text": "导出",
+        "left": 12,
+        "right": 102,
+        "top": 187,
+        "bottom": 217
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 320,
+    "style": "product",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 152,
+        "bottom": 176
+      },
+      {
+        "text": "产品",
+        "left": 165,
+        "right": 254,
+        "top": 149,
+        "bottom": 179
+      },
+      {
+        "text": "导出",
+        "left": 12,
+        "right": 102,
+        "top": 187,
+        "bottom": 217
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 320,
+    "style": "swiss",
+    "pageWidth": 320,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 152.59375,
+        "bottom": 176.59375
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 152.59375,
+        "bottom": 176.59375
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 152.59375,
+        "bottom": 176.59375
+      },
+      {
+        "text": "网格",
+        "left": 165,
+        "right": 254,
+        "top": 149.59375,
+        "bottom": 179.59375
+      },
+      {
+        "text": "导出",
+        "left": 12,
+        "right": 102,
+        "top": 187.59375,
+        "bottom": 217.59375
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 320,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 390,
+    "style": "clean",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 100.6953125,
+        "bottom": 124.6953125
+      },
+      {
+        "text": "简洁",
+        "left": 165,
+        "right": 254,
+        "top": 97.6953125,
+        "bottom": 127.6953125
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 97.6953125,
+        "bottom": 127.6953125
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 390,
+    "style": "editorial",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "杂志",
+        "left": 165,
+        "right": 254,
+        "top": 108.5,
+        "bottom": 138.5
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 108.5,
+        "bottom": 138.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 390,
+    "style": "product",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 111.5,
+        "bottom": 135.5
+      },
+      {
+        "text": "产品",
+        "left": 165,
+        "right": 254,
+        "top": 108.5,
+        "bottom": 138.5
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 108.5,
+        "bottom": 138.5
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 390,
+    "style": "swiss",
+    "pageWidth": 390,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 15,
+        "right": 60,
+        "top": 111.796875,
+        "bottom": 135.796875
+      },
+      {
+        "text": "浅色",
+        "left": 62,
+        "right": 107,
+        "top": 111.796875,
+        "bottom": 135.796875
+      },
+      {
+        "text": "深色",
+        "left": 109,
+        "right": 154,
+        "top": 111.796875,
+        "bottom": 135.796875
+      },
+      {
+        "text": "网格",
+        "left": 165,
+        "right": 254,
+        "top": 108.796875,
+        "bottom": 138.796875
+      },
+      {
+        "text": "导出",
+        "left": 262,
+        "right": 352,
+        "top": 108.796875,
+        "bottom": 138.796875
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 12,
+        "right": 160,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 12,
+        "right": 188,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 390,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "clean",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 41.546875,
+        "bottom": 65.546875
+      },
+      {
+        "text": "简洁",
+        "left": 1173,
+        "right": 1262,
+        "top": 38.546875,
+        "bottom": 68.546875
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 38.546875,
+        "bottom": 68.546875
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "editorial",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "杂志",
+        "left": 1173,
+        "right": 1262,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "product",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 44.25,
+        "bottom": 68.25
+      },
+      {
+        "text": "产品",
+        "left": 1173,
+        "right": 1262,
+        "top": 41.25,
+        "bottom": 71.25
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 41.25,
+        "bottom": 71.25
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  },
+  {
+    "caseName": "curl",
+    "arm": "candidate",
+    "width": 1440,
+    "style": "swiss",
+    "pageWidth": 1440,
+    "controls": [
+      {
+        "text": "系统",
+        "left": 1023,
+        "right": 1068,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "浅色",
+        "left": 1070,
+        "right": 1115,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "深色",
+        "left": 1117,
+        "right": 1162,
+        "top": 44.3984375,
+        "bottom": 68.3984375
+      },
+      {
+        "text": "网格",
+        "left": 1173,
+        "right": 1262,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      },
+      {
+        "text": "导出",
+        "left": 1270,
+        "right": 1360,
+        "top": 41.3984375,
+        "bottom": 71.3984375
+      }
+    ],
+    "menus": [
+      {
+        "menu": ".style-menu",
+        "left": 1114,
+        "right": 1262,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      },
+      {
+        "menu": ".export-menu",
+        "left": 1184,
+        "right": 1360,
+        "visible": true,
+        "expanded": "true",
+        "focusInside": true,
+        "pageWidth": 1440,
+        "closed": {
+          "hidden": true,
+          "focused": true,
+          "expanded": "false"
+        }
+      }
+    ]
+  }
+]
