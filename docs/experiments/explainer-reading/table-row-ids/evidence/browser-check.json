@@ -1,0 +1,392 @@
+{
+  "scope": "same visible author content, manual IDs versus automatic repeated-row IDs; original phone tables still need horizontal scrolling",
+  "rows": [
+    {
+      "width": 390,
+      "theme": "light",
+      "style": "editorial",
+      "documentWidth": 390,
+      "ids": [
+        "archify-software-notices",
+        "board",
+        "answer",
+        "observation",
+        "prose-3bb5887b81b3",
+        "comparison-b9a7013dbdeb",
+        "some-eager",
+        "some-lazy",
+        "none-eager",
+        "none-lazy",
+        "row-82a9f3bb7b68",
+        "prose-1ebaf90c5dbb",
+        "mechanism",
+        "comparison-83ae22ccf776",
+        "row-db281572a303",
+        "row-7d55bcdd98dc",
+        "prose-a3ff5b2c9588",
+        "boundary",
+        "prose-f7e887a8c40a",
+        "snippet-42a9f279b4dd",
+        "prose-6caed06c3e24",
+        "prose-3d7b65914554",
+        "source-option",
+        "diagram-dialog",
+        "diagram-dialog-title",
+        "toast",
+        "archify-explainer-prepared",
+        "explainer-manifest",
+        "explainer-reader-words",
+        "ask-title"
+      ],
+      "rows": [
+        {
+          "id": "some-eager",
+          "cells": [
+            "Some(7)",
+            "unwrap_or(fallback())",
+            "7",
+            "执行"
+          ]
+        },
+        {
+          "id": "some-lazy",
+          "cells": [
+            "Some(7)",
+            "unwrap_or_else(|| fallback())",
+            "7",
+            "不执行"
+          ]
+        },
+        {
+          "id": "none-eager",
+          "cells": [
+            "None",
+            "unwrap_or(fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "none-lazy",
+          "cells": [
+            "None",
+            "unwrap_or_else(|| fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-82a9f3bb7b68",
+          "cells": [
+            "Some(0)",
+            "unwrap_or_else(|| fallback())",
+            "0",
+            "不执行"
+          ]
+        }
+      ],
+      "table": {
+        "width": 432,
+        "client": 358
+      },
+      "name": "manual",
+      "screenshotSha256": "6930b6609c1b472985e1cc892a143c8d579d6ee5d9c901f73a2b13465ff23015"
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "style": "editorial",
+      "documentWidth": 1440,
+      "ids": [
+        "archify-software-notices",
+        "board",
+        "answer",
+        "observation",
+        "prose-3bb5887b81b3",
+        "comparison-b9a7013dbdeb",
+        "some-eager",
+        "some-lazy",
+        "none-eager",
+        "none-lazy",
+        "row-82a9f3bb7b68",
+        "prose-1ebaf90c5dbb",
+        "mechanism",
+        "comparison-83ae22ccf776",
+        "row-db281572a303",
+        "row-7d55bcdd98dc",
+        "prose-a3ff5b2c9588",
+        "boundary",
+        "prose-f7e887a8c40a",
+        "snippet-42a9f279b4dd",
+        "prose-6caed06c3e24",
+        "prose-3d7b65914554",
+        "source-option",
+        "diagram-dialog",
+        "diagram-dialog-title",
+        "toast",
+        "archify-explainer-prepared",
+        "explainer-manifest",
+        "explainer-reader-words",
+        "ask-title"
+      ],
+      "rows": [
+        {
+          "id": "some-eager",
+          "cells": [
+            "Some(7)",
+            "unwrap_or(fallback())",
+            "7",
+            "执行"
+          ]
+        },
+        {
+          "id": "some-lazy",
+          "cells": [
+            "Some(7)",
+            "unwrap_or_else(|| fallback())",
+            "7",
+            "不执行"
+          ]
+        },
+        {
+          "id": "none-eager",
+          "cells": [
+            "None",
+            "unwrap_or(fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "none-lazy",
+          "cells": [
+            "None",
+            "unwrap_or_else(|| fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-82a9f3bb7b68",
+          "cells": [
+            "Some(0)",
+            "unwrap_or_else(|| fallback())",
+            "0",
+            "不执行"
+          ]
+        }
+      ],
+      "table": {
+        "width": 1272,
+        "client": 1272
+      },
+      "name": "manual",
+      "screenshotSha256": "30ca001cf161aa578c6671da9ba9fc000f7cad4328f1883aee8de70c0214f0f2"
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "style": "editorial",
+      "documentWidth": 390,
+      "ids": [
+        "archify-software-notices",
+        "board",
+        "answer",
+        "observation",
+        "prose-3bb5887b81b3",
+        "comparison-1bfb94c3be1a",
+        "row-03b655f8da10",
+        "row-2adcbbed7320",
+        "row-fc8717006e6f",
+        "row-03765016423b",
+        "row-fa8bc0b948fc",
+        "prose-1ebaf90c5dbb",
+        "mechanism",
+        "comparison-83ae22ccf776",
+        "row-db281572a303",
+        "row-7d55bcdd98dc",
+        "prose-a3ff5b2c9588",
+        "boundary",
+        "prose-f7e887a8c40a",
+        "snippet-42a9f279b4dd",
+        "prose-6caed06c3e24",
+        "prose-3d7b65914554",
+        "source-option",
+        "diagram-dialog",
+        "diagram-dialog-title",
+        "toast",
+        "archify-explainer-prepared",
+        "explainer-manifest",
+        "explainer-reader-words",
+        "ask-title"
+      ],
+      "rows": [
+        {
+          "id": "row-03b655f8da10",
+          "cells": [
+            "Some(7)",
+            "unwrap_or(fallback())",
+            "7",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-2adcbbed7320",
+          "cells": [
+            "Some(7)",
+            "unwrap_or_else(|| fallback())",
+            "7",
+            "不执行"
+          ]
+        },
+        {
+          "id": "row-fc8717006e6f",
+          "cells": [
+            "None",
+            "unwrap_or(fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-03765016423b",
+          "cells": [
+            "None",
+            "unwrap_or_else(|| fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-fa8bc0b948fc",
+          "cells": [
+            "Some(0)",
+            "unwrap_or_else(|| fallback())",
+            "0",
+            "不执行"
+          ]
+        }
+      ],
+      "table": {
+        "width": 432,
+        "client": 358
+      },
+      "name": "automatic",
+      "screenshotSha256": "6930b6609c1b472985e1cc892a143c8d579d6ee5d9c901f73a2b13465ff23015"
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "style": "editorial",
+      "documentWidth": 1440,
+      "ids": [
+        "archify-software-notices",
+        "board",
+        "answer",
+        "observation",
+        "prose-3bb5887b81b3",
+        "comparison-1bfb94c3be1a",
+        "row-03b655f8da10",
+        "row-2adcbbed7320",
+        "row-fc8717006e6f",
+        "row-03765016423b",
+        "row-fa8bc0b948fc",
+        "prose-1ebaf90c5dbb",
+        "mechanism",
+        "comparison-83ae22ccf776",
+        "row-db281572a303",
+        "row-7d55bcdd98dc",
+        "prose-a3ff5b2c9588",
+        "boundary",
+        "prose-f7e887a8c40a",
+        "snippet-42a9f279b4dd",
+        "prose-6caed06c3e24",
+        "prose-3d7b65914554",
+        "source-option",
+        "diagram-dialog",
+        "diagram-dialog-title",
+        "toast",
+        "archify-explainer-prepared",
+        "explainer-manifest",
+        "explainer-reader-words",
+        "ask-title"
+      ],
+      "rows": [
+        {
+          "id": "row-03b655f8da10",
+          "cells": [
+            "Some(7)",
+            "unwrap_or(fallback())",
+            "7",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-2adcbbed7320",
+          "cells": [
+            "Some(7)",
+            "unwrap_or_else(|| fallback())",
+            "7",
+            "不执行"
+          ]
+        },
+        {
+          "id": "row-fc8717006e6f",
+          "cells": [
+            "None",
+            "unwrap_or(fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-03765016423b",
+          "cells": [
+            "None",
+            "unwrap_or_else(|| fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-fa8bc0b948fc",
+          "cells": [
+            "Some(0)",
+            "unwrap_or_else(|| fallback())",
+            "0",
+            "不执行"
+          ]
+        }
+      ],
+      "table": {
+        "width": 1272,
+        "client": 1272
+      },
+      "name": "automatic",
+      "screenshotSha256": "b3af2dd2ead398a4ab0e7e6fc0d5b8d83ef2f0b7112b215a5ef9942d03a95107"
+    }
+  ],
+  "linked": {
+    "hash": "#row-2adcbbed7320",
+    "id": "row-2adcbbed7320",
+    "cells": [
+      "Some(7)",
+      "unwrap_or_else(|| fallback())",
+      "7",
+      "不执行"
+    ],
+    "top": 0.1875,
+    "bottom": 105.5625,
+    "height": 900
+  },
+  "pixelMatches": [
+    {
+      "width": 390,
+      "identical": true
+    },
+    {
+      "width": 1440,
+      "identical": false
+    }
+  ]
+}

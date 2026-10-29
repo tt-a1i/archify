@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: comparison row IDs stay stable
+ok 1 - comparison row IDs stay stable
+  ---
+  duration_ms: 14.423417
+  type: 'test'
+  ...
+# Subtest: comparison tables preserve repeated labels as distinct rows
+not ok 2 - comparison tables preserve repeated labels as distinct rows
+  ---
+  duration_ms: 2.09775
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-parser.test.mjs:146:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    [{"code":"explainer/duplicate-id","severity":"error","message":"This identity is already used. Use an explicit distinct ID.","subject":{"line":12,"column":1,"component":"comparison","path":"/panels/0/blocks/0/rows/1/id","panelId":"reasoning"},"evidence":{"reason":"This identity is already used. Use an explicit distinct ID.","example":"id=request-path-branch"},"supportedFixes":["Use a valid form, for example: id=request-path-branch"]},{"code":"explainer/duplicate-id","severity":"error","message":"This identity is already used. Use an explicit distinct ID.","subject":{"line":13,"column":1,"component":"comparison","path":"/panels/0/blocks/0/rows/2/id","panelId":"reasoning"},"evidence":{"reason":"This identity is already used. Use an explicit distinct ID.","example":"id=request-path-branch"},"supportedFixes":["Use a valid form, for example: id=request-path-branch"]}]
+
+    false !== true
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-parser.test.mjs:152:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 170.446791

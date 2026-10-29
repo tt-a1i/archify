@@ -1,0 +1,13 @@
+{
+  "width": 1440,
+  "height": 900,
+  "changedPixels": 7,
+  "differenceBounds": [
+    1431,
+    2,
+    1438,
+    543
+  ],
+  "contentExcludingBrowserScrollbarIdentical": true,
+  "interpretation": "Seven changed pixels occur only on the browser scrollbar edge; page content is identical. The 390 px full screenshots are byte-identical."
+}

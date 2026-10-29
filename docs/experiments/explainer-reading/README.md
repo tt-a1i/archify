@@ -175,3 +175,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 25
 
 [Rust default evaluation](rust-default/README.md) distinguishes the returned value from whether a fallback function ran. Source and local compiler are pinned to Rust 1.89.0; nine constructed combinations run twice. The independent draft's four-column tables hide the key execution column at 390 px. A two-column explanation and a complete runnable program make the results inspectable, at the cost of additional phone height. Actual author validation failures, copy payloads, compiled output and visual evidence are retained. The index now contains twelve questions across eleven projects and 28 main variants; this content round changes neither product runtime nor ZIP.
+
+## Continued exploration — round 26
+
+[Repeated comparison labels](table-row-ids/README.md) fixes the duplicate automatic IDs that blocked the independent Rust first draft. The unchanged draft now passes strict delivery, all rows and source locations remain intact, and explicit duplicate IDs still fail. All 28 saved main variants retain identical parser results and rendered HTML. The canonical ZIP builds reproducibly and passes extracted CLI/browser checks. This removes an observed authoring obstacle; it does not repair the original wide phone table or establish a human-reading gain. The index remains twelve questions across eleven projects and 28 variants.

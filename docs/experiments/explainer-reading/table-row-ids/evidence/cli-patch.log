@@ -1,0 +1,183 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-cli.test.mjs test/explainer-patch.test.mjs
+
+Repository tests: 2 files, concurrency 4
+TAP version 13
+# Subtest: compact cyclic diagrams remain deliverable with a stricter quality override
+ok 1 - compact cyclic diagrams remain deliverable with a stricter quality override
+  ---
+  duration_ms: 6431.061583
+  type: 'test'
+  ...
+# Subtest: patch quality changes resolve shorthand under the new context and preserve other authored panels
+ok 2 - patch quality changes resolve shorthand under the new context and preserve other authored panels
+  ---
+  duration_ms: 3503.122625
+  type: 'test'
+  ...
+# Subtest: explainer CLI binds original draft bytes through validate, deliver and strict check
+ok 3 - explainer CLI binds original draft bytes through validate, deliver and strict check
+  ---
+  duration_ms: 1103.9345
+  type: 'test'
+  ...
+# Subtest: explainer CLI parse and semantic failures preserve an existing artifact and actionable locations
+ok 4 - explainer CLI parse and semantic failures preserve an existing artifact and actionable locations
+  ---
+  duration_ms: 761.145125
+  type: 'test'
+  ...
+# Subtest: explainer prepared resource mutation fails before overwriting last good HTML
+ok 5 - explainer prepared resource mutation fails before overwriting last good HTML
+  ---
+  duration_ms: 619.195792
+  type: 'test'
+  ...
+# Subtest: explainer refuses a prepared bundle bound to different original source bytes
+ok 6 - explainer refuses a prepared bundle bound to different original source bytes
+  ---
+  duration_ms: 134.800667
+  type: 'test'
+  ...
+# Subtest: explainer direct render resolves contained resources against author directory
+ok 7 - explainer direct render resolves contained resources against author directory
+  ---
+  duration_ms: 242.847125
+  type: 'test'
+  ...
+# Subtest: explainer finalize opts into the browser gate and reports unavailability
+ok 8 - explainer finalize opts into the browser gate and reports unavailability
+  ---
+  duration_ms: 1025.493917
+  type: 'test'
+  ...
+# Subtest: explainer prepared bundle cannot follow same-byte draft into a different author directory
+ok 9 - explainer prepared bundle cannot follow same-byte draft into a different author directory
+  ---
+  duration_ms: 136.441417
+  type: 'test'
+  ...
+# Subtest: explainer public writing modes warn, reject strict drafts, and permit explicit off
+ok 10 - explainer public writing modes warn, reject strict drafts, and permit explicit off
+  ---
+  duration_ms: 1465.384042
+  type: 'test'
+  ...
+# Subtest: explainer prepared writing mode cannot silently change across stages
+ok 11 - explainer prepared writing mode cannot silently change across stages
+  ---
+  duration_ms: 136.849792
+  type: 'test'
+  ...
+# Subtest: default explainer finalize succeeds without discovering or launching a browser
+ok 12 - default explainer finalize succeeds without discovering or launching a browser
+  ---
+  duration_ms: 1023.66
+  type: 'test'
+  ...
+# Subtest: CR-only drafts return structured failures through public commands and preserve output (\#1083)
+ok 13 - CR-only drafts return structured failures through public commands and preserve output (\#1083)
+  ---
+  duration_ms: 399.002
+  type: 'test'
+  ...
+# Subtest: literal heading separators survive public validate, deliver and finalize (\#1083)
+ok 14 - literal heading separators survive public validate, deliver and finalize (\#1083)
+  ---
+  duration_ms: 5715.634375
+  type: 'test'
+  ...
+# Subtest: workflow shorthand carries page locale into rendered lane labels (\#1082)
+ok 15 - workflow shorthand carries page locale into rendered lane labels (\#1082)
+  ---
+  duration_ms: 6770.557
+  type: 'test'
+  ...
+# Subtest: patch payload errors preserve their specific repair advice
+ok 16 - patch payload errors preserve their specific repair advice
+  ---
+  duration_ms: 305.389083
+  type: 'test'
+  ...
+# Subtest: panel patch preserves original source outside target token range
+ok 17 - panel patch preserves original source outside target token range
+  ---
+  duration_ms: 1491.891792
+  type: 'test'
+  ...
+# Subtest: patching referenced prose keeps the diagram and its frozen native artifact unchanged
+ok 18 - patching referenced prose keeps the diagram and its frozen native artifact unchanged
+  ---
+  duration_ms: 2308.258833
+  type: 'test'
+  ...
+# Subtest: panel patch rejects missing target and changed identity without overwriting existing output
+ok 19 - panel patch rejects missing target and changed identity without overwriting existing output
+  ---
+  duration_ms: 1254.872334
+  type: 'test'
+  ...
+# Subtest: panel patch retains contained resources when unchanged original files are unavailable
+ok 20 - panel patch retains contained resources when unchanged original files are unavailable
+  ---
+  duration_ms: 1454.292458
+  type: 'test'
+  ...
+# Subtest: restricted author draft panel patch preserves other authored text and stable panel IDs
+ok 21 - restricted author draft panel patch preserves other authored text and stable panel IDs
+  ---
+  duration_ms: 1196.659708
+  type: 'test'
+  ...
+# Subtest: panel patch applies explicit strict writing checks before publishing
+ok 22 - panel patch applies explicit strict writing checks before publishing
+  ---
+  duration_ms: 1453.356625
+  type: 'test'
+  ...
+# Subtest: panel patch retains source evidence when a changed diagram shares its source id
+ok 23 - panel patch retains source evidence when a changed diagram shares its source id
+  ---
+  duration_ms: 3268.08925
+  type: 'test'
+  ...
+# Subtest: panel patch quality override validates every native child from frozen inputs
+ok 24 - panel patch quality override validates every native child from frozen inputs
+  ---
+  duration_ms: 4537.971125
+  type: 'test'
+  ...
+# Subtest: panel patch across directories retains resource origins for subsequent edits
+ok 25 - panel patch across directories retains resource origins for subsequent edits
+  ---
+  duration_ms: 2192.50225
+  type: 'test'
+  ...
+# Subtest: a page without its source directory can patch prose but cannot read unrelated output-local assets
+ok 26 - a page without its source directory can patch prose but cannot read unrelated output-local assets
+  ---
+  duration_ms: 465.400959
+  type: 'test'
+  ...
+# Subtest: patch output excludes temporary execution paths and is reproducible (\#1085)
+ok 27 - patch output excludes temporary execution paths and is reproducible (\#1085)
+  ---
+  duration_ms: 3322.003791
+  type: 'test'
+  ...
+# Subtest: reader serialization omits private bindings for Windows paths and missing origins (\#1085)
+ok 28 - reader serialization omits private bindings for Windows paths and missing origins (\#1085)
+  ---
+  duration_ms: 5.419542
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29625.404041

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3345bcdd-173f-4079-a7f3-29df4fcce050",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/author/first-draft.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/table-row-ids/candidate.html",
+  "specification": {
+    "sha256": "af7bc8a8cabcfba25c36e46a596148483a131bff309767fb1c8d3fa385779305",
+    "bytes": 2494
+  },
+  "artifact": {
+    "sha256": "35b9c9c5ebb0b96f5921ffc0e79562e6d6323f85e16fc10e9e0d3ee6b9fd7824",
+    "bytes": 160185
+  },
+  "explainer": {
+    "preparedSha256": "3f5b1be2a16c47e9818b2785c32973ba2d7298f5f73c17b6c6772212d7606cfc",
+    "dependencies": []
+  }
+}

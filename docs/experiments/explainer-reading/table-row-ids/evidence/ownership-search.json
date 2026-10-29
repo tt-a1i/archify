@@ -1,0 +1,54 @@
+[
+  {
+    "query": "repo:tt-a1i/archify is:open \"duplicate-id\"",
+    "status": "fulfilled",
+    "results": [
+      {
+        "number": 1106,
+        "url": "https://github.com/tt-a1i/archify/pull/1106",
+        "title": "Improve workflow compilation performance"
+      },
+      {
+        "number": 1142,
+        "url": "https://github.com/tt-a1i/archify/pull/1142",
+        "title": "feat: add explainer claim evidence attribution"
+      },
+      {
+        "number": 140,
+        "url": "https://github.com/tt-a1i/archify/pull/140",
+        "title": "feat(import): add Mermaid flowchart importer for typed architecture IR"
+      }
+    ]
+  },
+  {
+    "query": "repo:tt-a1i/archify is:open \"row\" \"ID\"",
+    "status": "fulfilled",
+    "results": [
+      {
+        "number": 1030,
+        "url": "https://github.com/tt-a1i/archify/pull/1030",
+        "title": "fix(waterfall): key the incomplete legend only to open bars"
+      },
+      {
+        "number": 998,
+        "url": "https://github.com/tt-a1i/archify/pull/998",
+        "title": "Code analysis Main branch"
+      },
+      {
+        "number": 1101,
+        "url": "https://github.com/tt-a1i/archify/pull/1101",
+        "title": "docs(readme): put install before showcase and trim agent-facing detail"
+      },
+      {
+        "number": 923,
+        "url": "https://github.com/tt-a1i/archify/pull/923",
+        "title": "fix(sequence): emit the whole ordered adjustment when a note reaches several messages"
+      },
+      {
+        "number": 1106,
+        "url": "https://github.com/tt-a1i/archify/pull/1106",
+        "title": "Improve workflow compilation performance"
+      }
+    ]
+  }
+]

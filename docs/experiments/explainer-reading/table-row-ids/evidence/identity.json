@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "4d182b54f5778ef707228922c5d04b3b981f26b3",
+  "base": "f9e0e56af411e78be4053297508b00d6dff7d8a2",
+  "originDev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "inputSha256": "af7bc8a8cabcfba25c36e46a596148483a131bff309767fb1c8d3fa385779305",
+  "candidateSha256": "35b9c9c5ebb0b96f5921ffc0e79562e6d6323f85e16fc10e9e0d3ee6b9fd7824",
+  "fixedInputReplay": true,
+  "freshGeneration": false,
+  "humanAcceptance": false
+}

@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/table-row-ids/candidate.html",
+  "family": "explainer",
+  "artifact": {
+    "sha256": "35b9c9c5ebb0b96f5921ffc0e79562e6d6323f85e16fc10e9e0d3ee6b9fd7824",
+    "bytes": 160185
+  },
+  "checks": [
+    {
+      "name": "explainer_structure",
+      "ok": true,
+      "details": [
+        "29 unique DOM IDs"
+      ]
+    },
+    {
+      "name": "explainer_payload_identity",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "explainer_dependencies",
+      "ok": true,
+      "details": [
+        "0 frozen dependencies"
+      ]
+    },
+    {
+      "name": "explainer_native_diagrams",
+      "ok": true,
+      "details": []
+    }
+  ],
+  "composition": {
+    "schemaVersion": 1,
+    "profile": "showcase",
+    "status": "pass",
+    "summary": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "issues": [],
+    "nativeDiagrams": []
+  },
+  "diagnostics": [],
+  "provenance": "current",
+  "deliveryReceiptId": "3345bcdd-173f-4079-a7f3-29df4fcce050"
+}

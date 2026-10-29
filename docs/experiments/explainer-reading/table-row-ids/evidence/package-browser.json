@@ -1,0 +1,124 @@
+{
+  "ok": true,
+  "scope": "repository and extracted-package artifacts, 390 px row-link navigation and row integrity",
+  "results": [
+    {
+      "name": "repository",
+      "id": "row-2adcbbed7320",
+      "cells": [
+        "Some(7)",
+        "unwrap_or_else(|| fallback())",
+        "7",
+        "不执行"
+      ],
+      "top": 0.1875,
+      "unique": true,
+      "rows": [
+        {
+          "id": "row-03b655f8da10",
+          "cells": [
+            "Some(7)",
+            "unwrap_or(fallback())",
+            "7",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-2adcbbed7320",
+          "cells": [
+            "Some(7)",
+            "unwrap_or_else(|| fallback())",
+            "7",
+            "不执行"
+          ]
+        },
+        {
+          "id": "row-fc8717006e6f",
+          "cells": [
+            "None",
+            "unwrap_or(fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-03765016423b",
+          "cells": [
+            "None",
+            "unwrap_or_else(|| fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-fa8bc0b948fc",
+          "cells": [
+            "Some(0)",
+            "unwrap_or_else(|| fallback())",
+            "0",
+            "不执行"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "package",
+      "id": "row-2adcbbed7320",
+      "cells": [
+        "Some(7)",
+        "unwrap_or_else(|| fallback())",
+        "7",
+        "不执行"
+      ],
+      "top": 0.1875,
+      "unique": true,
+      "rows": [
+        {
+          "id": "row-03b655f8da10",
+          "cells": [
+            "Some(7)",
+            "unwrap_or(fallback())",
+            "7",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-2adcbbed7320",
+          "cells": [
+            "Some(7)",
+            "unwrap_or_else(|| fallback())",
+            "7",
+            "不执行"
+          ]
+        },
+        {
+          "id": "row-fc8717006e6f",
+          "cells": [
+            "None",
+            "unwrap_or(fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-03765016423b",
+          "cells": [
+            "None",
+            "unwrap_or_else(|| fallback())",
+            "99",
+            "执行"
+          ]
+        },
+        {
+          "id": "row-fa8bc0b948fc",
+          "cells": [
+            "Some(0)",
+            "unwrap_or_else(|| fallback())",
+            "0",
+            "不执行"
+          ]
+        }
+      ]
+    }
+  ]
+}

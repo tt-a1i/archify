@@ -1,0 +1,20 @@
+{
+  "rawBytesIdentical": false,
+  "onlyDifferences": {
+    "sourcePath": {
+      "temporary": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/author/first-draft.archify.md",
+      "repository": "../rust-default/author/first-draft.archify.md"
+    },
+    "baseDir": {
+      "temporary": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/author",
+      "repository": "../rust-default/author"
+    },
+    "digest": {
+      "temporary": "c8da60eefcd6e9c72c29156772c34037178e9cd52fecafee2728ec6b14f2a282",
+      "repository": "1cdc6004009441439d6b6b228f1748dc6a8ce831e0d90ac27eaa22001ce8d4fc"
+    }
+  },
+  "outsidePreparedDataIdentical": true,
+  "interpretation": "Output-directory-relative provenance paths and the prepared-data digest change. All other prepared fields and complete visible HTML are identical.",
+  "initialChecks": "Whole-file equality failed, as did path-only normalization before accounting for the digest. Generated files were not modified."
+}

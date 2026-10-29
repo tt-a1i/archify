@@ -1,0 +1,315 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-parser.test.mjs test/explainer-validation.test.mjs test/explainer-renderer.test.mjs
+
+Repository tests: 3 files, concurrency 4
+TAP version 13
+# Subtest: explainer author families preserve literal values and normalize typed public data
+ok 1 - explainer author families preserve literal values and normalize typed public data
+  ---
+  duration_ms: 6.026625
+  type: 'test'
+  ...
+# Subtest: automatic heading IDs survive insertion and duplicate headings offer an explicit repair
+ok 2 - automatic heading IDs survive insertion and duplicate headings offer an explicit repair
+  ---
+  duration_ms: 0.6755
+  type: 'test'
+  ...
+# Subtest: panel offsets enable exact replacement without rewriting untouched source or CRLF
+ok 3 - panel offsets enable exact replacement without rewriting untouched source or CRLF
+  ---
+  duration_ms: 0.54575
+  type: 'test'
+  ...
+# Subtest: JSON is not reinterpreted and exact nested field lines survive schema diagnostics
+ok 4 - JSON is not reinterpreted and exact nested field lines survive schema diagnostics
+  ---
+  duration_ms: 2.543875
+  type: 'test'
+  ...
+# Subtest: native shorthand preserves api to redis and source file references stay explicit
+ok 5 - native shorthand preserves api to redis and source file references stay explicit
+  ---
+  duration_ms: 9.390459
+  type: 'test'
+  ...
+# Subtest: restricted syntax errors contain a line, component, reason and repair example
+ok 6 - restricted syntax errors contain a line, component, reason and repair example
+  ---
+  duration_ms: 0.545916
+  type: 'test'
+  ...
+# Subtest: frozen real format-calibration drafts parse and validate without rewriting their syntax
+ok 7 - frozen real format-calibration drafts parse and validate without rewriting their syntax
+  ---
+  duration_ms: 6.506333
+  type: 'test'
+  ...
+# Subtest: diagram cells retain literal pipes and source map keeps title location after metadata
+ok 8 - diagram cells retain literal pipes and source map keeps title location after metadata
+  ---
+  duration_ms: 0.323459
+  type: 'test'
+  ...
+# Subtest: answer reasons, scope, numbered source syntax and explicit spans normalize without hidden fields
+ok 9 - answer reasons, scope, numbered source syntax and explicit spans normalize without hidden fields
+  ---
+  duration_ms: 2.070958
+  type: 'test'
+  ...
+# Subtest: comparison row IDs stay stable
+ok 10 - comparison row IDs stay stable
+  ---
+  duration_ms: 3.038458
+  type: 'test'
+  ...
+# Subtest: comparison tables preserve repeated labels as distinct rows
+ok 11 - comparison tables preserve repeated labels as distinct rows
+  ---
+  duration_ms: 2.245916
+  type: 'test'
+  ...
+# Subtest: reason lists immediately follow the conclusion and zero span reaches schema rejection
+ok 12 - reason lists immediately follow the conclusion and zero span reaches schema rejection
+  ---
+  duration_ms: 0.237
+  type: 'test'
+  ...
+# Subtest: plain code fences become literal snippets, diff fences become diffs, and table corners keep their header
+ok 13 - plain code fences become literal snippets, diff fences become diffs, and table corners keep their header
+  ---
+  duration_ms: 1.911334
+  type: 'test'
+  ...
+# Subtest: a callout may take the following paragraph and may share its panel ID without failing
+ok 14 - a callout may take the following paragraph and may share its panel ID without failing
+  ---
+  duration_ms: 0.262792
+  type: 'test'
+  ...
+# Subtest: a comparison assessment may be followed by a citation
+ok 15 - a comparison assessment may be followed by a citation
+  ---
+  duration_ms: 0.120917
+  type: 'test'
+  ...
+# Subtest: a source cell ties a shorthand node to a declared source without entering the native spec
+ok 16 - a source cell ties a shorthand node to a declared source without entering the native spec
+  ---
+  duration_ms: 3.812333
+  type: 'test'
+  ...
+# Subtest: an authored page style is kept and limited to the shipped styles
+ok 17 - an authored page style is kept and limited to the shipped styles
+  ---
+  duration_ms: 0.16325
+  type: 'test'
+  ...
+# Subtest: node content references reuse explicit prose IDs and follow body edits without changing the native graph
+ok 18 - node content references reuse explicit prose IDs and follow body edits without changing the native graph
+  ---
+  duration_ms: 2.738125
+  type: 'test'
+  ...
+# Subtest: diagram references reject message, phase, edge and field rows at the authored line
+ok 19 - diagram references reject message, phase, edge and field rows at the authored line
+  ---
+  duration_ms: 6.959708
+  type: 'test'
+  ...
+# Subtest: declared nodes retain every previously accepted source-cell position
+ok 20 - declared nodes retain every previously accepted source-cell position
+  ---
+  duration_ms: 11.678833
+  type: 'test'
+  ...
+# Subtest: node references accept each documented content block and reject duplicate source bindings
+ok 21 - node references accept each documented content block and reject duplicate source bindings
+  ---
+  duration_ms: 2.020917
+  type: 'test'
+  ...
+# Subtest: a badge-only comparison cell and a route written in the node column are accepted
+ok 22 - a badge-only comparison cell and a route written in the node column are accepted
+  ---
+  duration_ms: 0.280208
+  type: 'test'
+  ...
+# Subtest: heading line terminators remain literal text without crashing the parser (\#1083)
+ok 23 - heading line terminators remain literal text without crashing the parser (\#1083)
+  ---
+  duration_ms: 0.680083
+  type: 'test'
+  ...
+# Subtest: workflow shorthand uses final page locale without moving its source locations (\#1082)
+ok 24 - workflow shorthand uses final page locale without moving its source locations (\#1082)
+  ---
+  duration_ms: 1.219083
+  type: 'test'
+  ...
+# Subtest: renderer: every shape remains statically readable and authored text cannot become markup
+ok 25 - renderer: every shape remains statically readable and authored text cannot become markup
+  ---
+  duration_ms: 42.223041
+  type: 'test'
+  ...
+# Subtest: renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+ok 26 - renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+  ---
+  duration_ms: 17.171292
+  type: 'test'
+  ...
+# Subtest: renderer: resources fail closed and native previews preserve identity without leaking styles
+ok 27 - renderer: resources fail closed and native previews preserve identity without leaking styles
+  ---
+  duration_ms: 10.426833
+  type: 'test'
+  ...
+# Subtest: renderer: no-script content includes scope, system theme and inert operation controls
+ok 28 - renderer: no-script content includes scope, system theme and inert operation controls
+  ---
+  duration_ms: 8.78175
+  type: 'test'
+  ...
+# Subtest: renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+ok 29 - renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+  ---
+  duration_ms: 14.032958
+  type: 'test'
+  ...
+# Subtest: renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+ok 30 - renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+  ---
+  duration_ms: 44.179
+  type: 'test'
+  ...
+# Subtest: renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+ok 31 - renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+  ---
+  duration_ms: 5.127375
+  type: 'test'
+  ...
+# Subtest: renderer: only Chinese pages get Chinese controls; other languages fall back to English
+ok 32 - renderer: only Chinese pages get Chinese controls; other languages fall back to English
+  ---
+  duration_ms: 13.348459
+  type: 'test'
+  ...
+# Subtest: renderer: native diagram panels receive responsive space without changing the frozen native diagram
+ok 33 - renderer: native diagram panels receive responsive space without changing the frozen native diagram
+  ---
+  duration_ms: 5.810792
+  type: 'test'
+  ...
+# Subtest: renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+ok 34 - renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+  ---
+  duration_ms: 7.608375
+  type: 'test'
+  ...
+# Subtest: renderer: source markers number first appearances including blank labels and remain plain text
+ok 35 - renderer: source markers number first appearances including blank labels and remain plain text
+  ---
+  duration_ms: 5.003541
+  type: 'test'
+  ...
+# Subtest: literal snippets render as copyable code and table corners keep their header
+ok 36 - literal snippets render as copyable code and table corners keep their header
+  ---
+  duration_ms: 5.4165
+  type: 'test'
+  ...
+# Subtest: renderer: shared pages omit disposable native checker filenames but retain evidence
+ok 37 - renderer: shared pages omit disposable native checker filenames but retain evidence
+  ---
+  duration_ms: 6.08575
+  type: 'test'
+  ...
+# Subtest: renderer: manifest warnings use the same portable locations as the prepared bundle
+ok 38 - renderer: manifest warnings use the same portable locations as the prepared bundle
+  ---
+  duration_ms: 5.619833
+  type: 'test'
+  ...
+# Subtest: renderer: Windows cross-volume source locations are omitted instead of exposed
+ok 39 - renderer: Windows cross-volume source locations are omitted instead of exposed
+  ---
+  duration_ms: 7.406
+  type: 'test'
+  ...
+# Subtest: generated schema rejects injected execution, resources and author approval fields
+ok 40 - generated schema rejects injected execution, resources and author approval fields
+  ---
+  duration_ms: 3.51225
+  type: 'test'
+  ...
+# Subtest: comparison assessments remain per cell and invalid widths locate the offending row
+ok 41 - comparison assessments remain per cell and invalid widths locate the offending row
+  ---
+  duration_ms: 5.027542
+  type: 'test'
+  ...
+# Subtest: inline safety keeps literal code and diff untouched while rejecting HTML and unsafe links
+ok 42 - inline safety keeps literal code and diff untouched while rejecting HTML and unsafe links
+  ---
+  duration_ms: 3.989083
+  type: 'test'
+  ...
+# Subtest: diagram references name real diagram blocks and inline topology nodes
+ok 43 - diagram references name real diagram blocks and inline topology nodes
+  ---
+  duration_ms: 9.161125
+  type: 'test'
+  ...
+# Subtest: native collection errors stay structured before resolving forward node references
+ok 44 - native collection errors stay structured before resolving forward node references
+  ---
+  duration_ms: 21.543667
+  type: 'test'
+  ...
+# Subtest: writing warnings are configurable and literal code is excluded from prose rules
+ok 45 - writing warnings are configurable and literal code is excluded from prose rules
+  ---
+  duration_ms: 3.232833
+  type: 'test'
+  ...
+# Subtest: global interactive IDs and source anchors cannot collide
+ok 46 - global interactive IDs and source anchors cannot collide
+  ---
+  duration_ms: 0.591917
+  type: 'test'
+  ...
+# Subtest: built-in answer is a legitimate block target while chrome IDs remain reserved
+ok 47 - built-in answer is a legitimate block target while chrome IDs remain reserved
+  ---
+  duration_ms: 0.265625
+  type: 'test'
+  ...
+# Subtest: steps never silently discard a simultaneous node and route selection
+ok 48 - steps never silently discard a simultaneous node and route selection
+  ---
+  duration_ms: 2.415125
+  type: 'test'
+  ...
+# Subtest: source links resolve forward IDs and code requires a repository location
+ok 49 - source links resolve forward IDs and code requires a repository location
+  ---
+  duration_ms: 0.931666
+  type: 'test'
+  ...
+# Subtest: answer accepts four reasons and local qualifications remain valid in strict writing mode
+ok 50 - answer accepts four reasons and local qualifications remain valid in strict writing mode
+  ---
+  duration_ms: 1.1365
+  type: 'test'
+  ...
+1..50
+# tests 50
+# suites 0
+# pass 50
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 352.791333
