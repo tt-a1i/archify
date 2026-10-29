@@ -1,0 +1,47 @@
+[
+  {
+    "case": "git-base",
+    "rawHtmlIdentical": false,
+    "changedMetadataFields": {
+      "archify-explainer-prepared": [
+        "diagnostics",
+        "digest"
+      ],
+      "explainer-manifest": [
+        "diagnostics"
+      ]
+    },
+    "htmlOutsideTwoMetadataBlocksIdentical": true,
+    "commonMarkupSha256": "96ec4dbc4d49030e2e238a4881acaac8df9b7ad298299c5f2ca19f2e2adc18e5"
+  },
+  {
+    "case": "git-candidate",
+    "rawHtmlIdentical": false,
+    "changedMetadataFields": {
+      "archify-explainer-prepared": [
+        "diagnostics",
+        "digest"
+      ],
+      "explainer-manifest": [
+        "diagnostics"
+      ]
+    },
+    "htmlOutsideTwoMetadataBlocksIdentical": true,
+    "commonMarkupSha256": "090152b20295339648782b388022bde93d6ca3051930d8d824fc4e73c628adc5"
+  },
+  {
+    "case": "thread",
+    "rawHtmlIdentical": false,
+    "changedMetadataFields": {
+      "archify-explainer-prepared": [
+        "diagnostics",
+        "digest"
+      ],
+      "explainer-manifest": [
+        "diagnostics"
+      ]
+    },
+    "htmlOutsideTwoMetadataBlocksIdentical": true,
+    "commonMarkupSha256": "c487782fc31fcb9f534b21c158267204f077979bbfcd5b1321dda125401162f9"
+  }
+]

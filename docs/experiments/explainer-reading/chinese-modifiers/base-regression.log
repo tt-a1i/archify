@@ -1,0 +1,233 @@
+TAP version 13
+# Subtest: writing: independently authored bilingual hints give concrete repairs without failing by default
+ok 1 - writing: independently authored bilingual hints give concrete repairs without failing by default
+  ---
+  duration_ms: 7.9345
+  type: 'test'
+  ...
+# Subtest: writing: direct technical prose and quoted URL bodies do not trigger phrase hints
+ok 2 - writing: direct technical prose and quoted URL bodies do not trigger phrase hints
+  ---
+  duration_ms: 1.037792
+  type: 'test'
+  ...
+# Subtest: writing: long sentences count Han and English words, not punctuation or decimal dots
+ok 3 - writing: long sentences count Han and English words, not punctuation or decimal dots
+  ---
+  duration_ms: 0.304917
+  type: 'test'
+  ...
+# Subtest: writing: strict and off mode preserve explicit severity control
+ok 4 - writing: strict and off mode preserve explicit severity control
+  ---
+  duration_ms: 0.389667
+  type: 'test'
+  ...
+# Subtest: writing: source line offsets, component targets and diagnostic order survive repeated calls
+ok 5 - writing: source line offsets, component targets and diagnostic order survive repeated calls
+  ---
+  duration_ms: 0.336125
+  type: 'test'
+  ...
+# Subtest: writing: a URL with sentence punctuation is excluded from length but leaves the next sentence measurable
+ok 6 - writing: a URL with sentence punctuation is excluded from length but leaves the next sentence measurable
+  ---
+  duration_ms: 0.1395
+  type: 'test'
+  ...
+# Subtest: writing: URL masking preserves Chinese prose after bare and Markdown links
+ok 7 - writing: URL masking preserves Chinese prose after bare and Markdown links
+  ---
+  duration_ms: 0.593667
+  type: 'test'
+  ...
+# Subtest: writing: English URL paths and balanced URL parentheses stay masked
+ok 8 - writing: English URL paths and balanced URL parentheses stay masked
+  ---
+  duration_ms: 0.354834
+  type: 'test'
+  ...
+# Subtest: writing: long paragraphs, an all-bold conclusion and a disclaimer-style scope get structural hints
+ok 9 - writing: long paragraphs, an all-bold conclusion and a disclaimer-style scope get structural hints
+  ---
+  duration_ms: 0.593834
+  type: 'test'
+  ...
+# Subtest: writing: Chinese and English controlled-language hints stay precise
+ok 10 - writing: Chinese and English controlled-language hints stay precise
+  ---
+  duration_ms: 0.763167
+  type: 'test'
+  ...
+# Subtest: writing: independent Chinese modifiers do not imply a nested noun phrase
+not ok 11 - writing: independent Chinese modifiers do not imply a nested noun phrase
+  ---
+  duration_ms: 3.01175
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-writing.test.mjs:107:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   {
+    +     code: 'explainer/writing-de-chain',
+    +     evidence: {
+    +       example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。',
+    +       matched: '冲突中的文件不适用上表的简单复制模型：从暂存区恢复工作区时，未合并条目需要相应的冲突选项处理。',
+    +       reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +       rule: 'de-chain'
+    +     },
+    +     message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +     severity: 'error',
+    +     subject: {
+    +       component: 'prose',
+    +       line: 1
+    +     },
+    +     supportedFixes: [
+    +       'Split the sentence or move a modifier into its own clause.'
+    +     ]
+    +   },
+    +   {
+    +     code: 'explainer/writing-de-chain',
+    +     evidence: {
+    +       example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。',
+    +       matched: '是当前提交里的版本；暂存区是准备提交的版本；工作区是磁盘上正在编辑的文件。',
+    +       reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +       rule: 'de-chain'
+    +     },
+    +     message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +     severity: 'error',
+    +     subject: {
+    +       component: 'prose',
+    +       line: 1
+    +     },
+    +     supportedFixes: [
+    +       'Split the sentence or move a modifier into its own clause.'
+    +     ]
+    +   },
+    +   {
+    +     code: 'explainer/writing-de-chain',
+    +     evidence: {
+    +       example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。',
+    +       matched: '上面的机制来自固定版本的 CPython 3.13.9 源码；观察运行于本地 Python 3.15.0，并非 3.13.9 的实测。',
+    +       reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +       rule: 'de-chain'
+    +     },
+    +     message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +     severity: 'error',
+    +     subject: {
+    +       component: 'prose',
+    +       line: 1
+    +     },
+    +     supportedFixes: [
+    +       'Split the sentence or move a modifier into its own clause.'
+    +     ]
+    +   },
+    +   {
+    +     code: 'explainer/writing-de-chain',
+    +     evidence: {
+    +       example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。',
+    +       matched: '请求的状态和用户的权限决定缓存的键。',
+    +       reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +       rule: 'de-chain'
+    +     },
+    +     message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.',
+    +     severity: 'error',
+    +     subject: {
+    +       component: 'prose',
+    +       line: 1
+    +     },
+    +     supportedFixes: [
+    +       'Split the sentence or move a modifier into its own clause.'
+    +     ]
+    +   }
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      code: 'explainer/writing-de-chain'
+      severity: 'error'
+      message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+      subject:
+        line: 1
+        component: 'prose'
+      evidence:
+        rule: 'de-chain'
+        reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+        example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。'
+        matched: '冲突中的文件不适用上表的简单复制模型：从暂存区恢复工作区时，未合并条目需要相应的冲突选项处理。'
+      supportedFixes:
+        0: 'Split the sentence or move a modifier into its own clause.'
+    1:
+      code: 'explainer/writing-de-chain'
+      severity: 'error'
+      message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+      subject:
+        line: 1
+        component: 'prose'
+      evidence:
+        rule: 'de-chain'
+        reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+        example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。'
+        matched: '是当前提交里的版本；暂存区是准备提交的版本；工作区是磁盘上正在编辑的文件。'
+      supportedFixes:
+        0: 'Split the sentence or move a modifier into its own clause.'
+    2:
+      code: 'explainer/writing-de-chain'
+      severity: 'error'
+      message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+      subject:
+        line: 1
+        component: 'prose'
+      evidence:
+        rule: 'de-chain'
+        reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+        example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。'
+        matched: '上面的机制来自固定版本的 CPython 3.13.9 源码；观察运行于本地 Python 3.15.0，并非 3.13.9 的实测。'
+      supportedFixes:
+        0: 'Split the sentence or move a modifier into its own clause.'
+    3:
+      code: 'explainer/writing-de-chain'
+      severity: 'error'
+      message: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+      subject:
+        line: 1
+        component: 'prose'
+      evidence:
+        rule: 'de-chain'
+        reason: 'This sentence chains 3 “的” modifiers, so the head noun arrives late.'
+        example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。'
+        matched: '请求的状态和用户的权限决定缓存的键。'
+      supportedFixes:
+        0: 'Split the sentence or move a modifier into its own clause.'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-writing.test.mjs:114:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: writing: local uncertainty and examples survive strict mode without disabling actionable hints
+ok 12 - writing: local uncertainty and examples survive strict mode without disabling actionable hints
+  ---
+  duration_ms: 0.798875
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 11
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.740209

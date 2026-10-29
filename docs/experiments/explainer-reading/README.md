@@ -123,3 +123,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 12
 
 [Thread cancellation boundaries](thread-cancel/README.md) adds an eighth reading question across the same seven projects. Two local runs distinguish a cancelled async Task from its already-running thread function, both directly and through TaskGroup failure. The preferred page makes the object states visible and uses existing two-column authoring hints; original, intermediate and preferred layouts remain inspectable. Source Python 3.13.9 and local Python 3.15.0 evidence are explicitly separated. The index now offers nineteen variants.
+
+## Continued exploration — round 13
+
+[Chinese modifier diagnostic](chinese-modifiers/README.md) removes a count-only rule that mistook three independent “的” occurrences for a nested modifier chain. Three unchanged original drafts fail only that check on base strict mode and pass candidate strict mode. The writing guide retains meaning-based editing advice; other checks stay active. Focused 41 tests, core 19 tests, generated checks and the rebuilt package smoke pass. This is a fixed-input diagnostic correction, not a fresh-generation or human-comprehension result.

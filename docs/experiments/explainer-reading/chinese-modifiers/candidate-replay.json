@@ -1,0 +1,76 @@
+{
+  "arm": "candidate",
+  "runtime": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/archify/bin/archify.mjs",
+  "node": {
+    "node": "22.23.3",
+    "zlib": "1.2.12"
+  },
+  "runs": [
+    {
+      "case": "git-base",
+      "source": "docs/experiments/explainer-reading/restore-pair/base/first-draft.archify.md",
+      "sourceSha256": "fbb0b7f42efebab99331e9ed29233453ea214a33fb428ad822e6f8e49ddd9970",
+      "mode": "strict",
+      "exitCode": 0,
+      "ok": true,
+      "diagnostics": [],
+      "artifact": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round13/candidate/strict/git-base/page.html",
+      "htmlSha256": "17f583c8d32e6bcd356c18b12b2af5d3811b72c718772d73b9aa873ebecd0369"
+    },
+    {
+      "case": "git-base",
+      "source": "docs/experiments/explainer-reading/restore-pair/base/first-draft.archify.md",
+      "sourceSha256": "fbb0b7f42efebab99331e9ed29233453ea214a33fb428ad822e6f8e49ddd9970",
+      "mode": "warn",
+      "exitCode": 0,
+      "ok": true,
+      "diagnostics": [],
+      "artifact": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round13/candidate/warn/git-base/page.html",
+      "htmlSha256": "3647ae37ebbed7d7c5065cb3ef440b9c2f2363b8da4b2891a4facbeb14afb141"
+    },
+    {
+      "case": "git-candidate",
+      "source": "docs/experiments/explainer-reading/restore-pair/candidate/first-draft.archify.md",
+      "sourceSha256": "d075745a01ac7efcb10ff6b532a347a8ae991657356a0ee5472afd6058c217fc",
+      "mode": "strict",
+      "exitCode": 0,
+      "ok": true,
+      "diagnostics": [],
+      "artifact": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round13/candidate/strict/git-candidate/page.html",
+      "htmlSha256": "521d604fa09bf1e8776ffce2df66502eb7becd50355c7a5b506caaff5945dfe5"
+    },
+    {
+      "case": "git-candidate",
+      "source": "docs/experiments/explainer-reading/restore-pair/candidate/first-draft.archify.md",
+      "sourceSha256": "d075745a01ac7efcb10ff6b532a347a8ae991657356a0ee5472afd6058c217fc",
+      "mode": "warn",
+      "exitCode": 0,
+      "ok": true,
+      "diagnostics": [],
+      "artifact": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round13/candidate/warn/git-candidate/page.html",
+      "htmlSha256": "c116fc18b03dcc6bae63f67f47fb26f1426c061610996774ba928f76e6b35e0d"
+    },
+    {
+      "case": "thread",
+      "source": "docs/experiments/explainer-reading/thread-cancel/author/first-draft.archify.md",
+      "sourceSha256": "d52369a434b9a968b720e5ecae679661cb87594f4f436c87db2a10997112342a",
+      "mode": "strict",
+      "exitCode": 0,
+      "ok": true,
+      "diagnostics": [],
+      "artifact": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round13/candidate/strict/thread/page.html",
+      "htmlSha256": "cd3fc6d72b270b313fa0b0031e29830f67640484facfaaabb8a2d0cc152809d6"
+    },
+    {
+      "case": "thread",
+      "source": "docs/experiments/explainer-reading/thread-cancel/author/first-draft.archify.md",
+      "sourceSha256": "d52369a434b9a968b720e5ecae679661cb87594f4f436c87db2a10997112342a",
+      "mode": "warn",
+      "exitCode": 0,
+      "ok": true,
+      "diagnostics": [],
+      "artifact": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round13/candidate/warn/thread/page.html",
+      "htmlSha256": "409a212206d27951a09eef3001d2a27157b3a3c7357b2854d0e829dd6309019a"
+    }
+  ]
+}
