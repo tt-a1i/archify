@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between fourteen reading questions across twelve projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between fifteen reading questions across thirteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -201,3 +201,9 @@ The index now contains fourteen questions across twelve projects and thirty-two 
 [Inline page titles](title-inline/README.md): three independent originals displayed command backticks literally even though their title syntax passed validation. The heading now uses the existing inline language, preserves citation order and gives the browser tab a plain-text title. Native title links also receive preparation's existing target checks. All 32 saved variants were replayed: 29 remain byte-identical; the other three change only heading and browser-title output. Actual title navigation, export and extracted-package execution are retained.
 
 This is a local accepted-input/rendering repair. The earlier content candidates remain preferred; no general authoring speed or human comprehension claim follows.
+
+## Continued exploration — round 31
+
+[Apple openrsync source slash](openrsync-slash/README.md) pairs each copy command with its resulting directory tree. Complete nested paths show that the slash changes the copied directory level while recursive copying remains active. The source audit distinguishes Apple openrsync's compatibility banner from the upstream rsync implementation; a wrong initial probe expectation and the author's source-path failure are retained. Five copied blocks match the page, and the two commands reproduce the trees in four temporary fixtures.
+
+The index now contains fifteen questions across thirteen projects and thirty-four variants. The selected page is shorter on phones and taller on desktop; no runtime or package changed, and no human comprehension improvement is inferred.

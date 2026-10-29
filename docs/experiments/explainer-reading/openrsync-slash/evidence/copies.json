@@ -1,0 +1,10 @@
+{
+  "scope": "actual Copy controls, Clipboard.writeText intercepted; no OS permission claim",
+  "payloads": [
+    "src/.hidden\nsrc/a.txt\nsrc/nested/b.txt",
+    "rsync -r -- src dst",
+    "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt",
+    "rsync -r -- src/ dst",
+    "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+  ]
+}

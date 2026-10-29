@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.html",
+  "family": "explainer",
+  "artifact": {
+    "sha256": "85e958931d6849e3fac9fa895c69c82309d25adab977121c8637e10917a8f2bd",
+    "bytes": 155279
+  },
+  "checks": [
+    {
+      "name": "explainer_structure",
+      "ok": true,
+      "details": [
+        "26 unique DOM IDs"
+      ]
+    },
+    {
+      "name": "explainer_payload_identity",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "explainer_dependencies",
+      "ok": true,
+      "details": [
+        "0 frozen dependencies"
+      ]
+    },
+    {
+      "name": "explainer_native_diagrams",
+      "ok": true,
+      "details": []
+    }
+  ],
+  "composition": {
+    "schemaVersion": 1,
+    "profile": "showcase",
+    "status": "pass",
+    "summary": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "issues": [],
+    "nativeDiagrams": []
+  },
+  "diagnostics": [],
+  "provenance": "current",
+  "deliveryReceiptId": "12edd20e-2238-485e-a366-27550b8db093"
+}

@@ -1,0 +1,6 @@
+{
+  "exitCode": 1,
+  "scope": "recorded replay of initial discovery probe; first two identical assertion failures were visible in tool output but stderr was not saved",
+  "reason": "probe incorrectly expected absent destination to remove the src directory layer; actual Apple openrsync still creates dst/src without a source trailing slash",
+  "productFailure": false
+}

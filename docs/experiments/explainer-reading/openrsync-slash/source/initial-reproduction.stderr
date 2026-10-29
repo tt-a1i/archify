@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round31/source/initial-probe.py", line 19, in <module>
+    assert actual==expected,(target_exists,slash,actual)
+           ^^^^^^^^^^^^^^^^
+AssertionError: (False, False, {'src/.hidden': 'hidden\n', 'src/a.txt': 'alpha\n', 'src/nested/b.txt': 'beta\n'})

@@ -1,0 +1,294 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2338,
+    "documentWidth": 390,
+    "title": "源目录末尾的 /，差哪一层？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 366,
+        "height": 251,
+        "scrollHeight": 251
+      },
+      {
+        "id": "source",
+        "width": 366,
+        "height": 331,
+        "scrollHeight": 331
+      },
+      {
+        "id": "results",
+        "width": 366,
+        "height": 677,
+        "scrollHeight": 677
+      },
+      {
+        "id": "why",
+        "width": 366,
+        "height": 149,
+        "scrollHeight": 149
+      },
+      {
+        "id": "scope",
+        "width": 366,
+        "height": 346,
+        "scrollHeight": 346
+      }
+    ],
+    "scroll": [
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "rsync -r -- src dst"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "rsync -r -- src/ dst"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      }
+    ],
+    "copies": [
+      "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt",
+      "rsync -r -- src dst",
+      "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt",
+      "rsync -r -- src/ dst",
+      "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2338,
+    "documentWidth": 390,
+    "title": "源目录末尾的 /，差哪一层？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 366,
+        "height": 251,
+        "scrollHeight": 251
+      },
+      {
+        "id": "source",
+        "width": 366,
+        "height": 331,
+        "scrollHeight": 331
+      },
+      {
+        "id": "results",
+        "width": 366,
+        "height": 677,
+        "scrollHeight": 677
+      },
+      {
+        "id": "why",
+        "width": 366,
+        "height": 149,
+        "scrollHeight": 149
+      },
+      {
+        "id": "scope",
+        "width": 366,
+        "height": 346,
+        "scrollHeight": 346
+      }
+    ],
+    "scroll": [
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "rsync -r -- src dst"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "rsync -r -- src/ dst"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      }
+    ],
+    "copies": [
+      "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt",
+      "rsync -r -- src dst",
+      "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt",
+      "rsync -r -- src/ dst",
+      "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1049,
+    "documentWidth": 1440,
+    "title": "源目录末尾的 /，差哪一层？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 416,
+        "height": 218,
+        "scrollHeight": 218
+      },
+      {
+        "id": "source",
+        "width": 416,
+        "height": 306,
+        "scrollHeight": 306
+      },
+      {
+        "id": "results",
+        "width": 416,
+        "height": 677,
+        "scrollHeight": 677
+      },
+      {
+        "id": "why",
+        "width": 416,
+        "height": 442,
+        "scrollHeight": 442
+      },
+      {
+        "id": "scope",
+        "width": 416,
+        "height": 354,
+        "scrollHeight": 354
+      }
+    ],
+    "scroll": [
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "rsync -r -- src dst"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "rsync -r -- src/ dst"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      }
+    ],
+    "copies": [
+      "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt",
+      "rsync -r -- src dst",
+      "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt",
+      "rsync -r -- src/ dst",
+      "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1049,
+    "documentWidth": 1440,
+    "title": "源目录末尾的 /，差哪一层？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 416,
+        "height": 218,
+        "scrollHeight": 218
+      },
+      {
+        "id": "source",
+        "width": 416,
+        "height": 306,
+        "scrollHeight": 306
+      },
+      {
+        "id": "results",
+        "width": 416,
+        "height": 677,
+        "scrollHeight": 677
+      },
+      {
+        "id": "why",
+        "width": 416,
+        "height": 442,
+        "scrollHeight": 442
+      },
+      {
+        "id": "scope",
+        "width": 416,
+        "height": 354,
+        "scrollHeight": 354
+      }
+    ],
+    "scroll": [
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "rsync -r -- src dst"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "rsync -r -- src/ dst"
+      },
+      {
+        "width": 406,
+        "scroll": 406,
+        "text": "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+      }
+    ],
+    "copies": [
+      "src/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt",
+      "rsync -r -- src dst",
+      "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt",
+      "rsync -r -- src/ dst",
+      "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt"
+    ]
+  }
+]

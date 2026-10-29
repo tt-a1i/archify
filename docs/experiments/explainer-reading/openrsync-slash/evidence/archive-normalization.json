@@ -1,0 +1,22 @@
+[
+  {
+    "path": "evidence/browser-02.mjs",
+    "originalSha256": "ad574328a8ca0d0bb7a459059394756e1cd68950a8ee868cb45af7ec89f81077",
+    "archivedSha256": "5762dd1052cd09cec21ad802508591ad6cfa862212401a6befc0f63ed823d8a2"
+  },
+  {
+    "path": "evidence/browser-03.mjs",
+    "originalSha256": "b03177077b6cbf46b83916cea6c4fcdcd3f4dfaa59861505d1e403a3cf3c0089",
+    "archivedSha256": "913a5821b345895e0d76a92f145178cbc2c8fcdef503bdae38963012f1e45a56"
+  },
+  {
+    "path": "evidence/browser-01.mjs",
+    "originalSha256": "cfc240a4f0a8d873c5173ece3e131d4eab244f89541d8c9fe5adb6a1cc4ce838",
+    "archivedSha256": "ff86a7fb68db2497d4ed88eb0257ddc4e779af8e330f4ecca144e52e7496f04a"
+  },
+  {
+    "path": "evidence/copy-run.json",
+    "originalSha256": "753c02ced762f3d1ac1a977cfceb6698f4e8696258ac529538c08c94db5720c5",
+    "archivedSha256": "512a6a2a1cb54817d59e2f40c05e582184536d34612765fd1015cbadf094cdfa"
+  }
+]

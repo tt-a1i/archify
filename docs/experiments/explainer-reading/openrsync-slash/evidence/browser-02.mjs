@@ -1,0 +1,9 @@
+const fs=await import('node:fs/promises');const r='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round31',p=(await taskSpace(14)).page('p1');await fs.mkdir(r+'/screenshots',{recursive:true});
+const metrics=[];
+for(const width of [390,1440])for(const theme of ['light','dark']) {
+ await p.cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await p.goto('file://'+r+'/candidate-1.html');await p.click('[data-theme-choice="'+theme+'"]');
+ await p.evaluate(async()=>{await document.fonts.ready;await Promise.allSettled(document.getAnimations().map(a=>a.finished));await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});
+ metrics.push({width,theme,...await p.evaluate(()=>({height:document.documentElement.scrollHeight,documentWidth:document.documentElement.scrollWidth,title:document.querySelector('h1').textContent,panels:[...document.querySelectorAll('.panel')].map(el=>({id:el.id,width:el.clientWidth,height:el.clientHeight,scrollHeight:el.scrollHeight})),scroll:[...document.querySelectorAll('.table-scroll,.snippet pre')].map(el=>({width:el.clientWidth,scroll:el.scrollWidth,text:el.textContent})),copies:[...document.querySelectorAll('.snippet pre code')].map(el=>el.textContent)}))});
+ for(const [part,y] of [['top',0],['bottom',99999]]){await p.evaluate(y=>scrollTo(0,y),y);const shot=await p.cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await fs.writeFile(r+'/screenshots/candidate-1-'+width+'-'+theme+'-'+part+'.png',Buffer.from(shot.data,'base64'));}
+}
+await fs.writeFile(r+'/candidate-1-browser.json',JSON.stringify(metrics,null,2)+'\n');console.log(metrics.map(m=>({width:m.width,theme:m.theme,height:m.height,title:m.title,overflow:m.scroll.filter(x=>x.scroll>x.width+1).map(x=>({width:x.width,scroll:x.scroll}))})));

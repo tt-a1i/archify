@@ -1,0 +1,26 @@
+{
+  "workStartUtc": "2026-10-29T21:37:53Z",
+  "draftCompletedUtc": "2026-10-29T21:38:08.700Z",
+  "attempts": [
+    {
+      "number": 1,
+      "startUtc": "2026-10-29T21:38:15.691Z",
+      "endUtc": "2026-10-29T21:38:21.559859+00:00",
+      "exitStatus": "unknown: shell status assignment failed; receipt reports fail"
+    },
+    {
+      "number": 2,
+      "startUtc": "2026-10-29T21:38:21.645Z",
+      "endUtc": "2026-10-29T21:38:22.699Z",
+      "exitStatus": 0
+    }
+  ],
+  "corrections": [
+    "Copied the unchanged probe into author and used a contained source path after source-path validation failed. Shell wrapper used zsh reserved variable status, so first exit status was not captured."
+  ],
+  "unknowns": [
+    "Matching project identity does not establish bit-for-bit build identity.",
+    "Automated checks do not establish human comprehension or visual quality."
+  ],
+  "handoffUtc": "2026-10-29T21:38:26.166Z"
+}

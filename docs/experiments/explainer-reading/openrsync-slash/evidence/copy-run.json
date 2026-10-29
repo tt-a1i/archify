@@ -1,0 +1,69 @@
+{
+  "scope": "Actual reader Copy payloads; allowlisted command argv executed via /usr/bin/rsync in fresh temporary fixtures; directory trees generated from filesystem, not stdout",
+  "cases": [
+    {
+      "destinationExisted": true,
+      "sourceTrailingSlash": false,
+      "command": "rsync -r -- src dst",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "directoryTree": "dst/\n\u2514\u2500\u2500 src/\n    \u251c\u2500\u2500 .hidden\n    \u251c\u2500\u2500 a.txt\n    \u2514\u2500\u2500 nested/\n        \u2514\u2500\u2500 b.txt",
+      "copiedTreeMatches": true,
+      "fileContents": {
+        "src/.hidden": "hidden\n",
+        "src/a.txt": "alpha\n",
+        "src/nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    },
+    {
+      "destinationExisted": true,
+      "sourceTrailingSlash": true,
+      "command": "rsync -r -- src/ dst",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "directoryTree": "dst/\n\u251c\u2500\u2500 .hidden\n\u251c\u2500\u2500 a.txt\n\u2514\u2500\u2500 nested/\n    \u2514\u2500\u2500 b.txt",
+      "copiedTreeMatches": true,
+      "fileContents": {
+        ".hidden": "hidden\n",
+        "a.txt": "alpha\n",
+        "nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    },
+    {
+      "destinationExisted": false,
+      "sourceTrailingSlash": false,
+      "command": "rsync -r -- src dst",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "directoryTree": "dst/\n\u2514\u2500\u2500 src/\n    \u251c\u2500\u2500 .hidden\n    \u251c\u2500\u2500 a.txt\n    \u2514\u2500\u2500 nested/\n        \u2514\u2500\u2500 b.txt",
+      "copiedTreeMatches": true,
+      "fileContents": {
+        "src/.hidden": "hidden\n",
+        "src/a.txt": "alpha\n",
+        "src/nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    },
+    {
+      "destinationExisted": false,
+      "sourceTrailingSlash": true,
+      "command": "rsync -r -- src/ dst",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "directoryTree": "dst/\n\u251c\u2500\u2500 .hidden\n\u251c\u2500\u2500 a.txt\n\u2514\u2500\u2500 nested/\n    \u2514\u2500\u2500 b.txt",
+      "copiedTreeMatches": true,
+      "fileContents": {
+        ".hidden": "hidden\n",
+        "a.txt": "alpha\n",
+        "nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    }
+  ]
+}

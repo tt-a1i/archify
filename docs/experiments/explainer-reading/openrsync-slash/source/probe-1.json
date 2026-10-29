@@ -1,0 +1,113 @@
+{
+  "version": "openrsync: protocol version 29\nrsync version 2.6.9 compatible\n",
+  "build": "/usr/bin/rsync:\n\tPROGRAM:rsync  PROJECT:rsync-184\n\tPROGRAM:rsync  PROJECT:rsync-184\n",
+  "scope": "four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport",
+  "cases": [
+    {
+      "destinationExisted": true,
+      "sourceTrailingSlash": false,
+      "command": [
+        "rsync",
+        "-r",
+        "--",
+        "src",
+        "dst"
+      ],
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "destinationTree": [
+        "src/",
+        "src/.hidden",
+        "src/a.txt",
+        "src/nested/",
+        "src/nested/b.txt"
+      ],
+      "fileContents": {
+        "src/.hidden": "hidden\n",
+        "src/a.txt": "alpha\n",
+        "src/nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    },
+    {
+      "destinationExisted": true,
+      "sourceTrailingSlash": true,
+      "command": [
+        "rsync",
+        "-r",
+        "--",
+        "src/",
+        "dst"
+      ],
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "destinationTree": [
+        ".hidden",
+        "a.txt",
+        "nested/",
+        "nested/b.txt"
+      ],
+      "fileContents": {
+        ".hidden": "hidden\n",
+        "a.txt": "alpha\n",
+        "nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    },
+    {
+      "destinationExisted": false,
+      "sourceTrailingSlash": false,
+      "command": [
+        "rsync",
+        "-r",
+        "--",
+        "src",
+        "dst"
+      ],
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "destinationTree": [
+        "src/",
+        "src/.hidden",
+        "src/a.txt",
+        "src/nested/",
+        "src/nested/b.txt"
+      ],
+      "fileContents": {
+        "src/.hidden": "hidden\n",
+        "src/a.txt": "alpha\n",
+        "src/nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    },
+    {
+      "destinationExisted": false,
+      "sourceTrailingSlash": true,
+      "command": [
+        "rsync",
+        "-r",
+        "--",
+        "src/",
+        "dst"
+      ],
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "destinationTree": [
+        ".hidden",
+        "a.txt",
+        "nested/",
+        "nested/b.txt"
+      ],
+      "fileContents": {
+        ".hidden": "hidden\n",
+        "a.txt": "alpha\n",
+        "nested/b.txt": "beta\n"
+      },
+      "sourcePreserved": true
+    }
+  ]
+}

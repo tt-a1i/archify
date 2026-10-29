@@ -1,0 +1,18 @@
+{
+  "runtime": "18e6350f1fc2bc0f72655bf59258b460ad5b3e20",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "primaryRepository": "apple-oss-distributions/rsync",
+  "tag": "rsync-184",
+  "commit": "13eacd7e9a204b236310dab23682f6354ecc69bd",
+  "manual": "openrsync/openrsync.1",
+  "manualSha256": "b4e11faf370023166abcab4be71a71c46a46a90a565b9ccb1d81a96567597f30",
+  "localExecutableSha256": "bba32d943e19adffa393a01690396af4ef84f079ce46ee8d9efa0ea6565adbc9",
+  "localBuild": "/usr/bin/rsync:\n\tPROGRAM:rsync  PROJECT:rsync-184\n\tPROGRAM:rsync  PROJECT:rsync-184\n",
+  "initialResearchOnly": {
+    "repository": "RsyncProject/rsync",
+    "tag": "v2.6.9",
+    "commit": "0c6d79528ac651ef064173327d769ba7a2b338ab",
+    "disposition": "not the local implementation; do not use as primary behavior evidence"
+  },
+  "probeTwoRunsByteIdentical": true
+}

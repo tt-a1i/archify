@@ -1,0 +1,40 @@
+{
+  "image": {
+    "width": 780,
+    "height": 4482
+  },
+  "states": [
+    {
+      "title": "源目录末尾的 /，差哪一层？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.html",
+      "width": "390px",
+      "report": "openrsync-slash/README.md",
+      "cases": 15
+    },
+    {
+      "title": "源目录末尾的 /，差哪一层？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.html",
+      "width": "1440px",
+      "report": "openrsync-slash/README.md",
+      "cases": 15
+    },
+    {
+      "title": "源目录末尾的 /，差哪一层？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/author/answer.html",
+      "width": "390px",
+      "report": "openrsync-slash/README.md",
+      "cases": 15
+    },
+    {
+      "title": "源目录末尾的 /，差哪一层？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/author/answer.html",
+      "width": "1440px",
+      "report": "openrsync-slash/README.md",
+      "cases": 15
+    }
+  ]
+}

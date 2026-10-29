@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "stage": "arguments",
+  "error": "Unknown finalize option \"--strict\".",
+  "diagnostics": [
+    {
+      "code": "cli/unknown-option",
+      "severity": "error",
+      "message": "Unknown finalize option \"--strict\".",
+      "subject": {
+        "command": "finalize",
+        "option": "--strict"
+      },
+      "evidence": {},
+      "supportedFixes": [
+        "remove the unknown option and retry"
+      ]
+    }
+  ]
+}

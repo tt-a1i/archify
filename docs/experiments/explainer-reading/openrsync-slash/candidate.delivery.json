@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "12edd20e-2238-485e-a366-27550b8db093",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.html",
+  "specification": {
+    "sha256": "c456a24c11c23d77db5834f14ff275a54db6eccea6d330492a76c9d3cf469544",
+    "bytes": 2295
+  },
+  "artifact": {
+    "sha256": "85e958931d6849e3fac9fa895c69c82309d25adab977121c8637e10917a8f2bd",
+    "bytes": 155279
+  },
+  "explainer": {
+    "preparedSha256": "984924acfbe4df4f6d0309a1314e6740b08d40196923b42a2ac6192345810427",
+    "dependencies": []
+  }
+}
