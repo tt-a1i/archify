@@ -1,0 +1,18 @@
+online-profile.js actual10 12 actual5 17 allRows 280 mismatches []
+evalmachine.<anonymous>:66
+    let xhr = new XMLHttpRequest();
+              ^
+
+ReferenceError: XMLHttpRequest is not defined
+    at probeSourceServer (evalmachine.<anonymous>:66:15)
+    at evalmachine.<anonymous>:75:3
+    at Script.runInContext (node:vm:149:12)
+    at Object.runInContext (node:vm:301:6)
+    at [stdin]:5:70
+    at runScriptInThisContext (node:internal/vm:209:10)
+    at node:internal/process/execution:446:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:444:60)
+    at evalFunction (node:internal/process/execution:279:30)
+
+Node.js v22.23.3

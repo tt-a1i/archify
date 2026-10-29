@@ -1,0 +1,75 @@
+{
+  "observedAt": "2026-10-29T15:33:17.909324+00:00",
+  "viewerUrl": "https://coz-profiler.github.io/coz-ui/",
+  "viewport": {
+    "width": 1512,
+    "height": 762,
+    "devicePixelRatio": 2
+  },
+  "input": {
+    "path": "sqlite.coz",
+    "bytes": 1699818,
+    "sha256": "e4b8d5f7c58bc5669b98b97d3bcea861aa46ccaf2baa6fd5498c1e095c477488",
+    "mode": "set native file input then Open; public committed fixture"
+  },
+  "states": [
+    {
+      "minimumPoints": 10,
+      "renderedPlots": 12,
+      "evidence": "browser-05.stderr",
+      "image": "minimum-10.png"
+    },
+    {
+      "minimumPoints": 5,
+      "renderedPlots": 17,
+      "evidence": "browser-06.stderr",
+      "image": "minimum-5.png",
+      "selectedLine": "sqlite3.c:14853",
+      "circles": 8
+    },
+    {
+      "minimumPoints": 5,
+      "selectedLine": "sqlite3.c:14853",
+      "hoveredCircleIndex": 5,
+      "nativeTooltip": {
+        "Line Speedup": "+60.0%",
+        "Progress Speedup": "+12.5%"
+      },
+      "evidence": "browser-07.stderr",
+      "image": "point-14853.png"
+    }
+  ],
+  "assets": [
+    {
+      "url": "https://coz-profiler.github.io/coz-ui/js/profile.js",
+      "bytes": 26270,
+      "sha256": "abc793304be54dbc8e28d13d1f29deb0bebcbe39d304ed5e7fa51f0999173cca",
+      "gitBlobSha1": "044e69ddbd5a8c1f5e3693802762ce0e6f63ad68",
+      "expectedRepository": "coz-profiler/coz-ui",
+      "expectedCommit": "7fe33c0be8dca7b35b172cc4692fd9ae9cc9820b",
+      "expectedPath": "js/profile.js"
+    },
+    {
+      "url": "https://coz-profiler.github.io/coz-ui/js/ui.js",
+      "bytes": 7957,
+      "sha256": "f1115f1471a7009e93681936c08cae3736134f1a476ea62bd8f2b058e42b2c5d",
+      "gitBlobSha1": "f728e86a703d7c2c5349ffde8e61dd8c4f74fb38",
+      "expectedRepository": "coz-profiler/coz-ui",
+      "expectedCommit": "7fe33c0be8dca7b35b172cc4692fd9ae9cc9820b",
+      "expectedPath": "js/ui.js"
+    }
+  ],
+  "identityLimit": "Script URLs observed in DOM; HTTP bytes subsequently retrieved at those URLs match pinned blobs. Browser cache response bytes, other assets and full deployment revision not independently verified. Current plasma-umass/coz master has additional MIN_DELTA5 behavior and was not this browser UI.",
+  "failures": [
+    {
+      "step": "browser-03",
+      "exitCode": 1,
+      "cause": "selected file then waited for data before clicking Open; modal and selected file observed in browser-04, Open in browser-05 resolves",
+      "upstreamDefect": false
+    }
+  ],
+  "visualLimit": "Minimum5 screenshots show crowded/overlapping tick labels; cause not diagnosed. Raw frames retained, not a visual-quality or human-usability benchmark.",
+  "inspection": "Root opened and viewed all3PNGs",
+  "scope": "native UI replay of committed profile; no profiler/benchmark/history test execution; no actual optimization-before-after result",
+  "cleanup": "browser-08-finish exit0, space19closed; no local server"
+}

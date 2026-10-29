@@ -1,0 +1,54 @@
+{
+  "sha": "7fe33c0be8dca7b35b172cc4692fd9ae9cc9820b",
+  "truncated": false,
+  "tree": [
+    {
+      "path": "index.htm",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9578d9a7e3786e186ce343dffe0784cff6b7a40f",
+      "size": 5494,
+      "url": "https://api.github.com/repos/coz-profiler/coz-ui/git/blobs/9578d9a7e3786e186ce343dffe0784cff6b7a40f"
+    },
+    {
+      "path": "js/profile.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "044e69ddbd5a8c1f5e3693802762ce0e6f63ad68",
+      "size": 26270,
+      "url": "https://api.github.com/repos/coz-profiler/coz-ui/git/blobs/044e69ddbd5a8c1f5e3693802762ce0e6f63ad68"
+    },
+    {
+      "path": "js/ui.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f728e86a703d7c2c5349ffde8e61dd8c4f74fb38",
+      "size": 7957,
+      "url": "https://api.github.com/repos/coz-profiler/coz-ui/git/blobs/f728e86a703d7c2c5349ffde8e61dd8c4f74fb38"
+    },
+    {
+      "path": "lib/science/LICENSE.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a59d17ee6dff87b1a6bc9db4f0b38160bf97dfb8",
+      "size": 1429,
+      "url": "https://api.github.com/repos/coz-profiler/coz-ui/git/blobs/a59d17ee6dff87b1a6bc9db4f0b38160bf97dfb8"
+    },
+    {
+      "path": "profiles/sqlite.coz",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8501a0b20aef4ac7511ea7093b93e5b6692187c1",
+      "size": 1699818,
+      "url": "https://api.github.com/repos/coz-profiler/coz-ui/git/blobs/8501a0b20aef4ac7511ea7093b93e5b6692187c1"
+    },
+    {
+      "path": "ts/profile.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "17a29065c55ebd9011f3abbb61aba55e9e45653d",
+      "size": 25417,
+      "url": "https://api.github.com/repos/coz-profiler/coz-ui/git/blobs/17a29065c55ebd9011f3abbb61aba55e9e45653d"
+    }
+  ]
+}

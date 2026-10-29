@@ -1,0 +1,7 @@
+Error: page.waitForFunction timed out after 10000ms on page p1; last URL was "https://coz-profiler.github.io/coz-ui/"; last title was "coz plot".
+    at waitForFunctionTimeoutError (file:////[eval1]:19509:12)
+    at file:////[eval1]:18834:19
+    at async file:////[eval1]:16940:28
+startedAt 2026-10-29T15:15:47.463Z
+
+ego's nodejs process exited with code 1.

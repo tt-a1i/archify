@@ -1,0 +1,66 @@
+{
+  "provenance": "Scripts, commands, merged outputs, and exit codes transcribed from original functions.exec/exec_command conversation tool history. No verification rerun during preservation. .js files contain exact original stdin script text.",
+  "runtime": {
+    "observed": "Node.js v22.23.3",
+    "source": "original errors in attempts 01 and 02; attempt 03 used same node command/session environment, version not printed separately"
+  },
+  "attempts": [
+    {
+      "id": "01",
+      "result": "online comparison succeeded, then current source initialization failed because XMLHttpRequest was absent",
+      "exit_code": 1
+    },
+    {
+      "id": "02",
+      "result": "current source initialization failed because document.getElementById was absent",
+      "exit_code": 1
+    },
+    {
+      "id": "03",
+      "result": "current native function comparison succeeded with document and XMLHttpRequest stubs",
+      "exit_code": 0
+    }
+  ],
+  "successful_native_checks": {
+    "online": "01 output before initialization failure on next file",
+    "current": "03",
+    "expected_rows": 280,
+    "min_points_10_results": 12,
+    "min_points_5_results": 17,
+    "mismatching_rows": [],
+    "comparison": "For each analysis.json row, locate native selected line and progress point; compare measurement count, ordered speedup exact equality, and absolute progress difference <= 5.01e-9."
+  },
+  "formulas": {
+    "grouping": "selected source line + progress point name + numeric virtual speedup",
+    "throughput_measurement": "sum(experiment.duration) / sum(progress-point.delta)",
+    "baseline": "measurement at numeric speedup 0",
+    "progress_speedup": "(baseline - measurement) / baseline",
+    "retained_progress_range": "inclusive [-1, 2]",
+    "current_hasEnoughData": "aggregated delta >= MIN_DELTA=5 for throughput, including baseline",
+    "online_hasEnoughData": "no MIN_DELTA gate",
+    "minimum_points": "count distinct retained speedup measurements, including baseline; not raw experiment count",
+    "14853": {
+      "raw_experiment_records": 13,
+      "distinct_raw_speedups": 10,
+      "retained_points": 8,
+      "baseline_records": 3,
+      "baseline_duration": 1501545699,
+      "baseline_delta": 6103,
+      "filtered_015_progress": -3.1720599344093894,
+      "filtered_055_progress": -10710913156417.982,
+      "virtual_06_progress": 0.12533746603290397
+    }
+  },
+  "limits": [
+    "VM checks native parsing and getSpeedupData only; does not run native drawPlots, browser rendering, tooltips, or smoothing.",
+    "Current source startup receives document stubs and XMLHttpRequest stubs that send no requests; source/AI endpoint behavior is untested.",
+    "Only the committed sqlite.coz fixture and saved JS snapshots were checked; no profiler or benchmark run.",
+    "The Python analysis is a fixture-specific throughput calculation, not a universal parser/latency implementation.",
+    "Python retains arbitrary precision integers, native JavaScript uses Number; all retained fixture points agree within stated tolerance, not a general precision proof.",
+    "Expected-row comparison does not explicitly assert absence of extra native rows beyond 280; it compares every expected row plus min10/min5 result totals.",
+    "Unknown benchmark capture version/session provenance; multiple startup/shutdown records do not identify individual trial boundaries.",
+    "No claim that entire deployed site equals current upstream source."
+  ],
+  "artifacts": "01/02/03 .command.transcribed.txt, .output.transcribed.txt, .exit.transcribed.json; exact stdin also in 01/02/03.js",
+  "absent_original_fields": "Separate stdout/stderr streams and exact start/end timestamps unavailable; exec_command exposed merged output. Transcribed output is not a fresh execution log."
+}

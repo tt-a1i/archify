@@ -1,0 +1,13 @@
+{
+  "schema": "source-snapshot-v1",
+  "repository": "https://github.com/mafintosh/why-is-node-running",
+  "revision": "6dff5ee27c0093c8e5a8235bf1bbfbb3c03e18ba",
+  "tree_api": "https://api.github.com/repos/mafintosh/why-is-node-running/git/trees/6dff5ee27c0093c8e5a8235bf1bbfbb3c03e18ba",
+  "scope": "Complete upstream source files in this directory; manifest excludes itself.",
+  "files": [
+    {"path":"README.md","url":"https://raw.githubusercontent.com/mafintosh/why-is-node-running/6dff5ee27c0093c8e5a8235bf1bbfbb3c03e18ba/README.md","git_blob_sha1":"37595903cd040c611c04f3f7623eb9eb8e0eb177","sha256":"e3d8bf5573115de31fca4185170ca47553799016158fc6f96709828070ae57bc","bytes":3504},
+    {"path":"index.js","url":"https://raw.githubusercontent.com/mafintosh/why-is-node-running/6dff5ee27c0093c8e5a8235bf1bbfbb3c03e18ba/index.js","git_blob_sha1":"9189e97f5f7fdf1905625e99307c96a6dbf9d09c","sha256":"6daa0abe98665e2eec698b6fe89d7576829689351111095aa4b458e9e3df4880","bytes":3088},
+    {"path":"example.js","url":"https://raw.githubusercontent.com/mafintosh/why-is-node-running/6dff5ee27c0093c8e5a8235bf1bbfbb3c03e18ba/example.js","git_blob_sha1":"26fda832b2435af621cdb62d2d65729da6a978ab","sha256":"739dc92e3bd69f27e00a15a2163aa17ed6dc8beba38e26b974ff2766ad5f3916","bytes":358},
+    {"path":"LICENSE","url":"https://raw.githubusercontent.com/mafintosh/why-is-node-running/6dff5ee27c0093c8e5a8235bf1bbfbb3c03e18ba/LICENSE","git_blob_sha1":"bae9da7bfae2b5e22cfb0945b362b23ca822c8bb","sha256":"6a134e51aa31496c15a741592fc5d782b2dbf8d8b6b8524e15c8520ae0cd6374","bytes":1079}
+  ]
+}

@@ -1,0 +1,75 @@
+startedAt 2026-10-29T15:14:56.213Z
+[p1 "coz plot" | space "Archify research 20261026"(19): 1 managed, 0 untracked — p1* "coz plot"]
+root
+  container
+    table
+      table_row
+        table_cell
+    container
+      table
+        table_row
+          table_cell
+      container
+        heading
+          text "Causal Profile"
+        button [ref=1]
+          text ""
+          text "Load a Profile"
+        container
+          heading
+            text "Progress Points"
+          paragraph
+            text "None"
+        container
+          heading
+            text "Sort By"
+          combobox "Sort By" [ref=2]
+            text "Impact"
+        container
+          heading
+            text "Minimum Points"
+          spinbutton "Minimum Points" [ref=3]
+          paragraph
+            text "10"
+      container
+        container
+          table
+            table_row
+              table_cell
+          table
+            table_row
+              table_cell
+        container
+          table
+            table_row
+              table_cell
+          container
+            heading
+              text "Getting Started"
+            paragraph
+              text "Welcome to the causal profile viewer. To make use of this profile viewer you'll first need a causal profile. You will need to use the"
+              text "coz"
+              text "program to collect a causal profile from your program. For this to work, you will need to add at least one"
+              text "progress point"
+              text "to your program, and then build it with debug information. Next, run your program with"
+              text "coz"
+              text ":"
+            text "$ coz run --- ./myprogram arg1 arg2"
+            paragraph
+              text "Next, you will need to load your profile into this viewer. Click the"
+              text "Load Profile"
+              text "button on this page and browse to your file. There are some sample profiles available as well if you want to see what a causal profile looks like."
+          table
+            table_row
+              table_cell
+      table
+        table_row
+          table_cell
+    table
+      table_row
+        table_cell
+
+inputs [ { type: 'range', id: 'minpoints_field', ariaLabel: null }, { type: 'file', id: 'load-profile-file', ariaLabel: null } ]
+scripts [ 'https://coz-profiler.github.io/coz-ui/lib/jquery-3.1.1.js', 'https://coz-profiler.github.io/coz-ui/lib/bootstrap/bootstrap.js', 'https://coz-profiler.github.io/coz-ui/lib/d3/d3.js', 'https://coz-profiler.github.io/coz-ui/lib/d3/d3-tip.js', 'https://coz-profiler.github.io/coz-ui/lib/science/science.v1.js', 'https://coz-profiler.github.io/coz-ui/js/profile.js', 'https://coz-profiler.github.io/coz-ui/js/ui.js' ]
+finishedAt 2026-10-29T15:14:57.316Z
+

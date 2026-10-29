@@ -1,0 +1,25 @@
+{
+  "event_types": {
+    "startup": 40,
+    "experiment": 1233,
+    "progress-point": 1233,
+    "runtime": 58,
+    "samples": 36952,
+    "shutdown": 30
+  },
+  "selected_source_lines": 280,
+  "progress_point_records": {
+    "main.c:73": 1233
+  },
+  "selected_point_pairs": 280,
+  "zero_present_pairs": 108,
+  "online_threshold10": 12,
+  "current_threshold10": 12,
+  "online_threshold5": 17,
+  "current_threshold5": 17
+}
+sqlite3.c:111558 raw 7 online 7 current 7 points [{'virtual': 0.0, 'progress': 0.0, 'delta': 2167, 'records': 1}, {'virtual': 0.1, 'progress': 0.02971288, 'delta': 2222, 'records': 1}, {'virtual': 0.2, 'progress': 0.02404104, 'delta': 2197, 'records': 1}, {'virtual': 0.3, 'progress': -0.02369973, 'delta': 2026, 'records': 1}, {'virtual': 0.45, 'progress': -0.0736046, 'delta': 2019, 'records': 1}, {'virtual': 0.5, 'progress': -0.05707251, 'delta': 2029, 'records': 1}, {'virtual': 1.0, 'progress': -0.16960383, 'delta': 1757, 'records': 1}]
+sqlite3.c:14841 raw 9 online 7 current 7 points [{'virtual': 0.0, 'progress': 0.0, 'delta': 4802, 'records': 2}, {'virtual': 0.1, 'progress': -0.16248262, 'delta': 2066, 'records': 1}, {'virtual': 0.3, 'progress': -0.07668016, 'delta': 4239, 'records': 2}, {'virtual': 0.4, 'progress': -0.12106135, 'delta': 1962, 'records': 1}, {'virtual': 0.45, 'progress': -0.17786822, 'delta': 2003, 'records': 1}, {'virtual': 0.6, 'progress': -0.17259987, 'delta': 1998, 'records': 1}, {'virtual': 0.65, 'progress': -0.23095539, 'delta': 1858, 'records': 1}]
+sqlite3.c:14853 raw 10 online 8 current 8 points [{'virtual': 0.0, 'progress': 0.0, 'delta': 6103, 'records': 3}, {'virtual': 0.05, 'progress': 0.01870051, 'delta': 2071, 'records': 1}, {'virtual': 0.1, 'progress': 0.06948631, 'delta': 2179, 'records': 1}, {'virtual': 0.2, 'progress': 0.03958939, 'delta': 2117, 'records': 1}, {'virtual': 0.4, 'progress': 0.0422322, 'delta': 4200, 'records': 1}, {'virtual': 0.6, 'progress': 0.12533747, 'delta': 2165, 'records': 1}, {'virtual': 0.75, 'progress': 0.07015719, 'delta': 4334, 'records': 2}, {'virtual': 1.0, 'progress': -0.02293099, 'delta': 1979, 'records': 1}]
+sqlite3.c:19333 raw 10 online 8 current 8 points [{'virtual': 0.0, 'progress': 0.0, 'delta': 8705, 'records': 4}, {'virtual': 0.05, 'progress': -0.00724815, 'delta': 6399, 'records': 3}, {'virtual': 0.2, 'progress': -0.04035137, 'delta': 2014, 'records': 1}, {'virtual': 0.6, 'progress': -0.07753948, 'delta': 1976, 'records': 1}, {'virtual': 0.65, 'progress': -0.42146574, 'delta': 1519, 'records': 1}, {'virtual': 0.7, 'progress': -0.37888667, 'delta': 4444, 'records': 2}, {'virtual': 0.9, 'progress': -0.0782401, 'delta': 1838, 'records': 1}, {'virtual': 0.95, 'progress': -0.084126, 'delta': 3787, 'records': 2}]
+sqlite3.c:40461 raw 6 online 6 current 6 points [{'virtual': 0.0, 'progress': 0.0, 'delta': 2028, 'records': 1}, {'virtual': 0.35, 'progress': 0.18312661, 'delta': 2426, 'records': 1}, {'virtual': 0.4, 'progress': 0.04862033, 'delta': 2056, 'records': 1}, {'virtual': 0.55, 'progress': -0.02088288, 'delta': 1925, 'records': 1}, {'virtual': 0.6, 'progress': -0.00240526, 'delta': 1946, 'records': 1}, {'virtual': 0.75, 'progress': -0.18272801, 'delta': 1638, 'records': 1}]

@@ -852,3 +852,9 @@ CUE 的来源路径不确定性已通过只读文件身份检查排除：macOS �
 ## 第 65 批：同题阅读边界探针
 
 [task-view 与 Archify 的独立阅读记录](scouts/task-view-reading-probe-round65.md)保留同题、各一位 Terra medium 读者的原始回答和三张实拍。两组均能区分路径声明、报告实现与测试执行，原生 notes 和源码已足够回答本题；未证明额外阅读层优势，不扩 importer。完整证据推进既有 task-flow-tests 分支，无新 PR。这个有提示的单 fixture Agent 观察不代表真人效率或两者等效。
+
+## 第 66 批：进程存活诊断与因果性能阅读
+
+刷新 336 个远程 head，只有上一批两个交付分支推进；[候选检索](audit/round66-dedup.json)没有返回同名 issue/PR，CodeCharta 因已有完整折叠边研究而排除。[why-is-node-running](scouts/node-handle-evidence-round66.md) 的原生报告已有分配栈；现有数据缺失的因果上下文不能靠绘图补出，不新增实现。[Coz](scouts/coz-native-points-round66.md) 的完整上游 SQLite profile 实际显示：门槛 10→5 时图数 12→17，原生 hover 给出虚拟 60% / Progress Speedup 12.5%。有效点数、原始记录数与实际优化结果须分开；原生源码 VM、透明分析与实拍相符，未运行 profiler 或 benchmark。
+
+归档固定源、完整许可、三张实际截图、失败和可复现分析。当前还缺少配对的真实优化前后证据和新增阅读层的用户价值验证，两候选均暂不实施，因此只更新研究分支，不创建同义实验分支或 PR。

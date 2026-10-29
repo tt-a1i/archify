@@ -1,0 +1,10 @@
+{
+  "scope": "Fresh-path analyst projection rerun only; no native profiler, browser or VM execution",
+  "command": "python3 analysis/reproduce.py source/sqlite.coz <fresh-output.json>",
+  "exit_code": 0,
+  "byte_equal_to_original_analysis": true,
+  "analysis_sha256": "d2869b3e9570a89c2d7df5401636227f1f1c52054a03901acf244c41c9612547",
+  "expected_rows": 280,
+  "stdout_equals_original_summary": true,
+  "stderr": ""
+}

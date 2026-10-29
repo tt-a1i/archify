@@ -1,0 +1,17 @@
+evalmachine.<anonymous>:101
+    let el = document.getElementById('ai-provider');
+                      ^
+
+TypeError: document.getElementById is not a function
+    at getSelectedProvider (evalmachine.<anonymous>:101:23)
+    at populateModelDropdown (evalmachine.<anonymous>:157:20)
+    at evalmachine.<anonymous>:351:1
+    at Script.runInContext (node:vm:149:12)
+    at Object.runInContext (node:vm:301:6)
+    at [stdin]:2:125
+    at runScriptInThisContext (node:internal/vm:209:10)
+    at node:internal/process/execution:446:12
+    at [stdin]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:444:60)
+
+Node.js v22.23.3

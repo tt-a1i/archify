@@ -1,0 +1,313 @@
+startedAt 2026-10-29T15:17:24.806Z
+[p1 "coz plot" | space "Archify research 20261026"(19): 1 managed, 0 untracked — p1* "coz plot"]
+root
+  container
+    table
+      table_row
+        table_cell
+    container
+      table
+        table_row
+          table_cell
+      container
+        heading
+          text "Causal Profile"
+        button [ref=1]
+          text ""
+          text "Load a Profile"
+        container
+          heading
+            text "Progress Points"
+          paragraph
+            text ""
+            text "main.c:73"
+        container
+          heading
+            text "Sort By"
+          combobox "Sort By" [ref=2]
+            text "Impact"
+        container
+          heading
+            text "Minimum Points"
+          spinbutton "Minimum Points" [ref=3]
+          paragraph
+            text "10"
+      container
+        container
+          table
+            table_row
+              table_cell
+          table
+            table_row
+              table_cell
+        container
+          table
+            table_row
+              table_cell
+          container
+            container
+              text "sqlite3.c:40345"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:80031"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:19419"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:16916"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:19509"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "main.c:73"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:16971"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:38939"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:16907"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:18974"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:123328"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+            container
+              text "sqlite3.c:16869"
+              svg_root "0% 20% 40% 60% 80% 100% Line speedup -80% -60% -40% -20% 0% 20% Program Speedup"
+                text "0%"
+                text "20%"
+                text "40%"
+                text "60%"
+                text "80%"
+                text "100%"
+                text "Line speedup"
+                text "-80%"
+                text "-60%"
+                text "-40%"
+                text "-20%"
+                text "0%"
+                text "20%"
+                text "Program Speedup"
+          table
+            table_row
+              table_cell
+      table
+        table_row
+          table_cell
+    table
+      table_row
+        table_cell
+  dialog "Select a Causal Profile" [ref=4, loc=role:dialog[name="Select a Causal Profile"]]
+    container
+      table
+        table_row
+          table_cell
+      button "Close" [ref=5, loc=css:button[aria-label="Close"]]
+        text "×"
+      heading
+        text "Select a Causal Profile"
+      table
+        table_row
+          table_cell
+    container
+      text "Load Profile"
+      form
+        table
+          table_row
+            table_cell
+              text ""
+            table_cell
+              textbox [ref=6]
+                button [ref=7]
+                  text "选择文件"
+                text "未选择任何文件"
+      text "Sample Profiles"
+      container
+        button [ref=8]
+          text "blackscholes"
+        button [ref=9]
+          text "dedup"
+        button [ref=10]
+          text "ferret"
+        button [ref=11]
+          text "fluidanimate"
+        button [ref=12]
+          text "sqlite"
+        button [ref=13]
+          text "swaptions"
+    container
+      table
+        table_row
+          table_cell
+      button [ref=14]
+        text "Cancel"
+      button [ref=15]
+        text "Open"
+      table
+        table_row
+          table_cell
+
+dom { range: [ { id: 'minpoints_field', value: '10', min: '0', max: '20', step: '1' } ], headings: [ { tag: 'H3', class: '', text: 'Causal Profile' }, { tag: 'H4', class: '', text: 'Progress Points' }, { tag: 'H4', class: '', text: 'Sort By' }, { tag: 'H4', class: '', text: 'Minimum Points' }, { tag: 'H4', class: 'modal-title', text: 'Select a Causal Profile' } ], svg: [ { class: null, circles: 14 }, { class: null, circles: 15 }, { class: null, circles: 20 }, { class: null, circles: 19 }, { class: null, circles: 12 }, { class: null, circles: 15 }, { class: null, circles: 15 }, { class: null, circles: 10 }, { class: null, circles: 15 }, { class: null, circles: 12 }, { class: null, circles: 16 }, { class: null, circles: 10 } ] }
+finishedAt 2026-10-29T15:17:27.892Z
+

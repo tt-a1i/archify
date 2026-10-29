@@ -1,0 +1,70 @@
+{
+  "sha": "dfc22c6c6f54cfbf085199440089cb29552f67d6",
+  "truncated": false,
+  "tree": [
+    {
+      "path": "LICENSE.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6f765a3b3a534ffc395950b18af58d1d1befe8e6",
+      "size": 1660,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/6f765a3b3a534ffc395950b18af58d1d1befe8e6"
+    },
+    {
+      "path": "benchmarks/LICENSE.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "08d5b5c52d2675eee936f6675343f094411d9c73",
+      "size": 2522,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/08d5b5c52d2675eee936f6675343f094411d9c73"
+    },
+    {
+      "path": "viewer/index.htm",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dbed1d3c2fb31ba91cc79543137b471877f3d068",
+      "size": 26883,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/dbed1d3c2fb31ba91cc79543137b471877f3d068"
+    },
+    {
+      "path": "viewer/js/profile.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "60f062141f2264601547f96de480688e60f5eb42",
+      "size": 68452,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/60f062141f2264601547f96de480688e60f5eb42"
+    },
+    {
+      "path": "viewer/js/ui.js",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "57fed81cb689859fa782eb5c9accd375757d6a30",
+      "size": 21292,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/57fed81cb689859fa782eb5c9accd375757d6a30"
+    },
+    {
+      "path": "viewer/lib/science/LICENSE.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a59d17ee6dff87b1a6bc9db4f0b38160bf97dfb8",
+      "size": 1429,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/a59d17ee6dff87b1a6bc9db4f0b38160bf97dfb8"
+    },
+    {
+      "path": "viewer/profiles/sqlite.coz",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8501a0b20aef4ac7511ea7093b93e5b6692187c1",
+      "size": 1699818,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/8501a0b20aef4ac7511ea7093b93e5b6692187c1"
+    },
+    {
+      "path": "viewer/ts/profile.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b742793931ddad29ba9f9a28ca223140b4febc96",
+      "size": 65842,
+      "url": "https://api.github.com/repos/plasma-umass/coz/git/blobs/b742793931ddad29ba9f9a28ca223140b4febc96"
+    }
+  ]
+}

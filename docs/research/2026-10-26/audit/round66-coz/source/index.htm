@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Coz Causal Profiler - Visualize performance optimization potential">
+    <meta name="theme-color" content="#1a1a2e">
+
+    <title>Coz Profiler</title>
+
+    <link rel="stylesheet" href="lib/bootstrap/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="lib/font-awesome/css/font-awesome.css">
+    <link rel="stylesheet" type="text/css" href="css/ui.css">
+    <link rel="stylesheet" type="text/css" href="css/plot.css">
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div id="sidebar" class="col-sm-3 col-md-3 col-lg-2 sidebar">
+          <div class="sidebar-header">
+            <h3 class="brand">
+              <span class="brand-icon">&#9889;</span> Coz
+            </h3>
+            <p class="brand-tagline">Causal Profiler</p>
+          </div>
+
+          <div class="sidebar-section sidebar-buttons">
+            <button type="button" id="load-profile-btn" class="btn btn-primary btn-block btn-modern" data-toggle="modal" data-target="#load-profile-dlg">
+              <i class="fa fa-folder-open"></i> Load Profile
+            </button>
+            <button type="button" id="help-btn" class="btn btn-outline btn-block" data-toggle="modal" data-target="#help-modal">
+              <i class="fa fa-question-circle"></i> Help
+            </button>
+          </div>
+
+          <div id="legend" class="sidebar-section">
+            <h4><i class="fa fa-dot-circle-o"></i> Progress Points</h4>
+            <p class="legend-entry noseries">None loaded</p>
+          </div>
+
+          <div id="sortby" class="sidebar-section">
+            <h4 id="sortby_label"><i class="fa fa-sort"></i> Sort By</h4>
+            <select id="sortby_field" class="form-control form-control-modern" disabled aria-labelledby="sortby_label">
+              <option value="alphabetical">Alphabetical</option>
+              <option value="impact" selected>Impact</option>
+              <option value="max_speedup">Max Speedup</option>
+              <option value="min_speedup">Min Speedup</option>
+            </select>
+          </div>
+
+          <div id="minpoints" class="sidebar-section">
+            <h4 id="minpoints_label"><i class="fa fa-sliders"></i> Minimum Points</h4>
+            <div class="slider-container">
+              <input type="range" id="minpoints_field" min="0" max="20" step="1" value="10" list="ticks" aria-labeledby="minpoints_label">
+              <datalist id="ticks">
+                <option value="0">
+                <option value="5">
+                <option value="10">
+                <option value="15">
+                <option value="20">
+              </datalist>
+              <p id="minpoints_display" class="slider-value">10</p>
+            </div>
+          </div>
+
+          <div id="ai-settings" class="sidebar-section">
+            <h4><i class="fa fa-magic"></i> AI Optimization</h4>
+            <div class="ai-settings-form">
+              <div class="form-group-compact">
+                <label class="ai-label" for="ai-provider">Provider</label>
+                <select id="ai-provider" class="form-control form-control-modern form-control-sm">
+                  <option value="anthropic">Anthropic Claude</option>
+                  <option value="openai">OpenAI GPT</option>
+                  <option value="bedrock">Amazon Bedrock</option>
+                  <option value="ollama">Ollama (local)</option>
+                </select>
+              </div>
+              <div id="ai-key-group" class="form-group-compact">
+                <label class="ai-label" for="ai-api-key">API Key <span id="ai-key-status" class="ai-status"></span></label>
+                <div class="input-with-toggle">
+                  <input type="password" id="ai-api-key" class="form-control form-control-modern form-control-sm" placeholder="Paste API key (or use env var)">
+                  <button type="button" id="ai-key-toggle" class="input-toggle-btn" title="Show/hide key"><i class="fa fa-eye"></i></button>
+                </div>
+              </div>
+              <div id="ai-bedrock-group" style="display: none;">
+                <div class="form-group-compact">
+                  <label class="ai-label" for="ai-bedrock-region">AWS Region <span id="ai-bedrock-status" class="ai-status"></span></label>
+                  <input type="text" id="ai-bedrock-region" class="form-control form-control-modern form-control-sm" placeholder="us-east-1">
+                </div>
+                <div class="form-group-compact" style="margin-top: 0.4rem;">
+                  <label class="ai-label" for="ai-aws-access-key">Access Key ID <span class="ai-hint">(or use env var)</span></label>
+                  <div class="input-with-toggle">
+                    <input type="password" id="ai-aws-access-key" class="form-control form-control-modern form-control-sm" placeholder="AKIA...">
+                    <button type="button" class="input-toggle-btn aws-key-toggle" title="Show/hide"><i class="fa fa-eye"></i></button>
+                  </div>
+                </div>
+                <div class="form-group-compact" style="margin-top: 0.4rem;">
+                  <label class="ai-label" for="ai-aws-secret-key">Secret Access Key <span class="ai-hint">(or use env var)</span></label>
+                  <div class="input-with-toggle">
+                    <input type="password" id="ai-aws-secret-key" class="form-control form-control-modern form-control-sm" placeholder="Secret key">
+                    <button type="button" class="input-toggle-btn aws-key-toggle" title="Show/hide"><i class="fa fa-eye"></i></button>
+                  </div>
+                </div>
+                <div class="form-group-compact" style="margin-top: 0.4rem;">
+                  <label class="ai-label" for="ai-aws-session-token">Session Token <span class="ai-hint">(optional)</span></label>
+                  <div class="input-with-toggle">
+                    <input type="password" id="ai-aws-session-token" class="form-control form-control-modern form-control-sm" placeholder="Optional session token">
+                    <button type="button" class="input-toggle-btn aws-key-toggle" title="Show/hide"><i class="fa fa-eye"></i></button>
+                  </div>
+                </div>
+              </div>
+              <div id="ai-ollama-group" class="form-group-compact" style="display: none;">
+                <label class="ai-label" for="ai-ollama-host">Ollama Host</label>
+                <input type="text" id="ai-ollama-host" class="form-control form-control-modern form-control-sm" placeholder="http://localhost:11434">
+              </div>
+              <div class="form-group-compact">
+                <label class="ai-label" for="ai-model">Model</label>
+                <div style="display:flex; gap:4px; align-items:center;">
+                  <select id="ai-model" class="form-control form-control-modern form-control-sm" style="flex:1;">
+                  </select>
+                  <button id="ai-model-refresh" class="btn btn-xs" title="Refresh model list" style="padding:2px 6px; line-height:1; border:1px solid var(--border-color,#444); background:transparent; color:var(--text-secondary,#999); cursor:pointer;">
+                    <i class="fa fa-refresh"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-section theme-section">
+            <div class="theme-toggle">
+              <span class="theme-label"><i class="fa fa-sun-o"></i></span>
+              <label class="switch">
+                <input type="checkbox" id="theme-toggle" checked>
+                <span class="slider"></span>
+              </label>
+              <span class="theme-label"><i class="fa fa-moon-o"></i></span>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <a href="https://github.com/plasma-umass/coz" target="_blank" class="footer-link">
+              <i class="fa fa-github"></i> GitHub
+            </a>
+            <a href="https://arxiv.org/abs/1608.03676" target="_blank" class="footer-link">
+              <i class="fa fa-file-text-o"></i> Paper
+            </a>
+          </div>
+        </div>
+
+        <div id="sidebar-resize-handle"></div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-9 col-md-offset-3 col-lg-10 col-lg-offset-2 main-content">
+          <div class="row">
+            <div id="warning-area" class="col-md-12"></div>
+          </div>
+          <div class="row">
+            <div id="plot-area" class="col-md-12">
+              <div id="plot-message">
+                <div class="welcome-container">
+                  <div class="welcome-icon">&#9889;</div>
+                  <h1>Welcome to Coz</h1>
+                  <p class="welcome-subtitle">The Causal Profiler for Native Code</p>
+
+                  <div id="drop-zone" class="drop-zone">
+                    <div class="drop-zone-content">
+                      <i class="fa fa-cloud-upload drop-icon"></i>
+                      <p class="drop-text">Drag & drop your <code>.coz</code> or <code>.jsonl</code> file here</p>
+                      <p class="drop-subtext">or click to browse</p>
+                      <input type="file" id="drop-zone-input" accept=".coz,.jsonl" hidden>
+                    </div>
+                    <div class="drop-zone-hover">
+                      <i class="fa fa-download"></i>
+                      <p>Release to load profile</p>
+                    </div>
+                  </div>
+
+                  <div class="samples-section">
+                    <p class="samples-title">Or try a sample profile:</p>
+                    <div id="quick-samples" class="quick-samples"></div>
+                  </div>
+
+                  <div class="getting-started">
+                    <h2>Getting Started</h2>
+                    <div class="steps">
+                      <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                          <h4>Add Progress Points</h4>
+                          <p>Include <code>coz.h</code> and add <code>COZ_PROGRESS</code> macros to mark throughput points in your code.</p>
+                        </div>
+                      </div>
+                      <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                          <h4>Build with Debug Info</h4>
+                          <p>Compile your program with <code>-g</code> flag to include debug symbols.</p>
+                        </div>
+                      </div>
+                      <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                          <h4>Run with Coz</h4>
+                          <pre><code>coz run --- ./myprogram arg1 arg2</code></pre>
+                        </div>
+                      </div>
+                      <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                          <h4>Analyze Results</h4>
+                          <p>Load your <code>profile.jsonl</code> or <code>profile.coz</code> file here to visualize optimization opportunities.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Expandable Help Sections -->
+                  <div class="help-sections">
+                    <details class="help-card">
+                      <summary class="help-card-header">
+                        <span class="help-icon">&#128161;</span>
+                        <span>What is Causal Profiling?</span>
+                        <span class="chevron">&#9662;</span>
+                      </summary>
+                      <div class="help-card-content">
+                        <p>Traditional profilers measure <strong>where</strong> your program spends time, but not <strong>whether</strong> optimizing that code will actually improve performance.</p>
+                        <p>Coz answers the question: <em>"If I optimize this code, will my program actually run faster?"</em></p>
+                        <p>It uses <strong>virtual speedups</strong> to simulate optimizations and measure their real impact on throughput or latency &mdash; establishing causality, not just correlation.</p>
+                        <div class="help-highlight">
+                          <strong>Key insight:</strong> Slowing down all other code has the same relative effect as speeding up the selected line.
+                        </div>
+                      </div>
+                    </details>
+
+                    <details class="help-card">
+                      <summary class="help-card-header">
+                        <span class="help-icon">&#128200;</span>
+                        <span>Interpreting Results</span>
+                        <span class="chevron">&#9662;</span>
+                      </summary>
+                      <div class="help-card-content">
+                        <p>Coz profiles show the predicted program speedup (y-axis) from optimizing each line by the percentage on the x-axis. Lines are sorted by impact.</p>
+                        <div class="result-types">
+                          <div class="result-type positive">
+                            <div class="result-icon">&#8599;</div>
+                            <div>
+                              <strong>Steep upward slope</strong>
+                              <p>Strong optimization candidate. Example: slope of +0.8 means optimizing by 10% improves throughput by ~8%.</p>
+                            </div>
+                          </div>
+                          <div class="result-type neutral">
+                            <div class="result-icon">&#8594;</div>
+                            <div>
+                              <strong>Flat or near-zero slope</strong>
+                              <p>Optimization won't help. Code may already be fast or not on the critical path.</p>
+                            </div>
+                          </div>
+                          <div class="result-type negative">
+                            <div class="result-icon">&#8600;</div>
+                            <div>
+                              <strong>Downward slope</strong>
+                              <p>Counter-intuitive! May indicate contention &mdash; optimizing could harm performance.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </details>
+
+                    <details class="help-card">
+                      <summary class="help-card-header">
+                        <span class="help-icon">&#128221;</span>
+                        <span>Progress Point Types</span>
+                        <span class="chevron">&#9662;</span>
+                      </summary>
+                      <div class="help-card-content">
+                        <div class="code-examples">
+                          <div class="code-example">
+                            <h5>Throughput Profiling</h5>
+                            <p>Mark the end of a unit of work:</p>
+                            <pre><code>#include "coz.h"
+
+void process_request() {
+    // ... do work ...
+    COZ_PROGRESS;  // or COZ_PROGRESS_NAMED("requests")
+}</code></pre>
+                          </div>
+                          <div class="code-example">
+                            <h5>Latency Profiling</h5>
+                            <p>Mark transaction boundaries:</p>
+                            <pre><code>#include "coz.h"
+
+void handle_transaction() {
+    COZ_BEGIN("transaction");
+    // ... do work ...
+    COZ_END("transaction");
+}</code></pre>
+                          </div>
+                        </div>
+                        <p class="help-note">Don't forget to link with <code>-ldl</code> when compiling!</p>
+                      </div>
+                    </details>
+
+                    <details class="help-card">
+                      <summary class="help-card-header">
+                        <span class="help-icon">&#9881;</span>
+                        <span>Advanced Options</span>
+                        <span class="chevron">&#9662;</span>
+                      </summary>
+                      <div class="help-card-content">
+                        <h5>Source Scope Filtering</h5>
+                        <p>Limit profiling to specific source files:</p>
+                        <pre><code>coz run --source-scope '/path/to/project/**' --- ./myprogram</code></pre>
+
+                        <h5>Environment Variables</h5>
+                        <ul class="env-list">
+                          <li><code>COZ_OUTPUT</code> &mdash; Output file path (default: profile.jsonl)</li>
+                          <li><code>COZ_SOURCE_SCOPE</code> &mdash; Glob pattern for source files</li>
+                          <li><code>COZ_BINARY_SCOPE</code> &mdash; Binary scope filter</li>
+                          <li><code>COZ_FILTER_SYSTEM</code> &mdash; Set to 1 to drop system headers</li>
+                        </ul>
+                      </div>
+                    </details>
+                  </div>
+
+                  <div class="keyboard-hint">
+                    <kbd>Ctrl</kbd> + <kbd>O</kbd> to open a file &nbsp;&bull;&nbsp; <kbd>?</kbd> for help
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File open dialog (hidden) -->
+    <div class="modal fade" id="load-profile-dlg" tabindex="-1" role="dialog" aria-labelledby="load-profile-dlg-title" aria-hidden="true">
+      <div class="modal-dialog modal-modern">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="load-profile-dlg-title">
+              <i class="fa fa-folder-open"></i> Load Causal Profile
+            </h4>
+          </div>
+          <div class="modal-body">
+            <div id="modal-drop-zone" class="modal-drop-zone">
+              <div class="drop-zone-content">
+                <i class="fa fa-cloud-upload drop-icon"></i>
+                <p class="drop-text">Drag & drop your <code>.coz</code> or <code>.jsonl</code> file here</p>
+                <p class="drop-subtext">or</p>
+              </div>
+              <div class="drop-zone-hover">
+                <i class="fa fa-download"></i>
+                <p>Release to load profile</p>
+              </div>
+            </div>
+
+            <form id="load-profile-form" class="file-form">
+              <label for="load-profile-file" class="btn btn-outline btn-block">
+                <i class="fa fa-file-text-o"></i> Browse Files
+              </label>
+              <input type="file" class="hidden-input" id="load-profile-file" accept=".coz,.jsonl" />
+            </form>
+
+            <div class="divider">
+              <span>Sample Profiles</span>
+            </div>
+            <div id="samples" class="samples-grid"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help modal -->
+    <div class="modal fade" id="help-modal" tabindex="-1" role="dialog" aria-labelledby="help-modal-title" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-modern">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="help-modal-title">
+              <i class="fa fa-question-circle"></i> Coz Help
+            </h4>
+          </div>
+          <div class="modal-body help-modal-body">
+            <div class="help-sections">
+              <details class="help-card" open>
+                <summary class="help-card-header">
+                  <span class="help-icon">&#128161;</span>
+                  <span>What is Causal Profiling?</span>
+                  <span class="chevron">&#9662;</span>
+                </summary>
+                <div class="help-card-content">
+                  <p>Traditional profilers measure <strong>where</strong> your program spends time, but not <strong>whether</strong> optimizing that code will actually improve performance.</p>
+                  <p>Coz answers the question: <em>"If I optimize this code, will my program actually run faster?"</em></p>
+                  <p>It uses <strong>virtual speedups</strong> to simulate optimizations and measure their real impact on throughput or latency &mdash; establishing causality, not just correlation.</p>
+                  <div class="help-highlight">
+                    <strong>Key insight:</strong> Slowing down all other code has the same relative effect as speeding up the selected line.
+                  </div>
+                </div>
+              </details>
+
+              <details class="help-card">
+                <summary class="help-card-header">
+                  <span class="help-icon">&#128200;</span>
+                  <span>Interpreting Results</span>
+                  <span class="chevron">&#9662;</span>
+                </summary>
+                <div class="help-card-content">
+                  <p>Coz profiles show the predicted program speedup (y-axis) from optimizing each line by the percentage on the x-axis. Lines are sorted by impact.</p>
+                  <div class="result-types">
+                    <div class="result-type positive">
+                      <div class="result-icon">&#8599;</div>
+                      <div>
+                        <strong>Steep upward slope</strong>
+                        <p>Strong optimization candidate. Example: slope of +0.8 means optimizing by 10% improves throughput by ~8%.</p>
+                      </div>
+                    </div>
+                    <div class="result-type neutral">
+                      <div class="result-icon">&#8594;</div>
+                      <div>
+                        <strong>Flat or near-zero slope</strong>
+                        <p>Optimization won't help. Code may already be fast or not on the critical path.</p>
+                      </div>
+                    </div>
+                    <div class="result-type negative">
+                      <div class="result-icon">&#8600;</div>
+                      <div>
+                        <strong>Downward slope</strong>
+                        <p>Counter-intuitive! May indicate contention &mdash; optimizing could harm performance.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <details class="help-card">
+                <summary class="help-card-header">
+                  <span class="help-icon">&#128221;</span>
+                  <span>Progress Point Types</span>
+                  <span class="chevron">&#9662;</span>
+                </summary>
+                <div class="help-card-content">
+                  <div class="code-examples">
+                    <div class="code-example">
+                      <h5>Throughput Profiling</h5>
+                      <p>Mark the end of a unit of work:</p>
+                      <pre><code>#include "coz.h"
+
+void process_request() {
+    // ... do work ...
+    COZ_PROGRESS;  // or COZ_PROGRESS_NAMED("requests")
+}</code></pre>
+                    </div>
+                    <div class="code-example">
+                      <h5>Latency Profiling</h5>
+                      <p>Mark transaction boundaries:</p>
+                      <pre><code>#include "coz.h"
+
+void handle_transaction() {
+    COZ_BEGIN("transaction");
+    // ... do work ...
+    COZ_END("transaction");
+}</code></pre>
+                    </div>
+                  </div>
+                  <p class="help-note">Don't forget to link with <code>-ldl</code> when compiling!</p>
+                </div>
+              </details>
+
+              <details class="help-card">
+                <summary class="help-card-header">
+                  <span class="help-icon">&#9881;</span>
+                  <span>Advanced Options</span>
+                  <span class="chevron">&#9662;</span>
+                </summary>
+                <div class="help-card-content">
+                  <h5>Source Scope Filtering</h5>
+                  <p>Limit profiling to specific source files:</p>
+                  <pre><code>coz run --source-scope '/path/to/project/**' --- ./myprogram</code></pre>
+
+                  <h5>Environment Variables</h5>
+                  <ul class="env-list">
+                    <li><code>COZ_OUTPUT</code> &mdash; Output file path (default: profile.jsonl)</li>
+                    <li><code>COZ_SOURCE_SCOPE</code> &mdash; Glob pattern for source files</li>
+                    <li><code>COZ_BINARY_SCOPE</code> &mdash; Binary scope filter</li>
+                    <li><code>COZ_FILTER_SYSTEM</code> &mdash; Set to 1 to drop system headers</li>
+                  </ul>
+                </div>
+              </details>
+
+              <details class="help-card">
+                <summary class="help-card-header">
+                  <span class="help-icon">&#9000;</span>
+                  <span>Keyboard Shortcuts</span>
+                  <span class="chevron">&#9662;</span>
+                </summary>
+                <div class="help-card-content">
+                  <ul class="env-list">
+                    <li><kbd>Ctrl</kbd> + <kbd>O</kbd> &mdash; Open file dialog</li>
+                    <li><kbd>?</kbd> &mdash; Show this help</li>
+                  </ul>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="lib/jquery-3.1.1.js"></script>
+    <script src="lib/bootstrap/bootstrap.js"></script>
+    <script src="lib/d3/d3.js"></script>
+    <script src="lib/d3/d3-tip.js"></script>
+    <script src="lib/science/science.v1.js"></script>
+
+    <!-- Causal profile loading and plotting code -->
+    <script src="js/profile.js"></script>
+
+    <!-- The UI code -->
+    <script src="js/ui.js"></script>
+  </body>
+</html>

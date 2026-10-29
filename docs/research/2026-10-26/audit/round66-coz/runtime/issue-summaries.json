@@ -1,0 +1,31 @@
+{
+  "retrievedAt": "2026-10-29T15:37:56.283Z",
+  "queries": [
+    {
+      "query": "repo:tt-a1i/archify coz",
+      "topn": 20,
+      "returnedIssues": [],
+      "scope": "bounded connector search, not semantic proof of non-overlap"
+    },
+    {
+      "query": "repo:tt-a1i/archify \"why-is-node-running\"",
+      "topn": 20,
+      "returnedIssues": [],
+      "scope": "bounded connector search, not semantic proof of non-overlap"
+    }
+  ],
+  "sourceIssues": [
+    {
+      "url": "https://github.com/plasma-umass/coz/issues/103",
+      "title": "Where to place progress points",
+      "state": "closed",
+      "summary": "Reporter described an Intel TBB program: about 50 end-to-end profiling runs suggested a limited improvement; placing a progress point in an already known optimized region changed which source line appeared. No matched before/after artifacts were replayed in this research."
+    },
+    {
+      "url": "https://github.com/plasma-umass/coz/issues/231",
+      "title": "Incorrect predictions if code contains usleep calls",
+      "state": "open",
+      "summary": "Reporter supplied a pthread/usleep/barrier example and a Windows11 WSL environment. This research did not reproduce the reported prediction problem or infer it applies generally."
+    }
+  ]
+}

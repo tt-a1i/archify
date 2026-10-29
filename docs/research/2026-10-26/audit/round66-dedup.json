@@ -1,0 +1,30 @@
+{
+  "retrievedAt": "2026-10-29T15:38:29.276Z",
+  "remoteHeads": 336,
+  "headsFile": "round66-coz/runtime/remote-heads.tsv",
+  "priorHub": "3beb343b8fd6686201bde9b0f307f9a1c6b00246",
+  "codecharta": "Excluded based on prior 2026-10-28 graph-folding-reading and folded-edge-membership-feasibility, fixed bd1fe9b4; no new discovery claim.",
+  "queries": [
+    {
+      "query": "repo:tt-a1i/archify coz",
+      "topn": 20,
+      "issues": {
+        "issues": []
+      },
+      "prs": {
+        "issues": []
+      }
+    },
+    {
+      "query": "repo:tt-a1i/archify \"why-is-node-running\"",
+      "topn": 20,
+      "issues": {
+        "issues": []
+      },
+      "prs": {
+        "issues": []
+      }
+    }
+  ],
+  "limits": "Keyword-based duplicate screening, not all-issue semantic equivalence; no new feature or PR accepted."
+}

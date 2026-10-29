@@ -1,0 +1,17 @@
+{
+  "scope": "Evidence package integrity, not product/runtime test suite",
+  "local_markdown_links_checked": 19,
+  "broken_local_links": [],
+  "copy_map_files_verified": 63,
+  "archived_source_files": 5,
+  "metadata_only_online_and_live": true,
+  "browser_script_exit_stdout_stderr_groups": 8,
+  "png_count": 3,
+  "vm_audit_file_count": 14,
+  "source_metadata_entries_verified": 10,
+  "source_verification": "all 8 source snapshots and 2 live HTTP asset bytes match pinned metadata and independent selected tree; full online/live source excluded",
+  "analysis_rerun": "fresh path bytes and stdout equal original analysis and summary",
+  "manifest_excludes_itself": true,
+  "manifest_file_count": 69,
+  "json_parsed_including_report_and_manifest": 23
+}

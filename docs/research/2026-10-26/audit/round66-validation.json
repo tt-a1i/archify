@@ -1,0 +1,41 @@
+{
+  "stagedHashMismatches": [],
+  "whitespace": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exitCode": 2,
+    "stdout": "docs/research/2026-10-26/audit/round66-coz/runtime/browser-01.stderr:74: new blank line at EOF.\ndocs/research/2026-10-26/audit/round66-coz/runtime/browser-02.stderr:75: new blank line at EOF.\ndocs/research/2026-10-26/audit/round66-coz/runtime/browser-04.stderr:124: new blank line at EOF.\ndocs/research/2026-10-26/audit/round66-coz/runtime/browser-05.stderr:313: new blank line at EOF.\ndocs/research/2026-10-26/audit/round66-coz/runtime/browser-06.stderr:348: new blank line at EOF.\ndocs/research/2026-10-26/audit/round66-coz/runtime/browser-07.stderr:309: new blank line at EOF.\ndocs/research/2026-10-26/audit/round66-coz/runtime/browser-08-finish.stderr:2: new blank line at EOF.\ndocs/research/2026-10-26/audit/round66-coz/source/LICENSE.md:6: trailing whitespace.\n+modification, are permitted provided that the following conditions are met: \ndocs/research/2026-10-26/audit/round66-coz/source/LICENSE.md:9: trailing whitespace.\n+   list of conditions and the following disclaimer. \ndocs/research/2026-10-26/audit/round66-coz/source/LICENSE.md:12: trailing whitespace.\n+   and/or other materials provided with the distribution. \ndocs/research/2026-10-26/audit/round66-coz/source/LICENSE.md:26: trailing whitespace.\n+of the authors and should not be interpreted as representing official policies, \ndocs/research/2026-10-26/audit/round66-coz/source/profile.ts:1038: trailing whitespace.\n+    \ndocs/research/2026-10-26/audit/round66-coz/source/profile.ts:1744: trailing whitespace.\n+    \ndocs/research/2026-10-26/audit/round66-node-handles/index.js:45: trailing whitespace.\n+  \ndocs/research/2026-10-26/audit/round66-node-handles/index.js:75: trailing whitespace.\n+    \n",
+    "stderr": "",
+    "diagnosticCount": 15,
+    "classification": "15 warnings only original source bytes or original browser stderr; preserved unchanged"
+  },
+  "note": "All staged manifest bytes match; no product/runtime or full-suite checks appropriate for research-only additions. Portable analysis was executed and matches original; native VM scope recorded separately.",
+  "copyMapVerifiedEntries": 63,
+  "authoredCheck": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      ".",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/runtime/browser-01.stderr",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/runtime/browser-02.stderr",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/runtime/browser-04.stderr",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/runtime/browser-05.stderr",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/runtime/browser-06.stderr",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/runtime/browser-07.stderr",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/runtime/browser-08-finish.stderr",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/source/LICENSE.md",
+      ":(exclude)docs/research/2026-10-26/audit/round66-coz/source/profile.ts",
+      ":(exclude)docs/research/2026-10-26/audit/round66-node-handles/index.js"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

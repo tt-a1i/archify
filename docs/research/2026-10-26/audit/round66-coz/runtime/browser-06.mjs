@@ -1,0 +1,10 @@
+console.log('startedAt',new Date().toISOString());
+const task=await taskSpace(19); const page=task.page('p1');
+await page.waitForSelector('loc=role:dialog[name="Select a Causal Profile"]',{state:'hidden'});
+await page.focus('#minpoints_field');
+for(let i=0;i<5;i++)await page.keyboard.press('ArrowLeft');
+await page.waitForFunction(()=>document.querySelector('#minpoints_field').value==='5'&&document.querySelectorAll('svg').length===17);
+console.log(await page.snapshot({scope:'full_page'}));
+console.log('dom',await page.evaluate(()=>({value:document.querySelector('#minpoints_field').value,plots:[...document.querySelectorAll('svg')].map(s=>({parentTag:s.parentElement.tagName,parentClass:s.parentElement.className,header:s.parentElement.innerText.split('\n')[0],circles:s.querySelectorAll('circle').length}))})));
+await page.screenshot({path:'ARCHIVED_RUNTIME/minimum-5.png'});
+console.log('finishedAt',new Date().toISOString());

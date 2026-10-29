@@ -1,0 +1,11 @@
+{
+  "provenance": "transcribed from original exec_command tool result; not rerun",
+  "exit_code": 0,
+  "stdout_separate_capture": null,
+  "stderr_separate_capture": null,
+  "unavailable_fields": [
+    "original separately captured stdout",
+    "original separately captured stderr",
+    "exact wall-clock start and end timestamps"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "sqlite.coz": {
+    "url": "https://raw.githubusercontent.com/plasma-umass/coz/dfc22c6c6f54cfbf085199440089cb29552f67d6/viewer/profiles/sqlite.coz",
+    "git_blob_sha1": "8501a0b20aef4ac7511ea7093b93e5b6692187c1",
+    "sha256": "e4b8d5f7c58bc5669b98b97d3bcea861aa46ccaf2baa6fd5498c1e095c477488",
+    "bytes": 1699818
+  },
+  "index.htm": {
+    "url": "https://raw.githubusercontent.com/plasma-umass/coz/dfc22c6c6f54cfbf085199440089cb29552f67d6/viewer/index.htm",
+    "git_blob_sha1": "dbed1d3c2fb31ba91cc79543137b471877f3d068",
+    "sha256": "a7cffa68f5356fcc24993fff7899e48c7327e2d02760f3f1cf1764c3aad81e31",
+    "bytes": 26883
+  },
+  "profile.ts": {
+    "url": "https://raw.githubusercontent.com/plasma-umass/coz/dfc22c6c6f54cfbf085199440089cb29552f67d6/viewer/ts/profile.ts",
+    "git_blob_sha1": "b742793931ddad29ba9f9a28ca223140b4febc96",
+    "sha256": "e9a88573be2ada464b21f51c669d3216186a2bf3a27632a76046720a10a8b3ed",
+    "bytes": 65842
+  },
+  "LICENSE.md": {
+    "url": "https://raw.githubusercontent.com/plasma-umass/coz/dfc22c6c6f54cfbf085199440089cb29552f67d6/LICENSE.md",
+    "git_blob_sha1": "6f765a3b3a534ffc395950b18af58d1d1befe8e6",
+    "sha256": "23edff6c2aa7c5c3fce8ab54ba38925d7fed9e0b59e0b960d2423a1a126beb44",
+    "bytes": 1660
+  },
+  "online-profile.ts": {
+    "url": "https://raw.githubusercontent.com/coz-profiler/coz-ui/7fe33c0be8dca7b35b172cc4692fd9ae9cc9820b/ts/profile.ts",
+    "git_blob_sha1": "17a29065c55ebd9011f3abbb61aba55e9e45653d",
+    "sha256": "bf728558cdcea70b40af00086eda6bbf6f7d3aa19d65007ee06d3782612c90e3",
+    "bytes": 25417
+  },
+  "online-index.htm": {
+    "url": "https://raw.githubusercontent.com/coz-profiler/coz-ui/7fe33c0be8dca7b35b172cc4692fd9ae9cc9820b/index.htm",
+    "git_blob_sha1": "9578d9a7e3786e186ce343dffe0784cff6b7a40f",
+    "sha256": "779986c124ac6e7aa6d443471dd0816b0b80c2d15c809c6c5cbe0b954b0b7f8b",
+    "bytes": 5494
+  },
+  "current-profile.js": {
+    "url": "https://raw.githubusercontent.com/plasma-umass/coz/dfc22c6c6f54cfbf085199440089cb29552f67d6/viewer/js/profile.js",
+    "git_blob_sha1": "60f062141f2264601547f96de480688e60f5eb42",
+    "sha256": "ae9d541e3a305b7d169df73862e79d9178f51f1058036ebd2e574706acd67bc9",
+    "bytes": 68452
+  },
+  "online-profile.js": {
+    "url": "https://raw.githubusercontent.com/coz-profiler/coz-ui/7fe33c0be8dca7b35b172cc4692fd9ae9cc9820b/js/profile.js",
+    "git_blob_sha1": "044e69ddbd5a8c1f5e3693802762ce0e6f63ad68",
+    "sha256": "abc793304be54dbc8e28d13d1f29deb0bebcbe39d304ed5e7fa51f0999173cca",
+    "bytes": 26270
+  }
+}

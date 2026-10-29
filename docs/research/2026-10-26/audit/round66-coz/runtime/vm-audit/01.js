@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm');
+const fixture=fs.readFileSync('ARCHIVED_SOURCE/sqlite.coz','utf8');
+const expected=JSON.parse(fs.readFileSync('ARCHIVED_SOURCE/analysis.json','utf8'));
+for(const [file,key] of [['online-profile.js','online_points'],['current-profile.js','current_points']]){
+ const c={document:{addEventListener:()=>{}}};vm.createContext(c);vm.runInContext(fs.readFileSync('ARCHIVED_SOURCE/'+file,'utf8'),c);c.fixture=fixture;
+ vm.runInContext('var auditProfile=new Profile(fixture,null,null,()=>10,()=>{});var auditAll=auditProfile.getSpeedupData(0)',c);
+ let mismatches=[];
+ for(const row of expected.lines){const a=c.auditAll.find(x=>x.name===row.selected)?.progress_points.find(x=>x.name===row.point)?.measurements||[];const b=row[key];if(a.length!==b.length||a.some((x,i)=>x.speedup!==b[i].virtual||Math.abs(x.progress_speedup-b[i].progress)>5.01e-9))mismatches.push(row.selected);}
+ console.log(file, 'actual10',vm.runInContext('auditProfile.getSpeedupData(10).length',c),'actual5',vm.runInContext('auditProfile.getSpeedupData(5).length',c),'allRows',expected.lines.length,'mismatches',JSON.stringify(mismatches));
+}

@@ -1,0 +1,74 @@
+startedAt 2026-10-29T15:14:04.054Z
+{ spaceId: 19 }
+viewport { width: 1512, height: 762, devicePixelRatio: 2 }
+[p1 "coz plot" | space "Archify research 20261026"(19): 1 managed, 0 untracked — p1* "coz plot"]
+root
+  table
+    table_row
+      table_cell
+  container
+    table
+      table_row
+        table_cell
+    container
+      heading
+        text "Causal Profile"
+      button [ref=1]
+        text ""
+        text "Load a Profile"
+      container
+        heading
+          text "Progress Points"
+        paragraph
+          text "None"
+      container
+        heading
+          text "Sort By"
+        combobox "Sort By" [ref=2]
+          text "Impact"
+      container
+        heading
+          text "Minimum Points"
+        spinbutton "Minimum Points" [ref=3]
+        paragraph
+          text "10"
+    container
+      container
+        table
+          table_row
+            table_cell
+        table
+          table_row
+            table_cell
+      container
+        table
+          table_row
+            table_cell
+        container
+          heading
+            text "Getting Started"
+          paragraph
+            text "Welcome to the causal profile viewer. To make use of this profile viewer you'll first need a causal profile. You will need to use the"
+            text "coz"
+            text "program to collect a causal profile from your program. For this to work, you will need to add at least one"
+            text "progress point"
+            text "to your program, and then build it with debug information. Next, run your program with"
+            text "coz"
+            text ":"
+          text "$ coz run --- ./myprogram arg1 arg2"
+          paragraph
+            text "Next, you will need to load your profile into this viewer. Click the"
+            text "Load Profile"
+            text "button on this page and browse to your file. There are some sample profiles available as well if you want to see what a causal profile looks like."
+        table
+          table_row
+            table_cell
+    table
+      table_row
+        table_cell
+  table
+    table_row
+      table_cell
+
+finishedAt 2026-10-29T15:14:06.710Z
+
