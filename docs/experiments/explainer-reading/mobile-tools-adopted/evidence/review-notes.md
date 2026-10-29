@@ -1,0 +1,13 @@
+# Scoped pre-commit review
+
+Source commit e16dbcfb8916cb621efb0806e7f23d0b1497ac10 reuses the contributor's exact CSS rule and test changes. Shared caller: renderExplainer embeds reader.css in formal Explainer HTML; the standalone package contains this same file. The rule affects only <=760 px and leaves native Viewer CSS, document/schema, reader.js and instructions unchanged.
+
+Test-value decision: retain the existing upstream regression because it observes the actual demonstrated failure (off-screen toolbar controls and menus), keyboard opening/Escape return, and hidden print tools. Its 24 locale/style/width combinations expose different text and style widths; it does not freeze coordinates or insist on one-row tools. The helper extraction reuses the existing keyboard implementation without adding a second event mechanism. The regression fails on unchanged CSS at en/clean/320 (scrollWidth 401), then all 17 real-Chrome Explainer tests pass. No duplicate new fixture family or repository-wide audit.
+
+No concrete duplicate state, dead path or layered architecture is introduced, so a broader simplify-codebase audit is not warranted. No speculative robustness, dependencies or interaction state added. Existing HTML artifacts remain historical; two new canonical variants show the current branch behavior. Generated Viewer/gallery authority did not change; generated checks pass without unrelated refreshes. Canonical ZIP was rebuilt from the source commit twice with identical bytes.
+
+Packaging comparison initially asserted full HTML equality despite different source-to-output relative paths. It failed. The retained first attempt differs only in prepared sourcePath/baseDir and their digest; everything outside the prepared payload is identical. Repeating the extracted CLI with identical relative source placement produces exact canonical HTML bytes and current provenance. This repairs the comparison setup, not product behavior; both receipts and the original failure are retained.
+
+The replay harness initially read the index directly from the checkout. After the index was updated, the original 46-entry cohort was frozen from base 6828a8678b55dd698798ca7b0e8107eafeb7a946. The final script reads this frozen index; its 46 result hashes match the original run exactly. New index variants do not silently change the replay denominator.
+
+No full-generation benchmark, final-head CI, Windows/Safari, assistive-technology or human acceptance is claimed. Original PR #1076 remains the integration path and is not modified or merged by this work. The experimental branch qualification is independently scoped.

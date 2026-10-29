@@ -1,6 +1,6 @@
 # Existing toolbar proposal on complete reading cases
 
-This round evaluates the existing [PR #1076 by BlueboxC](https://github.com/tt-a1i/archify/pull/1076), inspected at `cd50794b794fc9f6ec4c9914dee78df0b7fddde3`. Its narrow-screen rule wraps the toolbar and anchors the menus to that container. The proposal remains in its owner's draft PR; this round does not modify that PR or apply the rule to this branch's product source.
+This round evaluates the existing [PR #1076 by BlueboxC](https://github.com/tt-a1i/archify/pull/1076), inspected at `cd50794b794fc9f6ec4c9914dee78df0b7fddde3`. Its narrow-screen rule wraps the toolbar and anchors the menus to that container. At this round's recorded revision, the proposal remained in its owner's draft PR; this round did not modify that PR or apply the rule to the branch's product source. [Round 40](../mobile-tools-adopted/README.md) later adopts the exact rule on the experimental branch and records current-source qualification, preserving this historical comparison and the original PR's integration path.
 
 | Fixed input | Baseline | Proposal replay |
 | --- | --- | --- |

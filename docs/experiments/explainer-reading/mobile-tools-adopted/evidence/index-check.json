@@ -1,0 +1,56 @@
+{
+  "counts": {
+    "questions": 19,
+    "variants": 48
+  },
+  "checks": [
+    {
+      "name": "taskgroup",
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "mobile-tools-adopted/taskgroup-candidate.html",
+      "open": "mobile-tools-adopted/taskgroup-candidate.html",
+      "report": "mobile-tools-adopted/README.md",
+      "version": "当前工具栏修复",
+      "wrap": "wrap",
+      "frameWidth": "390px"
+    },
+    {
+      "name": "taskgroup",
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "mobile-tools-adopted/taskgroup-candidate.html",
+      "open": "mobile-tools-adopted/taskgroup-candidate.html",
+      "report": "mobile-tools-adopted/README.md",
+      "version": "当前工具栏修复",
+      "wrap": "wrap",
+      "frameWidth": "1440px"
+    },
+    {
+      "name": "curl",
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "mobile-tools-adopted/curl-candidate.html",
+      "open": "mobile-tools-adopted/curl-candidate.html",
+      "report": "mobile-tools-adopted/README.md",
+      "version": "当前工具栏修复",
+      "wrap": "wrap",
+      "frameWidth": "390px"
+    },
+    {
+      "name": "curl",
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "mobile-tools-adopted/curl-candidate.html",
+      "open": "mobile-tools-adopted/curl-candidate.html",
+      "report": "mobile-tools-adopted/README.md",
+      "version": "当前工具栏修复",
+      "wrap": "wrap",
+      "frameWidth": "1440px"
+    }
+  ]
+}

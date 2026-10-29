@@ -1,0 +1,50 @@
+{
+  "sharedDifferencePixels": 2,
+  "differenceBounds": [
+    59,
+    1136,
+    97,
+    1141
+  ],
+  "extraBottomHeight": 76,
+  "extraBottomColors": [
+    [
+      48640,
+      [
+        244,
+        245,
+        247
+      ]
+    ]
+  ],
+  "differentPixels": [
+    {
+      "x": 59,
+      "y": 1136,
+      "base": [
+        218,
+        219,
+        220
+      ],
+      "candidate": [
+        219,
+        219,
+        220
+      ]
+    },
+    {
+      "x": 96,
+      "y": 1140,
+      "base": [
+        218,
+        219,
+        220
+      ],
+      "candidate": [
+        218,
+        219,
+        219
+      ]
+    }
+  ]
+}

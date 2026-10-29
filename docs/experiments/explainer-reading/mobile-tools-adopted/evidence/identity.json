@@ -1,0 +1,18 @@
+{
+  "base": "6828a8678b55dd698798ca7b0e8107eafeb7a946",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "proposal": {
+    "url": "https://github.com/tt-a1i/archify/pull/1076",
+    "head": "cd50794b794fc9f6ec4c9914dee78df0b7fddde3",
+    "author": "BlueboxC"
+  },
+  "os": "macOS-26.7.2-arm64-arm-64bit-Mach-O",
+  "node": "v22.23.3",
+  "baselineCssSha256": "1d280581a01ae8b806df29f79513c40c3e1f9d3cdddd66ed95e987400eb6a0a1",
+  "candidateCssSha256": "7d11a8cdb6fbf6db2da5a02c313fe00756258aa987f18193d9836b408e6f77b6",
+  "inputFiles": {
+    "taskgroup-language/candidate.archify.md": "59aa8a8c43d6393cf9d7871b29fdf03a09b4498f772669d9c2fdfdfad11a300f",
+    "curl-headers/candidate.archify.md": "dd39471d66e39f3dee45d9ec6ed3820947ab1fea27bfb20d83c69a3189eea4a5"
+  },
+  "sourceAndReaderJSUnchanged": true
+}

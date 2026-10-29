@@ -16,7 +16,7 @@ Two independent discovery authors use gpt-6.1-terra, medium reasoning, with a 15
 
 The writing-rule experiment uses the same authored input on base and candidate. Scope is removal of a demonstrated false-positive phrase rule; keep sentence/paragraph length, vague quantities, source resolution and all diagram contracts. No new scoring heuristic. The existing real-repository generation pilot concerns architecture/workflow authoring: this exploratory branch does not claim that benchmark or general generation gains. A broader benchmark and human acceptance remain unperformed.
 
-Existing open work checked before implementation: #1015 (visual hierarchy, metrics, steps and source cards), #1076 (mobile menus), #1142 (claim attribution), #1144 (dependency preview), #1108 (placement indexing), #1152 (locale). This experiment does not implement those features or change their branches.
+Existing open work checked before implementation: #1015 (visual hierarchy, metrics, steps and source cards), #1076 (mobile menus), #1142 (claim attribution), #1144 (dependency preview), #1108 (placement indexing), #1152 (locale). The initial round did not implement those features or change their branches. Round 40 later reuses #1076 on this experimental branch, with attribution and current-source verification; its owner branch is unchanged.
 
 ## Evidence
 
@@ -243,3 +243,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 39
 
 [Matplotlib axis windows](matplotlib-axis/README.md) preserves two actual plots of the same 80/100 values while explaining why clipping below 70 leaves visible segments of 10/30. The retained page aligns the figures and replaces a horizontally clipped four-column table with two explicit ratios. It also corrects “upper half” and an ambiguous endpoint phrase; the original draft, rejected revision, actual geometry and image hashes remain inspectable.
+
+## Continued exploration — round 40
+
+[Narrow-screen tools adopted on the experimental branch](mobile-tools-adopted/README.md): reuse BlueboxC’s exact CSS proposal and browser regression from #1076 on current source. The unchanged-CSS regression fails at 320 px; the candidate keeps menus and controls reachable. The original PR remains the integration path. Source commit: `e16dbcfb8916cb621efb0806e7f23d0b1497ac10`. Fixed-input comparisons, package checks and limits are recorded in the linked report. No merge or live installation.

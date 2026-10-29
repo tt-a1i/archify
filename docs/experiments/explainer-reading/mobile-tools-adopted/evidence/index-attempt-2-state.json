@@ -1,0 +1,11 @@
+{
+  "name": "taskgroup",
+  "previewWidth": 390,
+  "width": 390,
+  "pageWidth": 392,
+  "frame": "mobile-tools-adopted/taskgroup-candidate.html",
+  "open": "mobile-tools-adopted/taskgroup-candidate.html",
+  "report": "mobile-tools-adopted/README.md",
+  "version": "当前工具栏修复",
+  "frameWidth": "390px"
+}

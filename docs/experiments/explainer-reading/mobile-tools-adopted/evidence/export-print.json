@@ -1,0 +1,122 @@
+[
+  {
+    "name": "taskgroup",
+    "width": 320,
+    "arm": "base",
+    "png": {
+      "width": 756,
+      "height": 5750,
+      "sha256": "6f718c5341c2a3509e70b0a9850bd6245a357cf54ea9371a57230f59a9aebc30"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  },
+  {
+    "name": "taskgroup",
+    "width": 320,
+    "arm": "candidate",
+    "png": {
+      "width": 756,
+      "height": 5750,
+      "sha256": "6f718c5341c2a3509e70b0a9850bd6245a357cf54ea9371a57230f59a9aebc30"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  },
+  {
+    "name": "taskgroup",
+    "width": 1440,
+    "arm": "base",
+    "png": {
+      "width": 2880,
+      "height": 2618,
+      "sha256": "0d311b5285d26423e111f4a300cfec28551bdf01ed9eb67aa7738c23ba966cad"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  },
+  {
+    "name": "taskgroup",
+    "width": 1440,
+    "arm": "candidate",
+    "png": {
+      "width": 2880,
+      "height": 2618,
+      "sha256": "0d311b5285d26423e111f4a300cfec28551bdf01ed9eb67aa7738c23ba966cad"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  },
+  {
+    "name": "curl",
+    "width": 320,
+    "arm": "base",
+    "png": {
+      "width": 640,
+      "height": 5872,
+      "sha256": "ea611af20416998cc00dd71cfb46206a17cc1bdbd50f97f7f465d7cc4a2f7c4c"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  },
+  {
+    "name": "curl",
+    "width": 320,
+    "arm": "candidate",
+    "png": {
+      "width": 640,
+      "height": 5948,
+      "sha256": "1cd34ed6d1c941c0e3888fc1de42543070cca64e56fb6ccf71b8cec11423580d"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  },
+  {
+    "name": "curl",
+    "width": 1440,
+    "arm": "base",
+    "png": {
+      "width": 2880,
+      "height": 2634,
+      "sha256": "8c2d1335a029437a415e47c6d4482f4acf29984a52e83f9e1722e65a14518134"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  },
+  {
+    "name": "curl",
+    "width": 1440,
+    "arm": "candidate",
+    "png": {
+      "width": 2880,
+      "height": 2634,
+      "sha256": "8c2d1335a029437a415e47c6d4482f4acf29984a52e83f9e1722e65a14518134"
+    },
+    "liveDocumentPreserved": true,
+    "print": {
+      "tools": "none",
+      "body": "rgb(255, 255, 255)"
+    }
+  }
+]

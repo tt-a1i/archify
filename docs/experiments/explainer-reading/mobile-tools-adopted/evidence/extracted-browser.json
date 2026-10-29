@@ -1,0 +1,10 @@
+{
+  "width": 320,
+  "pageWidth": 320,
+  "menu": {
+    "left": 12,
+    "right": 188
+  },
+  "visible": true,
+  "focusInside": true
+}

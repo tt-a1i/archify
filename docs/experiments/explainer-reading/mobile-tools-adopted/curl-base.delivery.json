@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "a498230e-fc43-4cf7-97df-3d1d832e619f",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/mobile-tools-adopted/curl.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/mobile-tools-adopted/curl-base.html",
+  "specification": {
+    "sha256": "dd39471d66e39f3dee45d9ec6ed3820947ab1fea27bfb20d83c69a3189eea4a5",
+    "bytes": 4072
+  },
+  "artifact": {
+    "sha256": "145bc95395ccf96b1db0de26f105de1dade3a1d7a36a08486cf3e142d0b47d6d",
+    "bytes": 167510
+  },
+  "explainer": {
+    "preparedSha256": "d33f362d3061e46b6d7f05a2c517d561e9787b93acb3b6f1f52b2b9d1161f703",
+    "dependencies": []
+  }
+}

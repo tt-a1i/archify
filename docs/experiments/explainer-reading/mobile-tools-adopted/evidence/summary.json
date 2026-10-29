@@ -1,0 +1,55 @@
+{
+  "statesPerArm": 48,
+  "baseFits": 24,
+  "candidateFits": 48,
+  "desktopScreenshots": {
+    "taskgroup-0": {
+      "byteIdentical": true,
+      "baseSha256": "ead36b0a02c088efc4821d48221bb3af14d434c350487e8152c31c0691af997d",
+      "candidateSha256": "ead36b0a02c088efc4821d48221bb3af14d434c350487e8152c31c0691af997d"
+    },
+    "curl-0": {
+      "byteIdentical": true,
+      "baseSha256": "521201e3201968f9d9ba58f89ee2febf62431712287d73b020f403cb3d3b19c3",
+      "candidateSha256": "521201e3201968f9d9ba58f89ee2febf62431712287d73b020f403cb3d3b19c3"
+    }
+  },
+  "answerTopChanges": [
+    {
+      "name": "taskgroup-0",
+      "width": 320,
+      "base": 179.390625,
+      "candidate": 217.390625
+    },
+    {
+      "name": "taskgroup-0",
+      "width": 390,
+      "base": 179.390625,
+      "candidate": 217.390625
+    },
+    {
+      "name": "taskgroup-0",
+      "width": 1440,
+      "base": 93.09375,
+      "candidate": 93.09375
+    },
+    {
+      "name": "curl-0",
+      "width": 320,
+      "base": 149.6953125,
+      "candidate": 187.6953125
+    },
+    {
+      "name": "curl-0",
+      "width": 390,
+      "base": 149.6953125,
+      "candidate": 149.6953125
+    },
+    {
+      "name": "curl-0",
+      "width": 1440,
+      "base": 93.09375,
+      "candidate": 93.09375
+    }
+  ]
+}

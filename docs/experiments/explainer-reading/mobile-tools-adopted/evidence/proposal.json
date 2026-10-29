@@ -1,0 +1,60 @@
+{
+  "pr": {
+    "url": "https://github.com/tt-a1i/archify/pull/1076",
+    "number": 1076,
+    "state": "open",
+    "merged": false,
+    "mergeable": false,
+    "draft": true,
+    "body": "## Problem and value\n\nAgreed CSS P0 from [#1068](https://github.com/tt-a1i/archify/issues/1068#issuecomment-6379381498). The English Explainer toolbar overflows a 320px viewport and obstructs Style/Export.\n\nWrap the toolbar at <=760px and anchor menus to the wrapping container. The runtime delta against inspected dev `10b4dd5c5f2264baa315ee65a9b4cc23c13ea5f0` remains one media rule. No JavaScript, dependency, release-identity or P1/P2 feature change.\n\n## AI assistance and accountability\n\n- AI use: implementation, investigation, tests and writing assistance using Codex; exact model identifier unavailable.\n- Accountable contributor: @BlueboxC.\n- Origin: reproducible inspection following the bilingual comparison in #1068.\n- [ ] I reviewed the submitted changes and explanation, understand their impact, and can answer questions about them.\n\nThis remains a draft. Personal human-review confirmation is pending.\n\n## Stability impact\n\nShared Explainer reader CSS; desktop >760px and existing print behavior remain preserved. The existing browser fixture checks observable containment, Style/Export operation, Escape/focus restoration and hidden print controls. It does not freeze layout coordinates or introduce a parallel test framework.\n\n## Current verification\n\nHead [`cd50794`](https://github.com/BlueboxC/archify/commit/cd50794b794fc9f6ec4c9914dee78df0b7fddde3) merges the inspected dev revision above into this branch. Compared with that dev tree, only the CSS rule, its existing-file regression and canonical ZIP differ.\n\n- Real Chrome: dev reproduces the narrow-toolbar failure; candidate passes **all nine Explainer browser tests**, including **24 locale/style/viewport combinations** (en/zh-CN; clean/editorial/product/swiss; 320/390/1440), keyboard/menu containment and print checks.\n- `npm run test:generated` passes.\n- Canonical ZIP rebuilt from the combined source with official Node22.23.2 / bundled zlib1.3.1-e00f703. Apache licensing and historical MIT notices from current dev are preserved.\n- [Final-head CI](https://github.com/tt-a1i/archify/actions/runs/40232925326) has completed: **19 successful checks, 2 skips, zero failures**, including both full-regression shards, both browser shards, Windows portability on Node22/24, three-platform package smokes, Node18/20/22/24 tests, WebM decode and ZIP freshness. The local refresh used focused checks; these separate CI results supply the platform qualification. Maintainer acceptance and personal human approval remain pending.\n- [Earlier 144-case / 960-capture comparison](https://github.com/BlueboxC/archify/commit/ad60fc94cd4038e2136a8c05203091e836eb94b6) remains historical evidence at its recorded revisions.\n\n## Visual evidence and generated artifacts\n\nThe browser regression is reproducible from this head and compares the same document, locale, style and viewport. Perceptual human review is pending. Gallery pages do not embed the Explainer reader change, so no unrelated Gallery refresh is included. No release, deployment or repository-generation benchmark is claimed.\n\nBlueboxC",
+    "title": "fix(explainer): keep mobile toolbar and Style/Export menus in view",
+    "base": "dev",
+    "base_sha": "10b4dd5c5f2264baa315ee65a9b4cc23c13ea5f0",
+    "head": "codex/1068-upstream-p0",
+    "head_sha": "cd50794b794fc9f6ec4c9914dee78df0b7fddde3",
+    "head_repo_id": 1358433444,
+    "head_repo_full_name": "BlueboxC/archify",
+    "merge_commit_sha": null,
+    "user": {
+      "login": "BlueboxC",
+      "name": "BlueboxC",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/196053363?v=4",
+      "id": 196053363
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-10-24T12:03:29Z",
+    "updated_at": "2026-10-26T23:55:03Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 3,
+    "changed_files": 3,
+    "additions": 36,
+    "deletions": 2,
+    "display_url": "https://github.com/tt-a1i/archify/pull/1076",
+    "display_title": "fix(explainer): keep mobile toolbar and Style/Export menus in view"
+  },
+  "patch": {
+    "patches": [
+      {
+        "filename": "archify.zip",
+        "patch": null
+      },
+      {
+        "filename": "archify/explainer/reader.css",
+        "patch": "@@ -449,7 +449,7 @@ dialog::backdrop{background:rgb(10 10 12/.55);backdrop-filter:blur(2px)}\n /* Narrow desktop windows */\n @media(max-width:1255px){.diagram-panel,.diagram-panel+.panel,.panel:has(+.diagram-panel){grid-column:span 12}}\n @media(max-width:1100px){.shell{width:calc(100% - 40px)}.masthead{align-items:flex-start;flex-wrap:wrap}.board{gap:12px}.panel-head{padding:12px 16px}.panel-body{padding:14px 16px 16px}.answer-scope{padding:10px 16px 12px}}\n-@media(max-width:760px){.shell{width:calc(100% - 24px)}.board{display:flex;flex-direction:column}.sources ol{grid-template-columns:1fr}h1{font-size:22px}.verdict{font-size:18px}}\n+@media(max-width:760px){.shell{width:calc(100% - 24px)}.board{display:flex;flex-direction:column}.sources ol{grid-template-columns:1fr}h1{font-size:22px}.verdict{font-size:18px}.js .tools{position:relative;min-width:0;max-width:100%;flex-wrap:wrap}.tools .tool-menu{position:static}.tools .menu-options{left:0;right:auto;max-width:100%;top:calc(100% + 6px)}}\n @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}\n \n /* Print */"
+      },
+      {
+        "filename": "test/explainer-browser.test.mjs",
+        "patch": "@@ -85,8 +85,42 @@ test('retry layout and referenced node explanations remain readable and keyboard\n  }finally{await browser.close();}\n });\n \n+test('Explainer toolbar and menus remain inside narrow viewports',{skip:!chrome},async()=>{\n+ const {renderExplainer}=await import('../archify/explainer/render.mjs');\n+ const browser=new ChromeVisualBrowser(chrome);\n+ try {\n+  for(const locale of ['en','zh-CN']) {\n+   const document=formalDocument();document.meta.locale=locale;\n+   const file=artifact('toolbar-'+locale,renderExplainer(document));\n+   for(const width of [320,390,1440])for(const style of ['clean','editorial','product','swiss']) {\n+    await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,height:900,keyboard:false});\n+    await keyboardActivate(browser,'.style-menu [aria-haspopup]');\n+    await keyboardActivate(browser,`[data-style-choice=\"${style}\"]`);\n+    const selected=await pageValue(browser,`({style:document.documentElement.dataset.style,label:document.querySelector('[data-style-label]').textContent,choice:document.querySelector('[data-style-choice=\"${style}\"]').textContent})`);\n+    assert.equal(selected.style,style);assert.equal(selected.label,selected.choice);\n+    assert.equal(await pageValue(browser,\"document.activeElement===document.querySelector('.style-menu [aria-haspopup]')\"),true);\n+    const containment=await pageValue(browser,`({width:innerWidth,scroll:document.documentElement.scrollWidth,controls:[...document.querySelectorAll('.tools button')].filter(e=>e.getBoundingClientRect().width).map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right}})})`);\n+    assert.equal(containment.scroll,width,JSON.stringify({locale,width,style,containment}));\n+    assert.ok(containment.controls.every(r=>r.left>=0&&r.right<=width),JSON.stringify(containment));\n+    for(const menu of ['.style-menu','.export-menu']) {\n+     await keyboardActivate(browser,menu+' [aria-haspopup]');\n+     const popup=await pageValue(browser,`(()=>{const e=document.querySelector(${JSON.stringify(menu+' .menu-options')});const r=e.getBoundingClientRect();return {left:r.left,right:r.right,visible:getComputedStyle(e).display!=='none',scroll:document.documentElement.scrollWidth}})()`);\n+     assert.equal(popup.visible,true);assert.ok(popup.left>=0&&popup.right<=width,JSON.stringify({locale,width,style,menu,popup}));assert.equal(popup.scroll,width);\n+     assert.equal(await pageValue(browser,`document.querySelector(${JSON.stringify(menu+' .menu-options')}).contains(document.activeElement)`),true,'Keyboard opening must focus a menu item');\n+     await keyboardPress(browser,'Escape');\n+     const closed=await pageValue(browser,`(()=>{const toggle=document.querySelector(${JSON.stringify(menu+' [aria-haspopup]')});return {hidden:document.querySelector(${JSON.stringify(menu+' .menu-options')}).hidden,expanded:toggle.getAttribute('aria-expanded'),focused:document.activeElement===toggle}})()`);\n+     assert.deepEqual(closed,{hidden:true,expanded:'false',focused:true},JSON.stringify({locale,width,style,menu,closed}));\n+    }\n+    await browser.cdp.send('Emulation.setEmulatedMedia',{media:'print'},await browser.sessionPromise);\n+    assert.equal(await pageValue(browser,\"getComputedStyle(document.querySelector('.tools')).display\"),'none');\n+   }\n+  }\n+ } finally { await browser.close(); }\n+});\n+\n async function pageValue(browser,expression){const result=await browser.cdp.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},await browser.sessionPromise);if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result.value;}\n-async function keyboardActivate(browser,selector,key='Enter',shift=false) {assert.equal(await pageValue(browser,`(function(){const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.scrollIntoView({block:'center'});e.focus();return document.activeElement===e;})()`),true,selector);for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key,code:key===' '?'Space':key,windowsVirtualKeyCode:key==='Escape'?27:key===' '?32:key==='Tab'?9:13,modifiers:shift?8:0,...(key==='Enter'&&type==='keyDown'?{text:'\\r',unmodifiedText:'\\r'}:{})},await browser.sessionPromise);await pageValue(browser,'new Promise(resolve=>setTimeout(resolve,0))');}\n+async function keyboardActivate(browser,selector,key='Enter',shift=false) {assert.equal(await pageValue(browser,`(function(){const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.scrollIntoView({block:'center'});e.focus();return document.activeElement===e;})()`),true,selector);await keyboardPress(browser,key,shift);}\n+async function keyboardPress(browser,key,shift=false) {for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key,code:key===' '?'Space':key,windowsVirtualKeyCode:key==='Escape'?27:key===' '?32:key==='Tab'?9:13,modifiers:shift?8:0,...(key==='Enter'&&type==='keyDown'?{text:'\\r',unmodifiedText:'\\r'}:{})},await browser.sessionPromise);await pageValue(browser,'new Promise(resolve=>setTimeout(resolve,0))');}\n test('native step opens the complete Viewer and focuses exact nodes and edges with readable graph text',{skip:!chrome},async()=>{\n  const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');\n  const spec=compileExplainerDiagram('sequence',['actor api | API | backend','actor redis | Redis | database','api | redis | Read cache','redis | api | Return cache'],{title:'Cache lookup',id:'native',quality:'showcase'});"
+      }
+    ],
+    "url": "https://github.com/tt-a1i/archify/pull/1076",
+    "title": "tt-a1i/archify#1076 (patch)",
+    "display_url": "https://github.com/tt-a1i/archify/pull/1076",
+    "display_title": "tt-a1i/archify#1076 (patch)"
+  }
+}

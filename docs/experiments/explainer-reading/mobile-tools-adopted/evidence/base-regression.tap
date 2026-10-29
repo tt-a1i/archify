@@ -1,0 +1,38 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-browser.test.mjs --test-name-pattern=Explainer toolbar and menus
+
+Repository tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: Explainer toolbar and menus remain inside narrow viewports
+not ok 1 - Explainer toolbar and menus remain inside narrow viewports
+  ---
+  duration_ms: 991.687292
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:148:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"locale":"en","width":320,"style":"clean","containment":{"width":320,"scroll":401,"controls":[{"left":15,"right":80.65625},{"left":82.65625,"right":132.1875},{"left":134.1875,"right":181.578125},{"left":192.578125,"right":289.84375},{"left":297.84375,"right":401.078125}]}}
+
+    401 !== 320
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 320
+  actual: 401
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:163:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1139.230917

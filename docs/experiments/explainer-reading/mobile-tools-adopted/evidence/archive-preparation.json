@@ -1,0 +1,4 @@
+{
+  "initialFailure": "The report link checker checked manifest.json before that file had been created. It stopped before staging or committing.",
+  "repair": "Create the manifest after all report/evidence files, then verify every link. No product change."
+}

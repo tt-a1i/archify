@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "fb14bda2-4842-46d9-8dea-6d9989a86dfd",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/mobile-tools-adopted/taskgroup.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/mobile-tools-adopted/taskgroup-candidate.html",
+  "specification": {
+    "sha256": "59aa8a8c43d6393cf9d7871b29fdf03a09b4498f772669d9c2fdfdfad11a300f",
+    "bytes": 3816
+  },
+  "artifact": {
+    "sha256": "1c72369b9dca4fa547bd643198ca48f99c3af9e311b7cccf8f37a18f4e63ca5a",
+    "bytes": 165633
+  },
+  "explainer": {
+    "preparedSha256": "1120c9189ce622ffd3738da73f78b5f4a85e5bd4dbf3a744409dea4d52efead0",
+    "dependencies": []
+  }
+}

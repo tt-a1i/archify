@@ -1,0 +1,7 @@
+{
+  "assertion": "extracted candidate HTML equals canonical candidate HTML",
+  "equal": false,
+  "firstDifference": 101955,
+  "canonicalContext": "current `await` to be interrupted.[](source:taskgroup-doc)[](source:cancellation-doc)\\n\",\"diagnostics\":[],\"sourcePath\":\"taskgroup.archify.md\",\"baseDir\":\".\",\"quality\":\"showcase\",\"writingMode\":\"strict\",\"source\":{\"sha256\":\"59aa8a8c43d6393cf9d7871b29fdf03a09b4498f772669d9c2fdfdfad11a300f\",\"bytes\":3816},\"preparedSources\":{\"",
+  "extractedContext": "current `await` to be interrupted.[](source:taskgroup-doc)[](source:cancellation-doc)\\n\",\"diagnostics\":[],\"sourcePath\":\"../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/mobile-tools-adopted/taskgroup.archify.md\",\"baseDir\":\"../../../../../.codex/worktrees/explainer-reading"
+}

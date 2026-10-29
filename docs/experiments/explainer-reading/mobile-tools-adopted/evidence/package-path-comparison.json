@@ -1,0 +1,21 @@
+{
+  "firstAttemptDifferences": [
+    {
+      "path": "/baseDir",
+      "canonical": ".",
+      "extracted": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/mobile-tools-adopted"
+    },
+    {
+      "path": "/digest",
+      "canonical": "f64fbea3e957c093138866be3a8fbcb5fedb2a79861150a1ddcab21a7391fe0e",
+      "extracted": "8480008f8ade33254b7e35cba5d95411f93b2878abd8ecca83424b5ecfd27b77"
+    },
+    {
+      "path": "/sourcePath",
+      "canonical": "taskgroup.archify.md",
+      "extracted": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/mobile-tools-adopted/taskgroup.archify.md"
+    }
+  ],
+  "everythingOutsidePreparedIdentical": true,
+  "relativeSourcePlacementMatchedHTMLIdentical": true
+}

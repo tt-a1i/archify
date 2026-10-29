@@ -1,0 +1,18 @@
+[
+  {
+    "name": "taskgroup",
+    "onlyReaderCssDiffers": true,
+    "sha256": {
+      "base": "af4513a822ec4fdacc34ac142af6f231ea5a38362550024f714c3ea0cc12f4fc",
+      "candidate": "1c72369b9dca4fa547bd643198ca48f99c3af9e311b7cccf8f37a18f4e63ca5a"
+    }
+  },
+  {
+    "name": "curl",
+    "onlyReaderCssDiffers": true,
+    "sha256": {
+      "base": "145bc95395ccf96b1db0de26f105de1dade3a1d7a36a08486cf3e142d0b47d6d",
+      "candidate": "ddcc09fa494266a6d2a624b22ad90e191003afbf5d660cd2ed15da7def109993"
+    }
+  }
+]
