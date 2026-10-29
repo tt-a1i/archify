@@ -1,0 +1,11 @@
+{
+  "python": "3.12.13 (main, May 10 2026, 19:20:41) [Clang 22.1.3 ]",
+  "executable": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round34/venv/bin/python",
+  "programSha256": "f08419a6ed627e245e21b5a50c0887a0750aa0e8bdd7562d7c4a93afc39cd7d8",
+  "returncode": 0,
+  "stdout": "['A', 'D']\n['A', 'B', 'D']\n",
+  "stderr": "",
+  "expectedCopiedOutput": "['A', 'D']\n['A', 'B', 'D']",
+  "exactMatch": true,
+  "temporaryDirectoryRemoved": true
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "从 A 到 D 的有向边",
+    "output": "graph.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "节点"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "lane-0",
+      "label": "从 A 到 D 的有向边"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "a",
+      "label": "A",
+      "type": "external",
+      "col": 0,
+      "lane": "lane-0"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "type": "external",
+      "col": 1,
+      "lane": "lane-0"
+    },
+    {
+      "id": "d",
+      "label": "D",
+      "type": "external",
+      "col": 2,
+      "lane": "lane-0"
+    }
+  ],
+  "edges": [
+    {
+      "id": "a-to-d-1",
+      "from": "a",
+      "to": "d",
+      "label": "5"
+    },
+    {
+      "id": "a-to-b-1",
+      "from": "a",
+      "to": "b",
+      "label": "1"
+    },
+    {
+      "id": "b-to-d-1",
+      "from": "b",
+      "to": "d",
+      "label": "1"
+    }
+  ]
+}

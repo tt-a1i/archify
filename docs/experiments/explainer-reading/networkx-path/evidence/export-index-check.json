@@ -1,0 +1,40 @@
+{
+  "png": {
+    "width": 780,
+    "height": 4754
+  },
+  "variants": [
+    {
+      "version": "路径与计算标准",
+      "width": "390",
+      "frame": "networkx-path/candidate.html",
+      "open": "networkx-path/candidate.html",
+      "report": "networkx-path/README.md"
+    },
+    {
+      "version": "路径与计算标准",
+      "width": "1440",
+      "frame": "networkx-path/candidate.html",
+      "open": "networkx-path/candidate.html",
+      "report": "networkx-path/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "390",
+      "frame": "networkx-path/author/answer.html",
+      "open": "networkx-path/author/answer.html",
+      "report": "networkx-path/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "1440",
+      "frame": "networkx-path/author/answer.html",
+      "open": "networkx-path/author/answer.html",
+      "report": "networkx-path/README.md"
+    }
+  ],
+  "counts": {
+    "questions": 16,
+    "variants": 36
+  }
+}

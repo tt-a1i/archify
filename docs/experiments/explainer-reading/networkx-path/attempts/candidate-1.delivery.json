@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "7eb4e395-8522-411c-b960-4051fda23e3f",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round34/candidate-1.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round34/candidate-1.html",
+  "specification": {
+    "sha256": "3cdced170a41f0a59f1d61803d81262fb2e0bf4828d4768032b8efdce4c12882",
+    "bytes": 2670
+  },
+  "artifact": {
+    "sha256": "36509646617c586295189f92524d1e50b71405d4e821d7da18dbc81a33c2971a",
+    "bytes": 533751
+  },
+  "explainer": {
+    "preparedSha256": "e71b8eea703d096da31f989b4f6804c4bc7f8af04ad591acce1e2be493fba100",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "graph",
+        "inline": true,
+        "sha256": "7b5a58962c455611b2720a6fdfefd180cb2397619134da1c5e56918f4a08709c",
+        "bytes": 566
+      }
+    ]
+  }
+}

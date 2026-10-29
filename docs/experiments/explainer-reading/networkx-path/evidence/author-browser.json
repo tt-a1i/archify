@@ -1,0 +1,798 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2564,
+    "documentWidth": 390,
+    "title": "为什么 shortest_path 会选存储成本更高的路线？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 332,
+        "scrollWidth": 348,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 29,
+          "y": 787.2265625,
+          "width": 332,
+          "height": 82.8984375,
+          "top": 787.2265625,
+          "right": 361,
+          "bottom": 870.125,
+          "left": 29
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": "路线边数存储的 cost 之和A → D15A → B → D22",
+        "box": {
+          "x": 29,
+          "y": 931.71875,
+          "width": 332,
+          "height": 114.0703125,
+          "top": 931.71875,
+          "right": 361,
+          "bottom": 1045.7890625,
+          "left": 29
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": "调用优化目标返回路线shortest_path(G, 'A', 'D')边数A → Dshortest_path(G, 'A', 'D', weight='cost')cost 之和A → B → D",
+        "box": {
+          "x": 29,
+          "y": 1061.7890625,
+          "width": 332,
+          "height": 276.6015625,
+          "top": 1061.7890625,
+          "right": 361,
+          "bottom": 1338.390625,
+          "left": 29
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 412,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 30,
+          "y": 1530.3671875,
+          "width": 330,
+          "height": 215.25,
+          "top": 1530.3671875,
+          "right": 360,
+          "bottom": 1745.6171875,
+          "left": 30
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 330,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 30,
+          "y": 1797.25,
+          "width": 330,
+          "height": 66.5,
+          "top": 1797.25,
+          "right": 360,
+          "bottom": 1863.75,
+          "left": 30
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 179.390625,
+          "width": 366,
+          "height": 454.4296875,
+          "top": 179.390625,
+          "right": 378,
+          "bottom": 633.8203125,
+          "left": 12
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 12,
+          "y": 645.8203125,
+          "width": 366,
+          "height": 709.5703125,
+          "top": 645.8203125,
+          "right": 378,
+          "bottom": 1355.390625,
+          "left": 12
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 12,
+          "y": 1367.390625,
+          "width": 366,
+          "height": 514.359375,
+          "top": 1367.390625,
+          "right": 378,
+          "bottom": 1881.75,
+          "left": 12
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 12,
+          "y": 1893.75,
+          "width": 366,
+          "height": 359.046875,
+          "top": 1893.75,
+          "right": 378,
+          "bottom": 2252.796875,
+          "left": 12
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "cost=5",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "Agent 逻辑",
+        "font": "7.5px",
+        "screenHeight": 0
+      },
+      {
+        "text": "外部系统",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · cost=1a → d · cost=5b → d · cost=1"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2564,
+    "documentWidth": 390,
+    "title": "为什么 shortest_path 会选存储成本更高的路线？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 332,
+        "scrollWidth": 348,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 29,
+          "y": 787.2265625,
+          "width": 332,
+          "height": 82.8984375,
+          "top": 787.2265625,
+          "right": 361,
+          "bottom": 870.125,
+          "left": 29
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": "路线边数存储的 cost 之和A → D15A → B → D22",
+        "box": {
+          "x": 29,
+          "y": 931.71875,
+          "width": 332,
+          "height": 114.0703125,
+          "top": 931.71875,
+          "right": 361,
+          "bottom": 1045.7890625,
+          "left": 29
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": "调用优化目标返回路线shortest_path(G, 'A', 'D')边数A → Dshortest_path(G, 'A', 'D', weight='cost')cost 之和A → B → D",
+        "box": {
+          "x": 29,
+          "y": 1061.7890625,
+          "width": 332,
+          "height": 276.6015625,
+          "top": 1061.7890625,
+          "right": 361,
+          "bottom": 1338.390625,
+          "left": 29
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 412,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 30,
+          "y": 1530.3671875,
+          "width": 330,
+          "height": 215.25,
+          "top": 1530.3671875,
+          "right": 360,
+          "bottom": 1745.6171875,
+          "left": 30
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 330,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 30,
+          "y": 1797.25,
+          "width": 330,
+          "height": 66.5,
+          "top": 1797.25,
+          "right": 360,
+          "bottom": 1863.75,
+          "left": 30
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 179.390625,
+          "width": 366,
+          "height": 454.4296875,
+          "top": 179.390625,
+          "right": 378,
+          "bottom": 633.8203125,
+          "left": 12
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 12,
+          "y": 645.8203125,
+          "width": 366,
+          "height": 709.5703125,
+          "top": 645.8203125,
+          "right": 378,
+          "bottom": 1355.390625,
+          "left": 12
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 12,
+          "y": 1367.390625,
+          "width": 366,
+          "height": 514.359375,
+          "top": 1367.390625,
+          "right": 378,
+          "bottom": 1881.75,
+          "left": 12
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 12,
+          "y": 1893.75,
+          "width": 366,
+          "height": 359.046875,
+          "top": 1893.75,
+          "right": 378,
+          "bottom": 2252.796875,
+          "left": 12
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "cost=5",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "Agent 逻辑",
+        "font": "7.5px",
+        "screenHeight": 0
+      },
+      {
+        "text": "外部系统",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · cost=1a → d · cost=5b → d · cost=1"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1473,
+    "documentWidth": 1440,
+    "title": "为什么 shortest_path 会选存储成本更高的路线？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 814,
+        "scrollWidth": 814,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 529,
+          "y": 236.5,
+          "width": 814,
+          "height": 114.015625,
+          "top": 236.5,
+          "right": 1343,
+          "bottom": 350.515625,
+          "left": 529
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 814,
+        "scrollWidth": 814,
+        "text": "路线边数存储的 cost 之和A → D15A → B → D22",
+        "box": {
+          "x": 529,
+          "y": 366.515625,
+          "width": 814,
+          "height": 114.0703125,
+          "top": 366.515625,
+          "right": 1343,
+          "bottom": 480.5859375,
+          "left": 529
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 814,
+        "scrollWidth": 814,
+        "text": "调用优化目标返回路线shortest_path(G, 'A', 'D')边数A → Dshortest_path(G, 'A', 'D', weight='cost')cost 之和A → B → D",
+        "box": {
+          "x": 529,
+          "y": 496.5859375,
+          "width": 814,
+          "height": 160.5078125,
+          "top": 496.5859375,
+          "right": 1343,
+          "bottom": 657.09375,
+          "left": 529
+        }
+      },
+      {
+        "kind": "",
+        "width": 804,
+        "scrollWidth": 804,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 534,
+          "y": 832.1328125,
+          "width": 804,
+          "height": 215.25,
+          "top": 832.1328125,
+          "right": 1338,
+          "bottom": 1047.3828125,
+          "left": 534
+        }
+      },
+      {
+        "kind": "",
+        "width": 804,
+        "scrollWidth": 804,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 534,
+          "y": 1099.015625,
+          "width": 804,
+          "height": 66.5,
+          "top": 1099.015625,
+          "right": 1338,
+          "bottom": 1165.515625,
+          "left": 534
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 93.09375,
+          "width": 416,
+          "height": 741,
+          "top": 93.09375,
+          "right": 496,
+          "bottom": 834.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 512,
+          "y": 93.09375,
+          "width": 848,
+          "height": 581,
+          "top": 93.09375,
+          "right": 1360,
+          "bottom": 674.09375,
+          "left": 512
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 512,
+          "y": 690.09375,
+          "width": 848,
+          "height": 528,
+          "top": 690.09375,
+          "right": 1360,
+          "bottom": 1218.09375,
+          "left": 512
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 80,
+          "y": 850.09375,
+          "width": 416,
+          "height": 368,
+          "top": 850.09375,
+          "right": 496,
+          "bottom": 1218.09375,
+          "left": 80
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "cost=5",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "Agent 逻辑",
+        "font": "7.5px",
+        "screenHeight": 0
+      },
+      {
+        "text": "外部系统",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · cost=1a → d · cost=5b → d · cost=1"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1473,
+    "documentWidth": 1440,
+    "title": "为什么 shortest_path 会选存储成本更高的路线？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 814,
+        "scrollWidth": 814,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 529,
+          "y": 236.5,
+          "width": 814,
+          "height": 114.015625,
+          "top": 236.5,
+          "right": 1343,
+          "bottom": 350.515625,
+          "left": 529
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 814,
+        "scrollWidth": 814,
+        "text": "路线边数存储的 cost 之和A → D15A → B → D22",
+        "box": {
+          "x": 529,
+          "y": 366.515625,
+          "width": 814,
+          "height": 114.0703125,
+          "top": 366.515625,
+          "right": 1343,
+          "bottom": 480.5859375,
+          "left": 529
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 814,
+        "scrollWidth": 814,
+        "text": "调用优化目标返回路线shortest_path(G, 'A', 'D')边数A → Dshortest_path(G, 'A', 'D', weight='cost')cost 之和A → B → D",
+        "box": {
+          "x": 529,
+          "y": 496.5859375,
+          "width": 814,
+          "height": 160.5078125,
+          "top": 496.5859375,
+          "right": 1343,
+          "bottom": 657.09375,
+          "left": 529
+        }
+      },
+      {
+        "kind": "",
+        "width": 804,
+        "scrollWidth": 804,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 534,
+          "y": 832.1328125,
+          "width": 804,
+          "height": 215.25,
+          "top": 832.1328125,
+          "right": 1338,
+          "bottom": 1047.3828125,
+          "left": 534
+        }
+      },
+      {
+        "kind": "",
+        "width": 804,
+        "scrollWidth": 804,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 534,
+          "y": 1099.015625,
+          "width": 804,
+          "height": 66.5,
+          "top": 1099.015625,
+          "right": 1338,
+          "bottom": 1165.515625,
+          "left": 534
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 93.09375,
+          "width": 416,
+          "height": 741,
+          "top": 93.09375,
+          "right": 496,
+          "bottom": 834.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 512,
+          "y": 93.09375,
+          "width": 848,
+          "height": 581,
+          "top": 93.09375,
+          "right": 1360,
+          "bottom": 674.09375,
+          "left": 512
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 512,
+          "y": 690.09375,
+          "width": 848,
+          "height": 528,
+          "top": 690.09375,
+          "right": 1360,
+          "bottom": 1218.09375,
+          "left": 512
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 80,
+          "y": 850.09375,
+          "width": 416,
+          "height": 368,
+          "top": 850.09375,
+          "right": 496,
+          "bottom": 1218.09375,
+          "left": 80
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "cost=5",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "cost=1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "Agent 逻辑",
+        "font": "7.5px",
+        "screenHeight": 0
+      },
+      {
+        "text": "外部系统",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · cost=1a → d · cost=5b → d · cost=1"
+    ]
+  }
+]

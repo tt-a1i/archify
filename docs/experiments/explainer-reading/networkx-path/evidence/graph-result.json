@@ -1,0 +1,22 @@
+{
+  "probeEdges": [
+    [
+      "a",
+      "b",
+      "1"
+    ],
+    [
+      "a",
+      "d",
+      "5"
+    ],
+    [
+      "b",
+      "d",
+      "1"
+    ]
+  ],
+  "specAndSemanticMatch": true,
+  "svgNodeAndEdgeIdsMatch": true,
+  "legend": "节点"
+}

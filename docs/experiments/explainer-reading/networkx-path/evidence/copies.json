@@ -1,0 +1,10 @@
+{
+  "payloads": [
+    "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.add_edge('B', 'D', cost=1)\n\nprint(nx.shortest_path(G, 'A', 'D'))\nprint(nx.shortest_path(\n    G, 'A', 'D', weight='cost'\n))",
+    "['A', 'D']\n['A', 'B', 'D']"
+  ],
+  "visible": [
+    "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.add_edge('B', 'D', cost=1)\n\nprint(nx.shortest_path(G, 'A', 'D'))\nprint(nx.shortest_path(\n    G, 'A', 'D', weight='cost'\n))",
+    "['A', 'D']\n['A', 'B', 'D']"
+  ]
+}

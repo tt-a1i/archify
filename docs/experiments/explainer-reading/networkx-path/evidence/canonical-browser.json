@@ -1,0 +1,714 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2328,
+    "documentWidth": 390,
+    "title": "写了 cost，为什么还选直达路？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 29,
+          "y": 782.46875,
+          "width": 332,
+          "height": 83,
+          "top": 782.46875,
+          "right": 361,
+          "bottom": 865.46875,
+          "left": 29
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": "比较什么选中的路线边数（默认）A → D：只经过 1 条边；cost 合计 5。cost 总和A → B → D：cost 合计 2（1 + 1），小于直达的 5；需经过 2 条边。",
+        "box": {
+          "x": 29,
+          "y": 881.46875,
+          "width": 332,
+          "height": 178.8515625,
+          "top": 881.46875,
+          "right": 361,
+          "bottom": 1060.3203125,
+          "left": 29
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 330,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 30,
+          "y": 1252.296875,
+          "width": 330,
+          "height": 257.75,
+          "top": 1252.296875,
+          "right": 360,
+          "bottom": 1510.046875,
+          "left": 30
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 330,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 30,
+          "y": 1561.6796875,
+          "width": 330,
+          "height": 66.5,
+          "top": 1561.6796875,
+          "right": 360,
+          "bottom": 1628.1796875,
+          "left": 30
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 149.6953125,
+          "width": 366,
+          "height": 454.4296875,
+          "top": 149.6953125,
+          "right": 378,
+          "bottom": 604.125,
+          "left": 12
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 12,
+          "y": 616.125,
+          "width": 366,
+          "height": 461.1953125,
+          "top": 616.125,
+          "right": 378,
+          "bottom": 1077.3203125,
+          "left": 12
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 12,
+          "y": 1089.3203125,
+          "width": 366,
+          "height": 556.859375,
+          "top": 1089.3203125,
+          "right": 378,
+          "bottom": 1646.1796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 12,
+          "y": 1658.1796875,
+          "width": 366,
+          "height": 359.046875,
+          "top": 1658.1796875,
+          "right": 378,
+          "bottom": 2017.2265625,
+          "left": 12
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "5",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "节点",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · 1a → d · 5b → d · 1"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2328,
+    "documentWidth": 390,
+    "title": "写了 cost，为什么还选直达路？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 29,
+          "y": 782.46875,
+          "width": 332,
+          "height": 83,
+          "top": 782.46875,
+          "right": 361,
+          "bottom": 865.46875,
+          "left": 29
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 332,
+        "scrollWidth": 332,
+        "text": "比较什么选中的路线边数（默认）A → D：只经过 1 条边；cost 合计 5。cost 总和A → B → D：cost 合计 2（1 + 1），小于直达的 5；需经过 2 条边。",
+        "box": {
+          "x": 29,
+          "y": 881.46875,
+          "width": 332,
+          "height": 178.8515625,
+          "top": 881.46875,
+          "right": 361,
+          "bottom": 1060.3203125,
+          "left": 29
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 330,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 30,
+          "y": 1252.296875,
+          "width": 330,
+          "height": 257.75,
+          "top": 1252.296875,
+          "right": 360,
+          "bottom": 1510.046875,
+          "left": 30
+        }
+      },
+      {
+        "kind": "",
+        "width": 330,
+        "scrollWidth": 330,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 30,
+          "y": 1561.6796875,
+          "width": 330,
+          "height": 66.5,
+          "top": 1561.6796875,
+          "right": 360,
+          "bottom": 1628.1796875,
+          "left": 30
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 149.6953125,
+          "width": 366,
+          "height": 454.4296875,
+          "top": 149.6953125,
+          "right": 378,
+          "bottom": 604.125,
+          "left": 12
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 12,
+          "y": 616.125,
+          "width": 366,
+          "height": 461.1953125,
+          "top": 616.125,
+          "right": 378,
+          "bottom": 1077.3203125,
+          "left": 12
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 12,
+          "y": 1089.3203125,
+          "width": 366,
+          "height": 556.859375,
+          "top": 1089.3203125,
+          "right": 378,
+          "bottom": 1646.1796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 12,
+          "y": 1658.1796875,
+          "width": 366,
+          "height": 359.046875,
+          "top": 1658.1796875,
+          "right": 378,
+          "bottom": 2017.2265625,
+          "left": 12
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "5",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 8.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "节点",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · 1a → d · 5b → d · 1"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1233,
+    "documentWidth": 1440,
+    "title": "写了 cost，为什么还选直达路？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 598,
+        "scrollWidth": 598,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 745,
+          "y": 236.5,
+          "width": 598,
+          "height": 114.5234375,
+          "top": 236.5,
+          "right": 1343,
+          "bottom": 351.0234375,
+          "left": 745
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 598,
+        "scrollWidth": 598,
+        "text": "比较什么选中的路线边数（默认）A → D：只经过 1 条边；cost 合计 5。cost 总和A → B → D：cost 合计 2（1 + 1），小于直达的 5；需经过 2 条边。",
+        "box": {
+          "x": 745,
+          "y": 367.0234375,
+          "width": 598,
+          "height": 114.0703125,
+          "top": 367.0234375,
+          "right": 1343,
+          "bottom": 481.09375,
+          "left": 745
+        }
+      },
+      {
+        "kind": "",
+        "width": 588,
+        "scrollWidth": 588,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 102,
+          "y": 580.1328125,
+          "width": 588,
+          "height": 257.75,
+          "top": 580.1328125,
+          "right": 690,
+          "bottom": 837.8828125,
+          "left": 102
+        }
+      },
+      {
+        "kind": "",
+        "width": 588,
+        "scrollWidth": 588,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 102,
+          "y": 889.515625,
+          "width": 588,
+          "height": 66.5,
+          "top": 889.515625,
+          "right": 690,
+          "bottom": 956.015625,
+          "left": 102
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 93.09375,
+          "width": 632,
+          "height": 329,
+          "top": 93.09375,
+          "right": 712,
+          "bottom": 422.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 728,
+          "y": 93.09375,
+          "width": 632,
+          "height": 405,
+          "top": 93.09375,
+          "right": 1360,
+          "bottom": 498.09375,
+          "left": 728
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 80,
+          "y": 438.09375,
+          "width": 632,
+          "height": 540,
+          "top": 438.09375,
+          "right": 712,
+          "bottom": 978.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 728,
+          "y": 514.09375,
+          "width": 632,
+          "height": 464,
+          "top": 514.09375,
+          "right": 1360,
+          "bottom": 978.09375,
+          "left": 728
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "5",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "节点",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · 1a → d · 5b → d · 1"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1233,
+    "documentWidth": 1440,
+    "title": "写了 cost，为什么还选直达路？",
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "diagram-preview preview-graph single-lane bare-lanes",
+        "width": 598,
+        "scrollWidth": 598,
+        "text": ".preview-graph,.preview-graph[data-theme=\"dark\"]{\n      --bg: #020617;\n      --grid: #1e293b;\n      ",
+        "box": {
+          "x": 745,
+          "y": 236.5,
+          "width": 598,
+          "height": 114.5234375,
+          "top": 236.5,
+          "right": 1343,
+          "bottom": 351.0234375,
+          "left": 745
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 598,
+        "scrollWidth": 598,
+        "text": "比较什么选中的路线边数（默认）A → D：只经过 1 条边；cost 合计 5。cost 总和A → B → D：cost 合计 2（1 + 1），小于直达的 5；需经过 2 条边。",
+        "box": {
+          "x": 745,
+          "y": 367.0234375,
+          "width": 598,
+          "height": 114.0703125,
+          "top": 367.0234375,
+          "right": 1343,
+          "bottom": 481.09375,
+          "left": 745
+        }
+      },
+      {
+        "kind": "",
+        "width": 588,
+        "scrollWidth": 588,
+        "text": "import networkx as nx\n\nG = nx.DiGraph()\nG.add_edge('A', 'D', cost=5)\nG.add_edge('A', 'B', cost=1)\nG.",
+        "box": {
+          "x": 102,
+          "y": 580.1328125,
+          "width": 588,
+          "height": 257.75,
+          "top": 580.1328125,
+          "right": 690,
+          "bottom": 837.8828125,
+          "left": 102
+        }
+      },
+      {
+        "kind": "",
+        "width": 588,
+        "scrollWidth": 588,
+        "text": "['A', 'D']\n['A', 'B', 'D']",
+        "box": {
+          "x": 102,
+          "y": 889.515625,
+          "width": 588,
+          "height": 66.5,
+          "top": 889.515625,
+          "right": 690,
+          "bottom": 956.015625,
+          "left": 102
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 93.09375,
+          "width": 632,
+          "height": 329,
+          "top": 93.09375,
+          "right": 712,
+          "bottom": 422.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "routes",
+        "box": {
+          "x": 728,
+          "y": 93.09375,
+          "width": 632,
+          "height": 405,
+          "top": 93.09375,
+          "right": 1360,
+          "bottom": 498.09375,
+          "left": 728
+        }
+      },
+      {
+        "id": "example",
+        "box": {
+          "x": 80,
+          "y": 438.09375,
+          "width": 632,
+          "height": 540,
+          "top": 438.09375,
+          "right": 712,
+          "bottom": 978.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "missing",
+        "box": {
+          "x": 728,
+          "y": 514.09375,
+          "width": 632,
+          "height": 464,
+          "top": 514.09375,
+          "right": 1360,
+          "bottom": 978.09375,
+          "left": 728
+        }
+      }
+    ],
+    "diagramTexts": [
+      {
+        "text": "01 / 从 A 到 D 的有向边",
+        "font": "10px",
+        "screenHeight": 0
+      },
+      {
+        "text": "A",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "B",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "D",
+        "font": "11px",
+        "screenHeight": 16.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "5",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "1",
+        "font": "8px",
+        "screenHeight": 11.5
+      },
+      {
+        "text": "图例",
+        "font": "12px",
+        "screenHeight": 0
+      },
+      {
+        "text": "节点",
+        "font": "7.5px",
+        "screenHeight": 0
+      }
+    ],
+    "semanticText": [
+      "图的结构A aB bD da → b · 1a → d · 5b → d · 1"
+    ]
+  }
+]

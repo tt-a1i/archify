@@ -1,0 +1,16 @@
+{
+  "initialArchiveLinkCheck": "Ran before manifest creation and failed on manifest.json; rerun after creation below. No product failure.",
+  "generatedHtmlWhitespace": {
+    "exit": 2,
+    "occurrences": 72,
+    "files": [
+      "docs/experiments/explainer-reading/networkx-path/attempts/candidate-1.html",
+      "docs/experiments/explainer-reading/networkx-path/attempts/candidate-2.html",
+      "docs/experiments/explainer-reading/networkx-path/attempts/legend-repair-candidate.html",
+      "docs/experiments/explainer-reading/networkx-path/author/answer.html",
+      "docs/experiments/explainer-reading/networkx-path/author/attempt-1/answer.html",
+      "docs/experiments/explainer-reading/networkx-path/candidate.html"
+    ],
+    "decision": "Preserve generated artifact bytes and provenance. Whitespace belongs to embedded native renderer CSS; authored files and index checked separately. No artifact rewrite."
+  }
+}

@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between fifteen reading questions across thirteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between sixteen reading questions across fourteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -219,3 +219,7 @@ The final eight viewport/theme states fit, 15 real-Chrome browser tests pass, an
 [Source cards and image export](source-card-export/README.md): the public image-export path included an open source card and used its overflowing excerpt to trigger page reflow. Export now measures body code inside the shell and drops the transient card from its clone. At phone and desktop widths, open/closed-card PNG pairs are byte-identical while the live reading state remains intact. Ordinary UI runs had already closed the card and are reported separately.
 
 All 16 Explainer browser tests pass, with existing table/code/diff completeness checks retained; deterministic package builds and the extracted regression/public CLI checks pass. No authoring guidance or main reading-case counts changed. Two incomplete test-download attempts remain disclosed.
+
+## Continued exploration — round 34
+
+[NetworkX shortest paths](networkx-path/README.md) compares fewest edges with minimum selected attribute sum on one fixed three-node graph. The candidate pairs the native graph with a two-column comparison and executable Python; six actual cases also cover omitted parameters and absent attributes. Actual Viewer inspection exposed unrelated default node categories, repaired through an existing explicit legend. The small phone edge labels remain a documented limit.

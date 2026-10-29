@@ -1,0 +1,255 @@
+{
+  "python": "3.12.13",
+  "networkx": "3.7",
+  "scope": "six fixed directed three-node graphs/calls, positive present weights, missing-attribute default; no performance, negative-weight, tie, unreachable-node or backend comparison",
+  "cases": [
+    {
+      "name": "cost_default",
+      "edges": [
+        {
+          "from": "A",
+          "to": "D",
+          "attributes": {
+            "cost": 5
+          }
+        },
+        {
+          "from": "A",
+          "to": "B",
+          "attributes": {
+            "cost": 1
+          }
+        },
+        {
+          "from": "B",
+          "to": "D",
+          "attributes": {
+            "cost": 1
+          }
+        }
+      ],
+      "call": "nx.shortest_path(G, 'A', 'D')",
+      "requestedWeight": null,
+      "objective": "edge count",
+      "path": [
+        "A",
+        "D"
+      ],
+      "edgeCount": 1,
+      "objectiveLength": 1,
+      "storedAttribute": "cost",
+      "pathStoredValues": [
+        5
+      ],
+      "storedAttributeTotal": 5,
+      "graphPreserved": true
+    },
+    {
+      "name": "cost_requested",
+      "edges": [
+        {
+          "from": "A",
+          "to": "D",
+          "attributes": {
+            "cost": 5
+          }
+        },
+        {
+          "from": "A",
+          "to": "B",
+          "attributes": {
+            "cost": 1
+          }
+        },
+        {
+          "from": "B",
+          "to": "D",
+          "attributes": {
+            "cost": 1
+          }
+        }
+      ],
+      "call": "nx.shortest_path(G, 'A', 'D', weight='cost')",
+      "requestedWeight": "cost",
+      "objective": "sum of cost; absent attributes default to 1",
+      "path": [
+        "A",
+        "B",
+        "D"
+      ],
+      "edgeCount": 2,
+      "objectiveLength": 2,
+      "storedAttribute": "cost",
+      "pathStoredValues": [
+        1,
+        1
+      ],
+      "storedAttributeTotal": 2,
+      "graphPreserved": true
+    },
+    {
+      "name": "wrong_attribute",
+      "edges": [
+        {
+          "from": "A",
+          "to": "D",
+          "attributes": {
+            "cost": 5
+          }
+        },
+        {
+          "from": "A",
+          "to": "B",
+          "attributes": {
+            "cost": 1
+          }
+        },
+        {
+          "from": "B",
+          "to": "D",
+          "attributes": {
+            "cost": 1
+          }
+        }
+      ],
+      "call": "nx.shortest_path(G, 'A', 'D', weight='weight')",
+      "requestedWeight": "weight",
+      "objective": "sum of weight; absent attributes default to 1",
+      "path": [
+        "A",
+        "D"
+      ],
+      "edgeCount": 1,
+      "objectiveLength": 1,
+      "storedAttribute": "cost",
+      "pathStoredValues": [
+        5
+      ],
+      "storedAttributeTotal": 5,
+      "graphPreserved": true
+    },
+    {
+      "name": "weight_named_but_omitted",
+      "edges": [
+        {
+          "from": "A",
+          "to": "D",
+          "attributes": {
+            "weight": 5
+          }
+        },
+        {
+          "from": "A",
+          "to": "B",
+          "attributes": {
+            "weight": 1
+          }
+        },
+        {
+          "from": "B",
+          "to": "D",
+          "attributes": {
+            "weight": 1
+          }
+        }
+      ],
+      "call": "nx.shortest_path(G, 'A', 'D')",
+      "requestedWeight": null,
+      "objective": "edge count",
+      "path": [
+        "A",
+        "D"
+      ],
+      "edgeCount": 1,
+      "objectiveLength": 1,
+      "storedAttribute": "weight",
+      "pathStoredValues": [
+        5
+      ],
+      "storedAttributeTotal": 5,
+      "graphPreserved": true
+    },
+    {
+      "name": "weight_requested",
+      "edges": [
+        {
+          "from": "A",
+          "to": "D",
+          "attributes": {
+            "weight": 5
+          }
+        },
+        {
+          "from": "A",
+          "to": "B",
+          "attributes": {
+            "weight": 1
+          }
+        },
+        {
+          "from": "B",
+          "to": "D",
+          "attributes": {
+            "weight": 1
+          }
+        }
+      ],
+      "call": "nx.shortest_path(G, 'A', 'D', weight='weight')",
+      "requestedWeight": "weight",
+      "objective": "sum of weight; absent attributes default to 1",
+      "path": [
+        "A",
+        "B",
+        "D"
+      ],
+      "edgeCount": 2,
+      "objectiveLength": 2,
+      "storedAttribute": "weight",
+      "pathStoredValues": [
+        1,
+        1
+      ],
+      "storedAttributeTotal": 2,
+      "graphPreserved": true
+    },
+    {
+      "name": "missing_direct_cost",
+      "edges": [
+        {
+          "from": "A",
+          "to": "D",
+          "attributes": {}
+        },
+        {
+          "from": "A",
+          "to": "B",
+          "attributes": {
+            "cost": 1
+          }
+        },
+        {
+          "from": "B",
+          "to": "D",
+          "attributes": {
+            "cost": 1
+          }
+        }
+      ],
+      "call": "nx.shortest_path(G, 'A', 'D', weight='cost')",
+      "requestedWeight": "cost",
+      "objective": "sum of cost; absent attributes default to 1",
+      "path": [
+        "A",
+        "D"
+      ],
+      "edgeCount": 1,
+      "objectiveLength": 1,
+      "storedAttribute": "cost",
+      "pathStoredValues": [
+        null
+      ],
+      "storedAttributeTotal": null,
+      "graphPreserved": true
+    }
+  ]
+}

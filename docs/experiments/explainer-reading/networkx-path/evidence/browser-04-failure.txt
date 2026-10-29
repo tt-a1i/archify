@@ -1,0 +1,1 @@
+Invocation exit 1: SyntaxError: await is only valid in async functions and the top level bodies of modules at node:internal/vm:203. The generated script contained a literal newline inside a quoted JavaScript string; no browser action ran. New browser-05.mjs corrects string escaping.

@@ -1,0 +1,131 @@
+{
+  "spec": {
+    "schema_version": 2,
+    "diagram_type": "workflow",
+    "meta": {
+      "title": "从 A 到 D 的有向边",
+      "output": "graph.html",
+      "quality_profile": "showcase",
+      "locale": "zh-CN",
+      "legend": {
+        "entries": {
+          "external": {
+            "label": "节点"
+          }
+        }
+      }
+    },
+    "lanes": [
+      {
+        "id": "lane-0",
+        "label": "从 A 到 D 的有向边"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "a",
+        "label": "A",
+        "type": "external",
+        "col": 0,
+        "lane": "lane-0"
+      },
+      {
+        "id": "b",
+        "label": "B",
+        "type": "external",
+        "col": 1,
+        "lane": "lane-0"
+      },
+      {
+        "id": "d",
+        "label": "D",
+        "type": "external",
+        "col": 2,
+        "lane": "lane-0"
+      }
+    ],
+    "edges": [
+      {
+        "id": "a-to-d-1",
+        "from": "a",
+        "to": "d",
+        "label": "5"
+      },
+      {
+        "id": "a-to-b-1",
+        "from": "a",
+        "to": "b",
+        "label": "1"
+      },
+      {
+        "id": "b-to-d-1",
+        "from": "b",
+        "to": "d",
+        "label": "1"
+      }
+    ]
+  },
+  "semantic": {
+    "nodes": [
+      {
+        "id": "a",
+        "label": "A",
+        "svgId": "node-a"
+      },
+      {
+        "id": "b",
+        "label": "B",
+        "svgId": "node-b"
+      },
+      {
+        "id": "d",
+        "label": "D",
+        "svgId": "node-d"
+      }
+    ],
+    "edges": [
+      {
+        "id": "a-to-b-1",
+        "from": "a",
+        "to": "b",
+        "label": "1",
+        "key": "0"
+      },
+      {
+        "id": "a-to-d-1",
+        "from": "a",
+        "to": "d",
+        "label": "5",
+        "key": "1"
+      },
+      {
+        "id": "b-to-d-1",
+        "from": "b",
+        "to": "d",
+        "label": "1",
+        "key": "2"
+      }
+    ]
+  },
+  "renderedNodes": [
+    "a",
+    "b",
+    "d"
+  ],
+  "renderedEdges": [
+    "a-to-b-1",
+    "a-to-d-1",
+    "b-to-d-1"
+  ],
+  "visibleText": [
+    "01 / 从 A 到 D 的有向边",
+    "A",
+    "B",
+    "D",
+    "1",
+    "5",
+    "1",
+    "图例",
+    "节点"
+  ]
+}
