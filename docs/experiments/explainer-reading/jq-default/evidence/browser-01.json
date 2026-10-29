@@ -1,0 +1,266 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "style": "editorial",
+    "pageWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 483.4765625,
+        "width": 366
+      },
+      {
+        "id": "switch",
+        "height": 362.0078125,
+        "width": 366
+      },
+      {
+        "id": "policy",
+        "height": 583.0390625,
+        "width": 366
+      },
+      {
+        "id": "stream",
+        "height": 591.96875,
+        "width": 366
+      }
+    ],
+    "tables": [
+      {
+        "width": 492.75,
+        "container": 358
+      }
+    ],
+    "snippets": [
+      {
+        "title": "复现：明确关闭却得到 truebash复制",
+        "code": "bash",
+        "scroll": 367,
+        "client": 356
+      },
+      {
+        "title": "保留 false：null 或缺失时默认bash复制",
+        "code": "bash",
+        "scroll": 577,
+        "client": 356
+      },
+      {
+        "title": "只在缺失键时默认：也保留 nullbash复制",
+        "code": "bash",
+        "scroll": 585,
+        "client": 356
+      },
+      {
+        "title": "整个左侧结果流bash复制",
+        "code": "bash",
+        "scroll": 356,
+        "client": 356
+      },
+      {
+        "title": "逐个结果判断bash复制",
+        "code": "bash",
+        "scroll": 356,
+        "client": 356
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "style": "editorial",
+    "pageWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 483.4765625,
+        "width": 366
+      },
+      {
+        "id": "switch",
+        "height": 362.0078125,
+        "width": 366
+      },
+      {
+        "id": "policy",
+        "height": 583.0390625,
+        "width": 366
+      },
+      {
+        "id": "stream",
+        "height": 591.96875,
+        "width": 366
+      }
+    ],
+    "tables": [
+      {
+        "width": 492.75,
+        "container": 358
+      }
+    ],
+    "snippets": [
+      {
+        "title": "复现：明确关闭却得到 truebash复制",
+        "code": "bash",
+        "scroll": 367,
+        "client": 356
+      },
+      {
+        "title": "保留 false：null 或缺失时默认bash复制",
+        "code": "bash",
+        "scroll": 577,
+        "client": 356
+      },
+      {
+        "title": "只在缺失键时默认：也保留 nullbash复制",
+        "code": "bash",
+        "scroll": 585,
+        "client": 356
+      },
+      {
+        "title": "整个左侧结果流bash复制",
+        "code": "bash",
+        "scroll": 356,
+        "client": 356
+      },
+      {
+        "title": "逐个结果判断bash复制",
+        "code": "bash",
+        "scroll": 356,
+        "client": 356
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "style": "editorial",
+    "pageWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 334,
+        "width": 740
+      },
+      {
+        "id": "switch",
+        "height": 337,
+        "width": 524
+      },
+      {
+        "id": "policy",
+        "height": 558,
+        "width": 740
+      },
+      {
+        "id": "stream",
+        "height": 555,
+        "width": 524
+      }
+    ],
+    "tables": [
+      {
+        "width": 732,
+        "container": 732
+      }
+    ],
+    "snippets": [
+      {
+        "title": "复现：明确关闭却得到 truebash复制",
+        "code": "bash",
+        "scroll": 514,
+        "client": 514
+      },
+      {
+        "title": "保留 false：null 或缺失时默认bash复制",
+        "code": "bash",
+        "scroll": 730,
+        "client": 730
+      },
+      {
+        "title": "只在缺失键时默认：也保留 nullbash复制",
+        "code": "bash",
+        "scroll": 730,
+        "client": 730
+      },
+      {
+        "title": "整个左侧结果流bash复制",
+        "code": "bash",
+        "scroll": 514,
+        "client": 514
+      },
+      {
+        "title": "逐个结果判断bash复制",
+        "code": "bash",
+        "scroll": 514,
+        "client": 514
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "style": "editorial",
+    "pageWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 334,
+        "width": 740
+      },
+      {
+        "id": "switch",
+        "height": 337,
+        "width": 524
+      },
+      {
+        "id": "policy",
+        "height": 558,
+        "width": 740
+      },
+      {
+        "id": "stream",
+        "height": 555,
+        "width": 524
+      }
+    ],
+    "tables": [
+      {
+        "width": 732,
+        "container": 732
+      }
+    ],
+    "snippets": [
+      {
+        "title": "复现：明确关闭却得到 truebash复制",
+        "code": "bash",
+        "scroll": 514,
+        "client": 514
+      },
+      {
+        "title": "保留 false：null 或缺失时默认bash复制",
+        "code": "bash",
+        "scroll": 730,
+        "client": 730
+      },
+      {
+        "title": "只在缺失键时默认：也保留 nullbash复制",
+        "code": "bash",
+        "scroll": 730,
+        "client": 730
+      },
+      {
+        "title": "整个左侧结果流bash复制",
+        "code": "bash",
+        "scroll": 514,
+        "client": 514
+      },
+      {
+        "title": "逐个结果判断bash复制",
+        "code": "bash",
+        "scroll": 514,
+        "client": 514
+      }
+    ]
+  }
+]

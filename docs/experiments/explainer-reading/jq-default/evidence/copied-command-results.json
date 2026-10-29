@@ -1,0 +1,59 @@
+{
+  "jq": "/usr/bin/jq",
+  "version": "jq-1.7.1-apple",
+  "clipboardScope": "Clipboard API interception, not OS clipboard",
+  "copiedEqualsRendered": true,
+  "commands": [
+    {
+      "index": 1,
+      "shell": "/bin/zsh -f",
+      "copiedText": "jq -cn '{\"enabled\":false}\n  | .enabled // true'\n# 输出：true",
+      "expectedStdout": "true\n",
+      "stdout": "true\n",
+      "stderr": "",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "index": 2,
+      "shell": "/bin/zsh -f",
+      "copiedText": "jq -cn '{\"enabled\":false}\n  | .enabled\n  | if . == null then true\n    else . end'\n# 输出：false",
+      "expectedStdout": "false\n",
+      "stdout": "false\n",
+      "stderr": "",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "index": 3,
+      "shell": "/bin/zsh -f",
+      "copiedText": "jq -cn '{\"enabled\":null}\n  | if has(\"enabled\")\n    then .enabled\n    else true end'\n# 输出：null",
+      "expectedStdout": "null\n",
+      "stdout": "null\n",
+      "stderr": "",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "index": 4,
+      "shell": "/bin/zsh -f",
+      "copiedText": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0",
+      "expectedStdout": "0\n",
+      "stdout": "0\n",
+      "stderr": "",
+      "exitCode": 0,
+      "pass": true
+    },
+    {
+      "index": 5,
+      "shell": "/bin/zsh -f",
+      "copiedText": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0",
+      "expectedStdout": "\"fallback\"\n\"fallback\"\n0\n",
+      "stdout": "\"fallback\"\n\"fallback\"\n0\n",
+      "stderr": "",
+      "exitCode": 0,
+      "pass": true
+    }
+  ],
+  "allPassed": true
+}

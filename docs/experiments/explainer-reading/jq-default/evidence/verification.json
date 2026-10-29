@@ -1,0 +1,17 @@
+{
+  "comparisonBase": "8ccb79ff716b6b53afd8be76415c9c8c97d62a53",
+  "devRefreshed": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "devIsAncestorOfHead": true,
+  "mainQuestions": 10,
+  "distinctProjects": 9,
+  "mainVariants": 24,
+  "indexLocalTargetsExist": 44,
+  "jqReadmeLocalLinks": "pass",
+  "firstAuthorDraftAndOutputUnchanged": true,
+  "selectedScreenshotsInspected": 17,
+  "copyCommandsPassed": 5,
+  "runtimeChanged": false,
+  "zipRebuilt": false,
+  "humanAcceptance": false,
+  "remoteCiAcceptance": false
+}

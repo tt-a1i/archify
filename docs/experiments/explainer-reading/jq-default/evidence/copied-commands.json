@@ -1,0 +1,25 @@
+{
+  "width": 390,
+  "mode": "Clipboard API interception, not OS clipboard",
+  "copies": [
+    "jq -cn '{\"enabled\":false}\n  | .enabled // true'\n# 输出：true",
+    "jq -cn '{\"enabled\":false}\n  | .enabled\n  | if . == null then true\n    else . end'\n# 输出：false",
+    "jq -cn '{\"enabled\":null}\n  | if has(\"enabled\")\n    then .enabled\n    else true end'\n# 输出：null",
+    "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0",
+    "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+  ],
+  "rendered": [
+    "jq -cn '{\"enabled\":false}\n  | .enabled // true'\n# 输出：true",
+    "jq -cn '{\"enabled\":false}\n  | .enabled\n  | if . == null then true\n    else . end'\n# 输出：false",
+    "jq -cn '{\"enabled\":null}\n  | if has(\"enabled\")\n    then .enabled\n    else true end'\n# 输出：null",
+    "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0",
+    "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+  ],
+  "buttons": [
+    "复制",
+    "复制",
+    "复制",
+    "已复制",
+    "已复制"
+  ]
+}

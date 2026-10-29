@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "explainer",
+  "quality": "showcase",
+  "startedAt": "2026-10-29T19:01:38.752Z",
+  "specification": {
+    "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.archify.md",
+    "sha256": "e3b2702a6fc4339f073be5e1b593d548cc24771b3955774746df407fa32c11e5",
+    "bytes": 3835
+  },
+  "artifact": {
+    "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.html",
+    "sha256": "40565ec474b7c1abee688975a177d54eca26937f15896c82010c5a21d18fb8fb",
+    "bytes": 162990
+  },
+  "stages": {
+    "browser-check": {
+      "status": "not-run",
+      "execution": "not-requested"
+    },
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round20/runtime/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.archify.md",
+        "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.html",
+        "--quality",
+        "showcase",
+        "--writing",
+        "strict",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "e3b2702a6fc4339f073be5e1b593d548cc24771b3955774746df407fa32c11e5",
+          "bytes": 3835
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 490,
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round20/runtime/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.archify.md",
+        "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.html",
+        "--quality",
+        "showcase",
+        "--writing",
+        "strict",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "401f4c6a-5a33-4e78-aadf-167ff0c6f07d",
+        "ok": true,
+        "command": "deliver",
+        "type": "explainer",
+        "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.archify.md",
+        "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.html",
+        "explainer": {
+          "preparedSha256": "8e750d0cf7b1d4a8d056e30aabc68881cd909141e8d52bd07d3f9906d8a5f0c2",
+          "dependencies": []
+        },
+        "specification": {
+          "sha256": "e3b2702a6fc4339f073be5e1b593d548cc24771b3955774746df407fa32c11e5",
+          "bytes": 3835
+        },
+        "artifact": {
+          "sha256": "40565ec474b7c1abee688975a177d54eca26937f15896c82010c5a21d18fb8fb",
+          "bytes": 162990
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 243,
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round20/runtime/archify/bin/archify.mjs",
+        "check",
+        "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.html",
+        "family": "explainer",
+        "artifact": {
+          "sha256": "40565ec474b7c1abee688975a177d54eca26937f15896c82010c5a21d18fb8fb",
+          "bytes": 162990
+        },
+        "checks": [
+          {
+            "name": "explainer_structure",
+            "ok": true,
+            "details": [
+              "32 unique DOM IDs"
+            ]
+          },
+          {
+            "name": "explainer_payload_identity",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "explainer_dependencies",
+            "ok": true,
+            "details": [
+              "0 frozen dependencies"
+            ]
+          },
+          {
+            "name": "explainer_native_diagrams",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "issues": [],
+          "nativeDiagrams": []
+        },
+        "diagnostics": [],
+        "provenance": "current",
+        "deliveryReceiptId": "401f4c6a-5a33-4e78-aadf-167ff0c6f07d"
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": false,
+    "ran": false
+  },
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.finalize.json",
+    "summaryReceipt": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/jq-default/candidate.finalize-summary.json"
+  },
+  "visualReview": "not-requested",
+  "finishedAt": "2026-10-29T19:01:39.660Z",
+  "durationMs": 908,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.1-dev.1",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-26T23:50:51.017Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between nine reading questions across eight projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between ten reading questions across nine projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -151,3 +151,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 19
 
 [Configured pie legends](pie-legends/README.md) now retain values and percentages after comments, frontmatter and init directives. Parsing before decoration also prevents repeated category names from turning into extra slices. The first attempt failed existing multiline compatibility coverage; the retained normalizer fixes that regression. Two new tests fail base, 54 focused and 19 core tests pass, generated checks pass, and the rebuilt package passes an extracted smoke. Matching phone/desktop and light/dark pages preserve panel height. No universal narrow-layout default is adopted.
+
+## Continued exploration — round 20
+
+[jq defaults](jq-default/README.md) adds a source-pinned explanation of why `// true` replaces an explicit `false`. The 24-case local probe separates false/null, absent keys, empty values and empty result streams. A shorter four-column header still overflows; the retained two-column explanation fits at 390 px, and all five commands copied through the reader produce their displayed outputs. Multiline commands cost vertical space. Original author work and the failed intermediate layout are retained. The review index now has ten questions across nine projects and 24 main variants; product runtime and package are unchanged.

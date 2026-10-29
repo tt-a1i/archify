@@ -1,0 +1,20 @@
+[
+  {
+    "action": "author",
+    "frame": "jq-default/author/answer.html",
+    "open": "jq-default/author/answer.html"
+  },
+  {
+    "action": "candidate-desktop",
+    "frame": "jq-default/candidate.html",
+    "frameWidth": "1440px",
+    "note": "页面宽度 1440px · 显示比例 71%",
+    "caseCount": 10
+  },
+  {
+    "action": "candidate-phone",
+    "frame": "jq-default/candidate.html",
+    "frameWidth": "390px",
+    "note": "页面宽度 390px · 显示比例 100%"
+  }
+]
