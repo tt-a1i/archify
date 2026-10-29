@@ -1,0 +1,33 @@
+TAP version 13
+# Subtest: source cards keep their evidence and return link reachable in short viewports
+not ok 1 - source cards keep their evidence and return link reachable in short viewports
+  ---
+  duration_ms: 794.086708
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round32/regression-final-base.test.mjs:35:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    source card remains inside 390 x 480
+
+    false !== true
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round32/regression-final-base.test.mjs:49:11)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 945.093917

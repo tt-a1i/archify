@@ -1,0 +1,3 @@
+const fs=await import('node:fs/promises'),p=(await taskSpace(14)).page('p1'),r='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round32';
+await p.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:480,deviceScaleFactor:1,mobile:false});await p.goto('file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/sqlite-probe/candidate.html');await p.click('[data-theme-choice="light"]');
+console.log(await p.evaluate(()=>({sources:JSON.parse(document.querySelector('#archify-explainer-prepared').textContent).preparedSources.sources,citations:[...document.querySelectorAll('.cite a')].map(a=>a.getAttribute('href'))})));console.log(await p.snapshot());

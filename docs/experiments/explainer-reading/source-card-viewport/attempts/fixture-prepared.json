@@ -1,0 +1,708 @@
+{
+  "schemaVersion": 1,
+  "kind": "archify-explainer-prepared",
+  "document": {
+    "schema_version": 1,
+    "diagram_type": "explainer",
+    "meta": {
+      "title": "源目录末尾的 `/`，差哪一层？",
+      "id": "slash",
+      "locale": "zh-CN",
+      "style": "editorial"
+    },
+    "answer": {
+      "summary": "目标目录 `dst` 已存在且为空时，`src` 会把自己那一层也复制进去，得到 `dst/src/`；`src/` 则把内容直接放进 `dst/`。两者都会复制子目录。[](source:manual)",
+      "scope": "Apple openrsync · 本地 -r 复制 · 空目标目录"
+    },
+    "panels": [
+      {
+        "id": "source",
+        "title": "从相同的源目录开始",
+        "span": 6,
+        "blocks": [
+          {
+            "type": "prose",
+            "text": "两个例子分开运行，每次都使用这三份源文件和一个空 `dst`。[](source:probe)",
+            "id": "prose-3bbf259e9455"
+          },
+          {
+            "type": "snippet",
+            "language": "text",
+            "title": "复制前的文件路径",
+            "text": "src/.hidden\nsrc/a.txt\nsrc/nested/b.txt",
+            "id": "snippet-672c0efcbc7a"
+          }
+        ]
+      },
+      {
+        "id": "without-slash",
+        "title": "不带 `/`：保留外层 src",
+        "span": 6,
+        "blocks": [
+          {
+            "type": "snippet",
+            "language": "sh",
+            "title": "复制源目录本身",
+            "text": "rsync -r -- src dst",
+            "id": "snippet-0d1c40a76363"
+          },
+          {
+            "type": "snippet",
+            "language": "text",
+            "title": "复制后的目标目录",
+            "text": "dst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt",
+            "id": "snippet-e852912cb9ca"
+          },
+          {
+            "type": "prose",
+            "text": "`src` 这一层进入了 `dst`；嵌套文件位于 `dst/src/nested/b.txt`。[](source:probe)",
+            "id": "prose-3da8e9834373"
+          }
+        ]
+      },
+      {
+        "id": "with-slash",
+        "title": "带 `/`：内容直接进入 dst",
+        "span": 6,
+        "blocks": [
+          {
+            "type": "snippet",
+            "language": "sh",
+            "title": "复制源目录里的内容",
+            "text": "rsync -r -- src/ dst",
+            "id": "snippet-56b5f5172e83"
+          },
+          {
+            "type": "snippet",
+            "language": "text",
+            "title": "复制后的目标目录",
+            "text": "dst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt",
+            "id": "snippet-a7a6e8d62e92"
+          },
+          {
+            "type": "prose",
+            "text": "`-r` 仍然递归复制，嵌套文件位于 `dst/nested/b.txt`。末尾的 `/` 没有关闭递归，隐藏文件也仍在。[](source:manual)[](source:probe)",
+            "id": "prose-a6f68e98bb03"
+          }
+        ]
+      },
+      {
+        "id": "scope",
+        "title": "这次实测的范围",
+        "span": 12,
+        "blocks": [
+          {
+            "type": "prose",
+            "text": "使用 macOS 的 Apple openrsync（项目 `rsync-184`）做本地复制。两次命令都成功退出，源文件保持不变。目标目录不存在时，手册说明会创建它；本次探针也得到相同的两种目录层级。[](source:destination)[](source:probe)",
+            "id": "prose-9b409713d952"
+          },
+          {
+            "type": "prose",
+            "text": "结果针对单个源目录和 `-r`；过滤规则、符号链接、远程传输和元数据不在这次检查范围内。",
+            "id": "prose-834df2de11ce"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "manual",
+        "title": "Apple openrsync 手册：递归与源目录末尾斜杠",
+        "url": "https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L760-L773"
+      },
+      {
+        "id": "destination",
+        "title": "Apple openrsync 手册：目标目录",
+        "url": "https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L972-L981"
+      },
+      {
+        "id": "probe",
+        "title": "本地目录与文件内容记录",
+        "path": "source/probe-1.json"
+      }
+    ]
+  },
+  "sourceMap": {
+    "/meta": {
+      "line": 1,
+      "column": 1,
+      "start": 0,
+      "end": 28
+    },
+    "/meta/title": {
+      "line": 1,
+      "column": 1,
+      "start": 0,
+      "end": 28
+    },
+    "/meta/id": {
+      "line": 1,
+      "column": 1,
+      "start": 0,
+      "end": 28
+    },
+    "/answer": {
+      "line": 3,
+      "column": 1,
+      "start": 29,
+      "end": 132
+    },
+    "/answer/summary": {
+      "line": 3,
+      "column": 1,
+      "start": 29,
+      "end": 132
+    },
+    "/answer/scope": {
+      "line": 5,
+      "column": 1,
+      "start": 133,
+      "end": 184
+    },
+    "/meta/locale": {
+      "line": 6,
+      "column": 1,
+      "start": 184,
+      "end": 219
+    },
+    "/meta/style": {
+      "line": 6,
+      "column": 1,
+      "start": 184,
+      "end": 219
+    },
+    "/sources/0": {
+      "line": 7,
+      "column": 1,
+      "start": 219,
+      "end": 403
+    },
+    "/sources/0/id": {
+      "line": 7,
+      "column": 1,
+      "start": 219,
+      "end": 403
+    },
+    "/sources/0/title": {
+      "line": 7,
+      "column": 1,
+      "start": 219,
+      "end": 403
+    },
+    "/sources/0/url": {
+      "line": 7,
+      "column": 1,
+      "start": 219,
+      "end": 403
+    },
+    "/sources/1": {
+      "line": 8,
+      "column": 1,
+      "start": 403,
+      "end": 586
+    },
+    "/sources/1/id": {
+      "line": 8,
+      "column": 1,
+      "start": 403,
+      "end": 586
+    },
+    "/sources/1/title": {
+      "line": 8,
+      "column": 1,
+      "start": 403,
+      "end": 586
+    },
+    "/sources/1/url": {
+      "line": 8,
+      "column": 1,
+      "start": 403,
+      "end": 586
+    },
+    "/sources/2": {
+      "line": 9,
+      "column": 1,
+      "start": 586,
+      "end": 645
+    },
+    "/sources/2/id": {
+      "line": 9,
+      "column": 1,
+      "start": 586,
+      "end": 645
+    },
+    "/sources/2/title": {
+      "line": 9,
+      "column": 1,
+      "start": 586,
+      "end": 645
+    },
+    "/sources/2/path": {
+      "line": 9,
+      "column": 1,
+      "start": 586,
+      "end": 645
+    },
+    "/panels/0": {
+      "line": 11,
+      "column": 1,
+      "start": 646,
+      "end": 795
+    },
+    "/panels/0/id": {
+      "line": 11,
+      "column": 1,
+      "start": 646,
+      "end": 1547
+    },
+    "/panels/0/title": {
+      "line": 11,
+      "column": 1,
+      "start": 646,
+      "end": 1547
+    },
+    "/panels/0/span": {
+      "line": 11,
+      "column": 1,
+      "start": 646,
+      "end": 1547
+    },
+    "/panels/0/blocks": {
+      "line": 11,
+      "column": 1,
+      "start": 646,
+      "end": 1547
+    },
+    "/panels/0/blocks/0": {
+      "line": 13,
+      "column": 1,
+      "start": 677,
+      "end": 725
+    },
+    "/panels/0/blocks/0/type": {
+      "line": 13,
+      "column": 1,
+      "start": 677,
+      "end": 725
+    },
+    "/panels/0/blocks/0/text": {
+      "line": 13,
+      "column": 1,
+      "start": 677,
+      "end": 725
+    },
+    "/panels/0/blocks/0/id": {
+      "line": 13,
+      "column": 1,
+      "start": 677,
+      "end": 725
+    },
+    "/panels/0/blocks/1": {
+      "line": 15,
+      "column": 1,
+      "start": 726,
+      "end": 794
+    },
+    "/panels/0/blocks/1/type": {
+      "line": 15,
+      "column": 1,
+      "start": 726,
+      "end": 794
+    },
+    "/panels/0/blocks/1/language": {
+      "line": 15,
+      "column": 1,
+      "start": 726,
+      "end": 794
+    },
+    "/panels/0/blocks/1/title": {
+      "line": 15,
+      "column": 1,
+      "start": 726,
+      "end": 794
+    },
+    "/panels/0/blocks/1/text": {
+      "line": 16,
+      "column": 1,
+      "start": 751,
+      "end": 789
+    },
+    "/panels/0/blocks/1/id": {
+      "line": 15,
+      "column": 1,
+      "start": 726,
+      "end": 794
+    },
+    "/panels/1": {
+      "line": 21,
+      "column": 1,
+      "start": 795,
+      "end": 1061
+    },
+    "/panels/1/id": {
+      "line": 21,
+      "column": 1,
+      "start": 795,
+      "end": 1547
+    },
+    "/panels/1/title": {
+      "line": 21,
+      "column": 1,
+      "start": 795,
+      "end": 1547
+    },
+    "/panels/1/span": {
+      "line": 21,
+      "column": 1,
+      "start": 795,
+      "end": 1547
+    },
+    "/panels/1/blocks": {
+      "line": 21,
+      "column": 1,
+      "start": 795,
+      "end": 1547
+    },
+    "/panels/1/blocks/0": {
+      "line": 23,
+      "column": 1,
+      "start": 839,
+      "end": 885
+    },
+    "/panels/1/blocks/0/type": {
+      "line": 23,
+      "column": 1,
+      "start": 839,
+      "end": 885
+    },
+    "/panels/1/blocks/0/language": {
+      "line": 23,
+      "column": 1,
+      "start": 839,
+      "end": 885
+    },
+    "/panels/1/blocks/0/title": {
+      "line": 23,
+      "column": 1,
+      "start": 839,
+      "end": 885
+    },
+    "/panels/1/blocks/0/text": {
+      "line": 24,
+      "column": 1,
+      "start": 861,
+      "end": 880
+    },
+    "/panels/1/blocks/0/id": {
+      "line": 23,
+      "column": 1,
+      "start": 839,
+      "end": 885
+    },
+    "/panels/1/blocks/1": {
+      "line": 27,
+      "column": 1,
+      "start": 886,
+      "end": 993
+    },
+    "/panels/1/blocks/1/type": {
+      "line": 27,
+      "column": 1,
+      "start": 886,
+      "end": 993
+    },
+    "/panels/1/blocks/1/language": {
+      "line": 27,
+      "column": 1,
+      "start": 886,
+      "end": 993
+    },
+    "/panels/1/blocks/1/title": {
+      "line": 27,
+      "column": 1,
+      "start": 886,
+      "end": 993
+    },
+    "/panels/1/blocks/1/text": {
+      "line": 28,
+      "column": 1,
+      "start": 911,
+      "end": 988
+    },
+    "/panels/1/blocks/1/id": {
+      "line": 27,
+      "column": 1,
+      "start": 886,
+      "end": 993
+    },
+    "/panels/1/blocks/2": {
+      "line": 36,
+      "column": 1,
+      "start": 994,
+      "end": 1060
+    },
+    "/panels/1/blocks/2/type": {
+      "line": 36,
+      "column": 1,
+      "start": 994,
+      "end": 1060
+    },
+    "/panels/1/blocks/2/text": {
+      "line": 36,
+      "column": 1,
+      "start": 994,
+      "end": 1060
+    },
+    "/panels/1/blocks/2/id": {
+      "line": 36,
+      "column": 1,
+      "start": 994,
+      "end": 1060
+    },
+    "/panels/2": {
+      "line": 38,
+      "column": 1,
+      "start": 1061,
+      "end": 1332
+    },
+    "/panels/2/id": {
+      "line": 38,
+      "column": 1,
+      "start": 1061,
+      "end": 1547
+    },
+    "/panels/2/title": {
+      "line": 38,
+      "column": 1,
+      "start": 1061,
+      "end": 1547
+    },
+    "/panels/2/span": {
+      "line": 38,
+      "column": 1,
+      "start": 1061,
+      "end": 1547
+    },
+    "/panels/2/blocks": {
+      "line": 38,
+      "column": 1,
+      "start": 1061,
+      "end": 1547
+    },
+    "/panels/2/blocks/0": {
+      "line": 40,
+      "column": 1,
+      "start": 1103,
+      "end": 1152
+    },
+    "/panels/2/blocks/0/type": {
+      "line": 40,
+      "column": 1,
+      "start": 1103,
+      "end": 1152
+    },
+    "/panels/2/blocks/0/language": {
+      "line": 40,
+      "column": 1,
+      "start": 1103,
+      "end": 1152
+    },
+    "/panels/2/blocks/0/title": {
+      "line": 40,
+      "column": 1,
+      "start": 1103,
+      "end": 1152
+    },
+    "/panels/2/blocks/0/text": {
+      "line": 41,
+      "column": 1,
+      "start": 1127,
+      "end": 1147
+    },
+    "/panels/2/blocks/0/id": {
+      "line": 40,
+      "column": 1,
+      "start": 1103,
+      "end": 1152
+    },
+    "/panels/2/blocks/1": {
+      "line": 44,
+      "column": 1,
+      "start": 1153,
+      "end": 1235
+    },
+    "/panels/2/blocks/1/type": {
+      "line": 44,
+      "column": 1,
+      "start": 1153,
+      "end": 1235
+    },
+    "/panels/2/blocks/1/language": {
+      "line": 44,
+      "column": 1,
+      "start": 1153,
+      "end": 1235
+    },
+    "/panels/2/blocks/1/title": {
+      "line": 44,
+      "column": 1,
+      "start": 1153,
+      "end": 1235
+    },
+    "/panels/2/blocks/1/text": {
+      "line": 45,
+      "column": 1,
+      "start": 1178,
+      "end": 1230
+    },
+    "/panels/2/blocks/1/id": {
+      "line": 44,
+      "column": 1,
+      "start": 1153,
+      "end": 1235
+    },
+    "/panels/2/blocks/2": {
+      "line": 52,
+      "column": 1,
+      "start": 1236,
+      "end": 1331
+    },
+    "/panels/2/blocks/2/type": {
+      "line": 52,
+      "column": 1,
+      "start": 1236,
+      "end": 1331
+    },
+    "/panels/2/blocks/2/text": {
+      "line": 52,
+      "column": 1,
+      "start": 1236,
+      "end": 1331
+    },
+    "/panels/2/blocks/2/id": {
+      "line": 52,
+      "column": 1,
+      "start": 1236,
+      "end": 1331
+    },
+    "/panels/3": {
+      "line": 54,
+      "column": 1,
+      "start": 1332,
+      "end": 1547
+    },
+    "/panels/3/id": {
+      "line": 54,
+      "column": 1,
+      "start": 1332,
+      "end": 1547
+    },
+    "/panels/3/title": {
+      "line": 54,
+      "column": 1,
+      "start": 1332,
+      "end": 1547
+    },
+    "/panels/3/span": {
+      "line": 54,
+      "column": 1,
+      "start": 1332,
+      "end": 1547
+    },
+    "/panels/3/blocks": {
+      "line": 54,
+      "column": 1,
+      "start": 1332,
+      "end": 1547
+    },
+    "/panels/3/blocks/0": {
+      "line": 56,
+      "column": 1,
+      "start": 1361,
+      "end": 1501
+    },
+    "/panels/3/blocks/0/type": {
+      "line": 56,
+      "column": 1,
+      "start": 1361,
+      "end": 1501
+    },
+    "/panels/3/blocks/0/text": {
+      "line": 56,
+      "column": 1,
+      "start": 1361,
+      "end": 1501
+    },
+    "/panels/3/blocks/0/id": {
+      "line": 56,
+      "column": 1,
+      "start": 1361,
+      "end": 1501
+    },
+    "/panels/3/blocks/1": {
+      "line": 58,
+      "column": 1,
+      "start": 1502,
+      "end": 1547
+    },
+    "/panels/3/blocks/1/type": {
+      "line": 58,
+      "column": 1,
+      "start": 1502,
+      "end": 1547
+    },
+    "/panels/3/blocks/1/text": {
+      "line": 58,
+      "column": 1,
+      "start": 1502,
+      "end": 1547
+    },
+    "/panels/3/blocks/1/id": {
+      "line": 58,
+      "column": 1,
+      "start": 1502,
+      "end": 1547
+    }
+  },
+  "format": "markdown",
+  "sourceText": "# 源目录末尾的 `/`，差哪一层？ {#slash}\n\n目标目录 `dst` 已存在且为空时，`src` 会把自己那一层也复制进去，得到 `dst/src/`；`src/` 则把内容直接放进 `dst/`。两者都会复制子目录。[](source:manual)\n\n@answer scope=\"Apple openrsync · 本地 -r 复制 · 空目标目录\"\n@meta locale=zh-CN style=editorial\n@source manual title=\"Apple openrsync 手册：递归与源目录末尾斜杠\" url=https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L760-L773\n@source destination title=\"Apple openrsync 手册：目标目录\" url=https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L972-L981\n@source probe title=\"本地目录与文件内容记录\" path=source/probe-1.json\n\n## 从相同的源目录开始 {#source span=6}\n\n两个例子分开运行，每次都使用这三份源文件和一个空 `dst`。[](source:probe)\n\n```text title=\"复制前的文件路径\"\nsrc/.hidden\nsrc/a.txt\nsrc/nested/b.txt\n```\n\n## 不带 `/`：保留外层 src {#without-slash span=6}\n\n```sh title=\"复制源目录本身\"\nrsync -r -- src dst\n```\n\n```text title=\"复制后的目标目录\"\ndst/\n└── src/\n    ├── .hidden\n    ├── a.txt\n    └── nested/\n        └── b.txt\n```\n\n`src` 这一层进入了 `dst`；嵌套文件位于 `dst/src/nested/b.txt`。[](source:probe)\n\n## 带 `/`：内容直接进入 dst {#with-slash span=6}\n\n```sh title=\"复制源目录里的内容\"\nrsync -r -- src/ dst\n```\n\n```text title=\"复制后的目标目录\"\ndst/\n├── .hidden\n├── a.txt\n└── nested/\n    └── b.txt\n```\n\n`-r` 仍然递归复制，嵌套文件位于 `dst/nested/b.txt`。末尾的 `/` 没有关闭递归，隐藏文件也仍在。[](source:manual)[](source:probe)\n\n## 这次实测的范围 {#scope span=12}\n\n使用 macOS 的 Apple openrsync（项目 `rsync-184`）做本地复制。两次命令都成功退出，源文件保持不变。目标目录不存在时，手册说明会创建它；本次探针也得到相同的两种目录层级。[](source:destination)[](source:probe)\n\n结果针对单个源目录和 `-r`；过滤规则、符号链接、远程传输和元数据不在这次检查范围内。\n",
+  "diagnostics": [],
+  "sourcePath": "candidate.archify.md",
+  "baseDir": ".",
+  "quality": "showcase",
+  "writingMode": "strict",
+  "source": {
+    "sha256": "c456a24c11c23d77db5834f14ff275a54db6eccea6d330492a76c9d3cf469544",
+    "bytes": 2295
+  },
+  "preparedSources": {
+    "sources": {
+      "manual": {
+        "id": "manual",
+        "title": "Apple openrsync 手册：递归与源目录末尾斜杠",
+        "url": "https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L760-L773"
+      },
+      "destination": {
+        "id": "destination",
+        "title": "Apple openrsync 手册：目标目录",
+        "url": "https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L972-L981"
+      },
+      "probe": {
+        "id": "probe",
+        "title": "本地目录与文件内容记录",
+        "path": "source/probe-1.json",
+        "text": "{\n  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",\n  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",\n  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",\n  \"cases\": [\n    {\n      \"destinationExisted\": true,\n      \"sourceTrailingSlash\": false,\n      \"command\": [\n        \"rsync\",\n        \"-r\",\n        \"--\",\n        \"src\",\n        \"dst\"\n      ],\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"exitCode\": 0,\n      \"destinationTree\": [\n        \"src/\",\n        \"src/.hidden\",\n        \"src/a.txt\",\n        \"src/nested/\",\n        \"src/nested/b.txt\"\n      ],\n      \"fileContents\": {\n        \"src/.hidden\": \"hidden\\n\",\n        \"src/a.txt\": \"alpha\\n\",\n        \"src/nested/b.txt\": \"beta\\n\"\n      },\n      \"sourcePreserved\": true\n    },\n    {\n      \"destinationExisted\": true,\n      \"sourceTrailingSlash\": true,\n      \"command\": [\n        \"rsync\",\n        \"-r\",\n        \"--\",\n        \"src/\",\n        \"dst\"\n      ],\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"exitCode\": 0,\n      \"destinationTree\": [\n        \".hidden\",\n        \"a.txt\",\n        \"nested/\",\n        \"nested/b.txt\"\n      ],\n      \"fileContents\": {\n        \".hidden\": \"hidden\\n\",\n        \"a.txt\": \"alpha\\n\",\n        \"nested/b.txt\": \"beta\\n\"\n      },\n      \"sourcePreserved\": true\n    },\n    {\n      \"destinationExisted\": false,\n      \"sourceTrailingSlash\": false,\n      \"command\": [\n        \"rsync\",\n        \"-r\",\n        \"--\",\n        \"src\",\n        \"dst\"\n      ],\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"exitCode\": 0,\n      \"destinationTree\": [\n        \"src/\",\n        \"src/.hidden\",\n        \"src/a.txt\",\n        \"src/nested/\",\n        \"src/nested/b.txt\"\n      ],\n      \"fileContents\": {\n        \"src/.hidden\": \"hidden\\n\",\n        \"src/a.txt\": \"alpha\\n\",\n        \"src/nested/b.txt\": \"beta\\n\"\n      },\n      \"sourcePreserved\": true\n    },\n    {\n      \"destinationExisted\": false,\n      \"sourceTrailingSlash\": true,\n      \"command\": [\n        \"rsync\",\n        \"-r\",\n        \"--\",\n        \"src/\",\n        \"dst\"\n      ],\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"exitCode\": 0,\n      \"destinationTree\": [\n        \".hidden\",\n        \"a.txt\",\n        \"nested/\",\n        \"nested/b.txt\"\n      ],\n      \"fileContents\": {\n        \".hidden\": \"hidden\\n\",\n        \"a.txt\": \"alpha\\n\",\n        \"nested/b.txt\": \"beta\\n\"\n      },\n      \"sourcePreserved\": true\n    }\n  ]\n}\n",
+        "lines": [
+          1,
+          14
+        ]
+      }
+    },
+    "assets": {}
+  },
+  "preparedDiagrams": {
+    "diagrams": {}
+  },
+  "dependencies": [],
+  "digest": "c4277cd644fb5b744065a038eae734727162eee94435f556b82ead287cf7b0b4"
+}

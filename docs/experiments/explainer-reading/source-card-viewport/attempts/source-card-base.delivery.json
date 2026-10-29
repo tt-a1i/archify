@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "f8cfac9b-68c8-4fa0-887f-efbdb096a3af",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round32/source-card.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round32/source-card-base.html",
+  "specification": {
+    "sha256": "b43180f5e2a61fb2cf5848d0235cd04f3795312d56a173593dfd7835cdb533a9",
+    "bytes": 2357
+  },
+  "artifact": {
+    "sha256": "2db1507fb7b17dfc762ebc72258c39682349208691e22dd3cf1eae1239217ab9",
+    "bytes": 161491
+  },
+  "explainer": {
+    "preparedSha256": "ed2460baf0fe618fc6a696f5b1bf52e850f01331143edb27ac991e1de38e809c",
+    "dependencies": [
+      {
+        "kind": "repository",
+        "id": "probe",
+        "path": "docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json",
+        "revision": "c16a23e803b542703cb2c34946a71c7b635b25af",
+        "sha256": "f0507d44e4405a01d987da570288640aff125b8920ab950b3a51bdbc392552b7",
+        "bytes": 2535
+      }
+    ]
+  }
+}

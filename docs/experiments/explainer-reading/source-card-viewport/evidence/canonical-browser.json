@@ -1,0 +1,17 @@
+{
+  "card": {
+    "box": {
+      "x": 12,
+      "y": 12,
+      "width": 366,
+      "height": 419.6875,
+      "top": 12,
+      "right": 378,
+      "bottom": 431.6875,
+      "left": 12
+    },
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "hidden": false
+  },
+  "exportedAfterClosingCard": true
+}

@@ -1,0 +1,212 @@
+[
+  {
+    "step": "style open",
+    "focus": {
+      "tag": "BUTTON",
+      "text": "杂志",
+      "html": "<button type=\"button\" role=\"menuitemradio\" aria-checked=\"true\" data-style-choice=\"editorial\" tabindex=\"-1\"><span class=\"style-swatch\" data-swatch=\"editorial\"></span><span>杂志</span><svg class=\"tool-ico"
+    },
+    "menus": [
+      {
+        "hidden": false
+      },
+      {
+        "hidden": true
+      }
+    ],
+    "card": {
+      "hidden": true,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    "scrollY": 0
+  },
+  {
+    "step": "style Tab",
+    "focus": {
+      "tag": "BUTTON",
+      "text": "导出",
+      "html": "<button type=\"button\" class=\"tool-button\" data-export-toggle=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\"><svg class=\"tool-icon\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2"
+    },
+    "menus": [
+      {
+        "hidden": true
+      },
+      {
+        "hidden": true
+      }
+    ],
+    "card": {
+      "hidden": true,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    "scrollY": 0
+  },
+  {
+    "step": "style Shift Tab",
+    "focus": {
+      "tag": "BUTTON",
+      "text": "杂志",
+      "html": "<button type=\"button\" class=\"tool-button\" data-style-toggle=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"样式\"><span class=\"style-swatch\" data-swatch=\"editorial\"></span><span data-style-lab"
+    },
+    "menus": [
+      {
+        "hidden": true
+      },
+      {
+        "hidden": true
+      }
+    ],
+    "card": {
+      "hidden": true,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    "scrollY": 0
+  },
+  {
+    "step": "export Tab",
+    "focus": {
+      "tag": "BUTTON",
+      "text": "追问",
+      "html": "<button type=\"button\" class=\"ask-button interactive\">追问</button>"
+    },
+    "menus": [
+      {
+        "hidden": true
+      },
+      {
+        "hidden": true
+      }
+    ],
+    "card": {
+      "hidden": true,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    "scrollY": 0
+  },
+  {
+    "step": "citation focus",
+    "focus": {
+      "tag": "A",
+      "text": "1",
+      "html": "<a href=\"#source-manual\">1</a>"
+    },
+    "menus": [
+      {
+        "hidden": true
+      },
+      {
+        "hidden": true
+      }
+    ],
+    "card": {
+      "hidden": false,
+      "box": {
+        "x": 12,
+        "y": 404.4296875,
+        "width": 366,
+        "height": 120.1171875,
+        "top": 404.4296875,
+        "right": 378,
+        "bottom": 524.546875,
+        "left": 12
+      }
+    },
+    "scrollY": 0
+  },
+  {
+    "step": "source card Tab",
+    "focus": {
+      "tag": "A",
+      "text": "打开原文 ↗",
+      "html": "<a href=\"https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L760-L773\" target=\"_blank\" rel=\"noopener noreferrer\">打开原文 ↗</a>"
+    },
+    "menus": [
+      {
+        "hidden": true
+      },
+      {
+        "hidden": true
+      }
+    ],
+    "card": {
+      "hidden": false,
+      "box": {
+        "x": 12,
+        "y": 404.4296875,
+        "width": 366,
+        "height": 120.1171875,
+        "top": 404.4296875,
+        "right": 378,
+        "bottom": 524.546875,
+        "left": 12
+      }
+    },
+    "scrollY": 0
+  },
+  {
+    "step": "source card leave",
+    "focus": {
+      "tag": "A",
+      "text": "1",
+      "html": "<a class=\"panel-id\" href=\"#source\" aria-label=\"从相同的源目录开始\">1</a>"
+    },
+    "menus": [
+      {
+        "hidden": true
+      },
+      {
+        "hidden": true
+      }
+    ],
+    "card": {
+      "hidden": true,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    "scrollY": 0
+  }
+]

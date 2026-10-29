@@ -1,0 +1,794 @@
+[
+  {
+    "arm": "base",
+    "width": 390,
+    "height": 480,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": -193.6171875,
+      "width": 366,
+      "height": 419.6875,
+      "top": -193.6171875,
+      "right": 378,
+      "bottom": 226.0703125,
+      "left": 12
+    },
+    "inView": false,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "base",
+    "width": 390,
+    "height": 480,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": -193.6171875,
+      "width": 366,
+      "height": 419.6875,
+      "top": -193.6171875,
+      "right": 378,
+      "bottom": 226.0703125,
+      "left": 12
+    },
+    "inView": false,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "base",
+    "width": 1440,
+    "height": 480,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 908,
+      "y": -236.90625,
+      "width": 520,
+      "height": 403.59375,
+      "top": -236.90625,
+      "right": 1428,
+      "bottom": 166.6875,
+      "left": 908
+    },
+    "inView": false,
+    "scrollHeight": 402,
+    "clientHeight": 402,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 1440,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "base",
+    "width": 1440,
+    "height": 480,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 908,
+      "y": -236.90625,
+      "width": 520,
+      "height": 403.59375,
+      "top": -236.90625,
+      "right": 1428,
+      "bottom": 166.6875,
+      "left": 908
+    },
+    "inView": false,
+    "scrollHeight": 402,
+    "clientHeight": 402,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 1440,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "base",
+    "width": 390,
+    "height": 240,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": -313.6171875,
+      "width": 366,
+      "height": 419.6875,
+      "top": -313.6171875,
+      "right": 378,
+      "bottom": 106.0703125,
+      "left": 12
+    },
+    "inView": false,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "base",
+    "width": 390,
+    "height": 240,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": -313.6171875,
+      "width": 366,
+      "height": 419.6875,
+      "top": -313.6171875,
+      "right": 378,
+      "bottom": 106.0703125,
+      "left": 12
+    },
+    "inView": false,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "base",
+    "width": 390,
+    "height": 900,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 463.8828125,
+      "width": 366,
+      "height": 419.6875,
+      "top": 463.8828125,
+      "right": 378,
+      "bottom": 883.5703125,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "base",
+    "width": 390,
+    "height": 900,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 463.8828125,
+      "width": 366,
+      "height": 419.6875,
+      "top": 463.8828125,
+      "right": 378,
+      "bottom": 883.5703125,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 390,
+    "height": 480,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 8,
+      "width": 366,
+      "height": 419.6875,
+      "top": 8,
+      "right": 378,
+      "bottom": 427.6875,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 390,
+    "height": 480,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 8,
+      "width": 366,
+      "height": 419.6875,
+      "top": 8,
+      "right": 378,
+      "bottom": 427.6875,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 1440,
+    "height": 480,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 908,
+      "y": 8,
+      "width": 520,
+      "height": 403.59375,
+      "top": 8,
+      "right": 1428,
+      "bottom": 411.59375,
+      "left": 908
+    },
+    "inView": true,
+    "scrollHeight": 402,
+    "clientHeight": 402,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 1440,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 1440,
+    "height": 480,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 908,
+      "y": 8,
+      "width": 520,
+      "height": 403.59375,
+      "top": 8,
+      "right": 1428,
+      "bottom": 411.59375,
+      "left": 908
+    },
+    "inView": true,
+    "scrollHeight": 402,
+    "clientHeight": 402,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 1440,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 390,
+    "height": 240,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 8,
+      "width": 366,
+      "height": 419.6875,
+      "top": 8,
+      "right": 378,
+      "bottom": 427.6875,
+      "left": 12
+    },
+    "inView": false,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 390,
+    "height": 240,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 8,
+      "width": 366,
+      "height": 419.6875,
+      "top": 8,
+      "right": 378,
+      "bottom": 427.6875,
+      "left": 12
+    },
+    "inView": false,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 390,
+    "height": 900,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 463.8828125,
+      "width": 366,
+      "height": 419.6875,
+      "top": 463.8828125,
+      "right": 378,
+      "bottom": 883.5703125,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "proposal",
+    "width": 390,
+    "height": 900,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 463.8828125,
+      "width": 366,
+      "height": 419.6875,
+      "top": 463.8828125,
+      "right": 378,
+      "bottom": 883.5703125,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "height": 480,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 12,
+      "width": 366,
+      "height": 419.6875,
+      "top": 12,
+      "right": 378,
+      "bottom": 431.6875,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "height": 480,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 12,
+      "width": 366,
+      "height": 419.6875,
+      "top": 12,
+      "right": 378,
+      "bottom": 431.6875,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 1440,
+    "height": 480,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 908,
+      "y": 12,
+      "width": 520,
+      "height": 403.59375,
+      "top": 12,
+      "right": 1428,
+      "bottom": 415.59375,
+      "left": 908
+    },
+    "inView": true,
+    "scrollHeight": 402,
+    "clientHeight": 402,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 1440,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 1440,
+    "height": 480,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 908,
+      "y": 12,
+      "width": 520,
+      "height": 403.59375,
+      "top": 12,
+      "right": 1428,
+      "bottom": 415.59375,
+      "left": 908
+    },
+    "inView": true,
+    "scrollHeight": 402,
+    "clientHeight": 402,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 1440,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "height": 240,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 12,
+      "width": 366,
+      "height": 216,
+      "top": 12,
+      "right": 378,
+      "bottom": 228,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 214,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 203.5
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "height": 240,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 12,
+      "width": 366,
+      "height": 216,
+      "top": 12,
+      "right": 378,
+      "bottom": 228,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 214,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 203.5
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "height": 900,
+    "theme": "light",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 463.8828125,
+      "width": 366,
+      "height": 419.6875,
+      "top": 463.8828125,
+      "right": 378,
+      "bottom": 883.5703125,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "height": 900,
+    "theme": "dark",
+    "hidden": false,
+    "box": {
+      "x": 12,
+      "y": 463.8828125,
+      "width": 366,
+      "height": 419.6875,
+      "top": 463.8828125,
+      "right": 378,
+      "bottom": 883.5703125,
+      "left": 12
+    },
+    "inView": true,
+    "scrollHeight": 418,
+    "clientHeight": 418,
+    "scrollTop": 0,
+    "text": "本地目录与文件内容记录docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"固定在 c16a23e打开原文 ↗",
+    "href": "https://github.com/tt-a1i/archify/blob/c16a23e803b542703cb2c34946a71c7b635b25af/docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json#L1-L14",
+    "pageWidth": 390,
+    "link": {
+      "focused": true,
+      "visible": true,
+      "scrollTop": 0
+    },
+    "exit": {
+      "hidden": true,
+      "focused": true
+    }
+  }
+]

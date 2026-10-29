@@ -1,0 +1,83 @@
+[
+  {
+    "width": 390,
+    "height": 480,
+    "card": {
+      "x": 12,
+      "y": -125.6171875,
+      "width": 366,
+      "height": 352.2890625,
+      "top": -125.6171875,
+      "right": 378,
+      "bottom": 226.671875,
+      "left": 12
+    },
+    "source": "本地目录与文件内容记录source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"…",
+    "opener": {
+      "x": 86.2890625,
+      "y": 234.3828125,
+      "width": 8.6953125,
+      "height": 11.5,
+      "top": 234.3828125,
+      "right": 94.984375,
+      "bottom": 245.8828125,
+      "left": 86.2890625
+    },
+    "scrollY": 333.5,
+    "documentHeight": 2192
+  },
+  {
+    "width": 1440,
+    "height": 480,
+    "card": {
+      "x": 908,
+      "y": -184.90625,
+      "width": 520,
+      "height": 352.2890625,
+      "top": -184.90625,
+      "right": 1428,
+      "bottom": 167.3828125,
+      "left": 908
+    },
+    "source": "本地目录与文件内容记录source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"…",
+    "opener": {
+      "x": 1147.2890625,
+      "y": 175.09375,
+      "width": 8.6953125,
+      "height": 11.5,
+      "top": 175.09375,
+      "right": 1155.984375,
+      "bottom": 186.59375,
+      "left": 1147.2890625
+    },
+    "scrollY": 0,
+    "documentHeight": 1213
+  },
+  {
+    "width": 390,
+    "height": 900,
+    "card": {
+      "x": 12,
+      "y": 463.8828125,
+      "width": 366,
+      "height": 352.2890625,
+      "top": 463.8828125,
+      "right": 378,
+      "bottom": 816.171875,
+      "left": 12
+    },
+    "source": "本地目录与文件内容记录source/probe-1.json:1–1421{2  \"version\": \"openrsync: protocol version 29\\nrsync version 2.6.9 compatible\\n\",3  \"build\": \"/usr/bin/rsync:\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\\tPROGRAM:rsync  PROJECT:rsync-184\\n\",4  \"scope\": \"four local recursive-copy constructions; one source directory, target absent or empty directory; no --delete, archive metadata, symlinks, filters or remote transport\",5  \"cases\": [6    {7      \"destinationExisted\": true,8      \"sourceTrailingSlash\": false,9      \"command\": [10        \"rsync\",11        \"-r\",12        \"--\",13        \"src\",14        \"dst\"…",
+    "opener": {
+      "x": 86.2890625,
+      "y": 444.3828125,
+      "width": 8.6953125,
+      "height": 11.5,
+      "top": 444.3828125,
+      "right": 94.984375,
+      "bottom": 455.8828125,
+      "left": 86.2890625
+    },
+    "scrollY": 123.5,
+    "documentHeight": 2192
+  }
+]

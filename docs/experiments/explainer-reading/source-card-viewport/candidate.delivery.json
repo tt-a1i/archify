@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "bdda5a58-2d9b-42d0-a7b9-8ff1679119ea",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/source-card-viewport/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/source-card-viewport/candidate.html",
+  "specification": {
+    "sha256": "dc005128c18571a3271d629bb98a60a6b14ff75e0f7cd7fec846f327372bb6b8",
+    "bytes": 2455
+  },
+  "artifact": {
+    "sha256": "fd24b3a61ad6f4c05ebe66ebed7f750800012624a030cfa4075e1057b234c6b5",
+    "bytes": 162094
+  },
+  "explainer": {
+    "preparedSha256": "c2ac7a17b99f21dcf99705e9cbebd5405b4eddb45e73441151b7933d793879a3",
+    "dependencies": [
+      {
+        "kind": "repository",
+        "id": "probe",
+        "path": "docs/experiments/explainer-reading/openrsync-slash/source/probe-1.json",
+        "revision": "c16a23e803b542703cb2c34946a71c7b635b25af",
+        "sha256": "f0507d44e4405a01d987da570288640aff125b8920ab950b3a51bdbc392552b7",
+        "bytes": 2535
+      }
+    ]
+  }
+}

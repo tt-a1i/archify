@@ -1,0 +1,32 @@
+{
+  "owners": [
+    {
+      "number": 1015,
+      "sha": "fe4f80d2195e0a7b49b7cfe6d3dba7ffd31a7ac8",
+      "repo": "tt-a1i/archify",
+      "excerpt": "      card.style.width = `${width}px`;\n      card.style.left = `${Math.max(12,Math.min(innerWidth - width - 12,box.left - 24)) + scrollX}px`;\n      const below = box.bottom + 8 + card.offsetHeight < innerHeight;\n      card.style.top = `${Math.max(8 + scrollY,(below ? box.bottom + 8 : box.top - 8 - card.offsetHeight) + scrollY)}px`;\n    };"
+    },
+    {
+      "number": 1142,
+      "sha": "c48949649eb7a9482d6170dcb4e29c1b47a047b5",
+      "repo": "outlier27-cell/archify",
+      "excerpt": "      card.style.width = `${width}px`;\n      card.style.left = `${Math.max(12,Math.min(innerWidth - width - 12,box.left - 24)) + scrollX}px`;\n      const below = box.bottom + 8 + card.offsetHeight < innerHeight;\n      card.style.top = `${(below ? box.bottom + 8 : box.top - 8 - card.offsetHeight) + scrollY}px`;\n    };"
+    },
+    {
+      "number": 1144,
+      "sha": "d72bb78d5bccd815ca6727141b3ff8783ad28ffc",
+      "repo": "outlier27-cell/archify",
+      "excerpt": "      card.style.width = `${width}px`;\n      card.style.left = `${Math.max(12,Math.min(innerWidth - width - 12,box.left - 24)) + scrollX}px`;\n      const below = box.bottom + 8 + card.offsetHeight < innerHeight;\n      card.style.top = `${(below ? box.bottom + 8 : box.top - 8 - card.offsetHeight) + scrollY}px`;\n    };"
+    }
+  ],
+  "pr1015css": [
+    ".source-card{position:absolute;z-index:30;display:flex;flex-direction:column;gap:10px;padding:12px 14px;background:var(--panel);border:1px solid var(--control-border,var(--rule-strong));border-radius:12px;box-shadow:0 16px 40px rgb(16 24 40/.16);font-size:12.5px;color:var(--secondary)}",
+    ".source-card header{display:flex;align-items:flex-start;gap:10px}",
+    ".source-card b{color:var(--ink);font-size:13px;line-height:1.4}",
+    ".source-card pre{margin:0;max-height:280px;font-size:11.5px;line-height:1.6;padding:8px 0;border-radius:8px}",
+    ".source-card .line{display:block;padding:0 12px 0 0;white-space:pre}",
+    ".source-card .line i{display:inline-block;width:3.2em;padding-right:10px;text-align:right;color:var(--faint);font-style:normal;user-select:none}",
+    ".source-card footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 0;border-top:1px solid var(--rule);font-size:11.5px;color:var(--muted)}",
+    ".source-card a{font-size:12px;font-weight:500}"
+  ]
+}

@@ -1,0 +1,9 @@
+# Round 32: auxiliary reading controls
+
+Start 2026-10-29T21:49Z (minute precision). Base c16a23e803b542703cb2c34946a71c7b635b25af, dev5ecbd1bfdbf83ea747072112493c940e707569cb refreshed round31. Round31 clean remote verified. Overall goal active.
+
+Question: on actual saved explainers, can keyboard readers enter and leave toolbar/source controls without losing their reading place, and can the source content be read inside the viewport? Scope actual existing page interactions first, not a speculative focus framework. Known #1076 toolbar-wrap proposal remains independently owned; known #1124 changes QA traversal, not Reader focus behavior. Do not infer either is a Reader repair or silently duplicate them.
+
+Budget: 8 minutes initial diagnosis, at most2 concrete runtime hypotheses. Record actual UI state with real key events. If evidence identifies a small Reader bug, define a <=25min implementation/verification follow-up. Otherwise record the audit and move to another reading question. No author needed for a fixed-input UI audit. No generation/speed/human acceptance claims. No merge/release/live install.
+
+Diagnosis at 21:49:10Z: real menu/source keyboard checks showed correct transitions. Initial programmatic focus attempts on later navigations did not open cards until a real theme-button click activated the page; empty-card captures are not a Reader failure. A fixed-input rendition with a real probe excerpt shows the source-card top at -125.6px on390x480 and -184.9px on1440x480; header and early evidence lines are clipped. Next verify through public strict finalize with a pinned repository source, then clamp vertical placement and bound oversized cards with local scrolling. Follow-up budget <=25min and <=2candidate implementations; retain all initial probes. No generic focus model or unrelated toolbar changes.

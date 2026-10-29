@@ -1,0 +1,20 @@
+[
+  {
+    "path": "evidence/regression-base.log",
+    "originalSha256": "4c76cd460539ef0982390dc544690a138e4c04f74972632f78d8c68707cd5866",
+    "archiveSha256": "ec324f1aa0df5997bca1015ce049ee6cf96a95c7000caaf425a05e54475379f4",
+    "change": "trim whitespace on diagnostic blank lines; original logs remain in tuning round"
+  },
+  {
+    "path": "evidence/regression-final-base.log",
+    "originalSha256": "656209a7527ec7432e29dff977745baeb9b6340dc94a5b139d1295b7546d0cd2",
+    "archiveSha256": "eb3ade760be8434a23d250593306e9e486e5bf85e90feb6932a35dfb7efb4bfa",
+    "change": "trim whitespace on diagnostic blank lines; original logs remain in tuning round"
+  },
+  {
+    "path": "evidence/reopen-before-reset.log",
+    "originalSha256": "08c73237f77342b9d5470418e36968212082efec6ad33a49e1d4e3ab3681292d",
+    "archiveSha256": "1ff88492605589bd9cc85863144109381f2c015007326b7fca5d73f98e5e2988",
+    "change": "trim whitespace on diagnostic blank lines; original logs remain in tuning round"
+  }
+]

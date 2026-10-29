@@ -1,0 +1,53 @@
+{
+  "scope": "900px-tall viewport where both cards already fit; geometry unchanged; settled images still have one-channel-level differences within excerpt, so no pixel identity claimed",
+  "results": [
+    {
+      "theme": "light",
+      "capture": "card",
+      "byteIdentical": false,
+      "maxChannelDelta": 2,
+      "pixelDifferenceBounds": [
+        28,
+        112,
+        374,
+        830
+      ]
+    },
+    {
+      "theme": "light",
+      "capture": "settled",
+      "byteIdentical": false,
+      "maxChannelDelta": 1,
+      "pixelDifferenceBounds": [
+        28,
+        556,
+        362,
+        830
+      ]
+    },
+    {
+      "theme": "dark",
+      "capture": "card",
+      "byteIdentical": false,
+      "maxChannelDelta": 4,
+      "pixelDifferenceBounds": [
+        28,
+        112,
+        374,
+        830
+      ]
+    },
+    {
+      "theme": "dark",
+      "capture": "settled",
+      "byteIdentical": false,
+      "maxChannelDelta": 1,
+      "pixelDifferenceBounds": [
+        28,
+        556,
+        362,
+        830
+      ]
+    }
+  ]
+}

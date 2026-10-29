@@ -207,3 +207,9 @@ This is a local accepted-input/rendering repair. The earlier content candidates 
 [Apple openrsync source slash](openrsync-slash/README.md) pairs each copy command with its resulting directory tree. Complete nested paths show that the slash changes the copied directory level while recursive copying remains active. The source audit distinguishes Apple openrsync's compatibility banner from the upstream rsync implementation; a wrong initial probe expectation and the author's source-path failure are retained. Five copied blocks match the page, and the two commands reproduce the trees in four temporary fixtures.
 
 The index now contains fifteen questions across thirteen projects and thirty-four variants. The selected page is shorter on phones and taller on desktop; no runtime or package changed, and no human comprehension improvement is inferred.
+
+## Continued exploration — round 32
+
+[Source cards in short windows](source-card-viewport/README.md) retain the heading and evidence when an excerpt cannot fit above or below its citation. The existing #1015 top-clamp proposal is credited and replayed; the new bounded-height behavior also handles a card taller than the viewport. Local scrolling preserves the original link and excerpt, and reopening returns to the heading. The first candidate's retained scroll position is recorded as a failed intermediate result.
+
+The final eight viewport/theme states fit, 15 real-Chrome browser tests pass, and the extracted deterministic package passes the new regression and public CLI checks. Thirty-four frozen pages change only their embedded Reader assets. This is a local reading interaction repair; the main index remains fifteen questions across thirteen projects and thirty-four variants.

@@ -1,0 +1,24 @@
+{
+  "card": "<div class=\"source-card\" hidden=\"\" role=\"group\" aria-label=\"来源详情\"></div>",
+  "errors": [],
+  "prepared": {
+    "sources": {
+      "manual": {
+        "id": "manual",
+        "title": "Apple openrsync 手册：递归与源目录末尾斜杠",
+        "url": "https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L760-L773"
+      },
+      "destination": {
+        "id": "destination",
+        "title": "Apple openrsync 手册：目标目录",
+        "url": "https://github.com/apple-oss-distributions/rsync/blob/13eacd7e9a204b236310dab23682f6354ecc69bd/openrsync/openrsync.1#L972-L981"
+      },
+      "probe": {
+        "id": "probe",
+        "title": "本地目录与文件内容记录",
+        "path": "source/probe-1.json"
+      }
+    },
+    "assets": {}
+  }
+}

@@ -1,0 +1,10 @@
+const fs=await import('node:fs/promises'),p=(await taskSpace(14)).page('p1'),r='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round32';
+await p.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:700,deviceScaleFactor:1,mobile:false});
+await p.goto('file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/openrsync-slash/candidate.html');
+const state=()=>p.evaluate(()=>({focus:{tag:document.activeElement.tagName,text:document.activeElement.textContent?.slice(0,80),html:document.activeElement.outerHTML.slice(0,200)},menus:[...document.querySelectorAll('[role=menu]')].map(e=>({hidden:e.hidden})),card:document.querySelector('.source-card')?{hidden:document.querySelector('.source-card').hidden,box:document.querySelector('.source-card').getBoundingClientRect().toJSON()}:null,scrollY}));
+const checks=[];
+await p.press('[data-style-toggle]','Enter');checks.push({step:'style open',...await state()});await p.keyboard.press('Tab');checks.push({step:'style Tab',...await state()});
+await p.press('[data-style-toggle]','Enter');await p.keyboard.press('Shift+Tab');checks.push({step:'style Shift Tab',...await state()});
+await p.press('[data-export-toggle]','Enter');await p.keyboard.press('Tab');checks.push({step:'export Tab',...await state()});
+await p.focus('.cite a >> nth=0');checks.push({step:'citation focus',...await state()});await p.keyboard.press('Tab');checks.push({step:'source card Tab',...await state()});await p.keyboard.press('Tab');checks.push({step:'source card leave',...await state()});
+await fs.writeFile(r+'/initial-interactions.json',JSON.stringify(checks,null,2)+'\n');console.log(checks);console.log(await p.snapshot());
