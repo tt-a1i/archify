@@ -1,0 +1,66 @@
+{
+  "repository": "https://github.com/jqlang/jq",
+  "tag": "jq-1.7.1",
+  "commit": "71c2ab509a8628dbbad4bc7b3f98a64aa90d3297",
+  "localExecutable": "/usr/bin/jq",
+  "localVersion": "jq-1.7.1-apple",
+  "binaryLimit": "The Apple version label is not proof that this executable is identical to the upstream tagged build.",
+  "entries": [
+    {
+      "id": "manual",
+      "path": "docs/content/manual/v1.7/manual.yml",
+      "blob": "11e59e1bfa85594923b0b918da9d6d531c11e325",
+      "ranges": {
+        "alternative": [
+          2405,
+          2460
+        ],
+        "objectIndex": [
+          408,
+          435
+        ],
+        "empty": [
+          1213,
+          1226
+        ],
+        "has": [
+          954,
+          971
+        ]
+      },
+      "url": "https://github.com/jqlang/jq/blob/71c2ab509a8628dbbad4bc7b3f98a64aa90d3297/docs/content/manual/v1.7/manual.yml",
+      "readableUrl": "https://jqlang.org/manual/v1.7/#alternative-operator"
+    },
+    {
+      "id": "compile",
+      "path": "src/compile.c",
+      "blob": "e5e65f20142f21f66984a0c6392e71378a6ef1f8",
+      "lines": [
+        890,
+        920
+      ],
+      "url": "https://github.com/jqlang/jq/blob/71c2ab509a8628dbbad4bc7b3f98a64aa90d3297/src/compile.c#L890-L920"
+    },
+    {
+      "id": "execute",
+      "path": "src/execute.c",
+      "blob": "9ef83683298dc18a2347729825706abd413a77c2",
+      "lines": [
+        719,
+        728
+      ],
+      "url": "https://github.com/jqlang/jq/blob/71c2ab509a8628dbbad4bc7b3f98a64aa90d3297/src/execute.c#L719-L728"
+    },
+    {
+      "id": "parser",
+      "path": "src/parser.y",
+      "blob": "3d246895526227d98f427d1bbf64a8e2007a4f23",
+      "lines": [
+        392,
+        395
+      ],
+      "url": "https://github.com/jqlang/jq/blob/71c2ab509a8628dbbad4bc7b3f98a64aa90d3297/src/parser.y#L392-L395"
+    }
+  ],
+  "audit": "The v1.7 manual line 2427 has wording inconsistent with its definition and following examples about per-value defaults. The page should rely on the formal definition, source and reproduced stream pair, not copy that sentence. No source or manual was edited."
+}

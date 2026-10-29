@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "executable": "/usr/bin/jq",
+  "version": "jq-1.7.1-apple",
+  "scope": "Constructed values and JSON objects; stdout is a result stream, not an input-file mutation.",
+  "case_count": 24,
+  "cases": [
+    {
+      "id": "alternative_false",
+      "expression": "false // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "false // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "\"fallback\"\n",
+      "stderr": "",
+      "outputs": [
+        "fallback"
+      ]
+    },
+    {
+      "id": "alternative_null",
+      "expression": "null // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "null // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "\"fallback\"\n",
+      "stderr": "",
+      "outputs": [
+        "fallback"
+      ]
+    },
+    {
+      "id": "alternative_empty",
+      "expression": "empty // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "empty // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "\"fallback\"\n",
+      "stderr": "",
+      "outputs": [
+        "fallback"
+      ]
+    },
+    {
+      "id": "alternative_zero",
+      "expression": "0 // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "0 // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "0\n",
+      "stderr": "",
+      "outputs": [
+        0
+      ]
+    },
+    {
+      "id": "alternative_empty_string",
+      "expression": "\"\" // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "\"\" // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "\"\"\n",
+      "stderr": "",
+      "outputs": [
+        ""
+      ]
+    },
+    {
+      "id": "alternative_empty_array",
+      "expression": "[] // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "[] // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "[]\n",
+      "stderr": "",
+      "outputs": [
+        []
+      ]
+    },
+    {
+      "id": "alternative_empty_object",
+      "expression": "{} // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{} // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "{}\n",
+      "stderr": "",
+      "outputs": [
+        {}
+      ]
+    },
+    {
+      "id": "empty_has_no_output",
+      "expression": "empty",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "empty"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "outputs": []
+    },
+    {
+      "id": "null_is_one_value",
+      "expression": "null",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "null"
+      ],
+      "exit_code": 0,
+      "stdout": "null\n",
+      "stderr": "",
+      "outputs": [
+        null
+      ]
+    },
+    {
+      "id": "empty_array_is_one_value",
+      "expression": "[]",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "[]"
+      ],
+      "exit_code": 0,
+      "stdout": "[]\n",
+      "stderr": "",
+      "outputs": [
+        []
+      ]
+    },
+    {
+      "id": "false_alternative",
+      "expression": "{\"enabled\":false} | .enabled // true",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":false} | .enabled // true"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "false_null_only",
+      "expression": "{\"enabled\":false} | .enabled | if . == null then true else . end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":false} | .enabled | if . == null then true else . end"
+      ],
+      "exit_code": 0,
+      "stdout": "false\n",
+      "stderr": "",
+      "outputs": [
+        false
+      ]
+    },
+    {
+      "id": "false_missing_only",
+      "expression": "{\"enabled\":false} | if has(\"enabled\") then .enabled else true end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":false} | if has(\"enabled\") then .enabled else true end"
+      ],
+      "exit_code": 0,
+      "stdout": "false\n",
+      "stderr": "",
+      "outputs": [
+        false
+      ]
+    },
+    {
+      "id": "true_alternative",
+      "expression": "{\"enabled\":true} | .enabled // true",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":true} | .enabled // true"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "true_null_only",
+      "expression": "{\"enabled\":true} | .enabled | if . == null then true else . end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":true} | .enabled | if . == null then true else . end"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "true_missing_only",
+      "expression": "{\"enabled\":true} | if has(\"enabled\") then .enabled else true end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":true} | if has(\"enabled\") then .enabled else true end"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "null_alternative",
+      "expression": "{\"enabled\":null} | .enabled // true",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":null} | .enabled // true"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "null_null_only",
+      "expression": "{\"enabled\":null} | .enabled | if . == null then true else . end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":null} | .enabled | if . == null then true else . end"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "null_missing_only",
+      "expression": "{\"enabled\":null} | if has(\"enabled\") then .enabled else true end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{\"enabled\":null} | if has(\"enabled\") then .enabled else true end"
+      ],
+      "exit_code": 0,
+      "stdout": "null\n",
+      "stderr": "",
+      "outputs": [
+        null
+      ]
+    },
+    {
+      "id": "missing_alternative",
+      "expression": "{} | .enabled // true",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{} | .enabled // true"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "missing_null_only",
+      "expression": "{} | .enabled | if . == null then true else . end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{} | .enabled | if . == null then true else . end"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "missing_missing_only",
+      "expression": "{} | if has(\"enabled\") then .enabled else true end",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "{} | if has(\"enabled\") then .enabled else true end"
+      ],
+      "exit_code": 0,
+      "stdout": "true\n",
+      "stderr": "",
+      "outputs": [
+        true
+      ]
+    },
+    {
+      "id": "whole_stream",
+      "expression": "(false, null, 0) // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "(false, null, 0) // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "0\n",
+      "stderr": "",
+      "outputs": [
+        0
+      ]
+    },
+    {
+      "id": "each_stream_value",
+      "expression": "(false, null, 0) | . // \"fallback\"",
+      "argv": [
+        "/usr/bin/jq",
+        "-cn",
+        "(false, null, 0) | . // \"fallback\""
+      ],
+      "exit_code": 0,
+      "stdout": "\"fallback\"\n\"fallback\"\n0\n",
+      "stderr": "",
+      "outputs": [
+        "fallback",
+        "fallback",
+        0
+      ]
+    }
+  ]
+}
