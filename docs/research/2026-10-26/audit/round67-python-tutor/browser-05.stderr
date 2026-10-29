@@ -1,0 +1,18 @@
+startedAt 2026-10-29T16:02:41.377Z
+before { focused: true, active: { tag: 'TEXTAREA', class: 'ace_text-input' }, editor: '1\n2\n3\n4\n5\n6\n7\nroot = [[1], [2]]\nalias = root\ncopy = list(root)\nroot[0].append(9)\nroot[1] = [7]\nalias = [[8]]', textarea: [ { class: 'ace_text-input', value: '\x01\x01' } ] }
+renderedEditor 1
+2
+3
+4
+5
+6
+7
+root = [[1], [2]]
+alias = root
+copy = list(root)
+root[0].append(9)
+root[1] = [7]
+alias = [[8]]
+[static page accessibility snapshot omitted]
+finishedAt 2026-10-29T16:02:42.000Z
+

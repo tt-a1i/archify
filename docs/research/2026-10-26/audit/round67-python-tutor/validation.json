@@ -1,0 +1,46 @@
+{
+  "json_count": 28,
+  "copy_records": 68,
+  "observer_semantics_match": true,
+  "checks": "JSON, local Markdown links, original and public bytes/SHA256; fresh local observer excluding python_version",
+  "issues": [],
+  "coordinator_review": {
+    "permalink_exact_source_and_py_curInstr": "pass",
+    "public_fixture_sha256": "48249b9ac307e35b66a44e9d6e32e231d1acbd72fabff374a1d50114e76b240b",
+    "staged_manifest_bytes_before_final_validation_update": {
+      "entries": 71,
+      "result": "pass"
+    },
+    "staged_scope": "research-only; 74 files",
+    "independent_packaging_review": "round67_state_audit found no concrete misinformation or omitted important failure; no repeated execution or hash sweep",
+    "authored_markdown_diff_check": "pass",
+    "full_diff_check": {
+      "result": "nonzero whitespace warnings preserved in browser evidence",
+      "warnings": [
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-01.stderr:6: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-03.stderr:5: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-04.stderr:5: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-05.stderr:18: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-06.stderr:5: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-07.stderr:4: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-07.stderr:7: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-07.stderr:10: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-07.stderr:12: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-07.stderr:24: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-07.stderr:30: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-07.stderr:34: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-08.stderr:4: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-09.stderr:4: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-09.stderr:7: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-09.stderr:10: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-09.stderr:12: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-09.stderr:24: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-09.stderr:30: trailing whitespace.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-09.stderr:37: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-10.stderr:5: new blank line at EOF.",
+        "docs/research/2026-10-26/audit/round67-python-tutor/browser-11-finish.stderr:2: new blank line at EOF."
+      ]
+    },
+    "product_tests": "not run: no product behavior change"
+  }
+}

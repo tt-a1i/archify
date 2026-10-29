@@ -1,0 +1,6 @@
+{
+  "at": "2026-10-29T16:03:30.787517+00:00",
+  "evidence": "browser05 before action already showed exact six lines from earlier paste; immediate browser04 snapshot was too early",
+  "correction": "Do not call focus+paste failed. Script05 redundantly retyped identical source via observed Ace parent, then verified rendered text. No execution requested until browser06.",
+  "inputUnchanged": true
+}

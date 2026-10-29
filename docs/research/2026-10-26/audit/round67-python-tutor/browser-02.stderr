@@ -1,0 +1,7 @@
+ElementResolutionError: page.click timed out after 3000ms: page.click failed: <div> intercepts pointer events
+    at #retryElementAction (file:////[eval1]:19158:27)
+    at async file:////[eval1]:19242:29
+    at async file:////[eval1]:16940:28
+startedAt 2026-10-29T15:59:22.409Z
+
+ego's nodejs process exited with code 1.

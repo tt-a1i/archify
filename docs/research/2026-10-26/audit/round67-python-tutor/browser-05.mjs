@@ -1,0 +1,10 @@
+console.log('startedAt',new Date().toISOString());
+const task=await taskSpace(23); const page=task.page('p1');
+console.log('before',await page.evaluate(()=>({focused:document.hasFocus(),active:{tag:document.activeElement.tagName,class:document.activeElement.className},editor:document.querySelector('.ace_editor').innerText,textarea:[...document.querySelectorAll('textarea')].map(e=>({class:e.className,value:e.value}))})));
+await page.click('loc=css:.ace_editor',{label:'Focus visible code editor'});
+await page.keyboard.press('ControlOrMeta+A');
+await page.keyboard.type('root = [[1], [2]]\nalias = root\ncopy = list(root)\nroot[0].append(9)\nroot[1] = [7]\nalias = [[8]]\n');
+await page.waitForFunction(()=>document.querySelector('.ace_editor').innerText.includes('alias = [[8]]'));
+console.log('renderedEditor',await page.evaluate(()=>document.querySelector('.ace_editor').innerText));
+console.log(await page.snapshot());
+console.log('finishedAt',new Date().toISOString());

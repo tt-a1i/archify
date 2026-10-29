@@ -1,0 +1,5 @@
+startedAt 2026-10-29T16:03:30.950Z
+[static page accessibility snapshot omitted]
+renderedStructure [ { tag: 'TABLE', id: 'pyCodeOutput', class: null, parentId: 'pyCodeOutputDiv', parentClass: '' }, { tag: 'svg', id: 'leftCodeGutterSVG', class: null, parentId: 'gutterTD', parentClass: '' }, { tag: 'svg', id: 'prevLegendArrowSVG', class: null, parentId: 'legendDiv', parentClass: '' }, { tag: 'svg', id: 'curLegendArrowSVG', class: null, parentId: 'legendDiv', parentClass: '' }, { tag: 'TABLE', id: 'stackHeapTable', class: null, parentId: 'dataViz', parentClass: '' } ]
+finishedAt 2026-10-29T16:03:31.981Z
+

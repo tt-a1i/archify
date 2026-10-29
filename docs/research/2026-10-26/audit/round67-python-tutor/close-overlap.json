@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-30",
+  "remoteHeadCount": 336,
+  "changedSinceStart": {
+    "refs/heads/codex/explainer-reading-lab": {
+      "before": "62c44717f7473c8917709aa7f71b45759bee1ece",
+      "after": "5492057ceb5f4267c11e8c8a3c3ad3450acd4788"
+    }
+  },
+  "method": "Independent read-only local Git tree and README review by round67_overlap; objects already present; no checkout or fetch",
+  "reviewedChanges": [
+    {"commit": "3b1755acf", "scope": "docs/experiments/explainer-reading/restore-commands", "finding": "Four fenced copyable Git restore commands; content-only"},
+    {"commit": "cb1662402", "scope": "docs/experiments/explainer-reading/ripgrep-pair", "finding": "Two-author comparison, isolated search fixture and command wrapping; proposed guide change not adopted"},
+    {"commit": "5492057ce", "scope": "docs/experiments/explainer-reading", "finding": "Interactive experiment review index with screenshots/checks and rounds6-8 summary"}
+  ],
+  "conclusion": "No Python Tutor or Python shallow-copy/object-identity experiment among these changes. The ripgrep Python probe executes a search fixture, not an identity observation.",
+  "limits": "Static scope review only; no page execution or renewed acceptance of other branch. Bounded issue/PR searches and this branch review are not exhaustive semantic overlap proof."
+}

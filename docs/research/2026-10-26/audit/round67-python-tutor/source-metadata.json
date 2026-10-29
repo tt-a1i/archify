@@ -1,0 +1,24 @@
+{
+  "scope": "Metadata only; full fetched webpage/document remain outside repository. No redistribution license confirmed for the current app/source package.",
+  "website": "https://pythontutor.com/visualize.html",
+  "article": "https://pythontutor.com/articles/python-visualizer.html",
+  "documentationRepository": "https://github.com/pythontutor-dev/pythontutor",
+  "documentationCommit": "c7b7fee29fe60d74a967ff59437f9e1ecbe38a35",
+  "licenseStatus": "not confirmed; do not infer old forks license/current deployment identity",
+  "files": [
+    {
+      "name": "python-visualizer.html",
+      "url": "https://pythontutor.com/articles/python-visualizer.html",
+      "bytes": 238686,
+      "sha256": "cf8ffc8275a08735107eb4ea87b30df4db145a9569444a818346f85f8aa37a1d",
+      "archivedFullText": false
+    },
+    {
+      "name": "unsupported-features.md",
+      "url": "https://github.com/pythontutor-dev/pythontutor/blob/c7b7fee29fe60d74a967ff59437f9e1ecbe38a35/unsupported-features.md",
+      "bytes": 13382,
+      "sha256": "b1f9af86d38b414e184940beebb02c18f4d43dc53985265c11c4e42dd79f70a9",
+      "archivedFullText": false
+    }
+  ]
+}

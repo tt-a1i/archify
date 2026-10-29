@@ -1,0 +1,12 @@
+console.log('startedAt',new Date().toISOString());
+const task=await taskSpace(23); const page=task.page('p1'); const fs=await import('node:fs/promises');
+await page.click('loc=role:button[name="Next >"]',{label:'Replace one outer element'});
+await page.waitForFunction(()=>document.body.innerText.includes('Step 6 of 6'));
+const replacement=await page.evaluate(()=>({code:document.querySelector('#pyCodeOutput').innerText,stackHeapText:document.querySelector('#stackHeapTable').innerText,stackHeapHtml:document.querySelector('#stackHeapTable').outerHTML}));
+await fs.writeFile('ARCHIVED_RAW_ROOT/after-replacement.dom.json',JSON.stringify(replacement,null,2)+'\n');
+console.log('replacement',replacement.stackHeapText);
+await page.click('loc=role:button[name="Next >"]',{label:'Rebind alias to new list'});
+console.log(await page.snapshot());
+const finalState=await page.evaluate(()=>({code:document.querySelector('#pyCodeOutput').innerText,stackHeapText:document.querySelector('#stackHeapTable').innerText,stackHeapHtml:document.querySelector('#stackHeapTable').outerHTML}));
+await fs.writeFile('ARCHIVED_RAW_ROOT/final.dom.json',JSON.stringify(finalState,null,2)+'\n');
+console.log('finishedAt',new Date().toISOString());

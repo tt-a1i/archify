@@ -1,0 +1,5 @@
+startedAt 2026-10-29T16:08:31.171Z
+gutterStability { stable: true, frames: 9, svg: '<svg id="leftCodeGutterSVG" style="width: 18px; min-width: 18px; height: 129.953px;"><polygon id="prevLineArrow" points="0,3 12,3 12,0 18,5 12,10 12,7 0,7" fill="#c9e6ca" style="" transform="translate(0, 117.5390625)"></polygon><polygon id="curLineArrow" points="0,3 12,3 12,0 18,5 12,10 12,7 0,7" fill="#E10C65" transform="translate(0,117.5390625)" style="display: none;"></polygon></svg>' }
+permalink [ { id: 'urlOutput', value: 'https://pythontutor.com/visualize.html#code=root%20%3D%20%5B%5B1%5D,%20%5B2%5D%5D%0Aalias%20%3D%20root%0Acopy%20%3D%20list%28root%29%0Aroot%5B0%5D.append%289%29%0Aroot%5B1%5D%20%3D%20%5B7%5D%0Aalias%20%3D%20%5B%5B8%5D%5D%0A&curInstr=6&mode=display&origin=opt-frontend.js&py=311' } ]
+finishedAt 2026-10-29T16:08:40.369Z
+

@@ -1,0 +1,65 @@
+{
+  "reviewer": "round67_state_audit",
+  "model": "gpt-6.1-sol",
+  "reasoning": "medium",
+  "mode": "read-only DOM/log/source/image audit",
+  "result": "No value or reference-structure errors found",
+  "states": {
+    "after-copy": {
+      "listBoxes": 4,
+      "variables": 3
+    },
+    "after-mutation": {
+      "listBoxes": 4,
+      "variables": 3
+    },
+    "after-replacement": {
+      "listBoxes": 5,
+      "variables": 3
+    },
+    "final": {
+      "listBoxes": 7,
+      "variables": 3,
+      "referenceSourcesAndArrows": 8,
+      "root": [
+        [
+          1,
+          9
+        ],
+        [
+          7
+        ]
+      ],
+      "copy": [
+        [
+          1,
+          9
+        ],
+        [
+          2
+        ]
+      ],
+      "alias": [
+        [
+          8
+        ]
+      ],
+      "sharedRootCopyFirstChild": true
+    }
+  },
+  "permalink": {
+    "sourceSha256": "48249b9ac307e35b66a44e9d6e32e231d1acbd72fabff374a1d50114e76b240b",
+    "py": "311",
+    "curInstr": "6"
+  },
+  "images": "Both reviewer and root viewed all3PNGs",
+  "arrowObservation": "after-copy image displays Step4 but pink arrow visually between lines2/3; cause unproven. after-mutation green line4/pinkline5. Finalgutter stable for8consecutive comparisons over9frames; imageDone6steps.",
+  "limits": [
+    "known-answer synthetic capability probe, not reader/human study",
+    "DOM IDs are UI identifiers, not memory addresses",
+    "local Python3.15 independent prefix runs, not one continuous trace or PythonTutor backend verification",
+    "native UI language label and permalinkpy311, actual backend build not independently verified",
+    "paste did succeed after immediate snapshot; subsequenttyping redundant but identical",
+    "no upstream implementation/article source licensed or copied into product"
+  ]
+}

@@ -1,0 +1,1026 @@
+{
+  "original_root": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor",
+  "placeholder": "ARCHIVED_RAW_ROOT",
+  "records": [
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/after-copy.dom.json",
+      "public": "after-copy.dom.json",
+      "original_digest": {
+        "sha256": "7e7cf0c0113dd3dd20aaf61990e9f34266bc9966de8bca96f6a5d71f29b0c38f",
+        "bytes": 3461
+      },
+      "public_digest": {
+        "sha256": "7e7cf0c0113dd3dd20aaf61990e9f34266bc9966de8bca96f6a5d71f29b0c38f",
+        "bytes": 3461
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/after-copy.png",
+      "public": "after-copy.png",
+      "original_digest": {
+        "sha256": "dc463a08295e77d16a13f84cc03255b268b6af80fb15b639d026a282ef7951fb",
+        "bytes": 85462
+      },
+      "public_digest": {
+        "sha256": "dc463a08295e77d16a13f84cc03255b268b6af80fb15b639d026a282ef7951fb",
+        "bytes": 85462
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/after-mutation.dom.json",
+      "public": "after-mutation.dom.json",
+      "original_digest": {
+        "sha256": "f5f27f876173895474910452e12071a2b3529d7ac811bcaf679c54d45b9091f6",
+        "bytes": 3559
+      },
+      "public_digest": {
+        "sha256": "f5f27f876173895474910452e12071a2b3529d7ac811bcaf679c54d45b9091f6",
+        "bytes": 3559
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/after-mutation.png",
+      "public": "after-mutation.png",
+      "original_digest": {
+        "sha256": "5f0962f8ce407a5e0ff42f7c7806196fd5c8f53616c5e5cfc3cdb7d5ff156c70",
+        "bytes": 86015
+      },
+      "public_digest": {
+        "sha256": "5f0962f8ce407a5e0ff42f7c7806196fd5c8f53616c5e5cfc3cdb7d5ff156c70",
+        "bytes": 86015
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/after-replacement.dom.json",
+      "public": "after-replacement.dom.json",
+      "original_digest": {
+        "sha256": "429c5071d42202e54272dafdffb2f7aa4e8e3e8a6ba00cd9b0539468e9e25190",
+        "bytes": 3803
+      },
+      "public_digest": {
+        "sha256": "429c5071d42202e54272dafdffb2f7aa4e8e3e8a6ba00cd9b0539468e9e25190",
+        "bytes": 3803
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-01.exit.json",
+      "public": "browser-01.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-01.mjs",
+      "public": "browser-01.mjs",
+      "original_digest": {
+        "sha256": "df56142f8825c331e253874607b9e16e747faec893921bf9c1990c9f9de29472",
+        "bytes": 446
+      },
+      "public_digest": {
+        "sha256": "df56142f8825c331e253874607b9e16e747faec893921bf9c1990c9f9de29472",
+        "bytes": 446
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-01.stderr",
+      "public": "browser-01.stderr",
+      "original_digest": {
+        "sha256": "f21ea07aa9a8f52256b48488c1fefe54d4a71d9bdf75ea350dc734ed39e73ba5",
+        "bytes": 11610
+      },
+      "public_digest": {
+        "sha256": "3bc021ad6a7b6af00c9fb3eee10bddf636a50c4d29194c3d3eebc767e4448f94",
+        "bytes": 192
+      },
+      "transformations": [
+        "omit 1 complete static page accessibility snapshot block(s)"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-01.stdout",
+      "public": "browser-01.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-02.exit.json",
+      "public": "browser-02.exit.json",
+      "original_digest": {
+        "sha256": "e153f5bd2ee7416d77570b30ba1de5bb9196c55f8d145e34df9dab12190ffe43",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "e153f5bd2ee7416d77570b30ba1de5bb9196c55f8d145e34df9dab12190ffe43",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-02.mjs",
+      "public": "browser-02.mjs",
+      "original_digest": {
+        "sha256": "275fd3a082cb008fb7932b720b24c2ddaf5f21daef758b854c64db4bd76aea04",
+        "bytes": 475
+      },
+      "public_digest": {
+        "sha256": "ac49506064ef9209917c02b187e40e85258883891c9c43919fc27a917649e30b",
+        "bytes": 413
+      },
+      "transformations": [
+        "replace exact original raw root with ARCHIVED_RAW_ROOT placeholder"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-02.stderr",
+      "public": "browser-02.stderr",
+      "original_digest": {
+        "sha256": "3d133b39c53c8a89a5ae60aa25f323070b6a0be42679d2d172998c5b3ea74dd7",
+        "bytes": 320
+      },
+      "public_digest": {
+        "sha256": "3d133b39c53c8a89a5ae60aa25f323070b6a0be42679d2d172998c5b3ea74dd7",
+        "bytes": 320
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-02.stdout",
+      "public": "browser-02.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-03.exit.json",
+      "public": "browser-03.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-03.mjs",
+      "public": "browser-03.mjs",
+      "original_digest": {
+        "sha256": "b5742feb51898cbb5670f66ebe4a0e785879b23255446e738e26ebaade3810a7",
+        "bytes": 624
+      },
+      "public_digest": {
+        "sha256": "b5742feb51898cbb5670f66ebe4a0e785879b23255446e738e26ebaade3810a7",
+        "bytes": 624
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-03.stderr",
+      "public": "browser-03.stderr",
+      "original_digest": {
+        "sha256": "a4a1c3ba245aeb0a509886437a7faf2d67c83fe5880b37d4e7e7ba2ac7006b8c",
+        "bytes": 3190
+      },
+      "public_digest": {
+        "sha256": "b80b6ce913a4cc0eeee17cadfd4884cd1bdae65b1cb72ed285cfb3b3d9c2db36",
+        "bytes": 301
+      },
+      "transformations": [
+        "omit 1 complete static page accessibility snapshot block(s)"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-03.stdout",
+      "public": "browser-03.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-04.exit.json",
+      "public": "browser-04.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-04.mjs",
+      "public": "browser-04.mjs",
+      "original_digest": {
+        "sha256": "cf349b5fb3fe5e25560a29d79e95c10cf29a8fed99dabe587eb40261958129c7",
+        "bytes": 579
+      },
+      "public_digest": {
+        "sha256": "44605bf06c0f95a56cf9ed59fd140613339377f068c2e697c9b773567d356575",
+        "bytes": 517
+      },
+      "transformations": [
+        "replace exact original raw root with ARCHIVED_RAW_ROOT placeholder"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-04.stderr",
+      "public": "browser-04.stderr",
+      "original_digest": {
+        "sha256": "b47f450515cb7cd30f3986305e87c199e3f82205dbbec394d4192347f624c540",
+        "bytes": 3023
+      },
+      "public_digest": {
+        "sha256": "5eb85dcac748aea57b663695d7f49c523a1598b6ef0127d155919b1b252da816",
+        "bytes": 134
+      },
+      "transformations": [
+        "omit 1 complete static page accessibility snapshot block(s)"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-04.stdout",
+      "public": "browser-04.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-05.exit.json",
+      "public": "browser-05.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-05.mjs",
+      "public": "browser-05.mjs",
+      "original_digest": {
+        "sha256": "d28959390b0f939a4075d9abdba46aed505bbcc1a8329b131b77339fbc830841",
+        "bytes": 978
+      },
+      "public_digest": {
+        "sha256": "d28959390b0f939a4075d9abdba46aed505bbcc1a8329b131b77339fbc830841",
+        "bytes": 978
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-05.stderr",
+      "public": "browser-05.stderr",
+      "original_digest": {
+        "sha256": "2ae18ce16d551b22a9f6247b517916134ccf76b8b0b0c008e55efe3dfc1728a7",
+        "bytes": 4493
+      },
+      "public_digest": {
+        "sha256": "00c510bb8a88967bd1243fb7344eeee93720d7f4db213a93078bbfb1f0466e16",
+        "bytes": 514
+      },
+      "transformations": [
+        "omit 1 complete static page accessibility snapshot block(s)"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-05.stdout",
+      "public": "browser-05.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-06.exit.json",
+      "public": "browser-06.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-06.mjs",
+      "public": "browser-06.mjs",
+      "original_digest": {
+        "sha256": "f93b3f96e5e12b7207df29cd8e670630bb69ff606f86e1e9a0628a0a2f635c2c",
+        "bytes": 635
+      },
+      "public_digest": {
+        "sha256": "f93b3f96e5e12b7207df29cd8e670630bb69ff606f86e1e9a0628a0a2f635c2c",
+        "bytes": 635
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-06.stderr",
+      "public": "browser-06.stderr",
+      "original_digest": {
+        "sha256": "ba229c03301c50e615f6aa60b4ab211d77f4a3ba41e57c70cff02914876e7383",
+        "bytes": 5513
+      },
+      "public_digest": {
+        "sha256": "b778d0f0b8f43d5c5eae7802f83711428736daa8a86460d090fd03cf42bb718f",
+        "bytes": 608
+      },
+      "transformations": [
+        "omit 1 complete static page accessibility snapshot block(s)"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-06.stdout",
+      "public": "browser-06.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-07.exit.json",
+      "public": "browser-07.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-07.mjs",
+      "public": "browser-07.mjs",
+      "original_digest": {
+        "sha256": "520459e99031236d205d02f8ecfc74fbffa034f8f8b4e6156a16f556c410d5fd",
+        "bytes": 1071
+      },
+      "public_digest": {
+        "sha256": "07c11f7b390e063562ff7f6097cce129366a284596506991f7a2fd0a77e70d5a",
+        "bytes": 947
+      },
+      "transformations": [
+        "replace exact original raw root with ARCHIVED_RAW_ROOT placeholder"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-07.stderr",
+      "public": "browser-07.stderr",
+      "original_digest": {
+        "sha256": "748c733a5504980e9481159296847a5c4173e59d98d7931e152c535872af4535",
+        "bytes": 7566
+      },
+      "public_digest": {
+        "sha256": "d79c88ec0650f26babb6745f1139a711fa15d3c970a84c0720204711030dbd40",
+        "bytes": 241
+      },
+      "transformations": [
+        "omit 1 complete static page accessibility snapshot block(s)"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-07.stdout",
+      "public": "browser-07.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-08.exit.json",
+      "public": "browser-08.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-08.mjs",
+      "public": "browser-08.mjs",
+      "original_digest": {
+        "sha256": "3e3a532b8f0edf4471b36ea929be5d367a9287305fe56f4cde101cca0ba52a51",
+        "bytes": 1001
+      },
+      "public_digest": {
+        "sha256": "d302f5d6f2b5d56eef8018fca151df300a051392e725fc0e16dcda6233e54ea2",
+        "bytes": 877
+      },
+      "transformations": [
+        "replace exact original raw root with ARCHIVED_RAW_ROOT placeholder"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-08.stderr",
+      "public": "browser-08.stderr",
+      "original_digest": {
+        "sha256": "881454961453b938c0f41d00930a9875723e9d41a00d16addba4dcead55efdc1",
+        "bytes": 3445
+      },
+      "public_digest": {
+        "sha256": "881454961453b938c0f41d00930a9875723e9d41a00d16addba4dcead55efdc1",
+        "bytes": 3445
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-08.stdout",
+      "public": "browser-08.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-09.exit.json",
+      "public": "browser-09.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-09.mjs",
+      "public": "browser-09.mjs",
+      "original_digest": {
+        "sha256": "fae5d2f61705fbfb6bd1c074410003e6d9a345ae9277ef0c93ca2cc1b927743b",
+        "bytes": 1348
+      },
+      "public_digest": {
+        "sha256": "0278d8b4ebe81f8f9e9336aa7fa1d91f5f91c4dbfaae284d0c74b2db7a4bad9f",
+        "bytes": 1224
+      },
+      "transformations": [
+        "replace exact original raw root with ARCHIVED_RAW_ROOT placeholder"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-09.stderr",
+      "public": "browser-09.stderr",
+      "original_digest": {
+        "sha256": "23a3f0be7cce9984a0ce18e627cf2c6af9bd40957aa76ef96a3551631cae2529",
+        "bytes": 8208
+      },
+      "public_digest": {
+        "sha256": "3cb446bb2feca7e7de2a978237d824043b52573c5cfe4090b5d8f291a3f65723",
+        "bytes": 256
+      },
+      "transformations": [
+        "omit 1 complete static page accessibility snapshot block(s)"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-09.stdout",
+      "public": "browser-09.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-10.exit.json",
+      "public": "browser-10.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-10.mjs",
+      "public": "browser-10.mjs",
+      "original_digest": {
+        "sha256": "df49be7bdcb652ab74750d15c3914856559a832b72b30b1d1e380e4573f37fc5",
+        "bytes": 1244
+      },
+      "public_digest": {
+        "sha256": "af3fdcb84645a9be09b16c5cfecca08c4ffe94fb71b4923c5edd7baa9f34d4cd",
+        "bytes": 1120
+      },
+      "transformations": [
+        "replace exact original raw root with ARCHIVED_RAW_ROOT placeholder"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-10.stderr",
+      "public": "browser-10.stderr",
+      "original_digest": {
+        "sha256": "c74d4711ccd25dded95762e9e265f0ab92c72465ee72618c8ff062ef7806e345",
+        "bytes": 836
+      },
+      "public_digest": {
+        "sha256": "c74d4711ccd25dded95762e9e265f0ab92c72465ee72618c8ff062ef7806e345",
+        "bytes": 836
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-10.stdout",
+      "public": "browser-10.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-11-finish.exit.json",
+      "public": "browser-11-finish.exit.json",
+      "original_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "public_digest": {
+        "sha256": "982b9e9bfb10ffe83cad665807abcfd3fa97b37822db5ab7831157a499548a9e",
+        "bytes": 16
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-11-finish.mjs",
+      "public": "browser-11-finish.mjs",
+      "original_digest": {
+        "sha256": "7770e2c3a7536ebfadf3ac8031fc3a2aa2d3d4c5e204309bff9c786b945e9dee",
+        "bytes": 120
+      },
+      "public_digest": {
+        "sha256": "7770e2c3a7536ebfadf3ac8031fc3a2aa2d3d4c5e204309bff9c786b945e9dee",
+        "bytes": 120
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-11-finish.stderr",
+      "public": "browser-11-finish.stderr",
+      "original_digest": {
+        "sha256": "f65a17c282fb2b3a007d9e3959245092012f963573be6cd840276745416cf3f2",
+        "bytes": 170
+      },
+      "public_digest": {
+        "sha256": "f65a17c282fb2b3a007d9e3959245092012f963573be6cd840276745416cf3f2",
+        "bytes": 170
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/browser-11-finish.stdout",
+      "public": "browser-11-finish.stdout",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/close-overlap.json",
+      "public": "close-overlap.json",
+      "original_digest": {
+        "sha256": "b6d6afa199aebe148af617c1d0eb56a4b5caa2f1e20e655e338e96fdf945b36c",
+        "bytes": 1336
+      },
+      "public_digest": {
+        "sha256": "b6d6afa199aebe148af617c1d0eb56a4b5caa2f1e20e655e338e96fdf945b36c",
+        "bytes": 1336
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/close-remote-heads.tsv",
+      "public": "close-remote-heads.tsv",
+      "original_digest": {
+        "sha256": "93b29b409c9cb74694cfa97032d1ac4adb3266b2463a1cf406d7caa94a5d0a55",
+        "bytes": 26917
+      },
+      "public_digest": {
+        "sha256": "93b29b409c9cb74694cfa97032d1ac4adb3266b2463a1cf406d7caa94a5d0a55",
+        "bytes": 26917
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/doc-tree.json",
+      "public": "doc-tree.json",
+      "original_digest": {
+        "sha256": "4d181fa7a0de9d2c60108ad821b09be5d0ec60b7e4ef80f0b4f7e22f0c8b0341",
+        "bytes": 802
+      },
+      "public_digest": {
+        "sha256": "4d181fa7a0de9d2c60108ad821b09be5d0ec60b7e4ef80f0b4f7e22f0c8b0341",
+        "bytes": 802
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/final-rebinding.png",
+      "public": "final-rebinding.png",
+      "original_digest": {
+        "sha256": "4feebfbc662b9023237f2cd00e97c94a9b548af8bbaca57393911978c68b28b1",
+        "bytes": 78244
+      },
+      "public_digest": {
+        "sha256": "4feebfbc662b9023237f2cd00e97c94a9b548af8bbaca57393911978c68b28b1",
+        "bytes": 78244
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/final.dom.json",
+      "public": "final.dom.json",
+      "original_digest": {
+        "sha256": "74ac5ec9c082404778ce6e265ffc1cefdf12ad648da108167e6e56c00c296fe6",
+        "bytes": 4502
+      },
+      "public_digest": {
+        "sha256": "74ac5ec9c082404778ce6e265ffc1cefdf12ad648da108167e6e56c00c296fe6",
+        "bytes": 4502
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/github-searches.json",
+      "public": "github-searches.json",
+      "original_digest": {
+        "sha256": "b9415e2dfc9da1bdb367e8cddf60164a4c1c3ed3a0eb459500176f406a5e51c1",
+        "bytes": 835
+      },
+      "public_digest": {
+        "sha256": "b9415e2dfc9da1bdb367e8cddf60164a4c1c3ed3a0eb459500176f406a5e51c1",
+        "bytes": 835
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/input-recovery-note.json",
+      "public": "input-recovery-note.json",
+      "original_digest": {
+        "sha256": "7e5d265723e483fd3dda921af1ceef3057b28d8ad209cfbe62f357872fae0df4",
+        "bytes": 625
+      },
+      "public_digest": {
+        "sha256": "7e5d265723e483fd3dda921af1ceef3057b28d8ad209cfbe62f357872fae0df4",
+        "bytes": 625
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/input-recovery-outcome.json",
+      "public": "input-recovery-outcome.json",
+      "original_digest": {
+        "sha256": "ccdc8598abf604e1ecbeb4bdae223ae7d842e5b268beb2a66383f6eb4ce46a0a",
+        "bytes": 399
+      },
+      "public_digest": {
+        "sha256": "ccdc8598abf604e1ecbeb4bdae223ae7d842e5b268beb2a66383f6eb4ce46a0a",
+        "bytes": 399
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/local/command.txt",
+      "public": "local/command.txt",
+      "original_digest": {
+        "sha256": "3ec5cdd1a7400223e04c36a34249dde10647174bbe501eb391df45a237017d80",
+        "bytes": 47
+      },
+      "public_digest": {
+        "sha256": "3ec5cdd1a7400223e04c36a34249dde10647174bbe501eb391df45a237017d80",
+        "bytes": 47
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/local/exit.txt",
+      "public": "local/exit.txt",
+      "original_digest": {
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "bytes": 2
+      },
+      "public_digest": {
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "bytes": 2
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/local/observe.py",
+      "public": "local/observe.py",
+      "original_digest": {
+        "sha256": "d56e88833d2afcac8e0626a75023a37860e30d71b112e09149c8b787a1a32b19",
+        "bytes": 1058
+      },
+      "public_digest": {
+        "sha256": "d56e88833d2afcac8e0626a75023a37860e30d71b112e09149c8b787a1a32b19",
+        "bytes": 1058
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/local/stderr.txt",
+      "public": "local/stderr.txt",
+      "original_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "public_digest": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/local/stdout.json",
+      "public": "local/stdout.json",
+      "original_digest": {
+        "sha256": "d2b423138474b9c55d91d139d15d3ace0dd2e45daecc0058e247f67ceae9d86e",
+        "bytes": 2660
+      },
+      "public_digest": {
+        "sha256": "d2b423138474b9c55d91d139d15d3ace0dd2e45daecc0058e247f67ceae9d86e",
+        "bytes": 2660
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/permalink.json",
+      "public": "permalink.json",
+      "original_digest": {
+        "sha256": "04a08e27174bd21567c4b78fc65c1c757be7b01baabb614c3b33ac4e5f523915",
+        "bytes": 839
+      },
+      "public_digest": {
+        "sha256": "04a08e27174bd21567c4b78fc65c1c757be7b01baabb614c3b33ac4e5f523915",
+        "bytes": 839
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/probe.py",
+      "public": "probe.py",
+      "original_digest": {
+        "sha256": "48249b9ac307e35b66a44e9d6e32e231d1acbd72fabff374a1d50114e76b240b",
+        "bytes": 95
+      },
+      "public_digest": {
+        "sha256": "48249b9ac307e35b66a44e9d6e32e231d1acbd72fabff374a1d50114e76b240b",
+        "bytes": 95
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/protocol.json",
+      "public": "protocol.json",
+      "original_digest": {
+        "sha256": "2f84f161de8a6f40c40ee22f9eac48ea56b0e958df4bf3a9113a4aab0c255069",
+        "bytes": 816
+      },
+      "public_digest": {
+        "sha256": "2f84f161de8a6f40c40ee22f9eac48ea56b0e958df4bf3a9113a4aab0c255069",
+        "bytes": 816
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/remote-heads.tsv",
+      "public": "remote-heads.tsv",
+      "original_digest": {
+        "sha256": "a140302a29fc60b4bfb3fd85e365c0e40f94b1cf08c2773fb91b5bbb36f113f7",
+        "bytes": 26917
+      },
+      "public_digest": {
+        "sha256": "a140302a29fc60b4bfb3fd85e365c0e40f94b1cf08c2773fb91b5bbb36f113f7",
+        "bytes": 26917
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/source-metadata.json",
+      "public": "source-metadata.json",
+      "original_digest": {
+        "sha256": "4cadb29ca60af52483edafeaf5752a9b1df4bc0e244b399172a96112fd64e389",
+        "bytes": 1138
+      },
+      "public_digest": {
+        "sha256": "4cadb29ca60af52483edafeaf5752a9b1df4bc0e244b399172a96112fd64e389",
+        "bytes": 1138
+      },
+      "transformations": [
+        "none"
+      ]
+    },
+    {
+      "original": "/Users/tsk/.local/share/archify-tuning/evidence/2026-10-29-round67-python-tutor/state-audit.json",
+      "public": "state-audit.json",
+      "original_digest": {
+        "sha256": "4b4ddd744e2c020c3c46b201b90adf75c48f37591b8499e64bf91223875e4d0d",
+        "bytes": 1806
+      },
+      "public_digest": {
+        "sha256": "4b4ddd744e2c020c3c46b201b90adf75c48f37591b8499e64bf91223875e4d0d",
+        "bytes": 1806
+      },
+      "transformations": [
+        "none"
+      ]
+    }
+  ]
+}

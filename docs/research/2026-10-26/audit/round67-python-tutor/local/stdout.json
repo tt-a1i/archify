@@ -1,0 +1,156 @@
+{
+  "source_sha256": "48249b9ac307e35b66a44e9d6e32e231d1acbd72fabff374a1d50114e76b240b",
+  "python_version": "3.15.0 (main, Oct  9 2026, 11:16:41) [Clang 21.0.0 (clang-2100.3.34.2)]",
+  "method": "independent source prefixes in fresh namespaces",
+  "results": [
+    {
+      "end_line": 3,
+      "values": {
+        "root": [
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ],
+        "alias": [
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ],
+        "copy": [
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      "identity": {
+        "root is alias": true,
+        "root is copy": false,
+        "root[0] is copy[0]": true,
+        "root[1] is copy[1]": true,
+        "alias[0] is root[0]": true
+      }
+    },
+    {
+      "end_line": 4,
+      "values": {
+        "root": [
+          [
+            1,
+            9
+          ],
+          [
+            2
+          ]
+        ],
+        "alias": [
+          [
+            1,
+            9
+          ],
+          [
+            2
+          ]
+        ],
+        "copy": [
+          [
+            1,
+            9
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      "identity": {
+        "root is alias": true,
+        "root is copy": false,
+        "root[0] is copy[0]": true,
+        "root[1] is copy[1]": true,
+        "alias[0] is root[0]": true
+      }
+    },
+    {
+      "end_line": 5,
+      "values": {
+        "root": [
+          [
+            1,
+            9
+          ],
+          [
+            7
+          ]
+        ],
+        "alias": [
+          [
+            1,
+            9
+          ],
+          [
+            7
+          ]
+        ],
+        "copy": [
+          [
+            1,
+            9
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      "identity": {
+        "root is alias": true,
+        "root is copy": false,
+        "root[0] is copy[0]": true,
+        "root[1] is copy[1]": false,
+        "alias[0] is root[0]": true
+      }
+    },
+    {
+      "end_line": 6,
+      "values": {
+        "root": [
+          [
+            1,
+            9
+          ],
+          [
+            7
+          ]
+        ],
+        "alias": [
+          [
+            8
+          ]
+        ],
+        "copy": [
+          [
+            1,
+            9
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      "identity": {
+        "root is alias": false,
+        "root is copy": false,
+        "root[0] is copy[0]": true,
+        "root[1] is copy[1]": false,
+        "alias[0] is root[0]": false
+      }
+    }
+  ]
+}

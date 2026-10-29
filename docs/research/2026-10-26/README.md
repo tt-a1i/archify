@@ -858,3 +858,9 @@ CUE 的来源路径不确定性已通过只读文件身份检查排除：macOS �
 刷新 336 个远程 head，只有上一批两个交付分支推进；[候选检索](audit/round66-dedup.json)没有返回同名 issue/PR，CodeCharta 因已有完整折叠边研究而排除。[why-is-node-running](scouts/node-handle-evidence-round66.md) 的原生报告已有分配栈；现有数据缺失的因果上下文不能靠绘图补出，不新增实现。[Coz](scouts/coz-native-points-round66.md) 的完整上游 SQLite profile 实际显示：门槛 10→5 时图数 12→17，原生 hover 给出虚拟 60% / Progress Speedup 12.5%。有效点数、原始记录数与实际优化结果须分开；原生源码 VM、透明分析与实拍相符，未运行 profiler 或 benchmark。
 
 归档固定源、完整许可、三张实际截图、失败和可复现分析。当前还缺少配对的真实优化前后证据和新增阅读层的用户价值验证，两候选均暂不实施，因此只更新研究分支，不创建同义实验分支或 PR。
+
+## 第 67 批：引用、原地修改与重新绑定
+
+[Python Tutor 原生状态观察](scouts/python-tutor-mutation-round67.md)补齐既有 Copy identity 研究没有覆盖的逐步执行证据。原创六行 Python 在原生页面依次显示浅拷贝、共享内层修改、元素替换和变量重新绑定；三张实拍、四个状态、独立前缀运行与永久链接共同记录结果。首张图片的步骤数字与粉色箭头位置不一致，原因未确定；输入控件首次点击失败和延迟粘贴后的重复输入也保留，未改写为全程无误。
+
+本轮刷新 336 个远程 head，并核对已有 Explainer reading 更新与 Copy identity / Bloaty 的覆盖。原生工具已能展示本题关系，尚无新增 Archify 阅读层的价值证据，因此不新增产品实现或同义实验分支。网站与文档仓库的复用许可未确认，只保留来源元数据、原创输入和实测记录，不复制其文章或实现。完整边界见[证据说明](audit/round67-python-tutor/README.md)。本批只推研究分支，不创建 PR；完成后按用户要求停下。

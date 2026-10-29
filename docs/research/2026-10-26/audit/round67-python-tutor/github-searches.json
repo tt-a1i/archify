@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-30",
+  "scope": "Bounded GitHub connector searches; empty exact-term results are not proof of no semantic overlap.",
+  "searches": [
+    {
+      "kind": "issues",
+      "query": "repo:tt-a1i/archify \"Python Tutor\"",
+      "topn": 10,
+      "result": {
+        "issues": []
+      }
+    },
+    {
+      "kind": "issues",
+      "query": "repo:tt-a1i/archify pythontutor",
+      "topn": 10,
+      "result": {
+        "issues": []
+      }
+    },
+    {
+      "kind": "pull_requests",
+      "query": "repo:tt-a1i/archify \"Python Tutor\"",
+      "topn": 10,
+      "state": "all",
+      "result": {
+        "issues": []
+      }
+    },
+    {
+      "kind": "pull_requests",
+      "query": "repo:tt-a1i/archify pythontutor",
+      "topn": 10,
+      "state": "all",
+      "result": {
+        "issues": []
+      }
+    }
+  ]
+}

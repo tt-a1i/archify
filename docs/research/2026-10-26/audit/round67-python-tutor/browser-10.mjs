@@ -1,0 +1,10 @@
+console.log('startedAt',new Date().toISOString());
+const task=await taskSpace(23); const page=task.page('p1'); const fs=await import('node:fs/promises');
+const stability=await page.evaluate(()=>new Promise(resolve=>{let previous='',stable=0,frames=0;function tick(){const current=document.querySelector('#leftCodeGutterSVG').outerHTML;stable=current===previous?stable+1:0;previous=current;frames++;if(stable>=8||frames>=120)resolve({stable:stable>=8,frames,svg:current});else requestAnimationFrame(tick);}requestAnimationFrame(tick);}));
+console.log('gutterStability',stability);
+await page.screenshot({path:'ARCHIVED_RAW_ROOT/final-rebinding.png'});
+await page.click('loc=role:button[name="Generate permanent link"]',{label:'Record original program permalink'});
+const links=await page.evaluate(()=>[...document.querySelectorAll('input')].map(e=>({id:e.id,value:e.value})).filter(e=>e.value.startsWith('https://pythontutor.com/')));
+await fs.writeFile('ARCHIVED_RAW_ROOT/permalink.json',JSON.stringify({links,stability},null,2)+'\n');
+console.log('permalink',links);
+console.log('finishedAt',new Date().toISOString());

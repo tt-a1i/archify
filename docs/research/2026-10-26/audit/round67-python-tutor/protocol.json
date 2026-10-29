@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-29T15:56:42.313067+00:00",
+  "input": "probe.py",
+  "inputSha256": "48249b9ac307e35b66a44e9d6e32e231d1acbd72fabff374a1d50114e76b240b",
+  "author": "Original research fixture, not copied from upstream tutorial",
+  "question": "Can native stepwise view distinguish shared nested mutation, replacement of an outer-list item, and rebinding an alias?",
+  "states": [
+    "after line3 copy",
+    "after line4 append",
+    "after line5 replace",
+    "after line6 rebind"
+  ],
+  "scope": "one known-answer synthetic capability observation, not independent reader/human benefit study; no equivalence with previous copy-identity fixture",
+  "budget": "15min native interaction, up to3screens, one justified UI recovery",
+  "no": "no importers, product code, packages, private upstream source copies, PRs"
+}
