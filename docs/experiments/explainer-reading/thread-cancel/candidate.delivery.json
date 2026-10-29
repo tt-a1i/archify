@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3847f1cd-3364-4bbe-91ec-03e67cb03b44",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/thread-cancel/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/thread-cancel/candidate.html",
+  "specification": {
+    "sha256": "a559ad6a2e2df1fbef4ac5c7475effaada2b3c209a77157b67f08f74007a2497",
+    "bytes": 3993
+  },
+  "artifact": {
+    "sha256": "519615e316bf71e97954b23ba77a1fa06691c443298c5139ac2834bbf5af73f3",
+    "bytes": 158739
+  },
+  "explainer": {
+    "preparedSha256": "0b2ad0f64280dd6af6f4183feef4b4958629709e34eefe4fb574360b4c28c231",
+    "dependencies": []
+  }
+}

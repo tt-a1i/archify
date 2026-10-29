@@ -1,0 +1,138 @@
+[
+  {
+    "arm": "author",
+    "width": 390,
+    "pageWidth": 390,
+    "groupText": "2TaskGroup 等到了什么？追问一个子任务抛出非 CancelledError 异常时，TaskGroup 会取消其余 Task，并等待这些 Task 结束。这个等待边界是 Task；它本身不代表已运行的线程函数已经结束。2在本地 Python 3.15.0 的观察中，线程先启动并等待信号。另一个子任务失败后，外层捕获 ExceptionGroup；此时包装 Task 已取消，线程函数尚未完成。随后释放信号，函数才完成。直接取消的观察也呈现同样的先后关系。6证据范围机制依据固定版本 CPython 3.13.9 源码。观察运行于本地 Python 3.15.0，并非 3.13.9 实测。该观察没有测试排队工作或测量耗时。",
+    "facts": 0,
+    "summaryHeight": 142.78125,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 454.4296875,
+        "scroll": 452,
+        "client": 452
+      },
+      {
+        "id": "mechanism",
+        "height": 493.25,
+        "scroll": 491,
+        "client": 491
+      },
+      {
+        "id": "group",
+        "height": 458.796875,
+        "scroll": 457,
+        "client": 457
+      },
+      {
+        "id": "stopping",
+        "height": 318.109375,
+        "scroll": 316,
+        "client": 316
+      }
+    ]
+  },
+  {
+    "arm": "author",
+    "width": 1440,
+    "pageWidth": 1440,
+    "groupText": "2TaskGroup 等到了什么？追问一个子任务抛出非 CancelledError 异常时，TaskGroup 会取消其余 Task，并等待这些 Task 结束。这个等待边界是 Task；它本身不代表已运行的线程函数已经结束。2在本地 Python 3.15.0 的观察中，线程先启动并等待信号。另一个子任务失败后，外层捕获 ExceptionGroup；此时包装 Task 已取消，线程函数尚未完成。随后释放信号，函数才完成。直接取消的观察也呈现同样的先后关系。6证据范围机制依据固定版本 CPython 3.13.9 源码。观察运行于本地 Python 3.15.0，并非 3.13.9 实测。该观察没有测试排队工作或测量耗时。",
+    "facts": 0,
+    "summaryHeight": 136.1875,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 457,
+        "scroll": 455,
+        "client": 455
+      },
+      {
+        "id": "mechanism",
+        "height": 457,
+        "scroll": 455,
+        "client": 455
+      },
+      {
+        "id": "group",
+        "height": 457,
+        "scroll": 455,
+        "client": 455
+      },
+      {
+        "id": "stopping",
+        "height": 202,
+        "scroll": 200,
+        "client": 200
+      }
+    ]
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "pageWidth": 390,
+    "groupText": "2TaskGroup 等到了什么？追问一个子任务抛出非 CancelledError 异常时，TaskGroup 会取消其余 Task，并等待这些 Task 结束。这个等待边界是 Task；它本身不代表已运行的线程函数已经结束。2本地 Python 3.15.0 观察先让线程启动并等待信号。直接取消后，调用方收到 CancelledError；TaskGroup 路径中，调用方在组外捕获 ExceptionGroup。释放信号前，两条路径都记录到以下状态。6外层 Task已结束，并被标记为取消线程函数已经启动，但尚未完成释放信号后，线程函数才完成。直接取消那一例中，Task.cancel() 返回了 True；这个返回值没有表示线程已经停止。6证据范围机制依据固定版本 CPython 3.13.9 源码。观察运行于本地 Python 3.15.0，并非 3.13.9 实测。该观察没有测试排队工作或测量耗时。",
+    "facts": 1,
+    "summaryHeight": 142.78125,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 454.4296875,
+        "scroll": 452,
+        "client": 452
+      },
+      {
+        "id": "mechanism",
+        "height": 493.25,
+        "scroll": 491,
+        "client": 491
+      },
+      {
+        "id": "group",
+        "height": 630.765625,
+        "scroll": 629,
+        "client": 629
+      },
+      {
+        "id": "stopping",
+        "height": 318.109375,
+        "scroll": 316,
+        "client": 316
+      }
+    ]
+  },
+  {
+    "arm": "candidate",
+    "width": 1440,
+    "pageWidth": 1440,
+    "groupText": "2TaskGroup 等到了什么？追问一个子任务抛出非 CancelledError 异常时，TaskGroup 会取消其余 Task，并等待这些 Task 结束。这个等待边界是 Task；它本身不代表已运行的线程函数已经结束。2本地 Python 3.15.0 观察先让线程启动并等待信号。直接取消后，调用方收到 CancelledError；TaskGroup 路径中，调用方在组外捕获 ExceptionGroup。释放信号前，两条路径都记录到以下状态。6外层 Task已结束，并被标记为取消线程函数已经启动，但尚未完成释放信号后，线程函数才完成。直接取消那一例中，Task.cancel() 返回了 True；这个返回值没有表示线程已经停止。6证据范围机制依据固定版本 CPython 3.13.9 源码。观察运行于本地 Python 3.15.0，并非 3.13.9 实测。该观察没有测试排队工作或测量耗时。",
+    "facts": 1,
+    "summaryHeight": 136.1875,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 589,
+        "scroll": 587,
+        "client": 587
+      },
+      {
+        "id": "mechanism",
+        "height": 589,
+        "scroll": 587,
+        "client": 587
+      },
+      {
+        "id": "group",
+        "height": 589,
+        "scroll": 587,
+        "client": 587
+      },
+      {
+        "id": "stopping",
+        "height": 202,
+        "scroll": 200,
+        "client": 200
+      }
+    ]
+  }
+]

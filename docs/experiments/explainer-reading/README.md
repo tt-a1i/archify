@@ -119,3 +119,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 11
 
 [TaskGroup's direct opening](taskgroup-language/README.md) replaces abstract introductory phrases with the cancellation/wait/report sequence and keeps the cancellation exception adjacent. The phone answer card is about 58 px shorter; the desktop summary takes an extra line while the card is slightly shorter. Source declarations and the remaining explanation are byte-identical. This is a content variant, not a new writing heuristic or demonstrated human-comprehension gain. The index now offers seventeen variants.
+
+## Continued exploration — round 12
+
+[Thread cancellation boundaries](thread-cancel/README.md) adds an eighth reading question across the same seven projects. Two local runs distinguish a cancelled async Task from its already-running thread function, both directly and through TaskGroup failure. The preferred page makes the object states visible and uses existing two-column authoring hints; original, intermediate and preferred layouts remain inspectable. Source Python 3.13.9 and local Python 3.15.0 evidence are explicitly separated. The index now offers nineteen variants.

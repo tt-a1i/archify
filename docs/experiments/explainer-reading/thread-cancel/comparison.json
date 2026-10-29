@@ -1,0 +1,11 @@
+{
+  "probeRunsIdentical": true,
+  "twoColumnsOnlyChangesPanelSpans": true,
+  "parentContentRepair": "Explicitly contrasts Task and thread states and adds the observed True return from direct Task.cancel. Source/runtime caveats retained.",
+  "authorFirstFinalize": false,
+  "authorSecondFinalize": true,
+  "parentFinalize": true,
+  "twoColumnsFinalize": true,
+  "relocatedAuthorProvenance": "invalid",
+  "parentProvenance": "current"
+}

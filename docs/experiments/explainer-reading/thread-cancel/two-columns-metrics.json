@@ -1,0 +1,86 @@
+[
+  {
+    "width": 390,
+    "pageWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 454.4296875,
+        "top": 179.390625,
+        "left": 12,
+        "width": 366,
+        "client": 452,
+        "scroll": 452
+      },
+      {
+        "id": "mechanism",
+        "height": 493.25,
+        "top": 645.8203125,
+        "left": 12,
+        "width": 366,
+        "client": 491,
+        "scroll": 491
+      },
+      {
+        "id": "group",
+        "height": 630.765625,
+        "top": 1151.0703125,
+        "left": 12,
+        "width": 366,
+        "client": 629,
+        "scroll": 629
+      },
+      {
+        "id": "stopping",
+        "height": 318.109375,
+        "top": 1793.8359375,
+        "left": 12,
+        "width": 366,
+        "client": 316,
+        "scroll": 316
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "pageWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 329,
+        "top": 93.09375,
+        "left": 80,
+        "width": 632,
+        "client": 327,
+        "scroll": 327
+      },
+      {
+        "id": "mechanism",
+        "height": 388,
+        "top": 93.09375,
+        "left": 728,
+        "width": 632,
+        "client": 386,
+        "scroll": 386
+      },
+      {
+        "id": "group",
+        "height": 490,
+        "top": 438.09375,
+        "left": 80,
+        "width": 632,
+        "client": 488,
+        "scroll": 488
+      },
+      {
+        "id": "stopping",
+        "height": 431,
+        "top": 497.09375,
+        "left": 728,
+        "width": 632,
+        "client": 429,
+        "scroll": 429
+      }
+    ]
+  }
+]

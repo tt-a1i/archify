@@ -1,0 +1,36 @@
+{
+  "width": 1024,
+  "pageWidth": 1024,
+  "panels": [
+    {
+      "id": "answer",
+      "width": 486,
+      "client": 347,
+      "scroll": 347
+    },
+    {
+      "id": "mechanism",
+      "width": 486,
+      "client": 400,
+      "scroll": 400
+    },
+    {
+      "id": "group",
+      "width": 486,
+      "client": 530,
+      "scroll": 530
+    },
+    {
+      "id": "stopping",
+      "width": 486,
+      "client": 477,
+      "scroll": 477
+    }
+  ],
+  "facts": [
+    {
+      "client": 452,
+      "scroll": 452
+    }
+  ]
+}

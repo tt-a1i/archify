@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "78677152-4819-45bc-bb54-9fec0e20b648",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/thread-cancel/two-columns.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/thread-cancel/two-columns.html",
+  "specification": {
+    "sha256": "622e091a628b32129ef1e44314ddf0d52d286f1495c4319eca768cca9768c2dc",
+    "bytes": 4014
+  },
+  "artifact": {
+    "sha256": "395c20dd9e8940a4b82722b44ad1c05480fa367aa5ba4f6048c7e1a513f4cab8",
+    "bytes": 159040
+  },
+  "explainer": {
+    "preparedSha256": "7ba84a873899d1beeaeb2fcc1526f3aad9adddb9d90496087379252d294e664f",
+    "dependencies": []
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": [
+    {
+      "iframe": "thread-cancel/author/answer.html",
+      "open": "thread-cancel/author/answer.html",
+      "width": 390,
+      "pageWidth": 390,
+      "caseCount": 8
+    },
+    {
+      "iframe": "thread-cancel/two-columns.html",
+      "open": "thread-cancel/two-columns.html",
+      "width": 390,
+      "pageWidth": 390,
+      "caseCount": 8
+    }
+  ],
+  "reused": "The previous seventeen variants retain their earlier round evidence; these two new thread variants were loaded here."
+}

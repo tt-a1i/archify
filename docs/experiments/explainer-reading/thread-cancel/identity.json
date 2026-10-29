@@ -1,0 +1,11 @@
+{
+  "runtime": "422328ebf897679f7e1eca69251da0905b146471",
+  "source": "8183fa5e3f78ca6ab862de7fb8b14f3d929421e0",
+  "evidenceCommit": "eb61a8954710eccd523b5a8d95057c2fb38b7e18",
+  "model": "gpt-6.1-terra",
+  "effort": "medium",
+  "discovery": true,
+  "budgetMinutes": 15,
+  "promptSha256": "c0493ad8d3c328223a9bc1325c1eb236840c0f584c25346a001287823a7e047e",
+  "sourcePackSha256": "eaffa31f95ad0a170d2d8519465393281d0f10e824d701c0de3870ecd783a81a"
+}
