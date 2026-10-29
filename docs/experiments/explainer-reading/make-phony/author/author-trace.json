@@ -1,0 +1,41 @@
+{
+  "work_start_utc": "2026-10-29T21:17:26Z",
+  "initial_reads": {
+    "started_utc": "2026-10-29T21:17:26Z",
+    "completed_utc": null,
+    "timing_note": "Exact completion time not separately recorded. Frozen skill, authoring guide, brief and probe read before draft."
+  },
+  "first_draft": {
+    "preserved_as": "first-draft.archify.md",
+    "recorded_utc": "2026-10-29T21:17:46Z"
+  },
+  "attempts": [
+    {
+      "number": 1,
+      "source": "attempt-1.archify.md",
+      "output": "attempt-1.html",
+      "start_utc": "2026-10-29T21:17:46Z",
+      "end_utc": "2026-10-29T21:17:47Z",
+      "exit_code": 0,
+      "result": "strict pass",
+      "stdout": "attempt-1.stdout",
+      "stderr": "attempt-1.stderr"
+    },
+    {
+      "number": 2,
+      "source": "attempt-2.archify.md (identical to answer.archify.md used by command)",
+      "output": "answer.html",
+      "start_utc": "2026-10-29T21:17:50Z",
+      "end_utc": "2026-10-29T21:17:51Z",
+      "exit_code": 0,
+      "result": "strict pass",
+      "stdout": "attempt-2.stdout",
+      "stderr": "attempt-2.stderr"
+    }
+  ],
+  "failures": [],
+  "corrections": [],
+  "known_waits": "No intentional waits; per-command elapsed times not separately recorded.",
+  "handoff_utc": "2026-10-29T21:17:55Z",
+  "limitations": "Automated validate, deliver and check passed; browser and human comprehension not assessed."
+}

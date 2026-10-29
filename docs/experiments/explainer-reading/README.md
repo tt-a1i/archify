@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between thirteen reading questions across eleven projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between fourteen reading questions across twelve projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -189,3 +189,9 @@ The review index adds these two experimental variants, for sixteen variants acro
 [Authored panel widths](fixed-panel-spans/README.md): the reader widened explicit six-column panels during browser measurement. The repaired reader honors widths 1–12 through style, theme and viewport changes while preserving automatic layout controls. The [Git endpoint explanation](git-diff-endpoints/candidate.html) now uses balanced columns, keeps the observed diffs beside their directions, and provides three copyable commands verified in a temporary repository. Original and rejected attempts remain in round 27.
 
 The review index now contains thirteen questions across eleven projects and thirty retained variants. This is a verified local contract repair with a new reading candidate, not evidence of general authoring speed or human comprehension. Narrow explicit diagrams can still fail the existing readability check; the report retains that boundary.
+
+## Continued exploration — round 29
+
+[GNU Make action/file collision](make-phony/README.md): a same-name file suppresses an ordinary check recipe, while `.PHONY` changes that decision. The candidate replaces ambiguous “already updated” language with “the file needs no update,” retains a real-file prerequisite boundary and adds complete runnable commands. Two cramped/uneven intermediate arrangements remain inspectable; a final split separates the Makefile from its run and observed output. Four copied blocks retain literal tabs and pass isolated execution.
+
+The index now contains fourteen questions across twelve projects and thirty-two variants. Runtime, authoring guidance and ZIP are unchanged; this is a source-backed reading candidate, not a general comprehension or generation claim.

@@ -1,0 +1,40 @@
+{
+  "image": {
+    "width": 780,
+    "height": 5106
+  },
+  "states": [
+    {
+      "title": "命令没执行，是同名文件让它跳过了吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/candidate.html",
+      "width": "390px",
+      "report": "make-phony/README.md",
+      "cases": 14
+    },
+    {
+      "title": "命令没执行，是同名文件让它跳过了吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/candidate.html",
+      "width": "1440px",
+      "report": "make-phony/README.md",
+      "cases": 14
+    },
+    {
+      "title": "命令没执行，是同名文件让它跳过了吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/author/answer.html",
+      "width": "390px",
+      "report": "make-phony/README.md",
+      "cases": 14
+    },
+    {
+      "title": "命令没执行，是同名文件让它跳过了吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/author/answer.html",
+      "width": "1440px",
+      "report": "make-phony/README.md",
+      "cases": 14
+    }
+  ]
+}

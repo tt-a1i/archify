@@ -1,0 +1,17 @@
+{
+  "runtimeCommit": "f70db859fa51e663d67041927652bc07f038abc7",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "primary": {
+    "repository": "mirror/make",
+    "tag": "3.81",
+    "commit": "776d8b7bc2ff83f8ebf5d357ec89e3bbe6d83962",
+    "document": "doc/make.texi",
+    "sha256": "64ca6ba2ccc36d7ca30fc2c57a4848a712c0f02ed0ee89b302a923ee6073cc3f"
+  },
+  "initialResearchOnly": {
+    "tag": "4.4.1",
+    "commit": "d66a65ad5a0e31b287f53930b0f09e31801f1613",
+    "sha256": "4bc3c176c7eacefae7fdafd0665138372943f9e15cf6b6e816ad8062a31689dd"
+  },
+  "probeTwoRunsByteIdentical": true
+}

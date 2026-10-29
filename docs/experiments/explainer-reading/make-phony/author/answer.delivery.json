@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "acc8cc68-2b31-4bf0-9e23-0466a86abf14",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round29/author/answer.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round29/author/answer.html",
+  "specification": {
+    "sha256": "ec19734049e1cc819aaef297f7151695fe640fdcfc26e9125c489afdd5a01a85",
+    "bytes": 2836
+  },
+  "artifact": {
+    "sha256": "3bed8ad7cd7a85c2c7a2970221f1e11b3e862893ca12b723d8e621b64330dc02",
+    "bytes": 159069
+  },
+  "explainer": {
+    "preparedSha256": "44e86c916dbbc3439b8f5bd8b80c078ecd7cc518ed56eae47dae9a1036626775",
+    "dependencies": []
+  }
+}

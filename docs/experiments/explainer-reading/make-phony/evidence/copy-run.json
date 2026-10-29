@@ -1,0 +1,54 @@
+{
+  "ok": true,
+  "scope": "only copied Makefiles and shell payload in disposable directories; Clipboard API interception, not OS clipboard permission",
+  "tabCounts": [
+    1,
+    1,
+    3
+  ],
+  "results": [
+    {
+      "case": "phony-false-file-false",
+      "stdout": [
+        "checked\n",
+        "checked\n"
+      ],
+      "matchesProbe": true,
+      "filePreserved": true
+    },
+    {
+      "case": "phony-false-file-true",
+      "stdout": [
+        "make: `check' is up to date.\n",
+        "make: `check' is up to date.\n"
+      ],
+      "matchesProbe": true,
+      "filePreserved": true
+    },
+    {
+      "case": "phony-true-file-false",
+      "stdout": [
+        "checked\n",
+        "checked\n"
+      ],
+      "matchesProbe": true,
+      "filePreserved": true
+    },
+    {
+      "case": "phony-true-file-true",
+      "stdout": [
+        "checked\n",
+        "checked\n"
+      ],
+      "matchesProbe": true,
+      "filePreserved": true
+    },
+    {
+      "case": "complete-copied-example",
+      "stdout": "built\nchecked\nchecked\n",
+      "stderr": "",
+      "exitCode": 0,
+      "output": "hello\n"
+    }
+  ]
+}

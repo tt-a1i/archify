@@ -1,0 +1,9 @@
+{
+  "scope": "actual Copy controls, Clipboard.writeText intercepted; no OS permission claim",
+  "payloads": [
+    "check:\n\t@printf 'checked\\n'",
+    ".PHONY: check\ncheck:\n\t@printf 'checked\\n'",
+    ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt",
+    "printf 'hello\\n' > input.txt\nmake check\nmake check"
+  ]
+}

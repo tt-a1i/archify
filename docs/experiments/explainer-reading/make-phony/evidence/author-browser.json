@@ -1,0 +1,266 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2551,
+    "documentWidth": 390,
+    "title": "为什么 `make check` 没有执行命令？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 366,
+        "height": 314,
+        "scrollHeight": 314
+      },
+      {
+        "id": "collision",
+        "width": 366,
+        "height": 628,
+        "scrollHeight": 628
+      },
+      {
+        "id": "fix",
+        "width": 366,
+        "height": 356,
+        "scrollHeight": 356
+      },
+      {
+        "id": "real-output",
+        "width": 366,
+        "height": 446,
+        "scrollHeight": 446
+      },
+      {
+        "id": "verify",
+        "width": 366,
+        "height": 245,
+        "scrollHeight": 245
+      }
+    ],
+    "scroll": [
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "check:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 358,
+        "scroll": 358,
+        "text": "当前目录连续两次 make check 的观察结果没有 check 文件两次都输出 checked已有 check 文件两次都报告 check 已更新，命令没有输出"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": ".PHONY: check\ncheck:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+      }
+    ],
+    "copies": [
+      "check:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2551,
+    "documentWidth": 390,
+    "title": "为什么 `make check` 没有执行命令？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 366,
+        "height": 314,
+        "scrollHeight": 314
+      },
+      {
+        "id": "collision",
+        "width": 366,
+        "height": 628,
+        "scrollHeight": 628
+      },
+      {
+        "id": "fix",
+        "width": 366,
+        "height": 356,
+        "scrollHeight": 356
+      },
+      {
+        "id": "real-output",
+        "width": 366,
+        "height": 446,
+        "scrollHeight": 446
+      },
+      {
+        "id": "verify",
+        "width": 366,
+        "height": 245,
+        "scrollHeight": 245
+      }
+    ],
+    "scroll": [
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": "check:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 358,
+        "scroll": 358,
+        "text": "当前目录连续两次 make check 的观察结果没有 check 文件两次都输出 checked已有 check 文件两次都报告 check 已更新，命令没有输出"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": ".PHONY: check\ncheck:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 356,
+        "scroll": 356,
+        "text": ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+      }
+    ],
+    "copies": [
+      "check:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1221,
+    "documentWidth": 1440,
+    "title": "为什么 `make check` 没有执行命令？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 524,
+        "height": 252,
+        "scrollHeight": 252
+      },
+      {
+        "id": "collision",
+        "width": 740,
+        "height": 458,
+        "scrollHeight": 458
+      },
+      {
+        "id": "fix",
+        "width": 524,
+        "height": 349,
+        "scrollHeight": 349
+      },
+      {
+        "id": "real-output",
+        "width": 740,
+        "height": 395,
+        "scrollHeight": 395
+      },
+      {
+        "id": "verify",
+        "width": 524,
+        "height": 235,
+        "scrollHeight": 235
+      }
+    ],
+    "scroll": [
+      {
+        "width": 730,
+        "scroll": 730,
+        "text": "check:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 732,
+        "scroll": 732,
+        "text": "当前目录连续两次 make check 的观察结果没有 check 文件两次都输出 checked已有 check 文件两次都报告 check 已更新，命令没有输出"
+      },
+      {
+        "width": 514,
+        "scroll": 514,
+        "text": ".PHONY: check\ncheck:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 730,
+        "scroll": 730,
+        "text": ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+      }
+    ],
+    "copies": [
+      "check:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1221,
+    "documentWidth": 1440,
+    "title": "为什么 `make check` 没有执行命令？",
+    "panels": [
+      {
+        "id": "answer",
+        "width": 524,
+        "height": 252,
+        "scrollHeight": 252
+      },
+      {
+        "id": "collision",
+        "width": 740,
+        "height": 458,
+        "scrollHeight": 458
+      },
+      {
+        "id": "fix",
+        "width": 524,
+        "height": 349,
+        "scrollHeight": 349
+      },
+      {
+        "id": "real-output",
+        "width": 740,
+        "height": 395,
+        "scrollHeight": 395
+      },
+      {
+        "id": "verify",
+        "width": 524,
+        "height": 235,
+        "scrollHeight": 235
+      }
+    ],
+    "scroll": [
+      {
+        "width": 730,
+        "scroll": 730,
+        "text": "check:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 732,
+        "scroll": 732,
+        "text": "当前目录连续两次 make check 的观察结果没有 check 文件两次都输出 checked已有 check 文件两次都报告 check 已更新，命令没有输出"
+      },
+      {
+        "width": 514,
+        "scroll": 514,
+        "text": ".PHONY: check\ncheck:\n\t@printf 'checked\\n'"
+      },
+      {
+        "width": 730,
+        "scroll": 730,
+        "text": ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+      }
+    ],
+    "copies": [
+      "check:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck:\n\t@printf 'checked\\n'",
+      ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt"
+    ]
+  }
+]

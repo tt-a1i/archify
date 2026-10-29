@@ -1,0 +1,105 @@
+{
+  "version": "GNU Make 3.81",
+  "scope": "five constructed cases, two ordinary explicit make invocations each; no -n/-q/-t; temporary directories, no user files",
+  "cases": [
+    {
+      "case": "phony-false-file-false",
+      "phony": false,
+      "sameNameFile": false,
+      "makefile": "check:\n\t@printf 'checked\\n'\n",
+      "calls": [
+        {
+          "stdout": "checked\n",
+          "stderr": "",
+          "exitCode": 0
+        },
+        {
+          "stdout": "checked\n",
+          "stderr": "",
+          "exitCode": 0
+        }
+      ],
+      "recipeRuns": 2,
+      "filePreserved": true
+    },
+    {
+      "case": "phony-false-file-true",
+      "phony": false,
+      "sameNameFile": true,
+      "makefile": "check:\n\t@printf 'checked\\n'\n",
+      "calls": [
+        {
+          "stdout": "make: `check' is up to date.\n",
+          "stderr": "",
+          "exitCode": 0
+        },
+        {
+          "stdout": "make: `check' is up to date.\n",
+          "stderr": "",
+          "exitCode": 0
+        }
+      ],
+      "recipeRuns": 0,
+      "filePreserved": true
+    },
+    {
+      "case": "phony-true-file-false",
+      "phony": true,
+      "sameNameFile": false,
+      "makefile": ".PHONY: check\ncheck:\n\t@printf 'checked\\n'\n",
+      "calls": [
+        {
+          "stdout": "checked\n",
+          "stderr": "",
+          "exitCode": 0
+        },
+        {
+          "stdout": "checked\n",
+          "stderr": "",
+          "exitCode": 0
+        }
+      ],
+      "recipeRuns": 2,
+      "filePreserved": true
+    },
+    {
+      "case": "phony-true-file-true",
+      "phony": true,
+      "sameNameFile": true,
+      "makefile": ".PHONY: check\ncheck:\n\t@printf 'checked\\n'\n",
+      "calls": [
+        {
+          "stdout": "checked\n",
+          "stderr": "",
+          "exitCode": 0
+        },
+        {
+          "stdout": "checked\n",
+          "stderr": "",
+          "exitCode": 0
+        }
+      ],
+      "recipeRuns": 2,
+      "filePreserved": true
+    },
+    {
+      "case": "real-prerequisite-not-inherited",
+      "makefile": ".PHONY: check\ncheck: report.txt\n\t@printf 'checked\\n'\nreport.txt: input.txt\n\t@printf 'built\\n'\n\t@cp input.txt report.txt\n",
+      "input": "hello\n",
+      "calls": [
+        {
+          "stdout": "built\nchecked\n",
+          "stderr": "",
+          "exitCode": 0
+        },
+        {
+          "stdout": "checked\n",
+          "stderr": "",
+          "exitCode": 0
+        }
+      ],
+      "output": "hello\n",
+      "scope": "unchanged real prerequisite builds only on first call; check is phony on both calls"
+    }
+  ]
+}
