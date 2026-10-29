@@ -1,0 +1,185 @@
+{
+  "environment": {
+    "python": "3.12.13",
+    "requests": "2.34.2",
+    "urllib3": "2.8.0",
+    "sourceSha256": {
+      "adapters.py": "647eabd4453de232aa40b55ff033d6f19778910b7e7069c51fdf63076fc77493",
+      "models.py": "d1bc0d990abf5d5ebee05f890911b4363fadf2d5264b686a963df47c529b6ace"
+    }
+  },
+  "configuration": {
+    "timeoutSeconds": 0.4,
+    "body": "ABCDE",
+    "stream": false,
+    "trustEnv": false,
+    "allowRedirects": false,
+    "server": "ephemeral 127.0.0.1 HTTP/1.1, finite body, no TLS",
+    "schedules": {
+      "steady": {
+        "headerDelay": 0.0,
+        "bodyDelays": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ]
+      },
+      "body_gap": {
+        "headerDelay": 0.0,
+        "bodyDelays": [
+          0.05,
+          0.7,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "header_gap": {
+        "headerDelay": 0.7,
+        "bodyDelays": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  "measurement": "elapsedMs surrounds Session.get with default stream=False, including body consumption; headerElapsedMs is Response.elapsed and is not the complete download. Server write events are not client receive timestamps. Sleep settings are requested delays, not exact network timing.",
+  "results": [
+    {
+      "case": "steady",
+      "outcome": "complete",
+      "elapsedMs": 787.644,
+      "body": "ABCDE",
+      "bodyBytes": 5,
+      "headerElapsedMs": 1.115
+    },
+    {
+      "case": "body_gap",
+      "outcome": "exception",
+      "elapsedMs": 456.114,
+      "exception": "ConnectionError",
+      "message": "HTTPConnectionPool(host='127.0.0.1', port=51776): Read timed out.",
+      "isTimeoutSubclass": false
+    },
+    {
+      "case": "header_gap",
+      "outcome": "exception",
+      "elapsedMs": 403.21,
+      "exception": "ReadTimeout",
+      "message": "HTTPConnectionPool(host='127.0.0.1', port=51776): Read timed out. (read timeout=0.4)",
+      "isTimeoutSubclass": true
+    }
+  ],
+  "serverEvents": {
+    "steady": [
+      {
+        "kind": "server_received_request",
+        "clientStartMs": 0.939
+      },
+      {
+        "kind": "server_sent_headers",
+        "clientStartMs": 1.185
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 152.247,
+        "byte": "A"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 312.577,
+        "byte": "B"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 469.003,
+        "byte": "C"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 626.824,
+        "byte": "D"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 786.964,
+        "byte": "E"
+      }
+    ],
+    "body_gap": [
+      {
+        "kind": "server_received_request",
+        "clientStartMs": 2.137
+      },
+      {
+        "kind": "server_sent_headers",
+        "clientStartMs": 2.27
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 55.042,
+        "byte": "A"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 757.795,
+        "byte": "B"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 757.815,
+        "byte": "C"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 757.821,
+        "byte": "D"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 757.826,
+        "byte": "E"
+      }
+    ],
+    "header_gap": [
+      {
+        "kind": "server_received_request",
+        "clientStartMs": 1.235
+      },
+      {
+        "kind": "server_sent_headers",
+        "clientStartMs": 708.463
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 708.49,
+        "byte": "A"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 708.498,
+        "byte": "B"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 708.502,
+        "byte": "C"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 708.506,
+        "byte": "D"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 708.509,
+        "byte": "E"
+      }
+    ]
+  }
+}

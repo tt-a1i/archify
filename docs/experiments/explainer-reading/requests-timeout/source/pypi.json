@@ -1,0 +1,17 @@
+{
+  "name": "requests",
+  "version": "2.34.2",
+  "requiresPython": ">=3.10",
+  "files": [
+    {
+      "filename": "requests-2.34.2-py3-none-any.whl",
+      "upload_time_iso_8601": "2026-05-14T19:25:26.443000Z",
+      "digests": {
+        "blake2b_256": "a0f4c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a",
+        "md5": "cc4287951c320ff794e5e183c7a91f85",
+        "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+      },
+      "url": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl"
+    }
+  ]
+}

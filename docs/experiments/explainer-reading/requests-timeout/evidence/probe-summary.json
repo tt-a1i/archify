@@ -1,0 +1,63 @@
+{
+  "caseOrder": [
+    "steady",
+    "body_gap",
+    "header_gap"
+  ],
+  "configuredTimeoutMs": 400,
+  "runs": [
+    {
+      "run": 1,
+      "results": [
+        {
+          "case": "steady",
+          "outcome": "complete",
+          "elapsedMs": 783.884,
+          "body": "ABCDE",
+          "bodyBytes": 5
+        },
+        {
+          "case": "body_gap",
+          "outcome": "exception",
+          "elapsedMs": 460.036,
+          "exception": "ConnectionError",
+          "isTimeoutSubclass": false
+        },
+        {
+          "case": "header_gap",
+          "outcome": "exception",
+          "elapsedMs": 401.456,
+          "exception": "ReadTimeout",
+          "isTimeoutSubclass": true
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "results": [
+        {
+          "case": "steady",
+          "outcome": "complete",
+          "elapsedMs": 787.644,
+          "body": "ABCDE",
+          "bodyBytes": 5
+        },
+        {
+          "case": "body_gap",
+          "outcome": "exception",
+          "elapsedMs": 456.114,
+          "exception": "ConnectionError",
+          "isTimeoutSubclass": false
+        },
+        {
+          "case": "header_gap",
+          "outcome": "exception",
+          "elapsedMs": 403.21,
+          "exception": "ReadTimeout",
+          "isTimeoutSubclass": true
+        }
+      ]
+    }
+  ],
+  "timingComparison": "Compare qualitative outcomes and actual ranges, not byte-identical durations."
+}

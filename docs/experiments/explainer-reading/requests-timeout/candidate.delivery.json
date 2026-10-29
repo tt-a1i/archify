@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "57d446aa-e465-4965-8eee-4020444c9f55",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/requests-timeout/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/requests-timeout/candidate.html",
+  "specification": {
+    "sha256": "730d854c3af55e3935a524489199da076cf8968662ad44e6c5959e4995b36c2f",
+    "bytes": 4288
+  },
+  "artifact": {
+    "sha256": "5b136f178339b6f50685f2b6f1112c1a00feee5baedf6ab3de01543a2a77fc77",
+    "bytes": 167882
+  },
+  "explainer": {
+    "preparedSha256": "493d089fc349b15ab3523aac3eb9d14e89fc2fe87e64b06a1f530ddcf96e3dae",
+    "dependencies": []
+  }
+}

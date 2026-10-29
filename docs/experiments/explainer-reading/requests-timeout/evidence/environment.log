@@ -1,0 +1,11 @@
+Using CPython 3.12.13
+Creating virtual environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/venv
+Activate with: source /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/venv/bin/activate
+Using Python 3.12.13 environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/venv
+Resolved 5 packages in 737ms
+Installed 5 packages in 8ms
+ + certifi==2026.10.23
+ + charset-normalizer==3.5.2
+ + idna==3.20
+ + requests==2.34.2
+ + urllib3==2.8.0

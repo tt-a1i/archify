@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "explainer",
+  "quality": "showcase",
+  "startedAt": "2026-10-29T23:50:14.717Z",
+  "specification": {
+    "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.archify.md",
+    "sha256": "4fcff505cbfed1ab5800b3d82e811eca591b8c3434df0f523b39f554594aebfb",
+    "bytes": 4266
+  },
+  "artifact": {
+    "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.html",
+    "sha256": "c15f0a7155d38980447d8ffc372b5540e9117aab7e30355e0f86c425f640787d",
+    "bytes": 167777
+  },
+  "stages": {
+    "browser-check": {
+      "status": "not-run",
+      "execution": "not-requested"
+    },
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/frozen/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.archify.md",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.html",
+        "--quality",
+        "showcase",
+        "--writing",
+        "strict",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "4fcff505cbfed1ab5800b3d82e811eca591b8c3434df0f523b39f554594aebfb",
+          "bytes": 4266
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 483,
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/frozen/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.archify.md",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.html",
+        "--quality",
+        "showcase",
+        "--writing",
+        "strict",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "521eeac5-fdc2-4606-bea2-6aac81dd1a43",
+        "ok": true,
+        "command": "deliver",
+        "type": "explainer",
+        "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.archify.md",
+        "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.html",
+        "explainer": {
+          "preparedSha256": "d9491efaef5069f9a52f1c1f048690c5bbeed1d8983a7356a1f8dfd5ccfff652",
+          "dependencies": []
+        },
+        "specification": {
+          "sha256": "4fcff505cbfed1ab5800b3d82e811eca591b8c3434df0f523b39f554594aebfb",
+          "bytes": 4266
+        },
+        "artifact": {
+          "sha256": "c15f0a7155d38980447d8ffc372b5540e9117aab7e30355e0f86c425f640787d",
+          "bytes": 167777
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 245,
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/frozen/archify/bin/archify.mjs",
+        "check",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.html",
+        "family": "explainer",
+        "artifact": {
+          "sha256": "c15f0a7155d38980447d8ffc372b5540e9117aab7e30355e0f86c425f640787d",
+          "bytes": 167777
+        },
+        "checks": [
+          {
+            "name": "explainer_structure",
+            "ok": true,
+            "details": [
+              "37 unique DOM IDs"
+            ]
+          },
+          {
+            "name": "explainer_payload_identity",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "explainer_dependencies",
+            "ok": true,
+            "details": [
+              "0 frozen dependencies"
+            ]
+          },
+          {
+            "name": "explainer_native_diagrams",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "issues": [],
+          "nativeDiagrams": []
+        },
+        "diagnostics": [],
+        "provenance": "current",
+        "deliveryReceiptId": "521eeac5-fdc2-4606-bea2-6aac81dd1a43"
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": false,
+    "ran": false
+  },
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.finalize.json",
+    "summaryReceipt": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round42/parent/candidate-1.finalize-summary.json"
+  },
+  "visualReview": "not-requested",
+  "finishedAt": "2026-10-29T23:50:15.593Z",
+  "durationMs": 875,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.1-dev.1",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-26T23:50:51.017Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "environment": {
+    "python": "3.12.13",
+    "requests": "2.34.2",
+    "urllib3": "2.8.0",
+    "sourceSha256": {
+      "adapters.py": "647eabd4453de232aa40b55ff033d6f19778910b7e7069c51fdf63076fc77493",
+      "models.py": "d1bc0d990abf5d5ebee05f890911b4363fadf2d5264b686a963df47c529b6ace"
+    }
+  },
+  "configuration": {
+    "timeoutSeconds": 0.4,
+    "body": "ABCDE",
+    "stream": false,
+    "trustEnv": false,
+    "allowRedirects": false,
+    "server": "ephemeral 127.0.0.1 HTTP/1.1, finite body, no TLS",
+    "schedules": {
+      "steady": {
+        "headerDelay": 0.0,
+        "bodyDelays": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ]
+      },
+      "body_gap": {
+        "headerDelay": 0.0,
+        "bodyDelays": [
+          0.05,
+          0.7,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "header_gap": {
+        "headerDelay": 0.7,
+        "bodyDelays": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  "measurement": "elapsedMs surrounds Session.get with default stream=False, including body consumption; headerElapsedMs is Response.elapsed and is not the complete download. Server write events are not client receive timestamps. Sleep settings are requested delays, not exact network timing.",
+  "results": [
+    {
+      "case": "steady",
+      "outcome": "complete",
+      "elapsedMs": 783.884,
+      "body": "ABCDE",
+      "bodyBytes": 5,
+      "headerElapsedMs": 1.239
+    },
+    {
+      "case": "body_gap",
+      "outcome": "exception",
+      "elapsedMs": 460.036,
+      "exception": "ConnectionError",
+      "message": "HTTPConnectionPool(host='127.0.0.1', port=51761): Read timed out.",
+      "isTimeoutSubclass": false
+    },
+    {
+      "case": "header_gap",
+      "outcome": "exception",
+      "elapsedMs": 401.456,
+      "exception": "ReadTimeout",
+      "message": "HTTPConnectionPool(host='127.0.0.1', port=51761): Read timed out. (read timeout=0.4)",
+      "isTimeoutSubclass": true
+    }
+  ],
+  "serverEvents": {
+    "steady": [
+      {
+        "kind": "server_received_request",
+        "clientStartMs": 1.082
+      },
+      {
+        "kind": "server_sent_headers",
+        "clientStartMs": 1.326
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 158.256,
+        "byte": "A"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 316.576,
+        "byte": "B"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 473.481,
+        "byte": "C"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 624.974,
+        "byte": "D"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 783.441,
+        "byte": "E"
+      }
+    ],
+    "body_gap": [
+      {
+        "kind": "server_received_request",
+        "clientStartMs": 2.297
+      },
+      {
+        "kind": "server_sent_headers",
+        "clientStartMs": 2.413
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 57.726,
+        "byte": "A"
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 766.029,
+        "byte": "B"
+      },
+      {
+        "kind": "server_transport_error",
+        "clientStartMs": 766.229,
+        "exception": "BrokenPipeError"
+      }
+    ],
+    "header_gap": [
+      {
+        "kind": "server_received_request",
+        "clientStartMs": 0.975
+      },
+      {
+        "kind": "server_sent_headers",
+        "clientStartMs": 709.345
+      },
+      {
+        "kind": "server_write_returned",
+        "clientStartMs": 709.393,
+        "byte": "A"
+      },
+      {
+        "kind": "server_transport_error",
+        "clientStartMs": 709.53,
+        "exception": "BrokenPipeError"
+      }
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "png": {
+    "width": 780,
+    "height": 5306
+  },
+  "counts": {
+    "questions": 21,
+    "variants": 52
+  },
+  "checks": [
+    {
+      "versionIndex": 0,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "requests-timeout/candidate.html",
+      "open": "requests-timeout/candidate.html",
+      "report": "requests-timeout/README.md",
+      "version": "两个场景与完整结果",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 0,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "requests-timeout/candidate.html",
+      "open": "requests-timeout/candidate.html",
+      "report": "requests-timeout/README.md",
+      "version": "两个场景与完整结果",
+      "frameWidth": "1440px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "requests-timeout/author/answer.html",
+      "open": "requests-timeout/author/answer.html",
+      "report": "requests-timeout/README.md",
+      "version": "作者初稿",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "requests-timeout/author/answer.html",
+      "open": "requests-timeout/author/answer.html",
+      "report": "requests-timeout/README.md",
+      "version": "作者初稿",
+      "frameWidth": "1440px"
+    }
+  ]
+}

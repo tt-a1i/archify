@@ -1,0 +1,8 @@
+UTC work start: 2026-10-29T23:46:46Z, before reads.
+Scope: supplied-evidence discovery; not a full-generation benchmark.
+Source: frozen supplied bundle; copied probe and result JSON locally for portable evidence. Probe was not rerun.
+Visual review: pending; no browser used.
+Attempt 1 start: 2026-10-29T23:47:05Z
+Attempt 1 exit: 0
+Attempt 1 end: 2026-10-29T23:47:07Z
+UTC work end: 2026-10-29T23:47:09Z

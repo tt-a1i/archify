@@ -1,0 +1,9 @@
+{
+  "tableMatchesBothProbeRuns": true,
+  "pageAndTableFitAllFourStates": true,
+  "desktopPairedPanelTopsMatch": true,
+  "exceptionClassesMatchProbe": true,
+  "authorProbeCopiesIdentical": true,
+  "copyProgramPresent": false,
+  "canonicalHtmlSha256": "5b136f178339b6f50685f2b6f1112c1a00feee5baedf6ab3de01543a2a77fc77"
+}

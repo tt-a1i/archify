@@ -1,0 +1,17 @@
+{
+  "project": "Requests",
+  "version": "2.34.2",
+  "tag": "v2.34.2",
+  "commit": "6e83187b8feb273ed4c6cdab5efd8d54901dfab3",
+  "installedSourceFilesMatchPinnedUpstream": [
+    "adapters.py",
+    "models.py"
+  ],
+  "sourceSha256": {
+    "adapters.py": "647eabd4453de232aa40b55ff033d6f19778910b7e7069c51fdf63076fc77493",
+    "models.py": "d1bc0d990abf5d5ebee05f890911b4363fadf2d5264b686a963df47c529b6ace"
+  },
+  "archifySource": "04ef10be26191bca95d34d63525c479eff416d22",
+  "productSource": "e16dbcfb8916cb621efb0806e7f23d0b1497ac10",
+  "limits": "Two Python modules compared, not complete wheel build reproduction. Timing and ephemeral ports differ between runs."
+}

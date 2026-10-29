@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between twenty reading questions across eighteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between twenty-one reading questions across nineteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -251,3 +251,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 41
 
 [pandas missing grouping keys](pandas-groupby/README.md): four actual synthetic rows distinguish raw total 100, default grouped total 80 and total 100 with the missing-key group included. Both original tables already fit on the phone; the retained candidate makes the same Python program readable without horizontal code scrolling and aligns input/results on desktop. Actual copied programs have identical ASTs and output. The two parent syntax failures and the declared one-repair extension are preserved. Runtime/package evidence is reused from round 40.
+
+## Continued exploration — round 42
+
+[Requests timeout boundaries](requests-timeout/README.md) compares a five-byte response sent in short intervals with a long pause during the body and a delayed-header control. Actual local runs distinguish a completed download of about 0.8 seconds from timeout=0.4, and preserve the different exception classes. The retained page replaces a generic sequence and clipped four-column table with two concrete scenarios and a complete three-column timing table. Runtime/package evidence is reused from round 40.
