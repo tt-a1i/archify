@@ -1,0 +1,75 @@
+{
+  "curl_version": "curl 8.7.1 (x86_64-apple-darwin25.0) libcurl/8.7.1 (SecureTransport) LibreSSL/3.3.6 zlib/1.2.12 nghttp2/1.68.1\nRelease-Date: 2024-03-27\nProtocols: dict file ftp ftps gopher gophers http https imap imaps ipfs ipns ldap ldaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp\nFeatures: alt-svc AsynchDNS GSS-API HSTS HTTP2 HTTPS-proxy IPv6 Kerberos Largefile libz MultiSSL NTLM SPNEGO SSL threadsafe UnixSockets\n",
+  "scope": "Authored HTTP/1.1 fixture on loopback; no proxy, default curl config, redirects or external server.",
+  "common_arguments": [
+    "-q",
+    "--silent",
+    "--show-error",
+    "--noproxy",
+    "*",
+    "--max-time",
+    "5",
+    "--write-out",
+    "%{stderr}%{size_download}\n"
+  ],
+  "fixture_body": "alpha\n",
+  "cases": [
+    {
+      "name": "plain",
+      "arguments": [],
+      "request": {
+        "method": "GET",
+        "path": "/item"
+      },
+      "exit": 0,
+      "curl_reported_body_bytes": 6,
+      "stdout": "alpha\n",
+      "stderr_download_counter": "6\n"
+    },
+    {
+      "name": "include",
+      "arguments": [
+        "-i"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/item"
+      },
+      "exit": 0,
+      "curl_reported_body_bytes": 6,
+      "stdout": "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 6\r\nConnection: close\r\n\r\nalpha\n",
+      "stderr_download_counter": "6\n"
+    },
+    {
+      "name": "head",
+      "arguments": [
+        "-I"
+      ],
+      "request": {
+        "method": "HEAD",
+        "path": "/item"
+      },
+      "exit": 0,
+      "curl_reported_body_bytes": 0,
+      "stdout": "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 6\r\nConnection: close\r\n\r\n",
+      "stderr_download_counter": "0\n"
+    },
+    {
+      "name": "discard-body",
+      "arguments": [
+        "-D",
+        "-",
+        "-o",
+        "/dev/null"
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/item"
+      },
+      "exit": 0,
+      "curl_reported_body_bytes": 6,
+      "stdout": "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 6\r\nConnection: close\r\n\r\n",
+      "stderr_download_counter": "6\n"
+    }
+  ]
+}
