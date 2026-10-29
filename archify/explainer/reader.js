@@ -50,21 +50,24 @@
     const items = panels.map(panel=>{
       const fixed = Number(panel.dataset.spanFixed) || 0;
       const wide = fixed >= 9 || Number((panel.className.match(/\bspan(\d+)\b/) || [])[1]) >= 9;
-      const min = Math.max(4,Number(panel.dataset.spanMin) || 4,fixed && fixed < 9 ? fixed : 0,readableSpan(panel));
+      const min = fixed || Math.max(4,Number(panel.dataset.spanMin) || 4,readableSpan(panel));
       const height = {}, fits = {};
-      for (const span of SPANS) {
+      // Authored widths are exact, including widths outside the automatic templates.
+      // Narrow tables and code keep their local scrolling instead of widening the panel.
+      for (const span of fixed ? [fixed] : SPANS) {
         panel.style.width = px(span) + 'px';
         height[span] = Math.ceil(panel.getBoundingClientRect().height);
-        fits[span] = span >= min && !all('.table-scroll,.diff-scroll,pre',panel).some(element=>element.scrollWidth > element.clientWidth + 1);
+        fits[span] = fixed ? true : span >= min && !all('.table-scroll,.diff-scroll,pre',panel).some(element=>element.scrollWidth > element.clientWidth + 1);
       }
       panel.style.width = '';
-      return {panel,wide,height,fits,text:panel.dataset.measure === 'text'};
+      return {panel,fixed,wide,height,fits,text:panel.dataset.measure === 'text'};
     });
     board.classList.remove('measuring');
     const width = board.clientWidth;
     const excess = (item,span) => item.text ? Math.max(0,px(span) - 720) / 720 * px(span) * item.height[span] * .6 : 0;
     // One set of column lines per section. Panels fill the shortest fitting column in source
-    // order; a panel that fits no column takes the full width and closes the section above it. The
+    // order; a panel that fits no column closes the section above it and uses its authored width,
+    // or the full width when automatic. The
     // last panel of every column stretches to the section bottom, so column edges and bottoms align.
     function simulate(template, section, forced = []) {
       const lines = template.reduce((acc,span)=>[...acc,acc[acc.length - 1] + span],[1]);
@@ -75,7 +78,7 @@
       const close = () => {
         // A conclusion alone in its section takes the full width rather than leaving blank columns beside it.
         const alone = last.filter(Boolean);
-        if (alone.length === 1 && alone[0] === placed[0] && placed.length === 1 && template.length > 1) {
+        if (alone.length === 1 && !alone[0].item.fixed && alone[0] === placed[0] && placed.length === 1 && template.length > 1) {
           Object.assign(alone[0],{line:1,span:12,height:alone[0].item.height[12]});
           cursor += alone[0].height + gap;
           open();
@@ -98,9 +101,10 @@
         if (!choices.length) {
           chosen.push(0);
           close();
-          placed.push({item,line:1,span:12,top:cursor,height:item.height[12]});
-          wide += excess(item,12);
-          cursor += item.height[12] + gap;
+          const span = item.fixed || 12;
+          placed.push({item,line:1,span,top:cursor,height:item.height[span]});
+          wide += excess(item,span);
+          cursor += item.height[span] + gap;
           continue;
         }
         // Reading order is top to bottom, then left to right: a panel never starts above the previous

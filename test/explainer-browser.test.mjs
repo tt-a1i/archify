@@ -32,6 +32,29 @@ test('formal renderer retains keyboard navigation, static reading and print mode
 });
 test.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
 
+test('authored panel spans remain exact through measured layout and reader relayout',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.meta.locale='zh-CN';
+ const literal='Keep this complete command: '+ 'x'.repeat(100);
+ doc.panels=Array.from({length:12},(_,index)=>({id:`fixed-${index+1}`,title:'Width',span:index+1,blocks:[index===5?{id:'fixed-code',type:'snippet',text:literal}:{id:`text-${index+1}`,type:'prose',text:'X'}]}));
+ doc.panels.push({id:'after-full',title:'Last',span:6,blocks:[{id:'last-text',type:'prose',text:'X'}]});
+ const file=artifact('fixed-spans',renderExplainer(doc,{sourceText:JSON.stringify(doc)})),browser=new ChromeVisualBrowser(chrome);
+ const measure=()=>pageValue(browser,`(()=>{const board=document.querySelector('.board'),gap=parseFloat(getComputedStyle(board).columnGap),column=(board.clientWidth-gap*11)/12;return [...board.querySelectorAll('[data-span-fixed]')].map(panel=>({id:panel.id,span:Number(panel.dataset.spanFixed),width:panel.getBoundingClientRect().width,expected:column*Number(panel.dataset.spanFixed)+gap*(Number(panel.dataset.spanFixed)-1),text:panel.querySelector('.panel-body').textContent}));})()`);
+ const exact=async()=>{const rows=await measure();assert.deepEqual(rows.map(row=>row.id),doc.panels.map(panel=>panel.id),'authored panels retain source order');assert.deepEqual(rows.filter(row=>Math.abs(row.width-row.expected)>1),[],'a fixed width is not a minimum or a full-row fallback');assert.ok(rows[5].text.includes(literal),'a narrow authored code panel retains its complete text');};
+ const settled=()=>pageValue(browser,'document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
+ try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'light',keyboard:false});await exact();
+  await keyboardActivate(browser,'[data-style-toggle]');await keyboardActivate(browser,'[data-style-choice="editorial"]');await settled();await exact();
+  await keyboardActivate(browser,'[data-theme-choice="dark"]');await settled();await exact();
+  for(const width of [900,390,1440]){
+   await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);await settled();
+   if(width===390){const rows=await measure();assert.ok(rows.every(row=>Math.abs(row.width-rows[0].width)<1),'phone panels still stack at the full available width');}
+   else await exact();
+  }
+  assert.equal(await pageValue(browser,"document.querySelector('#fixed-6 pre code').textContent"),literal);
+ }finally{await browser.close();}
+});
+
 test('retry layout and referenced node explanations remain readable and keyboard accessible after a prose edit',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
  const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
