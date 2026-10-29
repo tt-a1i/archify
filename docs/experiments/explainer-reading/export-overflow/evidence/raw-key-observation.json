@@ -1,0 +1,41 @@
+[
+  {
+    "index": 0,
+    "normal": {
+      "left": 16.5,
+      "active": "table-scroll"
+    },
+    "protocol": {
+      "result": {
+        "type": "string",
+        "value": "{\"left\":16.5,\"active\":\"table-scroll\",\"lastRight\":543.5}"
+      }
+    }
+  },
+  {
+    "index": 1,
+    "normal": {
+      "left": 48.5,
+      "active": "table-scroll"
+    },
+    "protocol": {
+      "result": {
+        "type": "string",
+        "value": "{\"left\":48.5,\"active\":\"table-scroll\",\"lastRight\":511.5}"
+      }
+    }
+  },
+  {
+    "index": 2,
+    "normal": {
+      "left": 82.5,
+      "active": "table-scroll"
+    },
+    "protocol": {
+      "result": {
+        "type": "string",
+        "value": "{\"left\":82.5,\"active\":\"table-scroll\",\"lastRight\":477.5}"
+      }
+    }
+  }
+]

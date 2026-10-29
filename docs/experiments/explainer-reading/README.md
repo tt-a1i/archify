@@ -155,3 +155,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 20
 
 [jq defaults](jq-default/README.md) adds a source-pinned explanation of why `// true` replaces an explicit `false`. The 24-case local probe separates false/null, absent keys, empty values and empty result streams. A shorter four-column header still overflows; the retained two-column explanation fits at 390 px, and all five commands copied through the reader produce their displayed outputs. Multiline commands cost vertical space. Original author work and the failed intermediate layout are retained. The review index now has ten questions across nine projects and 24 main variants; product runtime and package are unchanged.
+
+## Continued exploration — round 21
+
+[Wide-table export](export-overflow/README.md) confirms that keyboard scrolling works in the observed browser, while phone-width PNGs lose later table columns and long code. Two frozen export-only prototypes recover content but split a technical term or a numeric value; neither table strategy is adopted. Code wrapping remains a separate candidate. Four unchanged controls per prototype—three desktop cases and the fitting phone case—produce byte-identical PNGs. Product runtime and archive remain unchanged; the next trial will preserve table tokens with a wider export canvas.

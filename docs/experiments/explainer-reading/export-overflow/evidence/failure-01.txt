@@ -1,0 +1,3 @@
+Browser-01 stopped after jq's initial screenshot, before keyboard traversal.
+ElementResolutionError: page.focus timed out after 3000ms: Selector [data-theme-choice="system"] matched 0 elements.
+This is a selector error in the experiment, not evidence that the reader's keyboard navigation fails. Inspect the current DOM before choosing the correct starting control.

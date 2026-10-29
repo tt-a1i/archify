@@ -1,0 +1,34 @@
+--- archify/explainer/reader.js
++++ archify/explainer/reader.js
+@@ -270,6 +270,12 @@
+     const shell = document.querySelector('.shell'), width = document.documentElement.clientWidth;
+     let height = Math.ceil(shell.getBoundingClientRect().height + 48);
+     const clone = root.cloneNode(true);
++    const liveTables = all('.table-scroll');
++    const exportTables = all('.table-scroll',clone).filter((table,index)=>liveTables[index].scrollWidth > liveTables[index].clientWidth + 1);
++    exportTables.forEach(table=>table.classList.add('export-table'));
++    const liveCode = all('pre');
++    const exportCode = all('pre',clone).filter((pre,index)=>liveCode[index].scrollWidth > liveCode[index].clientWidth + 1);
++    exportCode.forEach(pre=>pre.classList.add('export-code'));
+     clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());
+     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
+     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
+@@ -278,8 +284,17 @@
+     // Inside a foreignObject the page's <html> is not :root, so theme and style rules would drop out;
+     // the root's own attribute selects the same element with the same specificity.
+     const sheet = clone.querySelector('head>style'); if (sheet) sheet.textContent = sheet.textContent.replace(/:root\b/g,'[data-archify-artifact]');
++    if (exportTables.length && sheet) sheet.textContent += `
++      .export-table table{table-layout:auto;width:100%}
++      .export-table th,.export-table td{min-width:0;overflow-wrap:anywhere}
++      .export-table thead th{white-space:normal}
++    `;
++    if (exportCode.length && sheet) sheet.textContent += `
++      .export-code{overflow:visible;white-space:pre-wrap}
++      .export-code code{white-space:pre-wrap;overflow-wrap:anywhere}
++    `;
+     clone.style.width = `${width}px`;
+-    if (clone.querySelector('[data-diagram-fit="scroll"]')) {
++    if (exportTables.length || exportCode.length || clone.querySelector('[data-diagram-fit="scroll"]')) {
+       // The exported overview is shorter than the scrollable live diagram.
+       // Measure the inert clone synchronously, then remove it before painting.
+       const measuring = document.createElement('div');

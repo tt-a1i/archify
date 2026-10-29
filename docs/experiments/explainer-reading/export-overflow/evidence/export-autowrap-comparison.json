@@ -1,0 +1,524 @@
+[
+  {
+    "arm": "candidate",
+    "name": "gzip",
+    "width": 390,
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 544,
+          "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18"
+        }
+      ]
+    },
+    "geometry": {
+      "exportTables": 1,
+      "exportCode": 0,
+      "code": [],
+      "rootWidth": 390,
+      "shellHeight": 2071.328125,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 358,
+          "tableWidth": 358,
+          "cellOverflow": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18",
+          "headers": [
+            {
+              "text": "输入",
+              "width": 85.9140625,
+              "height": 52.265625
+            },
+            {
+              "text": "输入大小",
+              "width": 64.9609375,
+              "height": 52.265625
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 87.3359375,
+              "height": 52.265625
+            },
+            {
+              "text": "gzip 结果",
+              "width": 68.1171875,
+              "height": 52.265625
+            },
+            {
+              "text": "变化",
+              "width": 51.671875,
+              "height": 52.265625
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "jq",
+    "width": 390,
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 493,
+          "text": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失truetruetrue"
+        }
+      ]
+    },
+    "geometry": {
+      "exportTables": 1,
+      "exportCode": 3,
+      "code": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false} | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false} | .enabled | if . == null then true else . end'\n# 输出：false"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false} | if has(\"enabled\") then .enabled else true end'\n# 输出：false"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ],
+      "rootWidth": 390,
+      "shellHeight": 2643.0859375,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 358,
+          "tableWidth": 358,
+          "cellOverflow": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "text": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失truetruetrue",
+          "headers": [
+            {
+              "text": "输入对象的 enabled",
+              "width": 85.9140625,
+              "height": 52.265625
+            },
+            {
+              "text": "// true",
+              "width": 69.9921875,
+              "height": 52.265625
+            },
+            {
+              "text": "仅 null 或缺失时默认",
+              "width": 115.5859375,
+              "height": 52.265625
+            },
+            {
+              "text": "仅缺失时默认",
+              "width": 86.5078125,
+              "height": 52.265625
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "control",
+    "width": 390,
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 358,
+          "text": "写法enabled 的结果// truefalse、null、缺失都输出 true。判断 null保留 false；null 或缺失输出 true。检查键保留 false 和 null；仅缺失输出 true。"
+        }
+      ]
+    },
+    "geometry": {
+      "exportTables": 0,
+      "exportCode": 0,
+      "code": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled\n  | if . == null then true\n    else . end'\n# 输出：false"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":null}\n  | if has(\"enabled\")\n    then .enabled\n    else true end'\n# 输出：null"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ],
+      "rootWidth": 390,
+      "shellHeight": 2753.15625,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 358,
+          "tableWidth": 358,
+          "cellOverflow": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "text": "写法enabled 的结果// truefalse、null、缺失都输出 true。判断 null保留 false；null 或缺失输出 true。检查键保留 false 和 null；仅缺失输出 true。",
+          "headers": [
+            {
+              "text": "写法",
+              "width": 96,
+              "height": 31.6328125
+            },
+            {
+              "text": "enabled 的结果",
+              "width": 262,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "gzip",
+    "width": 1440,
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "tables": [
+        {
+          "width": 840,
+          "scrollWidth": 840,
+          "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18"
+        }
+      ]
+    },
+    "geometry": {
+      "exportTables": 0,
+      "exportCode": 0,
+      "code": [],
+      "rootWidth": 1440,
+      "shellHeight": 1016.578125,
+      "tables": [
+        {
+          "width": 840,
+          "scrollWidth": 840,
+          "tableWidth": 840,
+          "cellOverflow": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18",
+          "headers": [
+            {
+              "text": "输入",
+              "width": 201.59375,
+              "height": 31.6328125
+            },
+            {
+              "text": "输入大小",
+              "width": 159.6015625,
+              "height": 31.6328125
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 159.6015625,
+              "height": 31.6328125
+            },
+            {
+              "text": "gzip 结果",
+              "width": 159.6015625,
+              "height": 31.6328125
+            },
+            {
+              "text": "变化",
+              "width": 159.6015625,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "jq",
+    "width": 1440,
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "tables": [
+        {
+          "width": 732,
+          "scrollWidth": 732,
+          "text": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失truetruetrue"
+        }
+      ]
+    },
+    "geometry": {
+      "exportTables": 0,
+      "exportCode": 0,
+      "code": [
+        {
+          "width": 514,
+          "scrollWidth": 514,
+          "text": "jq -cn '{\"enabled\":false} | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 730,
+          "scrollWidth": 730,
+          "text": "jq -cn '{\"enabled\":false} | .enabled | if . == null then true else . end'\n# 输出：false"
+        },
+        {
+          "width": 730,
+          "scrollWidth": 730,
+          "text": "jq -cn '{\"enabled\":false} | if has(\"enabled\") then .enabled else true end'\n# 输出：false"
+        },
+        {
+          "width": 514,
+          "scrollWidth": 514,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 514,
+          "scrollWidth": 514,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ],
+      "rootWidth": 1440,
+      "shellHeight": 1286.078125,
+      "tables": [
+        {
+          "width": 732,
+          "scrollWidth": 732,
+          "tableWidth": 732,
+          "cellOverflow": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "text": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失truetruetrue",
+          "headers": [
+            {
+              "text": "输入对象的 enabled",
+              "width": 175.6796875,
+              "height": 31.6328125
+            },
+            {
+              "text": "// true",
+              "width": 173.3984375,
+              "height": 31.6328125
+            },
+            {
+              "text": "仅 null 或缺失时默认",
+              "width": 209.515625,
+              "height": 31.6328125
+            },
+            {
+              "text": "仅缺失时默认",
+              "width": 173.40625,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "control",
+    "width": 1440,
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "tables": [
+        {
+          "width": 840,
+          "scrollWidth": 840,
+          "text": "写法enabled 的结果// truefalse、null、缺失都输出 true。判断 null保留 false；null 或缺失输出 true。检查键保留 false 和 null；仅缺失输出 true。"
+        }
+      ]
+    },
+    "geometry": {
+      "exportTables": 0,
+      "exportCode": 0,
+      "code": [
+        {
+          "width": 406,
+          "scrollWidth": 406,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 838,
+          "scrollWidth": 838,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled\n  | if . == null then true\n    else . end'\n# 输出：false"
+        },
+        {
+          "width": 838,
+          "scrollWidth": 838,
+          "text": "jq -cn '{\"enabled\":null}\n  | if has(\"enabled\")\n    then .enabled\n    else true end'\n# 输出：null"
+        },
+        {
+          "width": 406,
+          "scrollWidth": 406,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 406,
+          "scrollWidth": 406,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ],
+      "rootWidth": 1440,
+      "shellHeight": 1373.078125,
+      "tables": [
+        {
+          "width": 840,
+          "scrollWidth": 840,
+          "tableWidth": 840,
+          "cellOverflow": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "text": "写法enabled 的结果// truefalse、null、缺失都输出 true。判断 null保留 false；null 或缺失输出 true。检查键保留 false 和 null；仅缺失输出 true。",
+          "headers": [
+            {
+              "text": "写法",
+              "width": 201.59375,
+              "height": 31.6328125
+            },
+            {
+              "text": "enabled 的结果",
+              "width": 638.40625,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

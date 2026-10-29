@@ -1,0 +1,188 @@
+[
+  {
+    "case": "gzip",
+    "width": 390,
+    "baseDimensions": [
+      780,
+      4322
+    ],
+    "candidateDimensions": [
+      780,
+      4240
+    ],
+    "identical": false,
+    "markedTables": 1,
+    "markedCode": 0,
+    "codeWidths": [],
+    "candidateSha256": "c9ed5e3013916e3310a492b7a80f780e7cb9ea0b9b90b05d1653819785a54388"
+  },
+  {
+    "case": "jq",
+    "width": 390,
+    "baseDimensions": [
+      780,
+      5338
+    ],
+    "candidateDimensions": [
+      780,
+      5384
+    ],
+    "identical": false,
+    "markedTables": 1,
+    "markedCode": 3,
+    "codeWidths": [
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ]
+    ],
+    "candidateSha256": "4e22c593699efe9d6cf06c9e9168320a3bf4232f824229fe8558ae0fa5f0ab80"
+  },
+  {
+    "case": "control",
+    "width": 390,
+    "baseDimensions": [
+      780,
+      5728
+    ],
+    "candidateDimensions": [
+      780,
+      5728
+    ],
+    "identical": true,
+    "markedTables": 0,
+    "markedCode": 0,
+    "codeWidths": [
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ],
+      [
+        356,
+        356
+      ]
+    ],
+    "candidateSha256": "3570d480da681a58f8d42ceeb1a57edcdfe1d61ef5f630aced40efe3394d2454"
+  },
+  {
+    "case": "gzip",
+    "width": 1440,
+    "baseDimensions": [
+      2880,
+      2130
+    ],
+    "candidateDimensions": [
+      2880,
+      2130
+    ],
+    "identical": true,
+    "markedTables": 0,
+    "markedCode": 0,
+    "codeWidths": [],
+    "candidateSha256": "809912d09033a669fc3c3f2283552158c20aa10a2b5f9b34c1a2f6d97cab3eba"
+  },
+  {
+    "case": "jq",
+    "width": 1440,
+    "baseDimensions": [
+      2880,
+      2670
+    ],
+    "candidateDimensions": [
+      2880,
+      2670
+    ],
+    "identical": true,
+    "markedTables": 0,
+    "markedCode": 0,
+    "codeWidths": [
+      [
+        514,
+        514
+      ],
+      [
+        730,
+        730
+      ],
+      [
+        730,
+        730
+      ],
+      [
+        514,
+        514
+      ],
+      [
+        514,
+        514
+      ]
+    ],
+    "candidateSha256": "a8f933a93b9b6615971ce94278cb29ab8513afd7c27c7e10b38897455c504165"
+  },
+  {
+    "case": "control",
+    "width": 1440,
+    "baseDimensions": [
+      2880,
+      2844
+    ],
+    "candidateDimensions": [
+      2880,
+      2844
+    ],
+    "identical": true,
+    "markedTables": 0,
+    "markedCode": 0,
+    "codeWidths": [
+      [
+        406,
+        406
+      ],
+      [
+        838,
+        838
+      ],
+      [
+        838,
+        838
+      ],
+      [
+        406,
+        406
+      ],
+      [
+        406,
+        406
+      ]
+    ],
+    "candidateSha256": "a9e0789eb5ccc93becaf50db8fec01eed4e4d443b101dce1106e0f31c4428d9f"
+  }
+]

@@ -1,0 +1,7 @@
+const fs=await import('node:fs/promises'),root='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round21',p=(await taskSpace(14)).page('p1'),rows=[];
+await p.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:900,deviceScaleFactor:1,mobile:false});await p.goto('file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-size/author/answer.html');await p.click('[data-theme-choice="light"]');await p.focus('[data-theme-choice="auto"]');
+const read=()=>p.evaluate(()=>{const e=document.activeElement,w=document.querySelector('.table-scroll');return {tag:e.tagName,classes:e.className,theme:e.getAttribute('data-theme-choice'),text:e.textContent?.slice(0,70),activeTable:e===w,scrollLeft:w.scrollLeft,maxScroll:w.scrollWidth-w.clientWidth,width:innerWidth};});
+for(let i=1;i<=70;i++){await p.keyboard.press('Tab');const s=await read();rows.push({key:'Tab',step:i,...s});await fs.writeFile(root+'/gzip-keyboard-trace.json',JSON.stringify(rows,null,2));if(s.activeTable)break;if(i>1&&s.theme==='auto')break;}
+for(let i=1;i<=8;i++){await p.keyboard.press('ArrowRight');const s=await read();rows.push({key:'ArrowRight',step:i,...s});await fs.writeFile(root+'/gzip-keyboard-trace.json',JSON.stringify(rows,null,2));}
+console.log(rows);
+const shot=await p.cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await fs.writeFile(root+'/screens/gzip-arrow-observed.png',Buffer.from(shot.data,'base64'));

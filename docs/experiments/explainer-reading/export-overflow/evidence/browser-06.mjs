@@ -1,0 +1,3 @@
+const fs=await import('node:fs/promises'),root='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round21',p=(await taskSpace(14)).page('p1');await fs.mkdir(root+'/exports',{recursive:true});await p.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:900,deviceScaleFactor:1,mobile:false});
+if(await p.evaluate(()=>document.querySelector('.export-menu [role="menu"]').hidden))await p.press('[data-export-toggle]','Enter');
+const pending=p.waitForEvent('download',{timeout:30000});await p.click('[data-export-image="png"]');const d=await pending;await d.saveAs(root+'/exports/gzip-base-390.png');console.log({suggestedName:d.suggestedFilename(),saved:root+'/exports/gzip-base-390.png'});

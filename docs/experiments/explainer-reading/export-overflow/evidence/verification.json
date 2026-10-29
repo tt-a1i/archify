@@ -1,0 +1,16 @@
+{
+  "verifiedAtUtc": "2026-10-29T19:25:10.737999+00:00",
+  "base": "46abd16d41601d5848455fd50471f379a583a7fe",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "sameInputsAcrossThreeArms": true,
+  "strictFinalizeArchives": 9,
+  "reportLocalLinks": 26,
+  "archivedArtifactHashesChecked": 97,
+  "selectedPhonePngsInspected": 6,
+  "selectedKeyboardScreenshotsInspected": 5,
+  "productRuntimeChanged": false,
+  "zipRebuilt": false,
+  "fullBrowserGate": false,
+  "humanReadingAcceptance": false,
+  "disposition": "Confirmed export clipping; both table-compression defaults rejected; code wrapping remains experimental."
+}

@@ -1,0 +1,29 @@
+{
+  "inspected": {
+    "url": "https://github.com/tt-a1i/archify/pull/1015",
+    "head": "fe4f80d2195e0a7b49b7cfe6d3dba7ffd31a7ac8",
+    "base": "ba701d20a55ed6f139484d9ead7ff45671fe40eb",
+    "changedFiles": [
+      "archify/explainer/reader.css",
+      "archify/explainer/reader.js",
+      "archify/explainer/render.mjs"
+    ],
+    "conclusion": "PR 1015 changes table visual styling and other reader interactions; the inspected patches retain .table-scroll overflow:auto and do not add table-specific focusability or overflow hints. Research only; no source reused."
+  },
+  "exportSearch": {
+    "query": "open PRs: explainer export table",
+    "results": [
+      {
+        "number": 998,
+        "title": "Code analysis Main branch",
+        "url": "https://github.com/tt-a1i/archify/pull/998"
+      },
+      {
+        "number": 1101,
+        "title": "docs(readme): put install before showcase and trim agent-facing detail",
+        "url": "https://github.com/tt-a1i/archify/pull/1101"
+      }
+    ],
+    "limit": "Bounded search. PR 998 was returned with a broad Code Analysis title; its export ownership is not yet audited. No claim that no overlapping work exists."
+  }
+}

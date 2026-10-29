@@ -1,0 +1,92 @@
+[
+  {
+    "case": "gzip",
+    "width": 390,
+    "baseDimensions": [
+      780,
+      4322
+    ],
+    "candidateDimensions": [
+      780,
+      4466
+    ],
+    "identical": false,
+    "baseSha256": "14863bdcc0d5e1dfdeb30dc77208b86d22bbc37b0beda128646f61037cab705e",
+    "candidateSha256": "d931446c7d5484bcdefbeed2a58130cfbdcede8c763263d9b26cf6de542cecfb"
+  },
+  {
+    "case": "jq",
+    "width": 390,
+    "baseDimensions": [
+      780,
+      5338
+    ],
+    "candidateDimensions": [
+      780,
+      5256
+    ],
+    "identical": false,
+    "baseSha256": "c12cb6300f1aa22d76e9d8afec45d759ad6940d5c73a297b87fb1d90108a2d22",
+    "candidateSha256": "4b7b729419abc715d7d7c8880c7bee88dca1b15c16206255ca532619cf11b15e"
+  },
+  {
+    "case": "control",
+    "width": 390,
+    "baseDimensions": [
+      780,
+      5728
+    ],
+    "candidateDimensions": [
+      780,
+      5728
+    ],
+    "identical": true,
+    "baseSha256": "3570d480da681a58f8d42ceeb1a57edcdfe1d61ef5f630aced40efe3394d2454",
+    "candidateSha256": "3570d480da681a58f8d42ceeb1a57edcdfe1d61ef5f630aced40efe3394d2454"
+  },
+  {
+    "case": "gzip",
+    "width": 1440,
+    "baseDimensions": [
+      2880,
+      2130
+    ],
+    "candidateDimensions": [
+      2880,
+      2130
+    ],
+    "identical": true,
+    "baseSha256": "809912d09033a669fc3c3f2283552158c20aa10a2b5f9b34c1a2f6d97cab3eba",
+    "candidateSha256": "809912d09033a669fc3c3f2283552158c20aa10a2b5f9b34c1a2f6d97cab3eba"
+  },
+  {
+    "case": "jq",
+    "width": 1440,
+    "baseDimensions": [
+      2880,
+      2670
+    ],
+    "candidateDimensions": [
+      2880,
+      2670
+    ],
+    "identical": true,
+    "baseSha256": "a8f933a93b9b6615971ce94278cb29ab8513afd7c27c7e10b38897455c504165",
+    "candidateSha256": "a8f933a93b9b6615971ce94278cb29ab8513afd7c27c7e10b38897455c504165"
+  },
+  {
+    "case": "control",
+    "width": 1440,
+    "baseDimensions": [
+      2880,
+      2844
+    ],
+    "candidateDimensions": [
+      2880,
+      2844
+    ],
+    "identical": true,
+    "baseSha256": "a9e0789eb5ccc93becaf50db8fec01eed4e4d443b101dce1106e0f31c4428d9f",
+    "candidateSha256": "a9e0789eb5ccc93becaf50db8fec01eed4e4d443b101dce1106e0f31c4428d9f"
+  }
+]

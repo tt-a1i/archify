@@ -1,0 +1,27 @@
+--- archify/explainer/reader.js
++++ archify/explainer/reader.js
+@@ -270,6 +270,9 @@
+     const shell = document.querySelector('.shell'), width = document.documentElement.clientWidth;
+     let height = Math.ceil(shell.getBoundingClientRect().height + 48);
+     const clone = root.cloneNode(true);
++    const liveTables = all('.table-scroll');
++    const exportTables = all('.table-scroll',clone).filter((table,index)=>liveTables[index].scrollWidth > liveTables[index].clientWidth + 1);
++    exportTables.forEach(table=>table.classList.add('export-table'));
+     clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());
+     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
+     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
+@@ -278,8 +281,13 @@
+     // Inside a foreignObject the page's <html> is not :root, so theme and style rules would drop out;
+     // the root's own attribute selects the same element with the same specificity.
+     const sheet = clone.querySelector('head>style'); if (sheet) sheet.textContent = sheet.textContent.replace(/:root\b/g,'[data-archify-artifact]');
++    if (exportTables.length && sheet) sheet.textContent += `
++      .export-table table{table-layout:fixed;width:100%}
++      .export-table th,.export-table td{min-width:0;overflow-wrap:anywhere}
++      .export-table thead th{white-space:normal}
++    `;
+     clone.style.width = `${width}px`;
+-    if (clone.querySelector('[data-diagram-fit="scroll"]')) {
++    if (exportTables.length || clone.querySelector('[data-diagram-fit="scroll"]')) {
+       // The exported overview is shorter than the scrollable live diagram.
+       // Measure the inert clone synchronously, then remove it before painting.
+       const measuring = document.createElement('div');

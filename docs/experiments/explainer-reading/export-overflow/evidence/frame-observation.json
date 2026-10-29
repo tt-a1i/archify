@@ -1,0 +1,514 @@
+[
+  {
+    "id": "gzip",
+    "file": "gzip-size/author/answer.html",
+    "reached": true,
+    "trace": [
+      {
+        "table": false,
+        "theme": "light",
+        "tag": "BUTTON",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": "dark",
+        "tag": "BUTTON",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "tool-button"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "tool-button"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "ask-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": "panel-id"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "ask-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": "panel-id"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "ask-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": true,
+        "theme": null,
+        "tag": "DIV",
+        "cls": "table-scroll"
+      }
+    ],
+    "beforeCapture": {
+      "width": 390,
+      "active": "table-scroll",
+      "scrollLeft": 0,
+      "maxScroll": 186,
+      "lastRight": 560,
+      "clipRight": 374
+    },
+    "afterCapture": {
+      "width": 390,
+      "active": "table-scroll",
+      "scrollLeft": 0,
+      "maxScroll": 186,
+      "lastRight": 560,
+      "clipRight": 374
+    },
+    "afterFrames": {
+      "width": 390,
+      "active": "table-scroll",
+      "scrollLeft": 0,
+      "maxScroll": 186,
+      "lastRight": 560,
+      "clipRight": 374
+    }
+  },
+  {
+    "id": "control",
+    "file": "jq-default/candidate.html",
+    "reached": false,
+    "trace": [
+      {
+        "table": false,
+        "theme": "light",
+        "tag": "BUTTON",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": "dark",
+        "tag": "BUTTON",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "tool-button"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "tool-button"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "ask-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": "panel-id"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "ask-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "text-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": "panel-id"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "ask-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "text-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "text-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": "panel-id"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "ask-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "text-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BUTTON",
+        "cls": "text-button interactive"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": "colophon-brand"
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "BODY",
+        "cls": ""
+      },
+      {
+        "table": false,
+        "theme": null,
+        "tag": "A",
+        "cls": "skip-link"
+      },
+      {
+        "table": false,
+        "theme": "auto",
+        "tag": "BUTTON",
+        "cls": ""
+      }
+    ],
+    "beforeCapture": {
+      "width": 390,
+      "active": "",
+      "scrollLeft": 0,
+      "maxScroll": 0,
+      "lastRight": 374,
+      "clipRight": 374
+    },
+    "afterCapture": {
+      "width": 390,
+      "active": "",
+      "scrollLeft": 0,
+      "maxScroll": 0,
+      "lastRight": 374,
+      "clipRight": 374
+    },
+    "afterFrames": {
+      "width": 390,
+      "active": "",
+      "scrollLeft": 0,
+      "maxScroll": 0,
+      "lastRight": 374,
+      "clipRight": 374
+    }
+  }
+]

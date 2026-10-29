@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "25fa16f7-fb36-4bdf-97e4-1dfe5d55056c",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round21/base/gzip.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round21/base/gzip.html",
+  "specification": {
+    "sha256": "8e4094b3f609b2ebdf72ded99ac2886437bb62662e03a780cbf70486b1a8f42b",
+    "bytes": 2732
+  },
+  "artifact": {
+    "sha256": "683f1244d08c97ace7ad3a27a0acdffc285459ae2dec14cf4cf8de2fa7b4f40f",
+    "bytes": 156117
+  },
+  "explainer": {
+    "preparedSha256": "4d45ab4dc6c1888c55a3a7847857fef0e37d25a9324ba2b62bdb799eca3301d8",
+    "dependencies": []
+  }
+}

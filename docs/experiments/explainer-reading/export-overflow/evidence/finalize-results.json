@@ -1,0 +1,32 @@
+[
+  {
+    "arm": "base",
+    "case": "gzip",
+    "exitCode": 0
+  },
+  {
+    "arm": "base",
+    "case": "jq",
+    "exitCode": 0
+  },
+  {
+    "arm": "base",
+    "case": "control",
+    "exitCode": 0
+  },
+  {
+    "arm": "candidate",
+    "case": "gzip",
+    "exitCode": 0
+  },
+  {
+    "arm": "candidate",
+    "case": "jq",
+    "exitCode": 0
+  },
+  {
+    "arm": "candidate",
+    "case": "control",
+    "exitCode": 0
+  }
+]

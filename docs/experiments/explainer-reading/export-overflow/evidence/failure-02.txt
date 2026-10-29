@@ -1,0 +1,3 @@
+Browser-02 recorded jq matrix success, then timed out waiting for the first .table-scroll's scrollLeft > 0 on the gzip author page. The script assumed one table per page and observed document.querySelector('.table-scroll') even after focusing any table. This timeout alone does not identify a reader keyboard failure. Inspect all tables and the active element before retrying.
+
+Follow-up DOM inspection found exactly one table (544 px / 358 px); the multiple-table hypothesis is rejected for this artifact. The next observation will save focus and scroll state after each key event rather than infer a cause from the timeout.

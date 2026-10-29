@@ -1,0 +1,35 @@
+{
+  "scope": "Bounded read-only search, not exhaustive. Inspect PR 1015 current diff before overlapping table implementation.",
+  "queries": [
+    {
+      "query": "open PR: explainer table scroll",
+      "results": [
+        {
+          "number": 1015,
+          "title": "feat(explainer): improve visual hierarchy, KPI deltas, code focus, and interactive details",
+          "url": "https://github.com/tt-a1i/archify/pull/1015"
+        },
+        {
+          "number": 1101,
+          "title": "docs(readme): put install before showcase and trim agent-facing detail",
+          "url": "https://github.com/tt-a1i/archify/pull/1101"
+        }
+      ]
+    },
+    {
+      "query": "open issue: explainer overflow",
+      "results": [
+        {
+          "number": 1068,
+          "title": "feat(artifacts): polish standalone page reading and interaction experience",
+          "url": "https://github.com/tt-a1i/archify/issues/1068"
+        },
+        {
+          "number": 1026,
+          "title": "[Viewer] Mobile: nav actions overflow, route probe hides under the nav, presentation stage clips the scene start",
+          "url": "https://github.com/tt-a1i/archify/issues/1026"
+        }
+      ]
+    }
+  ]
+}

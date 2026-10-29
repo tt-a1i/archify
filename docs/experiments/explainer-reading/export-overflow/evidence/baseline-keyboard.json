@@ -1,0 +1,320 @@
+[
+  {
+    "id": "jq-matrix",
+    "file": "jq-default/author/answer.html",
+    "initial": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "viewport": 390,
+      "pageWidth": 390,
+      "scrollWidth": 493,
+      "clientWidth": 358,
+      "tabIndex": -1,
+      "explicitTabIndex": null,
+      "ariaLabel": null,
+      "lastHeader": "仅缺失时默认",
+      "lastHeaderRight": 508.75,
+      "clipRight": 374,
+      "lastColumnFullyVisible": false,
+      "tableText": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失truetruetrue"
+    },
+    "trace": [
+      {
+        "step": 1,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "",
+        "text": "浅色",
+        "theme": "light",
+        "isTable": false
+      },
+      {
+        "step": 2,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "",
+        "text": "深色",
+        "theme": "dark",
+        "isTable": false
+      },
+      {
+        "step": 3,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "tool-button",
+        "text": "杂志",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 4,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "tool-button",
+        "text": "导出",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 5,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "ask-button interactive",
+        "text": "追问",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 6,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "1",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 7,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 8,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "2",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 9,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 10,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "3",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 11,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 12,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "2",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 13,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 14,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "4",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 15,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 16,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "2",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 17,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 18,
+        "tag": "A",
+        "id": "",
+        "classes": "panel-id",
+        "text": "1",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 19,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "ask-button interactive",
+        "text": "追问",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 20,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "2",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 21,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 22,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "text-button interactive",
+        "text": "复制",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 23,
+        "tag": "PRE",
+        "id": "",
+        "classes": "",
+        "text": "jq -cn '{\"enabled\":false} | .enabled // true'\n# 输出：true",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 24,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "1",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 25,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 26,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "5",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 27,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 28,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "2",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 29,
+        "tag": "A",
+        "id": "",
+        "classes": "",
+        "text": "打开原文 ↗",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 30,
+        "tag": "A",
+        "id": "",
+        "classes": "panel-id",
+        "text": "2",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 31,
+        "tag": "BUTTON",
+        "id": "",
+        "classes": "ask-button interactive",
+        "text": "追问",
+        "theme": null,
+        "isTable": false
+      },
+      {
+        "step": 32,
+        "tag": "DIV",
+        "id": "",
+        "classes": "table-scroll",
+        "text": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失",
+        "theme": null,
+        "isTable": true
+      }
+    ],
+    "reached": true,
+    "after": {
+      "activeTable": true,
+      "scrollLeft": 135,
+      "maxScroll": 135,
+      "lastHeaderRight": 373.75,
+      "clipRight": 374,
+      "lastColumnFullyVisible": true
+    }
+  }
+]
