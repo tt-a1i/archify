@@ -1,0 +1,24 @@
+[
+  {
+    "theme": "light",
+    "bounds": [
+      676,
+      41,
+      1360,
+      541
+    ],
+    "changedPixels": 7419,
+    "contentExcludingScrollbarIdentical": false
+  },
+  {
+    "theme": "dark",
+    "bounds": [
+      733,
+      43,
+      1359,
+      384
+    ],
+    "changedPixels": 5770,
+    "contentExcludingScrollbarIdentical": false
+  }
+]

@@ -1,0 +1,202 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2221,
+    "documentWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "column": "span 6",
+        "height": 323.8828125,
+        "clipped": false
+      },
+      {
+        "id": "example",
+        "column": "span 6",
+        "height": 392.3671875,
+        "clipped": false
+      },
+      {
+        "id": "observed",
+        "column": "span 6",
+        "height": 589.921875,
+        "clipped": false
+      },
+      {
+        "id": "check",
+        "column": "span 6",
+        "height": 397.5390625,
+        "clipped": false
+      }
+    ],
+    "scroll": [
+      {
+        "width": 358,
+        "scroll": 358
+      },
+      {
+        "width": 356,
+        "scroll": 356
+      },
+      {
+        "width": 356,
+        "scroll": 356
+      },
+      {
+        "width": 356,
+        "scroll": 356
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2221,
+    "documentWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "column": "span 6",
+        "height": 323.8828125,
+        "clipped": false
+      },
+      {
+        "id": "example",
+        "column": "span 6",
+        "height": 392.3671875,
+        "clipped": false
+      },
+      {
+        "id": "observed",
+        "column": "span 6",
+        "height": 589.921875,
+        "clipped": false
+      },
+      {
+        "id": "check",
+        "column": "span 6",
+        "height": 397.5390625,
+        "clipped": false
+      }
+    ],
+    "scroll": [
+      {
+        "width": 358,
+        "scroll": 358
+      },
+      {
+        "width": 356,
+        "scroll": 356
+      },
+      {
+        "width": 356,
+        "scroll": 356
+      },
+      {
+        "width": 356,
+        "scroll": 356
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1093,
+    "documentWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 267,
+        "clipped": false
+      },
+      {
+        "id": "example",
+        "column": "7 / span 6",
+        "height": 367,
+        "clipped": false
+      },
+      {
+        "id": "observed",
+        "column": "1 / span 6",
+        "height": 487,
+        "clipped": false
+      },
+      {
+        "id": "check",
+        "column": "7 / span 6",
+        "height": 387,
+        "clipped": false
+      }
+    ],
+    "scroll": [
+      {
+        "width": 624,
+        "scroll": 624
+      },
+      {
+        "width": 622,
+        "scroll": 622
+      },
+      {
+        "width": 622,
+        "scroll": 622
+      },
+      {
+        "width": 622,
+        "scroll": 622
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1093,
+    "documentWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 267,
+        "clipped": false
+      },
+      {
+        "id": "example",
+        "column": "7 / span 6",
+        "height": 367,
+        "clipped": false
+      },
+      {
+        "id": "observed",
+        "column": "1 / span 6",
+        "height": 487,
+        "clipped": false
+      },
+      {
+        "id": "check",
+        "column": "7 / span 6",
+        "height": 387,
+        "clipped": false
+      }
+    ],
+    "scroll": [
+      {
+        "width": 624,
+        "scroll": 624
+      },
+      {
+        "width": 622,
+        "scroll": 622
+      },
+      {
+        "width": 622,
+        "scroll": 622
+      },
+      {
+        "width": 622,
+        "scroll": 622
+      }
+    ]
+  }
+]

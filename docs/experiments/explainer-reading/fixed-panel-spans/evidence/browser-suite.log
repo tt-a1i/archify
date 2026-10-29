@@ -1,0 +1,99 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-browser.test.mjs
+
+Repository tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: common public HTML QA measures real keyboard, references, themes and horizontal layout without Archify markers
+ok 1 - common public HTML QA measures real keyboard, references, themes and horizontal layout without Archify markers
+  ---
+  duration_ms: 1189.79325
+  type: 'test'
+  ...
+# Subtest: formal renderer retains keyboard navigation, static reading and print modes
+ok 2 - formal renderer retains keyboard navigation, static reading and print modes
+  ---
+  duration_ms: 4296.240375
+  type: 'test'
+  ...
+# Subtest: authored panel spans remain exact through measured layout and reader relayout
+ok 3 - authored panel spans remain exact through measured layout and reader relayout
+  ---
+  duration_ms: 933.444209
+  type: 'test'
+  ...
+# Subtest: retry layout and referenced node explanations remain readable and keyboard accessible after a prose edit
+ok 4 - retry layout and referenced node explanations remain readable and keyboard accessible after a prose edit
+  ---
+  duration_ms: 2136.819
+  type: 'test'
+  ...
+# Subtest: native step opens the complete Viewer and focuses exact nodes and edges with readable graph text
+ok 5 - native step opens the complete Viewer and focuses exact nodes and edges with readable graph text
+  ---
+  duration_ms: 3524.912125
+  type: 'test'
+  ...
+# Subtest: wide frozen native previews keep every node visible at 1280 and reclaim the 1440 text floor on live resize
+ok 6 - wide frozen native previews keep every node visible at 1280 and reclaim the 1440 text floor on live resize
+  ---
+  duration_ms: 4474.0565
+  type: 'test'
+  ...
+# Subtest: public overflow uses actual clip chains and separates local scroll access from irreversible cropping
+ok 7 - public overflow uses actual clip chains and separates local scroll access from irreversible cropping
+  ---
+  duration_ms: 835.959291
+  type: 'test'
+  ...
+# Subtest: public system-theme mode starts with fresh storage and stable DOM identities distinguish duplicate controls
+ok 8 - public system-theme mode starts with fresh storage and stable DOM identities distinguish duplicate controls
+  ---
+  duration_ms: 846.830333
+  type: 'test'
+  ...
+# Subtest: text names light their diagram nodes and walk-throughs step through steps and messages
+ok 9 - text names light their diagram nodes and walk-throughs step through steps and messages
+  ---
+  duration_ms: 1967.892917
+  type: 'test'
+  ...
+# Subtest: phone native previews keep readable text with local keyboard scrolling and reset for desktop and print
+ok 10 - phone native previews keep readable text with local keyboard scrolling and reset for desktop and print
+  ---
+  duration_ms: 1212.072291
+  type: 'test'
+  ...
+# Subtest: image export retains the final table column and footer across responsive widths
+ok 11 - image export retains the final table column and footer across responsive widths
+  ---
+  duration_ms: 1118.373625
+  type: 'test'
+  ...
+# Subtest: image export wraps long snippets while preserving live code
+ok 12 - image export wraps long snippets while preserving live code
+  ---
+  duration_ms: 1006.454792
+  type: 'test'
+  ...
+# Subtest: image export bounds wide bitmaps and retains the final cells
+ok 13 - image export bounds wide bitmaps and retains the final cells
+  ---
+  duration_ms: 964.383125
+  type: 'test'
+  ...
+# Subtest: image export retains long diff rows and original line numbers
+ok 14 - image export retains long diff rows and original line numbers
+  ---
+  duration_ms: 1020.936292
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25674.703875

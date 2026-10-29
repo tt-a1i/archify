@@ -1,0 +1,40 @@
+{
+  "image": {
+    "width": 780,
+    "height": 4540
+  },
+  "states": [
+    {
+      "title": "diff 为空，暂存区就没有改动吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/candidate.html",
+      "width": "390px",
+      "report": "fixed-panel-spans/README.md",
+      "cases": 13
+    },
+    {
+      "title": "diff 为空，暂存区就没有改动吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/candidate.html",
+      "width": "1440px",
+      "report": "fixed-panel-spans/README.md",
+      "cases": 13
+    },
+    {
+      "title": "diff 为空，暂存区就没有改动吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/author/answer.html",
+      "width": "390px",
+      "report": "fixed-panel-spans/README.md",
+      "cases": 13
+    },
+    {
+      "title": "diff 为空，暂存区就没有改动吗？",
+      "src": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/author/answer.html",
+      "width": "1440px",
+      "report": "fixed-panel-spans/README.md",
+      "cases": 13
+    }
+  ]
+}

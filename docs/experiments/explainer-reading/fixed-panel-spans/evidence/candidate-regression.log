@@ -1,0 +1,21 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-browser.test.mjs --test-name-pattern=authored panel spans
+
+Repository tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: authored panel spans remain exact through measured layout and reader relayout
+ok 1 - authored panel spans remain exact through measured layout and reader relayout
+  ---
+  duration_ms: 1015.12275
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1157.465417

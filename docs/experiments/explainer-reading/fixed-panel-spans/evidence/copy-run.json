@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "gitVersion": "git version 2.50.1 (Apple Git-155)",
+  "scope": "exact payload intercepted from actual Copy button; isolated tracked-file repository; OS clipboard permission not exercised",
+  "commands": [
+    {
+      "command": "git diff --cached -- value.txt",
+      "stdout": "diff --git a/value.txt b/value.txt\nindex 32c0381..9e3df68 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=2\n",
+      "matchesPriorProbe": true
+    },
+    {
+      "command": "git diff -- value.txt",
+      "stdout": "diff --git a/value.txt b/value.txt\nindex 9e3df68..32c0381 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=2\n+value=1\n",
+      "matchesPriorProbe": true
+    },
+    {
+      "command": "git diff HEAD -- value.txt",
+      "stdout": "",
+      "matchesPriorProbe": true
+    }
+  ],
+  "readOnlyPreserved": true
+}

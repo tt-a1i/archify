@@ -1,0 +1,4 @@
+import fs from 'node:fs';import {renderExplainer as baseRender} from './base/archify/explainer/render.mjs';import {renderExplainer as render} from '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/archify/explainer/render.mjs';import {unpackPageBundle} from './base/archify/explainer/page-bundle.mjs';
+const root=new URL('.',import.meta.url).pathname,html=fs.readFileSync(root+'/base/native.html','utf8'),bundle=unpackPageBundle(JSON.parse(html.match(/<script\b[^>]*\bid="archify-explainer-prepared"[^>]*>([\s\S]*?)<\/script>/)[1]));
+const doc=structuredClone(bundle.document);doc.panels.find(p=>p.id==='sequence').span=6;const resources={sourceText:JSON.stringify(doc),preparedDiagrams:bundle.preparedDiagrams,preparedSources:bundle.preparedSources};
+fs.writeFileSync(root+'/base/native-explicit.html',baseRender(doc,resources));fs.writeFileSync(root+'/candidate/native-explicit.html',render(doc,resources));

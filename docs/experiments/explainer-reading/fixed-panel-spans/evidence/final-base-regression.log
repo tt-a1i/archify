@@ -1,0 +1,180 @@
+TAP version 13
+# Subtest: authored panel spans remain exact through measured layout and reader relayout
+not ok 1 - authored panel spans remain exact through measured layout and reader relayout
+  ---
+  duration_ms: 943.875958
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round28/base/test/explainer-browser.test.mjs:35:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    a fixed width is not a minimum or a full-row fallback
+    + actual - expected
+
+    + [
+    +   {
+    +     expected: 92,
+    +     id: 'fixed-1',
+    +     span: 1,
+    +     text: 'X',
+    +     width: 416
+    +   },
+    +   {
+    +     expected: 200,
+    +     id: 'fixed-2',
+    +     span: 2,
+    +     text: 'X',
+    +     width: 416
+    +   },
+    +   {
+    +     expected: 308,
+    +     id: 'fixed-3',
+    +     span: 3,
+    +     text: 'X',
+    +     width: 416
+    +   },
+    +   {
+    +     expected: 524,
+    +     id: 'fixed-5',
+    +     span: 5,
+    +     text: 'X',
+    +     width: 1280
+    +   },
+    +   {
+    +     expected: 632,
+    +     id: 'fixed-6',
+    +     span: 6,
+    +     text: '复制Keep this complete command: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    +     width: 1280
+    +   },
+    +   {
+    +     expected: 740,
+    +     id: 'fixed-7',
+    +     span: 7,
+    +     text: 'X',
+    +     width: 1280
+    +   },
+    +   {
+    +     expected: 848,
+    +     id: 'fixed-8',
+    +     span: 8,
+    +     text: 'X',
+    +     width: 1280
+    +   },
+    +   {
+    +     expected: 956,
+    +     id: 'fixed-9',
+    +     span: 9,
+    +     text: 'X',
+    +     width: 1280
+    +   },
+    +   {
+    +     expected: 1064,
+    +     id: 'fixed-10',
+    +     span: 10,
+    +     text: 'X',
+    +     width: 1280
+    +   },
+    +   {
+    +     expected: 1172,
+    +     id: 'fixed-11',
+    +     span: 11,
+    +     text: 'X',
+    +     width: 1280
+    +   },
+    +   {
+    +     expected: 632,
+    +     id: 'after-full',
+    +     span: 6,
+    +     text: 'X',
+    +     width: 1280
+    +   }
+    + ]
+    - []
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      id: 'fixed-1'
+      span: 1
+      width: 416
+      expected: 92
+      text: 'X'
+    1:
+      id: 'fixed-2'
+      span: 2
+      width: 416
+      expected: 200
+      text: 'X'
+    2:
+      id: 'fixed-3'
+      span: 3
+      width: 416
+      expected: 308
+      text: 'X'
+    3:
+      id: 'fixed-5'
+      span: 5
+      width: 1280
+      expected: 524
+      text: 'X'
+    4:
+      id: 'fixed-6'
+      span: 6
+      width: 1280
+      expected: 632
+      text: '复制Keep this complete command: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    5:
+      id: 'fixed-7'
+      span: 7
+      width: 1280
+      expected: 740
+      text: 'X'
+    6:
+      id: 'fixed-8'
+      span: 8
+      width: 1280
+      expected: 848
+      text: 'X'
+    7:
+      id: 'fixed-9'
+      span: 9
+      width: 1280
+      expected: 956
+      text: 'X'
+    8:
+      id: 'fixed-10'
+      span: 10
+      width: 1280
+      expected: 1064
+      text: 'X'
+    9:
+      id: 'fixed-11'
+      span: 11
+      width: 1280
+      expected: 1172
+      text: 'X'
+    10:
+      id: 'after-full'
+      span: 6
+      width: 1280
+      expected: 632
+      text: 'X'
+  operator: 'deepStrictEqual'
+  stack: |-
+    exact (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round28/base/test/explainer-browser.test.mjs:43:168)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round28/base/test/explainer-browser.test.mjs:46:96)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1090.710167

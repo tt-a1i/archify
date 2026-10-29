@@ -1,0 +1,156 @@
+{
+  "base": "7e836b98525a5bcbc2d8e5c1ce2b2d962b077130",
+  "scope": "frozen authored document, sources and prepared diagrams; only reader runtime differs; not new generation or artifact provenance acceptance",
+  "results": [
+    {
+      "name": "git-explicit",
+      "file": "git-diff-endpoints/attempts/candidate-2.html",
+      "variant": "base",
+      "fixed": [
+        {
+          "id": "example",
+          "span": 6
+        },
+        {
+          "id": "observed",
+          "span": 6
+        },
+        {
+          "id": "check",
+          "span": 12
+        }
+      ],
+      "sha256": "76b476115153b7035c7beca38311ef8a26d40dc1b08bb5d354b5f59bdacd29ab"
+    },
+    {
+      "name": "git-explicit",
+      "file": "git-diff-endpoints/attempts/candidate-2.html",
+      "variant": "candidate",
+      "fixed": [
+        {
+          "id": "example",
+          "span": 6
+        },
+        {
+          "id": "observed",
+          "span": 6
+        },
+        {
+          "id": "check",
+          "span": 12
+        }
+      ],
+      "sha256": "b4d96b0c0675ef597729d87497f09f809a1eaa92180ac7fb2807b27c230c5f43"
+    },
+    {
+      "name": "git-auto",
+      "file": "git-diff-endpoints/author/answer.html",
+      "variant": "base",
+      "fixed": [],
+      "sha256": "7e513670c3436738bdc5fad1c39226d9cb228a6dfbab749a0823918bab47a4ca"
+    },
+    {
+      "name": "git-auto",
+      "file": "git-diff-endpoints/author/answer.html",
+      "variant": "candidate",
+      "fixed": [],
+      "sha256": "f05000ff986e970667b2beb1ed1ec3b1aa89f0c068f2021fee55eb33df2317bd"
+    },
+    {
+      "name": "rust",
+      "file": "rust-default/candidate.html",
+      "variant": "base",
+      "fixed": [],
+      "sha256": "7db15d779ccd234d432863e7c6cc265fdc64bda4821dab33fef780c592b488a2"
+    },
+    {
+      "name": "rust",
+      "file": "rust-default/candidate.html",
+      "variant": "candidate",
+      "fixed": [],
+      "sha256": "6d31742146c974d7390d93cd5a8fd16652d5c471885f594ab2803a8bda332a4e"
+    },
+    {
+      "name": "jq",
+      "file": "jq-default/candidate.html",
+      "variant": "base",
+      "fixed": [],
+      "sha256": "fd0723da54da0549d7089b41cf7a93c6521ed635f8f8ef8c15399ba976297d59"
+    },
+    {
+      "name": "jq",
+      "file": "jq-default/candidate.html",
+      "variant": "candidate",
+      "fixed": [],
+      "sha256": "034d393193ab489d39e7abcd82faed417606ca1c455c7a46fa872f371744121c"
+    },
+    {
+      "name": "thread",
+      "file": "thread-cancel/two-columns.html",
+      "variant": "base",
+      "fixed": [
+        {
+          "id": "mechanism",
+          "span": 6
+        },
+        {
+          "id": "group",
+          "span": 6
+        },
+        {
+          "id": "stopping",
+          "span": 6
+        }
+      ],
+      "sha256": "30781c832072822d6724a931753182ebf0cc7953b7f4131feee898099d91fc69"
+    },
+    {
+      "name": "thread",
+      "file": "thread-cancel/two-columns.html",
+      "variant": "candidate",
+      "fixed": [
+        {
+          "id": "mechanism",
+          "span": 6
+        },
+        {
+          "id": "group",
+          "span": 6
+        },
+        {
+          "id": "stopping",
+          "span": 6
+        }
+      ],
+      "sha256": "2dd03f2b61aa1d36ad6d96a6be6660ec165b70086ec97368a11930a22498ac83"
+    },
+    {
+      "name": "pie",
+      "file": "pie-reading/candidate.html",
+      "variant": "base",
+      "fixed": [],
+      "sha256": "11a9900f8315eb14f5432cd34c55d3f8fe905d963b0bed3788d2108eca4b31f1"
+    },
+    {
+      "name": "pie",
+      "file": "pie-reading/candidate.html",
+      "variant": "candidate",
+      "fixed": [],
+      "sha256": "fec6a04d8ff2b2dbe49838b4750691544e734bb1dd7175d4a1fd55447b41befc"
+    },
+    {
+      "name": "native",
+      "file": "phone-preview/candidate.html",
+      "variant": "base",
+      "fixed": [],
+      "sha256": "a566f1a74662b3304c4948e8b9eafea49f5baad6cee528abdc236707b70f6706"
+    },
+    {
+      "name": "native",
+      "file": "phone-preview/candidate.html",
+      "variant": "candidate",
+      "fixed": [],
+      "sha256": "5bf22812079265ce1e457e3efbc5d07c4153cc07b5eef7592f542db9e0ab9f76"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "ok": true,
+  "scope": "actual copy button, Clipboard.writeText payload intercepted; OS permissions not exercised",
+  "payload": "git diff --cached -- value.txt\ngit diff -- value.txt\ngit diff HEAD -- value.txt"
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "6c278335-c91e-47dd-bed7-ac1a295b15f8",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/git-diff-endpoints/candidate.html",
+  "specification": {
+    "sha256": "2139582f6b090fac6b9137444b26ee7e717918b055ef254526434830f0090e13",
+    "bytes": 2433
+  },
+  "artifact": {
+    "sha256": "49f25205b836e03edf71959b947f09f1b91dc5633d85e02031601b50ced3aac0",
+    "bytes": 158015
+  },
+  "explainer": {
+    "preparedSha256": "a8e52fb67142c64b867f0daca7aae574f0535995598bfd2eed49ca56a07023dd",
+    "dependencies": []
+  }
+}

@@ -1,0 +1,356 @@
+[
+  {
+    "name": "thread",
+    "variant": "base",
+    "theme": "light",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 300,
+        "clipped": false
+      },
+      {
+        "id": "mechanism",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 375,
+        "clipped": false
+      },
+      {
+        "id": "group",
+        "fixed": "6",
+        "column": "1 / span 6",
+        "height": 483,
+        "clipped": false
+      },
+      {
+        "id": "stopping",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 408,
+        "clipped": false
+      }
+    ],
+    "native": [],
+    "notices": [],
+    "sha256": "51e8687b9150cedcccdcabd9ff834d2a812393160847143dbfb47aa6f94e2440"
+  },
+  {
+    "name": "thread",
+    "variant": "base",
+    "theme": "dark",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 300,
+        "clipped": false
+      },
+      {
+        "id": "mechanism",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 375,
+        "clipped": false
+      },
+      {
+        "id": "group",
+        "fixed": "6",
+        "column": "1 / span 6",
+        "height": 483,
+        "clipped": false
+      },
+      {
+        "id": "stopping",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 408,
+        "clipped": false
+      }
+    ],
+    "native": [],
+    "notices": [],
+    "sha256": "68e689e7ed5da16bf6f15cd762115bc82533995585eeded913dedf5158c6ed22"
+  },
+  {
+    "name": "thread",
+    "variant": "candidate",
+    "theme": "light",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 300,
+        "clipped": false
+      },
+      {
+        "id": "mechanism",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 375,
+        "clipped": false
+      },
+      {
+        "id": "group",
+        "fixed": "6",
+        "column": "1 / span 6",
+        "height": 483,
+        "clipped": false
+      },
+      {
+        "id": "stopping",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 408,
+        "clipped": false
+      }
+    ],
+    "native": [],
+    "notices": [],
+    "sha256": "51e8687b9150cedcccdcabd9ff834d2a812393160847143dbfb47aa6f94e2440"
+  },
+  {
+    "name": "thread",
+    "variant": "candidate",
+    "theme": "dark",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 300,
+        "clipped": false
+      },
+      {
+        "id": "mechanism",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 375,
+        "clipped": false
+      },
+      {
+        "id": "group",
+        "fixed": "6",
+        "column": "1 / span 6",
+        "height": 483,
+        "clipped": false
+      },
+      {
+        "id": "stopping",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 408,
+        "clipped": false
+      }
+    ],
+    "native": [],
+    "notices": [],
+    "sha256": "68e689e7ed5da16bf6f15cd762115bc82533995585eeded913dedf5158c6ed22"
+  },
+  {
+    "name": "native-explicit",
+    "variant": "base",
+    "theme": "light",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 12",
+        "height": 213,
+        "clipped": false
+      },
+      {
+        "id": "sequence",
+        "fixed": "6",
+        "column": "1 / span 12",
+        "height": 630,
+        "clipped": false
+      },
+      {
+        "id": "comparison",
+        "column": "1 / span 6",
+        "height": 381,
+        "clipped": false
+      },
+      {
+        "id": "forget-panel",
+        "column": "7 / span 6",
+        "height": 381,
+        "clipped": false
+      },
+      {
+        "id": "checks",
+        "column": "1 / span 12",
+        "height": 277,
+        "clipped": false
+      }
+    ],
+    "native": [
+      {
+        "fit": "fit",
+        "width": 1272
+      }
+    ],
+    "notices": [
+      {
+        "hidden": true,
+        "text": ""
+      }
+    ],
+    "sha256": "1a1eb6e7bcac17c463af6d99f6d25241a66933d211fb0f34de401985eaa63d2a"
+  },
+  {
+    "name": "native-explicit",
+    "variant": "base",
+    "theme": "dark",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 12",
+        "height": 213,
+        "clipped": false
+      },
+      {
+        "id": "sequence",
+        "fixed": "6",
+        "column": "1 / span 12",
+        "height": 630,
+        "clipped": false
+      },
+      {
+        "id": "comparison",
+        "column": "1 / span 6",
+        "height": 381,
+        "clipped": false
+      },
+      {
+        "id": "forget-panel",
+        "column": "7 / span 6",
+        "height": 381,
+        "clipped": false
+      },
+      {
+        "id": "checks",
+        "column": "1 / span 12",
+        "height": 277,
+        "clipped": false
+      }
+    ],
+    "native": [
+      {
+        "fit": "fit",
+        "width": 1272
+      }
+    ],
+    "notices": [
+      {
+        "hidden": true,
+        "text": ""
+      }
+    ],
+    "sha256": "8ca4140102fe6c19b99bbf55795b725e66add0da3af45412102f0bccf6fbaa9f"
+  },
+  {
+    "name": "native-explicit",
+    "variant": "candidate",
+    "theme": "light",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 300,
+        "clipped": false
+      },
+      {
+        "id": "sequence",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 508,
+        "clipped": false
+      },
+      {
+        "id": "comparison",
+        "column": "1 / span 6",
+        "height": 584,
+        "clipped": false
+      },
+      {
+        "id": "forget-panel",
+        "column": "7 / span 6",
+        "height": 376,
+        "clipped": false
+      },
+      {
+        "id": "checks",
+        "column": "1 / span 12",
+        "height": 277,
+        "clipped": false
+      }
+    ],
+    "native": [
+      {
+        "fit": "insufficient",
+        "required": "849",
+        "width": 624
+      }
+    ],
+    "notices": [
+      {
+        "hidden": false,
+        "text": "This diagram cannot fit this page width with readable text. Open the interactive view to inspect it."
+      }
+    ],
+    "sha256": "6e4ce2d8ddcbb71a90f3906a70e0a86890c3aece2a15a46fa7744bea5f59e6a7"
+  },
+  {
+    "name": "native-explicit",
+    "variant": "candidate",
+    "theme": "dark",
+    "panels": [
+      {
+        "id": "answer",
+        "column": "1 / span 6",
+        "height": 300,
+        "clipped": false
+      },
+      {
+        "id": "sequence",
+        "fixed": "6",
+        "column": "7 / span 6",
+        "height": 508,
+        "clipped": false
+      },
+      {
+        "id": "comparison",
+        "column": "1 / span 6",
+        "height": 584,
+        "clipped": false
+      },
+      {
+        "id": "forget-panel",
+        "column": "7 / span 6",
+        "height": 376,
+        "clipped": false
+      },
+      {
+        "id": "checks",
+        "column": "1 / span 12",
+        "height": 277,
+        "clipped": false
+      }
+    ],
+    "native": [
+      {
+        "fit": "insufficient",
+        "required": "849",
+        "width": 624
+      }
+    ],
+    "notices": [
+      {
+        "hidden": false,
+        "text": "This diagram cannot fit this page width with readable text. Open the interactive view to inspect it."
+      }
+    ],
+    "sha256": "71732f4827ef42710a4c5a5df3473044605e2fa7bb622a6a75814205da7933c6"
+  }
+]

@@ -1,0 +1,8 @@
+const fs=await import('node:fs/promises'),root='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round28',p=(await taskSpace(14)).page('p1'),results=[];
+await p.goto('file://'+root+'/balanced.html');
+for(const width of [390,1440])for(const theme of ['light','dark']){
+ await p.cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await p.click(`[data-theme-choice="${theme}"]`);await p.evaluate(()=>document.fonts.ready.then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))));
+ results.push(await p.evaluate(()=>({width:innerWidth,theme:document.documentElement.dataset.theme,height:document.documentElement.scrollHeight,documentWidth:document.documentElement.scrollWidth,panels:[...document.querySelectorAll('.panel')].map(e=>({id:e.id,column:getComputedStyle(e).gridColumn,height:e.getBoundingClientRect().height,clipped:e.scrollHeight>e.clientHeight+1})),scroll:[...document.querySelectorAll('.table-scroll,.diff-scroll,.snippet pre')].map(e=>({width:e.clientWidth,scroll:e.scrollWidth}))})));
+ for(const pos of ['top','bottom']){await p.evaluate(pos=>scrollTo(0,pos==='top'?0:document.documentElement.scrollHeight),pos);await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const shot=await p.cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await fs.writeFile(`${root}/screenshots/balanced-${width}-${theme}-${pos}.png`,Buffer.from(shot.data,'base64'));}
+}
+await fs.writeFile(root+'/balanced-metrics.json',JSON.stringify(results,null,2)+'\n');console.log(results);
