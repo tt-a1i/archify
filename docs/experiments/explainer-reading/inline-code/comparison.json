@@ -1,0 +1,122 @@
+[
+  {
+    "name": "git-restore",
+    "arm": "base",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 348
+      }
+    ],
+    "text": [
+      "git restore -- file.txt",
+      "git restore --staged -- file.txt",
+      "git restore --source=HEAD -- file.txt",
+      "git restore --staged --worktree -- file.txt"
+    ]
+  },
+  {
+    "name": "git-restore",
+    "arm": "candidate",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 327
+      }
+    ],
+    "text": [
+      "git restore -- file.txt",
+      "git restore --staged -- file.txt",
+      "git restore --source=HEAD -- file.txt",
+      "git restore --staged --worktree -- file.txt"
+    ]
+  },
+  {
+    "name": "redis",
+    "arm": "base",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 156
+      },
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 240
+      }
+    ],
+    "text": [
+      "noeviction",
+      "volatile-*",
+      "noeviction",
+      "allkeys-*"
+    ]
+  },
+  {
+    "name": "redis",
+    "arm": "candidate",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 156
+      },
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 240
+      }
+    ],
+    "text": [
+      "noeviction",
+      "volatile-*",
+      "noeviction",
+      "allkeys-*"
+    ]
+  },
+  {
+    "name": "taskgroup",
+    "arm": "base",
+    "width": 390,
+    "pageWidth": 400,
+    "tables": [
+      {
+        "width": 332,
+        "scroll": 332,
+        "height": 384
+      }
+    ],
+    "text": [
+      "TaskGroup",
+      "gather"
+    ]
+  },
+  {
+    "name": "taskgroup",
+    "arm": "candidate",
+    "width": 390,
+    "pageWidth": 400,
+    "tables": [
+      {
+        "width": 332,
+        "scroll": 332,
+        "height": 384
+      }
+    ],
+    "text": [
+      "TaskGroup",
+      "gather"
+    ]
+  }
+]

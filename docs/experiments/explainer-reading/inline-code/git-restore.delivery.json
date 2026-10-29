@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3295663b-1241-4082-a440-2797738d9d54",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/restore-pair/purpose-table.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/inline-code/git-restore.html",
+  "specification": {
+    "sha256": "c14d559513c63532602e8354374c0a4e023213c06cc1d6d33b87c5053103f55e",
+    "bytes": 3017
+  },
+  "artifact": {
+    "sha256": "0f9b385aafa0c19c14398d1e18e6af0a6ad3f0694a79f5b56b041c7b97ea94b6",
+    "bytes": 539054
+  },
+  "explainer": {
+    "preparedSha256": "acb0db3285cf715c0368b7884715607faf97d0816c36c17125d42b6ba60b6e21",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "restore-flow",
+        "inline": true,
+        "sha256": "305b95620235391f2d3f01b9dd4445fca9954104c19040efab329639aa65850d",
+        "bytes": 694
+      }
+    ]
+  }
+}

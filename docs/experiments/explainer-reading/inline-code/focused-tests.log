@@ -1,0 +1,213 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-inline.test.mjs test/explainer-renderer.test.mjs test/explainer-browser.test.mjs test/explainer-layout.test.mjs
+
+Repository tests: 4 files, concurrency 2
+TAP version 13
+# Subtest: common public HTML QA measures real keyboard, references, themes and horizontal layout without Archify markers
+ok 1 - common public HTML QA measures real keyboard, references, themes and horizontal layout without Archify markers
+  ---
+  duration_ms: 1125.576625
+  type: 'test'
+  ...
+# Subtest: formal renderer retains keyboard navigation, static reading and print modes
+ok 2 - formal renderer retains keyboard navigation, static reading and print modes
+  ---
+  duration_ms: 5192.813208
+  type: 'test'
+  ...
+# Subtest: retry layout and referenced node explanations remain readable and keyboard accessible after a prose edit
+ok 3 - retry layout and referenced node explanations remain readable and keyboard accessible after a prose edit
+  ---
+  duration_ms: 2987.606292
+  type: 'test'
+  ...
+# Subtest: inline commands wrap between words and retain exact selectable text without overflowing long paths
+ok 4 - inline commands wrap between words and retain exact selectable text without overflowing long paths
+  ---
+  duration_ms: 1959.918458
+  type: 'test'
+  ...
+# Subtest: native step opens the complete Viewer and focuses exact nodes and edges with readable graph text
+ok 5 - native step opens the complete Viewer and focuses exact nodes and edges with readable graph text
+  ---
+  duration_ms: 5447.639584
+  type: 'test'
+  ...
+# Subtest: wide frozen native previews keep every node visible at 1280 and reclaim the 1440 text floor on live resize
+ok 6 - wide frozen native previews keep every node visible at 1280 and reclaim the 1440 text floor on live resize
+  ---
+  duration_ms: 4713.967041
+  type: 'test'
+  ...
+# Subtest: public overflow uses actual clip chains and separates local scroll access from irreversible cropping
+ok 7 - public overflow uses actual clip chains and separates local scroll access from irreversible cropping
+  ---
+  duration_ms: 845.104459
+  type: 'test'
+  ...
+# Subtest: public system-theme mode starts with fresh storage and stable DOM identities distinguish duplicate controls
+ok 8 - public system-theme mode starts with fresh storage and stable DOM identities distinguish duplicate controls
+  ---
+  duration_ms: 945.114833
+  type: 'test'
+  ...
+# Subtest: text names light their diagram nodes and walk-throughs step through steps and messages
+ok 9 - text names light their diagram nodes and walk-throughs step through steps and messages
+  ---
+  duration_ms: 2091.513125
+  type: 'test'
+  ...
+# Subtest: phone native previews keep readable text with local keyboard scrolling and reset for desktop and print
+ok 10 - phone native previews keep readable text with local keyboard scrolling and reset for desktop and print
+  ---
+  duration_ms: 1529.13075
+  type: 'test'
+  ...
+# Subtest: inline content preserves escaped literals and safe text while exposing reference semantics
+ok 11 - inline content preserves escaped literals and safe text while exposing reference semantics
+  ---
+  duration_ms: 7.465459
+  type: 'test'
+  ...
+# Subtest: unsupported or executable author input fails with located repair guidance
+ok 12 - unsupported or executable author input fails with located repair guidance
+  ---
+  duration_ms: 1.127042
+  type: 'test'
+  ...
+# Subtest: HTTP references preserve parentheses and escape attributes without evaluating label markup
+ok 13 - HTTP references preserve parentheses and escape attributes without evaluating label markup
+  ---
+  duration_ms: 0.186166
+  type: 'test'
+  ...
+# Subtest: typical-value qualifications become numbered real footnotes shared across text fields
+ok 14 - typical-value qualifications become numbered real footnotes shared across text fields
+  ---
+  duration_ms: 0.2105
+  type: 'test'
+  ...
+# Subtest: escaped backslashes do not consume a following closing emphasis delimiter
+ok 15 - escaped backslashes do not consume a following closing emphasis delimiter
+  ---
+  duration_ms: 0.176959
+  type: 'test'
+  ...
+# Subtest: board preserves order, content widths and fills each row including the last
+ok 16 - board preserves order, content widths and fills each row including the last
+  ---
+  duration_ms: 2.653959
+  type: 'test'
+  ...
+# Subtest: native width is estimated from the prepared viewBox; authored spans stay exact
+ok 17 - native width is estimated from the prepared viewBox; authored spans stay exact
+  ---
+  duration_ms: 0.293708
+  type: 'test'
+  ...
+# Subtest: all three example HTML boards start with the conclusion and every panel row totals twelve
+ok 18 - all three example HTML boards start with the conclusion and every panel row totals twelve
+  ---
+  duration_ms: 643.637917
+  type: 'test'
+  ...
+# Subtest: renderer: every shape remains statically readable and authored text cannot become markup
+ok 19 - renderer: every shape remains statically readable and authored text cannot become markup
+  ---
+  duration_ms: 40.240042
+  type: 'test'
+  ...
+# Subtest: renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+ok 20 - renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+  ---
+  duration_ms: 20.384375
+  type: 'test'
+  ...
+# Subtest: renderer: resources fail closed and native previews preserve identity without leaking styles
+ok 21 - renderer: resources fail closed and native previews preserve identity without leaking styles
+  ---
+  duration_ms: 9.748166
+  type: 'test'
+  ...
+# Subtest: renderer: no-script content includes scope, system theme and inert operation controls
+ok 22 - renderer: no-script content includes scope, system theme and inert operation controls
+  ---
+  duration_ms: 8.143125
+  type: 'test'
+  ...
+# Subtest: renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+ok 23 - renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+  ---
+  duration_ms: 15.953417
+  type: 'test'
+  ...
+# Subtest: renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+ok 24 - renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+  ---
+  duration_ms: 50.896542
+  type: 'test'
+  ...
+# Subtest: renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+ok 25 - renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+  ---
+  duration_ms: 8.004541
+  type: 'test'
+  ...
+# Subtest: renderer: only Chinese pages get Chinese controls; other languages fall back to English
+ok 26 - renderer: only Chinese pages get Chinese controls; other languages fall back to English
+  ---
+  duration_ms: 15.850542
+  type: 'test'
+  ...
+# Subtest: renderer: native diagram panels receive responsive space without changing the frozen native diagram
+ok 27 - renderer: native diagram panels receive responsive space without changing the frozen native diagram
+  ---
+  duration_ms: 8.649042
+  type: 'test'
+  ...
+# Subtest: renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+ok 28 - renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+  ---
+  duration_ms: 5.944042
+  type: 'test'
+  ...
+# Subtest: renderer: source markers number first appearances including blank labels and remain plain text
+ok 29 - renderer: source markers number first appearances including blank labels and remain plain text
+  ---
+  duration_ms: 8.876667
+  type: 'test'
+  ...
+# Subtest: literal snippets render as copyable code and table corners keep their header
+ok 30 - literal snippets render as copyable code and table corners keep their header
+  ---
+  duration_ms: 5.21775
+  type: 'test'
+  ...
+# Subtest: renderer: shared pages omit disposable native checker filenames but retain evidence
+ok 31 - renderer: shared pages omit disposable native checker filenames but retain evidence
+  ---
+  duration_ms: 8.899458
+  type: 'test'
+  ...
+# Subtest: renderer: manifest warnings use the same portable locations as the prepared bundle
+ok 32 - renderer: manifest warnings use the same portable locations as the prepared bundle
+  ---
+  duration_ms: 7.892375
+  type: 'test'
+  ...
+# Subtest: renderer: Windows cross-volume source locations are omitted instead of exposed
+ok 33 - renderer: Windows cross-volume source locations are omitted instead of exposed
+  ---
+  duration_ms: 5.323625
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27000.601083

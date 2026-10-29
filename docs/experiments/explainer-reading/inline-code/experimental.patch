@@ -1,0 +1,91 @@
+diff --git a/archify/explainer/inline.mjs b/archify/explainer/inline.mjs
+index cdaa58c74..665a25fa8 100644
+--- a/archify/explainer/inline.mjs
++++ b/archify/explainer/inline.mjs
+@@ -127,7 +127,7 @@ export function renderInline(value, context = {}) {
+   if (parsed.diagnostics.length) throw inlineError(parsed.diagnostics);
+   const render = tokens => tokens.map(token => {
+     if (token.type === 'text') return escapeHtml(token.value);
+-    if (token.type === 'code') return `<code>${escapeHtml(token.value)}</code>`;
++    if (token.type === 'code') return `<code>${escapeHtml(token.value).replace(/\S+/g, word => `<span class="code-word">${word}</span>`)}</code>`;
+     if (token.type === 'strong' || token.type === 'em') return `<${token.type}>${render(token.children)}</${token.type}>`;
+     const label=escapeHtml(token.label), ref=token.reference;
+     if (ref.kind === 'web') return `<a href="${escapeHtml(ref.url)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+diff --git a/archify/explainer/reader.css b/archify/explainer/reader.css
+index cc5a78320..b714e4282 100644
+--- a/archify/explainer/reader.css
++++ b/archify/explainer/reader.css
+@@ -16,6 +16,8 @@ button:hover{border-color:var(--faint);color:var(--ink)}
+ :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+ code,pre{font-family:var(--mono)}
+ code{font-size:.86em;background:var(--code);border:1px solid var(--rule);padding:0 5px;border-radius:5px;overflow-wrap:anywhere;color:var(--ink);-webkit-box-decoration-break:clone;box-decoration-break:clone}
++/* Keep flags and identifiers together; an overlong word can still wrap within the code's padding. */
++.code-word{display:inline-block;max-width:calc(100% - 12px);overflow-wrap:anywhere}
+ ::selection{background:var(--marker)}
+ .interactive{display:none!important}
+ .js .interactive{display:initial!important}
+diff --git a/test/explainer-browser.test.mjs b/test/explainer-browser.test.mjs
+index 2905aa1d4..056e83d02 100644
+--- a/test/explainer-browser.test.mjs
++++ b/test/explainer-browser.test.mjs
+@@ -86,6 +86,37 @@ test('retry layout and referenced node explanations remain readable and keyboard
+ });
+ 
+ async function pageValue(browser,expression){const result=await browser.cdp.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},await browser.sessionPromise);if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result.value;}
++test('inline commands wrap between words and retain exact selectable text without overflowing long paths',{skip:!chrome},async()=>{
++ const {renderExplainer}=await import('../archify/explainer/render.mjs');
++ const command='git restore --staged --worktree -- file.txt',longPath='src/'+ 'very_long_directory_'.repeat(30)+'/file.ts';
++ const doc=formalDocument();doc.meta.locale='zh-CN';doc.meta.style='editorial';doc.answer.summary='先检查 `--staged` 的目标，再恢复。';
++ doc.panels=[{id:'commands',title:'恢复到哪里？',blocks:[
++  {id:'restore-table',type:'comparison',columns:['命令与结果'],label:'目的',rows:[{id:'restore-both',label:'两处都恢复',cells:[{text:'`'+command+'`。HEAD → 暂存区和工作区。'}]}]},
++  {id:'long-path',type:'prose',text:'路径：`'+longPath+'`。'},
++  {id:'literal',type:'prose',text:'字面内容：`<img src=x onerror=alert(1)>`。'},
++  {id:'fenced',type:'snippet',text:command+'\n',language:'sh'}
++ ]}];
++ const file=artifact('inline-command-wrap',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedSources:{sources:{example:{title:'Example'}}}}));
++ const browser=new ChromeVisualBrowser(chrome);try {
++  for(const state of [{width:390},{width:1440},{width:390,javascript:false},{width:390,media:'print'}]){
++   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,height:900,theme:'light',keyboard:false,...state});
++   const result=await pageValue(browser,`(()=>{
++    const code=document.querySelector('#restore-table code'),range=document.createRange();range.selectNodeContents(code);
++    const selection=getSelection();selection.removeAllRanges();selection.addRange(range);const selected=selection.toString();selection.removeAllRanges();
++    const walker=document.createTreeWalker(code,NodeFilter.SHOW_TEXT),chars=[];let node;
++    while(node=walker.nextNode())for(let i=0;i<node.length;i++){const r=document.createRange();r.setStart(node,i);r.setEnd(node,i+1);chars.push(r.getBoundingClientRect().top);}
++    const words=[...code.textContent.matchAll(/\\S+/g)].map(m=>({text:m[0],lines:new Set(chars.slice(m.index,m.index+m[0].length).map(y=>Math.round(y))).size}));
++    const path=document.querySelector('#long-path'),table=document.querySelector('#restore-table .table-scroll');
++    return {text:code.textContent,selected,words,pathWidth:path.clientWidth,pathScroll:path.scrollWidth,pathText:path.querySelector('code').textContent,tableWidth:table.clientWidth,tableScroll:table.scrollWidth,literal:document.querySelector('#literal code').textContent,images:document.querySelectorAll('#literal img').length,fenced:document.querySelector('#fenced pre code').textContent};
++   })()`);
++   assert.deepEqual(result.words.filter(w=>w.lines!==1),[],JSON.stringify({state,result}));
++   assert.equal(result.text,command);assert.equal(result.selected,command);
++   assert.equal(result.pathText,longPath);assert.ok(result.pathScroll<=result.pathWidth+1,JSON.stringify({state,result}));
++   assert.ok(result.tableScroll<=result.tableWidth+1,JSON.stringify({state,result}));
++   assert.equal(result.literal,'<img src=x onerror=alert(1)>');assert.equal(result.images,0);assert.equal(result.fenced,command+'\n');
++  }
++ }finally{await browser.close();}
++});
+ async function keyboardActivate(browser,selector,key='Enter',shift=false) {assert.equal(await pageValue(browser,`(function(){const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.scrollIntoView({block:'center'});e.focus();return document.activeElement===e;})()`),true,selector);for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key,code:key===' '?'Space':key,windowsVirtualKeyCode:key==='Escape'?27:key===' '?32:key==='Tab'?9:13,modifiers:shift?8:0,...(key==='Enter'&&type==='keyDown'?{text:'\r',unmodifiedText:'\r'}:{})},await browser.sessionPromise);await pageValue(browser,'new Promise(resolve=>setTimeout(resolve,0))');}
+ test('native step opens the complete Viewer and focuses exact nodes and edges with readable graph text',{skip:!chrome},async()=>{
+  const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+diff --git a/test/explainer-inline.test.mjs b/test/explainer-inline.test.mjs
+index acec504b4..fc06d0090 100644
+--- a/test/explainer-inline.test.mjs
++++ b/test/explainer-inline.test.mjs
+@@ -1,5 +1,6 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
++import {parseFragment} from 'parse5';
+ import {parseInline,renderInline} from '../archify/explainer/inline.mjs';
+ 
+ test('inline content preserves escaped literals and safe text while exposing reference semantics',()=>{
+@@ -13,7 +14,10 @@ test('inline content preserves escaped literals and safe text while exposing ref
+   ]);
+   const html=renderInline(source);
+   assert.match(html,/<strong>先查<\/strong>/);
+-  assert.match(html,/<code>GET &lt;key&gt;<\/code>/);
++  const code=parseFragment(html).childNodes.find(node=>node.tagName==='code');
++  const text=node=>node.nodeName==='#text'?node.value:(node.childNodes||[]).map(text).join('');
++  assert.equal(text(code),'GET <key>');
++  assert.equal(code.childNodes.some(node=>node.tagName==='key'),false);
+   assert.match(html,/data-diagram-hash="route=api~db"/);
+   assert.match(html,/href="#source-trace"/);
+   assert.ok(html.endsWith('。*'));

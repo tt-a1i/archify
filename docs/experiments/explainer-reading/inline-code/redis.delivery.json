@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "5b8c431b-f470-45ff-bb79-f80b7f1c8468",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/redis/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/inline-code/redis.html",
+  "specification": {
+    "sha256": "dc8fd13d5e4fe1cd9dab80ce749864bff9285fcbac41db7c3e1cefb12f5731d3",
+    "bytes": 3685
+  },
+  "artifact": {
+    "sha256": "811b9320f010a7d2a91dc5482388fec6dd6ff17e486920b6ad71c07f915fe6e9",
+    "bytes": 160245
+  },
+  "explainer": {
+    "preparedSha256": "2217baa7ac2e24c4776b3d853178ff10320646aabf97038d563e4c9e810a36b0",
+    "dependencies": []
+  }
+}

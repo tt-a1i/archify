@@ -1,0 +1,48 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-browser.test.mjs --test-name-pattern=inline commands wrap
+
+Repository tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: inline commands wrap between words and retain exact selectable text without overflowing long paths
+not ok 1 - inline commands wrap between words and retain exact selectable text without overflowing long paths
+  ---
+  duration_ms: 1414.494458
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:89:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"state":{"width":390},"result":{"text":"git restore --staged --worktree -- file.txt","selected":"git restore --staged --worktree -- file.txt","words":[{"text":"git","lines":1},{"text":"restore","lines":1},{"text":"--staged","lines":1},{"text":"--worktree","lines":1},{"text":"--","lines":2},{"text":"file.txt","lines":1}],"pathWidth":358,"pathScroll":362,"pathText":"src/very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_very_long_directory_/file.ts","tableWidth":358,"tableScroll":358,"literal":"<img src=x onerror=alert(1)>","images":0,"fenced":"git restore --staged --worktree -- file.txt\n"}}
+    + actual - expected
+    
+    + [
+    +   {
+    +     lines: 2,
+    +     text: '--'
+    +   }
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      text: '--'
+      lines: 2
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:112:11)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1561.42375

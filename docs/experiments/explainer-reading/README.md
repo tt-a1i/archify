@@ -81,3 +81,7 @@ These are ongoing exploration checkpoints. No overall-goal completion, human acc
 ## Continued exploration — round 4
 
 [Git restore paired experiment](restore-pair/README.md): a short-table-label instruction failed to improve the phone table. The preserved independent pair led to a separate two-column content repair, verified against the pinned Git manual and a disposable-repository probe. The candidate instruction remains unadopted; a remaining split command separator is the next bounded reader problem.
+
+## Continued exploration — round 5
+
+[Inline command wrapping](inline-code/README.md): the candidate preserved short flags and passed 33 focused tests, but left Chinese punctuation alone on a line. It was rejected after visual review; the experimental patch and actual results remain available, and the adopted runtime is unchanged.
