@@ -85,3 +85,7 @@ These are ongoing exploration checkpoints. No overall-goal completion, human acc
 ## Continued exploration — round 5
 
 [Inline command wrapping](inline-code/README.md): the candidate preserved short flags and passed 33 focused tests, but left Chinese punctuation alone on a line. It was rejected after visual review; the experimental patch and actual results remain available, and the adopted runtime is unchanged.
+
+## Continued exploration — round 6
+
+[Copyable Git restore operations](restore-commands/README.md) use existing code snippets to keep complete commands readable. The variant trades desktop density for clearer actions and direct copy controls; the compact comparison remains available.

@@ -1,0 +1,188 @@
+{
+  "ok": true,
+  "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/restore-commands/candidate.html",
+  "family": "explainer",
+  "artifact": {
+    "sha256": "96d54a554a360e30b167a315a066c2571bbf4209e1b69f2801fa3f85c531d106",
+    "bytes": 538608
+  },
+  "checks": [
+    {
+      "name": "explainer_structure",
+      "ok": true,
+      "details": [
+        "40 unique DOM IDs"
+      ]
+    },
+    {
+      "name": "explainer_payload_identity",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "explainer_dependencies",
+      "ok": true,
+      "details": [
+        "1 frozen dependencies"
+      ]
+    },
+    {
+      "name": "explainer_native_diagrams",
+      "ok": true,
+      "details": [
+        "restore-flow: pass"
+      ]
+    }
+  ],
+  "composition": {
+    "schemaVersion": 1,
+    "profile": "showcase",
+    "status": "pass",
+    "summary": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "issues": [],
+    "nativeDiagrams": [
+      {
+        "id": "restore-flow",
+        "receipt": {
+          "ok": true,
+          "file": "/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-explainer-check-s3glCH/child.html",
+          "artifact": {
+            "sha256": "31ef02fa60775fedce4cfa2f9af507e5c0366d299da56320182c232696636ab5",
+            "bytes": 858128
+          },
+          "checks": [
+            {
+              "name": "single_svg",
+              "ok": true,
+              "details": [
+                "found 1 <svg> block(s)"
+              ]
+            },
+            {
+              "name": "finite_svg",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "orthogonal_arrows",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "label_route_clearance",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "relationship_crossings",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "relationship_corridors",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "container_border_runs",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "route_rhythm",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "legend_clearance",
+              "ok": true,
+              "details": []
+            }
+          ],
+          "composition": {
+            "schemaVersion": 1,
+            "profile": "showcase",
+            "status": "pass",
+            "summary": {
+              "errors": 0,
+              "warnings": 0
+            },
+            "metrics": {
+              "properCrossings": 0,
+              "resolvedCrossovers": 0,
+              "ambiguousCorridors": 0,
+              "arrowheadCollisions": 0,
+              "containerBorderRuns": 0,
+              "labelRouteClearanceIssues": 0,
+              "labelCanvasOverflowIssues": 0,
+              "minLabelRouteClearance": 35.2,
+              "desktopReadabilityIssues": 0,
+              "viewportHeightIssues": 0,
+              "minProjectedNodeTextPx": 8,
+              "maxBends": 2,
+              "routesOverSuggestedBends": 0,
+              "maxStretch": 1.087,
+              "routesOverSuggestedStretch": 0,
+              "minSegmentPx": 24,
+              "minInteriorSegmentPx": 552,
+              "shortSegmentCount": 0,
+              "shortEndpointSegmentCount": 0,
+              "shortInteriorSegmentCount": 0,
+              "microSegmentCount": 0
+            },
+            "suggestedLimits": {
+              "bendsPerRelationship": 2,
+              "stretch": 1.35,
+              "segmentPx": 16,
+              "microSegmentPx": 8
+            },
+            "routeReview": {
+              "crossings": [],
+              "detours": []
+            },
+            "leadingSpace": {
+              "measured": true,
+              "emptyTopPx": 80,
+              "emptyTopRatio": 0.345,
+              "occupiedTop": 80,
+              "viewBoxTop": 0,
+              "canvasHeight": 232,
+              "typicalNodeHeight": 60,
+              "reviewSuggested": false
+            },
+            "desktopReadability": {
+              "budgetBasis": "recognized-declared-wide",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "actualReaderWidth": 960,
+              "desiredReaderWidth": 960,
+              "viewportCap": 1376,
+              "limit": "source-size",
+              "requestedTargetPx": 7.5,
+              "requestedTargetMet": true,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "edge",
+                "id": "head-to-index-1",
+                "from": "head",
+                "to": "index"
+              },
+              "minimumSourceTextPx": 8,
+              "minimumProjectedTextPx": 8,
+              "semanticTextCount": 6
+            },
+            "issues": []
+          }
+        }
+      }
+    ]
+  },
+  "diagnostics": [],
+  "provenance": "current",
+  "deliveryReceiptId": "1b24cb1b-aca5-413f-bf04-637387d6ef8d"
+}

@@ -1,0 +1,92 @@
+{
+  "metrics": [
+    {
+      "width": 320,
+      "pageWidth": 352,
+      "panelHeight": 895,
+      "snippets": [
+        {
+          "text": "git restore -- file.txt",
+          "width": 286,
+          "scroll": 286
+        },
+        {
+          "text": "git restore --staged -- file.txt",
+          "width": 286,
+          "scroll": 286
+        },
+        {
+          "text": "git restore --source=HEAD -- file.txt",
+          "width": 286,
+          "scroll": 306
+        },
+        {
+          "text": "git restore --staged --worktree -- file.txt",
+          "width": 286,
+          "scroll": 352
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "pageWidth": 390,
+      "panelHeight": 792,
+      "snippets": [
+        {
+          "text": "git restore -- file.txt",
+          "width": 356,
+          "scroll": 356
+        },
+        {
+          "text": "git restore --staged -- file.txt",
+          "width": 356,
+          "scroll": 356
+        },
+        {
+          "text": "git restore --source=HEAD -- file.txt",
+          "width": 356,
+          "scroll": 356
+        },
+        {
+          "text": "git restore --staged --worktree -- file.txt",
+          "width": 356,
+          "scroll": 356
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "pageWidth": 1440,
+      "panelHeight": 823,
+      "snippets": [
+        {
+          "text": "git restore -- file.txt",
+          "width": 838,
+          "scroll": 838
+        },
+        {
+          "text": "git restore --staged -- file.txt",
+          "width": 838,
+          "scroll": 838
+        },
+        {
+          "text": "git restore --source=HEAD -- file.txt",
+          "width": 838,
+          "scroll": 838
+        },
+        {
+          "text": "git restore --staged --worktree -- file.txt",
+          "width": 838,
+          "scroll": 838
+        }
+      ]
+    }
+  ],
+  "copied": [
+    "git restore -- file.txt",
+    "git restore --staged -- file.txt",
+    "git restore --source=HEAD -- file.txt",
+    "git restore --staged --worktree -- file.txt"
+  ],
+  "copyScope": "Browser button dispatch intercepted before writing the system clipboard; no command executed."
+}

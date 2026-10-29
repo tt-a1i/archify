@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "1b24cb1b-aca5-413f-bf04-637387d6ef8d",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/restore-commands/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/restore-commands/candidate.html",
+  "specification": {
+    "sha256": "af089cb3c92ef8e977aec8e3ae8759acf58f7bd92373fba2e32e45f3e69350bd",
+    "bytes": 2987
+  },
+  "artifact": {
+    "sha256": "96d54a554a360e30b167a315a066c2571bbf4209e1b69f2801fa3f85c531d106",
+    "bytes": 538608
+  },
+  "explainer": {
+    "preparedSha256": "d5d0b3f7e852c75100adbf3c5e6b7a754e58bf9525c93f626602cf7524c01e8b",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "restore-flow",
+        "inline": true,
+        "sha256": "305b95620235391f2d3f01b9dd4445fca9954104c19040efab329639aa65850d",
+        "bytes": 694
+      }
+    ]
+  }
+}
