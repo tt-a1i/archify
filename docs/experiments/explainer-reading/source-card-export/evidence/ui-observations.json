@@ -1,0 +1,30 @@
+[
+  {
+    "width": 1440,
+    "before": {
+      "cardHidden": false,
+      "at": 220.29999999701977
+    },
+    "during": [
+      {
+        "cardHidden": true,
+        "cardTop": 0,
+        "at": 1130.5999999940395
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "before": {
+      "cardHidden": false,
+      "at": 235.29999999701977
+    },
+    "during": [
+      {
+        "cardHidden": true,
+        "cardTop": 0,
+        "at": 1213.0999999940395
+      }
+    ]
+  }
+]

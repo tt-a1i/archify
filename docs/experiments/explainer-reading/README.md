@@ -213,3 +213,9 @@ The index now contains fifteen questions across thirteen projects and thirty-fou
 [Source cards in short windows](source-card-viewport/README.md) retain the heading and evidence when an excerpt cannot fit above or below its citation. The existing #1015 top-clamp proposal is credited and replayed; the new bounded-height behavior also handles a card taller than the viewport. Local scrolling preserves the original link and excerpt, and reopening returns to the heading. The first candidate's retained scroll position is recorded as a failed intermediate result.
 
 The final eight viewport/theme states fit, 15 real-Chrome browser tests pass, and the extracted deterministic package passes the new regression and public CLI checks. Thirty-four frozen pages change only their embedded Reader assets. This is a local reading interaction repair; the main index remains fifteen questions across thirteen projects and thirty-four variants.
+
+## Continued exploration — round 33
+
+[Source cards and image export](source-card-export/README.md): the public image-export path included an open source card and used its overflowing excerpt to trigger page reflow. Export now measures body code inside the shell and drops the transient card from its clone. At phone and desktop widths, open/closed-card PNG pairs are byte-identical while the live reading state remains intact. Ordinary UI runs had already closed the card and are reported separately.
+
+All 16 Explainer browser tests pass, with existing table/code/diff completeness checks retained; deterministic package builds and the extracted regression/public CLI checks pass. No authoring guidance or main reading-case counts changed. Two incomplete test-download attempts remain disclosed.

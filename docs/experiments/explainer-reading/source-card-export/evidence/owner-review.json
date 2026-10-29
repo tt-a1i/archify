@@ -1,0 +1,26 @@
+[
+  {
+    "number": 1015,
+    "sha": "fe4f80d2195e0a7b49b7cfe6d3dba7ffd31a7ac8",
+    "repo": "tt-a1i/archify",
+    "rows": [
+      "    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());"
+    ]
+  },
+  {
+    "number": 1142,
+    "sha": "c48949649eb7a9482d6170dcb4e29c1b47a047b5",
+    "repo": "outlier27-cell/archify",
+    "rows": [
+      "    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());"
+    ]
+  },
+  {
+    "number": 1144,
+    "sha": "d72bb78d5bccd815ca6727141b3ff8783ad28ffc",
+    "repo": "outlier27-cell/archify",
+    "rows": [
+      "    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());"
+    ]
+  }
+]

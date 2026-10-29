@@ -1,0 +1,129 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-renderer.test.mjs test/explainer-layout.test.mjs
+
+Repository tests: 2 files, concurrency 4
+TAP version 13
+# Subtest: board preserves order, content widths and fills each row including the last
+ok 1 - board preserves order, content widths and fills each row including the last
+  ---
+  duration_ms: 2.758625
+  type: 'test'
+  ...
+# Subtest: native width is estimated from the prepared viewBox; authored spans stay exact
+ok 2 - native width is estimated from the prepared viewBox; authored spans stay exact
+  ---
+  duration_ms: 0.353042
+  type: 'test'
+  ...
+# Subtest: all three example HTML boards start with the conclusion and every panel row totals twelve
+ok 3 - all three example HTML boards start with the conclusion and every panel row totals twelve
+  ---
+  duration_ms: 610.503042
+  type: 'test'
+  ...
+# Subtest: renderer: every shape remains statically readable and authored text cannot become markup
+ok 4 - renderer: every shape remains statically readable and authored text cannot become markup
+  ---
+  duration_ms: 43.148042
+  type: 'test'
+  ...
+# Subtest: renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+ok 5 - renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+  ---
+  duration_ms: 16.789792
+  type: 'test'
+  ...
+# Subtest: renderer: resources fail closed and native previews preserve identity without leaking styles
+ok 6 - renderer: resources fail closed and native previews preserve identity without leaking styles
+  ---
+  duration_ms: 10.301708
+  type: 'test'
+  ...
+# Subtest: renderer: no-script content includes scope, system theme and inert operation controls
+ok 7 - renderer: no-script content includes scope, system theme and inert operation controls
+  ---
+  duration_ms: 9.175917
+  type: 'test'
+  ...
+# Subtest: renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+ok 8 - renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+  ---
+  duration_ms: 14.40075
+  type: 'test'
+  ...
+# Subtest: renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+ok 9 - renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+  ---
+  duration_ms: 45.803458
+  type: 'test'
+  ...
+# Subtest: renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+ok 10 - renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+  ---
+  duration_ms: 5.530833
+  type: 'test'
+  ...
+# Subtest: renderer: only Chinese pages get Chinese controls; other languages fall back to English
+ok 11 - renderer: only Chinese pages get Chinese controls; other languages fall back to English
+  ---
+  duration_ms: 13.767291
+  type: 'test'
+  ...
+# Subtest: renderer: native diagram panels receive responsive space without changing the frozen native diagram
+ok 12 - renderer: native diagram panels receive responsive space without changing the frozen native diagram
+  ---
+  duration_ms: 6.544791
+  type: 'test'
+  ...
+# Subtest: renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+ok 13 - renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+  ---
+  duration_ms: 8.396084
+  type: 'test'
+  ...
+# Subtest: renderer: source markers number first appearances including blank labels and remain plain text
+ok 14 - renderer: source markers number first appearances including blank labels and remain plain text
+  ---
+  duration_ms: 5.209292
+  type: 'test'
+  ...
+# Subtest: literal snippets render as copyable code and table corners keep their header
+ok 15 - literal snippets render as copyable code and table corners keep their header
+  ---
+  duration_ms: 6.224417
+  type: 'test'
+  ...
+# Subtest: renderer: shared pages omit disposable native checker filenames but retain evidence
+ok 16 - renderer: shared pages omit disposable native checker filenames but retain evidence
+  ---
+  duration_ms: 6.646334
+  type: 'test'
+  ...
+# Subtest: renderer: manifest warnings use the same portable locations as the prepared bundle
+ok 17 - renderer: manifest warnings use the same portable locations as the prepared bundle
+  ---
+  duration_ms: 7.023459
+  type: 'test'
+  ...
+# Subtest: renderer: Windows cross-volume source locations are omitted instead of exposed
+ok 18 - renderer: Windows cross-volume source locations are omitted instead of exposed
+  ---
+  duration_ms: 10.927667
+  type: 'test'
+  ...
+# Subtest: renderer: page titles render validated inline content in reading order with plain browser text
+ok 19 - renderer: page titles render validated inline content in reading order with plain browser text
+  ---
+  duration_ms: 7.651042
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 801.635875

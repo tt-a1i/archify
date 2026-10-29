@@ -1,0 +1,9 @@
+const fs=await import('node:fs/promises'),p=(await taskSpace(14)).page('p1'),r='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round33';
+const observations=[];
+for(const width of [1440,390])for(const sourceOpen of [false,true]){
+ await p.cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await p.goto('file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round33/candidate.html');await p.click('[data-theme-choice="light"]');await p.evaluate(async()=>{await document.fonts.ready;await Promise.allSettled(document.getAnimations().map(a=>a.finished));});
+ if(sourceOpen)await p.focus('.cite a[href="#source-probe"] >> nth=0');
+ const before=await p.evaluate(()=>({cardHidden:document.querySelector('.source-card').hidden,sourceOverflow:document.querySelector('.source-card pre')?{width:document.querySelector('.source-card pre').clientWidth,scrollWidth:document.querySelector('.source-card pre').scrollWidth}:null,panels:[...document.querySelectorAll('.panel')].map(el=>({id:el.id,box:el.getBoundingClientRect().toJSON()}))}));
+ const pending=p.waitForEvent('download',{timeout:30000});await p.evaluate(async()=>{const blob=await window.ArchifyExplainer.pageImage();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='public-page-image.png';a.click();URL.revokeObjectURL(a.href);});const download=await pending;await download.saveAs(r+'/candidate-api-'+width+'-'+(sourceOpen?'open':'closed')+'.png');observations.push({width,sourceOpen,before});await fs.writeFile(r+'/candidate-api-observations.json',JSON.stringify(observations,null,2)+'\n');
+}
+await fs.writeFile(r+'/candidate-api-observations.json',JSON.stringify(observations,null,2)+'\n');console.log(observations.map(o=>({width:o.width,sourceOpen:o.sourceOpen,cardHidden:o.before.cardHidden,sourceOverflow:o.before.sourceOverflow})));

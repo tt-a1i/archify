@@ -1,0 +1,22 @@
+{
+  "sameOutsidePreparedPayload": true,
+  "preparedChanges": [
+    {
+      "path": "/sourcePath",
+      "before": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/source-card-viewport/candidate.archify.md",
+      "after": "candidate.archify.md"
+    },
+    {
+      "path": "/digest",
+      "before": "635cda92aeb152cf11d5141133bb271b2bfe0982ce56e00558eb833ea74c0a70",
+      "after": "313431e1954654cc61f0fc97f7e0a64451acae3c1cf6deba70bfdd26e605a631"
+    },
+    {
+      "path": "/baseDir",
+      "before": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/source-card-viewport",
+      "after": "."
+    }
+  ],
+  "canonicalSha256": "c78db401bd1b818dc7090873d9f6d7d05cca2af272eae6820b50c395d19754ab",
+  "scope": "current-path relocation changes prepared sourcePath/baseDir; do not call artifact bytes identical"
+}

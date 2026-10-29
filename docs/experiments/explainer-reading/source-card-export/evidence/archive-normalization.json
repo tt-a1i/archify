@@ -1,0 +1,8 @@
+[
+  {
+    "path": "evidence/regression-base.log",
+    "originalSha256": "942a6567c129a3c4e081a517e15ac2086d71ceb52db87a6af34292e6aa3f69c3",
+    "archiveSha256": "48e3b8e2bedfb9f164c19bdda07b32cd64845e9d18c2eac3d7cf08f7c2b729f2",
+    "change": "trim trailing whitespace only; raw logs retained in tuning round"
+  }
+]

@@ -1,0 +1,33 @@
+TAP version 13
+# Subtest: image export excludes floating source evidence and preserves the live reading state
+not ok 1 - image export excludes floating source evidence and preserves the live reading state
+  ---
+  duration_ms: 1078.78675
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:391:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the floating source card must not cover the exported explanation
+
+    240950 !== 0
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 240950
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:407:11)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1222.76275

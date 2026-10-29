@@ -1,0 +1,308 @@
+[
+  {
+    "width": 1440,
+    "sourceOpen": false,
+    "before": {
+      "cardHidden": true,
+      "sourceOverflow": null,
+      "panels": [
+        {
+          "id": "answer",
+          "box": {
+            "x": 80,
+            "y": 116.5,
+            "width": 632,
+            "height": 219,
+            "top": 116.5,
+            "right": 712,
+            "bottom": 335.5,
+            "left": 80
+          }
+        },
+        {
+          "id": "source",
+          "box": {
+            "x": 728,
+            "y": 116.5,
+            "width": 632,
+            "height": 239,
+            "top": 116.5,
+            "right": 1360,
+            "bottom": 355.5,
+            "left": 728
+          }
+        },
+        {
+          "id": "without-slash",
+          "box": {
+            "x": 80,
+            "y": 351.5,
+            "width": 632,
+            "height": 424,
+            "top": 351.5,
+            "right": 712,
+            "bottom": 775.5,
+            "left": 80
+          }
+        },
+        {
+          "id": "with-slash",
+          "box": {
+            "x": 728,
+            "y": 371.5,
+            "width": 632,
+            "height": 404,
+            "top": 371.5,
+            "right": 1360,
+            "bottom": 775.5,
+            "left": 728
+          }
+        },
+        {
+          "id": "scope",
+          "box": {
+            "x": 80,
+            "y": 791.5,
+            "width": 1280,
+            "height": 167,
+            "top": 791.5,
+            "right": 1360,
+            "bottom": 958.5,
+            "left": 80
+          }
+        }
+      ]
+    }
+  },
+  {
+    "width": 1440,
+    "sourceOpen": true,
+    "before": {
+      "cardHidden": false,
+      "sourceOverflow": {
+        "width": 488,
+        "scrollWidth": 1276
+      },
+      "panels": [
+        {
+          "id": "answer",
+          "box": {
+            "x": 80,
+            "y": 116.5,
+            "width": 632,
+            "height": 219,
+            "top": 116.5,
+            "right": 712,
+            "bottom": 335.5,
+            "left": 80
+          }
+        },
+        {
+          "id": "source",
+          "box": {
+            "x": 728,
+            "y": 116.5,
+            "width": 632,
+            "height": 239,
+            "top": 116.5,
+            "right": 1360,
+            "bottom": 355.5,
+            "left": 728
+          }
+        },
+        {
+          "id": "without-slash",
+          "box": {
+            "x": 80,
+            "y": 351.5,
+            "width": 632,
+            "height": 424,
+            "top": 351.5,
+            "right": 712,
+            "bottom": 775.5,
+            "left": 80
+          }
+        },
+        {
+          "id": "with-slash",
+          "box": {
+            "x": 728,
+            "y": 371.5,
+            "width": 632,
+            "height": 404,
+            "top": 371.5,
+            "right": 1360,
+            "bottom": 775.5,
+            "left": 728
+          }
+        },
+        {
+          "id": "scope",
+          "box": {
+            "x": 80,
+            "y": 791.5,
+            "width": 1280,
+            "height": 167,
+            "top": 791.5,
+            "right": 1360,
+            "bottom": 958.5,
+            "left": 80
+          }
+        }
+      ]
+    }
+  },
+  {
+    "width": 390,
+    "sourceOpen": false,
+    "before": {
+      "cardHidden": true,
+      "sourceOverflow": null,
+      "panels": [
+        {
+          "id": "answer",
+          "box": {
+            "x": 12,
+            "y": 219,
+            "width": 366,
+            "height": 252.4921875,
+            "top": 219,
+            "right": 378,
+            "bottom": 471.4921875,
+            "left": 12
+          }
+        },
+        {
+          "id": "source",
+          "box": {
+            "x": 12,
+            "y": 483.4921875,
+            "width": 366,
+            "height": 264.0703125,
+            "top": 483.4921875,
+            "right": 378,
+            "bottom": 747.5625,
+            "left": 12
+          }
+        },
+        {
+          "id": "without-slash",
+          "box": {
+            "x": 12,
+            "y": 759.5625,
+            "width": 366,
+            "height": 424.703125,
+            "top": 759.5625,
+            "right": 378,
+            "bottom": 1184.265625,
+            "left": 12
+          }
+        },
+        {
+          "id": "with-slash",
+          "box": {
+            "x": 12,
+            "y": 1196.265625,
+            "width": 366,
+            "height": 429.25,
+            "top": 1196.265625,
+            "right": 378,
+            "bottom": 1625.515625,
+            "left": 12
+          }
+        },
+        {
+          "id": "scope",
+          "box": {
+            "x": 12,
+            "y": 1637.515625,
+            "width": 366,
+            "height": 243.875,
+            "top": 1637.515625,
+            "right": 378,
+            "bottom": 1881.390625,
+            "left": 12
+          }
+        }
+      ]
+    }
+  },
+  {
+    "width": 390,
+    "sourceOpen": true,
+    "before": {
+      "cardHidden": false,
+      "sourceOverflow": {
+        "width": 334,
+        "scrollWidth": 1276
+      },
+      "panels": [
+        {
+          "id": "answer",
+          "box": {
+            "x": 12,
+            "y": 219,
+            "width": 366,
+            "height": 252.4921875,
+            "top": 219,
+            "right": 378,
+            "bottom": 471.4921875,
+            "left": 12
+          }
+        },
+        {
+          "id": "source",
+          "box": {
+            "x": 12,
+            "y": 483.4921875,
+            "width": 366,
+            "height": 264.0703125,
+            "top": 483.4921875,
+            "right": 378,
+            "bottom": 747.5625,
+            "left": 12
+          }
+        },
+        {
+          "id": "without-slash",
+          "box": {
+            "x": 12,
+            "y": 759.5625,
+            "width": 366,
+            "height": 424.703125,
+            "top": 759.5625,
+            "right": 378,
+            "bottom": 1184.265625,
+            "left": 12
+          }
+        },
+        {
+          "id": "with-slash",
+          "box": {
+            "x": 12,
+            "y": 1196.265625,
+            "width": 366,
+            "height": 429.25,
+            "top": 1196.265625,
+            "right": 378,
+            "bottom": 1625.515625,
+            "left": 12
+          }
+        },
+        {
+          "id": "scope",
+          "box": {
+            "x": 12,
+            "y": 1637.515625,
+            "width": 366,
+            "height": 243.875,
+            "top": 1637.515625,
+            "right": 378,
+            "bottom": 1881.390625,
+            "left": 12
+          }
+        }
+      ]
+    }
+  }
+]

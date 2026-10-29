@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round33/package.html",
+  "family": "explainer",
+  "artifact": {
+    "sha256": "e05b1c7efe21a3ee1bc8bccc006b6b013530d93f3b1566ffa6d9357258fc8695",
+    "bytes": 162367
+  },
+  "checks": [
+    {
+      "name": "explainer_structure",
+      "ok": true,
+      "details": [
+        "26 unique DOM IDs"
+      ]
+    },
+    {
+      "name": "explainer_payload_identity",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "explainer_dependencies",
+      "ok": true,
+      "details": [
+        "1 frozen dependencies"
+      ]
+    },
+    {
+      "name": "explainer_native_diagrams",
+      "ok": true,
+      "details": []
+    }
+  ],
+  "composition": {
+    "schemaVersion": 1,
+    "profile": "showcase",
+    "status": "pass",
+    "summary": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "issues": [],
+    "nativeDiagrams": []
+  },
+  "diagnostics": [],
+  "provenance": "current",
+  "deliveryReceiptId": "9fa37399-47a0-44e0-990f-e1a87b2fefc6"
+}

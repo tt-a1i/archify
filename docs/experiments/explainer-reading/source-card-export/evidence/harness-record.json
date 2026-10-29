@@ -1,0 +1,24 @@
+{
+  "initialApiLoop": {
+    "script": "browser-02.mjs",
+    "outcome": "partial, two desktop PNGs saved before incomplete phone attempt",
+    "reportedError": "page.waitForEvent(\"download\") timed out after 30000ms",
+    "exitCode": 1,
+    "concurrentInspection": "browser-03.mjs mistakenly used the same Page while this loop was active; timeout cause not established"
+  },
+  "canonicalLinkHarness": {
+    "script": "browser-07.mjs",
+    "outcome": "did not finish saving the synthetic download; client terminated after about two minutes",
+    "exitCode": 8,
+    "observedPage": "canonical page and open source card remained visible; no browser permission prompt was shown",
+    "possibleHarnessIssue": "the synthetic link revokes its object URL immediately, unlike product exportImage which appends/removes the link and revokes after four seconds; causality not proved"
+  },
+  "canonicalBlobHarness": {
+    "script": "browser-08.mjs",
+    "method": "save the actual public pageImage Blob bytes through FileReader; avoid synthetic download indirection"
+  },
+  "comparisonHelper": {
+    "outcome": "unbounded full-string SequenceMatcher comparison was terminated; structured prepared-payload comparison used instead",
+    "productEffect": "none"
+  }
+}
