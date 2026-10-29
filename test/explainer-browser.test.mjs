@@ -277,3 +277,82 @@ test('phone native previews keep readable text with local keyboard scrolling and
   assert.ok(printed.svg<=printed.box+1,'Print contains the complete diagram instead of clipping the mobile scroll surface');
  }finally{await browser.close();}
 });
+
+// Mark the ends of actual content in the bitmap. Geometry alone missed a clipped
+// footer during the expanded-export experiment; these colors must survive rasterization.
+async function exportContentPixels(browser){
+ return pageValue(browser,`(async()=>{
+  const style=document.createElement('style');style.textContent=
+   '.table-scroll tbody tr:first-child>th::before{content:"";display:inline-block;width:8px;height:8px;background:rgb(3,211,229)}'+
+   '.table-scroll tbody tr:last-child>td:last-child::after{content:"";display:inline-block;width:8px;height:8px;float:right;background:rgb(250,13,191)}'+
+   '.snippet .export-test-code-end{background:rgb(227,101,7)}'+
+   'footer::after{content:"";display:block;width:8px;height:8px;background:rgb(19,239,73)}';document.head.append(style);
+  const code=document.querySelector('.snippet pre code'),originalCode=code&&[...code.childNodes];
+  if(code){const text=code.textContent,end=document.createElement('span');end.className='export-test-code-end';end.textContent=text.slice(-16);code.replaceChildren(document.createTextNode(text.slice(0,-16)),end);}
+  const scrolls=[...document.querySelectorAll('.table-scroll,pre')];scrolls.forEach(e=>e.scrollLeft=e.scrollWidth);
+  const state=()=>({width:innerWidth,roots:document.querySelectorAll('html').length,frames:document.querySelectorAll('iframe').length,scrolls:scrolls.map(e=>({left:e.scrollLeft,width:e.clientWidth,scrollWidth:e.scrollWidth,text:e.textContent}))});
+  const before=state(),blob=await window.ArchifyExplainer.pageImage(),bitmap=await createImageBitmap(blob),canvas=document.createElement('canvas');
+  try{
+   canvas.width=bitmap.width;canvas.height=bitmap.height;const context=canvas.getContext('2d');context.drawImage(bitmap,0,0);
+   const pixels=context.getImageData(0,0,canvas.width,canvas.height).data,marks={first:0,last:0,code:0,footer:0};
+   for(let i=0;i<pixels.length;i+=4){const r=pixels[i],g=pixels[i+1],b=pixels[i+2];if(r===3&&g===211&&b===229)marks.first++;if(r===250&&g===13&&b===191)marks.last++;if(r===227&&g===101&&b===7)marks.code++;if(r===19&&g===239&&b===73)marks.footer++;}
+   return {type:blob.type,width:bitmap.width,height:bitmap.height,marks,before,after:state()};
+  }finally{bitmap.close();style.remove();if(code)code.replaceChildren(...originalCode);}
+ })()`);
+}
+function tableExportDocument(columns){
+ const doc=formalDocument();doc.meta.id='complete-table-export';doc.sources=[];
+ doc.answer={summary:'Every result belongs in the exported image.',scope:'Synthetic export fixture'};
+ doc.panels=[{id:'results',title:'Complete results',blocks:[{id:'matrix',type:'comparison',labelColumn:'Measure',columns:Array.from({length:columns},(_,i)=>'Batch '+(i+1)),rows:[{id:'delta',label:'Delta',cells:Array.from({length:columns},(_,i)=>({text:i===columns-1?'-995':String(i+20)}))}]}]},
+  ...Array.from({length:6},(_,i)=>({id:'after-'+i,title:'Following section '+(i+1),blocks:[{id:'text-'+i,type:'prose',text:'This content and the final footer belong after the full comparison.'}]}))];
+ return doc;
+}
+test('image export retains the final table column and footer across responsive widths',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=tableExportDocument(12),file=artifact('complete-table-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  for(const style of ['clean','editorial']){
+   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:390,theme:'light',keyboard:false});
+   await pageValue(browser,`document.querySelector('[data-style-choice="${style}"]').click()`);
+   const result=await exportContentPixels(browser);
+   assert.ok(result.before.scrolls[0].scrollWidth>result.before.scrolls[0].width,'The fixture must overflow before export');
+   assert.ok(result.marks.first>16,'The first table cell survives a live scroll to the end: '+JSON.stringify({width:result.width,height:result.height,marks:result.marks}));
+   assert.ok(result.marks.last>16,'The last column must be present in the actual PNG');
+   assert.ok(result.marks.footer>16,'The footer must survive responsive export reflow');
+   assert.deepEqual(result.after,result.before,'Export leaves live geometry, scroll positions and document ownership intact');
+  }
+ }finally{await browser.close();}
+});
+test('image export wraps long snippets while preserving live code',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.meta.id='complete-code-export';doc.sources=[];
+ const code='printf "%s\\n" "'+ 'complete-result-'.repeat(40)+'"';
+ doc.panels=[{id:'command',title:'Read the complete command',blocks:[{id:'literal',type:'snippet',language:'sh',text:code}]}];
+ const file=artifact('complete-code-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:file,width:390,theme:'dark',keyboard:false});
+  const result=await exportContentPixels(browser);
+  assert.equal(result.width,780,'Code wrapping retains the requested viewport width');
+  assert.ok(result.before.scrolls[0].scrollWidth>result.before.scrolls[0].width);
+  assert.ok(result.marks.code>16,'The final code characters are present in the PNG');
+  assert.ok(result.marks.footer>16,'Wrapping height includes the footer');
+  assert.equal(result.after.scrolls[0].text,code);
+  assert.deepEqual(result.after,result.before);
+ }finally{await browser.close();}
+});
+test('image export bounds wide bitmaps and retains the final cells',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=tableExportDocument(160),file=artifact('bounded-table-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ try{
+  await inspectPublicHtml(browser,{artifactPath:file,width:390,theme:'light',keyboard:false});
+  const result=await exportContentPixels(browser);
+  assert.ok(result.before.scrolls[0].scrollWidth>16000,'The fixture exercises the width limit');
+  assert.ok(result.width<=16000&&result.height<=16000,'Both bitmap dimensions stay within the existing export limit');
+  assert.ok(result.marks.first>4&&result.marks.last>4,'Both ends survive the bounded bitmap: '+JSON.stringify({width:result.width,height:result.height,marks:result.marks}));
+  assert.ok(result.marks.footer>4);
+  assert.deepEqual(result.after,result.before);
+ }finally{await browser.close();}
+});

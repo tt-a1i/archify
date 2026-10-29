@@ -263,13 +263,25 @@
   try { const saved = localStorage.getItem('archify-explainer-style'); if (saved) setStyle(saved,false); } catch {}
   toolMenu(document.querySelector('.style-menu'),item=>setStyle(item.dataset.styleChoice,true),()=>styleItems.find(item=>item.getAttribute('aria-checked') === 'true'));
   toolMenu(document.querySelector('.export-menu'),item=>item.matches('[data-print]') ? window.print() : exportImage(item.dataset.exportImage));
-  // Long image: the page as laid out now, drawn through an SVG foreignObject at twice the pixel
+  // Long image: keep complete tables and code in a static image, at up to twice the pixel
   // density. Controls, dialogs and walk-through bars are left out. Browsers that refuse to export a
   // foreignObject canvas (Safari) get a notice pointing to Print / PDF.
   async function pageImage(format = 'png') {
-    const shell = document.querySelector('.shell'), width = document.documentElement.clientWidth;
+    const shell = document.querySelector('.shell'), liveWidth = document.documentElement.clientWidth;
+    let width = liveWidth + Math.ceil(Math.max(0,...all('.table-scroll').map(table=>table.scrollWidth - table.clientWidth)));
     let height = Math.ceil(shell.getBoundingClientRect().height + 48);
-    const clone = root.cloneNode(true);
+    let clone = root.cloneNode(true);
+    const liveCode = all('pre');
+    const exportCode = all('pre',clone).filter((pre,index)=>liveCode[index].scrollWidth > liveCode[index].clientWidth + 1);
+    exportCode.forEach(pre=>pre.classList.add('export-code'));
+    if (width > liveWidth) {
+      const copyShell = clone.querySelector('.shell'), copyBoard = clone.querySelector('.board');
+      copyShell.style.width = `${shell.getBoundingClientRect().width + width - liveWidth}px`;
+      copyShell.style.maxWidth = 'none';
+      copyBoard.style.display = 'flex';
+      copyBoard.style.flexDirection = 'column';
+      all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
+    }
     clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());
     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
@@ -278,9 +290,33 @@
     // Inside a foreignObject the page's <html> is not :root, so theme and style rules would drop out;
     // the root's own attribute selects the same element with the same specificity.
     const sheet = clone.querySelector('head>style'); if (sheet) sheet.textContent = sheet.textContent.replace(/:root\b/g,'[data-archify-artifact]');
+    if (exportCode.length && sheet) sheet.textContent += '.export-code{overflow:visible;white-space:pre-wrap}.export-code code{white-space:pre-wrap;overflow-wrap:anywhere}';
     clone.style.width = `${width}px`;
-    if (clone.querySelector('[data-diagram-fit="scroll"]')) {
-      // The exported overview is shorter than the scrollable live diagram.
+    if (width > liveWidth) {
+      // Responsive padding and type change at the export width; measure in that viewport.
+      const frame = document.createElement('iframe');
+      frame.setAttribute('sandbox','allow-same-origin');
+      frame.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;height:900px;border:0;visibility:hidden;pointer-events:none`;
+      const loaded = new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+      frame.srcdoc = '<!doctype html>' + clone.outerHTML;
+      document.body.append(frame);
+      try {
+        await loaded;
+        await frame.contentDocument.fonts.ready;
+        const doc = frame.contentDocument;
+        const remaining = Math.ceil(Math.max(0,...all('.table-scroll',doc).map(table=>table.scrollWidth - table.clientWidth)));
+        if (remaining) {
+          width += remaining;
+          frame.style.width = `${width}px`;
+          doc.documentElement.style.width = `${width}px`;
+          doc.querySelector('.shell').style.width = `${shell.getBoundingClientRect().width + width - liveWidth}px`;
+        }
+        if (all('.table-scroll',doc).some(table=>table.scrollWidth > table.clientWidth + 1)) throw new Error('Export table does not fit');
+        height = Math.ceil(doc.querySelector('.shell').getBoundingClientRect().height + 48);
+        clone = doc.documentElement.cloneNode(true);
+      } finally { frame.remove(); }
+    } else if (exportCode.length || clone.querySelector('[data-diagram-fit="scroll"]')) {
+      // Code wrapping or a full diagram overview changes height without changing the viewport.
       // Measure the inert clone synchronously, then remove it before painting.
       const measuring = document.createElement('div');
       measuring.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;visibility:hidden;pointer-events:none`;
@@ -294,7 +330,7 @@
     const image = new Image();
     image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     await image.decode();
-    const scale = Math.min(2,16000 / height), canvas = document.createElement('canvas');
+    const scale = Math.min(2,16000 / Math.max(width,height)), canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale);
     const context = canvas.getContext('2d');
     context.fillStyle = getComputedStyle(document.body).backgroundColor; context.fillRect(0,0,canvas.width,canvas.height);
