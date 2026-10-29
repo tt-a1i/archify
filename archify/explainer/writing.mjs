@@ -108,11 +108,6 @@ export function lintExplainerWriting(entries, {mode = 'warn', locale = 'auto', s
       const units = han + words;
       const language = han ? 'zh' : (words ? 'en' : (locale.startsWith('zh') ? 'zh' : 'en'));
       const limit = limits[language];
-      const particles = sentence.text.replace(/目的|的确|的话/gu, '').match(/的/gu)?.length || 0;
-      if (particles >= 3) found.push({offset: sentence.offset + Math.max(0, sentence.text.search(/\S/u)), rule: 'de-chain',
-        reason: `This sentence chains ${particles} “的” modifiers, so the head noun arrives late.`,
-        example: '负责处理用户提交的订单的服务的日志 → 订单服务的日志。它记录用户提交的订单。',
-        fix: 'Split the sentence or move a modifier into its own clause.', matched: sentence.text.trim()});
       if (units > limit) {
         const leading = sentence.text.search(/\S/u);
         found.push({offset: sentence.offset + Math.max(0, leading), rule: 'sentence-length',

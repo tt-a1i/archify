@@ -98,10 +98,19 @@ test('writing: Chinese and English controlled-language hints stay precise', () =
   const rules = text => lintExplainerWriting([entry(text)]).map(item => item.evidence.rule);
   assert.deepEqual(rules('综上所述，先做出决定再加以验证。'), ['filler', 'light-verb', 'light-verb']);
   assert.deepEqual(rules('重试 3 次以上会放大延迟。'), ['number-boundary']);
-  assert.deepEqual(rules('负责处理用户提交的订单的服务的日志很大。'), ['de-chain']);
   assert.deepEqual(rules('In order to utilize the cache, read it first.'), ['plain-word', 'plain-word']);
   assert.deepEqual(rules('In summary, this cutting-edge design is seamless.'), ['filler', 'cliche', 'cliche']);
   assert.deepEqual(lintExplainerWriting(['任务进行中。', '目的的确清楚。', '重试超过 3 次。', '服务以下游为准。', 'Use the cache before the database.'].map(text => entry(text))), []);
+});
+
+test('writing: independent Chinese modifiers do not imply a nested noun phrase', () => {
+  const independentModifiers = [
+    '冲突中的文件不适用上表的简单复制模型：从暂存区恢复工作区时，未合并条目需要相应的冲突选项处理。',
+    '是当前提交里的版本；暂存区是准备提交的版本；工作区是磁盘上正在编辑的文件。',
+    '上面的机制来自固定版本的 CPython 3.13.9 源码；观察运行于本地 Python 3.15.0，并非 3.13.9 的实测。',
+    '请求的状态和用户的权限决定缓存的键。',
+  ];
+  assert.deepEqual(lintExplainerWriting(independentModifiers.map(text => entry(text)), {mode: 'strict'}), []);
 });
 
 
