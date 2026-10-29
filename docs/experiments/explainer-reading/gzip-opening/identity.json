@@ -1,0 +1,25 @@
+{
+  "title_identical": true,
+  "from_answer_scope_to_end_identical": true,
+  "shared_body_sha256": "bd6b17ed4579e3f6ab4452dcb0db7525ca5075160b2cfbad6f51c4ccd33cde6d",
+  "opening_numbers": [
+    1,
+    21,
+    3,
+    18
+  ],
+  "matches_probe": true,
+  "same_size_contrast": {
+    "input_bytes": 1024,
+    "gzip_bytes": [
+      29,
+      1047
+    ]
+  },
+  "base_revision": "5ab8f047123407ddb24f2a9aa8fd55753405db13",
+  "fresh_probe_run": false,
+  "panel_geometry_identical_at_css_widths": {
+    "390": true,
+    "1440": true
+  }
+}

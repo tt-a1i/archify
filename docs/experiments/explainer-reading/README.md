@@ -131,3 +131,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 14
 
 [Gzip size](gzip-size/README.md) separates compressed payload bytes from format overhead using four reproducible local inputs. A five-column author table hid the final gzip result on a 390 px phone. The parent combines input/output/difference into one column, keeping every measured value visible at that width. The panel grows by about 68 px; the original and the three-column variant remain available. No runtime or guide change. The index now offers twenty-one variants across nine questions and eight projects.
+
+## Continued exploration — round 15
+
+[Gzip's concrete opening](gzip-opening/README.md) introduces the space occupied by compressed data and header/trailer information through one local byte example. The rest of the explanation is byte-identical. An intermediate version was shorter; the final wording has the same checked geometry as the original and is retained as a language alternative, not a measured density or comprehension gain. First attempt, source checks, light/dark screenshots and receipts remain inspectable. The index now offers twenty-two variants.

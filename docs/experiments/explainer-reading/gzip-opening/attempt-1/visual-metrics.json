@@ -1,0 +1,227 @@
+[
+  {
+    "arm": "base",
+    "width": 390,
+    "scrollWidth": 390,
+    "theme": "light",
+    "style": "clean",
+    "scrollY": 0,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 149.6953125,
+        "width": 366,
+        "height": 426.53125,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      },
+      {
+        "id": "parts",
+        "x": 12,
+        "y": 588.2265625,
+        "width": 366,
+        "height": 359.046875,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      },
+      {
+        "id": "examples",
+        "x": 12,
+        "y": 959.2734375,
+        "width": 366,
+        "height": 641.2890625,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      },
+      {
+        "id": "check",
+        "x": 12,
+        "y": 1612.5625,
+        "width": 366,
+        "height": 248.15625,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      }
+    ],
+    "verdictHeight": 172.4765625,
+    "reasonsHeight": 115.1875,
+    "tables": [
+      {
+        "clientWidth": 332,
+        "scrollWidth": 332
+      }
+    ]
+  },
+  {
+    "arm": "base",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "theme": "light",
+    "style": "clean",
+    "scrollY": 0,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 93.09375,
+        "width": 416,
+        "height": 428,
+        "bodyClientWidth": 414,
+        "bodyScrollWidth": 414
+      },
+      {
+        "id": "parts",
+        "x": 512,
+        "y": 93.09375,
+        "width": 848,
+        "height": 268,
+        "bodyClientWidth": 846,
+        "bodyScrollWidth": 846
+      },
+      {
+        "id": "examples",
+        "x": 512,
+        "y": 377.09375,
+        "width": 848,
+        "height": 432,
+        "bodyClientWidth": 846,
+        "bodyScrollWidth": 846
+      },
+      {
+        "id": "check",
+        "x": 80,
+        "y": 537.09375,
+        "width": 416,
+        "height": 272,
+        "bodyClientWidth": 414,
+        "bodyScrollWidth": 414
+      }
+    ],
+    "verdictHeight": 136.1875,
+    "reasonsHeight": 91.390625,
+    "tables": [
+      {
+        "clientWidth": 806,
+        "scrollWidth": 806
+      }
+    ]
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "scrollWidth": 390,
+    "theme": "light",
+    "style": "clean",
+    "scrollY": 0,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 149.6953125,
+        "width": 366,
+        "height": 396.8359375,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      },
+      {
+        "id": "parts",
+        "x": 12,
+        "y": 558.53125,
+        "width": 366,
+        "height": 359.046875,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      },
+      {
+        "id": "examples",
+        "x": 12,
+        "y": 929.578125,
+        "width": 366,
+        "height": 641.2890625,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      },
+      {
+        "id": "check",
+        "x": 12,
+        "y": 1582.8671875,
+        "width": 366,
+        "height": 248.15625,
+        "bodyClientWidth": 364,
+        "bodyScrollWidth": 364
+      }
+    ],
+    "verdictHeight": 142.78125,
+    "reasonsHeight": 115.1875,
+    "tables": [
+      {
+        "clientWidth": 332,
+        "scrollWidth": 332
+      }
+    ]
+  },
+  {
+    "arm": "candidate",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "theme": "light",
+    "style": "clean",
+    "scrollY": 0,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 93.09375,
+        "width": 416,
+        "height": 428,
+        "bodyClientWidth": 414,
+        "bodyScrollWidth": 414
+      },
+      {
+        "id": "parts",
+        "x": 512,
+        "y": 93.09375,
+        "width": 848,
+        "height": 268,
+        "bodyClientWidth": 846,
+        "bodyScrollWidth": 846
+      },
+      {
+        "id": "examples",
+        "x": 512,
+        "y": 377.09375,
+        "width": 848,
+        "height": 432,
+        "bodyClientWidth": 846,
+        "bodyScrollWidth": 846
+      },
+      {
+        "id": "check",
+        "x": 80,
+        "y": 537.09375,
+        "width": 416,
+        "height": 272,
+        "bodyClientWidth": 414,
+        "bodyScrollWidth": 414
+      }
+    ],
+    "verdictHeight": 136.1875,
+    "reasonsHeight": 115.1875,
+    "tables": [
+      {
+        "clientWidth": 806,
+        "scrollWidth": 806
+      }
+    ]
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "scrollWidth": 390,
+    "theme": "dark",
+    "style": "clean",
+    "scrollY": 0,
+    "answerHeight": 396.8359375
+  }
+]

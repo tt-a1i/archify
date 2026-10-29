@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3a3ef0ce-0d47-4fa3-b16b-09e60369b294",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-opening/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-opening/candidate.html",
+  "specification": {
+    "sha256": "870a408b932ee456261e0b3a40a34584af31659ceb828816b2fbb9c94dee3914",
+    "bytes": 2917
+  },
+  "artifact": {
+    "sha256": "ff59b398c4e227db6b80673868f38a9652082ef0c3d457bc35267bd7d602694f",
+    "bytes": 155359
+  },
+  "explainer": {
+    "preparedSha256": "966bc5b324362b0279c7cf6377371107c3511f9dbc1a896c3fcca2abf81e5255",
+    "dependencies": []
+  }
+}

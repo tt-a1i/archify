@@ -1,0 +1,32 @@
+{
+  "results": [
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "frame": "gzip-opening/candidate.html",
+      "link": "gzip-opening/candidate.html",
+      "report": "gzip-opening/README.md",
+      "version": "具体样本开头",
+      "versionButtons": 3
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "frame": "gzip-size/candidate.html",
+      "link": "gzip-size/candidate.html",
+      "report": "gzip-opening/README.md",
+      "version": "原开头",
+      "versionButtons": 3
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "frame": "gzip-size/author/answer.html",
+      "link": "gzip-size/author/answer.html",
+      "report": "gzip-opening/README.md",
+      "version": "五列表格",
+      "versionButtons": 3
+    }
+  ],
+  "openingFoundInFrameSnapshot": true
+}
