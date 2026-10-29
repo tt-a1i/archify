@@ -1,0 +1,5 @@
+{
+  "query": "repo:tt-a1i/archify is:open diff in:title",
+  "results": [],
+  "scope": "Bounded title search only; not evidence that no overlapping PR exists. Earlier round22 inspected PR998 filenames and round21 inspected PR1015 table/export scope. No external message or patch reuse."
+}

@@ -1,0 +1,113 @@
+{ name: 'real', width: 390, theme: 'light', diff: [ [ 356, 356 ] ], png: [ 780, 9282 ], footer: 4592.5703125, height: 4641, liveUnchanged: true }
+{ name: 'real', width: 1440, theme: 'light', diff: [ [ 1270, 1270 ] ], png: [ 2880, 4300 ], footer: 2101.078125, height: 2150, liveUnchanged: true }
+{ name: 'short', width: 390, theme: 'light', diff: [ [ 356, 356 ] ], png: [ 780, 1926 ], footer: 852.9296875, height: 963, liveUnchanged: true }
+{ name: 'short', width: 1440, theme: 'light', diff: [ [ 838, 838 ] ], png: [ 2880, 1186 ], footer: 544.9453125, height: 593, liveUnchanged: true }
+{ name: 'tokens', width: 390, theme: 'light', diff: [ [ 356, 356 ] ], png: [ 780, 2324 ], footer: 1113.34375, height: 1162, liveUnchanged: true }
+{ name: 'tokens', width: 1440, theme: 'light', diff: [ [ 1270, 1270 ] ], png: [ 2880, 1670 ], footer: 786.9453125, height: 835, liveUnchanged: true }
+{ name: 'real', width: 390, theme: 'dark', diff: [ [ 356, 356 ] ], png: [ 780, 9282 ], footer: 4592.5703125, height: 4641, liveUnchanged: true }
+[p1 "饼图配置后，数值和占比为什么还要保留？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "饼图配置后，数值和占比为什么还要保留？ · Archify"]
+root
+  container
+    container
+      heading
+        text "饼图配置后，数值和占比为什么还要保留？"
+      container
+        group "主题"
+          button [ref=359]
+            text "系统"
+          button [ref=360]
+            text "浅色"
+          button [ref=361]
+            text "深色"
+        button "样式" [ref=362, loc=css:button[aria-label="样式"]]
+          text "杂志"
+          svg_root
+        button [ref=363]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=364]
+            text "追问"
+        paragraph
+          text "这个提交先解析饼图，再给图例补上数值和占比；渲染时继续使用同一个解析结果。下面保留完整文件差异，便于核对兼容性处理。"
+          anchor [ref=365, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/candidate/real.html#source-change]
+            text "1"
+        paragraph
+          text "适用于"
+          text "Archify 的一个已提交改动"
+          text "固定输入阅读实验"
+      container
+        container
+          anchor "先看改变的顺序" [ref=366, loc=css:a[aria-label="先看改变的顺序"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/candidate/real.html#sequence]
+            text "1"
+          heading
+            text "先看改变的顺序"
+          button [ref=367]
+            text "追问"
+        paragraph
+          text "原来直接改写图表文本；现在先解析，再修改图例，最后渲染解析结果。原有多行写法的兼容处理仍在"
+          text "pieInput"
+          text "中。"
+          anchor [ref=368, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/candidate/real.html#source-change]
+            text "1"
+      container
+        container
+          anchor "完整改动里有哪些细节？" [ref=369, loc=css:a[aria-label="完整改动里有哪些细节？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/candidate/real.html#patch]
+            text "2"
+          heading
+            text "完整改动里有哪些细节？"
+          button [ref=370]
+            text "追问"
+        container
+          container
+            text "charts.mjs 的完整文件差异；原行与新行分别计数"
+            container
+              text "+24 新增"
+              text "·"
+              text "−14 删除"
+          container [ref=371]
+            table "charts.mjs 的完整文件差异；原行与新行分别计数"
+              table_row
+                table_cell
+                  text "原行"
+                table_cell
+                  text "新行"
+                table_cell
+                  text "改动"
+              table_row
+                table_cell
+                table_cell
+                table_cell
+                  text "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs"
+              table_row
+                table_cell
+                table_cell
+                table_cell
+                  text "index c067c0f50..0900f8994 100644"
+              table_row
+                table_cell
+                table_cell
+                table_cell
+                  text "--- a/archify/explainer/charts.mjs"
+              table_row
+                table_cell
+                table_cell
+                table_cell
+                  text "+++ b/archify/explainer/charts.mjs"
+              table_row
+                table_cell
+                table_cell
+                table_cell
+                  text "@@ -1,4 +1,4 @@"
+              table_row
+                table_cell
+                  text "1"
+                table_cell
+                table_cell
+                  text "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';"

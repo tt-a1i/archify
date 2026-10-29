@@ -1,0 +1,22 @@
+[
+  {
+    "case": "real",
+    "finalizeExitCode": 0,
+    "checkExitCode": 0
+  },
+  {
+    "case": "short",
+    "finalizeExitCode": 0,
+    "checkExitCode": 0
+  },
+  {
+    "case": "tokens",
+    "finalizeExitCode": 0,
+    "checkExitCode": 0
+  },
+  {
+    "case": "desktop-code",
+    "finalizeExitCode": 0,
+    "checkExitCode": 0
+  }
+]

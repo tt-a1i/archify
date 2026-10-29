@@ -163,3 +163,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 22
 
 [Complete image exports](export-complete/README.md) preserve every comparison-table column and wrap overflowing commands in the exported image. A responsive counterexample exposed footer clipping, and actual-pixel tests caught broken CSS serialization; both failures are retained. Three new regressions fail on base and pass on the product change. Four no-overflow PNG controls remain byte-identical. The official-toolchain ZIP builds reproducibly and passes extracted CLI/browser smoke. Wider images may require zooming; this does not replace the clearer two-column content variants or establish human reading gains.
+
+## Continued exploration — round 23
+
+[Diff and desktop-code exports](diff-export/README.md) retain long removed/added lines and release stale measured panel heights when code wraps. The first prototype passed width/footer checks but clipped the bottom of a real patch; the retained image exposed that failure. An extended snippet test and new diff test fail on base; 13 browser, 25 parser/renderer and 19 core tests pass on candidate. Short diff PNGs remain byte-identical, and the canonical package passes extracted CLI/five browser checks. The complete phone patch is substantially longer, so content selection remains the next readability question.

@@ -1,0 +1,61 @@
+diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs
+index c067c0f50..0900f8994 100644
+--- a/archify/explainer/charts.mjs
++++ b/archify/explainer/charts.mjs
+@@ -1,4 +1,4 @@
+-import { PeleError, detectType, register, render } from './vendor/pele/core.js';
++import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';
+ import pie from './vendor/pele/diagrams/pie.js';
+ import xychart from './vendor/pele/diagrams/xychart.js';
+ import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';
+@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);
+ 
+ const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };
+ 
+-// A pie legend reads "Label · value (share%)" rather than Pele's "Label [value]". The labels are
+-// rewritten before rendering so the legend is laid out for their real width.
+-function pieLegend(text) {
++// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so
++// a later parse error still points to the authored line; configuration prefixes need no rewrite.
++function pieInput(text) {
+   if (!/^\s*pie\b/u.test(text)) return text;
+-  const slice = /^(\s*)"((?:[^"\\]|\\.)*)"\s*:\s*(-?\d+(?:\.\d+)?)\s*$/gmu;
+-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);
+-  if (!(total > 0)) return text;
+-  return text.replace(/^(\s*pie)(\s+)showData\b/u, (_, pie, gap) => pie + gap.replace(/[^\r\n]/g, '')).replace(slice, (matched, indent, label, value) => {
+-    const share = Math.round(Number(value) / total * 100);
+-    // Keep accepted multiline whitespace without dropping diagnostic lines.
+-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\r\n]/g, '');
+-    return `${indent}"${label} · ${value}${/\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}" : ${value}${breaks}`;
+-  });
++  return text.replace(/^(\s*pie)(\s+)showData\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\r\n]/g, ''))
++    .replace(/^(\s*)"((?:[^"\\]|\\.)*)"\s*:\s*(-?\d+(?:\.\d+)?)\s*$/gmu, (matched, indent, label, value) => {
++      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\r\n]/g, '');
++      return `${indent}"${label}" : ${value}${breaks}`;
++    });
++}
++
++// Decorate parsed sections so configuration prefixes and accepted label syntax retain the
++// same value/share legend. Rendering the same model also preserves its parsed configuration.
++function pieLegend(model) {
++  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);
++  if (!(total > 0)) return model;
++  model.showData = false;
++  model.sections = new Map([...model.sections].map(([label, value]) => {
++    const share = Math.round(value / total * 100);
++    return [`${label} · ${value}${/\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];
++  }));
++  return model;
+ }
+ 
+ /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */
+@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {
+   const type = detectType(text);
+   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };
+   try {
+-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });
++    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;
++    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });
+     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright.
+     const svg = result.svg.replace(/<g transform="translate\(([\d.-]+),([\d.-]+)\) rotate\(-90\)"><text x="0" y="[\d.-]+" text-anchor="middle">([^<]*\p{Script=Han}[^<]*)<\/text><\/g>/gu, (_, x, y, label) => `<text x="${x}" y="${y}" text-anchor="middle" writing-mode="vertical-rl">${label}</text>`);
+     return { svg, width: result.width, height: result.height, type: result.type };

@@ -1,0 +1,21 @@
+{
+  "productRevision": "60f5c8f28f5f4112d00400963057bb40241119b2",
+  "baseRevision": "9183ff68dff83c47139fa181eb3e069bd547cbb4",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "readerSha256": "82a5ecd0641db4497760a3b1cda910702275cd4da272bf0c2b4387dec43fbfc0",
+  "testSha256": "98dd739880a46ad9b3f3db8b548ac14ed7cb510726e53d6b62e3e45971959219",
+  "regressionsFailBase": 2,
+  "browserPass": 13,
+  "diffRendererPass": 25,
+  "corePass": 19,
+  "generated": "pass",
+  "packageBrowserPass": 5,
+  "canonicalFinalizations": 4,
+  "currentPathProvenanceChecks": 4,
+  "canonicalPngDownloads": 6,
+  "canonicalPrototypePixelMatches": 6,
+  "baseNoOverflowPixelMatches": 2,
+  "fullBrowserRunner": "not-run",
+  "finalHeadCI": "not-claimed",
+  "humanReadingAcceptance": false
+}

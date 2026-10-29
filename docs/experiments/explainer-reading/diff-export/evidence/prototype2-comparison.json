@@ -1,0 +1,4463 @@
+[
+  {
+    "arm": "candidate",
+    "name": "real",
+    "width": 390,
+    "theme": "light",
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 2249,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " "
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width."
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines."
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright."
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };"
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "width": 390,
+      "pageWidth": 390,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 2249,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " "
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width."
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines."
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright."
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };"
+            }
+          ]
+        }
+      ]
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "     return { svg, width: result.width, height: result.height, type: result.type };",
+          "lastBottom": 4145.6796875,
+          "panelBottom": 4169.078125
+        }
+      ],
+      "width": 390,
+      "footerBottom": 4592.5703125,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs",
+              "height": 61.6953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {",
+              "height": 102.9921875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);",
+              "height": 204.984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelWidth": 780,
+    "pixelHeight": 9282,
+    "sha256": "7538b43c70fce92c72d2de950eaf2231db61a2b89bcef0491f68fa8e92f43906",
+    "cssImageHeight": 4641
+  },
+  {
+    "arm": "candidate",
+    "name": "real",
+    "width": 1440,
+    "theme": "light",
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": [
+        {
+          "width": 1270,
+          "scrollWidth": 2249,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " "
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width."
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines."
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright."
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };"
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": [
+        {
+          "width": 1270,
+          "scrollWidth": 2249,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " "
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width."
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines."
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright."
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };"
+            }
+          ]
+        }
+      ]
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "     return { svg, width: result.width, height: result.height, type: result.type };",
+          "lastBottom": 1830.6171875,
+          "panelBottom": 1854.015625
+        }
+      ],
+      "width": 1440,
+      "footerBottom": 2201.28125,
+      "diff": [
+        {
+          "width": 1270,
+          "scrollWidth": 1270,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs",
+              "height": 20.8984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width.",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite.",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines.",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration.",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright.",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelWidth": 2880,
+    "pixelHeight": 4500,
+    "sha256": "cf3b530cca72fe1e95cafcd553168586858c1bd9461e7f8ae358cbb0adc29bfd",
+    "cssImageHeight": 2250
+  },
+  {
+    "arm": "candidate",
+    "name": "short",
+    "width": 390,
+    "theme": "light",
+    "live": {
+      "width": 390,
+      "pageWidth": 414,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1 +1 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-timeout = 100"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+timeout = 200"
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "width": 390,
+      "pageWidth": 414,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1 +1 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-timeout = 100"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+timeout = 200"
+            }
+          ]
+        }
+      ]
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "+timeout = 200",
+          "lastBottom": 555.6171875,
+          "panelBottom": 579.015625
+        }
+      ],
+      "width": 390,
+      "footerBottom": 852.9296875,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1 +1 @@",
+              "height": 20.8984375,
+              "whiteSpace": "pre"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-timeout = 100",
+              "height": 21.3984375,
+              "whiteSpace": "pre"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+timeout = 200",
+              "height": 21.3984375,
+              "whiteSpace": "pre"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelWidth": 780,
+    "pixelHeight": 1926,
+    "sha256": "f4d641e062aac62a787bd6bee3b51a3c66e407b00e791075d1ba373b02c96b0d",
+    "cssImageHeight": 963
+  },
+  {
+    "arm": "candidate",
+    "name": "short",
+    "width": 1440,
+    "theme": "light",
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": [
+        {
+          "width": 838,
+          "scrollWidth": 838,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1 +1 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-timeout = 100"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+timeout = 200"
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": [
+        {
+          "width": 838,
+          "scrollWidth": 838,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1 +1 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-timeout = 100"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+timeout = 200"
+            }
+          ]
+        }
+      ]
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "+timeout = 200",
+          "lastBottom": 287.0234375,
+          "panelBottom": 310.5
+        }
+      ],
+      "width": 1440,
+      "footerBottom": 544.9453125,
+      "diff": [
+        {
+          "width": 838,
+          "scrollWidth": 838,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1 +1 @@",
+              "height": 20.8984375,
+              "whiteSpace": "pre"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-timeout = 100",
+              "height": 21.3984375,
+              "whiteSpace": "pre"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+timeout = 200",
+              "height": 21.3984375,
+              "whiteSpace": "pre"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelWidth": 2880,
+    "pixelHeight": 1186,
+    "sha256": "bc364225434f6d9df8226725f28fa82cda8a67081cdf3216f415f606e013f3a6",
+    "cssImageHeight": 593
+  },
+  {
+    "arm": "candidate",
+    "name": "tokens",
+    "width": 390,
+    "theme": "light",
+    "live": {
+      "width": 390,
+      "pageWidth": 414,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 1340,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,3 +1,3 @@"
+            },
+            {
+              "kind": "context",
+              "old": "1",
+              "new": "1",
+              "text": " function message() {"
+            },
+            {
+              "kind": "removed",
+              "old": "2",
+              "new": null,
+              "text": "-  const message = \"alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  OLD-END\";"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "2",
+              "text": "+  const message = \"甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  NEW-END\";"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " }"
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "width": 390,
+      "pageWidth": 414,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 1340,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,3 +1,3 @@"
+            },
+            {
+              "kind": "context",
+              "old": "1",
+              "new": "1",
+              "text": " function message() {"
+            },
+            {
+              "kind": "removed",
+              "old": "2",
+              "new": null,
+              "text": "-  const message = \"alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  OLD-END\";"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "2",
+              "text": "+  const message = \"甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  NEW-END\";"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " }"
+            }
+          ]
+        }
+      ]
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": " }",
+          "lastBottom": 790.234375,
+          "panelBottom": 813.6328125
+        }
+      ],
+      "width": 390,
+      "footerBottom": 1113.34375,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,3 +1,3 @@",
+              "height": 20.8984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "1",
+              "new": "1",
+              "text": " function message() {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "2",
+              "new": null,
+              "text": "-  const message = \"alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  OLD-END\";",
+              "height": 102.9921875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "2",
+              "text": "+  const message = \"甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  NEW-END\";",
+              "height": 102.9921875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " }",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelWidth": 780,
+    "pixelHeight": 2324,
+    "sha256": "0cc576eed18cf0bb3604fca41a1988b19c19eeed70326da066f4eaa72b879357",
+    "cssImageHeight": 1162
+  },
+  {
+    "arm": "candidate",
+    "name": "tokens",
+    "width": 1440,
+    "theme": "light",
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": [
+        {
+          "width": 1270,
+          "scrollWidth": 1340,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,3 +1,3 @@"
+            },
+            {
+              "kind": "context",
+              "old": "1",
+              "new": "1",
+              "text": " function message() {"
+            },
+            {
+              "kind": "removed",
+              "old": "2",
+              "new": null,
+              "text": "-  const message = \"alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  OLD-END\";"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "2",
+              "text": "+  const message = \"甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  NEW-END\";"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " }"
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": [
+        {
+          "width": 1270,
+          "scrollWidth": 1340,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,3 +1,3 @@"
+            },
+            {
+              "kind": "context",
+              "old": "1",
+              "new": "1",
+              "text": " function message() {"
+            },
+            {
+              "kind": "removed",
+              "old": "2",
+              "new": null,
+              "text": "-  const message = \"alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  OLD-END\";"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "2",
+              "text": "+  const message = \"甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  NEW-END\";"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " }"
+            }
+          ]
+        }
+      ]
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": " }",
+          "lastBottom": 548.3125,
+          "panelBottom": 571.7109375
+        }
+      ],
+      "width": 1440,
+      "footerBottom": 806.046875,
+      "diff": [
+        {
+          "width": 1270,
+          "scrollWidth": 1270,
+          "rows": [
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,3 +1,3 @@",
+              "height": 20.8984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "1",
+              "new": "1",
+              "text": " function message() {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "2",
+              "new": null,
+              "text": "-  const message = \"alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  alpha beta  OLD-END\";",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "2",
+              "text": "+  const message = \"甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  甲方  乙方  NEW-END\";",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " }",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelWidth": 2880,
+    "pixelHeight": 1710,
+    "sha256": "c204c877946664d2cab7d368c5801160963cc481426ac23acafa52a603a8e68f",
+    "cssImageHeight": 855
+  },
+  {
+    "arm": "candidate",
+    "name": "real",
+    "width": 390,
+    "theme": "dark",
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 2249,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " "
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width."
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines."
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright."
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };"
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "width": 390,
+      "pageWidth": 390,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 2249,
+          "left": 0,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " "
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width."
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines."
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration."
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " "
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright."
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };"
+            }
+          ]
+        }
+      ]
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "     return { svg, width: result.width, height: result.height, type: result.type };",
+          "lastBottom": 4145.6796875,
+          "panelBottom": 4169.078125
+        }
+      ],
+      "width": 390,
+      "footerBottom": 4592.5703125,
+      "diff": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "rows": [
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "diff --git a/archify/explainer/charts.mjs b/archify/explainer/charts.mjs",
+              "height": 61.6953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "index c067c0f50..0900f8994 100644",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "--- a/archify/explainer/charts.mjs",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "header",
+              "old": null,
+              "new": null,
+              "text": "+++ b/archify/explainer/charts.mjs",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -1,4 +1,4 @@",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "1",
+              "new": null,
+              "text": "-import { PeleError, detectType, register, render } from './vendor/pele/core.js';",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "1",
+              "text": "+import { PeleError, detectType, parse, register, render } from './vendor/pele/core.js';",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "2",
+              "new": "2",
+              "text": " import pie from './vendor/pele/diagrams/pie.js';",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "3",
+              "new": "3",
+              "text": " import xychart from './vendor/pele/diagrams/xychart.js';",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "4",
+              "new": "4",
+              "text": " import quadrantChart from './vendor/pele/diagrams/quadrantChart.js';",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -10,19 +10,28 @@ register(pie, xychart, quadrantChart, sankey, radar, venn);",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "10",
+              "new": "10",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "11",
+              "new": "11",
+              "text": " const NATIVE = { flowchart: 'workflow or architecture', sequence: 'sequence', class: 'class', er: 'erd', state: 'lifecycle', timeline: 'timeline', gantt: 'timeline or waterfall', mindmap: 'tree', treeView: 'tree' };",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "12",
+              "new": "12",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "13",
+              "new": null,
+              "text": "-// A pie legend reads \"Label · value (share%)\" rather than Pele's \"Label [value]\". The labels are",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "14",
+              "new": null,
+              "text": "-// rewritten before rendering so the legend is laid out for their real width.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "15",
+              "new": null,
+              "text": "-function pieLegend(text) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "13",
+              "text": "+// Retain the multiline pie tokens accepted by the original wrapper. Keep line breaks so",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "14",
+              "text": "+// a later parse error still points to the authored line; configuration prefixes need no rewrite.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "15",
+              "text": "+function pieInput(text) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "16",
+              "new": "16",
+              "text": "   if (!/^\\s*pie\\b/u.test(text)) return text;",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "17",
+              "new": null,
+              "text": "-  const slice = /^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu;",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "18",
+              "new": null,
+              "text": "-  const total = [...text.matchAll(slice)].reduce((sum, match) => sum + Number(match[3]), 0);",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "19",
+              "new": null,
+              "text": "-  if (!(total > 0)) return text;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "20",
+              "new": null,
+              "text": "-  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + gap.replace(/[^\\r\\n]/g, '')).replace(slice, (matched, indent, label, value) => {",
+              "height": 102.9921875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "21",
+              "new": null,
+              "text": "-    const share = Math.round(Number(value) / total * 100);",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "22",
+              "new": null,
+              "text": "-    // Keep accepted multiline whitespace without dropping diagnostic lines.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "23",
+              "new": null,
+              "text": "-    const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "24",
+              "new": null,
+              "text": "-    return `${indent}\"${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}\" : ${value}${breaks}`;",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "25",
+              "new": null,
+              "text": "-  });",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "17",
+              "text": "+  return text.replace(/^(\\s*pie)(\\s+)showData\\b/u, (_, pie, gap) => pie + ' showData' + gap.replace(/[^\\r\\n]/g, ''))",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "18",
+              "text": "+    .replace(/^(\\s*)\"((?:[^\"\\\\]|\\\\.)*)\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)\\s*$/gmu, (matched, indent, label, value) => {",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "19",
+              "text": "+      const breaks = matched.slice(indent.length + label.length + 2).replace(/[^\\r\\n]/g, '');",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "20",
+              "text": "+      return `${indent}\"${label}\" : ${value}${breaks}`;",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "21",
+              "text": "+    });",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "22",
+              "text": "+}",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "23",
+              "text": "+",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "24",
+              "text": "+// Decorate parsed sections so configuration prefixes and accepted label syntax retain the",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "25",
+              "text": "+// same value/share legend. Rendering the same model also preserves its parsed configuration.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "26",
+              "text": "+function pieLegend(model) {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "27",
+              "text": "+  const total = [...model.sections.values()].reduce((sum, value) => sum + value, 0);",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "28",
+              "text": "+  if (!(total > 0)) return model;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "29",
+              "text": "+  model.showData = false;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "30",
+              "text": "+  model.sections = new Map([...model.sections].map(([label, value]) => {",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "31",
+              "text": "+    const share = Math.round(value / total * 100);",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "32",
+              "text": "+    return [`${label} · ${value}${/\\p{Script=Han}/u.test(label) ? `（${share}%）` : ` (${share}%)`}`, value];",
+              "height": 82.59375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "33",
+              "text": "+  }));",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "34",
+              "text": "+  return model;",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "26",
+              "new": "35",
+              "text": " }",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "27",
+              "new": "36",
+              "text": " ",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "28",
+              "new": "37",
+              "text": " /** Render a Mermaid chart to static SVG, or return a located diagnostic reason. */",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "hunk",
+              "old": null,
+              "new": null,
+              "text": "@@ -30,7 +39,8 @@ export function compileExplainerChart(text) {",
+              "height": 41.796875,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "30",
+              "new": "39",
+              "text": "   const type = detectType(text);",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "31",
+              "new": "40",
+              "text": "   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "32",
+              "new": "41",
+              "text": "   try {",
+              "height": 21.3984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "removed",
+              "old": "33",
+              "new": null,
+              "text": "-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "42",
+              "text": "+    const input = type === 'pie' ? pieLegend(parse(pieInput(text))) : text;",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "added",
+              "old": null,
+              "new": "43",
+              "text": "+    const result = render(input, { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });",
+              "height": 143.7890625,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "34",
+              "new": "44",
+              "text": "     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright.",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "35",
+              "new": "45",
+              "text": "     const svg = result.svg.replace(/<g transform=\"translate\\(([\\d.-]+),([\\d.-]+)\\) rotate\\(-90\\)\"><text x=\"0\" y=\"[\\d.-]+\" text-anchor=\"middle\">([^<]*\\p{Script=Han}[^<]*)<\\/text><\\/g>/gu, (_, x, y, label) => `<text x=\"${x}\" y=\"${y}\" text-anchor=\"middle\" writing-mode=\"vertical-rl\">${label}</text>`);",
+              "height": 204.984375,
+              "whiteSpace": "pre-wrap"
+            },
+            {
+              "kind": "context",
+              "old": "36",
+              "new": "46",
+              "text": "     return { svg, width: result.width, height: result.height, type: result.type };",
+              "height": 62.1953125,
+              "whiteSpace": "pre-wrap"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelWidth": 780,
+    "pixelHeight": 9282,
+    "sha256": "b3babdbdeee5921aea6a4b77c84719734b5335da38bdf5e2077c63ec640dac91",
+    "cssImageHeight": 4641
+  },
+  {
+    "arm": "base",
+    "name": "desktop-code",
+    "width": 1440,
+    "theme": "light",
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": []
+    },
+    "after": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": []
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "const message = \"complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  END-OF-COMMAND\";",
+          "lastBottom": 519.7265625,
+          "panelBottom": 469.5
+        }
+      ],
+      "width": 1440,
+      "footerBottom": 703.9453125,
+      "diff": []
+    },
+    "pixelWidth": 2880,
+    "pixelHeight": 1504,
+    "sha256": "55bd62c7d1dfc6ceaff6474e2ba7122e517cce6d158b00ee15cc3197970588a4",
+    "cssImageHeight": 752
+  },
+  {
+    "arm": "candidate",
+    "name": "desktop-code",
+    "width": 1440,
+    "theme": "light",
+    "live": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": []
+    },
+    "after": {
+      "width": 1440,
+      "pageWidth": 1440,
+      "diff": []
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "const message = \"complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  END-OF-COMMAND\";",
+          "lastBottom": 518.8203125,
+          "panelBottom": 553.5703125
+        }
+      ],
+      "width": 1440,
+      "footerBottom": 787.90625,
+      "diff": []
+    },
+    "pixelWidth": 2880,
+    "pixelHeight": 1672,
+    "sha256": "753e9d123301ef0d7a4cf7f3b4fcc4c5c8d3952e716ae71022174b8c7eaeabb3",
+    "cssImageHeight": 836
+  },
+  {
+    "arm": "candidate",
+    "name": "desktop-code",
+    "width": 390,
+    "theme": "light",
+    "live": {
+      "width": 390,
+      "pageWidth": 414,
+      "diff": []
+    },
+    "after": {
+      "width": 390,
+      "pageWidth": 414,
+      "diff": []
+    },
+    "measured": {
+      "content": [
+        {
+          "lastText": "const message = \"complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  END-OF-COMMAND\";",
+          "lastBottom": 929.3203125,
+          "panelBottom": 964.0703125
+        }
+      ],
+      "width": 390,
+      "footerBottom": 1263.78125,
+      "diff": []
+    },
+    "pixelWidth": 780,
+    "pixelHeight": 2624,
+    "sha256": "c1383565c224a0dd3c50cae58055a4d631a36a1831cbda6b0e7c6ffe2ce36637",
+    "cssImageHeight": 1312
+  }
+]

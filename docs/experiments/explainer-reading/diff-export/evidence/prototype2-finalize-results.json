@@ -1,0 +1,27 @@
+[
+  {
+    "arm": "base",
+    "case": "desktop-code",
+    "exitCode": 0
+  },
+  {
+    "arm": "candidate",
+    "case": "real",
+    "exitCode": 0
+  },
+  {
+    "arm": "candidate",
+    "case": "short",
+    "exitCode": 0
+  },
+  {
+    "arm": "candidate",
+    "case": "tokens",
+    "exitCode": 0
+  },
+  {
+    "arm": "candidate",
+    "case": "desktop-code",
+    "exitCode": 0
+  }
+]

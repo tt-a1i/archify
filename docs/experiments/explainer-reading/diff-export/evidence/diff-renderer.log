@@ -1,0 +1,165 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-diff.test.mjs test/explainer-renderer.test.mjs
+
+Repository tests: 2 files, concurrency 4
+TAP version 13
+# Subtest: real git unified diff preserves bytes, real line numbers, file changes and git numstat counts
+ok 1 - real git unified diff preserves bytes, real line numbers, file changes and git numstat counts
+  ---
+  duration_ms: 720.59325
+  type: 'test'
+  ...
+# Subtest: simple diff fragments retain CRLF and never invent old or new line numbers
+ok 2 - simple diff fragments retain CRLF and never invent old or new line numbers
+  ---
+  duration_ms: 0.350959
+  type: 'test'
+  ...
+# Subtest: hunk ranges support zero-count insertions and deletions plus implicit count one
+ok 3 - hunk ranges support zero-count insertions and deletions plus implicit count one
+  ---
+  duration_ms: 0.304375
+  type: 'test'
+  ...
+# Subtest: hunk size mismatches, illegal rows and ranges produce actionable original-line diagnostics
+ok 4 - hunk size mismatches, illegal rows and ranges produce actionable original-line diagnostics
+  ---
+  duration_ms: 0.91025
+  type: 'test'
+  ...
+# Subtest: binary and combined diffs are rejected explicitly instead of being interpreted as text changes
+ok 5 - binary and combined diffs are rejected explicitly instead of being interpreted as text changes
+  ---
+  duration_ms: 0.166375
+  type: 'test'
+  ...
+# Subtest: git mode and rename-only metadata stay valid without invented content line numbers
+ok 6 - git mode and rename-only metadata stay valid without invented content line numbers
+  ---
+  duration_ms: 0.381459
+  type: 'test'
+  ...
+# Subtest: diff validation uses the shared secret scanner without leaking rejected values
+ok 7 - diff validation uses the shared secret scanner without leaking rejected values
+  ---
+  duration_ms: 0.892417
+  type: 'test'
+  ...
+# Subtest: fenced diff source locations use actual content lines and preserve internal CRLF
+ok 8 - fenced diff source locations use actual content lines and preserve internal CRLF
+  ---
+  duration_ms: 12.141041
+  type: 'test'
+  ...
+# Subtest: hunk content resembling file headers is counted as literal removed and added data
+ok 9 - hunk content resembling file headers is counted as literal removed and added data
+  ---
+  duration_ms: 0.611083
+  type: 'test'
+  ...
+# Subtest: a renamed file retains the old credential syntax for removed lines
+ok 10 - a renamed file retains the old credential syntax for removed lines
+  ---
+  duration_ms: 0.578292
+  type: 'test'
+  ...
+# Subtest: renderer: every shape remains statically readable and authored text cannot become markup
+ok 11 - renderer: every shape remains statically readable and authored text cannot become markup
+  ---
+  duration_ms: 91.707333
+  type: 'test'
+  ...
+# Subtest: renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+ok 12 - renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+  ---
+  duration_ms: 25.337375
+  type: 'test'
+  ...
+# Subtest: renderer: resources fail closed and native previews preserve identity without leaking styles
+ok 13 - renderer: resources fail closed and native previews preserve identity without leaking styles
+  ---
+  duration_ms: 17.289291
+  type: 'test'
+  ...
+# Subtest: renderer: no-script content includes scope, system theme and inert operation controls
+ok 14 - renderer: no-script content includes scope, system theme and inert operation controls
+  ---
+  duration_ms: 11.827667
+  type: 'test'
+  ...
+# Subtest: renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+ok 15 - renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+  ---
+  duration_ms: 26.185459
+  type: 'test'
+  ...
+# Subtest: renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+ok 16 - renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+  ---
+  duration_ms: 76.286916
+  type: 'test'
+  ...
+# Subtest: renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+ok 17 - renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+  ---
+  duration_ms: 6.842292
+  type: 'test'
+  ...
+# Subtest: renderer: only Chinese pages get Chinese controls; other languages fall back to English
+ok 18 - renderer: only Chinese pages get Chinese controls; other languages fall back to English
+  ---
+  duration_ms: 27.232375
+  type: 'test'
+  ...
+# Subtest: renderer: native diagram panels receive responsive space without changing the frozen native diagram
+ok 19 - renderer: native diagram panels receive responsive space without changing the frozen native diagram
+  ---
+  duration_ms: 53.400625
+  type: 'test'
+  ...
+# Subtest: renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+ok 20 - renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+  ---
+  duration_ms: 40.612792
+  type: 'test'
+  ...
+# Subtest: renderer: source markers number first appearances including blank labels and remain plain text
+ok 21 - renderer: source markers number first appearances including blank labels and remain plain text
+  ---
+  duration_ms: 51.11075
+  type: 'test'
+  ...
+# Subtest: literal snippets render as copyable code and table corners keep their header
+ok 22 - literal snippets render as copyable code and table corners keep their header
+  ---
+  duration_ms: 40.729375
+  type: 'test'
+  ...
+# Subtest: renderer: shared pages omit disposable native checker filenames but retain evidence
+ok 23 - renderer: shared pages omit disposable native checker filenames but retain evidence
+  ---
+  duration_ms: 7.438167
+  type: 'test'
+  ...
+# Subtest: renderer: manifest warnings use the same portable locations as the prepared bundle
+ok 24 - renderer: manifest warnings use the same portable locations as the prepared bundle
+  ---
+  duration_ms: 12.61825
+  type: 'test'
+  ...
+# Subtest: renderer: Windows cross-volume source locations are omitted instead of exposed
+ok 25 - renderer: Windows cross-volume source locations are omitted instead of exposed
+  ---
+  duration_ms: 11.535584
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 968.0005

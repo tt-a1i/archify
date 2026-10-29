@@ -1,0 +1,8 @@
+{
+  "runtime": "9183ff68dff83c47139fa181eb3e069bd547cbb4",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "sourceCommit": "e5e03d185ce0617aa4fc7645bac0317e4079f421",
+  "sourcePath": "archify/explainer/charts.mjs",
+  "patchSha256": "d53065c10f67075fa3cd6dbdfdd7b73b5a190b8fa888b5c7d607bc409156f297",
+  "kind": "fixed-input renderer/export exploration; parent-authored explanatory wrapper, not an independent author comparison"
+}

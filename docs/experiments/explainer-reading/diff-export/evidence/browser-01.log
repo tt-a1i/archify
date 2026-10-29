@@ -1,0 +1,113 @@
+{ name: 'real', width: 390, diff: [ [ 356, 2249 ] ], png: [ 780, 5164 ] }
+{ name: 'real', width: 1440, diff: [ [ 1270, 2249 ] ], png: [ 2880, 4300 ] }
+{ name: 'short', width: 390, diff: [ [ 356, 356 ] ], png: [ 780, 1926 ] }
+{ name: 'short', width: 1440, diff: [ [ 838, 838 ] ], png: [ 2880, 1186 ] }
+{ name: 'tokens', width: 390, diff: [ [ 356, 1340 ] ], png: [ 780, 2122 ] }
+{ name: 'tokens', width: 1440, diff: [ [ 1270, 1340 ] ], png: [ 2880, 1670 ] }
+[p1 "Can a wrapped diff preserve literal text? · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "Can a wrapped diff preserve literal text? · Archify"]
+root
+  container
+    container
+      heading
+        text "Can a wrapped diff preserve literal text?"
+      container
+        group "Theme"
+          button [ref=347]
+            text "System"
+          button [ref=348]
+            text "Light"
+          button [ref=349]
+            text "Dark"
+        button "Style" [ref=350, loc=css:button[aria-label="Style"]]
+          text "Editorial"
+          svg_root
+        button [ref=351]
+          svg_root
+          text "Export"
+          svg_root
+    container
+      container
+        container
+          text "A"
+          heading
+            text "Answer"
+          button [ref=352]
+            text "Ask"
+        paragraph
+          text "The synthetic rows include repeated spaces and long strings. Their bytes and old/new line numbers must remain intact."
+        paragraph
+          text "Applies to"
+          text "Illustrative literal-text fixture"
+      container
+        container
+          anchor "Which string changes?" [ref=353, loc=css:a[aria-label="Which string changes?"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base/tokens.html#change]
+            text "1"
+          heading
+            text "Which string changes?"
+          button [ref=354]
+            text "Ask"
+        container
+          container
+            text "Synthetic long strings with repeated spaces"
+            container
+              text "+1 Added"
+              text "·"
+              text "−1 Removed"
+          container [ref=355]
+            table "Synthetic long strings with repeated spaces"
+              table_row
+                table_cell
+                  text "Old"
+                table_cell
+                  text "New"
+                table_cell
+                  text "Change"
+              table_row
+                table_cell
+                table_cell
+                table_cell
+                  text "@@ -1,3 +1,3 @@"
+              table_row
+                table_cell
+                  text "1"
+                table_cell
+                  text "1"
+                table_cell
+                  text "function message() {"
+              table_row
+                table_cell
+                  text "2"
+                table_cell
+                table_cell
+                  text "- const message = "alpha beta alpha beta alpha beta alpha beta alpha beta alpha beta alpha beta alpha beta alpha beta alpha beta alpha beta alpha beta OLD-END";"
+              table_row
+                table_cell
+                table_cell
+                  text "2"
+                table_cell
+                  text "+ const message = "甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 甲方 乙方 NEW-END";"
+              table_row
+                table_cell
+                  text "3"
+                table_cell
+                  text "3"
+                table_cell
+                  text "}"
+      container
+        container
+          anchor "Where does the change end?" [ref=356, loc=css:a[aria-label="Where does the change end?"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base/tokens.html#after]
+            text "2"
+          heading
+            text "Where does the change end?"
+          button [ref=357]
+            text "Ask"
+        paragraph
+          text "The closing brace belongs after the replaced string, and this paragraph belongs after the diff."
+    container
+      anchor [ref=358, loc=href:https://github.com/tt-a1i/archify, url=https://github.com/tt-a1i/archify]
+        svg_root
+        container
+          text "Archify"
+          text "Turn anything you want to understand, plan, or share into an interactive visual."
+      paragraph
+        text "2 panels"

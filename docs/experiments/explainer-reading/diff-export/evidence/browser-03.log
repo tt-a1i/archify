@@ -1,0 +1,79 @@
+{ arm: 'candidate', name: 'real', width: 390, theme: 'light', content: [ { lastText: '     return { svg, width: result.width, height: result.height, type: result.type };', lastBottom: 4145.6796875, panelBottom: 4169.078125 } ], diff: [ [ 356, 356 ] ], png: [ 780, 9282 ], footer: 4592.5703125, height: 4641, liveUnchanged: true }
+{ arm: 'candidate', name: 'real', width: 1440, theme: 'light', content: [ { lastText: '     return { svg, width: result.width, height: result.height, type: result.type };', lastBottom: 1830.6171875, panelBottom: 1854.015625 } ], diff: [ [ 1270, 1270 ] ], png: [ 2880, 4500 ], footer: 2201.28125, height: 2250, liveUnchanged: true }
+{ arm: 'candidate', name: 'short', width: 390, theme: 'light', content: [ { lastText: '+timeout = 200', lastBottom: 555.6171875, panelBottom: 579.015625 } ], diff: [ [ 356, 356 ] ], png: [ 780, 1926 ], footer: 852.9296875, height: 963, liveUnchanged: true }
+{ arm: 'candidate', name: 'short', width: 1440, theme: 'light', content: [ { lastText: '+timeout = 200', lastBottom: 287.0234375, panelBottom: 310.5 } ], diff: [ [ 838, 838 ] ], png: [ 2880, 1186 ], footer: 544.9453125, height: 593, liveUnchanged: true }
+{ arm: 'candidate', name: 'tokens', width: 390, theme: 'light', content: [ { lastText: ' }', lastBottom: 790.234375, panelBottom: 813.6328125 } ], diff: [ [ 356, 356 ] ], png: [ 780, 2324 ], footer: 1113.34375, height: 1162, liveUnchanged: true }
+{ arm: 'candidate', name: 'tokens', width: 1440, theme: 'light', content: [ { lastText: ' }', lastBottom: 548.3125, panelBottom: 571.7109375 } ], diff: [ [ 1270, 1270 ] ], png: [ 2880, 1710 ], footer: 806.046875, height: 855, liveUnchanged: true }
+{ arm: 'candidate', name: 'real', width: 390, theme: 'dark', content: [ { lastText: '     return { svg, width: result.width, height: result.height, type: result.type };', lastBottom: 4145.6796875, panelBottom: 4169.078125 } ], diff: [ [ 356, 356 ] ], png: [ 780, 9282 ], footer: 4592.5703125, height: 4641, liveUnchanged: true }
+{ arm: 'base', name: 'desktop-code', width: 1440, theme: 'light', content: [ { lastText: 'const message = "complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  END-OF-COMMAND";', lastBottom: 519.7265625, panelBottom: 469.5 } ], diff: [], png: [ 2880, 1504 ], footer: 703.9453125, height: 752, liveUnchanged: true }
+{ arm: 'candidate', name: 'desktop-code', width: 1440, theme: 'light', content: [ { lastText: 'const message = "complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  END-OF-COMMAND";', lastBottom: 518.8203125, panelBottom: 553.5703125 } ], diff: [], png: [ 2880, 1672 ], footer: 787.90625, height: 836, liveUnchanged: true }
+{ arm: 'candidate', name: 'desktop-code', width: 390, theme: 'light', content: [ { lastText: 'const message = "complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  complete  result  END-OF-COMMAND";', lastBottom: 929.3203125, panelBottom: 964.0703125 } ], diff: [], png: [ 780, 2624 ], footer: 1263.78125, height: 1312, liveUnchanged: true }
+[p1 "Can a desktop export show the whole command? · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "Can a desktop export show the whole command? · Archify"]
+root
+  container
+    container
+      heading
+        text "Can a desktop export show the whole command?"
+      container
+        group "Theme"
+          button [ref=372]
+            text "System"
+          button [ref=373]
+            text "Light"
+          button [ref=374]
+            text "Dark"
+        button "Style" [ref=375, loc=css:button[aria-label="Style"]]
+          text "Editorial"
+          svg_root
+        button [ref=376]
+          svg_root
+          text "Export"
+          svg_root
+    container
+      container
+        container
+          text "A"
+          heading
+            text "Answer"
+          button [ref=377]
+            text "Ask"
+        paragraph
+          text "The synthetic command is intentionally long. All its characters and the following paragraph belong in the image."
+        paragraph
+          text "Applies to"
+          text "Illustrative desktop reflow fixture"
+      container
+        container
+          anchor "What is the command?" [ref=378, loc=css:a[aria-label="What is the command?"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/candidate/desktop-code.html#command]
+            text "1"
+          heading
+            text "What is the command?"
+          button [ref=379]
+            text "Ask"
+        container
+          container
+            container
+              text "Long literal command"
+              text "js"
+            button [ref=380]
+              text "Copy"
+          container [ref=381]
+            text "const message = "complete result complete result complete result complete result complete result complete result complete result complete result complete result complete result complete result complet..."
+      container
+        container
+          anchor "What follows the command?" [ref=382, loc=css:a[aria-label="What follows the command?"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/candidate/desktop-code.html#after]
+            text "2"
+          heading
+            text "What follows the command?"
+          button [ref=383]
+            text "Ask"
+        paragraph
+          text "This paragraph must appear after the complete command, not cover its last lines."
+    container
+      anchor [ref=384, loc=href:https://github.com/tt-a1i/archify, url=https://github.com/tt-a1i/archify]
+        svg_root
+        container
+          text "Archify"
+          text "Turn anything you want to understand, plan, or share into an interactive visual."
+      paragraph
+        text "2 panels"

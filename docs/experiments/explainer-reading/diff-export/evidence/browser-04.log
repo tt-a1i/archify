@@ -1,0 +1,5 @@
+{ theme: 'light', image: 'file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/exports/final-candidate-real-390.png', width: 390, scroll: 3450 }
+{ theme: 'dark', image: 'file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/exports/final-candidate-real-390-dark.png', width: 390, scroll: 3450 }
+[p1 "final-candidate-real-390-dark.png (780×9282)" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "final-candidate-real-390-dark.png (780×9282)"]
+root
+  image

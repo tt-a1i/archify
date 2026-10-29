@@ -1,0 +1,26 @@
+[
+  {
+    "path": "base/real.archify.md",
+    "intentionalContextBlankLines": [
+      28,
+      30,
+      66
+    ]
+  },
+  {
+    "path": "candidate/real.archify.md",
+    "intentionalContextBlankLines": [
+      28,
+      30,
+      66
+    ]
+  },
+  {
+    "path": "source.patch",
+    "intentionalContextBlankLines": [
+      12,
+      14,
+      50
+    ]
+  }
+]

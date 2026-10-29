@@ -1,0 +1,48 @@
+TAP version 13
+# Subtest: image export wraps long snippets while preserving live code
+not ok 1 - image export wraps long snippets while preserving live code
+  ---
+  duration_ms: 1423.565083
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base-regression/test/explainer-browser.test.mjs:331:1'
+  failureType: 'testCodeFailure'
+  error: 'The final code characters are present in the PNG'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base-regression/test/explainer-browser.test.mjs:344:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: image export retains long diff rows and original line numbers
+not ok 2 - image export retains long diff rows and original line numbers
+  ---
+  duration_ms: 814.901375
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base-regression/test/explainer-browser.test.mjs:366:1'
+  failureType: 'testCodeFailure'
+  error: 'Both removed and added line endings remain in the actual image'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base-regression/test/explainer-browser.test.mjs:377:11)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2378.855584

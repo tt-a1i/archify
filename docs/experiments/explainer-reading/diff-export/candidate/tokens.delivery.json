@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "a318cf4c-6cc7-49b3-b362-99b81d83830c",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/diff-export/candidate/tokens.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/diff-export/candidate/tokens.html",
+  "specification": {
+    "sha256": "d3edb53bb08f75837adc708d95471c674877c7fbce77c65f528d21660bd249b8",
+    "bytes": 959
+  },
+  "artifact": {
+    "sha256": "5e088ad932ba378e6671c085fda98aa2e86111e6bc5da3501cff26f51dae0476",
+    "bytes": 142756
+  },
+  "explainer": {
+    "preparedSha256": "7c087ffc82907cbf491cbe1d4a191c366fdfeade8ec2dd5de142885fc7df2d1f",
+    "dependencies": []
+  }
+}

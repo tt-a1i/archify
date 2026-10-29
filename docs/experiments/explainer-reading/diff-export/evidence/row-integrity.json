@@ -1,0 +1,44 @@
+[
+  {
+    "case": "real",
+    "width": 390,
+    "theme": "light",
+    "exportedRowsEqualBase": true
+  },
+  {
+    "case": "real",
+    "width": 1440,
+    "theme": "light",
+    "exportedRowsEqualBase": true
+  },
+  {
+    "case": "short",
+    "width": 390,
+    "theme": "light",
+    "exportedRowsEqualBase": true
+  },
+  {
+    "case": "short",
+    "width": 1440,
+    "theme": "light",
+    "exportedRowsEqualBase": true
+  },
+  {
+    "case": "tokens",
+    "width": 390,
+    "theme": "light",
+    "exportedRowsEqualBase": true
+  },
+  {
+    "case": "tokens",
+    "width": 1440,
+    "theme": "light",
+    "exportedRowsEqualBase": true
+  },
+  {
+    "case": "real",
+    "width": 390,
+    "theme": "dark",
+    "exportedRowsEqualBase": true
+  }
+]

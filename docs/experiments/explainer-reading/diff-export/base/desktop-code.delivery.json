@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "b815c159-3448-4f6a-8108-1ccd204eb17a",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base/desktop-code.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round23/base/desktop-code.html",
+  "specification": {
+    "sha256": "a220c24e16c7c504c6c53660e38cd421aa7a7a6fb32e24e5b4ebfe54b5914a19",
+    "bytes": 1213
+  },
+  "artifact": {
+    "sha256": "d54b93f7a179f6e357cf04003102dacf076f90618a9fa850151f9818e2b8c5ad",
+    "bytes": 141905
+  },
+  "explainer": {
+    "preparedSha256": "4ba398556bc963739e3513fbf08f8b434527a8f1842a38eb59698a2a8de0d8a9",
+    "dependencies": []
+  }
+}

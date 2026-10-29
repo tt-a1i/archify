@@ -1,0 +1,56 @@
+[
+  {
+    "case": "real",
+    "width": 390,
+    "prototypePixelsEqual": true,
+    "basePixelsEqual": false,
+    "lastContentFits": true,
+    "footerFits": true,
+    "liveUnchanged": true
+  },
+  {
+    "case": "real",
+    "width": 1440,
+    "prototypePixelsEqual": true,
+    "basePixelsEqual": false,
+    "lastContentFits": true,
+    "footerFits": true,
+    "liveUnchanged": true
+  },
+  {
+    "case": "short",
+    "width": 390,
+    "prototypePixelsEqual": true,
+    "basePixelsEqual": true,
+    "lastContentFits": true,
+    "footerFits": true,
+    "liveUnchanged": true
+  },
+  {
+    "case": "short",
+    "width": 1440,
+    "prototypePixelsEqual": true,
+    "basePixelsEqual": true,
+    "lastContentFits": true,
+    "footerFits": true,
+    "liveUnchanged": true
+  },
+  {
+    "case": "tokens",
+    "width": 390,
+    "prototypePixelsEqual": true,
+    "basePixelsEqual": false,
+    "lastContentFits": true,
+    "footerFits": true,
+    "liveUnchanged": true
+  },
+  {
+    "case": "desktop-code",
+    "width": 1440,
+    "prototypePixelsEqual": true,
+    "basePixelsEqual": null,
+    "lastContentFits": true,
+    "footerFits": true,
+    "liveUnchanged": true
+  }
+]
