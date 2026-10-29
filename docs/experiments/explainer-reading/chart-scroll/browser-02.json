@@ -1,0 +1,698 @@
+[
+  {
+    "chart": "pie",
+    "width": 390,
+    "arm": "base",
+    "theme": "light",
+    "pageWidth": 390,
+    "svgWidth": 332,
+    "viewBox": "0 0 415 256",
+    "viewport": null,
+    "hint": null,
+    "panelHeight": 629.109375,
+    "labels": [
+      {
+        "text": "头部 · 10（48%）",
+        "px": 8.79986572265625
+      },
+      {
+        "text": "压缩数据 · 3（14%）",
+        "px": 8.79986572265625
+      },
+      {
+        "text": "尾部 · 8（38%）",
+        "px": 8.79986572265625
+      }
+    ]
+  },
+  {
+    "chart": "pie",
+    "width": 390,
+    "arm": "candidate",
+    "theme": "light",
+    "pageWidth": 390,
+    "svgWidth": 415,
+    "viewBox": "0 0 415 256",
+    "viewport": {
+      "client": 332,
+      "scroll": 415,
+      "tab": 0,
+      "fit": "scroll"
+    },
+    "hint": {
+      "hidden": false,
+      "text": "左右滑动查看图表，也可聚焦图框后按方向键。"
+    },
+    "panelHeight": 706.9453125,
+    "labels": [
+      {
+        "text": "头部 · 10（48%）",
+        "px": 11
+      },
+      {
+        "text": "压缩数据 · 3（14%）",
+        "px": 11
+      },
+      {
+        "text": "尾部 · 8（38%）",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "pie",
+    "width": 1440,
+    "arm": "base",
+    "theme": "light",
+    "pageWidth": 1440,
+    "svgWidth": 415,
+    "viewBox": "0 0 415 256",
+    "viewport": null,
+    "hint": null,
+    "panelHeight": 618,
+    "labels": [
+      {
+        "text": "头部 · 10（48%）",
+        "px": 11
+      },
+      {
+        "text": "压缩数据 · 3（14%）",
+        "px": 11
+      },
+      {
+        "text": "尾部 · 8（38%）",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "pie",
+    "width": 1440,
+    "arm": "candidate",
+    "theme": "light",
+    "pageWidth": 1440,
+    "svgWidth": 415,
+    "viewBox": "0 0 415 256",
+    "viewport": {
+      "client": 590,
+      "scroll": 590,
+      "tab": -1,
+      "fit": "fit"
+    },
+    "hint": {
+      "hidden": true,
+      "text": ""
+    },
+    "panelHeight": 618,
+    "labels": [
+      {
+        "text": "头部 · 10（48%）",
+        "px": 11
+      },
+      {
+        "text": "压缩数据 · 3（14%）",
+        "px": 11
+      },
+      {
+        "text": "尾部 · 8（38%）",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "bar",
+    "width": 390,
+    "arm": "base",
+    "theme": "light",
+    "pageWidth": 390,
+    "svgWidth": 332,
+    "viewBox": "0 0 480 260",
+    "viewport": null,
+    "hint": null,
+    "panelHeight": 604.140625,
+    "labels": [
+      {
+        "text": "0",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "5",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "10",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "头部",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "压缩数据",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "尾部",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "B",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "10",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "3",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "8",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "字节",
+        "px": 7.608112980769231
+      }
+    ]
+  },
+  {
+    "chart": "bar",
+    "width": 390,
+    "arm": "candidate",
+    "theme": "light",
+    "pageWidth": 390,
+    "svgWidth": 480,
+    "viewBox": "0 0 480 260",
+    "viewport": {
+      "client": 332,
+      "scroll": 480,
+      "tab": 0,
+      "fit": "scroll"
+    },
+    "hint": {
+      "hidden": false,
+      "text": "左右滑动查看图表，也可聚焦图框后按方向键。"
+    },
+    "panelHeight": 710.9453125,
+    "labels": [
+      {
+        "text": "0",
+        "px": 11
+      },
+      {
+        "text": "5",
+        "px": 11
+      },
+      {
+        "text": "10",
+        "px": 11
+      },
+      {
+        "text": "头部",
+        "px": 11
+      },
+      {
+        "text": "压缩数据",
+        "px": 11
+      },
+      {
+        "text": "尾部",
+        "px": 11
+      },
+      {
+        "text": "B",
+        "px": 11
+      },
+      {
+        "text": "10",
+        "px": 10
+      },
+      {
+        "text": "3",
+        "px": 10
+      },
+      {
+        "text": "8",
+        "px": 10
+      },
+      {
+        "text": "字节",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "bar",
+    "width": 1440,
+    "arm": "base",
+    "theme": "light",
+    "pageWidth": 1440,
+    "svgWidth": 480,
+    "viewBox": "0 0 480 260",
+    "viewport": null,
+    "hint": null,
+    "panelHeight": 622,
+    "labels": [
+      {
+        "text": "0",
+        "px": 11
+      },
+      {
+        "text": "5",
+        "px": 11
+      },
+      {
+        "text": "10",
+        "px": 11
+      },
+      {
+        "text": "头部",
+        "px": 11
+      },
+      {
+        "text": "压缩数据",
+        "px": 11
+      },
+      {
+        "text": "尾部",
+        "px": 11
+      },
+      {
+        "text": "B",
+        "px": 11
+      },
+      {
+        "text": "10",
+        "px": 10
+      },
+      {
+        "text": "3",
+        "px": 10
+      },
+      {
+        "text": "8",
+        "px": 10
+      },
+      {
+        "text": "字节",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "bar",
+    "width": 1440,
+    "arm": "candidate",
+    "theme": "light",
+    "pageWidth": 1440,
+    "svgWidth": 480,
+    "viewBox": "0 0 480 260",
+    "viewport": {
+      "client": 590,
+      "scroll": 590,
+      "tab": -1,
+      "fit": "fit"
+    },
+    "hint": {
+      "hidden": true,
+      "text": ""
+    },
+    "panelHeight": 622,
+    "labels": [
+      {
+        "text": "0",
+        "px": 11
+      },
+      {
+        "text": "5",
+        "px": 11
+      },
+      {
+        "text": "10",
+        "px": 11
+      },
+      {
+        "text": "头部",
+        "px": 11
+      },
+      {
+        "text": "压缩数据",
+        "px": 11
+      },
+      {
+        "text": "尾部",
+        "px": 11
+      },
+      {
+        "text": "B",
+        "px": 11
+      },
+      {
+        "text": "10",
+        "px": 10
+      },
+      {
+        "text": "3",
+        "px": 10
+      },
+      {
+        "text": "8",
+        "px": 10
+      },
+      {
+        "text": "字节",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "latency",
+    "width": 390,
+    "arm": "base",
+    "theme": "light",
+    "pageWidth": 400,
+    "svgWidth": 332,
+    "viewBox": "0 0 480 260",
+    "viewport": null,
+    "hint": null,
+    "panelHeight": 403.6796875,
+    "labels": [
+      {
+        "text": "0",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "200",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "400",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "600",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "Mean",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "P50",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "P99",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "ms",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "80",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "80",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "80",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "88",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "80",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "600",
+        "px": 6.916466346153847
+      },
+      {
+        "text": "Before",
+        "px": 7.608112980769231
+      },
+      {
+        "text": "After",
+        "px": 7.608112980769231
+      }
+    ]
+  },
+  {
+    "chart": "latency",
+    "width": 390,
+    "arm": "candidate",
+    "theme": "light",
+    "pageWidth": 400,
+    "svgWidth": 480,
+    "viewBox": "0 0 480 260",
+    "viewport": {
+      "client": 332,
+      "scroll": 480,
+      "tab": 0,
+      "fit": "scroll"
+    },
+    "hint": {
+      "hidden": false,
+      "text": "Scroll the chart sideways, or focus it and use the arrow keys."
+    },
+    "panelHeight": 531.1171875,
+    "labels": [
+      {
+        "text": "0",
+        "px": 11
+      },
+      {
+        "text": "200",
+        "px": 11
+      },
+      {
+        "text": "400",
+        "px": 11
+      },
+      {
+        "text": "600",
+        "px": 11
+      },
+      {
+        "text": "Mean",
+        "px": 11
+      },
+      {
+        "text": "P50",
+        "px": 11
+      },
+      {
+        "text": "P99",
+        "px": 11
+      },
+      {
+        "text": "ms",
+        "px": 11
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "88",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "600",
+        "px": 10
+      },
+      {
+        "text": "Before",
+        "px": 11
+      },
+      {
+        "text": "After",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "latency",
+    "width": 1440,
+    "arm": "base",
+    "theme": "light",
+    "pageWidth": 1440,
+    "svgWidth": 480,
+    "viewBox": "0 0 480 260",
+    "viewport": null,
+    "hint": null,
+    "panelHeight": 442,
+    "labels": [
+      {
+        "text": "0",
+        "px": 11
+      },
+      {
+        "text": "200",
+        "px": 11
+      },
+      {
+        "text": "400",
+        "px": 11
+      },
+      {
+        "text": "600",
+        "px": 11
+      },
+      {
+        "text": "Mean",
+        "px": 11
+      },
+      {
+        "text": "P50",
+        "px": 11
+      },
+      {
+        "text": "P99",
+        "px": 11
+      },
+      {
+        "text": "ms",
+        "px": 11
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "88",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "600",
+        "px": 10
+      },
+      {
+        "text": "Before",
+        "px": 11
+      },
+      {
+        "text": "After",
+        "px": 11
+      }
+    ]
+  },
+  {
+    "chart": "latency",
+    "width": 1440,
+    "arm": "candidate",
+    "theme": "light",
+    "pageWidth": 1440,
+    "svgWidth": 480,
+    "viewBox": "0 0 480 260",
+    "viewport": {
+      "client": 806,
+      "scroll": 806,
+      "tab": -1,
+      "fit": "fit"
+    },
+    "hint": {
+      "hidden": true,
+      "text": ""
+    },
+    "panelHeight": 442,
+    "labels": [
+      {
+        "text": "0",
+        "px": 11
+      },
+      {
+        "text": "200",
+        "px": 11
+      },
+      {
+        "text": "400",
+        "px": 11
+      },
+      {
+        "text": "600",
+        "px": 11
+      },
+      {
+        "text": "Mean",
+        "px": 11
+      },
+      {
+        "text": "P50",
+        "px": 11
+      },
+      {
+        "text": "P99",
+        "px": 11
+      },
+      {
+        "text": "ms",
+        "px": 11
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "88",
+        "px": 10
+      },
+      {
+        "text": "80",
+        "px": 10
+      },
+      {
+        "text": "600",
+        "px": 10
+      },
+      {
+        "text": "Before",
+        "px": 11
+      },
+      {
+        "text": "After",
+        "px": 11
+      }
+    ]
+  }
+]

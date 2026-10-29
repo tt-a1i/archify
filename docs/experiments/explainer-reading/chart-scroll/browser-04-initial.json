@@ -1,0 +1,17 @@
+{
+  "width": 390,
+  "fit": "scroll",
+  "left": 0,
+  "scrollWidth": 480,
+  "clientWidth": 332,
+  "value": {
+    "text": "600",
+    "left": 378.5098571777344,
+    "right": 397.8301696777344,
+    "inside": false
+  },
+  "viewport": {
+    "left": 29,
+    "right": 361
+  }
+}

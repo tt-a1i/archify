@@ -1,0 +1,10 @@
+{
+  "width": 390,
+  "svgWidth": 332,
+  "inlineStyle": "max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_fm:var(--pele-font-mono,monospace);font:13px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,sans-serif)",
+  "maxWidth": "100%",
+  "scrollWidth": 332,
+  "clientWidth": 332,
+  "tabIndex": -1,
+  "fit": "fit"
+}

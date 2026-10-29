@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "f0e7c651-b0f0-4729-8c4e-843aef10b71f",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-charts/bar.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round17/pages/bar-base.html",
+  "specification": {
+    "sha256": "cb99147fbf0326ae08df9ce0a52a2b323d7f2449d74afa32239e956b406f7283",
+    "bytes": 3081
+  },
+  "artifact": {
+    "sha256": "755d68a91a7f14b87cb11d6e97f6d6680a5db54fd3f3a0af846618ea0ba8b7a3",
+    "bytes": 160121
+  },
+  "explainer": {
+    "preparedSha256": "e36f73d287227179123d5997ee1478dedbc53261c6656f132e91274ee613a234",
+    "dependencies": [
+      {
+        "kind": "data",
+        "id": "chart-352878fb9e17",
+        "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-charts/one-byte.json",
+        "sha256": "125cd2d61e8d11c22a4133ce174594a1efbe6781f8e1bdc879fc5968493bccc3",
+        "bytes": 121
+      }
+    ]
+  }
+}

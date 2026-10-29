@@ -139,3 +139,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 16
 
 [Gzip composition charts](gzip-charts/README.md) compare existing pie and bar support on the same measured 21-byte output. Both pass artifact checks, but phone text shrinks to about 8.8 px for the pie legend and 6.9 px for bar values; the explanation also grows by 245–270 px. Neither replaces the preferred text-first page. The experiment confirms a chart-readability gap, records relevant existing PR scope, and provides fixed inputs for a separate rendering experiment. The main index still offers twenty-two variants.
+
+## Continued exploration — round 17
+
+[Native-width phone chart scrolling](chart-scroll/README.md) restores 10–11 px labels, but hides the most important latency bar on first view and adds 78–127 px of panel height. Keyboard scrolling reaches the data; the comparison still becomes harder to see at once. The default is rejected. All three desktop screenshot pairs are byte-identical. Product source stays unchanged; the patch, failed first attempt, browser timeout and bounded successful observations are retained.

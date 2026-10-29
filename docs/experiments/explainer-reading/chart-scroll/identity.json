@@ -1,0 +1,17 @@
+{
+  "pie": {
+    "baseHtmlSha256": "f00f0345fa910fe2d3961a3abf633bbb151820bb9fe0c243723cff26259c38e7",
+    "candidateHtmlSha256": "06e53c7a0fb7dba31fefd19176bb2490b83ddf226d7fefcd0f27054b2026f696",
+    "desktopScreenshotsByteIdentical": true
+  },
+  "bar": {
+    "baseHtmlSha256": "755d68a91a7f14b87cb11d6e97f6d6680a5db54fd3f3a0af846618ea0ba8b7a3",
+    "candidateHtmlSha256": "a161da9d4ef88d56c70148f56d0a294d12aea5eb67c26f56ac7831037876f0ed",
+    "desktopScreenshotsByteIdentical": true
+  },
+  "latency": {
+    "baseHtmlSha256": "655bfbd85be2fe359b38d1f9d8011f46c8d16d567057d44e3cc025b466e039fd",
+    "candidateHtmlSha256": "1101cff1c1094e7d2051caa44900e48145c61dfbcff61bf62c9982dc6f7ea815",
+    "desktopScreenshotsByteIdentical": true
+  }
+}

@@ -1,0 +1,121 @@
+--- a/archify/explainer/reader.css
++++ b/archify/explainer/reader.css
+@@ -243,8 +243,13 @@
+ 
+ /* Code and diff */
+ .chart{margin:0;display:flex;flex-direction:column;--pele-bg:transparent;--pele-fg:var(--ink);--pele-muted:var(--muted);--pele-line:var(--rule-strong);--pele-surface:var(--sunk);--pele-surface-alt:var(--zebra);--pele-border:var(--rule-strong);--pele-accent:var(--accent);--pele-font:var(--sans);--pele-font-mono:var(--mono);--pele-series-1:var(--accent);--pele-series-2:var(--caution);--pele-series-3:var(--good);--pele-series-4:var(--violet);--pele-series-5:var(--bad);--pele-series-6:var(--accent-ink);--pele-series-7:var(--muted);--pele-series-8:var(--faint)}
+-/* Charts never scale above their native size, so their text stays at the page's small-text size. */
+-.chart>svg{display:block;width:min(100%,var(--native-width,100vw));height:auto;margin-inline:auto}
++/* Keep the caption outside the scroll surface; only the chart moves sideways. */
++.chart-viewport{min-width:0;max-width:100%;overflow:auto}
++.chart-viewport:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
++.chart-viewport>svg{display:block;width:min(100%,var(--native-width,100vw));height:auto;margin-inline:auto}
++.chart-fit-status{font-size:12px;color:var(--muted);padding:0 4px}
++.chart-fit-status:not([hidden]){margin-top:6px}
++@media screen and (max-width:760px){.chart-viewport>svg{width:var(--native-width,100%)}}
+ .chart figcaption{font-size:12px;color:var(--muted);margin-top:8px;padding:0 4px}
+ .snippet{border:1px solid var(--rule);border-radius:8px;background:var(--code);overflow:hidden}
+ .snippet figcaption{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 12px;border-bottom:1px solid var(--rule);font-size:12px;color:var(--muted);background:var(--panel)}
+@@ -466,7 +471,9 @@
+ .diagram-preview{overflow:visible;background:#fff}
+ .board .diagram-preview.diagram-preview[class]{--mask:#fff;--panel:#fff}
+ .diagram-preview>svg{min-width:0!important;width:100%}
+-.table-scroll,pre,.diff-scroll{overflow:visible}
++.table-scroll,pre,.diff-scroll,.chart-viewport{overflow:visible}
++.chart-fit-status{display:none!important}
++.chart-viewport{outline:none!important}
+ pre code,.diff-code code{white-space:pre-wrap;overflow-wrap:anywhere}
+ .typical{border:0;padding:0;font-size:11px}
+ a{color:inherit}
+--- a/archify/explainer/reader.js
++++ b/archify/explainer/reader.js
+@@ -187,7 +187,10 @@
+   }
+   // A fit notice that appears or goes away changes a panel's height after the board was planned,
+   // so the board is planned again and the notices rechecked at the new widths.
+-  function ensureDiagramReadability() { if (fitDiagrams()) { layoutBoard(); fitDiagrams(); } }
++  function ensureFigureReadability() {
++    const chartsChanged = fitCharts();
++    if (fitDiagrams() || chartsChanged) { layoutBoard(); fitDiagrams(); fitCharts(); }
++  }
+   function fitDiagrams() {
+     const minimumText = textFloor();
+     let changed = false;
+@@ -224,6 +227,19 @@
+     });
+     return changed;
+   }
++  function fitCharts() {
++    let changed = false;
++    all('.chart-viewport').forEach(viewport=>{
++      const scrolling = viewport.scrollWidth > viewport.clientWidth + 1;
++      const status = viewport.closest('.chart').querySelector('.chart-fit-status');
++      viewport.dataset.chartFit = scrolling ? 'scroll' : 'fit';
++      if (scrolling) viewport.tabIndex = 0; else viewport.removeAttribute('tabindex');
++      changed ||= status.hidden === scrolling;
++      status.hidden = !scrolling;
++      status.textContent = scrolling ? say('Scroll the chart sideways, or focus it and use the arrow keys.','左右滑动查看图表，也可聚焦图框后按方向键。') : '';
++    });
++    return changed;
++  }
+   const preference = matchMedia('(prefers-color-scheme: dark)');
+   let theme = 'auto';
+   function applyTheme() {
+@@ -258,7 +274,7 @@
+     styleItems.forEach(item=>item.setAttribute('aria-checked',String(item.dataset.styleChoice === style)));
+     styleToggle.querySelector('[data-style-label]').textContent = words.styles[style];
+     styleToggle.querySelector('.style-swatch').dataset.swatch = style;
+-    if (remember) { try { localStorage.setItem('archify-explainer-style',style); } catch {} requestAnimationFrame(()=>{ layoutBoard(); ensureDiagramReadability(); }); }
++    if (remember) { try { localStorage.setItem('archify-explainer-style',style); } catch {} requestAnimationFrame(()=>{ layoutBoard(); ensureFigureReadability(); }); }
+   };
+   try { const saved = localStorage.getItem('archify-explainer-style'); if (saved) setStyle(saved,false); } catch {}
+   toolMenu(document.querySelector('.style-menu'),item=>setStyle(item.dataset.styleChoice,true),()=>styleItems.find(item=>item.getAttribute('aria-checked') === 'true'));
+@@ -270,16 +286,17 @@
+     const shell = document.querySelector('.shell'), width = document.documentElement.clientWidth;
+     let height = Math.ceil(shell.getBoundingClientRect().height + 48);
+     const clone = root.cloneNode(true);
+-    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());
++    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.chart-fit-status').forEach(element=>element.remove());
+     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
+     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
+     // An exported image has no scroll interaction; retain the complete overview.
+     clone.querySelectorAll('.diagram-preview>svg').forEach(svg=>{svg.style.minWidth='0px';});
++    clone.querySelectorAll('.chart-viewport>svg').forEach(svg=>{svg.style.width='min(100%,var(--native-width,100vw))';});
+     // Inside a foreignObject the page's <html> is not :root, so theme and style rules would drop out;
+     // the root's own attribute selects the same element with the same specificity.
+     const sheet = clone.querySelector('head>style'); if (sheet) sheet.textContent = sheet.textContent.replace(/:root\b/g,'[data-archify-artifact]');
+     clone.style.width = `${width}px`;
+-    if (clone.querySelector('[data-diagram-fit="scroll"]')) {
++    if (clone.querySelector('[data-diagram-fit="scroll"],[data-chart-fit="scroll"]')) {
+       // The exported overview is shorter than the scrollable live diagram.
+       // Measure the inert clone synchronously, then remove it before painting.
+       const measuring = document.createElement('div');
+@@ -482,7 +499,7 @@
+     control.setAttribute('aria-pressed','true'); control.hidden = true;
+     if (hadFocus) bar.querySelector('[data-walk=next]').focus();
+     // The bar changes the panel height the board was planned with.
+-    const replan = () => requestAnimationFrame(()=>{ layoutBoard(); ensureDiagramReadability(); });
++    const replan = () => requestAnimationFrame(()=>{ layoutBoard(); ensureFigureReadability(); });
+     replan();
+     const render = () => { bar.querySelector('.walk-count').textContent = `${index + 1} / ${items.length}`; bar.querySelector('.walk-text').textContent = show(index) || ''; };
+     const move = delta => { index = Math.max(0,Math.min(items.length - 1,index + delta)); render(); };
+@@ -705,7 +722,7 @@
+   setupAsk();
+   setupSourceCards();
+   layoutBoard();
+-  const relayout = () => { layoutBoard(); ensureDiagramReadability(); };
++  const relayout = () => { layoutBoard(); ensureFigureReadability(); };
+   Promise.resolve(document.fonts?.ready).then(()=>requestAnimationFrame(()=>requestAnimationFrame(relayout)));
+   let resizeFrame;
+   window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame = requestAnimationFrame(relayout);});
+--- a/archify/explainer/render.mjs
++++ b/archify/explainer/render.mjs
+@@ -75,7 +75,7 @@
+       }
+       case 'steps': body = `<ol class="steps">${block.items.map(item => `<li id="${escape(item.id)}"><b>${item.target ? nativeLink(item.target,i(item.text)) : i(item.text)}</b>${item.detail ? `<p>${i(item.detail)}</p>` : ''}</li>`).join('')}</ol>`; break;
+       case 'diagram': { const diagram = diagrams[block.id]; if (!diagram?.svg || !diagram?.html) unavailable(block,`Missing prepared native diagram: ${block.id}`); const title = diagram.spec?.meta?.title || block.id; const svg = staticSvg(diagram.svg, block.id); const previewClass = previewPrefix(block.id); const nativeStyle = scopeNativeCss(diagram.styles ?? nativeStyles(diagram.html), '.' + previewClass, previewClass + '-', diagram.svg); const nativeWidth = Number(diagram.svg.match(/viewBox=["'][^"']*?[\d.-]+[ ,]+[\d.-]+[ ,]+([\d.]+)/)?.[1]); const lanes = diagram.previewLanes ?? diagram.spec?.lanes ?? [], singleLane = lanes.length === 1 ? ' single-lane bare-lanes' : lanes.length && lanes.every(lane => /^lane-\d+$/.test(lane.id)) ? ' bare-lanes' : ''; body = `<figure class="diagram"><figcaption><span class="diagram-title">${escape(title)}</span><span class="diagram-actions interactive"><button class="tool-button explore-button" type="button" data-open-diagram="${escape(block.id)}" title="${words.exploreTitle}">${icons.expand}<span>${words.explore}</span></button></span></figcaption><div class="diagram-preview ${previewClass}${singleLane}" role="img" aria-label="${escape(title)}"${block.nodeSources ? ` data-node-sources="${escape(JSON.stringify(block.nodeSources))}"` : ''}${block.nodeBlocks ? ` data-node-blocks="${escape(JSON.stringify(block.nodeBlocks))}"` : ''}${nativeWidth > 0 ? ` style="--native-width:${Math.round(nativeWidth)}px"` : ''}><style>${nativeStyle}</style>${svg}</div></figure><p class="diagram-fit-status fine" role="status" hidden></p><details class="diagram-semantics" open><summary>${words.graph}</summary><ul>${(diagram.semantic?.nodes || []).map(node => `<li>${escape(node.label || node.id)} <code>${escape(node.id)}</code></li>`).join('')}${(diagram.semantic?.edges || []).map(edge => `<li><code>${escape(edge.from)}</code> → <code>${escape(edge.to)}</code>${edge.label ? ` · ${escape(edge.label)}` : ''}</li>`).join('')}</ul></details>${block.changes?.length ? `<dl class="changes"><dt>${words.changes}</dt>${block.changes.map(change => `<dd><span class="chip ${escape(change.change)}">${words[change.change]}</span> <code>${escape(change.target)}</code></dd>`).join('')}</dl>` : ''}`; break; }
+-      case 'chart': { const text = block.text ?? preparedSources.charts?.[block.id]; if (typeof text !== 'string') unavailable(block,`Missing prepared chart data: ${block.id}`); const chart = compileExplainerChart(text); if (chart.error) unavailable(block, chart.error); body = `<figure class="chart" style="--native-width:${Math.round(chart.width)}px">${chart.svg.replace(/^<svg\b[^>]*>/, tag => tag.replace(/\s(?:width|height)="[^"]*"/g, ''))}${block.title ? `<figcaption>${i(block.title)}</figcaption>` : ''}</figure>`; break; }
++      case 'chart': { const text = block.text ?? preparedSources.charts?.[block.id]; if (typeof text !== 'string') unavailable(block,`Missing prepared chart data: ${block.id}`); const chart = compileExplainerChart(text); if (chart.error) unavailable(block, chart.error); body = `<figure class="chart" style="--native-width:${Math.round(chart.width)}px"><div class="chart-viewport" tabindex="0" role="region" aria-label="${english ? 'Chart' : '图表'}">${chart.svg.replace(/^<svg\b[^>]*>/, tag => tag.replace(/\s(?:width|height)="[^"]*"/g, ''))}</div>${block.title ? `<figcaption>${i(block.title)}</figcaption>` : ''}<p class="chart-fit-status" hidden></p></figure>`; break; }
+       case 'snippet': body = `<figure class="snippet"><figcaption><span class="snippet-label">${block.title ? i(block.title) : ''}${block.language ? `<code class="snippet-language">${escape(block.language)}</code>` : ''}</span><button class="text-button interactive" type="button" data-copy>${words.copy}</button></figcaption><pre><code${block.language ? ` class="language-${escape(block.language)}"` : ''}>${escape(block.text)}</code></pre></figure>`; break;
+       case 'code': { const source = sources[block.source]; if (!source?.path || typeof source.text !== 'string') unavailable(block,`Code requires a Git excerpt: ${block.source}`); body = `<figure class="code"><figcaption>${i(`[](source:${block.source})`)}<span>${escape(source.path)}:${escape(source.lines?.join('–'))}</span></figcaption><pre><code${block.language ? ` class="language-${escape(block.language)}"` : ''}>${escape(source.text)}</code></pre></figure>`; break; }
+       case 'diff': {

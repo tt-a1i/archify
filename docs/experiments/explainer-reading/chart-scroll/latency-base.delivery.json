@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "909159f8-ee06-4176-9201-49c67f7d851b",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round17/latency.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round17/pages/latency-base.html",
+  "specification": {
+    "sha256": "e4e2b015b3b1b5858c4b50bfbf1a7cbbe68643f3a0e8510c021c72a2bd544336",
+    "bytes": 746
+  },
+  "artifact": {
+    "sha256": "655bfbd85be2fe359b38d1f9d8011f46c8d16d567057d44e3cc025b466e039fd",
+    "bytes": 140188
+  },
+  "explainer": {
+    "preparedSha256": "7a26a99de687e9f5db6068687f4e84024996f90cb93d66cb0bc336db760155b4",
+    "dependencies": []
+  }
+}

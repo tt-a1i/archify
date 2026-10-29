@@ -1,0 +1,1 @@
+browser-03.mjs exited 1: page.waitForFunction timed out after 10000ms on page p1 at latency-candidate.html. No intermediate result was persisted, so the failing stage is unknown. The later browser-04 run proves initial overflow and raw CDP ArrowRight movement only. Do not claim export, desktop-return or print acceptance from this incomplete sequence.
