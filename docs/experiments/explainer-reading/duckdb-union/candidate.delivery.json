@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "b4934659-40d1-46d8-9ac5-d40dcd403660",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/duckdb-union/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/duckdb-union/candidate.html",
+  "specification": {
+    "sha256": "c230ab4f568e407a54e6af2a1ff78a230a89a99ad22d7e79c1320630535317c9",
+    "bytes": 3342
+  },
+  "artifact": {
+    "sha256": "84c86f94079af838a21ff22e41c07d2d7aa873bae62503a7c43de317d50da350",
+    "bytes": 166140
+  },
+  "explainer": {
+    "preparedSha256": "a17baf09ca80d202277fae6c29ae769512a84d649a38700697621f0565fa722e",
+    "dependencies": []
+  }
+}

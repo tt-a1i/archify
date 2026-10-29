@@ -1,0 +1,742 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2845,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 695.90625,
+          "width": 356,
+          "height": 109,
+          "top": 695.90625,
+          "right": 373,
+          "bottom": 804.90625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 863.703125,
+          "width": 358,
+          "height": 116.0703125,
+          "top": 863.703125,
+          "right": 374,
+          "bottom": 979.7734375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1192.890625,
+          "width": 356,
+          "height": 109,
+          "top": 1192.890625,
+          "right": 373,
+          "bottom": 1301.890625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 1360.6875,
+          "width": 358,
+          "height": 116.0703125,
+          "top": 1360.6875,
+          "right": 374,
+          "bottom": 1476.7578125,
+          "left": 16
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1783.265625,
+          "width": 356,
+          "height": 109,
+          "top": 1783.265625,
+          "right": 373,
+          "bottom": 1892.265625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 2232.734375,
+          "width": 358,
+          "height": 162.5078125,
+          "top": 2232.734375,
+          "right": 374,
+          "bottom": 2395.2421875,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 178.5,
+          "width": 366,
+          "height": 415.6796875,
+          "top": 178.5,
+          "right": 378,
+          "bottom": 594.1796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 12,
+          "y": 606.1796875,
+          "width": 366,
+          "height": 484.984375,
+          "top": 606.1796875,
+          "right": 378,
+          "bottom": 1091.1640625,
+          "left": 12
+        }
+      },
+      {
+        "id": "by-name",
+        "box": {
+          "x": 12,
+          "y": 1103.1640625,
+          "width": 366,
+          "height": 484.984375,
+          "top": 1103.1640625,
+          "right": 378,
+          "bottom": 1588.1484375,
+          "left": 12
+        }
+      },
+      {
+        "id": "explicit-order",
+        "box": {
+          "x": 12,
+          "y": 1600.1484375,
+          "width": 366,
+          "height": 378.7109375,
+          "top": 1600.1484375,
+          "right": 378,
+          "bottom": 1978.859375,
+          "left": 12
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 12,
+          "y": 1990.859375,
+          "width": 366,
+          "height": 515.7734375,
+          "top": 1990.859375,
+          "right": 378,
+          "bottom": 2506.6328125,
+          "left": 12
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nRome\t\nBob",
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nBob\t\nRome",
+      "写法\t实际保留的行数\nUNION BY NAME\t\n1 行\n\nUNION ALL BY NAME\t\n2 行"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2845,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 695.90625,
+          "width": 356,
+          "height": 109,
+          "top": 695.90625,
+          "right": 373,
+          "bottom": 804.90625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 863.703125,
+          "width": 358,
+          "height": 116.0703125,
+          "top": 863.703125,
+          "right": 374,
+          "bottom": 979.7734375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1192.890625,
+          "width": 356,
+          "height": 109,
+          "top": 1192.890625,
+          "right": 373,
+          "bottom": 1301.890625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 1360.6875,
+          "width": 358,
+          "height": 116.0703125,
+          "top": 1360.6875,
+          "right": 374,
+          "bottom": 1476.7578125,
+          "left": 16
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1783.265625,
+          "width": 356,
+          "height": 109,
+          "top": 1783.265625,
+          "right": 373,
+          "bottom": 1892.265625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 2232.734375,
+          "width": 358,
+          "height": 162.5078125,
+          "top": 2232.734375,
+          "right": 374,
+          "bottom": 2395.2421875,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 178.5,
+          "width": 366,
+          "height": 415.6796875,
+          "top": 178.5,
+          "right": 378,
+          "bottom": 594.1796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 12,
+          "y": 606.1796875,
+          "width": 366,
+          "height": 484.984375,
+          "top": 606.1796875,
+          "right": 378,
+          "bottom": 1091.1640625,
+          "left": 12
+        }
+      },
+      {
+        "id": "by-name",
+        "box": {
+          "x": 12,
+          "y": 1103.1640625,
+          "width": 366,
+          "height": 484.984375,
+          "top": 1103.1640625,
+          "right": 378,
+          "bottom": 1588.1484375,
+          "left": 12
+        }
+      },
+      {
+        "id": "explicit-order",
+        "box": {
+          "x": 12,
+          "y": 1600.1484375,
+          "width": 366,
+          "height": 378.7109375,
+          "top": 1600.1484375,
+          "right": 378,
+          "bottom": 1978.859375,
+          "left": 12
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 12,
+          "y": 1990.859375,
+          "width": 366,
+          "height": 515.7734375,
+          "top": 1990.859375,
+          "right": 378,
+          "bottom": 2506.6328125,
+          "left": 12
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nRome\t\nBob",
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nBob\t\nRome",
+      "写法\t实际保留的行数\nUNION BY NAME\t\n1 行\n\nUNION ALL BY NAME\t\n2 行"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1498,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 441.2265625,
+          "width": 622,
+          "height": 109,
+          "top": 441.2265625,
+          "right": 707,
+          "bottom": 550.2265625,
+          "left": 85
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 84,
+          "y": 609.0234375,
+          "width": 624,
+          "height": 116.0703125,
+          "top": 609.0234375,
+          "right": 708,
+          "bottom": 725.09375,
+          "left": 84
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 441.2265625,
+          "width": 622,
+          "height": 109,
+          "top": 441.2265625,
+          "right": 1355,
+          "bottom": 550.2265625,
+          "left": 733
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 609.0234375,
+          "width": 624,
+          "height": 116.0703125,
+          "top": 609.0234375,
+          "right": 1356,
+          "bottom": 725.09375,
+          "left": 732
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 984.8203125,
+          "width": 622,
+          "height": 109,
+          "top": 984.8203125,
+          "right": 707,
+          "bottom": 1093.8203125,
+          "left": 85
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 1017.78125,
+          "width": 624,
+          "height": 139.2890625,
+          "top": 1017.78125,
+          "right": 1356,
+          "bottom": 1157.0703125,
+          "left": 732
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 80,
+          "y": 351.5,
+          "width": 632,
+          "height": 460,
+          "top": 351.5,
+          "right": 712,
+          "bottom": 811.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "by-name",
+        "box": {
+          "x": 728,
+          "y": 351.5,
+          "width": 632,
+          "height": 460,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 811.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "explicit-order",
+        "box": {
+          "x": 80,
+          "y": 827.5,
+          "width": 632,
+          "height": 416,
+          "top": 827.5,
+          "right": 712,
+          "bottom": 1243.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 728,
+          "y": 827.5,
+          "width": 632,
+          "height": 416,
+          "top": 827.5,
+          "right": 1360,
+          "bottom": 1243.5,
+          "left": 728
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nRome\t\nBob",
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nBob\t\nRome",
+      "写法\t实际保留的行数\nUNION BY NAME\t\n1 行\n\nUNION ALL BY NAME\t\n2 行"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1498,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 441.2265625,
+          "width": 622,
+          "height": 109,
+          "top": 441.2265625,
+          "right": 707,
+          "bottom": 550.2265625,
+          "left": 85
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 84,
+          "y": 609.0234375,
+          "width": 624,
+          "height": 116.0703125,
+          "top": 609.0234375,
+          "right": 708,
+          "bottom": 725.09375,
+          "left": 84
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 441.2265625,
+          "width": 622,
+          "height": 109,
+          "top": 441.2265625,
+          "right": 1355,
+          "bottom": 550.2265625,
+          "left": 733
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 609.0234375,
+          "width": 624,
+          "height": 116.0703125,
+          "top": 609.0234375,
+          "right": 1356,
+          "bottom": 725.09375,
+          "left": 732
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 984.8203125,
+          "width": 622,
+          "height": 109,
+          "top": 984.8203125,
+          "right": 707,
+          "bottom": 1093.8203125,
+          "left": 85
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 1017.78125,
+          "width": 624,
+          "height": 139.2890625,
+          "top": 1017.78125,
+          "right": 1356,
+          "bottom": 1157.0703125,
+          "left": 732
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 80,
+          "y": 351.5,
+          "width": 632,
+          "height": 460,
+          "top": 351.5,
+          "right": 712,
+          "bottom": 811.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "by-name",
+        "box": {
+          "x": 728,
+          "y": 351.5,
+          "width": 632,
+          "height": 460,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 811.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "explicit-order",
+        "box": {
+          "x": 80,
+          "y": 827.5,
+          "width": 632,
+          "height": 416,
+          "top": 827.5,
+          "right": 712,
+          "bottom": 1243.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 728,
+          "y": 827.5,
+          "width": 632,
+          "height": 416,
+          "top": 827.5,
+          "right": 1360,
+          "bottom": 1243.5,
+          "left": 728
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nRome\t\nBob",
+      "person（姓名）\tcity（城市）\nAlice\t\nParis\n\nBob\t\nRome",
+      "写法\t实际保留的行数\nUNION BY NAME\t\n1 行\n\nUNION ALL BY NAME\t\n2 行"
+    ]
+  }
+]

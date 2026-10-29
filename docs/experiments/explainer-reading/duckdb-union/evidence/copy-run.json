@@ -1,0 +1,61 @@
+{
+  "duckdb": "2.0.0",
+  "copiedPrograms": [
+    {
+      "case": "position",
+      "sqlSha256": "475caf2c930e50de693c7a48bbc709ec8a3fa4bd9541d34102d9972230cd07ed",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Rome",
+          "Bob"
+        ]
+      ]
+    },
+    {
+      "case": "by_name",
+      "sqlSha256": "5f74a3e6a4d93a381bf411793bb11a09e76fc941a42ce80986e71481819b591a",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          "Rome"
+        ]
+      ]
+    },
+    {
+      "case": "explicit_order",
+      "sqlSha256": "003fd276e7c5c7bf419000027bd359356a58f36a89ff7fa357fffc741c3345e8",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          "Rome"
+        ]
+      ]
+    }
+  ],
+  "visibleResultTablesMatchQueries": 2,
+  "clipboardBoundary": "API intercepted; OS clipboard permissions not tested"
+}

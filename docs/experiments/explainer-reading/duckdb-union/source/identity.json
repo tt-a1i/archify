@@ -1,0 +1,29 @@
+{
+  "project": "DuckDB",
+  "version": "2.0.0",
+  "tag": "v2.0.0",
+  "commit": "d54cbbe3df17e8e5ce68312f483b4155836112aa",
+  "package": "duckdb==2.0.0",
+  "python": "3.12.13",
+  "reportedGitRevision": "d54cbbe3df",
+  "qualification": "Wheel reports a 10-character prefix matching the tag commit; this is not binary reproducibility verification.",
+  "sources": [
+    {
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/test/sql/setops/test_union_all_by_name.test",
+      "savedRawSha256": "8558b7f28c34deb3d6b43d720e240028411bdb6d547a54cddf0fcbc3d02bea60"
+    },
+    {
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/test/sql/setops/test_union_by_name.test",
+      "savedRawSha256": "65065800645c01199eb1091f6dd336a6d4b5111f842d87211d3b3eec2b1897ff"
+    },
+    {
+      "url": "https://github.com/duckdb/duckdb/blob/d54cbbe3df17e8e5ce68312f483b4155836112aa/src/planner/binder/query_node/bind_setop_node.cpp",
+      "savedRawSha256": "28aa4f0614eee06df10f2d8a5f445a6eb6105f3d206e126f02798a5155d4f742"
+    }
+  ],
+  "discoveryUrls": [
+    "https://duckdb.org/docs/current/sql/query_syntax/setops",
+    "https://pypi.org/project/duckdb/"
+  ],
+  "unavailableLookup": "https://duckdb.org/docs/2.0/sql/query_syntax/setops.html was inaccessible via web open; pinned upstream tests/source were fetched successfully."
+}

@@ -1,0 +1,678 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2844,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 760,
+          "width": 356,
+          "height": 109,
+          "top": 760,
+          "right": 373,
+          "bottom": 869,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 360,
+        "box": {
+          "x": 16,
+          "y": 886,
+          "width": 358,
+          "height": 156.0078125,
+          "top": 886,
+          "right": 374,
+          "bottom": 1042.0078125,
+          "left": 16
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1348.515625,
+          "width": 356,
+          "height": 109,
+          "top": 1348.515625,
+          "right": 373,
+          "bottom": 1457.515625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1576.7421875,
+          "width": 356,
+          "height": 109,
+          "top": 1576.7421875,
+          "right": 373,
+          "bottom": 1685.7421875,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 366,
+        "box": {
+          "x": 16,
+          "y": 1984.4140625,
+          "width": 358,
+          "height": 162.5078125,
+          "top": 1984.4140625,
+          "right": 374,
+          "bottom": 2146.921875,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 439.2734375,
+          "top": 219,
+          "right": 378,
+          "bottom": 658.2734375,
+          "left": 12
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 12,
+          "y": 670.2734375,
+          "width": 366,
+          "height": 508.921875,
+          "top": 670.2734375,
+          "right": 378,
+          "bottom": 1179.1953125,
+          "left": 12
+        }
+      },
+      {
+        "id": "fix",
+        "box": {
+          "x": 12,
+          "y": 1191.1953125,
+          "width": 366,
+          "height": 581.140625,
+          "top": 1191.1953125,
+          "right": 378,
+          "bottom": 1772.3359375,
+          "left": 12
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 12,
+          "y": 1784.3359375,
+          "width": 366,
+          "height": 422.3828125,
+          "top": 1784.3359375,
+          "right": 378,
+          "bottom": 2206.71875,
+          "left": 12
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 12,
+          "y": 2218.71875,
+          "width": 366,
+          "height": 286.875,
+          "top": 2218.71875,
+          "right": 378,
+          "bottom": 2505.59375,
+          "left": 12
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "位置\t第一查询：结果列名\t第二查询：送入的值\n第 1 列\t\nperson\n\t\nRome，原别名为 city\n\n第 2 列\t\ncity\n\t\nBob，原别名为 person",
+      "选择\t两边都有 Alice / Paris 时\t列匹配方式\nUNION BY NAME\t\n一行\n\t\n按名称\n\nUNION ALL BY NAME\t\n两行\n\t\n按名称"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2844,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 760,
+          "width": 356,
+          "height": 109,
+          "top": 760,
+          "right": 373,
+          "bottom": 869,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 360,
+        "box": {
+          "x": 16,
+          "y": 886,
+          "width": 358,
+          "height": 156.0078125,
+          "top": 886,
+          "right": 374,
+          "bottom": 1042.0078125,
+          "left": 16
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1348.515625,
+          "width": 356,
+          "height": 109,
+          "top": 1348.515625,
+          "right": 373,
+          "bottom": 1457.515625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1576.7421875,
+          "width": 356,
+          "height": 109,
+          "top": 1576.7421875,
+          "right": 373,
+          "bottom": 1685.7421875,
+          "left": 17
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 358,
+        "scrollWidth": 366,
+        "box": {
+          "x": 16,
+          "y": 1984.4140625,
+          "width": 358,
+          "height": 162.5078125,
+          "top": 1984.4140625,
+          "right": 374,
+          "bottom": 2146.921875,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 439.2734375,
+          "top": 219,
+          "right": 378,
+          "bottom": 658.2734375,
+          "left": 12
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 12,
+          "y": 670.2734375,
+          "width": 366,
+          "height": 508.921875,
+          "top": 670.2734375,
+          "right": 378,
+          "bottom": 1179.1953125,
+          "left": 12
+        }
+      },
+      {
+        "id": "fix",
+        "box": {
+          "x": 12,
+          "y": 1191.1953125,
+          "width": 366,
+          "height": 581.140625,
+          "top": 1191.1953125,
+          "right": 378,
+          "bottom": 1772.3359375,
+          "left": 12
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 12,
+          "y": 1784.3359375,
+          "width": 366,
+          "height": 422.3828125,
+          "top": 1784.3359375,
+          "right": 378,
+          "bottom": 2206.71875,
+          "left": 12
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 12,
+          "y": 2218.71875,
+          "width": 366,
+          "height": 286.875,
+          "top": 2218.71875,
+          "right": 378,
+          "bottom": 2505.59375,
+          "left": 12
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "位置\t第一查询：结果列名\t第二查询：送入的值\n第 1 列\t\nperson\n\t\nRome，原别名为 city\n\n第 2 列\t\ncity\n\t\nBob，原别名为 person",
+      "选择\t两边都有 Alice / Paris 时\t列匹配方式\nUNION BY NAME\t\n一行\n\t\n按名称\n\nUNION ALL BY NAME\t\n两行\n\t\n按名称"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1443,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 206.2265625,
+          "width": 622,
+          "height": 109,
+          "top": 206.2265625,
+          "right": 1355,
+          "bottom": 315.2265625,
+          "left": 733
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 332.2265625,
+          "width": 624,
+          "height": 116.0703125,
+          "top": 332.2265625,
+          "right": 1356,
+          "bottom": 448.296875,
+          "left": 732
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 564.0234375,
+          "width": 622,
+          "height": 109,
+          "top": 564.0234375,
+          "right": 707,
+          "bottom": 673.0234375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 766.453125,
+          "width": 622,
+          "height": 109,
+          "top": 766.453125,
+          "right": 707,
+          "bottom": 875.453125,
+          "left": 85
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 698.984375,
+          "width": 624,
+          "height": 139.2890625,
+          "top": 698.984375,
+          "right": 1356,
+          "bottom": 838.2734375,
+          "left": 732
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 632,
+          "height": 300,
+          "top": 116.5,
+          "right": 712,
+          "bottom": 416.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 728,
+          "y": 116.5,
+          "width": 632,
+          "height": 418,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 534.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "fix",
+        "box": {
+          "x": 80,
+          "y": 432.5,
+          "width": 632,
+          "height": 504,
+          "top": 432.5,
+          "right": 712,
+          "bottom": 936.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 728,
+          "y": 550.5,
+          "width": 632,
+          "height": 386,
+          "top": 550.5,
+          "right": 1360,
+          "bottom": 936.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 80,
+          "y": 952.5,
+          "width": 1280,
+          "height": 236,
+          "top": 952.5,
+          "right": 1360,
+          "bottom": 1188.5,
+          "left": 80
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "位置\t第一查询：结果列名\t第二查询：送入的值\n第 1 列\t\nperson\n\t\nRome，原别名为 city\n\n第 2 列\t\ncity\n\t\nBob，原别名为 person",
+      "选择\t两边都有 Alice / Paris 时\t列匹配方式\nUNION BY NAME\t\n一行\n\t\n按名称\n\nUNION ALL BY NAME\t\n两行\n\t\n按名称"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1443,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 206.2265625,
+          "width": 622,
+          "height": 109,
+          "top": 206.2265625,
+          "right": 1355,
+          "bottom": 315.2265625,
+          "left": 733
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 332.2265625,
+          "width": 624,
+          "height": 116.0703125,
+          "top": 332.2265625,
+          "right": 1356,
+          "bottom": 448.296875,
+          "left": 732
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 564.0234375,
+          "width": 622,
+          "height": 109,
+          "top": 564.0234375,
+          "right": 707,
+          "bottom": 673.0234375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "PRE",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 766.453125,
+          "width": 622,
+          "height": 109,
+          "top": 766.453125,
+          "right": 707,
+          "bottom": 875.453125,
+          "left": 85
+        }
+      },
+      {
+        "kind": "DIV",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 698.984375,
+          "width": 624,
+          "height": 139.2890625,
+          "top": 698.984375,
+          "right": 1356,
+          "bottom": 838.2734375,
+          "left": 732
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 632,
+          "height": 300,
+          "top": 116.5,
+          "right": 712,
+          "bottom": 416.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "position",
+        "box": {
+          "x": 728,
+          "y": 116.5,
+          "width": 632,
+          "height": 418,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 534.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "fix",
+        "box": {
+          "x": 80,
+          "y": 432.5,
+          "width": 632,
+          "height": 504,
+          "top": 432.5,
+          "right": 712,
+          "bottom": 936.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "exceptions",
+        "box": {
+          "x": 728,
+          "y": 550.5,
+          "width": 632,
+          "height": 386,
+          "top": 550.5,
+          "right": 1360,
+          "bottom": 936.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 80,
+          "y": 952.5,
+          "width": 1280,
+          "height": 236,
+          "top": 952.5,
+          "right": 1360,
+          "bottom": 1188.5,
+          "left": 80
+        }
+      }
+    ],
+    "code": [
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+      },
+      {
+        "language": "language-sql",
+        "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+      }
+    ],
+    "tables": [
+      "位置\t第一查询：结果列名\t第二查询：送入的值\n第 1 列\t\nperson\n\t\nRome，原别名为 city\n\n第 2 列\t\ncity\n\t\nBob，原别名为 person",
+      "选择\t两边都有 Alice / Paris 时\t列匹配方式\nUNION BY NAME\t\n一行\n\t\n按名称\n\nUNION ALL BY NAME\t\n两行\n\t\n按名称"
+    ]
+  }
+]

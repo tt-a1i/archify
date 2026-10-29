@@ -1,0 +1,62 @@
+{
+  "copied": [
+    "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;",
+    "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;",
+    "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+  ],
+  "visible": [
+    {
+      "language": "language-sql",
+      "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+    },
+    {
+      "language": "language-sql",
+      "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;"
+    },
+    {
+      "language": "language-sql",
+      "text": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;"
+    }
+  ],
+  "tables": [
+    {
+      "panel": "position",
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Rome",
+          "Bob"
+        ]
+      ]
+    },
+    {
+      "panel": "by-name",
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          "Rome"
+        ]
+      ]
+    },
+    {
+      "panel": "exceptions",
+      "rows": [
+        [
+          "UNION BY NAME",
+          "1 行"
+        ],
+        [
+          "UNION ALL BY NAME",
+          "2 行"
+        ]
+      ]
+    }
+  ]
+}

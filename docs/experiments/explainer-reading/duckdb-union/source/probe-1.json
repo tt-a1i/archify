@@ -1,0 +1,180 @@
+{
+  "python": "3.12.13",
+  "duckdb": "2.0.0",
+  "gitRevisionReported": "d54cbbe3df",
+  "cases": [
+    {
+      "name": "position",
+      "sql": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Rome",
+          "Bob"
+        ]
+      ],
+      "expected": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Rome",
+          "Bob"
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "name": "by_name",
+      "sql": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Rome' AS city, 'Bob' AS person\nORDER BY person, city;",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          "Rome"
+        ]
+      ],
+      "expected": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          "Rome"
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "name": "explicit_order",
+      "sql": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person, 'Rome' AS city\nORDER BY person, city;",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          "Rome"
+        ]
+      ],
+      "expected": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          "Rome"
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "name": "missing_by_name",
+      "sql": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Bob' AS person\nORDER BY person, city;",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          null
+        ]
+      ],
+      "expected": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Bob",
+          null
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "name": "missing_position",
+      "sql": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL\nSELECT 'Bob' AS person;",
+      "errorType": "BinderException",
+      "error": "Binder Error: Set operations can only apply to expressions with the same number of result columns",
+      "passed": true
+    },
+    {
+      "name": "duplicate_by_name",
+      "sql": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION BY NAME\nSELECT 'Paris' AS city, 'Alice' AS person\nORDER BY person, city;",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ]
+      ],
+      "expected": [
+        [
+          "Alice",
+          "Paris"
+        ]
+      ],
+      "passed": true
+    },
+    {
+      "name": "duplicate_all_by_name",
+      "sql": "SELECT 'Alice' AS person, 'Paris' AS city\nUNION ALL BY NAME\nSELECT 'Paris' AS city, 'Alice' AS person\nORDER BY person, city;",
+      "columns": [
+        "person",
+        "city"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Alice",
+          "Paris"
+        ]
+      ],
+      "expected": [
+        [
+          "Alice",
+          "Paris"
+        ],
+        [
+          "Alice",
+          "Paris"
+        ]
+      ],
+      "passed": true
+    }
+  ]
+}

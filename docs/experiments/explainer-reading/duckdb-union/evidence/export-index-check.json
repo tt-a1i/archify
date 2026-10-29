@@ -1,0 +1,40 @@
+{
+  "png": {
+    "width": 780,
+    "height": 5788
+  },
+  "counts": {
+    "questions": 18,
+    "variants": 44
+  },
+  "variants": [
+    {
+      "version": "查询与结果并排",
+      "width": "390",
+      "frame": "duckdb-union/candidate.html",
+      "open": "duckdb-union/candidate.html",
+      "report": "duckdb-union/README.md"
+    },
+    {
+      "version": "查询与结果并排",
+      "width": "1440",
+      "frame": "duckdb-union/candidate.html",
+      "open": "duckdb-union/candidate.html",
+      "report": "duckdb-union/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "390",
+      "frame": "duckdb-union/author/answer.html",
+      "open": "duckdb-union/author/answer.html",
+      "report": "duckdb-union/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "1440",
+      "frame": "duckdb-union/author/answer.html",
+      "open": "duckdb-union/author/answer.html",
+      "report": "duckdb-union/README.md"
+    }
+  ]
+}

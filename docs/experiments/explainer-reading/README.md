@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between seventeen reading questions across fifteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between eighteen reading questions across sixteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -235,3 +235,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 37
 
 [Authored conclusion width](answer-span/README.md) follows the NumPy case's staggered desktop examples. Optional `@answer span=12` places the conclusion above the two `span=6` programs; existing pages retain byte-identical rendered HTML in a 41-artifact replay. The comparison keeps all prose, code, values and source claims unchanged. Four styles, phone/desktop reading and actual PNG exports were checked; the report distinguishes this fixed-input result from authoring or human-comprehension gains.
+
+## Continued exploration — round 38
+
+[DuckDB column alignment](duckdb-union/README.md) uses seven repeated SQL cases to distinguish positional alignment, matching by column name, missing-column NULLs and duplicate retention. The retained page puts complete copied queries beside actual two-column results, keeps explicit column ordering as another correction, and removes layout-dependent wording. Three queries copied from the rendered page execute against fresh in-memory databases and match the source probes and visible result tables.
