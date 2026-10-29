@@ -1,5 +1,7 @@
 # Explainer reading laboratory
 
+Open [the local review page](index.html) to switch between six project cases, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
 Base: `5ecbd1bfdbf83ea747072112493c940e707569cb`.
@@ -93,3 +95,11 @@ These are ongoing exploration checkpoints. No overall-goal completion, human acc
 ## Continued exploration — round 7
 
 [Ripgrep filtering](ripgrep-pair/README.md) adds a new source-backed case and isolated executable fixtures. Both independent authors already chose fenced commands, so the proposed guide clarification remains unadopted. The reviewed variant uses verified shell continuations to fit complete commands on a phone while retaining the distinction between search scope and pattern interpretation.
+
+## Continued exploration — round 8
+
+The [review page](index.html) provides one local entry for the six projects and twelve page variants. It uses the actual retained HTML in a single iframe, displays its CSS viewport width and any visual scaling, and links directly to the full artifact and evidence record. No external assets or new product dependency are used.
+
+[Live interaction check](review-index-check.json): all twelve variant loads completed, each full-page link matched its preview, and all 22 local targets existed. The outer page fits 390 px without horizontal overflow. Parent inspection covered the [desktop shell](review-index-1440.png), [desktop preview mode](review-index-desktop-view.png) and [phone shell](review-index-390.png). This check does not revalidate the embedded pages; their documented limitations remain in the visible case notes. The snippets’ clipboard and reader acceptance scopes remain as described in the respective rounds. No runtime source changed and no package rebuild was needed.
+
+Next bounded direction: a curl explanation of request method versus output formatting (`-I` versus `-i`), verified with a disposable local HTTP fixture and pinned official option documentation. Keep the ongoing goal active and preserve the existing branch rather than starting a duplicate lab.

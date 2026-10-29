@@ -1,0 +1,94 @@
+{
+  "variantsLoaded": [
+    {
+      "case": "sqlite",
+      "version": "本地观测版",
+      "iframe": "sqlite-probe/candidate.html",
+      "open": "sqlite-probe/candidate.html"
+    },
+    {
+      "case": "sqlite",
+      "version": "机制说明版",
+      "iframe": "sqlite/candidate.html",
+      "open": "sqlite/candidate.html"
+    },
+    {
+      "case": "singleflight",
+      "version": "可读字号",
+      "iframe": "phone-preview/candidate.html",
+      "open": "phone-preview/candidate.html"
+    },
+    {
+      "case": "singleflight",
+      "version": "此前缩略图",
+      "iframe": "singleflight/candidate.html",
+      "open": "singleflight/candidate.html"
+    },
+    {
+      "case": "redis",
+      "version": "整理后",
+      "iframe": "redis/candidate.html",
+      "open": "redis/candidate.html"
+    },
+    {
+      "case": "redis",
+      "version": "整理前",
+      "iframe": "redis/before-review.html",
+      "open": "redis/before-review.html"
+    },
+    {
+      "case": "taskgroup",
+      "version": "整理后",
+      "iframe": "taskgroup/candidate.html",
+      "open": "taskgroup/candidate.html"
+    },
+    {
+      "case": "taskgroup",
+      "version": "整理前",
+      "iframe": "taskgroup/before-review.html",
+      "open": "taskgroup/before-review.html"
+    },
+    {
+      "case": "git",
+      "version": "可复制操作",
+      "iframe": "restore-commands/candidate.html",
+      "open": "restore-commands/candidate.html"
+    },
+    {
+      "case": "git",
+      "version": "紧凑表格",
+      "iframe": "restore-pair/purpose-table.html",
+      "open": "restore-pair/purpose-table.html"
+    },
+    {
+      "case": "ripgrep",
+      "version": "多行命令",
+      "iframe": "ripgrep-pair/readable-commands.html",
+      "open": "ripgrep-pair/readable-commands.html"
+    },
+    {
+      "case": "ripgrep",
+      "version": "作者初稿",
+      "iframe": "ripgrep-pair/candidate/answer.html",
+      "open": "ripgrep-pair/candidate/answer.html"
+    }
+  ],
+  "phone": {
+    "width": 390,
+    "pageWidth": 390,
+    "iframeWidth": "390px",
+    "frameBounds": {
+      "x": 22,
+      "y": 184.5703125,
+      "width": 346,
+      "height": 798.4609375,
+      "top": 184.5703125,
+      "right": 368,
+      "bottom": 983.03125,
+      "left": 22
+    },
+    "label": "页面宽度 390px · 显示比例 89%"
+  },
+  "localTargetsChecked": 22,
+  "scope": "Live parent UI switching and iframe load events; existing embedded-page acceptance remains separate."
+}
