@@ -1,0 +1,100 @@
+{
+  "query": "repo:tt-a1i/archify is:open explainer title",
+  "results": [
+    {
+      "number": 1108,
+      "title": "perf(explainer): index outgoing shorthand edges",
+      "url": "https://github.com/tt-a1i/archify/pull/1108"
+    },
+    {
+      "number": 1142,
+      "title": "feat: add explainer claim evidence attribution",
+      "url": "https://github.com/tt-a1i/archify/pull/1142"
+    },
+    {
+      "number": 1144,
+      "title": "feat: add dependency-aware Explainer preview",
+      "url": "https://github.com/tt-a1i/archify/pull/1144"
+    },
+    {
+      "number": 1015,
+      "title": "feat(explainer): improve visual hierarchy, KPI deltas, code focus, and interactive details",
+      "url": "https://github.com/tt-a1i/archify/pull/1015"
+    },
+    {
+      "number": 1018,
+      "title": "Add before after example",
+      "url": "https://github.com/tt-a1i/archify/pull/1018"
+    },
+    {
+      "number": 1076,
+      "title": "fix(explainer): keep mobile toolbar and Style/Export menus in view",
+      "url": "https://github.com/tt-a1i/archify/pull/1076"
+    },
+    {
+      "number": 998,
+      "title": "Code analysis Main branch",
+      "url": "https://github.com/tt-a1i/archify/pull/998"
+    },
+    {
+      "number": 1124,
+      "title": "fix(qa): finish bounded keyboard traversal across native scroll stops",
+      "url": "https://github.com/tt-a1i/archify/pull/1124"
+    },
+    {
+      "number": 1066,
+      "title": "feat: add standalone artifact update notice",
+      "url": "https://github.com/tt-a1i/archify/pull/1066"
+    },
+    {
+      "number": 1063,
+      "title": "feat: GitHub Enterprise source links for repository evidence",
+      "url": "https://github.com/tt-a1i/archify/pull/1063"
+    },
+    {
+      "number": 844,
+      "title": "fix(doctor): require regular installation files",
+      "url": "https://github.com/tt-a1i/archify/pull/844"
+    },
+    {
+      "number": 1101,
+      "title": "docs(readme): put install before showcase and trim agent-facing detail",
+      "url": "https://github.com/tt-a1i/archify/pull/1101"
+    },
+    {
+      "number": 1121,
+      "title": "experiment: read authored behavior paths with explicit test associations",
+      "url": "https://github.com/tt-a1i/archify/pull/1121"
+    },
+    {
+      "number": 317,
+      "title": "feat(architecture): allow connections to named boundaries",
+      "url": "https://github.com/tt-a1i/archify/pull/317"
+    },
+    {
+      "number": 1119,
+      "title": "在语义护照中只读展示节点的任务清单（Task checklist）",
+      "url": "https://github.com/tt-a1i/archify/pull/1119"
+    }
+  ],
+  "inspected": [
+    {
+      "number": 1015,
+      "head": "fe4f80d2195e0a7b49b7cfe6d3dba7ffd31a7ac8",
+      "titleHtml": "<h1>${escape(document.meta.title)}</h1>",
+      "titleText": "<title>${escape(document.meta.title)} · Archify</title>"
+    },
+    {
+      "number": 1142,
+      "head": "c48949649eb7a9482d6170dcb4e29c1b47a047b5",
+      "titleHtml": "<h1>${escape(document.meta.title)}</h1>",
+      "titleText": "<title>${escape(document.meta.title)} · Archify</title>"
+    },
+    {
+      "number": 1144,
+      "head": "d72bb78d5bccd815ca6727141b3ff8783ad28ffc",
+      "titleHtml": "<h1>${escape(document.meta.title)}</h1>",
+      "titleText": "<title>${escape(document.meta.title)} · Archify</title>"
+    }
+  ]
+}

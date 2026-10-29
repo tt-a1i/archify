@@ -1,0 +1,38 @@
+[
+  {
+    "title": "How <script> works?",
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "explainer/inline-html",
+        "path": "/meta/title"
+      }
+    ]
+  },
+  {
+    "title": "</script><script>injected</script>",
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "explainer/inline-html",
+        "path": "/meta/title"
+      },
+      {
+        "code": "explainer/inline-html",
+        "path": "/meta/title"
+      },
+      {
+        "code": "explainer/inline-html",
+        "path": "/meta/title"
+      }
+    ]
+  },
+  {
+    "title": "How `<script>` works?",
+    "valid": true
+  },
+  {
+    "title": "`</script><script>injected</script>`",
+    "valid": true
+  }
+]

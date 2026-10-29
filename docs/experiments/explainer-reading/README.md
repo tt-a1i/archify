@@ -195,3 +195,9 @@ The review index now contains thirteen questions across eleven projects and thir
 [GNU Make action/file collision](make-phony/README.md): a same-name file suppresses an ordinary check recipe, while `.PHONY` changes that decision. The candidate replaces ambiguous “already updated” language with “the file needs no update,” retains a real-file prerequisite boundary and adds complete runnable commands. Two cramped/uneven intermediate arrangements remain inspectable; a final split separates the Makefile from its run and observed output. Four copied blocks retain literal tabs and pass isolated execution.
 
 The index now contains fourteen questions across twelve projects and thirty-two variants. Runtime, authoring guidance and ZIP are unchanged; this is a source-backed reading candidate, not a general comprehension or generation claim.
+
+## Continued exploration — round 30
+
+[Inline page titles](title-inline/README.md): three independent originals displayed command backticks literally even though their title syntax passed validation. The heading now uses the existing inline language, preserves citation order and gives the browser tab a plain-text title. Native title links also receive preparation's existing target checks. All 32 saved variants were replayed: 29 remain byte-identical; the other three change only heading and browser-title output. Actual title navigation, export and extracted-package execution are retained.
+
+This is a local accepted-input/rendering repair. The earlier content candidates remain preferred; no general authoring speed or human comprehension claim follows.

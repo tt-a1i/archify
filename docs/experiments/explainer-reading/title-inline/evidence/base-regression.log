@@ -1,0 +1,44 @@
+TAP version 13
+# Subtest: page title links validate against prepared external native targets
+not ok 1 - page title links validate against prepared external native targets
+  ---
+  duration_ms: 701.561167
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round30/base/test/explainer-cli.test.mjs:187:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round30/base/test/explainer-cli.test.mjs:196:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: renderer: page titles render validated inline content in reading order with plain browser text
+not ok 2 - renderer: page titles render validated inline content in reading order with plain browser text
+  ---
+  duration_ms: 37.990917
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round30/base/test/explainer-renderer.test.mjs:237:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'nodeName')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    text (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round30/base/test/explainer-renderer.test.mjs:12:27)
+    TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round30/base/test/explainer-renderer.test.mjs:242:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 850.94175

@@ -1,0 +1,486 @@
+{
+  "base": "56027318779fb1b5a665dce16a8eba7a631821d6",
+  "scope": "32 frozen authored documents and prepared resources; only current renderer differs, not new generation or provenance acceptance",
+  "results": [
+    {
+      "name": "sqlite-0",
+      "file": "sqlite-probe/candidate.html",
+      "authoredTitle": "一次实验：为什么 SQLite 长读会挡住检查点？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "一次实验：为什么 SQLite 长读会挡住检查点？",
+      "candidateHeading": "一次实验：为什么 SQLite 长读会挡住检查点？",
+      "baseTitle": "一次实验：为什么 SQLite 长读会挡住检查点？ · Archify",
+      "candidateTitle": "一次实验：为什么 SQLite 长读会挡住检查点？ · Archify",
+      "sha256": {
+        "base": "0592cbd7c1e0a91d0c55e527d158bf41c94e6eab51d77367422ec1698c796806",
+        "candidate": "0592cbd7c1e0a91d0c55e527d158bf41c94e6eab51d77367422ec1698c796806"
+      }
+    },
+    {
+      "name": "sqlite-1",
+      "file": "sqlite/candidate.html",
+      "authoredTitle": "为什么 SQLite 能边读边写，长读却拖慢回写？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么 SQLite 能边读边写，长读却拖慢回写？",
+      "candidateHeading": "为什么 SQLite 能边读边写，长读却拖慢回写？",
+      "baseTitle": "为什么 SQLite 能边读边写，长读却拖慢回写？ · Archify",
+      "candidateTitle": "为什么 SQLite 能边读边写，长读却拖慢回写？ · Archify",
+      "sha256": {
+        "base": "8700b67162bd514195ef890970aad230d55941adecfc7007e6285c450a57571b",
+        "candidate": "8700b67162bd514195ef890970aad230d55941adecfc7007e6285c450a57571b"
+      }
+    },
+    {
+      "name": "singleflight-0",
+      "file": "phone-preview/candidate.html",
+      "authoredTitle": "What does singleflight suppress?",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "What does singleflight suppress?",
+      "candidateHeading": "What does singleflight suppress?",
+      "baseTitle": "What does singleflight suppress? · Archify",
+      "candidateTitle": "What does singleflight suppress? · Archify",
+      "sha256": {
+        "base": "c4b42a83f5099cc7e7892ac0c106ec93697cc69e83ec3b346eb06acdd05ee4c1",
+        "candidate": "c4b42a83f5099cc7e7892ac0c106ec93697cc69e83ec3b346eb06acdd05ee4c1"
+      }
+    },
+    {
+      "name": "singleflight-1",
+      "file": "singleflight/candidate.html",
+      "authoredTitle": "What does singleflight suppress?",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "What does singleflight suppress?",
+      "candidateHeading": "What does singleflight suppress?",
+      "baseTitle": "What does singleflight suppress? · Archify",
+      "candidateTitle": "What does singleflight suppress? · Archify",
+      "sha256": {
+        "base": "c543a96779912b414b369d327bcfd278e48e807eb9206bc49862337da17c8aa8",
+        "candidate": "c543a96779912b414b369d327bcfd278e48e807eb9206bc49862337da17c8aa8"
+      }
+    },
+    {
+      "name": "redis-0",
+      "file": "redis/candidate.html",
+      "authoredTitle": "Redis 内存满了，为什么设了 TTL 也可能写不进去？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "Redis 内存满了，为什么设了 TTL 也可能写不进去？",
+      "candidateHeading": "Redis 内存满了，为什么设了 TTL 也可能写不进去？",
+      "baseTitle": "Redis 内存满了，为什么设了 TTL 也可能写不进去？ · Archify",
+      "candidateTitle": "Redis 内存满了，为什么设了 TTL 也可能写不进去？ · Archify",
+      "sha256": {
+        "base": "7dd995e80ebef6ec177bc7a1ec5211774167fc3420af9e93a356b6e4fff6d25a",
+        "candidate": "7dd995e80ebef6ec177bc7a1ec5211774167fc3420af9e93a356b6e4fff6d25a"
+      }
+    },
+    {
+      "name": "redis-1",
+      "file": "redis/before-review.html",
+      "authoredTitle": "Redis 内存满了，为什么设了 TTL 也可能写不进去？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "Redis 内存满了，为什么设了 TTL 也可能写不进去？",
+      "candidateHeading": "Redis 内存满了，为什么设了 TTL 也可能写不进去？",
+      "baseTitle": "Redis 内存满了，为什么设了 TTL 也可能写不进去？ · Archify",
+      "candidateTitle": "Redis 内存满了，为什么设了 TTL 也可能写不进去？ · Archify",
+      "sha256": {
+        "base": "0e3ccdfeea488df4fbb402bff0b7bdc597ab04be979d2465d5aa1f3802889392",
+        "candidate": "0e3ccdfeea488df4fbb402bff0b7bdc597ab04be979d2465d5aa1f3802889392"
+      }
+    },
+    {
+      "name": "taskgroup-0",
+      "file": "taskgroup-language/candidate.html",
+      "authoredTitle": "What happens when one TaskGroup task fails?",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "What happens when one TaskGroup task fails?",
+      "candidateHeading": "What happens when one TaskGroup task fails?",
+      "baseTitle": "What happens when one TaskGroup task fails? · Archify",
+      "candidateTitle": "What happens when one TaskGroup task fails? · Archify",
+      "sha256": {
+        "base": "d54e5bab9e5c65fb96d30e73d7fa3afd4d6a56acf4dea464236955eb5a0f6f95",
+        "candidate": "d54e5bab9e5c65fb96d30e73d7fa3afd4d6a56acf4dea464236955eb5a0f6f95"
+      }
+    },
+    {
+      "name": "taskgroup-1",
+      "file": "taskgroup/candidate.html",
+      "authoredTitle": "Why does a failed TaskGroup task cancel its siblings?",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "Why does a failed TaskGroup task cancel its siblings?",
+      "candidateHeading": "Why does a failed TaskGroup task cancel its siblings?",
+      "baseTitle": "Why does a failed TaskGroup task cancel its siblings? · Archify",
+      "candidateTitle": "Why does a failed TaskGroup task cancel its siblings? · Archify",
+      "sha256": {
+        "base": "1a6a036aae0321b654c5b8aa524667f406cc8b7f1057126b70fcad4f7948d208",
+        "candidate": "1a6a036aae0321b654c5b8aa524667f406cc8b7f1057126b70fcad4f7948d208"
+      }
+    },
+    {
+      "name": "taskgroup-2",
+      "file": "taskgroup/before-review.html",
+      "authoredTitle": "Why does a failed TaskGroup task cancel its siblings?",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "Why does a failed TaskGroup task cancel its siblings?",
+      "candidateHeading": "Why does a failed TaskGroup task cancel its siblings?",
+      "baseTitle": "Why does a failed TaskGroup task cancel its siblings? · Archify",
+      "candidateTitle": "Why does a failed TaskGroup task cancel its siblings? · Archify",
+      "sha256": {
+        "base": "01a32a0e81d847cf11c365ceda4550c45347542eb9732263288ae06f632ba41e",
+        "candidate": "01a32a0e81d847cf11c365ceda4550c45347542eb9732263288ae06f632ba41e"
+      }
+    },
+    {
+      "name": "taskgroup-3",
+      "file": "mobile-tools/taskgroup-candidate.html",
+      "authoredTitle": "Why does a failed TaskGroup task cancel its siblings?",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "Why does a failed TaskGroup task cancel its siblings?",
+      "candidateHeading": "Why does a failed TaskGroup task cancel its siblings?",
+      "baseTitle": "Why does a failed TaskGroup task cancel its siblings? · Archify",
+      "candidateTitle": "Why does a failed TaskGroup task cancel its siblings? · Archify",
+      "sha256": {
+        "base": "56b96b87ceca8d10d060d601406a2a2af12bf93c397ccadebe4e33b0f9b0f814",
+        "candidate": "56b96b87ceca8d10d060d601406a2a2af12bf93c397ccadebe4e33b0f9b0f814"
+      }
+    },
+    {
+      "name": "git-0",
+      "file": "restore-commands/candidate.html",
+      "authoredTitle": "git restore 到底改了哪里？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "git restore 到底改了哪里？",
+      "candidateHeading": "git restore 到底改了哪里？",
+      "baseTitle": "git restore 到底改了哪里？ · Archify",
+      "candidateTitle": "git restore 到底改了哪里？ · Archify",
+      "sha256": {
+        "base": "b81fa841c8d0101138a6a3b2e413a1850c98b95a6742993dc2a8e09e4e6febb7",
+        "candidate": "b81fa841c8d0101138a6a3b2e413a1850c98b95a6742993dc2a8e09e4e6febb7"
+      }
+    },
+    {
+      "name": "git-1",
+      "file": "restore-pair/purpose-table.html",
+      "authoredTitle": "git restore 到底改了哪里？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "git restore 到底改了哪里？",
+      "candidateHeading": "git restore 到底改了哪里？",
+      "baseTitle": "git restore 到底改了哪里？ · Archify",
+      "candidateTitle": "git restore 到底改了哪里？ · Archify",
+      "sha256": {
+        "base": "19c301a3e8dd3196594070805bcc85db5356659ffc339fea810f1606fb07cb74",
+        "candidate": "19c301a3e8dd3196594070805bcc85db5356659ffc339fea810f1606fb07cb74"
+      }
+    },
+    {
+      "name": "ripgrep-0",
+      "file": "ripgrep-pair/readable-commands.html",
+      "authoredTitle": "为什么 ripgrep 找不到明明存在的文本？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么 ripgrep 找不到明明存在的文本？",
+      "candidateHeading": "为什么 ripgrep 找不到明明存在的文本？",
+      "baseTitle": "为什么 ripgrep 找不到明明存在的文本？ · Archify",
+      "candidateTitle": "为什么 ripgrep 找不到明明存在的文本？ · Archify",
+      "sha256": {
+        "base": "91671fd28b0d65638f445c125ecfffdb0953fa0afeb283dfe6bae9928ad03732",
+        "candidate": "91671fd28b0d65638f445c125ecfffdb0953fa0afeb283dfe6bae9928ad03732"
+      }
+    },
+    {
+      "name": "ripgrep-1",
+      "file": "ripgrep-pair/candidate/answer.html",
+      "authoredTitle": "为什么 ripgrep 找不到明明存在的文本？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么 ripgrep 找不到明明存在的文本？",
+      "candidateHeading": "为什么 ripgrep 找不到明明存在的文本？",
+      "baseTitle": "为什么 ripgrep 找不到明明存在的文本？ · Archify",
+      "candidateTitle": "为什么 ripgrep 找不到明明存在的文本？ · Archify",
+      "sha256": {
+        "base": "26f822d23e7739813b209378f1c0e93e8b6fd34b152edb05659494149b5cd51f",
+        "candidate": "26f822d23e7739813b209378f1c0e93e8b6fd34b152edb05659494149b5cd51f"
+      }
+    },
+    {
+      "name": "curl-0",
+      "file": "curl-headers/candidate.html",
+      "authoredTitle": "curl 的 -I 和 -i 差在哪？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "curl 的 -I 和 -i 差在哪？",
+      "candidateHeading": "curl 的 -I 和 -i 差在哪？",
+      "baseTitle": "curl 的 -I 和 -i 差在哪？ · Archify",
+      "candidateTitle": "curl 的 -I 和 -i 差在哪？ · Archify",
+      "sha256": {
+        "base": "540f0ec9be2c8c78b34905b4630adb3395628af188df965fc5361c8daaa934f2",
+        "candidate": "540f0ec9be2c8c78b34905b4630adb3395628af188df965fc5361c8daaa934f2"
+      }
+    },
+    {
+      "name": "curl-1",
+      "file": "curl-headers/author/answer.html",
+      "authoredTitle": "curl 的 `-I` 和 `-i` 差在哪？",
+      "byteIdentical": false,
+      "restIdentical": true,
+      "baseHeading": "curl 的 `-I` 和 `-i` 差在哪？",
+      "candidateHeading": "curl 的 <code>-I</code> 和 <code>-i</code> 差在哪？",
+      "baseTitle": "curl 的 `-I` 和 `-i` 差在哪？ · Archify",
+      "candidateTitle": "curl 的 -I 和 -i 差在哪？ · Archify",
+      "sha256": {
+        "base": "3371fac898d1a3da479fede518defd3e0d4373c524bac2b15daeaa6a4ddb3aa0",
+        "candidate": "82dd313c3e7a509b122cbae64e1bd3db0caa4e7bdce014404934e8152f0e80db"
+      }
+    },
+    {
+      "name": "curl-2",
+      "file": "mobile-tools/curl-candidate.html",
+      "authoredTitle": "curl 的 -I 和 -i 差在哪？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "curl 的 -I 和 -i 差在哪？",
+      "candidateHeading": "curl 的 -I 和 -i 差在哪？",
+      "baseTitle": "curl 的 -I 和 -i 差在哪？ · Archify",
+      "candidateTitle": "curl 的 -I 和 -i 差在哪？ · Archify",
+      "sha256": {
+        "base": "ab9fa05034cd28d2dc74911727658b8cf04fde6d180c266dbefe0135155ba2d8",
+        "candidate": "ab9fa05034cd28d2dc74911727658b8cf04fde6d180c266dbefe0135155ba2d8"
+      }
+    },
+    {
+      "name": "thread-0",
+      "file": "thread-cancel/two-columns.html",
+      "authoredTitle": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？",
+      "candidateHeading": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？",
+      "baseTitle": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？ · Archify",
+      "candidateTitle": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？ · Archify",
+      "sha256": {
+        "base": "d5bc9fd2413e91286c2746012589c185c2266802f27c5308ea132c8b25b11215",
+        "candidate": "d5bc9fd2413e91286c2746012589c185c2266802f27c5308ea132c8b25b11215"
+      }
+    },
+    {
+      "name": "thread-1",
+      "file": "thread-cancel/author/answer.html",
+      "authoredTitle": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？",
+      "candidateHeading": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？",
+      "baseTitle": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？ · Archify",
+      "candidateTitle": "为什么取消 asyncio.to_thread 的外层任务后，线程还在继续？ · Archify",
+      "sha256": {
+        "base": "0e82ba469b77cc8073567ededc58c0f91e43dbfa647c0ce4889a01e668e20b3a",
+        "candidate": "0e82ba469b77cc8073567ededc58c0f91e43dbfa647c0ce4889a01e668e20b3a"
+      }
+    },
+    {
+      "name": "gzip-0",
+      "file": "gzip-opening/candidate.html",
+      "authoredTitle": "为什么 gzip 压缩后反而更大？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么 gzip 压缩后反而更大？",
+      "candidateHeading": "为什么 gzip 压缩后反而更大？",
+      "baseTitle": "为什么 gzip 压缩后反而更大？ · Archify",
+      "candidateTitle": "为什么 gzip 压缩后反而更大？ · Archify",
+      "sha256": {
+        "base": "034d62946f8d120556f03fddfb8205a31d45f8f1c5e4eea319cb366dabc28723",
+        "candidate": "034d62946f8d120556f03fddfb8205a31d45f8f1c5e4eea319cb366dabc28723"
+      }
+    },
+    {
+      "name": "gzip-1",
+      "file": "gzip-size/candidate.html",
+      "authoredTitle": "为什么 gzip 压缩后反而更大？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么 gzip 压缩后反而更大？",
+      "candidateHeading": "为什么 gzip 压缩后反而更大？",
+      "baseTitle": "为什么 gzip 压缩后反而更大？ · Archify",
+      "candidateTitle": "为什么 gzip 压缩后反而更大？ · Archify",
+      "sha256": {
+        "base": "6b7bed1d20251f6d58e40642c1450469072723ce5278ff536c265e9342e04c3e",
+        "candidate": "6b7bed1d20251f6d58e40642c1450469072723ce5278ff536c265e9342e04c3e"
+      }
+    },
+    {
+      "name": "gzip-2",
+      "file": "gzip-size/author/answer.html",
+      "authoredTitle": "为什么 gzip 压缩后反而更大？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么 gzip 压缩后反而更大？",
+      "candidateHeading": "为什么 gzip 压缩后反而更大？",
+      "baseTitle": "为什么 gzip 压缩后反而更大？ · Archify",
+      "candidateTitle": "为什么 gzip 压缩后反而更大？ · Archify",
+      "sha256": {
+        "base": "071444e809c88d02fcb2c5b357dbe6e5dec94f92351185a7e2c9982376a543e2",
+        "candidate": "071444e809c88d02fcb2c5b357dbe6e5dec94f92351185a7e2c9982376a543e2"
+      }
+    },
+    {
+      "name": "jq-0",
+      "file": "jq-default/candidate.html",
+      "authoredTitle": "jq 读到了 false，为什么结果还是 true？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "jq 读到了 false，为什么结果还是 true？",
+      "candidateHeading": "jq 读到了 false，为什么结果还是 true？",
+      "baseTitle": "jq 读到了 false，为什么结果还是 true？ · Archify",
+      "candidateTitle": "jq 读到了 false，为什么结果还是 true？ · Archify",
+      "sha256": {
+        "base": "4195e6c697f250384c6823531fd1dd9d40efea7b399d1784327f392a00f6e31d",
+        "candidate": "4195e6c697f250384c6823531fd1dd9d40efea7b399d1784327f392a00f6e31d"
+      }
+    },
+    {
+      "name": "jq-1",
+      "file": "jq-default/author/answer.html",
+      "authoredTitle": "jq 读到了 false，为什么结果还是 true？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "jq 读到了 false，为什么结果还是 true？",
+      "candidateHeading": "jq 读到了 false，为什么结果还是 true？",
+      "baseTitle": "jq 读到了 false，为什么结果还是 true？ · Archify",
+      "candidateTitle": "jq 读到了 false，为什么结果还是 true？ · Archify",
+      "sha256": {
+        "base": "cbebe1b43baa52350ac257b0512b3a41c8cffb00f33b33779f3b4fdf9c25224d",
+        "candidate": "cbebe1b43baa52350ac257b0512b3a41c8cffb00f33b33779f3b4fdf9c25224d"
+      }
+    },
+    {
+      "name": "pie-0",
+      "file": "pie-reading/candidate.html",
+      "authoredTitle": "图例移到底部，数值为什么不见了？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "图例移到底部，数值为什么不见了？",
+      "candidateHeading": "图例移到底部，数值为什么不见了？",
+      "baseTitle": "图例移到底部，数值为什么不见了？ · Archify",
+      "candidateTitle": "图例移到底部，数值为什么不见了？ · Archify",
+      "sha256": {
+        "base": "c6b8c3c09d94a9881e019b723d5ba757c2eacc98eadc7326212e862e2a725253",
+        "candidate": "c6b8c3c09d94a9881e019b723d5ba757c2eacc98eadc7326212e862e2a725253"
+      }
+    },
+    {
+      "name": "pie-1",
+      "file": "pie-reading/author/answer.html",
+      "authoredTitle": "为什么加了配置前缀，饼图图例仍能显示数值？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么加了配置前缀，饼图图例仍能显示数值？",
+      "candidateHeading": "为什么加了配置前缀，饼图图例仍能显示数值？",
+      "baseTitle": "为什么加了配置前缀，饼图图例仍能显示数值？ · Archify",
+      "candidateTitle": "为什么加了配置前缀，饼图图例仍能显示数值？ · Archify",
+      "sha256": {
+        "base": "607ed83ceea50298f15af58030634acd7fe7032be05d112151135f754d6a79be",
+        "candidate": "607ed83ceea50298f15af58030634acd7fe7032be05d112151135f754d6a79be"
+      }
+    },
+    {
+      "name": "rust-0",
+      "file": "rust-default/candidate.html",
+      "authoredTitle": "已经有值，默认函数为什么还会执行？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "已经有值，默认函数为什么还会执行？",
+      "candidateHeading": "已经有值，默认函数为什么还会执行？",
+      "baseTitle": "已经有值，默认函数为什么还会执行？ · Archify",
+      "candidateTitle": "已经有值，默认函数为什么还会执行？ · Archify",
+      "sha256": {
+        "base": "e790e6afa3293f8fba3394aaaa62561e3568dd903a5c57e3fa6269963d35b097",
+        "candidate": "e790e6afa3293f8fba3394aaaa62561e3568dd903a5c57e3fa6269963d35b097"
+      }
+    },
+    {
+      "name": "rust-1",
+      "file": "rust-default/author/answer.html",
+      "authoredTitle": "返回了 7，为什么 fallback 还是执行了？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "返回了 7，为什么 fallback 还是执行了？",
+      "candidateHeading": "返回了 7，为什么 fallback 还是执行了？",
+      "baseTitle": "返回了 7，为什么 fallback 还是执行了？ · Archify",
+      "candidateTitle": "返回了 7，为什么 fallback 还是执行了？ · Archify",
+      "sha256": {
+        "base": "5bb3baa956785e596524417b6435a4859a789df69e1525e7525ed79e0e785db5",
+        "candidate": "5bb3baa956785e596524417b6435a4859a789df69e1525e7525ed79e0e785db5"
+      }
+    },
+    {
+      "name": "gitdiff-0",
+      "file": "git-diff-endpoints/candidate.html",
+      "authoredTitle": "git diff HEAD 为空，暂存区就没改动吗？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "git diff HEAD 为空，暂存区就没改动吗？",
+      "candidateHeading": "git diff HEAD 为空，暂存区就没改动吗？",
+      "baseTitle": "git diff HEAD 为空，暂存区就没改动吗？ · Archify",
+      "candidateTitle": "git diff HEAD 为空，暂存区就没改动吗？ · Archify",
+      "sha256": {
+        "base": "49f25205b836e03edf71959b947f09f1b91dc5633d85e02031601b50ced3aac0",
+        "candidate": "49f25205b836e03edf71959b947f09f1b91dc5633d85e02031601b50ced3aac0"
+      }
+    },
+    {
+      "name": "gitdiff-1",
+      "file": "git-diff-endpoints/author/answer.html",
+      "authoredTitle": "为什么 `git diff HEAD` 为空，暂存区却有改动？",
+      "byteIdentical": false,
+      "restIdentical": true,
+      "baseHeading": "为什么 `git diff HEAD` 为空，暂存区却有改动？",
+      "candidateHeading": "为什么 <code>git diff HEAD</code> 为空，暂存区却有改动？",
+      "baseTitle": "为什么 `git diff HEAD` 为空，暂存区却有改动？ · Archify",
+      "candidateTitle": "为什么 git diff HEAD 为空，暂存区却有改动？ · Archify",
+      "sha256": {
+        "base": "d9e1361f28ab7677bec1d666252030700af84dd923143aadb2042cc343e154c6",
+        "candidate": "f5ea978dfb9089c46a13d8ff98dc5fa3b3b0c4315e9050abfb96feaddbbe9b97"
+      }
+    },
+    {
+      "name": "make-0",
+      "file": "make-phony/candidate.html",
+      "authoredTitle": "为什么 make check 没有执行命令？",
+      "byteIdentical": true,
+      "restIdentical": true,
+      "baseHeading": "为什么 make check 没有执行命令？",
+      "candidateHeading": "为什么 make check 没有执行命令？",
+      "baseTitle": "为什么 make check 没有执行命令？ · Archify",
+      "candidateTitle": "为什么 make check 没有执行命令？ · Archify",
+      "sha256": {
+        "base": "a33baca508dfceda6f0165c088b031a88007acc582a9a575599d3cfc30c6e79d",
+        "candidate": "a33baca508dfceda6f0165c088b031a88007acc582a9a575599d3cfc30c6e79d"
+      }
+    },
+    {
+      "name": "make-1",
+      "file": "make-phony/author/answer.html",
+      "authoredTitle": "为什么 `make check` 没有执行命令？",
+      "byteIdentical": false,
+      "restIdentical": true,
+      "baseHeading": "为什么 `make check` 没有执行命令？",
+      "candidateHeading": "为什么 <code>make check</code> 没有执行命令？",
+      "baseTitle": "为什么 `make check` 没有执行命令？ · Archify",
+      "candidateTitle": "为什么 make check 没有执行命令？ · Archify",
+      "sha256": {
+        "base": "3bed8ad7cd7a85c2c7a2970221f1e11b3e862893ca12b723d8e621b64330dc02",
+        "candidate": "97d287f8e4ca2da83926607c8faf6877757a222e1f01ed358c146467c92f4cc3"
+      }
+    }
+  ]
+}

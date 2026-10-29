@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: page title links validate against prepared external native targets
+ok 1 - page title links validate against prepared external native targets
+  ---
+  duration_ms: 709.330208
+  type: 'test'
+  ...
+# Subtest: renderer: page titles render validated inline content in reading order with plain browser text
+ok 2 - renderer: page titles render validated inline content in reading order with plain browser text
+  ---
+  duration_ms: 42.702375
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 864.981625

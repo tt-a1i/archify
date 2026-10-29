@@ -1,0 +1,8 @@
+{
+  "scope": "derived interaction control with frozen singleflight resources; not independent author or provenance acceptance",
+  "id": "overlap-flow",
+  "node": "a",
+  "panel": "sequence",
+  "source": "do",
+  "title": "**Inspect** `flight` [caller](node:overlap-flow.a) [source](source:do) [details](block:sequence) [1 ms](typical:Illustrative only)"
+}

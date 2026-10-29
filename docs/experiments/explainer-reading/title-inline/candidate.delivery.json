@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "83a20a0a-c73b-4823-9ac9-eee5fc88ba84",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/make-phony/author/first-draft.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/title-inline/candidate.html",
+  "specification": {
+    "sha256": "ec19734049e1cc819aaef297f7151695fe640fdcfc26e9125c489afdd5a01a85",
+    "bytes": 2836
+  },
+  "artifact": {
+    "sha256": "39b65a4f1f55c076af60bde5e7f1dd63dec653d74984b50a0e7e955bed99f430",
+    "bytes": 159123
+  },
+  "explainer": {
+    "preparedSha256": "636000c239f94c5309d5ff0a66381d327442b201d6ff6c0db9d068937de71fda",
+    "dependencies": []
+  }
+}

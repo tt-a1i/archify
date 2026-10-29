@@ -1,0 +1,381 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-renderer.test.mjs test/explainer-inline.test.mjs test/explainer-validation.test.mjs test/explainer-cli.test.mjs test/explainer-patch.test.mjs
+
+Repository tests: 5 files, concurrency 4
+TAP version 13
+# Subtest: compact cyclic diagrams remain deliverable with a stricter quality override
+ok 1 - compact cyclic diagrams remain deliverable with a stricter quality override
+  ---
+  duration_ms: 6943.443958
+  type: 'test'
+  ...
+# Subtest: patch quality changes resolve shorthand under the new context and preserve other authored panels
+ok 2 - patch quality changes resolve shorthand under the new context and preserve other authored panels
+  ---
+  duration_ms: 3747.979375
+  type: 'test'
+  ...
+# Subtest: explainer CLI binds original draft bytes through validate, deliver and strict check
+ok 3 - explainer CLI binds original draft bytes through validate, deliver and strict check
+  ---
+  duration_ms: 1195.093125
+  type: 'test'
+  ...
+# Subtest: explainer CLI parse and semantic failures preserve an existing artifact and actionable locations
+ok 4 - explainer CLI parse and semantic failures preserve an existing artifact and actionable locations
+  ---
+  duration_ms: 778.414625
+  type: 'test'
+  ...
+# Subtest: explainer prepared resource mutation fails before overwriting last good HTML
+ok 5 - explainer prepared resource mutation fails before overwriting last good HTML
+  ---
+  duration_ms: 631.457375
+  type: 'test'
+  ...
+# Subtest: explainer refuses a prepared bundle bound to different original source bytes
+ok 6 - explainer refuses a prepared bundle bound to different original source bytes
+  ---
+  duration_ms: 164.218875
+  type: 'test'
+  ...
+# Subtest: explainer direct render resolves contained resources against author directory
+ok 7 - explainer direct render resolves contained resources against author directory
+  ---
+  duration_ms: 276.920542
+  type: 'test'
+  ...
+# Subtest: explainer finalize opts into the browser gate and reports unavailability
+ok 8 - explainer finalize opts into the browser gate and reports unavailability
+  ---
+  duration_ms: 1076.566584
+  type: 'test'
+  ...
+# Subtest: explainer prepared bundle cannot follow same-byte draft into a different author directory
+ok 9 - explainer prepared bundle cannot follow same-byte draft into a different author directory
+  ---
+  duration_ms: 136.196583
+  type: 'test'
+  ...
+# Subtest: explainer public writing modes warn, reject strict drafts, and permit explicit off
+ok 10 - explainer public writing modes warn, reject strict drafts, and permit explicit off
+  ---
+  duration_ms: 1544.071792
+  type: 'test'
+  ...
+# Subtest: explainer prepared writing mode cannot silently change across stages
+ok 11 - explainer prepared writing mode cannot silently change across stages
+  ---
+  duration_ms: 138.044709
+  type: 'test'
+  ...
+# Subtest: default explainer finalize succeeds without discovering or launching a browser
+ok 12 - default explainer finalize succeeds without discovering or launching a browser
+  ---
+  duration_ms: 1158.257291
+  type: 'test'
+  ...
+# Subtest: CR-only drafts return structured failures through public commands and preserve output (\#1083)
+ok 13 - CR-only drafts return structured failures through public commands and preserve output (\#1083)
+  ---
+  duration_ms: 458.372917
+  type: 'test'
+  ...
+# Subtest: literal heading separators survive public validate, deliver and finalize (\#1083)
+ok 14 - literal heading separators survive public validate, deliver and finalize (\#1083)
+  ---
+  duration_ms: 6366.42475
+  type: 'test'
+  ...
+# Subtest: workflow shorthand carries page locale into rendered lane labels (\#1082)
+ok 15 - workflow shorthand carries page locale into rendered lane labels (\#1082)
+  ---
+  duration_ms: 6953.888792
+  type: 'test'
+  ...
+# Subtest: page title links validate against prepared external native targets
+ok 16 - page title links validate against prepared external native targets
+  ---
+  duration_ms: 663.49475
+  type: 'test'
+  ...
+# Subtest: inline content preserves escaped literals and safe text while exposing reference semantics
+ok 17 - inline content preserves escaped literals and safe text while exposing reference semantics
+  ---
+  duration_ms: 3.620958
+  type: 'test'
+  ...
+# Subtest: unsupported or executable author input fails with located repair guidance
+ok 18 - unsupported or executable author input fails with located repair guidance
+  ---
+  duration_ms: 0.986042
+  type: 'test'
+  ...
+# Subtest: HTTP references preserve parentheses and escape attributes without evaluating label markup
+ok 19 - HTTP references preserve parentheses and escape attributes without evaluating label markup
+  ---
+  duration_ms: 0.157417
+  type: 'test'
+  ...
+# Subtest: typical-value qualifications become numbered real footnotes shared across text fields
+ok 20 - typical-value qualifications become numbered real footnotes shared across text fields
+  ---
+  duration_ms: 0.195791
+  type: 'test'
+  ...
+# Subtest: escaped backslashes do not consume a following closing emphasis delimiter
+ok 21 - escaped backslashes do not consume a following closing emphasis delimiter
+  ---
+  duration_ms: 0.155791
+  type: 'test'
+  ...
+# Subtest: patch payload errors preserve their specific repair advice
+ok 22 - patch payload errors preserve their specific repair advice
+  ---
+  duration_ms: 365.672458
+  type: 'test'
+  ...
+# Subtest: panel patch preserves original source outside target token range
+ok 23 - panel patch preserves original source outside target token range
+  ---
+  duration_ms: 1657.019167
+  type: 'test'
+  ...
+# Subtest: patching referenced prose keeps the diagram and its frozen native artifact unchanged
+ok 24 - patching referenced prose keeps the diagram and its frozen native artifact unchanged
+  ---
+  duration_ms: 2527.517167
+  type: 'test'
+  ...
+# Subtest: panel patch rejects missing target and changed identity without overwriting existing output
+ok 25 - panel patch rejects missing target and changed identity without overwriting existing output
+  ---
+  duration_ms: 1328.564458
+  type: 'test'
+  ...
+# Subtest: panel patch retains contained resources when unchanged original files are unavailable
+ok 26 - panel patch retains contained resources when unchanged original files are unavailable
+  ---
+  duration_ms: 1573.461125
+  type: 'test'
+  ...
+# Subtest: restricted author draft panel patch preserves other authored text and stable panel IDs
+ok 27 - restricted author draft panel patch preserves other authored text and stable panel IDs
+  ---
+  duration_ms: 1253.070584
+  type: 'test'
+  ...
+# Subtest: panel patch applies explicit strict writing checks before publishing
+ok 28 - panel patch applies explicit strict writing checks before publishing
+  ---
+  duration_ms: 1555.283208
+  type: 'test'
+  ...
+# Subtest: panel patch retains source evidence when a changed diagram shares its source id
+ok 29 - panel patch retains source evidence when a changed diagram shares its source id
+  ---
+  duration_ms: 3465.492166
+  type: 'test'
+  ...
+# Subtest: panel patch quality override validates every native child from frozen inputs
+ok 30 - panel patch quality override validates every native child from frozen inputs
+  ---
+  duration_ms: 4814.543084
+  type: 'test'
+  ...
+# Subtest: panel patch across directories retains resource origins for subsequent edits
+ok 31 - panel patch across directories retains resource origins for subsequent edits
+  ---
+  duration_ms: 2352.875459
+  type: 'test'
+  ...
+# Subtest: a page without its source directory can patch prose but cannot read unrelated output-local assets
+ok 32 - a page without its source directory can patch prose but cannot read unrelated output-local assets
+  ---
+  duration_ms: 542.498667
+  type: 'test'
+  ...
+# Subtest: patch output excludes temporary execution paths and is reproducible (\#1085)
+ok 33 - patch output excludes temporary execution paths and is reproducible (\#1085)
+  ---
+  duration_ms: 3852.188042
+  type: 'test'
+  ...
+# Subtest: reader serialization omits private bindings for Windows paths and missing origins (\#1085)
+ok 34 - reader serialization omits private bindings for Windows paths and missing origins (\#1085)
+  ---
+  duration_ms: 6.760208
+  type: 'test'
+  ...
+# Subtest: renderer: every shape remains statically readable and authored text cannot become markup
+ok 35 - renderer: every shape remains statically readable and authored text cannot become markup
+  ---
+  duration_ms: 47.521542
+  type: 'test'
+  ...
+# Subtest: renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+ok 36 - renderer: canonical input, draft, child bytes and prepared bundle survive script-breaking contents
+  ---
+  duration_ms: 19.0295
+  type: 'test'
+  ...
+# Subtest: renderer: resources fail closed and native previews preserve identity without leaking styles
+ok 37 - renderer: resources fail closed and native previews preserve identity without leaking styles
+  ---
+  duration_ms: 13.204291
+  type: 'test'
+  ...
+# Subtest: renderer: no-script content includes scope, system theme and inert operation controls
+ok 38 - renderer: no-script content includes scope, system theme and inert operation controls
+  ---
+  duration_ms: 11.663708
+  type: 'test'
+  ...
+# Subtest: renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+ok 39 - renderer: multiple native diagrams retain independent preview IDs and original payload hashes
+  ---
+  duration_ms: 18.691125
+  type: 'test'
+  ...
+# Subtest: renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+ok 40 - renderer: content revision changes for frozen resources but ignores dependency filesystem relocation
+  ---
+  duration_ms: 66.326083
+  type: 'test'
+  ...
+# Subtest: renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+ok 41 - renderer: over-limit metrics disclose the excess and limit-only metrics imply no measurement
+  ---
+  duration_ms: 7.961833
+  type: 'test'
+  ...
+# Subtest: renderer: only Chinese pages get Chinese controls; other languages fall back to English
+ok 42 - renderer: only Chinese pages get Chinese controls; other languages fall back to English
+  ---
+  duration_ms: 22.652417
+  type: 'test'
+  ...
+# Subtest: renderer: native diagram panels receive responsive space without changing the frozen native diagram
+ok 43 - renderer: native diagram panels receive responsive space without changing the frozen native diagram
+  ---
+  duration_ms: 8.648708
+  type: 'test'
+  ...
+# Subtest: renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+ok 44 - renderer: native system-dark aliases exclude print rules and printing overrides the noJS dark selector
+  ---
+  duration_ms: 12.403166
+  type: 'test'
+  ...
+# Subtest: renderer: source markers number first appearances including blank labels and remain plain text
+ok 45 - renderer: source markers number first appearances including blank labels and remain plain text
+  ---
+  duration_ms: 8.263875
+  type: 'test'
+  ...
+# Subtest: literal snippets render as copyable code and table corners keep their header
+ok 46 - literal snippets render as copyable code and table corners keep their header
+  ---
+  duration_ms: 7.975667
+  type: 'test'
+  ...
+# Subtest: renderer: shared pages omit disposable native checker filenames but retain evidence
+ok 47 - renderer: shared pages omit disposable native checker filenames but retain evidence
+  ---
+  duration_ms: 8.561875
+  type: 'test'
+  ...
+# Subtest: renderer: manifest warnings use the same portable locations as the prepared bundle
+ok 48 - renderer: manifest warnings use the same portable locations as the prepared bundle
+  ---
+  duration_ms: 7.2465
+  type: 'test'
+  ...
+# Subtest: renderer: Windows cross-volume source locations are omitted instead of exposed
+ok 49 - renderer: Windows cross-volume source locations are omitted instead of exposed
+  ---
+  duration_ms: 9.622
+  type: 'test'
+  ...
+# Subtest: renderer: page titles render validated inline content in reading order with plain browser text
+ok 50 - renderer: page titles render validated inline content in reading order with plain browser text
+  ---
+  duration_ms: 8.288167
+  type: 'test'
+  ...
+# Subtest: generated schema rejects injected execution, resources and author approval fields
+ok 51 - generated schema rejects injected execution, resources and author approval fields
+  ---
+  duration_ms: 4.599875
+  type: 'test'
+  ...
+# Subtest: comparison assessments remain per cell and invalid widths locate the offending row
+ok 52 - comparison assessments remain per cell and invalid widths locate the offending row
+  ---
+  duration_ms: 6.932541
+  type: 'test'
+  ...
+# Subtest: inline safety keeps literal code and diff untouched while rejecting HTML and unsafe links
+ok 53 - inline safety keeps literal code and diff untouched while rejecting HTML and unsafe links
+  ---
+  duration_ms: 6.048208
+  type: 'test'
+  ...
+# Subtest: diagram references name real diagram blocks and inline topology nodes
+ok 54 - diagram references name real diagram blocks and inline topology nodes
+  ---
+  duration_ms: 14.548792
+  type: 'test'
+  ...
+# Subtest: native collection errors stay structured before resolving forward node references
+ok 55 - native collection errors stay structured before resolving forward node references
+  ---
+  duration_ms: 33.534458
+  type: 'test'
+  ...
+# Subtest: writing warnings are configurable and literal code is excluded from prose rules
+ok 56 - writing warnings are configurable and literal code is excluded from prose rules
+  ---
+  duration_ms: 5.031333
+  type: 'test'
+  ...
+# Subtest: global interactive IDs and source anchors cannot collide
+ok 57 - global interactive IDs and source anchors cannot collide
+  ---
+  duration_ms: 0.68575
+  type: 'test'
+  ...
+# Subtest: built-in answer is a legitimate block target while chrome IDs remain reserved
+ok 58 - built-in answer is a legitimate block target while chrome IDs remain reserved
+  ---
+  duration_ms: 0.320708
+  type: 'test'
+  ...
+# Subtest: steps never silently discard a simultaneous node and route selection
+ok 59 - steps never silently discard a simultaneous node and route selection
+  ---
+  duration_ms: 3.070959
+  type: 'test'
+  ...
+# Subtest: source links resolve forward IDs and code requires a repository location
+ok 60 - source links resolve forward IDs and code requires a repository location
+  ---
+  duration_ms: 1.564083
+  type: 'test'
+  ...
+# Subtest: answer accepts four reasons and local qualifications remain valid in strict writing mode
+ok 61 - answer accepts four reasons and local qualifications remain valid in strict writing mode
+  ---
+  duration_ms: 1.828625
+  type: 'test'
+  ...
+1..61
+# tests 61
+# suites 0
+# pass 61
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32392.088166

@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import {renderExplainer} from '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/archify/explainer/render.mjs';
+import {unpackPageBundle} from './base/archify/explainer/page-bundle.mjs';
+import {validatePreparedTargets} from '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/archify/explainer/prepare.mjs';
+const r='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round30',file='/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/phone-preview/candidate.html';
+const html=fs.readFileSync(file,'utf8'),bundle=unpackPageBundle(JSON.parse(html.match(/<script\b[^>]*\bid="archify-explainer-prepared"[^>]*>([\s\S]*?)<\/script>/)[1]));
+const [id,diagram]=Object.entries(bundle.preparedDiagrams.diagrams)[0],node=diagram.semantic.nodes[0].id,panel=bundle.document.panels[0].id,source=bundle.document.sources[0].id;
+const document=structuredClone(bundle.document);document.meta.title='**Inspect** `flight` [caller](node:'+id+'.'+node+') [source](source:'+source+') [details](block:'+panel+') [1 ms](typical:Illustrative only)';
+validatePreparedTargets(document,bundle.preparedDiagrams.diagrams);
+fs.writeFileSync(r+'/title-control.html',renderExplainer(document,{preparedSources:bundle.preparedSources,preparedDiagrams:bundle.preparedDiagrams,sourceText:JSON.stringify(document)}));
+fs.writeFileSync(r+'/title-control.json',JSON.stringify({scope:'derived interaction control with frozen singleflight resources; not independent author or provenance acceptance',id,node,panel,source,title:document.meta.title},null,2)+'\n');console.log({id,node,panel,source});

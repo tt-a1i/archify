@@ -1,0 +1,18 @@
+{
+  "focused": {
+    "open": true,
+    "focus": {
+      "nodes": [
+        "a"
+      ],
+      "edges": [
+        "a-to-group-1",
+        "group-to-a-1"
+      ],
+      "active": "a"
+    }
+  },
+  "focusRestored": true,
+  "sourceNavigation": true,
+  "blockNavigation": true
+}
