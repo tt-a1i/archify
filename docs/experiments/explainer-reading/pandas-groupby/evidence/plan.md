@@ -1,0 +1,9 @@
+# Round 41: make omitted grouping rows visible
+
+Research/probe setup started while round 40's fixed-input browser matrix ran. This is independent source preparation, not timed generation. Frozen Archify source: e16dbcfb8916cb621efb0806e7f23d0b1497ac10. Pandas 3.1.0 tag: c6f46769b808eb60218189d089dd67841b44f1b9. Isolated Python 3.12.13; installed frame.py matches pinned upstream bytes. Two actual probe runs are identical. No live installation or user data.
+
+Question: can a reader see why grouped totals change when a grouping key is missing, and distinguish omitted groups from deleted original rows or imputed numeric values? Four synthetic rows have raw total 100; default groupby sums to 80, dropna=False sums to 100. A complete-key control and separate missing-numeric-value boundary protect the explanation's scope.
+
+One independent Terra/medium author, fresh context, 12-minute maximum, at most three authored attempts. Preserve first draft and every failure. Browser space is in use by round 40: author performs source/CLI checks only and records that visual acceptance is pending. No authored layout or wording intervention before first draft. Parent has at most two content revisions and 15 minutes for comparison after handoff. Inspect desktop/mobile light/dark, verify actual Copy text by executing programs in isolated Python, and inspect actual PNG export. Round 40 finishes/pushes before this round's content integration.
+
+This new-project supplied-evidence discovery is selected under the real repository benchmark convention; no paired full-generation or general readability/speed claim. Reuse unchanged runtime/package checks from round 40 with exact revision. Keep all raw third-party source outside the repository. Publish the explainer, own probe, selected evidence and source links on the authorized experimental branch. Overall goal remains active.

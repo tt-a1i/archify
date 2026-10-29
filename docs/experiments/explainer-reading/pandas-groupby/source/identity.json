@@ -1,0 +1,11 @@
+{
+  "project": "pandas",
+  "version": "3.1.0",
+  "upstreamTag": "v3.1.0",
+  "upstreamCommit": "c6f46769b808eb60218189d089dd67841b44f1b9",
+  "installedFrameMatchesPinnedSource": true,
+  "frameSha256": "9c28cd65d029a64091efd2d23e8281f2de4d8dae1179ff92b0eaee8712a847b9",
+  "archifySource": "e16dbcfb8916cb621efb0806e7f23d0b1497ac10",
+  "twoProbeRunsIdentical": true,
+  "limits": "Only frame.py bytes checked; not a compiled wheel reproducibility claim."
+}

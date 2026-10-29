@@ -1,0 +1,9 @@
+Work start UTC: 2026-10-29T23:21:18Z (recorded before reads).
+Read author-prompt.txt; frozen archify/SKILL.md and references/explainer-authoring.md; source/brief.md, probe-1.json, probe-2.json, identity.json and probe.py. Listed source and frozen authoring paths. Reads succeeded. A preliminary batched tool invocation had a JavaScript syntax error before executing any reads; the corrected invocation succeeded.
+Probe: not rerun. Used the supplied, matching probe-1.json and probe-2.json; the source bundle reports Python 3.12.13 and pandas 3.1.0. The identity report verifies frame.py bytes only, not full wheel reproducibility.
+First complete draft: first-draft.archify.md, recorded by timestamp 2026-10-29T23:21:34Z, before validation or rendering; identical attempt-1.archify.md.
+Attempt 1: node /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round41/frozen/archify/bin/archify.mjs finalize explainer attempt-1.archify.md answer.html --quality showcase --writing strict --json
+CLI stdout and stderr preserved in attempt-1.stdout.txt and attempt-1.stderr.txt. CLI JSON reports pass with validate, deliver and check passing, browser-check not run, zero diagnostics. Receipt and summary preserved as attempt-1.receipt.json and attempt-1.summary.json.
+Timing/status limitation: the shell wrapper attempted to assign zsh's read-only status variable after the CLI returned, so the wrapper exited 1 and did not capture the CLI process exit code or exact completion timestamp. The successful JSON receipt is retained; do not treat the wrapper's exit as the CLI's captured exit status. No later attempt was made.
+Visual review: pending. No browser used; explainer finalize did not run browser-check.
+Final handoff UTC: 2026-10-29T23:21:44Z

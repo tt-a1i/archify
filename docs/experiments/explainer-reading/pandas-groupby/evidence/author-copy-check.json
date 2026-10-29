@@ -1,0 +1,13 @@
+{
+  "copiedProgram": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round41/author-copied.py",
+  "pandas": "3.1.0",
+  "inputMatchesProbe": true,
+  "inputUnchanged": true,
+  "defaultGroupsMatchProbe": true,
+  "includeMissingGroupsMatchProbe": true,
+  "rawTotal": 100,
+  "defaultTotal": 80,
+  "includeMissingTotal": 100,
+  "stdout": "原始合计: 100\n默认分组:\n region\nNorth    50\nSouth    30\nName: amount, dtype: int64\n保留缺失键:\n region\nNorth    50\nSouth    30\nNaN      20\nName: amount, dtype: int64\n",
+  "clipboardScope": "The real Copy control wrote these bytes through an instrumented clipboard API; OS clipboard permissions are not tested."
+}

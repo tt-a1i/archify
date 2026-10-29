@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between nineteen reading questions across seventeen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between twenty reading questions across eighteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -247,3 +247,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 40
 
 [Narrow-screen tools adopted on the experimental branch](mobile-tools-adopted/README.md): reuse BlueboxC’s exact CSS proposal and browser regression from #1076 on current source. The unchanged-CSS regression fails at 320 px; the candidate keeps menus and controls reachable. The original PR remains the integration path. Source commit: `e16dbcfb8916cb621efb0806e7f23d0b1497ac10`. Fixed-input comparisons, package checks and limits are recorded in the linked report. No merge or live installation.
+
+## Continued exploration — round 41
+
+[pandas missing grouping keys](pandas-groupby/README.md): four actual synthetic rows distinguish raw total 100, default grouped total 80 and total 100 with the missing-key group included. Both original tables already fit on the phone; the retained candidate makes the same Python program readable without horizontal code scrolling and aligns input/results on desktop. Actual copied programs have identical ASTs and output. The two parent syntax failures and the declared one-repair extension are preserved. Runtime/package evidence is reused from round 40.

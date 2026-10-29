@@ -1,0 +1,7 @@
+{
+  "samePythonAST": true,
+  "identicalStdout": true,
+  "authorCodeBytes": 451,
+  "candidateCodeBytes": 488,
+  "onlyCodeFormattingChanged": true
+}

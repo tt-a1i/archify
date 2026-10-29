@@ -1,0 +1,6 @@
+{
+  "browserFailure": "#versions button >> nth=0 matched 0 elements",
+  "parseFailure": "SyntaxError: Unexpected token '{'",
+  "cause": "The new pandas case was appended after the previous final array element without adding its separating comma.",
+  "repair": "Add the missing comma after the Matplotlib entry, parse the case array before browser recheck, and reload the file page."
+}

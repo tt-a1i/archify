@@ -11,7 +11,7 @@
 </style>
 <main>
  <header>
-  <div><p class="eyebrow">EXPLAINER / 阅读实验</p><h1>先让人看懂，再把它做好看。</h1><p class="intro">十七个开源项目，反复检查同一件事：结论是否清楚、条件是否就在旁边、图和命令能否真正读懂。</p></div>
+  <div><p class="eyebrow">EXPLAINER / 阅读实验</p><h1>先让人看懂，再把它做好看。</h1><p class="intro">十八个开源项目，反复检查同一件事：结论是否清楚、条件是否就在旁边、图和命令能否真正读懂。</p></div>
   <p class="progress"><strong>持续探索中</strong>2026.10.30 · 实验分支</p>
  </header>
  <div class="layout">
@@ -51,7 +51,8 @@ const cases=[
  {id:'networkx',name:'NetworkX · shortest path',title:'写了 cost，为什么还选直达路？',description:'同一张三节点图，分别比较边数和 cost 总和。路径、输入代码与真实输出放在一起，缺失属性的默认值也保留在结论旁。',report:'viewer-mobile-embed/README.md',limit:'NetworkX 3.7、Python 3.12.13；六个构造组合重复两次。数字不代表真实距离、成本或性能。手机上的图内数字仍小，完整比较保留在表格中。交互图工具栏候选来自 #1027；没有人工理解测试。',versions:[['路径与计算标准','networkx-path/candidate.html'],['作者初稿','networkx-path/author/answer.html'],['交互图工具栏候选','viewer-mobile-embed/pr1027-networkx.html']]},
  {id:'numpy',name:'NumPy · views and copies',title:'改了 b，a 为什么也变了？',description:'用完整程序和实际输出比较共享数据与独立副本。结论单独一行，让两个示例在桌面上左右对齐；保留先前布局与总览表尝试供比较。',report:'answer-span/README.md',limit:'NumPy 2.5.4、Python 3.12.13；六个一维 int64 构造用例重复两次。范围是固定且不重复的索引，不推广到对象数组、reshape 或性能。新增可选结论宽度；四种风格均已检查，默认布局回放不变。没有人工理解测试。',versions:[['结论在上，示例并排','answer-span/candidate.html'],['完整程序与实际输出','numpy-views/candidate.html'],['作者初稿','numpy-views/author/answer.html'],['总览表尝试','numpy-views/attempts/candidate-2.html']]},
  {id:'duckdb',name:'DuckDB · column alignment',title:'为什么城市跑进了姓名列？',description:'把按位置和按列名拼接的查询、实际结果放在一起。姓名和城市落在哪一列可以直接对照；同时保留统一列顺序的写法，分开说明缺列和重复行。',report:'duckdb-union/README.md',limit:'DuckDB 2.0.0、Python 3.12.13；七组构造查询重复两次。使用两个文本列和内存数据库，不涉及文件导入、扩展或性能；没有人工理解测试。',versions:[['查询与结果并排','duckdb-union/candidate.html'],['作者初稿','duckdb-union/author/answer.html']]},
- {id:'matplotlib',name:'Matplotlib · axis window',title:'同样的 80 和 100，为什么柱长比例变了？',description:'用两张真实绘图结果，分开比较原始数值和露出的柱段。图片像素保持原样，图旁保留计算过程，避免把可见长度的三倍当成数据的三倍。',report:'matplotlib-axis/README.md',limit:'Matplotlib 3.11.2、Python 3.12.13、Agg；两个正值、线性纵轴，重复绘图结果一致。数值为无单位的合成示例，不推广到对数轴、负值或所有图表；没有人工理解测试。',versions:[['完整图与局部图对齐','matplotlib-axis/candidate.html'],['作者初稿','matplotlib-axis/author/answer.html']]}
+ {id:'matplotlib',name:'Matplotlib · axis window',title:'同样的 80 和 100，为什么柱长比例变了？',description:'用两张真实绘图结果，分开比较原始数值和露出的柱段。图片像素保持原样，图旁保留计算过程，避免把可见长度的三倍当成数据的三倍。',report:'matplotlib-axis/README.md',limit:'Matplotlib 3.11.2、Python 3.12.13、Agg；两个正值、线性纵轴，重复绘图结果一致。数值为无单位的合成示例，不推广到对数轴、负值或所有图表；没有人工理解测试。',versions:[['完整图与局部图对齐','matplotlib-axis/candidate.html'],['作者初稿','matplotlib-axis/author/answer.html']]},
+ {id:'pandas',name:'pandas · missing group keys',title:'分组求和后，100 为什么变成了 80？',description:'先找到缺失分组键的那一行，再对照两种汇总结果。原表没有被修改，完整代码可以复制运行。',report:'pandas-groupby/README.md',limit:'pandas 3.1.0、Python 3.12.13；单个 object 类型分组键与合成无单位数值。缺失分组键和缺失数值不同；这里的求和结果不能替代其他数据的核对。',versions:[['完整代码与并排对照','pandas-groupby/candidate.html'],['作者初稿','pandas-groupby/author/answer.html']]},
 ];
 const frame=document.querySelector('iframe'),viewport=document.querySelector('.viewport'),stage=document.querySelector('.stage');let selected=cases.find(c=>c.id===location.hash.slice(1))||cases.at(-1),version=0,width=390;
 function fit(){const room=stage.clientWidth-parseFloat(getComputedStyle(stage).paddingLeft)-parseFloat(getComputedStyle(stage).paddingRight),scale=Math.min(1,room/width),height=900;frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform=`scale(${scale})`;viewport.style.width=width*scale+'px';viewport.style.height=height*scale+'px';document.querySelector('#scale-note').textContent=`页面宽度 ${width}px · 显示比例 ${Math.round(scale*100)}%`;}

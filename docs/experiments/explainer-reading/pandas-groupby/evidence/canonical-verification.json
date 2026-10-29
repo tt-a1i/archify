@@ -1,0 +1,34 @@
+{
+  "canonicalSha256": "84ef3cf25f61009bd7e9637f4ed692c888ae2d47e1d1fc82bfbed403343e57a8",
+  "canonicalCopyMatchesExecutedCandidate": true,
+  "states": [
+    {
+      "width": 390,
+      "theme": "light",
+      "renderedTablesMatchProbe": true,
+      "pageTablesAndCodeFit": true,
+      "pairedDesktopPanelTops": false
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "renderedTablesMatchProbe": true,
+      "pageTablesAndCodeFit": true,
+      "pairedDesktopPanelTops": false
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "renderedTablesMatchProbe": true,
+      "pageTablesAndCodeFit": true,
+      "pairedDesktopPanelTops": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "renderedTablesMatchProbe": true,
+      "pageTablesAndCodeFit": true,
+      "pairedDesktopPanelTops": true
+    }
+  ]
+}

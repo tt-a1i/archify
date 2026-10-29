@@ -1,0 +1,17 @@
+{
+  "name": "pandas",
+  "version": "3.1.0",
+  "requiresPython": ">=3.11",
+  "releases": [
+    {
+      "filename": "pandas-3.1.0-cp312-cp312-macosx_11_0_arm64.whl",
+      "upload_time_iso_8601": "2026-10-22T11:55:09.523161Z",
+      "digests": {
+        "blake2b_256": "1b4baf8ca15261db52ab07f5d0c2d4c1bc28d822ea4c2a79756bc2606c012e7c",
+        "md5": "151eea24d6b10b086a83e4b01ca61903",
+        "sha256": "cc5e4e12d287ea77bbf4c4d4bf47ed152d82a990d3a6794dee7c350f887532b5"
+      },
+      "url": "https://files.pythonhosted.org/packages/1b/4b/af8ca15261db52ab07f5d0c2d4c1bc28d822ea4c2a79756bc2606c012e7c/pandas-3.1.0-cp312-cp312-macosx_11_0_arm64.whl"
+    }
+  ]
+}

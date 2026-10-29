@@ -1,0 +1,5 @@
+numpy==2.5.4
+pandas==3.1.0
+python-dateutil==3.0.0
+six==1.17.0
+tzdata==2026.6

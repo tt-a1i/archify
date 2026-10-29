@@ -1,0 +1,514 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "pageWidth": 390,
+    "height": 2427,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 415.6796875,
+        "top": 219,
+        "right": 378,
+        "bottom": 634.6796875,
+        "left": 12
+      },
+      {
+        "id": "rows",
+        "x": 12,
+        "y": 646.6796875,
+        "width": 366,
+        "height": 456.5859375,
+        "top": 646.6796875,
+        "right": 378,
+        "bottom": 1103.265625,
+        "left": 12
+      },
+      {
+        "id": "comparison",
+        "x": 12,
+        "y": 1115.265625,
+        "width": 366,
+        "height": 428.6328125,
+        "top": 1115.265625,
+        "right": 378,
+        "bottom": 1543.8984375,
+        "left": 12
+      },
+      {
+        "id": "reproduce",
+        "x": 12,
+        "y": 1555.8984375,
+        "width": 366,
+        "height": 553.9609375,
+        "top": 1555.8984375,
+        "right": 378,
+        "bottom": 2109.859375,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "region",
+            "amount",
+            "默认分组"
+          ],
+          [
+            "North",
+            "10",
+            "North"
+          ],
+          [
+            "None",
+            "20",
+            "缺失键排除"
+          ],
+          [
+            "South",
+            "30",
+            "South"
+          ],
+          [
+            "North",
+            "40",
+            "North"
+          ]
+        ]
+      },
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "结果",
+            "默认 dropna=True",
+            "dropna=False"
+          ],
+          [
+            "North",
+            "50",
+            "50"
+          ],
+          [
+            "South",
+            "30",
+            "30"
+          ],
+          [
+            "缺失键组",
+            "无",
+            "保留NaN：20"
+          ],
+          [
+            "参与行数",
+            "3",
+            "4"
+          ],
+          [
+            "分组结果合计",
+            "80",
+            "100"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 577,
+        "text": "import pandas as pd\n\ndf = pd.DataFrame({\n    \"region\": pd.Series([\"North\", None, \"South\", \"North\"], dtype=object),\n    \"amount\": [10, 20, 30, 40],\n})\nbefore = df.copy(deep=True)\ndefault = df.groupby(\"region\")[\"amount\"].sum()\nkeep_missing = df.groupby(\"region\", dropna=False)[\"amount\"].sum()\nprint(\"原始合计:\", df[\"amount\"].sum())\nprint(\"默认分组:\\n\", default)\nprint(\"保留缺失键:\\n\", keep_missing)\npd.testing.assert_frame_equal(df, before)"
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "pageWidth": 390,
+    "height": 2427,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 415.6796875,
+        "top": 219,
+        "right": 378,
+        "bottom": 634.6796875,
+        "left": 12
+      },
+      {
+        "id": "rows",
+        "x": 12,
+        "y": 646.6796875,
+        "width": 366,
+        "height": 456.5859375,
+        "top": 646.6796875,
+        "right": 378,
+        "bottom": 1103.265625,
+        "left": 12
+      },
+      {
+        "id": "comparison",
+        "x": 12,
+        "y": 1115.265625,
+        "width": 366,
+        "height": 428.6328125,
+        "top": 1115.265625,
+        "right": 378,
+        "bottom": 1543.8984375,
+        "left": 12
+      },
+      {
+        "id": "reproduce",
+        "x": 12,
+        "y": 1555.8984375,
+        "width": 366,
+        "height": 553.9609375,
+        "top": 1555.8984375,
+        "right": 378,
+        "bottom": 2109.859375,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "region",
+            "amount",
+            "默认分组"
+          ],
+          [
+            "North",
+            "10",
+            "North"
+          ],
+          [
+            "None",
+            "20",
+            "缺失键排除"
+          ],
+          [
+            "South",
+            "30",
+            "South"
+          ],
+          [
+            "North",
+            "40",
+            "North"
+          ]
+        ]
+      },
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "结果",
+            "默认 dropna=True",
+            "dropna=False"
+          ],
+          [
+            "North",
+            "50",
+            "50"
+          ],
+          [
+            "South",
+            "30",
+            "30"
+          ],
+          [
+            "缺失键组",
+            "无",
+            "保留NaN：20"
+          ],
+          [
+            "参与行数",
+            "3",
+            "4"
+          ],
+          [
+            "分组结果合计",
+            "80",
+            "100"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 577,
+        "text": "import pandas as pd\n\ndf = pd.DataFrame({\n    \"region\": pd.Series([\"North\", None, \"South\", \"North\"], dtype=object),\n    \"amount\": [10, 20, 30, 40],\n})\nbefore = df.copy(deep=True)\ndefault = df.groupby(\"region\")[\"amount\"].sum()\nkeep_missing = df.groupby(\"region\", dropna=False)[\"amount\"].sum()\nprint(\"原始合计:\", df[\"amount\"].sum())\nprint(\"默认分组:\\n\", default)\nprint(\"保留缺失键:\\n\", keep_missing)\npd.testing.assert_frame_equal(df, before)"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "pageWidth": 1440,
+    "height": 1644,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 416,
+        "height": 405,
+        "top": 116.5,
+        "right": 496,
+        "bottom": 521.5,
+        "left": 80
+      },
+      {
+        "id": "rows",
+        "x": 512,
+        "y": 116.5,
+        "width": 848,
+        "height": 405,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 521.5,
+        "left": 512
+      },
+      {
+        "id": "comparison",
+        "x": 80,
+        "y": 537.5,
+        "width": 1280,
+        "height": 380,
+        "top": 537.5,
+        "right": 1360,
+        "bottom": 917.5,
+        "left": 80
+      },
+      {
+        "id": "reproduce",
+        "x": 80,
+        "y": 933.5,
+        "width": 1280,
+        "height": 477,
+        "top": 933.5,
+        "right": 1360,
+        "bottom": 1410.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 840,
+        "scroll": 840,
+        "rows": [
+          [
+            "region",
+            "amount",
+            "默认分组"
+          ],
+          [
+            "North",
+            "10",
+            "North"
+          ],
+          [
+            "None",
+            "20",
+            "缺失键排除"
+          ],
+          [
+            "South",
+            "30",
+            "South"
+          ],
+          [
+            "North",
+            "40",
+            "North"
+          ]
+        ]
+      },
+      {
+        "client": 1272,
+        "scroll": 1272,
+        "rows": [
+          [
+            "结果",
+            "默认 dropna=True",
+            "dropna=False"
+          ],
+          [
+            "North",
+            "50",
+            "50"
+          ],
+          [
+            "South",
+            "30",
+            "30"
+          ],
+          [
+            "缺失键组",
+            "无",
+            "保留NaN：20"
+          ],
+          [
+            "参与行数",
+            "3",
+            "4"
+          ],
+          [
+            "分组结果合计",
+            "80",
+            "100"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 1270,
+        "scroll": 1270,
+        "text": "import pandas as pd\n\ndf = pd.DataFrame({\n    \"region\": pd.Series([\"North\", None, \"South\", \"North\"], dtype=object),\n    \"amount\": [10, 20, 30, 40],\n})\nbefore = df.copy(deep=True)\ndefault = df.groupby(\"region\")[\"amount\"].sum()\nkeep_missing = df.groupby(\"region\", dropna=False)[\"amount\"].sum()\nprint(\"原始合计:\", df[\"amount\"].sum())\nprint(\"默认分组:\\n\", default)\nprint(\"保留缺失键:\\n\", keep_missing)\npd.testing.assert_frame_equal(df, before)"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "pageWidth": 1440,
+    "height": 1644,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 416,
+        "height": 405,
+        "top": 116.5,
+        "right": 496,
+        "bottom": 521.5,
+        "left": 80
+      },
+      {
+        "id": "rows",
+        "x": 512,
+        "y": 116.5,
+        "width": 848,
+        "height": 405,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 521.5,
+        "left": 512
+      },
+      {
+        "id": "comparison",
+        "x": 80,
+        "y": 537.5,
+        "width": 1280,
+        "height": 380,
+        "top": 537.5,
+        "right": 1360,
+        "bottom": 917.5,
+        "left": 80
+      },
+      {
+        "id": "reproduce",
+        "x": 80,
+        "y": 933.5,
+        "width": 1280,
+        "height": 477,
+        "top": 933.5,
+        "right": 1360,
+        "bottom": 1410.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 840,
+        "scroll": 840,
+        "rows": [
+          [
+            "region",
+            "amount",
+            "默认分组"
+          ],
+          [
+            "North",
+            "10",
+            "North"
+          ],
+          [
+            "None",
+            "20",
+            "缺失键排除"
+          ],
+          [
+            "South",
+            "30",
+            "South"
+          ],
+          [
+            "North",
+            "40",
+            "North"
+          ]
+        ]
+      },
+      {
+        "client": 1272,
+        "scroll": 1272,
+        "rows": [
+          [
+            "结果",
+            "默认 dropna=True",
+            "dropna=False"
+          ],
+          [
+            "North",
+            "50",
+            "50"
+          ],
+          [
+            "South",
+            "30",
+            "30"
+          ],
+          [
+            "缺失键组",
+            "无",
+            "保留NaN：20"
+          ],
+          [
+            "参与行数",
+            "3",
+            "4"
+          ],
+          [
+            "分组结果合计",
+            "80",
+            "100"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 1270,
+        "scroll": 1270,
+        "text": "import pandas as pd\n\ndf = pd.DataFrame({\n    \"region\": pd.Series([\"North\", None, \"South\", \"North\"], dtype=object),\n    \"amount\": [10, 20, 30, 40],\n})\nbefore = df.copy(deep=True)\ndefault = df.groupby(\"region\")[\"amount\"].sum()\nkeep_missing = df.groupby(\"region\", dropna=False)[\"amount\"].sum()\nprint(\"原始合计:\", df[\"amount\"].sum())\nprint(\"默认分组:\\n\", default)\nprint(\"保留缺失键:\\n\", keep_missing)\npd.testing.assert_frame_equal(df, before)"
+      }
+    ]
+  }
+]

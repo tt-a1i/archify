@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "efd67957-327b-4f37-ac98-9813ff36ecfe",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pandas-groupby/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pandas-groupby/candidate.html",
+  "specification": {
+    "sha256": "12ef275e3b3a49a5966ac233c88ce4817c9d2825783256448f6e8122ba605fb9",
+    "bytes": 3284
+  },
+  "artifact": {
+    "sha256": "84ef3cf25f61009bd7e9637f4ed692c888ae2d47e1d1fc82bfbed403343e57a8",
+    "bytes": 165991
+  },
+  "explainer": {
+    "preparedSha256": "1e7ffd6e2a90646774956d6eab6c722645a3ab66f3ba6d5c3189c56d9b4a7d49",
+    "dependencies": []
+  }
+}

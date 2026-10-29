@@ -1,0 +1,56 @@
+{
+  "png": {
+    "width": 780,
+    "height": 5298
+  },
+  "counts": {
+    "questions": 20,
+    "variants": 50
+  },
+  "checks": [
+    {
+      "versionIndex": 0,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pandas-groupby/candidate.html",
+      "open": "pandas-groupby/candidate.html",
+      "report": "pandas-groupby/README.md",
+      "version": "完整代码与并排对照",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 0,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pandas-groupby/candidate.html",
+      "open": "pandas-groupby/candidate.html",
+      "report": "pandas-groupby/README.md",
+      "version": "完整代码与并排对照",
+      "frameWidth": "1440px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pandas-groupby/author/answer.html",
+      "open": "pandas-groupby/author/answer.html",
+      "report": "pandas-groupby/README.md",
+      "version": "作者初稿",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pandas-groupby/author/answer.html",
+      "open": "pandas-groupby/author/answer.html",
+      "report": "pandas-groupby/README.md",
+      "version": "作者初稿",
+      "frameWidth": "1440px"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "environment": {
+    "python": "3.12.13",
+    "pandas": "3.1.0",
+    "pandasGitVersion": "c6f46769b808eb60218189d089dd67841b44f1b9",
+    "frameSha256": "9c28cd65d029a64091efd2d23e8281f2de4d8dae1179ff92b0eaee8712a847b9"
+  },
+  "scope": "Synthetic unitless positive amounts, one object-dtype grouping key. Missing amounts appear only in the separate boundary fixture.",
+  "main": {
+    "input": [
+      {
+        "region": "North",
+        "amount": 10
+      },
+      {
+        "region": null,
+        "amount": 20
+      },
+      {
+        "region": "South",
+        "amount": 30
+      },
+      {
+        "region": "North",
+        "amount": 40
+      }
+    ],
+    "inputText": "region  amount\n North      10\n  None      20\n South      30\n North      40",
+    "inputUnchanged": true,
+    "rawTotal": 100,
+    "default": {
+      "groups": [
+        {
+          "key": "North",
+          "value": 50
+        },
+        {
+          "key": "South",
+          "value": 30
+        }
+      ],
+      "text": "region\nNorth    50\nSouth    30",
+      "total": 80,
+      "includedRows": 3
+    },
+    "includeMissingKey": {
+      "groups": [
+        {
+          "key": "North",
+          "value": 50
+        },
+        {
+          "key": "South",
+          "value": 30
+        },
+        {
+          "key": null,
+          "value": 20
+        }
+      ],
+      "text": "region\nNorth    50\nSouth    30\nNaN      20",
+      "total": 100,
+      "includedRows": 4
+    },
+    "excluded": [
+      {
+        "region": null,
+        "amount": 20
+      }
+    ]
+  },
+  "completeKeyControl": {
+    "input": [
+      {
+        "region": "North",
+        "amount": 10
+      },
+      {
+        "region": "South",
+        "amount": 20
+      },
+      {
+        "region": "South",
+        "amount": 30
+      },
+      {
+        "region": "North",
+        "amount": 40
+      }
+    ],
+    "defaultTotal": 100
+  },
+  "missingValueBoundary": {
+    "rows": [
+      {
+        "region": "North",
+        "amount": 10
+      },
+      {
+        "region": "North",
+        "amount": null
+      },
+      {
+        "region": null,
+        "amount": 20
+      }
+    ],
+    "inputUnchanged": true,
+    "missingAmountCount": 1,
+    "size": [
+      {
+        "key": "North",
+        "value": 2
+      },
+      {
+        "key": null,
+        "value": 1
+      }
+    ],
+    "count": [
+      {
+        "key": "North",
+        "value": 1
+      },
+      {
+        "key": null,
+        "value": 1
+      }
+    ]
+  }
+}
