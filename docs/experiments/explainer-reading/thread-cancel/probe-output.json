@@ -1,0 +1,46 @@
+{
+  "python": "3.15.0 (main, Oct  9 2026, 11:16:41) [Clang 21.0.0 (clang-2100.3.34.2)]",
+  "scope": "Already-running thread work held behind an Event. No queued-work or timing claims. asyncio.run returned after executor shutdown.",
+  "cases": [
+    {
+      "mode": "direct-cancel",
+      "task_cancel_request_accepted": true,
+      "before_releasing_worker": {
+        "async_wrapper_done": true,
+        "async_wrapper_cancelled": true,
+        "thread_completed_work": false
+      },
+      "after_releasing_worker": {
+        "thread_completed_work": true
+      },
+      "events": [
+        "thread: started",
+        "caller: requests task cancellation",
+        "caller: receives CancelledError",
+        "caller: releases thread gate",
+        "thread: completed work",
+        "caller: observes thread completion"
+      ]
+    },
+    {
+      "mode": "taskgroup-failure",
+      "task_cancel_request_accepted": null,
+      "before_releasing_worker": {
+        "async_wrapper_done": true,
+        "async_wrapper_cancelled": true,
+        "thread_completed_work": false
+      },
+      "after_releasing_worker": {
+        "thread_completed_work": true
+      },
+      "events": [
+        "thread: started",
+        "child: raises ValueError",
+        "caller: catches ExceptionGroup outside group",
+        "caller: releases thread gate",
+        "thread: completed work",
+        "caller: observes thread completion"
+      ]
+    }
+  ]
+}
