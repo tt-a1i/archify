@@ -1,0 +1,7 @@
+# Round 39: same values, different visible bar lengths
+
+New-project discovery using Matplotlib. Question: data values 80 and 100 are unchanged, but setting a bar chart's y-axis lower view limit to 70 makes the visible bar segments have a 3:1 length ratio. Explain the difference between data values, the displayed axis window, and visible geometry without claiming the second value is three times the first.
+
+Pin the current stable Matplotlib package and primary source/docs. Draw two real plots with the same values, bar colors, dimensions and upper limit; change only the lower view limit 0 vs70. Record bar data, view limits, clipping boundaries and deterministic PNG hashes. Repeat in isolated environment. These are constructed numbers, not observed performance or causal measurements; bar-geometry result is not a rule for every chart type. Avoid treating cropped axis windows as always invalid.
+
+Independent Terra/medium author receives only source/probes and two original generated plots plus frozen runtime. Capture original draft and strict attempts; author budget10min/two attempts, parent15min/two revisions. Inspect image readability on390/1440px and light/dark, current-path provenance, actual PNG export and any copied runnable code. Content-only unless a concrete runtime defect justifies its own round. Keep raw sources/venv/full temporary outputs outside repository; push an inspectable branch review bundle and continue overall goal.

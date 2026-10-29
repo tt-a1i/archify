@@ -1,0 +1,18 @@
+{
+  "matplotlib": "3.11.2",
+  "python": "3.12.13",
+  "modules": [
+    {
+      "file": "_base.py",
+      "match": true,
+      "sourceSha256": "ceff4d2fa9bd99eb1451a27812bef343902384dd592a9b8482f31b2eac55f36b",
+      "installedSha256": "ceff4d2fa9bd99eb1451a27812bef343902384dd592a9b8482f31b2eac55f36b"
+    },
+    {
+      "file": "_axes.py",
+      "match": true,
+      "sourceSha256": "f61e1cb43575eca70b01c9c80f16d3015e91a8101fe9ce0cc3fdc3d80441c8a7",
+      "installedSha256": "f61e1cb43575eca70b01c9c80f16d3015e91a8101fe9ce0cc3fdc3d80441c8a7"
+    }
+  ]
+}

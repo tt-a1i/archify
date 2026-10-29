@@ -1,0 +1,36 @@
+{
+  "project": "Matplotlib",
+  "package": "matplotlib==3.11.2",
+  "python": "3.12.13",
+  "tag": "v3.11.2",
+  "commit": "d3ca9172e392048ec242b90e8423e88d1a3000b2",
+  "sourceAudit": {
+    "matplotlib": "3.11.2",
+    "python": "3.12.13",
+    "modules": [
+      {
+        "file": "_base.py",
+        "match": true,
+        "sourceSha256": "ceff4d2fa9bd99eb1451a27812bef343902384dd592a9b8482f31b2eac55f36b",
+        "installedSha256": "ceff4d2fa9bd99eb1451a27812bef343902384dd592a9b8482f31b2eac55f36b"
+      },
+      {
+        "file": "_axes.py",
+        "match": true,
+        "sourceSha256": "f61e1cb43575eca70b01c9c80f16d3015e91a8101fe9ce0cc3fdc3d80441c8a7",
+        "installedSha256": "f61e1cb43575eca70b01c9c80f16d3015e91a8101fe9ce0cc3fdc3d80441c8a7"
+      }
+    ]
+  },
+  "sources": [
+    "https://github.com/matplotlib/matplotlib/blob/d3ca9172e392048ec242b90e8423e88d1a3000b2/lib/matplotlib/axes/_base.py#L4165",
+    "https://github.com/matplotlib/matplotlib/blob/d3ca9172e392048ec242b90e8423e88d1a3000b2/lib/matplotlib/axes/_axes.py#L2307",
+    "https://matplotlib.org/3.11.2/api/_as_gen/matplotlib.axes.Axes.bar.html"
+  ],
+  "discovery": [
+    "https://pypi.org/project/matplotlib/",
+    "https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_ylim.html"
+  ],
+  "qualification": "Two installed Python source modules match pinned upstream bytes; this does not certify the entire wheel or compiled rendering backend.",
+  "unavailableLookup": "Versioned set_ylim documentation failed web open; pinned upstream function was read instead."
+}

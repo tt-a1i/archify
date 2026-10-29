@@ -1,0 +1,9 @@
+{
+  "python": "3.12.13",
+  "platform": "macOS-26.7.2-arm64-arm-64bit",
+  "matplotlib": "3.11.2",
+  "freetype": "2.14.3",
+  "fontFile": "DejaVuSans.ttf",
+  "fontSha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+  "scope": "Repeatability is verified for this local environment; byte identity across platforms was not tested."
+}

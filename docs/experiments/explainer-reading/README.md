@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between eighteen reading questions across sixteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between nineteen reading questions across seventeen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -239,3 +239,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 38
 
 [DuckDB column alignment](duckdb-union/README.md) uses seven repeated SQL cases to distinguish positional alignment, matching by column name, missing-column NULLs and duplicate retention. The retained page puts complete copied queries beside actual two-column results, keeps explicit column ordering as another correction, and removes layout-dependent wording. Three queries copied from the rendered page execute against fresh in-memory databases and match the source probes and visible result tables.
+
+## Continued exploration — round 39
+
+[Matplotlib axis windows](matplotlib-axis/README.md) preserves two actual plots of the same 80/100 values while explaining why clipping below 70 leaves visible segments of 10/30. The retained page aligns the figures and replaces a horizontally clipped four-column table with two explicit ratios. It also corrects “upper half” and an ambiguous endpoint phrase; the original draft, rejected revision, actual geometry and image hashes remain inspectable.

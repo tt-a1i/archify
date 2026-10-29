@@ -1,0 +1,40 @@
+{
+  "png": {
+    "width": 780,
+    "height": 4980
+  },
+  "counts": {
+    "questions": 19,
+    "variants": 46
+  },
+  "variants": [
+    {
+      "version": "完整图与局部图对齐",
+      "width": "390",
+      "frame": "matplotlib-axis/candidate.html",
+      "open": "matplotlib-axis/candidate.html",
+      "report": "matplotlib-axis/README.md"
+    },
+    {
+      "version": "完整图与局部图对齐",
+      "width": "1440",
+      "frame": "matplotlib-axis/candidate.html",
+      "open": "matplotlib-axis/candidate.html",
+      "report": "matplotlib-axis/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "390",
+      "frame": "matplotlib-axis/author/answer.html",
+      "open": "matplotlib-axis/author/answer.html",
+      "report": "matplotlib-axis/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "1440",
+      "frame": "matplotlib-axis/author/answer.html",
+      "open": "matplotlib-axis/author/answer.html",
+      "report": "matplotlib-axis/README.md"
+    }
+  ]
+}

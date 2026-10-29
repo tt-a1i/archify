@@ -1,0 +1,116 @@
+{
+  "python": "3.12.13",
+  "matplotlib": "3.11.2",
+  "backend": "Agg",
+  "scope": "Two positive synthetic values; linear y axis; default zero-bottom bars. PNGs are actual Matplotlib outputs, not illustrative recreations.",
+  "cases": [
+    {
+      "name": "zero",
+      "values": [
+        80,
+        100
+      ],
+      "before": [
+        {
+          "bottom": 0.0,
+          "height": 80.0
+        },
+        {
+          "bottom": 0.0,
+          "height": 100.0
+        }
+      ],
+      "ylim": [
+        0.0,
+        110.0
+      ],
+      "yticks": [
+        0.0,
+        20.0,
+        40.0,
+        60.0,
+        80.0,
+        100.0,
+        120.0
+      ],
+      "bars": [
+        {
+          "bottom": 0.0,
+          "height": 80.0,
+          "visibleDataLength": 80.0,
+          "visiblePixelHeight": 309.992727,
+          "clipOn": true
+        },
+        {
+          "bottom": 0.0,
+          "height": 100.0,
+          "visibleDataLength": 100.0,
+          "visiblePixelHeight": 387.490909,
+          "clipOn": true
+        }
+      ],
+      "visiblePixelRatio": 1.25,
+      "dataRatio": 1.25,
+      "difference": 20,
+      "relativeIncrease": 0.25,
+      "pngSha256": "6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368",
+      "pngSize": [
+        768,
+        576
+      ]
+    },
+    {
+      "name": "cropped",
+      "values": [
+        80,
+        100
+      ],
+      "before": [
+        {
+          "bottom": 0.0,
+          "height": 80.0
+        },
+        {
+          "bottom": 0.0,
+          "height": 100.0
+        }
+      ],
+      "ylim": [
+        70.0,
+        110.0
+      ],
+      "yticks": [
+        70.0,
+        80.0,
+        90.0,
+        100.0,
+        110.0
+      ],
+      "bars": [
+        {
+          "bottom": 0.0,
+          "height": 80.0,
+          "visibleDataLength": 10.0,
+          "visiblePixelHeight": 106.56,
+          "clipOn": true
+        },
+        {
+          "bottom": 0.0,
+          "height": 100.0,
+          "visibleDataLength": 30.0,
+          "visiblePixelHeight": 319.68,
+          "clipOn": true
+        }
+      ],
+      "visiblePixelRatio": 3.0,
+      "dataRatio": 1.25,
+      "difference": 20,
+      "relativeIncrease": 0.25,
+      "pngSha256": "106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0",
+      "pngSize": [
+        768,
+        576
+      ]
+    }
+  ]
+}

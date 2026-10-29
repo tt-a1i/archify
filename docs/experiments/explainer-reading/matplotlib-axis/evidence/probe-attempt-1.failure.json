@@ -1,0 +1,8 @@
+{
+  "exitCode": 1,
+  "stage": "Python parse before any plot or query execution",
+  "error": "SyntaxError: expected 'else' after 'if' expression",
+  "line": 27,
+  "cause": "Missing whitespace in else3 token",
+  "repair": "Use else 3; also cast visibleDataLength to float for portable JSON serialization."
+}

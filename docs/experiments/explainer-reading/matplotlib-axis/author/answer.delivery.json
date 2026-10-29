@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "0a420765-106b-472a-8470-a6a81f9ea26c",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round39/author/answer.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round39/author/answer.html",
+  "specification": {
+    "sha256": "36704af362d0bb4b9e049c985586297b41956d80768f864e068a82da03ced963",
+    "bytes": 2543
+  },
+  "artifact": {
+    "sha256": "f860f194d416c7921569678c2f7df222aa91d26a95fe3a0ed9d2d60b2f6502bf",
+    "bytes": 344901
+  },
+  "explainer": {
+    "preparedSha256": "4a7c52727548abba548a67bd9185622f0f246c7453f06ecd0af81382399bd05c",
+    "dependencies": [
+      {
+        "kind": "image",
+        "id": "image-4f2de9444db8",
+        "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round39/author/images/zero.png",
+        "sha256": "6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368",
+        "bytes": 18157
+      },
+      {
+        "kind": "image",
+        "id": "image-8a3ee6f150cf",
+        "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round39/author/images/cropped.png",
+        "sha256": "106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0",
+        "bytes": 16727
+      }
+    ]
+  }
+}

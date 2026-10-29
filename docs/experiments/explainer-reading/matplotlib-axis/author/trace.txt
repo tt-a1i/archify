@@ -1,0 +1,5 @@
+work_start_utc=2026-10-29T23:06:25Z
+first_draft_saved_utc=2026-10-29T23:06:40Z
+attempt_1_start_utc=2026-10-29T23:06:40Z
+attempt_1_end_utc=2026-10-29T23:06:41Z
+handoff_utc=2026-10-29T23:06:44Z

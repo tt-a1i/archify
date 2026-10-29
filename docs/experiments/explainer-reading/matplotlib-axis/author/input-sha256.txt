@@ -1,0 +1,2 @@
+6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368  images/zero.png
+106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0  images/cropped.png

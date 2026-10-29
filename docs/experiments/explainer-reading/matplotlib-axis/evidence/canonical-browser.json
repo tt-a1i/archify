@@ -1,0 +1,466 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2441,
+    "documentWidth": 390,
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "DIV",
+        "width": 332,
+        "scrollWidth": 332
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 179.390625,
+          "width": 366,
+          "height": 425.234375,
+          "top": 179.390625,
+          "right": 378,
+          "bottom": 604.625,
+          "left": 12
+        }
+      },
+      {
+        "id": "zero",
+        "box": {
+          "x": 12,
+          "y": 616.625,
+          "width": 366,
+          "height": 449.9140625,
+          "top": 616.625,
+          "right": 378,
+          "bottom": 1066.5390625,
+          "left": 12
+        }
+      },
+      {
+        "id": "cropped",
+        "box": {
+          "x": 12,
+          "y": 1078.5390625,
+          "width": 366,
+          "height": 449.9140625,
+          "top": 1078.5390625,
+          "right": 378,
+          "bottom": 1528.453125,
+          "left": 12
+        }
+      },
+      {
+        "id": "ratios",
+        "box": {
+          "x": 12,
+          "y": 1540.453125,
+          "width": 366,
+          "height": 307.5703125,
+          "top": 1540.453125,
+          "right": 378,
+          "bottom": 1848.0234375,
+          "left": 12
+        }
+      },
+      {
+        "id": "mechanism",
+        "box": {
+          "x": 12,
+          "y": 1860.0234375,
+          "width": 366,
+          "height": 270.03125,
+          "top": 1860.0234375,
+          "right": 378,
+          "bottom": 2130.0546875,
+          "left": 12
+        }
+      }
+    ],
+    "images": [
+      {
+        "alt": "纵轴从零开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 29,
+          "y": 679.09375,
+          "width": 332,
+          "height": 249,
+          "top": 679.09375,
+          "right": 361,
+          "bottom": 928.09375,
+          "left": 29
+        },
+        "sha256": "6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368"
+      },
+      {
+        "alt": "纵轴从 70 开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 29,
+          "y": 1141.0078125,
+          "width": 332,
+          "height": 249,
+          "top": 1141.0078125,
+          "right": 361,
+          "bottom": 1390.0078125,
+          "left": 29
+        },
+        "sha256": "106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0"
+      }
+    ],
+    "code": []
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2441,
+    "documentWidth": 390,
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "DIV",
+        "width": 332,
+        "scrollWidth": 332
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 179.390625,
+          "width": 366,
+          "height": 425.234375,
+          "top": 179.390625,
+          "right": 378,
+          "bottom": 604.625,
+          "left": 12
+        }
+      },
+      {
+        "id": "zero",
+        "box": {
+          "x": 12,
+          "y": 616.625,
+          "width": 366,
+          "height": 449.9140625,
+          "top": 616.625,
+          "right": 378,
+          "bottom": 1066.5390625,
+          "left": 12
+        }
+      },
+      {
+        "id": "cropped",
+        "box": {
+          "x": 12,
+          "y": 1078.5390625,
+          "width": 366,
+          "height": 449.9140625,
+          "top": 1078.5390625,
+          "right": 378,
+          "bottom": 1528.453125,
+          "left": 12
+        }
+      },
+      {
+        "id": "ratios",
+        "box": {
+          "x": 12,
+          "y": 1540.453125,
+          "width": 366,
+          "height": 307.5703125,
+          "top": 1540.453125,
+          "right": 378,
+          "bottom": 1848.0234375,
+          "left": 12
+        }
+      },
+      {
+        "id": "mechanism",
+        "box": {
+          "x": 12,
+          "y": 1860.0234375,
+          "width": 366,
+          "height": 270.03125,
+          "top": 1860.0234375,
+          "right": 378,
+          "bottom": 2130.0546875,
+          "left": 12
+        }
+      }
+    ],
+    "images": [
+      {
+        "alt": "纵轴从零开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 29,
+          "y": 679.09375,
+          "width": 332,
+          "height": 249,
+          "top": 679.09375,
+          "right": 361,
+          "bottom": 928.09375,
+          "left": 29
+        },
+        "sha256": "6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368"
+      },
+      {
+        "alt": "纵轴从 70 开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 29,
+          "y": 1141.0078125,
+          "width": 332,
+          "height": 249,
+          "top": 1141.0078125,
+          "right": 361,
+          "bottom": 1390.0078125,
+          "left": 29
+        },
+        "sha256": "106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0"
+      }
+    ],
+    "code": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1511,
+    "documentWidth": 1440,
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "DIV",
+        "width": 590,
+        "scrollWidth": 590
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 93.09375,
+          "width": 1280,
+          "height": 213,
+          "top": 93.09375,
+          "right": 1360,
+          "bottom": 306.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "zero",
+        "box": {
+          "x": 80,
+          "y": 322.09375,
+          "width": 632,
+          "height": 627,
+          "top": 322.09375,
+          "right": 712,
+          "bottom": 949.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "cropped",
+        "box": {
+          "x": 728,
+          "y": 322.09375,
+          "width": 632,
+          "height": 627,
+          "top": 322.09375,
+          "right": 1360,
+          "bottom": 949.09375,
+          "left": 728
+        }
+      },
+      {
+        "id": "ratios",
+        "box": {
+          "x": 80,
+          "y": 965.09375,
+          "width": 632,
+          "height": 291,
+          "top": 965.09375,
+          "right": 712,
+          "bottom": 1256.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "mechanism",
+        "box": {
+          "x": 728,
+          "y": 965.09375,
+          "width": 632,
+          "height": 291,
+          "top": 965.09375,
+          "right": 1360,
+          "bottom": 1256.09375,
+          "left": 728
+        }
+      }
+    ],
+    "images": [
+      {
+        "alt": "纵轴从零开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 101,
+          "y": 388.5625,
+          "width": 590,
+          "height": 442.5,
+          "top": 388.5625,
+          "right": 691,
+          "bottom": 831.0625,
+          "left": 101
+        },
+        "sha256": "6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368"
+      },
+      {
+        "alt": "纵轴从 70 开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 749,
+          "y": 388.5625,
+          "width": 590,
+          "height": 442.5,
+          "top": 388.5625,
+          "right": 1339,
+          "bottom": 831.0625,
+          "left": 749
+        },
+        "sha256": "106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0"
+      }
+    ],
+    "code": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1511,
+    "documentWidth": 1440,
+    "style": "clean",
+    "regions": [
+      {
+        "kind": "DIV",
+        "width": 590,
+        "scrollWidth": 590
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 93.09375,
+          "width": 1280,
+          "height": 213,
+          "top": 93.09375,
+          "right": 1360,
+          "bottom": 306.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "zero",
+        "box": {
+          "x": 80,
+          "y": 322.09375,
+          "width": 632,
+          "height": 627,
+          "top": 322.09375,
+          "right": 712,
+          "bottom": 949.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "cropped",
+        "box": {
+          "x": 728,
+          "y": 322.09375,
+          "width": 632,
+          "height": 627,
+          "top": 322.09375,
+          "right": 1360,
+          "bottom": 949.09375,
+          "left": 728
+        }
+      },
+      {
+        "id": "ratios",
+        "box": {
+          "x": 80,
+          "y": 965.09375,
+          "width": 632,
+          "height": 291,
+          "top": 965.09375,
+          "right": 712,
+          "bottom": 1256.09375,
+          "left": 80
+        }
+      },
+      {
+        "id": "mechanism",
+        "box": {
+          "x": 728,
+          "y": 965.09375,
+          "width": 632,
+          "height": 291,
+          "top": 965.09375,
+          "right": 1360,
+          "bottom": 1256.09375,
+          "left": 728
+        }
+      }
+    ],
+    "images": [
+      {
+        "alt": "纵轴从零开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 101,
+          "y": 388.5625,
+          "width": 590,
+          "height": 442.5,
+          "top": 388.5625,
+          "right": 691,
+          "bottom": 831.0625,
+          "left": 101
+        },
+        "sha256": "6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368"
+      },
+      {
+        "alt": "纵轴从 70 开始，A 为 80，B 为 100 的 Matplotlib 柱状图",
+        "naturalWidth": 768,
+        "naturalHeight": 576,
+        "box": {
+          "x": 749,
+          "y": 388.5625,
+          "width": 590,
+          "height": 442.5,
+          "top": 388.5625,
+          "right": 1339,
+          "bottom": 831.0625,
+          "left": 749
+        },
+        "sha256": "106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0"
+      }
+    ],
+    "code": []
+  }
+]

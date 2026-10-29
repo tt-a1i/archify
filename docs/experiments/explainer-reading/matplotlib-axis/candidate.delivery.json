@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "b3484cda-678b-4b89-887f-6ccb8de78860",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/matplotlib-axis/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/matplotlib-axis/candidate.html",
+  "specification": {
+    "sha256": "efd42523dd0851975d06b5f23e0e097135c9c319c2b3e7f3d2cad8f0dd0f2b1f",
+    "bytes": 2497
+  },
+  "artifact": {
+    "sha256": "5291f350b860e783f5acfb2265a0f0a6c0ae4f8917f56cadff8974b0034daf7f",
+    "bytes": 342877
+  },
+  "explainer": {
+    "preparedSha256": "1533b4fc15b964df9a715b81b20d57016f9cd14f57f9513498df0e8a23f89ce7",
+    "dependencies": [
+      {
+        "kind": "image",
+        "id": "image-4f2de9444db8",
+        "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/matplotlib-axis/images/zero.png",
+        "sha256": "6f6c6c05f945493b71adbcd240007a0564927076abe93f051abaa53f40ab9368",
+        "bytes": 18157
+      },
+      {
+        "kind": "image",
+        "id": "image-8a3ee6f150cf",
+        "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/matplotlib-axis/images/cropped.png",
+        "sha256": "106c76bae36655dc5b596f472bdd6626afc62318928c93adeb34ac85cbc0dba0",
+        "bytes": 16727
+      }
+    ]
+  }
+}
