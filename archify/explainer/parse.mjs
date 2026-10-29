@@ -95,7 +95,18 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
       // Diagrams keep their ID because node and route links name it.
       if (block.id && block.id === panel.id && block.type !== 'diagram') block.id = `${panel.id}-${block.type}`;
       block.id ||= stable(block.type,`${panel.id}\0${JSON.stringify(block)}`);
-      if (block.type === 'comparison') for (const row of block.rows) row.id ||= stable('row', `${block.id}\0${row.label}`);
+      if (block.type === 'comparison') {
+        const occurrences = new Map();
+        for (const row of block.rows) {
+          if (row.id) continue;
+          const occurrence = occurrences.get(row.label) || 0;
+          occurrences.set(row.label, occurrence + 1);
+          // Repeated labels still represent separate rows. Keep the first automatic ID
+          // unchanged so existing row links and delivered source bindings remain valid.
+          const key = `${block.id}\0${row.label}`;
+          row.id = stable('row', occurrence ? `${key}\0${occurrence}` : key);
+        }
+      }
       const pointer = `/panels/${panelIndex}/blocks/${panel.blocks.length}`;
       panel.blocks.push(block); map(pointer,block,descriptor(at,until));
       const property = {facts:'entries',comparison:'rows',steps:'items',list:'items'}[block.type];

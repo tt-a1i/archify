@@ -131,6 +131,35 @@ test('answer reasons, scope, numbered source syntax and explicit spans normalize
 test('comparison row IDs stay stable',()=>{
  const result=parse(draft('@comparison columns="A,B"\nCost {#cost-row} | Low {good} | High {bad}'));
  assert.equal(result.document.panels[0].blocks[0].rows[0].id,'cost-row');assert.equal(validateExplainer(result.document).ok,true);
+ const original=parse(draft('@comparison id=choices columns="A,B"\nCost | Low | High'));
+ const named=parse(draft('@comparison id=choices columns="A,B"\nCost {#named-cost} | Other | Other\nCost | Low | High\n\nRead [the named row](block:named-cost).'));
+ assert.equal(named.document.panels[0].blocks[0].rows[1].id,original.document.panels[0].blocks[0].rows[0].id,'an authored ID does not change the automatic identity of another row');
+ assert.equal(validateExplainer(named.document).ok,true);
+ const duplicate=parse(draft('@comparison columns="A,B"\nCost {#cost-row} | Low | High\nCost {#cost-row} | Other | Other'));
+ for(const document of [duplicate.document,parse(JSON.stringify(duplicate.document)).document]) {
+   const checked=validateExplainer(document);
+   assert.equal(checked.ok,false);
+   assert.ok(checked.diagnostics.some(entry=>entry.code==='explainer/duplicate-id'&&entry.subject.path==='/panels/0/blocks/0/rows/1/id'),'explicit row IDs must still identify a single target');
+ }
+});
+
+test('comparison tables preserve repeated labels as distinct rows',()=>{
+ const rows=['| Ready | 7 |','| Ready | 9 |','| Ready | 9 |','| Ready {#named-ready} | 11 |'];
+ for(const content of ['| Input | Value |\n| --- | --- |\n'+rows.join('\n'),'@comparison id=observations columns="Value"\n'+rows.join('\n')]) {
+   const input=draft(content+'\n\nRead [the named row](block:named-ready).');
+   const result=parse(input),table=result.document.panels[0].blocks[0];
+   const checked=validateExplainer(result.document,{sourceMap:result.sourceMap});
+   assert.equal(checked.ok,true,JSON.stringify(checked.diagnostics));
+   assert.deepEqual(table.rows.map(row=>row.label),['Ready','Ready','Ready','Ready']);
+   assert.deepEqual(table.rows.map(row=>row.cells[0].text),['7','9','9','11']);
+   assert.equal(new Set(table.rows.map(row=>row.id)).size,4);
+   assert.equal(table.rows[3].id,'named-ready');
+   assert.deepEqual(parse(input).document,result.document,'replaying the same source must keep its identities');
+   rows.forEach((row,index)=>{
+     const location=result.sourceMap[`/panels/0/blocks/0/rows/${index}/id`];
+     assert.equal(input.split('\n')[location.line-1],row,'each row retains its own source location');
+   });
+ }
 });
 
 test('reason lists immediately follow the conclusion and zero span reaches schema rejection',()=>{
