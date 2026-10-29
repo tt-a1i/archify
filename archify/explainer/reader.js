@@ -275,8 +275,8 @@
     let width = liveWidth + Math.ceil(Math.max(0,...all('.table-scroll').map(table=>table.scrollWidth - table.clientWidth)));
     let height = Math.ceil(shell.getBoundingClientRect().height + 48);
     let clone = root.cloneNode(true);
-    const liveCode = all('pre');
-    const exportCode = all('pre',clone).filter((pre,index)=>liveCode[index].scrollWidth > liveCode[index].clientWidth + 1);
+    const liveCode = all('pre',shell);
+    const exportCode = all('pre',clone.querySelector('.shell')).filter((pre,index)=>liveCode[index].scrollWidth > liveCode[index].clientWidth + 1);
     exportCode.forEach(pre=>pre.classList.add('export-code'));
     const liveDiff = all('.diff-scroll');
     const exportDiff = all('.diff-scroll',clone).filter((diff,index)=>liveDiff[index].scrollWidth > liveDiff[index].clientWidth + 1);
@@ -296,7 +296,7 @@
       copyBoard.style.flexDirection = 'column';
       all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
     }
-    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());
+    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status,.source-card').forEach(element=>element.remove());
     clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
     clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
     // An exported image has no scroll interaction; retain the complete overview.

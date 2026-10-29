@@ -388,6 +388,29 @@ test('image export retains the final table column and footer across responsive w
   }
  }finally{await browser.close();}
 });
+test('image export excludes floating source evidence and preserves the live reading state',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.answer.summary='Read the conclusion and its [source](source:example).';
+ doc.panels=Array.from({length:3},(_,i)=>({id:'part-'+i,title:'Part '+(i+1),span:6,blocks:[{id:'code-'+i,type:'snippet',text:'A short complete command.'}]}));
+ const source={id:'example',title:'Source evidence',path:'src/example.js',lines:[1,14],url:'https://example.com/source',text:Array.from({length:14},(_,i)=>`Line ${i+1}: `+'long source text '.repeat(30)).join('\n')};
+ const file=artifact('export-source-card',renderExplainer(doc,{preparedSources:{sources:{example:source}},sourceText:JSON.stringify(doc)})),browser=new ChromeVisualBrowser(chrome);
+ const exportPixels=()=>pageValue(browser,`(async()=>{const blob=await window.ArchifyExplainer.pageImage(),bitmap=await createImageBitmap(blob),canvas=document.createElement('canvas');try{canvas.width=bitmap.width;canvas.height=bitmap.height;const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);const bytes=ctx.getImageData(0,0,canvas.width,canvas.height).data;let popup=0;for(let i=0;i<bytes.length;i+=4)if(bytes[i]===251&&bytes[i+1]===4&&bytes[i+2]===127)popup++;return {width:bitmap.width,height:bitmap.height,popup};}finally{bitmap.close();}})()`);
+ const liveState=()=>pageValue(browser,'(()=>{const c=document.querySelector(".source-card"),pre=c.querySelector("pre");return {hidden:c.hidden,text:c.textContent,top:c.scrollTop,codeLeft:pre.scrollLeft,focus:document.activeElement===document.querySelector(".cite a"),panels:[...document.querySelectorAll(".panel")].map(p=>({id:p.id,box:p.getBoundingClientRect().toJSON()}))};})()');
+ try {
+  for(const width of [1440,390]) {
+   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,theme:'light',keyboard:false});
+   await pageValue(browser,'(()=>{const s=document.createElement("style");s.textContent=".source-card{background:rgb(251,4,127)!important}";document.head.append(s);})()');
+   const closed=await exportPixels();
+   await pageValue(browser,'document.querySelector(".cite a").focus()');
+   assert.equal(await pageValue(browser,'(()=>{const c=document.querySelector(".source-card"),p=c.querySelector("pre");return !c.hidden&&p.scrollWidth>p.clientWidth;})()'),true,'open evidence contains overflowing code outside the page shell');
+   const before=await liveState(),opened=await exportPixels();
+   assert.equal(opened.popup,0,'the floating source card must not cover the exported explanation');
+   assert.deepEqual(opened,closed,'opening source evidence must not change exported page dimensions or content markers');
+   assert.deepEqual(await liveState(),before,'export preserves the open live card, source text, focus and panel geometry');
+  }
+ }finally{await browser.close();}
+});
+
 test('image export wraps long snippets while preserving live code',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
  const doc=formalDocument();doc.meta.id='complete-code-export';doc.sources=[];
