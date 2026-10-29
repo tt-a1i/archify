@@ -68,6 +68,33 @@ test('explainer charts label bar values and give pie slices their value and shar
   assert.doesNotMatch(pie.html, /\[0\.8\]/);
 });
 
+test('configured pie legends retain each value and share', async () => {
+  const { compileExplainerChart } = await import('../archify/explainer/charts.mjs');
+  const prefixes = [
+    '%% A comment before the chart\n',
+    '---\nconfig:\n  pie:\n    legendPosition: bottom\n---\n',
+    '%%{init: {"pie":{"legendPosition":"bottom"}}}%%\n',
+  ];
+  for (const prefix of prefixes) {
+    const result = compileExplainerChart(prefix + 'pie showData\n  "A & B" : 20\n  "字体" : 80');
+    assert.equal(result.error, undefined, prefix);
+    assert.match(result.svg, /A &amp; B · 20 \(20%\)/, 'configuration must not remove the numerical legend');
+    assert.match(result.svg, /字体 · 80（80%）/);
+    assert.doesNotMatch(result.svg, /\[20\]|\[80\]/, 'showData must not duplicate the values');
+  }
+});
+
+test('pie legend decoration preserves accepted category identity', async () => {
+  const { compileExplainerChart } = await import('../archify/explainer/charts.mjs');
+  // The pie parser keeps the first value for a repeated category. Decorating the label
+  // must not turn a later occurrence into a different slice or change the total.
+  const result = compileExplainerChart('pie\n  "A":1\n  "A":9\n  "B":1');
+  assert.equal(result.error, undefined);
+  assert.match(result.svg, /A · 1 \(50%\)/);
+  assert.match(result.svg, /B · 1 \(50%\)/);
+  assert.doesNotMatch(result.svg, /A · 9/);
+});
+
 test('a data chart reads its CSV next to the draft, freezes it, and names a missing column', t => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-explainer-data-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
