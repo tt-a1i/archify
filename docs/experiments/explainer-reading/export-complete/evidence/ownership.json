@@ -1,0 +1,10 @@
+{
+  "url": "https://github.com/tt-a1i/archify/pull/998",
+  "state": "open",
+  "head": "25b767c72e9463a89e9e89b696d26a52318189b3",
+  "changedFilesReported": 226,
+  "filenamesReturned": 226,
+  "explainerPaths": [],
+  "scope": "Read-only changed-file audit of the broad #998 search hit; no explainer runtime overlap in the returned file list. No patch reused, no exhaustive ownership-search or review-approval claim.",
+  "previous": "#1015 head fe4f80d2195e0a7b49b7cfe6d3dba7ffd31a7ac8 inspected in round21; no table-focus or image-export behavior patch."
+}

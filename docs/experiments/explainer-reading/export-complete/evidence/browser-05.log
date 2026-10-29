@@ -1,0 +1,109 @@
+[ { format: 'webp', file: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/exports/product-jq-dark.webp', filename: 'jq 读到了 false，为什么结果还是 true？.webp' }, { format: 'jpeg', file: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/exports/product-jq-dark.jpg', filename: 'jq 读到了 false，为什么结果还是 true？.jpg' } ]
+[p1 "jq 读到了 false，为什么结果还是 true？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "jq 读到了 false，为什么结果还是 true？ · Archify"]
+root
+  container
+    container
+      heading
+        text "jq 读到了 false，为什么结果还是 true？"
+      container
+        group "主题"
+          button [ref=330]
+            text "系统"
+          button [ref=331]
+            text "浅色"
+          button [ref=332]
+            text "深色"
+        button "样式" [ref=333, loc=css:button[aria-label="样式"]]
+          text "杂志"
+          svg_root
+        button [ref=334]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=335]
+            text "追问"
+        container
+          paragraph
+            text ".enabled // true"
+            text "会把左侧结果中的"
+            text "false"
+            text "当作不可用的备选值；当左侧没有其他可用结果时，jq 输出右侧的"
+            text "true"
+            text "。如果"
+            text "false"
+            text "是有意义的设置，请显式判断"
+            text "null"
+            text "或键是否存在。"
+            anchor [ref=336, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#source-manual]
+              text "1"
+            anchor [ref=337, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#source-probe]
+              text "2"
+          ordered_list
+            list_item
+              text "1"
+              text "读取对象中不存在的键会得到"
+              text "null"
+              text "。"
+              anchor [ref=338, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#source-index]
+                text "3"
+            list_item
+              text "2"
+              text "判断"
+              text "null"
+              text "可保留"
+              text "false"
+              text "，同时给"
+              text "null"
+              text "和缺失键设默认值。"
+              anchor [ref=339, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#source-probe]
+                text "2"
+            list_item
+              text "3"
+              text "用"
+              text "has("enabled")"
+              text "判断键是否存在，可同时保留"
+              text "false"
+              text "和显式的"
+              text "null"
+              text "。"
+              anchor [ref=340, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#source-has]
+                text "4"
+              anchor [ref=341, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#source-probe]
+                text "2"
+        paragraph
+          text "适用于"
+          text "JSON 对象字段"
+          text "jq 1.7.1 语义"
+          text "POSIX shell"
+      container
+        container
+          anchor "先看这个开关" [ref=342, loc=css:a[aria-label="先看这个开关"], url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#switch]
+            text "1"
+          heading
+            text "先看这个开关"
+          button [ref=343]
+            text "追问"
+        container
+          paragraph
+            text "假设"
+            text "enabled: false"
+            text "表示用户明确关闭功能。下面的过滤器读到这个值后，"
+            text "//"
+            text "仍选择了默认值。"
+            anchor [ref=344, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/jq.html#source-probe]
+              text "2"
+          container
+            container
+              container
+                text "复现：明确关闭却得到 true"
+                text "bash"
+              button [ref=345]
+                text "复制"
+            container [ref=346]
+              text "jq -cn '{"enabled":false} | .enabled // true' # 输出：true"

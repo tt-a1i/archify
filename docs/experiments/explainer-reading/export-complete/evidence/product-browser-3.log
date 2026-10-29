@@ -1,0 +1,33 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-browser.test.mjs --test-name-pattern=image export
+
+Repository tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: image export retains the final table column and footer across responsive widths
+ok 1 - image export retains the final table column and footer across responsive widths
+  ---
+  duration_ms: 1268.638125
+  type: 'test'
+  ...
+# Subtest: image export wraps long snippets while preserving live code
+ok 2 - image export wraps long snippets while preserving live code
+  ---
+  duration_ms: 731.494458
+  type: 'test'
+  ...
+# Subtest: image export bounds wide bitmaps and retains the final cells
+ok 3 - image export bounds wide bitmaps and retains the final cells
+  ---
+  duration_ms: 976.555083
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3124.276917

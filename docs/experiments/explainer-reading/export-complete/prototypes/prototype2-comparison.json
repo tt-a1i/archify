@@ -1,0 +1,516 @@
+[
+  {
+    "arm": "candidate",
+    "name": "gzip",
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "shellWidth": 366,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 544,
+          "scrollLeft": 0,
+          "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18"
+        }
+      ],
+      "code": []
+    },
+    "pixelWidth": 1152,
+    "pixelHeight": 3738,
+    "measured": {
+      "width": 576,
+      "shellHeight": 1820.578125,
+      "footerBottom": 1820.578125,
+      "tables": [
+        {
+          "width": 544,
+          "scrollWidth": 544,
+          "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18",
+          "headers": [
+            {
+              "text": "输入",
+              "width": 96,
+              "height": 31.6328125
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ],
+      "code": []
+    },
+    "cssImageHeight": 1869,
+    "after": {
+      "width": 390,
+      "pageWidth": 390,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 544,
+          "scrollLeft": 0
+        }
+      ],
+      "roots": 1,
+      "iframes": 0
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "jq",
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "shellWidth": 366,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 493,
+          "scrollLeft": 0,
+          "text": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失truetruetrue"
+        }
+      ],
+      "code": [
+        {
+          "width": 356,
+          "scrollWidth": 367,
+          "text": "jq -cn '{\"enabled\":false} | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 577,
+          "text": "jq -cn '{\"enabled\":false} | .enabled | if . == null then true else . end'\n# 输出：false"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 585,
+          "text": "jq -cn '{\"enabled\":false} | if has(\"enabled\") then .enabled else true end'\n# 输出：false"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ]
+    },
+    "pixelWidth": 1050,
+    "pixelHeight": 4852,
+    "measured": {
+      "width": 525,
+      "shellHeight": 2377.5859375,
+      "footerBottom": 2377.5859375,
+      "tables": [
+        {
+          "width": 493,
+          "scrollWidth": 493,
+          "text": "输入对象的 enabled// true仅 null 或缺失时默认仅缺失时默认falsetrue保留false保留falsenulltruetruenull缺失truetruetrue",
+          "headers": [
+            {
+              "text": "输入对象的 enabled",
+              "width": 133.421875,
+              "height": 31.6328125
+            },
+            {
+              "text": "// true",
+              "width": 112.0703125,
+              "height": 31.6328125
+            },
+            {
+              "text": "仅 null 或缺失时默认",
+              "width": 135.421875,
+              "height": 31.6328125
+            },
+            {
+              "text": "仅缺失时默认",
+              "width": 112.0859375,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ],
+      "code": [
+        {
+          "width": 491,
+          "scrollWidth": 491,
+          "text": "jq -cn '{\"enabled\":false} | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 491,
+          "scrollWidth": 491,
+          "text": "jq -cn '{\"enabled\":false} | .enabled | if . == null then true else . end'\n# 输出：false"
+        },
+        {
+          "width": 491,
+          "scrollWidth": 491,
+          "text": "jq -cn '{\"enabled\":false} | if has(\"enabled\") then .enabled else true end'\n# 输出：false"
+        },
+        {
+          "width": 491,
+          "scrollWidth": 491,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 491,
+          "scrollWidth": 491,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ]
+    },
+    "cssImageHeight": 2426,
+    "after": {
+      "width": 390,
+      "pageWidth": 390,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 493,
+          "scrollLeft": 0
+        }
+      ],
+      "roots": 1,
+      "iframes": 0
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "control",
+    "live": {
+      "width": 390,
+      "pageWidth": 390,
+      "shellWidth": 366,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 358,
+          "scrollLeft": 0,
+          "text": "写法enabled 的结果// truefalse、null、缺失都输出 true。判断 null保留 false；null 或缺失输出 true。检查键保留 false 和 null；仅缺失输出 true。"
+        }
+      ],
+      "code": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled\n  | if . == null then true\n    else . end'\n# 输出：false"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":null}\n  | if has(\"enabled\")\n    then .enabled\n    else true end'\n# 输出：null"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ]
+    },
+    "pixelWidth": 780,
+    "pixelHeight": 5728,
+    "measured": {
+      "width": 390,
+      "shellHeight": 2753.15625,
+      "footerBottom": 2753.15625,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 358,
+          "text": "写法enabled 的结果// truefalse、null、缺失都输出 true。判断 null保留 false；null 或缺失输出 true。检查键保留 false 和 null；仅缺失输出 true。",
+          "headers": [
+            {
+              "text": "写法",
+              "width": 96,
+              "height": 31.6328125
+            },
+            {
+              "text": "enabled 的结果",
+              "width": 262,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ],
+      "code": [
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled // true'\n# 输出：true"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":false}\n  | .enabled\n  | if . == null then true\n    else . end'\n# 输出：false"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '{\"enabled\":null}\n  | if has(\"enabled\")\n    then .enabled\n    else true end'\n# 输出：null"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) // \"fallback\"'\n# 输出：0"
+        },
+        {
+          "width": 356,
+          "scrollWidth": 356,
+          "text": "jq -cn '(false, null, 0) | . // \"fallback\"'\n# 输出：\n# \"fallback\"\n# \"fallback\"\n# 0"
+        }
+      ]
+    },
+    "cssImageHeight": 2864,
+    "after": {
+      "width": 390,
+      "pageWidth": 390,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 358,
+          "scrollLeft": 0
+        }
+      ],
+      "roots": 1,
+      "iframes": 0
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "wide",
+    "live": {
+      "width": 390,
+      "pageWidth": 414,
+      "shellWidth": 366,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 992,
+          "scrollLeft": 0,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HDelta-995+20+23+18-1200+400-803+600Samples10241024102410242048204820482048"
+        }
+      ],
+      "code": []
+    },
+    "pixelWidth": 2048,
+    "pixelHeight": 1640,
+    "measured": {
+      "width": 1024,
+      "shellHeight": 771.890625,
+      "footerBottom": 771.890625,
+      "tables": [
+        {
+          "width": 992,
+          "scrollWidth": 992,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HDelta-995+20+23+18-1200+400-803+600Samples10241024102410242048204820482048",
+          "headers": [
+            {
+              "text": "Measure",
+              "width": 96,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch A",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch B",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch C",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch D",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch E",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch F",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch G",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch H",
+              "width": 112,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ],
+      "code": []
+    },
+    "cssImageHeight": 820,
+    "after": {
+      "width": 390,
+      "pageWidth": 414,
+      "tables": [
+        {
+          "width": 358,
+          "scrollWidth": 992,
+          "scrollLeft": 0
+        }
+      ],
+      "roots": 1,
+      "iframes": 0
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "wide-clean",
+    "live": {
+      "width": 390,
+      "pageWidth": 400,
+      "shellWidth": 366,
+      "tables": [
+        {
+          "width": 332,
+          "scrollWidth": 1440,
+          "scrollLeft": 0,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HBatch IBatch JBatch KBatch LDelta-995+20+23+18-1200+400-803+600+810-900+1250-2000"
+        }
+      ],
+      "code": []
+    },
+    "pixelWidth": 3012,
+    "pixelHeight": 2862,
+    "measured": {
+      "width": 1506,
+      "shellHeight": 1382.75,
+      "footerBottom": 1382.75,
+      "tables": [
+        {
+          "width": 1440,
+          "scrollWidth": 1440,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HBatch IBatch JBatch KBatch LDelta-995+20+23+18-1200+400-803+600+810-900+1250-2000",
+          "headers": [
+            {
+              "text": "Measure",
+              "width": 96,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch A",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch B",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch C",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch D",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch E",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch F",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch G",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch H",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch I",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch J",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch K",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch L",
+              "width": 112,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ],
+      "code": []
+    },
+    "cssImageHeight": 1431,
+    "after": {
+      "width": 390,
+      "pageWidth": 400,
+      "tables": [
+        {
+          "width": 332,
+          "scrollWidth": 1440,
+          "scrollLeft": 0
+        }
+      ],
+      "roots": 1,
+      "iframes": 0
+    }
+  }
+]

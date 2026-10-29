@@ -1,0 +1,35 @@
+{
+  "productRevision": "7e07a7e71f8e51e404b11f75089455736b301d6d",
+  "baseRevision": "642072c97d43d03ada90c6414a4b47bf26a18ada",
+  "devRevision": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "readerSha256": "dad78f8bd008ad066e78b4f9a4a7e77851094484dd34f7dd3b29abc6ca7af9fd",
+  "testSha256": "6ad70481394bee20b68f0cd3079b4546cd9a12077a4cb8ae6eb9db3258a7e18c",
+  "newTests": {
+    "baseFail": 3,
+    "candidatePass": 3,
+    "skipped": 0
+  },
+  "browserFilePassBeforeFinalTestSelectorCorrection": 12,
+  "unchangedBrowserTestsReused": 9,
+  "corePass": 19,
+  "generated": "pass",
+  "canonicalFinalizations": 4,
+  "currentPathProvenanceChecks": 4,
+  "uiPngDownloads": 15,
+  "byteEqualControls": 4,
+  "otherFormats": {
+    "jpeg": [
+      1050,
+      4852
+    ],
+    "webp": [
+      1050,
+      4852
+    ]
+  },
+  "packageBrowserPass": 4,
+  "humanAcceptance": false,
+  "fullBrowserRunner": "not-run",
+  "finalHeadCI": "not-claimed",
+  "windows": "not-run"
+}

@@ -1,0 +1,46 @@
+# Complete comparison tables and code in image exports
+
+Round22 adopts an export-only repair after [round21](../export-overflow/README.md) demonstrated missing columns and commands in actual PNGs. Product commit: `7e07a7e71f8e51e404b11f75089455736b301d6d`. Frozen comparison base: `642072c97d43d03ada90c6414a4b47bf26a18ada`. `origin/dev` was refreshed at `5ecbd1bfdbf83ea747072112493c940e707569cb`, an ancestor of this branch.
+
+When a comparison table overflows, the image canvas grows enough to retain its columns, and export panels follow a single reading order. Overflowing snippets wrap in the image. The live page, its scroll positions, authored text, and existing no-overflow exports stay unchanged. This is a fixed-input reader/export experiment, exempt from fresh generation comparisons under the [real repository benchmark convention](../../../../benchmarks/real-repo-generation/README.md). It does not establish human comprehension gains.
+
+## Inspect the result
+
+| Input at 390 px | Actual output | What changed |
+| --- | --- | --- |
+| gzip, editorial | [Light PNG](exports/product-candidate-gzip-390-editorial-light.png), [dark PNG](exports/product-candidate-gzip-390-editorial-dark.png), [reader](candidate/gzip.html) | All five columns remain visible; `DEFLATE` and `-995` stay intact. Image: 1152 × 3738 px. |
+| jq, editorial | [Light PNG](exports/product-candidate-jq-390-editorial-light.png), [dark PNG](exports/product-candidate-jq-390-editorial-dark.png), [reader](candidate/jq.html) | All four policies and complete commands survive. Image: 1050 × 4852 px. |
+| Twelve-column synthetic fixture | [Clean](exports/product-candidate-wide-clean-390-clean-light.png), [product/dark](exports/product-candidate-wide-clean-390-product-dark.png), [Swiss](exports/product-candidate-wide-clean-390-swiss-light.png), [reader](candidate/wide-clean.html) | Table and six following sections retain the complete footer after crossing desktop breakpoints. These values are illustrative. |
+
+The full-width image trades a narrower canvas for complete data. A phone viewer may need to zoom; this is not a claim that a wide table is the best authored explanation. The preferred [two-column jq explanation](../jq-default/candidate.html) and [gzip content variant](../gzip-opening/candidate.html) still avoid that burden in normal reading. No live table compression, forced token splitting, or new scrolling control was added.
+
+The gzip and jq source semantics and executable probes remain owned by [gzip-size](../gzip-size/README.md) and [jq-default](../jq-default/README.md). This round reuses their original wider author inputs without changing prose or commands; the fitting control reuses the final jq input.
+
+## Failures that shaped the implementation
+
+1. The [first enlargement patch](prototypes/prototype1.patch) measured the expanded clone in the original phone viewport. It looked adequate on gzip/jq, but a clean twelve-column page crossed a responsive breakpoint: the serialized image was 1335 CSS px tall while the footer reached 1382.75 px. Its table also overflowed by 8 px. The [actual cropped PNG](prototypes/candidate-wide-clean-390.png) and [observations](prototypes/clean-comparison.json) are preserved.
+2. The [second prototype](prototypes/prototype2.patch) measured a script-free clone inside a temporary sandboxed iframe at its export width, adjusted the remaining table overflow once, and measured height there. Its [PNG](prototypes/final-candidate-wide-clean-390.png) includes the footer. However, later pixel regression tests exposed that using XML serialization as HTML `srcdoc` escapes `>` in CSS raw text, breaking child selectors. The [failed test log](evidence/product-browser-1.log), [diagnostic log](evidence/product-browser-diagnostic.log), and [diagnostic PNG](prototypes/diagnostic-3012.png) are retained. Product code uses HTML serialization for `srcdoc` and XML serialization only for the final SVG. Earlier prototype geometry is preliminary, not final acceptance; final measurement parses captured XML before creating its HTML measurement frame.
+3. The initial snippet pixel test selected `.snippet code`, which also includes the language label. Thus old code wrongly passed the check. Replacing a pseudo-element with a text marker did not fix that selector mistake. [First negative control](evidence/base-regression.log), [second negative control](evidence/base-regression-2.log), and [diagnostic image](prototypes/base-code-diagnostic.png) show the false positive. The final test marks actual trailing characters in `.snippet pre code`; [all three tests now fail on base](evidence/base-regression-3.log) and [pass on candidate](evidence/product-browser-4.log).
+
+The iframe is only created when export width changes, contains no reader scripts, and is removed in `finally`. The same-width inert-clone path remains responsible for snippet wrapping and native-diagram overview height. Canvas scaling now applies the existing 16000 px limit to both dimensions. A 160-column synthetic test verifies bounded output and retained endpoints; it is not a readability or performance benchmark.
+
+## Evidence and scope
+
+[Browser comparison](evidence/product-comparison.json) records 15 actual UI PNG downloads, live geometry, exported geometry, and SHA-256 values. The candidate covers editorial light/dark for gzip/jq, clean light, product dark, and Swiss light for the responsive counterexample. All candidate tables fit; all measured footers are inside the images; live dimensions, scroll positions and document ownership are unchanged.
+
+Four no-overflow controls are byte-identical to base: gzip/jq/fitting control at 1440 px, plus the fitting control at 390 px. Parent image inspection covered the seven changed candidate PNGs, including the clean/product/Swiss counterexamples. The unchanged controls are supported by byte equality, not a new human acceptance claim. [Browser script](evidence/browser-04.mjs) retains the actual download and measurement procedure.
+
+The jq dark page also downloaded [JPG](exports/product-jq-dark.jpg) and [WebP](exports/product-jq-dark.webp) through the reader menu. Both decode to 1050 × 4852 px and were visually inspected for complete commands, table and footer. This checks one case per format, not the whole format/style matrix. [Format run](evidence/other-formats.json), [script](evidence/browser-05.mjs).
+
+Validation on the product source:
+
+- [Full explainer browser test file](evidence/product-browser-full-file.log): 12 passed, zero skipped. The final three new tests were subsequently corrected and rerun: [3 passed](evidence/product-browser-4.log). The other nine tests, including native preview/print behavior, are unchanged; their earlier results are reused at identical product code.
+- [Core smoke](evidence/core.log): 19 passed; [generated-output checks](evidence/generated.log) passed. This is not a complete repository suite or full browser runner claim.
+- Four strict finalizations passed at the checked-in candidate paths. The HTML, inputs, delivery and finalize receipts remain in [candidate/](candidate/); [current-path provenance checks](evidence/current-path-checks.json) all pass. These final candidate receipts refer to their actual paths. Prototype and package records retain their original external tuning paths and are historical evidence, not relocated provenance acceptance.
+- Official Node 22.23.3 / bundled zlib 1.3.1-e00f703 produced two identical ZIPs: 6,995,966 bytes, SHA-256 `a3c9cb4b6b65fa44d4b5759afbc7d869e4b88f23bbc90b45da783ff48fe5aa15`. An extraction outside the repository has byte-identical reader source, passes strict [CLI finalization](evidence/package-cli.log), and passes [four browser regressions](evidence/package-browser.log). [Package identity](evidence/package-result.json). This is package execution, not installation.
+
+Scoped PR improvement check: the new tests protect missing actual bitmap content, footer clipping, width limits and unchanged live state, rather than a preferred layout width. Negative controls caught both the product defects and a faulty test. No equivalent existing bitmap test covered these losses. A focused simplification survey retained both measurement paths: changed media-query viewport and same-viewport reflow have different responsibilities. No broader helper or lifecycle framework was added.
+
+The broad ownership search hit [PR #998](https://github.com/tt-a1i/archify/pull/998) was checked at head `25b767c72e9463a89e9e89b696d26a52318189b3`: its 226 returned changed filenames contain no `archify/explainer/` path. Round21's #1015 inspection is also retained in the [bounded ownership record](evidence/ownership.json). This is not an exhaustive overlap search or review approval; no external comment or patch reuse occurred.
+
+Remaining boundaries: no Windows, Safari raster-export, screen-reader, full browser runner, final-head CI, or human reading acceptance is claimed. Diff tables are not repaired by this comparison-table change. Existing mobile toolbar overflow remains separately documented. The next bounded exploration should inspect complete diff/code explanations and their static exports, retaining content-first alternatives instead of treating a wider image as universally better.

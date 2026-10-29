@@ -1,0 +1,67 @@
+TAP version 13
+# Subtest: image export retains the final table column and footer across responsive widths
+not ok 1 - image export retains the final table column and footer across responsive widths
+  ---
+  duration_ms: 858.656709
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/base-regression/test/explainer-browser.test.mjs:310:1'
+  failureType: 'testCodeFailure'
+  error: 'The last column must be present in the actual PNG'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/base-regression/test/explainer-browser.test.mjs:321:11)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: image export wraps long snippets while preserving live code
+not ok 2 - image export wraps long snippets while preserving live code
+  ---
+  duration_ms: 747.1295
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/base-regression/test/explainer-browser.test.mjs:327:1'
+  failureType: 'testCodeFailure'
+  error: 'The final code characters are present in the PNG'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/base-regression/test/explainer-browser.test.mjs:339:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: image export bounds wide bitmaps and retains the final cells
+not ok 3 - image export bounds wide bitmaps and retains the final cells
+  ---
+  duration_ms: 797.591375
+  type: 'test'
+  location: '/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/base-regression/test/explainer-browser.test.mjs:345:1'
+  failureType: 'testCodeFailure'
+  error: 'Both ends survive the bounded bitmap: {"width":780,"height":3188,"marks":{"first":256,"last":0,"code":0,"footer":256}}'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round22/base-regression/test/explainer-browser.test.mjs:354:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 0
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2551.402167

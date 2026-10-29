@@ -1,0 +1,357 @@
+[
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "../export-overflow/README.md",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "../../../../benchmarks/real-repo-generation/README.md",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-candidate-gzip-390-editorial-light.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-candidate-gzip-390-editorial-dark.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "candidate/gzip.html",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-candidate-jq-390-editorial-light.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-candidate-jq-390-editorial-dark.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "candidate/jq.html",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-candidate-wide-clean-390-clean-light.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-candidate-wide-clean-390-product-dark.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-candidate-wide-clean-390-swiss-light.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "candidate/wide-clean.html",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "../jq-default/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "../gzip-opening/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "../gzip-size/README.md",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "../jq-default/README.md",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "prototypes/prototype1.patch",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "prototypes/candidate-wide-clean-390.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "prototypes/clean-comparison.json",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "prototypes/prototype2.patch",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "prototypes/final-candidate-wide-clean-390.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/product-browser-1.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/product-browser-diagnostic.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "prototypes/diagnostic-3012.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/base-regression.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/base-regression-2.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "prototypes/base-code-diagnostic.png",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/base-regression-3.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/product-browser-4.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/product-comparison.json",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/browser-04.mjs",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-jq-dark.jpg",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "exports/product-jq-dark.webp",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/other-formats.json",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/browser-05.mjs",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/product-browser-full-file.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/product-browser-4.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/core.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/generated.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "candidate/",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/current-path-checks.json",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/package-cli.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/package-browser.log",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/package-result.json",
+    "exists": true
+  },
+  {
+    "source": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/README.md",
+    "link": "evidence/ownership.json",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "phone-preview/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "chinese-modifiers/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "pie-legends/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "export-complete/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "mobile-tools/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "phone-labels/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "inline-code/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "restore-pair/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "ripgrep-pair/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "gzip-charts/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "chart-scroll/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "chart-narrow/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "export-overflow/README.md",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "sqlite-probe/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "phone-preview/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "redis/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "taskgroup/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "restore-commands/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "ripgrep-pair/readable-commands.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "curl-headers/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "thread-cancel/two-columns.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "gzip-opening/candidate.html",
+    "exists": true
+  },
+  {
+    "source": "docs/experiments/explainer-reading/index.html",
+    "link": "jq-default/candidate.html",
+    "exists": true
+  }
+]

@@ -1,0 +1,253 @@
+{ file: 'product-candidate-gzip-390-editorial-light.png', size: [ 1152, 3738 ], table: [ [ 544, 544 ] ], footer: 1820.578125, height: 1869, liveUnchanged: true }
+{ file: 'product-candidate-gzip-390-editorial-dark.png', size: [ 1152, 3738 ], table: [ [ 544, 544 ] ], footer: 1820.578125, height: 1869, liveUnchanged: true }
+{ file: 'product-candidate-jq-390-editorial-light.png', size: [ 1050, 4852 ], table: [ [ 493, 493 ] ], footer: 2377.5859375, height: 2426, liveUnchanged: true }
+{ file: 'product-candidate-jq-390-editorial-dark.png', size: [ 1050, 4852 ], table: [ [ 493, 493 ] ], footer: 2377.5859375, height: 2426, liveUnchanged: true }
+{ file: 'product-candidate-wide-clean-390-clean-light.png', size: [ 3012, 2862 ], table: [ [ 1440, 1440 ] ], footer: 1382.75, height: 1431, liveUnchanged: true }
+{ file: 'product-candidate-wide-clean-390-product-dark.png', size: [ 3020, 2824 ], table: [ [ 1440, 1440 ] ], footer: 1363.703125, height: 1412, liveUnchanged: true }
+{ file: 'product-candidate-wide-clean-390-swiss-light.png', size: [ 2928, 2408 ], table: [ [ 1440, 1440 ] ], footer: 1155.65625, height: 1204, liveUnchanged: true }
+{ file: 'product-base-control-390-editorial-light.png', size: [ 780, 5728 ], table: [ [ 358, 358 ] ], footer: 2753.15625, height: 2864, liveUnchanged: true }
+{ file: 'product-base-gzip-1440-editorial-light.png', size: [ 2880, 2130 ], table: [ [ 840, 840 ] ], footer: 1016.578125, height: 1065, liveUnchanged: true }
+{ file: 'product-base-jq-1440-editorial-light.png', size: [ 2880, 2670 ], table: [ [ 732, 732 ] ], footer: 1286.078125, height: 1335, liveUnchanged: true }
+{ file: 'product-base-control-1440-editorial-light.png', size: [ 2880, 2844 ], table: [ [ 840, 840 ] ], footer: 1373.078125, height: 1422, liveUnchanged: true }
+{ file: 'product-candidate-control-390-editorial-light.png', size: [ 780, 5728 ], table: [ [ 358, 358 ] ], footer: 2753.15625, height: 2864, liveUnchanged: true }
+{ file: 'product-candidate-gzip-1440-editorial-light.png', size: [ 2880, 2130 ], table: [ [ 840, 840 ] ], footer: 1016.578125, height: 1065, liveUnchanged: true }
+{ file: 'product-candidate-jq-1440-editorial-light.png', size: [ 2880, 2670 ], table: [ [ 732, 732 ] ], footer: 1286.078125, height: 1335, liveUnchanged: true }
+{ file: 'product-candidate-control-1440-editorial-light.png', size: [ 2880, 2844 ], table: [ [ 840, 840 ] ], footer: 1373.078125, height: 1422, liveUnchanged: true }
+[p1 "jq 读到了 false，为什么结果还是 true？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "jq 读到了 false，为什么结果还是 true？ · Archify"]
+root
+  container
+    container
+      heading
+        text "jq 读到了 false，为什么结果还是 true？"
+      container
+        group "主题"
+          button [ref=300]
+            text "系统"
+          button [ref=301]
+            text "浅色"
+          button [ref=302]
+            text "深色"
+        button "样式" [ref=303, loc=css:button[aria-label="样式"]]
+          text "杂志"
+          svg_root
+        button [ref=304]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=305]
+            text "追问"
+        container
+          paragraph
+            text "当"
+            text "enabled"
+            text "的值是"
+            text "false"
+            text "时，"
+            text ".enabled // true"
+            text "会输出默认值"
+            text "true"
+            text "。要保留这个关闭状态，可以改为判断"
+            text "null"
+            text "；如果连显式的"
+            text "null"
+            text "也要保留，就检查键是否存在。"
+            anchor [ref=306, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-manual]
+              text "1"
+            anchor [ref=307, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-probe]
+              text "2"
+          ordered_list
+            list_item
+              text "1"
+              text "读取对象中不存在的键会得到"
+              text "null"
+              text "。"
+              anchor [ref=308, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-index]
+                text "3"
+            list_item
+              text "2"
+              text "判断"
+              text "null"
+              text "可保留"
+              text "false"
+              text "，同时给"
+              text "null"
+              text "和缺失键设默认值。"
+              anchor [ref=309, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-probe]
+                text "2"
+            list_item
+              text "3"
+              text "用"
+              text "has("enabled")"
+              text "判断键是否存在，可同时保留"
+              text "false"
+              text "和显式的"
+              text "null"
+              text "。"
+              anchor [ref=310, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-has]
+                text "4"
+              anchor [ref=311, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-probe]
+                text "2"
+        paragraph
+          text "适用于"
+          text "JSON 对象字段"
+          text "jq 1.7.1 语义"
+          text "POSIX shell"
+      container
+        container
+          anchor "先看这个开关" [ref=312, loc=css:a[aria-label="先看这个开关"], url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#switch]
+            text "1"
+          heading
+            text "先看这个开关"
+          button [ref=313]
+            text "追问"
+        container
+          paragraph
+            text "假设"
+            text "enabled: false"
+            text "表示用户明确关闭功能。下面的过滤器读到这个值后，"
+            text "//"
+            text "仍选择了默认值。"
+            anchor [ref=314, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-probe]
+              text "2"
+          container
+            container
+              container
+                text "复现：明确关闭却得到 true"
+                text "bash"
+              button [ref=315]
+                text "复制"
+            text "jq -cn '{"enabled":false} | .enabled // true' # 输出：true"
+          paragraph
+            text "//"
+            text "输出左侧结果流中除"
+            text "false"
+            text "和"
+            text "null"
+            text "之外的值；如果没有这样的值，就输出右侧结果。"
+            text "0"
+            text "、空字符串和空数组都可保留。"
+            text "empty"
+            text "则是不产生结果，既不是"
+            text "null"
+            text "，也不是"
+            text "[]"
+            text "。"
+            anchor [ref=316, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-manual]
+              text "1"
+            anchor [ref=317, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-empty]
+              text "5"
+            anchor [ref=318, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-probe]
+              text "2"
+      container
+        container
+          anchor "你希望哪种情况使用默认值？" [ref=319, loc=css:a[aria-label="你希望哪种情况使用默认值？"], url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#policy]
+            text "2"
+          heading
+            text "你希望哪种情况使用默认值？"
+          button [ref=320]
+            text "追问"
+        container
+          paragraph
+            text "下面比较同一个对象字段"
+            text "enabled"
+            text "。表中是过滤器输出，不会修改输入文件。"
+          table
+            table_row
+              table_cell
+                text "写法"
+              table_cell
+                text "enabled 的结果"
+            table_row
+              table_cell
+                text "// true"
+              table_cell
+                text "false"
+                text "、"
+                text "null"
+                text "、缺失都输出"
+                text "true"
+                text "。"
+            table_row
+              table_cell
+                text "判断"
+                text "null"
+              table_cell
+                text "保留"
+                text "false"
+                text "；"
+                text "null"
+                text "或缺失输出"
+                text "true"
+                text "。"
+            table_row
+              table_cell
+                text "检查键"
+              table_cell
+                text "保留"
+                text "false"
+                text "和"
+                text "null"
+                text "；仅缺失输出"
+                text "true"
+                text "。"
+          paragraph
+            text "缺失键读取为"
+            text "null"
+            text "，因此仅凭读取结果无法区分两者；需要保留显式"
+            text "null"
+            text "时，先用"
+            text "has"
+            text "检查键。"
+            anchor [ref=321, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-index]
+              text "3"
+            anchor [ref=322, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-probe]
+              text "2"
+          container
+            container
+              container
+                text "保留 false：null 或缺失时默认"
+                text "bash"
+              button [ref=323]
+                text "复制"
+            text "jq -cn '{"enabled":false} | .enabled | if . == null then true else . end' # 输出：false"
+      container
+        container
+          anchor "多个结果时，默认值作用在哪里？" [ref=324, loc=css:a[aria-label="多个结果时，默认值作用在哪里？"], url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#stream]
+            text "3"
+          heading
+            text "多个结果时，默认值作用在哪里？"
+          button [ref=325]
+            text "追问"
+        container
+          paragraph
+            text "左侧可以产生多个结果。整个结果流中只要有可用值，"
+            text "//"
+            text "就输出这些可用值；把每个值通过管道送入另一个"
+            text "//"
+            text "，则会分别判断。"
+            anchor [ref=326, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-manual]
+              text "1"
+            anchor [ref=327, url=file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-complete/candidate/control.html#source-probe]
+              text "2"
+          container
+            container
+              container
+                text "整个左侧结果流"
+                text "bash"
+              button [ref=328]
+                text "复制"
+            text "jq -cn '(false, null, 0) // "fallback"' # 输出：0"
+          container
+            container
+              container
+                text "逐个结果判断"
+                text "bash"
+              button [ref=329]
+                text "复制"
+            text "jq -cn '(false, null, 0) | . // "fallback"' # 输出： # "fallback" # "fallback" # 0"

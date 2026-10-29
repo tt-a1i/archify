@@ -1,0 +1,34 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-browser.test.mjs --test-name-pattern=image export retains
+
+Repository tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: image export retains the final table column and footer across responsive widths
+not ok 1 - image export retains the final table column and footer across responsive widths
+  ---
+  duration_ms: 1069.182
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:309:1'
+  failureType: 'testCodeFailure'
+  error: 'The first table cell survives a live scroll to the end: {"type":"image/png","width":3012,"height":2796,"marks":{"first":0,"last":0,"code":0,"footer":256},"before":{"width":390,"roots":1,"frames":0,"scrolls":[{"left":1108,"width":332,"scrollWidth":1440,"text":"MeasureBatch 1Batch 2Batch 3Batch 4Batch 5Batch 6Batch 7Batch 8Batch 9Batch 10Batch 11Batch 12Delta2021222324252627282930-995"}]},"after":{"width":390,"roots":1,"frames":0,"scrolls":[{"left":1108,"width":332,"scrollWidth":1440,"text":"MeasureBatch 1Batch 2Batch 3Batch 4Batch 5Batch 6Batch 7Batch 8Batch 9Batch 10Batch 11Batch 12Delta2021222324252627282930-995"}]}}'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:320:11)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1215.052792

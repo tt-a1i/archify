@@ -1,0 +1,18 @@
+[
+  {
+    "case": "gzip",
+    "exitCode": 0
+  },
+  {
+    "case": "jq",
+    "exitCode": 0
+  },
+  {
+    "case": "control",
+    "exitCode": 0
+  },
+  {
+    "case": "wide-clean",
+    "exitCode": 0
+  }
+]

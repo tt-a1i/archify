@@ -159,3 +159,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 21
 
 [Wide-table export](export-overflow/README.md) confirms that keyboard scrolling works in the observed browser, while phone-width PNGs lose later table columns and long code. Two frozen export-only prototypes recover content but split a technical term or a numeric value; neither table strategy is adopted. Code wrapping remains a separate candidate. Four unchanged controls per prototype—three desktop cases and the fitting phone case—produce byte-identical PNGs. Product runtime and archive remain unchanged; the next trial will preserve table tokens with a wider export canvas.
+
+## Continued exploration — round 22
+
+[Complete image exports](export-complete/README.md) preserve every comparison-table column and wrap overflowing commands in the exported image. A responsive counterexample exposed footer clipping, and actual-pixel tests caught broken CSS serialization; both failures are retained. Three new regressions fail on base and pass on the product change. Four no-overflow PNG controls remain byte-identical. The official-toolchain ZIP builds reproducibly and passes extracted CLI/browser smoke. Wider images may require zooming; this does not replace the clearer two-column content variants or establish human reading gains.

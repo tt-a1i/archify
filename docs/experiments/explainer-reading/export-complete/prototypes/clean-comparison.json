@@ -1,0 +1,230 @@
+[
+  {
+    "arm": "base",
+    "name": "wide-clean",
+    "live": {
+      "width": 390,
+      "pageWidth": 400,
+      "shellWidth": 366,
+      "tables": [
+        {
+          "width": 332,
+          "scrollWidth": 1440,
+          "scrollLeft": 0,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HBatch IBatch JBatch KBatch LDelta-995+20+23+18-1200+400-803+600+810-900+1250-2000"
+        }
+      ],
+      "code": []
+    },
+    "pixelWidth": 780,
+    "pixelHeight": 3658,
+    "measured": {
+      "width": 390,
+      "shellHeight": 1718.9140625,
+      "footerBottom": 1718.9140625,
+      "tables": [
+        {
+          "width": 332,
+          "scrollWidth": 1440,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HBatch IBatch JBatch KBatch LDelta-995+20+23+18-1200+400-803+600+810-900+1250-2000",
+          "headers": [
+            {
+              "text": "Measure",
+              "width": 96,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch A",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch B",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch C",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch D",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch E",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch F",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch G",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch H",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch I",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch J",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch K",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch L",
+              "width": 112,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ],
+      "code": []
+    },
+    "cssImageHeight": 1829,
+    "after": {
+      "width": 390,
+      "pageWidth": 400,
+      "tables": [
+        {
+          "width": 332,
+          "scrollWidth": 1440,
+          "scrollLeft": 0
+        }
+      ],
+      "roots": 1,
+      "iframes": 0
+    }
+  },
+  {
+    "arm": "candidate",
+    "name": "wide-clean",
+    "live": {
+      "width": 390,
+      "pageWidth": 400,
+      "shellWidth": 366,
+      "tables": [
+        {
+          "width": 332,
+          "scrollWidth": 1440,
+          "scrollLeft": 0,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HBatch IBatch JBatch KBatch LDelta-995+20+23+18-1200+400-803+600+810-900+1250-2000"
+        }
+      ],
+      "code": []
+    },
+    "pixelWidth": 2996,
+    "pixelHeight": 2670,
+    "measured": {
+      "width": 1498,
+      "shellHeight": 1382.75,
+      "footerBottom": 1382.75,
+      "tables": [
+        {
+          "width": 1432,
+          "scrollWidth": 1440,
+          "text": "MeasureBatch ABatch BBatch CBatch DBatch EBatch FBatch GBatch HBatch IBatch JBatch KBatch LDelta-995+20+23+18-1200+400-803+600+810-900+1250-2000",
+          "headers": [
+            {
+              "text": "Measure",
+              "width": 96,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch A",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch B",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch C",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch D",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch E",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch F",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch G",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch H",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch I",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch J",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch K",
+              "width": 112,
+              "height": 31.6328125
+            },
+            {
+              "text": "Batch L",
+              "width": 112,
+              "height": 31.6328125
+            }
+          ]
+        }
+      ],
+      "code": []
+    },
+    "cssImageHeight": 1335,
+    "after": {
+      "width": 390,
+      "pageWidth": 400,
+      "tables": [
+        {
+          "width": 332,
+          "scrollWidth": 1440,
+          "scrollLeft": 0
+        }
+      ],
+      "roots": 1,
+      "iframes": 0
+    }
+  }
+]
