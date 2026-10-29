@@ -1,0 +1,5 @@
+# Separate observed defect for a follow-up fix
+
+The existing chart compiler adds value/share text to plain pie legends, but its /^\s*pie\b/ test bypasses that path when valid Mermaid frontmatter or an init directive precedes the pie. Local direct compile of A:10,B:3,C:8 gives labels A · 10 (48%), B · 3 (14%), C · 8 (38%) without prefix, but plain A,B,C with either bottom-legend configuration prefix. Both configurations compile successfully. This is a concrete semantics/presentation defect, not evidence that narrow defaults should be adopted.
+
+Vendored core exports parse and render accepts a parsed model. The parsed pie has a Map of sections and showData flag. Investigate using that model to decorate legend labels while retaining parsed configuration and diagnostics; first verify frontmatter configuration survives rendering the same model. Account for duplicate category behavior and valid whitespace/blank-line diagnostics before any source adoption. Do not silently change all other chart paths.

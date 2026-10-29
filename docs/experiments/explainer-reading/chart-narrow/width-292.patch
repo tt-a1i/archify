@@ -1,0 +1,11 @@
+--- a/archify/explainer/charts.mjs
++++ b/archify/explainer/charts.mjs
+@@ -30,7 +30,7 @@
+   const type = detectType(text);
+   if (type && NATIVE[type]) return { error: `Mermaid ${type} is drawn with the native ${NATIVE[type]} shorthand, which Archify validates and lets readers explore.`, example: `@${NATIVE[type].split(' ')[0]} id=...` };
+   try {
+-    const result = render(pieLegend(text), { padding: 8, fontSize: 13, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });
++    const result = render(pieLegend(text), { padding: 8, fontSize: 13, maxWidth: 292, links: false, images: false, config: { xyChart: { width: 480, height: 260, showDataLabel: true }, quadrantChart: { chartWidth: 400, chartHeight: 400 } } });
+     // A rotated CJK axis title lies on its side; vertical writing keeps the characters upright.
+     const svg = result.svg.replace(/<g transform="translate\(([\d.-]+),([\d.-]+)\) rotate\(-90\)"><text x="0" y="[\d.-]+" text-anchor="middle">([^<]*\p{Script=Han}[^<]*)<\/text><\/g>/gu, (_, x, y, label) => `<text x="${x}" y="${y}" text-anchor="middle" writing-mode="vertical-rl">${label}</text>`);
+     return { svg, width: result.width, height: result.height, type: result.type };

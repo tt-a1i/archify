@@ -1,0 +1,26 @@
+[
+  {
+    "kind": "plain",
+    "input": "pie\n  \"A\" : 10\n  \"B\" : 3\n  \"C\" : 8",
+    "width": 373,
+    "height": 256,
+    "error": null,
+    "legend": "<g class=\"pele-legend\" font-size=\"11\"><g class=\"pele-legend-item\" data-id=\"A · 10 (48%)\"><rect x=\"280\" y=\"96\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-1,#4c78a8)\"/><text x=\"332.23\" y=\"105.85\" text-anchor=\"middle\">A · 10 (48%)</text></g><g class=\"pele-legend-item\" data-id=\"B · 3 (14%)\"><rect x=\"280\" y=\"122\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-2,#f58518)\"/><text x=\"329.17\" y=\"131.85\" text-anchor=\"middle\">B · 3 (14%)</text></g><g class=\"pele-legend-item\" data-id=\"C · 8 (38%)\"><rect x=\"280\" y=\"148\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-3,#54a24b)\"/><text x=\"329.47\" y=\"157.85\" text-anchor=\"middle\">C · 8 (38%)</text></g></g></svg>"
+  },
+  {
+    "kind": "frontmatter",
+    "input": "---\nconfig:\n  pie:\n    legendPosition: bottom\n---\npie\n  \"A\" : 10\n  \"B\" : 3\n  \"C\" : 8",
+    "width": 256,
+    "height": 354,
+    "error": null,
+    "legend": "<g class=\"pele-legend\" font-size=\"11\"><g class=\"pele-legend-item\" data-id=\"A\"><rect x=\"114.03\" y=\"275\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-1,#4c78a8)\"/><text x=\"137.7\" y=\"284.85\" text-anchor=\"middle\">A</text></g><g class=\"pele-legend-item\" data-id=\"B\"><rect x=\"114.03\" y=\"301\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-2,#f58518)\"/><text x=\"137.7\" y=\"310.85\" text-anchor=\"middle\">B</text></g><g class=\"pele-legend-item\" data-id=\"C\"><rect x=\"114.03\" y=\"327\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-3,#54a24b)\"/><text x=\"138\" y=\"336.85\" text-anchor=\"middle\">C</text></g></g></svg>"
+  },
+  {
+    "kind": "directive",
+    "input": "%%{init: {\"pie\":{\"legendPosition\":\"bottom\"}}}%%\npie\n  \"A\" : 10\n  \"B\" : 3\n  \"C\" : 8",
+    "width": 256,
+    "height": 354,
+    "error": null,
+    "legend": "<g class=\"pele-legend\" font-size=\"11\"><g class=\"pele-legend-item\" data-id=\"A\"><rect x=\"114.03\" y=\"275\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-1,#4c78a8)\"/><text x=\"137.7\" y=\"284.85\" text-anchor=\"middle\">A</text></g><g class=\"pele-legend-item\" data-id=\"B\"><rect x=\"114.03\" y=\"301\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-2,#f58518)\"/><text x=\"137.7\" y=\"310.85\" text-anchor=\"middle\">B</text></g><g class=\"pele-legend-item\" data-id=\"C\"><rect x=\"114.03\" y=\"327\" width=\"12\" height=\"12\" rx=\"2\" fill=\"var(--pele-series-3,#54a24b)\"/><text x=\"138\" y=\"336.85\" text-anchor=\"middle\">C</text></g></g></svg>"
+  }
+]

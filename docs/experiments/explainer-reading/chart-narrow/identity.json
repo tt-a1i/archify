@@ -1,0 +1,18 @@
+{
+  "base": "8ebc41afaa445ef3ad3ee3748e22e3646a4da3eb",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "artifacts": {
+    "bar-width-332.html": "e3e8618c5f5844b5bec45172153fffe2b106e869bcf4197adc4f1ce1f5152d01",
+    "latency-width-292.html": "66821f776cfebdb64e7479f57359ebde63f9379fe5f57a04ca2cb174d0f2af2b",
+    "pie-width-332.html": "f27db2ba0a8c92e586faaa910b7ed34fe0eac659c3b2898c6ddba75cda301a3f",
+    "bar-width-292.html": "44994a5d810c9e775f5d57a6d241f8e9cd8d1cb4fa177535623246e25067d374",
+    "pie-base.html": "ca09a45cdce3977332072a071c5f811e68484ac7a664c77141ee1038a7c53d01",
+    "bar-base.html": "d725d3d2ddf7b5159aa90d2ee39753917d71e69487b3614f81cdde6d7094b8da",
+    "latency-width-332.html": "09fcb76b1c2b8e0f71c68a8809379c8ce9aa9e32dac58f2a9d2aeb69a9858725",
+    "pie-width-292.html": "f27db2ba0a8c92e586faaa910b7ed34fe0eac659c3b2898c6ddba75cda301a3f",
+    "dense-width-332.html": "09f687e4a8dcaa0c1dfc34ab9d5a4f4293d27174bbe3df1a6e5ad3b79e6bee85",
+    "latency-base.html": "f25544d7177c223429df4a1bca15fb3d64570c55b14045925bf76f9408fda366",
+    "dense-base.html": "6a9783741a31a9806ebe3d62fc589b5c28564abd3187bc1a1d2b8742ce7eb7d3",
+    "dense-width-292.html": "63bac7a756d13108fc10595e91f0ecc137529a75af0ffb895ba0de59f8f45fe0"
+  }
+}

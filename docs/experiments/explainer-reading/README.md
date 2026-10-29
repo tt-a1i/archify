@@ -143,3 +143,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 17
 
 [Native-width phone chart scrolling](chart-scroll/README.md) restores 10–11 px labels, but hides the most important latency bar on first view and adds 78–127 px of panel height. Keyboard scrolling reaches the data; the comparison still becomes harder to see at once. The default is rejected. All three desktop screenshot pairs are byte-identical. Product source stays unchanged; the patch, failed first attempt, browser timeout and bounded successful observations are retained.
+
+## Continued exploration — round 18
+
+[Chart-native narrow layouts](chart-narrow/README.md) make the three-category comparisons readable at 390 px without scrolling, but remove half the category labels in a six-batch counterexample; at the narrower cap, all bar-value labels disappear. Universal compact defaults are rejected. The pie's bottom legend preserves its values but costs vertical space. A separate configured-pie legend defect is now reproduced for a focused follow-up. Product source remains unchanged.
