@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { prepareExplainer, writePreparedBundle } from '../archify/explainer/prepare.mjs';
 import { scanHtml } from '../archify/explainer/check.mjs';
+import { compileExplainerDiagram } from '../archify/explainer/diagrams.mjs';
 const cli = path.resolve('archify/bin/archify.mjs');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a8XcAAAAASUVORK5CYII=', 'base64');
@@ -180,4 +181,22 @@ test('workflow shorthand carries page locale into rendered lane labels (#1082)',
     assert.ok(html.includes(`<title>Roll back · ${label}</title>`),locale||'default');
     assert.match(html,new RegExp(`aria-label="[^"]*Roll back[^"]*${label}"`,'u'),locale||'default');
   }
+});
+
+
+test('page title links validate against prepared external native targets',async t=>{
+  const dir=temporary(t),document=fixture();
+  const native=compileExplainerDiagram('architecture',['api | API | backend','store | Store | database','api > store | writes'],{id:'system'});
+  fs.writeFileSync(path.join(dir,'system.json'),JSON.stringify(native));
+  document.panels[0].blocks.push({id:'system-view',type:'diagram',diagramType:'architecture',source:'system.json'});
+  document.meta.title='Inspect [API](node:system-view.api)';
+  const input=write(dir,document),prepared=await prepareExplainer(JSON.stringify(document),{inputPath:input});
+  assert.ok(prepared.preparedDiagrams.diagrams['system-view'].semantic.nodes.some(node=>node.id==='api'));
+  document.meta.title='Inspect [missing](node:system-view.absent)';
+  await assert.rejects(prepareExplainer(JSON.stringify(document),{inputPath:input}),error=>{
+    const issue=error.archifyDiagnostics?.find(d=>d.subject.path==='/meta/title');
+    assert.ok(issue,JSON.stringify(error.archifyDiagnostics));
+    assert.match(issue.message,/absent/);
+    return true;
+  });
 });
