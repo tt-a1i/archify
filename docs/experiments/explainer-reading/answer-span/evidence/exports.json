@@ -1,0 +1,22 @@
+[
+  {
+    "variant": "base",
+    "width": 780,
+    "height": 5052
+  },
+  {
+    "variant": "base",
+    "width": 2880,
+    "height": 3104
+  },
+  {
+    "variant": "candidate",
+    "width": 780,
+    "height": 5028
+  },
+  {
+    "variant": "candidate",
+    "width": 2880,
+    "height": 2940
+  }
+]

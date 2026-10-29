@@ -1,0 +1,5 @@
+{
+  "command": "node archify/bin/archify.mjs check explainer <artifact.html> --json",
+  "exitCode": 2,
+  "result": "CLI usage: check takes the artifact path directly, without diagram type. No artifact mutation. Corrected check follows."
+}

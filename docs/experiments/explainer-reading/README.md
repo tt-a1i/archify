@@ -231,3 +231,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 36
 
 [NumPy views and copies](numpy-views/README.md) uses six repeated integer-array cases to distinguish shared data, independent copies and direct indexed assignment. The retained page replaces a clipped four-column table and lambda-based demonstration with complete straight-line programs and actual output. A later overview-table revision is retained but not selected: it adds repetition and a larger desktop blank area.
+
+## Continued exploration — round 37
+
+[Authored conclusion width](answer-span/README.md) follows the NumPy case's staggered desktop examples. Optional `@answer span=12` places the conclusion above the two `span=6` programs; existing pages retain byte-identical rendered HTML in a 41-artifact replay. The comparison keeps all prose, code, values and source claims unchanged. Four styles, phone/desktop reading and actual PNG exports were checked; the report distinguishes this fixed-input result from authoring or human-comprehension gains.

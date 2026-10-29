@@ -1,0 +1,60 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-parser.test.mjs test/explainer-layout.test.mjs --test-name-pattern=answer width
+
+Repository tests: 2 files, concurrency 4
+TAP version 13
+# Subtest: an authored answer width preserves its columns and the following comparison row
+not ok 1 - an authored answer width preserves its columns and the following comparison row
+  ---
+  duration_ms: 2.221042
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-layout.test.mjs:34:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    6 !== 1
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 6
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-layout.test.mjs:38:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: answer width accepts exact authored columns and locates invalid widths
+not ok 2 - answer width accepts exact authored columns and locates invalid widths
+  ---
+  duration_ms: 3.901292
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-parser.test.mjs:131:1'
+  failureType: 'testCodeFailure'
+  error: '[{"code":"explainer/parse-answer","severity":"error","message":"Unsupported argument span.","subject":{"line":5,"column":1,"component":"answer","path":"/","input":"answer.md"},"evidence":{"reason":"Unsupported argument span.","example":"@answer scope=..."},"supportedFixes":["Use the documented syntax, for example: @answer scope=..."]}]'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    parse (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-parser.test.mjs:7:93)
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-parser.test.mjs:133:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 170.995667

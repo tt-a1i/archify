@@ -1,0 +1,21 @@
+{
+  "initialExpectation": "full byte identity after switching from warn to strict",
+  "initialResult": "failed for outside and canonical artifacts",
+  "warnReplayMatchesOriginalSha": true,
+  "warnSha256": "45698dc8ef2076774bf7372c4998f49baa3ab4fe5d3122ca832d67677b0e2cc2",
+  "strictSha256": "e4b7ae353a516960749a543ec5f13ea6a2e703e4666819974877c93703a600c3",
+  "differences": [
+    {
+      "path": "/writingMode",
+      "warn": "warn",
+      "strict": "strict"
+    },
+    {
+      "path": "/digest",
+      "warn": "96fb33ab0140ab31cb2fc56e43b76e0afb279b03051beadde8935e60f6fa884c",
+      "strict": "68fec8901791c73eb1398599ca9540e3204e3d59cbe226f1cfc4176011db06c4"
+    }
+  ],
+  "restHtmlIdentical": true,
+  "scope": "Exact deterministic replay of original warn artifact; actual strict canonical and extracted layouts checked separately."
+}

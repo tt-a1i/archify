@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "0aa9158d-bf0f-4c73-927c-8b5abcd0824a",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/answer-span/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/answer-span/candidate.html",
+  "specification": {
+    "sha256": "981728b72cc13384462c0445106be3d503758b8aa353c1aed4231d0a232f88d5",
+    "bytes": 2630
+  },
+  "artifact": {
+    "sha256": "e4b7ae353a516960749a543ec5f13ea6a2e703e4666819974877c93703a600c3",
+    "bytes": 157772
+  },
+  "explainer": {
+    "preparedSha256": "9d0c40bb18ebba78afb93ac97f8f8af4c89cf85046fd88c8783a626d74fdd083",
+    "dependencies": []
+  }
+}

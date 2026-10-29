@@ -1,0 +1,14 @@
+{
+  "source": "66880ba8f034700d4dcbd6be60271202280ff3a8",
+  "zipSha256": "cb47c870caa24e8e9cecb9f187817abfd3033fe2d5613f8a5ea166fcee291b9a",
+  "bytes": 6996967,
+  "twoBuildsIdentical": true,
+  "extractedChangedFilesMatch": [
+    "explainer/parse.mjs",
+    "explainer/layout.mjs",
+    "explainer/render.mjs",
+    "schemas/explainer.schema.json",
+    "renderers/shared/generated-validators.mjs",
+    "references/explainer-authoring.md"
+  ]
+}
