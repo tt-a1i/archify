@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-10-30",
+  "relatedPR": {
+    "number": 1015,
+    "url": "https://github.com/tt-a1i/archify/pull/1015",
+    "state": "open",
+    "draft": true,
+    "head": "fe4f80d2195e0a7b49b7cfe6d3dba7ffd31a7ac8",
+    "title": "feat(explainer): improve visual hierarchy, KPI deltas, code focus, and interactive details"
+  },
+  "inspectedFiles": [
+    "archify/explainer/reader.css",
+    "archify/explainer/reader.js"
+  ],
+  "findings": [
+    "The 12.5px font rule in the inspected diff targets .diagram-preview, not .chart.",
+    "The chart changes add series/slice hover spotlighting; the .chart>svg width:min(100%,var(--native-width,100vw)) rule is unchanged."
+  ],
+  "queries": [
+    {
+      "kind": "open-pr",
+      "query": "explainer chart",
+      "matches": [
+        {
+          "title": "feat: add explainer claim evidence attribution",
+          "url": "https://github.com/tt-a1i/archify/pull/1142"
+        },
+        {
+          "title": "feat: add dependency-aware Explainer preview",
+          "url": "https://github.com/tt-a1i/archify/pull/1144"
+        },
+        {
+          "title": "Code analysis Main branch",
+          "url": "https://github.com/tt-a1i/archify/pull/998"
+        }
+      ]
+    },
+    {
+      "kind": "open-issue",
+      "query": "chart mobile",
+      "matches": []
+    },
+    {
+      "kind": "open-pr",
+      "query": "chart readability",
+      "matches": []
+    },
+    {
+      "kind": "open-issue",
+      "query": "explainer small text",
+      "matches": [
+        {
+          "title": "feat(reader): voluntary feedback and update awareness for standalone artifacts",
+          "url": "https://github.com/tt-a1i/archify/issues/1064"
+        }
+      ]
+    }
+  ],
+  "limits": "Searches are not an exhaustive ownership inventory. No PR edited, replayed or accepted in this round. The proposal's broader correctness is not assessed."
+}

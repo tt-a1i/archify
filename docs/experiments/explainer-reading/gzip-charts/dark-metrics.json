@@ -1,0 +1,152 @@
+[
+  {
+    "width": 390,
+    "theme": "dark",
+    "style": "clean",
+    "svgTexts": [
+      {
+        "text": "48%",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgba(0, 0, 0, 0)",
+        "actualFont": 8.79986572265625
+      },
+      {
+        "text": "14%",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgba(0, 0, 0, 0)",
+        "actualFont": 8.79986572265625
+      },
+      {
+        "text": "38%",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgba(0, 0, 0, 0)",
+        "actualFont": 8.79986572265625
+      },
+      {
+        "text": "头部 · 10（48%）",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 8.79986572265625
+      },
+      {
+        "text": "压缩数据 · 3（14%）",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 8.79986572265625
+      },
+      {
+        "text": "尾部 · 8（38%）",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 8.79986572265625
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "style": "clean",
+    "svgTexts": [
+      {
+        "text": "0",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(141, 148, 161)",
+        "actualFont": 7.608112980769231
+      },
+      {
+        "text": "5",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(141, 148, 161)",
+        "actualFont": 7.608112980769231
+      },
+      {
+        "text": "10",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(141, 148, 161)",
+        "actualFont": 7.608112980769231
+      },
+      {
+        "text": "头部",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(141, 148, 161)",
+        "actualFont": 7.608112980769231
+      },
+      {
+        "text": "压缩数据",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(141, 148, 161)",
+        "actualFont": 7.608112980769231
+      },
+      {
+        "text": "尾部",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(141, 148, 161)",
+        "actualFont": 7.608112980769231
+      },
+      {
+        "text": "B",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 7.608112980769231
+      },
+      {
+        "text": "10",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 6.916466346153847
+      },
+      {
+        "text": "3",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 6.916466346153847
+      },
+      {
+        "text": "8",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 6.916466346153847
+      },
+      {
+        "text": "字节",
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "fill": "rgb(241, 243, 246)",
+        "actualFont": 7.608112980769231
+      }
+    ]
+  }
+]

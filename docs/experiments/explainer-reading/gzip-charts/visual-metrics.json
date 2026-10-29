@@ -1,0 +1,416 @@
+[
+  {
+    "arm": "pie",
+    "width": 390,
+    "scrollWidth": 390,
+    "theme": "light",
+    "style": "clean",
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 149.6953125,
+        "width": 366,
+        "height": 426.53125
+      },
+      {
+        "id": "parts",
+        "x": 12,
+        "y": 588.2265625,
+        "width": 366,
+        "height": 629.109375
+      },
+      {
+        "id": "examples",
+        "x": 12,
+        "y": 1229.3359375,
+        "width": 366,
+        "height": 641.2890625
+      },
+      {
+        "id": "check",
+        "x": 12,
+        "y": 1882.625,
+        "width": 366,
+        "height": 248.15625
+      }
+    ],
+    "chart": {
+      "width": 332,
+      "height": 204.796875,
+      "viewBox": "0 0 415 256",
+      "texts": [
+        {
+          "text": "48%",
+          "fontSize": 11,
+          "effectiveFontSize": 8.79986572265625,
+          "width": 19.5703125,
+          "height": 10.5
+        },
+        {
+          "text": "14%",
+          "fontSize": 11,
+          "effectiveFontSize": 8.79986572265625,
+          "width": 18.0390625,
+          "height": 10.5
+        },
+        {
+          "text": "38%",
+          "fontSize": 11,
+          "effectiveFontSize": 8.79986572265625,
+          "width": 19.4296875,
+          "height": 10.5
+        },
+        {
+          "text": "头部 · 10（48%）",
+          "fontSize": 11,
+          "effectiveFontSize": 8.79986572265625,
+          "width": 72.1875,
+          "height": 10.5
+        },
+        {
+          "text": "压缩数据 · 3（14%）",
+          "fontSize": 11,
+          "effectiveFontSize": 8.79986572265625,
+          "width": 84.08596801757812,
+          "height": 10.5
+        },
+        {
+          "text": "尾部 · 8（38%）",
+          "fontSize": 11,
+          "effectiveFontSize": 8.79986572265625,
+          "width": 67.9921875,
+          "height": 10.5
+        }
+      ]
+    }
+  },
+  {
+    "arm": "pie",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "theme": "light",
+    "style": "clean",
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 93.09375,
+        "width": 632,
+        "height": 323
+      },
+      {
+        "id": "parts",
+        "x": 728,
+        "y": 93.09375,
+        "width": 632,
+        "height": 618
+      },
+      {
+        "id": "examples",
+        "x": 80,
+        "y": 432.09375,
+        "width": 632,
+        "height": 502
+      },
+      {
+        "id": "check",
+        "x": 728,
+        "y": 727.09375,
+        "width": 632,
+        "height": 207
+      }
+    ],
+    "chart": {
+      "width": 415,
+      "height": 256,
+      "viewBox": "0 0 415 256",
+      "texts": [
+        {
+          "text": "48%",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 24.4765625,
+          "height": 13
+        },
+        {
+          "text": "14%",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 22.5546875,
+          "height": 13
+        },
+        {
+          "text": "38%",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 24.296875,
+          "height": 13
+        },
+        {
+          "text": "头部 · 10（48%）",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 90.2890625,
+          "height": 12.999969482421875
+        },
+        {
+          "text": "压缩数据 · 3（14%）",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 105.1640625,
+          "height": 13
+        },
+        {
+          "text": "尾部 · 8（38%）",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 85.03125,
+          "height": 13
+        }
+      ]
+    }
+  },
+  {
+    "arm": "bar",
+    "width": 390,
+    "scrollWidth": 390,
+    "theme": "light",
+    "style": "clean",
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 149.6953125,
+        "width": 366,
+        "height": 426.53125
+      },
+      {
+        "id": "parts",
+        "x": 12,
+        "y": 588.2265625,
+        "width": 366,
+        "height": 604.140625
+      },
+      {
+        "id": "examples",
+        "x": 12,
+        "y": 1204.3671875,
+        "width": 366,
+        "height": 641.2890625
+      },
+      {
+        "id": "check",
+        "x": 12,
+        "y": 1857.65625,
+        "width": 366,
+        "height": 248.15625
+      }
+    ],
+    "chart": {
+      "width": 332,
+      "height": 179.828125,
+      "viewBox": "0 0 480 260",
+      "texts": [
+        {
+          "text": "0",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 4.835941314697266,
+          "height": 9
+        },
+        {
+          "text": "5",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 4.75,
+          "height": 9
+        },
+        {
+          "text": "10",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 8.4140625,
+          "height": 9
+        },
+        {
+          "text": "头部",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 15.2109375,
+          "height": 9
+        },
+        {
+          "text": "压缩数据",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 30.421875,
+          "height": 9
+        },
+        {
+          "text": "尾部",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 15.2109375,
+          "height": 9
+        },
+        {
+          "text": "B",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 9,
+          "height": 5.046875
+        },
+        {
+          "text": "10",
+          "fontSize": 10,
+          "effectiveFontSize": 6.916466346153847,
+          "width": 7.7265625,
+          "height": 8
+        },
+        {
+          "text": "3",
+          "fontSize": 10,
+          "effectiveFontSize": 6.916466346153847,
+          "width": 4.421875,
+          "height": 8
+        },
+        {
+          "text": "8",
+          "fontSize": 10,
+          "effectiveFontSize": 6.916466346153847,
+          "width": 4.5,
+          "height": 8
+        },
+        {
+          "text": "字节",
+          "fontSize": 11,
+          "effectiveFontSize": 7.608112980769231,
+          "width": 15.210906982421875,
+          "height": 9
+        }
+      ]
+    }
+  },
+  {
+    "arm": "bar",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "theme": "light",
+    "style": "clean",
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 93.09375,
+        "width": 632,
+        "height": 323
+      },
+      {
+        "id": "parts",
+        "x": 728,
+        "y": 93.09375,
+        "width": 632,
+        "height": 622
+      },
+      {
+        "id": "examples",
+        "x": 80,
+        "y": 432.09375,
+        "width": 632,
+        "height": 506
+      },
+      {
+        "id": "check",
+        "x": 728,
+        "y": 731.09375,
+        "width": 632,
+        "height": 207
+      }
+    ],
+    "chart": {
+      "width": 480,
+      "height": 260,
+      "viewBox": "0 0 480 260",
+      "texts": [
+        {
+          "text": "0",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 7,
+          "height": 13
+        },
+        {
+          "text": "5",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 6.8671875,
+          "height": 13
+        },
+        {
+          "text": "10",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 12.1640625,
+          "height": 13
+        },
+        {
+          "text": "头部",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 22,
+          "height": 13
+        },
+        {
+          "text": "压缩数据",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 44,
+          "height": 13
+        },
+        {
+          "text": "尾部",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 22,
+          "height": 13
+        },
+        {
+          "text": "B",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 13,
+          "height": 7.296875
+        },
+        {
+          "text": "10",
+          "fontSize": 10,
+          "effectiveFontSize": 10,
+          "width": 11.171875,
+          "height": 11.5
+        },
+        {
+          "text": "3",
+          "fontSize": 10,
+          "effectiveFontSize": 10,
+          "width": 6.390625,
+          "height": 11.5
+        },
+        {
+          "text": "8",
+          "fontSize": 10,
+          "effectiveFontSize": 10,
+          "width": 6.5078125,
+          "height": 11.5
+        },
+        {
+          "text": "字节",
+          "fontSize": 11,
+          "effectiveFontSize": 11,
+          "width": 22,
+          "height": 13
+        }
+      ]
+    }
+  }
+]

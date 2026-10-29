@@ -1,0 +1,13 @@
+{
+  "base_revision": "a24e774ab2fa6d9a942355dd8e63f2c0b6f18448",
+  "probe_reused_from_round": 14,
+  "components_bytes": [
+    10,
+    3,
+    8
+  ],
+  "total_bytes": 21,
+  "all_prose_unchanged_in_both_arms": true,
+  "both_strict_finalize_pass": true,
+  "runtime_changed": false
+}

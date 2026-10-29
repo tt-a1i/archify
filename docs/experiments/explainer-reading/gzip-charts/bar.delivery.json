@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "048205ec-d9b6-484d-8987-9b969438d980",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-charts/bar.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-charts/bar.html",
+  "specification": {
+    "sha256": "cb99147fbf0326ae08df9ce0a52a2b323d7f2449d74afa32239e956b406f7283",
+    "bytes": 3081
+  },
+  "artifact": {
+    "sha256": "d102ee1586b423a385f7508b5c015c03aed2503bda6cab47588650d577d84f65",
+    "bytes": 159675
+  },
+  "explainer": {
+    "preparedSha256": "e36f73d287227179123d5997ee1478dedbc53261c6656f132e91274ee613a234",
+    "dependencies": [
+      {
+        "kind": "data",
+        "id": "chart-352878fb9e17",
+        "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-charts/one-byte.json",
+        "sha256": "125cd2d61e8d11c22a4133ce174594a1efbe6781f8e1bdc879fc5968493bccc3",
+        "bytes": 121
+      }
+    ]
+  }
+}

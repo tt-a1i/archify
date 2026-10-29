@@ -135,3 +135,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 15
 
 [Gzip's concrete opening](gzip-opening/README.md) introduces the space occupied by compressed data and header/trailer information through one local byte example. The rest of the explanation is byte-identical. An intermediate version was shorter; the final wording has the same checked geometry as the original and is retained as a language alternative, not a measured density or comprehension gain. First attempt, source checks, light/dark screenshots and receipts remain inspectable. The index now offers twenty-two variants.
+
+## Continued exploration — round 16
+
+[Gzip composition charts](gzip-charts/README.md) compare existing pie and bar support on the same measured 21-byte output. Both pass artifact checks, but phone text shrinks to about 8.8 px for the pie legend and 6.9 px for bar values; the explanation also grows by 245–270 px. Neither replaces the preferred text-first page. The experiment confirms a chart-readability gap, records relevant existing PR scope, and provides fixed inputs for a separate rendering experiment. The main index still offers twenty-two variants.

@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="zh-CN" data-style="clean" data-archify-artifact="explainer" data-artifact="gzip-size" data-revision="dce0d0f06ba3500f86ac8622a7369e9321c2a5163536432ecec66c464963034b"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="**gzip 要同时保存压缩数据和头尾信息，两者加起来可能比原始数据更大。** 本地样本中，一个 `A` 从 1 B 增至 21 B：压缩数据 3 B，加上头尾信息 18 B。[](source:measure)"><title>为什么 gzip 压缩后反而更大？ · Archify</title><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20360%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M151%2094%2081%20164C67%20178%2060%20191%2060%20212V248H97V212C97%20204%20100%20199%20106%20193L179%20120Z%22%20fill%3D%22%230856F5%22%2F%3E%3Cpath%20d%3D%22M238%20135C252%20132%20261%20126%20270%20116L321%20167C334%20180%20339%20194%20339%20213V248H303V213C303%20204%20300%20199%20294%20193Z%22%20fill%3D%22%231DBBB7%22%2F%3E%3Crect%20x%3D%22146%22%20y%3D%2216%22%20width%3D%22110%22%20height%3D%22104%22%20rx%3D%2230%22%20fill%3D%22%230856F5%22%2F%3E%3Crect%20x%3D%2218%22%20y%3D%22238%22%20width%3D%22110%22%20height%3D%22104%22%20rx%3D%2228%22%20fill%3D%22%230856F5%22%2F%3E%3Crect%20x%3D%22274%22%20y%3D%22238%22%20width%3D%22108%22%20height%3D%22104%22%20rx%3D%2228%22%20fill%3D%22%231DBBB7%22%2F%3E%3C%2Fsvg%3E"><style>/* Clear cards on a quiet page. The conclusion leads; structure carries the explanation; colour only means something. */
+:root{color-scheme:light;--paper:#f4f5f7;--panel:#fff;--surface:#fff;--sunk:#f6f7f9;--zebra:#f8f9fa;--ink:#111318;--secondary:#2c3038;--muted:#6a707c;--faint:#9aa0aa;--rule:#e5e7eb;--rule-strong:#d3d7dd;--accent:#2457d6;--accent-soft:#eaf0fd;--accent-ink:#1b46b4;--marker:#dbe6fd;--good:#13834b;--good-soft:#e8f5ee;--caution:#b26a00;--caution-soft:#fdf3e2;--bad:#c4321f;--bad-soft:#fcebe8;--violet:#6a4fc8;--violet-soft:#f0ecfb;--code:#f6f7f9;--badge:#111318;--badge-ink:#fff;--shadow:0 1px 2px rgb(16 24 40/.04),0 1px 3px rgb(16 24 40/.03);--sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Segoe UI","Microsoft YaHei","Noto Sans SC",sans-serif;--mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace}
+:root[data-theme=dark]{color-scheme:dark;--paper:#0c0d10;--panel:#15171c;--surface:#15171c;--sunk:#1b1e24;--zebra:#191c21;--ink:#f1f3f6;--secondary:#cfd3da;--muted:#8d94a1;--faint:#5f6672;--rule:#262a31;--rule-strong:#343943;--accent:#7aa2ff;--accent-soft:#18223a;--accent-ink:#a3bfff;--marker:#24345c;--good:#5cc98d;--good-soft:#122a1e;--caution:#e9b04f;--caution-soft:#2e2412;--bad:#f2806f;--bad-soft:#331a17;--violet:#a994f5;--violet-soft:#221d36;--code:#1b1e24;--badge:#f1f3f6;--badge-ink:#111318;--shadow:0 1px 2px rgb(0 0 0/.35)}
+@media(prefers-color-scheme:dark){:root:not([data-theme]){color-scheme:dark;--paper:#0c0d10;--panel:#15171c;--surface:#15171c;--sunk:#1b1e24;--zebra:#191c21;--ink:#f1f3f6;--secondary:#cfd3da;--muted:#8d94a1;--faint:#5f6672;--rule:#262a31;--rule-strong:#343943;--accent:#7aa2ff;--accent-soft:#18223a;--accent-ink:#a3bfff;--marker:#24345c;--good:#5cc98d;--good-soft:#122a1e;--caution:#e9b04f;--caution-soft:#2e2412;--bad:#f2806f;--bad-soft:#331a17;--violet:#a994f5;--violet-soft:#221d36;--code:#1b1e24;--badge:#f1f3f6;--badge-ink:#111318;--shadow:0 1px 2px rgb(0 0 0/.35)}}
+
+/* Base */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--secondary);font:14.5px/1.72 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-feature-settings:"kern"}
+h1,h2,h3,p,ul,ol,dl,dd,figure{margin:0}
+strong,b{color:var(--ink);font-weight:600}
+a{color:var(--accent);text-decoration:none;overflow-wrap:anywhere}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--rule-strong);border-radius:8px;background:var(--panel);padding:4px 11px;line-height:1.5}
+button:hover{border-color:var(--faint);color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+code,pre{font-family:var(--mono)}
+code{font-size:.86em;background:var(--code);border:1px solid var(--rule);padding:0 5px;border-radius:5px;overflow-wrap:anywhere;color:var(--ink);-webkit-box-decoration-break:clone;box-decoration-break:clone}
+::selection{background:var(--marker)}
+.interactive{display:none!important}
+.js .interactive{display:initial!important}
+.skip-link{position:absolute;top:-80px;left:12px;padding:8px 12px;background:var(--ink);color:var(--paper);z-index:10}
+.skip-link:focus{top:8px}
+.fine{font-size:12px;color:var(--muted);line-height:1.65}
+
+/* Page frame */
+.shell{width:min(1280px,calc(100% - 64px));margin:auto}
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:32px;padding:36px 0 22px}
+h1{font:700 26px/1.35 var(--sans);color:var(--ink);letter-spacing:-.015em;max-width:900px;overflow-wrap:anywhere}
+/* Toolbar: one height, one radius, one type size for every control */
+.js .tools{display:flex!important;align-items:center;gap:8px;flex-shrink:0}
+.tools button{font-size:12.5px;line-height:1;color:var(--secondary)}
+.tools :focus{outline:none}
+.tools :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tool-button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid var(--control-border,var(--rule-strong));border-radius:8px;background:var(--panel);box-shadow:0 1px 1px rgb(16 24 40/.03);transition:background .15s,border-color .15s,color .15s}
+.tool-button:hover{background:var(--sunk);color:var(--ink)}
+.tool-button:disabled{opacity:.55;cursor:progress}
+.tool-icon{width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.tool-button .tool-icon{color:var(--muted)}
+.tool-button:hover .tool-icon{color:var(--ink)}
+.theme-controls{display:flex;align-items:center;height:30px;border:1px solid var(--control-border,var(--rule-strong));border-radius:8px;padding:2px;gap:2px;background:var(--panel);box-shadow:0 1px 1px rgb(16 24 40/.03)}
+.theme-controls button{height:24px;border:0;border-radius:6px;padding:0 10px;background:none;color:var(--muted)}
+.theme-controls button:hover{color:var(--ink);background:var(--sunk)}
+.theme-controls button[aria-pressed=true]{background:var(--sunk);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--rule)}
+.tool-menu{position:relative}
+/* The same control shape for the walk-through bar, its start buttons and the question dialog */
+.walk-bar button,.walk-start:not(.text-button),.ask-dialog footer button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border:1px solid var(--control-border,var(--rule-strong));border-radius:8px;font-size:12.5px;line-height:1}
+.ask-dialog footer button{height:32px;padding:0 14px}
+.tool-menu [aria-haspopup] .tool-icon:last-child{width:13px;height:13px;margin-left:1px;transition:transform .15s}
+.tool-menu [aria-expanded=true] .tool-icon:last-child{transform:rotate(180deg)}
+.style-swatch{width:14px;height:14px;flex-shrink:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgb(0 0 0/.12)}
+.style-swatch[data-swatch=clean]{background:linear-gradient(135deg,#f4f5f7 50%,#2457d6 50%)}
+.style-swatch[data-swatch=editorial]{background:linear-gradient(135deg,#f6f2ea 50%,#9c2f1f 50%)}
+.style-swatch[data-swatch=product]{background:linear-gradient(135deg,#f1efff 50%,#5b4bf5 50%)}
+.style-swatch[data-swatch=swiss]{background:linear-gradient(135deg,#fff 50%,#ff4f00 50%)}
+.menu-options{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:148px;padding:4px;background:var(--panel);border:1px solid var(--control-border,var(--rule-strong));border-radius:10px;box-shadow:0 12px 32px rgb(16 24 40/.14)}
+.menu-options button{display:flex;align-items:center;gap:9px;width:100%;height:32px;padding:0 10px;border:0;border-radius:6px;background:none;text-align:left}
+.menu-options button span:not(.style-swatch){flex:1}
+.menu-options button:hover,.menu-options button:focus-visible{background:var(--sunk);outline:none;color:var(--ink)}
+.style-options .tool-icon{width:14px;height:14px;color:var(--accent);visibility:hidden}
+.style-options [aria-checked=true]{color:var(--ink);font-weight:600}
+.style-options [aria-checked=true] .tool-icon{visibility:visible}
+.export-menu .menu-options{min-width:176px}
+.export-menu .menu-options .tool-icon{width:15px;height:15px;color:var(--muted)}
+.export-menu .menu-options small{font-size:11px;color:var(--faint)}
+.menu-label{padding:6px 10px 2px;font-size:11px;font-weight:600;color:var(--faint);letter-spacing:.02em}
+.menu-options hr{margin:4px 6px;border:0;border-top:1px solid var(--rule)}
+
+/* Board */
+.board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;align-items:stretch}
+.board.measuring{display:block}
+.board.measured{grid-auto-rows:1px;row-gap:0}
+.board.measured>.board-spacer{display:none}
+.span1{grid-column:span 1}.span2{grid-column:span 2}.span3{grid-column:span 3}.span4{grid-column:span 4}.span5{grid-column:span 5}.span6{grid-column:span 6}.span7{grid-column:span 7}.span8{grid-column:span 8}.span9{grid-column:span 9}.span10{grid-column:span 10}.span11{grid-column:span 11}.span12{grid-column:span 12}
+.board-spacer{min-width:0}
+.panel{min-width:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow);overflow:clip;overflow-clip-margin:4px}
+.panel-head{display:flex;gap:10px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--rule)}
+.panel-id{flex-shrink:0;min-width:22px;height:22px;padding:0 6px;border-radius:6px;display:grid;place-items:center;background:var(--badge);color:var(--badge-ink);font:600 12px/1 var(--sans);font-variant-numeric:tabular-nums;text-decoration:none}
+.panel-id:hover{text-decoration:none;background:var(--accent);color:#fff}
+.panel-head h2{font:600 15.5px/1.45 var(--sans);color:var(--ink);flex:1;min-width:0;overflow-wrap:anywhere}
+.panel-body{padding:16px 20px 20px;flex:1}
+.block{position:relative;min-width:0;overflow-wrap:anywhere}
+.block+.block{margin-top:16px}
+.block>p+p{margin-top:8px}
+
+/* Conclusion: the same card, read first. One quiet tinted box carries the verdict. */
+.answer-id{background:var(--accent);color:#fff}
+:root[data-theme=dark] .answer-id{color:#0c0d10}
+@media(prefers-color-scheme:dark){:root:not([data-theme]) .answer-id{color:#0c0d10}}
+.verdict{padding:12px 16px;border-radius:8px;background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent);font:600 17px/1.65 var(--sans);color:var(--ink);letter-spacing:-.005em;text-wrap:pretty}
+.verdict strong{font-weight:700;color:var(--accent-ink)}
+.reasons{list-style:none;padding:0;margin:14px 0 0;counter-reset:reason}
+.reasons li{counter-increment:reason;position:relative;padding:5px 0 5px 26px;font-size:14px;line-height:1.7;color:var(--secondary)}
+.reasons li::before{content:counter(reason);position:absolute;left:2px;top:9px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font:600 10.5px/1 var(--sans);color:var(--muted);background:var(--sunk);box-shadow:inset 0 0 0 1px var(--rule-strong)}
+/* A full-width conclusion sets the verdict beside its reasons instead of in one long line. */
+.answer-panel{container-type:inline-size}
+@container (min-width:900px){.answer-panel .panel-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}.answer-panel .reasons{margin-top:-5px}}
+.answer-scope{padding:10px 20px 12px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.scope-label{flex-shrink:0;font-size:12px;font-weight:500;color:var(--muted);margin-right:2px}
+.scope-chip{display:inline-flex;align-items:center;padding:0 8px;border-radius:999px;background:var(--sunk);border:1px solid var(--rule);color:var(--secondary);font-size:12px;line-height:1.7}
+
+/* Text */
+.block-prose>p{color:var(--secondary)}
+.text-list{list-style:none;padding:0}
+.text-list li{position:relative;padding-left:16px}
+.text-list li+li{margin-top:6px}
+ul.text-list li::before{content:"";position:absolute;left:2px;top:.72em;width:5px;height:5px;border-radius:50%;background:var(--ink);opacity:.55}
+ol.text-list{counter-reset:item}
+ol.text-list li{counter-increment:item;padding-left:24px}
+ol.text-list li::before{content:counter(item) ".";position:absolute;left:0;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.checklist{list-style:none;padding:0}
+.checklist li+li{border-top:1px dashed var(--rule)}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:7px 0;cursor:pointer}
+.checklist input{appearance:none;flex-shrink:0;width:17px;height:17px;margin:3px 0 0;border:1.5px solid var(--rule-strong);border-radius:5px;background:var(--panel);display:grid;place-items:center;cursor:pointer;transition:background .15s,border-color .15s}
+.checklist input::after{content:"";width:5px;height:9px;margin-top:-2px;border:solid var(--panel);border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);transition:transform .12s}
+.checklist input:checked{background:var(--good);border-color:var(--good)}
+.checklist input:checked::after{transform:rotate(45deg) scale(1)}
+.checklist input:checked+span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
+.callout{padding:11px 16px;background:var(--sunk);border-radius:8px;box-shadow:inset 3px 0 0 var(--faint);color:var(--secondary)}
+.callout h3{font-size:14px;color:var(--ink);margin-bottom:2px}
+.callout.warning{background:var(--caution-soft);box-shadow:inset 3px 0 0 var(--caution)}
+.callout.open-question{background:var(--violet-soft);box-shadow:inset 3px 0 0 var(--violet)}
+.cite{vertical-align:super;font-size:10px;line-height:0;margin-left:1px}
+.cite a{font-weight:600;color:var(--accent);padding:0 1px;font-variant-numeric:tabular-nums}
+.cite a:hover{text-decoration:none;background:var(--accent-soft);border-radius:3px}
+
+/* Comparison */
+.table-scroll{overflow:auto}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+thead th{font-size:12px;font-weight:500;color:var(--muted);padding-top:2px;padding-bottom:8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+tbody tr:nth-child(even)>*{background:var(--zebra)}
+tbody tr:nth-child(even)>:first-child{border-radius:6px 0 0 6px}
+tbody tr:nth-child(even)>:last-child{border-radius:0 6px 6px 0}
+th[scope=row]{width:24%;min-width:96px;font-weight:500;color:var(--ink);font-size:13.5px}
+td{min-width:112px;color:var(--secondary)}
+.assessment{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;line-height:1.45;font-weight:600}
+.assessment b{color:inherit;font-weight:600}
+.assessment::before{flex-shrink:0;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font:700 10px/1 var(--sans);color:#fff}
+.assessment.good{color:var(--good)}.assessment.good::before{content:"✓";background:var(--good)}
+.assessment.caution{color:var(--caution)}.assessment.caution::before{content:"!";background:var(--caution)}
+.assessment.bad{color:var(--bad)}.assessment.bad::before{content:"✕";background:var(--bad)}
+:root[data-theme=dark] .assessment::before{color:#0c0d10}
+@media(prefers-color-scheme:dark){:root:not([data-theme]) .assessment::before{color:#0c0d10}}
+.assessment-meter{display:none}
+.cell-text{display:block;color:var(--secondary);line-height:1.6}
+.assessment+.cell-text{color:var(--muted);font-size:12.5px;margin-top:2px}
+
+/* Facts and metrics */
+.facts>div{display:grid;grid-template-columns:minmax(80px,1fr) minmax(0,2fr);gap:16px;padding:8px 0;border-bottom:1px solid var(--rule)}
+.facts>div:first-child{padding-top:0}
+.facts>div:last-child{border-bottom:0;padding-bottom:0}
+.facts dt{color:var(--muted);font-size:13px}
+.facts dd{font-size:14px;color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.metric-label{font-size:12.5px;color:var(--muted)}
+.metric-value{font:700 32px/1.25 var(--sans);color:var(--ink);margin:4px 0;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.metric-value span,.metric-value small{font:500 14px var(--sans);margin-left:5px;color:var(--muted);letter-spacing:0}
+meter{width:100%;height:8px;accent-color:var(--accent)}
+.metric-over-limit .metric-value,.metric-overflow{color:var(--bad)}
+.metric-overflow{font-size:12px;font-weight:600;margin-top:6px}
+.typical,.chip{display:inline-block;border:1px solid var(--rule-strong);padding:0 6px;font-size:10.5px;border-radius:4px;color:var(--muted)}
+.typical{margin:5px 0}
+.typical-ref{font-size:10px;display:inline-block;min-width:16px;text-align:center}
+.text-button{border:0;background:none;padding:0;font-size:12px;color:var(--accent)}
+.text-button:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* Steps: a numbered rail */
+.steps{list-style:none;padding:0;counter-reset:step}
+.steps li{counter-increment:step;position:relative;padding:0 0 16px 36px}
+.steps li:last-child{padding-bottom:0}
+.steps li::before{content:counter(step);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:600 11.5px/1 var(--sans);color:var(--ink);background:var(--panel);border:1.5px solid var(--rule-strong);z-index:1;transition:background .15s,color .15s,border-color .15s}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:11px;top:25px;bottom:3px;width:1.5px;background:var(--rule)}
+.steps b{display:block;font-size:14.5px;line-height:1.6;color:var(--ink)}
+.steps p{font-size:13.5px;line-height:1.65;color:var(--muted);margin-top:1px}
+/* Text linked to a diagram node, and the step-through controls */
+.term{text-decoration:underline dotted color-mix(in srgb,var(--accent) 55%,transparent);text-underline-offset:3px;text-decoration-thickness:1.5px;border-radius:3px;transition:background .15s}
+.term:hover,.term.term-lit{background:var(--accent-soft);color:var(--accent-ink);text-decoration-color:var(--accent)}
+.walk-start{margin-bottom:10px;font-size:12px;color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,var(--rule))}
+.walk-start[aria-pressed=true]{background:var(--accent-soft)}
+.js .walk-start[hidden]{display:none!important}
+.walk-bar{position:sticky;top:8px;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;padding:6px 8px;border:1px solid var(--rule);border-radius:10px;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(6px);box-shadow:var(--shadow);font-size:12px}
+.walk-text{flex:1 1 220px;min-width:0;color:var(--ink);font-size:13px}
+.walk-text:empty{display:none}
+.walk-bar button{font-size:12px;padding:2px 10px}
+.walk-count{min-width:44px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.steps li.walk-current::before{background:var(--accent);color:#fff;border-color:var(--accent)}
+.steps li.walk-current b,.steps li.walk-current .diagram-link{color:var(--accent-ink)}
+.steps li:not(.walk-current):has(~ .walk-current) b,.steps:has(.walk-current) li:not(.walk-current) p{opacity:.55}
+.diagram-link{color:var(--ink)}
+.diagram-link>span{color:var(--faint);font-weight:400;transition:color .15s}
+.diagram-link:hover{color:var(--accent);text-decoration:none}
+.diagram-link:hover>span{color:var(--accent)}
+.steps li:has(.diagram-link):hover::before,.steps li:has(.diagram-link:focus-visible)::before{background:var(--accent);color:#fff;border-color:var(--accent)}
+.steps li:hover .diagram-link,.steps li:hover .diagram-link>span{color:var(--accent)}
+.steps li:has(.diagram-link):hover p{color:var(--secondary)}
+
+/* Diagram preview: native SVG re-tinted and re-typeset to the page */
+.diagram-panel .panel-body{display:flex;flex-direction:column;padding:14px 16px 16px}
+.block-diagram{flex:1;display:flex;flex-direction:column}
+.diagram{flex:1;display:flex;flex-direction:column}
+.diagram-preview{flex:1;min-width:0;max-width:100%;overflow:auto;display:flex;align-items:flex-start;padding:0}
+.diagram-preview>svg{display:block;width:min(100%,calc(var(--native-width,100vw) * 1.25))!important;margin-inline:auto;height:auto!important;min-height:0!important;max-height:none!important;max-width:none!important}
+.diagram-preview>svg>rect[fill^="url("],.diagram-preview [data-legend]{display:none}
+/* A single lane is the whole diagram, and lanes the shorthand adds only to stack branches carry no
+   meaning: the caption names the diagram, so their frames and numbered labels are noise. */
+.bare-lanes rect[data-composition-frame-kind=lane],.bare-lanes rect[data-composition-frame-kind=lane]+text{display:none}
+/* Phase labels then sit just above the nodes instead of above the hidden lane header. */
+.single-lane .phase-rule,.single-lane .phase-chip,.single-lane .phase-chip+text{transform:translateY(30px)}
+.diagram-preview text{font-family:var(--sans)!important}
+.board .diagram-preview.diagram-preview[class]{--bg:transparent;--lane-fill:color-mix(in srgb,var(--sunk) 55%,transparent);--lane-stroke:var(--control-border,var(--rule-strong));--grid:transparent;--canvas-dot:transparent;--mask:var(--surface);--panel:var(--surface);--text:var(--ink);--text-muted:var(--muted);--text-dim:var(--muted);--text-faint:var(--faint);--arrow:var(--faint);--arrow-emphasis:var(--accent);--frontend-fill:var(--surface);--frontend-stroke:var(--rule-strong);--backend-fill:var(--accent-soft);--backend-stroke:color-mix(in srgb,var(--accent) 50%,var(--rule));--database-fill:var(--sunk);--database-stroke:var(--rule-strong);--cloud-fill:var(--surface);--cloud-stroke:var(--rule-strong);--external-fill:var(--surface);--external-stroke:var(--rule-strong);--messagebus-fill:var(--surface);--messagebus-stroke:var(--rule-strong);--security-fill:var(--surface);--security-stroke:var(--rule-strong)}
+.diagram-preview .semantic-sigil{color:var(--muted);stroke:var(--muted)}
+.diagram-preview text.t-edge-default{fill:var(--accent-ink)}
+.diagram-preview [data-node-id],.diagram-preview [data-edge-id]{transition:opacity .18s}
+.diagram-preview.focusing [data-node-id]:not(.reader-highlight),.diagram-preview.focusing [data-edge-id]:not(.reader-highlight){opacity:.22}
+.diagram-preview [data-node-id].reader-highlight rect:not(.c-mask){stroke:var(--accent);stroke-width:2}
+.diagram-preview [data-edge-id].reader-highlight path{stroke:var(--accent)}
+.diagram-preview [data-edge-id].reader-highlight text{fill:var(--accent)}
+/* Steps beside the diagram they walk through, text on the left. The reader sets the diagram column
+   to the width its text needs; with less than 320px left for the steps, the diagram wraps above
+   them. The diagram stays in view while long steps scroll. */
+.diagram-panel .guided{flex-flow:row-reverse wrap;justify-content:center;align-items:flex-start;gap:16px 36px}
+.guided>.guide-figure{flex:1 0 var(--guide-figure,100%);max-width:min(100%,var(--guide-figure-max,100%));min-width:0;display:flex;flex-direction:column}
+.guided.beside>.guide-figure{position:sticky;top:12px}
+.guided>.guide-text{flex:1 1 320px;min-width:0}
+/* The diagram's header: its title, and the way into the interactive view. */
+.diagram>figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;min-height:28px;margin:0 0 10px;padding:0 2px;font-size:12px;color:var(--muted)}
+.diagram-title{font-size:12.5px;font-weight:500;color:var(--secondary)}
+.js .diagram-actions{display:flex!important;align-items:center;gap:10px;margin-left:auto}
+.explore-button{height:28px;padding:0 10px;font-size:12.5px;line-height:1;color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 32%,var(--rule))}
+.explore-button .tool-icon{width:14px;height:14px;color:var(--accent)}
+.explore-button:hover{background:var(--accent-soft);color:var(--accent-ink)}
+.diagram>figcaption .walk-start{margin:0}
+.js .diagram-preview [data-node-id]{cursor:pointer}
+.image figcaption,.code figcaption,.diff figcaption{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:10px;padding:0 4px}
+.js .diagram-semantics{display:none}
+.diagram-semantics{margin-top:8px;font-size:11px;color:var(--muted)}
+.diagram-semantics ul{padding-left:18px}
+.diagram-semantics code,.changes code{font-size:10px}
+.diagram-fit-status:not([hidden]){margin-top:6px}
+.changes{font-size:11px;margin-top:8px}
+.changes dd{margin-top:3px}
+.added{color:var(--good)}.removed{color:var(--bad)}.modified{color:var(--caution)}
+
+/* Code and diff */
+.chart{margin:0;display:flex;flex-direction:column;--pele-bg:transparent;--pele-fg:var(--ink);--pele-muted:var(--muted);--pele-line:var(--rule-strong);--pele-surface:var(--sunk);--pele-surface-alt:var(--zebra);--pele-border:var(--rule-strong);--pele-accent:var(--accent);--pele-font:var(--sans);--pele-font-mono:var(--mono);--pele-series-1:var(--accent);--pele-series-2:var(--caution);--pele-series-3:var(--good);--pele-series-4:var(--violet);--pele-series-5:var(--bad);--pele-series-6:var(--accent-ink);--pele-series-7:var(--muted);--pele-series-8:var(--faint)}
+/* Charts never scale above their native size, so their text stays at the page's small-text size. */
+.chart>svg{display:block;width:min(100%,var(--native-width,100vw));height:auto;margin-inline:auto}
+.chart figcaption{font-size:12px;color:var(--muted);margin-top:8px;padding:0 4px}
+.snippet{border:1px solid var(--rule);border-radius:8px;background:var(--code);overflow:hidden}
+.snippet figcaption{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 12px;border-bottom:1px solid var(--rule);font-size:12px;color:var(--muted);background:var(--panel)}
+.snippet-label{display:flex;align-items:center;gap:8px;min-width:0;color:var(--secondary);font-weight:500}
+.snippet-language{font-size:11px;color:var(--faint);background:none;border:0;padding:0;font-weight:400}
+.snippet pre{margin:0;border:0;border-radius:0;background:none;padding:12px 14px;font-size:12.5px;line-height:1.7;color:var(--ink)}
+pre{max-width:100%;overflow:auto;font-size:12px;line-height:1.7;background:var(--code);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;margin:8px 0 0}
+pre code{background:none;border:0;padding:0;white-space:pre;font-size:inherit}
+.diff-scroll{overflow:auto;max-width:100%;margin-top:8px;background:var(--code);border:1px solid var(--rule);border-radius:8px}
+.diff-code{width:100%;border-collapse:collapse;font:12px/1.7 var(--mono)}
+.diff-code th{font:10px/1.6 var(--sans);color:var(--muted);text-align:left;background:var(--sunk)}
+.diff-code th,.diff-code td{padding:0 8px;border:0;vertical-align:top}
+.diff-code .diff-line{display:table-row}
+.diff-code code{font:inherit;background:none;border:0;padding:0;white-space:pre}
+.diff-code .diff-number{width:1%;min-width:36px;text-align:right;user-select:none;color:var(--faint);border-right:1px solid var(--rule)}
+.diff-code .added{background:color-mix(in srgb,var(--good) 9%,var(--code));color:var(--good)}
+.diff-code .removed{background:color-mix(in srgb,var(--bad) 9%,var(--code));color:var(--bad)}
+.diff-code .hunk{color:var(--accent);background:var(--sunk)}
+.diff-code .header,.diff-code .no-newline{color:var(--muted)}
+.diff-code tbody tr>*,.diff-code tbody tr:hover>*{background:inherit}
+.diff-summary{white-space:nowrap}
+.image img{display:block;max-width:100%;height:auto;border-radius:8px}
+
+/* Footer */
+footer{padding:28px 0 32px}
+.typical-footnotes{padding:0 0 16px;font-size:12px;color:var(--muted)}
+.typical-footnotes h2,.sources h2{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.typical-footnotes ol{padding-left:20px}
+.sources{border-top:1px solid var(--rule);padding-top:16px}
+.sources:has(ol:empty){display:none}
+.sources ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 32px;padding-left:20px;font-size:12.5px;color:var(--muted)}
+.sources li{padding-left:4px;overflow-wrap:anywhere}
+.sources li::marker{font-size:11px;font-weight:600;color:var(--faint)}
+.sources a{color:var(--secondary)}
+.sources a:hover{color:var(--accent)}
+.sources code{display:block;margin-top:2px;font-size:11px;background:none;border:0;padding:0;color:var(--muted)}
+/* Colophon: the maker's mark, then what the reader can check on this page. */
+.colophon{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:28px;padding-top:18px;border-top:1px solid var(--rule)}
+.sources:has(ol:empty)+.colophon,.typical-footnotes+.colophon{margin-top:8px}
+.colophon-brand{display:inline-flex;align-items:center;gap:10px;min-width:0;color:var(--ink);text-decoration:none}
+.colophon-brand:hover{text-decoration:none}
+.colophon-mark{display:grid;place-items:center;flex-shrink:0;width:32px;height:32px;border-radius:9px;background:var(--panel);box-shadow:inset 0 0 0 1px var(--rule)}
+.colophon-mark svg{width:19px;height:auto}
+.colophon-words{display:grid;gap:4px;min-width:0}
+.colophon-name{font:650 13.5px/1 var(--sans);letter-spacing:-.01em;transition:color .15s}
+.colophon-brand:hover .colophon-name{color:var(--accent)}
+.colophon-tagline{font-size:11.5px;line-height:1.3;color:var(--muted)}
+.colophon-facts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.colophon-facts span+span::before{content:"·";margin:0 8px;color:var(--faint)}
+@media(max-width:760px){.colophon-facts{margin-left:0}}
+
+/* Source cards */
+.diagram-preview .has-source{cursor:help}
+.diagram-preview .has-source:hover rect:not(.c-mask){stroke:var(--accent);stroke-width:2}
+/* Source card: what kind of source, where it is, the evidence itself, then how to open it. */
+.source-card{position:absolute;z-index:30;display:flex;flex-direction:column;gap:10px;padding:12px 14px;background:var(--panel);border:1px solid var(--control-border,var(--rule-strong));border-radius:12px;box-shadow:0 16px 40px rgb(16 24 40/.16);font-size:12.5px;color:var(--secondary)}
+.source-card header{display:flex;align-items:flex-start;gap:10px}
+.source-icon{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink)}
+.source-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.source-head{display:grid;gap:2px;flex:1;min-width:0}
+.source-card b{color:var(--ink);font-size:13px;line-height:1.4}
+.source-where{font:11.5px/1.4 var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.source-number{flex-shrink:0;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:var(--sunk);font-size:11px;font-weight:600;color:var(--muted)}
+.source-card pre{margin:0;max-height:280px;font-size:11.5px;line-height:1.6;padding:8px 0;border-radius:8px}
+.source-card .line{display:block;padding:0 12px 0 0;white-space:pre}
+.source-card .line i{display:inline-block;width:3.2em;padding-right:10px;text-align:right;color:var(--faint);font-style:normal;user-select:none}
+.source-note{margin:0;padding:8px 12px;border-radius:8px;background:var(--sunk);box-shadow:inset 3px 0 0 var(--rule-strong);line-height:1.6}
+.source-note span{display:block;margin-top:2px;font-size:11.5px;color:var(--muted)}
+.source-content{white-space:pre-line;overflow-wrap:anywhere;max-height:280px;overflow:auto}
+.source-card footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 0;border-top:1px solid var(--rule);font-size:11.5px;color:var(--muted)}
+.source-pin code{font-size:11px}
+.source-card a{font-size:12px;font-weight:500}
+@media print{.source-card{display:none!important}}
+
+/* Follow-up questions */
+.ask-button{margin-left:auto;flex-shrink:0;font-size:12px;padding:1px 9px;color:var(--muted);border-color:transparent;background:none;opacity:.7;transition:opacity .15s,color .15s,border-color .15s}
+.panel:hover .ask-button,.ask-button:focus-visible{opacity:1;border-color:var(--rule-strong)}
+.ask-button:hover{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--rule))}
+.ask-floating{position:absolute;z-index:20;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--ink);color:var(--paper);border:0;box-shadow:0 4px 14px rgb(0 0 0/.18)}
+.ask-floating:hover{background:var(--accent);color:#fff}
+/* Follow-up dialog: where the question points, suggested questions, the reader's words, then copy. */
+.ask-dialog{width:min(560px,calc(100vw - 32px));padding:0;border-radius:14px}
+.ask-dialog form{margin:0;display:flex;flex-direction:column;gap:14px;padding:20px 22px 18px}
+.ask-dialog header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.ask-dialog h2{font:600 16px/1.35 var(--sans);color:var(--ink)}
+.ask-where{margin-top:3px;font-size:12.5px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.ask-close{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;margin:-3px -5px 0 0;padding:0;border:0;border-radius:50%;background:none;color:var(--faint);transition:background .15s,color .15s}
+.ask-close:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
+.ask-close:focus{outline:none}
+.ask-close:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ask-close svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.ask-dialog blockquote{margin:0;padding:9px 12px;border-radius:8px;background:var(--sunk);box-shadow:inset 3px 0 0 var(--accent);font-size:13px;line-height:1.6;color:var(--secondary);max-height:120px;overflow:auto}
+.ask-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ask-chips button{height:28px;padding:0 12px;border:1px solid var(--rule-strong);border-radius:999px;background:var(--panel);font-size:12.5px;line-height:1;color:var(--secondary);transition:background .15s,color .15s,border-color .15s}
+.ask-chips button:hover{color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 45%,var(--rule))}
+.ask-chips button[aria-pressed=true]{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 55%,var(--rule));color:var(--accent-ink)}
+.ask-dialog textarea{min-height:96px;font:inherit;font-size:14px;line-height:1.6;color:var(--ink);background:var(--paper);border:1px solid var(--rule-strong);border-radius:10px;padding:10px 12px;resize:vertical;transition:border-color .15s,box-shadow .15s}
+.ask-dialog textarea::placeholder{color:var(--faint)}
+.ask-dialog textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent);background:var(--panel)}
+.ask-dialog footer{display:flex;align-items:center;gap:8px;padding:0}
+.ask-note{flex:1;min-width:0;margin-right:8px;font-size:11.5px;line-height:1.45;color:var(--muted)}
+.ask-dialog footer button{background:var(--panel);color:var(--secondary)}
+.ask-dialog footer button:hover{background:var(--sunk);color:var(--ink)}
+.ask-dialog .primary,.ask-dialog .primary:hover{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.ask-dialog .primary:hover{filter:brightness(1.06)}
+.ask-dialog .primary kbd{margin-left:2px;font:500 10.5px/1 var(--sans);opacity:.75}
+:root[data-theme=dark] .ask-dialog .primary{color:#0c0d10}
+@media(max-width:560px){.ask-note{flex-basis:100%;margin:0 0 4px}.ask-dialog footer{flex-wrap:wrap;justify-content:flex-end}}
+@media print{.ask-button,.ask-floating{display:none!important}}
+
+/* Dialogs */
+dialog{color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:12px;box-shadow:0 24px 80px rgb(0 0 0/.25)}
+dialog::backdrop{background:rgb(10 10 12/.55);backdrop-filter:blur(2px)}
+/* The interactive view fills the window: the Viewer brings its own title and tools, so the dialog
+   adds no bar of its own, only a close control on the backdrop above it. */
+.viewer-dialog{width:min(1440px,calc(100vw - 48px));height:calc(100dvh - 76px);max-height:none;margin:56px auto 20px;padding:0;border:0;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 30px 90px rgb(0 0 0/.45),0 0 0 1px rgb(255 255 255/.06)}
+.viewer-dialog[open]{display:flex;flex-direction:column}
+.viewer-dialog::backdrop{background:rgb(8 10 15/.72);backdrop-filter:blur(8px) saturate(.85)}
+.viewer-dialog h2{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.viewer-close{position:fixed;top:12px;right:max(24px,calc((100vw - 1440px) / 2));display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 12px;border:1px solid rgb(255 255 255/.16);border-radius:999px;background:rgb(255 255 255/.1);color:#fff;font-size:13px;line-height:1;transition:background .15s}
+.viewer-close:hover{background:rgb(255 255 255/.18)}
+.viewer-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.viewer-close .tool-icon{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.viewer-close kbd{padding:3px 6px;border-radius:5px;background:rgb(255 255 255/.14);font:500 10.5px/1 var(--sans);color:rgb(255 255 255/.8)}
+.viewer-dialog iframe{width:100%;flex:1;border:0;min-height:0}
+.dialog-loading{margin:auto;font-size:13px;color:var(--muted)}
+.dialog-loading[hidden]{display:none}
+.dialog-open{overflow:hidden}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 15px;border-radius:8px;font-size:12px;opacity:0;pointer-events:none;z-index:100}
+#toast.visible{opacity:1}
+
+/* Styles. Clean is the default; editorial, product and swiss restyle the same structure. Each has a
+   light palette and a screen-only dark palette, so print always uses the light one. */
+:root[data-style=editorial]{--paper:#f6f2ea;--panel:#fbf8f2;--surface:#fbf8f2;--sunk:#f1ece2;--zebra:#f3eee5;--code:#f1ece2;--ink:#1d1a16;--secondary:#3a352e;--muted:#7a7166;--faint:#a39a8e;--rule:#e4dccf;--rule-strong:#d4c9b8;--accent:#9c2f1f;--accent-soft:#f4e6df;--accent-ink:#86261a;--marker:#f0d9cf;--badge:#1d1a16;--badge-ink:#fbf8f2;--shadow:none;--serif:"Songti SC","Noto Serif SC","Source Han Serif SC",Georgia,"Times New Roman",serif}
+:root[data-style=product]{--paper:#f3f4f8;--panel:#fff;--surface:#fff;--sunk:#f5f6fb;--zebra:#f7f8fc;--code:#f5f6fb;--ink:#0b0d12;--secondary:#272b35;--muted:#626a7b;--faint:#99a0ae;--rule:#e7e9f0;--rule-strong:#d7dbe6;--accent:#5b4bf5;--accent-soft:#f1efff;--accent-ink:#4a3be0;--marker:#e4e0ff;--badge:#5b4bf5;--badge-ink:#fff;--shadow:0 1px 2px rgb(16 24 40/.04),0 8px 24px rgb(16 24 40/.06)}
+:root[data-style=swiss]{--control-border:#d4d4d4;--paper:#fff;--panel:#fff;--surface:#fff;--sunk:#f4f4f4;--zebra:#f7f7f7;--code:#f4f4f4;--ink:#000;--secondary:#1f1f1f;--muted:#6b6b6b;--faint:#a0a0a0;--rule:#e6e6e6;--rule-strong:#000;--accent:#ff4f00;--accent-soft:#fff0e8;--accent-ink:#d94300;--marker:#ffe0cf;--badge:#000;--badge-ink:#fff;--shadow:none}
+@media screen{
+:root[data-style=editorial][data-theme=dark]{--paper:#171512;--panel:#1d1a16;--surface:#1d1a16;--sunk:#24211c;--zebra:#211e19;--code:#24211c;--ink:#f2ece2;--secondary:#d8d0c4;--muted:#a1978a;--faint:#6f675d;--rule:#2e2a24;--rule-strong:#3d372f;--accent:#e0806b;--accent-soft:#2e1d18;--accent-ink:#f0a08c;--marker:#4a2a20;--badge:#f2ece2;--badge-ink:#171512}
+:root[data-style=product][data-theme=dark]{--paper:#0d0e14;--panel:#161824;--surface:#161824;--sunk:#1c1f2e;--zebra:#1a1c29;--code:#1c1f2e;--ink:#f2f3f8;--secondary:#cfd2de;--muted:#8e93a8;--faint:#5d6278;--rule:#262a3b;--rule-strong:#333850;--accent:#8d80ff;--accent-soft:#211e40;--accent-ink:#b3aaff;--marker:#2f2a5c;--badge:#8d80ff;--badge-ink:#0d0e14;--shadow:0 1px 2px rgb(0 0 0/.4)}
+:root[data-style=swiss][data-theme=dark]{--control-border:#363636;--paper:#0a0a0a;--panel:#0a0a0a;--surface:#0a0a0a;--sunk:#161616;--zebra:#121212;--code:#161616;--ink:#fff;--secondary:#e6e6e6;--muted:#9a9a9a;--faint:#5c5c5c;--rule:#262626;--rule-strong:#fff;--accent:#ff6a1f;--accent-soft:#2a1508;--accent-ink:#ff8a4d;--marker:#4a2410;--badge:#fff;--badge-ink:#000}
+}
+@media screen and (prefers-color-scheme:dark){
+:root[data-style=editorial]:not([data-theme]){--paper:#171512;--panel:#1d1a16;--surface:#1d1a16;--sunk:#24211c;--zebra:#211e19;--code:#24211c;--ink:#f2ece2;--secondary:#d8d0c4;--muted:#a1978a;--faint:#6f675d;--rule:#2e2a24;--rule-strong:#3d372f;--accent:#e0806b;--accent-soft:#2e1d18;--accent-ink:#f0a08c;--badge:#f2ece2;--badge-ink:#171512}
+:root[data-style=product]:not([data-theme]){--paper:#0d0e14;--panel:#161824;--surface:#161824;--sunk:#1c1f2e;--zebra:#1a1c29;--code:#1c1f2e;--ink:#f2f3f8;--secondary:#cfd2de;--muted:#8e93a8;--faint:#5d6278;--rule:#262a3b;--rule-strong:#333850;--accent:#8d80ff;--accent-soft:#211e40;--accent-ink:#b3aaff;--badge:#8d80ff;--badge-ink:#0d0e14}
+:root[data-style=swiss]:not([data-theme]){--control-border:#363636;--paper:#0a0a0a;--panel:#0a0a0a;--surface:#0a0a0a;--sunk:#161616;--zebra:#121212;--code:#161616;--ink:#fff;--secondary:#e6e6e6;--muted:#9a9a9a;--faint:#5c5c5c;--rule:#262626;--rule-strong:#fff;--accent:#ff6a1f;--accent-soft:#2a1508;--accent-ink:#ff8a4d;--badge:#fff;--badge-ink:#000}
+}
+/* Editorial: a long read. Serif headings, hairline rules, no cards. */
+[data-style=editorial] body{font-size:15px}
+[data-style=editorial] h1,[data-style=editorial] .panel-head h2,[data-style=editorial] .verdict,[data-style=editorial] .callout h3{font-family:var(--serif)}
+[data-style=editorial] h1{font-size:30px;letter-spacing:0}
+[data-style=editorial] .masthead{border-bottom:2px solid var(--ink);margin-bottom:22px;padding-bottom:16px}
+[data-style=editorial] .panel{border:0;border-top:1px solid var(--rule-strong);border-radius:0;background:transparent;box-shadow:none}
+[data-style=editorial] .panel-head{border-bottom:0;padding:14px 4px 4px}
+[data-style=editorial] .panel-head h2{font-size:18px;font-weight:700}
+[data-style=editorial] .panel-id,[data-style=editorial] .answer-id{background:none;color:var(--accent);font:700 15px/1 Georgia,serif;min-width:0;padding:0}
+[data-style=editorial] .panel-body{padding:10px 4px 18px}
+[data-style=editorial] .verdict{background:none;box-shadow:inset 3px 0 0 var(--accent);border-radius:0;font-size:20px;line-height:1.7;padding:0 0 0 16px}
+[data-style=editorial] .answer-scope{border-top:1px dotted var(--rule-strong);padding:10px 4px}
+[data-style=editorial] tbody tr:nth-child(even)>*{background:none;border-radius:0}
+[data-style=editorial] tbody td,[data-style=editorial] tbody th{border-bottom:1px solid var(--rule)}
+/* Product: soft cards, strong weights, one confident accent. */
+[data-style=product] h1{font-size:30px;font-weight:800;letter-spacing:-.025em}
+[data-style=product] .panel{border-radius:18px;border-color:transparent}
+[data-style=product] .panel-head{border-bottom:0;padding:18px 22px 6px}
+[data-style=product] .panel-head h2{font-size:17px;font-weight:700;letter-spacing:-.01em}
+[data-style=product] .panel-id{border-radius:8px;min-width:26px;height:26px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px}
+[data-style=product] .answer-id{background:var(--accent);color:var(--badge-ink)}
+[data-style=product] .panel-body{padding:10px 22px 22px}
+[data-style=product] .answer-panel{background:linear-gradient(180deg,var(--accent-soft),var(--panel) 70%);border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+[data-style=product] .verdict{background:var(--panel);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 25%,transparent);border-radius:12px;font-size:19px;font-weight:700}
+[data-style=product] .callout{border-radius:12px}
+[data-style=product] .scope-chip{border-radius:8px}
+/* Swiss: black rules, large numbers, one signal colour. */
+[data-style=swiss] body{font-family:"Helvetica Neue","PingFang SC",Arial,sans-serif}
+[data-style=swiss] h1{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+[data-style=swiss] .masthead{border-bottom:4px solid var(--ink);padding-bottom:18px;margin-bottom:24px}
+[data-style=swiss] .board{column-gap:24px}
+[data-style=swiss] .panel{border:0;border-top:2px solid var(--ink);border-radius:0;box-shadow:none}
+[data-style=swiss] .panel-head{border-bottom:0;padding:10px 0 4px;align-items:baseline}
+[data-style=swiss] .panel-head h2{font-size:15px;font-weight:700}
+[data-style=swiss] .panel-id,[data-style=swiss] .answer-id{background:none;color:var(--accent);font:800 28px/1 "Helvetica Neue",Arial,sans-serif;min-width:0;height:auto;padding:0 6px 0 0}
+[data-style=swiss] .panel-body{padding:8px 0 4px}
+[data-style=swiss] .verdict{background:none;box-shadow:none;padding:0;font-size:22px;line-height:1.5;letter-spacing:-.01em}
+[data-style=swiss] .verdict strong{color:var(--accent)}
+[data-style=swiss] .reasons li::before{background:var(--ink);color:var(--paper);box-shadow:none;border-radius:0}
+[data-style=swiss] .answer-scope{border-top:1px solid var(--ink);padding:10px 0}
+[data-style=swiss] .scope-chip{border-radius:0;border-color:var(--ink);background:none}
+[data-style=swiss] tbody tr:nth-child(even)>*{background:none;border-radius:0}
+[data-style=swiss] tbody td,[data-style=swiss] tbody th{border-bottom:1px solid var(--rule)}
+[data-style=swiss] thead th{color:var(--ink);font-weight:700;border-bottom:2px solid var(--ink)}
+[data-style=swiss] .callout{border-radius:0;box-shadow:inset 4px 0 0 var(--accent)}
+[data-style=swiss] .steps li::before{border-radius:0;border-color:var(--ink)}
+/* Swiss controls keep the square corners of its numbers, chips and rules. */
+[data-style=swiss] :is(.tool-button,.theme-controls,.theme-controls button,.menu-options,.menu-options button,.walk-bar,.walk-bar button,.walk-start,.ask-button,.ask-chips button,.ask-dialog,.ask-dialog footer button,.ask-dialog textarea,.ask-dialog blockquote,.source-card,.source-icon,.source-note,.colophon-mark,.viewer-dialog,.snippet,.checklist input){border-radius:2px}
+/* Its neutral nodes take a grey outline; the full-strength rule colour is for page rules only. */
+:root[data-style=swiss] .board .diagram-preview.diagram-preview[class]{--frontend-stroke:color-mix(in srgb,var(--ink) 32%,var(--paper));--database-stroke:color-mix(in srgb,var(--ink) 32%,var(--paper));--cloud-stroke:color-mix(in srgb,var(--ink) 32%,var(--paper));--external-stroke:color-mix(in srgb,var(--ink) 32%,var(--paper));--messagebus-stroke:color-mix(in srgb,var(--ink) 32%,var(--paper));--security-stroke:color-mix(in srgb,var(--ink) 32%,var(--paper))}
+/* Style overrides that must beat the clean dark rules, and chart series that stay apart in warm palettes. */
+:root[data-style=editorial] .answer-id,:root[data-style=swiss] .answer-id{background:none;color:var(--accent)}
+:root[data-style=product] .answer-id{color:var(--badge-ink)}
+[data-style=editorial] .chart,[data-style=swiss] .chart{--pele-series-1:color-mix(in srgb,var(--ink) 45%,var(--paper));--pele-series-2:var(--accent)}
+
+/* Narrow desktop windows */
+@media(max-width:1255px){.diagram-panel,.diagram-panel+.panel,.panel:has(+.diagram-panel){grid-column:span 12}}
+@media(max-width:1100px){.shell{width:calc(100% - 40px)}.masthead{align-items:flex-start;flex-wrap:wrap}.board{gap:12px}.panel-head{padding:12px 16px}.panel-body{padding:14px 16px 16px}.answer-scope{padding:10px 16px 12px}}
+@media(max-width:760px){.shell{width:calc(100% - 24px)}.board{display:flex;flex-direction:column}.sources ol{grid-template-columns:1fr}h1{font-size:22px}.verdict{font-size:18px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Print */
+@media print{
+:root,:root[data-theme=dark],:root:not([data-theme]){color-scheme:light;--paper:#fff;--panel:#fff;--surface:#fff;--sunk:#f5f5f5;--zebra:#fafafa;--ink:#111;--secondary:#333;--muted:#555;--faint:#777;--rule:#ddd;--rule-strong:#ccc;--accent:#1d4aa8;--accent-soft:#eef2fb;--accent-ink:#1d4aa8;--marker:#dce5f8;--code:#f5f5f5;--good:#1d5e3a;--caution:#7a4c06;--bad:#8c2a1c;--badge:#111;--badge-ink:#fff;--shadow:none}
+.interactive,.js .interactive,dialog,#toast,.skip-link,button{display:none!important}
+.shell{width:100%;margin:0}
+.masthead{padding:0 0 12px}
+.board{display:block}
+.panel{margin-bottom:12px;break-inside:avoid;box-shadow:none;border-radius:8px}
+.answer-panel{background:var(--panel)}
+.sources ol{display:block}
+.sources li{margin-bottom:6px}
+.diagram-preview{overflow:visible;background:#fff}
+.board .diagram-preview.diagram-preview[class]{--mask:#fff;--panel:#fff}
+.diagram-preview>svg{min-width:0!important;width:100%}
+.table-scroll,pre,.diff-scroll{overflow:visible}
+pre code,.diff-code code{white-space:pre-wrap;overflow-wrap:anywhere}
+.typical{border:0;padding:0;font-size:11px}
+a{color:inherit}
+}
+</style><script type="application/json" id="archify-software-notices">"NOTICE\nArchify\nCopyright (c) 2026 tt-a1i (Archify)\nCopyright (c) 2025 Cocoon AI\n\nArchify is distributed under the Apache License, Version 2.0 (LICENSE),\nexcept where a file, package manifest, or third-party notice specifies otherwise.\nThe separately versioned DeepSeek Harness adapter remains MIT; its bundled\nSkill retains the license of the immutable source selected in release.json.\n\nCode and contributions received under the MIT License through pre-transition\ncommit 82c7e0f089a02a4d514714adf37dc2061682da5f remain available under their\noriginal terms. Previously published releases keep their existing licenses. The complete historical MIT\ncopyright and permission notice is preserved in LICENSE-MIT. This transition\ndoes not revoke existing MIT grants or assert a new patent grant on behalf\nof historical contributors.\n\nArchify originated from Cocoon-AI/architecture-diagram-generator:\nhttps://github.com/Cocoon-AI/architecture-diagram-generator\n\nThird-party components retain their own licenses; see THIRD_PARTY_NOTICES.md\nand the license files beside those components. Names and logos do not imply\nofficial endorsement, and the software license grants no general trademark\npermission.\n\nThese software licenses cover Archify's embedded runtime and templates, not\nownership of a user's authored content, business data, or source repository.\n\nLICENSE\n\n                                 Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\n\nLICENSE-MIT\nMIT License\n\nCopyright (c) 2026 tt-a1i (Archify)\nCopyright (c) 2025 Cocoon AI\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n\nTHIRD_PARTY_NOTICES.md\n# Third-party notices\n\nArchify includes optional vector data for third-party brand marks. These marks\nare provided only to identify technologies and services in user-authored\ndiagrams. Their inclusion does not imply sponsorship, endorsement, partnership,\nor affiliation with Archify.\n\nArchify's license and historical MIT grants are described in LICENSE, NOTICE,\nand LICENSE-MIT. The software license does not\nreplace the copyright licenses, trademark policies, or brand guidelines that\napply to third-party marks. Users are responsible for confirming that their\nparticular use is permitted.\n\n## Simple Icons\n\nMost of the built-in vector paths and their metadata were generated from\n[Simple Icons 16.28.0](https://github.com/simple-icons/simple-icons/tree/16.28.0).\nSimple Icons makes its collection work available under\n[CC0 1.0 Universal](https://github.com/simple-icons/simple-icons/blob/16.28.0/LICENSE.md).\n\nAs Simple Icons explains in its\n[disclaimer](https://github.com/simple-icons/simple-icons/blob/16.28.0/DISCLAIMER.md),\nCC0 for the collection does not mean that every underlying icon is CC0. License\nand brand-guideline metadata may be incomplete or change over time. The absence\nof an individual license entry is not a grant of permission.\n\nArchify embeds the selected icons as vector-path data and may render them in a\nuser-selected color. The following individual licenses were recorded in the\npinned Simple Icons 16.28.0 metadata:\n\n| Mark | Recorded source | Recorded license | Archify treatment |\n|---|---|---|---|\n| Angular | [Angular press kit](https://angular.dev/press-kit) | [`CC-BY-4.0`](https://creativecommons.org/licenses/by/4.0/) | Embedded as vector-path data; color may be changed by the authored diagram. |\n| Apache Airflow | [Apache logos](https://apache.org/logos) | [`Apache-2.0`](https://www.apache.org/licenses/LICENSE-2.0) | Embedded as vector-path data; Apache trademarks remain subject to the [ASF trademark policy](https://www.apache.org/foundation/marks/). |\n| Apache Kafka | [Apache logos](https://apache.org/logos) | [`Apache-2.0`](https://www.apache.org/licenses/LICENSE-2.0) | Embedded as vector-path data; Apache trademarks remain subject to the [ASF trademark policy](https://www.apache.org/foundation/marks/). |\n| .NET | [.NET brand repository](https://github.com/dotnet/brand/blob/c7d0f51b8ec59531332d05fb27a5b758a7a3d689/logo/dotnet-logo.svg) | [`CC0-1.0`](https://creativecommons.org/publicdomain/zero/1.0/) | Embedded as vector-path data; color may be changed by the authored diagram. |\n| JavaScript | [JS community logo](https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/js.svg) | [`MIT`](https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/LICENSE) | Embedded as vector-path data; color may be changed by the authored diagram. |\n| Jenkins | [Jenkins artwork source](https://get.jenkins.io/art/) | [`CC-BY-SA-3.0`](https://creativecommons.org/licenses/by-sa/3.0/) | Embedded as vector-path data; color may be changed by the authored diagram. Jenkins retains its trademark rights. |\n| Rust | [Rust project](https://www.rust-lang.org) | [`CC-BY-SA-4.0`](https://creativecommons.org/licenses/by-sa/4.0/) | Embedded as vector-path data; color may be changed by the authored diagram. See the [Rust media guide](https://www.rust-lang.org/policies/media-guide). |\n| Vue.js | [Vue logo source](https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/logo.svg) | [`CC-BY-NC-SA-4.0`](https://creativecommons.org/licenses/by-nc-sa/4.0/) | Embedded as vector-path data; color may be changed by the authored diagram. The non-commercial and share-alike conditions remain applicable; see the [Vue artwork terms](https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/README.md). |\n\nThe source, guideline, and known license fields for every packaged mark are\npreserved in `renderers/shared/generated-brand-marks.mjs`.\n\n## OpenAI mark\n\nThe OpenAI vector path is recorded from the\n[OpenAI brand guidelines](https://openai.com/brand/), not from Simple Icons.\nUse remains subject to those current guidelines and any applicable trademark\nrights. Its inclusion does not state or imply endorsement by OpenAI.\n\n## JetBrains Mono\n\nDelivered Archify viewer artifacts embed the JetBrains Mono variable font\nsubsets served by Google Fonts. For characters covered by these subsets, font\nselection does not depend on a network request or a locally installed copy.\nUncovered characters (including CJK) still use the system fallback stack;\nbrowser and operating-system rasterization can differ.\nJetBrains Mono is maintained at\n[github.com/JetBrains/JetBrainsMono](https://github.com/JetBrains/JetBrainsMono)\nand is distributed under the SIL Open Font License 1.1. The complete license\ntext is preserved in `assets/JetBrainsMono-OFL.txt` in the packaged Skill and\nin the font CSS carried by standalone HTML and SVG exports.\n\n## Pele\n\nThe explainer renders Mermaid chart fences with an unmodified subset of\n[Pele 1.3.0](https://github.com/obsidianmd/pele), copyright (c) 2026 kepano,\ndistributed under the MIT License. The subset and its license text are in\n`explainer/vendor/pele/` in the packaged Skill. Charts are rendered to static\nSVG when a page is built; delivered pages contain no Pele code.\n\n## No additional rights granted\n\nBrand names, logos, and trademarks remain the property of their respective\nowners. This notice records provenance and known terms; it does not grant rights\nthat Archify does not hold, and it does not state that every packaged mark has\nbeen cleared for every commercial, promotional, or redistributive use.\n\n## Story HTML parser\n\nThe Node story scanner and builder include parse5 7.3.0 (MIT) and entities\n6.0.1 (BSD-2-Clause), bundled into `story/vendor/html-parser.mjs`. The parser is\nnot embedded in generated HTML. Pinned sources, rebuild instructions and the\ncomplete licenses are in `story/vendor/`."</script></head><body><a class="skip-link" href="#board">跳至正文</a><div class="shell"><header class="masthead"><h1>为什么 gzip 压缩后反而更大？</h1><div class="tools interactive"><div class="theme-controls" role="group" aria-label="主题"><button type="button" data-theme-choice="auto" aria-pressed="true">系统</button><button type="button" data-theme-choice="light" aria-pressed="false">浅色</button><button type="button" data-theme-choice="dark" aria-pressed="false">深色</button></div><div class="tool-menu style-menu"><button type="button" class="tool-button" data-style-toggle aria-haspopup="menu" aria-expanded="false" aria-label="样式"><span class="style-swatch" data-swatch="clean"></span><span data-style-label>简洁</span><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 6.5 8 10l3.5-3.5"/></svg></button><div class="menu-options style-options" role="menu" aria-label="样式" hidden><button type="button" role="menuitemradio" aria-checked="true" data-style-choice="clean" tabindex="-1"><span class="style-swatch" data-swatch="clean"></span><span>简洁</span><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></button><button type="button" role="menuitemradio" aria-checked="false" data-style-choice="editorial" tabindex="-1"><span class="style-swatch" data-swatch="editorial"></span><span>杂志</span><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></button><button type="button" role="menuitemradio" aria-checked="false" data-style-choice="product" tabindex="-1"><span class="style-swatch" data-swatch="product"></span><span>产品</span><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></button><button type="button" role="menuitemradio" aria-checked="false" data-style-choice="swiss" tabindex="-1"><span class="style-swatch" data-swatch="swiss"></span><span>网格</span><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 8.5 6.5 11.5 12.5 4.5"/></svg></button></div></div><div class="tool-menu export-menu"><button type="button" class="tool-button" data-export-toggle aria-haspopup="menu" aria-expanded="false"><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.5v7M5 6.5l3 3 3-3M3 11v2.5h10V11"/></svg><span>导出</span><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 6.5 8 10l3.5-3.5"/></svg></button><div class="menu-options" role="menu" aria-label="导出" hidden><p class="menu-label" role="presentation">长图</p><button type="button" role="menuitem" tabindex="-1" data-export-image="png" aria-label="长图 PNG"><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 3.5h11v9h-11zM2.5 10.5l3-3 3 3 2-2 3 3M10.5 6.25a.75.75 0 1 0 0 .01"/></svg><span>PNG</span><small>最清晰</small></button><button type="button" role="menuitem" tabindex="-1" data-export-image="webp" aria-label="长图 WebP"><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 3.5h11v9h-11zM2.5 10.5l3-3 3 3 2-2 3 3M10.5 6.25a.75.75 0 1 0 0 .01"/></svg><span>WebP</span><small>体积最小</small></button><button type="button" role="menuitem" tabindex="-1" data-export-image="jpeg" aria-label="长图 JPG"><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 3.5h11v9h-11zM2.5 10.5l3-3 3 3 2-2 3 3M10.5 6.25a.75.75 0 1 0 0 .01"/></svg><span>JPG</span><small>兼容最好</small></button><hr role="separator"><button type="button" role="menuitem" tabindex="-1" data-print><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2M4.5 9.5h7v4h-7z"/></svg><span>打印 / PDF</span></button></div></div></div></header><main id="board"><div class="board"><section id="answer" class="panel answer-panel span5" data-row="0" data-span-min="4"><header class="panel-head"><span class="panel-id answer-id" aria-hidden="true">答</span><h2>结论</h2></header><div class="panel-body"><p class="verdict"><strong>gzip 要同时保存压缩数据和头尾信息，两者加起来可能比原始数据更大。</strong> 本地样本中，一个 <code>A</code> 从 1 B 增至 21 B：压缩数据 3 B，加上头尾信息 18 B。<sup class="cite"><a href="#source-measure">1</a></sup></p><ol class="reasons"><li>压缩数据本身也可能比输入更大；头尾信息并不是唯一原因。<sup class="cite"><a href="#source-measure">1</a></sup></li><li>相同大小的输入，内容不同，压缩结果也可能不同。<sup class="cite"><a href="#source-measure">1</a></sup></li></ol></div><p class="answer-scope"><span class="scope-label">适用于</span><span class="scope-chip">四个合成输入</span><span class="scope-chip">level 9</span><span class="scope-chip">mtime 0</span><span class="scope-chip">字节数</span></p></section><section class="panel span7" id="parts" data-row="0" data-span-min="5" data-title="多出的字节在哪里？"><header class="panel-head"><a class="panel-id" href="#parts" aria-label="多出的字节在哪里？">1</a><h2>多出的字节在哪里？</h2></header><div class="panel-body"><div class="block block-prose" id="prose-460a418637bd" data-block-type="prose"><p>这些实测输入各产生一个 gzip 成员，且没有可选头字段。每个结果的包装是 <strong>18 B：10 B 头部 + 8 B 尾部</strong>。尾部包含 CRC32 和输入长度字段，各 4 B。<sup class="cite"><a href="#source-rfc">2</a></sup></p></div><div class="block block-prose" id="prose-168015f50078" data-block-type="prose"><p>所以在这些样本中：gzip 大小 = raw DEFLATE 大小 + 18 B。raw DEFLATE 是压缩数据，不包含 gzip 头部和尾部。<sup class="cite"><a href="#source-zlib">3</a></sup></p></div><div class="block block-callout" id="callout-0604e57b8eab" data-block-type="callout"><aside class="callout note"><h3>18 B 的范围</h3><p>gzip 格式允许可选头字段，也允许多个成员；其他 gzip 文件的总包装大小不一定是 18 B。<sup class="cite"><a href="#source-rfc">2</a></sup></p></aside></div><div class="block block-chart" id="chart-f201ac2aa36e" data-block-type="chart"><figure class="chart" style="--native-width:415px"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-pie" viewBox="0 0 415 256" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_fm:var(--pele-font-mono,monospace);font:13px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="pie"><g class="pele-slices" transform="translate(128,128)" stroke="var(--_bg)" stroke-width="1.5" stroke-linejoin="round"><path class="pele-slice" data-id="头部 · 10（48%）" d="M0,0L0,-120A120,120 0 0 1 17.89,118.66Z" fill="var(--pele-series-1,#4c78a8)"/><path class="pele-slice" data-id="压缩数据 · 3（14%）" d="M0,0L17.89,118.66A120,120 0 0 1 -81.62,87.97Z" fill="var(--pele-series-2,#f58518)"/><path class="pele-slice" data-id="尾部 · 8（38%）" d="M0,0L-81.62,87.97A120,120 0 0 1 0,-120Z" fill="var(--pele-series-3,#54a24b)"/></g><g class="pele-slice-labels" transform="translate(128,128)" font-size="11" text-anchor="middle" fill="var(--_bg)"><text x="89.75" y="-2.88">48%</text><text x="-26.53" y="89.85">14%</text><text x="-83.78" y="-29.03">38%</text></g><g class="pele-legend" font-size="11"><g class="pele-legend-item" data-id="头部 · 10（48%）"><rect x="280" y="96" width="12" height="12" rx="2" fill="var(--pele-series-1,#4c78a8)"/><text x="345.37" y="105.85" text-anchor="middle">头部 · 10（48%）</text></g><g class="pele-legend-item" data-id="压缩数据 · 3（14%）"><rect x="280" y="122" width="12" height="12" rx="2" fill="var(--pele-series-2,#f58518)"/><text x="353.31" y="131.85" text-anchor="middle">压缩数据 · 3（14%）</text></g><g class="pele-legend-item" data-id="尾部 · 8（38%）"><rect x="280" y="148" width="12" height="12" rx="2" fill="var(--pele-series-3,#54a24b)"/><text x="342.31" y="157.85" text-anchor="middle">尾部 · 8（38%）</text></g></g></svg><figcaption>本地单字节样本的 gzip 组成：共 21 B，图中数值单位为 B。<sup class="cite"><a href="#source-measure">1</a></sup></figcaption></figure></div></div></section><section class="panel span8" id="examples" data-row="1" data-span-min="6" data-title="四个输入的实测结果"><header class="panel-head"><a class="panel-id" href="#examples" aria-label="四个输入的实测结果">2</a><h2>四个输入的实测结果</h2></header><div class="panel-body"><div class="block block-prose" id="prose-745722ad5eda" data-block-type="prose"><p>下表单位均为 B。采用 Python 3.15.0、zlib 1.2.12，显式设置压缩级别 9 和 mtime 0。<sup class="cite"><a href="#source-measure">1</a></sup> <sup class="cite"><a href="#source-python">4</a></sup></p></div><div class="block block-prose" id="prose-5ef17852290f" data-block-type="prose"><p>原始输入 → gzip 输出放在同一格，括号里是变化量。“压缩数据”指 raw DEFLATE，不含前述 18 B 头尾字段。</p></div><div class="block block-comparison" id="comparison-53eb40bb1289" data-block-type="comparison"><div class="table-scroll"><table><thead><tr><th scope="col">输入</th><th scope="col">原始 → gzip</th><th scope="col">压缩数据</th></tr></thead><tbody><tr id="row-2c7506ad8e09"><th scope="row">一个 ASCII A</th><td><span class="cell-text">1 → <strong>21</strong>（+20）</span></td><td><span class="cell-text">3</span></td></tr><tr id="row-510e165e0faf"><th scope="row">1024 个 ASCII A</th><td><span class="cell-text">1024 → <strong>29</strong>（-995）</span></td><td><span class="cell-text">11</span></td></tr><tr id="row-2b3da29587b7"><th scope="row">固定派生字节</th><td><span class="cell-text">1024 → <strong>1047</strong>（+23）</span></td><td><span class="cell-text">1029</span></td></tr><tr id="row-068828aaba1f"><th scope="row">29 B gzip 再压缩</th><td><span class="cell-text">29 → <strong>47</strong>（+18）</span></td><td><span class="cell-text">29</span></td></tr></tbody></table></div></div><div class="block block-prose" id="prose-823ce4d945d9" data-block-type="prose"><p>固定派生字节由 SHAKE-256 和固定种子生成，用于复现这一输入。第四行的输入是第二行产生的 29 B gzip 结果。结果只描述这四个输入，不能推断随机数据或已压缩数据总会变大。<sup class="cite"><a href="#source-measure">1</a></sup></p></div></div></section><section class="panel span4" id="check" data-row="1" data-span-min="4" data-measure="text" data-title="遇到变大时怎么判断？"><header class="panel-head"><a class="panel-id" href="#check" aria-label="遇到变大时怎么判断？">3</a><h2>遇到变大时怎么判断？</h2></header><div class="panel-body"><div class="block block-list" id="list-19c0f587cd25" data-block-type="list"><ul class="checklist"><li><label><input type="checkbox"><span>比较原始输入和最终 gzip 输出的字节数。</span></label></li><li><label><input type="checkbox"><span>如需定位原因，分别测 raw DEFLATE 与 gzip 包装的大小，并确认使用的格式和设置。</span></label></li><li><label><input type="checkbox"><span>用实际数据复测；不要把这里的结果当作其他文件的压缩率。</span></label></li></ul></div></div></section></div></main><footer><section class="sources"><h2>来源</h2><ol><li id="source-measure" value="1"><a href="https://github.com/tt-a1i/archify/blob/9320ccd5c69748678981fc8b47c28489853fa75c/docs/experiments/explainer-reading/gzip-size/probe-output.json" target="_blank" rel="noopener noreferrer">四个 gzip 输入的实测结果</a></li><li id="source-rfc" value="2"><a href="https://www.rfc-editor.org/rfc/rfc1952.html#section-2.3" target="_blank" rel="noopener noreferrer">RFC 1952：gzip 成员格式</a></li><li id="source-zlib" value="3"><a href="https://github.com/madler/zlib/blob/21767c654d31d2dccdde4330529775c6c5fd5389/zlib.h#L565-L575" target="_blank" rel="noopener noreferrer">zlib：raw DEFLATE 与 gzip 包装</a></li><li id="source-python" value="4"><a href="https://github.com/python/cpython/blob/d220409a13b77de7a6c30abe16ea90db01528edc/Lib/gzip.py#L660-L676" target="_blank" rel="noopener noreferrer">CPython gzip.compress 实现</a></li></ol></section><div class="colophon"><a class="colophon-brand" href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener noreferrer"><span class="colophon-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 360" fill="none"><path d="M151 94 81 164C67 178 60 191 60 212V248H97V212C97 204 100 199 106 193L179 120Z" fill="#0856F5"/><path d="M238 135C252 132 261 126 270 116L321 167C334 180 339 194 339 213V248H303V213C303 204 300 199 294 193Z" fill="#1DBBB7"/><rect x="146" y="16" width="110" height="104" rx="30" fill="#0856F5"/><rect x="18" y="238" width="110" height="104" rx="28" fill="#0856F5"/><rect x="274" y="238" width="108" height="104" rx="28" fill="#1DBBB7"/></svg></span><span class="colophon-words"><span class="colophon-name">Archify</span><span class="colophon-tagline">把你想理解、规划或分享的事，变成可以互动的可视化作品。</span></span></a><p class="colophon-facts"><span>3 个面板</span><span>4 个来源</span></p></div></footer></div><dialog class="viewer-dialog" id="diagram-dialog" aria-labelledby="diagram-dialog-title"><header><h2 id="diagram-dialog-title"></h2><button type="button" class="viewer-close" data-close-diagram><svg class="tool-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>关闭</span><kbd>Esc</kbd></button></header><p class="dialog-loading" role="status">正在打开交互图…</p></dialog><div id="toast" role="status" aria-live="polite"></div><script type="application/json" id="archify-explainer-prepared">{"schemaVersion":1,"kind":"archify-explainer-prepared","document":{"schema_version":1,"diagram_type":"explainer","meta":{"title":"为什么 gzip 压缩后反而更大？","id":"gzip-size","locale":"zh-CN"},"answer":{"summary":"**gzip 要同时保存压缩数据和头尾信息，两者加起来可能比原始数据更大。** 本地样本中，一个 `A` 从 1 B 增至 21 B：压缩数据 3 B，加上头尾信息 18 B。[](source:measure)","reasons":["压缩数据本身也可能比输入更大；头尾信息并不是唯一原因。[](source:measure)","相同大小的输入，内容不同，压缩结果也可能不同。[](source:measure)"],"scope":"四个合成输入 · level 9 · mtime 0 · 字节数"},"panels":[{"id":"parts","title":"多出的字节在哪里？","blocks":[{"type":"prose","text":"这些实测输入各产生一个 gzip 成员，且没有可选头字段。每个结果的包装是 **18 B：10 B 头部 + 8 B 尾部**。尾部包含 CRC32 和输入长度字段，各 4 B。[](source:rfc)","id":"prose-460a418637bd"},{"type":"prose","text":"所以在这些样本中：gzip 大小 = raw DEFLATE 大小 + 18 B。raw DEFLATE 是压缩数据，不包含 gzip 头部和尾部。[](source:zlib)","id":"prose-168015f50078"},{"type":"callout","level":"note","title":"18 B 的范围","text":"gzip 格式允许可选头字段，也允许多个成员；其他 gzip 文件的总包装大小不一定是 18 B。[](source:rfc)","id":"callout-0604e57b8eab"},{"type":"chart","title":"本地单字节样本的 gzip 组成：共 21 B，图中数值单位为 B。[](source:measure)","data":{"path":"one-byte.json","kind":"pie","x":"部分","y":["字节"],"unit":"B"},"id":"chart-f201ac2aa36e"}]},{"id":"examples","title":"四个输入的实测结果","blocks":[{"type":"prose","text":"下表单位均为 B。采用 Python 3.15.0、zlib 1.2.12，显式设置压缩级别 9 和 mtime 0。[](source:measure) [](source:python)","id":"prose-745722ad5eda"},{"type":"prose","text":"原始输入 → gzip 输出放在同一格，括号里是变化量。“压缩数据”指 raw DEFLATE，不含前述 18 B 头尾字段。","id":"prose-5ef17852290f"},{"type":"comparison","labelColumn":"输入","columns":["原始 → gzip","压缩数据"],"rows":[{"label":"一个 ASCII A","cells":[{"text":"1 → **21**（+20）"},{"text":"3"}],"id":"row-2c7506ad8e09"},{"label":"1024 个 ASCII A","cells":[{"text":"1024 → **29**（-995）"},{"text":"11"}],"id":"row-510e165e0faf"},{"label":"固定派生字节","cells":[{"text":"1024 → **1047**（+23）"},{"text":"1029"}],"id":"row-2b3da29587b7"},{"label":"29 B gzip 再压缩","cells":[{"text":"29 → **47**（+18）"},{"text":"29"}],"id":"row-068828aaba1f"}],"id":"comparison-53eb40bb1289"},{"type":"prose","text":"固定派生字节由 SHAKE-256 和固定种子生成，用于复现这一输入。第四行的输入是第二行产生的 29 B gzip 结果。结果只描述这四个输入，不能推断随机数据或已压缩数据总会变大。[](source:measure)","id":"prose-823ce4d945d9"}]},{"id":"check","title":"遇到变大时怎么判断？","blocks":[{"type":"list","ordered":false,"checklist":true,"items":["比较原始输入和最终 gzip 输出的字节数。","如需定位原因，分别测 raw DEFLATE 与 gzip 包装的大小，并确认使用的格式和设置。","用实际数据复测；不要把这里的结果当作其他文件的压缩率。"],"id":"list-19c0f587cd25"}]}],"sources":[{"id":"measure","title":"四个 gzip 输入的实测结果","url":"https://github.com/tt-a1i/archify/blob/9320ccd5c69748678981fc8b47c28489853fa75c/docs/experiments/explainer-reading/gzip-size/probe-output.json"},{"id":"rfc","title":"RFC 1952：gzip 成员格式","url":"https://www.rfc-editor.org/rfc/rfc1952.html#section-2.3"},{"id":"zlib","title":"zlib：raw DEFLATE 与 gzip 包装","url":"https://github.com/madler/zlib/blob/21767c654d31d2dccdde4330529775c6c5fd5389/zlib.h#L565-L575"},{"id":"python","title":"CPython gzip.compress 实现","url":"https://github.com/python/cpython/blob/d220409a13b77de7a6c30abe16ea90db01528edc/Lib/gzip.py#L660-L676"}]},"sourceMap":{"/meta":{"line":1,"column":1,"start":0,"end":33},"/meta/title":{"line":1,"column":1,"start":0,"end":33},"/meta/id":{"line":1,"column":1,"start":0,"end":33},"/answer":{"line":3,"column":1,"start":34,"end":141},"/answer/summary":{"line":3,"column":1,"start":34,"end":141},"/answer/reasons":{"line":5,"column":1,"start":142,"end":234},"/answer/reasons/0":{"line":5,"column":1,"start":142,"end":190},"/answer/reasons/1":{"line":6,"column":1,"start":190,"end":234},"/answer/scope":{"line":8,"column":1,"start":235,"end":284},"/meta/locale":{"line":9,"column":1,"start":284,"end":303},"/sources/0":{"line":10,"column":1,"start":303,"end":490},"/sources/0/id":{"line":10,"column":1,"start":303,"end":490},"/sources/0/title":{"line":10,"column":1,"start":303,"end":490},"/sources/0/url":{"line":10,"column":1,"start":303,"end":490},"/sources/1":{"line":11,"column":1,"start":490,"end":589},"/sources/1/id":{"line":11,"column":1,"start":490,"end":589},"/sources/1/title":{"line":11,"column":1,"start":490,"end":589},"/sources/1/url":{"line":11,"column":1,"start":490,"end":589},"/sources/2":{"line":12,"column":1,"start":589,"end":735},"/sources/2/id":{"line":12,"column":1,"start":589,"end":735},"/sources/2/title":{"line":12,"column":1,"start":589,"end":735},"/sources/2/url":{"line":12,"column":1,"start":589,"end":735},"/sources/3":{"line":13,"column":1,"start":735,"end":889},"/sources/3/id":{"line":13,"column":1,"start":735,"end":889},"/sources/3/title":{"line":13,"column":1,"start":735,"end":889},"/sources/3/url":{"line":13,"column":1,"start":735,"end":889},"/panels/0":{"line":15,"column":1,"start":890,"end":1329},"/panels/0/id":{"line":15,"column":1,"start":890,"end":1984},"/panels/0/title":{"line":15,"column":1,"start":890,"end":1984},"/panels/0/blocks":{"line":15,"column":1,"start":890,"end":1984},"/panels/0/blocks/0":{"line":17,"column":1,"start":913,"end":1017},"/panels/0/blocks/0/type":{"line":17,"column":1,"start":913,"end":1017},"/panels/0/blocks/0/text":{"line":17,"column":1,"start":913,"end":1017},"/panels/0/blocks/0/id":{"line":17,"column":1,"start":913,"end":1017},"/panels/0/blocks/1":{"line":19,"column":1,"start":1018,"end":1108},"/panels/0/blocks/1/type":{"line":19,"column":1,"start":1018,"end":1108},"/panels/0/blocks/1/text":{"line":19,"column":1,"start":1018,"end":1108},"/panels/0/blocks/1/id":{"line":19,"column":1,"start":1018,"end":1108},"/panels/0/blocks/2":{"line":21,"column":1,"start":1109,"end":1214},"/panels/0/blocks/2/type":{"line":21,"column":1,"start":1109,"end":1214},"/panels/0/blocks/2/level":{"line":21,"column":1,"start":1109,"end":1214},"/panels/0/blocks/2/title":{"line":21,"column":1,"start":1109,"end":1214},"/panels/0/blocks/2/text":{"line":21,"column":1,"start":1109,"end":1214},"/panels/0/blocks/2/id":{"line":21,"column":1,"start":1109,"end":1214},"/panels/0/blocks/3":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/type":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/title":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/data":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/data/path":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/data/kind":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/data/x":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/data/y":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/data/y/0":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/data/unit":{"line":24,"column":1,"start":1215,"end":1328},"/panels/0/blocks/3/id":{"line":24,"column":1,"start":1215,"end":1328},"/panels/1":{"line":26,"column":1,"start":1329,"end":1842},"/panels/1/id":{"line":26,"column":1,"start":1329,"end":1984},"/panels/1/title":{"line":26,"column":1,"start":1329,"end":1984},"/panels/1/blocks":{"line":26,"column":1,"start":1329,"end":1984},"/panels/1/blocks/0":{"line":28,"column":1,"start":1355,"end":1451},"/panels/1/blocks/0/type":{"line":28,"column":1,"start":1355,"end":1451},"/panels/1/blocks/0/text":{"line":28,"column":1,"start":1355,"end":1451},"/panels/1/blocks/0/id":{"line":28,"column":1,"start":1355,"end":1451},"/panels/1/blocks/1":{"line":30,"column":1,"start":1452,"end":1516},"/panels/1/blocks/1/type":{"line":30,"column":1,"start":1452,"end":1516},"/panels/1/blocks/1/text":{"line":30,"column":1,"start":1452,"end":1516},"/panels/1/blocks/1/id":{"line":30,"column":1,"start":1452,"end":1516},"/panels/1/blocks/2":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/2/type":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/2/labelColumn":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/2/columns":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/2/columns/0":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/2/columns/1":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/2/rows":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/2/rows/0":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/0/label":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/0/cells":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/0/cells/0":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/0/cells/0/text":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/0/cells/1":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/0/cells/1/text":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/0/id":{"line":34,"column":1,"start":1563,"end":1600},"/panels/1/blocks/2/rows/1":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/1/label":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/1/cells":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/1/cells/0":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/1/cells/0/text":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/1/cells/1":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/1/cells/1/text":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/1/id":{"line":35,"column":1,"start":1600,"end":1646},"/panels/1/blocks/2/rows/2":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/2/label":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/2/cells":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/2/cells/0":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/2/cells/0/text":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/2/cells/1":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/2/cells/1/text":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/2/id":{"line":36,"column":1,"start":1646,"end":1687},"/panels/1/blocks/2/rows/3":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/rows/3/label":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/rows/3/cells":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/rows/3/cells/0":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/rows/3/cells/0/text":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/rows/3/cells/1":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/rows/3/cells/1/text":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/rows/3/id":{"line":37,"column":1,"start":1687,"end":1729},"/panels/1/blocks/2/id":{"line":32,"column":1,"start":1517,"end":1729},"/panels/1/blocks/3":{"line":39,"column":1,"start":1730,"end":1841},"/panels/1/blocks/3/type":{"line":39,"column":1,"start":1730,"end":1841},"/panels/1/blocks/3/text":{"line":39,"column":1,"start":1730,"end":1841},"/panels/1/blocks/3/id":{"line":39,"column":1,"start":1730,"end":1841},"/panels/2":{"line":41,"column":1,"start":1842,"end":1984},"/panels/2/id":{"line":41,"column":1,"start":1842,"end":1984},"/panels/2/title":{"line":41,"column":1,"start":1842,"end":1984},"/panels/2/blocks":{"line":41,"column":1,"start":1842,"end":1984},"/panels/2/blocks/0":{"line":43,"column":1,"start":1866,"end":1984},"/panels/2/blocks/0/type":{"line":43,"column":1,"start":1866,"end":1984},"/panels/2/blocks/0/ordered":{"line":43,"column":1,"start":1866,"end":1984},"/panels/2/blocks/0/checklist":{"line":43,"column":1,"start":1866,"end":1984},"/panels/2/blocks/0/items":{"line":43,"column":1,"start":1866,"end":1984},"/panels/2/blocks/0/items/0":{"line":43,"column":1,"start":1866,"end":1895},"/panels/2/blocks/0/items/1":{"line":44,"column":1,"start":1895,"end":1950},"/panels/2/blocks/0/items/2":{"line":45,"column":1,"start":1950,"end":1984},"/panels/2/blocks/0/id":{"line":43,"column":1,"start":1866,"end":1984}},"format":"markdown","sourceText":"# 为什么 gzip 压缩后反而更大？ {#gzip-size}\n\n**gzip 要同时保存压缩数据和头尾信息，两者加起来可能比原始数据更大。** 本地样本中，一个 `A` 从 1 B 增至 21 B：压缩数据 3 B，加上头尾信息 18 B。[](source:measure)\n\n- 压缩数据本身也可能比输入更大；头尾信息并不是唯一原因。[](source:measure)\n- 相同大小的输入，内容不同，压缩结果也可能不同。[](source:measure)\n\n@answer scope=\"四个合成输入 · level 9 · mtime 0 · 字节数\"\n@meta locale=zh-CN\n@source measure title=\"四个 gzip 输入的实测结果\" url=https://github.com/tt-a1i/archify/blob/9320ccd5c69748678981fc8b47c28489853fa75c/docs/experiments/explainer-reading/gzip-size/probe-output.json\n@source rfc title=\"RFC 1952：gzip 成员格式\" url=https://www.rfc-editor.org/rfc/rfc1952.html#section-2.3\n@source zlib title=\"zlib：raw DEFLATE 与 gzip 包装\" url=https://github.com/madler/zlib/blob/21767c654d31d2dccdde4330529775c6c5fd5389/zlib.h#L565-L575\n@source python title=\"CPython gzip.compress 实现\" url=https://github.com/python/cpython/blob/d220409a13b77de7a6c30abe16ea90db01528edc/Lib/gzip.py#L660-L676\n\n## 多出的字节在哪里？ {#parts}\n\n这些实测输入各产生一个 gzip 成员，且没有可选头字段。每个结果的包装是 **18 B：10 B 头部 + 8 B 尾部**。尾部包含 CRC32 和输入长度字段，各 4 B。[](source:rfc)\n\n所以在这些样本中：gzip 大小 = raw DEFLATE 大小 + 18 B。raw DEFLATE 是压缩数据，不包含 gzip 头部和尾部。[](source:zlib)\n\n@callout level=note title=\"18 B 的范围\"\n| gzip 格式允许可选头字段，也允许多个成员；其他 gzip 文件的总包装大小不一定是 18 B。[](source:rfc) |\n\n@chart type=pie data=one-byte.json x=部分 y=字节 unit=B title=\"本地单字节样本的 gzip 组成：共 21 B，图中数值单位为 B。[](source:measure)\"\n\n## 四个输入的实测结果 {#examples}\n\n下表单位均为 B。采用 Python 3.15.0、zlib 1.2.12，显式设置压缩级别 9 和 mtime 0。[](source:measure) [](source:python)\n\n原始输入 → gzip 输出放在同一格，括号里是变化量。“压缩数据”指 raw DEFLATE，不含前述 18 B 头尾字段。\n\n| 输入 | 原始 → gzip | 压缩数据 |\n| --- | --- | --- |\n| 一个 ASCII A | 1 → **21**（+20） | 3 |\n| 1024 个 ASCII A | 1024 → **29**（-995） | 11 |\n| 固定派生字节 | 1024 → **1047**（+23） | 1029 |\n| 29 B gzip 再压缩 | 29 → **47**（+18） | 29 |\n\n固定派生字节由 SHAKE-256 和固定种子生成，用于复现这一输入。第四行的输入是第二行产生的 29 B gzip 结果。结果只描述这四个输入，不能推断随机数据或已压缩数据总会变大。[](source:measure)\n\n## 遇到变大时怎么判断？ {#check}\n\n- [ ] 比较原始输入和最终 gzip 输出的字节数。\n- [ ] 如需定位原因，分别测 raw DEFLATE 与 gzip 包装的大小，并确认使用的格式和设置。\n- [ ] 用实际数据复测；不要把这里的结果当作其他文件的压缩率。\n","diagnostics":[],"sourcePath":"pie.archify.md","baseDir":".","quality":"showcase","writingMode":"strict","source":{"sha256":"1dfeb124fa72e40e1090f169df8a4a6ee5fbe58e27a491f240c4f9e58fc1d2c4","bytes":3081},"preparedSources":{"sources":{"measure":{"id":"measure","title":"四个 gzip 输入的实测结果","url":"https://github.com/tt-a1i/archify/blob/9320ccd5c69748678981fc8b47c28489853fa75c/docs/experiments/explainer-reading/gzip-size/probe-output.json"},"rfc":{"id":"rfc","title":"RFC 1952：gzip 成员格式","url":"https://www.rfc-editor.org/rfc/rfc1952.html#section-2.3"},"zlib":{"id":"zlib","title":"zlib：raw DEFLATE 与 gzip 包装","url":"https://github.com/madler/zlib/blob/21767c654d31d2dccdde4330529775c6c5fd5389/zlib.h#L565-L575"},"python":{"id":"python","title":"CPython gzip.compress 实现","url":"https://github.com/python/cpython/blob/d220409a13b77de7a6c30abe16ea90db01528edc/Lib/gzip.py#L660-L676"}},"assets":{},"charts":{"chart-f201ac2aa36e":"pie\n  \"头部\" : 10\n  \"压缩数据\" : 3\n  \"尾部\" : 8"}},"preparedDiagrams":{"diagrams":{}},"dependencies":[{"kind":"data","id":"chart-f201ac2aa36e","path":"one-byte.json","sha256":"125cd2d61e8d11c22a4133ce174594a1efbe6781f8e1bdc879fc5968493bccc3","bytes":121,"contentBase64":"WwogIHsi6YOo5YiGIjogIuWktOmDqCIsICLlrZfoioIiOiAxMH0sCiAgeyLpg6jliIYiOiAi5Y6L57yp5pWw5o2uIiwgIuWtl+iKgiI6IDN9LAogIHsi6YOo5YiGIjogIuWwvumDqCIsICLlrZfoioIiOiA4fQpdCg=="}],"digest":"ab8db6486e9d4909bc355a3037786a2ca0c8907e01bab3532a597b097c5b92b8"}</script><script type="application/json" id="explainer-manifest">{"version":1,"artifactId":"gzip-size","revision":"dce0d0f06ba3500f86ac8622a7369e9321c2a5163536432ecec66c464963034b","documentSha256":"9c645e3f6968095372999fc1832597d0ab6ac72f1c812e3ce484521e33839e86","sourceSha256":"1dfeb124fa72e40e1090f169df8a4a6ee5fbe58e27a491f240c4f9e58fc1d2c4","dependencies":[{"kind":"data","id":"chart-f201ac2aa36e","path":"one-byte.json","sha256":"125cd2d61e8d11c22a4133ce174594a1efbe6781f8e1bdc879fc5968493bccc3","bytes":121}],"children":{},"sources":{"measure":{"id":"measure","title":"四个 gzip 输入的实测结果","url":"https://github.com/tt-a1i/archify/blob/9320ccd5c69748678981fc8b47c28489853fa75c/docs/experiments/explainer-reading/gzip-size/probe-output.json"},"rfc":{"id":"rfc","title":"RFC 1952：gzip 成员格式","url":"https://www.rfc-editor.org/rfc/rfc1952.html#section-2.3"},"zlib":{"id":"zlib","title":"zlib：raw DEFLATE 与 gzip 包装","url":"https://github.com/madler/zlib/blob/21767c654d31d2dccdde4330529775c6c5fd5389/zlib.h#L565-L575"},"python":{"id":"python","title":"CPython gzip.compress 实现","url":"https://github.com/python/cpython/blob/d220409a13b77de7a6c30abe16ea90db01528edc/Lib/gzip.py#L660-L676"}},"assets":{},"diagnostics":[]}</script><script type="application/json" id="explainer-reader-words">{"answer":"结论","answerMark":"答","scope":"适用于","sources":"来源","print":"打印 / PDF","image":"长图","imageHints":["最清晰","体积最小","兼容最好"],"export":"导出","style":"样式","styles":{"clean":"简洁","editorial":"杂志","product":"产品","swiss":"网格"},"auto":"系统","light":"浅色","dark":"深色","typical":"典型值","explore":"打开交互图","exploreTitle":"缩放、搜索节点、追踪路径和上下游，导出图片或动画","close":"关闭","loading":"正在打开交互图…","graph":"图的结构","changes":"结构改动","added":"新增","removed":"删除","modified":"修改","copy":"复制","copied":"已复制","walk":"逐步看","walkMessages":"逐条看消息","walkFlow":"沿流程看","prev":"上一步","next":"下一步","end":"结束","ask":"追问","askQuote":"追问这段","askPlaceholder":"哪里没看懂，或者希望这块补充什么？","askCopy":"复制追问","askCopied":"已复制，粘贴给 agent 即可","askCancel":"取消","askChips":["没看懂这块","展开讲讲","举个例子","依据是什么？"],"askPage":"页面","askFile":"文件","askWhere":"位置","askQuoteLabel":"引用","askQuestion":"问题","askNote":"会一并复制页面、面板位置和 ID，agent 可以只改这一块。","askPatch":"请用 Archify 的面板替换（patch explainer）只更新这个面板，保留它的 ID。","tagline":"把你想理解、规划或分享的事，变成可以互动的可视化作品。","facts":{}}</script><script>(() => {
+  'use strict';
+  const root = document.documentElement;
+  const read = id => JSON.parse(document.getElementById(id).textContent);
+  const prepared = read('archify-explainer-prepared');
+  const diagrams = prepared.preparedDiagrams.diagrams || prepared.preparedDiagrams;
+  const words = read('explainer-reader-words');
+  const english = !root.lang.startsWith('zh');
+  const say = (en,zh) => english ? en : zh;
+  const byId = id => document.getElementById(id);
+  const all = (selector, within = document) => [...within.querySelectorAll(selector)];
+  let toastTimer;
+  function notify(text) { const toast=byId('toast');toast.textContent=text;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),3000); }
+  // Measured board layout. Each panel is measured at every column width, then each column template is
+  // simulated and the one with the least page height and blank area wins. Panels keep source order on
+  // a 1px row grid, so the DOM and reading order never change.
+  // Without JavaScript, or on narrow windows, the static spans from the renderer stay in force.
+  const board = document.querySelector('.board');
+  function layoutBoard() {
+    const panels = all(':scope>.panel',board);
+    const floor = textFloor();
+    // A diagram needs enough width for its smallest label to reach the reading floor.
+    const readableWidth = svg => {
+      const viewWidth = svg.viewBox.baseVal?.width || svg.getBoundingClientRect().width;
+      const smallest = Math.min(...all('text',svg).filter(text=>text.textContent.trim() && !text.closest('[data-legend]')).map(text=>(parseFloat(text.getAttribute('font-size')) || parseFloat(getComputedStyle(text).fontSize)) / secondary(text)));
+      return Number.isFinite(smallest) && smallest > 0 ? viewWidth * floor / smallest : 0;
+    };
+    // Beside its steps, the diagram column is exactly that wide; without room for both, it wraps above them.
+    // It grows no wider than the preview draws the diagram, so spare width goes to the steps.
+    all('.guided').forEach(guide=>{
+      const preview = guide.querySelector('.diagram-preview'), need = Math.ceil(readableWidth(preview.querySelector('svg')) + 2);
+      guide.style.setProperty('--guide-figure',need + 'px');
+      guide.style.setProperty('--guide-figure-max',Math.max(need,Math.ceil(parseFloat(getComputedStyle(preview).getPropertyValue('--native-width')) * 1.25 || 0)) + 'px');
+    });
+    const reset = () => { board.classList.remove('measured'); panels.forEach(panel=>{panel.style.gridColumn = '';panel.style.gridRow = '';}); };
+    if (window.innerWidth <= 760 || panels.length < 2) { reset(); return; }
+    const gap = parseFloat(getComputedStyle(board).columnGap) || 0;
+    const column = (board.clientWidth - gap * 11) / 12;
+    const px = span => span * column + (span - 1) * gap;
+    const readableSpan = panel => {
+      const svgs = all('.diagram-preview>svg',panel);
+      if (!svgs.length) return 0;
+      const body = panel.querySelector('.panel-body'), style = getComputedStyle(body);
+      const inset = panel.offsetWidth - body.clientWidth + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+      const need = Math.max(...svgs.map(svg=>readableWidth(svg) + inset));
+      return [3,4,5,6,7,8,9,12].find(span=>px(span) >= need) || 12;
+    };
+    const SPANS = [4,5,6,7,8,12];
+    board.classList.add('measuring');
+    const items = panels.map(panel=>{
+      const fixed = Number(panel.dataset.spanFixed) || 0;
+      const wide = fixed >= 9 || Number((panel.className.match(/\bspan(\d+)\b/) || [])[1]) >= 9;
+      const min = Math.max(4,Number(panel.dataset.spanMin) || 4,fixed && fixed < 9 ? fixed : 0,readableSpan(panel));
+      const height = {}, fits = {};
+      for (const span of SPANS) {
+        panel.style.width = px(span) + 'px';
+        height[span] = Math.ceil(panel.getBoundingClientRect().height);
+        fits[span] = span >= min && !all('.table-scroll,.diff-scroll,pre',panel).some(element=>element.scrollWidth > element.clientWidth + 1);
+      }
+      panel.style.width = '';
+      return {panel,wide,height,fits,text:panel.dataset.measure === 'text'};
+    });
+    board.classList.remove('measuring');
+    const width = board.clientWidth;
+    const excess = (item,span) => item.text ? Math.max(0,px(span) - 720) / 720 * px(span) * item.height[span] * .6 : 0;
+    // One set of column lines per section. Panels fill the shortest fitting column in source
+    // order; a panel that fits no column takes the full width and closes the section above it. The
+    // last panel of every column stretches to the section bottom, so column edges and bottoms align.
+    function simulate(template, section, forced = []) {
+      const lines = template.reduce((acc,span)=>[...acc,acc[acc.length - 1] + span],[1]);
+      const placed = [], options = [], chosen = [];
+      let cursor = 0, waste = 0, wide = 0, heights, last, previous;
+      const open = () => { heights = template.map(()=>0); last = template.map(()=>null); previous = {top:0,c:-1,height:0}; };
+      // heights[c] is the offset of the next panel in column c, so it includes one trailing gap.
+      const close = () => {
+        // A conclusion alone in its section takes the full width rather than leaving blank columns beside it.
+        const alone = last.filter(Boolean);
+        if (alone.length === 1 && alone[0] === placed[0] && placed.length === 1 && template.length > 1) {
+          Object.assign(alone[0],{line:1,span:12,height:alone[0].item.height[12]});
+          cursor += alone[0].height + gap;
+          open();
+          return;
+        }
+        const bottom = Math.max(...heights) - gap;
+        if (bottom <= 0) return;
+        template.forEach((span,c)=>{
+          waste += px(span) * (heights[c] ? bottom - (heights[c] - gap) : bottom * 1.6);
+          if (last[c]) last[c].height = cursor + bottom - last[c].top;
+        });
+        cursor += bottom + gap;
+        open();
+      };
+      open();
+      for (const [index,item] of section.entries()) {
+        const answer = item.panel.id === 'answer' && item === items[0];
+        const choices = template.map((span,c)=>({c,span})).filter(({c,span})=>template.length > 1 && !item.wide && item.fits[span] && (!answer || c === 0));
+        options.push(choices.length);
+        if (!choices.length) {
+          chosen.push(0);
+          close();
+          placed.push({item,line:1,span:12,top:cursor,height:item.height[12]});
+          wide += excess(item,12);
+          cursor += item.height[12] + gap;
+          continue;
+        }
+        // Reading order is top to bottom, then left to right: a panel never starts above the previous
+        // one, and starts clearly lower when placed to its left. The panel above it stretches to close the gap.
+        const start = c => Math.max(heights[c], c < previous.c ? previous.top + Math.min(160, previous.height / 2) : previous.top);
+        const bottom = ({c,span}) => start(c) + item.height[span];
+        const selected = choices[forced[index]] || choices.reduce((a,b)=>bottom(b) < bottom(a) - 1 ? b : a), {c,span} = selected;
+        chosen.push(choices.indexOf(selected));
+        const top = start(c);
+        // A gap with no panel above it to stretch is a visible hole, which reads worse than room inside a card.
+        if (top > heights[c]) { waste += px(span) * (top - heights[c]) * (last[c] ? 1 : 1.6); if (last[c]) last[c].height += top - heights[c]; }
+        const entry = {item,line:lines[c],span,top:cursor + top,height:item.height[span]};
+        placed.push(entry);
+        previous = {top,c,height:item.height[span]};
+        heights[c] = top + item.height[span] + gap;
+        last[c] = entry;
+        wide += excess(item,span);
+      }
+      close();
+      return {placed,options,chosen,height:cursor,cost:cursor * width + waste + wide};
+    }
+    // Greedy placement cannot see that a short fit now forces a hole later, so each panel's column is
+    // chosen by completing the rest of the section greedily for every option and keeping the cheapest.
+    function plan(template, section) {
+      let best = simulate(template,section);
+      for (let index = 0; index < section.length; index++) {
+        const prefix = best.chosen.slice(0,index);
+        for (let option = 0; option < best.options[index]; option++) {
+          const trial = simulate(template,section,[...prefix,option]);
+          if (trial.cost < best.cost - 1) best = trial;
+        }
+      }
+      return best;
+    }
+    // Full-width panels split the page into sections; each section picks its own column lines.
+    const templates = [[6,6],[5,7],[7,5],[4,8],[8,4],[4,4,4],[12]];
+    const sections = items.reduce((list,item)=>{ if (item.wide || list.at(-1)?.[0]?.wide) list.push([item]); else list.at(-1).push(item); return list; },[[]]).filter(section=>section.length);
+    let offset = 0;
+    for (const section of sections) {
+      const layout = templates.map(template=>plan(template,section)).reduce((a,b)=>b.cost < a.cost ? b : a);
+      layout.placed.forEach(({item,line,span,top,height})=>{
+        item.panel.style.gridColumn = `${line} / span ${span}`;
+        item.panel.style.gridRow = `${Math.round(offset + top) + 1} / span ${Math.max(1,Math.round(height))}`;
+      });
+      offset += layout.height;
+    }
+    board.classList.add('measured');
+  }
+  // Phase rows that step down share one lane width, which leaves a wide empty strip beside each row.
+  // In the preview each lane frame hugs its own nodes; the full Viewer keeps the native geometry.
+  function fitLaneFrames(svg) {
+    if (svg.closest('.bare-lanes')) return;
+    const frames = all('rect[data-composition-frame-kind="lane"]',svg);
+    if (frames.length < 2) return;
+    const nodes = all('[data-node-id]',svg).map(node=>node.getBBox());
+    frames.forEach(frame=>{
+      const y = frame.y.baseVal.value, bottom = y + frame.height.baseVal.value, label = frame.nextElementSibling?.tagName === 'text' ? frame.nextElementSibling : null;
+      const inside = nodes.filter(box=>box.y >= y && box.y + box.height <= bottom);
+      if (!inside.length) return;
+      const pad = 16, left = Math.min(...inside.map(box=>box.x)) - pad, right = Math.max(...inside.map(box=>box.x + box.width)) + pad;
+      const width = Math.max(right - left, (label?.getComputedTextLength() || 0) + 28);
+      frame.setAttribute('x',left); frame.setAttribute('width',width);
+      label?.setAttribute('x',left + 14);
+    });
+  }
+  // The legend and grid are hidden in the preview, so fit the viewBox to the drawing itself.
+  function cropDiagramPreviews() {
+    all('.diagram-preview>svg').forEach(svg=>{
+      if (svg.dataset.cropped) return;
+      fitLaneFrames(svg);
+      let box; try { box = svg.getBBox(); } catch { return; }
+      if (!box.width || !box.height) return;
+      const pad = 6;
+      svg.setAttribute('viewBox',[box.x - pad,box.y - pad,box.width + pad * 2,box.height + pad * 2].map(n=>Math.round(n)).join(' '));
+      svg.parentElement.style.setProperty('--native-width',Math.round(box.width + pad * 2) + 'px');
+      svg.dataset.cropped = 'true';
+    });
+  }
+  // Edge labels are secondary to node text and may sit a little below the reading floor.
+  const secondary = text => text.closest('[data-edge-id]') ? .7 : 1;
+  function textFloor() {
+    const bodySize = parseFloat(getComputedStyle(document.querySelector('.block-prose>p') || document.body).fontSize);
+    return window.innerWidth >= 1440 ? Math.max(10,bodySize * .75) : 10;
+  }
+  // A fit notice that appears or goes away changes a panel's height after the board was planned,
+  // so the board is planned again and the notices rechecked at the new widths.
+  function ensureDiagramReadability() { if (fitDiagrams()) { layoutBoard(); fitDiagrams(); } }
+  function fitDiagrams() {
+    const minimumText = textFloor();
+    let changed = false;
+    // Only a diagram beside its steps stays in view; stacked above them, it would slide over them.
+    all('.guided').forEach(guide=>guide.classList.toggle('beside',guide.firstElementChild.getBoundingClientRect().left >= guide.lastElementChild.getBoundingClientRect().right));
+    all('.diagram-preview>svg').forEach(svg=>{
+      // Measure the current available width, rather than retaining a wider viewport's floor.
+      svg.style.minWidth = '0px';
+      const sizes = all('text',svg).filter(text=>text.textContent.trim() && text.getBoundingClientRect().width > 0).map(text=>{const matrix = text.getScreenCTM();return matrix ? parseFloat(getComputedStyle(text).fontSize) / secondary(text) * (()=>{const trace=matrix.a**2+matrix.b**2+matrix.c**2+matrix.d**2;const determinant=matrix.a*matrix.d-matrix.b*matrix.c;return Math.sqrt(Math.max(0,(trace-Math.sqrt(Math.max(0,trace**2-4*determinant**2)))/2));})() : Infinity;});
+      const smallest = Math.min(...sizes);
+      const preview = svg.parentElement;
+      const needed = svg.getBoundingClientRect().width * minimumText / smallest;
+      const widened = smallest > 0 && smallest < minimumText && needed <= preview.clientWidth;
+      if (widened) preview.style.setProperty('--native-width',Math.ceil(needed / 1.25) + 'px');
+      const insufficient = smallest > 0 && smallest < minimumText && !widened;
+      // On a phone, preserve the reading floor inside a local scroll surface.
+      // Desktop keeps the complete-fit contract and its actionable fit warning.
+      const scrolling = insufficient && window.innerWidth <= 760;
+      if (scrolling) {
+        svg.style.minWidth = Math.ceil(needed) + 'px';
+        preview.tabIndex = 0;
+      } else preview.removeAttribute('tabindex');
+      if (insufficient && !scrolling) {
+        preview.dataset.diagramRequiredWidth = String(Math.ceil(needed));
+      } else delete preview.dataset.diagramRequiredWidth;
+      preview.dataset.diagramFit = scrolling ? 'scroll' : insufficient ? 'insufficient' : 'fit';
+      preview.dataset.diagramMinimumText = String(minimumText);
+      const status = svg.closest('.block-diagram').querySelector('.diagram-fit-status');
+      changed ||= status.hidden === insufficient;
+      status.hidden = !insufficient;
+      status.textContent = scrolling
+        ? say('Scroll the diagram sideways, or focus it and use the arrow keys. Open the interactive view for the full diagram.','左右滑动查看图表；也可聚焦图框后按方向键。打开交互图可查看全图。')
+        : insufficient ? say('This diagram cannot fit this page width with readable text. Open the interactive view to inspect it.','此图在当前页宽下放不下且文字会太小，请打开交互图查看。') : '';
+    });
+    return changed;
+  }
+  const preference = matchMedia('(prefers-color-scheme: dark)');
+  let theme = 'auto';
+  function applyTheme() {
+    const effective = theme === 'auto' ? preference.matches ? 'dark' : 'light' : theme;
+    root.dataset.theme = effective;
+    all('[data-theme-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeChoice === theme)));
+    all('.diagram-preview').forEach(preview=>preview.dataset.theme = effective);
+    if (viewer?.ready) sendViewer();
+  }
+  all('[data-theme-choice]').forEach(button=>button.addEventListener('click',()=>{theme = button.dataset.themeChoice; applyTheme();}));
+  preference.addEventListener?.('change',applyTheme);
+  // Toolbar menus, not native selects, so they match the toolbar: arrow keys move, Escape or Tab
+  // closes, and a click elsewhere closes.
+  function toolMenu(container, pick, current = () => null) {
+    const toggle = container.querySelector('[aria-haspopup]'), panel = container.querySelector('[role=menu]'), items = all('[role^=menuitem]',panel);
+    const set = open => { panel.hidden = !open; toggle.setAttribute('aria-expanded',String(open)); if (open) (current() || items[0]).focus(); };
+    toggle.addEventListener('click',()=>set(panel.hidden));
+    items.forEach(item=>item.addEventListener('click',()=>{ set(false); toggle.focus(); pick(item); }));
+    panel.addEventListener('keydown',event=>{
+      const index = items.indexOf(document.activeElement);
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); items[(index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
+      else if (event.key === 'Escape' || event.key === 'Tab') { set(false); if (event.key === 'Escape') toggle.focus(); }
+    });
+    document.addEventListener('click',event=>{ if (!panel.hidden && !container.contains(event.target)) set(false); });
+  }
+  // The author picks a default style; a reader's own choice is kept for every explainer page.
+  const styleToggle = document.querySelector('[data-style-toggle]'), styleMenu = document.querySelector('.style-options');
+  const styleItems = all('[data-style-choice]',styleMenu || document);
+  const setStyle = (style, remember) => {
+    if (!styleItems.some(item=>item.dataset.styleChoice === style)) return;
+    root.dataset.style = style;
+    styleItems.forEach(item=>item.setAttribute('aria-checked',String(item.dataset.styleChoice === style)));
+    styleToggle.querySelector('[data-style-label]').textContent = words.styles[style];
+    styleToggle.querySelector('.style-swatch').dataset.swatch = style;
+    if (remember) { try { localStorage.setItem('archify-explainer-style',style); } catch {} requestAnimationFrame(()=>{ layoutBoard(); ensureDiagramReadability(); }); }
+  };
+  try { const saved = localStorage.getItem('archify-explainer-style'); if (saved) setStyle(saved,false); } catch {}
+  toolMenu(document.querySelector('.style-menu'),item=>setStyle(item.dataset.styleChoice,true),()=>styleItems.find(item=>item.getAttribute('aria-checked') === 'true'));
+  toolMenu(document.querySelector('.export-menu'),item=>item.matches('[data-print]') ? window.print() : exportImage(item.dataset.exportImage));
+  // Long image: the page as laid out now, drawn through an SVG foreignObject at twice the pixel
+  // density. Controls, dialogs and walk-through bars are left out. Browsers that refuse to export a
+  // foreignObject canvas (Safari) get a notice pointing to Print / PDF.
+  async function pageImage(format = 'png') {
+    const shell = document.querySelector('.shell'), width = document.documentElement.clientWidth;
+    let height = Math.ceil(shell.getBoundingClientRect().height + 48);
+    const clone = root.cloneNode(true);
+    clone.querySelectorAll('script,dialog,#toast,.skip-link,.tools,.ask-button,.ask-floating,.walk-bar,.walk-start,.interactive,.diagram-fit-status').forEach(element=>element.remove());
+    clone.querySelectorAll('.reader-highlight').forEach(element=>element.classList.remove('reader-highlight'));
+    clone.querySelectorAll('.focusing').forEach(element=>element.classList.remove('focusing'));
+    // An exported image has no scroll interaction; retain the complete overview.
+    clone.querySelectorAll('.diagram-preview>svg').forEach(svg=>{svg.style.minWidth='0px';});
+    // Inside a foreignObject the page's <html> is not :root, so theme and style rules would drop out;
+    // the root's own attribute selects the same element with the same specificity.
+    const sheet = clone.querySelector('head>style'); if (sheet) sheet.textContent = sheet.textContent.replace(/:root\b/g,'[data-archify-artifact]');
+    clone.style.width = `${width}px`;
+    if (clone.querySelector('[data-diagram-fit="scroll"]')) {
+      // The exported overview is shorter than the scrollable live diagram.
+      // Measure the inert clone synchronously, then remove it before painting.
+      const measuring = document.createElement('div');
+      measuring.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;visibility:hidden;pointer-events:none`;
+      measuring.append(clone);
+      document.body.append(measuring);
+      try { height = Math.ceil(clone.querySelector('.shell').getBoundingClientRect().height + 48); }
+      finally { measuring.remove(); }
+    }
+    const xhtml = new XMLSerializer().serializeToString(clone);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject x="0" y="0" width="${width}" height="${height}">${xhtml}</foreignObject></svg>`;
+    const image = new Image();
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    await image.decode();
+    const scale = Math.min(2,16000 / height), canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale); canvas.height = Math.round(height * scale);
+    const context = canvas.getContext('2d');
+    context.fillStyle = getComputedStyle(document.body).backgroundColor; context.fillRect(0,0,canvas.width,canvas.height);
+    context.drawImage(image,0,0,canvas.width,canvas.height);
+    return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob ? resolve(blob) : reject(new Error('empty')),`image/${format}`,.92));
+  }
+  const exportToggle = document.querySelector('[data-export-toggle]');
+  // PNG keeps text sharpest; WebP and JPG are smaller to share. A browser that cannot encode the
+  // chosen format returns PNG, and the file is named for what it actually holds.
+  async function exportImage(format) {
+    exportToggle.disabled = true;
+    try {
+      const blob = await pageImage(format), link = document.createElement('a'), extension = {'image/jpeg':'jpg','image/webp':'webp'}[blob.type] || 'png';
+      if (blob.type !== `image/${format}`) notify(say(`This browser cannot save ${format.toUpperCase()}; saved as PNG.`,`当前浏览器不支持导出 ${format.toUpperCase()}，已改存为 PNG。`));
+      link.href = URL.createObjectURL(blob); link.download = `${(document.querySelector('h1')?.textContent || 'explainer').trim().replace(/[\\/:*?"<>|]+/g,' ').slice(0,80)}.${extension}`;
+      document.body.append(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(link.href),4000);
+    } catch { notify(say('This browser cannot export the page as an image. Use Print / PDF instead.','当前浏览器无法导出长图，请用"打印 / PDF"。')); }
+    finally { exportToggle.disabled = false; }
+  }
+  window.ArchifyExplainer = {pageImage};
+  // Only the isolated srcdoc copy receives this bridge. The payload remains byte-for-byte native.
+  const viewerDialog = byId('diagram-dialog');
+  let viewer = null;
+  let viewerOpener;
+  function validHash(diagram,hash) {
+    if(!hash) return true;
+    const nodes = new Set((diagram.semantic?.nodes || []).map(node=>node.id));
+    try {
+      if(hash.startsWith('focus=')) return nodes.has(decodeURIComponent(hash.slice(6)));
+      if(hash.startsWith('route=')) { const parts = hash.slice(6).split('~').map(decodeURIComponent); return parts.length === 2 && parts.every(id=>nodes.has(id)); }
+    } catch {}
+    return false;
+  }
+  // The Viewer follows the page's theme, and its editorial preset matches the editorial style.
+  function sendViewer() { if(!viewer?.ready) return; viewer.frame.contentWindow.postMessage({kind:'archify-explainer-host',token:viewer.token,theme:root.dataset.theme,preset:root.dataset.style === 'editorial' ? 'editorial' : 'classic',hash:viewer.hash,nodes:viewer.nodes,edges:viewer.edges},'*'); }
+  function openViewer(id,hash,opener) {
+    const diagram = diagrams[id];
+    if(!diagram || !validHash(diagram,hash)) { notify(say('Diagram target unavailable.','图中目标不可用。')); return; }
+    let requestedEdges = []; try { requestedEdges = JSON.parse(opener.dataset.diagramEdges || '[]'); } catch {}
+    requestedEdges = requestedEdges.filter(id=>(diagram.semantic?.edges || []).some(edge=>edge.id === id));
+    const selectedEdges = (diagram.semantic?.edges || []).filter(edge=>requestedEdges.includes(edge.id));
+    const requestedNodes = [...new Set(hash.startsWith('focus=') ? [decodeURIComponent(hash.slice(6))] : hash.startsWith('route=') ? hash.slice(6).split('~').map(decodeURIComponent) : selectedEdges.flatMap(edge=>[edge.from,edge.to]))];
+    viewerOpener = opener;
+    byId('diagram-dialog-title').textContent = byId(id).querySelector('.diagram-title').textContent;
+    viewerDialog.showModal(); document.body.classList.add('dialog-open');
+    if(viewer?.id === id) { viewer.hash = hash; viewer.nodes = requestedNodes; viewer.edges = requestedEdges; sendViewer(); return; }
+    viewer?.frame.remove();
+    const token = Array.from(crypto.getRandomValues(new Uint32Array(4))).join('-');
+    viewerDialog.dataset.nativeReady = 'false'; delete viewerDialog.dataset.nativeFocus;
+    const frame = document.createElement('iframe'); frame.addEventListener('load',()=>{viewerDialog.dataset.nativeLoaded = id;}); frame.title = byId('diagram-dialog-title').textContent;
+    frame.setAttribute('sandbox','allow-scripts allow-downloads allow-modals');
+    const script = `<script>(()=>{
+      const token=${JSON.stringify(token)};
+      let pending=null;
+      const settle=data=>requestAnimationFrame(()=>{
+        if(pending!==data)return;
+        if(Array.isArray(data.edges)&&data.edges.length&&Array.isArray(data.nodes)){
+          if(window.Archify?.focus?.setMany)window.Archify.focus.setMany(data.nodes,{toggle:false,mode:'selection',updateUrl:false});
+          document.querySelectorAll('[data-edge-id]').forEach(edge=>{if(data.edges.includes(edge.dataset.edgeId))edge.setAttribute('data-focus-match','');else edge.removeAttribute('data-focus-match');});
+        }
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          if(pending!==data)return;
+          pending=null;
+          const active=document.querySelector('svg[data-focus-active]');
+          const selected=Array.from(document.querySelectorAll('[data-focus-selected]')).map(node=>node.dataset.nodeId);
+          const matched=Array.from(document.querySelectorAll('[data-edge-id][data-focus-match]')).map(edge=>edge.dataset.edgeId);
+          parent.postMessage({kind:'archify-explainer-focus-result',token,nodes:[...new Set(selected)],edges:[...new Set(matched)],active:active?.dataset.focusActive||''},'*');
+        }));
+      });
+      // The native hash listeners restore focus before the explicit host selection.
+      addEventListener('hashchange',()=>{if(pending&&location.hash.slice(1)===pending.hash)settle(pending);});
+      addEventListener('message',event=>{
+        const data=event.data;
+        if(event.source!==parent||data?.kind!=='archify-explainer-host'||data.token!==token)return;
+        if(['light','dark'].includes(data.theme))document.documentElement.dataset.theme=data.theme;
+        if(['classic','editorial'].includes(data.preset))window.Archify?.preset?.apply?.(data.preset);
+        if(typeof data.hash!=='string'||!/^(?:|focus=[^&]+|route=[^&]+~[^&]+)$/.test(data.hash))return;
+        pending=data;
+        if(location.hash.slice(1)===data.hash)dispatchEvent(new HashChangeEvent('hashchange'));
+        else location.hash=data.hash;
+      });
+      addEventListener('keydown',event=>{if(event.key==='Escape')parent.postMessage({kind:'archify-explainer-escape',token},'*');},true);
+      const ready=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>parent.postMessage({kind:'archify-explainer-ready',token},'*')));
+      if(document.readyState==='complete')ready();else addEventListener('load',ready,{once:true});
+    })();<\/script>`;
+    viewer = {id,frame,token,hash,nodes:requestedNodes,edges:requestedEdges,ready:false};
+    viewerDialog.querySelector('.dialog-loading').hidden = false;
+    viewerDialog.append(frame);
+    nativeHtml(diagram).then(html=>{
+      if (viewer?.frame !== frame) return;
+      const end = html.toLowerCase().lastIndexOf('</body>');
+      frame.srcdoc = end < 0 ? html + script : html.slice(0,end) + script + html.slice(end);
+    },()=>notify(say('This diagram could not be opened.','无法打开此交互图。')));
+  }
+  // The page stores each native Viewer gzip-compressed; inflate it once, on first open.
+  function nativeHtml(diagram) {
+    if (typeof diagram.html === 'string') return Promise.resolve(diagram.html);
+    const bytes = Uint8Array.from(atob(diagram.htmlGzip),character=>character.charCodeAt(0));
+    return diagram.inflating ||= new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  }
+  function closeViewer() { if(viewerDialog.open) viewerDialog.close(); }
+  document.querySelector('[data-close-diagram]').addEventListener('click',closeViewer);
+  viewerDialog.addEventListener('close',()=>{ document.body.classList.remove('dialog-open'); viewerOpener?.focus({preventScroll:true}); });
+  window.addEventListener('message',event=>{ if(!viewer || event.source !== viewer.frame.contentWindow || event.data?.token !== viewer.token) return; if(event.data.kind === 'archify-explainer-ready') {viewer.ready = true; viewerDialog.dataset.nativeReady = 'true'; viewerDialog.querySelector('.dialog-loading').hidden = true; sendViewer();} else if(event.data.kind === 'archify-explainer-focus-result') {viewerDialog.dataset.nativeFocus = JSON.stringify({nodes:event.data.nodes,edges:event.data.edges,active:event.data.active});} else if(event.data.kind === 'archify-explainer-escape') closeViewer(); });
+  all('[data-open-diagram]').forEach(button=>button.addEventListener('click',()=>openViewer(button.dataset.openDiagram,'',button)));
+  // A node clicked in the preview opens the interactive view focused on it, with its links.
+  all('.diagram-preview').forEach(preview=>preview.addEventListener('click',event=>{
+    const node = event.target.closest('[data-node-id]'), block = preview.closest('.block');
+    if (node) openViewer(block.id,`focus=${encodeURIComponent(node.dataset.nodeId)}`,node.hasAttribute('tabindex') ? node : block.querySelector('[data-open-diagram]'));
+  }));
+  // One spotlight for every text-to-diagram link: the named nodes and edges stay lit, the rest dims.
+  const previewOf = id => byId(id)?.querySelector('.diagram-preview');
+  function spotlight(preview, nodes = [], edges = []) {
+    if (!preview) return;
+    let matched = false;
+    all('[data-node-id],[data-edge-id]',preview).forEach(element=>{const hit = nodes.includes(element.dataset.nodeId) || edges.includes(element.dataset.edgeId); matched ||= hit; element.classList.toggle('reader-highlight',hit);});
+    preview.classList.toggle('focusing',matched);
+  }
+  const targetOf = link => {
+    const hash = link.dataset.diagramHash || '';
+    let edges = []; try { edges = JSON.parse(link.dataset.diagramEdges || '[]'); } catch {}
+    return {preview:previewOf(link.dataset.diagramLink),nodes:hash.startsWith('focus=') ? [decodeURIComponent(hash.slice(6))] : hash.startsWith('route=') ? hash.slice(6).split('~').map(decodeURIComponent) : [],edges};
+  };
+  all('[data-diagram-link]').forEach(link=>{
+    link.addEventListener('click',event=>{ event.preventDefault(); openViewer(link.dataset.diagramLink,link.dataset.diagramHash || '',link); });
+    // A walk-through owns the highlight while it runs.
+    const highlight = active => { if (walking) return; const {preview,nodes,edges} = targetOf(link); spotlight(preview,active ? nodes : [],active ? edges : []); };
+    // A step lights its part of the diagram from anywhere in it, its description included.
+    const hover = link.closest('.steps>li') || link;
+    hover.addEventListener('mouseenter',()=>highlight(true)); hover.addEventListener('mouseleave',()=>highlight(false)); link.addEventListener('focus',()=>highlight(true)); link.addEventListener('blur',()=>highlight(false));
+  });
+  // A name in the text that is also a node label is linked to that node, once per panel, both ways:
+  // hovering the word lights the node, hovering the node lights the word.
+  function linkTerms() {
+    const terms = new Map();
+    all('.diagram-preview').forEach(preview=>all('[data-node-id][data-node-label]',preview).forEach(node=>{
+      const label = node.dataset.nodeLabel.trim();
+      const target = {diagram:preview.closest('.block').id,node:node.dataset.nodeId};
+      if ((/\p{Script=Han}/u.test(label) ? label.length >= 2 : label.length >= 3) && !terms.has(label.toLowerCase())) terms.set(label.toLowerCase(),target);
+      // A plain-word ID ("server" for "Server :443") also names the node in English prose.
+      if (/^[a-z]{3,}$/.test(target.node) && !terms.has(target.node)) terms.set(target.node,target);
+    }));
+    if (!terms.size) return;
+    const pattern = new RegExp([...terms.keys()].sort((a,b)=>b.length - a.length).map(label=>label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))
+      .join('|'),'giu');
+    const word = /[\p{L}\p{N}_]/u;
+    all('.panel').forEach(panel=>{
+      const seen = new Set();
+      const walker = document.createTreeWalker(panel.querySelector('.panel-body') || panel,NodeFilter.SHOW_TEXT,{acceptNode:text=>text.parentElement.closest('.block-diagram,.block-chart,pre,code,a,button,svg,figcaption,.term,.diagram-semantics,thead') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+      const texts = []; while (walker.nextNode()) texts.push(walker.currentNode);
+      for (const text of texts) {
+        const value = text.nodeValue, parts = []; let last = 0;
+        for (const match of value.matchAll(pattern)) {
+          const before = value[match.index - 1], after = value[match.index + match[0].length];
+          if (seen.has(match[0].toLowerCase()) || (!/\p{Script=Han}/u.test(match[0]) && ((before && word.test(before)) || (after && word.test(after))))) continue;
+          seen.add(match[0].toLowerCase()); parts.push(value.slice(last,match.index),match[0]); last = match.index + match[0].length;
+        }
+        if (!parts.length) continue;
+        const fragment = document.createDocumentFragment();
+        parts.forEach((part,index)=>{ if (index % 2 === 0) { fragment.append(part); return; } const target = terms.get(part.toLowerCase()), span = document.createElement('span'); span.className = 'term'; span.dataset.diagram = target.diagram; span.dataset.node = target.node; span.textContent = part; fragment.append(span); });
+        fragment.append(value.slice(last)); text.replaceWith(fragment);
+      }
+    });
+    all('.term').forEach(term=>{ const lit = on => spotlight(previewOf(term.dataset.diagram),on ? [term.dataset.node] : []); term.addEventListener('mouseenter',()=>lit(true)); term.addEventListener('mouseleave',()=>lit(false)); });
+    all('.diagram-preview').forEach(preview=>{
+      const id = preview.closest('.block').id;
+      preview.addEventListener('mouseover',event=>{ const node = event.target.closest('[data-node-id]')?.dataset.nodeId; all('.term').forEach(term=>term.classList.toggle('term-lit',term.dataset.diagram === id && term.dataset.node === node)); });
+      preview.addEventListener('mouseleave',()=>all('.term-lit').forEach(term=>term.classList.remove('term-lit')));
+    });
+  }
+  // Walk-through: step lists that point into a diagram, and sequence diagrams message by message.
+  // Each step lights its part of the diagram; arrow keys move, Escape ends.
+  let walking = null;
+  function walk(control, items, show) {
+    const stop = () => { walking?.end(); };
+    if (walking?.control === control) { stop(); return; }
+    stop();
+    let index = 0;
+    const bar = document.createElement('div'); bar.className = 'walk-bar';
+    bar.innerHTML = `<button type="button" data-walk="prev">← ${words.prev}</button><span class="walk-count"></span><button type="button" data-walk="next">${words.next} →</button><span class="walk-text" aria-live="polite"></span><button type="button" data-walk="end">${words.end}</button>`;
+    // A diagram's bar sits above the diagram, so it stays in view while a tall diagram scrolls past.
+    const figure = control.closest('figcaption')?.closest('figure'); if (figure) figure.before(bar); else control.after(bar);
+    // The bar takes the start button's place while the walk runs, so one set of controls shows.
+    const hadFocus = document.activeElement === control;
+    control.setAttribute('aria-pressed','true'); control.hidden = true;
+    if (hadFocus) bar.querySelector('[data-walk=next]').focus();
+    // The bar changes the panel height the board was planned with.
+    const replan = () => requestAnimationFrame(()=>{ layoutBoard(); ensureDiagramReadability(); });
+    replan();
+    const render = () => { bar.querySelector('.walk-count').textContent = `${index + 1} / ${items.length}`; bar.querySelector('.walk-text').textContent = show(index) || ''; };
+    const move = delta => { index = Math.max(0,Math.min(items.length - 1,index + delta)); render(); };
+    bar.addEventListener('click',event=>{ const action = event.target.closest('[data-walk]')?.dataset.walk; if (action === 'end') stop(); else if (action) move(action === 'next' ? 1 : -1); });
+    const keys = event => { if (event.target.closest('input,textarea') || viewerDialog.open) return; if (event.key === 'ArrowRight') { event.preventDefault(); move(1); } else if (event.key === 'ArrowLeft') { event.preventDefault(); move(-1); } else if (event.key === 'Escape') stop(); };
+    document.addEventListener('keydown',keys);
+    walking = {control,end:()=>{ const refocus = bar.contains(document.activeElement); document.removeEventListener('keydown',keys); bar.remove(); control.hidden = false; control.setAttribute('aria-pressed','false'); if (refocus) control.focus(); show(-1); walking = null; replan(); }};
+    render();
+  }
+  function setupWalks() {
+    all('ol.steps').forEach(list=>{
+      const steps = all(':scope>li',list).filter(item=>item.querySelector('[data-diagram-link]'));
+      if (steps.length < 2) return;
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'walk-start interactive'; button.textContent = `▶ ${words.walk}`; button.setAttribute('aria-pressed','false');
+      list.before(button);
+      button.addEventListener('click',()=>walk(button,steps,index=>{
+        steps.forEach((step,i)=>step.classList.toggle('walk-current',i === index));
+        all('.diagram-preview').forEach(preview=>spotlight(preview));
+        if (index < 0) return;
+        const {preview,nodes,edges} = targetOf(steps[index].querySelector('[data-diagram-link]'));
+        spotlight(preview,nodes,edges);
+        const box = preview?.getBoundingClientRect();
+        if (box && (box.bottom < 0 || box.top > innerHeight)) preview.scrollIntoView({block:'nearest',behavior:'smooth'});
+      }));
+    });
+    // A workflow no step list walks through can be walked node by node, in the order it was written,
+    // each node lit with the edges that lead into it.
+    const walked = new Set(all('ol.steps [data-diagram-link]').map(link=>link.dataset.diagramLink));
+    all('.block-diagram').forEach(block=>{
+      const diagram = diagrams[block.id], nodes = diagram?.semantic?.nodes || [], edges = diagram?.semantic?.edges || [];
+      if (diagram?.diagramType !== 'workflow' || walked.has(block.id) || nodes.length < 3) return;
+      const preview = block.querySelector('.diagram-preview');
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'walk-start'; button.textContent = `▶ ${words.walkFlow}`; button.setAttribute('aria-pressed','false');
+      block.querySelector('.diagram-title')?.after(button);
+      button.addEventListener('click',()=>walk(button,nodes,index=>{
+        if (index < 0) { spotlight(preview); return; }
+        const node = nodes[index], into = edges.filter(edge=>edge.to === node.id && (index === 0 || nodes.slice(0,index).some(seen=>seen.id === edge.from)));
+        spotlight(preview,[node.id,...into.map(edge=>edge.from)],into.map(edge=>edge.id));
+        const target = preview.querySelector(`[data-node-id="${CSS.escape(node.id)}"]`), box = target?.getBoundingClientRect();
+        if (box && (box.top < 0 || box.bottom > innerHeight - 80)) target.scrollIntoView({block:'center',behavior:'smooth'});
+        return node.label || node.id;
+      }));
+    });
+    all('.block-diagram').forEach(block=>{
+      if (diagrams[block.id]?.diagramType !== 'sequence') return;
+      const preview = block.querySelector('.diagram-preview'), messages = all('[data-edge-id]',preview);
+      if (messages.length < 2) return;
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'walk-start'; button.textContent = `▶ ${words.walkMessages}`; button.setAttribute('aria-pressed','false');
+      block.querySelector('.diagram-title')?.after(button);
+      const label = id => preview.querySelector(`[data-node-id="${CSS.escape(id)}"]`)?.dataset.nodeLabel || id;
+      button.addEventListener('click',()=>walk(button,messages,index=>{
+        if (index < 0) { spotlight(preview); return; }
+        const message = messages[index];
+        spotlight(preview,[message.dataset.edgeFrom,message.dataset.edgeTo],[message.dataset.edgeId]);
+        const box = message.getBoundingClientRect();
+        if (box.top < 0 || box.bottom > innerHeight - 80) message.scrollIntoView({block:'center',behavior:'smooth'});
+        return `${label(message.dataset.edgeFrom)} → ${label(message.dataset.edgeTo)}${say(': ','：')}${message.dataset.edgeLabel || ''}`;
+      }));
+    });
+  }
+  all('[data-copy]').forEach(button=>button.addEventListener('click',()=>{
+    const text = button.closest('figure').querySelector('pre code').textContent;
+    Promise.resolve(navigator.clipboard?.writeText(text)).then(()=>{button.textContent = words.copied;setTimeout(()=>{button.textContent = words.copy;},1600);},()=>notify(say('Copy failed.','复制失败。')));
+  }));
+  // Follow-up questions: a reader asks about a panel, or about selected text in it, and copies a
+  // message that names the page, the panel ID and the quote, so the agent can revise just that panel.
+  function setupAsk() {
+    const dialog = document.createElement('dialog'); dialog.className = 'ask-dialog';
+    const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    dialog.innerHTML = `<form method="dialog"><header><div><h2 id="ask-title">${words.ask}</h2><p class="ask-where"></p></div><button type="button" class="ask-close" data-ask-cancel aria-label="${words.askCancel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></header><blockquote hidden></blockquote><div class="ask-chips" role="group" aria-label="${words.askQuestion}">${words.askChips.map(chip=>`<button type="button" data-chip>${chip}</button>`).join('')}</div><textarea rows="4" aria-labelledby="ask-title" placeholder="${words.askPlaceholder}"></textarea><footer><p class="ask-note">${words.askNote}</p><button type="button" data-ask-cancel>${words.askCancel}</button><button type="submit" class="primary">${words.askCopy}<kbd>${mac ? '⌘↵' : 'Ctrl ↵'}</kbd></button></footer></form>`;
+    document.body.append(dialog);
+    const area = dialog.querySelector('textarea'), quoteBox = dialog.querySelector('blockquote');
+    let context = null;
+    const open = (panel, quote = '') => {
+      const number = panel.id === 'answer' ? words.answer : panel.querySelector('.panel-id')?.textContent.trim();
+      const title = panel.id === 'answer' ? words.answer : panel.dataset.title || panel.querySelector('h2')?.textContent.trim();
+      context = {panel,quote,number,title};
+      dialog.querySelector('.ask-where').textContent = panel.id === 'answer' ? title : say(`Panel ${number} · ${title}`,`面板 ${number} · ${title}`);
+      all('[data-chip]',dialog).forEach(chip=>chip.setAttribute('aria-pressed','false'));
+      quoteBox.hidden = !quote; quoteBox.textContent = quote;
+      area.value = ''; dialog.showModal(); area.focus();
+    };
+    // A suggested question is added once; choosing it again takes it back out.
+    dialog.querySelectorAll('[data-chip]').forEach(chip=>chip.addEventListener('click',()=>{
+      const lines = area.value.split('\n').filter(line=>line.trim()), on = !lines.includes(chip.textContent);
+      area.value = (on ? [...lines,chip.textContent] : lines.filter(line=>line !== chip.textContent)).join('\n');
+      chip.setAttribute('aria-pressed',String(on)); area.focus();
+    }));
+    area.addEventListener('keydown',event=>{ if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); dialog.querySelector('form').requestSubmit(); } });
+    dialog.querySelectorAll('[data-ask-cancel]').forEach(button=>button.addEventListener('click',()=>dialog.close()));
+    dialog.querySelector('form').addEventListener('submit',event=>{
+      event.preventDefault();
+      const {panel,quote,number,title} = context, page = document.querySelector('h1')?.textContent.trim();
+      const file = location.protocol === 'file:' ? decodeURIComponent(location.pathname) : location.href.split('#')[0];
+      const quoteMark = text => english ? `"${text}"` : `「${text}」`;
+      const lines = [
+        `${words.askPage}${say(': ','：')}${quoteMark(page)}`,
+        `${words.askFile}${say(': ','：')}${file}`,
+        `${words.askWhere}${say(': ','：')}${panel.id === 'answer' ? title : say(`Panel ${number} ${quoteMark(title)}`,`面板 ${number}${quoteMark(title)}`)}${say(` (ID: ${panel.id})`,`（ID: ${panel.id}）`)}`,
+        ...(quote ? [`${words.askQuoteLabel}${say(': ','：')}${quoteMark(quote)}`] : []),
+        `${words.askQuestion}${say(': ','：')}${area.value.trim() || words.askChips[0]}`,
+        ...(panel.id === 'answer' ? [] : [words.askPatch]),
+      ];
+      const text = lines.join('\n');
+      Promise.resolve(navigator.clipboard?.writeText(text)).then(()=>{ dialog.close(); notify(words.askCopied); },()=>{ area.value = text; area.select(); });
+    });
+    all('.panel').forEach(panel=>{
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'ask-button interactive'; button.textContent = words.ask;
+      button.addEventListener('click',()=>open(panel));
+      panel.querySelector('.panel-head')?.append(button);
+    });
+    const floating = document.createElement('button'); floating.type = 'button'; floating.className = 'ask-floating'; floating.textContent = words.askQuote; floating.hidden = true;
+    document.body.append(floating);
+    let selected = null;
+    document.addEventListener('selectionchange',()=>{
+      const selection = getSelection(), text = selection.toString().replace(/\s+/g,' ').trim();
+      const panel = selection.rangeCount ? selection.getRangeAt(0).commonAncestorContainer.parentElement?.closest?.('.panel') || (selection.getRangeAt(0).commonAncestorContainer.closest?.('.panel')) : null;
+      if (!panel || text.length < 2 || dialog.open) { floating.hidden = true; selected = null; return; }
+      const box = selection.getRangeAt(0).getBoundingClientRect();
+      selected = {panel,text:text.slice(0,400)};
+      floating.style.left = `${Math.max(8,Math.min(innerWidth - 120,box.left + box.width / 2 - 45 + scrollX))}px`;
+      floating.style.top = `${box.top + scrollY - 38}px`;
+      floating.hidden = false;
+    });
+    floating.addEventListener('mousedown',event=>event.preventDefault());
+    floating.addEventListener('click',()=>{ if (selected) open(selected.panel,selected.text); floating.hidden = true; });
+  }
+  // Source cards: hovering or focusing a citation shows where the claim comes from, with the pinned
+  // code excerpt for a repository source, so a reader can check it without leaving the page.
+  const glyph = path => `<svg viewBox="0 0 16 16"><path d="${path}"/></svg>`;
+  const sourceIcons = {
+    code:glyph('M5.5 5 2.5 8l3 3M10.5 5l3 3-3 3M9 3.5 7 12.5'),
+    web:glyph('M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2zM2 8h12M8 2c1.7 1.6 2.5 3.6 2.5 6S9.7 12.4 8 14C6.3 12.4 5.5 10.4 5.5 8S6.3 3.6 8 2z'),
+    note:glyph('M4 2.5h5.5l2.5 2.5v8.5H4zM9.5 2.5V5H12M6 8h4M6 10.5h4'),
+  };
+  function setupSourceCards() {
+    const sources = prepared.preparedSources?.sources || {};
+    const card = document.createElement('div'); card.className = 'source-card'; card.hidden = true; card.setAttribute('role','group'); card.setAttribute('aria-label',say('Source details','来源详情'));
+    document.body.append(card);
+    let hideTimer, opener;
+    const hide = () => { clearTimeout(hideTimer); hideTimer = setTimeout(()=>{ if (!card.contains(document.activeElement)) card.hidden = true; },160); };
+    card.addEventListener('mouseenter',()=>clearTimeout(hideTimer)); card.addEventListener('mouseleave',hide);
+    card.addEventListener('focusin',()=>clearTimeout(hideTimer)); card.addEventListener('focusout',hide);
+    const show = (link, id = decodeURIComponent(link.getAttribute('href').slice('#source-'.length)), blockId) => {
+      const content = blockId && byId(blockId);
+      const source = sources[id] || prepared.document?.sources?.find(entry=>entry.id === id) || {};
+      if (!Object.keys(source).length && !content) return;
+      clearTimeout(hideTimer);
+      opener = link;
+      const escapeText = value => String(value ?? '').replace(/[&<>"]/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
+      // A repository source shows its pinned excerpt; a web page its host; any other note its text.
+      const host = (()=>{ try { return new URL(source.url).host.replace(/^www\./,''); } catch { return ''; } })();
+      const where = source.path ? `${source.path}${source.lines ? `:${source.lines.join('–')}` : ''}` : host || (content ? source.title || '' : '');
+      const kind = source.path ? 'code' : source.url ? 'web' : 'note';
+      const lines = source.path && typeof source.text === 'string' ? source.text.split('\n') : [];
+      const first = source.lines?.[0] || 1;
+      const excerpt = lines.length ? `<pre><code>${lines.slice(0,14).map((line,index)=>`<span class="line"><i>${first + index}</i>${escapeText(line) || ' '}</span>`).join('')}${lines.length > 14 ? `<span class="line more"><i></i>…</span>` : ''}</code></pre>` : '';
+      const note = !source.path && (source.text || source.method) ? `<p class="source-note">${escapeText(source.text || '')}${source.method ? `<span>${escapeText(source.method)}</span>` : ''}</p>` : '';
+      const contentNote = content ? `<p class="source-note source-content">${escapeText((content.innerText || content.textContent).trim())}</p>` : '';
+      const title = content ? link.getAttribute('data-node-label') || content.closest('.panel')?.querySelector('h2')?.textContent : source.title || source.path || id;
+      const number = /^\d+$/.test(link.textContent.trim()) ? link.textContent.trim() : '';
+      card.innerHTML = `<header><span class="source-icon" data-kind="${kind}" aria-hidden="true">${sourceIcons[kind]}</span><span class="source-head"><b>${escapeText(title)}</b>${where ? `<span class="source-where">${escapeText(where)}</span>` : ''}</span>${number ? `<span class="source-number">${number}</span>` : ''}</header>${contentNote}${excerpt}${note}${source.revision || source.url || content ? `<footer>${content ? `<a href="#${encodeURIComponent(blockId)}">${say('Read this paragraph','阅读这段')} ↗</a>` : ''}${source.revision ? `<span class="source-pin">${say('Pinned at','固定在')} <code>${escapeText(String(source.revision).slice(0,7))}</code></span>` : ''}${source.url ? `<a href="${escapeText(source.url)}" target="_blank" rel="noopener noreferrer">${say('Open source','打开原文')} ↗</a>` : ''}</footer>` : ''}`;
+      card.hidden = false;
+      const box = link.getBoundingClientRect(), width = Math.min(520,innerWidth - 24);
+      card.style.width = `${width}px`;
+      card.style.left = `${Math.max(12,Math.min(innerWidth - width - 12,box.left - 24)) + scrollX}px`;
+      const below = box.bottom + 8 + card.offsetHeight < innerHeight;
+      card.style.top = `${(below ? box.bottom + 8 : box.top - 8 - card.offsetHeight) + scrollY}px`;
+    };
+    all('.cite a[href^="#source-"]').forEach(link=>{
+      link.addEventListener('mouseenter',()=>show(link)); link.addEventListener('focus',()=>show(link));
+      link.addEventListener('mouseleave',hide); link.addEventListener('blur',hide);
+    });
+    // A diagram node tied to a source opens the same card, so a code diagram doubles as a code tour.
+    all('.diagram-preview[data-node-sources],.diagram-preview[data-node-blocks]').forEach(preview=>{
+      let map = {}, blocks = {}; try { map = JSON.parse(preview.dataset.nodeSources || '{}'); blocks = JSON.parse(preview.dataset.nodeBlocks || '{}'); } catch {}
+      all('[data-node-id]',preview).forEach(node=>{
+        const nodeId = node.dataset.nodeId;
+        const id = Object.hasOwn(map,nodeId) ? map[nodeId] : '', blockId = Object.hasOwn(blocks,nodeId) ? blocks[nodeId] : ''; if (!id && !blockId) return;
+        node.classList.add('has-source');
+        node.addEventListener('mouseenter',()=>show(node,id || '',blockId)); node.addEventListener('mouseleave',hide);
+        node.addEventListener('focus',()=>show(node,id || '',blockId)); node.addEventListener('blur',hide);
+        if (blockId) {
+          node.setAttribute('tabindex','0'); node.setAttribute('role','button');
+          node.setAttribute('aria-label',node.getAttribute('data-node-label') || node.dataset.nodeId);
+          node.setAttribute('aria-describedby',blockId);
+          node.addEventListener('keydown',event=>{ if (event.key==='Enter'||event.key===' ') { event.preventDefault(); node.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });
+        }
+      });
+    });
+    document.addEventListener('keydown',event=>{
+      if (event.key === 'Escape') {
+        if (card.contains(document.activeElement)) opener?.focus();
+        clearTimeout(hideTimer); card.hidden = true;
+      } else if (event.key === 'Tab' && !card.hidden && opener) {
+        // Visit the floating links after their opener, then resume the document's normal tab order.
+        const links = all('a[href]',card);
+        if (!event.shiftKey && event.target === opener && links.length) { event.preventDefault(); links[0].focus(); }
+        else if (event.shiftKey && event.target === links[0]) { event.preventDefault(); opener.focus(); }
+        else if (!event.shiftKey && event.target === links.at(-1)) { opener.focus(); card.hidden = true; }
+      }
+    });
+  }
+  // Checklist ticks are the reader's own progress; keep them per page and block across reloads.
+  all('.checklist').forEach(list=>{
+    const key = `archify-checklist:${root.dataset.artifact}:${list.closest('.block').id}`, boxes = all('input',list);
+    let saved = []; try { saved = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
+    boxes.forEach((box,index)=>{ box.checked = saved[index] === 1; box.addEventListener('change',()=>{ try { localStorage.setItem(key,JSON.stringify(boxes.map(b=>b.checked ? 1 : 0))); } catch {} }); });
+  });
+  // Native dialogs supply Escape, focus trapping and the accessible modal semantics.
+  const printDetails = new Map();
+  all('.diagram-semantics').forEach(details=>details.open = false);
+  window.addEventListener('beforeprint',()=>all('.diagram-semantics').forEach(details=>{printDetails.set(details,details.open);details.open = true;}));
+  window.addEventListener('afterprint',()=>{printDetails.forEach((open,details)=>details.open = open);printDetails.clear();});
+  root.classList.add('js');
+  applyTheme();
+  cropDiagramPreviews();
+  linkTerms();
+  setupWalks();
+  setupAsk();
+  setupSourceCards();
+  layoutBoard();
+  const relayout = () => { layoutBoard(); ensureDiagramReadability(); };
+  Promise.resolve(document.fonts?.ready).then(()=>requestAnimationFrame(()=>requestAnimationFrame(relayout)));
+  let resizeFrame;
+  window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame = requestAnimationFrame(relayout);});
+})();
+</script></body></html>
