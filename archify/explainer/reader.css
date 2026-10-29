@@ -300,7 +300,8 @@ footer{padding:28px 0 32px}
 .diagram-preview .has-source{cursor:help}
 .diagram-preview .has-source:hover rect:not(.c-mask){stroke:var(--accent);stroke-width:2}
 /* Source card: what kind of source, where it is, the evidence itself, then how to open it. */
-.source-card{position:absolute;z-index:30;display:flex;flex-direction:column;gap:10px;padding:12px 14px;background:var(--panel);border:1px solid var(--control-border,var(--rule-strong));border-radius:12px;box-shadow:0 16px 40px rgb(16 24 40/.16);font-size:12.5px;color:var(--secondary)}
+.source-card{position:absolute;z-index:30;display:flex;flex-direction:column;gap:10px;padding:12px 14px;max-height:calc(100vh - 24px);overflow:auto;background:var(--panel);border:1px solid var(--control-border,var(--rule-strong));border-radius:12px;box-shadow:0 16px 40px rgb(16 24 40/.16);font-size:12.5px;color:var(--secondary)}
+.source-card>*{flex-shrink:0}
 .source-card header{display:flex;align-items:flex-start;gap:10px}
 .source-icon{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent-ink)}
 .source-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}

@@ -697,11 +697,13 @@
       const number = /^\d+$/.test(link.textContent.trim()) ? link.textContent.trim() : '';
       card.innerHTML = `<header><span class="source-icon" data-kind="${kind}" aria-hidden="true">${sourceIcons[kind]}</span><span class="source-head"><b>${escapeText(title)}</b>${where ? `<span class="source-where">${escapeText(where)}</span>` : ''}</span>${number ? `<span class="source-number">${number}</span>` : ''}</header>${contentNote}${excerpt}${note}${source.revision || source.url || content ? `<footer>${content ? `<a href="#${encodeURIComponent(blockId)}">${say('Read this paragraph','阅读这段')} ↗</a>` : ''}${source.revision ? `<span class="source-pin">${say('Pinned at','固定在')} <code>${escapeText(String(source.revision).slice(0,7))}</code></span>` : ''}${source.url ? `<a href="${escapeText(source.url)}" target="_blank" rel="noopener noreferrer">${say('Open source','打开原文')} ↗</a>` : ''}</footer>` : ''}`;
       card.hidden = false;
+      card.scrollTop = 0;
       const box = link.getBoundingClientRect(), width = Math.min(520,innerWidth - 24);
       card.style.width = `${width}px`;
       card.style.left = `${Math.max(12,Math.min(innerWidth - width - 12,box.left - 24)) + scrollX}px`;
       const below = box.bottom + 8 + card.offsetHeight < innerHeight;
-      card.style.top = `${(below ? box.bottom + 8 : box.top - 8 - card.offsetHeight) + scrollY}px`;
+      const top = below ? box.bottom + 8 : box.top - 8 - card.offsetHeight;
+      card.style.top = `${Math.max(12,Math.min(innerHeight - card.offsetHeight - 12,top)) + scrollY}px`;
     };
     all('.cite a[href^="#source-"]').forEach(link=>{
       link.addEventListener('mouseenter',()=>show(link)); link.addEventListener('focus',()=>show(link));

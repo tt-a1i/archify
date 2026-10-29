@@ -32,6 +32,43 @@ test('formal renderer retains keyboard navigation, static reading and print mode
 });
 test.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
 
+test('source cards keep their evidence and return link reachable in short viewports',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.answer.summary='Read the [source](source:example).';
+ const excerpt=Array.from({length:14},(_,i)=>`Evidence line ${i+1}: ${'complete text '.repeat(12)}`).join('\n');
+ const source={id:'example',title:'Pinned source excerpt',path:'src/example.js',lines:[10,23],revision:'abc1234',url:'https://example.com/source',text:excerpt};
+ const file=artifact('source-card-viewport',renderExplainer(doc,{preparedSources:{sources:{example:source}},sourceText:JSON.stringify(doc)}));
+ const browser=new ChromeVisualBrowser(chrome);
+ const visible=()=>pageValue(browser,`(()=>{const card=document.querySelector('.source-card'),box=card.getBoundingClientRect();return !card.hidden&&box.top>=0&&box.bottom<=innerHeight+1&&box.left>=0&&box.right<=innerWidth+1;})()`);
+ try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:390,keyboard:false});
+  for(const [width,height] of [[390,480],[1440,480],[390,240],[390,900]]) {
+   await browser.cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},await browser.sessionPromise);
+   await pageValue(browser,'document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
+   await pageValue(browser,`(()=>{const a=document.querySelector('.cite a');a.scrollIntoView({block:'center'});a.focus();})()`);
+   assert.equal(await visible(),true,`source card remains inside ${width} x ${height}`);
+   assert.equal(await pageValue(browser,'document.querySelector(".source-card pre code").textContent.includes("Evidence line 14:")'),true,'the last excerpt line is retained');
+   await keyboardActivate(browser,'.cite a','Tab');
+   assert.equal(await pageValue(browser,'document.activeElement===document.querySelector(".source-card a")'),true,'the source link remains keyboard reachable');
+   assert.equal(await visible(),true,'focusing a card link does not push the card out of view');
+   if(height===240) {
+    assert.ok(await pageValue(browser,'document.querySelector(".source-card").scrollTop')>0,'the short card scrolls to reveal its source link');
+    for(const type of ['keyDown','keyUp'])await browser.cdp.send('Input.dispatchKeyEvent',{type,key:'Home',code:'Home',windowsVirtualKeyCode:36},await browser.sessionPromise);
+    assert.equal(await pageValue(browser,'new Promise(resolve=>{const card=document.querySelector(".source-card"),end=performance.now()+2000;function check(){if(card.scrollTop===0)return resolve(true);if(performance.now()>end)return resolve(false);requestAnimationFrame(check);}check();})'),true,'Home returns to the first evidence lines inside the short card');
+   }
+   await keyboardActivate(browser,'.source-card a','Escape');
+   assert.equal(await pageValue(browser,'document.querySelector(".source-card").hidden&&document.activeElement===document.querySelector(".cite a")'),true,'Escape returns to the citation');
+   await pageValue(browser,'document.activeElement.blur()');
+   if(height===240) {
+    await pageValue(browser,'document.querySelector(".cite a").focus()');
+    assert.equal(await pageValue(browser,'document.querySelector(".source-card").scrollTop'),0,'reopening starts with the source heading and first lines');
+    await keyboardActivate(browser,'.cite a','Escape');
+    await pageValue(browser,'document.activeElement.blur()');
+   }
+  }
+ }finally{await browser.close();}
+});
+
 test('authored panel spans remain exact through measured layout and reader relayout',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
  const doc=formalDocument();doc.meta.locale='zh-CN';
