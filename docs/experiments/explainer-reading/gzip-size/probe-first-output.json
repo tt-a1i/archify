@@ -1,0 +1,77 @@
+{
+  "python": "3.15.0",
+  "zlib_compile": "1.2.12",
+  "zlib_runtime": "1.2.12",
+  "settings": {
+    "compresslevel": 9,
+    "mtime": 0,
+    "raw_wbits": -15
+  },
+  "scope": "Four synthetic byte inputs; one gzip member without optional header fields. No performance measurement or general compression ratio claim.",
+  "fixtures": [
+    {
+      "name": "one-ascii-A",
+      "input_bytes": 1,
+      "input_sha256": "559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd",
+      "raw_deflate_bytes": 3,
+      "gzip_header_bytes": 10,
+      "gzip_trailer_bytes": 8,
+      "gzip_bytes": 21,
+      "delta_bytes": 20,
+      "gzip_sha256": "798f7e60c9f08148f1ea2f97afd36d3903e027bf95522eddea2f50bfb429c134",
+      "flags": 0,
+      "crc32_hex": "d3d99e8b",
+      "isize": 1,
+      "round_trip": true,
+      "raw_payload_matches": true
+    },
+    {
+      "name": "1024-ascii-As",
+      "input_bytes": 1024,
+      "input_sha256": "6ab72eeb9e77b07540897e0c8d6d23ec8eef0f8c3a47e1b3f4e93443d9536bed",
+      "raw_deflate_bytes": 11,
+      "gzip_header_bytes": 10,
+      "gzip_trailer_bytes": 8,
+      "gzip_bytes": 29,
+      "delta_bytes": -995,
+      "gzip_sha256": "b8741181f39eedf75c576df6daa3d459f450e4aa7dbe6ef3a5f6c03065a9669b",
+      "flags": 0,
+      "crc32_hex": "b737fb1a",
+      "isize": 1024,
+      "round_trip": true,
+      "raw_payload_matches": true
+    },
+    {
+      "name": "1024-shake256-derived-bytes",
+      "input_bytes": 1024,
+      "input_sha256": "6035159bfe49d5957172d8e6b89d8c1c86fb436c377c6e0ef7e7990ee05c2296",
+      "raw_deflate_bytes": 1029,
+      "gzip_header_bytes": 10,
+      "gzip_trailer_bytes": 8,
+      "gzip_bytes": 1047,
+      "delta_bytes": 23,
+      "gzip_sha256": "41fb04daa837898385846aad69a4e87aa73e0d9e158be4869438441aca144d28",
+      "flags": 0,
+      "crc32_hex": "b75b544f",
+      "isize": 1024,
+      "round_trip": true,
+      "raw_payload_matches": true
+    },
+    {
+      "name": "gzip-of-1024-ascii-As",
+      "input_bytes": 29,
+      "input_sha256": "b8741181f39eedf75c576df6daa3d459f450e4aa7dbe6ef3a5f6c03065a9669b",
+      "raw_deflate_bytes": 29,
+      "gzip_header_bytes": 10,
+      "gzip_trailer_bytes": 8,
+      "gzip_bytes": 47,
+      "delta_bytes": 18,
+      "gzip_sha256": "bd3750e298ae78890848fdbd82b2a76ff445b9971a57785ea1b6a1bb36be2c46",
+      "flags": 0,
+      "crc32_hex": "ae6e72a9",
+      "isize": 29,
+      "round_trip": true,
+      "raw_payload_matches": true
+    }
+  ]
+}
