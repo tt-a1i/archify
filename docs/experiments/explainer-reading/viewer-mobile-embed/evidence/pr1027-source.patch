@@ -1,0 +1,225 @@
+diff --git a/viewer/focus.js b/viewer/focus.js
+index 6a61c202b..551370be3 100644
+--- a/viewer/focus.js
++++ b/viewer/focus.js
+@@ -390,11 +390,36 @@
+       function compactPassportViewport() {
+         return window.innerWidth <= 720 && window.innerHeight <= 480;
+       }
++      function measuredDockRect() {
++        var nav = container.querySelector('.diagram-nav');
++        var dock = parseFloat(getComputedStyle(container).getPropertyValue('--archify-dock-h')) || 0;
++        if (nav) {
++          var style = getComputedStyle(nav);
++          var rect = nav.getBoundingClientRect();
++          if (!nav.hidden && style.display !== 'none' && style.visibility !== 'hidden' && rect.height > 0) {
++            return { top: rect.top, bottom: rect.bottom, height: rect.height };
++          }
++        }
++        var bottom = Math.min(container.getBoundingClientRect().bottom, window.innerHeight);
++        return { top: bottom - dock, bottom: bottom, height: dock };
++      }
++      function measuredDockTop() {
++        return measuredDockRect().top;
++      }
+       function compactPassportHeight() {
+         var toolbar = document.querySelector('.toolbar');
++        var dockRect = measuredDockRect();
+         var top = Math.max(8, toolbar ? toolbar.getBoundingClientRect().bottom + 8 : 8);
++        var belowTop = Math.max(top, Math.min(window.innerHeight - 8, dockRect.bottom + 8));
++        var aboveSpace = dockRect.top - 8 - top;
++        var belowSpace = window.innerHeight - 8 - belowTop;
++        var minimum = Math.min(120, explanationBaseHeight || 120);
++        if (aboveSpace < minimum && belowSpace > aboveSpace) top = belowTop;
++        var limit = top < dockRect.top ? dockRect.top : window.innerHeight;
++        var reserve = Math.max(0, window.innerHeight - limit);
+         chip.style.setProperty('--passport-viewport-top', top + 'px');
+-        return Math.max(0, window.innerHeight - top - 8);
++        chip.style.setProperty('--archify-passport-reserve', reserve + 'px');
++        return Math.max(0, Math.min(window.innerHeight - 8, limit - 8) - top);
+       }
+       function closeExplanation(options) {
+         options = options || {};
+@@ -420,8 +445,10 @@
+         if (chip.getAttribute('data-explaining') !== 'true') return;
+         var rect = container.getBoundingClientRect();
+         var padding = window.innerWidth <= 720 ? 8 : 16;
+-        var available = Math.max(0, Math.min(rect.bottom - padding, window.innerHeight - padding)
+-          - Math.max(rect.top + padding, padding));
++        var dockTop = measuredDockTop();
++        var chipTop = chip.getBoundingClientRect().top;
++        var available = Math.max(0, Math.min(dockTop - padding, window.innerHeight - padding)
++          - Math.max(chipTop + padding, padding));
+         if (compactPassportViewport()) available = compactPassportHeight();
+         var needed = explanationFace.scrollHeight - explanationBody.clientHeight + explanationBody.scrollHeight + 2;
+         chip.style.height = Math.ceil(Math.min(available, Math.max(explanationBaseHeight, needed))) + 'px';
+@@ -1473,6 +1500,7 @@
+           if (valid.length) top = valid[0];
+         }
+         chip.style.top = Math.round(top) + 'px';
++        fitExplanation();
+         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
+       }
+       function requestLensPlacement() {
+diff --git a/viewer/viewer-chrome-layout.js b/viewer/viewer-chrome-layout.js
+index 06d15935a..070b86a50 100644
+--- a/viewer/viewer-chrome-layout.js
++++ b/viewer/viewer-chrome-layout.js
+@@ -79,6 +79,18 @@
+           height: height
+         };
+       }
++      /* The mobile dock can wrap to more than one row, so its height is a
++         measured value, not a constant. Publish it before the desktop-only
++         stage-rail gate so the stage pad, probe, lens, overview map and radar
++         feedback can clear the real dock instead of guessing a row count. */
++      var dockHeight = -1;
++      function publishDockHeight() {
++        if (!nav || !container) return;
++        var height = visible(nav) ? Math.ceil(nav.getBoundingClientRect().height) : 0;
++        if (height === dockHeight) return;
++        dockHeight = height;
++        container.style.setProperty('--archify-dock-h', height + 'px');
++      }
+       function eligible() {
+         return Boolean(
+           container && svg && nav &&
+@@ -170,6 +182,7 @@
+       }
+       function measure() {
+         frame = 0;
++        publishDockHeight();
+         scheduleLift();
+         if (probingBaseline) return null;
+         if (!eligible()) return clear({ preserveBaseline: !cameraAtBaseline() });
+diff --git a/viewer/viewer.css b/viewer/viewer.css
+index 2833f04fd..f639aa532 100644
+--- a/viewer/viewer.css
++++ b/viewer/viewer.css
+@@ -418,13 +418,18 @@ html[data-present="true"]:not([data-embed="true"]) .diagram-container {
+   display: flex;
+   flex: 1 1 auto;
+   align-items: center;
+-  justify-content: center;
++  /* Centring an oversized scene makes its start-side overflow unreachable.
++     Start alignment plus auto inline margins centres the scene when it fits
++     and collapses to zero when it overflows, so the first edge stays
++     scrollable without a keyword the delta validator reads as a claim. */
++  justify-content: flex-start;
+   min-height: 0;
+   padding: 0.75rem;
+   padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
+ }
+ html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
+   flex: 1 1 auto;
++  margin-inline: auto;
+   height: 100%;
+   min-height: 0;
+   width: 100%;
+@@ -1211,6 +1216,8 @@ html[data-preset="blueprint"] .overview-map-surface { border-radius: 0.1rem; }
+    direct authored relationships. Geometry and the canonical SVG stay put. */
+ .semantic-lens {
+   position: absolute;
++  display: flex;
++  flex-direction: column;
+   right: 1rem;
+   bottom: calc(4.15rem + var(--archify-nav-reserve));
+   z-index: 24;
+@@ -1277,6 +1284,8 @@ html[data-preset="blueprint"] .semantic-lens { border-radius: 0.28rem; }
+ .semantic-lens-kinds {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
++  flex: 1 1 auto;
++  min-height: 0;
+   gap: 0.3rem;
+   max-height: min(15rem, 40vh);
+   padding: 0 0.5rem 0.5rem;
+@@ -3075,7 +3084,7 @@ html[data-reader-rail="bottom"] .node-outline-item::after {
+   .toolbar, .diagram-nav, .focus-chip, .archify-toast, .no-print { display: none !important; }
+   
+   .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+-  .diagram-container { --archify-nav-reserve: 0px !important; }
++  .diagram-container { --archify-nav-reserve: 0px !important; --archify-dock-h: 0px !important; }
+   html[data-preset="signal-flow"] .diagram-container,
+   html[data-preset="signal-flow"] .card { background: #ffffff; }
+   .cards { grid-template-columns: 1fr 1fr; }
+@@ -3861,8 +3870,9 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
+     padding: 0.75rem;
+     border-radius: 0.75rem;
+   }
++  .diagram-container { --archify-dock-h: 6.25rem; }
+   html:not([data-embed="true"]) .diagram-container {
+-    padding: 0.75rem 0.75rem 4.25rem;
++    padding: 0.75rem 0.75rem calc(1rem + var(--archify-dock-h));
+   }
+   html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] {
+     overflow-x: auto;
+@@ -3883,7 +3893,15 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
+   html:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] .node-finder {
+     transform: translateX(var(--archify-scroll-x, 0px));
+   }
+-  .diagram-nav { right: 0.5rem; bottom: 0.5rem; }
++  .diagram-nav {
++    right: 0.5rem;
++    bottom: 0.5rem;
++    /* A single scrolling row hid the zoom-in button past the edge; wrap the
++       controls so every action stays reachable. */
++    flex-wrap: wrap;
++    justify-content: center;
++    max-width: calc(100% - 1rem);
++  }
+   .diagram-nav button {
+     min-width: 2.75rem;
+     height: 2.75rem;
+@@ -3892,7 +3910,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
+   .diagram-nav [data-view="reset"][data-detail-visible] { min-width: 4.35rem; }
+   .overview-map {
+     right: 0.5rem;
+-    bottom: 3.7rem;
++    bottom: calc(1rem + var(--archify-dock-h));
+     width: min(10.25rem, calc(100% - 1rem));
+   }
+   .overview-map[data-docked="true"] {
+@@ -3906,12 +3924,12 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
+     left: var(--archify-radar-left, 0.5rem);
+   }
+   .overview-map-surface { height: 4rem; }
+-  .overview-map-feedback { right: 0.5rem; bottom: 3.7rem; }
++  .overview-map-feedback { right: 0.5rem; bottom: calc(1rem + var(--archify-dock-h)); }
+   .semantic-lens {
+     right: 0.5rem;
+-    bottom: 3.7rem;
++    bottom: calc(1rem + var(--archify-dock-h));
+     width: calc(100% - 1rem);
+-    max-height: calc(100% - 4.2rem);
++    max-height: calc(100% - var(--archify-dock-h) - 2rem);
+   }
+   .semantic-lens[data-dock-side] { left: auto; right: 0.5rem; }
+   .semantic-lens-kinds { max-height: min(12rem, 34vh); }
+@@ -3983,7 +4001,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
+   .node-finder-results { max-height: min(16rem, 38vh); }
+   .route-probe {
+     left: 0.5rem;
+-    bottom: 3.7rem;
++    bottom: calc(1rem + var(--archify-dock-h));
+     width: calc(100% - 1rem);
+     min-width: 0;
+   }
+@@ -4066,7 +4084,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
+     white-space: nowrap;
+   }
+   
+-  html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem 3.75rem; }
++  html[data-present="true"]:not([data-embed="true"]) .diagram-container { padding: 0.5rem 0.5rem calc(1rem + var(--archify-dock-h)); }
+   html[data-present="true"]:not([data-embed="true"]) .diagram-container[data-wide-diagram="true"] > svg {
+     width: 720px;
+     height: auto;
+@@ -5108,7 +5126,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
+     top: var(--passport-viewport-top, 8px) !important;
+     width: min(22rem, calc(100vw - 16px));
+     max-width: calc(100vw - 16px);
+-    max-height: calc(100vh - var(--passport-viewport-top, 8px) - 8px);
++    max-height: calc(100vh - var(--passport-viewport-top, 8px) - 8px - var(--archify-passport-reserve, var(--archify-dock-h, 0px)));
+     overflow-y: auto;
+   }
+   .focus-chip[data-explaining="true"] { overflow: hidden; }

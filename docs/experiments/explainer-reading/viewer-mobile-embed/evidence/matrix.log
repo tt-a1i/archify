@@ -1,0 +1,288 @@
+{
+  arm: 'base',
+  name: 'networkx',
+  width: 390,
+  height: 900,
+  theme: 'light',
+  unreachable: [ '100% · 再次放大以显示标签和注释。重置图表视图', '放大' ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'networkx',
+  width: 390,
+  height: 900,
+  theme: 'dark',
+  unreachable: [ '100% · 再次放大以显示标签和注释。重置图表视图', '放大' ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'networkx',
+  width: 320,
+  height: 480,
+  theme: 'light',
+  unreachable: [
+    '追踪有向路径',
+    '打开语义透镜',
+    '查找节点',
+    '打开图表指南',
+    '缩小',
+    '100% · 再次放大以显示标签和注释。重置图表视图',
+    '放大'
+  ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'networkx',
+  width: 320,
+  height: 480,
+  theme: 'dark',
+  unreachable: [
+    '追踪有向路径',
+    '打开语义透镜',
+    '查找节点',
+    '打开图表指南',
+    '缩小',
+    '100% · 再次放大以显示标签和注释。重置图表视图',
+    '放大'
+  ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'networkx',
+  width: 1440,
+  height: 900,
+  theme: 'light',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'networkx',
+  width: 1440,
+  height: 900,
+  theme: 'dark',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'sequence',
+  width: 390,
+  height: 900,
+  theme: 'light',
+  unreachable: [
+    'Zoom out',
+    '100% · Zoom in again to reveal tags and annotations. Reset diagram view',
+    'Zoom in'
+  ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'sequence',
+  width: 390,
+  height: 900,
+  theme: 'dark',
+  unreachable: [
+    'Zoom out',
+    '100% · Zoom in again to reveal tags and annotations. Reset diagram view',
+    'Zoom in'
+  ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'sequence',
+  width: 320,
+  height: 480,
+  theme: 'light',
+  unreachable: [
+    'Trace a directed route',
+    'Open semantic lens',
+    'Find a node',
+    'Open diagram guide',
+    'Zoom out',
+    '100% · Zoom in again to reveal tags and annotations. Reset diagram view',
+    'Zoom in'
+  ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'sequence',
+  width: 320,
+  height: 480,
+  theme: 'dark',
+  unreachable: [
+    'Trace a directed route',
+    'Open semantic lens',
+    'Find a node',
+    'Open diagram guide',
+    'Zoom out',
+    '100% · Zoom in again to reveal tags and annotations. Reset diagram view',
+    'Zoom in'
+  ],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'sequence',
+  width: 1440,
+  height: 900,
+  theme: 'light',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'base',
+  name: 'sequence',
+  width: 1440,
+  height: 900,
+  theme: 'dark',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'networkx',
+  width: 390,
+  height: 900,
+  theme: 'light',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'networkx',
+  width: 390,
+  height: 900,
+  theme: 'dark',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'networkx',
+  width: 320,
+  height: 480,
+  theme: 'light',
+  unreachable: [
+    '追踪有向路径',
+    '打开语义透镜',
+    '查找节点',
+    '打开图表指南',
+    '缩小',
+    '100% · 再次放大以显示标签和注释。重置图表视图',
+    '放大'
+  ],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'networkx',
+  width: 320,
+  height: 480,
+  theme: 'dark',
+  unreachable: [
+    '追踪有向路径',
+    '打开语义透镜',
+    '查找节点',
+    '打开图表指南',
+    '缩小',
+    '100% · 再次放大以显示标签和注释。重置图表视图',
+    '放大'
+  ],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'networkx',
+  width: 1440,
+  height: 900,
+  theme: 'light',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'networkx',
+  width: 1440,
+  height: 900,
+  theme: 'dark',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'sequence',
+  width: 390,
+  height: 900,
+  theme: 'light',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'sequence',
+  width: 390,
+  height: 900,
+  theme: 'dark',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'sequence',
+  width: 320,
+  height: 480,
+  theme: 'light',
+  unreachable: [
+    'Trace a directed route',
+    'Open semantic lens',
+    'Find a node',
+    'Open diagram guide',
+    'Zoom out',
+    '100% · Zoom in again to reveal tags and annotations. Reset diagram view',
+    'Zoom in'
+  ],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'sequence',
+  width: 320,
+  height: 480,
+  theme: 'dark',
+  unreachable: [
+    'Trace a directed route',
+    'Open semantic lens',
+    'Find a node',
+    'Open diagram guide',
+    'Zoom out',
+    '100% · Zoom in again to reveal tags and annotations. Reset diagram view',
+    'Zoom in'
+  ],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'sequence',
+  width: 1440,
+  height: 900,
+  theme: 'light',
+  unreachable: [],
+  closed: true
+}
+{
+  arm: 'pr1027',
+  name: 'sequence',
+  width: 1440,
+  height: 900,
+  theme: 'dark',
+  unreachable: [],
+  closed: true
+}

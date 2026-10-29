@@ -1,0 +1,114 @@
+[
+  {
+    "arm": "base",
+    "case": "networkx",
+    "sha256": "fb6d84a01e52e3f255b0d5d6e4381b55b821e5186d214d73a7ae496053c789a9",
+    "htmlOutsidePreparedAndManifestEqual": true,
+    "changedFields": [
+      {
+        "path": "archify-explainer-prepared/sourcePath",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/candidate.archify.md",
+        "to": "../networkx-path/candidate.archify.md"
+      },
+      {
+        "path": "archify-explainer-prepared/baseDir",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path",
+        "to": "../networkx-path"
+      },
+      {
+        "path": "archify-explainer-prepared/dependencies/0/path",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/graph.workflow.json",
+        "to": "../networkx-path/graph.workflow.json"
+      },
+      {
+        "path": "archify-explainer-prepared/digest",
+        "from": "50c11ae343ee6ea382f2f6fd40476ce4b6dba86d29686fee0925d23a8ff14cd3",
+        "to": "8560384299fa5f62a2c959c1bca9b72d8c9528014745a9413eb73675dd712d8b"
+      },
+      {
+        "path": "explainer-manifest/dependencies/0/path",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/graph.workflow.json",
+        "to": "../networkx-path/graph.workflow.json"
+      }
+    ]
+  },
+  {
+    "arm": "base",
+    "case": "sequence",
+    "sha256": "20be2aa42dfc0fe6d3bd33f17b1218913c1ce265f9f213dce2cc614b58eb0fa0",
+    "htmlOutsidePreparedAndManifestEqual": true,
+    "changedFields": [
+      {
+        "path": "archify-explainer-prepared/sourcePath",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/singleflight/candidate.archify.md",
+        "to": "../singleflight/candidate.archify.md"
+      },
+      {
+        "path": "archify-explainer-prepared/baseDir",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/singleflight",
+        "to": "../singleflight"
+      },
+      {
+        "path": "archify-explainer-prepared/digest",
+        "from": "678b2737d9a98793e97102a14d13baa4a585a34170b2262bd85e84ca8e7ee8bc",
+        "to": "03d98bd5fd783e548a1e2c5853c04c95c9d83a8451a0783c2d5758b4609e9633"
+      }
+    ]
+  },
+  {
+    "arm": "pr1027",
+    "case": "networkx",
+    "sha256": "58e03b4d2ba2d16829d20e28f653a137ba4abd950f11366e37c7020398ba9b63",
+    "htmlOutsidePreparedAndManifestEqual": true,
+    "changedFields": [
+      {
+        "path": "archify-explainer-prepared/sourcePath",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/candidate.archify.md",
+        "to": "../networkx-path/candidate.archify.md"
+      },
+      {
+        "path": "archify-explainer-prepared/baseDir",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path",
+        "to": "../networkx-path"
+      },
+      {
+        "path": "archify-explainer-prepared/dependencies/0/path",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/graph.workflow.json",
+        "to": "../networkx-path/graph.workflow.json"
+      },
+      {
+        "path": "archify-explainer-prepared/digest",
+        "from": "495edab37e2d4ff9297ae3ae51ff13d6d1a81235cd57d6a68f936443f79a37cd",
+        "to": "c3083f11b748ce226d497ab15afa790b5adf8c009052be1e14f3add9e1644467"
+      },
+      {
+        "path": "explainer-manifest/dependencies/0/path",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/graph.workflow.json",
+        "to": "../networkx-path/graph.workflow.json"
+      }
+    ]
+  },
+  {
+    "arm": "pr1027",
+    "case": "sequence",
+    "sha256": "9abd3001d960c826e74962665fa5eee23692c88c3a90f73276c886ef9bb951c7",
+    "htmlOutsidePreparedAndManifestEqual": true,
+    "changedFields": [
+      {
+        "path": "archify-explainer-prepared/sourcePath",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/singleflight/candidate.archify.md",
+        "to": "../singleflight/candidate.archify.md"
+      },
+      {
+        "path": "archify-explainer-prepared/baseDir",
+        "from": "../../../../../.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/singleflight",
+        "to": "../singleflight"
+      },
+      {
+        "path": "archify-explainer-prepared/digest",
+        "from": "92e1bc619943c743b1cafd971e49c34812948f199c51f76ae5addce245f43f84",
+        "to": "7e483ce702992a38caa90b557f3ec202ec8d776f0ef6b7086ac1b78821db5bbd"
+      }
+    ]
+  }
+]

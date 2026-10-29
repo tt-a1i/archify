@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-10-29T22:22Z",
+  "pullRequests": [
+    {
+      "number": 1001,
+      "url": "https://github.com/tt-a1i/archify/pull/1001",
+      "title": "fix(viewer): camera viewport follows the container, not the narrower SVG box",
+      "state": "open",
+      "head": "4ca84e4af9ef16810b0823fe6e3320b58cb733a5",
+      "repository": "leonkoellerwirth-arch/archify",
+      "author": "leonkoellerwirth-arch",
+      "scope": "Scale>1 camera viewport; read for overlap, not applied."
+    },
+    {
+      "number": 1027,
+      "url": "https://github.com/tt-a1i/archify/pull/1027",
+      "title": "fix(viewer): mobile nav reachability, dock clearance and presentation scroll",
+      "state": "open",
+      "head": "c393fc7fbc321d5b6c4685ca35cd612b75d64083",
+      "repository": "jahfaliabdulrahman-dev/archify",
+      "author": "jahfaliabdulrahman-dev",
+      "scope": "Three-file source delta replayed on current experiment base; original PR and source ownership preserved."
+    }
+  ]
+}

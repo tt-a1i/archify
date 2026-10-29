@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "866396ec-a54f-4c20-b7ea-496f88582d37",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/singleflight/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/viewer-mobile-embed/pr1027-sequence.html",
+  "specification": {
+    "sha256": "423e0324a107ee022c7aa38a5fe5e5d30b03aa82dc0a107b363615bf44dbdb2b",
+    "bytes": 3513
+  },
+  "artifact": {
+    "sha256": "9abd3001d960c826e74962665fa5eee23692c88c3a90f73276c886ef9bb951c7",
+    "bytes": 546831
+  },
+  "explainer": {
+    "preparedSha256": "fa823ec50e89a611d7f9dcdc23dcdfe34ce5e061248fefdf2c9b9167d5f4664d",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "overlap-flow",
+        "inline": true,
+        "sha256": "858fcfd27504c1fa5ccf7bb6cb2d1d9f66d26118397b8281997e562ad78006b3",
+        "bytes": 949
+      }
+    ]
+  }
+}

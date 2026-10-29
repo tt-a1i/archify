@@ -1,0 +1,1 @@
+The native Viewer is an out-of-process opaque srcdoc frame. Page.getFrameTree returned no childFrames, and browser-01 failed reading .find. No geometry was captured; this is a harness failure, not missing native content. Use the repository ChromeVisualBrowser native-target inspection seam for geometry and Ego real scroll/pixels for UI.

@@ -1,0 +1,116 @@
+{
+  "counts": {
+    "questions": 16,
+    "variants": 38
+  },
+  "rows": [
+    {
+      "case": "networkx",
+      "version": "路径与计算标准",
+      "width": "390",
+      "frame": "networkx-path/candidate.html",
+      "open": "networkx-path/candidate.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "networkx",
+      "version": "路径与计算标准",
+      "width": "1440",
+      "frame": "networkx-path/candidate.html",
+      "open": "networkx-path/candidate.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "networkx",
+      "version": "作者初稿",
+      "width": "390",
+      "frame": "networkx-path/author/answer.html",
+      "open": "networkx-path/author/answer.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "networkx",
+      "version": "作者初稿",
+      "width": "1440",
+      "frame": "networkx-path/author/answer.html",
+      "open": "networkx-path/author/answer.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "networkx",
+      "version": "交互图工具栏候选",
+      "width": "390",
+      "frame": "viewer-mobile-embed/pr1027-networkx.html",
+      "open": "viewer-mobile-embed/pr1027-networkx.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "networkx",
+      "version": "交互图工具栏候选",
+      "width": "1440",
+      "frame": "viewer-mobile-embed/pr1027-networkx.html",
+      "open": "viewer-mobile-embed/pr1027-networkx.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "singleflight",
+      "version": "可读字号",
+      "width": "390",
+      "frame": "phone-preview/candidate.html",
+      "open": "phone-preview/candidate.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "singleflight",
+      "version": "可读字号",
+      "width": "1440",
+      "frame": "phone-preview/candidate.html",
+      "open": "phone-preview/candidate.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "singleflight",
+      "version": "此前缩略图",
+      "width": "390",
+      "frame": "singleflight/candidate.html",
+      "open": "singleflight/candidate.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "singleflight",
+      "version": "此前缩略图",
+      "width": "1440",
+      "frame": "singleflight/candidate.html",
+      "open": "singleflight/candidate.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "singleflight",
+      "version": "交互图工具栏候选",
+      "width": "390",
+      "frame": "viewer-mobile-embed/pr1027-sequence.html",
+      "open": "viewer-mobile-embed/pr1027-sequence.html",
+      "report": "viewer-mobile-embed/README.md"
+    },
+    {
+      "case": "singleflight",
+      "version": "交互图工具栏候选",
+      "width": "1440",
+      "frame": "viewer-mobile-embed/pr1027-sequence.html",
+      "open": "viewer-mobile-embed/pr1027-sequence.html",
+      "report": "viewer-mobile-embed/README.md"
+    }
+  ],
+  "canonical": [
+    {
+      "name": "networkx",
+      "closed": true,
+      "focusReturned": true
+    },
+    {
+      "name": "sequence",
+      "closed": true,
+      "focusReturned": true
+    }
+  ]
+}

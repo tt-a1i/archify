@@ -1,0 +1,32 @@
+{
+  "base": {
+    "states": 12,
+    "allNavControlsInitiallyInsideAndHit": 4,
+    "allNavControlsAfterVerticalScrollInsideAndHit": 4,
+    "actualThemesMatch": true,
+    "closeAndFocusReturnAll": true,
+    "DInsideAfterControlledScroll": true,
+    "controlledScrollLeft": 80,
+    "zoomPercentLabels": {
+      "zoomOut": "概览75%",
+      "reset": "阅读100%",
+      "zoomIn": "阅读125%"
+    },
+    "zoomInAllNavControlsInsideAndHit": false
+  },
+  "pr1027": {
+    "states": 12,
+    "allNavControlsInitiallyInsideAndHit": 8,
+    "allNavControlsAfterVerticalScrollInsideAndHit": 12,
+    "actualThemesMatch": true,
+    "closeAndFocusReturnAll": true,
+    "DInsideAfterControlledScroll": true,
+    "controlledScrollLeft": 80,
+    "zoomPercentLabels": {
+      "zoomOut": "概览75%",
+      "reset": "阅读100%",
+      "zoomIn": "阅读125%"
+    },
+    "zoomInAllNavControlsInsideAndHit": true
+  }
+}

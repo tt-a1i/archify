@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "d733d8d7-5f28-482d-a1d0-4d36bfc31dfe",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/viewer-mobile-embed/pr1027-networkx.html",
+  "specification": {
+    "sha256": "c4bd84123044ee4da426a88a12a6260d278cc8c59d41ee73f63d57d5aef18c33",
+    "bytes": 2613
+  },
+  "artifact": {
+    "sha256": "58e03b4d2ba2d16829d20e28f653a137ba4abd950f11366e37c7020398ba9b63",
+    "bytes": 530891
+  },
+  "explainer": {
+    "preparedSha256": "d7bd262807c859e235d3f17719428ebb8dd83edb8566c8c56616f74e763c9e6b",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "graph",
+        "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/networkx-path/graph.workflow.json",
+        "relativePath": "graph.workflow.json",
+        "sha256": "f64f746ab9e6ba683950f7153b9a74cc65c566675759f496f24eb95bfe0c2aba",
+        "bytes": 1058
+      }
+    ]
+  }
+}

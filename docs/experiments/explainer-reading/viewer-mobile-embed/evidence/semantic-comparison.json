@@ -1,0 +1,24 @@
+[
+  {
+    "case": "networkx",
+    "documentEqual": true,
+    "diagrams": [
+      {
+        "id": "graph",
+        "specSemanticSvgEqual": true,
+        "svgSha256": "0277c4994157d7f440cdd3b8e619d66873cd1ade3e78a3036d4ffefc9e963daa"
+      }
+    ]
+  },
+  {
+    "case": "sequence",
+    "documentEqual": true,
+    "diagrams": [
+      {
+        "id": "overlap-flow",
+        "specSemanticSvgEqual": true,
+        "svgSha256": "84df787ae8c1cab04a684bf4abdc0d0055993a74668e8d3757baf5bf06e357a1"
+      }
+    ]
+  }
+]

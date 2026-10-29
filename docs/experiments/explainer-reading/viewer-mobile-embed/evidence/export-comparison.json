@@ -1,0 +1,38 @@
+{
+  "artifacts": [
+    {
+      "arm": "base",
+      "width": 390,
+      "bytes": 626979,
+      "sha256": "e070ae892322f990d6c648a14fcf5238d939c9c1cc1a0a79a61d43b4d6c3cfae"
+    },
+    {
+      "arm": "pr1027",
+      "width": 390,
+      "bytes": 626979,
+      "sha256": "e070ae892322f990d6c648a14fcf5238d939c9c1cc1a0a79a61d43b4d6c3cfae"
+    },
+    {
+      "arm": "base",
+      "width": 1440,
+      "bytes": 707615,
+      "sha256": "b99c130d1ef9015e24bc66e02766952120b7bce84b1f03d606c77c98c33dcfb1"
+    },
+    {
+      "arm": "pr1027",
+      "width": 1440,
+      "bytes": 707615,
+      "sha256": "b99c130d1ef9015e24bc66e02766952120b7bce84b1f03d606c77c98c33dcfb1"
+    }
+  ],
+  "comparisons": [
+    {
+      "width": 390,
+      "byteIdentical": true
+    },
+    {
+      "width": 1440,
+      "byteIdentical": true
+    }
+  ]
+}

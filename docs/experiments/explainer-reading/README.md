@@ -223,3 +223,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 34
 
 [NetworkX shortest paths](networkx-path/README.md) compares fewest edges with minimum selected attribute sum on one fixed three-node graph. The candidate pairs the native graph with a two-column comparison and executable Python; six actual cases also cover omitted parameters and absent attributes. Actual Viewer inspection exposed unrelated default node categories, repaired through an existing explicit legend. The small phone edge labels remain a documented limit.
+
+## Continued exploration — round 35
+
+[Native Viewer mobile controls](viewer-mobile-embed/README.md) replays the existing #1027 source delta against two fixed explainer inputs. The candidate keeps the zoom controls within the phone dock; short frames still require vertical scrolling. The authored document, graph spec, semantic graph and SVG remain unchanged, and NetworkX page PNGs are byte-identical at both tested widths. This adds comparison artifacts and two index variants, without adopting the PR into product code.

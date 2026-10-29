@@ -1,0 +1,1020 @@
+[
+  {
+    "width": 390,
+    "initial": {
+      "width": 342,
+      "height": 824,
+      "documentWidth": 342,
+      "container": {
+        "rect": {
+          "x": 16,
+          "y": 140,
+          "width": 310,
+          "height": 337.828125,
+          "top": 140,
+          "right": 326,
+          "bottom": 477.828125,
+          "left": 16
+        },
+        "clientWidth": 308,
+        "scrollWidth": 744,
+        "scrollLeft": 0,
+        "overflowX": "auto",
+        "minWidth": "0px",
+        "transform": "none"
+      },
+      "svg": {
+        "rect": {
+          "x": 29,
+          "y": 153,
+          "width": 720,
+          "height": 255.828125,
+          "top": 153,
+          "right": 749,
+          "bottom": 408.828125,
+          "left": 29
+        },
+        "clientWidth": 720,
+        "scrollWidth": 720,
+        "scrollLeft": 0,
+        "overflowX": "hidden",
+        "minWidth": "720px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "viewBox": "0 0 788 280",
+      "wide": "true",
+      "nav": {
+        "rect": {
+          "x": 41,
+          "y": 414.828125,
+          "width": 276,
+          "height": 54,
+          "top": 414.828125,
+          "right": 317,
+          "bottom": 468.828125,
+          "left": 41
+        },
+        "clientWidth": 274,
+        "scrollWidth": 365,
+        "scrollLeft": 0,
+        "overflowX": "auto",
+        "minWidth": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "nodes": [
+        {
+          "id": "a",
+          "rect": {
+            "x": 72.8695297241211,
+            "y": 237.9714813232422,
+            "width": 84.05780792236328,
+            "height": 47.51094055175781,
+            "top": 237.9714813232422,
+            "right": 156.92733764648438,
+            "bottom": 285.482421875,
+            "left": 72.8695297241211
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "b",
+          "rect": {
+            "x": 191.64688110351562,
+            "y": 237.9714813232422,
+            "width": 84.05780029296875,
+            "height": 47.51094055175781,
+            "top": 237.9714813232422,
+            "right": 275.7046813964844,
+            "bottom": 285.482421875,
+            "left": 191.64688110351562
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "d",
+          "rect": {
+            "x": 310.4242248535156,
+            "y": 237.9714813232422,
+            "width": 84.05780029296875,
+            "height": 47.51094055175781,
+            "top": 237.9714813232422,
+            "right": 394.4820251464844,
+            "bottom": 285.482421875,
+            "left": 310.4242248535156
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "text": "路径",
+          "title": "追踪路径（R）",
+          "aria": "追踪有向路径",
+          "rect": {
+            "x": 46,
+            "y": 419.828125,
+            "width": 52.375,
+            "height": 44,
+            "top": 419.828125,
+            "right": 98.375,
+            "bottom": 463.828125,
+            "left": 46
+          },
+          "hit": true
+        },
+        {
+          "text": "地图",
+          "title": "语义雷达（M）",
+          "aria": "打开语义雷达",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "hit": false
+        },
+        {
+          "text": "透镜",
+          "title": "语义透镜（L）",
+          "aria": "打开语义透镜",
+          "rect": {
+            "x": 99.375,
+            "y": 419.828125,
+            "width": 52.375,
+            "height": 44,
+            "top": 419.828125,
+            "right": 151.75,
+            "bottom": 463.828125,
+            "left": 99.375
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "查找节点（/）",
+          "aria": "查找节点",
+          "rect": {
+            "x": 158.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 202.75,
+            "bottom": 463.828125,
+            "left": 158.75
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "图表指南（?）",
+          "aria": "打开图表指南",
+          "rect": {
+            "x": 203.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 247.75,
+            "bottom": 463.828125,
+            "left": 203.75
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "缩小（-）",
+          "aria": "缩小",
+          "view": "out",
+          "rect": {
+            "x": 254.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 298.75,
+            "bottom": 463.828125,
+            "left": 254.75
+          },
+          "hit": true
+        },
+        {
+          "text": "阅读100%",
+          "title": "再次放大以显示标签和注释 · 重置视图（0）",
+          "aria": "100% · 再次放大以显示标签和注释。重置图表视图",
+          "view": "reset",
+          "rect": {
+            "x": 298.75,
+            "y": 419.828125,
+            "width": 60,
+            "height": 44,
+            "top": 419.828125,
+            "right": 358.75,
+            "bottom": 463.828125,
+            "left": 298.75
+          },
+          "hit": false
+        },
+        {
+          "text": "",
+          "title": "放大（+）",
+          "aria": "放大",
+          "view": "in",
+          "rect": {
+            "x": 358.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 402.75,
+            "bottom": 463.828125,
+            "left": 358.75
+          },
+          "hit": false
+        }
+      ]
+    },
+    "scrollEnd": {
+      "width": 342,
+      "height": 824,
+      "documentWidth": 342,
+      "container": {
+        "rect": {
+          "x": 16,
+          "y": 140,
+          "width": 310,
+          "height": 337.828125,
+          "top": 140,
+          "right": 326,
+          "bottom": 477.828125,
+          "left": 16
+        },
+        "clientWidth": 308,
+        "scrollWidth": 744,
+        "scrollLeft": 436,
+        "overflowX": "auto",
+        "minWidth": "0px",
+        "transform": "none"
+      },
+      "svg": {
+        "rect": {
+          "x": -407,
+          "y": 153,
+          "width": 720,
+          "height": 255.828125,
+          "top": 153,
+          "right": 313,
+          "bottom": 408.828125,
+          "left": -407
+        },
+        "clientWidth": 720,
+        "scrollWidth": 720,
+        "scrollLeft": 0,
+        "overflowX": "hidden",
+        "minWidth": "720px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "viewBox": "0 0 788 280",
+      "wide": "true",
+      "nav": {
+        "rect": {
+          "x": 41,
+          "y": 414.828125,
+          "width": 276,
+          "height": 54,
+          "top": 414.828125,
+          "right": 317,
+          "bottom": 468.828125,
+          "left": 41
+        },
+        "clientWidth": 274,
+        "scrollWidth": 365,
+        "scrollLeft": 0,
+        "overflowX": "auto",
+        "minWidth": "0px",
+        "transform": "matrix(1, 0, 0, 1, 436, 0)"
+      },
+      "nodes": [
+        {
+          "id": "a",
+          "rect": {
+            "x": -363.1304626464844,
+            "y": 237.9714813232422,
+            "width": 84.05780029296875,
+            "height": 47.51094055175781,
+            "top": 237.9714813232422,
+            "right": -279.0726623535156,
+            "bottom": 285.482421875,
+            "left": -363.1304626464844
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "b",
+          "rect": {
+            "x": -244.35311889648438,
+            "y": 237.9714813232422,
+            "width": 84.05780029296875,
+            "height": 47.51094055175781,
+            "top": 237.9714813232422,
+            "right": -160.29531860351562,
+            "bottom": 285.482421875,
+            "left": -244.35311889648438
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "d",
+          "rect": {
+            "x": -125.57577514648438,
+            "y": 237.9714813232422,
+            "width": 84.05780029296875,
+            "height": 47.51094055175781,
+            "top": 237.9714813232422,
+            "right": -41.517974853515625,
+            "bottom": 285.482421875,
+            "left": -125.57577514648438
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "text": "路径",
+          "title": "追踪路径（R）",
+          "aria": "追踪有向路径",
+          "rect": {
+            "x": 46,
+            "y": 419.828125,
+            "width": 52.375,
+            "height": 44,
+            "top": 419.828125,
+            "right": 98.375,
+            "bottom": 463.828125,
+            "left": 46
+          },
+          "hit": true
+        },
+        {
+          "text": "地图",
+          "title": "语义雷达（M）",
+          "aria": "打开语义雷达",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "hit": false
+        },
+        {
+          "text": "透镜",
+          "title": "语义透镜（L）",
+          "aria": "打开语义透镜",
+          "rect": {
+            "x": 99.375,
+            "y": 419.828125,
+            "width": 52.375,
+            "height": 44,
+            "top": 419.828125,
+            "right": 151.75,
+            "bottom": 463.828125,
+            "left": 99.375
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "查找节点（/）",
+          "aria": "查找节点",
+          "rect": {
+            "x": 158.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 202.75,
+            "bottom": 463.828125,
+            "left": 158.75
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "图表指南（?）",
+          "aria": "打开图表指南",
+          "rect": {
+            "x": 203.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 247.75,
+            "bottom": 463.828125,
+            "left": 203.75
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "缩小（-）",
+          "aria": "缩小",
+          "view": "out",
+          "rect": {
+            "x": 254.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 298.75,
+            "bottom": 463.828125,
+            "left": 254.75
+          },
+          "hit": true
+        },
+        {
+          "text": "阅读100%",
+          "title": "再次放大以显示标签和注释 · 重置视图（0）",
+          "aria": "100% · 再次放大以显示标签和注释。重置图表视图",
+          "view": "reset",
+          "rect": {
+            "x": 298.75,
+            "y": 419.828125,
+            "width": 60,
+            "height": 44,
+            "top": 419.828125,
+            "right": 358.75,
+            "bottom": 463.828125,
+            "left": 298.75
+          },
+          "hit": false
+        },
+        {
+          "text": "",
+          "title": "放大（+）",
+          "aria": "放大",
+          "view": "in",
+          "rect": {
+            "x": 358.75,
+            "y": 419.828125,
+            "width": 44,
+            "height": 44,
+            "top": 419.828125,
+            "right": 402.75,
+            "bottom": 463.828125,
+            "left": 358.75
+          },
+          "hit": false
+        }
+      ]
+    }
+  },
+  {
+    "width": 1440,
+    "initial": {
+      "width": 1392,
+      "height": 824,
+      "documentWidth": 1392,
+      "container": {
+        "rect": {
+          "x": 32,
+          "y": 78,
+          "width": 1328,
+          "height": 491.203125,
+          "top": 78,
+          "right": 1360,
+          "bottom": 569.203125,
+          "left": 32
+        },
+        "clientWidth": 1326,
+        "scrollWidth": 1326,
+        "scrollLeft": 0,
+        "overflowX": "hidden",
+        "minWidth": "0px",
+        "transform": "none"
+      },
+      "svg": {
+        "rect": {
+          "x": 47,
+          "y": 93,
+          "width": 1298,
+          "height": 461.203125,
+          "top": 93,
+          "right": 1345,
+          "bottom": 554.203125,
+          "left": 47
+        },
+        "clientWidth": 1298,
+        "scrollWidth": 1298,
+        "scrollLeft": 0,
+        "overflowX": "hidden",
+        "minWidth": "min(900px, 100%)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "viewBox": "0 0 788 280",
+      "wide": "true",
+      "nav": {
+        "rect": {
+          "x": 1008.25,
+          "y": 510.203125,
+          "width": 334.75,
+          "height": 42,
+          "top": 510.203125,
+          "right": 1343,
+          "bottom": 552.203125,
+          "left": 1008.25
+        },
+        "clientWidth": 333,
+        "scrollWidth": 333,
+        "scrollLeft": 0,
+        "overflowX": "auto",
+        "minWidth": "0px",
+        "transform": "none"
+      },
+      "nodes": [
+        {
+          "id": "a",
+          "rect": {
+            "x": 126.08470916748047,
+            "y": 246.18531799316406,
+            "width": 151.53814697265625,
+            "height": 85.65202331542969,
+            "top": 246.18531799316406,
+            "right": 277.6228561401367,
+            "bottom": 331.83734130859375,
+            "left": 126.08470916748047
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "b",
+          "rect": {
+            "x": 340.2147216796875,
+            "y": 246.18531799316406,
+            "width": 151.53817749023438,
+            "height": 85.65202331542969,
+            "top": 246.18531799316406,
+            "right": 491.7528991699219,
+            "bottom": 331.83734130859375,
+            "left": 340.2147216796875
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "d",
+          "rect": {
+            "x": 554.3447265625,
+            "y": 246.18531799316406,
+            "width": 151.5382080078125,
+            "height": 85.65202331542969,
+            "top": 246.18531799316406,
+            "right": 705.8829345703125,
+            "bottom": 331.83734130859375,
+            "left": 554.3447265625
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "text": "路径",
+          "title": "追踪路径（R）",
+          "aria": "追踪有向路径",
+          "rect": {
+            "x": 1013.25,
+            "y": 515.203125,
+            "width": 64.375,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1077.625,
+            "bottom": 547.203125,
+            "left": 1013.25
+          },
+          "hit": true
+        },
+        {
+          "text": "地图",
+          "title": "语义雷达（M）",
+          "aria": "打开语义雷达",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "hit": false
+        },
+        {
+          "text": "透镜",
+          "title": "语义透镜（L）",
+          "aria": "打开语义透镜",
+          "rect": {
+            "x": 1078.625,
+            "y": 515.203125,
+            "width": 64.375,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1143,
+            "bottom": 547.203125,
+            "left": 1078.625
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "查找节点（/）",
+          "aria": "查找节点",
+          "rect": {
+            "x": 1150,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1182,
+            "bottom": 547.203125,
+            "left": 1150
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "图表指南（?）",
+          "aria": "打开图表指南",
+          "rect": {
+            "x": 1183,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1215,
+            "bottom": 547.203125,
+            "left": 1183
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "缩小（-）",
+          "aria": "缩小",
+          "view": "out",
+          "rect": {
+            "x": 1222,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1254,
+            "bottom": 547.203125,
+            "left": 1222
+          },
+          "hit": true
+        },
+        {
+          "text": "阅读100%",
+          "title": "再次放大以显示标签和注释 · 重置视图（0）",
+          "aria": "100% · 再次放大以显示标签和注释。重置图表视图",
+          "view": "reset",
+          "rect": {
+            "x": 1254,
+            "y": 515.203125,
+            "width": 52,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1306,
+            "bottom": 547.203125,
+            "left": 1254
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "放大（+）",
+          "aria": "放大",
+          "view": "in",
+          "rect": {
+            "x": 1306,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1338,
+            "bottom": 547.203125,
+            "left": 1306
+          },
+          "hit": true
+        }
+      ]
+    },
+    "scrollEnd": {
+      "width": 1392,
+      "height": 824,
+      "documentWidth": 1392,
+      "container": {
+        "rect": {
+          "x": 32,
+          "y": 78,
+          "width": 1328,
+          "height": 491.203125,
+          "top": 78,
+          "right": 1360,
+          "bottom": 569.203125,
+          "left": 32
+        },
+        "clientWidth": 1326,
+        "scrollWidth": 1326,
+        "scrollLeft": 0,
+        "overflowX": "hidden",
+        "minWidth": "0px",
+        "transform": "none"
+      },
+      "svg": {
+        "rect": {
+          "x": 47,
+          "y": 93,
+          "width": 1298,
+          "height": 461.203125,
+          "top": 93,
+          "right": 1345,
+          "bottom": 554.203125,
+          "left": 47
+        },
+        "clientWidth": 1298,
+        "scrollWidth": 1298,
+        "scrollLeft": 0,
+        "overflowX": "hidden",
+        "minWidth": "min(900px, 100%)",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "viewBox": "0 0 788 280",
+      "wide": "true",
+      "nav": {
+        "rect": {
+          "x": 1008.25,
+          "y": 510.203125,
+          "width": 334.75,
+          "height": 42,
+          "top": 510.203125,
+          "right": 1343,
+          "bottom": 552.203125,
+          "left": 1008.25
+        },
+        "clientWidth": 333,
+        "scrollWidth": 333,
+        "scrollLeft": 0,
+        "overflowX": "auto",
+        "minWidth": "0px",
+        "transform": "none"
+      },
+      "nodes": [
+        {
+          "id": "a",
+          "rect": {
+            "x": 126.08470916748047,
+            "y": 246.18531799316406,
+            "width": 151.53814697265625,
+            "height": 85.65202331542969,
+            "top": 246.18531799316406,
+            "right": 277.6228561401367,
+            "bottom": 331.83734130859375,
+            "left": 126.08470916748047
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "b",
+          "rect": {
+            "x": 340.2147216796875,
+            "y": 246.18531799316406,
+            "width": 151.53817749023438,
+            "height": 85.65202331542969,
+            "top": 246.18531799316406,
+            "right": 491.7528991699219,
+            "bottom": 331.83734130859375,
+            "left": 340.2147216796875
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        },
+        {
+          "id": "d",
+          "rect": {
+            "x": 554.3447265625,
+            "y": 246.18531799316406,
+            "width": 151.5382080078125,
+            "height": 85.65202331542969,
+            "top": 246.18531799316406,
+            "right": 705.8829345703125,
+            "bottom": 331.83734130859375,
+            "left": 554.3447265625
+          },
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "scrollLeft": 0,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "transform": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "text": "路径",
+          "title": "追踪路径（R）",
+          "aria": "追踪有向路径",
+          "rect": {
+            "x": 1013.25,
+            "y": 515.203125,
+            "width": 64.375,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1077.625,
+            "bottom": 547.203125,
+            "left": 1013.25
+          },
+          "hit": true
+        },
+        {
+          "text": "地图",
+          "title": "语义雷达（M）",
+          "aria": "打开语义雷达",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "hit": false
+        },
+        {
+          "text": "透镜",
+          "title": "语义透镜（L）",
+          "aria": "打开语义透镜",
+          "rect": {
+            "x": 1078.625,
+            "y": 515.203125,
+            "width": 64.375,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1143,
+            "bottom": 547.203125,
+            "left": 1078.625
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "查找节点（/）",
+          "aria": "查找节点",
+          "rect": {
+            "x": 1150,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1182,
+            "bottom": 547.203125,
+            "left": 1150
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "图表指南（?）",
+          "aria": "打开图表指南",
+          "rect": {
+            "x": 1183,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1215,
+            "bottom": 547.203125,
+            "left": 1183
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "缩小（-）",
+          "aria": "缩小",
+          "view": "out",
+          "rect": {
+            "x": 1222,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1254,
+            "bottom": 547.203125,
+            "left": 1222
+          },
+          "hit": true
+        },
+        {
+          "text": "阅读100%",
+          "title": "再次放大以显示标签和注释 · 重置视图（0）",
+          "aria": "100% · 再次放大以显示标签和注释。重置图表视图",
+          "view": "reset",
+          "rect": {
+            "x": 1254,
+            "y": 515.203125,
+            "width": 52,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1306,
+            "bottom": 547.203125,
+            "left": 1254
+          },
+          "hit": true
+        },
+        {
+          "text": "",
+          "title": "放大（+）",
+          "aria": "放大",
+          "view": "in",
+          "rect": {
+            "x": 1306,
+            "y": 515.203125,
+            "width": 32,
+            "height": 32,
+            "top": 515.203125,
+            "right": 1338,
+            "bottom": 547.203125,
+            "left": 1306
+          },
+          "hit": true
+        }
+      ]
+    }
+  }
+]

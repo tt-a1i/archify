@@ -1,0 +1,8 @@
+{
+  "exit": 2,
+  "findingsByExtension": {
+    ".html": 48,
+    ".patch": 2
+  },
+  "decision": "Preserve generated native artifact bytes and the exact attributed PR patch. Authored/evidence text and hand-written index checked separately."
+}

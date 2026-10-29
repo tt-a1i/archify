@@ -1,0 +1,8 @@
+import fs from 'node:fs';import {createHash} from 'node:crypto';
+import {ChromeVisualBrowser} from '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/archify/bin/visual-check.mjs';
+import {inspectPublicHtml} from '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/archify/explainer/browser-check.mjs';
+const r='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round35',browser=new ChromeVisualBrowser('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'),out=[];
+try {for(const width of [390,1440])for(const arm of ['base','pr1027']){
+ await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:r+'/'+arm+'-networkx.html',width,height:900,theme:'light',keyboard:false});
+ const x=await browser.cdp.send('Runtime.evaluate',{expression:`(async()=>{document.querySelector('[data-theme-choice="light"]').click();await document.fonts.ready;const blob=await window.ArchifyExplainer.pageImage();return await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});})()`,awaitPromise:true,returnByValue:true},await browser.sessionPromise);if(x.exceptionDetails)throw Error(x.exceptionDetails.text);const bytes=Buffer.from(x.result.value.split(',')[1],'base64');fs.writeFileSync(r+'/'+arm+'-networkx-'+width+'.png',bytes);out.push({arm,width,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+}const comparisons=[390,1440].map(width=>({width,byteIdentical:out.filter(x=>x.width===width)[0].sha256===out.filter(x=>x.width===width)[1].sha256}));fs.writeFileSync(r+'/export-comparison.json',JSON.stringify({artifacts:out,comparisons},null,2)+'\n');console.log(comparisons);}finally{await browser.close();}

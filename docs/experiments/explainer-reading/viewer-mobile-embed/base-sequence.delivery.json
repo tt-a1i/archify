@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "d332c81d-ec22-4031-bd98-71010ceba7fd",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/singleflight/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/viewer-mobile-embed/base-sequence.html",
+  "specification": {
+    "sha256": "423e0324a107ee022c7aa38a5fe5e5d30b03aa82dc0a107b363615bf44dbdb2b",
+    "bytes": 3513
+  },
+  "artifact": {
+    "sha256": "20be2aa42dfc0fe6d3bd33f17b1218913c1ce265f9f213dce2cc614b58eb0fa0",
+    "bytes": 545591
+  },
+  "explainer": {
+    "preparedSha256": "de77093de77547431aec6ceacf0261b7238536ac3f66d315e2ec49f8ccc93e62",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "overlap-flow",
+        "inline": true,
+        "sha256": "858fcfd27504c1fa5ccf7bb6cb2d1d9f66d26118397b8281997e562ad78006b3",
+        "bytes": 949
+      }
+    ]
+  }
+}

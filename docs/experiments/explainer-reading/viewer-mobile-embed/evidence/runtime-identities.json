@@ -1,0 +1,27 @@
+{
+  "base": "9f74529f3bc43795c283ad48daf58aab06114e65",
+  "prHead": "c393fc7fbc321d5b6c4685ca35cd612b75d64083",
+  "patchSha256": "cfebda853f2753a377d50697a5742ca6e01b730ca5b74894f178d12f2245bb0c",
+  "files": [
+    {
+      "path": "viewer/focus.js",
+      "baseSha256": "5a3785534247d032a5435b391b8f93d8dfc8eb66e5c849e0a3240d9d0a419967",
+      "candidateSha256": "0687f8593153ba67a96fdab75a11e0d2ef46340893eab8d7e4f0175a00db0850"
+    },
+    {
+      "path": "viewer/viewer-chrome-layout.js",
+      "baseSha256": "288f801150004b82496b1f16450adf5da7c59696cd657008b7e9c809b5c8a1eb",
+      "candidateSha256": "7b6e63d50a252f970c2ba10402a8b291aea3f78d91484dbaa5bd4b30d7b2e069"
+    },
+    {
+      "path": "viewer/viewer.css",
+      "baseSha256": "0715303ecda9bf8f75f649f616fd9e47243e2233c601bcf303e71398d0037735",
+      "candidateSha256": "f9071604c756ba6b7fd003e759d4fabc67a866a65353d0fb6b1506fee28461dd"
+    },
+    {
+      "path": "archify/assets/template.html",
+      "baseSha256": "ada67bdc64bddaecf11a79ff7d4ffa438e407520147c9175e715fd8baaf0aac5",
+      "candidateSha256": "18b0ca626ed8679598a69c511bf1847ad27a48b69ff3f7d62d5470ba72cbe9af"
+    }
+  ]
+}
