@@ -219,7 +219,7 @@ A chart states where its numbers come from the same way text does: measured, fro
 
 | Directive | Header arguments | Rows |
 | --- | --- | --- |
-| `@answer` | `scope="..."` | none |
+| `@answer` | `scope="..."`, optional `span=1..12` (exact desktop columns, like panel spans) | none |
 | `@meta` | `locale` (`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
 | `@source <id>` | `title`, `url`, or `path` with `lines=start:end` | none |
 | `@steps` | `id` | `id | title | detail? | diagram-id? | node? | from~to? | edge-ids?` (node and route are exclusive) |
@@ -257,7 +257,9 @@ Pass `--repo-root /path/to/repository` for code excerpts. With it, every cited r
 
 ## Panels and layout
 
-Prefer a specific question as each panel title. `{#id}` gives a stable ID for links and panel replacement; `{#id span=7}` fixes a width of 1–12 columns. Omit spans: the page measures each panel and plans the board, keeping source order with the conclusion top-left, giving each diagram enough width for readable labels, and keeping tables and code from clipping. Without JavaScript, below 1100 px and in print, static widths apply.
+Prefer a specific question as each panel title. `{#id}` gives a stable ID for links and panel replacement; `{#id span=7}` fixes a width of 1–12 columns. Omit spans: the page measures each panel and plans the board, keeping source order with the conclusion top-left, giving each diagram enough width for readable labels, and keeping tables and code from clipping. Without JavaScript, static widths apply; narrow screens and print stack panels.
+
+When two examples need to start side by side below the conclusion, use `@answer span=12` with `span=6` on each example panel. The optional answer span uses the same 1–12 column range as panels; phone layouts still stack at full width. Leave it out for automatic placement.
 
 ## Delivery
 

@@ -69,15 +69,15 @@ test('source cards keep their evidence and return link reachable in short viewpo
  }finally{await browser.close();}
 });
 
-test('authored panel spans remain exact through measured layout and reader relayout',{skip:!chrome},async()=>{
+test('authored answer and panel spans remain exact through measured layout and reader relayout',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');
- const doc=formalDocument();doc.meta.locale='zh-CN';
+ const doc=formalDocument();doc.meta.locale='zh-CN';doc.answer.span=12;
  const literal='Keep this complete command: '+ 'x'.repeat(100);
  doc.panels=Array.from({length:12},(_,index)=>({id:`fixed-${index+1}`,title:'Width',span:index+1,blocks:[index===5?{id:'fixed-code',type:'snippet',text:literal}:{id:`text-${index+1}`,type:'prose',text:'X'}]}));
  doc.panels.push({id:'after-full',title:'Last',span:6,blocks:[{id:'last-text',type:'prose',text:'X'}]});
  const file=artifact('fixed-spans',renderExplainer(doc,{sourceText:JSON.stringify(doc)})),browser=new ChromeVisualBrowser(chrome);
  const measure=()=>pageValue(browser,`(()=>{const board=document.querySelector('.board'),gap=parseFloat(getComputedStyle(board).columnGap),column=(board.clientWidth-gap*11)/12;return [...board.querySelectorAll('[data-span-fixed]')].map(panel=>({id:panel.id,span:Number(panel.dataset.spanFixed),width:panel.getBoundingClientRect().width,expected:column*Number(panel.dataset.spanFixed)+gap*(Number(panel.dataset.spanFixed)-1),text:panel.querySelector('.panel-body').textContent}));})()`);
- const exact=async()=>{const rows=await measure();assert.deepEqual(rows.map(row=>row.id),doc.panels.map(panel=>panel.id),'authored panels retain source order');assert.deepEqual(rows.filter(row=>Math.abs(row.width-row.expected)>1),[],'a fixed width is not a minimum or a full-row fallback');assert.ok(rows[5].text.includes(literal),'a narrow authored code panel retains its complete text');};
+ const exact=async()=>{const rows=await measure();assert.deepEqual(rows.map(row=>row.id),['answer',...doc.panels.map(panel=>panel.id)],'authored panels retain source order');assert.deepEqual(rows.filter(row=>Math.abs(row.width-row.expected)>1),[],'a fixed width is not a minimum or a full-row fallback');assert.ok(rows[6].text.includes(literal),'a narrow authored code panel retains its complete text');};
  const settled=()=>pageValue(browser,'document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
  try {
   await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'light',keyboard:false});await exact();

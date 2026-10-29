@@ -128,6 +128,23 @@ test('answer reasons, scope, numbered source syntax and explicit spans normalize
  for(const list of ['1. Ordered','- First\n  - Nested'])assert.equal(parseExplainer('# Title\n\nAnswer.\n\n'+list).document,null);
 });
 
+test('answer width accepts exact authored columns and locates invalid widths',()=>{
+ for(const span of [1,6,12]){
+  const result=parse(`# Title\n\nAnswer.\n\n@answer span=${span} scope="Example"\n\n## Why?\n\nText.`);
+  assert.equal(result.document.answer.span,span);
+  assert.equal(result.document.answer.scope,'Example');
+  assert.equal(validateExplainer(result.document).ok,true);
+ }
+ for(const span of [0,13,1.5]){
+  const result=parse(`# Title\n\nAnswer.\n\n@answer span=${span}\n\n## Why?\n\nText.`);
+  const checked=validateExplainer(result.document,{sourceMap:result.sourceMap});
+  assert.equal(checked.ok,false);
+  assert.ok(checked.diagnostics.some(d=>d.subject.path==='/answer/span'&&d.subject.line===5));
+ }
+ const invalid=parseExplainer('# Title\n\nAnswer.\n\n@answer span=wide\n\n## Why?\n\nText.');
+ assert.equal(invalid.document,null);
+});
+
 test('comparison row IDs stay stable',()=>{
  const result=parse(draft('@comparison columns="A,B"\nCost {#cost-row} | Low {good} | High {bad}'));
  assert.equal(result.document.panels[0].blocks[0].rows[0].id,'cost-row');assert.equal(validateExplainer(result.document).ok,true);

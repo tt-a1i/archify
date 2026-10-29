@@ -98,7 +98,7 @@ export function renderExplainer(document, options = {}) {
   const rows=layoutExplainerPanels(document,diagrams);
   const panels=rows.flatMap((row,rowIndex)=>row.map(item=>{
     if(item.spacer)return `<div class="board-spacer span${item.span}" data-row="${rowIndex}" aria-hidden="true"></div>`;
-    if(item.answer)return `<section id="answer" class="panel answer-panel span${item.span}" data-row="${rowIndex}" data-span-min="${item.min}">${answerHtml}</section>`;
+    if(item.answer)return `<section id="answer" class="panel answer-panel span${item.span}" data-row="${rowIndex}" data-span-min="${item.min}"${item.explicit ? ` data-span-fixed="${item.span}"` : ''}>${answerHtml}</section>`;
     const panel=item.panel,index=document.panels.indexOf(panel);
     const measure=panel.blocks.every(block=>['prose','list','steps','callout','facts','metric'].includes(block.type)) ? ' data-measure="text"' : '';
     const blocks=panel.blocks.map(block=>blockHtml(block,panel.id)), figures=panel.blocks.filter(block=>block.type === 'diagram');

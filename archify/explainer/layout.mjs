@@ -16,7 +16,7 @@ export function layoutExplainerPanels(document, diagrams = {}) {
     return [4,4];
   };
   const sized = panel => panel.blocks.map(widths).reduce((best,next)=>next[0]>best[0]?next:best,[4,4]);
-  const items=[{id:'answer',span:5,min:4,weight:contentSize(document.answer),answer:true},...document.panels.map(panel=>{const [span,min]=sized(panel);return{id:panel.id,span:panel.span ?? span,min:panel.span ?? min,explicit:panel.span!==undefined,weight:contentSize(panel),panel};})];
+  const items=[{id:'answer',span:document.answer.span ?? 5,min:document.answer.span ?? 4,explicit:document.answer.span!==undefined,weight:contentSize(document.answer),answer:true},...document.panels.map(panel=>{const [span,min]=sized(panel);return{id:panel.id,span:panel.span ?? span,min:panel.span ?? min,explicit:panel.span!==undefined,weight:contentSize(panel),panel};})];
   const rows=[];let row=[],used=0;
   function finish(){if(!row.length)return;const remaining=12-used;const flexible=row.filter(item=>!item.explicit).sort((a,b)=>b.weight-a.weight);if(remaining&&flexible.length)flexible[0].span+=remaining;else if(remaining)row.push({spacer:true,span:remaining});rows.push(row);row=[];used=0;}
   for(const item of items){
