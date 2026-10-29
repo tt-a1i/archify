@@ -274,6 +274,16 @@
     const liveCode = all('pre');
     const exportCode = all('pre',clone).filter((pre,index)=>liveCode[index].scrollWidth > liveCode[index].clientWidth + 1);
     exportCode.forEach(pre=>pre.classList.add('export-code'));
+    const liveDiff = all('.diff-scroll');
+    const exportDiff = all('.diff-scroll',clone).filter((diff,index)=>liveDiff[index].scrollWidth > liveDiff[index].clientWidth + 1);
+    exportDiff.forEach(diff=>diff.classList.add('export-diff'));
+    // Wrapping changes panel height; release measured row spans in the export only.
+    if (exportCode.length || exportDiff.length) {
+      const copyBoard = clone.querySelector('.board');
+      copyBoard.classList.remove('measured');
+      all(':scope>.panel',copyBoard).forEach(panel=>panel.style.gridRow='');
+      all('.board-spacer',copyBoard).forEach(spacer=>spacer.remove());
+    }
     if (width > liveWidth) {
       const copyShell = clone.querySelector('.shell'), copyBoard = clone.querySelector('.board');
       copyShell.style.width = `${shell.getBoundingClientRect().width + width - liveWidth}px`;
@@ -291,6 +301,7 @@
     // the root's own attribute selects the same element with the same specificity.
     const sheet = clone.querySelector('head>style'); if (sheet) sheet.textContent = sheet.textContent.replace(/:root\b/g,'[data-archify-artifact]');
     if (exportCode.length && sheet) sheet.textContent += '.export-code{overflow:visible;white-space:pre-wrap}.export-code code{white-space:pre-wrap;overflow-wrap:anywhere}';
+    if (exportDiff.length && sheet) sheet.textContent += '.export-diff{overflow:visible}.export-diff code{white-space:pre-wrap;overflow-wrap:anywhere}';
     clone.style.width = `${width}px`;
     if (width > liveWidth) {
       // Responsive padding and type change at the export width; measure in that viewport.
@@ -315,8 +326,8 @@
         height = Math.ceil(doc.querySelector('.shell').getBoundingClientRect().height + 48);
         clone = doc.documentElement.cloneNode(true);
       } finally { frame.remove(); }
-    } else if (exportCode.length || clone.querySelector('[data-diagram-fit="scroll"]')) {
-      // Code wrapping or a full diagram overview changes height without changing the viewport.
+    } else if (exportCode.length || exportDiff.length || clone.querySelector('[data-diagram-fit="scroll"]')) {
+      // Wrapped code/diffs or a full diagram overview change height at the same viewport.
       // Measure the inert clone synchronously, then remove it before painting.
       const measuring = document.createElement('div');
       measuring.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;visibility:hidden;pointer-events:none`;

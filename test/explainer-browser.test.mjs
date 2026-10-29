@@ -286,10 +286,14 @@ async function exportContentPixels(browser){
    '.table-scroll tbody tr:first-child>th::before{content:"";display:inline-block;width:8px;height:8px;background:rgb(3,211,229)}'+
    '.table-scroll tbody tr:last-child>td:last-child::after{content:"";display:inline-block;width:8px;height:8px;float:right;background:rgb(250,13,191)}'+
    '.snippet .export-test-code-end{background:rgb(227,101,7)}'+
+   '.export-test-removed-end{background:rgb(3,211,229)}.export-test-added-end{background:rgb(250,13,191)}'+
    'footer::after{content:"";display:block;width:8px;height:8px;background:rgb(19,239,73)}';document.head.append(style);
-  const code=document.querySelector('.snippet pre code'),originalCode=code&&[...code.childNodes];
-  if(code){const text=code.textContent,end=document.createElement('span');end.className='export-test-code-end';end.textContent=text.slice(-16);code.replaceChildren(document.createTextNode(text.slice(0,-16)),end);}
-  const scrolls=[...document.querySelectorAll('.table-scroll,pre')];scrolls.forEach(e=>e.scrollLeft=e.scrollWidth);
+  const markedContent=[];
+  for(const [selector,className] of [['.snippet pre code','export-test-code-end'],['.diff-line.removed code','export-test-removed-end'],['.diff-line.added code','export-test-added-end']]){
+   const code=document.querySelector(selector);if(!code)continue;markedContent.push([code,[...code.childNodes]]);
+   const text=code.textContent,end=document.createElement('span');end.className=className;end.textContent=text.slice(-16);code.replaceChildren(document.createTextNode(text.slice(0,-16)),end);
+  }
+  const scrolls=[...document.querySelectorAll('.table-scroll,.diff-scroll,pre')];scrolls.forEach(e=>e.scrollLeft=e.scrollWidth);
   const state=()=>({width:innerWidth,roots:document.querySelectorAll('html').length,frames:document.querySelectorAll('iframe').length,scrolls:scrolls.map(e=>({left:e.scrollLeft,width:e.clientWidth,scrollWidth:e.scrollWidth,text:e.textContent}))});
   const before=state(),blob=await window.ArchifyExplainer.pageImage(),bitmap=await createImageBitmap(blob),canvas=document.createElement('canvas');
   try{
@@ -297,7 +301,7 @@ async function exportContentPixels(browser){
    const pixels=context.getImageData(0,0,canvas.width,canvas.height).data,marks={first:0,last:0,code:0,footer:0};
    for(let i=0;i<pixels.length;i+=4){const r=pixels[i],g=pixels[i+1],b=pixels[i+2];if(r===3&&g===211&&b===229)marks.first++;if(r===250&&g===13&&b===191)marks.last++;if(r===227&&g===101&&b===7)marks.code++;if(r===19&&g===239&&b===73)marks.footer++;}
    return {type:blob.type,width:bitmap.width,height:bitmap.height,marks,before,after:state()};
-  }finally{bitmap.close();style.remove();if(code)code.replaceChildren(...originalCode);}
+  }finally{bitmap.close();style.remove();for(const [code,children] of markedContent)code.replaceChildren(...children);}
  })()`);
 }
 function tableExportDocument(columns){
@@ -332,14 +336,16 @@ test('image export wraps long snippets while preserving live code',{skip:!chrome
  const file=artifact('complete-code-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
  const browser=new ChromeVisualBrowser(chrome);
  try{
-  await inspectPublicHtml(browser,{artifactPath:file,width:390,theme:'dark',keyboard:false});
+  for(const width of [390,1440]){
+  await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,theme:'dark',keyboard:false});
   const result=await exportContentPixels(browser);
-  assert.equal(result.width,780,'Code wrapping retains the requested viewport width');
+  assert.equal(result.width,width*2,'Code wrapping retains the requested viewport width');
   assert.ok(result.before.scrolls[0].scrollWidth>result.before.scrolls[0].width);
   assert.ok(result.marks.code>16,'The final code characters are present in the PNG');
   assert.ok(result.marks.footer>16,'Wrapping height includes the footer');
   assert.equal(result.after.scrolls[0].text,code);
   assert.deepEqual(result.after,result.before);
+  }
  }finally{await browser.close();}
 });
 test('image export bounds wide bitmaps and retains the final cells',{skip:!chrome},async()=>{
@@ -354,5 +360,26 @@ test('image export bounds wide bitmaps and retains the final cells',{skip:!chrom
   assert.ok(result.marks.first>4&&result.marks.last>4,'Both ends survive the bounded bitmap: '+JSON.stringify({width:result.width,height:result.height,marks:result.marks}));
   assert.ok(result.marks.footer>4);
   assert.deepEqual(result.after,result.before);
+ }finally{await browser.close();}
+});
+
+test('image export retains long diff rows and original line numbers',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const doc=formalDocument();doc.meta.id='complete-diff-export';doc.sources=[];
+ const diff=['@@ -1,3 +1,3 @@',' function message() {','-  const message = "'+'alpha  beta  '.repeat(40)+'OLD-END";','+  const message = "'+'甲方  乙方  '.repeat(40)+'NEW-END";',' }'].join('\n');
+ doc.panels=[{id:'change',title:'Read both complete strings',blocks:[{id:'literal-diff',type:'diff',caption:'Synthetic long-line change',text:diff}]},{id:'after',title:'After the change',blocks:[{id:'following',type:'prose',text:'This paragraph follows the complete diff.'}]}];
+ const file=artifact('complete-diff-export',renderExplainer(doc,{sourceText:JSON.stringify(doc)})),browser=new ChromeVisualBrowser(chrome);
+ try{
+  for(const width of [390,1440]){
+   await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width,theme:'dark',keyboard:false});
+   const result=await exportContentPixels(browser);
+   assert.ok(result.before.scrolls[0].scrollWidth>result.before.scrolls[0].width,'The live diff must overflow');
+   assert.ok(result.marks.first>16&&result.marks.last>16,'Both removed and added line endings remain in the actual image');
+   assert.ok(result.marks.footer>16,'The final footer remains visible');
+   assert.deepEqual(result.after,result.before,'Live text, dimensions, scroll positions and ownership remain unchanged');
+   const rows=await pageValue(browser,`[...document.querySelectorAll('.diff-code tbody tr')].map(row=>({old:row.dataset.oldLine||null,new:row.dataset.newLine||null,text:row.querySelector('code').textContent}))`);
+   assert.equal(rows.map(row=>row.text).join('\n'),diff,'Repeated spaces, prefixes and literal text are preserved');
+   assert.deepEqual(rows.map(row=>[row.old,row.new]),[[null,null],['1','1'],['2',null],[null,'2'],['3','3']]);
+  }
  }finally{await browser.close();}
 });
