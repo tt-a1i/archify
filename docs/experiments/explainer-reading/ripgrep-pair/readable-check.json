@@ -1,0 +1,179 @@
+{
+  "ok": true,
+  "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/ripgrep-pair/readable-commands.html",
+  "family": "explainer",
+  "artifact": {
+    "sha256": "6b7bf7ef41f755a83c40fef780c7e01b4855d48dd9472d189bb5cba14cd7e764",
+    "bytes": 542445
+  },
+  "checks": [
+    {
+      "name": "explainer_structure",
+      "ok": true,
+      "details": [
+        "41 unique DOM IDs"
+      ]
+    },
+    {
+      "name": "explainer_payload_identity",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "explainer_dependencies",
+      "ok": true,
+      "details": [
+        "1 frozen dependencies"
+      ]
+    },
+    {
+      "name": "explainer_native_diagrams",
+      "ok": true,
+      "details": [
+        "filter-flow: pass"
+      ]
+    }
+  ],
+  "composition": {
+    "schemaVersion": 1,
+    "profile": "showcase",
+    "status": "pass",
+    "summary": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "issues": [],
+    "nativeDiagrams": [
+      {
+        "id": "filter-flow",
+        "receipt": {
+          "ok": true,
+          "file": "/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-explainer-check-n3DMuZ/child.html",
+          "artifact": {
+            "sha256": "2c5770f48ee7991a734d02fbeac57901836461261c3b6d8489f993fffae7a62b",
+            "bytes": 857833
+          },
+          "checks": [
+            {
+              "name": "single_svg",
+              "ok": true,
+              "details": [
+                "found 1 <svg> block(s)"
+              ]
+            },
+            {
+              "name": "finite_svg",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "orthogonal_arrows",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "label_route_clearance",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "relationship_crossings",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "relationship_corridors",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "container_border_runs",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "route_rhythm",
+              "ok": true,
+              "details": []
+            },
+            {
+              "name": "legend_clearance",
+              "ok": true,
+              "details": []
+            }
+          ],
+          "composition": {
+            "schemaVersion": 1,
+            "profile": "showcase",
+            "status": "pass",
+            "summary": {
+              "errors": 0,
+              "warnings": 0
+            },
+            "metrics": {
+              "properCrossings": 0,
+              "resolvedCrossovers": 0,
+              "ambiguousCorridors": 0,
+              "arrowheadCollisions": 0,
+              "containerBorderRuns": 0,
+              "labelRouteClearanceIssues": 0,
+              "labelCanvasOverflowIssues": 0,
+              "minLabelRouteClearance": 96.2,
+              "desktopReadabilityIssues": 0,
+              "viewportHeightIssues": 0,
+              "minProjectedNodeTextPx": 8,
+              "maxBends": 0,
+              "routesOverSuggestedBends": 0,
+              "maxStretch": 1,
+              "routesOverSuggestedStretch": 0,
+              "minSegmentPx": 32,
+              "minInteriorSegmentPx": null,
+              "shortSegmentCount": 0,
+              "shortEndpointSegmentCount": 0,
+              "shortInteriorSegmentCount": 0,
+              "microSegmentCount": 0
+            },
+            "suggestedLimits": {
+              "bendsPerRelationship": 2,
+              "stretch": 1.35,
+              "segmentPx": 16,
+              "microSegmentPx": 8
+            },
+            "routeReview": {
+              "crossings": [],
+              "detours": []
+            },
+            "leadingSpace": {
+              "measured": false,
+              "reviewSuggested": false
+            },
+            "desktopReadability": {
+              "budgetBasis": "legacy-930",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "limit": "legacy",
+              "requestedTargetPx": null,
+              "requestedTargetMet": null,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "edge",
+                "id": "hidden-to-search-1",
+                "from": "hidden",
+                "to": "search"
+              },
+              "minimumSourceTextPx": 8,
+              "minimumProjectedTextPx": 8,
+              "semanticTextCount": 6
+            },
+            "issues": []
+          }
+        }
+      }
+    ]
+  },
+  "diagnostics": [],
+  "provenance": "current",
+  "deliveryReceiptId": "01bc1f78-ec4b-42d1-9a9b-01e8ea0b99d1"
+}

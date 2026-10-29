@@ -1,0 +1,17 @@
+{
+  "runtime": "3b1755acf98f2199e07058c7d7e76f5a3f8c1f7d",
+  "source": "e89fff89ac9af12e8d4ce9d5fd07beb408ca730f",
+  "model": "gpt-6.1-terra",
+  "effort": "medium",
+  "concurrency": 2,
+  "budgetMinutes": 15,
+  "difference": {
+    "old": "A command, config or code that does not exist yet",
+    "new": "A command the reader should run, or a proposed config or code snippet"
+  },
+  "speedClaim": false,
+  "promptSha256": {
+    "base": "4258ff55615d5c33fe91d7a2c95c828db22a107c00a266cfd84a4fcc5ab9fdc4",
+    "candidate": "0815995d72a9e9e1f7746eef93377c18e9a2a0c4627f7b7c533493e5ce6837eb"
+  }
+}

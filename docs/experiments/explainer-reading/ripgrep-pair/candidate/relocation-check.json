@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "check",
+  "provenance": "invalid",
+  "artifact": {
+    "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/ripgrep-pair/candidate/answer.html"
+  },
+  "error": "Delivery provenance could not be verified.",
+  "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/ripgrep-pair/candidate/answer.html",
+  "diagnostic": "Delivery provenance could not be verified.",
+  "diagnostics": [
+    {
+      "code": "delivery/provenance-invalid",
+      "severity": "error",
+      "message": "Delivery provenance could not be verified.",
+      "subject": {
+        "artifact": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/ripgrep-pair/candidate/answer.html",
+        "provenance": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/ripgrep-pair/candidate/answer.delivery.json"
+      },
+      "evidence": {
+        "reason": "The recorded delivery output does not identify this artifact.",
+        "recordedOutput": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/candidate/answer.html",
+        "pathIdentity": {
+          "code": "file-identity-different",
+          "operation": "same-entry",
+          "method": "bigint-stat"
+        }
+      },
+      "supportedFixes": [
+        "restore access to the delivery records, then rerun deliver successfully"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "metrics": [
+    {
+      "width": 390,
+      "pageWidth": 390,
+      "snippets": [
+        {
+          "text": "rg --no-config --files ./src\nrg --no-config --files --debug ./src",
+          "width": 356,
+          "scroll": 356
+        },
+        {
+          "text": "rg --no-config --hidden \\\n  --no-ignore -g '!.git' \\\n  -F '[ready]' ./src",
+          "width": 356,
+          "scroll": 356
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "pageWidth": 1440,
+      "snippets": [
+        {
+          "text": "rg --no-config --files ./src\nrg --no-config --files --debug ./src",
+          "width": 406,
+          "scroll": 406
+        },
+        {
+          "text": "rg --no-config --hidden \\\n  --no-ignore -g '!.git' \\\n  -F '[ready]' ./src",
+          "width": 406,
+          "scroll": 406
+        }
+      ]
+    }
+  ],
+  "copyPayloadMatchesExecutedFixture": true,
+  "copyScope": "Clipboard dispatch intercepted; OS clipboard unchanged."
+}

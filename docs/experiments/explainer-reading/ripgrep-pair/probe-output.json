@@ -1,0 +1,132 @@
+{
+  "version": "ripgrep 15.2.0 (rev e89fff89ac)\n\nfeatures:+pcre2\nsimd(compile):+NEON\nsimd(runtime):+NEON\n\nPCRE2 10.45 is available (JIT is available)\n",
+  "files": {
+    "visible.txt": "needle[1]\n",
+    ".hidden.txt": "needle[1]\n",
+    "ignored.txt": "needle[1]\n",
+    ".hidden-ignored.txt": "needle[1]\n",
+    "decoy.txt": "needle1\n",
+    ".gitignore": "ignored.txt\n.hidden-ignored.txt\n"
+  },
+  "isolation_controls": [
+    "--no-config",
+    "--no-ignore-global",
+    "--no-ignore-parent",
+    "--sort",
+    "path",
+    "--color",
+    "never"
+  ],
+  "cases": [
+    {
+      "name": "literal-default",
+      "arguments": [
+        "-n",
+        "-F",
+        "needle[1]",
+        "."
+      ],
+      "exit": 0,
+      "stdout": "./visible.txt:1:needle[1]\n",
+      "stderr": ""
+    },
+    {
+      "name": "literal-hidden",
+      "arguments": [
+        "--hidden",
+        "-n",
+        "-F",
+        "needle[1]",
+        "."
+      ],
+      "exit": 0,
+      "stdout": "./.hidden.txt:1:needle[1]\n./visible.txt:1:needle[1]\n",
+      "stderr": ""
+    },
+    {
+      "name": "literal-no-ignore",
+      "arguments": [
+        "--no-ignore",
+        "-n",
+        "-F",
+        "needle[1]",
+        "."
+      ],
+      "exit": 0,
+      "stdout": "./ignored.txt:1:needle[1]\n./visible.txt:1:needle[1]\n",
+      "stderr": ""
+    },
+    {
+      "name": "literal-both",
+      "arguments": [
+        "--hidden",
+        "--no-ignore",
+        "-n",
+        "-F",
+        "needle[1]",
+        "."
+      ],
+      "exit": 0,
+      "stdout": "./.hidden-ignored.txt:1:needle[1]\n./.hidden.txt:1:needle[1]\n./ignored.txt:1:needle[1]\n./visible.txt:1:needle[1]\n",
+      "stderr": ""
+    },
+    {
+      "name": "regex-default",
+      "arguments": [
+        "-n",
+        "needle[1]",
+        "."
+      ],
+      "exit": 0,
+      "stdout": "./decoy.txt:1:needle1\n",
+      "stderr": ""
+    },
+    {
+      "name": "regex-both",
+      "arguments": [
+        "--hidden",
+        "--no-ignore",
+        "-n",
+        "needle[1]",
+        "."
+      ],
+      "exit": 0,
+      "stdout": "./decoy.txt:1:needle1\n",
+      "stderr": ""
+    },
+    {
+      "name": "explicit-hidden",
+      "arguments": [
+        "-n",
+        "-F",
+        "needle[1]",
+        ".hidden.txt"
+      ],
+      "exit": 0,
+      "stdout": "1:needle[1]\n",
+      "stderr": ""
+    },
+    {
+      "name": "listed-default",
+      "arguments": [
+        "--files",
+        "."
+      ],
+      "exit": 0,
+      "stdout": "./decoy.txt\n./visible.txt\n",
+      "stderr": ""
+    }
+  ],
+  "debug": {
+    "arguments": [
+      "--debug",
+      "-n",
+      "-F",
+      "needle[1]",
+      "."
+    ],
+    "exit": 0,
+    "stdout": "./visible.txt:1:needle[1]\n",
+    "stderr": "rg: DEBUG|rg::flags::parse|crates/core/flags/parse.rs:89: not reading config files because --no-config is present\nrg: DEBUG|rg::flags::hiargs|crates/core/flags/hiargs.rs:954: read CWD from environment: /private/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-ripgrep-probe-uy7__9_j\nrg: DEBUG|rg::flags::hiargs|crates/core/flags/hiargs.rs:1092: number of paths given to search: 1\nrg: DEBUG|rg::flags::hiargs|crates/core/flags/hiargs.rs:1103: is_one_file? false\nrg: DEBUG|rg::flags::hiargs|crates/core/flags/hiargs.rs:1278: found hostname for hyperlink configuration: maxiaqingdeMacBook-Pro.local\nrg: DEBUG|rg::flags::hiargs|crates/core/flags/hiargs.rs:1288: hyperlink format: \"\"\nrg: DEBUG|rg::flags::hiargs|crates/core/flags/hiargs.rs:175: using 1 thread(s)\nrg: DEBUG|grep_regex::config|crates/regex/src/config.rs:175: assembling HIR from 1 fixed string literals\nrg: DEBUG|ignore::gitignore|crates/ignore/src/gitignore.rs:409: opened gitignore file: ./.gitignore\nrg: DEBUG|globset|crates/globset/src/lib.rs:515: built glob set; 0 literals, 2 basenames, 0 extensions, 0 prefixes, 0 suffixes, 0 required extensions, 0 regexes\nrg: DEBUG|ignore::walk|crates/ignore/src/walk.rs:2011: ignoring ./.git: Ignore(IgnoreMatch(Hidden))\nrg: DEBUG|ignore::walk|crates/ignore/src/walk.rs:2011: ignoring ./.gitignore: Ignore(IgnoreMatch(Hidden))\nrg: DEBUG|ignore::walk|crates/ignore/src/walk.rs:2011: ignoring ./.hidden-ignored.txt: Ignore(IgnoreMatch(Gitignore(Glob { from: Some(\"./.gitignore\"), original: \".hidden-ignored.txt\", actual: \"**/.hidden-ignored.txt\", is_whitelist: false, is_only_dir: false })))\nrg: DEBUG|ignore::walk|crates/ignore/src/walk.rs:2011: ignoring ./.hidden.txt: Ignore(IgnoreMatch(Hidden))\nrg: DEBUG|ignore::walk|crates/ignore/src/walk.rs:2011: ignoring ./ignored.txt: Ignore(IgnoreMatch(Gitignore(Glob { from: Some(\"./.gitignore\"), original: \"ignored.txt\", actual: \"**/ignored.txt\", is_whitelist: false, is_only_dir: false })))\n"
+  }
+}

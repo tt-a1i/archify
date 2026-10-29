@@ -1,0 +1,126 @@
+[
+  {
+    "arm": "base",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 251
+      }
+    ],
+    "snippets": [
+      {
+        "text": "rg --no-config --no-ignore --hidden -g '!.git' -F '[ready]' ./src",
+        "width": 356,
+        "scroll": 517
+      },
+      {
+        "text": "rg --no-config --files ./src\nrg --no-config --files --debug ./src",
+        "width": 356,
+        "scroll": 356
+      }
+    ],
+    "diagram": [
+      {
+        "width": 358,
+        "scroll": 471,
+        "fit": "scroll"
+      }
+    ]
+  },
+  {
+    "arm": "base",
+    "width": 1440,
+    "pageWidth": 1440,
+    "tables": [
+      {
+        "width": 1272,
+        "scroll": 1272,
+        "height": 158
+      }
+    ],
+    "snippets": [
+      {
+        "text": "rg --no-config --no-ignore --hidden -g '!.git' -F '[ready]' ./src",
+        "width": 622,
+        "scroll": 622
+      },
+      {
+        "text": "rg --no-config --files ./src\nrg --no-config --files --debug ./src",
+        "width": 622,
+        "scroll": 622
+      }
+    ],
+    "diagram": [
+      {
+        "width": 1272,
+        "scroll": 1272,
+        "fit": "fit"
+      }
+    ]
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 358,
+        "scroll": 358,
+        "height": 298
+      }
+    ],
+    "snippets": [
+      {
+        "text": "rg --no-config --files ./src\nrg --no-config --files --debug ./src",
+        "width": 356,
+        "scroll": 356
+      },
+      {
+        "text": "rg --no-config --hidden --no-ignore -g '!.git' -F '[ready]' ./src",
+        "width": 356,
+        "scroll": 517
+      }
+    ],
+    "diagram": [
+      {
+        "width": 358,
+        "scroll": 491,
+        "fit": "scroll"
+      }
+    ]
+  },
+  {
+    "arm": "candidate",
+    "width": 1440,
+    "pageWidth": 1440,
+    "tables": [
+      {
+        "width": 840,
+        "scroll": 840,
+        "height": 182
+      }
+    ],
+    "snippets": [
+      {
+        "text": "rg --no-config --files ./src\nrg --no-config --files --debug ./src",
+        "width": 838,
+        "scroll": 838
+      },
+      {
+        "text": "rg --no-config --hidden --no-ignore -g '!.git' -F '[ready]' ./src",
+        "width": 838,
+        "scroll": 838
+      }
+    ],
+    "diagram": [
+      {
+        "width": 840,
+        "scroll": 840,
+        "fit": "fit"
+      }
+    ]
+  }
+]

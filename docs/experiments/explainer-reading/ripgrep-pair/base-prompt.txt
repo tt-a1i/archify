@@ -1,0 +1,12 @@
+Author a Chinese explainer answering: 为什么 ripgrep 找不到明明存在的文本？ Focus on an ordinary recursive directory search in a Git repository: .gitignore versus hidden paths are separate filters; --no-ignore and --hidden do different things; show when both are needed, a literal-search example containing brackets, and a bounded way to inspect skipped paths with --files/--debug. Explain why expanding the search is not proof that the original pattern was correct. Include an exact runnable command where useful, local conditions/risks and a final checklist; do not turn this into an exhaustive ripgrep manual. The reader wants clarity, an attractive page and usable 390px/desktop reading.
+
+Use only the supplied pinned ripgrep source and selected flags for facts. No installation, Git mutation, real user file search or messaging. Source project and frozen runtime are read-only. You are not alone in the codebase; do not modify anything outside your output directory or revert another agent's changes.
+
+Read the supplied guide rather than the runtime's alternative copy. Write candidate.archify.md in your output directory, preserve first-draft.archify.md BEFORE first finalize and every subsequent revision/failure/receipt, then finalize using the frozen runtime's bin/archify.mjs. Budget 15 minutes; at most two repairs. Do not inspect another arm or previous experiments. Do not use a browser; parent will inspect actual pixels. Record source audit and natural friction in notes.md; no speed, human acceptance or broad benchmark claim.
+
+Guide: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/base-guide.md
+Pinned guide source: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/source/GUIDE.md
+Exact flag definitions with line numbers: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/source/selected-flags.txt
+Source citation: https://github.com/BurntSushi/ripgrep/blob/e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/GUIDE.md and https://github.com/BurntSushi/ripgrep/blob/e89fff89ac9af12e8d4ce9d5fd07beb408ca730f/crates/core/flags/defs.rs
+Runtime: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/runtime/archify
+Output directory: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/base

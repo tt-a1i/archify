@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "01bc1f78-ec4b-42d1-9a9b-01e8ea0b99d1",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/ripgrep-pair/readable-commands.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/ripgrep-pair/readable-commands.html",
+  "specification": {
+    "sha256": "914f185c23a217de6c564900abfa734ee942907d2c002e1b2b808e0268513f41",
+    "bytes": 3864
+  },
+  "artifact": {
+    "sha256": "6b7bf7ef41f755a83c40fef780c7e01b4855d48dd9472d189bb5cba14cd7e764",
+    "bytes": 542445
+  },
+  "explainer": {
+    "preparedSha256": "e42101b5f6ff3fa72620b5b42424643117a8acf12be090a28252d8dc2e2370cf",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "filter-flow",
+        "inline": true,
+        "sha256": "f37016cd7d879e42532d96d1c5f6f98e7b7119958790cc251bcf5de17ebe5504",
+        "bytes": 829
+      }
+    ]
+  }
+}

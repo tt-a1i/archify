@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "eb50b8de-1782-45ba-b063-7101944f92d4",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/candidate/candidate.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-29-reading-round7/candidate/answer.html",
+  "specification": {
+    "sha256": "d78f72848b9a7978901e89b6b11e8ae3c90fcd7cdd61044ad1fcec61bcdceee5",
+    "bytes": 3761
+  },
+  "artifact": {
+    "sha256": "22cefb89d0710c5875dacffe2a6019e797ce10389d480b5aa055400461d5d6b6",
+    "bytes": 541638
+  },
+  "explainer": {
+    "preparedSha256": "cac5620eca8c9b7f5d39ba0ec6cefff0bd2ab2bb212597829ed726a8e1d97c6b",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "filter-flow",
+        "inline": true,
+        "sha256": "f37016cd7d879e42532d96d1c5f6f98e7b7119958790cc251bcf5de17ebe5504",
+        "bytes": 829
+      }
+    ]
+  }
+}

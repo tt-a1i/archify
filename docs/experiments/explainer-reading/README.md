@@ -89,3 +89,7 @@ These are ongoing exploration checkpoints. No overall-goal completion, human acc
 ## Continued exploration — round 6
 
 [Copyable Git restore operations](restore-commands/README.md) use existing code snippets to keep complete commands readable. The variant trades desktop density for clearer actions and direct copy controls; the compact comparison remains available.
+
+## Continued exploration — round 7
+
+[Ripgrep filtering](ripgrep-pair/README.md) adds a new source-backed case and isolated executable fixtures. Both independent authors already chose fenced commands, so the proposed guide clarification remains unadopted. The reviewed variant uses verified shell continuations to fit complete commands on a phone while retaining the distinction between search scope and pattern interpretation.

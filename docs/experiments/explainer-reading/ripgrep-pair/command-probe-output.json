@@ -1,0 +1,11 @@
+{
+  "command": "rg --no-config --hidden \\\n  --no-ignore -g '!.git' \\\n  -F '[ready]' ./src",
+  "exit": 0,
+  "stdout": "./src/.hidden-ignored.txt:[ready]\n./src/.hidden.txt:[ready]\n./src/ignored.txt:[ready]\n./src/visible.txt:[ready]\n",
+  "stderr": "",
+  "excluded": [
+    "src/.git/sentinel.txt",
+    "src/decoy.txt"
+  ],
+  "scope": "The exact reviewed snippet ran with sh in a disposable local fixture; no user files searched."
+}
