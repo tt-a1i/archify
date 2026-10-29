@@ -1,0 +1,31 @@
+{
+  "timezone": "UTC",
+  "promptRead": "immediately before initialReads timestamp; exact time not recorded",
+  "initialReads": "2026-10-29T20:54:29Z",
+  "firstDraft": "2026-10-29T20:54:41Z",
+  "attempts": [
+    {
+      "number": 1,
+      "started": "2026-10-29T20:54:41Z",
+      "source": "attempt-1.archify.md",
+      "stdout": "attempt-1.stdout",
+      "stderr": "attempt-1.stderr",
+      "exitStatus": 0,
+      "result": "pass"
+    },
+    {
+      "number": 2,
+      "started": "2026-10-29T20:55:11Z",
+      "source": "attempt-2.archify.md",
+      "stdout": "attempt-2.stdout",
+      "stderr": "attempt-2.stderr",
+      "exitStatus": 0,
+      "result": "pass",
+      "reason": "add supplied pinned status source"
+    }
+  ],
+  "handoff": "2026-10-29T20:55:16Z",
+  "firstDraftPreserved": "first-draft.archify.md",
+  "browserInspection": "not run; assigned to parent",
+  "limits": "Strict validation does not establish human readability. Probe is constructed local evidence, not a performance measurement."
+}

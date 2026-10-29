@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "9af80ce4-bf93-4c81-99df-6eefe1c1c6fe",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/attempts/candidate-1.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/attempts/candidate-1.html",
+  "specification": {
+    "sha256": "c1526971aa9e39eb2d0dfa155efc37fd3f6073ec99980ea104f446a9966d9ce2",
+    "bytes": 2443
+  },
+  "artifact": {
+    "sha256": "2af8ddb206b9aed01dfc3e43040383cde65c4c1d86823f1d57dedc70932df87a",
+    "bytes": 159116
+  },
+  "explainer": {
+    "preparedSha256": "8b06c05fe1fd1c68f3123c7562497264da7988ee9a5902bf9d8750af4a3c1161",
+    "dependencies": []
+  }
+}

@@ -1,0 +1,178 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2367,
+    "documentWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 323.8828125
+      },
+      {
+        "id": "example",
+        "height": 703.390625
+      },
+      {
+        "id": "observed",
+        "height": 454.734375
+      },
+      {
+        "id": "check",
+        "height": 355.7421875
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358
+      },
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 356,
+        "scrollWidth": 356
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2367,
+    "documentWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 323.8828125
+      },
+      {
+        "id": "example",
+        "height": 703.390625
+      },
+      {
+        "id": "observed",
+        "height": 454.734375
+      },
+      {
+        "id": "check",
+        "height": 355.7421875
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358
+      },
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 356,
+        "scrollWidth": 356
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1305,
+    "documentWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 267
+      },
+      {
+        "id": "example",
+        "height": 687
+      },
+      {
+        "id": "observed",
+        "height": 404
+      },
+      {
+        "id": "check",
+        "height": 279
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624
+      },
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 1270,
+        "scrollWidth": 1270
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1305,
+    "documentWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 267
+      },
+      {
+        "id": "example",
+        "height": 687
+      },
+      {
+        "id": "observed",
+        "height": 404
+      },
+      {
+        "id": "check",
+        "height": 279
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624
+      },
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 1270,
+        "scrollWidth": 1270
+      }
+    ]
+  }
+]

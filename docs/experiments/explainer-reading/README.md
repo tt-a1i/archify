@@ -179,3 +179,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 26
 
 [Repeated comparison labels](table-row-ids/README.md) fixes the duplicate automatic IDs that blocked the independent Rust first draft. The unchanged draft now passes strict delivery, all rows and source locations remain intact, and explicit duplicate IDs still fail. All 28 saved main variants retain identical parser results and rendered HTML. The canonical ZIP builds reproducibly and passes extracted CLI/browser checks. This removes an observed authoring obstacle; it does not repair the original wide phone table or establish a human-reading gain. The index remains twelve questions across eleven projects and 28 variants.
+
+## Continued exploration — round 27
+
+[Empty Git endpoint diffs](git-diff-endpoints/README.md) verifies five tracked-file states, including an empty `git diff HEAD` with both staged and unstaged changes. An independent author and two content/layout trials remain inspectable. Removing a redundant table improves the phone arrangement but worsens desktop whitespace. The trial also proves that the browser changes explicitly authored 6-column panels to 8 columns, contrary to the guide. No candidate is adopted yet; the next round investigates that specific contract. Runtime, package and the 28 main index variants remain unchanged.

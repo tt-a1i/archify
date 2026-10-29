@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "explainer",
+  "quality": "showcase",
+  "startedAt": "2026-10-29T20:55:11.996Z",
+  "specification": {
+    "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.archify.md",
+    "sha256": "2410f22ff78cc762a6330a23eab866d28c74dd0d4d0a8e1b23af744a37ff8217",
+    "bytes": 2518
+  },
+  "artifact": {
+    "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.html",
+    "sha256": "7e513670c3436738bdc5fad1c39226d9cb228a6dfbab749a0823918bab47a4ca",
+    "bytes": 160373
+  },
+  "stages": {
+    "browser-check": {
+      "status": "not-run",
+      "execution": "not-requested"
+    },
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/runtime/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.archify.md",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.html",
+        "--quality",
+        "showcase",
+        "--writing",
+        "strict",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "2410f22ff78cc762a6330a23eab866d28c74dd0d4d0a8e1b23af744a37ff8217",
+          "bytes": 2518
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 500,
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/runtime/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.archify.md",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.html",
+        "--quality",
+        "showcase",
+        "--writing",
+        "strict",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "2b1c211f-bf90-47a0-8677-66c72f841e16",
+        "ok": true,
+        "command": "deliver",
+        "type": "explainer",
+        "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.archify.md",
+        "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.html",
+        "explainer": {
+          "preparedSha256": "64e242f558ac7859318d6df5c2152323b90cc9eddb205f81e06e4c25e39a67c4",
+          "dependencies": []
+        },
+        "specification": {
+          "sha256": "2410f22ff78cc762a6330a23eab866d28c74dd0d4d0a8e1b23af744a37ff8217",
+          "bytes": 2518
+        },
+        "artifact": {
+          "sha256": "7e513670c3436738bdc5fad1c39226d9cb228a6dfbab749a0823918bab47a4ca",
+          "bytes": 160373
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 245,
+      "command": [
+        "/opt/homebrew/Cellar/node@22/22.23.3_3/bin/node",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/runtime/archify/bin/archify.mjs",
+        "check",
+        "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.html",
+        "family": "explainer",
+        "artifact": {
+          "sha256": "7e513670c3436738bdc5fad1c39226d9cb228a6dfbab749a0823918bab47a4ca",
+          "bytes": 160373
+        },
+        "checks": [
+          {
+            "name": "explainer_structure",
+            "ok": true,
+            "details": [
+              "30 unique DOM IDs"
+            ]
+          },
+          {
+            "name": "explainer_payload_identity",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "explainer_dependencies",
+            "ok": true,
+            "details": [
+              "0 frozen dependencies"
+            ]
+          },
+          {
+            "name": "explainer_native_diagrams",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "issues": [],
+          "nativeDiagrams": []
+        },
+        "diagnostics": [],
+        "provenance": "current",
+        "deliveryReceiptId": "2b1c211f-bf90-47a0-8677-66c72f841e16"
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": false,
+    "ran": false
+  },
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.finalize.json",
+    "summaryReceipt": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round27/author/answer.finalize-summary.json"
+  },
+  "visualReview": "not-requested",
+  "finishedAt": "2026-10-29T20:55:12.900Z",
+  "durationMs": 904,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.1-dev.1",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-26T23:50:51.017Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

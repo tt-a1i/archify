@@ -1,0 +1,71 @@
+{
+  "version": "git version 2.50.1 (Apple Git-155)",
+  "scope": "five constructed tracked-file cases; existing HEAD, no conflicts, default text comparison",
+  "cases": [
+    {
+      "case": "clean",
+      "head": "value=1\n",
+      "index": "value=1\n",
+      "worktree": "value=1\n",
+      "diffs": {
+        "git diff": "",
+        "git diff --cached": "",
+        "git diff HEAD": ""
+      },
+      "shortStatus": "",
+      "readOnlyPreserved": true
+    },
+    {
+      "case": "staged-only",
+      "head": "value=1\n",
+      "index": "value=2\n",
+      "worktree": "value=2\n",
+      "diffs": {
+        "git diff": "",
+        "git diff --cached": "diff --git a/value.txt b/value.txt\nindex 32c0381..9e3df68 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=2\n",
+        "git diff HEAD": "diff --git a/value.txt b/value.txt\nindex 32c0381..9e3df68 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=2\n"
+      },
+      "shortStatus": "M  value.txt\n",
+      "readOnlyPreserved": true
+    },
+    {
+      "case": "unstaged-only",
+      "head": "value=1\n",
+      "index": "value=1\n",
+      "worktree": "value=3\n",
+      "diffs": {
+        "git diff": "diff --git a/value.txt b/value.txt\nindex 32c0381..5cdcb97 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=3\n",
+        "git diff --cached": "",
+        "git diff HEAD": "diff --git a/value.txt b/value.txt\nindex 32c0381..5cdcb97 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=3\n"
+      },
+      "shortStatus": " M value.txt\n",
+      "readOnlyPreserved": true
+    },
+    {
+      "case": "both-distinct",
+      "head": "value=1\n",
+      "index": "value=2\n",
+      "worktree": "value=3\n",
+      "diffs": {
+        "git diff": "diff --git a/value.txt b/value.txt\nindex 9e3df68..5cdcb97 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=2\n+value=3\n",
+        "git diff --cached": "diff --git a/value.txt b/value.txt\nindex 32c0381..9e3df68 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=2\n",
+        "git diff HEAD": "diff --git a/value.txt b/value.txt\nindex 32c0381..5cdcb97 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=3\n"
+      },
+      "shortStatus": "MM value.txt\n",
+      "readOnlyPreserved": true
+    },
+    {
+      "case": "same-endpoints",
+      "head": "value=1\n",
+      "index": "value=2\n",
+      "worktree": "value=1\n",
+      "diffs": {
+        "git diff": "diff --git a/value.txt b/value.txt\nindex 9e3df68..32c0381 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=2\n+value=1\n",
+        "git diff --cached": "diff --git a/value.txt b/value.txt\nindex 32c0381..9e3df68 100644\n--- a/value.txt\n+++ b/value.txt\n@@ -1 +1 @@\n-value=1\n+value=2\n",
+        "git diff HEAD": ""
+      },
+      "shortStatus": "MM value.txt\n",
+      "readOnlyPreserved": true
+    }
+  ]
+}

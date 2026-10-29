@@ -1,0 +1,60 @@
+{
+  "width": 1440,
+  "panels": [
+    {
+      "id": "answer",
+      "className": "panel answer-panel span6",
+      "inlineStyle": "grid-area: 1 / 1 / span 792 / span 4;",
+      "gridColumn": "1 / span 4",
+      "rect": {
+        "x": 80,
+        "y": 116.5,
+        "width": 416,
+        "height": 792
+      }
+    },
+    {
+      "id": "example",
+      "fixed": "6",
+      "className": "panel span6",
+      "inlineStyle": "grid-area: 1 / 5 / span 315 / span 8;",
+      "gridColumn": "5 / span 8",
+      "rect": {
+        "x": 512,
+        "y": 116.5,
+        "width": 848,
+        "height": 315
+      }
+    },
+    {
+      "id": "observed",
+      "fixed": "6",
+      "className": "panel span6",
+      "inlineStyle": "grid-area: 332 / 5 / span 461 / span 8;",
+      "gridColumn": "5 / span 8",
+      "rect": {
+        "x": 512,
+        "y": 447.5,
+        "width": 848,
+        "height": 461
+      }
+    },
+    {
+      "id": "check",
+      "fixed": "12",
+      "className": "panel span12",
+      "inlineStyle": "grid-area: 809 / 1 / span 321 / span 12;",
+      "gridColumn": "1 / span 12",
+      "rect": {
+        "x": 80,
+        "y": 924.5,
+        "width": 1280,
+        "height": 321
+      }
+    }
+  ],
+  "source": {
+    "sha256": "e0fe86367f4739ea8065f446cafca85c6a82613493c3d2f0f8c0b7981b8ad8d3",
+    "bytes": 2434
+  }
+}

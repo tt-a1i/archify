@@ -1,0 +1,11 @@
+{
+  "runtimeCommit": "4bc35604ec8809d832cdff98cadfe3167763938d",
+  "upstreamCommit": "d82adb61ba2fd11d8f2587fca1b6bd7925ce4044",
+  "upstreamTag": "v2.50.1",
+  "sourceUrl": "https://github.com/git/git/blob/d82adb61ba2fd11d8f2587fca1b6bd7925ce4044/Documentation/git-diff.adoc",
+  "localGit": "git version 2.50.1 (Apple Git-155)",
+  "localGitPath": "/usr/bin/git",
+  "probeRunsByteIdentical": true,
+  "probeSha256": "d59acea3be87c8d0e19ba54f75f626853d89aa3392480b1c1f100c63f292f606",
+  "sourceSha256": "b89525e5f065a2ce68b7238ce0485ea3ca7067b18c0ecd7e28e4508f69befe58"
+}

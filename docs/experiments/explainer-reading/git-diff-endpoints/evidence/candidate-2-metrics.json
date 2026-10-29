@@ -1,0 +1,154 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2233,
+    "documentWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 323.8828125
+      },
+      {
+        "id": "example",
+        "height": 392.3671875
+      },
+      {
+        "id": "observed",
+        "height": 589.921875
+      },
+      {
+        "id": "check",
+        "height": 397.5390625
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 356,
+        "scrollWidth": 356
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2233,
+    "documentWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 323.8828125
+      },
+      {
+        "id": "example",
+        "height": 392.3671875
+      },
+      {
+        "id": "observed",
+        "height": 589.921875
+      },
+      {
+        "id": "check",
+        "height": 397.5390625
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 356,
+        "scrollWidth": 356
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1452,
+    "documentWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 792
+      },
+      {
+        "id": "example",
+        "height": 315
+      },
+      {
+        "id": "observed",
+        "height": 461
+      },
+      {
+        "id": "check",
+        "height": 321
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 840,
+        "scrollWidth": 840
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 1270,
+        "scrollWidth": 1270
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1452,
+    "documentWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "height": 792
+      },
+      {
+        "id": "example",
+        "height": 315
+      },
+      {
+        "id": "observed",
+        "height": 461
+      },
+      {
+        "id": "check",
+        "height": 321
+      }
+    ],
+    "overflow": [
+      {
+        "tag": "DIV",
+        "classes": "table-scroll",
+        "width": 840,
+        "scrollWidth": 840
+      },
+      {
+        "tag": "PRE",
+        "classes": "",
+        "width": 1270,
+        "scrollWidth": 1270
+      }
+    ]
+  }
+]
