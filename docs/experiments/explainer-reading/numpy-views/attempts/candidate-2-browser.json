@@ -1,0 +1,630 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2713,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 761.1640625,
+          "width": 358,
+          "height": 221.4453125,
+          "top": 761.1640625,
+          "right": 374,
+          "bottom": 982.609375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1169.9296875,
+          "width": 356,
+          "height": 215.25,
+          "top": 1169.9296875,
+          "right": 373,
+          "bottom": 1385.1796875,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1436.8125,
+          "width": 356,
+          "height": 66.5,
+          "top": 1436.8125,
+          "right": 373,
+          "bottom": 1503.3125,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1622.5390625,
+          "width": 356,
+          "height": 215.25,
+          "top": 1622.5390625,
+          "right": 373,
+          "bottom": 1837.7890625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1889.421875,
+          "width": 356,
+          "height": 66.5,
+          "top": 1889.421875,
+          "right": 373,
+          "bottom": 1955.921875,
+          "left": 17
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 2109.609375,
+          "width": 358,
+          "height": 180.8515625,
+          "top": 2109.609375,
+          "right": 374,
+          "bottom": 2290.4609375,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 381.6796875,
+          "top": 219,
+          "right": 378,
+          "bottom": 600.6796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 12,
+          "y": 612.6796875,
+          "width": 366,
+          "height": 387.9296875,
+          "top": 612.6796875,
+          "right": 378,
+          "bottom": 1000.609375,
+          "left": 12
+        }
+      },
+      {
+        "id": "examples",
+        "box": {
+          "x": 12,
+          "y": 1012.609375,
+          "width": 366,
+          "height": 962.3125,
+          "top": 1012.609375,
+          "right": 378,
+          "bottom": 1974.921875,
+          "left": 12
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 12,
+          "y": 1986.921875,
+          "width": 366,
+          "height": 414.9296875,
+          "top": 1986.921875,
+          "right": 378,
+          "bottom": 2401.8515625,
+          "left": 12
+        }
+      }
+    ],
+    "tables": [
+      "怎样得到 b\t修改后的原数组 a\n切片视图\t\nb = a[1:3] 共享数据，a 变为 [10, 99, 30, 40]。\n\n显式复制\t\nb = a[1:3].copy() 复制数据，a 保持 [10, 20, 30, 40]。\n\n整数数组索引\t\nb = a[[1, 2]] 取出副本，a 保持 [10, 20, 30, 40]。",
+      "操作\t原数组 a 会怎样？\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2713,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 761.1640625,
+          "width": 358,
+          "height": 221.4453125,
+          "top": 761.1640625,
+          "right": 374,
+          "bottom": 982.609375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1169.9296875,
+          "width": 356,
+          "height": 215.25,
+          "top": 1169.9296875,
+          "right": 373,
+          "bottom": 1385.1796875,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1436.8125,
+          "width": 356,
+          "height": 66.5,
+          "top": 1436.8125,
+          "right": 373,
+          "bottom": 1503.3125,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1622.5390625,
+          "width": 356,
+          "height": 215.25,
+          "top": 1622.5390625,
+          "right": 373,
+          "bottom": 1837.7890625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1889.421875,
+          "width": 356,
+          "height": 66.5,
+          "top": 1889.421875,
+          "right": 373,
+          "bottom": 1955.921875,
+          "left": 17
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 2109.609375,
+          "width": 358,
+          "height": 180.8515625,
+          "top": 2109.609375,
+          "right": 374,
+          "bottom": 2290.4609375,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 381.6796875,
+          "top": 219,
+          "right": 378,
+          "bottom": 600.6796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 12,
+          "y": 612.6796875,
+          "width": 366,
+          "height": 387.9296875,
+          "top": 612.6796875,
+          "right": 378,
+          "bottom": 1000.609375,
+          "left": 12
+        }
+      },
+      {
+        "id": "examples",
+        "box": {
+          "x": 12,
+          "y": 1012.609375,
+          "width": 366,
+          "height": 962.3125,
+          "top": 1012.609375,
+          "right": 378,
+          "bottom": 1974.921875,
+          "left": 12
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 12,
+          "y": 1986.921875,
+          "width": 366,
+          "height": 414.9296875,
+          "top": 1986.921875,
+          "right": 378,
+          "bottom": 2401.8515625,
+          "left": 12
+        }
+      }
+    ],
+    "tables": [
+      "怎样得到 b\t修改后的原数组 a\n切片视图\t\nb = a[1:3] 共享数据，a 变为 [10, 99, 30, 40]。\n\n显式复制\t\nb = a[1:3].copy() 复制数据，a 保持 [10, 20, 30, 40]。\n\n整数数组索引\t\nb = a[[1, 2]] 取出副本，a 保持 [10, 20, 30, 40]。",
+      "操作\t原数组 a 会怎样？\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1807,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 1272,
+        "scrollWidth": 1272,
+        "box": {
+          "x": 84,
+          "y": 448.390625,
+          "width": 1272,
+          "height": 158.2890625,
+          "top": 448.390625,
+          "right": 1356,
+          "bottom": 606.6796875,
+          "left": 84
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 773.0234375,
+          "width": 622,
+          "height": 215.25,
+          "top": 773.0234375,
+          "right": 707,
+          "bottom": 988.2734375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 1039.90625,
+          "width": 622,
+          "height": 66.5,
+          "top": 1039.90625,
+          "right": 707,
+          "bottom": 1106.40625,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 1199.8359375,
+          "width": 622,
+          "height": 215.25,
+          "top": 1199.8359375,
+          "right": 707,
+          "bottom": 1415.0859375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 1466.71875,
+          "width": 622,
+          "height": 66.5,
+          "top": 1466.71875,
+          "right": 707,
+          "bottom": 1533.21875,
+          "left": 85
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 764.1875,
+          "width": 624,
+          "height": 136.0390625,
+          "top": 764.1875,
+          "right": 1356,
+          "bottom": 900.2265625,
+          "left": 732
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 80,
+          "y": 351.5,
+          "width": 1280,
+          "height": 274,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 625.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "examples",
+        "box": {
+          "x": 80,
+          "y": 641.5,
+          "width": 632,
+          "height": 911,
+          "top": 641.5,
+          "right": 712,
+          "bottom": 1552.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 728,
+          "y": 641.5,
+          "width": 632,
+          "height": 911,
+          "top": 641.5,
+          "right": 1360,
+          "bottom": 1552.5,
+          "left": 728
+        }
+      }
+    ],
+    "tables": [
+      "怎样得到 b\t修改后的原数组 a\n切片视图\t\nb = a[1:3] 共享数据，a 变为 [10, 99, 30, 40]。\n\n显式复制\t\nb = a[1:3].copy() 复制数据，a 保持 [10, 20, 30, 40]。\n\n整数数组索引\t\nb = a[[1, 2]] 取出副本，a 保持 [10, 20, 30, 40]。",
+      "操作\t原数组 a 会怎样？\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1807,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 1272,
+        "scrollWidth": 1272,
+        "box": {
+          "x": 84,
+          "y": 448.390625,
+          "width": 1272,
+          "height": 158.2890625,
+          "top": 448.390625,
+          "right": 1356,
+          "bottom": 606.6796875,
+          "left": 84
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 773.0234375,
+          "width": 622,
+          "height": 215.25,
+          "top": 773.0234375,
+          "right": 707,
+          "bottom": 988.2734375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 1039.90625,
+          "width": 622,
+          "height": 66.5,
+          "top": 1039.90625,
+          "right": 707,
+          "bottom": 1106.40625,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 1199.8359375,
+          "width": 622,
+          "height": 215.25,
+          "top": 1199.8359375,
+          "right": 707,
+          "bottom": 1415.0859375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 1466.71875,
+          "width": 622,
+          "height": 66.5,
+          "top": 1466.71875,
+          "right": 707,
+          "bottom": 1533.21875,
+          "left": 85
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 732,
+          "y": 764.1875,
+          "width": 624,
+          "height": 136.0390625,
+          "top": 764.1875,
+          "right": 1356,
+          "bottom": 900.2265625,
+          "left": 732
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 80,
+          "y": 351.5,
+          "width": 1280,
+          "height": 274,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 625.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "examples",
+        "box": {
+          "x": 80,
+          "y": 641.5,
+          "width": 632,
+          "height": 911,
+          "top": 641.5,
+          "right": 712,
+          "bottom": 1552.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 728,
+          "y": 641.5,
+          "width": 632,
+          "height": 911,
+          "top": 641.5,
+          "right": 1360,
+          "bottom": 1552.5,
+          "left": 728
+        }
+      }
+    ],
+    "tables": [
+      "怎样得到 b\t修改后的原数组 a\n切片视图\t\nb = a[1:3] 共享数据，a 变为 [10, 99, 30, 40]。\n\n显式复制\t\nb = a[1:3].copy() 复制数据，a 保持 [10, 20, 30, 40]。\n\n整数数组索引\t\nb = a[[1, 2]] 取出副本，a 保持 [10, 20, 30, 40]。",
+      "操作\t原数组 a 会怎样？\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  }
+]

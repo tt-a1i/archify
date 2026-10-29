@@ -1,0 +1,510 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2396,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 432,
+        "box": {
+          "x": 16,
+          "y": 713.5703125,
+          "width": 358,
+          "height": 251.1640625,
+          "top": 713.5703125,
+          "right": 374,
+          "bottom": 964.734375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 1211.109375,
+          "width": 358,
+          "height": 185.7265625,
+          "top": 1211.109375,
+          "right": 374,
+          "bottom": 1396.8359375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 510,
+        "box": {
+          "x": 17,
+          "y": 1584.15625,
+          "width": 356,
+          "height": 257.75,
+          "top": 1584.15625,
+          "right": 373,
+          "bottom": 1841.90625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 367,
+        "box": {
+          "x": 17,
+          "y": 1933.6171875,
+          "width": 356,
+          "height": 87.75,
+          "top": 1933.6171875,
+          "right": 373,
+          "bottom": 2021.3671875,
+          "left": 17
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 334.0859375,
+          "top": 219,
+          "right": 378,
+          "bottom": 553.0859375,
+          "left": 12
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 12,
+          "y": 565.0859375,
+          "width": 366,
+          "height": 485.2421875,
+          "top": 565.0859375,
+          "right": 378,
+          "bottom": 1050.328125,
+          "left": 12
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 12,
+          "y": 1062.328125,
+          "width": 366,
+          "height": 352.5078125,
+          "top": 1062.328125,
+          "right": 378,
+          "bottom": 1414.8359375,
+          "left": 12
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 12,
+          "y": 1426.8359375,
+          "width": 366,
+          "height": 706.921875,
+          "top": 1426.8359375,
+          "right": 378,
+          "bottom": 2133.7578125,
+          "left": 12
+        }
+      }
+    ],
+    "tables": [
+      "选区\tb 与 a 的数据\t修改后的 a\t修改后的 b\nb = a[1:3]\t\n共享，视图\n\t\n[10, 99, 30, 40]\n\t\n[99, 30]\n\nb = a[1:3].copy()\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]\n\nb = a[[1, 2]]\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]",
+      "从新的 a 开始\t修改后的 a\t原因\na[[1, 2]] = [99, 88]\t\n[10, 99, 88, 40]\n\t\n直接赋值给 a\n\na[[1, 2]][0] = 99\t\n[10, 20, 30, 40]\n\t\n修改的是读取产生的临时副本"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2396,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 432,
+        "box": {
+          "x": 16,
+          "y": 713.5703125,
+          "width": 358,
+          "height": 251.1640625,
+          "top": 713.5703125,
+          "right": 374,
+          "bottom": 964.734375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 1211.109375,
+          "width": 358,
+          "height": 185.7265625,
+          "top": 1211.109375,
+          "right": 374,
+          "bottom": 1396.8359375,
+          "left": 16
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 510,
+        "box": {
+          "x": 17,
+          "y": 1584.15625,
+          "width": 356,
+          "height": 257.75,
+          "top": 1584.15625,
+          "right": 373,
+          "bottom": 1841.90625,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 367,
+        "box": {
+          "x": 17,
+          "y": 1933.6171875,
+          "width": 356,
+          "height": 87.75,
+          "top": 1933.6171875,
+          "right": 373,
+          "bottom": 2021.3671875,
+          "left": 17
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 334.0859375,
+          "top": 219,
+          "right": 378,
+          "bottom": 553.0859375,
+          "left": 12
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 12,
+          "y": 565.0859375,
+          "width": 366,
+          "height": 485.2421875,
+          "top": 565.0859375,
+          "right": 378,
+          "bottom": 1050.328125,
+          "left": 12
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 12,
+          "y": 1062.328125,
+          "width": 366,
+          "height": 352.5078125,
+          "top": 1062.328125,
+          "right": 378,
+          "bottom": 1414.8359375,
+          "left": 12
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 12,
+          "y": 1426.8359375,
+          "width": 366,
+          "height": 706.921875,
+          "top": 1426.8359375,
+          "right": 378,
+          "bottom": 2133.7578125,
+          "left": 12
+        }
+      }
+    ],
+    "tables": [
+      "选区\tb 与 a 的数据\t修改后的 a\t修改后的 b\nb = a[1:3]\t\n共享，视图\n\t\n[10, 99, 30, 40]\n\t\n[99, 30]\n\nb = a[1:3].copy()\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]\n\nb = a[[1, 2]]\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]",
+      "从新的 a 开始\t修改后的 a\t原因\na[[1, 2]] = [99, 88]\t\n[10, 99, 88, 40]\n\t\n直接赋值给 a\n\na[[1, 2]][0] = 99\t\n[10, 20, 30, 40]\n\t\n修改的是读取产生的临时副本"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1511,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 1272,
+        "scrollWidth": 1272,
+        "box": {
+          "x": 84,
+          "y": 414.390625,
+          "width": 1272,
+          "height": 158.2890625,
+          "top": 414.390625,
+          "right": 1356,
+          "bottom": 572.6796875,
+          "left": 84
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 84,
+          "y": 771.1875,
+          "width": 624,
+          "height": 162.5078125,
+          "top": 771.1875,
+          "right": 708,
+          "bottom": 933.6953125,
+          "left": 84
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 780.0234375,
+          "width": 622,
+          "height": 257.75,
+          "top": 780.0234375,
+          "right": 1355,
+          "bottom": 1037.7734375,
+          "left": 733
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 1129.484375,
+          "width": 622,
+          "height": 87.75,
+          "top": 1129.484375,
+          "right": 1355,
+          "bottom": 1217.234375,
+          "left": 733
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 185,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 301.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 80,
+          "y": 317.5,
+          "width": 1280,
+          "height": 315,
+          "top": 317.5,
+          "right": 1360,
+          "bottom": 632.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 80,
+          "y": 648.5,
+          "width": 632,
+          "height": 656,
+          "top": 648.5,
+          "right": 712,
+          "bottom": 1304.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 728,
+          "y": 648.5,
+          "width": 632,
+          "height": 656,
+          "top": 648.5,
+          "right": 1360,
+          "bottom": 1304.5,
+          "left": 728
+        }
+      }
+    ],
+    "tables": [
+      "选区\tb 与 a 的数据\t修改后的 a\t修改后的 b\nb = a[1:3]\t\n共享，视图\n\t\n[10, 99, 30, 40]\n\t\n[99, 30]\n\nb = a[1:3].copy()\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]\n\nb = a[[1, 2]]\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]",
+      "从新的 a 开始\t修改后的 a\t原因\na[[1, 2]] = [99, 88]\t\n[10, 99, 88, 40]\n\t\n直接赋值给 a\n\na[[1, 2]][0] = 99\t\n[10, 20, 30, 40]\n\t\n修改的是读取产生的临时副本"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1511,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "table-scroll",
+        "width": 1272,
+        "scrollWidth": 1272,
+        "box": {
+          "x": 84,
+          "y": 414.390625,
+          "width": 1272,
+          "height": 158.2890625,
+          "top": 414.390625,
+          "right": 1356,
+          "bottom": 572.6796875,
+          "left": 84
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 624,
+        "scrollWidth": 624,
+        "box": {
+          "x": 84,
+          "y": 771.1875,
+          "width": 624,
+          "height": 162.5078125,
+          "top": 771.1875,
+          "right": 708,
+          "bottom": 933.6953125,
+          "left": 84
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 780.0234375,
+          "width": 622,
+          "height": 257.75,
+          "top": 780.0234375,
+          "right": 1355,
+          "bottom": 1037.7734375,
+          "left": 733
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 1129.484375,
+          "width": 622,
+          "height": 87.75,
+          "top": 1129.484375,
+          "right": 1355,
+          "bottom": 1217.234375,
+          "left": 733
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 185,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 301.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "compare",
+        "box": {
+          "x": 80,
+          "y": 317.5,
+          "width": 1280,
+          "height": 315,
+          "top": 317.5,
+          "right": 1360,
+          "bottom": 632.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 80,
+          "y": 648.5,
+          "width": 632,
+          "height": 656,
+          "top": 648.5,
+          "right": 712,
+          "bottom": 1304.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "check",
+        "box": {
+          "x": 728,
+          "y": 648.5,
+          "width": 632,
+          "height": 656,
+          "top": 648.5,
+          "right": 1360,
+          "bottom": 1304.5,
+          "left": 728
+        }
+      }
+    ],
+    "tables": [
+      "选区\tb 与 a 的数据\t修改后的 a\t修改后的 b\nb = a[1:3]\t\n共享，视图\n\t\n[10, 99, 30, 40]\n\t\n[99, 30]\n\nb = a[1:3].copy()\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]\n\nb = a[[1, 2]]\t\n独立，副本\n\t\n[10, 20, 30, 40]\n\t\n[99, 30]",
+      "从新的 a 开始\t修改后的 a\t原因\na[[1, 2]] = [99, 88]\t\n[10, 99, 88, 40]\n\t\n直接赋值给 a\n\na[[1, 2]][0] = 99\t\n[10, 20, 30, 40]\n\t\n修改的是读取产生的临时副本"
+    ]
+  }
+]

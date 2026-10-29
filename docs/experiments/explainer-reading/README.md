@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between sixteen reading questions across fourteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between seventeen reading questions across fifteen projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -227,3 +227,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 35
 
 [Native Viewer mobile controls](viewer-mobile-embed/README.md) replays the existing #1027 source delta against two fixed explainer inputs. The candidate keeps the zoom controls within the phone dock; short frames still require vertical scrolling. The authored document, graph spec, semantic graph and SVG remain unchanged, and NetworkX page PNGs are byte-identical at both tested widths. This adds comparison artifacts and two index variants, without adopting the PR into product code.
+
+## Continued exploration — round 36
+
+[NumPy views and copies](numpy-views/README.md) uses six repeated integer-array cases to distinguish shared data, independent copies and direct indexed assignment. The retained page replaces a clipped four-column table and lambda-based demonstration with complete straight-line programs and actual output. A later overview-table revision is retained but not selected: it adds repetition and a larger desktop blank area.

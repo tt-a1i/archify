@@ -1,0 +1,78 @@
+{
+  "python": "3.12.13",
+  "numpy": "2.5.4",
+  "programs": [
+    {
+      "copyIndex": 0,
+      "sha256": "42875c8b90868493ba583856f17074cd9598cead40bfd4915d68e4e5b6df7b2b",
+      "stdout": "a: [10, 99, 30, 40]\nb: [99, 30]\n",
+      "expectedCopiedOutput": "a: [10, 99, 30, 40]\nb: [99, 30]",
+      "exactMatch": true
+    },
+    {
+      "copyIndex": 2,
+      "sha256": "6c05a2b3738a2d4c056b2d5810292883866f3dd265ffd0c57d26a076ba9f05e2",
+      "stdout": "a: [10, 20, 30, 40]\nb: [99, 30]\n",
+      "expectedCopiedOutput": "a: [10, 20, 30, 40]\nb: [99, 30]",
+      "exactMatch": true
+    }
+  ],
+  "renderedTableOperations": [
+    {
+      "renderedStatements": [
+        "b = a[[1, 2]]",
+        "b[0] = 99"
+      ],
+      "renderedExpectedA": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "actualA": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "exactMatch": true
+    },
+    {
+      "renderedStatements": [
+        "a[[1, 2]] = [99, 88]"
+      ],
+      "renderedExpectedA": [
+        10,
+        99,
+        88,
+        40
+      ],
+      "actualA": [
+        10,
+        99,
+        88,
+        40
+      ],
+      "exactMatch": true
+    },
+    {
+      "renderedStatements": [
+        "a[[1, 2]][0] = 99"
+      ],
+      "renderedExpectedA": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "actualA": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "exactMatch": true
+    }
+  ],
+  "temporaryDirectoriesRemoved": true
+}

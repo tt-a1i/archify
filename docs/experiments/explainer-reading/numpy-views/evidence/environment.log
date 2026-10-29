@@ -1,0 +1,10 @@
+Using CPython 3.12.13 interpreter at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round34/venv/bin/python
+Creating virtual environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round36/venv
+Activate with: source /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round36/venv/bin/activate
+Using Python 3.12.13 environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round36/venv
+Resolved 1 package in 2.02s
+Downloading numpy (5.2MiB)
+ Downloaded numpy
+Prepared 1 package in 2.31s
+Installed 1 package in 18ms
+ + numpy==2.5.4

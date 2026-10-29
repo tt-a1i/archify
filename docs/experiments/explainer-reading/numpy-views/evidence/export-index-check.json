@@ -1,0 +1,54 @@
+{
+  "png": {
+    "width": 780,
+    "height": 5052
+  },
+  "counts": {
+    "questions": 17,
+    "variants": 41
+  },
+  "variants": [
+    {
+      "version": "完整程序与实际输出",
+      "width": "390",
+      "frame": "numpy-views/candidate.html",
+      "open": "numpy-views/candidate.html",
+      "report": "numpy-views/README.md"
+    },
+    {
+      "version": "完整程序与实际输出",
+      "width": "1440",
+      "frame": "numpy-views/candidate.html",
+      "open": "numpy-views/candidate.html",
+      "report": "numpy-views/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "390",
+      "frame": "numpy-views/author/answer.html",
+      "open": "numpy-views/author/answer.html",
+      "report": "numpy-views/README.md"
+    },
+    {
+      "version": "作者初稿",
+      "width": "1440",
+      "frame": "numpy-views/author/answer.html",
+      "open": "numpy-views/author/answer.html",
+      "report": "numpy-views/README.md"
+    },
+    {
+      "version": "总览表尝试",
+      "width": "390",
+      "frame": "numpy-views/attempts/candidate-2.html",
+      "open": "numpy-views/attempts/candidate-2.html",
+      "report": "numpy-views/README.md"
+    },
+    {
+      "version": "总览表尝试",
+      "width": "1440",
+      "frame": "numpy-views/attempts/candidate-2.html",
+      "open": "numpy-views/attempts/candidate-2.html",
+      "report": "numpy-views/README.md"
+    }
+  ]
+}

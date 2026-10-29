@@ -1,0 +1,566 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "height": 2478,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 770,
+          "width": 356,
+          "height": 215.25,
+          "top": 770,
+          "right": 373,
+          "bottom": 985.25,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1036.8828125,
+          "width": 356,
+          "height": 66.5,
+          "top": 1036.8828125,
+          "right": 373,
+          "bottom": 1103.3828125,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1291.703125,
+          "width": 356,
+          "height": 215.25,
+          "top": 1291.703125,
+          "right": 373,
+          "bottom": 1506.953125,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1558.5859375,
+          "width": 356,
+          "height": 66.5,
+          "top": 1558.5859375,
+          "right": 373,
+          "bottom": 1625.0859375,
+          "left": 17
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 1790.7734375,
+          "width": 358,
+          "height": 264.6328125,
+          "top": 1790.7734375,
+          "right": 374,
+          "bottom": 2055.40625,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 381.6796875,
+          "top": 219,
+          "right": 378,
+          "bottom": 600.6796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "view",
+        "box": {
+          "x": 12,
+          "y": 612.6796875,
+          "width": 366,
+          "height": 509.703125,
+          "top": 612.6796875,
+          "right": 378,
+          "bottom": 1122.3828125,
+          "left": 12
+        }
+      },
+      {
+        "id": "copy",
+        "box": {
+          "x": 12,
+          "y": 1134.3828125,
+          "width": 366,
+          "height": 509.703125,
+          "top": 1134.3828125,
+          "right": 378,
+          "bottom": 1644.0859375,
+          "left": 12
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 12,
+          "y": 1668.0859375,
+          "width": 366,
+          "height": 498.7109375,
+          "top": 1668.0859375,
+          "right": 378,
+          "bottom": 2166.796875,
+          "left": 12
+        }
+      }
+    ],
+    "tables": [
+      "操作\t原数组 a 会怎样？\n取出后修改 b\t\n执行 b = a[[1, 2]]，再写 b[0] = 99。改的是副本，a 仍为 [10, 20, 30, 40]。\n\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "height": 2478,
+    "documentWidth": 390,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 770,
+          "width": 356,
+          "height": 215.25,
+          "top": 770,
+          "right": 373,
+          "bottom": 985.25,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1036.8828125,
+          "width": 356,
+          "height": 66.5,
+          "top": 1036.8828125,
+          "right": 373,
+          "bottom": 1103.3828125,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1291.703125,
+          "width": 356,
+          "height": 215.25,
+          "top": 1291.703125,
+          "right": 373,
+          "bottom": 1506.953125,
+          "left": 17
+        }
+      },
+      {
+        "kind": "",
+        "width": 356,
+        "scrollWidth": 356,
+        "box": {
+          "x": 17,
+          "y": 1558.5859375,
+          "width": 356,
+          "height": 66.5,
+          "top": 1558.5859375,
+          "right": 373,
+          "bottom": 1625.0859375,
+          "left": 17
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 358,
+        "scrollWidth": 358,
+        "box": {
+          "x": 16,
+          "y": 1790.7734375,
+          "width": 358,
+          "height": 264.6328125,
+          "top": 1790.7734375,
+          "right": 374,
+          "bottom": 2055.40625,
+          "left": 16
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 381.6796875,
+          "top": 219,
+          "right": 378,
+          "bottom": 600.6796875,
+          "left": 12
+        }
+      },
+      {
+        "id": "view",
+        "box": {
+          "x": 12,
+          "y": 612.6796875,
+          "width": 366,
+          "height": 509.703125,
+          "top": 612.6796875,
+          "right": 378,
+          "bottom": 1122.3828125,
+          "left": 12
+        }
+      },
+      {
+        "id": "copy",
+        "box": {
+          "x": 12,
+          "y": 1134.3828125,
+          "width": 366,
+          "height": 509.703125,
+          "top": 1134.3828125,
+          "right": 378,
+          "bottom": 1644.0859375,
+          "left": 12
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 12,
+          "y": 1668.0859375,
+          "width": 366,
+          "height": 498.7109375,
+          "top": 1668.0859375,
+          "right": 378,
+          "bottom": 2166.796875,
+          "left": 12
+        }
+      }
+    ],
+    "tables": [
+      "操作\t原数组 a 会怎样？\n取出后修改 b\t\n执行 b = a[[1, 2]]，再写 b[0] = 99。改的是副本，a 仍为 [10, 20, 30, 40]。\n\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "height": 1503,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 248.0234375,
+          "width": 622,
+          "height": 215.25,
+          "top": 248.0234375,
+          "right": 1355,
+          "bottom": 463.2734375,
+          "left": 733
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 514.90625,
+          "width": 622,
+          "height": 66.5,
+          "top": 514.90625,
+          "right": 1355,
+          "bottom": 581.40625,
+          "left": 733
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 565.0234375,
+          "width": 622,
+          "height": 215.25,
+          "top": 565.0234375,
+          "right": 707,
+          "bottom": 780.2734375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 831.90625,
+          "width": 622,
+          "height": 66.5,
+          "top": 831.90625,
+          "right": 707,
+          "bottom": 898.40625,
+          "left": 85
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 1272,
+        "scrollWidth": 1272,
+        "box": {
+          "x": 84,
+          "y": 1030.390625,
+          "width": 1272,
+          "height": 158.2890625,
+          "top": 1030.390625,
+          "right": 1356,
+          "bottom": 1188.6796875,
+          "left": 84
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 632,
+          "height": 301,
+          "top": 116.5,
+          "right": 712,
+          "bottom": 417.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "view",
+        "box": {
+          "x": 728,
+          "y": 116.5,
+          "width": 632,
+          "height": 801,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 917.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "copy",
+        "box": {
+          "x": 80,
+          "y": 433.5,
+          "width": 632,
+          "height": 484,
+          "top": 433.5,
+          "right": 712,
+          "bottom": 917.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 80,
+          "y": 933.5,
+          "width": 1280,
+          "height": 315,
+          "top": 933.5,
+          "right": 1360,
+          "bottom": 1248.5,
+          "left": 80
+        }
+      }
+    ],
+    "tables": [
+      "操作\t原数组 a 会怎样？\n取出后修改 b\t\n执行 b = a[[1, 2]]，再写 b[0] = 99。改的是副本，a 仍为 [10, 20, 30, 40]。\n\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "height": 1503,
+    "documentWidth": 1440,
+    "style": "editorial",
+    "regions": [
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 248.0234375,
+          "width": 622,
+          "height": 215.25,
+          "top": 248.0234375,
+          "right": 1355,
+          "bottom": 463.2734375,
+          "left": 733
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 733,
+          "y": 514.90625,
+          "width": 622,
+          "height": 66.5,
+          "top": 514.90625,
+          "right": 1355,
+          "bottom": 581.40625,
+          "left": 733
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 565.0234375,
+          "width": 622,
+          "height": 215.25,
+          "top": 565.0234375,
+          "right": 707,
+          "bottom": 780.2734375,
+          "left": 85
+        }
+      },
+      {
+        "kind": "",
+        "width": 622,
+        "scrollWidth": 622,
+        "box": {
+          "x": 85,
+          "y": 831.90625,
+          "width": 622,
+          "height": 66.5,
+          "top": 831.90625,
+          "right": 707,
+          "bottom": 898.40625,
+          "left": 85
+        }
+      },
+      {
+        "kind": "table-scroll",
+        "width": 1272,
+        "scrollWidth": 1272,
+        "box": {
+          "x": 84,
+          "y": 1030.390625,
+          "width": 1272,
+          "height": 158.2890625,
+          "top": 1030.390625,
+          "right": 1356,
+          "bottom": 1188.6796875,
+          "left": 84
+        }
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "box": {
+          "x": 80,
+          "y": 116.5,
+          "width": 632,
+          "height": 301,
+          "top": 116.5,
+          "right": 712,
+          "bottom": 417.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "view",
+        "box": {
+          "x": 728,
+          "y": 116.5,
+          "width": 632,
+          "height": 801,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 917.5,
+          "left": 728
+        }
+      },
+      {
+        "id": "copy",
+        "box": {
+          "x": 80,
+          "y": 433.5,
+          "width": 632,
+          "height": 484,
+          "top": 433.5,
+          "right": 712,
+          "bottom": 917.5,
+          "left": 80
+        }
+      },
+      {
+        "id": "assignment",
+        "box": {
+          "x": 80,
+          "y": 933.5,
+          "width": 1280,
+          "height": 315,
+          "top": 933.5,
+          "right": 1360,
+          "bottom": 1248.5,
+          "left": 80
+        }
+      }
+    ],
+    "tables": [
+      "操作\t原数组 a 会怎样？\n取出后修改 b\t\n执行 b = a[[1, 2]]，再写 b[0] = 99。改的是副本，a 仍为 [10, 20, 30, 40]。\n\n直接写入 a\t\n执行 a[[1, 2]] = [99, 88]，a 变成 [10, 99, 88, 40]。\n\n连续索引后修改\t\n执行 a[[1, 2]][0] = 99。改的是临时副本，a 仍为 [10, 20, 30, 40]。"
+    ]
+  }
+]

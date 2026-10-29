@@ -1,0 +1,136 @@
+{
+  "python": "3.12.13",
+  "numpy": "2.5.4",
+  "numpyGitRevision": "a3d0ef1df045b858e68115001fdabc930bb3b68c",
+  "scope": "Fresh one-dimensional int64 arrays with fixed in-bounds, unique indices; no object dtype, reshape, repeated indices, performance or memory-size measurements.",
+  "cases": [
+    {
+      "name": "slice_view",
+      "code": "b = a[1:3]\nb[0] = 99",
+      "before": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "aAfter": [
+        10,
+        99,
+        30,
+        40
+      ],
+      "bAfter": [
+        99,
+        30
+      ],
+      "sameArrayObject": false,
+      "sharesMemory": true
+    },
+    {
+      "name": "explicit_copy",
+      "code": "b = a[1:3].copy()\nb[0] = 99",
+      "before": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "aAfter": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "bAfter": [
+        99,
+        30
+      ],
+      "sameArrayObject": false,
+      "sharesMemory": false
+    },
+    {
+      "name": "integer_index_copy",
+      "code": "b = a[[1, 2]]\nb[0] = 99",
+      "before": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "aAfter": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "bAfter": [
+        99,
+        30
+      ],
+      "sameArrayObject": false,
+      "sharesMemory": false
+    },
+    {
+      "name": "direct_integer_assignment",
+      "code": "a[[1, 2]] = [99, 88]",
+      "before": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "aAfter": [
+        10,
+        99,
+        88,
+        40
+      ],
+      "bAfter": null,
+      "sameArrayObject": null,
+      "sharesMemory": null
+    },
+    {
+      "name": "chained_integer_assignment",
+      "code": "a[[1, 2]][0] = 99",
+      "before": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "aAfter": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "bAfter": null,
+      "sameArrayObject": null,
+      "sharesMemory": null
+    },
+    {
+      "name": "same_object_alias",
+      "code": "b = a\nb[0] = 99",
+      "before": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "aAfter": [
+        99,
+        20,
+        30,
+        40
+      ],
+      "bAfter": [
+        99,
+        20,
+        30,
+        40
+      ],
+      "sameArrayObject": true,
+      "sharesMemory": true
+    }
+  ]
+}

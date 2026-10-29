@@ -1,0 +1,16 @@
+{
+  "python": "3.12.13 (main, May 10 2026, 19:20:41) [Clang 22.1.3 ]",
+  "numpy": "2.5.4",
+  "reportedGitRevision": "a3d0ef1df045b858e68115001fdabc930bb3b68c",
+  "tag": "v2.5.4",
+  "tagCommit": "a3d0ef1df045b858e68115001fdabc930bb3b68c",
+  "identityBoundary": "Installed wheel reports the same Git revision as the tag. This is not a source-to-binary reproducible-build verification.",
+  "sourceUrls": [
+    "https://github.com/numpy/numpy/blob/a3d0ef1df045b858e68115001fdabc930bb3b68c/doc/source/user/basics.copies.rst",
+    "https://github.com/numpy/numpy/blob/a3d0ef1df045b858e68115001fdabc930bb3b68c/doc/source/user/basics.indexing.rst"
+  ],
+  "savedReferenceSha256": {
+    "basics.indexing.rst": "b2f65be2efcef8f46fea3a436fadffa1f27d6679e05eff8c80498a747745f37f",
+    "basics.copies.rst": "63c07e23205e2007e9cf0251d3482f7276569122d26d1e667f8dd2a1518c4032"
+  }
+}
