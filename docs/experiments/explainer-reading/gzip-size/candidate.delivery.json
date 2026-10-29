@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "cfa734f4-7682-4fb6-a9ee-074d22e808f4",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-size/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/gzip-size/candidate.html",
+  "specification": {
+    "sha256": "9a30182ac7e3f10aecbc84e72056a8d78bd62cdd218d0fc7bdd9c97619e53b55",
+    "bytes": 2861
+  },
+  "artifact": {
+    "sha256": "51c5e8afd69a3e540d0dde078981521442a09532fb1a04ce6afcda28f70fd55b",
+    "bytes": 155085
+  },
+  "explainer": {
+    "preparedSha256": "17571d5f4fc0dc208491facade35bd9f5bf148ee392c78ad2978299c6ef95290",
+    "dependencies": []
+  }
+}

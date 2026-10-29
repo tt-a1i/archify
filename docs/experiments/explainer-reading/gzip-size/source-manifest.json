@@ -1,0 +1,26 @@
+{
+  "zlib.h": {
+    "repo": "madler/zlib",
+    "commit": "21767c654d31d2dccdde4330529775c6c5fd5389",
+    "blob": "4a98e38bf34c82def9f9bf77ced2a618899f8d11",
+    "url": "https://github.com/madler/zlib/blob/21767c654d31d2dccdde4330529775c6c5fd5389/zlib.h"
+  },
+  "deflate.c": {
+    "repo": "madler/zlib",
+    "commit": "21767c654d31d2dccdde4330529775c6c5fd5389",
+    "blob": "799fb93cc04ba81687a391579fbbfab88756cdc3",
+    "url": "https://github.com/madler/zlib/blob/21767c654d31d2dccdde4330529775c6c5fd5389/deflate.c"
+  },
+  "Lib/gzip.py": {
+    "repo": "python/cpython",
+    "commit": "d220409a13b77de7a6c30abe16ea90db01528edc",
+    "blob": "c7b4563fdfe991d568c83576d939dc7bb86fd123",
+    "url": "https://github.com/python/cpython/blob/d220409a13b77de7a6c30abe16ea90db01528edc/Lib/gzip.py"
+  },
+  "Doc/library/gzip.rst": {
+    "repo": "python/cpython",
+    "commit": "d220409a13b77de7a6c30abe16ea90db01528edc",
+    "blob": "2c667ddc522399c5c3310cdbcd4e48fa69c977fd",
+    "url": "https://github.com/python/cpython/blob/d220409a13b77de7a6c30abe16ea90db01528edc/Doc/library/gzip.rst"
+  }
+}

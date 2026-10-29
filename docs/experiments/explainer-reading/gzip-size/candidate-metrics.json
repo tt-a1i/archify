@@ -1,0 +1,70 @@
+[
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "width": 364,
+        "height": 426.53125
+      },
+      {
+        "id": "parts",
+        "width": 364,
+        "height": 359.046875
+      },
+      {
+        "id": "examples",
+        "width": 364,
+        "height": 641.2890625
+      },
+      {
+        "id": "check",
+        "width": 364,
+        "height": 248.15625
+      }
+    ],
+    "tables": [
+      {
+        "width": 332,
+        "wrapperWidth": 332,
+        "scrollWidth": 332,
+        "text": "输入\t原始 → gzip\t压缩数据\n一个 ASCII A\t\n1 → 21（+20）\n\t\n3\n\n1024 个 ASCII A\t\n1024 → 29（-995）\n\t\n11\n\n固定派生字节\t\n1024 → 1047（+23）\n\t\n1029\n\n29 B gzip 再压缩\t\n29 → 47（+18）\n\t\n29"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "width": 414,
+        "height": 428
+      },
+      {
+        "id": "parts",
+        "width": 846,
+        "height": 268
+      },
+      {
+        "id": "examples",
+        "width": 846,
+        "height": 432
+      },
+      {
+        "id": "check",
+        "width": 414,
+        "height": 272
+      }
+    ],
+    "tables": [
+      {
+        "width": 806,
+        "wrapperWidth": 806,
+        "scrollWidth": 806,
+        "text": "输入\t原始 → gzip\t压缩数据\n一个 ASCII A\t\n1 → 21（+20）\n\t\n3\n\n1024 个 ASCII A\t\n1024 → 29（-995）\n\t\n11\n\n固定派生字节\t\n1024 → 1047（+23）\n\t\n1029\n\n29 B gzip 再压缩\t\n29 → 47（+18）\n\t\n29"
+      }
+    ]
+  }
+]

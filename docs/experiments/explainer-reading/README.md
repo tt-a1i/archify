@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between six project cases, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between nine reading questions across eight projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -127,3 +127,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 13
 
 [Chinese modifier diagnostic](chinese-modifiers/README.md) removes a count-only rule that mistook three independent “的” occurrences for a nested modifier chain. Three unchanged original drafts fail only that check on base strict mode and pass candidate strict mode. The writing guide retains meaning-based editing advice; other checks stay active. Focused 41 tests, core 19 tests, generated checks and the rebuilt package smoke pass. This is a fixed-input diagnostic correction, not a fresh-generation or human-comprehension result.
+
+## Continued exploration — round 14
+
+[Gzip size](gzip-size/README.md) separates compressed payload bytes from format overhead using four reproducible local inputs. A five-column author table hid the final gzip result on a 390 px phone. The parent combines input/output/difference into one column, keeping every measured value visible at that width. The panel grows by about 68 px; the original and the three-column variant remain available. No runtime or guide change. The index now offers twenty-one variants across nine questions and eight projects.

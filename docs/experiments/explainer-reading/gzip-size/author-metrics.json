@@ -1,0 +1,70 @@
+[
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "panels": [
+      {
+        "id": "answer",
+        "width": 364,
+        "height": 426.53125
+      },
+      {
+        "id": "parts",
+        "width": 364,
+        "height": 359.046875
+      },
+      {
+        "id": "examples",
+        "width": 364,
+        "height": 573.6953125
+      },
+      {
+        "id": "check",
+        "width": 364,
+        "height": 248.15625
+      }
+    ],
+    "tables": [
+      {
+        "width": 544,
+        "wrapperWidth": 332,
+        "scrollWidth": 544,
+        "text": "输入\t输入大小\traw DEFLATE\tgzip 结果\t变化\n一个 ASCII A\t\n1\n\t\n3\n\t\n21\n\t\n+20\n\n1024 个 ASCII A\t\n1024\n\t\n11\n\t\n29\n\t\n-995\n\n固定派生字节\t\n1024\n\t\n1029\n\t\n1047\n\t\n+23\n\n重复 A 的 gzip 结果再次压缩\t\n29\n\t\n29\n\t\n47\n\t\n+18"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "panels": [
+      {
+        "id": "answer",
+        "width": 414,
+        "height": 428
+      },
+      {
+        "id": "parts",
+        "width": 846,
+        "height": 268
+      },
+      {
+        "id": "examples",
+        "width": 846,
+        "height": 417
+      },
+      {
+        "id": "check",
+        "width": 414,
+        "height": 257
+      }
+    ],
+    "tables": [
+      {
+        "width": 806,
+        "wrapperWidth": 806,
+        "scrollWidth": 806,
+        "text": "输入\t输入大小\traw DEFLATE\tgzip 结果\t变化\n一个 ASCII A\t\n1\n\t\n3\n\t\n21\n\t\n+20\n\n1024 个 ASCII A\t\n1024\n\t\n11\n\t\n29\n\t\n-995\n\n固定派生字节\t\n1024\n\t\n1029\n\t\n1047\n\t\n+23\n\n重复 A 的 gzip 结果再次压缩\t\n29\n\t\n29\n\t\n47\n\t\n+18"
+      }
+    ]
+  }
+]

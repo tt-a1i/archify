@@ -1,0 +1,8 @@
+{
+  "outside_result_table_and_legend_identical": true,
+  "rows_checked_against_probe": 4,
+  "numbers_checked_per_row": 4,
+  "original_columns": 5,
+  "candidate_columns": 3,
+  "runtime_source_changed": false
+}

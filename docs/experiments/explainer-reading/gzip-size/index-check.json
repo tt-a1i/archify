@@ -1,0 +1,28 @@
+[
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "iframe": "gzip-size/candidate.html",
+    "open": "gzip-size/candidate.html",
+    "report": "gzip-size/README.md",
+    "caseCount": 9,
+    "variantCount": 2,
+    "selected": "三列比较"
+  },
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "iframe": "gzip-size/author/answer.html",
+    "open": "gzip-size/author/answer.html",
+    "report": "gzip-size/README.md",
+    "caseCount": 9,
+    "variantCount": 2,
+    "selected": "作者五列表格"
+  },
+  {
+    "frameCssWidth": "1440px",
+    "label": "页面宽度 1440px · 显示比例 24%",
+    "outerWidth": 390,
+    "outerScrollWidth": 390
+  }
+]
