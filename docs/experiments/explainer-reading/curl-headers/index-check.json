@@ -1,0 +1,18 @@
+{
+  "caseCount": 7,
+  "loads": [
+    "curl-headers/author/answer.html",
+    "curl-headers/candidate.html"
+  ],
+  "iframe": "curl-headers/candidate.html",
+  "open": "curl-headers/candidate.html",
+  "width": 390,
+  "pageWidth": 390,
+  "iframeWidth": "390px",
+  "scale": "页面宽度 390px · 显示比例 89%",
+  "original": {
+    "iframe": "curl-headers/author/answer.html",
+    "open": "curl-headers/author/answer.html"
+  },
+  "reused": "The twelve existing variants were checked at 5492057ce; only the two new curl variants were reloaded here."
+}

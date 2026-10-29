@@ -1,0 +1,40 @@
+[
+  {
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 332,
+        "scroll": 432,
+        "height": 263
+      }
+    ],
+    "snippets": [
+      {
+        "width": 330,
+        "scroll": 330,
+        "text": "curl -q -I URL\ncurl -q -i URL\ncurl -q -D - -o /dev/null URL"
+      }
+    ],
+    "diagrams": []
+  },
+  {
+    "width": 1440,
+    "pageWidth": 1440,
+    "tables": [
+      {
+        "width": 806,
+        "scroll": 806,
+        "height": 197
+      }
+    ],
+    "snippets": [
+      {
+        "width": 804,
+        "scroll": 804,
+        "text": "curl -q -I URL\ncurl -q -i URL\ncurl -q -D - -o /dev/null URL"
+      }
+    ],
+    "diagrams": []
+  }
+]

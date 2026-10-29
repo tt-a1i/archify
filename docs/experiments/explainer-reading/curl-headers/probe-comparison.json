@@ -1,0 +1,14 @@
+{
+  "repeatCasesIdentical": true,
+  "headAndDiscardStdoutIdentical": true,
+  "methodsDiffer": [
+    "HEAD",
+    "GET"
+  ],
+  "downloadedBodyBytes": [
+    0,
+    6
+  ],
+  "fixtureBodyBytes": 6,
+  "note": "The second probe run only clarified the scope sentence; the cases are identical. Both scripts returned after server cleanup."
+}

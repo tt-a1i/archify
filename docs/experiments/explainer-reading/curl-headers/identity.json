@@ -1,0 +1,10 @@
+{
+  "runtime": "5492057ceb5f4267c11e8c8a3c3ad3450acd4788",
+  "curlSource": "de7b3e89218467159a7af72d58cea8425946e97d",
+  "evidenceCommit": "e47bde433b9ca12226a9204e5393c45c1cb6e907",
+  "model": "gpt-6.1-terra",
+  "effort": "medium",
+  "discovery": true,
+  "budgetMinutes": 15,
+  "promptSha256": "f048b64b076824a6830128344b509895555a2f397ecff467a6d7894af93d1876"
+}

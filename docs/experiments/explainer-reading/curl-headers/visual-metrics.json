@@ -1,0 +1,59 @@
+[
+  {
+    "theme": "light",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 332,
+        "scroll": 332,
+        "height": 298
+      }
+    ],
+    "snippets": [
+      {
+        "width": 330,
+        "scroll": 330
+      }
+    ],
+    "checklist": 4
+  },
+  {
+    "theme": "light",
+    "width": 1440,
+    "pageWidth": 1440,
+    "tables": [
+      {
+        "width": 590,
+        "scroll": 590,
+        "height": 216
+      }
+    ],
+    "snippets": [
+      {
+        "width": 588,
+        "scroll": 588
+      }
+    ],
+    "checklist": 4
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "pageWidth": 390,
+    "tables": [
+      {
+        "width": 332,
+        "scroll": 332,
+        "height": 298
+      }
+    ],
+    "snippets": [
+      {
+        "width": 330,
+        "scroll": 330
+      }
+    ],
+    "checklist": 4
+  }
+]

@@ -103,3 +103,9 @@ The [review page](index.html) provides one local entry for the six projects and 
 [Live interaction check](review-index-check.json): all twelve variant loads completed, each full-page link matched its preview, and all 22 local targets existed. The outer page fits 390 px without horizontal overflow. Parent inspection covered the [desktop shell](review-index-1440.png), [desktop preview mode](review-index-desktop-view.png) and [phone shell](review-index-390.png). This check does not revalidate the embedded pages; their documented limitations remain in the visible case notes. The snippets’ clipboard and reader acceptance scopes remain as described in the respective rounds. No runtime source changed and no package rebuild was needed.
 
 Next bounded direction: a curl explanation of request method versus output formatting (`-I` versus `-i`), verified with a disposable local HTTP fixture and pinned official option documentation. Keep the ongoing goal active and preserve the existing branch rather than starting a duplicate lab.
+
+## Continued exploration — round 9
+
+[Curl request/download/output](curl-headers/README.md) adds the seventh project to the review index. Two loopback probe runs show that HEAD and GET-with-discarded-body can print identical headers while downloading different body lengths. A two-column content repair makes all four operations visible in the phone table; source semantics and local fixture limits remain beside the claims. The independent first draft, its relocated-receipt failure and the repaired artifact's passing current-path check are retained.
+
+The index now has fourteen variants. The original twelve-load evidence remains at round 8's revision; round 9 checks the two added curl variants and local links separately. This round changes no runtime or authoring rule and makes no general generation-quality claim.
