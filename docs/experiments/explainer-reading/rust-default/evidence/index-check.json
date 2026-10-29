@@ -1,0 +1,30 @@
+{
+  "views": [
+    {
+      "title": "已经有值，默认函数为什么还会执行？",
+      "frame": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/author/answer.html",
+      "selected": "作者初稿",
+      "loads": 1
+    },
+    {
+      "title": "已经有值，默认函数为什么还会执行？",
+      "frame": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/candidate.html",
+      "selected": "两列与完整程序",
+      "loads": 2
+    },
+    {
+      "previewWidth": "1440px",
+      "scaleNote": "页面宽度 1440px · 显示比例 71%"
+    },
+    {
+      "outerWidth": 390,
+      "scrollWidth": 390,
+      "caseCount": 12,
+      "previewWidth": "390px",
+      "caseTitle": "已经有值，默认函数为什么还会执行？"
+    }
+  ],
+  "allNewLoadsHaveMatchingLinks": true
+}

@@ -1,0 +1,450 @@
+[
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 2404,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 381.6796875,
+        "top": 219
+      },
+      {
+        "id": "observation",
+        "height": 706.2109375,
+        "top": 612.6796875
+      },
+      {
+        "id": "mechanism",
+        "height": 398.6484375,
+        "top": 1330.890625
+      },
+      {
+        "id": "boundary",
+        "height": 427.8828125,
+        "top": 1741.5390625
+      }
+    ],
+    "tables": [
+      {
+        "width": 432,
+        "client": 358,
+        "scroll": 432
+      },
+      {
+        "width": 432,
+        "client": 358,
+        "scroll": 432
+      }
+    ],
+    "snippets": [
+      {
+        "title": "rust复制",
+        "code": "let ready = fallback();\nlet result = value.unwrap_or_else(|| ready);",
+        "client": 356,
+        "scroll": 359
+      }
+    ],
+    "name": "author"
+  },
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 2404,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 381.6796875,
+        "top": 219
+      },
+      {
+        "id": "observation",
+        "height": 706.2109375,
+        "top": 612.6796875
+      },
+      {
+        "id": "mechanism",
+        "height": 398.6484375,
+        "top": 1330.890625
+      },
+      {
+        "id": "boundary",
+        "height": 427.8828125,
+        "top": 1741.5390625
+      }
+    ],
+    "tables": [
+      {
+        "width": 432,
+        "client": 358,
+        "scroll": 432
+      },
+      {
+        "width": 432,
+        "client": 358,
+        "scroll": 432
+      }
+    ],
+    "snippets": [
+      {
+        "title": "rust复制",
+        "code": "let ready = fallback();\nlet result = value.unwrap_or_else(|| ready);",
+        "client": 356,
+        "scroll": 359
+      }
+    ],
+    "name": "author"
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 1486,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 185,
+        "top": 116.5
+      },
+      {
+        "id": "observation",
+        "height": 400,
+        "top": 317.5
+      },
+      {
+        "id": "mechanism",
+        "height": 231,
+        "top": 733.5
+      },
+      {
+        "id": "boundary",
+        "height": 299,
+        "top": 980.5
+      }
+    ],
+    "tables": [
+      {
+        "width": 1272,
+        "client": 1272,
+        "scroll": 1272
+      },
+      {
+        "width": 1272,
+        "client": 1272,
+        "scroll": 1272
+      }
+    ],
+    "snippets": [
+      {
+        "title": "rust复制",
+        "code": "let ready = fallback();\nlet result = value.unwrap_or_else(|| ready);",
+        "client": 1270,
+        "scroll": 1270
+      }
+    ],
+    "name": "author"
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 1486,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 185,
+        "top": 116.5
+      },
+      {
+        "id": "observation",
+        "height": 400,
+        "top": 317.5
+      },
+      {
+        "id": "mechanism",
+        "height": 231,
+        "top": 733.5
+      },
+      {
+        "id": "boundary",
+        "height": 299,
+        "top": 980.5
+      }
+    ],
+    "tables": [
+      {
+        "width": 1272,
+        "client": 1272,
+        "scroll": 1272
+      },
+      {
+        "width": 1272,
+        "client": 1272,
+        "scroll": 1272
+      }
+    ],
+    "snippets": [
+      {
+        "title": "rust复制",
+        "code": "let ready = fallback();\nlet result = value.unwrap_or_else(|| ready);",
+        "client": 1270,
+        "scroll": 1270
+      }
+    ],
+    "name": "author"
+  },
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 2613,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 252.4921875,
+        "top": 219
+      },
+      {
+        "id": "observation",
+        "height": 501.5859375,
+        "top": 483.4921875
+      },
+      {
+        "id": "example",
+        "height": 662.296875,
+        "top": 997.078125
+      },
+      {
+        "id": "mechanism",
+        "height": 244.171875,
+        "top": 1671.375
+      },
+      {
+        "id": "boundary",
+        "height": 450.8515625,
+        "top": 1927.546875
+      }
+    ],
+    "tables": [
+      {
+        "width": 358,
+        "client": 358,
+        "scroll": 358
+      }
+    ],
+    "snippets": [
+      {
+        "title": "示例程序：两种写法都返回 7rust复制",
+        "code": "fn fallback() -> i32 {\n    println!(\"fallback called\");\n    99\n}\nfn main() {\n    let value = Some(7);\n    let eager = value.unwrap_or(fallback());\n    println!(\"unwrap_or: {eager}\");\n    let lazy = value\n        .unwrap_or_else(|| fallback());\n    println!(\"unwrap_or_else: {lazy}\");\n}",
+        "client": 356,
+        "scroll": 359
+      },
+      {
+        "title": "本机运行输出text复制",
+        "code": "fallback called\nunwrap_or: 7\nunwrap_or_else: 7",
+        "client": 356,
+        "scroll": 356
+      },
+      {
+        "title": "反例：计算发生在闭包外rust复制",
+        "code": "let ready = fallback();\nlet result = value\n    .unwrap_or_else(|| ready);",
+        "client": 356,
+        "scroll": 356
+      }
+    ],
+    "name": "candidate"
+  },
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 2613,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 252.4921875,
+        "top": 219
+      },
+      {
+        "id": "observation",
+        "height": 501.5859375,
+        "top": 483.4921875
+      },
+      {
+        "id": "example",
+        "height": 662.296875,
+        "top": 997.078125
+      },
+      {
+        "id": "mechanism",
+        "height": 244.171875,
+        "top": 1671.375
+      },
+      {
+        "id": "boundary",
+        "height": 450.8515625,
+        "top": 1927.546875
+      }
+    ],
+    "tables": [
+      {
+        "width": 358,
+        "client": 358,
+        "scroll": 358
+      }
+    ],
+    "snippets": [
+      {
+        "title": "示例程序：两种写法都返回 7rust复制",
+        "code": "fn fallback() -> i32 {\n    println!(\"fallback called\");\n    99\n}\nfn main() {\n    let value = Some(7);\n    let eager = value.unwrap_or(fallback());\n    println!(\"unwrap_or: {eager}\");\n    let lazy = value\n        .unwrap_or_else(|| fallback());\n    println!(\"unwrap_or_else: {lazy}\");\n}",
+        "client": 356,
+        "scroll": 359
+      },
+      {
+        "title": "本机运行输出text复制",
+        "code": "fallback called\nunwrap_or: 7\nunwrap_or_else: 7",
+        "client": 356,
+        "scroll": 356
+      },
+      {
+        "title": "反例：计算发生在闭包外rust复制",
+        "code": "let ready = fallback();\nlet result = value\n    .unwrap_or_else(|| ready);",
+        "client": 356,
+        "scroll": 356
+      }
+    ],
+    "name": "candidate"
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 1195,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 219,
+        "top": 116.5
+      },
+      {
+        "id": "observation",
+        "height": 315,
+        "top": 116.5
+      },
+      {
+        "id": "example",
+        "height": 637,
+        "top": 351.5
+      },
+      {
+        "id": "mechanism",
+        "height": 167,
+        "top": 447.5
+      },
+      {
+        "id": "boundary",
+        "height": 358,
+        "top": 630.5
+      }
+    ],
+    "tables": [
+      {
+        "width": 732,
+        "client": 732,
+        "scroll": 732
+      }
+    ],
+    "snippets": [
+      {
+        "title": "示例程序：两种写法都返回 7rust复制",
+        "code": "fn fallback() -> i32 {\n    println!(\"fallback called\");\n    99\n}\nfn main() {\n    let value = Some(7);\n    let eager = value.unwrap_or(fallback());\n    println!(\"unwrap_or: {eager}\");\n    let lazy = value\n        .unwrap_or_else(|| fallback());\n    println!(\"unwrap_or_else: {lazy}\");\n}",
+        "client": 514,
+        "scroll": 514
+      },
+      {
+        "title": "本机运行输出text复制",
+        "code": "fallback called\nunwrap_or: 7\nunwrap_or_else: 7",
+        "client": 514,
+        "scroll": 514
+      },
+      {
+        "title": "反例：计算发生在闭包外rust复制",
+        "code": "let ready = fallback();\nlet result = value\n    .unwrap_or_else(|| ready);",
+        "client": 730,
+        "scroll": 730
+      }
+    ],
+    "name": "candidate"
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 1195,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "id": "answer",
+        "height": 219,
+        "top": 116.5
+      },
+      {
+        "id": "observation",
+        "height": 315,
+        "top": 116.5
+      },
+      {
+        "id": "example",
+        "height": 637,
+        "top": 351.5
+      },
+      {
+        "id": "mechanism",
+        "height": 167,
+        "top": 447.5
+      },
+      {
+        "id": "boundary",
+        "height": 358,
+        "top": 630.5
+      }
+    ],
+    "tables": [
+      {
+        "width": 732,
+        "client": 732,
+        "scroll": 732
+      }
+    ],
+    "snippets": [
+      {
+        "title": "示例程序：两种写法都返回 7rust复制",
+        "code": "fn fallback() -> i32 {\n    println!(\"fallback called\");\n    99\n}\nfn main() {\n    let value = Some(7);\n    let eager = value.unwrap_or(fallback());\n    println!(\"unwrap_or: {eager}\");\n    let lazy = value\n        .unwrap_or_else(|| fallback());\n    println!(\"unwrap_or_else: {lazy}\");\n}",
+        "client": 514,
+        "scroll": 514
+      },
+      {
+        "title": "本机运行输出text复制",
+        "code": "fallback called\nunwrap_or: 7\nunwrap_or_else: 7",
+        "client": 514,
+        "scroll": 514
+      },
+      {
+        "title": "反例：计算发生在闭包外rust复制",
+        "code": "let ready = fallback();\nlet result = value\n    .unwrap_or_else(|| ready);",
+        "client": 730,
+        "scroll": 730
+      }
+    ],
+    "name": "candidate"
+  }
+]

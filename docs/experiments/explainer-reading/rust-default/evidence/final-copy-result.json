@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-29T20:34:09.313513+00:00",
+  "payloadsMatchRendered": true,
+  "fullProgramCompiled": true,
+  "stdoutMatchesDisplayed": true,
+  "mode": "Clipboard API writeText interception; not OS clipboard acceptance",
+  "compiler": "rustc1.89.0 --edition=2021",
+  "exampleSha256": "812109a513aa1c71523f855f40286006e3f94b5d00f5cba204c179459a6d08e7"
+}

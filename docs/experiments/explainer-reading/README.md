@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between eleven reading questions across ten projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between twelve reading questions across eleven projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -171,3 +171,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 24
 
 [Explain the pie fix](pie-reading/README.md) separates a concrete reading question from the complete patch. The preferred Chinese page starts with the disappearing legend values, compares the actual before/after labels, and groups the processing order into three stages while retaining multiline compatibility. An independent first draft and a rejected manual-width layout remain inspectable. Eight source probes run twice produce identical recorded results; the final page passes strict delivery and current-path checks, with 390/1440 px light/dark review and an actual phone PNG. This is content exploration, not a controlled generation or human-comprehension improvement. The index now offers eleven questions across ten projects and 26 main variants; product source and ZIP are unchanged.
+
+## Continued exploration — round 25
+
+[Rust default evaluation](rust-default/README.md) distinguishes the returned value from whether a fallback function ran. Source and local compiler are pinned to Rust 1.89.0; nine constructed combinations run twice. The independent draft's four-column tables hide the key execution column at 390 px. A two-column explanation and a complete runnable program make the results inspectable, at the cost of additional phone height. Actual author validation failures, copy payloads, compiled output and visual evidence are retained. The index now contains twelve questions across eleven projects and 28 main variants; this content round changes neither product runtime nor ZIP.

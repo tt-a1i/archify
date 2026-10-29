@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-29T20:28:18.360951+00:00",
+  "branch": "codex/explainer-reading-lab",
+  "branchHead": "9f0c1d2f06234bb3c6f345bcc74ec53ae95ca9db",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "sourceRepository": "rust-lang/rust",
+  "sourceRevision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "sourcePath": "library/core/src/option.rs",
+  "sourceLines": [
+    1009,
+    1052
+  ],
+  "fetchedVia": "GitHub connector fetch of exact commit blob",
+  "sourceExcerptSha256": "517dbfb4ab65a376bfcafe88ba1ee496b51dcbfe1bc3a340b50f41ade4f3e150",
+  "runtimeRevision": "fc79568e08b8128cb569deab2429cbc8cb8e9407",
+  "runtimePath": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round24/runtime/archify",
+  "scope": "independent discovery case; no controlled instruction or speed comparison",
+  "author": "gpt-6.1-terra medium; separate author subagent; browser owned by parent",
+  "archivedExcerptSha256": "d6bcc82fcf66e959e106458e1495214b16e04543bc91a7087deb4d468b8bb129",
+  "archivalNote": "The numbered excerpt removes a trailing formatting space after empty source line1031; original source text is unchanged. Original excerpt hash above refers to tuning copy."
+}

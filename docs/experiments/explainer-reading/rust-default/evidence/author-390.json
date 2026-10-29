@@ -1,0 +1,48 @@
+{
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 2404,
+  "tables": [
+    {
+      "width": 432,
+      "client": 358,
+      "scroll": 432,
+      "top": 735.3671875
+    },
+    {
+      "width": 432,
+      "client": 358,
+      "scroll": 432,
+      "top": 1385.984375
+    }
+  ],
+  "snippets": [
+    {
+      "code": "rust",
+      "scroll": 359,
+      "client": 356
+    }
+  ],
+  "panels": [
+    {
+      "id": "answer",
+      "top": 219,
+      "height": 381.6796875
+    },
+    {
+      "id": "observation",
+      "top": 612.6796875,
+      "height": 706.2109375
+    },
+    {
+      "id": "mechanism",
+      "top": 1330.890625,
+      "height": 398.6484375
+    },
+    {
+      "id": "boundary",
+      "top": 1741.5390625,
+      "height": 427.8828125
+    }
+  ]
+}

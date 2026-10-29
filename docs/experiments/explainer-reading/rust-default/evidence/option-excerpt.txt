@@ -1,0 +1,44 @@
+1009:     /// Returns the contained [`Some`] value or a provided default.
+1010:     ///
+1011:     /// Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing
+1012:     /// the result of a function call, it is recommended to use [`unwrap_or_else`],
+1013:     /// which is lazily evaluated.
+1014:     ///
+1015:     /// [`unwrap_or_else`]: Option::unwrap_or_else
+1016:     ///
+1017:     /// # Examples
+1018:     ///
+1019:     /// ```
+1020:     /// assert_eq!(Some("car").unwrap_or("bike"), "car");
+1021:     /// assert_eq!(None.unwrap_or("bike"), "bike");
+1022:     /// ```
+1023:     #[inline]
+1024:     #[stable(feature = "rust1", since = "1.0.0")]
+1025:     pub fn unwrap_or(self, default: T) -> T {
+1026:         match self {
+1027:             Some(x) => x,
+1028:             None => default,
+1029:         }
+1030:     }
+1031:
+1032:     /// Returns the contained [`Some`] value or computes it from a closure.
+1033:     ///
+1034:     /// # Examples
+1035:     ///
+1036:     /// ```
+1037:     /// let k = 10;
+1038:     /// assert_eq!(Some(4).unwrap_or_else(|| 2 * k), 4);
+1039:     /// assert_eq!(None.unwrap_or_else(|| 2 * k), 20);
+1040:     /// ```
+1041:     #[inline]
+1042:     #[track_caller]
+1043:     #[stable(feature = "rust1", since = "1.0.0")]
+1044:     pub fn unwrap_or_else<F>(self, f: F) -> T
+1045:     where
+1046:         F: FnOnce() -> T,
+1047:     {
+1048:         match self {
+1049:             Some(x) => x,
+1050:             None => f(),
+1051:         }
+1052:     }

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "446f22a7-bd28-4e22-a40d-e9c56cdcbed7",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/rust-default/candidate.html",
+  "specification": {
+    "sha256": "cba475284bd3a1cc8fd7fa0ee69e8184f29057748e33440283d4b380948f5bf1",
+    "bytes": 2776
+  },
+  "artifact": {
+    "sha256": "7db15d779ccd234d432863e7c6cc265fdc64bda4821dab33fef780c592b488a2",
+    "bytes": 157626
+  },
+  "explainer": {
+    "preparedSha256": "01b08c8535716b4bcc3fba8ef3b087c6d2e4e8f2445ae0210cf58c4f431b8a35",
+    "dependencies": []
+  }
+}

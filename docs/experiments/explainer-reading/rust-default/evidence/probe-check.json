@@ -1,0 +1,8 @@
+{
+  "checkedAt": "2026-10-29T20:27:35.657831+00:00",
+  "inputs": 9,
+  "runsIdentical": true,
+  "assertions": "results and ordered events match nine specified combinations",
+  "sourceSha256": "19a9e8961c7d7dd0b6599037e32e1ff997bb53d1fbee6ce09dd908ab4667d1d1",
+  "rustcVersion": "rustc 1.89.0 (29483883e 2025-08-04)\nbinary: rustc\ncommit-hash: 29483883eed69d5fb4db01964cdf2af4d86e9cb2\ncommit-date: 2025-08-04\nhost: aarch64-apple-darwin\nrelease: 1.89.0\nLLVM version: 20.1.7\n"
+}

@@ -1,0 +1,31 @@
+{
+  "traceCreatedAt": "2026-10-29T20:28:35.062435+00:00",
+  "observations": [
+    {
+      "time": "2026-10-29T20:28:04Z",
+      "event": "Time observed after reading source packet, frozen excerpts, probe and authoring references, before drafting."
+    },
+    {
+      "time": "2026-10-29T20:28:35.062435+00:00",
+      "event": "Recorded after three strict finalize attempts; attempts 1 and 2 failed, attempt 3 passed."
+    }
+  ],
+  "attempts": [
+    {
+      "candidate": "first-draft.archify.md",
+      "stdout": "finalize-1.stdout.json",
+      "exit": 1
+    },
+    {
+      "candidate": "attempt-2.archify.md",
+      "stdout": "finalize-2.stdout.json",
+      "exit": 1
+    },
+    {
+      "candidate": "answer.archify.md",
+      "stdout": "finalize-3.stdout.json",
+      "exit": 0
+    }
+  ],
+  "note": "Individual attempt timestamps were not recorded; ordering follows preserved command outputs. Initial relative-path reads failed because the working directory was the repository, not author; retried using absolute paths."
+}

@@ -1,0 +1,15 @@
+# Read-only source packet: Rust Option default evaluation
+
+Question: `Some(7)` returns7; why does `unwrap_or(fallback())` still run fallback, and what changes with `unwrap_or_else(|| fallback())`? Audience: developers new to this particular Rust distinction. Chinese explainer, concrete observation first, no jargon-first lecture. Let the artifact's content/layout choices follow evidence; no need for a diagram if a table/trace/code snippet explains better.
+
+Pinned primary source: https://github.com/rust-lang/rust/blob/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/option.rs#L1009-L1052 . GitHub connector fetched this exact source. Read `../option-excerpt.txt` (numbered exact excerpt). Lines1011-1013 document eager evaluation for unwrap_or;1025-1030 takes ready default:T and returns x forSome/default forNone;1044-1052 takes FnOnce and calls f() only inNone. Source is Rust1.89.0; do not label it latest Rust. Installed rustc version/commit exactly matches source; see../rustc-version.txt.
+
+Parent-owned local probe: read../probe.rs, ../probe-1.jsonl, ../probe-2.jsonl, ../probe-check.json. A small Rust std-only program compiled with installedrustc--edition=2021;9 cases, two identical runs. Some(7),None,Some(0) each tested unwrap_or,unwrap_or_else,precomputed. fallback appends the literal event `fallback` and returns99; event records are ordered, NOT timings. Some returns7 or0 in allthree modes; None returns99. unwrap_or_else only records fallback forNone. unwrap_or always records it; computing ready=fallback() before closing overready also always records it. Source and explicit expectations retained. No real network/cache/file operation or speed benchmark occurred. No additional installeddependency.
+
+Boundary: lazy here means function/closure body is called only forNone. Do not claim creating/capturing the closure has no evaluation effects, that earlier computations are undone, or that it always improves speed. Constant already-available defaults remain reasonable; avoid a universal ban on unwrap_or. None means absence; Some(0) is a present value. The page needn't be an exhaustive ownership/capture/drop tutorial.
+
+If including a runnable snippet, keep it self-contained (`fn main` and fallback definition), output exactly derived from running it, no fabricated code line attributions. Author-created snippets must be labelled examples rather than pinned repository source. You may compile only your own snippet under author/, using installed rustc, if needed; retain source+command+stdout/stderr. Do not modify parent probe or runtime. Parent will independently copy from rendered page and run it as relevant.
+
+Frozen runtime and authoring reference (read-only):
+/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round24/runtime/archify
+Read its SKILL.md and references/explainer-authoring.md before authoring. Runtime commitfc79568e08b8128cb569deab2429cbc8cb8e9407; branch HEAD9f0c1d2f06234bb3c6f345bcc74ec53ae95ca9db changes only content. Use pinned sourceURL citations and an accurate@answer scope. This is discovery, not a controlled comparison or evidence for a new writing rule.

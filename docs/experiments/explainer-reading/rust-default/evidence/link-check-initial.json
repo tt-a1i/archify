@@ -1,0 +1,8 @@
+{
+  "status": "failed",
+  "reason": "README links to the link report before the checker has written it",
+  "missing": [
+    "evidence/link-check.json"
+  ],
+  "repair": "write the result report, then check all referenced paths including that report"
+}

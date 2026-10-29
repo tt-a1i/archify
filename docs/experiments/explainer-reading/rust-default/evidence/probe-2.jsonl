@@ -1,0 +1,9 @@
+{"input":"Some(7)","mode":"unwrap_or","result":7,"events":["before", "fallback", "after"]}
+{"input":"Some(7)","mode":"unwrap_or_else","result":7,"events":["before", "after"]}
+{"input":"Some(7)","mode":"precomputed","result":7,"events":["before", "fallback", "after"]}
+{"input":"None","mode":"unwrap_or","result":99,"events":["before", "fallback", "after"]}
+{"input":"None","mode":"unwrap_or_else","result":99,"events":["before", "fallback", "after"]}
+{"input":"None","mode":"precomputed","result":99,"events":["before", "fallback", "after"]}
+{"input":"Some(0)","mode":"unwrap_or","result":0,"events":["before", "fallback", "after"]}
+{"input":"Some(0)","mode":"unwrap_or_else","result":0,"events":["before", "after"]}
+{"input":"Some(0)","mode":"precomputed","result":0,"events":["before", "fallback", "after"]}

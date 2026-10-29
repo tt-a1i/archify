@@ -1,0 +1,13 @@
+{
+  "sourceAndCompilerRevision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "candidateMatchesInspectedHtml": true,
+  "probeRunsIdentical": true,
+  "copy": "API payloads compiled; OS permission not tested",
+  "linksChecked": 122,
+  "index": {
+    "questions": 12,
+    "variants": 28
+  },
+  "productRuntimeAndZipChanged": false,
+  "humanComprehension": "not evaluated"
+}

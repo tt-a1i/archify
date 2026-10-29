@@ -1,0 +1,7 @@
+rustc 1.89.0 (29483883e 2025-08-04)
+binary: rustc
+commit-hash: 29483883eed69d5fb4db01964cdf2af4d86e9cb2
+commit-date: 2025-08-04
+host: aarch64-apple-darwin
+release: 1.89.0
+LLVM version: 20.1.7

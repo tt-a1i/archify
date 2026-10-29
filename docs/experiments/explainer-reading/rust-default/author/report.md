@@ -1,0 +1,7 @@
+# Author report
+
+- Scope: Rust 1.89.0 Option default evaluation, Chinese beginner-facing explainer. Sources: read-only source packet, numbered pinned Rust excerpt, probe program and both outputs, probe check and rustc version; frozen runtime skill and authoring reference.
+- Chose a concrete result table and a method comparison, followed by the precomputed-default boundary. The snippet is explicitly illustrative and deliberately incomplete, not a runnable example. No authored program was compiled. The probe is parent-owned evidence, not a performance benchmark.
+- Preserved `first-draft.archify.md` before validation. Strict finalize attempt 1 failed due to repeated generated row IDs; attempt 2 failed due to an editing mistake that removed closing code backticks. `attempt-2.archify.md` reconstructs the exact intermediate edit. Both diagnostic outputs and exit codes are retained. Attempt 3 passed validate, deliver and check, with no diagnostics; its original-path receipts remain beside the HTML. Explainer finalize did not run a browser check or perceptual review.
+- Initial attempts to read six evidence files through relative paths failed because the command ran from the repository directory. All six were subsequently read successfully using absolute paths. These were read errors, not validation attempts.
+- The page cites the pinned Rust source; the local probe is described as local and its nine-case observation, not attributed to the Rust source. The parent will independently review the visual result. No human acceptance is claimed.

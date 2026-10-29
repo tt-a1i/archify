@@ -1,0 +1,13 @@
+{
+  "mode": "Clipboard API writeText interception; not OS clipboard acceptance",
+  "copies": [
+    "fn fallback() -> i32 {\n    println!(\"fallback called\");\n    99\n}\nfn main() {\n    let value = Some(7);\n    let eager = value\n        .unwrap_or(fallback());\n    println!(\"unwrap_or: {eager}\");\n    let lazy = value\n        .unwrap_or_else(|| fallback());\n    println!(\"unwrap_or_else: {lazy}\");\n}",
+    "fallback called\nunwrap_or: 7\nunwrap_or_else: 7",
+    "let ready = fallback();\nlet result = value\n    .unwrap_or_else(|| ready);"
+  ],
+  "rendered": [
+    "fn fallback() -> i32 {\n    println!(\"fallback called\");\n    99\n}\nfn main() {\n    let value = Some(7);\n    let eager = value\n        .unwrap_or(fallback());\n    println!(\"unwrap_or: {eager}\");\n    let lazy = value\n        .unwrap_or_else(|| fallback());\n    println!(\"unwrap_or_else: {lazy}\");\n}",
+    "fallback called\nunwrap_or: 7\nunwrap_or_else: 7",
+    "let ready = fallback();\nlet result = value\n    .unwrap_or_else(|| ready);"
+  ]
+}
