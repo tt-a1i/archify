@@ -1,0 +1,28 @@
+{
+  "artifact": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/candidate.html",
+  "download": {
+    "name": "图例移到底部，数值为什么不见了？.png",
+    "savedTo": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/candidate-390-light.png"
+  },
+  "live": {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 1872,
+    "theme": "light",
+    "style": "editorial",
+    "sources": [
+      {
+        "text": "修复前：先检查源码开头",
+        "href": "https://github.com/tt-a1i/archify/blob/87747b86e145c03ab3aca7a559f4759a48913302/archify/explainer/charts.mjs"
+      },
+      {
+        "text": "修复后：先解析，再补全图例",
+        "href": "https://github.com/tt-a1i/archify/blob/e5e03d185ce0617aa4fc7645bac0317e4079f421/archify/explainer/charts.mjs"
+      },
+      {
+        "text": "完整代码修改",
+        "href": "https://github.com/tt-a1i/archify/commit/e5e03d185ce0617aa4fc7645bac0317e4079f421"
+      }
+    ]
+  }
+}

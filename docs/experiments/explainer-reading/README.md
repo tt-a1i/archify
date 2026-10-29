@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between ten reading questions across nine projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between eleven reading questions across ten projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -167,3 +167,7 @@ The review index adds these two experimental variants, for sixteen variants acro
 ## Continued exploration — round 23
 
 [Diff and desktop-code exports](diff-export/README.md) retain long removed/added lines and release stale measured panel heights when code wraps. The first prototype passed width/footer checks but clipped the bottom of a real patch; the retained image exposed that failure. An extended snippet test and new diff test fail on base; 13 browser, 25 parser/renderer and 19 core tests pass on candidate. Short diff PNGs remain byte-identical, and the canonical package passes extracted CLI/five browser checks. The complete phone patch is substantially longer, so content selection remains the next readability question.
+
+## Continued exploration — round 24
+
+[Explain the pie fix](pie-reading/README.md) separates a concrete reading question from the complete patch. The preferred Chinese page starts with the disappearing legend values, compares the actual before/after labels, and groups the processing order into three stages while retaining multiline compatibility. An independent first draft and a rejected manual-width layout remain inspectable. Eight source probes run twice produce identical recorded results; the final page passes strict delivery and current-path checks, with 390/1440 px light/dark review and an actual phone PNG. This is content exploration, not a controlled generation or human-comprehension improvement. The index now offers eleven questions across ten projects and 26 main variants; product source and ZIP are unchanged.

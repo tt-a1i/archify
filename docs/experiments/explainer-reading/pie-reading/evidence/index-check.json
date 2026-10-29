@@ -1,0 +1,30 @@
+{
+  "views": [
+    {
+      "title": "图例移到底部，数值为什么不见了？",
+      "frame": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/author/answer.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/author/answer.html",
+      "selected": "作者初稿",
+      "loads": 1
+    },
+    {
+      "title": "图例移到底部，数值为什么不见了？",
+      "frame": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/candidate.html",
+      "open": "file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/candidate.html",
+      "selected": "从具体问题进入",
+      "loads": 2
+    },
+    {
+      "previewWidth": "1440px",
+      "scaleNote": "页面宽度 1440px · 显示比例 71%"
+    },
+    {
+      "outerWidth": 390,
+      "scrollWidth": 390,
+      "caseCount": 11,
+      "previewWidth": "390px",
+      "caseTitle": "图例移到底部，数值为什么不见了？"
+    }
+  ],
+  "allNewLoadsHaveMatchingLinks": true
+}

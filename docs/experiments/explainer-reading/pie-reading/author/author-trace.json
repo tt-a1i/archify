@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-10-29T20:15:36Z",
+  "firstDraftAt": "2026-10-29T20:15:44Z",
+  "finalizeAttempts": [
+    {
+      "startedAt": "2026-10-29T20:15:47Z",
+      "doneAt": "2026-10-29T20:15:48Z",
+      "command": "node ../runtime/archify/bin/archify.mjs finalize explainer answer.archify.md answer.html --writing strict --json",
+      "exitCode": 0,
+      "stdout": "finalize-1.stdout.log",
+      "stderr": "finalize-1.stderr.log",
+      "receipt": "answer.finalize.json",
+      "summaryReceipt": "answer.finalize-summary.json"
+    }
+  ],
+  "doneAt": "2026-10-29T20:16:01Z"
+}

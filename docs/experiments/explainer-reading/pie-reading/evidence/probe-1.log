@@ -1,0 +1,115 @@
+[
+  {
+    name: 'plain',
+    identical: true,
+    before: [
+      '48%',
+      '14%',
+      '38%',
+      'A · 10 (48%)',
+      'B · 3 (14%)',
+      'C · 8 (38%)'
+    ],
+    after: [
+      '48%',
+      '14%',
+      '38%',
+      'A · 10 (48%)',
+      'B · 3 (14%)',
+      'C · 8 (38%)'
+    ],
+    error: undefined
+  },
+  {
+    name: 'comment',
+    identical: false,
+    before: [ '48%', '14%', '38%', 'A', 'B', 'C' ],
+    after: [
+      '48%',
+      '14%',
+      '38%',
+      'A · 10 (48%)',
+      'B · 3 (14%)',
+      'C · 8 (38%)'
+    ],
+    error: undefined
+  },
+  {
+    name: 'frontmatter',
+    identical: false,
+    before: [ '48%', '14%', '38%', 'A', 'B', 'C' ],
+    after: [
+      '48%',
+      '14%',
+      '38%',
+      'A · 10 (48%)',
+      'B · 3 (14%)',
+      'C · 8 (38%)'
+    ],
+    error: undefined
+  },
+  {
+    name: 'directive',
+    identical: false,
+    before: [ '48%', '14%', '38%', 'A', 'B', 'C' ],
+    after: [
+      '48%',
+      '14%',
+      '38%',
+      'A · 10 (48%)',
+      'B · 3 (14%)',
+      'C · 8 (38%)'
+    ],
+    error: undefined
+  },
+  {
+    name: 'multiline',
+    identical: true,
+    before: [
+      '48%',
+      '14%',
+      '38%',
+      'A · 10 (48%)',
+      'B · 3 (14%)',
+      'C · 8 (38%)'
+    ],
+    after: [
+      '48%',
+      '14%',
+      '38%',
+      'A · 10 (48%)',
+      'B · 3 (14%)',
+      'C · 8 (38%)'
+    ],
+    error: undefined
+  },
+  {
+    name: 'duplicate',
+    identical: false,
+    before: [ '9%', '82%', '9%', 'A · 1 (9%)', 'A · 9 (82%)', 'B · 1 (9%)' ],
+    after: [ '50%', '50%', 'A · 1 (50%)', 'B · 1 (50%)' ],
+    error: undefined
+  },
+  {
+    name: 'negative',
+    identical: false,
+    before: [],
+    after: [],
+    error: '"A" has invalid value: -1. Negative values are not allowed in pie charts. All slice values must be >= 0.'
+  },
+  {
+    name: 'bar',
+    identical: true,
+    before: [
+      '0',  '5', '10',
+      'A',  'B', 'C',
+      '10', '3', '8'
+    ],
+    after: [
+      '0',  '5', '10',
+      'A',  'B', 'C',
+      '10', '3', '8'
+    ],
+    error: undefined
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 1930,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 286.4921875
+      },
+      {
+        "title": "同一份配置，图例有什么变化？",
+        "height": 350.5703125
+      },
+      {
+        "title": "前缀为什么曾经影响图例？",
+        "height": 176.28125
+      },
+      {
+        "title": "修复后按什么顺序处理？",
+        "height": 571.4453125
+      }
+    ],
+    "tables": [
+      {
+        "width": 358,
+        "client": 358,
+        "scroll": 358
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 1930,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 286.4921875
+      },
+      {
+        "title": "同一份配置，图例有什么变化？",
+        "height": 350.5703125
+      },
+      {
+        "title": "前缀为什么曾经影响图例？",
+        "height": 176.28125
+      },
+      {
+        "title": "修复后按什么顺序处理？",
+        "height": 571.4453125
+      }
+    ],
+    "tables": [
+      {
+        "width": 358,
+        "client": 358,
+        "scroll": 358
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 1144,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 253
+      },
+      {
+        "title": "同一份配置，图例有什么变化？",
+        "height": 299
+      },
+      {
+        "title": "前缀为什么曾经影响图例？",
+        "height": 525
+      },
+      {
+        "title": "修复后按什么顺序处理？",
+        "height": 479
+      }
+    ],
+    "tables": [
+      {
+        "width": 840,
+        "client": 840,
+        "scroll": 840
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 1144,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 253
+      },
+      {
+        "title": "同一份配置，图例有什么变化？",
+        "height": 299
+      },
+      {
+        "title": "前缀为什么曾经影响图例？",
+        "height": 525
+      },
+      {
+        "title": "修复后按什么顺序处理？",
+        "height": 479
+      }
+    ],
+    "tables": [
+      {
+        "width": 840,
+        "client": 840,
+        "scroll": 840
+      }
+    ]
+  }
+]

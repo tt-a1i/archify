@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "0b64c2a2-bb82-4b05-9cf0-459e77eaa018",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pie-reading/candidate.html",
+  "specification": {
+    "sha256": "72b454e3a611866111c57506323a9365ebe16777a182fabda190098b952b32b2",
+    "bytes": 2320
+  },
+  "artifact": {
+    "sha256": "11a9900f8315eb14f5432cd34c55d3f8fe905d963b0bed3788d2108eca4b31f1",
+    "bytes": 154042
+  },
+  "explainer": {
+    "preparedSha256": "716f8e5b3731950968caff14d41b8f96af1474e58fbc2e94613c3aba5d3323ec",
+    "dependencies": []
+  }
+}

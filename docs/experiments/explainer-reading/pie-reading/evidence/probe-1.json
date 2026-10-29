@@ -1,0 +1,224 @@
+[
+  {
+    "name": "plain",
+    "input": "pie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "before": {
+      "width": 373,
+      "height": 256,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A · 10 (48%)",
+        "B · 3 (14%)",
+        "C · 8 (38%)"
+      ]
+    },
+    "after": {
+      "width": 373,
+      "height": 256,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A · 10 (48%)",
+        "B · 3 (14%)",
+        "C · 8 (38%)"
+      ]
+    },
+    "identical": true
+  },
+  {
+    "name": "comment",
+    "input": "%% comment\npie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "before": {
+      "width": 316,
+      "height": 256,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    "after": {
+      "width": 373,
+      "height": 256,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A · 10 (48%)",
+        "B · 3 (14%)",
+        "C · 8 (38%)"
+      ]
+    },
+    "identical": false
+  },
+  {
+    "name": "frontmatter",
+    "input": "---\nconfig:\n  pie:\n    legendPosition: bottom\n---\npie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "before": {
+      "width": 256,
+      "height": 354,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    "after": {
+      "width": 256,
+      "height": 354,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A · 10 (48%)",
+        "B · 3 (14%)",
+        "C · 8 (38%)"
+      ]
+    },
+    "identical": false
+  },
+  {
+    "name": "directive",
+    "input": "%%{init: {\"pie\":{\"legendPosition\":\"bottom\"}}}%%\npie\n \"A\":10\n \"B\":3\n \"C\":8",
+    "before": {
+      "width": 256,
+      "height": 354,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    "after": {
+      "width": 256,
+      "height": 354,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A · 10 (48%)",
+        "B · 3 (14%)",
+        "C · 8 (38%)"
+      ]
+    },
+    "identical": false
+  },
+  {
+    "name": "multiline",
+    "input": "pie\n showData\n \"A\"\n :\n 10\n \"B\":3\n \"C\":8",
+    "before": {
+      "width": 373,
+      "height": 256,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A · 10 (48%)",
+        "B · 3 (14%)",
+        "C · 8 (38%)"
+      ]
+    },
+    "after": {
+      "width": 373,
+      "height": 256,
+      "text": [
+        "48%",
+        "14%",
+        "38%",
+        "A · 10 (48%)",
+        "B · 3 (14%)",
+        "C · 8 (38%)"
+      ]
+    },
+    "identical": true
+  },
+  {
+    "name": "duplicate",
+    "input": "pie\n \"A\":1\n \"A\":9\n \"B\":1",
+    "before": {
+      "width": 367,
+      "height": 256,
+      "text": [
+        "9%",
+        "82%",
+        "9%",
+        "A · 1 (9%)",
+        "A · 9 (82%)",
+        "B · 1 (9%)"
+      ]
+    },
+    "after": {
+      "width": 367,
+      "height": 256,
+      "text": [
+        "50%",
+        "50%",
+        "A · 1 (50%)",
+        "B · 1 (50%)"
+      ]
+    },
+    "identical": false
+  },
+  {
+    "name": "negative",
+    "input": "pie\n \"A\":-1\n \"B\":3",
+    "before": {
+      "error": "\"A · -1 (-50%)\" has invalid value: -1. Negative values are not allowed in pie charts. All slice values must be >= 0.",
+      "line": 0,
+      "text": []
+    },
+    "after": {
+      "error": "\"A\" has invalid value: -1. Negative values are not allowed in pie charts. All slice values must be >= 0.",
+      "line": 0,
+      "text": []
+    },
+    "identical": false
+  },
+  {
+    "name": "bar",
+    "input": "xychart-beta\n x-axis [A,B,C]\n bar [10,3,8]",
+    "before": {
+      "width": 480,
+      "height": 260,
+      "text": [
+        "0",
+        "5",
+        "10",
+        "A",
+        "B",
+        "C",
+        "10",
+        "3",
+        "8"
+      ]
+    },
+    "after": {
+      "width": 480,
+      "height": 260,
+      "text": [
+        "0",
+        "5",
+        "10",
+        "A",
+        "B",
+        "C",
+        "10",
+        "3",
+        "8"
+      ]
+    },
+    "identical": true
+  }
+]

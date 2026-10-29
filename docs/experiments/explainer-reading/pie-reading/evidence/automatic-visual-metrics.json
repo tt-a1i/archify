@@ -1,0 +1,162 @@
+[
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 1872,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 286.4921875,
+        "top": 219,
+        "bottom": 505.4921875
+      },
+      {
+        "title": "同一份数据，图例有什么变化？",
+        "height": 324.7734375,
+        "top": 517.4921875,
+        "bottom": 842.265625
+      },
+      {
+        "title": "为什么改位置会影响内容？",
+        "height": 243.875,
+        "top": 854.265625,
+        "bottom": 1098.140625
+      },
+      {
+        "title": "修复后，数据和配置一起保留",
+        "height": 472.3046875,
+        "top": 1110.140625,
+        "bottom": 1582.4453125
+      }
+    ],
+    "tables": [
+      {
+        "width": 358,
+        "client": 358,
+        "scroll": 358
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "height": 1872,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 286.4921875,
+        "top": 219,
+        "bottom": 505.4921875
+      },
+      {
+        "title": "同一份数据，图例有什么变化？",
+        "height": 324.7734375,
+        "top": 517.4921875,
+        "bottom": 842.265625
+      },
+      {
+        "title": "为什么改位置会影响内容？",
+        "height": 243.875,
+        "top": 854.265625,
+        "bottom": 1098.140625
+      },
+      {
+        "title": "修复后，数据和配置一起保留",
+        "height": 472.3046875,
+        "top": 1110.140625,
+        "bottom": 1582.4453125
+      }
+    ],
+    "tables": [
+      {
+        "width": 358,
+        "client": 358,
+        "scroll": 358
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 994,
+    "theme": "light",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 253,
+        "top": 116.5,
+        "bottom": 369.5
+      },
+      {
+        "title": "同一份数据，图例有什么变化？",
+        "height": 274,
+        "top": 116.5,
+        "bottom": 390.5
+      },
+      {
+        "title": "为什么改位置会影响内容？",
+        "height": 375,
+        "top": 385.5,
+        "bottom": 760.5
+      },
+      {
+        "title": "修复后，数据和配置一起保留",
+        "height": 354,
+        "top": 406.5,
+        "bottom": 760.5
+      }
+    ],
+    "tables": [
+      {
+        "width": 840,
+        "client": 840,
+        "scroll": 840
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "height": 994,
+    "theme": "dark",
+    "style": "editorial",
+    "panels": [
+      {
+        "title": "结论",
+        "height": 253,
+        "top": 116.5,
+        "bottom": 369.5
+      },
+      {
+        "title": "同一份数据，图例有什么变化？",
+        "height": 274,
+        "top": 116.5,
+        "bottom": 390.5
+      },
+      {
+        "title": "为什么改位置会影响内容？",
+        "height": 375,
+        "top": 385.5,
+        "bottom": 760.5
+      },
+      {
+        "title": "修复后，数据和配置一起保留",
+        "height": 354,
+        "top": 406.5,
+        "bottom": 760.5
+      }
+    ],
+    "tables": [
+      {
+        "width": 840,
+        "client": 840,
+        "scroll": 840
+      }
+    ]
+  }
+]

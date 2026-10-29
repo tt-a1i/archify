@@ -1,0 +1,13 @@
+{
+  "candidateSourceSha256": "72b454e3a611866111c57506323a9365ebe16777a182fabda190098b952b32b2",
+  "candidateHtmlSha256": "11a9900f8315eb14f5432cd34c55d3f8fe905d963b0bed3788d2108eca4b31f1",
+  "candidateMatchesInspectedHtml": true,
+  "authorFirstDraftUnchanged": true,
+  "probeRunsIdentical": true,
+  "questions": 11,
+  "mainVariants": 26,
+  "localLinksChecked": 107,
+  "runtimeAndZipChanged": false,
+  "manualSpanAttempt": "rejected after visual inspection",
+  "humanComprehension": "not evaluated"
+}
