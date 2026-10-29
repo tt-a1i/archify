@@ -115,3 +115,7 @@ The index now has fourteen variants. The original twelve-load evidence remains a
 [Existing mobile-toolbar proposal](mobile-tools/README.md) replays #1076's exact CSS addition on the current runtime and complete TaskGroup/curl pages. Baseline: 12 of 24 light-theme states overflow. Candidate: all 24 keep controls and menus visible, with checked keyboard opening and Escape focus return. The clean desktop screenshot is byte-identical, and the checked print controls remain hidden. This is independent transfer evidence for the existing proposal, not a new implementation PR or product integration.
 
 The review index adds these two experimental variants, for sixteen variants across seven projects. Existing content and runtime remain unchanged; the candidate rule lives in the frozen replay and its generated pages only. Human acceptance and broader integration checks remain separate.
+
+## Continued exploration — round 11
+
+[TaskGroup's direct opening](taskgroup-language/README.md) replaces abstract introductory phrases with the cancellation/wait/report sequence and keeps the cancellation exception adjacent. The phone answer card is about 58 px shorter; the desktop summary takes an extra line while the card is slightly shorter. Source declarations and the remaining explanation are byte-identical. This is a content variant, not a new writing heuristic or demonstrated human-comprehension gain. The index now offers seventeen variants.

@@ -1,0 +1,58 @@
+[
+  {
+    "arm": "base",
+    "width": 390,
+    "pageWidth": 400,
+    "title": "Why does a failed TaskGroup task cancel its siblings?",
+    "titleHeight": 59.390625,
+    "summary": "TaskGroup treats its tasks as one unit of work: a non-cancellation failure starts a coordinated shutdown before the group reports errors.1",
+    "summaryHeight": 172.4765625,
+    "summaryLineHeight": "29.7px",
+    "answerHeight": 512.5234375,
+    "answerBottom": 691.9140625,
+    "tableWidths": [],
+    "words": 56
+  },
+  {
+    "arm": "candidate",
+    "width": 390,
+    "pageWidth": 400,
+    "title": "What happens when one TaskGroup task fails?",
+    "titleHeight": 59.390625,
+    "summary": "TaskGroup asks unfinished tasks to stop, waits for them to finish, then reports the errors. A child ending with CancelledError alone does not trigger this.1",
+    "summaryHeight": 172.4765625,
+    "summaryLineHeight": "29.7px",
+    "answerHeight": 454.9296875,
+    "answerBottom": 634.3203125,
+    "tableWidths": [],
+    "words": 51
+  },
+  {
+    "arm": "base",
+    "width": 1440,
+    "pageWidth": 1440,
+    "title": "Why does a failed TaskGroup task cancel its siblings?",
+    "titleHeight": 35.09375,
+    "summary": "TaskGroup treats its tasks as one unit of work: a non-cancellation failure starts a coordinated shutdown before the group reports errors.1",
+    "summaryHeight": 80.09375,
+    "summaryLineHeight": "28.05px",
+    "answerHeight": 329,
+    "answerBottom": 422.09375,
+    "tableWidths": [],
+    "words": 56
+  },
+  {
+    "arm": "candidate",
+    "width": 1440,
+    "pageWidth": 1440,
+    "title": "What happens when one TaskGroup task fails?",
+    "titleHeight": 35.09375,
+    "summary": "TaskGroup asks unfinished tasks to stop, waits for them to finish, then reports the errors. A child ending with CancelledError alone does not trigger this.1",
+    "summaryHeight": 108.140625,
+    "summaryLineHeight": "28.05px",
+    "answerHeight": 323,
+    "answerBottom": 416.09375,
+    "tableWidths": [],
+    "words": 51
+  }
+]

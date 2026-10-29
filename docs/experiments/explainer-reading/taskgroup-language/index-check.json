@@ -1,0 +1,29 @@
+{
+  "src": "taskgroup-language/candidate.html",
+  "open": "taskgroup-language/candidate.html",
+  "width": 390,
+  "pageWidth": 390,
+  "versions": 4,
+  "buttons": [
+    {
+      "text": "直接说明",
+      "left": 16,
+      "right": 80
+    },
+    {
+      "text": "此前说明",
+      "left": 82,
+      "right": 146
+    },
+    {
+      "text": "初始表格",
+      "left": 148,
+      "right": 212
+    },
+    {
+      "text": "工具栏候选",
+      "left": 214,
+      "right": 290
+    }
+  ]
+}

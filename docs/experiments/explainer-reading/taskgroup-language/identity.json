@@ -1,0 +1,12 @@
+{
+  "runtime": "93fd116e85bae264fb0dec6a5946c176fad39083",
+  "dev": "5ecbd1bfdbf83ea747072112493c940e707569cb",
+  "sourceCommit": "8183fa5e3f78ca6ab862de7fb8b14f3d929421e0",
+  "sourcePath": "Doc/library/asyncio-task.rst",
+  "sourceBlob": "740f692d6a2a042de12ff768b0596b57b81e6eb8",
+  "unchangedFromAnswerScopeThroughEnd": true,
+  "unchangedSuffixSha256": "445d32ce939ff76a7d1617cf50dccc6132514eb9332e39415220a85fc304af6f",
+  "firstAttemptRetained": true,
+  "generationComparison": false,
+  "notes": "Parent content edit. Current product runtime, without the experimental toolbar rule. visual-metrics tableWidths is an empty result from a nonmatching selector; it is not evidence that the page has no tables or that table fit was rechecked."
+}
