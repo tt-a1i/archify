@@ -1,0 +1,7 @@
+{
+  "fourStatesTablesMatchAllEightProbeCases": true,
+  "canonicalCodeMatchesExecutedCandidateBytes": true,
+  "pageTablesAndCodeFitFourStates": true,
+  "desktopTableCodeTopsAlignAndLowerPanelsDoNotOverlap": true,
+  "canonicalHtmlSha256": "83b7b14eb8afd608ada32fac7b4d8173ea9b702626f287ea3f2fb16034a4b178"
+}

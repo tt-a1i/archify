@@ -1,0 +1,117 @@
+{
+  "environment": {
+    "python": "3.12.13",
+    "pyyaml": "6.0.3",
+    "entrypoint": "yaml.safe_load",
+    "loader": "yaml.SafeLoader",
+    "sourceSha256": {
+      "resolver.py": "f4bf9561f9b89961f1503d558385fbae30d12bfed565de9bf76c33abb63620a6",
+      "constructor.py": "90d8247da78b524c10618fd0e857f54f3d97570fe91b5c5513d024ef3faf88b0",
+      "loader.py": "5156becc8aa6905482218abf3e04869b835226db4763645fff3438fdbd5f1cdd",
+      "__init__.py": "b19dfcc333d6a75dfd73073901164507252f271b41d3b5f7d85510033a0547a7"
+    }
+  },
+  "scalars": [
+    {
+      "case": "plain_on",
+      "input": "flag: on\n",
+      "value": true,
+      "repr": "True",
+      "pythonType": "bool",
+      "resolvedTag": "tag:yaml.org,2002:bool"
+    },
+    {
+      "case": "quoted_on",
+      "input": "flag: \"on\"\n",
+      "value": "on",
+      "repr": "'on'",
+      "pythonType": "str",
+      "resolvedTag": "tag:yaml.org,2002:str"
+    },
+    {
+      "case": "single_quoted_on",
+      "input": "flag: 'on'\n",
+      "value": "on",
+      "repr": "'on'",
+      "pythonType": "str",
+      "resolvedTag": "tag:yaml.org,2002:str"
+    },
+    {
+      "case": "tagged_on",
+      "input": "flag: !!str on\n",
+      "value": "on",
+      "repr": "'on'",
+      "pythonType": "str",
+      "resolvedTag": "tag:yaml.org,2002:str"
+    },
+    {
+      "case": "plain_off",
+      "input": "flag: off\n",
+      "value": false,
+      "repr": "False",
+      "pythonType": "bool",
+      "resolvedTag": "tag:yaml.org,2002:bool"
+    },
+    {
+      "case": "plain_number",
+      "input": "flag: 42\n",
+      "value": 42,
+      "repr": "42",
+      "pythonType": "int",
+      "resolvedTag": "tag:yaml.org,2002:int"
+    },
+    {
+      "case": "quoted_number",
+      "input": "flag: \"42\"\n",
+      "value": "42",
+      "repr": "'42'",
+      "pythonType": "str",
+      "resolvedTag": "tag:yaml.org,2002:str"
+    },
+    {
+      "case": "mixed_case_control",
+      "input": "flag: oN\n",
+      "value": "oN",
+      "repr": "'oN'",
+      "pythonType": "str",
+      "resolvedTag": "tag:yaml.org,2002:str"
+    }
+  ],
+  "mappings": [
+    {
+      "case": "plain_keys",
+      "input": "on: first\nyes: second\n",
+      "repr": "{True: 'second'}",
+      "size": 1,
+      "entries": [
+        {
+          "keyRepr": "True",
+          "keyType": "bool",
+          "valueRepr": "'second'",
+          "valueType": "str"
+        }
+      ]
+    },
+    {
+      "case": "quoted_keys",
+      "input": "\"on\": first\n\"yes\": second\n",
+      "repr": "{'on': 'first', 'yes': 'second'}",
+      "size": 2,
+      "entries": [
+        {
+          "keyRepr": "'on'",
+          "keyType": "str",
+          "valueRepr": "'first'",
+          "valueType": "str"
+        },
+        {
+          "keyRepr": "'yes'",
+          "keyType": "str",
+          "valueRepr": "'second'",
+          "valueType": "str"
+        }
+      ]
+    }
+  ],
+  "scope": "Default unmodified PyYAML SafeLoader in one isolated process; no custom constructors/resolvers, C loader comparison, arbitrary Python object construction or security testing."
+}

@@ -1,0 +1,21 @@
+{
+  "runs": 2,
+  "scalarCasesPerRun": 8,
+  "mappingCasesPerRun": 2,
+  "jsonBytesIdentical": true,
+  "probeSha256": "401f1402f4293d81cc565fc49eafc0bd90cbd58a50601326b5e5a9562aa4b7d9",
+  "outputSha256": "674943c746173dbb046f0d7ea76a27c8280d81480c24634ff91daf70c28db9a2",
+  "environment": {
+    "python": "3.12.13",
+    "pyyaml": "6.0.3",
+    "entrypoint": "yaml.safe_load",
+    "loader": "yaml.SafeLoader",
+    "sourceSha256": {
+      "resolver.py": "f4bf9561f9b89961f1503d558385fbae30d12bfed565de9bf76c33abb63620a6",
+      "constructor.py": "90d8247da78b524c10618fd0e857f54f3d97570fe91b5c5513d024ef3faf88b0",
+      "loader.py": "5156becc8aa6905482218abf3e04869b835226db4763645fff3438fdbd5f1cdd",
+      "__init__.py": "b19dfcc333d6a75dfd73073901164507252f271b41d3b5f7d85510033a0547a7"
+    }
+  },
+  "notes": "One successful probe version; metadata TLS failure is separate and retained in setup-notes.md."
+}

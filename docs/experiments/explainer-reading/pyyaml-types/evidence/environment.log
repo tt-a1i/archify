@@ -1,0 +1,7 @@
+Using CPython 3.12.13
+Creating virtual environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round44/venv
+Activate with: source /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round44/venv/bin/activate
+Using Python 3.12.13 environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round44/venv
+Resolved 1 package in 718ms
+Installed 1 package in 5ms
+ + pyyaml==6.0.3

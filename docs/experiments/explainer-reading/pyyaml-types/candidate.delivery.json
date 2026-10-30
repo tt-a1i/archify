@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "7aea2e63-7fb9-4151-9b73-7c19eade185c",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pyyaml-types/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/pyyaml-types/candidate.html",
+  "specification": {
+    "sha256": "e54a0d831389c5ae5f78d49b5d689bd7e0d30590a372eee2c11f0332845f3013",
+    "bytes": 3602
+  },
+  "artifact": {
+    "sha256": "83b7b14eb8afd608ada32fac7b4d8173ea9b702626f287ea3f2fb16034a4b178",
+    "bytes": 169485
+  },
+  "explainer": {
+    "preparedSha256": "baed8e6345387c66870b50b80854e86d117771a42631117ecf11ecd1dc88e1b7",
+    "dependencies": []
+  }
+}

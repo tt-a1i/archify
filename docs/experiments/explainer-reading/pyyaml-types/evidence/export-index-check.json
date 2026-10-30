@@ -1,0 +1,56 @@
+{
+  "png": {
+    "width": 780,
+    "height": 5608
+  },
+  "counts": {
+    "questions": 22,
+    "variants": 54
+  },
+  "checks": [
+    {
+      "versionIndex": 0,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pyyaml-types/candidate.html",
+      "open": "pyyaml-types/candidate.html",
+      "report": "pyyaml-types/README.md",
+      "version": "输入与可运行代码并排",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 0,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pyyaml-types/candidate.html",
+      "open": "pyyaml-types/candidate.html",
+      "report": "pyyaml-types/README.md",
+      "version": "输入与可运行代码并排",
+      "frameWidth": "1440px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pyyaml-types/author/answer.html",
+      "open": "pyyaml-types/author/answer.html",
+      "report": "pyyaml-types/README.md",
+      "version": "作者初稿",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "pyyaml-types/author/answer.html",
+      "open": "pyyaml-types/author/answer.html",
+      "report": "pyyaml-types/README.md",
+      "version": "作者初稿",
+      "frameWidth": "1440px"
+    }
+  ]
+}

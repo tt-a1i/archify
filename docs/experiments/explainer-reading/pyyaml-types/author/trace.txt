@@ -1,0 +1,7 @@
+Work start UTC: 2026-10-30T00:03:00Z (recorded before reads)
+Read author-prompt.txt, plan.md, source/brief.md, frozen/archify/SKILL.md and frozen/archify/references/explainer-authoring.md. Source and runtime were read-only. Copied probe.py, probe-1.json, probe-2.json and identity.json into author for portable evidence.
+First complete draft preserved as first-draft.archify.md before any validation. It is identical to answer.archify.md and is the exact source for attempt 1.
+Snippet execution: venv/bin/python author/snippet.py > author/snippet.stdout 2> author/snippet.stderr; exit 0 in snippet.exit. It is the complete Python snippet in the page. Output matches the page.
+Attempt 1: node frozen/archify/bin/archify.mjs finalize explainer author/answer.archify.md author/answer.html --quality showcase --writing strict --json > author/attempt-1.stdout 2> author/attempt-1.stderr. Exit 0 in attempt-1.exit. Receipt: answer.finalize.json; summary: answer.finalize-summary.json; delivery: answer.delivery.json. Validate, deliver and check passed; zero diagnostics. Browser check not run. No failed attempts.
+Visual review remains pending; no browser used. No commit, push or install. This is supplied-evidence discovery, not a full-generation benchmark.
+Last observed UTC: 2026-10-30T00:03:20Z. One of three allowed attempts used; within the 12-minute budget. Time records are wall-clock observations, not a performance measurement.

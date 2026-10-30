@@ -1,0 +1,1 @@
+The first metadata fetch through Python urllib failed with SSL UNEXPECTED_EOF_WHILE_READING after both probe executions and four-file byte-identity verification had completed. A later curl fetch of the same PyPI JSON succeeded. No TLS checks were disabled, no probe rerun was needed, and source probe version 1 is unchanged.

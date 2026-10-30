@@ -1,0 +1,514 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "pageWidth": 390,
+    "height": 2721,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 178.5,
+        "width": 366,
+        "height": 320.4921875,
+        "top": 178.5,
+        "right": 378,
+        "bottom": 498.9921875,
+        "left": 12
+      },
+      {
+        "id": "results",
+        "x": 12,
+        "y": 510.9921875,
+        "width": 366,
+        "height": 651.9609375,
+        "top": 510.9921875,
+        "right": 378,
+        "bottom": 1162.953125,
+        "left": 12
+      },
+      {
+        "id": "mechanism",
+        "x": 12,
+        "y": 1174.953125,
+        "width": 366,
+        "height": 295.46875,
+        "top": 1174.953125,
+        "right": 378,
+        "bottom": 1470.421875,
+        "left": 12
+      },
+      {
+        "id": "reproduce",
+        "x": 12,
+        "y": 1482.421875,
+        "width": 366,
+        "height": 511.828125,
+        "top": 1482.421875,
+        "right": 378,
+        "bottom": 1994.25,
+        "left": 12
+      },
+      {
+        "id": "keys",
+        "x": 12,
+        "y": 2006.25,
+        "width": 366,
+        "height": 369.34375,
+        "top": 2006.25,
+        "right": 378,
+        "bottom": 2375.59375,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "YAML 输入",
+            "Python 值的 repr",
+            "Python 类型"
+          ],
+          [
+            "flag: on",
+            "True",
+            "bool"
+          ],
+          [
+            "flag: \"on\"",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: 'on'",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: !!str on",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: off",
+            "False",
+            "bool"
+          ],
+          [
+            "flag: 42",
+            "42",
+            "int"
+          ],
+          [
+            "flag: \"42\"",
+            "'42'",
+            "str"
+          ],
+          [
+            "flag: oN",
+            "'oN'",
+            "str"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 457,
+        "text": "import yaml\n\nfor text in ['flag: on', 'flag: \"on\"', 'flag: !!str on']:\n    value = yaml.safe_load(text)['flag']\n    print(text, '=>', repr(value), type(value).__name__)"
+      },
+      {
+        "client": 356,
+        "scroll": 356,
+        "text": "flag: on => True bool\nflag: \"on\" => 'on' str\nflag: !!str on => 'on' str"
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "pageWidth": 390,
+    "height": 2721,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 178.5,
+        "width": 366,
+        "height": 320.4921875,
+        "top": 178.5,
+        "right": 378,
+        "bottom": 498.9921875,
+        "left": 12
+      },
+      {
+        "id": "results",
+        "x": 12,
+        "y": 510.9921875,
+        "width": 366,
+        "height": 651.9609375,
+        "top": 510.9921875,
+        "right": 378,
+        "bottom": 1162.953125,
+        "left": 12
+      },
+      {
+        "id": "mechanism",
+        "x": 12,
+        "y": 1174.953125,
+        "width": 366,
+        "height": 295.46875,
+        "top": 1174.953125,
+        "right": 378,
+        "bottom": 1470.421875,
+        "left": 12
+      },
+      {
+        "id": "reproduce",
+        "x": 12,
+        "y": 1482.421875,
+        "width": 366,
+        "height": 511.828125,
+        "top": 1482.421875,
+        "right": 378,
+        "bottom": 1994.25,
+        "left": 12
+      },
+      {
+        "id": "keys",
+        "x": 12,
+        "y": 2006.25,
+        "width": 366,
+        "height": 369.34375,
+        "top": 2006.25,
+        "right": 378,
+        "bottom": 2375.59375,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "YAML 输入",
+            "Python 值的 repr",
+            "Python 类型"
+          ],
+          [
+            "flag: on",
+            "True",
+            "bool"
+          ],
+          [
+            "flag: \"on\"",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: 'on'",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: !!str on",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: off",
+            "False",
+            "bool"
+          ],
+          [
+            "flag: 42",
+            "42",
+            "int"
+          ],
+          [
+            "flag: \"42\"",
+            "'42'",
+            "str"
+          ],
+          [
+            "flag: oN",
+            "'oN'",
+            "str"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 457,
+        "text": "import yaml\n\nfor text in ['flag: on', 'flag: \"on\"', 'flag: !!str on']:\n    value = yaml.safe_load(text)['flag']\n    print(text, '=>', repr(value), type(value).__name__)"
+      },
+      {
+        "client": 356,
+        "scroll": 356,
+        "text": "flag: on => True bool\nflag: \"on\" => 'on' str\nflag: !!str on => 'on' str"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "pageWidth": 1440,
+    "height": 1571,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 416,
+        "height": 287,
+        "top": 116.5,
+        "right": 496,
+        "bottom": 403.5,
+        "left": 80
+      },
+      {
+        "id": "results",
+        "x": 512,
+        "y": 116.5,
+        "width": 848,
+        "height": 485,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 601.5,
+        "left": 512
+      },
+      {
+        "id": "mechanism",
+        "x": 80,
+        "y": 419.5,
+        "width": 416,
+        "height": 659,
+        "top": 419.5,
+        "right": 496,
+        "bottom": 1078.5,
+        "left": 80
+      },
+      {
+        "id": "reproduce",
+        "x": 512,
+        "y": 617.5,
+        "width": 848,
+        "height": 461,
+        "top": 617.5,
+        "right": 1360,
+        "bottom": 1078.5,
+        "left": 512
+      },
+      {
+        "id": "keys",
+        "x": 80,
+        "y": 1094.5,
+        "width": 1280,
+        "height": 215,
+        "top": 1094.5,
+        "right": 1360,
+        "bottom": 1309.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 840,
+        "scroll": 840,
+        "rows": [
+          [
+            "YAML 输入",
+            "Python 值的 repr",
+            "Python 类型"
+          ],
+          [
+            "flag: on",
+            "True",
+            "bool"
+          ],
+          [
+            "flag: \"on\"",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: 'on'",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: !!str on",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: off",
+            "False",
+            "bool"
+          ],
+          [
+            "flag: 42",
+            "42",
+            "int"
+          ],
+          [
+            "flag: \"42\"",
+            "'42'",
+            "str"
+          ],
+          [
+            "flag: oN",
+            "'oN'",
+            "str"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 838,
+        "scroll": 838,
+        "text": "import yaml\n\nfor text in ['flag: on', 'flag: \"on\"', 'flag: !!str on']:\n    value = yaml.safe_load(text)['flag']\n    print(text, '=>', repr(value), type(value).__name__)"
+      },
+      {
+        "client": 838,
+        "scroll": 838,
+        "text": "flag: on => True bool\nflag: \"on\" => 'on' str\nflag: !!str on => 'on' str"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "pageWidth": 1440,
+    "height": 1571,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 416,
+        "height": 287,
+        "top": 116.5,
+        "right": 496,
+        "bottom": 403.5,
+        "left": 80
+      },
+      {
+        "id": "results",
+        "x": 512,
+        "y": 116.5,
+        "width": 848,
+        "height": 485,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 601.5,
+        "left": 512
+      },
+      {
+        "id": "mechanism",
+        "x": 80,
+        "y": 419.5,
+        "width": 416,
+        "height": 659,
+        "top": 419.5,
+        "right": 496,
+        "bottom": 1078.5,
+        "left": 80
+      },
+      {
+        "id": "reproduce",
+        "x": 512,
+        "y": 617.5,
+        "width": 848,
+        "height": 461,
+        "top": 617.5,
+        "right": 1360,
+        "bottom": 1078.5,
+        "left": 512
+      },
+      {
+        "id": "keys",
+        "x": 80,
+        "y": 1094.5,
+        "width": 1280,
+        "height": 215,
+        "top": 1094.5,
+        "right": 1360,
+        "bottom": 1309.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 840,
+        "scroll": 840,
+        "rows": [
+          [
+            "YAML 输入",
+            "Python 值的 repr",
+            "Python 类型"
+          ],
+          [
+            "flag: on",
+            "True",
+            "bool"
+          ],
+          [
+            "flag: \"on\"",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: 'on'",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: !!str on",
+            "'on'",
+            "str"
+          ],
+          [
+            "flag: off",
+            "False",
+            "bool"
+          ],
+          [
+            "flag: 42",
+            "42",
+            "int"
+          ],
+          [
+            "flag: \"42\"",
+            "'42'",
+            "str"
+          ],
+          [
+            "flag: oN",
+            "'oN'",
+            "str"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 838,
+        "scroll": 838,
+        "text": "import yaml\n\nfor text in ['flag: on', 'flag: \"on\"', 'flag: !!str on']:\n    value = yaml.safe_load(text)['flag']\n    print(text, '=>', repr(value), type(value).__name__)"
+      },
+      {
+        "client": 838,
+        "scroll": 838,
+        "text": "flag: on => True bool\nflag: \"on\" => 'on' str\nflag: !!str on => 'on' str"
+      }
+    ]
+  }
+]

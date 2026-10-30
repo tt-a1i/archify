@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "label": "canonical",
+      "exitCode": 0,
+      "stdoutMatchesProbe": true,
+      "displayedOutputMatches": true,
+      "astIdenticalToOriginal": true,
+      "stdout": "flag: on => True bool\nflag: \"on\" => 'on' str\nflag: !!str on => 'on' str\n"
+    }
+  ],
+  "scope": "Actual Copy-control bytes executed in the pinned venv. Clipboard API instrumented; OS clipboard permission not tested. Displayed text code fences may omit the final newline."
+}

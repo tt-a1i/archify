@@ -1,0 +1,67 @@
+{
+  "result": "failed assertion",
+  "assertion": "lower mechanism and keys panel tops must be identical",
+  "actual": [
+    {
+      "theme": "light",
+      "panels": [
+        {
+          "id": "answer",
+          "top": 116.5,
+          "height": 219
+        },
+        {
+          "id": "results",
+          "top": 351.5,
+          "height": 511
+        },
+        {
+          "id": "reproduce",
+          "top": 351.5,
+          "height": 593
+        },
+        {
+          "id": "mechanism",
+          "top": 878.5,
+          "height": 349
+        },
+        {
+          "id": "keys",
+          "top": 960.5,
+          "height": 267
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "panels": [
+        {
+          "id": "answer",
+          "top": 116.5,
+          "height": 219
+        },
+        {
+          "id": "results",
+          "top": 351.5,
+          "height": 511
+        },
+        {
+          "id": "reproduce",
+          "top": 351.5,
+          "height": 593
+        },
+        {
+          "id": "mechanism",
+          "top": 878.5,
+          "height": 349
+        },
+        {
+          "id": "keys",
+          "top": 960.5,
+          "height": 267
+        }
+      ]
+    }
+  ],
+  "interpretation": "Unsupported verification expectation: the retained layout uses two columns with independently stacked lower panels. Main table/code tops align; lower tops differ by 82 px and bottoms align. No content overlap or product failure is demonstrated. Artifact unchanged; corrected verification checks table/code alignment and no overlap. Export/index script had not run because set -e stopped after this assertion."
+}
