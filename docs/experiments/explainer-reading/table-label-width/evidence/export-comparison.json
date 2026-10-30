@@ -1,0 +1,138 @@
+{
+  "exports": [
+    {
+      "id": "requests",
+      "width": 390,
+      "style": "editorial",
+      "arm": "base",
+      "before": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2604,
+        "tables": [
+          {
+            "client": 358,
+            "scroll": 358,
+            "text": "场景第 1 次第 2 次持续发送，完成783.884787.644中途停顿，异常460.036456.114等响应头，异常401.456403.210"
+          }
+        ]
+      },
+      "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round43/exports/requests-base-390.png"
+    },
+    {
+      "id": "requests",
+      "width": 390,
+      "style": "editorial",
+      "arm": "candidate",
+      "before": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2535,
+        "tables": [
+          {
+            "client": 358,
+            "scroll": 358,
+            "text": "场景第 1 次第 2 次持续发送，完成783.884787.644中途停顿，异常460.036456.114等响应头，异常401.456403.210"
+          }
+        ]
+      },
+      "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round43/exports/requests-candidate-390.png"
+    },
+    {
+      "id": "matplotlib",
+      "width": 1440,
+      "style": "clean",
+      "arm": "base",
+      "before": {
+        "width": 1440,
+        "pageWidth": 1440,
+        "height": 1511,
+        "tables": [
+          {
+            "client": 590,
+            "scroll": 590,
+            "text": "要比较的东西B / A原始数值100 / 80 = 1.25从 70 开始露出的柱段30 / 10 = 3"
+          }
+        ]
+      },
+      "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round43/exports/matplotlib-base-1440.png"
+    },
+    {
+      "id": "matplotlib",
+      "width": 1440,
+      "style": "clean",
+      "arm": "candidate",
+      "before": {
+        "width": 1440,
+        "pageWidth": 1440,
+        "height": 1488,
+        "tables": [
+          {
+            "client": 590,
+            "scroll": 590,
+            "text": "要比较的东西B / A原始数值100 / 80 = 1.25从 70 开始露出的柱段30 / 10 = 3"
+          }
+        ]
+      },
+      "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round43/exports/matplotlib-candidate-1440.png"
+    },
+    {
+      "id": "wide-gzip",
+      "width": 390,
+      "style": "editorial",
+      "arm": "base",
+      "before": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2112,
+        "tables": [
+          {
+            "client": 358,
+            "scroll": 544,
+            "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18"
+          }
+        ]
+      },
+      "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round43/exports/wide-gzip-base-390.png"
+    },
+    {
+      "id": "wide-gzip",
+      "width": 390,
+      "style": "editorial",
+      "arm": "candidate",
+      "before": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2112,
+        "tables": [
+          {
+            "client": 358,
+            "scroll": 544,
+            "text": "输入输入大小raw DEFLATEgzip 结果变化一个 ASCII A1321+201024 个 ASCII A10241129-995固定派生字节102410291047+23重复 A 的 gzip 结果再次压缩292947+18"
+          }
+        ]
+      },
+      "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round43/exports/wide-gzip-candidate-390.png"
+    }
+  ],
+  "dark": [
+    {
+      "arm": "base",
+      "pageWidth": 390,
+      "height": 2604,
+      "table": {
+        "client": 358,
+        "scroll": 358
+      }
+    },
+    {
+      "arm": "candidate",
+      "pageWidth": 390,
+      "height": 2535,
+      "table": {
+        "client": 358,
+        "scroll": 358
+      }
+    }
+  ]
+}

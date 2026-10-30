@@ -1,0 +1,7266 @@
+[
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2684,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 332,
+        "height": 224.9453125,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 118,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 118,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "783.884",
+              "width": 118,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 118,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "460.036",
+              "width": 118,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 118,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "401.456",
+              "width": 118,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 118,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2684,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 332,
+        "height": 224.9453125,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 108,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 108,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "783.884",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 108,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "460.036",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 108,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "401.456",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2604,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "height": 227.9453125,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 131,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 131,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "783.884",
+              "width": 131,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 131,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "460.036",
+              "width": 131,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 131,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "401.456",
+              "width": 131,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 131,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2535,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "height": 158.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 123.859375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 117.0625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 117.078125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 123.859375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 117.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 117.078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 123.859375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 117.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 117.078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 123.859375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 117.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 117.078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2764,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 320,
+        "height": 224.9453125,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "783.884",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "460.036",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "401.456",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2764,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 320,
+        "height": 224.9453125,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "783.884",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "460.036",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "401.456",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2527,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 366,
+        "height": 228.9453125,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 96,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 135,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 135,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "783.884",
+              "width": 135,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 135,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "460.036",
+              "width": 135,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 135,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "401.456",
+              "width": 135,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 135,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2457,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 366,
+        "height": 159.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 126.625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 119.6796875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 119.6953125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 126.625,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 119.6796875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 119.6953125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 126.625,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 119.6796875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 119.6953125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 126.625,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 119.6796875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 119.6953125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1509,
+    "tables": [
+      {
+        "client": 590,
+        "scroll": 590,
+        "height": 155.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 141.59375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 224.203125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 224.203125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 141.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 224.203125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 224.203125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 141.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 224.203125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 224.203125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 141.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 224.203125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 224.203125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1509,
+    "tables": [
+      {
+        "client": 590,
+        "scroll": 590,
+        "height": 155.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 204.125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 192.9296875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 192.9453125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 204.125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 192.9296875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 192.9453125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 204.125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 192.9296875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 192.9453125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 204.125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 192.9296875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 192.9453125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1483,
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "height": 158.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 149.7578125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 237.1171875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 237.125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 149.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 237.1171875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 237.125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 149.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 237.1171875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 237.125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 149.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 237.1171875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 237.125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1483,
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "height": 158.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 215.890625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 204.046875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 204.0625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 215.890625,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 204.046875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 204.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 215.890625,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 204.046875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 204.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 215.890625,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 204.046875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 204.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1538,
+    "tables": [
+      {
+        "client": 586,
+        "scroll": 586,
+        "height": 155.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 140.6328125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 222.6796875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 222.6875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 140.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 222.6796875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 222.6875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 140.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 222.6796875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 222.6875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 140.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 222.6796875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 222.6875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1538,
+    "tables": [
+      {
+        "client": 586,
+        "scroll": 586,
+        "height": 155.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 202.7421875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 191.625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 191.6328125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 202.7421875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 191.625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 191.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 202.7421875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 191.625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 191.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 202.7421875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 191.625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 191.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1444,
+    "tables": [
+      {
+        "client": 628,
+        "scroll": 628,
+        "height": 159.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 150.71875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 238.640625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 238.640625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 150.71875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 238.640625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 238.640625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 150.71875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 238.640625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 238.640625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 150.71875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 238.640625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 238.640625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "requests",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1444,
+    "tables": [
+      {
+        "client": 628,
+        "scroll": 628,
+        "height": 159.2890625,
+        "rows": [
+          [
+            {
+              "text": "场景",
+              "width": 217.2734375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 1 次",
+              "width": 205.359375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "第 2 次",
+              "width": 205.3671875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "持续发送，完成",
+              "width": 217.2734375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "783.884",
+              "width": 205.359375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "787.644",
+              "width": 205.3671875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "中途停顿，异常",
+              "width": 217.2734375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "460.036",
+              "width": 205.359375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "456.114",
+              "width": 205.3671875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "等响应头，异常",
+              "width": 217.2734375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "401.456",
+              "width": 205.359375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "403.210",
+              "width": 205.3671875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2441,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 332,
+        "height": 137.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 236,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 96,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 236,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 236,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2418,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 332,
+        "height": 114.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 174.1171875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 157.8828125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 174.1171875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 157.8828125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 174.1171875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 157.8828125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2495,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "height": 139.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 262,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 96,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 262,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 262,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2471,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "height": 116.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 187.7578125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 170.2421875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 187.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 170.2421875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 187.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 170.2421875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2474,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 320,
+        "height": 137.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 224,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 96,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 224,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 224,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2451,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 320,
+        "height": 114.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 167.828125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 152.171875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 167.828125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 152.171875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 167.828125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 152.171875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2401,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 366,
+        "height": 140.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 96,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 270,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 96,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 270,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 270,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2378,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 366,
+        "height": 117.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 191.46875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 174.53125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 191.46875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 174.53125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 191.46875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 174.53125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1511,
+    "tables": [
+      {
+        "client": 590,
+        "scroll": 590,
+        "height": 137.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 141.59375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 448.40625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 141.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 448.40625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 141.59375,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 448.40625,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1488,
+    "tables": [
+      {
+        "client": 590,
+        "scroll": 590,
+        "height": 114.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 309.4296875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 280.5703125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 309.4296875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 280.5703125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 309.4296875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 280.5703125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1508,
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "height": 139.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 149.7578125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 474.2421875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 149.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 474.2421875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 149.7578125,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 474.2421875,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1485,
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "height": 116.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 327.2578125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 296.7421875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 327.2578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 296.7421875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 327.2578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 296.7421875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1511,
+    "tables": [
+      {
+        "client": 586,
+        "scroll": 586,
+        "height": 137.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 140.6328125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 445.3671875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 140.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 445.3671875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 140.6328125,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 445.3671875,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1487,
+    "tables": [
+      {
+        "client": 586,
+        "scroll": 586,
+        "height": 114.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 307.328125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 278.671875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 307.328125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 278.671875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 307.328125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 278.671875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1488,
+    "tables": [
+      {
+        "client": 628,
+        "scroll": 628,
+        "height": 140.2890625,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 150.71875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 477.28125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 150.71875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 477.28125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 150.71875,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 477.28125,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matplotlib",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1464,
+    "tables": [
+      {
+        "client": 628,
+        "scroll": 628,
+        "height": 117.0703125,
+        "rows": [
+          [
+            {
+              "text": "要比较的东西",
+              "width": 328.53125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "B / A",
+              "width": 299.46875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "原始数值",
+              "width": 328.53125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "100 / 80 = 1.25",
+              "width": 299.46875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "从 70 开始露出的柱段",
+              "width": 328.53125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "30 / 10 = 3",
+              "width": 299.46875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2926,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 332,
+        "height": 383.9921875,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 116.9453125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 119.0546875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 96,
+              "cellHeight": 99.140625,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 116.9453125,
+              "cellHeight": 99.140625,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 119.0546875,
+              "cellHeight": 99.140625,
+              "textHeight": 81.140625
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 96,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 116.9453125,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 119.0546875,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 96,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 116.9453125,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "First exception",
+              "width": 119.0546875,
+              "cellHeight": 61.1875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 96,
+              "cellHeight": 104.375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 116.9453125,
+              "cellHeight": 104.375,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 119.0546875,
+              "cellHeight": 104.375,
+              "textHeight": 86.375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2926,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 332,
+        "height": 383.9921875,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 97.796875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 116.203125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 118,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 97.796875,
+              "cellHeight": 99.140625,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 116.203125,
+              "cellHeight": 99.140625,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 118,
+              "cellHeight": 99.140625,
+              "textHeight": 81.140625
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 97.796875,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 116.203125,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 118,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 97.796875,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 116.203125,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "First exception",
+              "width": 118,
+              "cellHeight": 61.1875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 97.796875,
+              "cellHeight": 104.375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 116.203125,
+              "cellHeight": 104.375,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 118,
+              "cellHeight": 104.375,
+              "textHeight": 86.375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2750,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "height": 311.7265625,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 127.6640625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 134.3359375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 127.6640625,
+              "cellHeight": 65.4375,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 134.3359375,
+              "cellHeight": 65.4375,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 96,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 127.6640625,
+              "cellHeight": 88.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 134.3359375,
+              "cellHeight": 88.65625,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 96,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 127.6640625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 134.3359375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 96,
+              "cellHeight": 83.78125,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 127.6640625,
+              "cellHeight": 83.78125,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 134.3359375,
+              "cellHeight": 83.78125,
+              "textHeight": 64.78125
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2788,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "height": 350.0390625,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 101.7109375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 125.3125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 130.9765625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 101.7109375,
+              "cellHeight": 83.78125,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 125.3125,
+              "cellHeight": 83.78125,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 130.9765625,
+              "cellHeight": 83.78125,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 101.7109375,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 125.3125,
+              "cellHeight": 88.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 130.9765625,
+              "cellHeight": 88.65625,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 101.7109375,
+              "cellHeight": 62.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 125.3125,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "First exception",
+              "width": 130.9765625,
+              "cellHeight": 62.1875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 101.7109375,
+              "cellHeight": 83.78125,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 125.3125,
+              "cellHeight": 83.78125,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 130.9765625,
+              "cellHeight": 83.78125,
+              "textHeight": 64.78125
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 3057,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 320,
+        "height": 383.9921875,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 96,
+              "cellHeight": 99.140625,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 112,
+              "cellHeight": 99.140625,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 112,
+              "cellHeight": 99.140625,
+              "textHeight": 81.140625
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 96,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 96,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 112,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "First exception",
+              "width": 112,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 96,
+              "cellHeight": 104.375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 112,
+              "cellHeight": 104.375,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 112,
+              "cellHeight": 104.375,
+              "textHeight": 86.375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 3057,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 320,
+        "height": 383.9921875,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 96,
+              "cellHeight": 99.140625,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 112,
+              "cellHeight": 99.140625,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 112,
+              "cellHeight": 99.140625,
+              "textHeight": 81.140625
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 96,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 96,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 112,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "First exception",
+              "width": 112,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 96,
+              "cellHeight": 104.375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 112,
+              "cellHeight": 104.375,
+              "textHeight": 64.78125
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 112,
+              "cellHeight": 104.375,
+              "textHeight": 86.375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2680,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 366,
+        "height": 312.7265625,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 96,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 130.828125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 139.171875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 130.828125,
+              "cellHeight": 65.4375,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 139.171875,
+              "cellHeight": 65.4375,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 96,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 130.828125,
+              "cellHeight": 88.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 139.171875,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 96,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 130.828125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 139.171875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 96,
+              "cellHeight": 83.78125,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 130.828125,
+              "cellHeight": 83.78125,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 139.171875,
+              "cellHeight": 83.78125,
+              "textHeight": 64.78125
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2680,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 366,
+        "height": 312.7265625,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 102.828125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 128.03125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 135.140625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 102.828125,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 128.03125,
+              "cellHeight": 65.4375,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 135.140625,
+              "cellHeight": 65.4375,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 102.828125,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "After all children finish",
+              "width": 128.03125,
+              "cellHeight": 88.65625,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "On first exception",
+              "width": 135.140625,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 102.828125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 128.03125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 135.140625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 102.828125,
+              "cellHeight": 83.78125,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 128.03125,
+              "cellHeight": 83.78125,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 135.140625,
+              "cellHeight": 83.78125,
+              "textHeight": 64.78125
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1260,
+    "tables": [
+      {
+        "client": 590,
+        "scroll": 590,
+        "height": 261.6953125,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 141.59375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 204.5390625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 243.8671875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 141.59375,
+              "cellHeight": 63.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 204.5390625,
+              "cellHeight": 63.21875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 243.8671875,
+              "cellHeight": 63.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 141.59375,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "After all children finish",
+              "width": 204.5390625,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 243.8671875,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 141.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 204.5390625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 243.8671875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 141.59375,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 204.5390625,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 243.8671875,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1260,
+    "tables": [
+      {
+        "client": 590,
+        "scroll": 590,
+        "height": 261.6953125,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 136.59375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 206.59375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 246.8125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 136.59375,
+              "cellHeight": 63.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 206.59375,
+              "cellHeight": 63.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 246.8125,
+              "cellHeight": 63.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 136.59375,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "After all children finish",
+              "width": 206.59375,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 246.8125,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 136.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 206.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 246.8125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 136.59375,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 206.59375,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 246.8125,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1242,
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "height": 242.4765625,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 149.7578125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 215.1875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 259.0546875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 149.7578125,
+              "cellHeight": 64.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 215.1875,
+              "cellHeight": 64.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 259.0546875,
+              "cellHeight": 64.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 149.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "After all children finish",
+              "width": 215.1875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 259.0546875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 149.7578125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 215.1875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 259.0546875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 149.7578125,
+              "cellHeight": 62.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 215.1875,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 259.0546875,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1242,
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "height": 265.6953125,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 141.703125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 218.5078125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 263.7890625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 141.703125,
+              "cellHeight": 64.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 218.5078125,
+              "cellHeight": 64.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 263.7890625,
+              "cellHeight": 64.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 141.703125,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "After all children finish",
+              "width": 218.5078125,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 263.7890625,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 141.703125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 218.5078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 263.7890625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 141.703125,
+              "cellHeight": 62.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 218.5078125,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 263.7890625,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1265,
+    "tables": [
+      {
+        "client": 586,
+        "scroll": 586,
+        "height": 261.6953125,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 140.6328125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 203.28125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 242.0859375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 140.6328125,
+              "cellHeight": 63.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 203.28125,
+              "cellHeight": 63.21875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 242.0859375,
+              "cellHeight": 63.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 140.6328125,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "After all children finish",
+              "width": 203.28125,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 242.0859375,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 140.6328125,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 203.28125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 242.0859375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 140.6328125,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 203.28125,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 242.0859375,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1265,
+    "tables": [
+      {
+        "client": 586,
+        "scroll": 586,
+        "height": 261.6953125,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 135.9921875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 205.1953125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 244.8125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 135.9921875,
+              "cellHeight": 63.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 205.1953125,
+              "cellHeight": 63.21875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 244.8125,
+              "cellHeight": 63.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 135.9921875,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "After all children finish",
+              "width": 205.1953125,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 244.8125,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 135.9921875,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 205.1953125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 244.8125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 135.9921875,
+              "cellHeight": 61.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 205.1953125,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 244.8125,
+              "cellHeight": 61.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1183,
+    "tables": [
+      {
+        "client": 628,
+        "scroll": 628,
+        "height": 243.4765625,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 150.71875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 215.6875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 261.59375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 150.71875,
+              "cellHeight": 64.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 215.6875,
+              "cellHeight": 64.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 261.59375,
+              "cellHeight": 64.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 150.71875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "After all children finish",
+              "width": 215.6875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 261.59375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 150.71875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 215.6875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 261.59375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 150.71875,
+              "cellHeight": 62.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 215.6875,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 261.59375,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1183,
+    "tables": [
+      {
+        "client": 628,
+        "scroll": 628,
+        "height": 266.6953125,
+        "rows": [
+          [
+            {
+              "text": "Question",
+              "width": 141.734375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "TaskGroup",
+              "width": 219.3671875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gather",
+              "width": 266.8984375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "Ordinary failure",
+              "width": 141.734375,
+              "cellHeight": 64.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Requests sibling cancellation",
+              "width": 219.3671875,
+              "cellHeight": 64.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "Still runningSiblings continue",
+              "width": 266.8984375,
+              "cellHeight": 64.21875,
+              "textHeight": 42
+            }
+          ],
+          [
+            {
+              "text": "Error reaches caller",
+              "width": 141.734375,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "After all children finish",
+              "width": 219.3671875,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "On first exception",
+              "width": 266.8984375,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Error form",
+              "width": 141.734375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "Grouped failures",
+              "width": 219.3671875,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "First exception",
+              "width": 266.8984375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "Child cancelled",
+              "width": 141.734375,
+              "cellHeight": 62.1875,
+              "textHeight": 16
+            },
+            {
+              "text": "Does not trigger sibling shutdown",
+              "width": 219.3671875,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            },
+            {
+              "text": "Propagates cancellation; siblings continue",
+              "width": 266.8984375,
+              "cellHeight": 62.1875,
+              "textHeight": 43.1875
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2111,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 544,
+        "height": 312.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2111,
+    "tables": [
+      {
+        "client": 332,
+        "scroll": 544,
+        "height": 312.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2112,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 544,
+        "height": 316.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2112,
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 544,
+        "height": 316.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2238,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 544,
+        "height": 312.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2238,
+    "tables": [
+      {
+        "client": 320,
+        "scroll": 544,
+        "height": 312.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 87.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 87.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 390,
+    "height": 2076,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 544,
+        "height": 317.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 390,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 390,
+    "height": 2076,
+    "tables": [
+      {
+        "client": 366,
+        "scroll": 544,
+        "height": 317.6015625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 96,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 112,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 96,
+              "cellHeight": 65.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "1024",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 112,
+              "cellHeight": 65.4375,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 96,
+              "cellHeight": 88.65625,
+              "textHeight": 62.4375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 112,
+              "cellHeight": 88.65625,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1028,
+    "tables": [
+      {
+        "client": 806,
+        "scroll": 806,
+        "height": 219.7265625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 193.4375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 153.140625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 153.140625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 153.140625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 153.140625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 193.4375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 193.4375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 193.4375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 153.140625,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 193.4375,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "29",
+              "width": 153.140625,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 153.140625,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 153.140625,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 153.140625,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "clean",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1029,
+    "tables": [
+      {
+        "client": 806,
+        "scroll": 806,
+        "height": 196.5078125,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 245.59375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 140.09375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 140.09375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 140.09375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 140.125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 245.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 140.125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 245.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 140.125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 245.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 140.125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 245.59375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "29",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 140.09375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 140.125,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1016,
+    "tables": [
+      {
+        "client": 840,
+        "scroll": 840,
+        "height": 200.5078125,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 201.59375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 159.6015625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 159.6015625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 159.6015625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 159.6015625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 201.59375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 201.59375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 201.59375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 201.59375,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "29",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 159.6015625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "editorial",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1016,
+    "tables": [
+      {
+        "client": 840,
+        "scroll": 840,
+        "height": 200.5078125,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 255.953125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 146.0078125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 146.0078125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 146.0078125,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 146.0234375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 255.953125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 146.0234375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 255.953125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 146.0234375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 255.953125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 146.0234375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 255.953125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "29",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 146.0078125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 146.0234375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 1025,
+    "tables": [
+      {
+        "client": 802,
+        "scroll": 802,
+        "height": 219.7265625,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 192.4765625,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 152.375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 152.375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 152.375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 152.3984375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 192.4765625,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 152.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 192.4765625,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 152.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 192.4765625,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 152.375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 152.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 192.4765625,
+              "cellHeight": 64.4375,
+              "textHeight": 39.21875
+            },
+            {
+              "text": "29",
+              "width": 152.375,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 152.375,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 152.375,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 152.3984375,
+              "cellHeight": 64.4375,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "product",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 1034,
+    "tables": [
+      {
+        "client": 802,
+        "scroll": 802,
+        "height": 196.5078125,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 244.375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 139.3984375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 139.3984375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 139.3984375,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 139.4296875,
+              "cellHeight": 31.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 244.375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 139.4296875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 244.375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 139.4296875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 244.375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 139.4296875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 244.375,
+              "cellHeight": 41.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "29",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 139.3984375,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 139.4296875,
+              "cellHeight": 41.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "base",
+    "pageWidth": 1440,
+    "height": 999,
+    "tables": [
+      {
+        "client": 845,
+        "scroll": 845,
+        "height": 201.5078125,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 202.875,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 160.609375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 160.609375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 160.609375,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 160.625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 202.875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 160.625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 202.875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 160.625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 202.875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 160.625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 202.875,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "29",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 160.609375,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 160.625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "swiss",
+    "theme": "light",
+    "arm": "candidate",
+    "pageWidth": 1440,
+    "height": 999,
+    "tables": [
+      {
+        "client": 845,
+        "scroll": 845,
+        "height": 201.5078125,
+        "rows": [
+          [
+            {
+              "text": "输入",
+              "width": 257.0703125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "输入大小",
+              "width": 147.0625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "raw DEFLATE",
+              "width": 147.0625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "gzip 结果",
+              "width": 147.0625,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            },
+            {
+              "text": "变化",
+              "width": 147.0703125,
+              "cellHeight": 32.6328125,
+              "textHeight": 14
+            }
+          ],
+          [
+            {
+              "text": "一个 ASCII A",
+              "width": 257.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "3",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "21",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+20",
+              "width": 147.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "1024 个 ASCII A",
+              "width": 257.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "11",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "-995",
+              "width": 147.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "固定派生字节",
+              "width": 257.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "1024",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1029",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "1047",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+23",
+              "width": 147.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ],
+          [
+            {
+              "text": "重复 A 的 gzip 结果再次压缩",
+              "width": 257.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 16
+            },
+            {
+              "text": "29",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "29",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "47",
+              "width": 147.0625,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            },
+            {
+              "text": "+18",
+              "width": 147.0703125,
+              "cellHeight": 42.21875,
+              "textHeight": 21.59375
+            }
+          ]
+        ]
+      }
+    ]
+  }
+]

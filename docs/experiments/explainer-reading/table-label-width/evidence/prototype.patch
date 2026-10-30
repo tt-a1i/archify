@@ -1,0 +1,13 @@
+diff --git a/archify/explainer/reader.css b/archify/explainer/reader.css
+index e51933536..f16fea538 100644
+--- a/archify/explainer/reader.css
++++ b/archify/explainer/reader.css
+@@ -132,7 +132,7 @@ thead th{font-size:12px;font-weight:500;color:var(--muted);padding-top:2px;paddi
+ tbody tr:nth-child(even)>*{background:var(--zebra)}
+ tbody tr:nth-child(even)>:first-child{border-radius:6px 0 0 6px}
+ tbody tr:nth-child(even)>:last-child{border-radius:0 6px 6px 0}
+-th[scope=row]{width:24%;min-width:96px;font-weight:500;color:var(--ink);font-size:13.5px}
++th[scope=row]{width:auto;min-width:96px;font-weight:500;color:var(--ink);font-size:13.5px}
+ td{min-width:112px;color:var(--secondary)}
+ .assessment{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;line-height:1.45;font-weight:600}
+ .assessment b{color:inherit;font-weight:600}

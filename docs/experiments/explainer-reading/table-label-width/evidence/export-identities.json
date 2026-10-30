@@ -1,0 +1,38 @@
+[
+  {
+    "file": "matplotlib-base-1440.png",
+    "width": 2880,
+    "height": 3120,
+    "sha256": "fd3724e9e2f21c7402b79273e8565de1cf2e48789a5f8ee736dadfe0e3a22e7f"
+  },
+  {
+    "file": "matplotlib-candidate-1440.png",
+    "width": 2880,
+    "height": 3074,
+    "sha256": "611afba643a7176582ba1de4b72fb9e0bd49af862213de07cdd09f0429ff1242"
+  },
+  {
+    "file": "requests-base-390.png",
+    "width": 780,
+    "height": 5306,
+    "sha256": "a891e5e5bd5583a0b8560790129990d835b9cf3b9ba4c00ddea1f9ebc4af63a8"
+  },
+  {
+    "file": "requests-candidate-390.png",
+    "width": 780,
+    "height": 5166,
+    "sha256": "25c490aa2e601a83a9354f5dae5d1366c5802ddbbe5845c756f4190d37e98cb9"
+  },
+  {
+    "file": "wide-gzip-base-390.png",
+    "width": 1152,
+    "height": 3738,
+    "sha256": "ad3a807a69b4096288c835b955b2e28297d6cebe25e60d5d4716c4b28ba39458"
+  },
+  {
+    "file": "wide-gzip-candidate-390.png",
+    "width": 1152,
+    "height": 3738,
+    "sha256": "ad3a807a69b4096288c835b955b2e28297d6cebe25e60d5d4716c4b28ba39458"
+  }
+]

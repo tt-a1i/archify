@@ -1,0 +1,26 @@
+[
+  {
+    "file": "requests-candidate-390.png",
+    "displayWidth": 390,
+    "width": 780,
+    "height": 5166
+  },
+  {
+    "file": "matplotlib-base-1440.png",
+    "displayWidth": 1440,
+    "width": 2880,
+    "height": 3120
+  },
+  {
+    "file": "matplotlib-candidate-1440.png",
+    "displayWidth": 1440,
+    "width": 2880,
+    "height": 3074
+  },
+  {
+    "file": "wide-gzip-candidate-390.png",
+    "displayWidth": 576,
+    "width": 1152,
+    "height": 3738
+  }
+]

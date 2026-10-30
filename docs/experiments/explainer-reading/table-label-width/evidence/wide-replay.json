@@ -1,0 +1,9 @@
+{
+  "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/export-overflow/base/gzip.html",
+  "inputSha256": "683f1244d08c97ace7ad3a27a0acdffc285459ae2dec14cf4cf8de2fa7b4f40f",
+  "restIdentical": true,
+  "sha256": {
+    "base": "975d8298bc5cbd8adf398baae61ff1840a3764b62a571c796b2153f6c506cf17",
+    "candidate": "7793158392a04f9afc02960f77ada2af3b7d32bf5c3540c4c8a7f6fbaa4a51c5"
+  }
+}

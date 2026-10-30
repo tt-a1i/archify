@@ -255,3 +255,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 42
 
 [Requests timeout boundaries](requests-timeout/README.md) compares a five-byte response sent in short intervals with a long pause during the body and a delayed-header control. Actual local runs distinguish a completed download of about 0.8 seconds from timeout=0.4, and preserve the different exception classes. The retained page replaces a generic sequence and clipped four-column table with two concrete scenarios and a complete three-column timing table. Runtime/package evidence is reused from round 40.
+
+## Continued exploration — round 43
+
+[Automatic row-label width](table-label-width/README.md) removes the fixed 24% first-column allocation on frozen pages. Several Chinese numeric tables become easier to scan, but the English TaskGroup comparison gains avoidable wrapping in another supported style. The universal CSS change is rejected and the runtime restored. The report retains the positive cases, counterexample, 52-document replay, four-style comparisons and actual exports; existing passing tests do not settle this visual tradeoff.

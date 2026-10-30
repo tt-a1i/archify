@@ -1,0 +1,134 @@
+
+> test
+> npm run test:core
+
+
+> test:core
+> node scripts/run-tests.mjs test/core-smoke.test.mjs
+
+Repository tests: 1 files, concurrency 4
+TAP version 13
+# Subtest: core smoke: public CLI diagrams, compatibility and delivery safety
+    # Subtest: architecture: validate, render and deliver the official example
+    ok 1 - architecture: validate, render and deliver the official example
+      ---
+      duration_ms: 1413.425375
+      type: 'test'
+      ...
+    # Subtest: workflow: validate, render and deliver the official example
+    ok 2 - workflow: validate, render and deliver the official example
+      ---
+      duration_ms: 1759.231
+      type: 'test'
+      ...
+    # Subtest: sequence: validate, render and deliver the official example
+    ok 3 - sequence: validate, render and deliver the official example
+      ---
+      duration_ms: 1435.268292
+      type: 'test'
+      ...
+    # Subtest: dataflow: validate, render and deliver the official example
+    ok 4 - dataflow: validate, render and deliver the official example
+      ---
+      duration_ms: 1382.124125
+      type: 'test'
+      ...
+    # Subtest: lifecycle: validate, render and deliver the official example
+    ok 5 - lifecycle: validate, render and deliver the official example
+      ---
+      duration_ms: 1388.160708
+      type: 'test'
+      ...
+    # Subtest: erd: validate, render and deliver the official example
+    ok 6 - erd: validate, render and deliver the official example
+      ---
+      duration_ms: 1426.041583
+      type: 'test'
+      ...
+    # Subtest: tree: validate, render and deliver the official example
+    ok 7 - tree: validate, render and deliver the official example
+      ---
+      duration_ms: 1401.327917
+      type: 'test'
+      ...
+    # Subtest: class: validate, render and deliver the official example
+    ok 8 - class: validate, render and deliver the official example
+      ---
+      duration_ms: 1390.379
+      type: 'test'
+      ...
+    # Subtest: timeline: validate, render and deliver the official example
+    ok 9 - timeline: validate, render and deliver the official example
+      ---
+      duration_ms: 1365.649667
+      type: 'test'
+      ...
+    # Subtest: waterfall: validate, render and deliver the official example
+    ok 10 - waterfall: validate, render and deliver the official example
+      ---
+      duration_ms: 1335.615375
+      type: 'test'
+      ...
+    # Subtest: explainer: validate, render and deliver the official example
+    ok 11 - explainer: validate, render and deliver the official example
+      ---
+      duration_ms: 1207.036792
+      type: 'test'
+      ...
+    # Subtest: architecture: frozen schema-v1 input remains valid and renderable
+    ok 12 - architecture: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 807.166125
+      type: 'test'
+      ...
+    # Subtest: workflow: frozen schema-v1 input remains valid and renderable
+    ok 13 - workflow: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 816.002042
+      type: 'test'
+      ...
+    # Subtest: sequence: frozen schema-v1 input remains valid and renderable
+    ok 14 - sequence: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 788.572834
+      type: 'test'
+      ...
+    # Subtest: dataflow: frozen schema-v1 input remains valid and renderable
+    ok 15 - dataflow: frozen schema-v1 input remains valid and renderable
+      ---
+      duration_ms: 772.582208
+      type: 'test'
+      ...
+    # Subtest: unknown diagram types return a structured diagnostic
+    ok 16 - unknown diagram types return a structured diagnostic
+      ---
+      duration_ms: 88.380583
+      type: 'test'
+      ...
+    # Subtest: strict provenance binds the delivered artifact bytes
+    ok 17 - strict provenance binds the delivered artifact bytes
+      ---
+      duration_ms: 393.918
+      type: 'test'
+      ...
+    # Subtest: invalid schema preserves the last artifact and marks its delivery as failed
+    ok 18 - invalid schema preserves the last artifact and marks its delivery as failed
+      ---
+      duration_ms: 705.454375
+      type: 'test'
+      ...
+    1..18
+ok 1 - core smoke: public CLI diagrams, compatibility and delivery safety
+  ---
+  duration_ms: 19889.456042
+  type: 'test'
+  ...
+1..1
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20034.415084

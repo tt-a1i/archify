@@ -1,0 +1,95 @@
+{
+  "base": "fd6e099c4b82b5da0200cb330ae7bbe8c670afa4",
+  "original": "th[scope=row]{width:24%;min-width:96px;",
+  "replacement": "th[scope=row]{width:auto;min-width:96px;",
+  "results": [
+    {
+      "id": "requests",
+      "file": "requests-timeout/candidate.html",
+      "style": "editorial",
+      "restIdentical": true,
+      "inputSha256": "5b136f178339b6f50685f2b6f1112c1a00feee5baedf6ab3de01543a2a77fc77",
+      "sha256": {
+        "base": "5b136f178339b6f50685f2b6f1112c1a00feee5baedf6ab3de01543a2a77fc77",
+        "candidate": "ab9514165a067df1a3a4eb26839f41f53c8263ae9abd70f7a6a044fddd220863"
+      }
+    },
+    {
+      "id": "pandas",
+      "file": "pandas-groupby/candidate.html",
+      "style": "editorial",
+      "restIdentical": true,
+      "inputSha256": "84ef3cf25f61009bd7e9637f4ed692c888ae2d47e1d1fc82bfbed403343e57a8",
+      "sha256": {
+        "base": "84ef3cf25f61009bd7e9637f4ed692c888ae2d47e1d1fc82bfbed403343e57a8",
+        "candidate": "070e4d10f4309e5d086c5e7c97b5457f8af174b2657c037487f54cb335ff86cf"
+      }
+    },
+    {
+      "id": "matplotlib",
+      "file": "matplotlib-axis/candidate.html",
+      "style": "clean",
+      "restIdentical": true,
+      "inputSha256": "5291f350b860e783f5acfb2265a0f0a6c0ae4f8917f56cadff8974b0034daf7f",
+      "sha256": {
+        "base": "6973429ff5cf98b771ad746c9dd14f7675b2d39babb722515af65d686b34c531",
+        "candidate": "d026d4037292c13cdccf20c09690785e1e6c52b56a4ebd8e61183001d8c25e15"
+      }
+    },
+    {
+      "id": "redis",
+      "file": "redis/candidate.html",
+      "style": "editorial",
+      "restIdentical": true,
+      "inputSha256": "4adbcc829adcfddcf4903b8e73a638d741cd1317145f9c1fac534ed5b505c3aa",
+      "sha256": {
+        "base": "1bd77bc3f8f6f0b294a17a6f90e02e490875284afea58d8d3672a3140c50ea7f",
+        "candidate": "7180227a6975bb844ea3fa9b09c5c04ded8a4b54807cccbc21b728b55309a29f"
+      }
+    },
+    {
+      "id": "taskgroup",
+      "file": "mobile-tools-adopted/taskgroup-candidate.html",
+      "style": "clean",
+      "restIdentical": true,
+      "inputSha256": "1c72369b9dca4fa547bd643198ca48f99c3af9e311b7cccf8f37a18f4e63ca5a",
+      "sha256": {
+        "base": "1c72369b9dca4fa547bd643198ca48f99c3af9e311b7cccf8f37a18f4e63ca5a",
+        "candidate": "06415119a07cabfcc40c7ad27b4413dd5e828f98586f6304db81c82c01fef802"
+      }
+    },
+    {
+      "id": "restore",
+      "file": "restore-pair/purpose-table.html",
+      "style": "editorial",
+      "restIdentical": true,
+      "inputSha256": "c7d44afca46f7942e4621b2f9f30e80c64cbe742a87c5e08ee6dd781f80d2ffd",
+      "sha256": {
+        "base": "8e0ba74910f00fca795578faee797d36291595de5a216318a095aff6eca05b3c",
+        "candidate": "75d5d05172e0b0881cece476034c92bfeb9b308ae072c7a317111d4a3f201d4f"
+      }
+    },
+    {
+      "id": "duckdb",
+      "file": "duckdb-union/candidate.html",
+      "style": "editorial",
+      "restIdentical": true,
+      "inputSha256": "84c86f94079af838a21ff22e41c07d2d7aa873bae62503a7c43de317d50da350",
+      "sha256": {
+        "base": "dc40ab2839c94a3901af936eca3e516c38bf6cf5fc074ccb8f841b2f3df0130e",
+        "candidate": "c6891e565c43947bd5bceb54316afb4bd2610e71030fbf670b4bd582ac2dc224"
+      }
+    },
+    {
+      "id": "gzip",
+      "file": "gzip-opening/candidate.html",
+      "style": "clean",
+      "restIdentical": true,
+      "inputSha256": "ff59b398c4e227db6b80673868f38a9652082ef0c3d457bc35267bd7d602694f",
+      "sha256": {
+        "base": "3739ef752e34a4a440b013ba33db944b45b0dbd8c5e0e4de97399bb5448353a7",
+        "candidate": "1e6a193d4ba01b4ee9ad25854694468c5851e7df326b4102f9cbbf1e62b99b77"
+      }
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "counts": {
+    "pairs": 32,
+    "tallerPage": 3,
+    "shorterPage": 10,
+    "samePage": 19,
+    "sameContent": true,
+    "noIncreasedTableScroll": true
+  },
+  "tallerCases": [
+    {
+      "id": "taskgroup",
+      "width": 390,
+      "style": "editorial",
+      "basePage": 2750,
+      "candidatePage": 2788,
+      "baseTables": [
+        311.7265625
+      ],
+      "candidateTables": [
+        350.0390625
+      ]
+    },
+    {
+      "id": "taskgroup",
+      "width": 1440,
+      "style": "editorial",
+      "basePage": 1242,
+      "candidatePage": 1242,
+      "baseTables": [
+        242.4765625
+      ],
+      "candidateTables": [
+        265.6953125
+      ]
+    },
+    {
+      "id": "taskgroup",
+      "width": 1440,
+      "style": "swiss",
+      "basePage": 1183,
+      "candidatePage": 1183,
+      "baseTables": [
+        243.4765625
+      ],
+      "candidateTables": [
+        266.6953125
+      ]
+    },
+    {
+      "id": "wide-gzip",
+      "width": 1440,
+      "style": "clean",
+      "basePage": 1028,
+      "candidatePage": 1029,
+      "baseTables": [
+        219.7265625
+      ],
+      "candidateTables": [
+        196.5078125
+      ]
+    },
+    {
+      "id": "wide-gzip",
+      "width": 1440,
+      "style": "product",
+      "basePage": 1025,
+      "candidatePage": 1034,
+      "baseTables": [
+        219.7265625
+      ],
+      "candidateTables": [
+        196.5078125
+      ]
+    }
+  ]
+}

@@ -1,0 +1,364 @@
+[
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "editorial",
+    "arm": "base",
+    "height": 2750,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 257,
+        "width": 366,
+        "height": 415.6796875,
+        "top": 257,
+        "right": 378,
+        "bottom": 672.6796875,
+        "left": 12
+      },
+      {
+        "id": "shutdown",
+        "x": 12,
+        "y": 684.6796875,
+        "width": 366,
+        "height": 489.453125,
+        "top": 684.6796875,
+        "right": 378,
+        "bottom": 1174.1328125,
+        "left": 12
+      },
+      {
+        "id": "errors",
+        "x": 12,
+        "y": 1186.1328125,
+        "width": 366,
+        "height": 321.265625,
+        "top": 1186.1328125,
+        "right": 378,
+        "bottom": 1507.3984375,
+        "left": 12
+      },
+      {
+        "id": "compare",
+        "x": 12,
+        "y": 1519.3984375,
+        "width": 366,
+        "height": 520.0078125,
+        "top": 1519.3984375,
+        "right": 378,
+        "bottom": 2039.40625,
+        "left": 12
+      },
+      {
+        "id": "checks",
+        "x": 12,
+        "y": 2051.40625,
+        "width": 366,
+        "height": 338.46875,
+        "top": 2051.40625,
+        "right": 378,
+        "bottom": 2389.875,
+        "left": 12
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 390,
+    "style": "editorial",
+    "arm": "candidate",
+    "height": 2788,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 257,
+        "width": 366,
+        "height": 415.6796875,
+        "top": 257,
+        "right": 378,
+        "bottom": 672.6796875,
+        "left": 12
+      },
+      {
+        "id": "shutdown",
+        "x": 12,
+        "y": 684.6796875,
+        "width": 366,
+        "height": 489.453125,
+        "top": 684.6796875,
+        "right": 378,
+        "bottom": 1174.1328125,
+        "left": 12
+      },
+      {
+        "id": "errors",
+        "x": 12,
+        "y": 1186.1328125,
+        "width": 366,
+        "height": 321.265625,
+        "top": 1186.1328125,
+        "right": 378,
+        "bottom": 1507.3984375,
+        "left": 12
+      },
+      {
+        "id": "compare",
+        "x": 12,
+        "y": 1519.3984375,
+        "width": 366,
+        "height": 558.3203125,
+        "top": 1519.3984375,
+        "right": 378,
+        "bottom": 2077.71875,
+        "left": 12
+      },
+      {
+        "id": "checks",
+        "x": 12,
+        "y": 2089.71875,
+        "width": 366,
+        "height": 338.46875,
+        "top": 2089.71875,
+        "right": 378,
+        "bottom": 2428.1875,
+        "left": 12
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "editorial",
+    "arm": "base",
+    "height": 1242,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 632,
+        "height": 301,
+        "top": 116.5,
+        "right": 712,
+        "bottom": 417.5,
+        "left": 80
+      },
+      {
+        "id": "shutdown",
+        "x": 728,
+        "y": 116.5,
+        "width": 632,
+        "height": 375,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 491.5,
+        "left": 728
+      },
+      {
+        "id": "errors",
+        "x": 80,
+        "y": 433.5,
+        "width": 632,
+        "height": 244,
+        "top": 433.5,
+        "right": 712,
+        "bottom": 677.5,
+        "left": 80
+      },
+      {
+        "id": "compare",
+        "x": 728,
+        "y": 507.5,
+        "width": 632,
+        "height": 473,
+        "top": 507.5,
+        "right": 1360,
+        "bottom": 980.5,
+        "left": 728
+      },
+      {
+        "id": "checks",
+        "x": 80,
+        "y": 693.5,
+        "width": 632,
+        "height": 287,
+        "top": 693.5,
+        "right": 712,
+        "bottom": 980.5,
+        "left": 80
+      }
+    ]
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "style": "editorial",
+    "arm": "candidate",
+    "height": 1242,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 632,
+        "height": 301,
+        "top": 116.5,
+        "right": 712,
+        "bottom": 417.5,
+        "left": 80
+      },
+      {
+        "id": "shutdown",
+        "x": 728,
+        "y": 116.5,
+        "width": 632,
+        "height": 375,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 491.5,
+        "left": 728
+      },
+      {
+        "id": "errors",
+        "x": 80,
+        "y": 433.5,
+        "width": 632,
+        "height": 244,
+        "top": 433.5,
+        "right": 712,
+        "bottom": 677.5,
+        "left": 80
+      },
+      {
+        "id": "compare",
+        "x": 728,
+        "y": 507.5,
+        "width": 632,
+        "height": 473,
+        "top": 507.5,
+        "right": 1360,
+        "bottom": 980.5,
+        "left": 728
+      },
+      {
+        "id": "checks",
+        "x": 80,
+        "y": 693.5,
+        "width": 632,
+        "height": 287,
+        "top": 693.5,
+        "right": 712,
+        "bottom": 980.5,
+        "left": 80
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "product",
+    "arm": "base",
+    "height": 1025,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 98.5,
+        "width": 416,
+        "height": 424,
+        "top": 98.5,
+        "right": 496,
+        "bottom": 522.5,
+        "left": 80
+      },
+      {
+        "id": "parts",
+        "x": 512,
+        "y": 98.5,
+        "width": 848,
+        "height": 264,
+        "top": 98.5,
+        "right": 1360,
+        "bottom": 362.5,
+        "left": 512
+      },
+      {
+        "id": "examples",
+        "x": 512,
+        "y": 378.5,
+        "width": 848,
+        "height": 413,
+        "top": 378.5,
+        "right": 1360,
+        "bottom": 791.5,
+        "left": 512
+      },
+      {
+        "id": "check",
+        "x": 80,
+        "y": 538.5,
+        "width": 416,
+        "height": 253,
+        "top": 538.5,
+        "right": 496,
+        "bottom": 791.5,
+        "left": 80
+      }
+    ]
+  },
+  {
+    "id": "wide-gzip",
+    "width": 1440,
+    "style": "product",
+    "arm": "candidate",
+    "height": 1034,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 98.5,
+        "width": 848,
+        "height": 298,
+        "top": 98.5,
+        "right": 928,
+        "bottom": 396.5,
+        "left": 80
+      },
+      {
+        "id": "parts",
+        "x": 944,
+        "y": 98.5,
+        "width": 416,
+        "height": 364,
+        "top": 98.5,
+        "right": 1360,
+        "bottom": 462.5,
+        "left": 944
+      },
+      {
+        "id": "examples",
+        "x": 80,
+        "y": 412.5,
+        "width": 848,
+        "height": 388,
+        "top": 412.5,
+        "right": 928,
+        "bottom": 800.5,
+        "left": 80
+      },
+      {
+        "id": "check",
+        "x": 944,
+        "y": 478.5,
+        "width": 416,
+        "height": 322,
+        "top": 478.5,
+        "right": 1360,
+        "bottom": 800.5,
+        "left": 944
+      }
+    ]
+  }
+]
