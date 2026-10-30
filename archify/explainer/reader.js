@@ -11,6 +11,8 @@
   const all = (selector, within = document) => [...within.querySelectorAll(selector)];
   let toastTimer;
   function notify(text) { const toast=byId('toast');toast.textContent=text;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),3000); }
+  // Call during user activation; async also routes unavailable APIs and synchronous throws to failure handlers.
+  async function copyText(text) { await navigator.clipboard.writeText(text); }
   // Measured board layout. Each panel is measured at every column width, then each column template is
   // simulated and the one with the least page height and blank area wins. Panels keep source order on
   // a 1px row grid, so the DOM and reading order never change.
@@ -596,16 +598,16 @@
   }
   all('[data-copy]').forEach(button=>button.addEventListener('click',()=>{
     const text = button.closest('figure').querySelector('pre code').textContent;
-    Promise.resolve(navigator.clipboard?.writeText(text)).then(()=>{button.textContent = words.copied;setTimeout(()=>{button.textContent = words.copy;},1600);},()=>notify(say('Copy failed.','复制失败。')));
+    copyText(text).then(()=>{button.textContent = words.copied;setTimeout(()=>{button.textContent = words.copy;},1600);},()=>notify(say('Copy failed. Select the code and copy it manually.','复制失败，请选中代码后手动复制。')));
   }));
   // Follow-up questions: a reader asks about a panel, or about selected text in it, and copies a
   // message that names the page, the panel ID and the quote, so the agent can revise just that panel.
   function setupAsk() {
     const dialog = document.createElement('dialog'); dialog.className = 'ask-dialog';
     const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-    dialog.innerHTML = `<form method="dialog"><header><div><h2 id="ask-title">${words.ask}</h2><p class="ask-where"></p></div><button type="button" class="ask-close" data-ask-cancel aria-label="${words.askCancel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></header><blockquote hidden></blockquote><div class="ask-chips" role="group" aria-label="${words.askQuestion}">${words.askChips.map(chip=>`<button type="button" data-chip>${chip}</button>`).join('')}</div><textarea rows="4" aria-labelledby="ask-title" placeholder="${words.askPlaceholder}"></textarea><footer><p class="ask-note">${words.askNote}</p><button type="button" data-ask-cancel>${words.askCancel}</button><button type="submit" class="primary">${words.askCopy}<kbd>${mac ? '⌘↵' : 'Ctrl ↵'}</kbd></button></footer></form>`;
+    dialog.innerHTML = `<form method="dialog"><header><div><h2 id="ask-title">${words.ask}</h2><p class="ask-where"></p></div><button type="button" class="ask-close" data-ask-cancel aria-label="${words.askCancel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></header><blockquote hidden></blockquote><div class="ask-chips" role="group" aria-label="${words.askQuestion}">${words.askChips.map(chip=>`<button type="button" data-chip>${chip}</button>`).join('')}</div><textarea rows="4" aria-labelledby="ask-title" placeholder="${words.askPlaceholder}"></textarea><footer><p class="ask-note" role="status">${words.askNote}</p><button type="button" data-ask-cancel>${words.askCancel}</button><button type="submit" class="primary">${words.askCopy}<kbd>${mac ? '⌘↵' : 'Ctrl ↵'}</kbd></button></footer></form>`;
     document.body.append(dialog);
-    const area = dialog.querySelector('textarea'), quoteBox = dialog.querySelector('blockquote');
+    const area = dialog.querySelector('textarea'), quoteBox = dialog.querySelector('blockquote'), note = dialog.querySelector('.ask-note');
     let context = null;
     const open = (panel, quote = '') => {
       const number = panel.id === 'answer' ? words.answer : panel.querySelector('.panel-id')?.textContent.trim();
@@ -614,7 +616,7 @@
       dialog.querySelector('.ask-where').textContent = panel.id === 'answer' ? title : say(`Panel ${number} · ${title}`,`面板 ${number} · ${title}`);
       all('[data-chip]',dialog).forEach(chip=>chip.setAttribute('aria-pressed','false'));
       quoteBox.hidden = !quote; quoteBox.textContent = quote;
-      area.value = ''; dialog.showModal(); area.focus();
+      area.value = ''; note.textContent = words.askNote; dialog.showModal(); area.focus();
     };
     // A suggested question is added once; choosing it again takes it back out.
     dialog.querySelectorAll('[data-chip]').forEach(chip=>chip.addEventListener('click',()=>{
@@ -638,7 +640,7 @@
         ...(panel.id === 'answer' ? [] : [words.askPatch]),
       ];
       const text = lines.join('\n');
-      Promise.resolve(navigator.clipboard?.writeText(text)).then(()=>{ dialog.close(); notify(words.askCopied); },()=>{ area.value = text; area.select(); });
+      copyText(text).then(()=>{ dialog.close(); notify(words.askCopied); },()=>{ area.value = text; area.focus(); area.select(); note.textContent = say('Copy failed. The text is selected; copy it manually.','复制失败，已选中文本，请手动复制。'); });
     });
     all('.panel').forEach(panel=>{
       const button = document.createElement('button'); button.type = 'button'; button.className = 'ask-button interactive'; button.textContent = words.ask;

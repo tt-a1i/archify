@@ -262,6 +262,50 @@ test('public system-theme mode starts with fresh storage and stable DOM identiti
   await browser.resetPage();const disabled=await inspectPublicHtml(browser,{artifactPath:file,width:1440,theme:'dark',themeControl:'system',javascript:false,keyboard:false});assert.equal(await pageValue(browser,'Boolean(window.artifactRan)'),false);assert.equal(disabled.fontReadiness.status,'loaded');assert.equal(disabled.measurementMethod.clipCoverage,'not-measured-script-disabled');assert.equal(disabled.measurementMethod.documentExtentMeasured,true);assert.equal(disabled.background,'rgb(23, 23, 23)');
  }finally{await browser.close();}
 });
+test('copy controls report confirmed writes and retain manual-copy text on clipboard failure',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');
+ const browser=new ChromeVisualBrowser(chrome),observations=[];
+ const literal='const message = "literal <&> 中文";\nconsole.log(message);\n',question='Why this result? <&> 中文';
+ try {
+  for(const locale of ['en','zh-CN']) {
+   const doc=formalDocument();doc.meta.locale=locale;
+   doc.panels[0].blocks.push({id:'copy-example',type:'snippet',title:'Complete example',language:'js',text:literal});
+   const file=artifact(`clipboard-${locale}`,renderExplainer(doc,{sourceText:JSON.stringify(doc)}));
+   for(const mode of ['success','missing','rejected','throws']) {
+    await browser.resetPage();await inspectPublicHtml(browser,{artifactPath:file,width:390,keyboard:false});
+    await pageValue(browser,`(()=>{window.copyErrors=[];addEventListener('error',e=>{copyErrors.push(e.message);e.preventDefault();});window.written=[];const mode=${JSON.stringify(mode)};Object.defineProperty(navigator,'clipboard',{configurable:true,value:mode==='missing'?undefined:{writeText(value){written.push(value);if(mode==='throws')throw new Error('Controlled synchronous failure');if(mode==='rejected')return Promise.reject(new Error('Controlled rejection'));return new Promise(resolve=>window.finishCopy=resolve);}}});})()`);
+    await keyboardActivate(browser,'[data-copy]');
+    const pendingSnippet=await pageValue(browser,'document.querySelector("[data-copy]").textContent');
+    if(mode==='success')await pageValue(browser,'finishCopy()');
+    const snippet=await pageValue(browser,`({label:document.querySelector('[data-copy]').textContent,toast:document.querySelector('#toast').textContent,written:[...written]})`);
+    await keyboardActivate(browser,'#why .ask-button');
+    await pageValue(browser,`document.querySelector('.ask-dialog textarea').value=${JSON.stringify(question)};document.querySelector('#toast').textContent='';`);
+    await keyboardActivate(browser,'.ask-dialog [type=submit]');
+    const pendingDialog=await pageValue(browser,'document.querySelector(".ask-dialog").open');
+    if(mode==='success')await pageValue(browser,'finishCopy()');
+    const ask=await pageValue(browser,`(()=>{const area=document.querySelector('.ask-dialog textarea');return {open:document.querySelector('.ask-dialog').open,text:area.value,selection:[area.selectionStart,area.selectionEnd],focused:document.activeElement===area,note:document.querySelector('.ask-note').textContent,noteRole:document.querySelector('.ask-note').getAttribute('role'),toast:document.querySelector('#toast').textContent,written:[...written],errors:copyErrors};})()`);
+    let reopened;
+    if(mode!=='success'){await keyboardActivate(browser,'.ask-dialog footer [data-ask-cancel]');await keyboardActivate(browser,'#why .ask-button');reopened=await pageValue(browser,`({note:document.querySelector('.ask-note').textContent,expected:JSON.parse(document.getElementById('explainer-reader-words').textContent).askNote,text:document.querySelector('.ask-dialog textarea').value})`);}
+    observations.push({locale,mode,pendingSnippet,pendingDialog,snippet,ask,reopened});
+   }
+  }
+  for(const entry of observations) {
+   const {locale,mode,snippet,ask}=entry,copy=locale==='en'?'Copy':'复制',copied=locale==='en'?'Copied':'已复制',failed=locale==='en'?'Copy failed':'复制失败';
+   const success=observations.find(item=>item.locale===locale&&item.mode==='success');
+   assert.deepEqual(ask.errors,[],JSON.stringify(entry));
+   if(mode==='success') {
+    assert.equal(entry.pendingSnippet,copy,'success must wait for the clipboard promise');assert.equal(entry.pendingDialog,true,'a pending write keeps the question available');
+    assert.equal(snippet.label,copied);assert.deepEqual(snippet.written,[literal]);assert.equal(ask.open,false);
+    assert.ok(ask.written[1].includes(question));assert.ok(ask.written[1].includes('why'));assert.ok(ask.toast.startsWith(copied));
+   } else {
+    assert.equal(snippet.label,copy,JSON.stringify(entry));assert.ok(snippet.toast.startsWith(failed),JSON.stringify(entry));
+    assert.equal(ask.open,true,JSON.stringify(entry));assert.equal(ask.text,success.ask.written[1],'manual copy retains the complete successful payload');
+    assert.deepEqual(ask.selection,[0,ask.text.length]);assert.equal(ask.focused,true);assert.ok(ask.note.startsWith(failed));assert.equal(ask.noteRole,'status');
+    assert.equal(entry.reopened.note,entry.reopened.expected,'a new question restores its normal instruction');assert.equal(entry.reopened.text,'');
+   }
+  }
+ }finally{await browser.close();}
+});
 test('text names light their diagram nodes and walk-throughs step through steps and messages',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
  const spec=compileExplainerDiagram('sequence',['actor api | API | backend','actor redis | Redis | database','api | redis | Read cache','redis | api | Return cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
