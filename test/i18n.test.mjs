@@ -8,6 +8,7 @@ import { validateSchema } from '../archify/renderers/shared/validator.mjs';
 import {
   skillRoot, ES_TRANSLATIONS, KO_TRANSLATIONS, FR_PARTIAL_TRANSLATIONS,
   MANIFEST, EXAMPLES, example, authoredExample, localeDocument, createLocaleFixture,
+  stripRuntimeWarnings,
 } from './helpers/i18n-fixture.mjs';
 
 import {
@@ -486,10 +487,10 @@ test('validate and deliver receipts carry locale warnings as structured diagnost
     for (const key of coverage.missingKeys) assert.equal(coverage.englishSource[key], translateMessage('en', key));
     assert.deepEqual(receipt.diagnostics[0].evidence.unknownKeys, ['viewer.common.closee']);
     const expectedWarnings = receipt.diagnostics.map(entry => `archify: ${entry.message}\n`).join('');
-    assert.equal(machine.stderr, expectedWarnings, `${command}: JSON success discloses each warning once`);
+    assert.equal(stripRuntimeWarnings(machine.stderr), expectedWarnings, `${command}: JSON success discloses each warning once`);
     const human = spawnSync(process.execPath, args, { cwd: tmp, encoding: 'utf8' });
     assert.equal(human.status, 0, human.stderr || human.stdout);
-    assert.equal(human.stderr, expectedWarnings, `${command}: human success discloses each warning once`);
+    assert.equal(stripRuntimeWarnings(human.stderr), expectedWarnings, `${command}: human success discloses each warning once`);
     assert.ok(human.stdout.trim());
   }
 

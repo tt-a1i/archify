@@ -51,12 +51,21 @@ test('workflow cards keep CJK words unbroken while retaining the overflow guard'
   const html = fs.readFileSync(output, 'utf8');
   const cardRule = html.match(/\.card \{[^}]*\}/g)?.find(rule => rule.includes('overflow-wrap'));
   assert.ok(cardRule, 'rendered HTML inlines the .card rule');
-  assert.ok(
-    cardRule.includes('word-break: keep-all'),
+  // Declaration text can also appear inside CSS comments; judge the
+  // declarations only so a comment cannot satisfy these assertions.
+  const declarations = cardRule.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(
+    declarations,
+    /word-break\s*:\s*keep-all/,
     'card prose keeps CJK words unbroken (wraps at spaces, not between syllables)',
   );
-  assert.ok(
-    cardRule.includes('overflow-wrap: anywhere'),
+  assert.match(
+    declarations,
+    /overflow-wrap\s*:\s*anywhere/,
     'card prose retains the unbroken-run overflow guard from #632',
+  );
+  assert.ok(
+    html.includes('class="card"'),
+    'rendered Korean card carries the .card class the rule styles',
   );
 });

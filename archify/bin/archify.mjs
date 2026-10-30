@@ -2662,6 +2662,20 @@ function inputDiagnostic(error, inputPath) {
   });
 }
 
+// Lines Node itself prints on a child's stderr: `(node:PID) [CODE] Warning: ...`
+// plus the `(Use `node --trace-warnings ...` ...)` hint it appends after each
+// one. Application output never takes this shape, so stripping these lines
+// cannot hide an archify diagnostic or warning.
+const RUNTIME_WARNING_LINE = /^\(node:\d+\) .*Warning:.*$/;
+const RUNTIME_WARNING_HINT = /^\(Use `node --trace-warnings.*$/;
+
+function stripRuntimeWarnings(stderr) {
+  return String(stderr || '')
+    .split('\n')
+    .filter((line) => !RUNTIME_WARNING_LINE.test(line) && !RUNTIME_WARNING_HINT.test(line))
+    .join('\n');
+}
+
 function rendererFailure(result) {
   if (result.error) {
     return {
@@ -2674,7 +2688,12 @@ function rendererFailure(result) {
     };
   }
   try {
-    const payload = JSON.parse((result.stderr || '').trim());
+    // Node prints its own runtime warnings (for example undici's experimental
+    // EnvHttpProxyAgent notice on Node 22) on the renderer's stderr ahead of
+    // the structured diagnostic. Strip those lines so the diagnostic boundary
+    // still parses on warning-emitting runtimes; anything else stays
+    // fail-closed below.
+    const payload = JSON.parse(stripRuntimeWarnings(result.stderr).trim());
     if (payload?.ok === false && Array.isArray(payload.diagnostics) && payload.diagnostics.length) {
       return {
         error: payload.error || payload.diagnostics[0].message,

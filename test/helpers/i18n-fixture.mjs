@@ -19,6 +19,22 @@ export const KO_TRANSLATIONS = JSON.parse(fs.readFileSync(path.join(skillRoot, '
 export const FR_PARTIAL_TRANSLATIONS = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/locales/fr.partial.json'), 'utf8'));
 export const MANIFEST = JSON.parse(fs.readFileSync(path.join(skillRoot, 'locales/manifest.json'), 'utf8'));
 
+// Lines Node itself prints on a child's stderr: `(node:PID) [CODE] Warning: ...`
+// plus the `(Use `node --trace-warnings ...` ...)` hint it appends after each
+// one. Newer runtimes (for example Node 22's experimental EnvHttpProxyAgent
+// notice) emit these before any application output, so tests that assert on
+// captured stderr strip them first. Application warnings never take this
+// shape, so an unexpected archify warning still fails the assertion.
+const RUNTIME_WARNING_LINE = /^\(node:\d+\) .*Warning:.*$/;
+const RUNTIME_WARNING_HINT = /^\(Use `node --trace-warnings.*$/;
+
+export function stripRuntimeWarnings(stderr) {
+  return String(stderr || '')
+    .split('\n')
+    .filter((line) => !RUNTIME_WARNING_LINE.test(line) && !RUNTIME_WARNING_HINT.test(line))
+    .join('\n');
+}
+
 export const EXAMPLES = {
   architecture: 'web-app.architecture.json',
   workflow: 'agent-tool-call.workflow.json',
@@ -106,6 +122,9 @@ export function createLocaleFixture() {
     const result = spawnSync(process.execPath, args, { cwd: skillRoot, encoding: 'utf8' });
     return {
       ...result,
+      // Runtime warnings are the platform's, not the CLI's; drop them so
+      // stderr assertions only judge application output.
+      stderr: stripRuntimeWarnings(result.stderr),
       output,
       html: result.status === 0 && command === 'render' ? fs.readFileSync(output, 'utf8') : '',
     };
