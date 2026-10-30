@@ -1,0 +1,14 @@
+{
+  "snippet": {
+    "clipboardType": "undefined",
+    "button": "已复制",
+    "toast": ""
+  },
+  "question": {
+    "clipboardType": "undefined",
+    "dialogOpen": false,
+    "toast": "已复制，粘贴给 agent 即可",
+    "question": "均值为什么是 2？"
+  },
+  "scope": "Actual complete page in Chrome; navigator.clipboard deliberately set to undefined. This does not establish real OS clipboard permissions or frequency."
+}

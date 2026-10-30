@@ -1,0 +1,1 @@
+const p=(await taskSpace(14)).page('p1');console.log(await p.evaluate(()=>({reports:window.reports,frame:!!document.querySelector('iframe'),srcdocLength:document.querySelector('iframe')?.srcdoc.length,bridge:document.querySelector('iframe')?.srcdoc.includes("kind:'clipboard-probe'")})));console.log(await p.snapshot());

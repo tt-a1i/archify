@@ -1,0 +1,17 @@
+{
+  "before": {
+    "secure": false,
+    "clipboard": "undefined",
+    "initialized": true,
+    "asks": 5
+  },
+  "snippet": {
+    "button": "已复制",
+    "toast": ""
+  },
+  "question": {
+    "open": false,
+    "toast": "已复制，粘贴给 agent 即可"
+  },
+  "scope": "Actual data-URL page in Chrome; no injected clipboard property or permissions. Does not establish ordinary file-page or OS clipboard behavior."
+}

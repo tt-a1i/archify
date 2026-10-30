@@ -1,0 +1,1 @@
+const p=(await taskSpace(14)).page('p1');console.log(await p.evaluate(()=>{const f=document.querySelector('iframe');return{src:f?.getAttribute('src'),documentAvailable:Boolean(f?.contentDocument),title:document.title,selection:document.querySelector('#open-link')?.getAttribute('href'),scripts:[...document.scripts].length};}));console.log(await p.snapshot());

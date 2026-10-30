@@ -1,0 +1,5 @@
+const fs=await import('node:fs/promises'),r='/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round47',p=(await taskSpace(14)).page('p1'),out=[];
+for(const [id,width,positions]of [['polars',390,[0,1300,2000]],['taskgroup',1440,[0,1100]]]){
+ await p.cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await p.goto('file://'+r+'/exports-2/'+id+'-'+width+'-candidate.png');const dimensions=await p.evaluate(async width=>{const img=document.querySelector('img');await img.decode();document.body.style.margin='0';img.style.cssText='width:'+width+'px;max-width:none;height:auto;';return{naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,displayHeight:img.getBoundingClientRect().height};},width);
+ for(const y of positions){await p.evaluate(y=>scrollTo(0,y),y);const shot=await p.cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});const name=id+'-export-'+y+'.png';await fs.writeFile(r+'/screenshots-2/'+name,Buffer.from(shot.data,'base64'));out.push({id,width,y,dimensions,file:name});}
+}await fs.writeFile(r+'/export-inspection.json',JSON.stringify(out,null,2)+'\n');console.log(out);

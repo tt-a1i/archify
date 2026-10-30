@@ -1,0 +1,57 @@
+[
+  {
+    "id": "polars",
+    "width": 390,
+    "y": 0,
+    "dimensions": {
+      "naturalWidth": 780,
+      "naturalHeight": 5530,
+      "displayHeight": 2765
+    },
+    "file": "polars-export-0.png"
+  },
+  {
+    "id": "polars",
+    "width": 390,
+    "y": 1300,
+    "dimensions": {
+      "naturalWidth": 780,
+      "naturalHeight": 5530,
+      "displayHeight": 2765
+    },
+    "file": "polars-export-1300.png"
+  },
+  {
+    "id": "polars",
+    "width": 390,
+    "y": 2000,
+    "dimensions": {
+      "naturalWidth": 780,
+      "naturalHeight": 5530,
+      "displayHeight": 2765
+    },
+    "file": "polars-export-2000.png"
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "y": 0,
+    "dimensions": {
+      "naturalWidth": 2880,
+      "naturalHeight": 2618,
+      "displayHeight": 1309
+    },
+    "file": "taskgroup-export-0.png"
+  },
+  {
+    "id": "taskgroup",
+    "width": 1440,
+    "y": 1100,
+    "dimensions": {
+      "naturalWidth": 2880,
+      "naturalHeight": 2618,
+      "displayHeight": 1309
+    },
+    "file": "taskgroup-export-1100.png"
+  }
+]

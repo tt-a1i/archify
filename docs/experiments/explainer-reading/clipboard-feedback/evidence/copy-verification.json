@@ -1,0 +1,7 @@
+{
+  "sha256": "33c271275ef9690979aa10d2fcff4858021c9b839cc98a367295a89857b189dd",
+  "bytesEqualRound46VerifiedProgram": true,
+  "astEqual": true,
+  "stdout": "fill_null [1.0, 0.0, nan, 3.0] mean: nan\nnan_to_null [1.0, None, None, 3.0] mean: 2.0\nboth_to_zero [1.0, 0.0, 0.0, 3.0] mean: 1.0\n",
+  "scope": "Clipboard API instrumented; program executed with round46 pinned Polars environment. No OS permission claim."
+}

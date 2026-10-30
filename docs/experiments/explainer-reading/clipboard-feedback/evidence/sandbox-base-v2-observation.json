@@ -1,0 +1,23 @@
+{
+  "before": {
+    "kind": "clipboard-probe",
+    "secure": true,
+    "clipboardType": "object",
+    "writeType": "function",
+    "button": "复制",
+    "dialogOpen": false,
+    "toast": "",
+    "question": ""
+  },
+  "after": {
+    "kind": "clipboard-probe",
+    "secure": true,
+    "clipboardType": "object",
+    "writeType": "function",
+    "button": "复制",
+    "dialogOpen": false,
+    "toast": "复制失败。",
+    "question": ""
+  },
+  "scope": "Actual opaque sandbox capability; no clipboard property injection. Button invoked through browser UI."
+}

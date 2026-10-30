@@ -1,0 +1,38 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/explainer-browser.test.mjs --test-name-pattern=copy controls report
+
+Repository tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: copy controls report confirmed writes and retain manual-copy text on clipboard failure
+not ok 1 - copy controls report confirmed writes and retain manual-copy text on clipboard failure
+  ---
+  duration_ms: 2739.3285
+  type: 'test'
+  location: '/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:265:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"locale":"en","mode":"missing","pendingSnippet":"Copied","pendingDialog":false,"snippet":{"label":"Copied","toast":"","written":[]},"ask":{"open":false,"text":"Why this result? <&> 中文","selection":[23,23],"focused":false,"toast":"Copied. Paste it to your agent.","written":[],"errors":[]}}
+
+    'Copied' !== 'Copy'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Copy'
+  actual: 'Copied'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/tsk/.codex/worktrees/explainer-reading-lab/archify/test/explainer-browser.test.mjs:299:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2891.727875

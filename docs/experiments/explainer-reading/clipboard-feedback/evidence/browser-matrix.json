@@ -1,0 +1,602 @@
+{
+  "rows": [
+    {
+      "id": "polars",
+      "width": 390,
+      "arm": "base",
+      "style": "editorial",
+      "theme": "light",
+      "geometry": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2716,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 12,
+            "y": 219,
+            "width": 366,
+            "height": 415.6796875,
+            "top": 219,
+            "right": 378,
+            "bottom": 634.6796875,
+            "left": 12
+          },
+          {
+            "id": "distinction",
+            "x": 12,
+            "y": 646.6796875,
+            "width": 366,
+            "height": 296.6953125,
+            "top": 646.6796875,
+            "right": 378,
+            "bottom": 943.375,
+            "left": 12
+          },
+          {
+            "id": "mean",
+            "x": 12,
+            "y": 955.375,
+            "width": 366,
+            "height": 513.1171875,
+            "top": 955.375,
+            "right": 378,
+            "bottom": 1468.4921875,
+            "left": 12
+          },
+          {
+            "id": "reproduce",
+            "x": 12,
+            "y": 1480.4921875,
+            "width": 366,
+            "height": 604.0703125,
+            "top": 1480.4921875,
+            "right": 378,
+            "bottom": 2084.5625,
+            "left": 12
+          },
+          {
+            "id": "checks",
+            "x": 12,
+            "y": 2096.5625,
+            "width": 366,
+            "height": 205.28125,
+            "top": 2096.5625,
+            "right": 378,
+            "bottom": 2301.84375,
+            "left": 12
+          }
+        ]
+      },
+      "screenshotSha256": "57f7b5241fc14ab237252e2cb3f70db2d5a19babcfd2c703f6ae6b76672612db",
+      "exportSha256": "42aa64275f21a662e4f246569aad4e44bbf33f19588038c63ac4227b3315b9eb"
+    },
+    {
+      "id": "polars",
+      "width": 390,
+      "arm": "candidate",
+      "style": "editorial",
+      "theme": "light",
+      "geometry": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2716,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 12,
+            "y": 219,
+            "width": 366,
+            "height": 415.6796875,
+            "top": 219,
+            "right": 378,
+            "bottom": 634.6796875,
+            "left": 12
+          },
+          {
+            "id": "distinction",
+            "x": 12,
+            "y": 646.6796875,
+            "width": 366,
+            "height": 296.6953125,
+            "top": 646.6796875,
+            "right": 378,
+            "bottom": 943.375,
+            "left": 12
+          },
+          {
+            "id": "mean",
+            "x": 12,
+            "y": 955.375,
+            "width": 366,
+            "height": 513.1171875,
+            "top": 955.375,
+            "right": 378,
+            "bottom": 1468.4921875,
+            "left": 12
+          },
+          {
+            "id": "reproduce",
+            "x": 12,
+            "y": 1480.4921875,
+            "width": 366,
+            "height": 604.0703125,
+            "top": 1480.4921875,
+            "right": 378,
+            "bottom": 2084.5625,
+            "left": 12
+          },
+          {
+            "id": "checks",
+            "x": 12,
+            "y": 2096.5625,
+            "width": 366,
+            "height": 205.28125,
+            "top": 2096.5625,
+            "right": 378,
+            "bottom": 2301.84375,
+            "left": 12
+          }
+        ]
+      },
+      "screenshotSha256": "57f7b5241fc14ab237252e2cb3f70db2d5a19babcfd2c703f6ae6b76672612db",
+      "exportSha256": "42aa64275f21a662e4f246569aad4e44bbf33f19588038c63ac4227b3315b9eb"
+    },
+    {
+      "id": "polars",
+      "width": 1440,
+      "arm": "base",
+      "style": "editorial",
+      "theme": "light",
+      "geometry": {
+        "width": 1440,
+        "pageWidth": 1440,
+        "height": 1465,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 80,
+            "y": 116.5,
+            "width": 632,
+            "height": 301,
+            "top": 116.5,
+            "right": 712,
+            "bottom": 417.5,
+            "left": 80
+          },
+          {
+            "id": "distinction",
+            "x": 728,
+            "y": 116.5,
+            "width": 632,
+            "height": 301,
+            "top": 116.5,
+            "right": 1360,
+            "bottom": 417.5,
+            "left": 728
+          },
+          {
+            "id": "mean",
+            "x": 80,
+            "y": 433.5,
+            "width": 632,
+            "height": 579,
+            "top": 433.5,
+            "right": 712,
+            "bottom": 1012.5,
+            "left": 80
+          },
+          {
+            "id": "reproduce",
+            "x": 728,
+            "y": 433.5,
+            "width": 632,
+            "height": 579,
+            "top": 433.5,
+            "right": 1360,
+            "bottom": 1012.5,
+            "left": 728
+          },
+          {
+            "id": "checks",
+            "x": 80,
+            "y": 1028.5,
+            "width": 1280,
+            "height": 154,
+            "top": 1028.5,
+            "right": 1360,
+            "bottom": 1182.5,
+            "left": 80
+          }
+        ]
+      },
+      "screenshotSha256": "64c31a40f967e4449ee326b64bfca00e80b7f17457031fff604d0dd51bedaf8d",
+      "exportSha256": "03d637f8f46358e0b42a4dd48163da40678e24295f7de837c6fcbc72bf1aa266"
+    },
+    {
+      "id": "polars",
+      "width": 1440,
+      "arm": "candidate",
+      "style": "editorial",
+      "theme": "light",
+      "geometry": {
+        "width": 1440,
+        "pageWidth": 1440,
+        "height": 1465,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 80,
+            "y": 116.5,
+            "width": 632,
+            "height": 301,
+            "top": 116.5,
+            "right": 712,
+            "bottom": 417.5,
+            "left": 80
+          },
+          {
+            "id": "distinction",
+            "x": 728,
+            "y": 116.5,
+            "width": 632,
+            "height": 301,
+            "top": 116.5,
+            "right": 1360,
+            "bottom": 417.5,
+            "left": 728
+          },
+          {
+            "id": "mean",
+            "x": 80,
+            "y": 433.5,
+            "width": 632,
+            "height": 579,
+            "top": 433.5,
+            "right": 712,
+            "bottom": 1012.5,
+            "left": 80
+          },
+          {
+            "id": "reproduce",
+            "x": 728,
+            "y": 433.5,
+            "width": 632,
+            "height": 579,
+            "top": 433.5,
+            "right": 1360,
+            "bottom": 1012.5,
+            "left": 728
+          },
+          {
+            "id": "checks",
+            "x": 80,
+            "y": 1028.5,
+            "width": 1280,
+            "height": 154,
+            "top": 1028.5,
+            "right": 1360,
+            "bottom": 1182.5,
+            "left": 80
+          }
+        ]
+      },
+      "screenshotSha256": "64c31a40f967e4449ee326b64bfca00e80b7f17457031fff604d0dd51bedaf8d",
+      "exportSha256": "03d637f8f46358e0b42a4dd48163da40678e24295f7de837c6fcbc72bf1aa266"
+    },
+    {
+      "id": "taskgroup",
+      "width": 390,
+      "arm": "base",
+      "style": "clean",
+      "theme": "light",
+      "geometry": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2926,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 12,
+            "y": 217.390625,
+            "width": 366,
+            "height": 454.9296875,
+            "top": 217.390625,
+            "right": 378,
+            "bottom": 672.3203125,
+            "left": 12
+          },
+          {
+            "id": "shutdown",
+            "x": 12,
+            "y": 684.3203125,
+            "width": 366,
+            "height": 518.1875,
+            "top": 684.3203125,
+            "right": 378,
+            "bottom": 1202.5078125,
+            "left": 12
+          },
+          {
+            "id": "errors",
+            "x": 12,
+            "y": 1214.5078125,
+            "width": 366,
+            "height": 369.78125,
+            "top": 1214.5078125,
+            "right": 378,
+            "bottom": 1584.2890625,
+            "left": 12
+          },
+          {
+            "id": "compare",
+            "x": 12,
+            "y": 1596.2890625,
+            "width": 366,
+            "height": 595.2109375,
+            "top": 1596.2890625,
+            "right": 378,
+            "bottom": 2191.5,
+            "left": 12
+          },
+          {
+            "id": "checks",
+            "x": 12,
+            "y": 2203.5,
+            "width": 366,
+            "height": 362.90625,
+            "top": 2203.5,
+            "right": 378,
+            "bottom": 2566.40625,
+            "left": 12
+          }
+        ]
+      },
+      "screenshotSha256": "c2f3619b5f51832729651c9d82ba3f9290fe30292c21df7c2bea396ed5b4dd92",
+      "exportSha256": "c91bdc85ee27c20729ff7477258de0a88e0eea45c24bf6975ba6debce7cdab6d"
+    },
+    {
+      "id": "taskgroup",
+      "width": 390,
+      "arm": "candidate",
+      "style": "clean",
+      "theme": "light",
+      "geometry": {
+        "width": 390,
+        "pageWidth": 390,
+        "height": 2926,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 12,
+            "y": 217.390625,
+            "width": 366,
+            "height": 454.9296875,
+            "top": 217.390625,
+            "right": 378,
+            "bottom": 672.3203125,
+            "left": 12
+          },
+          {
+            "id": "shutdown",
+            "x": 12,
+            "y": 684.3203125,
+            "width": 366,
+            "height": 518.1875,
+            "top": 684.3203125,
+            "right": 378,
+            "bottom": 1202.5078125,
+            "left": 12
+          },
+          {
+            "id": "errors",
+            "x": 12,
+            "y": 1214.5078125,
+            "width": 366,
+            "height": 369.78125,
+            "top": 1214.5078125,
+            "right": 378,
+            "bottom": 1584.2890625,
+            "left": 12
+          },
+          {
+            "id": "compare",
+            "x": 12,
+            "y": 1596.2890625,
+            "width": 366,
+            "height": 595.2109375,
+            "top": 1596.2890625,
+            "right": 378,
+            "bottom": 2191.5,
+            "left": 12
+          },
+          {
+            "id": "checks",
+            "x": 12,
+            "y": 2203.5,
+            "width": 366,
+            "height": 362.90625,
+            "top": 2203.5,
+            "right": 378,
+            "bottom": 2566.40625,
+            "left": 12
+          }
+        ]
+      },
+      "screenshotSha256": "c2f3619b5f51832729651c9d82ba3f9290fe30292c21df7c2bea396ed5b4dd92",
+      "exportSha256": "c91bdc85ee27c20729ff7477258de0a88e0eea45c24bf6975ba6debce7cdab6d"
+    },
+    {
+      "id": "taskgroup",
+      "width": 1440,
+      "arm": "base",
+      "style": "clean",
+      "theme": "light",
+      "geometry": {
+        "width": 1440,
+        "pageWidth": 1440,
+        "height": 1260,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 80,
+            "y": 93.09375,
+            "width": 632,
+            "height": 323,
+            "top": 93.09375,
+            "right": 712,
+            "bottom": 416.09375,
+            "left": 80
+          },
+          {
+            "id": "shutdown",
+            "x": 728,
+            "y": 93.09375,
+            "width": 632,
+            "height": 388,
+            "top": 93.09375,
+            "right": 1360,
+            "bottom": 481.09375,
+            "left": 728
+          },
+          {
+            "id": "errors",
+            "x": 80,
+            "y": 432.09375,
+            "width": 632,
+            "height": 254,
+            "top": 432.09375,
+            "right": 712,
+            "bottom": 686.09375,
+            "left": 80
+          },
+          {
+            "id": "compare",
+            "x": 728,
+            "y": 497.09375,
+            "width": 632,
+            "height": 502,
+            "top": 497.09375,
+            "right": 1360,
+            "bottom": 999.09375,
+            "left": 728
+          },
+          {
+            "id": "checks",
+            "x": 80,
+            "y": 702.09375,
+            "width": 632,
+            "height": 297,
+            "top": 702.09375,
+            "right": 712,
+            "bottom": 999.09375,
+            "left": 80
+          }
+        ]
+      },
+      "screenshotSha256": "ead36b0a02c088efc4821d48221bb3af14d434c350487e8152c31c0691af997d",
+      "exportSha256": "0d311b5285d26423e111f4a300cfec28551bdf01ed9eb67aa7738c23ba966cad"
+    },
+    {
+      "id": "taskgroup",
+      "width": 1440,
+      "arm": "candidate",
+      "style": "clean",
+      "theme": "light",
+      "geometry": {
+        "width": 1440,
+        "pageWidth": 1440,
+        "height": 1260,
+        "panels": [
+          {
+            "id": "answer",
+            "x": 80,
+            "y": 93.09375,
+            "width": 632,
+            "height": 323,
+            "top": 93.09375,
+            "right": 712,
+            "bottom": 416.09375,
+            "left": 80
+          },
+          {
+            "id": "shutdown",
+            "x": 728,
+            "y": 93.09375,
+            "width": 632,
+            "height": 388,
+            "top": 93.09375,
+            "right": 1360,
+            "bottom": 481.09375,
+            "left": 728
+          },
+          {
+            "id": "errors",
+            "x": 80,
+            "y": 432.09375,
+            "width": 632,
+            "height": 254,
+            "top": 432.09375,
+            "right": 712,
+            "bottom": 686.09375,
+            "left": 80
+          },
+          {
+            "id": "compare",
+            "x": 728,
+            "y": 497.09375,
+            "width": 632,
+            "height": 502,
+            "top": 497.09375,
+            "right": 1360,
+            "bottom": 999.09375,
+            "left": 728
+          },
+          {
+            "id": "checks",
+            "x": 80,
+            "y": 702.09375,
+            "width": 632,
+            "height": 297,
+            "top": 702.09375,
+            "right": 712,
+            "bottom": 999.09375,
+            "left": 80
+          }
+        ]
+      },
+      "screenshotSha256": "ead36b0a02c088efc4821d48221bb3af14d434c350487e8152c31c0691af997d",
+      "exportSha256": "0d311b5285d26423e111f4a300cfec28551bdf01ed9eb67aa7738c23ba966cad"
+    }
+  ],
+  "pairs": [
+    {
+      "id": "polars",
+      "width": 390,
+      "geometryIdentical": true,
+      "screenshotBytesIdentical": true,
+      "exportBytesIdentical": true
+    },
+    {
+      "id": "polars",
+      "width": 1440,
+      "geometryIdentical": true,
+      "screenshotBytesIdentical": true,
+      "exportBytesIdentical": true
+    },
+    {
+      "id": "taskgroup",
+      "width": 390,
+      "geometryIdentical": true,
+      "screenshotBytesIdentical": true,
+      "exportBytesIdentical": true
+    },
+    {
+      "id": "taskgroup",
+      "width": 1440,
+      "geometryIdentical": true,
+      "screenshotBytesIdentical": true,
+      "exportBytesIdentical": true
+    }
+  ]
+}

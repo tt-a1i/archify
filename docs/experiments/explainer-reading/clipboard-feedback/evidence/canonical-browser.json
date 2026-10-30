@@ -1,0 +1,92 @@
+{
+  "canonical": [
+    {
+      "id": "polars",
+      "width": 390,
+      "pageWidth": 390,
+      "height": 2716,
+      "panels": 5,
+      "code": [
+        {
+          "client": 356,
+          "scroll": 356
+        }
+      ]
+    },
+    {
+      "id": "polars",
+      "width": 1440,
+      "pageWidth": 1440,
+      "height": 1465,
+      "panels": 5,
+      "code": [
+        {
+          "client": 622,
+          "scroll": 622
+        }
+      ]
+    },
+    {
+      "id": "taskgroup",
+      "width": 390,
+      "pageWidth": 390,
+      "height": 2926,
+      "panels": 5,
+      "code": []
+    },
+    {
+      "id": "taskgroup",
+      "width": 1440,
+      "pageWidth": 1440,
+      "height": 1260,
+      "panels": 5,
+      "code": []
+    }
+  ],
+  "index": [
+    {
+      "id": "polars",
+      "width": "390px",
+      "src": "clipboard-feedback/polars-candidate.html",
+      "open": "clipboard-feedback/polars-candidate.html",
+      "report": "clipboard-feedback/README.md",
+      "variants": 3,
+      "title": "为什么 fill_null 后还有 NaN？ · 复制失败说明"
+    },
+    {
+      "id": "polars",
+      "width": "1440px",
+      "src": "clipboard-feedback/polars-candidate.html",
+      "open": "clipboard-feedback/polars-candidate.html",
+      "report": "clipboard-feedback/README.md",
+      "variants": 3,
+      "title": "为什么 fill_null 后还有 NaN？ · 复制失败说明"
+    },
+    {
+      "id": "taskgroup",
+      "width": "390px",
+      "src": "clipboard-feedback/taskgroup-candidate.html",
+      "open": "clipboard-feedback/taskgroup-candidate.html",
+      "report": "clipboard-feedback/README.md",
+      "variants": 6,
+      "title": "一个任务失败，其他任务什么时候结束？ · 复制失败保留追问"
+    },
+    {
+      "id": "taskgroup",
+      "width": "1440px",
+      "src": "clipboard-feedback/taskgroup-candidate.html",
+      "open": "clipboard-feedback/taskgroup-candidate.html",
+      "report": "clipboard-feedback/README.md",
+      "variants": 6,
+      "title": "一个任务失败，其他任务什么时候结束？ · 复制失败保留追问"
+    }
+  ],
+  "packaged": {
+    "snippet": "复制",
+    "open": true,
+    "note": "复制失败，已选中文本，请手动复制。",
+    "focused": true,
+    "selected": true,
+    "hasQuestion": true
+  }
+}

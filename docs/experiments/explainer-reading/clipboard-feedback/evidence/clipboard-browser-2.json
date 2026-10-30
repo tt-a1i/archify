@@ -1,0 +1,94 @@
+{
+  "dataUrl": [
+    {
+      "arm": "base",
+      "before": {
+        "secure": false,
+        "clipboard": "undefined",
+        "initialized": true
+      },
+      "snippet": {
+        "button": "已复制",
+        "toast": ""
+      },
+      "ask": {
+        "open": false,
+        "toast": "已复制，粘贴给 agent 即可",
+        "note": "会一并复制页面、面板位置和 ID，agent 可以只改这一块。",
+        "focused": false,
+        "fullSelection": false,
+        "textLength": 9,
+        "hasQuestion": true
+      }
+    },
+    {
+      "arm": "candidate",
+      "before": {
+        "secure": false,
+        "clipboard": "undefined",
+        "initialized": true
+      },
+      "snippet": {
+        "button": "复制",
+        "toast": "复制失败，请选中代码后手动复制。"
+      },
+      "ask": {
+        "open": true,
+        "toast": "复制失败，请选中代码后手动复制。",
+        "note": "复制失败，已选中文本，请手动复制。",
+        "focused": true,
+        "fullSelection": true,
+        "textLength": 219673,
+        "hasQuestion": true
+      }
+    }
+  ],
+  "controlledFileFailures": [
+    {
+      "id": "polars",
+      "open": true,
+      "dialog": {
+        "x": 18,
+        "y": 270.1953125,
+        "width": 354,
+        "height": 359.609375,
+        "top": 270.1953125,
+        "right": 372,
+        "bottom": 629.8046875,
+        "left": 18
+      },
+      "toast": "复制失败，请选中代码后手动复制。",
+      "note": "复制失败，已选中文本，请手动复制。",
+      "focused": true,
+      "fullSelection": true,
+      "text": "页面：「为什么 fill_null 后还有 NaN？」\n文件：/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round47/full-replay-2/candidate/polars-0.html\n位置：面板 3「自己运行这个例子」（ID: reproduce）\n问题：均值为什么是 2？\n请用 Archify 的面板替换（patch explainer）只更新这个面板，保留它的 ID。",
+      "width": 390,
+      "height": 900
+    },
+    {
+      "id": "taskgroup",
+      "open": true,
+      "dialog": {
+        "x": 17.5,
+        "y": 270.1953125,
+        "width": 355,
+        "height": 359.609375,
+        "top": 270.1953125,
+        "right": 372.5,
+        "bottom": 629.8046875,
+        "left": 17.5
+      },
+      "toast": "",
+      "note": "Copy failed. The text is selected; copy it manually.",
+      "focused": true,
+      "fullSelection": true,
+      "text": "Page: \"What happens when one TaskGroup task fails?\"\nFile: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round47/full-replay-2/candidate/taskgroup-0.html\nWhere: Panel 1 \"What happens after a task fails?\" (ID: shutdown)\nQuestion: When do the siblings stop?\nRevise only this panel with Archify panel replacement (patch explainer), keeping its ID.",
+      "width": 390,
+      "height": 900
+    }
+  ],
+  "controlledSuccess": {
+    "button": "已复制"
+  },
+  "scope": "Data URL has genuinely absent API. File-page missing API and success are controlled injections; no OS clipboard permission claim. Data-URL question payload contains its long URL, so only outcome/selection is assessed there."
+}

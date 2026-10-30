@@ -1,0 +1,145 @@
+[
+  {
+    "query": "clipboard",
+    "limit": 15,
+    "issues": [
+      {
+        "number": 795,
+        "title": "fix(viewer): declare unavailable relationship queries honestly",
+        "url": "https://github.com/tt-a1i/archify/pull/795",
+        "clipboardExcerpt": [
+          "Current head: 879300698a51ef78fcab40bf4e98b89968760fb0. Fixed target dev: d5d979493bba650b3995836afd379cd249f2d0dd (2026-10-27). The rebase preserves the source proposal, current upstream reader/clipboard helpers, complete locale catalogs and release identity. Generated artifacts were rebuilt with the repository's native producers; authored geometry/cards and Architecture IR inputs remain unchanged."
+        ]
+      },
+      {
+        "number": 1066,
+        "title": "feat: add standalone artifact update notice",
+        "url": "https://github.com/tt-a1i/archify/pull/1066",
+        "clipboardExcerpt": [
+          "Forwarded standalone Archify HTML can show its generator version but had no explicit, bounded way for a reader to discover a newer stable version. This PR adds a quiet update notice to Native Viewer and Explainer artifacts. Both remain offline-first: no polling, telemetry, persistence, credentials, or automatic installation is introduced.",
+          "- Keep the readers aligned: Native Viewer and Explainer use the same externally observable update contract.",
+          "Current head `a7552e53490d544eac1be1951a0484e89b501710` includes the bounded streaming-manifest regression tests. The generated gallery, checkout comparison, README proof receipt, and skill archive were refreshed on the preceding generated-output commit; the final test-only commit does not alter generated sources or delivery artifacts. Standalone Explainer pages no longer serialize the private author `inputPath`.",
+          "- Earlier generated-output validation: checkout comparison, gallery, README motion proof, both Explainer private-path tests, `npm run test:core` (19/19), and `npm run test:generated` passed."
+        ]
+      },
+      {
+        "number": 234,
+        "title": "Retire Share Card exports and keep Copy diagram only",
+        "url": "https://github.com/tt-a1i/archify/pull/234",
+        "clipboardExcerpt": [
+          "  - Removed ordinary, clipboard, Route, Reach, and Architecture Delta Share Card UI, helpers, APIs, receipts, localization, documentation promises, and dedicated image assets."
+        ]
+      }
+    ]
+  },
+  {
+    "query": "copy",
+    "limit": 15,
+    "issues": [
+      {
+        "number": 234,
+        "title": "Retire Share Card exports and keep Copy diagram only",
+        "url": "https://github.com/tt-a1i/archify/pull/234",
+        "clipboardExcerpt": [
+          "  - Removed ordinary, clipboard, Route, Reach, and Architecture Delta Share Card UI, helpers, APIs, receipts, localization, documentation promises, and dedicated image assets."
+        ]
+      },
+      {
+        "number": 828,
+        "title": "fix(site): preserve literal replacement tokens in recipe builds",
+        "url": "https://github.com/tt-a1i/archify/pull/828",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 461,
+        "title": "Deferred: optional offline Atlas overview/detail reading",
+        "url": "https://github.com/tt-a1i/archify/pull/461",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 1015,
+        "title": "feat(explainer): improve visual hierarchy, KPI deltas, code focus, and interactive details",
+        "url": "https://github.com/tt-a1i/archify/pull/1015",
+        "clipboardExcerpt": [
+          "Enhance Archify Explainer visual hierarchy, information density, and interactive comprehension across the schema, parser, validator, renderer, reader runtime/styles, and showcase artifacts:",
+          "   - Add directional dashed stroke-dashoffset flow animation (`@keyframes explainer-edge-flow`) on highlighted SVG edges and enforce readable SVG label sizes (`>=12.5px`).",
+          "   - Support `before=<number>` on `@metric` in `explainer.schema.json` and `parse.mjs` to render baseline-to-current comparisons (`80 ms → 600 ms`, `×7.5` / `+10%`).",
+          "   - Enrich `docs/cases/explainer/*.archify.md` and re-render all four showcase pages (`p99-tail-latency.html`, `finalize-delivery.html`, `tls-first-visit.html`, `first-rental.html`).",
+          "- `ARCHIFY_EXPLAINER_BROWSER_TESTS=1 npm run test:focus -- test/explainer-*.test.mjs`",
+          "- `node archify/bin/archify.mjs browser-check docs/cases/explainer/*.html`"
+        ]
+      },
+      {
+        "number": 963,
+        "title": "docs(license): relicense to AGPL-3.0 starting with 4.0.0 (draft)",
+        "url": "https://github.com/tt-a1i/archify/pull/963",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 653,
+        "title": "feat(levels): add C4 leveled architecture generation",
+        "url": "https://github.com/tt-a1i/archify/pull/653",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 1145,
+        "title": "feat: add opt-in native connection adjustment",
+        "url": "https://github.com/tt-a1i/archify/pull/1145",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 150,
+        "title": "feat(cognition): add cognition diagram type for reasoning-route diagrams",
+        "url": "https://github.com/tt-a1i/archify/pull/150",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 1066,
+        "title": "feat: add standalone artifact update notice",
+        "url": "https://github.com/tt-a1i/archify/pull/1066",
+        "clipboardExcerpt": [
+          "Forwarded standalone Archify HTML can show its generator version but had no explicit, bounded way for a reader to discover a newer stable version. This PR adds a quiet update notice to Native Viewer and Explainer artifacts. Both remain offline-first: no polling, telemetry, persistence, credentials, or automatic installation is introduced.",
+          "- Keep the readers aligned: Native Viewer and Explainer use the same externally observable update contract.",
+          "Current head `a7552e53490d544eac1be1951a0484e89b501710` includes the bounded streaming-manifest regression tests. The generated gallery, checkout comparison, README proof receipt, and skill archive were refreshed on the preceding generated-output commit; the final test-only commit does not alter generated sources or delivery artifacts. Standalone Explainer pages no longer serialize the private author `inputPath`.",
+          "- Earlier generated-output validation: checkout comparison, gallery, README motion proof, both Explainer private-path tests, `npm run test:core` (19/19), and `npm run test:generated` passed."
+        ]
+      },
+      {
+        "number": 87,
+        "title": "Add Claude, Grok, Codex, and Pi plugin marketplaces",
+        "url": "https://github.com/tt-a1i/archify/pull/87",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 1120,
+        "title": "experiment: distinguish exception group identity from repeated traceback text",
+        "url": "https://github.com/tt-a1i/archify/pull/1120",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 1027,
+        "title": "fix(viewer): mobile nav reachability, dock clearance and presentation scroll",
+        "url": "https://github.com/tt-a1i/archify/pull/1027",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 1029,
+        "title": "fix(timeline): state sub-second break durations in milliseconds",
+        "url": "https://github.com/tt-a1i/archify/pull/1029",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 508,
+        "title": "feat: redesign website with a shared drafted-sheet interaction system",
+        "url": "https://github.com/tt-a1i/archify/pull/508",
+        "clipboardExcerpt": []
+      },
+      {
+        "number": 863,
+        "title": "fix(browser): preserve DevTools pipes during Windows browser startup",
+        "url": "https://github.com/tt-a1i/archify/pull/863",
+        "clipboardExcerpt": []
+      }
+    ]
+  }
+]

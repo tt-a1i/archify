@@ -1,0 +1,5 @@
+# Sandbox harness attempts
+
+Attempt 1 browser-01.mjs timed out waiting ten seconds for the bridge report. The actual page remained static. Browser-02 confirmed the iframe and bridge text existed but no report arrived; browser-03 recorded its cross-origin frame target and then reproduced the original bug on a complete page with an injected missing API. Investigation found create-sandbox.mjs inserted before the first literal </body> in the HTML, which is inside the export JavaScript, corrupting that script. Attempt 2 uses the final body closing tag, retains the original harness, and runs as browser-04.mjs. A failed harness is not evidence about real sandbox clipboard availability.
+
+Final index harness: browser-11 timed out because file-origin iframe contentDocument is unavailable to the parent. browser-12 observed the correct selected URL and rendered iframe via the browser snapshot. browser-13 uses parent-owned source/link/width attributes, while complete canonical documents are inspected directly. No product change or browser security workaround.

@@ -271,3 +271,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 46
 
 [Polars null and NaN](polars-null-nan/README.md) checks seven operations twice on one explicit Float64 fixture. The retained page explains why fill_null leaves NaN and contrasts two versus four values participating in a mean. Parent formats the actual copied Python without changing its AST or results, separates the arithmetic explanations and keeps the author’s scrolling variant for comparison. Longer page height is reported. The author inspected both widths and acknowledged code scrolling; this is supplied-evidence discovery, not proof of universal self-inspection improvement. Runtime/package evidence is reused from round 40.
+
+## Continued exploration — round 47
+
+[Honest clipboard feedback](clipboard-feedback/README.md) repairs two controls that could report success when the Clipboard API was absent. A genuinely unavailable API is reproduced on a data URL; controlled file-page cases cover rejection, synchronous failure and delayed success in Chinese and English. The retained candidate keeps failed questions selected in the open dialog and puts the instruction inside it. All 58 frozen inputs differ only in the reader script; selected normal screenshots and actual PNG exports are byte-identical. The report preserves the rejected background-toast candidate, targeted regression, package reproducibility and remaining evidence limits.

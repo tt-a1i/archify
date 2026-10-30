@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "ea5098ff-bbb9-47f1-a1ed-8744831ee480",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/clipboard-feedback/polars.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/clipboard-feedback/polars-candidate.html",
+  "specification": {
+    "sha256": "0dfe4ad52ca3340cb5f74dce3e067c9c065ab446687eba27f1e12e720d747d1d",
+    "bytes": 3256
+  },
+  "artifact": {
+    "sha256": "8f07eed901e63ac75e0ccaf783ca33bd48ae73a80d5cfbdea1f4b4821fd1e832",
+    "bytes": 164639
+  },
+  "explainer": {
+    "preparedSha256": "f196be94de473dfd8c65c3f78455c32115430bd8790ac88014f2bb5d6fd4db22",
+    "dependencies": []
+  }
+}

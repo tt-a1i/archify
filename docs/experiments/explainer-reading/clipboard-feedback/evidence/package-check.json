@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "file": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round47/package-smoke/polars.html",
+  "family": "explainer",
+  "artifact": {
+    "sha256": "8f07eed901e63ac75e0ccaf783ca33bd48ae73a80d5cfbdea1f4b4821fd1e832",
+    "bytes": 164639
+  },
+  "checks": [
+    {
+      "name": "explainer_structure",
+      "ok": true,
+      "details": [
+        "32 unique DOM IDs"
+      ]
+    },
+    {
+      "name": "explainer_payload_identity",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "explainer_dependencies",
+      "ok": true,
+      "details": [
+        "0 frozen dependencies"
+      ]
+    },
+    {
+      "name": "explainer_native_diagrams",
+      "ok": true,
+      "details": []
+    }
+  ],
+  "composition": {
+    "schemaVersion": 1,
+    "profile": "showcase",
+    "status": "pass",
+    "summary": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "issues": [],
+    "nativeDiagrams": []
+  },
+  "diagnostics": [],
+  "provenance": "current",
+  "deliveryReceiptId": "788861e3-7f28-4f59-9ecf-92de5b98be61"
+}
