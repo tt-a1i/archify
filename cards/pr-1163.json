@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1163,
+  "author": "tt-a1i",
+  "title": "docs: remove Raven sponsor entry from stable READMEs",
+  "mergedAt": "2026-10-30T06:43:02Z",
+  "mergeCommit": "f325d86230553e1dd15d3464324f1fcd01f02352",
+  "url": "https://github.com/tt-a1i/archify/pull/1163"
+}
