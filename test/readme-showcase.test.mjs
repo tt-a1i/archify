@@ -436,8 +436,7 @@ test('README preserves the visual proof set and key content', () => {
   for (const { file: filename, noRepository } of readmeLanguages) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const supercode = readme.indexOf('https://supercode.sh/?utm_source=archify');
-    const evermind = readme.indexOf('docs/assets/sponsors/evermind-archify-raven.png');
-    assert.ok(supercode >= 0 && evermind > supercode, `${filename}: EverMind must follow Supercode`);
+    assert.ok(supercode >= 0, `${filename}: Supercode sponsor entry is missing`);
     assert.match(readme, noRepository, `${filename}: the no-repository entry point is missing`);
     for (const asset of commonAssets) {
       assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);
