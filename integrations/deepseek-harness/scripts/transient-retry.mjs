@@ -1,4 +1,4 @@
-const TRANSIENT_NETWORK_CODES = ['ETIMEDOUT', 'ECONNRESET', 'EAI_AGAIN'];
+const TRANSIENT_NETWORK_CODES = /\b(?:ETIMEDOUT|ECONNRESET|EAI_AGAIN)\b/;
 
 export function isTransientNetworkFailure(result = {}) {
   const details = [
@@ -7,7 +7,7 @@ export function isTransientNetworkFailure(result = {}) {
     result.stderr,
     result.stdout,
   ].filter(Boolean).join('\n').toUpperCase();
-  return TRANSIENT_NETWORK_CODES.some((code) => details.includes(code));
+  return TRANSIENT_NETWORK_CODES.test(details);
 }
 
 export function runWithTransientNetworkRetry(runAttempt, { maxAttempts = 2 } = {}) {
