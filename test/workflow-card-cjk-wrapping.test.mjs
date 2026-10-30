@@ -6,6 +6,14 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+// Node 22 prints its own runtime warnings (for example undici's experimental
+// EnvHttpProxyAgent notice when proxy env vars are set) on every child
+// process's stderr, which breaks tests that assert on captured stderr or parse
+// it as JSON. Silence those runtime warnings for every CLI child this file
+// spawns (the setting inherits into grandchildren too); warnings printed by
+// archify itself are unaffected.
+process.env.NODE_NO_WARNINGS ??= '1';
+
 const root = fileURLToPath(new URL('../archify/', import.meta.url));
 const cli = path.join(root, 'bin/archify.mjs');
 

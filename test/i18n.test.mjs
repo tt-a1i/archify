@@ -1,4 +1,12 @@
 import { test } from 'node:test';
+
+// Node 22 prints its own runtime warnings (for example undici's experimental
+// EnvHttpProxyAgent notice when proxy env vars are set) on every child
+// process's stderr, which breaks tests that assert on captured stderr or parse
+// it as JSON. Silence those runtime warnings for every CLI child this file
+// spawns (the setting inherits into grandchildren too); warnings printed by
+// archify itself are unaffected.
+process.env.NODE_NO_WARNINGS ??= '1';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -8,7 +16,6 @@ import { validateSchema } from '../archify/renderers/shared/validator.mjs';
 import {
   skillRoot, ES_TRANSLATIONS, KO_TRANSLATIONS, FR_PARTIAL_TRANSLATIONS,
   MANIFEST, EXAMPLES, example, authoredExample, localeDocument, createLocaleFixture,
-  stripRuntimeWarnings,
 } from './helpers/i18n-fixture.mjs';
 
 import {
@@ -487,10 +494,10 @@ test('validate and deliver receipts carry locale warnings as structured diagnost
     for (const key of coverage.missingKeys) assert.equal(coverage.englishSource[key], translateMessage('en', key));
     assert.deepEqual(receipt.diagnostics[0].evidence.unknownKeys, ['viewer.common.closee']);
     const expectedWarnings = receipt.diagnostics.map(entry => `archify: ${entry.message}\n`).join('');
-    assert.equal(stripRuntimeWarnings(machine.stderr), expectedWarnings, `${command}: JSON success discloses each warning once`);
+    assert.equal(machine.stderr, expectedWarnings, `${command}: JSON success discloses each warning once`);
     const human = spawnSync(process.execPath, args, { cwd: tmp, encoding: 'utf8' });
     assert.equal(human.status, 0, human.stderr || human.stdout);
-    assert.equal(stripRuntimeWarnings(human.stderr), expectedWarnings, `${command}: human success discloses each warning once`);
+    assert.equal(human.stderr, expectedWarnings, `${command}: human success discloses each warning once`);
     assert.ok(human.stdout.trim());
   }
 
