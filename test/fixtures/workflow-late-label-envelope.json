@@ -1,0 +1,301 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "从需求到可查看的 HTML",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "attempt-1/workflow.html",
+    "repository": {
+      "url": "https://github.com/tt-a1i/archify.git",
+      "revision": "847146aeb93b492592adb78dc220f57e4a8b4636"
+    }
+  },
+  "lanes": [
+    {
+      "id": "agent",
+      "label": "使用 Skill 的 Agent"
+    },
+    {
+      "id": "machine",
+      "label": "finalize 自动检查"
+    },
+    {
+      "id": "review",
+      "label": "审阅与交付"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "agent",
+      "col": 0,
+      "type": "external",
+      "label": "需求",
+      "sublabel": "提出要表达的流程",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 18,
+          "end_line": 20
+        }
+      ]
+    },
+    {
+      "id": "author",
+      "lane": "agent",
+      "col": 1,
+      "type": "backend",
+      "label": "Agent 编写",
+      "sublabel": "读 Skill、查源码",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 33,
+          "end_line": 39
+        }
+      ]
+    },
+    {
+      "id": "json",
+      "lane": "agent",
+      "col": 2,
+      "type": "database",
+      "label": "候选 JSON",
+      "sublabel": "语义、布局、来源",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 38,
+          "end_line": 46
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "lane": "machine",
+      "col": 2,
+      "type": "security",
+      "label": "校验",
+      "sublabel": "结构与证据",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 40,
+          "end_line": 48
+        },
+        {
+          "path": "archify/renderers/workflow/README.md",
+          "line": 10,
+          "end_line": 11
+        }
+      ]
+    },
+    {
+      "id": "deliver",
+      "lane": "machine",
+      "col": 3,
+      "type": "backend",
+      "label": "布局与渲染",
+      "sublabel": "生成并检查 HTML",
+      "sources": [
+        {
+          "path": "archify/references/delivery-contract.md",
+          "line": 278,
+          "end_line": 288
+        },
+        {
+          "path": "archify/renderers/workflow/README.md",
+          "line": 48,
+          "end_line": 55
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "lane": "machine",
+      "col": 4,
+      "type": "security",
+      "label": "严格检查",
+      "sublabel": "核对交付来源",
+      "sources": [
+        {
+          "path": "archify/references/delivery-contract.md",
+          "line": 286,
+          "end_line": 289
+        }
+      ]
+    },
+    {
+      "id": "browser",
+      "lane": "machine",
+      "col": 5,
+      "type": "frontend",
+      "label": "浏览器检查",
+      "sublabel": "真实浏览器自动测量",
+      "sources": [
+        {
+          "path": "archify/references/delivery-contract.md",
+          "line": 286,
+          "end_line": 299
+        },
+        {
+          "path": "archify/references/delivery-contract.md",
+          "line": 412,
+          "end_line": 419
+        }
+      ]
+    },
+    {
+      "id": "repair",
+      "lane": "agent",
+      "col": 5,
+      "type": "backend",
+      "label": "诊断并修复",
+      "sublabel": "保持语义与来源",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 48,
+          "end_line": 50
+        },
+        {
+          "path": "archify/references/delivery-contract.md",
+          "line": 28,
+          "end_line": 32
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "lane": "review",
+      "col": 4,
+      "type": "frontend",
+      "label": "视觉审阅",
+      "sublabel": "截图后由人或看图者判断",
+      "sources": [
+        {
+          "path": "archify/references/delivery-contract.md",
+          "line": 528,
+          "end_line": 540
+        }
+      ]
+    },
+    {
+      "id": "handoff",
+      "lane": "review",
+      "col": 5,
+      "type": "external",
+      "label": "交付 HTML",
+      "sublabel": "说明检查与审阅状态",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 88,
+          "end_line": 92
+        },
+        {
+          "path": "archify/references/delivery-contract.md",
+          "line": 412,
+          "end_line": 419
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "author"
+    },
+    {
+      "from": "author",
+      "to": "json"
+    },
+    {
+      "from": "json",
+      "to": "validate"
+    },
+    {
+      "from": "validate",
+      "to": "deliver"
+    },
+    {
+      "from": "deliver",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "browser"
+    },
+    {
+      "from": "browser",
+      "to": "handoff",
+      "label": "自动通过"
+    },
+    {
+      "from": "browser",
+      "to": "review",
+      "label": "需要视觉审阅",
+      "role": "branch"
+    },
+    {
+      "from": "review",
+      "to": "handoff",
+      "label": "审阅通过"
+    },
+    {
+      "from": "validate",
+      "to": "repair",
+      "label": "校验失败",
+      "role": "error"
+    },
+    {
+      "from": "deliver",
+      "to": "repair",
+      "label": "渲染失败",
+      "role": "error"
+    },
+    {
+      "from": "check",
+      "to": "repair",
+      "label": "检查失败",
+      "role": "error"
+    },
+    {
+      "from": "browser",
+      "to": "repair",
+      "label": "浏览器失败",
+      "role": "error"
+    },
+    {
+      "from": "review",
+      "to": "repair",
+      "label": "发现问题",
+      "role": "error"
+    },
+    {
+      "from": "repair",
+      "to": "json",
+      "label": "修改后重试",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "各自的职责",
+      "items": [
+        "Agent 理解需求、追踪源码、选择图类型并编写候选 JSON。",
+        "Workflow 编译器根据节点与连线计算布局；交付过程渲染并检查 HTML。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "不要混淆检查",
+      "items": [
+        "finalize 在首个失败阶段停止；根据诊断修复候选并重新执行完整流程。",
+        "浏览器自动检查不产生截图，也不代表视觉审阅；需要审阅时运行 visual-check 并检查截图。"
+      ]
+    }
+  ]
+}

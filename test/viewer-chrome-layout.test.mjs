@@ -1154,3 +1154,63 @@ test('theme switches repaint the page and diagram without dropping the desktop r
 });
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
+
+
+test('tall width-first workflow protects its lower return through genuine document scroll', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the real browser regression.',
+}, async () => {
+  // Enlarge supported dimensions in a public fixture. Its bottom-channel
+  // record-result relationship and label expose actual footer occlusion.
+  const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', CASES.workflow), 'utf8'));
+  source.nodes.forEach(node => { node.height = 150; });
+  const input = path.join(tmp, 'tall-return.json');
+  const artifact = path.join(tmp, 'tall-return.html');
+  fs.writeFileSync(input, JSON.stringify(source));
+  execFileSync(process.execPath, [path.join(skillRoot, 'bin', 'archify.mjs'), 'render', 'workflow', input, artifact]);
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    for (const [width, height] of [[1440, 900], [2048, 1320]]) {
+      for (const theme of ['light', 'dark']) {
+        const sessionId = await load(browser, artifact, { width, height, query: '?theme=' + theme });
+        const setup = await evaluate(browser, sessionId, `({ fit: document.querySelector('.diagram-container > svg').getAttribute('data-reader-fit'), max: document.documentElement.scrollHeight - innerHeight })`);
+        assert.equal(setup.fit, 'width-first');
+        assert.ok(await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('.diagram-nav > button')).filter(button => button.getBoundingClientRect().width > 0).length >= 3`));
+        assert.ok(setup.max > 2, JSON.stringify(setup));
+        let previous = -1;
+        for (const fraction of [0, 0.5, 1]) {
+          await evaluate(browser, sessionId, `scrollTo(0, ${setup.max} * ${fraction})`);
+          await waitForLayout(browser, sessionId);
+          const geometry = await finalGeometry(browser, sessionId);
+          const reached = await evaluate(browser, sessionId, 'scrollY');
+          assert.ok(Math.abs(reached - setup.max * fraction) <= 1, JSON.stringify({ setup, reached, fraction }));
+          assert.ok(reached > previous, 'top, middle and bottom must be distinct reached scroll states');
+          previous = reached;
+          assert.equal(geometry.dockStageIntersectionArea, 0, JSON.stringify(geometry));
+          assert.ok(geometry.stageGap >= 9.5, JSON.stringify(geometry));
+          assert.deepEqual(await edgePaintHitsUnderDock(browser, sessionId, 'path[data-edge-id="record-result"]'), []);
+          const paint = await evaluate(browser, sessionId, `(() => {
+            const dock = document.querySelector('.diagram-nav').getBoundingClientRect();
+            const labels = Array.from(document.querySelectorAll('text')).filter(text => text.textContent === 'record result');
+            return { labels: labels.length, overlap: labels.some(text => {
+              const box = text.getBoundingClientRect();
+              return Math.min(box.right, dock.right) > Math.max(box.left, dock.left) && Math.min(box.bottom, dock.bottom) > Math.max(box.top, dock.top);
+            }) };
+          })()`);
+          assert.ok(paint.labels > 0, 'the lower return label must exist');
+          assert.equal(paint.overlap, false);
+          // Document scrolling is the approved route to the existing footer.
+          if (fraction === 1) {
+            const reachable = await evaluate(browser, sessionId, `Array.from(document.querySelectorAll('.diagram-nav > button')).filter(button => button.getBoundingClientRect().width > 0).every(button => {
+              const box = button.getBoundingClientRect();
+              const x = (box.left + box.right) / 2, y = (box.top + box.bottom) / 2;
+              return x >= 0 && x < innerWidth && y >= 0 && y < innerHeight && button.contains(document.elementFromPoint(x, y));
+            })`);
+            assert.equal(reachable, true, JSON.stringify(geometry));
+          }
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+});

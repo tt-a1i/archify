@@ -21,7 +21,7 @@
   "legend.architecture.messagebus": "ناقل رسائل",
   "legend.architecture.external": "خارجي",
   "legend.workflow.frontend": "واجهة المستخدم",
-  "legend.workflow.backend": "منطق الوكيل",
+  "legend.workflow.backend": "معالجة",
   "legend.workflow.security": "سياسة",
   "legend.workflow.messagebus": "فعلُ أداة",
   "legend.workflow.database": "سياق / تتبّع",

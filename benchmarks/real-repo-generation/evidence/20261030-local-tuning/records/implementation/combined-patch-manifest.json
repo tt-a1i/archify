@@ -1,0 +1,250 @@
+{
+  "atUtc": "2026-10-30T02:54:26.942647+00:00",
+  "base": "847146aeb93b492592adb78dc220f57e4a8b4636",
+  "patch": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch",
+  "patchSha256": "8a0b96783140b0b7f28afcfdf57eeb1b5eb5ce4cefbb3d31891e4a50cebe85a3",
+  "patchBytes": 115271,
+  "patchFiles": [
+    "archify/assets/template.html",
+    "archify/bin/visual-check.mjs",
+    "archify/locales/ar.json",
+    "archify/locales/en.json",
+    "archify/locales/es.json",
+    "archify/locales/ko.json",
+    "archify/locales/zh-CN.json",
+    "archify/locales/zh-TW.json",
+    "archify/renderers/workflow/workflow-compiler.mjs",
+    "test/viewer-camera-browser.test.mjs",
+    "test/viewer-chrome-layout.test.mjs",
+    "test/workflow-automatic-width.test.mjs",
+    "test/workflow-compiler-hard-contract.test.mjs",
+    "test/workflow-port-slot.test.mjs",
+    "test/workflow-routing-clarity.test.mjs",
+    "viewer/viewer-chrome-layout.js",
+    "test/fixtures/workflow-fanin-port-clearance.json",
+    "test/fixtures/workflow-frame-clearance.json",
+    "test/fixtures/workflow-label-frame-clearance.json",
+    "test/fixtures/workflow-late-label-envelope.json",
+    "test/fixtures/workflow-preferred-secondary-routing.json",
+    "test/workflow-label-fallback.test.mjs"
+  ],
+  "totalFiles": 22,
+  "inheritedFileCount": 21,
+  "unchangedInherited": 19,
+  "authorizedModifiedInherited": 2,
+  "newFixture": "test/fixtures/workflow-late-label-envelope.json",
+  "newFixtureSha256": "f559663b0a1837a9ee7b45a37e1daf482b38ae2f3e5fe0266c478f998ce6b111",
+  "allFrozenGoIdentitiesMatch": true,
+  "inheritedChecks": [
+    {
+      "path": "archify/assets/template.html",
+      "inheritedSha256": "1b3de2941ff3609316c6e83452a3fa7cf688a7849bf3f0834fea5a5d453497e2",
+      "actualSha256": "1b3de2941ff3609316c6e83452a3fa7cf688a7849bf3f0834fea5a5d453497e2",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/bin/visual-check.mjs",
+      "inheritedSha256": "4dbfde94c28f15d4fe0e19fee0e013a1149f7f3f9c64f4b78161d066f7b9fa49",
+      "actualSha256": "4dbfde94c28f15d4fe0e19fee0e013a1149f7f3f9c64f4b78161d066f7b9fa49",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/locales/ar.json",
+      "inheritedSha256": "7541123ada3ff35d28729bb6fdc8d4ba03236efa8207877a326c90014b477847",
+      "actualSha256": "7541123ada3ff35d28729bb6fdc8d4ba03236efa8207877a326c90014b477847",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/locales/en.json",
+      "inheritedSha256": "d368c6ac5e9eaf1822507748f40f6369db1b20082e88f982c68c399d90a60d0e",
+      "actualSha256": "d368c6ac5e9eaf1822507748f40f6369db1b20082e88f982c68c399d90a60d0e",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/locales/es.json",
+      "inheritedSha256": "5da2d668f970e81d8c8792a66708fc9306b691655794810fa169e92bfa76e3a9",
+      "actualSha256": "5da2d668f970e81d8c8792a66708fc9306b691655794810fa169e92bfa76e3a9",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/locales/ko.json",
+      "inheritedSha256": "d34df7b73f9c937c0d519a5afe079e6c7cb88d167176cd7d067e7dd89d2b29e2",
+      "actualSha256": "d34df7b73f9c937c0d519a5afe079e6c7cb88d167176cd7d067e7dd89d2b29e2",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/locales/zh-CN.json",
+      "inheritedSha256": "e87f703e3708aaccf915cd485d90ed4529b383d3a5fc78f5fa9c325404ae9340",
+      "actualSha256": "e87f703e3708aaccf915cd485d90ed4529b383d3a5fc78f5fa9c325404ae9340",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/locales/zh-TW.json",
+      "inheritedSha256": "22cd8d664649c1b2886565cfc88fd82c9870f2ba9f52665b0fbf63e699eaa8f9",
+      "actualSha256": "22cd8d664649c1b2886565cfc88fd82c9870f2ba9f52665b0fbf63e699eaa8f9",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "archify/renderers/workflow/workflow-compiler.mjs",
+      "inheritedSha256": "b98ecb59f820569a849ba90514cee075438ebd7e5660f47db8fc6e9eb98cef31",
+      "actualSha256": "52cc99fa0b7c2742ab161fb14dab275f9d1e28089b4c45349e2c9d8f3867f2a1",
+      "authorizedChanged": true,
+      "preserved": false
+    },
+    {
+      "path": "test/viewer-camera-browser.test.mjs",
+      "inheritedSha256": "15df268c77638b9fd1ae1eec3741540736af57c9ae07da86b89b1556ec8241f1",
+      "actualSha256": "15df268c77638b9fd1ae1eec3741540736af57c9ae07da86b89b1556ec8241f1",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/viewer-chrome-layout.test.mjs",
+      "inheritedSha256": "a033f7e23222e09b7f67938e237657b913a298bb007e54c92e24dedc061b96f7",
+      "actualSha256": "a033f7e23222e09b7f67938e237657b913a298bb007e54c92e24dedc061b96f7",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/workflow-automatic-width.test.mjs",
+      "inheritedSha256": "b409c6a3d8989965a8850f2d8009b37c1da286fb9b84d85eac2448555845c265",
+      "actualSha256": "b409c6a3d8989965a8850f2d8009b37c1da286fb9b84d85eac2448555845c265",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/workflow-compiler-hard-contract.test.mjs",
+      "inheritedSha256": "209e2a504a03ab210629cb7799ad90837c1de226269f75af503d1ddf8bef64c2",
+      "actualSha256": "209e2a504a03ab210629cb7799ad90837c1de226269f75af503d1ddf8bef64c2",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/workflow-port-slot.test.mjs",
+      "inheritedSha256": "1145c6cd9cd90acd25b1755a88b0bd6a62513e30227e36dc1694d1ea1740a1e7",
+      "actualSha256": "1145c6cd9cd90acd25b1755a88b0bd6a62513e30227e36dc1694d1ea1740a1e7",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/workflow-routing-clarity.test.mjs",
+      "inheritedSha256": "131f98e0585502a731808e75326f7aad1e4b9694e619f7d5181e0cb5cf847f2d",
+      "actualSha256": "21094f2185552d07b0f7d21dddab00232876bb73d30044057d03f63f3d1cb618",
+      "authorizedChanged": true,
+      "preserved": false
+    },
+    {
+      "path": "viewer/viewer-chrome-layout.js",
+      "inheritedSha256": "bfee20f2478f1f688d821685d2779002ab38fed2ac97d67dd74715999f9cd88e",
+      "actualSha256": "bfee20f2478f1f688d821685d2779002ab38fed2ac97d67dd74715999f9cd88e",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/fixtures/workflow-fanin-port-clearance.json",
+      "inheritedSha256": "a6af57b8976d74cb59f0ca89baba71f0fae86cdf7f0df4c98b5c53c2e566b789",
+      "actualSha256": "a6af57b8976d74cb59f0ca89baba71f0fae86cdf7f0df4c98b5c53c2e566b789",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/workflow-label-fallback.test.mjs",
+      "inheritedSha256": "2e658697f473aeb153d2eb82e651ae57f419e4d95ebcfae0e157a91eecd5ef9d",
+      "actualSha256": "2e658697f473aeb153d2eb82e651ae57f419e4d95ebcfae0e157a91eecd5ef9d",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/fixtures/workflow-preferred-secondary-routing.json",
+      "inheritedSha256": "c1df125f0f68d23ba70bc629b27e21c07a56d5f3ec51551a6346a76905973446",
+      "actualSha256": "c1df125f0f68d23ba70bc629b27e21c07a56d5f3ec51551a6346a76905973446",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/fixtures/workflow-frame-clearance.json",
+      "inheritedSha256": "dbf81a8ed6bac77340a62e75d84d227665f75158a83667421bdddcb4ae5f2da1",
+      "actualSha256": "dbf81a8ed6bac77340a62e75d84d227665f75158a83667421bdddcb4ae5f2da1",
+      "authorizedChanged": false,
+      "preserved": true
+    },
+    {
+      "path": "test/fixtures/workflow-label-frame-clearance.json",
+      "inheritedSha256": "e1e413f439e12e09d43e1ce2d79d48c0b213fa5a4bb31c6e1702a876505f86f6",
+      "actualSha256": "e1e413f439e12e09d43e1ce2d79d48c0b213fa5a4bb31c6e1702a876505f86f6",
+      "authorizedChanged": false,
+      "preserved": true
+    }
+  ],
+  "files": {
+    "archify/assets/template.html": "1b3de2941ff3609316c6e83452a3fa7cf688a7849bf3f0834fea5a5d453497e2",
+    "archify/bin/visual-check.mjs": "4dbfde94c28f15d4fe0e19fee0e013a1149f7f3f9c64f4b78161d066f7b9fa49",
+    "archify/locales/ar.json": "7541123ada3ff35d28729bb6fdc8d4ba03236efa8207877a326c90014b477847",
+    "archify/locales/en.json": "d368c6ac5e9eaf1822507748f40f6369db1b20082e88f982c68c399d90a60d0e",
+    "archify/locales/es.json": "5da2d668f970e81d8c8792a66708fc9306b691655794810fa169e92bfa76e3a9",
+    "archify/locales/ko.json": "d34df7b73f9c937c0d519a5afe079e6c7cb88d167176cd7d067e7dd89d2b29e2",
+    "archify/locales/zh-CN.json": "e87f703e3708aaccf915cd485d90ed4529b383d3a5fc78f5fa9c325404ae9340",
+    "archify/locales/zh-TW.json": "22cd8d664649c1b2886565cfc88fd82c9870f2ba9f52665b0fbf63e699eaa8f9",
+    "archify/renderers/workflow/workflow-compiler.mjs": "52cc99fa0b7c2742ab161fb14dab275f9d1e28089b4c45349e2c9d8f3867f2a1",
+    "test/fixtures/workflow-fanin-port-clearance.json": "a6af57b8976d74cb59f0ca89baba71f0fae86cdf7f0df4c98b5c53c2e566b789",
+    "test/fixtures/workflow-frame-clearance.json": "dbf81a8ed6bac77340a62e75d84d227665f75158a83667421bdddcb4ae5f2da1",
+    "test/fixtures/workflow-label-frame-clearance.json": "e1e413f439e12e09d43e1ce2d79d48c0b213fa5a4bb31c6e1702a876505f86f6",
+    "test/fixtures/workflow-late-label-envelope.json": "f559663b0a1837a9ee7b45a37e1daf482b38ae2f3e5fe0266c478f998ce6b111",
+    "test/fixtures/workflow-preferred-secondary-routing.json": "c1df125f0f68d23ba70bc629b27e21c07a56d5f3ec51551a6346a76905973446",
+    "test/viewer-camera-browser.test.mjs": "15df268c77638b9fd1ae1eec3741540736af57c9ae07da86b89b1556ec8241f1",
+    "test/viewer-chrome-layout.test.mjs": "a033f7e23222e09b7f67938e237657b913a298bb007e54c92e24dedc061b96f7",
+    "test/workflow-automatic-width.test.mjs": "b409c6a3d8989965a8850f2d8009b37c1da286fb9b84d85eac2448555845c265",
+    "test/workflow-compiler-hard-contract.test.mjs": "209e2a504a03ab210629cb7799ad90837c1de226269f75af503d1ddf8bef64c2",
+    "test/workflow-label-fallback.test.mjs": "2e658697f473aeb153d2eb82e651ae57f419e4d95ebcfae0e157a91eecd5ef9d",
+    "test/workflow-port-slot.test.mjs": "1145c6cd9cd90acd25b1755a88b0bd6a62513e30227e36dc1694d1ea1740a1e7",
+    "test/workflow-routing-clarity.test.mjs": "21094f2185552d07b0f7d21dddab00232876bb73d30044057d03f63f3d1cb618",
+    "viewer/viewer-chrome-layout.js": "bfee20f2478f1f688d821685d2779002ab38fed2ac97d67dd74715999f9cd88e"
+  },
+  "excludedDependencySymlinks": {
+    "archify/node_modules": {
+      "isSymlink": true,
+      "target": "/LOCAL_USER/.codex/worktrees/archify-label-anchor-38/archify/archify/node_modules"
+    },
+    "node_modules": {
+      "isSymlink": true,
+      "target": "/LOCAL_USER/.codex/worktrees/archify-label-anchor-38/archify/node_modules"
+    }
+  },
+  "applyCheck": {
+    "command": [
+      "git",
+      "-C",
+      "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/base",
+      "apply",
+      "--check",
+      "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "",
+    "actualApplyPerformed": false
+  },
+  "baseBefore": {
+    "head": "847146aeb93b492592adb78dc220f57e4a8b4636",
+    "status": ""
+  },
+  "baseAfter": {
+    "head": "847146aeb93b492592adb78dc220f57e4a8b4636",
+    "status": ""
+  },
+  "baseHeadAndStatusUnchanged": true,
+  "runtimeCalls": 0,
+  "testsRun": 0,
+  "lateReviewIssue": {
+    "status": "unaccepted for adoption; frozen test retained without edits",
+    "issue": "Full45 does not author fromSide/toSide. Bottom/right output-direction assertions freeze automatic choice and may reject a better valid alternative. Generic actual endpoint attachment should be considered in a separately authorized follow-up, not silently changed after execution."
+  }
+}

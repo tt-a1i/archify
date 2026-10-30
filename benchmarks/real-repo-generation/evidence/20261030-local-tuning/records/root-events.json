@@ -1,0 +1,34 @@
+{
+  "rootToolTimingScope": "metadata and read commands unwrapped; this log is not a complete end-to-end command timeline",
+  "events": [
+    {
+      "kind": "root-freeze",
+      "file": "root-freeze-go.json"
+    },
+    {
+      "kind": "late-preflight-finding",
+      "issue": "automatic bottom/right test overconstraint",
+      "action": "no postfreeze edit; unresolved for adoption"
+    },
+    {
+      "kind": "user-pause",
+      "instruction": "这轮搞完以后停一下吧",
+      "action": "automation_update returned PAUSED; finish49only"
+    },
+    {
+      "kind": "read-failure",
+      "command": "cat $CODEX_HOME/automations/archify-2/automation.toml",
+      "exitCode": 1,
+      "reason": "CODEX_HOME unset so /automations path absent",
+      "recovery": "read observed /LOCAL_USER/.codex/automations/archify-2/automation.toml; update via tool",
+      "productCalls": 0
+    },
+    {
+      "kind": "read-failure",
+      "path": "verification/run.json",
+      "exitCode": 1,
+      "reason": "assumed single run path; actual per-operation artifacts retained under verification; no product retry",
+      "productCalls": 0
+    }
+  ]
+}

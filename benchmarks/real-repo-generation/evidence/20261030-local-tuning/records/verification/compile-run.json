@@ -1,0 +1,148 @@
+{
+  "calls": 6,
+  "freshControlCalls": 0,
+  "node": "v22.23.2",
+  "start": "2026-10-30T02:51:46.234Z",
+  "runs": [
+    {
+      "case": "repair45",
+      "ok": true,
+      "elapsedMs": 293.789417,
+      "wholePublicOutputEqual": false,
+      "differenceCount": 9,
+      "inputObjectUnchanged": true,
+      "sourceEvidenceObjectUnchanged": true,
+      "nodesEqual": true,
+      "topologyEqual": true,
+      "svgTextEqual": true,
+      "viewBox": {
+        "control": [
+          1072,
+          528
+        ],
+        "candidate": [
+          843,
+          528
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "case": "originalA26",
+      "ok": true,
+      "elapsedMs": 137.24874999999997,
+      "wholePublicOutputEqual": true,
+      "differenceCount": 0,
+      "inputObjectUnchanged": true,
+      "sourceEvidenceObjectUnchanged": true,
+      "nodesEqual": true,
+      "topologyEqual": true,
+      "svgTextEqual": true,
+      "viewBox": {
+        "control": [
+          873,
+          528
+        ],
+        "candidate": [
+          873,
+          528
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "case": "B26",
+      "ok": true,
+      "elapsedMs": 104.61425000000008,
+      "wholePublicOutputEqual": true,
+      "differenceCount": 0,
+      "inputObjectUnchanged": true,
+      "sourceEvidenceObjectUnchanged": true,
+      "nodesEqual": true,
+      "topologyEqual": true,
+      "svgTextEqual": true,
+      "viewBox": {
+        "control": [
+          888,
+          528
+        ],
+        "candidate": [
+          888,
+          528
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "case": "SkillRoster13",
+      "ok": true,
+      "elapsedMs": 52.290167,
+      "wholePublicOutputEqual": true,
+      "differenceCount": 0,
+      "inputObjectUnchanged": true,
+      "sourceEvidenceObjectUnchanged": true,
+      "nodesEqual": true,
+      "topologyEqual": true,
+      "svgTextEqual": true,
+      "viewBox": {
+        "control": [
+          880,
+          652
+        ],
+        "candidate": [
+          880,
+          652
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "case": "pin36",
+      "ok": true,
+      "elapsedMs": 50.37316700000008,
+      "wholePublicOutputEqual": true,
+      "differenceCount": 0,
+      "inputObjectUnchanged": true,
+      "sourceEvidenceObjectUnchanged": true,
+      "nodesEqual": true,
+      "topologyEqual": true,
+      "svgTextEqual": true,
+      "viewBox": {
+        "control": [
+          880,
+          652
+        ],
+        "candidate": [
+          880,
+          652
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "case": "legacyB17",
+      "ok": true,
+      "elapsedMs": 83.00983399999996,
+      "wholePublicOutputEqual": true,
+      "differenceCount": 0,
+      "inputObjectUnchanged": true,
+      "sourceEvidenceObjectUnchanged": true,
+      "nodesEqual": true,
+      "topologyEqual": true,
+      "svgTextEqual": true,
+      "viewBox": {
+        "control": [
+          806,
+          528
+        ],
+        "candidate": [
+          806,
+          528
+        ]
+      },
+      "diagnostics": []
+    }
+  ],
+  "end": "2026-10-30T02:51:46.993Z",
+  "hashesUnchanged": true
+}

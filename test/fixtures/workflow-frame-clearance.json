@@ -1,0 +1,392 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SkillRoster：从扫描到 Apply 与 Undo",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "workflow.html",
+    "repository": {
+      "url": "https://github.com/tt-a1i/skillroster.git",
+      "revision": "0539695e849851f39e0ec4e5db21a42497b9d703"
+    }
+  },
+  "lanes": [
+    {
+      "id": "flow",
+      "label": "发现与执行"
+    },
+    {
+      "id": "state",
+      "label": "持久化状态"
+    },
+    {
+      "id": "exception",
+      "label": "失败与恢复",
+      "variant": "exception"
+    },
+    {
+      "id": "undo",
+      "label": "撤销"
+    }
+  ],
+  "mainPath": [
+    "scan",
+    "report",
+    "plan",
+    "confirm",
+    "apply",
+    "receipt"
+  ],
+  "nodes": [
+    {
+      "id": "scan",
+      "lane": "flow",
+      "col": 0,
+      "type": "backend",
+      "label": "扫描本地环境",
+      "sublabel": "Agent 根目录与 Skills",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 1660,
+          "end_line": 1705
+        }
+      ],
+      "explanation": "读取已批准来源根及发现结果；扫描完成后事务保存索引和快照。"
+    },
+    {
+      "id": "report",
+      "lane": "flow",
+      "col": 1,
+      "type": "backend",
+      "label": "审阅发现",
+      "sublabel": "Report 与整理建议",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 293,
+          "end_line": 317
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "lane": "flow",
+      "col": 2,
+      "type": "backend",
+      "label": "准备并审阅 Plan",
+      "sublabel": "快照、变更及影响",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 8822,
+          "end_line": 8873
+        }
+      ],
+      "explanation": "调用方依据快照与报告编写声明式 Plan JSON，plan 校验并保存 ready Plan，不执行 Agent / Library 变更；用 plan --show 审阅完整操作、变更前状态及影响，再确认。"
+    },
+    {
+      "id": "confirm",
+      "lane": "flow",
+      "col": 3,
+      "type": "security",
+      "label": "确认变更",
+      "sublabel": "CLI 或 JSON 调用方",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 361,
+          "end_line": 370
+        }
+      ],
+      "explanation": "交互 CLI 先预览并要求输入 confirm；JSON 跳过提示，调用方必须事先取得用户明确确认。取消则不执行。"
+    },
+    {
+      "id": "apply",
+      "lane": "flow",
+      "col": 4,
+      "type": "backend",
+      "label": "Apply Plan",
+      "sublabel": "检查漂移并执行",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 8876,
+          "end_line": 8937
+        }
+      ]
+    },
+    {
+      "id": "receipt",
+      "lane": "flow",
+      "col": 5,
+      "type": "backend",
+      "label": "验证 Receipt",
+      "sublabel": "检查状态与验证结果",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 8938,
+          "end_line": 9008
+        }
+      ],
+      "explanation": "Apply 执行中验证并返回 Receipt；仅 status=applied 且 verification=passed 才算成功并重扫。有 Receipt 或 changed_paths 不代表验证成功，失败时查看 error 与恢复状态。"
+    },
+    {
+      "id": "failure",
+      "lane": "exception",
+      "col": 4,
+      "type": "security",
+      "label": "失败与恢复",
+      "sublabel": "回滚或需要恢复",
+      "sources": [
+        {
+          "path": "src/change.rs",
+          "line": 759,
+          "end_line": 803
+        }
+      ],
+      "explanation": "执行或验证失败会尝试补偿：成功为 failed_rolled_back，失败为 recovery_required。最终日志或 SQLite 收尾失败时，文件可能已经改变，需检查恢复状态。"
+    },
+    {
+      "id": "recover",
+      "lane": "exception",
+      "col": 5,
+      "type": "backend",
+      "label": "检查并人工恢复",
+      "sublabel": "lifecycle recovery",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 8999,
+          "end_line": 9006
+        }
+      ],
+      "explanation": "lifecycle recovery 只检查精确路径并保守导入孤立日志，不自动修复或判定成功；人工检查修复后再重扫、审阅并准备 Plan。recovery_required 阻止新 Plan 与 Apply。"
+    },
+    {
+      "id": "blocked",
+      "lane": "exception",
+      "col": 2,
+      "type": "security",
+      "label": "计划受阻",
+      "sublabel": "确认来源后重扫",
+      "sources": [
+        {
+          "path": "src/roster_plan.rs",
+          "line": 356,
+          "end_line": 409
+        }
+      ]
+    },
+    {
+      "id": "undo_confirm",
+      "lane": "undo",
+      "col": 3,
+      "type": "security",
+      "label": "确认 Undo",
+      "sublabel": "预览 Receipt 路径",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 388,
+          "end_line": 399
+        }
+      ],
+      "explanation": "交互 CLI 要求输入 confirm；JSON 调用方须先取得用户明确确认。"
+    },
+    {
+      "id": "undo",
+      "lane": "undo",
+      "col": 4,
+      "type": "backend",
+      "label": "Undo Receipt",
+      "sublabel": "只逆转已应用变更",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 9011,
+          "end_line": 9043
+        }
+      ]
+    },
+    {
+      "id": "reverse",
+      "lane": "undo",
+      "col": 5,
+      "type": "backend",
+      "label": "验证并记录逆向",
+      "sublabel": "必要时重新扫描",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 9043,
+          "end_line": 9080
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "lane": "state",
+      "col": 0,
+      "type": "database",
+      "label": "扫描状态",
+      "sublabel": "SQLite 快照与索引",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 1748,
+          "end_line": 1761
+        }
+      ]
+    },
+    {
+      "id": "plans",
+      "lane": "state",
+      "col": 2,
+      "type": "database",
+      "label": "不可变 Plan",
+      "sublabel": "摘要、操作与快照",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 8860,
+          "end_line": 8872
+        }
+      ]
+    },
+    {
+      "id": "journal",
+      "lane": "state",
+      "col": 4,
+      "type": "database",
+      "label": "日志与恢复数据",
+      "sublabel": "操作、指纹与补偿",
+      "sources": [
+        {
+          "path": "src/change.rs",
+          "line": 714,
+          "end_line": 757
+        }
+      ]
+    },
+    {
+      "id": "records",
+      "lane": "state",
+      "col": 5,
+      "type": "database",
+      "label": "Receipt 与治理状态",
+      "sublabel": "Roster / Library",
+      "sources": [
+        {
+          "path": "src/app.rs",
+          "line": 8969,
+          "end_line": 9002
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "scan",
+      "to": "report"
+    },
+    {
+      "from": "report",
+      "to": "plan"
+    },
+    {
+      "from": "plan",
+      "to": "confirm",
+      "label": "ready"
+    },
+    {
+      "from": "confirm",
+      "to": "apply",
+      "label": "已确认"
+    },
+    {
+      "from": "apply",
+      "to": "receipt"
+    },
+    {
+      "from": "scan",
+      "to": "state",
+      "label": "保存"
+    },
+    {
+      "from": "plan",
+      "to": "plans",
+      "label": "保存"
+    },
+    {
+      "from": "apply",
+      "to": "journal",
+      "label": "记录"
+    },
+    {
+      "from": "receipt",
+      "to": "records",
+      "label": "保存"
+    },
+    {
+      "from": "plan",
+      "to": "blocked",
+      "label": "来源不足"
+    },
+    {
+      "from": "blocked",
+      "to": "scan",
+      "label": "确认后重扫"
+    },
+    {
+      "from": "apply",
+      "to": "failure",
+      "label": "执行失败"
+    },
+    {
+      "from": "failure",
+      "to": "recover",
+      "label": "需恢复"
+    },
+    {
+      "from": "receipt",
+      "to": "undo_confirm",
+      "label": "选择撤销"
+    },
+    {
+      "from": "undo_confirm",
+      "to": "undo",
+      "label": "已确认"
+    },
+    {
+      "from": "undo",
+      "to": "reverse"
+    },
+    {
+      "from": "undo",
+      "to": "failure",
+      "label": "逆转失败"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "确认职责",
+      "items": [
+        "CLI：预览后在终端输入 confirm；取消不执行。",
+        "JSON：无交互提示，调用方在执行前负责取得明确确认。"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "状态与恢复",
+      "items": [
+        "扫描保存快照与索引；Plan、Receipt 和治理状态存入 SQLite。",
+        "文件操作日志记录指纹、补偿和恢复信息；成功 Apply 后重扫。",
+        "计划过期或来源不足时先重扫并重新准备；恢复未解决时阻止后续变更。"
+      ]
+    }
+  ]
+}

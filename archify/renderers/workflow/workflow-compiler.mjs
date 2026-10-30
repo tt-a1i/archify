@@ -57,6 +57,7 @@ import {
   collectArrowheadCollisions,
   collectLabelRouteClearance,
   collectBorderRuns,
+  frameBorderSegments,
   forwardCollinearAnalysisSegments,
   sourceSegmentIndexAtPoint,
   polylineBendContacts,
@@ -168,13 +169,13 @@ function usesIndependentLaneMeasurement(workflow) {
 
 // A readable-v2 node without an authored width grows to fit its label, up to
 // 200px; longer labels still fail the label check. A sublabel or tag that
-// would not fit even at 6px also grows the node to fit it at its preferred 8px
-// or 7px. Keyed by the node object so the authored document is never rewritten.
+// would not fit at its preferred 8px or 7px also grows the node to fit it.
+// Keyed by the node object so the authored document is never rewritten.
 const automaticNodeWidths = new WeakMap();
 function automaticNodeWidth(node) {
   const labelWidth = Math.max(92, Math.ceil((textUnits(node.label) * 6.8 - 6) / 4) * 4);
   const secondaryWidths = [[node.sublabel, 8], [node.tag, 7]]
-    .filter(([text]) => text && minimumNodeTextWidth(text, 6) > availableNodeTextWidth(labelWidth))
+    .filter(([text, size]) => text && minimumNodeTextWidth(text, size) > availableNodeTextWidth(labelWidth))
     .map(([text, size]) => Math.ceil((minimumNodeTextWidth(text, size) + labelWidth - availableNodeTextWidth(labelWidth)) / 4) * 4);
   const fitted = Math.max(labelWidth, ...secondaryWidths);
   return fitted > 92 ? Math.min(200, fitted) : null;
@@ -3391,6 +3392,8 @@ function oneBendCrossLaneVia(edge, start, end, fromSide, toSide) {
 }
 
 const pathCache = new Map();
+// Label overrides belong to an exact candidate, including during preview.
+const rescuedLabelPoints = new WeakMap();
 const readableSideCache = new Map();
 const workflowDiagnostics = [];
 
@@ -4047,7 +4050,7 @@ function readableAutomaticCandidateSet(
   return { rawCandidates, candidates, outsideRight };
 }
 
-function readableAutomaticVia(edge, from, to, start, end, fromSide, toSide) {
+function readableAutomaticVia(edge, from, to, start, end, fromSide, toSide, expansion = null) {
   const { rawCandidates, candidates, outsideRight } = readableAutomaticCandidateSet(
     edge,
     from,
@@ -4143,6 +4146,7 @@ function readableAutomaticVia(edge, from, to, start, end, fromSide, toSide) {
               infeasibleX = midpointX;
             }
           }
+          if (expansion) expansion.rawSeed = currentPoints;
           return feasiblePoints.slice(1, -1);
         }
         lastInfeasibleX = outsideRightMinX;
@@ -4371,7 +4375,8 @@ function routeVia(
   }
 }
 
-function workflowEdgeLabelPoint(edge, points) {
+function workflowEdgeLabelPoint(edge, points, allowLongFallback = false) {
+  if (rescuedLabelPoints.has(points)) return rescuedLabelPoints.get(points);
   if (workflow.schema_version === 1) {
     if (edge.labelAt || Number.isInteger(edge.labelSegment) || points.length !== 3) {
       return labelPoint(edge, points);
@@ -4442,7 +4447,8 @@ function workflowEdgeLabelPoint(edge, points) {
     return ly - 10 >= top + 4 && ly + 4 <= top + laneHeight(index) - 4;
   });
   const preferred = pointOn(segments[0]?.index ?? 0);
-  if (!edge.label || !segments[0]?.horizontal || segments[0].length >= width + 8
+  if (!edge.label || !segments[0]?.horizontal
+      || (segments[0].length >= width + 8 && !allowLongFallback)
       || clearOfNodes(preferred)) return preferred;
   for (const segment of segments.slice(1)) {
     if (segment.length < 28) continue;
@@ -4521,7 +4527,9 @@ function automaticPortCandidates(edge, node, side, preferred, counterpart) {
       const ownWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
       const otherWidth = other.width || (other.variant === 'emphasis' ? 1.8 : 1.4);
       if (Math.abs(point[1 - axis] - center[1 - axis]) < 0.0001) {
-        occupied.push({ coordinate: point[axis], clearance: Math.max(16, 3.5 * (ownWidth + otherWidth)) });
+        occupied.push({ coordinate: point[axis], clearance: Math.max(16, 3.5 * (ownWidth + otherWidth)),
+          footprint: (node.id === edge.to ? 3.5 : 0.5) * ownWidth
+            + (endpoint === 'from' ? 0.5 : 3.5) * otherWidth });
       }
     }
   }
@@ -4538,7 +4546,27 @@ function automaticPortCandidates(edge, node, side, preferred, counterpart) {
     }
     if (candidates.length >= 2) return candidates.slice(0, 2);
   }
-  return candidates.length ? candidates : [preferred];
+  if (candidates.length || !independentAutomaticRoute(edge) || edge.from === edge.to || node.id !== edge.to) {
+    return candidates.length ? candidates : [preferred];
+  }
+  // The regular spread may miss a narrow slot. Use the existing endpoint
+  // stroke/arrow footprints only after exhausting its preferred spacing.
+  const minimum = (axis ? node.y : node.x) + 16;
+  const maximum = (axis ? node.y + node.height : node.x + node.width) - 16;
+  let slots = [[minimum, maximum]];
+  for (const { coordinate, footprint } of occupied) {
+    const low = coordinate - footprint, high = coordinate + footprint;
+    slots = slots.flatMap(([start, end]) => high <= start || low >= end
+      ? [[start, end]]
+      : [[start, Math.min(end, low)], [Math.max(start, high), end]].filter(([a, b]) => b > a));
+  }
+  const narrow = slots.map(([start, end]) => {
+    const point = [...center];
+    point[axis] = (start + end) / 2;
+    return point;
+  }).sort((a, b) => Math.abs(a[axis] - preferred[axis]) - Math.abs(b[axis] - preferred[axis])
+    || a[axis] - b[axis]).slice(0, 2);
+  return narrow.length ? narrow : [preferred];
 }
 
 function automaticEndpointRepairs(edge, selected, from, to, naturalFromSide, naturalToSide, narrowSlots = false) {
@@ -4731,7 +4759,149 @@ function readableFreeSpacePlans(edge, selected, from, to, naturalFromSide, natur
   return plans;
 }
 
-function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
+// Preserve the ordinary contest; only shorten its winning expanded corridor.
+function rescueSelectedOutsideLabel(edge, selected, from, to, naturalFromSide, naturalToSide) {
+  if (!selected.labelRescue || selected.points !== selected.labelRescue.owner
+    || !edge.label || ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(field => edge[field] !== undefined)) return selected;
+  const points = selected.labelRescue.rawSeed.map(point => [...point]);
+  if (readableCandidateRejection(edge, points, from, to, selected.fromSide, selected.toSide)
+    !== 'edge-label node clearance') return selected;
+  const preferred = workflowEdgeLabelPoint(edge, points);
+  const alternate = workflowEdgeLabelPoint(edge, points, true);
+  // Short-run fallback is unchanged; only the long-run permission can differ.
+  if (preferred[0] === alternate[0] && preferred[1] === alternate[1]) return selected;
+  rescuedLabelPoints.set(points, alternate);
+  if (!readableCandidateIsFeasible(edge, points, from, to, selected.fromSide, selected.toSide)) {
+    rescuedLabelPoints.delete(points);
+    return selected;
+  }
+  const cost = readableCandidateCost(edge, points, selected.cost.stableCandidateOrdinal, naturalFromSide, naturalToSide);
+  if (compareCost(cost, selected.cost) > 0) {
+    rescuedLabelPoints.delete(points);
+    return selected;
+  }
+  return { ...selected, points, cost };
+}
+
+function clearsRegisteredIncomingArrowheads(edge, points) {
+  const own = { ...edge, width: edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4) };
+  for (const [other, routed] of nodeRoutes.get(edge.to) ?? []) {
+    if (other === edge || other.to !== edge.to) continue;
+    const incoming = { ...other, width: other.width || (other.variant === 'emphasis' ? 1.8 : 1.4) };
+    if (collectArrowheadCollisions({
+      routedRelations: [{ relation: own, points }, { relation: incoming, points: routed.points }],
+      allowShortWorkflowTrunks: true,
+    }).length) return false;
+  }
+  return true;
+}
+
+function hasLongParallelFrameRun(points) {
+  const turns = points.map((point, index) => index > 0 && index < points.length - 1
+    && (point[0] - points[index - 1][0]) * (points[index + 1][1] - point[1])
+      !== (point[1] - points[index - 1][1]) * (points[index + 1][0] - point[0]));
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index], end = points[index + 1];
+    const axis = start[1] === end[1] ? 0 : 1;
+    const fixed = 1 - axis;
+    if (start[fixed] !== end[fixed]) continue;
+    const startTrim = turns[index] ? 8 : 0;
+    const endTrim = turns[index + 1] ? 8 : 0;
+    if (Math.abs(end[axis] - start[axis]) <= startTrim + endTrim) continue;
+    // Corners never exceed 8px; this is a conservative straight subset.
+    const direction = Math.sign(end[axis] - start[axis]);
+    const low = Math.min(start[axis] + direction * startTrim, end[axis] - direction * endTrim);
+    const high = Math.max(start[axis] + direction * startTrim, end[axis] - direction * endTrim);
+    for (const frame of compositionFrames()) {
+      if (frame.kind !== 'lane' && frame.kind !== 'exception-lane') continue;
+      for (const border of frameBorderSegments(frame)) {
+        if (border.start[fixed] !== border.end[fixed]
+          || Math.abs(start[fixed] - border.start[fixed]) >= 8) continue;
+        const overlap = Math.min(high, Math.max(border.start[axis], border.end[axis]))
+          - Math.max(low, Math.min(border.start[axis], border.end[axis]));
+        if (overlap > 24) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function preferLateFrameAlternative(edge, selected, from, to, naturalFromSide, naturalToSide) {
+  if (preservesWorkflowAbsoluteGeometry(workflow) || !independentAutomaticRoute(edge)
+    || ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(field => edge[field] !== undefined)
+    || ![selected.fromSide, selected.toSide].some(side => side === 'left' || side === 'right')
+    || !hasLongParallelFrameRun(selected.points)) return selected;
+  const start = selected.points[0], end = selected.points.at(-1);
+  const rail = (side, point) => side === 'left' ? layout.laneX - 20
+    : side === 'right' ? layout.laneX + layout.laneW + 12 : point[0];
+  const sourceX = rail(selected.fromSide, start), destinationX = rail(selected.toSide, end);
+  const bottomY = Math.max(laneTop(from.lane) + laneHeight(from.lane),
+    laneTop(to.lane) + laneHeight(to.lane)) + 16;
+  const points = joinRoutePoints(start, [[sourceX, start[1]], [sourceX, bottomY],
+    [destinationX, bottomY], [destinationX, end[1]]], end);
+  // Keep the nominal alternative first; only its label-clearance rejection
+  // justifies constructing one envelope fallback. Earlier failures stay final.
+  const assess = (candidatePoints, protectPaint = false) => {
+    if (!readableCandidateIsFeasible(edge, candidatePoints, from, to, selected.fromSide, selected.toSide)
+      || hasLongParallelFrameRun(candidatePoints)
+      || !clearsRegisteredIncomingArrowheads(edge, candidatePoints)) return {};
+    const cost = readableCandidateCost(edge, candidatePoints, selected.cost.stableCandidateOrdinal, naturalFromSide, naturalToSide);
+    for (const dimension of READABLE_CANDIDATE_COST_PRIORITY) {
+      if (dimension === 'bendCount') break;
+      if ((cost[dimension] || 0) === (selected.cost[dimension] || 0)) continue;
+      if ((cost[dimension] || 0) > (selected.cost[dimension] || 0)) return { rejectedDimension: dimension };
+      break;
+    }
+    const candidateMask = candidateLabelRect(edge, candidatePoints);
+    const baselineMask = candidateLabelRect(edge, selected.points);
+    if (candidateMask) {
+      for (const frame of compositionFrames()) {
+        if (frame.kind !== 'lane' && frame.kind !== 'exception-lane') continue;
+        for (const border of frameBorderSegments(frame)) {
+          if (segmentIntersectsRect(border, candidateMask)
+            && (!baselineMask || !segmentIntersectsRect(border, baselineMask))) return {};
+        }
+      }
+      if (protectPaint) {
+        // This fallback retains the ordinary horizontal shelf label. If the
+        // default anchor chooses another segment, leave the selected route alone.
+        const shelfStart = candidatePoints[1], shelfEnd = candidatePoints[2];
+        const labelPoint = workflowEdgeLabelPoint(edge, candidatePoints);
+        if (labelPoint[0] !== (shelfStart[0] + shelfEnd[0]) / 2
+          || labelPoint[1] !== shelfStart[1] - 10
+          || labelTouchesFramePaint(candidateMask)
+          || !labelClearsSelectedPaint(edge, candidatePoints, 1, candidateMask)) return {};
+      }
+    }
+    return { route: { points: candidatePoints, fromSide: selected.fromSide, toSide: selected.toSide,
+      cost, family: 'late-bottom-frame' } };
+  };
+  const nominal = assess(points);
+  if (nominal.route) return nominal.route;
+  // Evidence currently covers a bottom departure and right arrival. Do not
+  // generalize the paint-envelope construction to other port patterns yet.
+  if (nominal.rejectedDimension !== 'labelRouteClearanceDeficit' || !edge.label
+    || selected.fromSide !== 'bottom' || selected.toSide !== 'right') return selected;
+
+  const frames = compositionFrames().filter(frame => frame.kind === 'lane' || frame.kind === 'exception-lane');
+  // Match the rendered 1px frame stroke and .75px label-mask stroke. Reuse
+  // the existing 8px readable label preference as a finite envelope margin.
+  const frameHalfStroke = 0.5, labelHalfStroke = 0.375, clearance = 8;
+  const shelfY = Math.max(...frames.map(frame => frame.y + frame.height))
+    + frameHalfStroke + labelHalfStroke + clearance + 20;
+  let paintedLabelRight = -Infinity;
+  for (const routed of pathCache.values()) {
+    const mask = LABEL_RECT_CACHE.get(routed);
+    if (mask && mask.y + mask.height >= end[1] && mask.y <= shelfY) {
+      paintedLabelRight = Math.max(paintedLabelRight, mask.x + mask.width + labelHalfStroke);
+    }
+  }
+  const railX = Math.max(destinationX, paintedLabelRight + clearance);
+  const envelopePoints = [[...start], [start[0], shelfY], [railX, shelfY], [railX, end[1]], [...end]];
+  return assess(envelopePoints, true).route || selected;
+}
+
+function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts, allowLateFrameAlternative = false) {
   const authoredFrom = edge.fromSide && edge.fromSide !== 'auto' ? edge.fromSide : null;
   const authoredTo = edge.toSide && edge.toSide !== 'auto' ? edge.toSide : null;
   const sideOrder = ['right', 'bottom', 'left', 'top'];
@@ -4814,12 +4984,14 @@ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
         plans.push(...alternative.candidates.map((candidate) => ({ ...candidate, ...candidateSides })));
         if (!alternative.candidates.length) {
           try {
+            const expansion = {};
             const via = withDiagnosticRecordingSuppressed(() => readableAutomaticVia(
-              edge, from, to, alternativeStart, alternativeEnd, candidateSides.fromSide, candidateSides.toSide,
+              edge, from, to, alternativeStart, alternativeEnd, candidateSides.fromSide, candidateSides.toSide, expansion,
             ));
             const points = joinRoutePoints(alternativeStart, via, alternativeEnd);
             plans.push({
               points, ...candidateSides,
+              labelRescue: expansion.rawSeed ? { rawSeed: expansion.rawSeed, owner: points } : null,
               cost: readableCandidateCost(edge, points, pairOrdinal * 9 + portOrdinal * 144 + 6, naturalFromSide, naturalToSide),
             });
           } catch (error) {
@@ -4831,6 +5003,7 @@ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
     }
     if (planned.candidates.length) continue;
     try {
+      const expansion = {};
       const expandedVia = withDiagnosticRecordingSuppressed(() => readableAutomaticVia(
         edge,
         from,
@@ -4839,6 +5012,7 @@ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
         end,
         candidateSides.fromSide,
         candidateSides.toSide,
+        expansion,
       ));
       const expandedPoints = joinRoutePoints(start, expandedVia, end);
       const outsideRightOrdinal = planned.rawCandidates.findIndex(({ family }) => (
@@ -4849,6 +5023,7 @@ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
         family: 'outside-right',
         ordinal,
         points: expandedPoints,
+        labelRescue: expansion.rawSeed ? { rawSeed: expansion.rawSeed, owner: expandedPoints } : null,
         cost: readableCandidateCost(
           edge,
           expandedPoints,
@@ -4919,11 +5094,18 @@ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts) {
     }
     plans.push(...readableFreeSpacePlans(edge, plans[0], from, to, naturalFromSide, naturalToSide));
     plans.sort((a, b) => compareCost(a.cost, b.cost));
-    const selected = plans[0];
+    // Prefer an existing arrow-clear plan in the original cost order. Retain
+    // the original winner when none clears so final diagnostics remain precise.
+    const arrowClearPlan = independentAutomaticRoute(edge)
+      && !['labelAt', 'labelDx', 'labelDy', 'labelSegment'].some(field => edge[field] !== undefined)
+      ? plans.find(plan => clearsRegisteredIncomingArrowheads(edge, plan.points)) : null;
+    const selected = rescueSelectedOutsideLabel(edge, arrowClearPlan || plans[0], from, to, naturalFromSide, naturalToSide);
+    const final = allowLateFrameAlternative
+      ? preferLateFrameAlternative(edge, selected, from, to, naturalFromSide, naturalToSide) : selected;
     return {
-      points: selected.points,
-      fromSide: selected.fromSide,
-      toSide: selected.toSide,
+      points: final.points,
+      fromSide: final.fromSide,
+      toSide: final.toSide,
     };
   }
 
@@ -5081,7 +5263,10 @@ function readableControlledRoute(edge, from, to) {
 
   // Preset-only routes retain their dedicated typed conflict (and verified
   // alternative search) when exhaustive side inference found no valid plan.
-  const fallback = materializedCandidates[0];
+  // When sides were inferred, diagnose a route that honors them before an
+  // arbitrary default pair: otherwise an obstacle can look like a request
+  // for endpoint pins that the author never supplied.
+  const fallback = diagnosticCandidates[0] || materializedCandidates[0];
   if (!fallback) return null;
   const fallbackVia = readablePresetVia(
     edge,
@@ -5104,7 +5289,110 @@ function readableControlledRoute(edge, from, to) {
 
 // Registering a routed path also publishes it (and its label box) to the grid.
 let obstacleSequence = 0;
+function labelPaintRectsTouch(a, b) {
+  return !(a.x + a.width < b.x || b.x + b.width < a.x
+    || a.y + a.height < b.y || b.y + b.height < a.y);
+}
+
+function labelTouchesFramePaint(mask) {
+  for (const frame of compositionFrames()) {
+    if (frame.kind !== 'lane' && frame.kind !== 'exception-lane') continue;
+    if (frameBorderSegments(frame).some(border => segmentIntersectsRect(border, mask, 0.5))) return true;
+    const radius = Math.min(frame.radius || 0, frame.width / 2, frame.height / 2);
+    for (const x of [frame.x, frame.x + frame.width - radius]) {
+      for (const y of [frame.y, frame.y + frame.height - radius]) {
+        if (labelPaintRectsTouch(mask, { x: x - 0.5, y: y - 0.5,
+          width: radius + 1, height: radius + 1 })) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function labelClearsSelectedPaint(edge, points, owner, mask) {
+  // renderNode's 1.5px border bounds the current 1.25px node UI border.
+  for (const node of nodes.values()) {
+    if (labelPaintRectsTouch(mask, { x: node.x - 0.75, y: node.y - 0.75,
+      width: node.width + 1.5, height: node.height + 1.5 })) return false;
+  }
+  for (const [relation, routed] of [...pathCache, [edge, { points }]]) {
+    const priorMask = relation === edge ? null : LABEL_RECT_CACHE.get(routed);
+    if (priorMask && labelPaintRectsTouch(mask, priorMask)) return false;
+    const route = routed.points;
+    const width = relation.width || (relation.variant === 'emphasis' ? 1.8 : 1.4);
+    const pad = width / 2;
+    for (let index = 0; index < route.length - 1; index += 1) {
+      const start = route[index], end = route[index + 1];
+      if (start[0] !== end[0] && start[1] !== end[1]) return false;
+      if (relation === edge && index === owner) continue;
+      if (segmentIntersectsRect({ start, end }, mask, pad)) return false;
+    }
+    // roundedWorkflowPath never exceeds 8px; these boxes cover its turns.
+    for (let index = 1; index < route.length - 1; index += 1) {
+      const point = route[index], before = route[index - 1], after = route[index + 1];
+      if ((point[0] - before[0]) * (after[1] - point[1])
+        === (point[1] - before[1]) * (after[0] - point[0])) continue;
+      if (labelPaintRectsTouch(mask, { x: point[0] - 8 - pad, y: point[1] - 8 - pad,
+        width: 16 + width, height: 16 + width })) return false;
+    }
+    // shared/utils marker definitions: 10x7, ref 9/3.5, strokeWidth units.
+    const tip = route.at(-1), previous = route.at(-2);
+    const length = Math.hypot(tip[0] - previous[0], tip[1] - previous[1]);
+    if (!length) return false;
+    const dx = (tip[0] - previous[0]) / length, dy = (tip[1] - previous[1]) / length;
+    const triangle = [[0, 0], [10, 3.5], [0, 7]].map(([x, y]) => [
+      tip[0] + dx * (x - 9) * width - dy * (y - 3.5) * width,
+      tip[1] + dy * (x - 9) * width + dx * (y - 3.5) * width,
+    ]);
+    const xs = triangle.map(point => point[0]), ys = triangle.map(point => point[1]);
+    if (labelPaintRectsTouch(mask, { x: Math.min(...xs), y: Math.min(...ys),
+      width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) })) return false;
+  }
+  return true;
+}
+
+function selectCommittedImplicitLabel(edge, routed) {
+  if (workflow.schema_version !== 2 || !edge.label || (edge.route && edge.route !== 'auto')
+    || preservesWorkflowAbsoluteGeometry(workflow)
+    || ['labelAt', 'labelSegment', 'labelDx', 'labelDy'].some(field => Object.hasOwn(edge, field))
+    || routed.points.length < 3 || routed.points.length > 5) return routed;
+  const baseline = workflowEdgeLabelPoint(edge, routed.points);
+  if (!labelTouchesFramePaint(candidateLabelRect(edge, routed.points))) return routed;
+  const deficit = labelRouteClearanceDeficit(edge, routed.points);
+  const from = nodes.get(edge.from), to = nodes.get(edge.to);
+  const sides = edgeSides(edge);
+  const segments = routed.points.slice(0, -1).map((start, index) => ({ index,
+    horizontal: start[1] === routed.points[index + 1][1],
+    length: Math.hypot(routed.points[index + 1][0] - start[0], routed.points[index + 1][1] - start[1]),
+  })).sort((a, b) => Number(b.horizontal) - Number(a.horizontal) || b.length - a.length || a.index - b.index);
+  for (const segment of segments) {
+    if (segment.length < 28) continue;
+    const anchor = labelPoint({ ...edge, labelSegment: segment.index }, routed.points);
+    if (!segment.horizontal) anchor[1] += 10;
+    if (anchor[0] === baseline[0] && anchor[1] === baseline[1]) continue;
+    const points = routed.points.map(point => [...point]);
+    rescuedLabelPoints.set(points, anchor);
+    let accepted = false;
+    try {
+      const mask = candidateLabelRect(edge, points);
+      if (mask.x < layout.laneX + 4 || mask.x + mask.width > layout.laneX + layout.laneW - 4
+        || !workflow.lanes.some((lane, index) => mask.y >= laneTop(lane.id) + 4
+          && mask.y + mask.height <= laneTop(lane.id) + laneHeight(index) - 4)
+        || labelTouchesFramePaint(mask)
+        || !readableCandidateIsFeasible(edge, points, from, to, sides.fromSide, sides.toSide)
+        || labelRouteClearanceDeficit(edge, points) > deficit
+        || !labelClearsSelectedPaint(edge, points, segment.index, mask)) continue;
+      accepted = true;
+      return { d: routed.d, points };
+    } finally {
+      if (!accepted) rescuedLabelPoints.delete(points);
+    }
+  }
+  return routed;
+}
+
 function registerRouted(edge, routed) {
+  routed = selectCommittedImplicitLabel(edge, routed);
   pathCache.set(edge, routed);
   const sequence = obstacleSequence++;
   const routeExtent = routeBounds(routed.points);
@@ -5150,6 +5438,7 @@ function pathFor(edge, automaticPlan = null) {
       to,
       { fromSide, toSide },
       ports,
+      true,
     );
     readableSideCache.set(edge, {
       fromSide: planned.fromSide,

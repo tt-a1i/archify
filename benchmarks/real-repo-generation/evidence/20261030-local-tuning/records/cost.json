@@ -1,0 +1,117 @@
+{
+  "phase": 49,
+  "startedAtUtc": "2026-10-30T02:40:24.694375+00:00",
+  "cutoffUtc": "2026-10-30T03:07:23.300484+00:00",
+  "deadlineUtc": "2026-10-30T03:04:24.694375+00:00",
+  "wallSpanSeconds": 1618.606109,
+  "interruptionIncluded": true,
+  "budgetOverrunIncludesUserInterruptionAndArchive": true,
+  "directCandidateCompiles": 6,
+  "freshControlCompiles": 0,
+  "focusedRuns": 1,
+  "testsPassed": 174,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "finalizes": 1,
+  "visualChecks": 1,
+  "newScreenshots": 4,
+  "independentImageViewsReported": 8,
+  "rootImageViews": 2,
+  "pageHarnesses": 1,
+  "pageStates": 4,
+  "freshAuthors": 0,
+  "freshAuthorDenominator": 17,
+  "modelTokens": "unknown",
+  "billing": "unknown",
+  "completeTeamElapsed": "unknown",
+  "logs": [
+    {
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/page/observable-commands.jsonl",
+      "sha256": "5e81f52528d37606ec4d18248002a3273e78f52deece9f7fa7543fcddc3d9d36",
+      "bytesAtCutoff": 80177,
+      "records": 18,
+      "firstStart": "2026-10-30T02:53:12.819199+00:00",
+      "lastEnd": "2026-10-30T03:06:44.198100+00:00",
+      "failedCommands": [],
+      "summedCommandSeconds": 1.365587749848768,
+      "isTeamElapsed": false
+    },
+    {
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/setup/observable-commands.jsonl",
+      "sha256": "d6060d6bf6724db3811770cd5b132cf61c9824b88edec1cde6b0570e6b17195d",
+      "bytesAtCutoff": 2238,
+      "records": 1,
+      "firstStart": "2026-10-30T02:41:11.006582+00:00",
+      "lastEnd": "2026-10-30T02:41:12.058653+00:00",
+      "failedCommands": [],
+      "summedCommandSeconds": 1.0517857079394162,
+      "isTeamElapsed": false
+    },
+    {
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/observable-commands.jsonl",
+      "sha256": "42f996090904e3c5d2d832784b0373a177f79492ca7a75424d6823046ded64aa",
+      "bytesAtCutoff": 106870,
+      "records": 13,
+      "firstStart": "2026-10-30T02:42:48.305736+00:00",
+      "lastEnd": "2026-10-30T02:53:26.950950+00:00",
+      "failedCommands": [],
+      "summedCommandSeconds": 12.704379956,
+      "isTeamElapsed": false
+    },
+    {
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/observable-commands.jsonl",
+      "sha256": "8993472d054ba74253087bb248f6a6c723e23187731b4ede849d5d5f400e8dbb",
+      "bytesAtCutoff": 69498,
+      "records": 8,
+      "firstStart": "2026-10-30T02:52:31.103497+00:00",
+      "lastEnd": "2026-10-30T03:00:35.151029+00:00",
+      "failedCommands": [
+        {
+          "start": "2026-10-30T03:00:35.071666+00:00",
+          "end": "2026-10-30T03:00:35.151029+00:00",
+          "elapsedSeconds": 0.078976792,
+          "cwd": "/LOCAL_USER/.codex/worktrees/5aa5/archify",
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import pathlib,json,hashlib,datetime\nr=pathlib.Path(\"/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra\");p=r/\"compact-envelope-candidate-49\";o=p/\"visual\";h=lambda f:hashlib.sha256(pathlib.Path(f).read_bytes()).hexdigest();now=datetime.datetime.now(datetime.timezone.utc).isoformat();states=[];bind=[];measure=[]\nfor role,q in [(\"before\",r/\"repair-column-trial-45/author/candidate-qa\"),(\"after\",o/\"repair45/after-qa\")]:\n rc=q/\"workflow.visual-check.json\";j=json.loads(rc.read_text());assert h(j[\"artifact\"][\"path\"])==j[\"artifact\"][\"sha256\"];assert j[\"state\"]=={\"detail\":\"read\",\"motion\":\"still\"};assert all(h(q/x[\"file\"])==x[\"sha256\"] for x in j[\"sidecars\"][\"files\"])\n bind.append({\"role\":role,\"receipt\":str(rc),\"receiptSha256\":h(rc),\"artifact\":j[\"artifact\"],\"state\":j[\"state\"]})\n for s in j[\"captures\"][\"screenshots\"]:\n  f=q/(\"workflow.visual-check.\"+str(s[\"width\"])+\"x\"+str(s[\"height\"])+\".\"+s[\"theme\"]+\".png\");states.append({\"role\":role,\"width\":s[\"width\"],\"height\":s[\"height\"],\"theme\":s[\"theme\"],\"path\":str(f),\"sha256\":h(f),\"actuallyViewed\":True,\"read\":\"read\",\"motion\":\"still\",\"viewBatchCompletedAt\":now});measure.append({\"role\":role,**{k:s.get(k) for k in [\"width\",\"height\",\"theme\",\"viewBoxWidth\",\"readerWidth\",\"diagramWidth\",\"pageComposition\",\"dockStageGap\",\"dockStageIntersectionArea\"]}})\nsem=json.loads((p/\"verification/repair45-geometry-semantics.json\").read_text());assert sem[\"nodes\"][\"equal\"];assert sem[\"textContent\"][\"equal\"];assert sem[\"topology\"][\"control\"]==sem[\"topology\"][\"candidate\"];assert sem[\"fonts\"][\"control\"]==sem[\"fonts\"][\"candidate\"]\ninp=r/\"repair-column-trial-45/author/first.json\";data=json.loads(inp.read_text());fs=json.loads((o/\"repair45/after/workflow.finalize-summary.json\").read_text());assert h(inp)==fs[\"specification\"][\"sha256\"]\nlogs=[json.loads(x) for x in (o/\"observable-commands.jsonl\").read_text().splitlines()];calls=[{k:x.get(k) for k in [\"start\",\"end\",\"elapsedSeconds\",\"cwd\",\"command\",\"exitCode\"]} for x in logs if \"finalize\" in x.get(\"command\",[]) or \"visual-check\" in x.get(\"command\",[])];assert len(calls)==2\nresult={\"closedAtUtc\":now,\"bindings\":bind,\"semantic\":{\"input\":str(inp),\"inputSha256\":h(inp),\"nodes\":len(data[\"nodes\"]),\"edges\":len(data[\"edges\"]),\"lanes\":len(data[\"lanes\"]),\"cards\":len(data[\"cards\"]),\"sameFixedJSON\":True,\"nodesEqual\":True,\"topologyEqual\":True,\"textEqual\":True,\"fontsEqual\":True,\"evidence\":str(p/\"verification/repair45-geometry-semantics.json\"),\"evidenceSha256\":h(p/\"verification/repair45-geometry-semantics.json\")},\"counts\":{\"finalize\":1,\"visualCheck\":1,\"newPNG\":4,\"reusedPNG\":4,\"actualViewed\":8,\"retries\":0,\"directCompile\":0,\"test\":0},\"verdict\":{\"localImprovement\":True,\"wholeGraphBeautyAcceptance\":False,\"humanAcceptance\":False,\"scope\":\"repair45sameJSONcontrolb98→49;noother5newvisualcapture\"},\"measurements\":measure,\"productCommandTimings\":calls,\"states\":states,\"limits\":[\"No normal scrolling/zoom/detailsweep\",\"2048originaldisplayresizedbytoolto1984wide\",\"Nopixelglyphorcontrastmeasurements; savedgeometryused\",\"Wholegraphloop/densityfailuresremain\",\"Parallelcostnotaspeedclaim\"]}\n(o/\"identity.json\").write_text(json.dumps(result,ensure_ascii=False,indent=2));(o/\"comparison-states.json\").write_text(json.dumps(states,ensure_ascii=False,indent=2));(o/\"measurements.json\").write_text(json.dumps(measure,ensure_ascii=False,indent=2));(o/\"view-log.json\").write_text(json.dumps({\"completedAtUtc\":now,\"method\":\"actualview_image all8originalPNGs; batchcompletiononly,noinventedperimagedurations\",\"images\":states,\"failedViews\":[],\"newUniqueScreenshots\":4},ensure_ascii=False,indent=2));(o/\"command-timings.json\").write_text(json.dumps(calls,ensure_ascii=False,indent=2))\nreport=\"\"\"# 第49轮视觉结果：右侧空路由区明显减少，整图美观仍未接受\n\n固定45 JSON在新49运行时出现真实局部用户收益：发现问题返回线不再向极右扩出大片空白，主体在相同视口内更易读，标签与交付卡片分离。8张配对原图已实际看完，未见新增交叉、字形遮挡、错误标签归属或导航工具条盖图。但左/顶校验失败大U、长重试、修复下方汇聚和第三泳道左侧大空白仍在，**整体美观仍FAIL**。这不是人工接受，也没有把自动PASS变成视觉接受。\n\n## 匹配观察与实际收益\n\n已实际查看before b98与after49各1440×900/2048×1320浅深色四张图，read/still，四状态匹配。4旧图是复用且本轮重新查看，4新图来自唯一一次visual-check。identity.json与comparison-states.json保留所有路径/hash/HTML/receipt绑定。\n\n原发现问题线由审阅底部向下、向右长跨到图外大空区，再向上进修复。新线仍为必要反馈，改为在内容右侧附近转上，横向空走显著减少；底部标签有独立空间，不再贴交付卡片。缩窄右边空路由区后，主路径、条件和节点在同视口中更容易辨识，浅深色均可见。没有借删节点/文字/边来得到紧凑画面。\n\n主路径保持需求→编写→JSON→校验→渲染→严格检查→浏览器，自动通过到交付与视觉审阅到交付都可追踪，前向分支没有继承新的外围绕行。五失败源仍分别通向修复：校验从左绕顶、渲染与检查向右上汇聚、浏览器直上、审阅从右侧返回。retry仍向左到JSON，条件名称与箭头可区分。新紧凑回线位于卡片外侧，无可见新交点/遮字；dock留在下方，图例/节点未被它覆盖。\n\n## 仍保留的整图问题\n\n校验失败仍从机器泳道左出、绕过需求左边和顶部到修复，线像额外的边框且迫使跨区追踪；修复→JSON重试仍长；渲染/检查/浏览器输入仍集中在修复左/下部。第三泳道左空右重未解决。这些缺陷不因右侧缩窄而消失，因此本轮结论为局部改善、不是整图接受或恢复45布局为推荐方案。反馈语义必要，几何整圈必要性未证实；不单以路线长度裁决。\n\n## 身份、内容与显示比例\n\nfinalize和visual-check各执行1次、都PASS，0重试。新HTML f37368e8…7606c，固定输入f559663b…6b111。两侧HTML/QA receipts/全部sidecar hash重新匹配。verification已有完整输出比较显示：10节点、15边、3泳道、2cards；节点几何、完整文字、字体、拓扑保持相同，只有review→repair路由/标签和画布包络改变。输入本轮没有修改，完整语义保留；原首稿语义待办不因此完成。\n\n已有QA回执记录viewBox宽1072→843、高528不变；1440的SVG显示高663→746，2048为921→1082。该回执几何支持主体显示比例增加；并非本轮新DOM/字形像素测量，不声称源字体变大。保存measurements.json可复核。暗色次要文字仍比主标题弱，但没有新测contrast ratio，未制造字体/对比硬失败。\n\n新2048截图底部卡片没有全部进入当前视口，不是内容丢失。当前截图不足以证明完整正常滚动体验，本轮没有添加滚动浏览或截图。不能把单屏fit设为硬规则。\n\n## 命令、时长与范围\n\n完整CLI argv/start/end/elapsed在command-timings.json，所有shell命令和输出在observable-commands.jsonl。产品调用严格串行：一次新49finalize workflow，随后一次visual-check。ARCHIFY_CHROME明确指向Chrome，canonical Node22.23.2，repo-root为冻结R/base，quality showcase。没有直接compile、测试、新作者、新JSON或源码修改。批次完成时间和实际8张路径在view-log.json，没有虚构逐张持续时间；2048工具显示缩放为1984宽，未修改原PNG。\n\n其他5个固定输入由执行代理报告whole-public-result相等，本视觉代理没有为它们新截图或声称新增视觉验证；此结论限repair45固定JSON。并行流程耗时不是性能收益或独立首稿成功率证据。\n\"\"\"\n(o/\"report.md\").write_text(report);print(now+\" report saved;8images;localgain;wholegraphFAIL\")\n"
+          ],
+          "exitCode": 1,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 8, in <module>\nAssertionError\n"
+        }
+      ],
+      "summedCommandSeconds": 7.436312872999999,
+      "isTeamElapsed": false
+    },
+    {
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/observable-commands.jsonl",
+      "sha256": "8afbd24e444e7e1c9ad08152317625b9c75482da584b21499d0e2847df9e31cd",
+      "bytesAtCutoff": 121806,
+      "records": 16,
+      "firstStart": "2026-10-30T02:42:32.464916+00:00",
+      "lastEnd": "2026-10-30T02:56:13.637424+00:00",
+      "failedCommands": [],
+      "summedCommandSeconds": 0.744275665,
+      "isTeamElapsed": false
+    },
+    {
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/observable-commands.jsonl",
+      "sha256": "c153265e5a686903f99577327cb6f8ed6b7f7c9400767b177da1482cb40d1eeb",
+      "bytesAtCutoff": 167345,
+      "records": 16,
+      "firstStart": "2026-10-30T02:42:07.487475+00:00",
+      "lastEnd": "2026-10-30T02:54:26.965797+00:00",
+      "failedCommands": [],
+      "summedCommandSeconds": 1.191365418,
+      "isTeamElapsed": false
+    }
+  ],
+  "limits": [
+    "Per-command times are bounded; parallel sums are not team elapsed.",
+    "Internal compile stages and copied logs not added to direct calls.",
+    "Root metadata/reads partly unwrapped; lookup failures in root-events.json.",
+    "No first-pass or speedup conclusion.",
+    "Independent visual conclusion received before interruption; root reconstructed its report without new image review."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "command": [
+    "/tmp/node-v22.23.2-darwin-arm64/bin/node",
+    "/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js",
+    "run",
+    "test:focus",
+    "--",
+    "test/workflow-automatic-width.test.mjs",
+    "test/workflow-absolute-sizing-diagnostics.test.mjs",
+    "test/workflow-port-slot.test.mjs",
+    "test/workflow-straight-reservation.test.mjs",
+    "test/workflow-route-order.test.mjs",
+    "test/workflow-routing-clarity.test.mjs",
+    "test/workflow-shared-trunks.test.mjs",
+    "test/workflow-compiler-hard-contract.test.mjs",
+    "test/workflow-vertical-label.test.mjs",
+    "test/workflow-label-fallback.test.mjs"
+  ],
+  "cwd": "/LOCAL_USER/.codex/worktrees/archify-envelope-49/archify",
+  "start": "2026-10-30T02:52:07.501558+00:00",
+  "end": "2026-10-30T02:52:13.034291+00:00",
+  "elapsedSeconds": 5.53075525,
+  "exitCode": 0,
+  "testsRuns": 1,
+  "hashesUnchanged": true,
+  "summaryLines": [
+    "# tests 174",
+    "# pass 174",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+    "# todo 0",
+    "# duration_ms 4321.5105"
+  ],
+  "failLines": []
+}

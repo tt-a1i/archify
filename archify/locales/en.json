@@ -21,7 +21,7 @@
   "legend.architecture.messagebus": "Message bus",
   "legend.architecture.external": "External",
   "legend.workflow.frontend": "User UI",
-  "legend.workflow.backend": "Agent logic",
+  "legend.workflow.backend": "Processing",
   "legend.workflow.security": "Policy",
   "legend.workflow.messagebus": "Tool action",
   "legend.workflow.database": "Context / trace",

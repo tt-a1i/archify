@@ -1770,12 +1770,9 @@ export class ChromeVisualBrowser {
         && typeof Archify.viewerChromeLayout.stageRect === 'function'
         ? Archify.viewerChromeLayout.stageRect()
         : (stage ? stage.getBoundingClientRect() : null);
-      // The dock may lift to the viewport floor while the page scrolls; the
-      // stage contract is about its resting position.
-      var navigationDockRect = !navigationDock ? null
-        : window.Archify && Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.dockRect === 'function'
-          ? Archify.viewerChromeLayout.dockRect()
-          : navigationDock.getBoundingClientRect();
+      // Occlusion concerns the displayed dock, including its CSS translation.
+      // The Viewer resting box is retained for layout feedback, not paint QA.
+      var navigationDockRect = navigationDock ? navigationDock.getBoundingClientRect() : null;
       var stageDockIntersectionArea = intersectionArea(stageRect, navigationDockRect);
       var viewerChromeReceipt = window.Archify && Archify.viewerChromeLayout
         && typeof Archify.viewerChromeLayout.receipt === 'function'

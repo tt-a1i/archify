@@ -21,7 +21,7 @@
   "legend.architecture.messagebus": "訊息匯流排",
   "legend.architecture.external": "外部系統",
   "legend.workflow.frontend": "使用者介面",
-  "legend.workflow.backend": "Agent 邏輯",
+  "legend.workflow.backend": "處理",
   "legend.workflow.security": "政策",
   "legend.workflow.messagebus": "工具操作",
   "legend.workflow.database": "脈絡 / 追蹤",

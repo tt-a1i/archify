@@ -1,0 +1,853 @@
+{
+  "candidateCompilerSha256": "52cc99fa0b7c2742ab161fb14dab275f9d1e28089b4c45349e2c9d8f3867f2a1",
+  "directCalls": 6,
+  "freshControlCalls": 0,
+  "allCompilePass": true,
+  "hashesUnchanged": true,
+  "changedCases": [
+    "repair45"
+  ],
+  "focusedResult": {
+    "command": [
+      "/tmp/node-v22.23.2-darwin-arm64/bin/node",
+      "/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js",
+      "run",
+      "test:focus",
+      "--",
+      "test/workflow-automatic-width.test.mjs",
+      "test/workflow-absolute-sizing-diagnostics.test.mjs",
+      "test/workflow-port-slot.test.mjs",
+      "test/workflow-straight-reservation.test.mjs",
+      "test/workflow-route-order.test.mjs",
+      "test/workflow-routing-clarity.test.mjs",
+      "test/workflow-shared-trunks.test.mjs",
+      "test/workflow-compiler-hard-contract.test.mjs",
+      "test/workflow-vertical-label.test.mjs",
+      "test/workflow-label-fallback.test.mjs"
+    ],
+    "cwd": "/LOCAL_USER/.codex/worktrees/archify-envelope-49/archify",
+    "start": "2026-10-30T02:52:07.501558+00:00",
+    "end": "2026-10-30T02:52:13.034291+00:00",
+    "elapsedSeconds": 5.53075525,
+    "exitCode": 0,
+    "testsRuns": 1,
+    "hashesUnchanged": true,
+    "summaryLines": [
+      "# tests 174",
+      "# pass 174",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# todo 0",
+      "# duration_ms 4321.5105"
+    ],
+    "failLines": []
+  },
+  "cases": [
+    {
+      "case": "repair45",
+      "fullOutputEqual": false,
+      "nodesEqual": true,
+      "edgeCount": [
+        15,
+        15
+      ],
+      "changedEdges": [
+        {
+          "control": {
+            "id": null,
+            "from": "review",
+            "to": "repair",
+            "points": [
+              [
+                590,
+                393
+              ],
+              [
+                590,
+                409
+              ],
+              [
+                1055.2,
+                409
+              ],
+              [
+                1055.2,
+                119
+              ],
+              [
+                798.4,
+                119
+              ]
+            ]
+          },
+          "candidate": {
+            "id": null,
+            "from": "review",
+            "to": "repair",
+            "points": [
+              [
+                590,
+                393
+              ],
+              [
+                590,
+                432.875
+              ],
+              [
+                826.775,
+                432.875
+              ],
+              [
+                826.775,
+                119
+              ],
+              [
+                798.4,
+                119
+              ]
+            ]
+          }
+        }
+      ],
+      "labelCount": [
+        9,
+        9
+      ],
+      "changedLabels": [
+        {
+          "control": {
+            "edge": null,
+            "label": "发现问题",
+            "x": 822.6,
+            "y": 399,
+            "width": 48.4,
+            "height": 14
+          },
+          "candidate": {
+            "edge": null,
+            "label": "发现问题",
+            "x": 708.3875,
+            "y": 422.875,
+            "width": 48.4,
+            "height": 14
+          }
+        }
+      ],
+      "fontSizeValuesEqual": true,
+      "fontSizeValues": {
+        "control": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ],
+        "candidate": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ]
+      },
+      "diagnostics": {
+        "control": [],
+        "candidate": []
+      },
+      "sourceEvidenceMode": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/late-candidate-gate-47/trace/sourceEvidence.json",
+      "viewBox": {
+        "control": [
+          1072,
+          528
+        ],
+        "candidate": [
+          843,
+          528
+        ]
+      }
+    },
+    {
+      "case": "originalA26",
+      "fullOutputEqual": true,
+      "nodesEqual": true,
+      "edgeCount": [
+        15,
+        15
+      ],
+      "changedEdges": [],
+      "labelCount": [
+        9,
+        9
+      ],
+      "changedLabels": [],
+      "fontSizeValuesEqual": true,
+      "fontSizeValues": {
+        "control": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ],
+        "candidate": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ]
+      },
+      "diagnostics": {
+        "control": [],
+        "candidate": []
+      },
+      "sourceEvidenceMode": "omitted",
+      "viewBox": {
+        "control": [
+          873,
+          528
+        ],
+        "candidate": [
+          873,
+          528
+        ]
+      }
+    },
+    {
+      "case": "B26",
+      "fullOutputEqual": true,
+      "nodesEqual": true,
+      "edgeCount": [
+        14,
+        14
+      ],
+      "changedEdges": [],
+      "labelCount": [
+        7,
+        7
+      ],
+      "changedLabels": [],
+      "fontSizeValuesEqual": true,
+      "fontSizeValues": {
+        "control": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ],
+        "candidate": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ]
+      },
+      "diagnostics": {
+        "control": [],
+        "candidate": []
+      },
+      "sourceEvidenceMode": "omitted",
+      "viewBox": {
+        "control": [
+          888,
+          528
+        ],
+        "candidate": [
+          888,
+          528
+        ]
+      }
+    },
+    {
+      "case": "SkillRoster13",
+      "fullOutputEqual": true,
+      "nodesEqual": true,
+      "edgeCount": [
+        17,
+        17
+      ],
+      "changedEdges": [],
+      "labelCount": [
+        13,
+        13
+      ],
+      "changedLabels": [],
+      "fontSizeValuesEqual": true,
+      "fontSizeValues": {
+        "control": [
+          "10",
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "9.7",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "10.3",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10.4",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5"
+        ],
+        "candidate": [
+          "10",
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "9.7",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "10.3",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10.4",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5"
+        ]
+      },
+      "diagnostics": {
+        "control": [],
+        "candidate": []
+      },
+      "sourceEvidenceMode": "omitted",
+      "viewBox": {
+        "control": [
+          880,
+          652
+        ],
+        "candidate": [
+          880,
+          652
+        ]
+      }
+    },
+    {
+      "case": "pin36",
+      "fullOutputEqual": true,
+      "nodesEqual": true,
+      "edgeCount": [
+        17,
+        17
+      ],
+      "changedEdges": [],
+      "labelCount": [
+        13,
+        13
+      ],
+      "changedLabels": [],
+      "fontSizeValuesEqual": true,
+      "fontSizeValues": {
+        "control": [
+          "10",
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "9.7",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "10.3",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10.4",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5"
+        ],
+        "candidate": [
+          "10",
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "9.7",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "10.3",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10.4",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "10",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5"
+        ]
+      },
+      "diagnostics": {
+        "control": [],
+        "candidate": []
+      },
+      "sourceEvidenceMode": "omitted",
+      "viewBox": {
+        "control": [
+          880,
+          652
+        ],
+        "candidate": [
+          880,
+          652
+        ]
+      }
+    },
+    {
+      "case": "legacyB17",
+      "fullOutputEqual": true,
+      "nodesEqual": true,
+      "edgeCount": [
+        14,
+        14
+      ],
+      "changedEdges": [],
+      "labelCount": [
+        7,
+        7
+      ],
+      "changedLabels": [],
+      "fontSizeValuesEqual": true,
+      "fontSizeValues": {
+        "control": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ],
+        "candidate": [
+          "10",
+          "10",
+          "10",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "11",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "8",
+          "12",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5",
+          "7.5"
+        ]
+      },
+      "diagnostics": {
+        "control": [],
+        "candidate": []
+      },
+      "sourceEvidenceMode": "omitted",
+      "viewBox": {
+        "control": [
+          806,
+          528
+        ],
+        "candidate": [
+          806,
+          528
+        ]
+      }
+    }
+  ],
+  "claimLimits": [
+    "Whole public output exact equality for five reused API controls at matching arguments; repair45 uses frozen exact47sourceEvidence",
+    "Changed repair45 semantic content/text/topology/nodes/fonts preserved against exact API control; source factual audit and visual review remain separate",
+    "No CLI/finalize/visual/product-cost or billing/speed claim"
+  ]
+}

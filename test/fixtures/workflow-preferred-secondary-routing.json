@@ -1,0 +1,265 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "从需求到可查看的 HTML",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "attempt-1/workflow.html",
+    "repository": {
+      "url": "https://github.com/tt-a1i/archify.git",
+      "revision": "847146aeb93b492592adb78dc220f57e4a8b4636"
+    }
+  },
+  "lanes": [
+    {
+      "id": "agent",
+      "label": "使用 Skill 的 Agent"
+    },
+    {
+      "id": "auto",
+      "label": "finalize 自动流程"
+    },
+    {
+      "id": "review",
+      "label": "审阅与交付"
+    }
+  ],
+  "mainPath": [
+    "req",
+    "author",
+    "validate",
+    "deliver",
+    "check",
+    "browser",
+    "html"
+  ],
+  "nodes": [
+    {
+      "id": "req",
+      "lane": "agent",
+      "col": 0,
+      "type": "external",
+      "label": "需求",
+      "sublabel": "描述要解释的流程",
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 400,
+          "end_line": 411
+        }
+      ]
+    },
+    {
+      "id": "author",
+      "lane": "agent",
+      "col": 1,
+      "type": "backend",
+      "label": "Agent 编写 JSON",
+      "sublabel": "读 Skill、查代码、选类型",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 33,
+          "end_line": 39
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "lane": "auto",
+      "col": 2,
+      "type": "security",
+      "label": "校验 JSON",
+      "sublabel": "结构、布局与质量规则",
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 405,
+          "end_line": 410
+        }
+      ]
+    },
+    {
+      "id": "deliver",
+      "lane": "auto",
+      "col": 3,
+      "type": "backend",
+      "label": "布局渲染与交付",
+      "sublabel": "渲染候选，检查后替换",
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 387,
+          "end_line": 390
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "lane": "auto",
+      "col": 4,
+      "type": "security",
+      "label": "严格检查",
+      "sublabel": "产物与来源一致性",
+      "sources": [
+        {
+          "path": "archify/bin/finalize.mjs",
+          "line": 189,
+          "end_line": 207
+        }
+      ]
+    },
+    {
+      "id": "browser",
+      "lane": "auto",
+      "col": 5,
+      "type": "frontend",
+      "label": "浏览器自动检查",
+      "sublabel": "可视区域、可读性、主题",
+      "sources": [
+        {
+          "path": "archify/bin/finalize.mjs",
+          "line": 209,
+          "end_line": 220
+        }
+      ]
+    },
+    {
+      "id": "repair",
+      "lane": "agent",
+      "col": 3,
+      "type": "backend",
+      "label": "Agent 修复重试",
+      "sublabel": "依据诊断修改 JSON",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 48,
+          "end_line": 50
+        }
+      ]
+    },
+    {
+      "id": "visual",
+      "lane": "review",
+      "col": 4,
+      "type": "frontend",
+      "label": "视觉审阅",
+      "sublabel": "截图后由人或 Agent 看图",
+      "sources": [
+        {
+          "path": "archify/SKILL.md",
+          "line": 88,
+          "end_line": 98
+        }
+      ]
+    },
+    {
+      "id": "html",
+      "lane": "review",
+      "col": 5,
+      "type": "external",
+      "label": "可查看 HTML",
+      "sublabel": "交付链接与检查范围",
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 380,
+          "end_line": 394
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "req",
+      "to": "author"
+    },
+    {
+      "from": "author",
+      "to": "validate"
+    },
+    {
+      "from": "validate",
+      "to": "deliver"
+    },
+    {
+      "from": "deliver",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "browser"
+    },
+    {
+      "from": "browser",
+      "to": "html",
+      "label": "自动通过"
+    },
+    {
+      "from": "validate",
+      "to": "repair",
+      "label": "失败",
+      "role": "error"
+    },
+    {
+      "from": "deliver",
+      "to": "repair",
+      "label": "失败",
+      "role": "error"
+    },
+    {
+      "from": "check",
+      "to": "repair",
+      "role": "error"
+    },
+    {
+      "from": "browser",
+      "to": "repair",
+      "role": "error"
+    },
+    {
+      "from": "repair",
+      "to": "author",
+      "label": "修改后重跑",
+      "role": "return"
+    },
+    {
+      "from": "browser",
+      "to": "visual",
+      "label": "按需截图",
+      "role": "branch"
+    },
+    {
+      "from": "visual",
+      "to": "repair",
+      "label": "发现问题",
+      "role": "branch"
+    },
+    {
+      "from": "visual",
+      "to": "html",
+      "label": "审阅后交付",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "自动检查与审阅",
+      "items": [
+        "finalize 遇到首个失败即停止；通过不等于视觉验收。",
+        "视觉审阅查看截图，检查关系线、文字和整体呈现。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "失败后的处理",
+      "items": [
+        "按诊断定位并修复，保持原有语义与来源，重新执行完整流程。",
+        "交付前检查失败不会替换最后可用的文件；浏览器失败仍需修复复查。"
+      ]
+    }
+  ]
+}

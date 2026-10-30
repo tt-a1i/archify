@@ -394,7 +394,8 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
           cameraDockTracing = false;
           const r = s.getBoundingClientRect(), nav = c.querySelector('.diagram-nav').getBoundingClientRect(), b = c.getBoundingClientRect();
           return { state: Archify.view.state(), top: r.top, bottom: r.bottom,
-            scrollY, navTop: nav.top, navBottom: nav.bottom, navHeight: nav.height, windowHeight: innerHeight,
+            scrollY, navTop: nav.top, navBottom: nav.bottom, navHeight: nav.height,
+            windowHeight: innerHeight,
             windowWidth: innerWidth, documentWidth: document.documentElement.clientWidth,
             pageHeight: document.documentElement.scrollHeight, containerTop: b.top, containerBottom: b.bottom,
             containerHeight: b.height, baseSvgHeight: s.clientHeight,
@@ -408,8 +409,19 @@ test('Camera preserves transactions, rendered state and real caller handoffs', {
         assert.ok(Math.abs(parseFloat(value.reserve || '0') - parseFloat(initialReserve || '0')) <= 1,
           'manual zoom preserves the baseline rail within one CSS-pixel rounding: ' + JSON.stringify({ position, requestedScale: scale, ...value }));
         assert.ok(value.bottom > 0 && value.top < value.windowHeight, 'shrunk content stays on screen');
-        assert.ok(value.navTop >= 0 && value.navBottom <= value.windowHeight,
-          'existing dock lift keeps controls usable: ' + JSON.stringify({ position, requestedScale: scale, ...value }));
+        assert.ok(value.navTop >= value.bottom + 9.5,
+          'displayed dock stays outside the painted SVG: ' + JSON.stringify({ position, requestedScale: scale, ...value }));
+        const reachable = await run(`(async () => {
+          const before = scrollY;
+          document.querySelector('.diagram-nav').scrollIntoView({ block: 'nearest', behavior: 'instant' });
+          await Archify.layoutStability.whenStable();
+          const dock = document.querySelector('.diagram-nav').getBoundingClientRect();
+          const visible = dock.top >= 0 && dock.bottom <= innerHeight;
+          scrollTo(0, before);
+          await Archify.layoutStability.whenStable();
+          return visible;
+        })()`, true);
+        assert.equal(reachable, true, 'the footer dock remains reachable through document scroll');
         await snapshot(`long-scrolled-${position}-${scale}`);
         await screenshot(`long-scrolled-${position}-${scale}`);
       }

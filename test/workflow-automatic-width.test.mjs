@@ -122,7 +122,9 @@ test('same-object edits and quality overrides agree with a fresh input after eve
   workflow.nodes[0].sublabel = 'Review borrower records';
   workflow.meta.quality_profile = 'standard';
   assert.ok(widthOf(check('showcase'), 'verify') > 92);
-  assert.equal(widthOf(check('standard'), 'verify'), 92);
+  const standard = check('standard');
+  assert.ok(widthOf(standard, 'verify') > 92 && widthOf(standard, 'verify') <= 200);
+  assert.match(standard.svg, /data-detail="context"[^>]*font-size="8"[^>]*>Review borrower records<\/text>/);
   workflow.meta.quality_profile = 'showcase';
   workflow.nodes[0].width = 92;
   assert.equal(check().ok, false);
@@ -194,8 +196,11 @@ test('ordinary authored canvas removal advice can still verify an automatic-widt
   assert.ok(capacity);
   assert.ok(capacity.supportedFixes.includes('omit meta.viewBox so the compiler can use its measured intrinsic canvas'));
   delete authored.meta.viewBox;
+  const appliedBefore = JSON.stringify(authored);
   const applied = compileSuccessfully(authored);
-  assert.equal(widthOf(applied, 'verify'), 96);
+  assert.ok(widthOf(applied, 'verify') > 92 && widthOf(applied, 'verify') <= 200);
+  assert.match(applied.svg, /data-detail="context"[^>]*font-size="8"[^>]*>Review borrower records<\/text>/);
+  assert.equal(JSON.stringify(authored), appliedBefore);
 });
 
 test('explicit undersizing, automatic capacity and the fixed text-row ceiling remain failures', () => {
@@ -216,9 +221,12 @@ test('explicit undersizing, automatic capacity and the fixed text-row ceiling re
 
   const rowCeiling = cascadeWorkflow();
   for (const node of rowCeiling.nodes.slice(2)) node.width = 400;
+  const rowBefore = JSON.stringify(rowCeiling);
   const rowResult = compileWorkflow({ workflow: rowCeiling });
   assert.equal(rowResult.ok, false);
-  assert.equal(widthOf(rowResult, 'n0'), 92);
+  for (const id of ['n0', 'n1']) assert.ok(widthOf(rowResult, id) <= 200);
+  for (const node of rowCeiling.nodes.slice(2)) assert.equal(widthOf(rowResult, node.id), 400);
+  assert.equal(JSON.stringify(rowCeiling), rowBefore);
   assert.ok(rowResult.diagnostics.some(({ code, evidence }) => code === 'workflow/sublabel-readability' && evidence.requiredFontPx > 8));
 });
 
@@ -229,7 +237,6 @@ test('already successful automatic and preserved-geometry output keeps exact bas
   const cases = [
     [(w) => { w.nodes[0].sublabel = 'Review'; }, '534b97cba075f71755547834250d05b71a12c56b01c66dde92b39abced0cf540'],
     [(w) => { w.nodes[0].sublabel = 'Review borrower records and loan eligibility'; }, '87d8b7618a419fcb4947e1d48c7d8217e2e116de259e79bcc5b7e362b3ae7e61'],
-    [(w) => { w.meta.quality_profile = 'standard'; }, '534b97cba075f71755547834250d05b71a12c56b01c66dde92b39abced0cf540'],
     [(w) => { w.meta.viewBox = [1000, 420]; }, 'fbcb1e66f972c89f9f56bba923766b0adc3f11c3d300739c50f3ef7d7855d606'],
     [(w) => { w.nodes[0].width = 104; }, '974133d390cdfbaa38658000eb01dece4860fd98c242159c6ff0e9afc290f56e'],
   ];
@@ -239,4 +246,19 @@ test('already successful automatic and preserved-geometry output keeps exact bas
     const result = compileSuccessfully(workflow);
     assert.equal(digest(JSON.stringify(result.receipt)), receiptHash);
   }
+});
+
+test('standard automatic widths preserve full secondary text at preferred sizes', () => {
+  const workflow = lendingWorkflow();
+  workflow.meta.quality_profile = 'standard';
+  workflow.nodes[1].tag = 'Membership eligibility';
+  const before = JSON.stringify(workflow);
+  const result = compileSuccessfully(workflow);
+  assert.deepEqual(result, compileSuccessfully(clone(workflow)));
+  assert.equal(JSON.stringify(workflow), before);
+  assert.ok(result.receipt.nodes.every(({ width }) => width <= 200));
+  assert.match(result.svg, /data-detail="context"[^>]*font-size="8"[^>]*>Review borrower records<\/text>/);
+  assert.match(result.svg, /data-detail="fine"[^>]*font-size="7"[^>]*>Membership eligibility<\/text>/);
+  assert.equal(result.receipt.nodes.length, workflow.nodes.length);
+  assert.equal(result.receipt.edges.length, workflow.edges.length);
 });

@@ -23,7 +23,7 @@
   "legend.architecture.messagebus": "메시지 버스",
   "legend.architecture.external": "외부",
   "legend.workflow.frontend": "사용자 UI",
-  "legend.workflow.backend": "Agent 로직",
+  "legend.workflow.backend": "처리",
   "legend.workflow.security": "정책",
   "legend.workflow.messagebus": "도구 실행",
   "legend.workflow.database": "컨텍스트 / 추적",

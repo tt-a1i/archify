@@ -243,7 +243,7 @@ test('readable-v2 retries automatic endpoint sides against already planned route
   assertOrthogonal(first.receipt.edges.find(({ id }) => id === 'e1').points);
 });
 
-test('readable-v2 expands an outside corridor for deterministic labeled fan-out', () => {
+test('readable-v2 preserves connected deterministic labeled fan-out around occupied regions', () => {
   const document = workflow({
     lanes: Array.from({ length: 5 }, (_, index) => ({
       id: `l${index}`,
@@ -264,17 +264,55 @@ test('readable-v2 expands an outside corridor for deterministic labeled fan-out'
     ],
   });
 
+  const original = clone(document);
   const first = compileWorkflow({ workflow: document, qualityProfile: 'standard' });
-  const second = compileWorkflow({ workflow: clone(document), qualityProfile: 'standard' });
+  const second = compileWorkflow({ workflow: clone(original), qualityProfile: 'standard' });
   assert.equal(first.ok, true, JSON.stringify(first.diagnostics, null, 2));
   assert.deepEqual(second, first);
   const route = first.receipt.edges.find(({ id }) => id === 'e3')?.points;
   assert.ok(route);
   assertOrthogonal(route);
-  assert.ok(
-    Math.max(...route.map(([x]) => x)) > 764,
-    `the final fan-out edge must escape the occupied route/label region: ${JSON.stringify(route)}`,
-  );
+  assert.deepEqual(document, original, "compilation must preserve the authored input");
+  assert.deepEqual(first.receipt.nodes.map(({ id, lane, col, width }) => ({ id, lane, col, width })),
+    original.nodes.map(({ id, lane, col, width }) => ({ id, lane, col, width })));
+  assert.deepEqual(first.receipt.edges.map(({ id, from, to }) => ({ id, from, to })),
+    original.edges.map(({ id, from, to }) => ({ id, from, to })));
+  assert.deepEqual(first.receipt.labels.map(({ edge, label }) => ({ edge, label })),
+    original.edges.map(({ id: edge, label }) => ({ edge, label })));
+  for (const { label } of [...original.nodes, ...original.edges]) {
+    assert.ok(first.svg.includes(`>${label}</text>`), `complete text must render: ${label}`);
+  }
+  const labels = first.receipt.labels.map(label => ({ ...label,
+    x: label.x - label.width / 2, y: label.y - 10,
+  }));
+  for (const edge of first.receipt.edges) {
+    assertOrthogonal(edge.points);
+    for (const [id, point] of [[edge.from, edge.points[0]], [edge.to, edge.points.at(-1)]]) {
+      const node = first.receipt.nodes.find(node => node.id === id);
+      assert.ok(node, `${edge.id} must retain endpoint card ${id}`);
+      const [x, y] = point;
+      assert.ok(((x === node.x || x === node.x + node.width) && y >= node.y && y <= node.y + node.height)
+        || ((y === node.y || y === node.y + node.height) && x >= node.x && x <= node.x + node.width),
+      `${edge.id} must attach to its declared card ${id}`);
+    }
+    for (let index = 0; index < edge.points.length - 1; index += 1) {
+      for (const node of first.receipt.nodes.filter(({ id }) => id !== edge.from && id !== edge.to)) {
+        assert.ok(!segmentMeetsRect(edge.points[index], edge.points[index + 1], node),
+          `${edge.id} must clear unrelated card ${node.id}`);
+      }
+      for (const label of labels.filter(label => label.edge !== edge.id)) {
+        assert.ok(!segmentMeetsRect(edge.points[index], edge.points[index + 1], label, 4),
+          `${edge.id} must clear the actual current label of ${label.edge}`);
+      }
+    }
+  }
+  for (const label of labels) {
+    for (const node of first.receipt.nodes) {
+      assert.ok(label.x + label.width <= node.x || label.x >= node.x + node.width
+        || label.y + label.height <= node.y || label.y >= node.y + node.height,
+      `${label.edge} must keep its full semantic mask clear of card ${node.id}`);
+    }
+  }
 });
 
 test('readable-v2 expands an outside corridor without moving the lane geometry', () => {
@@ -403,6 +441,8 @@ test('readable-v2 feeds a measured adjacent-rank gutter back into layout', () =>
 });
 
 test('readable-v2 feeds a measured lane gap back into layout', () => {
+  // Explicit relative label controls retain this measured-gap boundary.
+  // Implicit labels may instead clear a node by selecting another segment.
   const document = workflow({
     lanes: [0, 1, 2].map((index) => ({ id: `l${index}`, label: `Lane ${index}` })),
     nodes: [0, 1, 2].map((index) => ({
@@ -410,10 +450,10 @@ test('readable-v2 feeds a measured lane gap back into layout', () => {
     })),
     edges: [
       {
-        id: 'e0', from: 'n1', to: 'n2', fromSide: 'bottom', toSide: 'right', label: 'LLLLLLLLLL',
+        id: 'e0', from: 'n1', to: 'n2', fromSide: 'bottom', toSide: 'right', label: 'LLLLLLLLLL', labelDx: 0,
       },
       {
-        id: 'e2', from: 'n2', to: 'n1', fromSide: 'left', toSide: 'right', label: 'x',
+        id: 'e2', from: 'n2', to: 'n1', fromSide: 'left', toSide: 'right', label: 'x', labelDx: 0,
       },
     ],
   });
@@ -724,6 +764,27 @@ test('readable-v2 treats an omitted preset side as a solver choice', () => {
     assert.equal(result.ok, true, `${fixture.route}: ${JSON.stringify(result.diagnostics, null, 2)}`);
     assert.deepEqual(result.receipt.edges[0].points, fixture.expected);
   }
+});
+
+test('readable-v2 reports a blocked preset with feasible inferred endpoint directions', () => {
+  const document = workflow({
+    lanes: ['prepare', 'commit', 'failure'].map(id => ({ id, label: id })),
+    nodes: [
+      { id: 'read', lane: 'prepare', col: 0, type: 'backend', label: 'Read candidate' },
+      { id: 'blocked', lane: 'failure', col: 1, type: 'backend', label: 'Preserve old artifact' },
+      { id: 'recover', lane: 'failure', col: 2, type: 'backend', label: 'Recover' },
+    ],
+    edges: [{ from: 'recover', to: 'read', route: 'return-left', label: 'Retry delivery' }],
+  });
+
+  const result = compileWorkflow({ workflow: document, qualityProfile: 'showcase' });
+  assert.equal(result.ok, false);
+  const diagnostic = result.diagnostics.find(({ code }) => code === 'workflow/route-preset-conflict');
+  assert.ok(diagnostic);
+  assert.equal(diagnostic.evidence.invariant, 'node clearance');
+  assert.equal(diagnostic.evidence.obstacleNode, 'blocked');
+  assert.equal(diagnostic.evidence.fromSide, 'left');
+  assert.equal(diagnostic.evidence.toSide, 'left');
 });
 
 test('readable-v2 treats an infeasible route preset as a candidate-family conflict, not a coordinate pin', () => {

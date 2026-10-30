@@ -1,0 +1,512 @@
+--- a/archify/renderers/workflow/workflow-compiler.mjs
++++ b/archify/renderers/workflow/workflow-compiler.mjs
+@@ -4839,27 +4839,66 @@
+     laneTop(to.lane) + laneHeight(to.lane)) + 16;
+   const points = joinRoutePoints(start, [[sourceX, start[1]], [sourceX, bottomY],
+     [destinationX, bottomY], [destinationX, end[1]]], end);
+-  if (!readableCandidateIsFeasible(edge, points, from, to, selected.fromSide, selected.toSide)
+-    || hasLongParallelFrameRun(points) || !clearsRegisteredIncomingArrowheads(edge, points)) return selected;
+-  const cost = readableCandidateCost(edge, points, selected.cost.stableCandidateOrdinal, naturalFromSide, naturalToSide);
+-  for (const dimension of READABLE_CANDIDATE_COST_PRIORITY) {
+-    if (dimension === 'bendCount') break;
+-    if ((cost[dimension] || 0) === (selected.cost[dimension] || 0)) continue;
+-    if ((cost[dimension] || 0) > (selected.cost[dimension] || 0)) return selected;
+-    break;
+-  }
+-  const candidateMask = candidateLabelRect(edge, points);
+-  const baselineMask = candidateLabelRect(edge, selected.points);
+-  if (candidateMask) {
+-    for (const frame of compositionFrames()) {
+-      if (frame.kind !== 'lane' && frame.kind !== 'exception-lane') continue;
+-      for (const border of frameBorderSegments(frame)) {
+-        if (segmentIntersectsRect(border, candidateMask)
+-          && (!baselineMask || !segmentIntersectsRect(border, baselineMask))) return selected;
+-      }
+-    }
+-  }
+-  return { points, fromSide: selected.fromSide, toSide: selected.toSide, cost, family: 'late-bottom-frame' };
++  // Keep the nominal alternative first; only its label-clearance rejection
++  // justifies constructing one envelope fallback. Earlier failures stay final.
++  const assess = (candidatePoints, protectPaint = false) => {
++    if (!readableCandidateIsFeasible(edge, candidatePoints, from, to, selected.fromSide, selected.toSide)
++      || hasLongParallelFrameRun(candidatePoints)
++      || !clearsRegisteredIncomingArrowheads(edge, candidatePoints)) return {};
++    const cost = readableCandidateCost(edge, candidatePoints, selected.cost.stableCandidateOrdinal, naturalFromSide, naturalToSide);
++    for (const dimension of READABLE_CANDIDATE_COST_PRIORITY) {
++      if (dimension === 'bendCount') break;
++      if ((cost[dimension] || 0) === (selected.cost[dimension] || 0)) continue;
++      if ((cost[dimension] || 0) > (selected.cost[dimension] || 0)) return { rejectedDimension: dimension };
++      break;
++    }
++    const candidateMask = candidateLabelRect(edge, candidatePoints);
++    const baselineMask = candidateLabelRect(edge, selected.points);
++    if (candidateMask) {
++      for (const frame of compositionFrames()) {
++        if (frame.kind !== 'lane' && frame.kind !== 'exception-lane') continue;
++        for (const border of frameBorderSegments(frame)) {
++          if (segmentIntersectsRect(border, candidateMask)
++            && (!baselineMask || !segmentIntersectsRect(border, baselineMask))) return {};
++        }
++      }
++      if (protectPaint) {
++        // This fallback retains the ordinary horizontal shelf label. If the
++        // default anchor chooses another segment, leave the selected route alone.
++        const shelfStart = candidatePoints[1], shelfEnd = candidatePoints[2];
++        const labelPoint = workflowEdgeLabelPoint(edge, candidatePoints);
++        if (labelPoint[0] !== (shelfStart[0] + shelfEnd[0]) / 2
++          || labelPoint[1] !== shelfStart[1] - 10
++          || labelTouchesFramePaint(candidateMask)
++          || !labelClearsSelectedPaint(edge, candidatePoints, 1, candidateMask)) return {};
++      }
++    }
++    return { route: { points: candidatePoints, fromSide: selected.fromSide, toSide: selected.toSide,
++      cost, family: 'late-bottom-frame' } };
++  };
++  const nominal = assess(points);
++  if (nominal.route) return nominal.route;
++  // Evidence currently covers a bottom departure and right arrival. Do not
++  // generalize the paint-envelope construction to other port patterns yet.
++  if (nominal.rejectedDimension !== 'labelRouteClearanceDeficit' || !edge.label
++    || selected.fromSide !== 'bottom' || selected.toSide !== 'right') return selected;
++
++  const frames = compositionFrames().filter(frame => frame.kind === 'lane' || frame.kind === 'exception-lane');
++  // Match the rendered 1px frame stroke and .75px label-mask stroke. Reuse
++  // the existing 8px readable label preference as a finite envelope margin.
++  const frameHalfStroke = 0.5, labelHalfStroke = 0.375, clearance = 8;
++  const shelfY = Math.max(...frames.map(frame => frame.y + frame.height))
++    + frameHalfStroke + labelHalfStroke + clearance + 20;
++  let paintedLabelRight = -Infinity;
++  for (const routed of pathCache.values()) {
++    const mask = LABEL_RECT_CACHE.get(routed);
++    if (mask && mask.y + mask.height >= end[1] && mask.y <= shelfY) {
++      paintedLabelRight = Math.max(paintedLabelRight, mask.x + mask.width + labelHalfStroke);
++    }
++  }
++  const railX = Math.max(destinationX, paintedLabelRight + clearance);
++  const envelopePoints = [[...start], [start[0], shelfY], [railX, shelfY], [railX, end[1]], [...end]];
++  return assess(envelopePoints, true).route || selected;
+ }
+ 
+ function readableAutomaticRoute(edge, from, to, primarySides, primaryPorts, allowLateFrameAlternative = false) {
+--- a/test/workflow-routing-clarity.test.mjs
++++ b/test/workflow-routing-clarity.test.mjs
+@@ -541,3 +541,115 @@
+     assert.ok(disjoint(mask, box(otherMask)), 'moving the label must not obscure another label');
+   }
+ });
++
++
++test('a labeled repair return uses the available outer envelope without losing failure paths', () => {
++  const workflow = JSON.parse(fs.readFileSync(
++    new URL('./fixtures/workflow-late-label-envelope.json', import.meta.url), 'utf8',
++  ));
++  const before = structuredClone(workflow);
++  assert.equal(workflow.nodes.length, 10);
++  assert.equal(workflow.edges.length, 15);
++  const result = compileWorkflow({ workflow, qualityProfile: 'showcase' });
++  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
++  assert.deepEqual(workflow, before, 'routing must preserve the full authored document, including sources and cards');
++  const placement = nodes => nodes.map(({ id, lane, col }) => [id, lane, col]).sort();
++  assert.deepEqual(placement(result.receipt.nodes), placement(workflow.nodes));
++  assert.deepEqual(result.receipt.edges.map(({ from, to }) => [from, to]).sort(),
++    workflow.edges.map(({ from, to }) => [from, to]).sort());
++  assert.deepEqual(result.receipt.labels.map(({ label }) => label).sort(),
++    workflow.edges.filter(({ label }) => label).map(({ label }) => label).sort());
++  const escape = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
++  for (const node of workflow.nodes) {
++    for (const text of [node.label, node.sublabel].filter(Boolean)) {
++      assert.ok(result.svg.includes('>' + escape(text) + '</text>'), 'preserve full node text for ' + node.id);
++    }
++  }
++  for (const edge of workflow.edges) {
++    assert.equal(attributeRole(edgeTag(result.svg, edge.from, edge.to)), edge.role || '');
++  }
++
++  const attrs = tag => Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)]
++    .map(([, key, value]) => [key, value]));
++  const box = tag => {
++    const values = attrs(tag);
++    const rect = Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, Number(values[key])]));
++    assert.ok(Object.values(rect).every(Number.isFinite));
++    assert.ok(rect.width > 0 && rect.height > 0);
++    return rect;
++  };
++  const expand = (rect, pad) => ({
++    x: rect.x - pad, y: rect.y - pad, width: rect.width + 2 * pad, height: rect.height + 2 * pad,
++  });
++  const disjoint = (a, b) => a.x + a.width < b.x || b.x + b.width < a.x
++    || a.y + a.height < b.y || b.y + b.height < a.y;
++  const frames = (result.svg.match(/<rect\b[^>]*>/g) || []).filter(tag => (
++    /data-composition-frame-kind="(?:lane|exception-lane)"/.test(tag)
++  ));
++  assert.equal(frames.length, workflow.lanes.length, 'retain every lane frame');
++  const frameRight = Math.max(...frames.map(tag => {
++    const rect = box(tag);
++    return rect.x + rect.width;
++  }));
++  const route = result.receipt.edges.find(({ from, to }) => from === 'review' && to === 'repair');
++  assert.ok(route);
++  const source = result.receipt.nodes.find(({ id }) => id === route.from);
++  const target = result.receipt.nodes.find(({ id }) => id === route.to);
++  const [start, next] = route.points, end = route.points.at(-1), previous = route.points.at(-2);
++  assert.equal(start[1], source.y + source.height);
++  assert.ok(start[0] >= source.x && start[0] <= source.x + source.width);
++  assert.equal(next[0], start[0]);
++  assert.ok(next[1] > start[1], 'retain the downward departure into the return corridor');
++  assert.equal(end[0], target.x + target.width);
++  assert.ok(end[1] >= target.y && end[1] <= target.y + target.height);
++  assert.equal(previous[1], end[1]);
++  assert.ok(previous[0] > end[0], 'the arrow must reach the repair card from its right side');
++  // This full graph has a clear outer corridor. Do not spend another whole
++  // card column on empty return space, or freeze a particular automatic rail.
++  const widestCard = Math.max(...result.receipt.nodes.map(({ width }) => width));
++  assert.ok(Math.max(...route.points.map(([x]) => x)) < frameRight + widestCard,
++    'the feedback loop should fit within one card width beyond the actual lanes');
++
++  const groups = [...result.svg.matchAll(/<g\b(?=[^>]*data-edge-from=)(?=[^>]*data-edge-label=)[^>]*>[\s\S]*?<\/g>/g)]
++    .map(([group]) => group);
++  for (const edge of workflow.edges.filter(({ label }) => label)) {
++    const group = groups.find(group => attrs(group)['data-edge-from'] === edge.from
++      && attrs(group)['data-edge-to'] === edge.to);
++    assert.ok(group, 'retain the rendered label group for ' + edge.from + '->' + edge.to);
++    assert.ok(group.includes('>' + escape(edge.label) + '</text>'),
++      'preserve full rendered condition text for ' + edge.from + '->' + edge.to);
++  }
++  const targetGroup = groups.find(group => attrs(group)['data-edge-from'] === 'review'
++    && attrs(group)['data-edge-to'] === 'repair');
++  assert.ok(targetGroup);
++  assert.equal((targetGroup.match(/>发现问题<\/text>/g) || []).length, 1);
++  const maskTag = targetGroup.match(/<rect\b[^>]*class="c-mask"[^>]*>/)?.[0];
++  assert.ok(maskTag);
++  // Read the rendered mask paint width rather than reproducing the candidate
++  // rail/shelf construction or importing the router's private helpers.
++  const maskStroke = Number(result.svg.match(/g\[data-edge-from\] > rect\.c-mask \{[^}]*stroke-width:\s*([\d.]+)px/)?.[1]);
++  assert.ok(Number.isFinite(maskStroke));
++  const mask = expand(box(maskTag), maskStroke / 2);
++  for (const tag of frames) {
++    const frame = box(tag), halfStroke = Number(attrs(tag)['stroke-width']) / 2;
++    assert.ok(Number.isFinite(halfStroke));
++    const borders = [
++      { x: frame.x, y: frame.y, width: frame.width, height: 0 },
++      { x: frame.x, y: frame.y + frame.height, width: frame.width, height: 0 },
++      { x: frame.x, y: frame.y, width: 0, height: frame.height },
++      { x: frame.x + frame.width, y: frame.y, width: 0, height: frame.height },
++    ];
++    for (const border of borders) assert.ok(disjoint(mask, expand(border, halfStroke)),
++      'the failure label paint must stay separate from lane border paint');
++  }
++  for (const node of result.receipt.nodes) {
++    assert.ok(disjoint(mask, expand(node, 0.75)), 'the failure label must not cover card ' + node.id);
++  }
++  for (const group of groups) {
++    if (group === targetGroup) continue;
++    const otherMask = group.match(/<rect\b[^>]*class="c-mask"[^>]*>/)?.[0];
++    assert.ok(otherMask);
++    assert.ok(disjoint(mask, expand(box(otherMask), maskStroke / 2)),
++      'the failure label must not obscure another condition');
++  }
++});
+--- /dev/null
++++ b/test/fixtures/workflow-late-label-envelope.json
+@@ -0,0 +1,301 @@
++{
++  "schema_version": 2,
++  "diagram_type": "workflow",
++  "meta": {
++    "title": "从需求到可查看的 HTML",
++    "locale": "zh-CN",
++    "quality_profile": "showcase",
++    "output": "attempt-1/workflow.html",
++    "repository": {
++      "url": "https://github.com/tt-a1i/archify.git",
++      "revision": "847146aeb93b492592adb78dc220f57e4a8b4636"
++    }
++  },
++  "lanes": [
++    {
++      "id": "agent",
++      "label": "使用 Skill 的 Agent"
++    },
++    {
++      "id": "machine",
++      "label": "finalize 自动检查"
++    },
++    {
++      "id": "review",
++      "label": "审阅与交付"
++    }
++  ],
++  "nodes": [
++    {
++      "id": "request",
++      "lane": "agent",
++      "col": 0,
++      "type": "external",
++      "label": "需求",
++      "sublabel": "提出要表达的流程",
++      "sources": [
++        {
++          "path": "archify/SKILL.md",
++          "line": 18,
++          "end_line": 20
++        }
++      ]
++    },
++    {
++      "id": "author",
++      "lane": "agent",
++      "col": 1,
++      "type": "backend",
++      "label": "Agent 编写",
++      "sublabel": "读 Skill、查源码",
++      "sources": [
++        {
++          "path": "archify/SKILL.md",
++          "line": 33,
++          "end_line": 39
++        }
++      ]
++    },
++    {
++      "id": "json",
++      "lane": "agent",
++      "col": 2,
++      "type": "database",
++      "label": "候选 JSON",
++      "sublabel": "语义、布局、来源",
++      "sources": [
++        {
++          "path": "archify/SKILL.md",
++          "line": 38,
++          "end_line": 46
++        }
++      ]
++    },
++    {
++      "id": "validate",
++      "lane": "machine",
++      "col": 2,
++      "type": "security",
++      "label": "校验",
++      "sublabel": "结构与证据",
++      "sources": [
++        {
++          "path": "archify/SKILL.md",
++          "line": 40,
++          "end_line": 48
++        },
++        {
++          "path": "archify/renderers/workflow/README.md",
++          "line": 10,
++          "end_line": 11
++        }
++      ]
++    },
++    {
++      "id": "deliver",
++      "lane": "machine",
++      "col": 3,
++      "type": "backend",
++      "label": "布局与渲染",
++      "sublabel": "生成并检查 HTML",
++      "sources": [
++        {
++          "path": "archify/references/delivery-contract.md",
++          "line": 278,
++          "end_line": 288
++        },
++        {
++          "path": "archify/renderers/workflow/README.md",
++          "line": 48,
++          "end_line": 55
++        }
++      ]
++    },
++    {
++      "id": "check",
++      "lane": "machine",
++      "col": 4,
++      "type": "security",
++      "label": "严格检查",
++      "sublabel": "核对交付来源",
++      "sources": [
++        {
++          "path": "archify/references/delivery-contract.md",
++          "line": 286,
++          "end_line": 289
++        }
++      ]
++    },
++    {
++      "id": "browser",
++      "lane": "machine",
++      "col": 5,
++      "type": "frontend",
++      "label": "浏览器检查",
++      "sublabel": "真实浏览器自动测量",
++      "sources": [
++        {
++          "path": "archify/references/delivery-contract.md",
++          "line": 286,
++          "end_line": 299
++        },
++        {
++          "path": "archify/references/delivery-contract.md",
++          "line": 412,
++          "end_line": 419
++        }
++      ]
++    },
++    {
++      "id": "repair",
++      "lane": "agent",
++      "col": 5,
++      "type": "backend",
++      "label": "诊断并修复",
++      "sublabel": "保持语义与来源",
++      "sources": [
++        {
++          "path": "archify/SKILL.md",
++          "line": 48,
++          "end_line": 50
++        },
++        {
++          "path": "archify/references/delivery-contract.md",
++          "line": 28,
++          "end_line": 32
++        }
++      ]
++    },
++    {
++      "id": "review",
++      "lane": "review",
++      "col": 4,
++      "type": "frontend",
++      "label": "视觉审阅",
++      "sublabel": "截图后由人或看图者判断",
++      "sources": [
++        {
++          "path": "archify/references/delivery-contract.md",
++          "line": 528,
++          "end_line": 540
++        }
++      ]
++    },
++    {
++      "id": "handoff",
++      "lane": "review",
++      "col": 5,
++      "type": "external",
++      "label": "交付 HTML",
++      "sublabel": "说明检查与审阅状态",
++      "sources": [
++        {
++          "path": "archify/SKILL.md",
++          "line": 88,
++          "end_line": 92
++        },
++        {
++          "path": "archify/references/delivery-contract.md",
++          "line": 412,
++          "end_line": 419
++        }
++      ]
++    }
++  ],
++  "edges": [
++    {
++      "from": "request",
++      "to": "author"
++    },
++    {
++      "from": "author",
++      "to": "json"
++    },
++    {
++      "from": "json",
++      "to": "validate"
++    },
++    {
++      "from": "validate",
++      "to": "deliver"
++    },
++    {
++      "from": "deliver",
++      "to": "check"
++    },
++    {
++      "from": "check",
++      "to": "browser"
++    },
++    {
++      "from": "browser",
++      "to": "handoff",
++      "label": "自动通过"
++    },
++    {
++      "from": "browser",
++      "to": "review",
++      "label": "需要视觉审阅",
++      "role": "branch"
++    },
++    {
++      "from": "review",
++      "to": "handoff",
++      "label": "审阅通过"
++    },
++    {
++      "from": "validate",
++      "to": "repair",
++      "label": "校验失败",
++      "role": "error"
++    },
++    {
++      "from": "deliver",
++      "to": "repair",
++      "label": "渲染失败",
++      "role": "error"
++    },
++    {
++      "from": "check",
++      "to": "repair",
++      "label": "检查失败",
++      "role": "error"
++    },
++    {
++      "from": "browser",
++      "to": "repair",
++      "label": "浏览器失败",
++      "role": "error"
++    },
++    {
++      "from": "review",
++      "to": "repair",
++      "label": "发现问题",
++      "role": "error"
++    },
++    {
++      "from": "repair",
++      "to": "json",
++      "label": "修改后重试",
++      "role": "return"
++    }
++  ],
++  "cards": [
++    {
++      "dot": "cyan",
++      "title": "各自的职责",
++      "items": [
++        "Agent 理解需求、追踪源码、选择图类型并编写候选 JSON。",
++        "Workflow 编译器根据节点与连线计算布局；交付过程渲染并检查 HTML。"
++      ]
++    },
++    {
++      "dot": "amber",
++      "title": "不要混淆检查",
++      "items": [
++        "finalize 在首个失败阶段停止；根据诊断修复候选并重新执行完整流程。",
++        "浏览器自动检查不产生截图，也不代表视觉审阅；需要审阅时运行 visual-check 并检查截图。"
++      ]
++    }
++  ]
++}

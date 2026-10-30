@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {"title":"从需求到可查看的 HTML", "locale":"zh-CN", "quality_profile":"showcase", "output":"diagram.html", "repository":{"url":"https://github.com/tt-a1i/archify.git","revision":"847146aeb93b492592adb78dc220f57e4a8b4636"}},
+  "lanes":[{"id":"agent","label":"Agent：理解与创作"},{"id":"cli","label":"Archify：自动交付"},{"id":"review","label":"审阅与修复"}],
+  "nodes":[
+    {"id":"request","lane":"agent","col":0,"type":"external","label":"需求","sublabel":"目标与范围","sources":[{"path":"archify/SKILL.md","line":18,"end_line":22}]},
+    {"id":"author","lane":"agent","col":1,"type":"backend","label":"Agent 创作","sublabel":"读 Skill 与源码","explanation":"选择工作流类型，追踪代码事实和来源，编写完整的仓库证据与 JSON。","sources":[{"path":"archify/SKILL.md","line":33,"end_line":39},{"path":"archify/references/repository-authoring.md","line":3,"end_line":27}]},
+    {"id":"json","lane":"agent","col":2,"type":"database","label":"候选 JSON","sublabel":"语义、布局与来源","sources":[{"path":"archify/SKILL.md","line":38,"end_line":46}]},
+    {"id":"validate","lane":"cli","col":2,"type":"security","label":"校验候选","sublabel":"schema 与质量","sources":[{"path":"archify/SKILL.md","line":40,"end_line":48},{"path":"archify/renderers/workflow/README.md","line":3,"end_line":11}]},
+    {"id":"deliver","lane":"cli","col":3,"type":"backend","label":"布局与交付","sublabel":"渲染 HTML","sources":[{"path":"archify/renderers/workflow/README.md","line":3,"end_line":14},{"path":"archify/references/delivery-contract.md","line":280,"end_line":294}]},
+    {"id":"check","lane":"cli","col":4,"type":"security","label":"产物检查","sublabel":"严格来源校验","sources":[{"path":"archify/references/delivery-contract.md","line":280,"end_line":294},{"path":"archify/renderers/workflow/README.md","line":16,"end_line":24}]},
+    {"id":"browser","lane":"cli","col":5,"type":"frontend","label":"浏览器检查","sublabel":"自动测量，非截图","sources":[{"path":"archify/references/delivery-contract.md","line":443,"end_line":465}]},
+    {"id":"repair","lane":"review","col":2,"type":"backend","label":"诊断并修复","sublabel":"保留语义与来源","explanation":"finalize 在首个失败关卡停止；Agent 根据诊断修改相关区域，再运行完整 finalize。","sources":[{"path":"archify/references/delivery-contract.md","line":3,"end_line":5},{"path":"archify/references/delivery-contract.md","line":28,"end_line":32}]},
+    {"id":"visual","lane":"review","col":4,"type":"external","label":"视觉审阅","sublabel":"可选截图与判断","explanation":"视觉检查可生成截图；是否清楚、好看仍由人或具备图像能力的审阅者判断。","sources":[{"path":"archify/references/delivery-contract.md","line":412,"end_line":419}]},
+    {"id":"html","lane":"review","col":5,"type":"frontend","label":"可查看 HTML","sublabel":"附自动检查证据","sources":[{"path":"archify/references/delivery-contract.md","line":286,"end_line":299},{"path":"archify/SKILL.md","line":88,"end_line":92}]}
+  ],
+  "mainPath":["request","author","json","validate","deliver","check","browser","html"],
+  "edges":[
+    {"from":"request","to":"author"},{"from":"author","to":"json"},{"from":"json","to":"validate"},{"from":"validate","to":"deliver"},{"from":"deliver","to":"check"},{"from":"check","to":"browser"},{"from":"browser","to":"html"},
+    {"from":"validate","to":"repair","label":"失败","role":"error"},{"from":"deliver","to":"repair","label":"失败","role":"error"},{"from":"check","to":"repair","label":"失败","role":"error"},{"from":"browser","to":"repair","label":"失败","role":"error"},
+    {"from":"repair","to":"json","label":"修改后重试","role":"return"},{"from":"html","to":"visual","label":"按需","role":"branch"},{"from":"visual","to":"repair","label":"发现问题","role":"return"}
+  ],
+  "cards":[{"dot":"cyan","title":"自动检查的边界","items":["finalize 依次执行校验、交付、严格检查和真实浏览器检查。","机器通过不等于视觉或人工验收。"]},{"dot":"amber","title":"失败与重试","items":["首个失败关卡停止；根据诊断修复后重新执行完整流程。","本图不包含发布或部署。"]}]
+}

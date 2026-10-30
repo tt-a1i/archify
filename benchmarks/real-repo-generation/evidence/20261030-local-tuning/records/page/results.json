@@ -1,0 +1,627 @@
+{
+  "startedAt": "2026-10-30T03:06:43.697Z",
+  "harnessRuns": 1,
+  "productCalls": 0,
+  "newCaptures": 0,
+  "diagramDOMMeasurements": 0,
+  "states": [
+    {
+      "state": "1440x900.light",
+      "viewport": [
+        1440,
+        900
+      ],
+      "noHorizontalOverflow": true,
+      "status": "局部改善 · 整图FAIL · 候选未选中",
+      "scopeSameJSON": true,
+      "pauseShown": true,
+      "acceptanceBoundary": true,
+      "images": [
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png",
+          "width": 1440,
+          "height": 900,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png"
+        },
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png",
+          "width": 1440,
+          "height": 900,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png"
+        }
+      ],
+      "links": [
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png"
+        },
+        {
+          "text": "完整原HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html"
+        },
+        {
+          "text": "完整原JSON",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png"
+        },
+        {
+          "text": "完整新HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html"
+        },
+        {
+          "text": "完整新JSON（相同文件）",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "49冻结协议",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/protocol.json"
+        },
+        {
+          "text": "六例编译与完整比较",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/compile-run.json"
+        },
+        {
+          "text": "唯一测试执行收据",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/focused-run.json"
+        },
+        {
+          "text": "repair45全部差异",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/repair45-all-differences.json"
+        },
+        {
+          "text": "本轮源码与测试增量",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/incremental.patch"
+        },
+        {
+          "text": "实现说明",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/report.md"
+        },
+        {
+          "text": "执行前独立审查",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/pre-execution-review.md"
+        },
+        {
+          "text": "45：原输入修复对照",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/index.html"
+        },
+        {
+          "text": "45：原整图拒绝结论",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/independent-review/report.md"
+        },
+        {
+          "text": "完整源码与测试补丁",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch"
+        },
+        {
+          "text": "六例验证报告",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/report.md"
+        },
+        {
+          "text": "完整比较汇总",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/comparison.json"
+        },
+        {
+          "text": "完整补丁身份",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-patch-manifest.json"
+        },
+        {
+          "text": "49最终结论与暂停记录",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/report.md"
+        },
+        {
+          "text": "源码与测试保留项",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/report.md"
+        }
+      ]
+    },
+    {
+      "state": "1440x900.dark",
+      "viewport": [
+        1440,
+        900
+      ],
+      "noHorizontalOverflow": true,
+      "status": "局部改善 · 整图FAIL · 候选未选中",
+      "scopeSameJSON": true,
+      "pauseShown": true,
+      "acceptanceBoundary": true,
+      "images": [
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.dark.png",
+          "width": 1440,
+          "height": 900,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.dark.png"
+        },
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.dark.png",
+          "width": 1440,
+          "height": 900,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.dark.png"
+        }
+      ],
+      "links": [
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.dark.png"
+        },
+        {
+          "text": "完整原HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html"
+        },
+        {
+          "text": "完整原JSON",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.dark.png"
+        },
+        {
+          "text": "完整新HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html"
+        },
+        {
+          "text": "完整新JSON（相同文件）",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "49冻结协议",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/protocol.json"
+        },
+        {
+          "text": "六例编译与完整比较",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/compile-run.json"
+        },
+        {
+          "text": "唯一测试执行收据",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/focused-run.json"
+        },
+        {
+          "text": "repair45全部差异",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/repair45-all-differences.json"
+        },
+        {
+          "text": "本轮源码与测试增量",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/incremental.patch"
+        },
+        {
+          "text": "实现说明",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/report.md"
+        },
+        {
+          "text": "执行前独立审查",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/pre-execution-review.md"
+        },
+        {
+          "text": "45：原输入修复对照",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/index.html"
+        },
+        {
+          "text": "45：原整图拒绝结论",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/independent-review/report.md"
+        },
+        {
+          "text": "完整源码与测试补丁",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch"
+        },
+        {
+          "text": "六例验证报告",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/report.md"
+        },
+        {
+          "text": "完整比较汇总",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/comparison.json"
+        },
+        {
+          "text": "完整补丁身份",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-patch-manifest.json"
+        },
+        {
+          "text": "49最终结论与暂停记录",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/report.md"
+        },
+        {
+          "text": "源码与测试保留项",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/report.md"
+        }
+      ]
+    },
+    {
+      "state": "2048x1320.light",
+      "viewport": [
+        2048,
+        1320
+      ],
+      "noHorizontalOverflow": true,
+      "status": "局部改善 · 整图FAIL · 候选未选中",
+      "scopeSameJSON": true,
+      "pauseShown": true,
+      "acceptanceBoundary": true,
+      "images": [
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.light.png",
+          "width": 2048,
+          "height": 1320,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.light.png"
+        },
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.light.png",
+          "width": 2048,
+          "height": 1320,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.light.png"
+        }
+      ],
+      "links": [
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.light.png"
+        },
+        {
+          "text": "完整原HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html"
+        },
+        {
+          "text": "完整原JSON",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.light.png"
+        },
+        {
+          "text": "完整新HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html"
+        },
+        {
+          "text": "完整新JSON（相同文件）",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "49冻结协议",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/protocol.json"
+        },
+        {
+          "text": "六例编译与完整比较",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/compile-run.json"
+        },
+        {
+          "text": "唯一测试执行收据",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/focused-run.json"
+        },
+        {
+          "text": "repair45全部差异",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/repair45-all-differences.json"
+        },
+        {
+          "text": "本轮源码与测试增量",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/incremental.patch"
+        },
+        {
+          "text": "实现说明",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/report.md"
+        },
+        {
+          "text": "执行前独立审查",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/pre-execution-review.md"
+        },
+        {
+          "text": "45：原输入修复对照",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/index.html"
+        },
+        {
+          "text": "45：原整图拒绝结论",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/independent-review/report.md"
+        },
+        {
+          "text": "完整源码与测试补丁",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch"
+        },
+        {
+          "text": "六例验证报告",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/report.md"
+        },
+        {
+          "text": "完整比较汇总",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/comparison.json"
+        },
+        {
+          "text": "完整补丁身份",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-patch-manifest.json"
+        },
+        {
+          "text": "49最终结论与暂停记录",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/report.md"
+        },
+        {
+          "text": "源码与测试保留项",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/report.md"
+        }
+      ]
+    },
+    {
+      "state": "2048x1320.dark",
+      "viewport": [
+        2048,
+        1320
+      ],
+      "noHorizontalOverflow": true,
+      "status": "局部改善 · 整图FAIL · 候选未选中",
+      "scopeSameJSON": true,
+      "pauseShown": true,
+      "acceptanceBoundary": true,
+      "images": [
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.dark.png",
+          "width": 2048,
+          "height": 1320,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.dark.png"
+        },
+        {
+          "src": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.dark.png",
+          "width": 2048,
+          "height": 1320,
+          "originalLink": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.dark.png"
+        }
+      ],
+      "links": [
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.dark.png"
+        },
+        {
+          "text": "完整原HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html"
+        },
+        {
+          "text": "完整原JSON",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.dark.png"
+        },
+        {
+          "text": "完整新HTML",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html"
+        },
+        {
+          "text": "完整新JSON（相同文件）",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json"
+        },
+        {
+          "text": "49冻结协议",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/protocol.json"
+        },
+        {
+          "text": "六例编译与完整比较",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/compile-run.json"
+        },
+        {
+          "text": "唯一测试执行收据",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/focused-run.json"
+        },
+        {
+          "text": "repair45全部差异",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/repair45-all-differences.json"
+        },
+        {
+          "text": "本轮源码与测试增量",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/incremental.patch"
+        },
+        {
+          "text": "实现说明",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/report.md"
+        },
+        {
+          "text": "执行前独立审查",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/pre-execution-review.md"
+        },
+        {
+          "text": "45：原输入修复对照",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/index.html"
+        },
+        {
+          "text": "45：原整图拒绝结论",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/independent-review/report.md"
+        },
+        {
+          "text": "完整源码与测试补丁",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch"
+        },
+        {
+          "text": "六例验证报告",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/report.md"
+        },
+        {
+          "text": "完整比较汇总",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/comparison.json"
+        },
+        {
+          "text": "完整补丁身份",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-patch-manifest.json"
+        },
+        {
+          "text": "49最终结论与暂停记录",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/report.md"
+        },
+        {
+          "text": "源码与测试保留项",
+          "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/report.md"
+        }
+      ]
+    }
+  ],
+  "beforeHashes": {
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/index.html": "e6baa7590f251cdc4984a54238bffc206725cf4a4a6f57093f7047875e65d54d",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html": "b3efd39fc1f9bd8e6c30e6cbb14dcef219f91af35baa2e4c19a49199c8d0370a",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html": "f37368e81879bd3ec59bbc7b38351fb14d02234686f0097a8feeae4da197606c",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json": "f559663b0a1837a9ee7b45a37e1daf482b38ae2f3e5fe0266c478f998ce6b111",
+    "/LOCAL_USER/.codex/worktrees/archify-envelope-49/archify/archify/renderers/workflow/workflow-compiler.mjs": "52cc99fa0b7c2742ab161fb14dab275f9d1e28089b4c45349e2c9d8f3867f2a1",
+    "/LOCAL_USER/.codex/worktrees/archify-label-anchor-38/archify/archify/renderers/workflow/workflow-compiler.mjs": "b98ecb59f820569a849ba90514cee075438ebd7e5660f47db8fc6e9eb98cef31",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png": "21b10ba2367c1682bcb99052f236f4a30802a5a9c1e5683d035fe4b1e437a2a3",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.dark.png": "9692d4765083a62fbf655a8a9a3dc8707847ef86750e5b816f386e3a546317c1",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.light.png": "00aa309b5495da9d2379926adc6334c34f2c3e01476115f0e919a256a58b9192",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.dark.png": "e25bccd26cc0ec65f2d5da06e739a05b395352537d3c5fcf55a7b4123d7d75fe",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png": "9dffc8479f54a3909681c1e3b937e37994f22abe84e42dbfc85cdc30432d000c",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.dark.png": "286d171e843e2cdf17b981197ff42ffb17e4a153346e5f500b8484736c0c343f",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.light.png": "126bddbf20f472a60f7f69202544f3f93fdc0fc301e7e22d7aebfc668f97652d",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.dark.png": "c3e3fda78a97829c2492b3a8ec210cfb4af3a9f9c9dec55b8f3bdd5cb9022c0c"
+  },
+  "spaceId": 24,
+  "initialSnapshot": "[p1 \"49：紧凑回流候选 · 暂未接受\" | space \"Archify49 compact envelope comparison page QA\"(24): 1 managed, 0 untracked — p1* \"49：紧凑回流候选 · 暂未接受\"]\nroot\n  container\n    text \"ARCHIFY · 第49轮 · 固定输入源码候选\"\n    heading\n      text \"回流能否收紧，整图仍需判断\"\n    paragraph\n      text \"左右使用第45轮完全相同的JSON（repair.col=5），比较原b98与49隔离源码候选。候选只在原晚期路线因标签与路径净距被拒绝时，尝试一个由现有绘制边界推...\"\n    text \"局部改善 · 整图FAIL · 候选未选中\"\n    text \"6个固定输入编译 PASS\"\n    text \"一次测试：174 / 174 PASS\"\n    text \"viewBox宽度：1072 → 843\"\n    paragraph\n      text \"只有repair45输出变化，其余5例完整公开结果相同；10节点、15关系、全部文本、来源与cards保留。宽度为源码坐标，不是字号或像素测量。自动通过不等�...\"\n    container\n      container\n        text \"截图主题\"\n        combobox [ref=1]\n          text \"浅色\"\n      container\n        text \"原始视口\"\n        combobox [ref=2]\n          text \"1440 × 900\"\n    paragraph\n      text \"四组均read / still / overview / UI100%。两张图同时切换，点击查看原像素图片。本页仅展示既有产物，不生成截图。\"\n    container\n      container\n        container\n          heading\n            text \"原45 · b98源码\"\n          text \"同一完整repair45 JSON · 第45轮既有QA\"\n        anchor [ref=3, url=file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png]\n          image\n      container\n        container\n          heading\n            text \"49 · 隔离紧凑包络候选\"\n          text \"JSON不变 · 仅源码候选变化\"\n        anchor [ref=4, url=file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png]\n          image\n",
+  "links": [
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png",
+      "bytes": 152171
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html",
+      "bytes": 879271
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json",
+      "bytes": 6414
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png",
+      "bytes": 138936
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html",
+      "bytes": 879324
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/protocol.json",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/protocol.json",
+      "bytes": 3783
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/compile-run.json",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/compile-run.json",
+      "bytes": 3173
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/focused-run.json",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/focused-run.json",
+      "bytes": 1079
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/repair45-all-differences.json",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/repair45-all-differences.json",
+      "bytes": 64848
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/incremental.patch",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/incremental.patch",
+      "bytes": 18763
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/report.md",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/report.md",
+      "bytes": 2240
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/pre-execution-review.md",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/pre-execution-review.md",
+      "bytes": 5402
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/index.html",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/index.html",
+      "bytes": 6532
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/independent-review/report.md",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/independent-review/report.md",
+      "bytes": 4214
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-source-test.patch",
+      "bytes": 115271
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/report.md",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/report.md",
+      "bytes": 2391
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/comparison.json",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/verification/comparison.json",
+      "bytes": 15232
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-patch-manifest.json",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/implementation/combined-patch-manifest.json",
+      "bytes": 12034
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/report.md",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/report.md",
+      "bytes": 3906
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/report.md",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/review/report.md",
+      "bytes": 5622
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.dark.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.dark.png",
+      "bytes": 166158
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.dark.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.dark.png",
+      "bytes": 153651
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.light.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.light.png",
+      "bytes": 216479
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.light.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.light.png",
+      "bytes": 208205
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.dark.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.dark.png",
+      "bytes": 239279
+    },
+    {
+      "href": "file:///LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.dark.png",
+      "path": "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.dark.png",
+      "bytes": 234422
+    }
+  ],
+  "afterHashes": {
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/index.html": "e6baa7590f251cdc4984a54238bffc206725cf4a4a6f57093f7047875e65d54d",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate/workflow.html": "b3efd39fc1f9bd8e6c30e6cbb14dcef219f91af35baa2e4c19a49199c8d0370a",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after/workflow.html": "f37368e81879bd3ec59bbc7b38351fb14d02234686f0097a8feeae4da197606c",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/first.json": "f559663b0a1837a9ee7b45a37e1daf482b38ae2f3e5fe0266c478f998ce6b111",
+    "/LOCAL_USER/.codex/worktrees/archify-envelope-49/archify/archify/renderers/workflow/workflow-compiler.mjs": "52cc99fa0b7c2742ab161fb14dab275f9d1e28089b4c45349e2c9d8f3867f2a1",
+    "/LOCAL_USER/.codex/worktrees/archify-label-anchor-38/archify/archify/renderers/workflow/workflow-compiler.mjs": "b98ecb59f820569a849ba90514cee075438ebd7e5660f47db8fc6e9eb98cef31",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.light.png": "21b10ba2367c1682bcb99052f236f4a30802a5a9c1e5683d035fe4b1e437a2a3",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.1440x900.dark.png": "9692d4765083a62fbf655a8a9a3dc8707847ef86750e5b816f386e3a546317c1",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.light.png": "00aa309b5495da9d2379926adc6334c34f2c3e01476115f0e919a256a58b9192",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/repair-column-trial-45/author/candidate-qa/workflow.visual-check.2048x1320.dark.png": "e25bccd26cc0ec65f2d5da06e739a05b395352537d3c5fcf55a7b4123d7d75fe",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.light.png": "9dffc8479f54a3909681c1e3b937e37994f22abe84e42dbfc85cdc30432d000c",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.1440x900.dark.png": "286d171e843e2cdf17b981197ff42ffb17e4a153346e5f500b8484736c0c343f",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.light.png": "126bddbf20f472a60f7f69202544f3f93fdc0fc301e7e22d7aebfc668f97652d",
+    "/LOCAL_USER/.local/share/archify-tuning/rounds/20261029-terra/compact-envelope-candidate-49/visual/repair45/after-qa/workflow.visual-check.2048x1320.dark.png": "c3e3fda78a97829c2492b3a8ec210cfb4af3a9f9c9dec55b8f3bdd5cb9022c0c"
+  },
+  "immutable": true,
+  "endedAt": "2026-10-30T03:06:44.174Z",
+  "elapsedMs": 477,
+  "ok": true
+}

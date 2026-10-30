@@ -141,10 +141,10 @@
         };
         return lastReceipt;
       }
-      /* When the stage runs below the viewport, the dock lifts to the viewport
-         floor so its controls stay reachable while reading. Stage-rail
-         decisions and receipts use its resting position, so the lift never
-         feeds back into layout. */
+      /* Lift toward the viewport floor only within the existing footer rail.
+         A tall document-scrolling stage keeps its dock in that safe footer;
+         readers scroll to the controls rather than losing graph paint.
+         Resting geometry still owns rail feedback and stability. */
       var lift = 0;
       var liftFrame = 0;
       function restingNavRect() {
@@ -158,7 +158,12 @@
         if (eligible()) {
           var rest = restingNavRect();
           var box = container.getBoundingClientRect();
-          next = Math.round(Math.max(0, Math.min(rest.bottom - (window.innerHeight - 16), rest.top - box.top - 16)));
+          var stage = protectedStageRect();
+          next = Math.floor(Math.max(0, Math.min(
+            rest.bottom - (window.innerHeight - 16),
+            rest.top - box.top - 16,
+            rest.top - stage.bottom - SAFE_GAP
+          )));
         }
         if (next === lift) return;
         lift = next;

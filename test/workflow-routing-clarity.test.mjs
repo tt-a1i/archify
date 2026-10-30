@@ -167,29 +167,33 @@ test('readable-v2 keeps clear backward branches straight after provisional port 
   }
 });
 
-test('readable-v2 keeps clear adjacent routes straight without moving nodes or enlarging the canvas', () => {
-  const result = compileWorkflow({ workflow: workflowFixture(), qualityProfile: 'showcase' });
+test('readable-v2 keeps clear adjacent routes straight while fitting full node text', () => {
+  const workflow = workflowFixture();
+  const before = structuredClone(workflow);
+  const result = compileWorkflow({ workflow, qualityProfile: 'showcase' });
   assert.equal(result.ok, true, JSON.stringify(result.diagnostics, null, 2));
 
-  // The reproduction already has sufficient room; routing must preserve its layout.
-  assert.deepEqual(result.receipt.viewBox, [949, 528]);
-  assert.deepEqual(result.receipt.nodes.map(({ id, x, y, width, height }) => (
-    [id, x, y, width, height]
-  )), [
-    ['request', 48, 93, 92, 52],
-    ['admit', 225.2, 93, 92, 52],
-    ['graph', 498.4, 93, 92, 52],
-    ['start', 345.2, 217, 92, 52],
-    ['turn', 498.4, 217, 92, 52],
-    ['tool', 670.8, 217, 92, 52],
-    ['resume', 828.8, 217, 92, 52],
-    ['commit', 670.8, 341, 92, 52],
-    ['project', 828.8, 341, 92, 52],
-  ]);
+  // Widths and canvas are automatic: preferred secondary text may grow them.
+  // Preserve the authored content and straight facing relationships below.
+  assert.deepEqual(workflow, before);
+  for (const node of workflow.nodes) {
+    assert.ok(result.svg.includes(`>${node.label}</text>`), `preserve full label for ${node.id}`);
+    if (node.sublabel) assert.ok(result.svg.includes(`>${node.sublabel}</text>`), `preserve full context for ${node.id}`);
+  }
+  assert.equal(result.receipt.nodes.length, workflow.nodes.length);
+  assert.equal(result.receipt.edges.length, workflow.edges.length);
+  assert.deepEqual(result.receipt.nodes.map(({ id }) => id).sort(), workflow.nodes.map(({ id }) => id).sort());
+  assert.deepEqual(result.receipt.labels.map(({ label }) => label).sort(), workflow.edges.filter(({ label }) => label).map(({ label }) => label).sort());
 
   const adjacentRoutes = [['turn', 'tool'], ['commit', 'project']].map(([from, to]) => {
     const edge = result.receipt.edges.find((candidate) => candidate.from === from && candidate.to === to);
     assert.ok(edge, `expected the authored ${from}->${to} relationship`);
+    const source = result.receipt.nodes.find(({ id }) => id === from);
+    const target = result.receipt.nodes.find(({ id }) => id === to);
+    assert.deepEqual(edge.points, [
+      [source.x + source.width, source.y + source.height / 2],
+      [target.x, target.y + target.height / 2],
+    ], 'clear adjacent routes must connect facing node borders horizontally');
     return { from, to, pointCount: edge.points.length };
   });
   assert.deepEqual(adjacentRoutes, [
@@ -372,4 +376,280 @@ test('public validate and rendered HTML agree on automatic workflow routing', (t
   const checked = spawnSync(process.execPath, [cli, 'check', output, '--json'], { encoding: 'utf8' });
   assert.equal(checked.status, 0, checked.stderr || checked.stdout);
   assert.equal(JSON.parse(checked.stdout).ok, true);
+});
+
+test('preferred secondary widths preserve all branches into the repair node', () => {
+  // Real first draft: preferred context widths exposed adjacent repair arrows
+  // colliding in the old planner. Preserve all failure and review relationships.
+  const workflow = JSON.parse(fs.readFileSync(new URL('./fixtures/workflow-preferred-secondary-routing.json', import.meta.url), 'utf8'));
+  const before = structuredClone(workflow);
+  assert.equal(workflow.nodes.length, 9);
+  assert.equal(workflow.edges.length, 14);
+  const result = compileWorkflow({ workflow, qualityProfile: 'showcase' });
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  assert.deepEqual(workflow, before);
+  assert.ok(result.receipt.nodes.every(({ width }) => width <= 200));
+  assert.deepEqual(result.receipt.nodes.map(({ id }) => id).sort(), workflow.nodes.map(({ id }) => id).sort());
+  assert.deepEqual(result.receipt.edges.map(({ from, to }) => [from, to]).sort(), workflow.edges.map(({ from, to }) => [from, to]).sort());
+  assert.deepEqual(result.receipt.labels.map(({ label }) => label).sort(), workflow.edges.filter(({ label }) => label).map(({ label }) => label).sort());
+  for (const node of workflow.nodes) {
+    assert.ok(result.svg.includes(`>${node.label}</text>`), `preserve full label for ${node.id}`);
+    assert.ok(result.svg.includes(`font-size="8" text-anchor="middle">${node.sublabel}</text>`), `preserve full preferred-size context for ${node.id}`);
+  }
+  for (const edge of workflow.edges) {
+    assert.equal(attributeRole(edgeTag(result.svg, edge.from, edge.to)), edge.role || '');
+  }
+});
+
+function attributeRole(tag) {
+  return tag.match(/data-edge-role="([^"]*)"/)?.[1];
+}
+
+test('an automatic cross-lane return stays outside the lane and exception frames', () => {
+  const workflow = JSON.parse(fs.readFileSync(new URL('./fixtures/workflow-frame-clearance.json', import.meta.url), 'utf8'));
+  const before = structuredClone(workflow);
+  assert.equal(workflow.nodes.length, 16);
+  assert.equal(workflow.edges.length, 17);
+  const result = compileWorkflow({ workflow, qualityProfile: 'showcase' });
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  assert.deepEqual(workflow, before);
+  assert.deepEqual(result.receipt.nodes.map(({ id }) => id).sort(), workflow.nodes.map(({ id }) => id).sort());
+  assert.deepEqual(result.receipt.edges.map(({ from, to }) => [from, to]).sort(), workflow.edges.map(({ from, to }) => [from, to]).sort());
+  assert.deepEqual(result.receipt.labels.map(({ label }) => label).sort(), workflow.edges.filter(({ label }) => label).map(({ label }) => label).sort());
+  for (const node of workflow.nodes) {
+    assert.ok(result.svg.includes(`>${node.label}</text>`), `preserve full label for ${node.id}`);
+    if (node.sublabel) assert.ok(result.svg.includes(`>${node.sublabel}</text>`), `preserve full context for ${node.id}`);
+  }
+
+  // Compare the return to the rendered frame envelope, not frozen automatic
+  // coordinates or a global near-border threshold. This return has room to
+  // remain visibly outside both the right rail and the bottom shelf.
+  const frames = (result.svg.match(/<rect\b[^>]*>/g) || []).filter(tag => (
+    /data-composition-frame-kind="(?:lane|exception-lane)"/.test(tag)
+  ));
+  assert.ok(frames.length > workflow.lanes.length, 'retain the exception grouping frame');
+  const number = (tag, name) => Number(tag.match(new RegExp(`\\b${name}="([^"]+)"`))?.[1]);
+  const frameRight = Math.max(...frames.map(tag => number(tag, 'x') + number(tag, 'width')));
+  const frameBottom = Math.max(...frames.map(tag => number(tag, 'y') + number(tag, 'height')));
+  const route = result.receipt.edges.find(({ from, to }) => from === 'receipt' && to === 'undo_confirm');
+  assert.ok(route);
+  const segments = route.points.slice(1).map((end, index) => [route.points[index], end]);
+  const vertical = segments.filter(([start, end]) => start[0] === end[0])
+    .sort((a, b) => Math.abs(b[1][1] - b[0][1]) - Math.abs(a[1][1] - a[0][1]))[0];
+  const horizontal = segments.filter(([start, end]) => start[1] === end[1])
+    .sort((a, b) => Math.abs(b[1][0] - b[0][0]) - Math.abs(a[1][0] - a[0][0]))[0];
+  assert.ok(vertical && horizontal, 'preserve the return rail and shelf');
+  assert.ok(vertical[0][0] > frameRight, 'the long return rail must remain outside the frame envelope');
+  assert.ok(horizontal[0][1] > frameBottom, 'the return shelf must remain below the frame envelope');
+});
+
+test('implicit labels clear lane borders while preserving an authored source side', () => {
+  const workflow = JSON.parse(fs.readFileSync(new URL('./fixtures/workflow-label-frame-clearance.json', import.meta.url), 'utf8'));
+  const before = structuredClone(workflow);
+  assert.equal(workflow.nodes.length, 16);
+  assert.equal(workflow.edges.length, 17);
+  const result = compileWorkflow({ workflow, qualityProfile: 'showcase' });
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  assert.deepEqual(workflow, before);
+  const placement = nodes => nodes.map(({ id, lane, col }) => [id, lane, col]).sort();
+  assert.deepEqual(placement(result.receipt.nodes), placement(workflow.nodes));
+  const topology = edges => edges.map(({ from, to }) => JSON.stringify([from, to])).sort();
+  assert.deepEqual(topology(result.receipt.edges), topology(workflow.edges));
+  assert.deepEqual(result.receipt.labels.map(({ label }) => label).sort(), workflow.edges.filter(({ label }) => label).map(({ label }) => label).sort());
+  for (const node of workflow.nodes) {
+    assert.ok(result.svg.includes('>' + node.label + '</text>'), 'preserve full label for ' + node.id);
+    if (node.sublabel) assert.ok(result.svg.includes('>' + node.sublabel + '</text>'), 'preserve full context for ' + node.id);
+  }
+  for (const edge of workflow.edges) {
+    assert.equal(attributeRole(edgeTag(result.svg, edge.from, edge.to)), edge.role || '');
+  }
+
+  const scan = result.receipt.nodes.find(({ id }) => id === 'scan');
+  const route = result.receipt.edges.find(({ from, to }) => from === 'scan' && to === 'state');
+  assert.ok(scan && route);
+  assert.equal(workflow.edges.find(({ from, to }) => from === 'scan' && to === 'state').fromSide, 'bottom');
+  const [start, next] = route.points;
+  assert.equal(start[1], scan.y + scan.height, 'honor the authored bottom source side');
+  assert.ok(start[0] >= scan.x && start[0] <= scan.x + scan.width);
+  assert.equal(next[0], start[0]);
+  assert.ok(next[1] > start[1], 'the authored bottom departure points downward');
+
+  const attrs = tag => Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, key, value]) => [key, value]));
+  const box = tag => {
+    const values = attrs(tag);
+    const rect = Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, Number(values[key])]));
+    assert.ok(Object.values(rect).every(Number.isFinite));
+    assert.ok(rect.width > 0 && rect.height > 0);
+    return rect;
+  };
+  const labelGroups = [...result.svg.matchAll(/<g\b(?=[^>]*data-edge-from=)(?=[^>]*data-edge-label=)[^>]*>[\s\S]*?<\/g>/g)];
+  const targetGroups = labelGroups.filter(([group]) => {
+    const values = attrs(group);
+    return values['data-edge-from'] === 'scan' && values['data-edge-to'] === 'state';
+  });
+  assert.equal(targetGroups.length, 1);
+  const targetGroup = targetGroups[0][0];
+  assert.equal((targetGroup.match(/>保存<\/text>/g) || []).length, 1);
+  const targetRects = targetGroup.match(/<rect\b[^>]*class="c-mask"[^>]*>/g) || [];
+  assert.equal(targetRects.length, 1);
+  const mask = box(targetRects[0]);
+  const text = attrs(targetGroup.match(/<text\b[^>]*>/)[0]);
+  const matchingReceipt = result.receipt.labels.filter(label => label.label === '保存'
+    && label.x === Number(text.x) && label.y === Number(text.y));
+  assert.equal(matchingReceipt.length, 1, 'receipt and rendered label must agree');
+  const receiptLabel = matchingReceipt[0];
+  assert.deepEqual(mask, {
+    x: receiptLabel.x - receiptLabel.width / 2, y: receiptLabel.y - 10,
+    width: receiptLabel.width, height: receiptLabel.height,
+  });
+
+  const flowId = 'lane-' + workflow.lanes.findIndex(({ id }) => id === 'flow');
+  const frameTags = (result.svg.match(/<rect\b[^>]*>/g) || []).filter(tag => attrs(tag)['data-composition-frame-id'] === flowId);
+  assert.equal(frameTags.length, 1, 'retain the actual flow lane frame');
+  const frame = box(frameTags[0]);
+  const frameAttrs = attrs(frameTags[0]);
+  const radius = Number(frameAttrs.rx || 0);
+  const frameHalfStroke = Number(frameAttrs['stroke-width']) / 2;
+  assert.ok(Number.isFinite(radius) && Number.isFinite(frameHalfStroke));
+  assert.ok(mask.x >= frame.x + radius && mask.x + mask.width <= frame.x + frame.width - radius,
+    'this fixture tests the straight frame border, away from rounded corners');
+  const bottom = frame.y + frame.height;
+  assert.ok(mask.y + mask.height < bottom - frameHalfStroke || mask.y > bottom + frameHalfStroke,
+    'the semantic label mask must not contact the actual lane bottom stroke');
+
+  const disjoint = (a, b) => a.x + a.width < b.x || b.x + b.width < a.x
+    || a.y + a.height < b.y || b.y + b.height < a.y;
+  // Inspect rendered rectangles; do not copy the fallback anchor algorithm.
+  for (const node of workflow.nodes) {
+    const nodeGroup = [...result.svg.matchAll(/<g\b(?=[^>]*data-node-id=)[^>]*>[\s\S]*?<\/g>/g)]
+      .find(([group]) => attrs(group)['data-node-id'] === node.id)?.[0];
+    assert.ok(nodeGroup, 'retain rendered node ' + node.id);
+    const paintTag = (nodeGroup.match(/<rect\b[^>]*>/g) || []).find(tag => attrs(tag)['data-animate'] === 'node');
+    assert.ok(paintTag, 'retain the painted node rectangle for ' + node.id);
+    const nodeBox = box(paintTag);
+    const halfStroke = Number(attrs(paintTag)['stroke-width']) / 2;
+    assert.ok(Number.isFinite(halfStroke));
+    assert.ok(disjoint(mask, {
+      x: nodeBox.x - halfStroke, y: nodeBox.y - halfStroke,
+      width: nodeBox.width + 2 * halfStroke, height: nodeBox.height + 2 * halfStroke,
+    }), 'label mask must not cover node ' + node.id);
+  }
+  for (const [group] of labelGroups) {
+    if (group === targetGroup) continue;
+    const otherMask = group.match(/<rect\b[^>]*class="c-mask"[^>]*>/)?.[0];
+    assert.ok(otherMask, 'retain every other semantic label mask');
+    assert.ok(disjoint(mask, box(otherMask)), 'moving the label must not obscure another label');
+  }
+});
+
+
+test('a labeled repair return uses the available outer envelope without losing failure paths', () => {
+  const workflow = JSON.parse(fs.readFileSync(
+    new URL('./fixtures/workflow-late-label-envelope.json', import.meta.url), 'utf8',
+  ));
+  const before = structuredClone(workflow);
+  assert.equal(workflow.nodes.length, 10);
+  assert.equal(workflow.edges.length, 15);
+  const result = compileWorkflow({ workflow, qualityProfile: 'showcase' });
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  assert.deepEqual(workflow, before, 'routing must preserve the full authored document, including sources and cards');
+  const placement = nodes => nodes.map(({ id, lane, col }) => [id, lane, col]).sort();
+  assert.deepEqual(placement(result.receipt.nodes), placement(workflow.nodes));
+  assert.deepEqual(result.receipt.edges.map(({ from, to }) => [from, to]).sort(),
+    workflow.edges.map(({ from, to }) => [from, to]).sort());
+  assert.deepEqual(result.receipt.labels.map(({ label }) => label).sort(),
+    workflow.edges.filter(({ label }) => label).map(({ label }) => label).sort());
+  const escape = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  for (const node of workflow.nodes) {
+    for (const text of [node.label, node.sublabel].filter(Boolean)) {
+      assert.ok(result.svg.includes('>' + escape(text) + '</text>'), 'preserve full node text for ' + node.id);
+    }
+  }
+  for (const edge of workflow.edges) {
+    assert.equal(attributeRole(edgeTag(result.svg, edge.from, edge.to)), edge.role || '');
+  }
+
+  const attrs = tag => Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)]
+    .map(([, key, value]) => [key, value]));
+  const box = tag => {
+    const values = attrs(tag);
+    const rect = Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, Number(values[key])]));
+    assert.ok(Object.values(rect).every(Number.isFinite));
+    assert.ok(rect.width > 0 && rect.height > 0);
+    return rect;
+  };
+  const expand = (rect, pad) => ({
+    x: rect.x - pad, y: rect.y - pad, width: rect.width + 2 * pad, height: rect.height + 2 * pad,
+  });
+  const disjoint = (a, b) => a.x + a.width < b.x || b.x + b.width < a.x
+    || a.y + a.height < b.y || b.y + b.height < a.y;
+  const frames = (result.svg.match(/<rect\b[^>]*>/g) || []).filter(tag => (
+    /data-composition-frame-kind="(?:lane|exception-lane)"/.test(tag)
+  ));
+  assert.equal(frames.length, workflow.lanes.length, 'retain every lane frame');
+  const frameRight = Math.max(...frames.map(tag => {
+    const rect = box(tag);
+    return rect.x + rect.width;
+  }));
+  const route = result.receipt.edges.find(({ from, to }) => from === 'review' && to === 'repair');
+  assert.ok(route);
+  const source = result.receipt.nodes.find(({ id }) => id === route.from);
+  const target = result.receipt.nodes.find(({ id }) => id === route.to);
+  const [start, next] = route.points, end = route.points.at(-1), previous = route.points.at(-2);
+  assert.equal(start[1], source.y + source.height);
+  assert.ok(start[0] >= source.x && start[0] <= source.x + source.width);
+  assert.equal(next[0], start[0]);
+  assert.ok(next[1] > start[1], 'retain the downward departure into the return corridor');
+  assert.equal(end[0], target.x + target.width);
+  assert.ok(end[1] >= target.y && end[1] <= target.y + target.height);
+  assert.equal(previous[1], end[1]);
+  assert.ok(previous[0] > end[0], 'the arrow must reach the repair card from its right side');
+  // This full graph has a clear outer corridor. Do not spend another whole
+  // card column on empty return space, or freeze a particular automatic rail.
+  const widestCard = Math.max(...result.receipt.nodes.map(({ width }) => width));
+  assert.ok(Math.max(...route.points.map(([x]) => x)) < frameRight + widestCard,
+    'the feedback loop should fit within one card width beyond the actual lanes');
+
+  const groups = [...result.svg.matchAll(/<g\b(?=[^>]*data-edge-from=)(?=[^>]*data-edge-label=)[^>]*>[\s\S]*?<\/g>/g)]
+    .map(([group]) => group);
+  for (const edge of workflow.edges.filter(({ label }) => label)) {
+    const group = groups.find(group => attrs(group)['data-edge-from'] === edge.from
+      && attrs(group)['data-edge-to'] === edge.to);
+    assert.ok(group, 'retain the rendered label group for ' + edge.from + '->' + edge.to);
+    assert.ok(group.includes('>' + escape(edge.label) + '</text>'),
+      'preserve full rendered condition text for ' + edge.from + '->' + edge.to);
+  }
+  const targetGroup = groups.find(group => attrs(group)['data-edge-from'] === 'review'
+    && attrs(group)['data-edge-to'] === 'repair');
+  assert.ok(targetGroup);
+  assert.equal((targetGroup.match(/>发现问题<\/text>/g) || []).length, 1);
+  const maskTag = targetGroup.match(/<rect\b[^>]*class="c-mask"[^>]*>/)?.[0];
+  assert.ok(maskTag);
+  // Read the rendered mask paint width rather than reproducing the candidate
+  // rail/shelf construction or importing the router's private helpers.
+  const maskStroke = Number(result.svg.match(/g\[data-edge-from\] > rect\.c-mask \{[^}]*stroke-width:\s*([\d.]+)px/)?.[1]);
+  assert.ok(Number.isFinite(maskStroke));
+  const mask = expand(box(maskTag), maskStroke / 2);
+  for (const tag of frames) {
+    const frame = box(tag), halfStroke = Number(attrs(tag)['stroke-width']) / 2;
+    assert.ok(Number.isFinite(halfStroke));
+    const borders = [
+      { x: frame.x, y: frame.y, width: frame.width, height: 0 },
+      { x: frame.x, y: frame.y + frame.height, width: frame.width, height: 0 },
+      { x: frame.x, y: frame.y, width: 0, height: frame.height },
+      { x: frame.x + frame.width, y: frame.y, width: 0, height: frame.height },
+    ];
+    for (const border of borders) assert.ok(disjoint(mask, expand(border, halfStroke)),
+      'the failure label paint must stay separate from lane border paint');
+  }
+  for (const node of result.receipt.nodes) {
+    assert.ok(disjoint(mask, expand(node, 0.75)), 'the failure label must not cover card ' + node.id);
+  }
+  for (const group of groups) {
+    if (group === targetGroup) continue;
+    const otherMask = group.match(/<rect\b[^>]*class="c-mask"[^>]*>/)?.[0];
+    assert.ok(otherMask);
+    assert.ok(disjoint(mask, expand(box(otherMask), maskStroke / 2)),
+      'the failure label must not obscure another condition');
+  }
 });
