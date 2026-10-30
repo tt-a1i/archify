@@ -5119,7 +5119,7 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
     top: var(--passport-viewport-top, 8px) !important;
     width: min(22rem, calc(100vw - 16px));
     max-width: calc(100vw - 16px);
-    max-height: calc(100vh - var(--passport-viewport-top, 8px) - 8px);
+    max-height: calc(100vh - var(--passport-viewport-top, 8px) - 8px - var(--archify-passport-reserve, var(--archify-dock-h, 0px)));
     overflow-y: auto;
   }
   .focus-chip[data-explaining="true"] { overflow: hidden; }
