@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "修改第一个任务后的引用",
+    "output": "object-map.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "base",
+      "label": "原版 root",
+      "type": "external",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        132,
+        60
+      ]
+    },
+    {
+      "id": "next",
+      "label": "新版 root",
+      "type": "frontend",
+      "pos": [
+        250,
+        40
+      ],
+      "size": [
+        132,
+        60
+      ]
+    },
+    {
+      "id": "oldtasks",
+      "label": "原版 tasks",
+      "type": "external",
+      "pos": [
+        40,
+        245
+      ],
+      "size": [
+        132,
+        60
+      ]
+    },
+    {
+      "id": "newtasks",
+      "label": "新版 tasks",
+      "type": "frontend",
+      "pos": [
+        250,
+        245
+      ],
+      "size": [
+        132,
+        60
+      ]
+    },
+    {
+      "id": "user",
+      "label": "共享 user",
+      "type": "database",
+      "pos": [
+        145,
+        145
+      ],
+      "size": [
+        132,
+        60
+      ]
+    },
+    {
+      "id": "oldfirst",
+      "label": "原版首项 false",
+      "type": "external",
+      "pos": [
+        40,
+        365
+      ],
+      "size": [
+        132,
+        60
+      ]
+    },
+    {
+      "id": "newfirst",
+      "label": "新版首项 true",
+      "type": "frontend",
+      "pos": [
+        250,
+        365
+      ],
+      "size": [
+        132,
+        60
+      ]
+    },
+    {
+      "id": "second",
+      "label": "共享第二项",
+      "type": "database",
+      "pos": [
+        145,
+        500
+      ],
+      "size": [
+        132,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "base-to-oldtasks-1",
+      "from": "base",
+      "to": "oldtasks",
+      "label": "tasks"
+    },
+    {
+      "id": "next-to-newtasks-1",
+      "from": "next",
+      "to": "newtasks",
+      "label": "tasks"
+    },
+    {
+      "id": "base-to-user-1",
+      "from": "base",
+      "to": "user",
+      "label": "user"
+    },
+    {
+      "id": "next-to-user-1",
+      "from": "next",
+      "to": "user",
+      "label": "user"
+    },
+    {
+      "id": "oldtasks-to-oldfirst-1",
+      "from": "oldtasks",
+      "to": "oldfirst",
+      "label": "0"
+    },
+    {
+      "id": "newtasks-to-newfirst-1",
+      "from": "newtasks",
+      "to": "newfirst",
+      "label": "0"
+    },
+    {
+      "id": "oldtasks-to-second-1",
+      "from": "oldtasks",
+      "to": "second",
+      "label": "1"
+    },
+    {
+      "id": "newtasks-to-second-1",
+      "from": "newtasks",
+      "to": "second",
+      "label": "1"
+    }
+  ]
+}

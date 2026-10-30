@@ -1,0 +1,7 @@
+# Round49: a complete reference map in a narrow column
+
+Start 2026-10-30T00:59:44.997099+00:00. Base222ce38f12b2ebab7cac0b6c4193b4807501188c; product runtime d300979c84b2e049101ff4d6035f19425dec7225. Latest remote dev5ecbd1bfdbf83ea747072112493c940e707569cb unchanged.
+
+Observed round48: eight-object graph is accurate but622px wide inside358px phone viewport. Phone PNG fits all relationships by shrinking labels. Fixed-input hypothesis: vertically interleave the two versions with shared objects while preserving every node/edge/label/type, all prose and executable code, so the complete graph is simultaneously visible at a readable phone scale.
+
+Bound20 minutes/max3 complete native geometry candidates. Start with automatic routing and no runtime change. Explicit authored geometry is intentional for this specimen; no general router or author-productivity claim. Change only positions/sizes, remove shorthand grid placement for explicit positions, and allow panel widths in one follow-up if the full desktop page becomes too tall. No source-guidance edits or semantics simplification. Compare complete page at390/1440, dark/light, native Viewer, actual exports, node/edge identities and unchanged code payload. Native/explainer strict gates plus visual review; no broad runtime suite for content-only evidence. Retain last valid base and failed candidates; stop coordinate repair after bounded budget. Reuse round48 content probes and round47 product/package evidence. Branch push, no merge/install; goal remains active.

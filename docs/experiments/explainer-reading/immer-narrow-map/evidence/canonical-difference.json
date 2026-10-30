@@ -1,0 +1,15 @@
+{
+  "preparedKeysChanged": [
+    "document",
+    "sourceMap",
+    "sourceText",
+    "sourcePath",
+    "source",
+    "dependencies",
+    "digest"
+  ],
+  "preparedDiagramsIdentical": true,
+  "documentIdenticalExceptExternalSpecFilename": true,
+  "canonicalSha256": "b42c9c5dc0122f9791bfcfb4fa2d3f11afdf132e66cb83522338ed65dd80f200",
+  "note": "Canonical source uses object-map.architecture.json instead of candidate-1.architecture.json. Source mapping, source/dependency metadata, digest and revision also change. No byte identity claim."
+}

@@ -279,3 +279,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 48
 
 [Immer structural sharing](immer-sharing/README.md) compares values, reference identity and default freezing across four fresh-tree cases, repeated twice. The independent author retains a complete eight-object graph. Parent adds a five-row identity summary, formats the executable code for phones and separates data-value preservation from freezing. Equal-width desktop columns made graph labels smaller; the retained second composition restores more width to the graph. The phone graph still scrolls and the page is longer. Actual copied code produces identical output matching the probe. Runtime/package evidence is reused from round47.
+
+### Round 49 — a complete graph in a narrow column
+
+[Immer narrow reference map](immer-narrow-map/README.md) keeps all eight objects, eight references and every word/code line from round48. Explicit vertical geometry removes the phone graph’s 264 px horizontal overflow; two equal desktop columns reduce empty side space. Phone height increases by 89 px and desktop by 146 px. Native strict checks, four reading states, actual Copy, native Viewer and two PNG exports are recorded. This is a fixed-input authored layout, not a general automatic-layout improvement. Runtime/package evidence remains round47.

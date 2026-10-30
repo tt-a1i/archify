@@ -1,0 +1,111 @@
+{
+  "rows": [
+    {
+      "width": 390,
+      "theme": "light",
+      "pageWidth": 390,
+      "height": 3472,
+      "diagramClient": 358,
+      "diagramScroll": 358,
+      "code": [
+        {
+          "client": 356,
+          "scroll": 356
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "pageWidth": 390,
+      "height": 3472,
+      "diagramClient": 358,
+      "diagramScroll": 358,
+      "code": [
+        {
+          "client": 356,
+          "scroll": 356
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "pageWidth": 1440,
+      "height": 2041,
+      "diagramClient": 624,
+      "diagramScroll": 624,
+      "code": [
+        {
+          "client": 622,
+          "scroll": 622
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "pageWidth": 1440,
+      "height": 2041,
+      "diagramClient": 624,
+      "diagramScroll": 624,
+      "code": [
+        {
+          "client": 622,
+          "scroll": 622
+        }
+      ]
+    }
+  ],
+  "index": [
+    {
+      "width": "390px",
+      "version": 0,
+      "src": "immer-narrow-map/candidate.html",
+      "open": "immer-narrow-map/candidate.html",
+      "report": "immer-narrow-map/README.md",
+      "progress": "持续探索中2026.10.30 · 实验分支"
+    },
+    {
+      "width": "390px",
+      "version": 1,
+      "src": "immer-sharing/candidate.html",
+      "open": "immer-sharing/candidate.html",
+      "report": "immer-narrow-map/README.md",
+      "progress": "持续探索中2026.10.30 · 实验分支"
+    },
+    {
+      "width": "390px",
+      "version": 2,
+      "src": "immer-sharing/author/answer.html",
+      "open": "immer-sharing/author/answer.html",
+      "report": "immer-narrow-map/README.md",
+      "progress": "持续探索中2026.10.30 · 实验分支"
+    },
+    {
+      "width": "1440px",
+      "version": 0,
+      "src": "immer-narrow-map/candidate.html",
+      "open": "immer-narrow-map/candidate.html",
+      "report": "immer-narrow-map/README.md",
+      "progress": "持续探索中2026.10.30 · 实验分支"
+    },
+    {
+      "width": "1440px",
+      "version": 1,
+      "src": "immer-sharing/candidate.html",
+      "open": "immer-sharing/candidate.html",
+      "report": "immer-narrow-map/README.md",
+      "progress": "持续探索中2026.10.30 · 实验分支"
+    },
+    {
+      "width": "1440px",
+      "version": 2,
+      "src": "immer-sharing/author/answer.html",
+      "open": "immer-sharing/author/answer.html",
+      "report": "immer-narrow-map/README.md",
+      "progress": "持续探索中2026.10.30 · 实验分支"
+    }
+  ],
+  "copyBytesUnchanged": true
+}

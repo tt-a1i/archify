@@ -1,0 +1,666 @@
+[
+  {
+    "arm": "base",
+    "width": 390,
+    "pageWidth": 390,
+    "height": 3383,
+    "diagram": {
+      "client": 358,
+      "scroll": 622,
+      "height": 404,
+      "viewBox": "34 74 684 444",
+      "text": [
+        {
+          "label": "原版 root",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "新版 root",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "原版 tasks",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "新版 tasks",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "共享 user",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "原版首项 false",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "新版首项 true",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "共享第二项",
+          "font": 11,
+          "projected": 10.002815315315315
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 7.274774774774775
+        },
+        {
+          "label": "图例",
+          "font": 12,
+          "projected": 10.912162162162161
+        },
+        {
+          "label": "前端",
+          "font": 10,
+          "projected": 9.093468468468469
+        },
+        {
+          "label": "数据库",
+          "font": 10,
+          "projected": 9.093468468468469
+        },
+        {
+          "label": "外部系统",
+          "font": 10,
+          "projected": 9.093468468468469
+        }
+      ]
+    },
+    "code": [
+      {
+        "client": 356,
+        "scroll": 356
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 449.4765625,
+        "top": 219,
+        "right": 378,
+        "bottom": 668.4765625,
+        "left": 12
+      },
+      {
+        "id": "references",
+        "x": 12,
+        "y": 680.4765625,
+        "width": 366,
+        "height": 1021.9453125,
+        "top": 680.4765625,
+        "right": 378,
+        "bottom": 1702.421875,
+        "left": 12
+      },
+      {
+        "id": "check",
+        "x": 12,
+        "y": 1714.421875,
+        "width": 366,
+        "height": 931.2109375,
+        "top": 1714.421875,
+        "right": 378,
+        "bottom": 2645.6328125,
+        "left": 12
+      },
+      {
+        "id": "limits",
+        "x": 12,
+        "y": 2657.6328125,
+        "width": 366,
+        "height": 311.46875,
+        "top": 2657.6328125,
+        "right": 378,
+        "bottom": 2969.1015625,
+        "left": 12
+      }
+    ]
+  },
+  {
+    "arm": "base",
+    "width": 1440,
+    "pageWidth": 1440,
+    "height": 1895,
+    "diagram": {
+      "client": 840,
+      "scroll": 840,
+      "height": 546,
+      "viewBox": "34 74 684 444",
+      "text": [
+        {
+          "label": "原版 root",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "新版 root",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "原版 tasks",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "新版 tasks",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "共享 user",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "原版首项 false",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "新版首项 true",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "共享第二项",
+          "font": 11,
+          "projected": 13.508639498873874
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 9.82446509009009
+        },
+        {
+          "label": "图例",
+          "font": 12,
+          "projected": 14.736697635135135
+        },
+        {
+          "label": "前端",
+          "font": 10,
+          "projected": 12.280581362612612
+        },
+        {
+          "label": "数据库",
+          "font": 10,
+          "projected": 12.280581362612612
+        },
+        {
+          "label": "外部系统",
+          "font": 10,
+          "projected": 12.280581362612612
+        }
+      ]
+    },
+    "code": [
+      {
+        "client": 406,
+        "scroll": 406
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 1280,
+        "height": 219,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 335.5,
+        "left": 80
+      },
+      {
+        "id": "references",
+        "x": 80,
+        "y": 351.5,
+        "width": 848,
+        "height": 1041,
+        "top": 351.5,
+        "right": 928,
+        "bottom": 1392.5,
+        "left": 80
+      },
+      {
+        "id": "check",
+        "x": 944,
+        "y": 351.5,
+        "width": 416,
+        "height": 1041,
+        "top": 351.5,
+        "right": 1360,
+        "bottom": 1392.5,
+        "left": 944
+      },
+      {
+        "id": "limits",
+        "x": 80,
+        "y": 1408.5,
+        "width": 1280,
+        "height": 183,
+        "top": 1408.5,
+        "right": 1360,
+        "bottom": 1591.5,
+        "left": 80
+      }
+    ]
+  },
+  {
+    "arm": "candidate-1",
+    "width": 390,
+    "pageWidth": 390,
+    "height": 3472,
+    "diagram": {
+      "client": 358,
+      "scroll": 358,
+      "height": 538,
+      "viewBox": "34 34 354 532",
+      "text": [
+        {
+          "label": "原版 root",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "新版 root",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "原版 tasks",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "新版 tasks",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "共享 user",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "原版首项 false",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "新版首项 true",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "共享第二项",
+          "font": 11,
+          "projected": 11.124221687030076
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 8.090343045112782
+        },
+        {
+          "label": "Legend",
+          "font": 12,
+          "projected": 12.135514567669173
+        },
+        {
+          "label": "Frontend",
+          "font": 10,
+          "projected": 10.112928806390977
+        },
+        {
+          "label": "Database",
+          "font": 10,
+          "projected": 10.112928806390977
+        },
+        {
+          "label": "External",
+          "font": 10,
+          "projected": 10.112928806390977
+        }
+      ]
+    },
+    "code": [
+      {
+        "client": 356,
+        "scroll": 356
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 449.4765625,
+        "top": 219,
+        "right": 378,
+        "bottom": 668.4765625,
+        "left": 12
+      },
+      {
+        "id": "references",
+        "x": 12,
+        "y": 680.4765625,
+        "width": 366,
+        "height": 1110.609375,
+        "top": 680.4765625,
+        "right": 378,
+        "bottom": 1791.0859375,
+        "left": 12
+      },
+      {
+        "id": "check",
+        "x": 12,
+        "y": 1803.0859375,
+        "width": 366,
+        "height": 931.2109375,
+        "top": 1803.0859375,
+        "right": 378,
+        "bottom": 2734.296875,
+        "left": 12
+      },
+      {
+        "id": "limits",
+        "x": 12,
+        "y": 2746.296875,
+        "width": 366,
+        "height": 311.46875,
+        "top": 2746.296875,
+        "right": 378,
+        "bottom": 3057.765625,
+        "left": 12
+      }
+    ]
+  },
+  {
+    "arm": "candidate-1",
+    "width": 1440,
+    "pageWidth": 1440,
+    "height": 2015,
+    "diagram": {
+      "client": 840,
+      "scroll": 840,
+      "height": 666,
+      "viewBox": "34 34 354 532",
+      "text": [
+        {
+          "label": "原版 root",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "新版 root",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "原版 tasks",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "新版 tasks",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "共享 user",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "原版首项 false",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "新版首项 true",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "共享第二项",
+          "font": 11,
+          "projected": 13.75
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "tasks",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "user",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "0",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "1",
+          "font": 8,
+          "projected": 10
+        },
+        {
+          "label": "Legend",
+          "font": 12,
+          "projected": 15
+        },
+        {
+          "label": "Frontend",
+          "font": 10,
+          "projected": 12.5
+        },
+        {
+          "label": "Database",
+          "font": 10,
+          "projected": 12.5
+        },
+        {
+          "label": "External",
+          "font": 10,
+          "projected": 12.5
+        }
+      ]
+    },
+    "code": [
+      {
+        "client": 406,
+        "scroll": 406
+      }
+    ],
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 1280,
+        "height": 219,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 335.5,
+        "left": 80
+      },
+      {
+        "id": "references",
+        "x": 80,
+        "y": 351.5,
+        "width": 848,
+        "height": 1161,
+        "top": 351.5,
+        "right": 928,
+        "bottom": 1512.5,
+        "left": 80
+      },
+      {
+        "id": "check",
+        "x": 944,
+        "y": 351.5,
+        "width": 416,
+        "height": 1161,
+        "top": 351.5,
+        "right": 1360,
+        "bottom": 1512.5,
+        "left": 944
+      },
+      {
+        "id": "limits",
+        "x": 80,
+        "y": 1528.5,
+        "width": 1280,
+        "height": 183,
+        "top": 1528.5,
+        "right": 1360,
+        "bottom": 1711.5,
+        "left": 80
+      }
+    ]
+  }
+]

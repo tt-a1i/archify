@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "f643204f-b32c-4b86-b8b2-eb83b39bff93",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-narrow-map/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-narrow-map/candidate.html",
+  "specification": {
+    "sha256": "a04a2009f7f7d7c96bc6ff975bbf7764f7a74b4acae3739294a509808e1711f5",
+    "bytes": 3742
+  },
+  "artifact": {
+    "sha256": "b42c9c5dc0122f9791bfcfb4fa2d3f11afdf132e66cb83522338ed65dd80f200",
+    "bytes": 574650
+  },
+  "explainer": {
+    "preparedSha256": "e265305a3dfeaa5ffa5cfec7816586f3db6f0c47bb1a68280d29b352a3b6268e",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "object-map",
+        "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-narrow-map/object-map.architecture.json",
+        "relativePath": "object-map.architecture.json",
+        "sha256": "b6582dd56415f67ddfd2ad7b634f47f476c07f4b1da8adb74a61a45f3e536c5b",
+        "bytes": 2677
+      }
+    ]
+  }
+}

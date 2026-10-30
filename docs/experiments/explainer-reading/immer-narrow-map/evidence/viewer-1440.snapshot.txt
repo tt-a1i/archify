@@ -1,0 +1,184 @@
+[p1 "改了一个任务，为什么 user 还是同一个对象？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "改了一个任务，为什么 user 还是同一个对象？ · Archify"]
+root
+  container
+    heading
+      text "改了一个任务，为什么"
+      text "user"
+      text "还是同一个对象？"
+    button [ref=765]
+      text "系统"
+    button [ref=766]
+      text "浅色"
+    button [ref=767]
+      text "深色"
+    button "样式" [ref=768, loc=css:button[aria-label="样式"]]
+      text "杂志"
+      svg_root
+    button [ref=769]
+      svg_root
+      text "导出"
+      svg_root
+  container
+    container
+      container
+        text "答"
+        heading
+          text "结论"
+        button [ref=770]
+          text "追问"
+      paragraph
+        text "在这个例子中，Immer 只为改动路径上的根对象、"
+        text "tasks"
+        text "数组和第一个任务换了引用。没改动的"
+        text "user"
+        text "和第二个任务，仍是两个版本共用的同一个对象。"
+        anchor [ref=771, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round49/candidate-2.html#source-produce]
+          text "1"
+      ordered_list
+        list_item
+          text "1"
+          text "原版第一个任务的"
+          text "done"
+          text "仍为"
+          text "false"
+          text "，新版为"
+          text "true"
+          text "。"
+        list_item
+          text "2"
+          text "共享表示"
+          text "==="
+          text "为"
+          text "true"
+          text "，不是只表示内容相等。"
+        list_item
+          text "3"
+          text "默认冻结会让共享对象也被冻结；“数据值没变”不代表对象仍可直接修改。"
+          anchor [ref=772, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round49/candidate-2.html#source-freezing]
+            text "2"
+      paragraph
+        text "适用于"
+        text "Immer 11.2.9"
+        text "普通对象和数组"
+        text "默认 autoFreeze"
+    container
+      container
+        anchor "两个版本指向什么？" [ref=773, loc=css:a[aria-label="两个版本指向什么？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round49/candidate-2.html#references]
+          text "1"
+        heading
+          text "两个版本指向什么？"
+        button [ref=774]
+          text "追问"
+      paragraph
+        text "每个方框表示一个对象或数组，箭头表示属性引用；"
+        text "0"
+        text "、"
+        text "1"
+        text "是数组下标。两条箭头汇入同一方框，表示它们指向同一个对象。"
+      container
+        text "修改第一个任务后的引用"
+        button [ref=775]
+          svg_root
+          text "打开交互图"
+        image "修改第一个任务后的引用"
+          image "原版 root 新版 root 原版 tasks 新版 tasks 共享 user 原版首项 false 新版首项 true 共享第二项 tasks tasks user user 0 0 1 1 Legend Frontend Database External"
+            text "原版 root"
+            text "新版 root"
+            text "原版 tasks"
+            text "新版 tasks"
+            text "共享 user"
+            text "tasks"
+            text "tasks"
+            text "user"
+            text "user"
+            text "0"
+            text "0"
+            text "1"
+            text "1"
+    container
+      container
+        anchor "怎么自己检查？" [ref=776, loc=css:a[aria-label="怎么自己检查？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round49/candidate-2.html#check]
+          text "2"
+        heading
+          text "怎么自己检查？"
+        button [ref=777]
+          text "追问"
+      paragraph
+        text "原始数据中用户是"
+        text "Lin"
+        text "，任务是"
+        text "Read"
+        text "和"
+        text "Write"
+        text "，两项初始"
+        text "done"
+        text "均为"
+        text "false"
+        text "。以下代码使用默认配置；"
+        text "false"
+        text "表示引用不同。"
+      container
+        text "example.cjs"
+        text "js"
+        button [ref=778]
+          text "已复制"
+        text "const { produce } = require('immer'); const base = { user: { name: 'Lin' }, tasks: [ { title: 'Read', done: false }, { title: 'Write', done: false }, ], }; const next = produce(base, draft => { draft...."
+  dialog_modal "修改第一个任务后的引用" [ref=779]
+    button [ref=780]
+      svg_root
+      text "关闭"
+      text "Esc"
+    iframe [ref=781]
+      root
+        toolbar "Diagram actions"
+          container
+            button "Toggle color theme" [ref=782, loc=css:button[aria-label="Toggle color theme"]]
+            button "Visual style: Editorial. Choose visual style" [ref=783, loc=css:button[aria-label="Visual style: Editorial. Choose visual style"]]
+              text "Editorial"
+            button "Resume motion" [ref=784, loc=css:button[aria-label="Resume motion"]]
+              text "Still"
+            button "Enter presentation stage" [ref=785]
+          button "Export diagram" [ref=786, loc=css:button[aria-label="Export diagram"]]
+            text "Export"
+        container
+          container
+            heading
+              text "修改第一个任务后的引用"
+            text "EDITORIAL / FIELD NOTE"
+          container
+            image "原版 root 新版 root 原版 tasks 新版 tasks 共享 user 原版首项 false 新版首项 true 共享第二项 tasks tasks user user 0 0 1 1 Legend Frontend 3 Database 2 External 3" [ref=787, loc=role:image[name="修改第一个任务后的引用 An architecture diagram generated by Archify."]]
+              text "原版 root"
+              text "新版 root"
+              text "原版 tasks"
+              text "新版 tasks"
+              text "共享 user"
+              text "原版首项 false"
+              text "新版首项 true"
+              text "共享第二项"
+              text "tasks"
+              text "tasks"
+              text "user"
+              text "user"
+              text "0"
+              text "0"
+              text "1"
+              text "1"
+              text "Legend"
+              text "Frontend"
+              text "3"
+              text "Database"
+              text "2"
+              text "External"
+              text "3"
+            toolbar "Diagram view controls"
+              button "Trace a directed route" [ref=788]
+                text "ROUTE"
+              button "Open semantic lens" [ref=789, loc=css:button[aria-label="Open semantic lens"]]
+                text "LENS"
+              button "Find a node" [ref=790, loc=css:button[aria-label="Find a node"]]
+              button "Open diagram guide" [ref=791, loc=css:button[aria-label="Open diagram guide"]]
+              button "Zoom out" [ref=792, loc=css:button[aria-label="Zoom out"]]
+              button "100% · Zoom in again to reveal tags and annotations. Reset diagram view" [ref=793, loc=css:button[aria-label="100% · Zoom in again to reveal tags and annotations. Reset diagram view"]]
+                text "100%"
+              button "Zoom in" [ref=794, loc=css:button[aria-label="Zoom in"]]
+            text "ARCHIFY / PLATE 04"

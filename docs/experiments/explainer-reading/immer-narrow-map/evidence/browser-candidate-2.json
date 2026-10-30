@@ -1,0 +1,371 @@
+{
+  "rows": [
+    {
+      "width": 390,
+      "pageWidth": 390,
+      "height": 3472,
+      "theme": "light",
+      "diagram": {
+        "client": 358,
+        "scroll": 358,
+        "height": 538,
+        "viewBox": "34 34 354 532",
+        "nodes": [
+          "base",
+          "next",
+          "oldtasks",
+          "newtasks",
+          "user",
+          "oldfirst",
+          "newfirst",
+          "second"
+        ],
+        "edges": [
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1"
+        ]
+      },
+      "table": {
+        "client": 358,
+        "scroll": 358
+      },
+      "code": [
+        {
+          "client": 356,
+          "scroll": 356
+        }
+      ],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 449.4765625,
+          "top": 219,
+          "right": 378,
+          "bottom": 668.4765625,
+          "left": 12
+        },
+        {
+          "id": "references",
+          "x": 12,
+          "y": 680.4765625,
+          "width": 366,
+          "height": 1110.609375,
+          "top": 680.4765625,
+          "right": 378,
+          "bottom": 1791.0859375,
+          "left": 12
+        },
+        {
+          "id": "check",
+          "x": 12,
+          "y": 1803.0859375,
+          "width": 366,
+          "height": 931.2109375,
+          "top": 1803.0859375,
+          "right": 378,
+          "bottom": 2734.296875,
+          "left": 12
+        },
+        {
+          "id": "limits",
+          "x": 12,
+          "y": 2746.296875,
+          "width": 366,
+          "height": 311.46875,
+          "top": 2746.296875,
+          "right": 378,
+          "bottom": 3057.765625,
+          "left": 12
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "pageWidth": 390,
+      "height": 3472,
+      "theme": "dark",
+      "diagram": {
+        "client": 358,
+        "scroll": 358,
+        "height": 538,
+        "viewBox": "34 34 354 532",
+        "nodes": [
+          "base",
+          "next",
+          "oldtasks",
+          "newtasks",
+          "user",
+          "oldfirst",
+          "newfirst",
+          "second"
+        ],
+        "edges": [
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1"
+        ]
+      },
+      "table": {
+        "client": 358,
+        "scroll": 358
+      },
+      "code": [
+        {
+          "client": 356,
+          "scroll": 356
+        }
+      ],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 449.4765625,
+          "top": 219,
+          "right": 378,
+          "bottom": 668.4765625,
+          "left": 12
+        },
+        {
+          "id": "references",
+          "x": 12,
+          "y": 680.4765625,
+          "width": 366,
+          "height": 1110.609375,
+          "top": 680.4765625,
+          "right": 378,
+          "bottom": 1791.0859375,
+          "left": 12
+        },
+        {
+          "id": "check",
+          "x": 12,
+          "y": 1803.0859375,
+          "width": 366,
+          "height": 931.2109375,
+          "top": 1803.0859375,
+          "right": 378,
+          "bottom": 2734.296875,
+          "left": 12
+        },
+        {
+          "id": "limits",
+          "x": 12,
+          "y": 2746.296875,
+          "width": 366,
+          "height": 311.46875,
+          "top": 2746.296875,
+          "right": 378,
+          "bottom": 3057.765625,
+          "left": 12
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "pageWidth": 1440,
+      "height": 2041,
+      "theme": "light",
+      "diagram": {
+        "client": 624,
+        "scroll": 624,
+        "height": 666,
+        "viewBox": "34 34 354 532",
+        "nodes": [
+          "base",
+          "next",
+          "oldtasks",
+          "newtasks",
+          "user",
+          "oldfirst",
+          "newfirst",
+          "second"
+        ],
+        "edges": [
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1"
+        ]
+      },
+      "table": {
+        "client": 624,
+        "scroll": 624
+      },
+      "code": [
+        {
+          "client": 622,
+          "scroll": 622
+        }
+      ],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        },
+        {
+          "id": "references",
+          "x": 80,
+          "y": 351.5,
+          "width": 632,
+          "height": 1187,
+          "top": 351.5,
+          "right": 712,
+          "bottom": 1538.5,
+          "left": 80
+        },
+        {
+          "id": "check",
+          "x": 728,
+          "y": 351.5,
+          "width": 632,
+          "height": 1187,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 1538.5,
+          "left": 728
+        },
+        {
+          "id": "limits",
+          "x": 80,
+          "y": 1554.5,
+          "width": 1280,
+          "height": 183,
+          "top": 1554.5,
+          "right": 1360,
+          "bottom": 1737.5,
+          "left": 80
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "pageWidth": 1440,
+      "height": 2041,
+      "theme": "dark",
+      "diagram": {
+        "client": 624,
+        "scroll": 624,
+        "height": 666,
+        "viewBox": "34 34 354 532",
+        "nodes": [
+          "base",
+          "next",
+          "oldtasks",
+          "newtasks",
+          "user",
+          "oldfirst",
+          "newfirst",
+          "second"
+        ],
+        "edges": [
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1"
+        ]
+      },
+      "table": {
+        "client": 624,
+        "scroll": 624
+      },
+      "code": [
+        {
+          "client": 622,
+          "scroll": 622
+        }
+      ],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        },
+        {
+          "id": "references",
+          "x": 80,
+          "y": 351.5,
+          "width": 632,
+          "height": 1187,
+          "top": 351.5,
+          "right": 712,
+          "bottom": 1538.5,
+          "left": 80
+        },
+        {
+          "id": "check",
+          "x": 728,
+          "y": 351.5,
+          "width": 632,
+          "height": 1187,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 1538.5,
+          "left": 728
+        },
+        {
+          "id": "limits",
+          "x": 80,
+          "y": 1554.5,
+          "width": 1280,
+          "height": 183,
+          "top": 1554.5,
+          "right": 1360,
+          "bottom": 1737.5,
+          "left": 80
+        }
+      ]
+    }
+  ],
+  "viewers": [
+    {
+      "width": 1440,
+      "open": true,
+      "ready": "true",
+      "frameTitle": "修改第一个任务后的引用"
+    },
+    {
+      "width": 390,
+      "open": true,
+      "ready": "true",
+      "frameTitle": "修改第一个任务后的引用"
+    }
+  ],
+  "copyBytesEqualRound48": true
+}

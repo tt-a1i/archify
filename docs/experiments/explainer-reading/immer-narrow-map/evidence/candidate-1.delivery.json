@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "5da0ce90-46c5-4d41-ac46-5e191f90ab4b",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round49/candidate-1.archify.md",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round49/candidate-1.html",
+  "specification": {
+    "sha256": "1ee93d60a02339711e0d62068f5444ffd875cd72cd419a47a96c5de0f20522c3",
+    "bytes": 3743
+  },
+  "artifact": {
+    "sha256": "87cbd826283abdda3f2f30f771851ee6e6ff69447e7e05418eed6e4afa6dcd81",
+    "bytes": 574658
+  },
+  "explainer": {
+    "preparedSha256": "0688415c581dd7990911e013684c44736261f698fbb2edc5276e070a3f2c06e6",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "object-map",
+        "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round49/candidate-1.architecture.json",
+        "relativePath": "candidate-1.architecture.json",
+        "sha256": "b6582dd56415f67ddfd2ad7b634f47f476c07f4b1da8adb74a61a45f3e536c5b",
+        "bytes": 2677
+      }
+    ]
+  }
+}
