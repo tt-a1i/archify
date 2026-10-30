@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "337ec1ba-7f75-44cf-9cc4-e695c31aad09",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-sharing/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-sharing/candidate.html",
+  "specification": {
+    "sha256": "aa548c1e4899cf4128470762ac909eaa2e5ba9d5a1f50ee90396b9b3a64a1bc7",
+    "bytes": 4217
+  },
+  "artifact": {
+    "sha256": "15c2e40dd37acbead309eaa55db6d274f51c49c490f8e359cfbc331ad219cc58",
+    "bytes": 583943
+  },
+  "explainer": {
+    "preparedSha256": "6085c96c3a24da2eba15cc63d7635429bfb5a2f5b1ad769248ef606889296a62",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "object-map",
+        "inline": true,
+        "sha256": "67cde1818f13a7b14c9733fdd53d51d4b2b71454dc4ce1ea9da1f1236161110e",
+        "bytes": 1448
+      }
+    ]
+  }
+}

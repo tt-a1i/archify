@@ -1,0 +1,162 @@
+{
+  "rows": [
+    {
+      "width": 390,
+      "native": {
+        "client": 358,
+        "scroll": 622,
+        "nodeLabels": [
+          {
+            "id": "base",
+            "text": "原版 root · 架构组件\n          \n          \n          \n            \n            \n          \n          原版 root"
+          },
+          {
+            "id": "next",
+            "text": "新版 root · 架构组件\n          \n          \n          \n            \n            \n            \n            \n          \n          新版 root"
+          },
+          {
+            "id": "oldtasks",
+            "text": "原版 tasks · 架构组件\n          \n          \n          \n            \n            \n          \n          原版 tasks"
+          },
+          {
+            "id": "newtasks",
+            "text": "新版 tasks · 架构组件\n          \n          \n          \n            \n            \n            \n            \n          \n          新版 tasks"
+          },
+          {
+            "id": "user",
+            "text": "共享 user · 架构组件\n          \n          \n          \n            \n            \n          \n          共享 user"
+          },
+          {
+            "id": "oldfirst",
+            "text": "原版首项 false · 架构组件\n          \n          \n          \n            \n            \n          \n          原版首项 false"
+          },
+          {
+            "id": "newfirst",
+            "text": "新版首项 true · 架构组件\n          \n          \n          \n            \n            \n            \n            \n          \n          新版首项 true"
+          },
+          {
+            "id": "second",
+            "text": "共享第二项 · 架构组件\n          \n          \n          \n            \n            \n          \n          共享第二项"
+          }
+        ],
+        "edgeIds": [
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1",
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1"
+        ]
+      }
+    },
+    {
+      "width": 1440,
+      "native": {
+        "client": 840,
+        "scroll": 840,
+        "nodeLabels": [
+          {
+            "id": "base",
+            "text": "原版 root · 架构组件\n          \n          \n          \n            \n            \n          \n          原版 root"
+          },
+          {
+            "id": "next",
+            "text": "新版 root · 架构组件\n          \n          \n          \n            \n            \n            \n            \n          \n          新版 root"
+          },
+          {
+            "id": "oldtasks",
+            "text": "原版 tasks · 架构组件\n          \n          \n          \n            \n            \n          \n          原版 tasks"
+          },
+          {
+            "id": "newtasks",
+            "text": "新版 tasks · 架构组件\n          \n          \n          \n            \n            \n            \n            \n          \n          新版 tasks"
+          },
+          {
+            "id": "user",
+            "text": "共享 user · 架构组件\n          \n          \n          \n            \n            \n          \n          共享 user"
+          },
+          {
+            "id": "oldfirst",
+            "text": "原版首项 false · 架构组件\n          \n          \n          \n            \n            \n          \n          原版首项 false"
+          },
+          {
+            "id": "newfirst",
+            "text": "新版首项 true · 架构组件\n          \n          \n          \n            \n            \n            \n            \n          \n          新版首项 true"
+          },
+          {
+            "id": "second",
+            "text": "共享第二项 · 架构组件\n          \n          \n          \n            \n            \n          \n          共享第二项"
+          }
+        ],
+        "edgeIds": [
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1",
+          "base-to-oldtasks-1",
+          "next-to-newtasks-1",
+          "base-to-user-1",
+          "next-to-user-1",
+          "oldtasks-to-oldfirst-1",
+          "newtasks-to-newfirst-1",
+          "oldtasks-to-second-1",
+          "newtasks-to-second-1"
+        ]
+      }
+    }
+  ],
+  "index": [
+    {
+      "v": 0,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "immer-sharing/candidate.html",
+      "open": "immer-sharing/candidate.html",
+      "report": "immer-sharing/README.md",
+      "previewWidth": "390px"
+    },
+    {
+      "v": 0,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "immer-sharing/candidate.html",
+      "open": "immer-sharing/candidate.html",
+      "report": "immer-sharing/README.md",
+      "previewWidth": "1440px"
+    },
+    {
+      "v": 1,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "immer-sharing/author/answer.html",
+      "open": "immer-sharing/author/answer.html",
+      "report": "immer-sharing/README.md",
+      "previewWidth": "390px"
+    },
+    {
+      "v": 1,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "immer-sharing/author/answer.html",
+      "open": "immer-sharing/author/answer.html",
+      "report": "immer-sharing/README.md",
+      "previewWidth": "1440px"
+    }
+  ],
+  "copyBytesEqualCandidate2": true,
+  "scope": "Prior browser-02 diagram array was empty due to wrong selector; these measurements use actual diagram-preview and are authoritative."
+}

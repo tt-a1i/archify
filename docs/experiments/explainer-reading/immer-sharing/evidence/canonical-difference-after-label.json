@@ -1,0 +1,9 @@
+{
+  "preparedKeysChanged": [
+    "sourcePath",
+    "digest"
+  ],
+  "otherPreparedKeysIdentical": true,
+  "outsidePreparedBundleIdentical": true,
+  "canonicalSha256": "15c2e40dd37acbead309eaa55db6d274f51c49c490f8e359cfbc331ad219cc58"
+}

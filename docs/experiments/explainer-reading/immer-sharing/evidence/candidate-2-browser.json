@@ -1,0 +1,269 @@
+{
+  "rows": [
+    {
+      "width": 390,
+      "pageWidth": 390,
+      "height": 3407,
+      "theme": "light",
+      "code": [
+        {
+          "client": 356,
+          "scroll": 356
+        }
+      ],
+      "tables": [
+        {
+          "client": 358,
+          "scroll": 358,
+          "rows": 5
+        }
+      ],
+      "diagram": [],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 449.4765625,
+          "top": 219,
+          "right": 378,
+          "bottom": 668.4765625,
+          "left": 12
+        },
+        {
+          "id": "references",
+          "x": 12,
+          "y": 680.4765625,
+          "width": 366,
+          "height": 1045.1640625,
+          "top": 680.4765625,
+          "right": 378,
+          "bottom": 1725.640625,
+          "left": 12
+        },
+        {
+          "id": "check",
+          "x": 12,
+          "y": 1737.640625,
+          "width": 366,
+          "height": 931.2109375,
+          "top": 1737.640625,
+          "right": 378,
+          "bottom": 2668.8515625,
+          "left": 12
+        },
+        {
+          "id": "limits",
+          "x": 12,
+          "y": 2680.8515625,
+          "width": 366,
+          "height": 311.46875,
+          "top": 2680.8515625,
+          "right": 378,
+          "bottom": 2992.3203125,
+          "left": 12
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "pageWidth": 390,
+      "height": 3407,
+      "theme": "dark",
+      "code": [
+        {
+          "client": 356,
+          "scroll": 356
+        }
+      ],
+      "tables": [
+        {
+          "client": 358,
+          "scroll": 358,
+          "rows": 5
+        }
+      ],
+      "diagram": [],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 12,
+          "y": 219,
+          "width": 366,
+          "height": 449.4765625,
+          "top": 219,
+          "right": 378,
+          "bottom": 668.4765625,
+          "left": 12
+        },
+        {
+          "id": "references",
+          "x": 12,
+          "y": 680.4765625,
+          "width": 366,
+          "height": 1045.1640625,
+          "top": 680.4765625,
+          "right": 378,
+          "bottom": 1725.640625,
+          "left": 12
+        },
+        {
+          "id": "check",
+          "x": 12,
+          "y": 1737.640625,
+          "width": 366,
+          "height": 931.2109375,
+          "top": 1737.640625,
+          "right": 378,
+          "bottom": 2668.8515625,
+          "left": 12
+        },
+        {
+          "id": "limits",
+          "x": 12,
+          "y": 2680.8515625,
+          "width": 366,
+          "height": 311.46875,
+          "top": 2680.8515625,
+          "right": 378,
+          "bottom": 2992.3203125,
+          "left": 12
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "pageWidth": 1440,
+      "height": 1895,
+      "theme": "light",
+      "code": [
+        {
+          "client": 406,
+          "scroll": 406
+        }
+      ],
+      "tables": [
+        {
+          "client": 840,
+          "scroll": 840,
+          "rows": 5
+        }
+      ],
+      "diagram": [],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        },
+        {
+          "id": "references",
+          "x": 80,
+          "y": 351.5,
+          "width": 848,
+          "height": 1041,
+          "top": 351.5,
+          "right": 928,
+          "bottom": 1392.5,
+          "left": 80
+        },
+        {
+          "id": "check",
+          "x": 944,
+          "y": 351.5,
+          "width": 416,
+          "height": 1041,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 1392.5,
+          "left": 944
+        },
+        {
+          "id": "limits",
+          "x": 80,
+          "y": 1408.5,
+          "width": 1280,
+          "height": 183,
+          "top": 1408.5,
+          "right": 1360,
+          "bottom": 1591.5,
+          "left": 80
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "pageWidth": 1440,
+      "height": 1895,
+      "theme": "dark",
+      "code": [
+        {
+          "client": 406,
+          "scroll": 406
+        }
+      ],
+      "tables": [
+        {
+          "client": 840,
+          "scroll": 840,
+          "rows": 5
+        }
+      ],
+      "diagram": [],
+      "panels": [
+        {
+          "id": "answer",
+          "x": 80,
+          "y": 116.5,
+          "width": 1280,
+          "height": 219,
+          "top": 116.5,
+          "right": 1360,
+          "bottom": 335.5,
+          "left": 80
+        },
+        {
+          "id": "references",
+          "x": 80,
+          "y": 351.5,
+          "width": 848,
+          "height": 1041,
+          "top": 351.5,
+          "right": 928,
+          "bottom": 1392.5,
+          "left": 80
+        },
+        {
+          "id": "check",
+          "x": 944,
+          "y": 351.5,
+          "width": 416,
+          "height": 1041,
+          "top": 351.5,
+          "right": 1360,
+          "bottom": 1392.5,
+          "left": 944
+        },
+        {
+          "id": "limits",
+          "x": 80,
+          "y": 1408.5,
+          "width": 1280,
+          "height": 183,
+          "top": 1408.5,
+          "right": 1360,
+          "bottom": 1591.5,
+          "left": 80
+        }
+      ]
+    }
+  ],
+  "copyBytesEqualCandidate1": true
+}

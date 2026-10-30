@@ -1,0 +1,27 @@
+{
+  "npmVersion": "11.2.9",
+  "tag": "v11.2.9",
+  "tagCommit": "75a290e44ba14bd723c8ef8546b6559c8ef3ae88",
+  "npmGitHead": "75a290e44ba14bd723c8ef8546b6559c8ef3ae88",
+  "pinnedSourceMatches": [
+    {
+      "path": "src/core/finalize.ts",
+      "bytesEqual": true,
+      "sha256": "f5c76275dc374fb22367e21ab9348ca663dd681588b0becfb9564754d4fb913b"
+    },
+    {
+      "path": "src/core/proxy.ts",
+      "bytesEqual": true,
+      "sha256": "fac7fb2778b3c9a5add6178b889f03e198da58c5573a0cc5da61eeef4055a990"
+    },
+    {
+      "path": "src/immer.ts",
+      "bytesEqual": true,
+      "sha256": "4b6ac1c93d490ac54dc3634cf3f38064fd065dd0f8fc3bf1c5d2d6bab5b266a5"
+    }
+  ],
+  "scope": "Three packaged TypeScript source files match pinned upstream. Not an independent rebuild of the executed bundle.",
+  "probeSha256": "d453dbc1ccf30c20eed5e283fb06d41b9b90cea03ff3c5a204b2a56665636e8d",
+  "outputSha256": "84c19ba3ed02c5c1e11f3d7c539ddc07da0b301f513e1057c0f0f2dcc55e2a97",
+  "runsIdentical": true
+}

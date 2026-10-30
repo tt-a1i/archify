@@ -1,0 +1,14 @@
+{
+  "byteIdentical": false,
+  "preparedKeysChanged": [
+    "sourcePath",
+    "digest"
+  ],
+  "sourceBasenames": [
+    "candidate-2.archify.md",
+    "candidate.archify.md"
+  ],
+  "otherPreparedKeysIdentical": true,
+  "outsidePreparedBundleIdentical": true,
+  "scope": "Renamed source basename and dependent prepared digest. All displayed markup, native diagram payloads, code, CSS, runtime and manifest identical."
+}

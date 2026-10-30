@@ -1,0 +1,48 @@
+{
+  "normalized": [
+    {
+      "path": "author/review-03.stderr",
+      "rawSha256": "1a009a4beaf9d127ad35d0889c25a1c558a03e8022c09130fb8263953dd011d8",
+      "archivedSha256": "53bb393ea57438d2b0e03c4bc671b3a4e504b55b21dac557070664bdfc9e3c67",
+      "change": "terminal empty lines only"
+    },
+    {
+      "path": "author/review-01.stderr",
+      "rawSha256": "c7f7cee5fe3d5ade5f707a1a6985c8a6952b4bf93af5b88533aef93aea91fbee",
+      "archivedSha256": "c558fbb8a68a4229b219b12f7d3632aeb31dc6da893cbfb09306b3608db63456",
+      "change": "terminal empty lines only"
+    },
+    {
+      "path": "author/review-05.stderr",
+      "rawSha256": "d083e3f949f505e1713ef5e0e46326ac3fbb4402b7ddff59d3110f8e7032057c",
+      "archivedSha256": "e1b61f3dab28b50575cb126d11ae8614b439da29f6a90cd1716ea092655f5d07",
+      "change": "terminal empty lines only"
+    },
+    {
+      "path": "author/review-02.stderr",
+      "rawSha256": "30f89e2ab257283e38d91e6a45c9114f62d7e313596a60ae36b0a656584d93b1",
+      "archivedSha256": "7d19cf5df3362b52e9b7cd330c5d0a05c94e706efdd2270da3c0b95b2a2a7cf2",
+      "change": "terminal empty lines only"
+    },
+    {
+      "path": "author/review-04.stderr",
+      "rawSha256": "fbddd2d16e516a0717b2857bef94a2dbd0a56e92bb64901402e83cd9294b239c",
+      "archivedSha256": "39e75b1a4956ca151025d736104e62693415fda2362ae9c9831452c14fad27ad",
+      "change": "terminal empty lines only"
+    },
+    {
+      "path": "author/review-06.stderr",
+      "rawSha256": "9cdf514fa3a511667d81e4969db3d675fc0a482715cbbd1b89ec644d42ca63df",
+      "archivedSha256": "6064ffd3f2fb13ed04871401392a0fac3820ece05bad6c1f1a59f80547834539",
+      "change": "terminal empty lines only"
+    }
+  ],
+  "preservedGeneratedHtml": [
+    "docs/experiments/explainer-reading/immer-sharing/author/answer.html",
+    "docs/experiments/explainer-reading/immer-sharing/author/first-draft.html",
+    "docs/experiments/explainer-reading/immer-sharing/candidate.html",
+    "docs/experiments/explainer-reading/immer-sharing/evidence/candidate-1.html",
+    "docs/experiments/explainer-reading/immer-sharing/evidence/candidate-2-before-label.html"
+  ],
+  "reason": "Preserve exact generated artifact bytes and recorded provenance; existing embedded native Viewer CSS has whitespace-only lines and trailing spaces."
+}

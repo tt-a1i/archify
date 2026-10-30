@@ -1,0 +1,9 @@
+# Parent candidate1
+
+Observed author phone: complete native diagram 622 in358 viewport; code555 in354; output658 in354. Full graph is accurate but needs scrolling. Keep its8 nodes and8 edges unchanged; add a five-row identity table to read the key comparison without following offscreen arrows. Reflow executable JS, replace the wide raw stdout fence with an explicitly derived prose summary and identity table. Add direct actual probe links and the two tested same-root controls. Use full-width answer then equal graph/code columns; observe total height and gaps before adopting. No runtime or universal layout change.
+
+The reflow adds optional trailing commas as well as whitespace; verify AST (if parser already available) or real execution plus normalized tokens rather than claiming byte equality. The rendered output summary must match actual stdout/probe, not a newly invented output format.
+
+Candidate1 review: copied code and stdout match actual probe, code fits356px. Added table gives the same five identities. However at desktop the equal6/6 columns shrink native diagram text and trigger its readability notice; the original author used838px for the diagram. Candidate2 changes only diagram/code spans to8/4, restoring838px diagram width while the reflowed code should still fit the412px code column. It is the second/final allowed parent composition. Phone graph still requires scrolling; table is the alternative summary, not a claim to make the whole graph fit.
+
+Final local copy-edit verified at2026-10-30T00:55:32Z: `tasks` row fits on one line at390, height42.21875; phone page3383 instead of3407. Four light/dark width states fit code/table; graph still622 inside358. New actual exports780x6306 and2880x3886 retain all8 nodes/8 edges. Code bytes unchanged. Composition experiment is concluded; candidate2 with this local label correction retained. Consolidation follows.

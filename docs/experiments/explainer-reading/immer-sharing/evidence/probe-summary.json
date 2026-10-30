@@ -1,0 +1,137 @@
+{
+  "cases": 4,
+  "twoIndependentProcessesEqual": true,
+  "sameReferenceMeans": "=== on the object at the named path",
+  "casesObserved": [
+    {
+      "id": "change_first_task",
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": false,
+        "user": true,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": false,
+        "user": true,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    },
+    {
+      "id": "no_op",
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    },
+    {
+      "id": "assign_same_value",
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    },
+    {
+      "id": "change_user",
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": false,
+        "user": false,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": false,
+        "user": false,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    }
+  ],
+  "node": "22.23.3",
+  "immer": "11.2.9"
+}

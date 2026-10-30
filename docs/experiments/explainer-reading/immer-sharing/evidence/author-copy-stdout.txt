@@ -1,0 +1,3 @@
+相同引用（===）: { root: false, user: true, tasks: false, first: false, second: true }
+首项 done: false → true
+共享对象冻结: true true

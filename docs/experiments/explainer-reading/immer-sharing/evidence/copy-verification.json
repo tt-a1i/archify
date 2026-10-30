@@ -1,0 +1,18 @@
+{
+  "rows": [
+    {
+      "arm": "author",
+      "codeSha256": "62fee23305e6c1ac195603d1f9f7f0f8f4a46fd8c3ce0df316cb984573fb9a2f",
+      "capturedMatchesActualProbe": true,
+      "stdout": "相同引用（===）: { root: false, user: true, tasks: false, first: false, second: true }\n首项 done: false → true\n共享对象冻结: true true\n"
+    },
+    {
+      "arm": "candidate-1",
+      "codeSha256": "6bd906ed7b9e1050c58f79898bc7c1e23432d112028750e9ad48d7f9176690a5",
+      "capturedMatchesActualProbe": true,
+      "stdout": "相同引用（===）: { root: false, user: true, tasks: false, first: false, second: true }\n首项 done: false → true\n共享对象冻结: true true\n"
+    }
+  ],
+  "stdoutIdentical": true,
+  "scope": "Actual Copy API payloads executed as unmodified CommonJS files. Separate VM console capture checks arguments against real probe. Code reflow and optional trailing commas, no AST equality claim. OS clipboard permissions not tested."
+}

@@ -1,0 +1,92 @@
+---
+id: produce
+title: Using produce
+---
+
+<center>
+	<div
+		data-ea-publisher="immerjs"
+		data-ea-type="image"
+		className="horizontal bordered"
+	></div>
+</center> <details>
+	<summary className="egghead-summary">
+		egghead.io lesson 3: Simplifying deep updates with _produce_
+	</summary>
+	<br />
+	<div>
+		<iframe
+			width="760"
+			height="427"
+			scrolling="no"
+			src="https://egghead.io/lessons/javascript-simplify-deep-state-updates-using-immer-produce/embed"
+		></iframe>
+	</div>
+	<a
+		className="egghead-link"
+		href="https://egghead.io/lessons/javascript-simplify-deep-state-updates-using-immer-produce"
+	>
+		Hosted on egghead.io
+	</a>
+</details>
+
+The Immer package exposes a `produce` function that does all the work.
+
+`produce(baseState, recipe: (draftState) => void): nextState`
+
+`produce` takes a base state, and a _recipe_ that can be used to perform all the desired mutations on the `draft` that is passed in. The interesting thing about Immer is that the `baseState` will be untouched, but the `nextState` will reflect all changes made to `draftState`.
+
+Inside the recipe, all standard JavaScript APIs can be used on the `draft` object, including field assignments, `delete` operations, and mutating array, Map and Set operations like `push`, `pop`, `splice`, `set`, `sort`, `remove`, etc.
+
+Any of those mutations don't have to happen at the root, but it is allowed to modify anything anywhere deep inside the draft: `draft.todos[0].tags["urgent"].author.age = 56`
+
+Note that the recipe function itself normally doesn't return anything. However, it is possible to return in case you want to replace the `draft` object in its entirety with another object, for more details see [returning new data](./return.mdx).
+
+## Example
+
+```javascript
+import {produce} from "immer"
+
+const baseState = [
+	{
+		title: "Learn TypeScript",
+		done: true
+	},
+	{
+		title: "Try Immer",
+		done: false
+	}
+]
+
+const nextState = produce(baseState, draftState => {
+	draftState.push({title: "Tweet about it"})
+	draftState[1].done = true
+})
+```
+
+```javascript
+// the new item is only added to the next state,
+// base state is unmodified
+expect(baseState.length).toBe(2)
+expect(nextState.length).toBe(3)
+
+// same for the changed 'done' prop
+expect(baseState[1].done).toBe(false)
+expect(nextState[1].done).toBe(true)
+
+// unchanged data is structurally shared
+expect(nextState[0]).toBe(baseState[0])
+// ...but changed data isn't.
+expect(nextState[1]).not.toBe(baseState[1])
+```
+
+For advanced TypeScript typing scenarios, see [Using TypeScript or Flow](./typescript.mdx).
+
+### Terminology
+
+- `(base)state`, the immutable state passed to `produce`
+- `recipe`: the second argument of `produce`, that captures how the base state should be "mutated".
+- `draft`: the first argument of any `recipe`, which is a proxy to the original base state that can be safely mutated.
+- `producer`. A function that uses `produce` and is generally of the form `(baseState, ...arguments) => resultState`
+
+Note that it isn't strictly necessary to name the first argument of the recipe `draft`. You can name it anything you want, for example `users`. Using `draft` as a name is just a convention to signal: "mutation is OK here".

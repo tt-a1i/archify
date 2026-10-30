@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between twenty-four reading questions across twenty-two projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between twenty-five reading questions across twenty-three projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -275,3 +275,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 47
 
 [Honest clipboard feedback](clipboard-feedback/README.md) repairs two controls that could report success when the Clipboard API was absent. A genuinely unavailable API is reproduced on a data URL; controlled file-page cases cover rejection, synchronous failure and delayed success in Chinese and English. The retained candidate keeps failed questions selected in the open dialog and puts the instruction inside it. All 58 frozen inputs differ only in the reader script; selected normal screenshots and actual PNG exports are byte-identical. The report preserves the rejected background-toast candidate, targeted regression, package reproducibility and remaining evidence limits.
+
+## Continued exploration — round 48
+
+[Immer structural sharing](immer-sharing/README.md) compares values, reference identity and default freezing across four fresh-tree cases, repeated twice. The independent author retains a complete eight-object graph. Parent adds a five-row identity summary, formats the executable code for phones and separates data-value preservation from freezing. Equal-width desktop columns made graph labels smaller; the retained second composition restores more width to the graph. The phone graph still scrolls and the page is longer. Actual copied code produces identical output matching the probe. Runtime/package evidence is reused from round47.

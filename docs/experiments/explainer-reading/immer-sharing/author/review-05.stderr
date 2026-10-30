@@ -1,0 +1,2 @@
+[ { tag: 'DIV', cls: 'diagram-preview preview-object-map', client: 358, scroll: 622, top: 624.9609375 }, { tag: 'PRE', cls: '', client: 356, scroll: 557, top: 1355.015625 }, { tag: 'PRE', cls: '', client: 356, scroll: 660, top: 1876.8984375 } ]
+{ scrolls: [ { left: 201, max: 201 }, { left: 304, max: 304 } ] }

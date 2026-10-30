@@ -1,0 +1,201 @@
+[p1 "改一个嵌套任务后，哪些对象被共享？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "改一个嵌套任务后，哪些对象被共享？ · Archify"]
+root
+  anchor [ref=735, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#board]
+    text "跳至正文"
+  container
+    container
+      heading
+        text "改一个嵌套任务后，哪些对象被共享？"
+      container
+        group "主题"
+          button [ref=736]
+            text "系统"
+          button [ref=737]
+            text "浅色"
+          button [ref=738]
+            text "深色"
+        button "样式" [ref=739, loc=css:button[aria-label="样式"]]
+          text "简洁"
+          svg_root
+        button [ref=740]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=741]
+            text "追问"
+        container
+          paragraph
+            text "把第一个任务的"
+            text "done"
+            text "从"
+            text "false"
+            text "改成"
+            text "true"
+            text "后，Immer 为根对象、"
+            text "tasks"
+            text "数组和第一个任务创建新引用；"
+            text "user"
+            text "和第二个任务仍由两个版本共享。"
+            anchor [ref=742, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#source-produce]
+              text "1"
+          ordered_list
+            list_item
+              text "1"
+              text "原始数据的值不变；新版本的第一个任务变为"
+              text "true"
+              text "。"
+            list_item
+              text "2"
+              text "共享表示"
+              text "==="
+              text "为"
+              text "true"
+              text "，不是只表示内容相等。"
+            list_item
+              text "3"
+              text "默认冻结也会冻结共享对象，所以原对象的可观察状态并非完全不变。"
+              anchor [ref=743, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#source-freezing]
+                text "2"
+        paragraph
+          text "适用于"
+          text "Immer 11.2.9"
+          text "普通对象和数组"
+          text "默认 autoFreeze"
+      container
+        container
+          anchor "两个版本指向什么？" [ref=744, loc=css:a[aria-label="两个版本指向什么？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#references]
+            text "1"
+          heading
+            text "两个版本指向什么？"
+          button [ref=745]
+            text "追问"
+        container
+          paragraph
+            text "图中每个节点代表一个对象或数组；两个根指向同一节点表示共享。箭头是属性引用，分别标出原版和新版。新旧首项的值分别为"
+            text "false"
+            text "和"
+            text "true"
+            text "。"
+          container
+            container
+              text "修改第一个任务后的引用"
+              button [ref=746]
+                svg_root
+                text "打开交互图"
+            image "修改第一个任务后的引用"
+              image "原版 root 新版 root 原版 tasks 新版 tasks 共享 user 原版首项 false 新版首项 true 共享第二项 tasks tasks user user 0 0 1 1 图例 前端 数据库 外部系统"
+                text "原版 root"
+                text "新版 root"
+                text "原版 tasks"
+                text "新版 tasks"
+                text "共享 user"
+                text "原版首项 false"
+                text "新版首项 true"
+                text "共享第二项"
+                text "tasks"
+                text "tasks"
+                text "user"
+                text "user"
+                text "0"
+                text "0"
+                text "1"
+                text "1"
+                text "图例"
+                text "前端"
+                text "数据库"
+                text "外部系统"
+          paragraph
+            text "未修改的状态在 finalize 时返回原引用；修改过的状态返回副本。"
+            anchor [ref=747, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#source-finalize]
+              text "3"
+      container
+        container
+          anchor "怎么自己检查？" [ref=748, loc=css:a[aria-label="怎么自己检查？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#check]
+            text "2"
+          heading
+            text "怎么自己检查？"
+          button [ref=749]
+            text "追问"
+        paragraph
+          text "原始数据中用户是"
+          text "Lin"
+          text "，任务是"
+          text "Read"
+          text "和"
+          text "Write"
+          text "，两项初始"
+          text "done"
+          text "均为"
+          text "false"
+          text "。以下代码使用默认配置；"
+          text "false"
+          text "表示引用不同。"
+        container
+          text "example.cjs"
+          text "js"
+          button [ref=750]
+            text "复制"
+          text "const { produce } = require('immer'); const base = { user: { name: 'Lin' }, tasks: [ { title: 'Read', done: false }, { title: 'Write', done: false }, ], }; const next = produce(base, draft => { draft...."
+        container
+          text "运行结果"
+          text "text"
+          button [ref=751]
+            text "复制"
+          text "相同引用（===）: { root: false, user: true, tasks: false, first: false, second: true } 首项 done: false → true 共享对象冻结: true true"
+      container
+        container
+          anchor "冻结与边界是什么？" [ref=752, loc=css:a[aria-label="冻结与边界是什么？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#limits]
+            text "3"
+          heading
+            text "冻结与边界是什么？"
+          button [ref=753]
+            text "追问"
+        paragraph
+          text "默认自动冻结下，这个例子的新版树被冻结。共享的"
+          text "base.user"
+          text "和"
+          text "base.tasks[1]"
+          text "也因此被冻结；不要在"
+          text "produce"
+          text "外直接修改它们。"
+          anchor [ref=754, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#source-freezing]
+            text "2"
+        paragraph
+          text "这张图展示的是不同版本之间的共享。单个输入应是单向树：同一对象不能在树中出现两次，也不能有环。"
+          anchor [ref=755, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#source-pitfalls]
+            text "4"
+    container
+      container
+        heading
+          text "来源"
+        ordered_list
+          list_item
+            anchor [ref=756, url=https://github.com/immerjs/immer/blob/75a290e44ba14bd723c8ef8546b6559c8ef3ae88/website/docs/produce.mdx]
+              text "Immer：使用 produce"
+          list_item
+            anchor [ref=757, url=https://github.com/immerjs/immer/blob/75a290e44ba14bd723c8ef8546b6559c8ef3ae88/website/docs/freezing.mdx]
+              text "Immer：自动冻结"
+          list_item
+            anchor [ref=758, url=https://github.com/immerjs/immer/blob/75a290e44ba14bd723c8ef8546b6559c8ef3ae88/src/core/finalize.ts]
+              text "Immer：finalize 源码"
+          list_item
+            anchor [ref=759, url=https://github.com/immerjs/immer/blob/75a290e44ba14bd723c8ef8546b6559c8ef3ae88/website/docs/pitfalls.md]
+              text "Immer：单向树限制"
+      anchor [ref=760, loc=href:https://github.com/tt-a1i/archify, url=https://github.com/tt-a1i/archify]
+        svg_root
+        text "Archify"
+        text "把你想理解、规划或分享的事，变成可以互动的可视化作品。"
+      paragraph
+        text "3 个面板"
+        text "·"
+        text "1 张图已通过结构校验"
+        text "·"
+        text "4 个来源"
+
+{ width: 1440, height: 900, bodyHeight: 1897, theme: '<html lang="zh-CN" data-style="clean" data-archify-artifact="explainer" data-artifact="immer-sharing" data-revision="8ff175c279cb3feb6d54f58c8339ccf6f50978cf4c725c1146d0ef1640268c62" class="js" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-s' }

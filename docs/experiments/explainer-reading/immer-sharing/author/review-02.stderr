@@ -1,0 +1,112 @@
+[p1 "改一个嵌套任务后，哪些对象被共享？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "改一个嵌套任务后，哪些对象被共享？ · Archify"]
+root
+  container
+    container
+      heading
+        text "改一个嵌套任务后，哪些对象被共享？"
+      container
+        group "主题"
+          button [ref=736]
+            text "系统"
+          button [ref=737]
+            text "浅色"
+          button [ref=738]
+            text "深色"
+        container
+          button "样式" [ref=739, loc=css:button[aria-label="样式"]]
+            text "简洁"
+            svg_root
+          menu "样式"
+            menuitemradio [ref=761]
+              text "简洁"
+              svg_root
+            menuitemradio [ref=762]
+              text "杂志"
+            menuitemradio [ref=763]
+              text "产品"
+            menuitemradio [ref=764]
+              text "网格"
+        button [ref=740]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=741]
+            text "追问"
+        container
+          paragraph
+            text "把第一个任务的"
+            text "done"
+            text "从"
+            text "false"
+            text "改成"
+            text "true"
+            text "后，Immer 为根对象、"
+            text "tasks"
+            text "数组和第一个任务创建新引用；"
+            text "user"
+            text "和第二个任务仍由两个版本共享。"
+            anchor [ref=742, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#source-produce]
+              text "1"
+          ordered_list
+            list_item
+              text "1"
+              text "原始数据的值不变；新版本的第一个任务变为"
+              text "true"
+              text "。"
+            list_item
+              text "2"
+              text "共享表示"
+              text "==="
+              text "为"
+              text "true"
+              text "，不是只表示内容相等。"
+            list_item
+              text "3"
+              text "默认冻结也会冻结共享对象，所以原对象的可观察状态并非完全不变。"
+              anchor [ref=743, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#source-freezing]
+                text "2"
+      container
+        container
+          anchor "两个版本指向什么？" [ref=744, loc=css:a[aria-label="两个版本指向什么？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round48/author/answer.html#references]
+            text "1"
+          heading
+            text "两个版本指向什么？"
+          button [ref=745]
+            text "追问"
+        container
+          paragraph
+            text "图中每个节点代表一个对象或数组；两个根指向同一节点表示共享。箭头是属性引用，分别标出原版和新版。新旧首项的值分别为"
+            text "false"
+            text "和"
+            text "true"
+            text "。"
+          container
+            container
+              text "修改第一个任务后的引用"
+              button [ref=746]
+                svg_root
+                text "打开交互图"
+            image "修改第一个任务后的引用"
+              image "原版 root 新版 root 原版 tasks 新版 tasks 共享 user 原版首项 false 新版首项 true 共享第二项 tasks tasks user user 0 0 1 1 图例 前端 数据库 外部系统"
+                text "原版 root"
+                text "新版 root"
+                text "原版 tasks"
+                text "新版 tasks"
+                text "共享 user"
+                text "原版首项 false"
+                text "新版首项 true"
+                text "共享第二项"
+                text "tasks"
+                text "tasks"
+                text "user"
+                text "user"
+                text "0"
+                text "0"
+                text "1"
+                text "1"
