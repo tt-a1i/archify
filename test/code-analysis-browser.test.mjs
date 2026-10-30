@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs';
 import { startAnalysisView } from '../archify/modules/code-analysis/bin/serve.mjs';
 
@@ -210,4 +211,101 @@ test('Code Analysis refuses changed IR and preserves captured source in the curr
   await run("document.getElementById('btn-bauify').click()");
   assert.equal(await run("document.documentElement.getAttribute('data-bauify')"), 'off');
   assert.equal(await run("document.getElementById('bauify-overview').hidden"), true);
+});
+
+test('Code Analysis Atlas draws the analyzed tree, focuses a module and hands a finding back to the Classic view', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run Code Analysis browser coverage.',
+}, async t => {
+  const fixture = fileURLToPath(new URL('../archify/modules/code-analysis/test/fixtures/py-tasks', import.meta.url));
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-atlas-browser-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const root = path.join(scratch, 'repo');
+  fs.cpSync(fixture, root, { recursive: true, filter: src => !src.includes('__pycache__') });
+  const ir = path.join(scratch, 'input.json');
+  fs.writeFileSync(ir, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Atlas', output: 'architecture.html' },
+    components: [{ id: 'app', type: 'backend', label: 'App', pos: [40, 40], size: [180, 64] }], connections: [] }));
+  const view = await startAnalysisView([root, '--ir', ir, '--out', path.join(scratch, 'view'), '--language', 'py', '--config', path.join(root, 'analysis.config.json')]);
+  const sockets = new Set();
+  view.server.on('connection', socket => { sockets.add(socket); socket.on('close', () => sockets.delete(socket)); });
+  t.after(() => new Promise(resolve => { view.server.close(resolve); for (const socket of sockets) socket.destroy(); }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => {
+    const response = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(response.exceptionDetails, undefined, response.exceptionDetails?.exception?.description);
+    return response.result?.value;
+  };
+  // Under the 15 s protocol timeout, so a stuck wait reports what it waited for.
+  const until = (condition, what) => run(`new Promise((resolve, reject) => { const deadline = Date.now() + 10000; const poll = () => {
+    if (${condition}) return resolve(true);
+    if (Date.now() > deadline) return reject(new Error(${JSON.stringify(what)}));
+    setTimeout(poll, 25);
+  }; poll(); })`);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+  const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+  await send('Page.navigate', { url: view.url });
+  await loaded;
+  await run("document.getElementById('code-analysis-start').click()");
+  await until("document.documentElement.getAttribute('data-bauify') === 'on'", 'analysis did not open');
+
+  await run("document.querySelector('#bauify-reader .reader-atlas').click()");
+  const atlas = JSON.parse(await run("document.getElementById('bauify-atlas-data').textContent"));
+  await until(`document.documentElement.getAttribute('data-bauify-atlas-drawn') === '${atlas.edges.length}'`, 'atlas did not draw');
+  assert.ok(atlas.edges.length > 0 && atlas.functions.length > 0, 'the fixture has dependencies and functions to draw');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-animating')"), 'true', 'the opening reveal runs');
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'the opening reveal did not finish');
+  assert.equal(await run("getComputedStyle(document.getElementById('bauify-reader')).display"), 'none', 'the Classic reader steps aside');
+  // The circle is painted: a good share of pixels in its bounding square are not transparent.
+  const painted = await run(`(() => { const c = document.querySelector('#bauify-atlas canvas'), x = c.getContext('2d');
+    const s = Math.min(c.width, c.height), d = x.getImageData((c.width - s) / 2, (c.height - s) / 2, s, s).data; let n = 0;
+    for (let i = 3; i < d.length; i += 4 * 7) if (d[i]) n++; return n; })()`);
+  assert.ok(painted > 500, `atlas canvas is painted (${painted} sampled pixels)`);
+
+  // A module from the side panel becomes the focus; the panel names it.
+  await run("document.querySelector('#bauify-atlas [data-module]').click()");
+  const focused = await run("document.documentElement.getAttribute('data-bauify-atlas-focus')");
+  assert.ok(atlas.modules.some(m => m.id === focused), 'a module is focused');
+  assert.match(await run("document.querySelector('#bauify-atlas .selected h4').textContent"), new RegExp(atlas.modules.find(m => m.id === focused).label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+
+  // A selected import cycle gets a light that travels around it: the canvas keeps changing.
+  const canvasSum = "(() => { const c = document.querySelector('#bauify-atlas canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 16) n += d[i] + d[i + 1] + d[i + 2] + d[i + 3]; return n; })()";
+  const cycle = atlas.findings.findIndex(f => f.kind === 'cycle');
+  assert.notEqual(cycle, -1, 'the fixture reports an import cycle');
+  await run(`document.querySelector('#bauify-atlas [data-finding="${cycle}"]').click()`);
+  await until("!document.documentElement.hasAttribute('data-bauify-atlas-animating')", 'the selection cross-fade did not finish');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-flow')"), 'on');
+  const before = await run(canvasSum);
+  await run('new Promise(resolve => setTimeout(resolve, 250))');
+  assert.notEqual(await run(canvasSum), before, 'the cycle light moves');
+  // With reduced motion the same selection is drawn at once and stays still.
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await run(`document.querySelector('#bauify-atlas [data-finding="${cycle}"]').click()`);
+  await run(`document.querySelector('#bauify-atlas [data-finding="${cycle}"]').click()`);
+  assert.equal(await run("document.documentElement.hasAttribute('data-bauify-atlas-animating')"), false, 'no cross-fade with reduced motion');
+  await run('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-flow')"), 'off');
+  const still = await run(canvasSum);
+  await run('new Promise(resolve => setTimeout(resolve, 250))');
+  assert.equal(await run(canvasSum), still, 'nothing moves with reduced motion');
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+
+  // A complex function selected in the Atlas opens with its source in the Classic view.
+  const complex = atlas.findings.findIndex(f => f.kind === 'function');
+  assert.notEqual(complex, -1, 'the fixture reports a complex function');
+  await run(`document.querySelector('#bauify-atlas [data-finding="${complex}"]').click()`);
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-atlas-finding')"), atlas.findings[complex].id);
+  await run("document.querySelector('#bauify-atlas .atlas-evidence').click()");
+  await until("document.getElementById('bauify-atlas').hidden && !document.getElementById('bauify-detail').hidden", 'finding did not open in the Classic view');
+  assert.match(await run("document.querySelector('#bauify-detail h3').textContent"), /is complex/);
+  assert.ok(await run("!!document.querySelector('#bauify-detail pre')"), 'the Classic view shows the source excerpt');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-view')"), null);
+
+  // Turning Code Analysis off also closes the Atlas.
+  await run("document.querySelector('#bauify-reader .reader-atlas').click()");
+  assert.equal(await run("document.getElementById('bauify-atlas').hidden"), false);
+  await run("document.getElementById('btn-bauify').click()");
+  await until("document.getElementById('bauify-atlas').hidden", 'atlas stayed open after Code Analysis was turned off');
+  assert.equal(await run("document.documentElement.getAttribute('data-bauify-view')"), null);
 });
