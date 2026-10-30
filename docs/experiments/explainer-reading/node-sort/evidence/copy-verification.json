@@ -1,0 +1,22 @@
+{
+  "checks": [
+    {
+      "version": "author",
+      "syntaxExit": 0,
+      "executionExit": 0,
+      "stdoutMatchesFourProbeResultsAndTypeCheck": true,
+      "displayedOutputMatchesIgnoringOnlyTerminalNewline": true,
+      "copiedSha256": "b58418cbe399f19433817d59e97295ef3dc5442672009c6b51a5c362c2a44154"
+    },
+    {
+      "version": "candidate-1",
+      "syntaxExit": 0,
+      "executionExit": 0,
+      "stdoutMatchesFourProbeResultsAndTypeCheck": true,
+      "displayedOutputMatchesIgnoringOnlyTerminalNewline": true,
+      "copiedSha256": "e43b516c019a66ddfa7bdcf31b60e78e22d89d2c95cb66c2878b87d55db769b8"
+    }
+  ],
+  "equalAfterWhitespaceRemoval": true,
+  "qualification": "Whitespace comparison is not a JavaScript AST comparison. Manually reviewed formatting-only code diff; actual execution and probe results independently checked. Clipboard API was instrumented, not OS clipboard permissions."
+}

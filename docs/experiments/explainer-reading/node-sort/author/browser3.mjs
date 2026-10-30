@@ -1,0 +1,10 @@
+const task = await taskSpace(14);
+const page = task.page('p1');
+await page.click('@665');
+await page.cdp('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
+console.log('1440', await page.evaluate(() => ({width:innerWidth, height:innerHeight, scrollWidth:document.documentElement.scrollWidth, scrollHeight:document.documentElement.scrollHeight, theme:document.documentElement.outerHTML.slice(0,300)})));
+await page.screenshot({path:'/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/desktop.png', fullPage:true});
+await page.cdp('Emulation.setDeviceMetricsOverride', {width:390, height:844, deviceScaleFactor:1, mobile:false});
+console.log('390', await page.evaluate(() => ({width:innerWidth, height:innerHeight, scrollWidth:document.documentElement.scrollWidth, scrollHeight:document.documentElement.scrollHeight, theme:document.documentElement.outerHTML.slice(0,300)})));
+await page.screenshot({path:'/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/mobile.png', fullPage:true});
+console.log(await page.info());

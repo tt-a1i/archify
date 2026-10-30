@@ -1,0 +1,56 @@
+{
+  "png": {
+    "width": 780,
+    "height": 5494
+  },
+  "counts": {
+    "questions": 23,
+    "variants": 56
+  },
+  "checks": [
+    {
+      "versionIndex": 0,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "node-sort/candidate.html",
+      "open": "node-sort/candidate.html",
+      "report": "node-sort/README.md",
+      "version": "完整代码与两个选择",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 0,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "node-sort/candidate.html",
+      "open": "node-sort/candidate.html",
+      "report": "node-sort/README.md",
+      "version": "完整代码与两个选择",
+      "frameWidth": "1440px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "node-sort/author/answer.html",
+      "open": "node-sort/author/answer.html",
+      "report": "node-sort/README.md",
+      "version": "作者自查后",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "node-sort/author/answer.html",
+      "open": "node-sort/author/answer.html",
+      "report": "node-sort/README.md",
+      "version": "作者自查后",
+      "frameWidth": "1440px"
+    }
+  ]
+}

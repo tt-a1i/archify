@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between twenty-two reading questions across twenty projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between twenty-three reading questions across twenty-one projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -263,3 +263,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 44
 
 [PyYAML input spellings and Python types](pyyaml-types/README.md) checks eight scalar cases and two mapping-key controls twice. The retained page separates the shared YAML prefix from each value, preserves complete quoted spellings, and pairs the result table with runnable Python. Actual Copy-control programs keep the original AST and output. The first parent layout left a large desktop gap and is retained as a rejected composition; the second uses two consistent columns. Runtime/package evidence is reused from round 40.
+
+## Continued exploration — round 45
+
+[Node.js comparison and array mutation](node-sort/README.md) separates default string-order comparison from mutation/copy behavior using five cases repeated twice. The independent author inspected its own browser result and repaired the phone table before handoff. Parent reflowed the same executable code, linked actual probes and shortened the repeated opening. Actual Copy bytes run successfully and match all four numeric cases plus element types. Code fits the phone at the cost of additional page height. This single supplied-evidence author workflow is not a general quality or speed comparison; unchanged runtime/package evidence is reused from round 40.

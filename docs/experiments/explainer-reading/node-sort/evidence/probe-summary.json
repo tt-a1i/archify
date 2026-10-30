@@ -1,0 +1,14 @@
+{
+  "runs": 2,
+  "casesPerRun": 5,
+  "jsonBytesIdentical": true,
+  "probeSha256": "e561a10f4254d5edbe373b258e0d7b31aad96fa5450c3f6fc0391950715b0344",
+  "outputSha256": "51c31fb84863b906ce1a3cb5eb1bc51343262670d0f3bbaa3b12b92222cde862",
+  "environment": {
+    "node": "v22.23.3",
+    "v8": "12.4.254.21-node.57",
+    "platform": "darwin",
+    "arch": "arm64",
+    "executableSha256": "68f4d07ca49e0500cc135c7e0a445093e228e42e126ac22306d045f0a8c2636b"
+  }
+}

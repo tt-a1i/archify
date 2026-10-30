@@ -1,0 +1,175 @@
+{
+  "environment": {
+    "node": "v22.23.3",
+    "v8": "12.4.254.21-node.57",
+    "platform": "darwin",
+    "arch": "arm64",
+    "executableSha256": "68f4d07ca49e0500cc135c7e0a445093e228e42e126ac22306d045f0a8c2636b"
+  },
+  "cases": [
+    {
+      "id": "sort-default",
+      "method": "sort",
+      "comparison": "default",
+      "before": [
+        2,
+        10,
+        1
+      ],
+      "result": [
+        1,
+        10,
+        2
+      ],
+      "after": [
+        1,
+        10,
+        2
+      ],
+      "returnsSameArray": true,
+      "resultTypes": [
+        "number",
+        "number",
+        "number"
+      ],
+      "inputTypes": [
+        "number",
+        "number",
+        "number"
+      ]
+    },
+    {
+      "id": "sort-numeric",
+      "method": "sort",
+      "comparison": "(a, b) => a - b",
+      "before": [
+        2,
+        10,
+        1
+      ],
+      "result": [
+        1,
+        2,
+        10
+      ],
+      "after": [
+        1,
+        2,
+        10
+      ],
+      "returnsSameArray": true,
+      "resultTypes": [
+        "number",
+        "number",
+        "number"
+      ],
+      "inputTypes": [
+        "number",
+        "number",
+        "number"
+      ]
+    },
+    {
+      "id": "toSorted-default",
+      "method": "toSorted",
+      "comparison": "default",
+      "before": [
+        2,
+        10,
+        1
+      ],
+      "result": [
+        1,
+        10,
+        2
+      ],
+      "after": [
+        2,
+        10,
+        1
+      ],
+      "returnsSameArray": false,
+      "resultTypes": [
+        "number",
+        "number",
+        "number"
+      ],
+      "inputTypes": [
+        "number",
+        "number",
+        "number"
+      ]
+    },
+    {
+      "id": "toSorted-numeric",
+      "method": "toSorted",
+      "comparison": "(a, b) => a - b",
+      "before": [
+        2,
+        10,
+        1
+      ],
+      "result": [
+        1,
+        2,
+        10
+      ],
+      "after": [
+        2,
+        10,
+        1
+      ],
+      "returnsSameArray": false,
+      "resultTypes": [
+        "number",
+        "number",
+        "number"
+      ],
+      "inputTypes": [
+        "number",
+        "number",
+        "number"
+      ]
+    },
+    {
+      "id": "strings-default",
+      "method": "sort",
+      "comparison": "default",
+      "before": [
+        "2",
+        "10",
+        "1"
+      ],
+      "result": [
+        "1",
+        "10",
+        "2"
+      ],
+      "after": [
+        "1",
+        "10",
+        "2"
+      ],
+      "returnsSameArray": true,
+      "resultTypes": [
+        "string",
+        "string",
+        "string"
+      ],
+      "inputTypes": [
+        "string",
+        "string",
+        "string"
+      ]
+    }
+  ],
+  "comparison": {
+    "numeric": false,
+    "stringRepresentations": [
+      "10",
+      "2"
+    ],
+    "stringOrder": true
+  },
+  "scope": "Dense ordinary Arrays of these finite numbers/strings. No TypedArray, sparse entries, undefined/NaN, BigInt, locale collation, objects, comparator side effects, sort-performance or binary-reproduction claim."
+}

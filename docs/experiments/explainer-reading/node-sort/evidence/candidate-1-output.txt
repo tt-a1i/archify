@@ -1,0 +1,5 @@
+sort 默认 [1,10,2] [1,10,2] true
+sort 数值 [1,2,10] [1,2,10] true
+toSorted 默认 [1,10,2] [2,10,1] false
+toSorted 数值 [1,2,10] [2,10,1] false
+类型 number,number,number

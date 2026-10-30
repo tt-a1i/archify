@@ -1,0 +1,124 @@
+[p1 "为什么 sort() 把 10 排在 2 前面？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "为什么 sort() 把 10 排在 2 前面？ · Archify"]
+root
+  container
+    container
+      heading
+        text "为什么"
+        text "sort()"
+        text "把 10 排在 2 前面？"
+      container
+        group "主题"
+          button [ref=649]
+            text "系统"
+          button [ref=650]
+            text "浅色"
+          button [ref=651]
+            text "深色"
+        container
+          button "样式" [ref=652, loc=css:button[aria-label="样式"]]
+            text "杂志"
+            svg_root
+          menu "样式"
+            menuitemradio [ref=664]
+              text "简洁"
+            menuitemradio [ref=665]
+              text "杂志"
+              svg_root
+            menuitemradio [ref=666]
+              text "产品"
+            menuitemradio [ref=667]
+              text "网格"
+        button [ref=653]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=654]
+            text "追问"
+        container
+          paragraph
+            text "默认"
+            text "sort()"
+            text "按字符串顺序比较，所以数字"
+            text "10"
+            text "会排在"
+            text "2"
+            text "前面。想按数值升序，传入"
+            text "(a, b) => a - b"
+            text "；是否保留原数组则由"
+            text "sort"
+            text "或"
+            text "toSorted"
+            text "决定。"
+            anchor [ref=655, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/answer.html#source-spec-sort]
+              text "1"
+            anchor [ref=656, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/answer.html#source-spec-copy]
+              text "2"
+          ordered_list
+            list_item
+              text "1"
+              text "默认规则比较字符串形式："
+              text ""10""
+              text "的首位"
+              text "1"
+              text "在"
+              text ""2""
+              text "的首位"
+              text "2"
+              text "之前。"
+            list_item
+              text "2"
+              text "数组里的元素仍是数字；比较规则不会把它们永久替换成字符串。"
+              anchor [ref=657, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/answer.html#source-v8-default]
+                text "3"
+            list_item
+              text "3"
+              text "toSorted()"
+              text "返回新数组，但默认比较规则仍相同。"
+              anchor [ref=658, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/answer.html#source-v8-copy]
+                text "4"
+        paragraph
+          text "适用于"
+          text "普通稠密 Array"
+          text "示例为有限数字与简单数字字符串"
+          text "Node 22.23.3"
+      container
+        container
+          anchor "先分清两个选择" [ref=659, loc=css:a[aria-label="先分清两个选择"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/answer.html#choices]
+            text "1"
+          heading
+            text "先分清两个选择"
+          button [ref=660]
+            text "追问"
+        container
+          paragraph
+            text "每格都从新的"
+            text "[2, 10, 1]"
+            text "开始。左边选择比较规则，上方选择是否修改原数组。"
+            anchor [ref=661, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/answer.html#source-spec-sort]
+              text "1"
+            anchor [ref=662, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round45/author/answer.html#source-spec-copy]
+              text "2"
+          container [ref=663]
+            table
+              table_row
+                table_cell
+                  text "比较规则"
+                table_cell
+                  text "sort"
+                  text "：修改原数组"
+                table_cell
+                  text "toSorted"
+                  text "：保留原数组"
+              table_row
+                table_cell
+                  text "默认：字符串顺序"
+                table_cell
+                  text "结果"
+                table_cell
+                  text "结果"

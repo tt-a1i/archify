@@ -1,0 +1,354 @@
+[
+  {
+    "version": "author",
+    "width": 390,
+    "theme": "light",
+    "pageWidth": 390,
+    "height": 2447,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 501.671875,
+        "top": 219,
+        "right": 378,
+        "bottom": 720.671875,
+        "left": 12
+      },
+      {
+        "id": "choices",
+        "x": 12,
+        "y": 732.671875,
+        "width": 366,
+        "height": 350.1484375,
+        "top": 732.671875,
+        "right": 378,
+        "bottom": 1082.8203125,
+        "left": 12
+      },
+      {
+        "id": "why",
+        "x": 12,
+        "y": 1094.8203125,
+        "width": 366,
+        "height": 243.875,
+        "top": 1094.8203125,
+        "right": 378,
+        "bottom": 1338.6953125,
+        "left": 12
+      },
+      {
+        "id": "run",
+        "x": 12,
+        "y": 1350.6953125,
+        "width": 366,
+        "height": 778.671875,
+        "top": 1350.6953125,
+        "right": 378,
+        "bottom": 2129.3671875,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "比较规则",
+            "sort",
+            "toSorted"
+          ],
+          [
+            "默认",
+            "[1, 10, 2]",
+            "[1, 10, 2]"
+          ],
+          [
+            "数值升序",
+            "[1, 2, 10]",
+            "[1, 2, 10]"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 713,
+        "text": "const cases = [\n  [\"sort 默认\", a => a.sort()],\n  [\"sort 数值\", a => a.sort((x, y) => x - y)],\n  [\"toSorted 默认\", a => a.toSorted()],\n  [\"toSorted 数值\", a => a.toSorted((x, y) => x - y)],\n];\nfor (const [name, run] of cases) {\n  const original = [2, 10, 1];\n  const result = run(original);\n  console.log(name, JSON.stringify(result), JSON.stringify(original), result === original);\n}\nconsole.log(\"类型\", [2, 10, 1].sort().map(x => typeof x).join(\",\"));"
+      },
+      {
+        "client": 356,
+        "scroll": 356,
+        "text": "sort 默认 [1,10,2] [1,10,2] true\nsort 数值 [1,2,10] [1,2,10] true\ntoSorted 默认 [1,10,2] [2,10,1] false\ntoSorted 数值 [1,2,10] [2,10,1] false\n类型 number,number,number"
+      }
+    ]
+  },
+  {
+    "version": "author",
+    "width": 1440,
+    "theme": "light",
+    "pageWidth": 1440,
+    "height": 1576,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 632,
+        "height": 508,
+        "top": 116.5,
+        "right": 712,
+        "bottom": 624.5,
+        "left": 80
+      },
+      {
+        "id": "choices",
+        "x": 728,
+        "y": 116.5,
+        "width": 632,
+        "height": 299,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 415.5,
+        "left": 728
+      },
+      {
+        "id": "why",
+        "x": 728,
+        "y": 431.5,
+        "width": 632,
+        "height": 193,
+        "top": 431.5,
+        "right": 1360,
+        "bottom": 624.5,
+        "left": 728
+      },
+      {
+        "id": "run",
+        "x": 80,
+        "y": 640.5,
+        "width": 1280,
+        "height": 702,
+        "top": 640.5,
+        "right": 1360,
+        "bottom": 1342.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "rows": [
+          [
+            "比较规则",
+            "sort",
+            "toSorted"
+          ],
+          [
+            "默认",
+            "[1, 10, 2]",
+            "[1, 10, 2]"
+          ],
+          [
+            "数值升序",
+            "[1, 2, 10]",
+            "[1, 2, 10]"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 1270,
+        "scroll": 1270,
+        "text": "const cases = [\n  [\"sort 默认\", a => a.sort()],\n  [\"sort 数值\", a => a.sort((x, y) => x - y)],\n  [\"toSorted 默认\", a => a.toSorted()],\n  [\"toSorted 数值\", a => a.toSorted((x, y) => x - y)],\n];\nfor (const [name, run] of cases) {\n  const original = [2, 10, 1];\n  const result = run(original);\n  console.log(name, JSON.stringify(result), JSON.stringify(original), result === original);\n}\nconsole.log(\"类型\", [2, 10, 1].sort().map(x => typeof x).join(\",\"));"
+      },
+      {
+        "client": 1270,
+        "scroll": 1270,
+        "text": "sort 默认 [1,10,2] [1,10,2] true\nsort 数值 [1,2,10] [1,2,10] true\ntoSorted 默认 [1,10,2] [2,10,1] false\ntoSorted 数值 [1,2,10] [2,10,1] false\n类型 number,number,number"
+      }
+    ]
+  },
+  {
+    "version": "candidate-1",
+    "width": 390,
+    "theme": "light",
+    "pageWidth": 390,
+    "height": 2678,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 376.078125,
+        "top": 219,
+        "right": 378,
+        "bottom": 595.078125,
+        "left": 12
+      },
+      {
+        "id": "choices",
+        "x": 12,
+        "y": 607.078125,
+        "width": 366,
+        "height": 350.1484375,
+        "top": 607.078125,
+        "right": 378,
+        "bottom": 957.2265625,
+        "left": 12
+      },
+      {
+        "id": "why",
+        "x": 12,
+        "y": 969.2265625,
+        "width": 366,
+        "height": 243.875,
+        "top": 969.2265625,
+        "right": 378,
+        "bottom": 1213.1015625,
+        "left": 12
+      },
+      {
+        "id": "run",
+        "x": 12,
+        "y": 1225.1015625,
+        "width": 366,
+        "height": 1038.21875,
+        "top": 1225.1015625,
+        "right": 378,
+        "bottom": 2263.3203125,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "比较规则",
+            "sort",
+            "toSorted"
+          ],
+          [
+            "默认",
+            "[1, 10, 2]",
+            "[1, 10, 2]"
+          ],
+          [
+            "数值升序",
+            "[1, 2, 10]",
+            "[1, 2, 10]"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 356,
+        "text": "const cases = [\n  [\"sort 默认\", a => a.sort()],\n  [\"sort 数值\",\n    a => a.sort((x, y) => x - y)],\n  [\"toSorted 默认\", a => a.toSorted()],\n  [\"toSorted 数值\",\n    a => a.toSorted((x, y) => x - y)],\n];\nfor (const [name, run] of cases) {\n  const original = [2, 10, 1];\n  const result = run(original);\n  console.log(\n    name,\n    JSON.stringify(result),\n    JSON.stringify(original),\n    result === original\n  );\n}\nconsole.log(\n  \"类型\",\n  [2, 10, 1].sort()\n    .map(x => typeof x).join(\",\")\n);"
+      },
+      {
+        "client": 356,
+        "scroll": 356,
+        "text": "sort 默认 [1,10,2] [1,10,2] true\nsort 数值 [1,2,10] [1,2,10] true\ntoSorted 默认 [1,10,2] [2,10,1] false\ntoSorted 数值 [1,2,10] [2,10,1] false\n类型 number,number,number"
+      }
+    ]
+  },
+  {
+    "version": "candidate-1",
+    "width": 1440,
+    "theme": "light",
+    "pageWidth": 1440,
+    "height": 1898,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 1280,
+        "height": 185,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 301.5,
+        "left": 80
+      },
+      {
+        "id": "choices",
+        "x": 80,
+        "y": 317.5,
+        "width": 632,
+        "height": 325,
+        "top": 317.5,
+        "right": 712,
+        "bottom": 642.5,
+        "left": 80
+      },
+      {
+        "id": "why",
+        "x": 728,
+        "y": 317.5,
+        "width": 632,
+        "height": 325,
+        "top": 317.5,
+        "right": 1360,
+        "bottom": 642.5,
+        "left": 728
+      },
+      {
+        "id": "run",
+        "x": 80,
+        "y": 658.5,
+        "width": 1280,
+        "height": 936,
+        "top": 658.5,
+        "right": 1360,
+        "bottom": 1594.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "rows": [
+          [
+            "比较规则",
+            "sort",
+            "toSorted"
+          ],
+          [
+            "默认",
+            "[1, 10, 2]",
+            "[1, 10, 2]"
+          ],
+          [
+            "数值升序",
+            "[1, 2, 10]",
+            "[1, 2, 10]"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 1270,
+        "scroll": 1270,
+        "text": "const cases = [\n  [\"sort 默认\", a => a.sort()],\n  [\"sort 数值\",\n    a => a.sort((x, y) => x - y)],\n  [\"toSorted 默认\", a => a.toSorted()],\n  [\"toSorted 数值\",\n    a => a.toSorted((x, y) => x - y)],\n];\nfor (const [name, run] of cases) {\n  const original = [2, 10, 1];\n  const result = run(original);\n  console.log(\n    name,\n    JSON.stringify(result),\n    JSON.stringify(original),\n    result === original\n  );\n}\nconsole.log(\n  \"类型\",\n  [2, 10, 1].sort()\n    .map(x => typeof x).join(\",\")\n);"
+      },
+      {
+        "client": 1270,
+        "scroll": 1270,
+        "text": "sort 默认 [1,10,2] [1,10,2] true\nsort 数值 [1,2,10] [1,2,10] true\ntoSorted 默认 [1,10,2] [2,10,1] false\ntoSorted 数值 [1,2,10] [2,10,1] false\n类型 number,number,number"
+      }
+    ]
+  }
+]

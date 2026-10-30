@@ -1,0 +1,20 @@
+{
+  "project": "Node.js / V8",
+  "tag": "v22.23.3",
+  "commit": "80dc632040e6bada37aac1220dde9c79581c9c22",
+  "runtime": {
+    "node": "v22.23.3",
+    "v8": "12.4.254.21-node.57",
+    "platform": "darwin",
+    "arch": "arm64",
+    "executableSha256": "68f4d07ca49e0500cc135c7e0a445093e228e42e126ac22306d045f0a8c2636b"
+  },
+  "archifySource": "358846e881b35c19a3cc7b15b89db274574c2610",
+  "productSource": "e16dbcfb8916cb621efb0806e7f23d0b1497ac10",
+  "sourceHashes": {
+    "array-sort.tq": "520ac09d43ecd344d88df726d5fbbed549b6189ea88912c438de0325b8a1eb78",
+    "array-to-sorted.tq": "60b07410b23c25543e65008794647815115d3a6fd3150a8950e6b55db4825156",
+    "node_version.h": "df20e6517f37fa5b0e56cac9e64b3e489e1df5b89ddd0cc4113ce68fc12a3092"
+  },
+  "scope": "Release tag/version header reconciles runtime version; no reproducible native binary build or byte-level source/runtime equivalence claim."
+}

@@ -1,0 +1,16 @@
+{
+  "fiveCasesAcrossTwoRunsVerified": true,
+  "sameInputFreshArrays": true,
+  "defaultNumericValueTypePreserved": true,
+  "pinnedDefaultComparisonHasSmallIntegerLexicographicFastPath": true,
+  "toSortedSourceCreatesArrayAndSharesComparison": true,
+  "sourcePin": "80dc632040e6bada37aac1220dde9c79581c9c22",
+  "testedNode": {
+    "node": "v22.23.3",
+    "v8": "12.4.254.21-node.57",
+    "platform": "darwin",
+    "arch": "arm64",
+    "executableSha256": "68f4d07ca49e0500cc135c7e0a445093e228e42e126ac22306d045f0a8c2636b"
+  },
+  "scope": "Source/version identification, not reproducible binary/source build. Only dense finite primitive arrays exercised."
+}
