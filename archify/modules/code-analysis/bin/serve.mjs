@@ -304,10 +304,8 @@ function client(token) {
         throw new Error(body.error || 'analysis failed');
       }
       var parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
-      var required = ['bauify-analysis', 'bauify-style', 'bauify-script'];
-      for (var i = 0; i < required.length; i++) if (!parsed.getElementById(required[i])) throw new Error('analysis result is incomplete');
-      // In document order; the Atlas parts are present only when raw facts were available.
-      var ids = ['bauify-analysis', 'bauify-atlas-data', 'bauify-style', 'bauify-script', 'bauify-atlas-style', 'bauify-atlas-script'].filter(function (id) { return parsed.getElementById(id); });
+      var ids = ['bauify-analysis', 'bauify-style', 'bauify-script'];
+      for (var i = 0; i < ids.length; i++) if (!parsed.getElementById(ids[i])) throw new Error('analysis result is incomplete');
       // Hand over to the layer: it adds its own toggle to the toolbar, so this button retires.
       button.remove(); say('');
       window.removeEventListener('resize', reposition);
@@ -317,7 +315,7 @@ function client(token) {
       if (toolbarObserver) toolbarObserver.disconnect();
       for (var j = 0; j < ids.length; j++) {
         var original = parsed.getElementById(ids[j]), element = document.createElement(original.tagName);
-        element.id = ids[j]; if (original.getAttribute('type') === 'application/json') element.type = 'application/json';
+        element.id = ids[j]; if (ids[j] === 'bauify-analysis') element.type = 'application/json';
         element.textContent = original.textContent; document.body.appendChild(element);
       }
       var toggle = document.getElementById('btn-bauify');

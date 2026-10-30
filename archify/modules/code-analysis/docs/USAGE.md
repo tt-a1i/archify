@@ -13,8 +13,7 @@ Use the project's architecture JSON prepared with Archify as `architecture.json`
 2. Click **Code Analysis** in the upper-right corner to start analysis.
 3. Read the project overview, then choose a finding or a component. The same reading column shows the selected page; Back returns to the previous page. View diagram folds the column, and Show analysis restores it.
 4. Click a source link for a short captured excerpt. Show full file expands it, and Show excerpt returns to the short view. References without a line show a file preview, not a finding location.
-5. Click **Atlas** at the top of the reading column for the whole-repository view, then **Classic view** to come back (see [Atlas view](#atlas-view)).
-6. Click **Code Analysis** again to return to the architecture view.
+5. Click **Code Analysis** again to return to the architecture view.
 
 Keep the terminal running. After changing source code or the `--config` file, click **Re-analyze** on the overview: the repository and the config are read again without restarting, the page reloads with the new result, and the overview shows what changed since the previous analysis (new, no longer detected, and findings whose code changed). A finding that is no longer detected is not necessarily fixed: if the config, the rules that ran, or the files that parsed changed between the two runs, the comparison is marked as not directly comparable and says why (see [Comparing runs](#comparing-runs)). If a re-analysis fails, the last good result stays in place and the reason is shown next to the button. Only a changed architecture JSON needs a restart.
 
@@ -133,21 +132,6 @@ Exit codes: `0` passed, `1` the gate failed, `2` the analysis could not run (the
 - other values replace the default.
 
 Rules are switched off only with `"ignore": ["rule/code"]`. A config that is not a JSON object stops analysis with `cli/config-invalid`.
-
-## Atlas view
-
-The Classic view reads the result against your architecture diagram and opens source evidence. The Atlas draws the analyzed tree itself, so the shape of the problems is visible at once:
-
-- each **module** is an arc around the circle; a thicker arc is a reported hub;
-- each **file** is a tick inside its module's arc;
-- each **dependency** between two analyzed files is a curve, coloured by the importing module and bundled through both modules, so heavy coupling shows as a thick strand;
-- each measured **function** is a spike outside its file, longer for higher cyclomatic complexity; a reported function carries a dot in its severity colour.
-
-Hover for names and numbers. Click a module arc (or a module in the side panel) to focus it: its own dependencies stay coloured, other modules' dependencies on it are drawn in a neutral colour, and the rest fades. Click a dotted spike or a finding in the side panel to draw that finding over everything else: a cycle's path, a module cycle's modules, a boundary's crossing imports, or a function and its file's dependencies. **Open evidence in Classic view** shows the same finding with its source excerpt and AI task.
-
-Motion is used only to show change: the picture grows out from the centre when the Atlas opens, a new focus or finding cross-fades in, and a light travels around a selected import cycle in the direction of its imports. With your system's reduced-motion setting on, everything is drawn at once and stays still.
-
-The Atlas adds no analysis: it draws the raw facts, module graph and findings of the same run. Dependency records that could not be resolved draw no curve; the side panel states how many there are, so a missing curve is not proof that there is no dependency. Test and generated files are left out, as in the module graph. The Atlas needs the raw facts of the run and is not offered without them.
 
 ## Comparing runs
 
