@@ -11,8 +11,10 @@ import { fileURLToPath } from 'node:url';
 // process's stderr, which breaks tests that assert on captured stderr or parse
 // it as JSON. Silence those runtime warnings for every CLI child this file
 // spawns (the setting inherits into grandchildren too); warnings printed by
-// archify itself are unaffected.
-process.env.NODE_NO_WARNINGS ??= '1';
+// archify itself are unaffected. Assign unconditionally: Node only silences
+// warnings when the value is exactly '1', so an inherited '0' or empty value
+// would re-enable them in the spawned children.
+process.env.NODE_NO_WARNINGS = '1';
 
 const root = fileURLToPath(new URL('../archify/', import.meta.url));
 const cli = path.join(root, 'bin/archify.mjs');
