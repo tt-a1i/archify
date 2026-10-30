@@ -1,0 +1,201 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/passport-explanation.test.mjs test/drilldown-navigation.test.mjs test/browser-gate.test.mjs
+
+Repository tests: 3 files, concurrency 4
+TAP version 13
+# Subtest: browser gate rejects an unavailable explicit browser instead of skipping
+ok 1 - browser gate rejects an unavailable explicit browser instead of skipping
+  ---
+  duration_ms: 103.770541
+  type: 'test'
+  ...
+# Subtest: browser gate includes every browser suite without repeating ordinary Node suites
+ok 2 - browser gate includes every browser suite without repeating ordinary Node suites
+  ---
+  duration_ms: 54.213834
+  type: 'test'
+  ...
+# Subtest: browser gate focuses maintained browser suites and supports explicit concurrency
+ok 3 - browser gate focuses maintained browser suites and supports explicit concurrency
+  ---
+  duration_ms: 53.985708
+  type: 'test'
+  ...
+# Subtest: browser gate forwards a validated test name pattern
+ok 4 - browser gate forwards a validated test name pattern
+  ---
+  duration_ms: 53.359709
+  type: 'test'
+  ...
+# Subtest: browser gate rejects files outside its inventory and invalid options before launch
+ok 5 - browser gate rejects files outside its inventory and invalid options before launch
+  ---
+  duration_ms: 258.520625
+  type: 'test'
+  ...
+# Subtest: browser inventory can be listed without Chrome or child execution
+ok 6 - browser inventory can be listed without Chrome or child execution
+  ---
+  duration_ms: 102.81925
+  type: 'test'
+  ...
+# Subtest: selected browser execution still requires Chrome
+ok 7 - selected browser execution still requires Chrome
+  ---
+  duration_ms: 63.203625
+  type: 'test'
+  ...
+# Subtest: browser gate propagates child failure (7)
+ok 8 - browser gate propagates child failure (7)
+  ---
+  duration_ms: 69.576708
+  type: 'test'
+  ...
+# Subtest: browser gate propagates child failure (SIGTERM)
+ok 9 - browser gate propagates child failure (SIGTERM)
+  ---
+  duration_ms: 72.513875
+  type: 'test'
+  ...
+# Subtest: browser gate propagates child failure (SIGTERM)
+ok 10 - browser gate propagates child failure (SIGTERM)
+  ---
+  duration_ms: 69.037959
+  type: 'test'
+  ...
+# Subtest: CI and release use the same browser command and retain WebM decoding
+ok 11 - CI and release use the same browser command and retain WebM decoding
+  ---
+  duration_ms: 23.665209
+  type: 'test'
+  ...
+# Subtest: browser shards are deterministic, nonempty, disjoint and cover the full maintained inventory
+ok 12 - browser shards are deterministic, nonempty, disjoint and cover the full maintained inventory
+  ---
+  duration_ms: 174.016791
+  type: 'test'
+  ...
+# Subtest: browser shard listing requires neither Chrome nor test execution
+ok 13 - browser shard listing requires neither Chrome nor test execution
+  ---
+  duration_ms: 147.947917
+  type: 'test'
+  ...
+# Subtest: browser shards reject invalid, duplicate, empty or partially selected coverage before launch
+ok 14 - browser shards reject invalid, duplicate, empty or partially selected coverage before launch
+  ---
+  duration_ms: 571.844917
+  type: 'test'
+  ...
+# Subtest: sharded browser gates retain Chrome requirements and propagate child failures
+ok 15 - sharded browser gates retain Chrome requirements and propagate child failures
+  ---
+  duration_ms: 209.758292
+  type: 'test'
+  ...
+# Subtest: CI media gates fail closed and run only for their affected responsibility
+ok 16 - CI media gates fail closed and run only for their affected responsibility
+  ---
+  duration_ms: 70.061583
+  type: 'test'
+  ...
+# Subtest: website CI uses the maintained browser script including community security coverage
+ok 17 - website CI uses the maintained browser script including community security coverage
+  ---
+  duration_ms: 0.571334
+  type: 'test'
+  ...
+# Subtest: schema accepts authored drilldowns on architecture components
+ok 18 - schema accepts authored drilldowns on architecture components
+  ---
+  duration_ms: 3.02375
+  type: 'test'
+  ...
+# Subtest: schema accepts href sugar and rejects path escape
+ok 19 - schema accepts href sugar and rejects path escape
+  ---
+  duration_ms: 2.051917
+  type: 'test'
+  ...
+# Subtest: isSiblingHtmlHref allows only same-directory html files
+ok 20 - isSiblingHtmlHref allows only same-directory html files
+  ---
+  duration_ms: 0.111584
+  type: 'test'
+  ...
+# Subtest: normalizeDrilldowns keeps ordered targets and drops incomplete or unsafe entries
+ok 21 - normalizeDrilldowns keeps ordered targets and drops incomplete or unsafe entries
+  ---
+  duration_ms: 0.371041
+  type: 'test'
+  ...
+# Subtest: resolveNodeDrilldowns prefers drilldowns over href sugar
+ok 22 - resolveNodeDrilldowns prefers drilldowns over href sugar
+  ---
+  duration_ms: 0.305833
+  type: 'test'
+  ...
+# Subtest: focusNodeAttrs and svgRootAttrs emit drilldown hooks
+ok 23 - focusNodeAttrs and svgRootAttrs emit drilldown hooks
+  ---
+  duration_ms: 1.912333
+  type: 'test'
+  ...
+# Subtest: architecture render includes drilldown viewer surfaces
+ok 24 - architecture render includes drilldown viewer surfaces
+  ---
+  duration_ms: 97.532084
+  type: 'test'
+  ...
+# Subtest: single-child href sugar wraps a native SVG anchor and mark
+ok 25 - single-child href sugar wraps a native SVG anchor and mark
+  ---
+  duration_ms: 96.577833
+  type: 'test'
+  ...
+# Subtest: all five supported native modes render authored sibling navigation
+ok 26 - all five supported native modes render authored sibling navigation
+  ---
+  duration_ms: 629.92125
+  type: 'test'
+  ...
+# Subtest: every semantic node collection accepts one optional plain-text explanation
+ok 27 - every semantic node collection accepts one optional plain-text explanation
+  ---
+  duration_ms: 2978.24425
+  type: 'test'
+  ...
+# Subtest: explanations ride in one JSON block outside the SVG and never enter the canonical diagram
+ok 28 - explanations ride in one JSON block outside the SVG and never enter the canonical diagram
+  ---
+  duration_ms: 607.910542
+  type: 'test'
+  ...
+# Subtest: documents without explanations emit no data block and keep the Explain action hidden
+ok 29 - documents without explanations emit no data block and keep the Explain action hidden
+  ---
+  duration_ms: 573.368709
+  type: 'test'
+  ...
+# Subtest: the whitespace-only explanation is dropped by the renderer rather than shipped
+ok 30 - the whitespace-only explanation is dropped by the renderer rather than shipped
+  ---
+  duration_ms: 100.671041
+  type: 'test'
+  ...
+# Subtest: zh-CN localizes the Explain action without translating authored prose
+ok 31 - zh-CN localizes the Explain action without translating authored prose
+  ---
+  duration_ms: 101.752416
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4412.410834

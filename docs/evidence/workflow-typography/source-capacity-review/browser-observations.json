@@ -1,0 +1,202 @@
+{
+  "runtimeCommit": "417282bf86a2ad071f5416cc1a68eef7bdd1a55a",
+  "node": "22.23.1",
+  "chrome": "154.0.8037.98",
+  "sourceDisplayContract": "No SRC/beacon overlays; verified references remain in the source payload, accessible node count and Focus source links.",
+  "runtimeFiles": {
+    "compiler": "3e80537ba85e50cefd976f977514327dba6ee11546dc73fb9046ab6f483538ac",
+    "typography": "eb95d7612858dea67e5def848accf0e9450d78407f6291cba39c4407c4005e1a"
+  },
+  "cases": [
+    {
+      "case": "source-fractional",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "source-fractional.png",
+      "screenshotSha256": "c1a8d3b1c5d489db1210f0a98565b30f56df9eaccc8c14a5ea013a9ceb3186f1",
+      "nodes": [
+        {
+          "id": "process",
+          "shape": {
+            "left": 131.13650512695312,
+            "right": 292.3729248046875,
+            "top": 229.04261779785156,
+            "bottom": 323.6813659667969,
+            "width": 161.23641967773438,
+            "height": 94.63874816894531
+          },
+          "texts": [
+            {
+              "text": "ProcessData",
+              "box": {
+                "left": 147.56723022460938,
+                "right": 275.9422607421875,
+                "top": 269.3310546875,
+                "bottom": 295.3310546875,
+                "width": 128.37503051757812,
+                "height": 26
+              },
+              "sourceFont": 11.1,
+              "projectedFont": 19.453525921092556,
+              "caption": false,
+              "role": "label",
+              "computedOpacity": 1,
+              "computedVisibility": "visible",
+              "computedDisplay": "block",
+              "effectiveOpacity": 1,
+              "visible": true
+            },
+            {
+              "text": "subtitle",
+              "box": {
+                "left": 178.10630798339844,
+                "right": 245.40318298339844,
+                "top": 301.61956787109375,
+                "bottom": 319.61956787109375,
+                "width": 67.296875,
+                "height": 18
+              },
+              "sourceFont": 8,
+              "projectedFont": 14.02055922240905,
+              "caption": true,
+              "role": "sublabel",
+              "computedOpacity": 1,
+              "computedVisibility": "visible",
+              "computedDisplay": "block",
+              "effectiveOpacity": 1,
+              "visible": true
+            }
+          ],
+          "overflow": [],
+          "overlaps": []
+        }
+      ],
+      "source": {
+        "sourceCount": "1",
+        "sourceAria": "Focus ProcessData, subtitle, Processing, 1 verified source reference",
+        "sources": [
+          {
+            "path": "source.js",
+            "line": 1,
+            "href": "https://github.com/example/archify-review-fixture/blob/2790d00d07e2bed5aa5a0af7e1309f67320e70b8/source.js#L1"
+          }
+        ],
+        "sourcePanelVisible": true,
+        "sourceLinks": [
+          "https://github.com/example/archify-review-fixture/blob/2790d00d07e2bed5aa5a0af7e1309f67320e70b8/source.js#L1"
+        ],
+        "sourceBadges": 0,
+        "hasBrand": false,
+        "decorationOverflow": [],
+        "decorationTextOverlap": []
+      }
+    },
+    {
+      "case": "source-brand-tag",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "source-brand-tag.png",
+      "screenshotSha256": "b418d121f869a3d6e1c9683cf8bb0e2c216c6576d73840bc443240141385da61",
+      "nodes": [
+        {
+          "id": "process",
+          "shape": {
+            "left": 125.50452423095703,
+            "right": 455.87064361572266,
+            "top": 282.8828125,
+            "bottom": 505.3075256347656,
+            "width": 330.3661193847656,
+            "height": 222.42471313476562
+          },
+          "texts": [
+            {
+              "text": "ProcessData",
+              "box": {
+                "left": 171.95318603515625,
+                "right": 409.42193603515625,
+                "top": 328.3107604980469,
+                "bottom": 376.3107604980469,
+                "width": 237.46875,
+                "height": 48
+              },
+              "sourceFont": 22,
+              "projectedFont": 35.98046875,
+              "caption": false,
+              "role": "label",
+              "computedOpacity": 1,
+              "computedVisibility": "visible",
+              "computedDisplay": "block",
+              "effectiveOpacity": 1,
+              "visible": true
+            },
+            {
+              "text": "subtitle",
+              "box": {
+                "left": 227.89849853515625,
+                "right": 353.47662353515625,
+                "top": 383.7770080566406,
+                "bottom": 418.7770080566406,
+                "width": 125.578125,
+                "height": 35
+              },
+              "sourceFont": 16,
+              "projectedFont": 26.167613636363637,
+              "caption": true,
+              "role": "sublabel",
+              "computedOpacity": 1,
+              "computedVisibility": "visible",
+              "computedDisplay": "block",
+              "effectiveOpacity": 1,
+              "visible": true
+            },
+            {
+              "text": "verified",
+              "box": {
+                "left": 235.75006103515625,
+                "right": 345.62506103515625,
+                "top": 443.05609130859375,
+                "bottom": 473.05609130859375,
+                "width": 109.875,
+                "height": 30
+              },
+              "sourceFont": 14,
+              "projectedFont": 22.896661931818183,
+              "caption": true,
+              "role": "tag",
+              "computedOpacity": 0,
+              "computedVisibility": "visible",
+              "computedDisplay": "block",
+              "effectiveOpacity": 0,
+              "visible": false
+            }
+          ],
+          "overflow": [],
+          "overlaps": []
+        }
+      ],
+      "source": {
+        "sourceCount": "1",
+        "sourceAria": "Focus ProcessData, subtitle, Processing, OpenAI, 1 verified source reference",
+        "sources": [
+          {
+            "path": "source.js",
+            "line": 1,
+            "href": "https://github.com/example/archify-review-fixture/blob/2e7b5347f04088391b8be02877faafc807e6d2ea/source.js#L1"
+          }
+        ],
+        "sourcePanelVisible": true,
+        "sourceLinks": [
+          "https://github.com/example/archify-review-fixture/blob/2e7b5347f04088391b8be02877faafc807e6d2ea/source.js#L1"
+        ],
+        "sourceBadges": 0,
+        "hasBrand": true,
+        "decorationOverflow": [],
+        "decorationTextOverlap": []
+      }
+    }
+  ]
+}

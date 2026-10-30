@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Archify release: gated publication",
+    "subtitle": "Public release.yml, summarized by release gate",
+    "output": "release-overview.html",
+    "quality_profile": "showcase",
+    "locale": "en"
+  },
+  "lanes": [
+    { "id": "windows", "label": "Windows matrix" },
+    { "id": "release", "label": "Ubuntu release job" }
+  ],
+  "mainPath": ["windows", "checks", "identity", "build", "verify", "publish"],
+  "nodes": [
+    { "id": "windows", "lane": "windows", "col": 0, "type": "backend", "label": "Windows paths", "sublabel": "Node 22 + 24" },
+    { "id": "checks", "lane": "release", "col": 1, "type": "security", "label": "Regressions", "sublabel": "unit, WebM, browser" },
+    { "id": "identity", "lane": "release", "col": 2, "type": "security", "label": "Identity", "sublabel": "version + channel" },
+    { "id": "build", "lane": "release", "col": 3, "type": "backend", "label": "Build archive", "sublabel": "build-zip.sh" },
+    { "id": "verify", "lane": "release", "col": 4, "type": "security", "label": "Verify package", "sublabel": "smoke + byte match" },
+    { "id": "publish", "lane": "release", "col": 5, "type": "external", "label": "GitHub Release", "sublabel": "archify.zip asset" }
+  ],
+  "edges": [
+    { "id": "windows-checks", "from": "windows", "to": "checks", "label": "needs", "role": "main" },
+    { "id": "checks-identity", "from": "checks", "to": "identity", "role": "main" },
+    { "id": "identity-build", "from": "identity", "to": "build", "role": "main" },
+    { "id": "build-verify", "from": "build", "to": "verify", "role": "main" },
+    { "id": "verify-publish", "from": "verify", "to": "publish", "role": "main" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Scope", "items": ["Triggered by a v* tag. The Ubuntu release job waits for both Windows matrix jobs.", "Checkout, exact tag fetch, Node setup and dependency installation are summarized inside their owning gate."] },
+    { "dot": "amber", "title": "Release identity", "items": ["Tag and package version must agree; skill-release.json selects stable or development publication.", "Stable releases additionally require an annotated tag and an older stable notifier manifest. The final follow-up reminder is outside this diagram's publication scope."] }
+  ]
+}

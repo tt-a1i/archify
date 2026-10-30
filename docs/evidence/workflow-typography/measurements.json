@@ -1,0 +1,209 @@
+{
+  "evidenceKind": "native Chrome typography and focused-tag comparison",
+  "candidateBase": "48a4dee6726022cad5879b756e95f100205e1cb5",
+  "runtimeVersion": "3.0.2-dev.1",
+  "sourceSha256": {
+    "archify/renderers/workflow/workflow-compiler.mjs": "c518882ec211edbbd93f993072323d1710cb7cdeb9479468c57ec27e23688898",
+    "archify/renderers/workflow/workflow-typography.mjs": "a63e3c9cabbf5b5602ec43137b87ea064b9160d0304efc865be5501a93535b71",
+    "archify/renderers/shared/legend.mjs": "dd7944792942ab6a0d9c500f2c1ad550ae9b714cf4d8030ecdf3f6548b18eea0"
+  },
+  "tests": 4,
+  "passed": 4,
+  "failed": 0,
+  "skipped": 0,
+  "defaultReadPagesMeasured": 32,
+  "focusedNodeCases": 32,
+  "cases": [
+    {
+      "fixture": "cjk",
+      "scale": 1.5,
+      "screenshots": 8,
+      "artifactSha256": {
+        "before": "8aecaea8a9faa4e49fa39e4cd0ddaaab9b50577837ae6b72a36ae86f0c1525be",
+        "after": "5219de54ba42496cd92b97739b31e74a34afd184bd781185186d4399b6a5734a"
+      },
+      "captionComparisons": [
+        {
+          "width": 1440,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 13.051724137931034,
+          "afterVisibleCaptionCssPx": 17.109873670212764,
+          "beforeAllAuthoredCaptionsTagsCssPx": 11.420258620689655,
+          "afterAllAuthoredCaptionsTagsCssPx": 14.97113946143617
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 13.051724137931034,
+          "afterVisibleCaptionCssPx": 17.109873670212764,
+          "beforeAllAuthoredCaptionsTagsCssPx": 11.420258620689655,
+          "afterAllAuthoredCaptionsTagsCssPx": 14.97113946143617
+        },
+        {
+          "width": 1920,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 17.70646551724138,
+          "afterVisibleCaptionCssPx": 23.21160239361702,
+          "beforeAllAuthoredCaptionsTagsCssPx": 15.493157327586207,
+          "afterAllAuthoredCaptionsTagsCssPx": 20.310152094414892
+        },
+        {
+          "width": 1920,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 17.70646551724138,
+          "afterVisibleCaptionCssPx": 23.21160239361702,
+          "beforeAllAuthoredCaptionsTagsCssPx": 15.493157327586207,
+          "afterAllAuthoredCaptionsTagsCssPx": 20.310152094414892
+        }
+      ],
+      "focusCases": 8
+    },
+    {
+      "fixture": "dense",
+      "scale": 1.5,
+      "screenshots": 8,
+      "artifactSha256": {
+        "before": "2e842ce91e189c7b227a85ea718b914a37bede866f58dc16a69cce8d1082481c",
+        "after": "3a378bc02de3e2a93f327c010a98ad2fc8a51346dacbb88c8cc3318877902c15"
+      },
+      "captionComparisons": [
+        {
+          "width": 1440,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 9.72342075892857,
+          "afterVisibleCaptionCssPx": 15.983705357142856,
+          "beforeAllAuthoredCaptionsTagsCssPx": 9.323828124999999,
+          "afterAllAuthoredCaptionsTagsCssPx": 13.9857421875
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 9.72342075892857,
+          "afterVisibleCaptionCssPx": 15.983705357142856,
+          "beforeAllAuthoredCaptionsTagsCssPx": 9.323828124999999,
+          "afterAllAuthoredCaptionsTagsCssPx": 13.9857421875
+        },
+        {
+          "width": 1920,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 11.212751116071429,
+          "afterVisibleCaptionCssPx": 18.431919642857142,
+          "beforeAllAuthoredCaptionsTagsCssPx": 10.751953125,
+          "afterAllAuthoredCaptionsTagsCssPx": 16.1279296875
+        },
+        {
+          "width": 1920,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 11.212751116071429,
+          "afterVisibleCaptionCssPx": 18.431919642857142,
+          "beforeAllAuthoredCaptionsTagsCssPx": 10.751953125,
+          "afterAllAuthoredCaptionsTagsCssPx": 16.1279296875
+        }
+      ],
+      "focusCases": 8
+    },
+    {
+      "fixture": "ordinary",
+      "scale": 1.5,
+      "screenshots": 8,
+      "artifactSha256": {
+        "before": "260c59a0a9c47fead0136f458f9583815af59d2132f57dcdda8e9cfa9f358387",
+        "after": "e842ce2bac809db3f76ad06d87639f21e1c4282f09ae5679de897b47c218f140"
+      },
+      "captionComparisons": [
+        {
+          "width": 1440,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 13.277155172413794,
+          "afterVisibleCaptionCssPx": 18.759474734042552,
+          "beforeAllAuthoredCaptionsTagsCssPx": 11.617510775862069,
+          "afterAllAuthoredCaptionsTagsCssPx": 16.414540392287233
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 13.277155172413794,
+          "afterVisibleCaptionCssPx": 18.759474734042552,
+          "beforeAllAuthoredCaptionsTagsCssPx": 11.617510775862069,
+          "afterAllAuthoredCaptionsTagsCssPx": 16.414540392287233
+        },
+        {
+          "width": 1920,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 18.01206896551724,
+          "afterVisibleCaptionCssPx": 25.449135638297868,
+          "beforeAllAuthoredCaptionsTagsCssPx": 15.760560344827585,
+          "afterAllAuthoredCaptionsTagsCssPx": 22.267993683510635
+        },
+        {
+          "width": 1920,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 18.01206896551724,
+          "afterVisibleCaptionCssPx": 25.449135638297868,
+          "beforeAllAuthoredCaptionsTagsCssPx": 15.760560344827585,
+          "afterAllAuthoredCaptionsTagsCssPx": 22.267993683510635
+        }
+      ],
+      "focusCases": 8
+    },
+    {
+      "fixture": "ordinary",
+      "scale": 2,
+      "screenshots": 8,
+      "artifactSha256": {
+        "before": "260c59a0a9c47fead0136f458f9583815af59d2132f57dcdda8e9cfa9f358387",
+        "after": "c36f8a12e3eb3c1883e4e0be6e05bc1cbfafcb3cb028201b152d92a2a175b2a6"
+      },
+      "captionComparisons": [
+        {
+          "width": 1440,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 13.277155172413794,
+          "afterVisibleCaptionCssPx": 22.693181818181817,
+          "beforeAllAuthoredCaptionsTagsCssPx": 11.617510775862069,
+          "afterAllAuthoredCaptionsTagsCssPx": 19.85653409090909
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 13.277155172413794,
+          "afterVisibleCaptionCssPx": 22.693181818181817,
+          "beforeAllAuthoredCaptionsTagsCssPx": 11.617510775862069,
+          "afterAllAuthoredCaptionsTagsCssPx": 19.85653409090909
+        },
+        {
+          "width": 1920,
+          "theme": "light",
+          "beforeVisibleCaptionCssPx": 18.01206896551724,
+          "afterVisibleCaptionCssPx": 29.791125541125542,
+          "beforeAllAuthoredCaptionsTagsCssPx": 15.760560344827585,
+          "afterAllAuthoredCaptionsTagsCssPx": 26.067234848484848
+        },
+        {
+          "width": 1920,
+          "theme": "dark",
+          "beforeVisibleCaptionCssPx": 18.01206896551724,
+          "afterVisibleCaptionCssPx": 29.791125541125542,
+          "beforeAllAuthoredCaptionsTagsCssPx": 15.760560344827585,
+          "afterAllAuthoredCaptionsTagsCssPx": 26.067234848484848
+        }
+      ],
+      "focusCases": 8
+    }
+  ],
+  "notes": [
+    "visibleCaptionMin includes only CSS-visible node sublabels/tags; default READ hides fine-detail tags.",
+    "captionMin retains every authored sublabel/tag, including hidden fine-detail text, for layout capacity checks.",
+    "Each default screenshot is captured before focus. Every page then focuses one node and verifies its tag is fully revealed, contained and non-overlapping.",
+    "CSS font sizes use computed font size times getScreenCTM scale, distinct from the conservative min(1,scale) projection in checker receipts."
+  ],
+  "comparisonBase": "f12947c420810399cfbaa254870de4f41b087bba",
+  "staticDenseComparison": {
+    "budgetPx": 930,
+    "hardFloorPx": 6,
+    "beforeMinimumSourcePx": 7.3,
+    "afterMinimumSourcePx": 12,
+    "beforeMinimumProjectedPx": 6.789,
+    "afterMinimumProjectedPx": 11.16
+  }
+}

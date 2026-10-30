@@ -1,0 +1,54 @@
+{
+  "mask": {
+    "left": 503.0999755859375,
+    "top": 607,
+    "right": 834.8999633789062,
+    "bottom": 649,
+    "width": 331.79998779296875,
+    "height": 42
+  },
+  "text": {
+    "left": 510.59375,
+    "top": 613,
+    "right": 827.40625,
+    "bottom": 644,
+    "width": 316.8125,
+    "height": 31
+  },
+  "label": "A long follow-up label",
+  "nodes": [
+    {
+      "id": "a",
+      "rect": {
+        "left": 216,
+        "top": 430,
+        "right": 354,
+        "bottom": 520,
+        "width": 138,
+        "height": 90
+      }
+    },
+    {
+      "id": "b",
+      "rect": {
+        "left": 936,
+        "top": 400,
+        "right": 1074,
+        "bottom": 550,
+        "width": 138,
+        "height": 150
+      }
+    },
+    {
+      "id": "tall",
+      "rect": {
+        "left": 1116,
+        "top": 265,
+        "right": 1254,
+        "bottom": 685,
+        "width": 138,
+        "height": 420
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "baselineCommit": "75c6721f910f3d78db8e87716acd9827a293b750",
+  "mutation": "Temporary copy only: omit sourceEvidence in acceptsFix; automatic height fix retained. Both source nodes have authored 92x53 boxes, needing 54 with sources but only 52 without.",
+  "originalCompilerSha256": "641530583390e62873c90f21020378eaa4b546fe6eeaa8e4cf6ddfb8eae14715",
+  "mutatedCompilerSha256": "e4e86fc9f486e535c9a8125aa18a7b7bde79d6244b2367453b494649c9beaee9",
+  "typographySha256": "eb95d7612858dea67e5def848accf0e9450d78407f6291cba39c4407c4005e1a",
+  "node": "22.23.1",
+  "exitCode": 1,
+  "finalRuntimeCommit": "417282bf86a2ad071f5416cc1a68eef7bdd1a55a",
+  "scope": "自动高度修复后的中间源码突变验证；最终提交再运行35项字体CLI测试。该记录不将中间源码冒充最终提交。"
+}

@@ -1,0 +1,67 @@
+
+> test:browser
+> node scripts/run-browser-tests.mjs test/workflow-typography-browser.test.mjs
+
+Browser tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: real browser preserves text bounds and improves measured workflow typography: ordinary/1.5
+ok 1 - real browser preserves text bounds and improves measured workflow typography: ordinary/1.5
+  ---
+  duration_ms: 12373.362042
+  type: 'test'
+  ...
+# ordinary/1.5/1440x900/light: visible caption 13.28 -> 18.76; all authored captions/tags 11.62 -> 16.41 CSS px
+# ordinary/1.5/1440x900/dark: visible caption 13.28 -> 18.76; all authored captions/tags 11.62 -> 16.41 CSS px
+# ordinary/1.5/1920x1080/light: visible caption 18.01 -> 25.45; all authored captions/tags 15.76 -> 22.27 CSS px
+# ordinary/1.5/1920x1080/dark: visible caption 18.01 -> 25.45; all authored captions/tags 15.76 -> 22.27 CSS px
+# Subtest: real browser preserves text bounds and improves measured workflow typography: ordinary/2
+ok 2 - real browser preserves text bounds and improves measured workflow typography: ordinary/2
+  ---
+  duration_ms: 6904.8885
+  type: 'test'
+  ...
+# ordinary/2/1440x900/light: visible caption 13.28 -> 22.69; all authored captions/tags 11.62 -> 19.86 CSS px
+# ordinary/2/1440x900/dark: visible caption 13.28 -> 22.69; all authored captions/tags 11.62 -> 19.86 CSS px
+# ordinary/2/1920x1080/light: visible caption 18.01 -> 29.79; all authored captions/tags 15.76 -> 26.07 CSS px
+# ordinary/2/1920x1080/dark: visible caption 18.01 -> 29.79; all authored captions/tags 15.76 -> 26.07 CSS px
+# Subtest: real browser preserves text bounds and improves measured workflow typography: dense/1.5
+ok 3 - real browser preserves text bounds and improves measured workflow typography: dense/1.5
+  ---
+  duration_ms: 7077.993459
+  type: 'test'
+  ...
+# dense/1.5/1440x900/light: visible caption 9.72 -> 15.98; all authored captions/tags 9.32 -> 13.99 CSS px
+# dense/1.5/1440x900/dark: visible caption 9.72 -> 15.98; all authored captions/tags 9.32 -> 13.99 CSS px
+# dense/1.5/1920x1080/light: visible caption 11.21 -> 18.43; all authored captions/tags 10.75 -> 16.13 CSS px
+# dense/1.5/1920x1080/dark: visible caption 11.21 -> 18.43; all authored captions/tags 10.75 -> 16.13 CSS px
+# Subtest: real browser preserves text bounds and improves measured workflow typography: cjk/1.5
+ok 4 - real browser preserves text bounds and improves measured workflow typography: cjk/1.5
+  ---
+  duration_ms: 6897.983375
+  type: 'test'
+  ...
+# cjk/1.5/1440x900/light: visible caption 13.05 -> 17.11; all authored captions/tags 11.42 -> 14.97 CSS px
+# cjk/1.5/1440x900/dark: visible caption 13.05 -> 17.11; all authored captions/tags 11.42 -> 14.97 CSS px
+# cjk/1.5/1920x1080/light: visible caption 17.71 -> 23.21; all authored captions/tags 15.49 -> 20.31 CSS px
+# cjk/1.5/1920x1080/dark: visible caption 17.71 -> 23.21; all authored captions/tags 15.49 -> 20.31 CSS px
+# Subtest: source-backed browser keeps evidence discoverable and decorated text contained: source-fractional
+ok 5 - source-backed browser keeps evidence discoverable and decorated text contained: source-fractional
+  ---
+  duration_ms: 1930.576375
+  type: 'test'
+  ...
+# Subtest: source-backed browser keeps evidence discoverable and decorated text contained: source-brand-tag
+ok 6 - source-backed browser keeps evidence discoverable and decorated text contained: source-brand-tag
+  ---
+  duration_ms: 2480.324916
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37752.228166

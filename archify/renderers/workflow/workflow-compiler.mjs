@@ -1,3 +1,4 @@
+import { workflowTypography, workflowNodeSize, workflowNodeText, workflowNodeMinimumHeight } from './workflow-typography.mjs';
 import { proposeWorkflowPlacement } from './workflow-placement-repair.mjs';
 import { createSpatialGrid } from '../shared/spatial-grid.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
@@ -28,8 +29,8 @@ import {
   resolveLegend,
   renderLegend as renderResolvedLegend,
 } from '../shared/legend.mjs';
-import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth, nodeLabelLayout } from '../shared/text-fit.mjs';
-import { brandLabelFitWidth, brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { availableNodeTextWidth, minimumNodeTextWidth } from '../shared/text-fit.mjs';
+import { brandMarkFor, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { DESKTOP_READER_DIAGRAM_WIDTH, MIN_PROJECTED_NODE_TEXT_PX, minimumReadableSourceTextPx, predictedFixedWidthOverflow } from '../shared/desktop-readability.mjs';
 import {
@@ -99,11 +100,8 @@ const READABLE_CANDIDATE_COST_PRIORITY = Object.freeze([
   'stableCandidateOrdinal',
 ]);
 const MAX_READABLE_LAYOUT_FEEDBACK_ROUNDS = 3;
-const GROUP_FRAME_TOP_INSET = 8;
 const GROUP_FRAME_BOTTOM_INSET = 4;
 const GROUP_LABEL_BASELINE_OFFSET = -2;
-const GROUP_LABEL_MASK_ASCENT = 10;
-const GROUP_LABEL_MASK_H = 14;
 const GROUP_NODE_INSET = 4;
 
 const HARD_ROUTE_RHYTHM = Object.freeze({ direct: 28, endpoint: 8, interior: 16 });
@@ -180,24 +178,24 @@ function automaticNodeWidth(node) {
   return fitted > 92 ? Math.min(200, fitted) : null;
 }
 
-function authoredNodeWidth(node) {
-  return Number.isFinite(node?.width) ? node.width : automaticNodeWidths.get(node) ?? 92;
+function authoredNodeWidth(node, workflow) {
+  return Number.isFinite(node?.width) ? node.width : Math.max((workflow.schema_version === 2 && automaticNodeWidths.get(node)) || 92, workflowNodeSize(node, workflowTypography(workflow)).width);
 }
 
-function nodeWidthContributor(node) {
-  return `node ${node.id} width ${authoredNodeWidth(node)}px`;
+function nodeWidthContributor(node, workflow) {
+  return `node ${node.id} width ${authoredNodeWidth(node, workflow)}px`;
 }
 
-function authoredNodeHeight(node) {
-  if (Number.isFinite(node?.height)) return node.height;
-  return node?.tag ? 68 : 52;
+function authoredNodeHeight(node, workflow, sourceEvidence) {
+  return workflowNodeSize(node, workflowTypography(workflow), Boolean(sourceEvidence?.nodes?.[node.id]?.length)).height;
 }
 
-function workflowLabelWidth(label) {
-  return Math.max(30, textUnits(label) * 4.8 + 10);
+function workflowLabelWidth(label, typography) {
+  return Math.max(30, textUnits(label) * typography.edgeAdvance + 10);
 }
 
 function readableGroupBounds(workflow, group, colXs) {
+  const typography = workflowTypography(workflow);
   if (!Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
     || group.fromCol < 0 || group.fromCol > group.toCol || group.toCol >= colXs.length) {
     return { x: 0, width: 0, cx: 0 };
@@ -205,7 +203,7 @@ function readableGroupBounds(workflow, group, colXs) {
   const start = colXs[group.fromCol] - 50;
   const end = colXs[group.toCol] + 50;
   const naturalWidth = end - start;
-  const minimumWidth = textUnits(group.label) * 5.6 + 20;
+  const minimumWidth = textUnits(group.label) * typography.headingAdvance + 20;
   let width = Math.max(naturalWidth, minimumWidth);
   let left = group.fromCol === group.toCol && width > naturalWidth
     ? start
@@ -218,7 +216,7 @@ function readableGroupBounds(workflow, group, colXs) {
       || node.col > group.toCol
       || node.col < 0
       || node.col >= colXs.length) continue;
-    const halfWidth = authoredNodeWidth(node) / 2;
+    const halfWidth = authoredNodeWidth(node, workflow) / 2;
     left = Math.min(left, colXs[node.col] - halfWidth - GROUP_NODE_INSET);
     right = Math.max(right, colXs[node.col] + halfWidth + GROUP_NODE_INSET);
   }
@@ -226,14 +224,15 @@ function readableGroupBounds(workflow, group, colXs) {
   return { x: left, width, cx: left + width / 2 };
 }
 
-function verticalIntervalsOverlap(a, b, clearance = 0) {
+function verticalIntervalsOverlap(a, b, clearance, workflow, sourceEvidence) {
   const aCenter = Number(a?.yOffset) || 0;
   const bCenter = Number(b?.yOffset) || 0;
   return Math.abs(aCenter - bCenter)
-    < authoredNodeHeight(a) / 2 + authoredNodeHeight(b) / 2 + clearance;
+    < authoredNodeHeight(a, workflow, sourceEvidence) / 2 + authoredNodeHeight(b, workflow, sourceEvidence) / 2 + clearance;
 }
 
-function createReadableLayout(workflow, layoutFeedback = {}) {
+function createReadableLayout(workflow, layoutFeedback = {}, sourceEvidence) {
+  const typography = workflowTypography(workflow);
   const columnCount = 6;
   const baselinePitch = 120;
   const columnStart = 94;
@@ -267,7 +266,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
       const leftNode = nodes[leftIndex];
       const rightNode = nodes[rightIndex];
       if (leftNode.lane !== rightNode.lane || leftNode.col === rightNode.col) continue;
-      if (!verticalIntervalsOverlap(leftNode, rightNode, 8)) continue;
+      if (!verticalIntervalsOverlap(leftNode, rightNode, 8, workflow, sourceEvidence)) continue;
       const fromNode = leftNode.col < rightNode.col ? leftNode : rightNode;
       const toNode = fromNode === leftNode ? rightNode : leftNode;
       // Unpinned drafts reserve a route corridor; absolute assertions keep
@@ -275,11 +274,11 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
       constraints.push({
         from: fromNode.col,
         to: toNode.col,
-        minimum: authoredNodeWidth(fromNode) / 2 + nodeClearance + authoredNodeWidth(toNode) / 2,
+        minimum: authoredNodeWidth(fromNode, workflow) / 2 + nodeClearance + authoredNodeWidth(toNode, workflow) / 2,
         contributors: [
           `rank ${fromNode.col}→${toNode.col} node width clearance`,
-          nodeWidthContributor(fromNode),
-          nodeWidthContributor(toNode),
+          nodeWidthContributor(fromNode, workflow),
+          nodeWidthContributor(toNode, workflow),
         ],
       });
     }
@@ -295,7 +294,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     const earlier = fromNode.col < toNode.col ? fromNode : toNode;
     const later = earlier === fromNode ? toNode : fromNode;
     const labeledDirectClearance = edge.label && !edge.labelAt
-      ? Math.max(28, workflowLabelWidth(edge.label) + 8)
+      ? Math.max(28, workflowLabelWidth(edge.label, typography) + 8)
       : 28;
     const directLabelExpansionCost = Math.max(0, labeledDirectClearance - 28);
     const canUseAutomaticLabelChannel = edge.label
@@ -311,18 +310,18 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     constraints.push({
       from: earlier.col,
       to: later.col,
-      minimum: authoredNodeWidth(earlier) / 2 + 28 + authoredNodeWidth(later) / 2,
+      minimum: authoredNodeWidth(earlier, workflow) / 2 + 28 + authoredNodeWidth(later, workflow) / 2,
       contributors: [
         `rank ${earlier.col}→${later.col} direct clearance`,
         `rank ${earlier.col}→${later.col} node width clearance`,
-        nodeWidthContributor(earlier),
-        nodeWidthContributor(later),
+        nodeWidthContributor(earlier, workflow),
+        nodeWidthContributor(later, workflow),
       ],
     });
     if (!preferLabelChannel && labeledDirectClearance > 28) {
-      const labelConstraintMinimum = authoredNodeWidth(earlier) / 2
+      const labelConstraintMinimum = authoredNodeWidth(earlier, workflow) / 2
         + labeledDirectClearance
-        + authoredNodeWidth(later) / 2;
+        + authoredNodeWidth(later, workflow) / 2;
       feedbackConstraints.push({
         from: earlier.col,
         to: later.col,
@@ -330,8 +329,8 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
         contributors: [
           `rank ${earlier.col}→${later.col} direct clearance`,
           `edge ${workflowEdgeName(edge)} label mask`,
-          nodeWidthContributor(earlier),
-          nodeWidthContributor(later),
+          nodeWidthContributor(earlier, workflow),
+          nodeWidthContributor(later, workflow),
         ],
       });
     }
@@ -340,7 +339,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   for (const phase of asArray(workflow.phases)) {
     if (!Number.isInteger(phase.fromCol) || !Number.isInteger(phase.toCol)
       || phase.fromCol < 0 || phase.fromCol > phase.toCol || phase.toCol >= columnCount) continue;
-    const minimumWidth = textUnits(phase.label) * 5.6 + 8;
+    const minimumWidth = textUnits(phase.label) * typography.headingAdvance + 8;
     if (phase.fromCol === phase.toCol) {
       if (phase.toCol < columnCount - 1) {
         constraints.push({
@@ -363,7 +362,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   for (const group of asArray(workflow.groups)) {
     if (!Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
       || group.fromCol < 0 || group.fromCol > group.toCol || group.toCol >= columnCount) continue;
-    const minimumWidth = textUnits(group.label) * 5.6 + 20;
+    const minimumWidth = textUnits(group.label) * typography.headingAdvance + 20;
     if (group.fromCol === group.toCol) {
       if (group.toCol < columnCount - 1) {
         constraints.push({
@@ -419,7 +418,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
 
   const firstRankNodes = nodes.filter((node) => node.col === 0);
   const firstExtent = firstRankNodes.reduce(
-    (maximum, node) => Math.max(maximum, authoredNodeWidth(node) / 2),
+    (maximum, node) => Math.max(maximum, authoredNodeWidth(node, workflow) / 2),
     46,
   );
   const leftInset = 8;
@@ -427,8 +426,8 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   if (leftShift) {
     for (let col = 0; col < colXs.length; col += 1) colXs[col] += leftShift;
     for (const node of firstRankNodes) {
-      if (Math.abs(authoredNodeWidth(node) / 2 - firstExtent) > 0.0001) continue;
-      for (const provenance of colProvenance) provenance.add(nodeWidthContributor(node));
+      if (Math.abs(authoredNodeWidth(node, workflow) / 2 - firstExtent) > 0.0001) continue;
+      for (const provenance of colProvenance) provenance.add(nodeWidthContributor(node, workflow));
     }
   }
 
@@ -451,7 +450,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     const prefix = lane.variant === 'exception'
       ? 'EX'
       : String(lanePosition + 1).padStart(2, '0');
-    const laneHeaderRight = 40 + 14 + textUnits(`${prefix} / ${lane.label}`) * 6.2;
+    const laneHeaderRight = 40 + 14 + textUnits(`${prefix} / ${lane.label}`) * typography.laneAdvance;
     const requiredShift = laneHeaderRight + 2 - colXs[node.col];
     if (requiredShift > laneHeaderShift + 0.0001) {
       laneHeaderShift = requiredShift;
@@ -474,14 +473,14 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     const toNode = nodesById.get(edge.to);
     if (!fromNode || !toNode) return maximum;
     const labelCenter = (colXs[fromNode.col] + colXs[toNode.col]) / 2;
-    const labelLeft = labelCenter - workflowLabelWidth(edge.label) / 2;
+    const labelLeft = labelCenter - workflowLabelWidth(edge.label, typography) / 2;
     return Math.max(maximum, 16 - labelLeft);
   }, 0);
   for (const phase of asArray(workflow.phases)) {
     if (!Number.isInteger(phase.fromCol) || !Number.isInteger(phase.toCol)) continue;
     const width = Math.max(
       colXs[phase.toCol] - colXs[phase.fromCol] + 92,
-      textUnits(phase.label) * 5.6 + 8,
+      textUnits(phase.label) * typography.headingAdvance + 8,
     );
     const left = phase.fromCol === phase.toCol
       ? colXs[phase.fromCol] - 46
@@ -501,10 +500,10 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   let rightmostContributors = new Set(colProvenance.at(-1));
   for (const node of nodes) {
     if (!Number.isInteger(node.col) || node.col < 0 || node.col >= columnCount) continue;
-    const nodeRight = colXs[node.col] + authoredNodeWidth(node) / 2;
+    const nodeRight = colXs[node.col] + authoredNodeWidth(node, workflow) / 2;
     const nodeContributors = new Set([
       ...colProvenance[node.col],
-      nodeWidthContributor(node),
+      nodeWidthContributor(node, workflow),
     ]);
     if (nodeRight > rightmost + 0.0001) {
       rightmost = nodeRight;
@@ -524,7 +523,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
       ...nodes
         .filter((node) => node.lane === group.lane
           && node.col >= group.fromCol && node.col <= group.toCol)
-        .map(nodeWidthContributor),
+        .map((node) => nodeWidthContributor(node, workflow)),
     ]);
     if (groupRight > rightmost + 0.0001) {
       rightmost = groupRight;
@@ -534,7 +533,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     }
   }
   const widestLaneLabel = asArray(workflow.lanes).reduce((widest, lane, index) => {
-    const width = textUnits(`${String(index + 1).padStart(2, '0')} / ${lane.label}`) * 6.2 + 30;
+    const width = textUnits(`${String(index + 1).padStart(2, '0')} / ${lane.label}`) * typography.laneAdvance + 30;
     return width > widest.width ? { width, lane } : widest;
   }, { width: 0, lane: null });
   const laneLabelWidth = widestLaneLabel.width;
@@ -558,8 +557,9 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     for (const node of nodes) {
       if (laneId !== undefined && node.lane !== laneId) continue;
       const yOffset = Number(node.yOffset) || 0;
-      const extent = authoredNodeHeight(node) / 2 + Math.abs(yOffset);
-      const contributor = `node ${node.id} height ${authoredNodeHeight(node)}px${yOffset ? ` with yOffset ${yOffset}px` : ''}`;
+      const height = authoredNodeHeight(node, workflow, sourceEvidence);
+      const extent = height / 2 + Math.abs(yOffset);
+      const contributor = `node ${node.id} height ${height}px${yOffset ? ` with yOffset ${yOffset}px` : ''}`;
       if (extent > maximum + 0.0001) {
         maximum = extent;
         contributors.clear();
@@ -571,12 +571,12 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     return { maximum, contributors };
   };
   const sharedVerticalExtent = verticalExtent();
-  const laneH = 30 + Math.max(74, Math.ceil(sharedVerticalExtent.maximum * 2 + 8));
+  const laneH = typography.laneTitleH + Math.max(74, Math.ceil(sharedVerticalExtent.maximum * 2 + 8));
   const independentLaneMeasurement = usesIndependentLaneMeasurement(workflow);
   const laneBaseHeights = asArray(workflow.lanes).map((lane) => {
     if (!independentLaneMeasurement) return laneH;
     const ownVerticalExtent = verticalExtent(lane.id);
-    const height = 30 + Math.max(74, Math.ceil(ownVerticalExtent.maximum * 2 + 8));
+    const height = typography.laneTitleH + Math.max(74, Math.ceil(ownVerticalExtent.maximum * 2 + 8));
     if (height > 104) {
       for (const contributor of ownVerticalExtent.contributors) heightContributors.add(contributor);
     }
@@ -590,13 +590,13 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     groupsByLane.set(group.lane, [...(groupsByLane.get(group.lane) || []), group]);
   }
   const groupLaneReserves = asArray(workflow.lanes).map((lane, laneIndex) => {
-    const baseContentH = laneBaseHeights[laneIndex] - 30;
-    let header = 0;
+    const baseContentH = laneBaseHeights[laneIndex] - typography.laneTitleH;
+    let header = groupsByLane.has(lane.id) ? Math.max(0, typography.groupAscent - 10) : 0;
     let footer = 0;
     for (const group of groupsByLane.get(lane.id) || []) {
       const bounds = readableGroupBounds(workflow, group, colXs);
       const labelLeft = bounds.x + 10;
-      const labelRight = labelLeft + textUnits(group.label) * 5.6;
+      const labelRight = labelLeft + textUnits(group.label) * typography.headingAdvance;
       for (const node of nodes) {
         if (node.lane !== group.lane
           || !Number.isInteger(node.col)
@@ -604,16 +604,17 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
           || node.col > group.toCol
           || node.col < 0
           || node.col >= colXs.length) continue;
-        const halfWidth = authoredNodeWidth(node) / 2;
+        const halfWidth = authoredNodeWidth(node, workflow) / 2;
         const nodeLeft = colXs[node.col] - halfWidth;
         const nodeRight = colXs[node.col] + halfWidth;
         const overlapsLabel = nodeRight > labelLeft && nodeLeft < labelRight;
-        const topOffset = (baseContentH - authoredNodeHeight(node)) / 2
+        const height = authoredNodeHeight(node, workflow, sourceEvidence);
+        const topOffset = (baseContentH - height) / 2
           + (Number(node.yOffset) || 0);
-        const minimumTopOffset = overlapsLabel ? 11 : 9;
+        const minimumTopOffset = overlapsLabel ? typography.groupInset - 2 + typography.groupHeight - typography.groupAscent + 1 : 9;
         header = Math.max(header, Math.ceil(minimumTopOffset - topOffset));
         const bottomMargin = baseContentH - GROUP_FRAME_BOTTOM_INSET
-          - topOffset - authoredNodeHeight(node);
+          - topOffset - height;
         footer = Math.max(footer, Math.ceil(1 - bottomMargin));
       }
     }
@@ -645,12 +646,12 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
   return {
     contract: 'readable-v2',
     laneX: 40,
-    laneY: 52,
+    laneY: typography.laneY,
     laneW,
     laneH,
     laneHeights,
     laneGap,
-    laneTitleH: 30,
+    laneTitleH: typography.laneTitleH,
     groupHeaderHeights,
     groupFooterHeights,
     colXs,
@@ -696,6 +697,23 @@ function stableValueKey(value) {
 
 function cloneWorkflow(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function preserveResolvedWorkflowBrands(workflow, candidate) {
+  const originals = new Map(asArray(workflow.nodes).map((node) => [node.id, node]));
+  for (const node of asArray(candidate.nodes)) {
+    const original = originals.get(node.id);
+    const mark = brandMarkFor(original);
+    if (!mark || stableValueKey(original.brand) !== stableValueKey(node.brand)) continue;
+    // 候选可能重新排序；按 ID 继承已解析品牌，仅复制其 Symbol，不恢复被删的作者字段。
+    for (const symbol of Object.getOwnPropertySymbols(original)) {
+      const descriptor = Object.getOwnPropertyDescriptor(original, symbol);
+      if (descriptor?.value !== mark) continue;
+      Object.defineProperty(node, symbol, descriptor);
+      break;
+    }
+  }
+  return candidate;
 }
 
 function compareWorkflowEdges(left, right) {
@@ -876,7 +894,7 @@ function resolveWorkflowLegendFootprint(workflow, layout) {
     LEGEND_CATALOG,
     presentLegendKinds,
   );
-  const legendFootprintOptions = { fontSize: 7, itemGap: 7 };
+  const legendFootprintOptions = workflowTypography(workflow).legend;
   const oneRowLegendFootprint = legendFootprint(workflowLegendEntries, {
     ...legendFootprintOptions,
     width: Number.MAX_SAFE_INTEGER,
@@ -916,7 +934,7 @@ function createWorkflowLaneGeometry(workflow, layout, legendExtraHeight, minimum
     + (layout.laneHeights?.reduce((total, height) => total + height, 0)
       ?? (workflow.lanes?.length || 1) * layout.laneH)
     + ((workflow.lanes?.length || 1) - 1) * layout.laneGap
-    + 124
+    + workflowTypography(workflow).bottomPadding
     + legendExtraHeight;
   const initialViewBox = workflow.meta?.viewBox || [minimumCanvasWidth, autoHeight];
   
@@ -964,7 +982,7 @@ function createWorkflowLaneGeometry(workflow, layout, legendExtraHeight, minimum
   }
 
   function legendY() {
-    return lastLaneBottom() + 44 + legendExtraHeight;
+    return lastLaneBottom() + workflowTypography(workflow).legendOffset + legendExtraHeight;
   }
 
   return {
@@ -984,11 +1002,11 @@ function createWorkflowLaneGeometry(workflow, layout, legendExtraHeight, minimum
 
 // Node measurement: the measured node map and the text-fit sizes every later
 // phase reads. Kept together so the compiler body reads as phases.
-function measureWorkflowNodes(workflow, layout, laneGeometry) {
+function measureWorkflowNodes(workflow, layout, laneGeometry, sourceEvidence) {
   const { laneHeight, laneGroupHeaderH, laneGroupFooterH, laneTop } = laneGeometry;
   function measureNode(node) {
-    const width = node.width || (workflow.schema_version === 2 && automaticNodeWidths.get(node)) || layout.nodeW;
-    const height = node.height || (node.tag ? 68 : layout.nodeH);
+    const width = authoredNodeWidth(node, workflow);
+    const { height } = workflowNodeSize({ ...node, width }, workflowTypography(workflow), Boolean(sourceEvidence?.nodes?.[node.id]?.length));
     const cx = layout.colXs[node.col];
     const groupHeaderH = laneGroupHeaderH(node.lane);
     const contentH = laneHeight(node.lane) - layout.laneTitleH
@@ -1007,14 +1025,7 @@ function measureWorkflowNodes(workflow, layout, laneGeometry) {
   }
 
   // Font sizes for this renderer's node text; the fitting geometry is shared.
-  const nodeTextFit = {
-    labelPreferred: 11,
-    labelMinimum: 9,
-    sublabelPreferred: 8,
-    sublabelMinimum: 6,
-    tagPreferred: 7,
-    tagMinimum: 6,
-  };
+  const nodeTextFit = workflowTypography(workflow);
 
   const nodes = new Map(asArray(workflow.nodes).map((node) => [node.id, measureNode(node)]));
 
@@ -1024,7 +1035,7 @@ function measureWorkflowNodes(workflow, layout, laneGeometry) {
 function workflowNodeTextProblems(node, nodeTextFit) {
   const problems = [];
   const estLabelW = textUnits(node.label) * 6.8;
-  if (estLabelW > node.width + 6) {
+  if (nodeTextFit.scale === 1 && estLabelW > node.width + 6) {
     problems.push(`Label "${node.label}" (~${Math.round(estLabelW)}px) is wider than component "${node.id}" (${node.width}px) — shorten the label or increase node.width.`);
   }
   const brandRailProblem = brandTopRailProblem(node, node.width, nodeTextFit.labelMinimum);
@@ -1071,6 +1082,7 @@ function createLegacyCapacityRepair({
   discoverFixes,
   resolvedQualityProfile,
   authoredQualityProfile,
+  sourceEvidence,
   nodeTextFit,
   acceptsFix,
 }) {
@@ -1093,7 +1105,7 @@ function createLegacyCapacityRepair({
     }
 
     function readableMigrationProvidesCapacity(from, to, requiredClearance) {
-      const readable = createReadableLayout({ ...workflow, schema_version: 2 });
+      const readable = createReadableLayout({ ...workflow, schema_version: 2 }, {}, sourceEvidence);
       const centerDistance = Math.abs(readable.colXs[to.col] - readable.colXs[from.col]);
       if (centerDistance - from.width / 2 - to.width / 2 < requiredClearance) return false;
       if (!discoverFixes) return false;
@@ -1101,14 +1113,16 @@ function createLegacyCapacityRepair({
       return withDiagnosticRecordingSuppressed(() => {
         const migrationQualityProfile = authoredQualityProfile;
         let planned = compileWorkflowWithFeedback({
-          workflow: intrinsicWorkflow(workflow),
+          workflow: preserveResolvedWorkflowBrands(workflow, intrinsicWorkflow(workflow)),
           qualityProfile: migrationQualityProfile,
+          sourceEvidence,
           discoverFixes: false,
         });
         if (!planned.ok) {
           planned = compileWorkflowWithFeedback({
-            workflow: planningWorkflow(workflow),
+            workflow: preserveResolvedWorkflowBrands(workflow, planningWorkflow(workflow)),
             qualityProfile: migrationQualityProfile,
+            sourceEvidence,
             discoverFixes: false,
           });
         }
@@ -1116,17 +1130,18 @@ function createLegacyCapacityRepair({
 
         let candidate;
         try {
-          candidate = createMappedWorkflowCandidate(
+          candidate = preserveResolvedWorkflowBrands(workflow, createMappedWorkflowCandidate(
             workflow,
             LEGACY_COLUMN_CENTERS,
             planned.receipt.columns,
-          ).document;
+          ).document);
         } catch {
           return false;
         }
         let compiled = compileWorkflowWithFeedback({
           workflow: candidate,
           qualityProfile: migrationQualityProfile,
+          sourceEvidence,
           discoverFixes: false,
         });
         const requiredViewBox = compiled.diagnostics?.length
@@ -1142,6 +1157,7 @@ function createLegacyCapacityRepair({
           compiled = compileWorkflowWithFeedback({
             workflow: candidate,
             qualityProfile: migrationQualityProfile,
+            sourceEvidence,
             discoverFixes: false,
           });
         }
@@ -1184,7 +1200,7 @@ function createLegacyCapacityRepair({
       const from = nodes.get(edge.from);
       const to = nodes.get(edge.to);
       if (!from || !to || from.lane !== to.lane || from.col === to.col) continue;
-      if (!verticalIntervalsOverlap(from, to, 8)) continue;
+      if (!verticalIntervalsOverlap(from, to, 8, workflow, sourceEvidence)) continue;
       const centerDistance = Math.abs(to.cx - from.cx);
       const actualSignedClearance = centerDistance - from.width / 2 - to.width / 2;
       const direct = !edge.via && ['auto', 'straight'].includes(edge.route || 'auto')
@@ -1412,6 +1428,7 @@ function compileWorkflowInternal({
     );
   }
   const workflow = canonicalReadableWorkflow(qualityResolvedWorkflow, widthOverrides);
+  const typography = workflowTypography(workflow);
   const semanticDiagnostics = semanticContractDiagnostics(workflow);
   if (semanticDiagnostics.length) {
     return compilerFailure(
@@ -1425,7 +1442,7 @@ function compileWorkflowInternal({
     edges: new Map(asArray(qualityResolvedWorkflow.edges).map((edge, index) => [edge, index])),
   };
   const layout = workflow.schema_version === 2
-    ? createReadableLayout(workflow, layoutFeedback)
+    ? createReadableLayout(workflow, layoutFeedback, sourceEvidence)
     : createLegacyLayout();
 
 const {
@@ -1459,8 +1476,7 @@ function workflowLegendLayout(obstacles = []) {
     x: 20,
     baselineY: legendY(),
     width: workflow.schema_version === 2 ? legendPackingWidth : viewBox[0] - 40,
-    fontSize: 7,
-    itemGap: 7,
+    ...typography.legend,
     minTitleY: lastLaneBottom() + 8,
     obstacles,
     unfit: workflow.meta?.legend === undefined ? 'hide' : 'error',
@@ -1472,6 +1488,7 @@ function workflowLegendRects() {
   if (!workflowLegendEntries.length) return [];
   const measured = measureLegend(workflowLegendEntries, workflowLegendLayout());
   if (!measured) return [];
+  if (typography.scale !== 1) return measured.rects;
   return [
     { kind: 'title', x: 20, y: measured.titleY - 10, width: 48, height: 14 },
     ...measured.entries.map((entry) => ({
@@ -1484,7 +1501,7 @@ function workflowLegendRects() {
   ];
 }
 
-const { measureNode, nodeTextFit, nodes } = measureWorkflowNodes(workflow, layout, laneGeometry);
+const { measureNode, nodeTextFit, nodes } = measureWorkflowNodes(workflow, layout, laneGeometry, sourceEvidence);
 
 // Obstacles of the routing search are queried through a uniform grid instead of
 // scanned: a candidate can only fail an obstacle its own box can reach.
@@ -1519,11 +1536,11 @@ function workflowCompositionFrames() {
       label: group.label,
       kind: 'group',
       x: span.x,
-      y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
+      y: laneTop(group.lane) + layout.laneTitleH + typography.groupInset,
       width: span.width,
       height: workflow.schema_version === 2
         ? laneHeight(group.lane) - layout.laneTitleH
-          - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET
+          - typography.groupInset - GROUP_FRAME_BOTTOM_INSET
         : layout.laneH - layout.laneTitleH - 16,
       radius: 9,
     });
@@ -1540,9 +1557,9 @@ function workflowSceneLabelObstacles() {
       kind: 'lane-header',
       id: lane.id,
       x: layout.laneX + 14,
-      y: laneTop(lane.id) + 12,
-      width: textUnits(label) * 6.2,
-      height: 14,
+      y: laneTop(lane.id) + typography.laneBaseline - typography.groupAscent,
+      width: textUnits(label) * typography.laneAdvance,
+      height: typography.groupHeight,
     });
   }
   for (const phase of asArray(workflow.phases)) {
@@ -1555,7 +1572,7 @@ function workflowSceneLabelObstacles() {
       x: span.x,
       y: 27,
       width: span.width,
-      height: 16,
+      height: typography.phaseHeight,
     });
   }
   for (const group of asArray(workflow.groups)) {
@@ -1563,15 +1580,15 @@ function workflowSceneLabelObstacles() {
       || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
       || group.fromCol < 0 || group.toCol >= layout.colXs.length || group.fromCol > group.toCol) continue;
     const span = groupSpan(group);
-    const frameY = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
+    const frameY = laneTop(group.lane) + layout.laneTitleH + typography.groupInset;
     const labelBaseline = frameY + GROUP_LABEL_BASELINE_OFFSET;
     obstacles.push({
       kind: 'group-label',
       id: group.id ?? null,
       x: span.x + 10,
-      y: labelBaseline - GROUP_LABEL_MASK_ASCENT,
-      width: textUnits(group.label) * 5.6,
-      height: GROUP_LABEL_MASK_H,
+      y: labelBaseline - typography.groupAscent,
+      width: textUnits(group.label) * typography.headingAdvance,
+      height: typography.groupHeight,
     });
   }
   return obstacles;
@@ -1592,11 +1609,13 @@ const edgeIndexByEdge = new Map(asArray(workflow.edges).map((edge, index) => [ed
       candidate[symbol] = workflow[symbol];
     }
     mutator(candidate);
+    preserveResolvedWorkflowBrands(workflow, candidate);
     const key = JSON.stringify(candidate);
     if (fixResults.has(key)) return fixResults.get(key);
     const accepted = withDiagnosticRecordingSuppressed(() => compileWorkflowWithFeedback({
       workflow: candidate,
       qualityProfile: resolvedQualityProfile,
+      sourceEvidence,
       discoverFixes: false,
     }).ok);
     if (fixResults.size < 128) fixResults.set(key, accepted);
@@ -1637,6 +1656,7 @@ const { enforceLegacyColumnCapacity } = createLegacyCapacityRepair({
   discoverFixes,
   resolvedQualityProfile,
   authoredQualityProfile,
+  sourceEvidence,
   nodeTextFit,
   acceptsFix,
 });
@@ -2788,7 +2808,7 @@ function validateWorkflow() {
     } else {
       phaseRanges.push(phase);
     }
-    const estLabelW = textUnits(phase.label) * 5.6;
+    const estLabelW = textUnits(phase.label) * typography.headingAdvance;
     const width = phaseSpan(phase).width;
     if (estLabelW > width + 8) {
       problems.push(`Phase label "${phase.label}" (~${Math.round(estLabelW)}px) is wider than its ${Math.round(width)}px span — shorten the label or widen the phase range.`);
@@ -3147,6 +3167,39 @@ function validateReadableInputsBeforeRouting() {
     sourceIndexes.nodes.get(node),
   ]));
 
+  if (typography.scale !== 1) {
+    for (const authoredNode of authoredNodes) {
+      const node = nodes.get(authoredNode.id);
+      const requiredWidth = Math.ceil(Math.max(
+        minimumNodeTextWidth(node.label, typography.labelMinimum) + 8 + (brandMarkFor(node) ? 48 : 0),
+        minimumNodeTextWidth(node.sublabel || '', typography.sublabelMinimum) + 8,
+        minimumNodeTextWidth(node.tag || '', typography.tagMinimum) + 8,
+      ));
+      const requiredHeight = workflowNodeMinimumHeight(
+        { ...node, width: Math.max(node.width, requiredWidth) }, typography, Boolean(sourceEvidence?.nodes?.[node.id]?.length),
+      );
+      if (node.width >= requiredWidth && node.height >= requiredHeight) continue;
+      const index = sourceIndexes.nodes.get(authoredNode);
+      const canonicalIndex = workflow.nodes.indexOf(authoredNode);
+      const supportedFixes = [];
+      if (acceptsFix((document) => {
+        document.nodes[canonicalIndex].width = Math.max(node.width, requiredWidth);
+        document.nodes[canonicalIndex].height = Math.max(node.height, requiredHeight);
+      })) supportedFixes.push(`set /nodes/${index}/width to ${Math.max(node.width, requiredWidth)} and /nodes/${index}/height to ${Math.max(node.height, requiredHeight)}`);
+      if ((authoredNode.width !== undefined || authoredNode.height !== undefined) && acceptsFix((document) => {
+        delete document.nodes[canonicalIndex].width;
+        delete document.nodes[canonicalIndex].height;
+      })) supportedFixes.push(`remove /nodes/${index}/width and /nodes/${index}/height to use measured automatic dimensions`);
+      fail({
+        code: 'workflow/typography-capacity', severity: 'error',
+        message: `Node "${node.id}" cannot fit typography_scale ${typography.scale} inside its authored ${node.width}×${node.height}px box; provide at least ${requiredWidth}×${requiredHeight}px or use automatic dimensions.`,
+        subject: { diagramType: 'workflow', node: node.id, path: `/nodes/${index}` },
+        evidence: { scale: typography.scale, width: node.width, height: node.height, requiredWidth, requiredHeight },
+        supportedFixes,
+      });
+    }
+  }
+
   const byLane = new Map();
   for (const authoredNode of authoredNodes) {
     const nodeIndex = sourceIndexes.nodes.get(authoredNode);
@@ -3281,7 +3334,7 @@ function phaseSpan(phase) {
     phase.fromCol,
     phase.toCol,
     46,
-    workflow.schema_version === 2 ? textUnits(phase.label) * 5.6 + 8 : 0,
+    workflow.schema_version === 2 ? textUnits(phase.label) * typography.headingAdvance + 8 : 0,
   );
 }
 
@@ -3450,8 +3503,8 @@ function routeMeetsHardRhythm(points) {
 function routeLabelClearsNodes(edge, points) {
   if (!edge.label || edge.labelAt) return true;
   const [lx, ly] = workflowEdgeLabelPoint(edge, points);
-  const width = workflowLabelWidth(edge.label);
-  const rect = { x: lx - width / 2, y: ly - 10, width, height: 14 };
+  const width = workflowLabelWidth(edge.label, typography);
+  const rect = { x: lx - width / 2, y: ly - typography.edgeAscent, width, height: typography.edgeHeight };
   // The comparison shrinks the rect by two pixels, so only nodes inside the
   // shrunk box can fail it.
   const queryBox = {
@@ -3468,8 +3521,8 @@ function routeLabelClearsNodes(edge, points) {
 function candidateLabelRect(edge, points) {
   if (!edge.label) return null;
   const [lx, ly] = workflowEdgeLabelPoint(edge, points);
-  const width = workflowLabelWidth(edge.label);
-  return { x: lx - width / 2, y: ly - 10, width, height: 14 };
+  const width = workflowLabelWidth(edge.label, typography);
+  return { x: lx - width / 2, y: ly - typography.edgeAscent, width, height: typography.edgeHeight };
 }
 
 function labelRouteClearanceDeficit(edge, points, threshold = 8) {
@@ -4402,7 +4455,7 @@ function workflowEdgeLabelPoint(edge, points) {
       if (incoming.length && incoming.every(value => value < x)) labelSide = 1;
       else if (incoming.length && incoming.every(value => value > x)) labelSide = -1;
     }
-    return [x + labelSide * (workflowLabelWidth(edge.label) / 2 + 8),
+    return [x + labelSide * (workflowLabelWidth(edge.label, typography) / 2 + 8),
       (points[0][1] + points[1][1]) / 2];
   }
   if (edge.labelAt || Number.isInteger(edge.labelSegment) || points.length <= 2) {
@@ -4430,16 +4483,17 @@ function workflowEdgeLabelPoint(edge, points) {
   // whole edge to manufacture a longer run. When the preferred run is that
   // short, use the next run that keeps the label clear of every node and
   // inside one lane, off the lane dividers, before giving up on it.
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(edge.label, typography);
   const clearOfNodes = ([lx, ly]) => {
-    const rect = { x: lx - width / 2, y: ly - 10, width, height: 14 };
+    const rect = { x: lx - width / 2, y: ly - typography.edgeAscent, width, height: typography.edgeHeight };
     return ![...nodes.values()].some((node) => rectsOverlap(rect, node, -2));
   };
   const insideOneLane = ([lx, ly]) => lx - width / 2 >= layout.laneX + 4
     && lx + width / 2 <= layout.laneX + layout.laneW - 4
     && asArray(workflow.lanes).some((lane, index) => {
     const top = laneTop(lane.id);
-    return ly - 10 >= top + 4 && ly + 4 <= top + laneHeight(index) - 4;
+    return ly - typography.edgeAscent >= top + 4
+      && ly - typography.edgeAscent + typography.edgeHeight <= top + laneHeight(index) - 4;
   });
   const preferred = pointOn(segments[0]?.index ?? 0);
   if (!edge.label || !segments[0]?.horizontal || segments[0].length >= width + 8
@@ -4492,7 +4546,7 @@ function allocatedPortSides(edge) {
 const automaticPorts = new Map([...automaticPortSpread(portRelations, nodes, {
   spacingFor: (left, right) => portOriginals.has(left) || portOriginals.has(right)
     ? Math.max(HARD_ROUTE_RHYTHM.interior,
-      (workflowLabelWidth(left.label) + workflowLabelWidth(right.label)) / 2 + 8) : 14,
+      (workflowLabelWidth(left.label, typography) + workflowLabelWidth(right.label, typography)) / 2 + 8) : 14,
   sideFor: (edge, endpoint) => allocatedPortSides(portOriginals.get(edge) || edge)[endpoint === 'source' ? 'fromSide' : 'toSide'],
 })].map(([edge, ports]) => [portOriginals.get(edge) || edge, ports]));
 
@@ -5181,15 +5235,15 @@ function labelRectFor(edge, relationIndex) {
   const cached = LABEL_RECT_CACHE.get(routed);
   if (cached) return cached;
   const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(edge.label, typography);
   const rect = {
     relation: edge,
     relationIndex,
     label: edge.label,
     x: lx - width / 2,
-    y: ly - 10,
+    y: ly - typography.edgeAscent,
     width,
-    height: 14,
+    height: typography.edgeHeight,
     lx,
     ly,
   };
@@ -5243,7 +5297,7 @@ function measuredContentBounds() {
     if (!Number.isInteger(phase.fromCol) || !Number.isInteger(phase.toCol)
       || phase.fromCol < 0 || phase.toCol >= layout.colXs.length || phase.fromCol > phase.toCol) continue;
     const span = phaseSpan(phase);
-    includeRect({ x: span.x, y: 27, width: span.width, height: 16 }, `phase ${phase.id}`);
+    includeRect({ x: span.x, y: 27, width: span.width, height: typography.phaseHeight }, `phase ${phase.id}`);
   }
   for (const group of asArray(workflow.groups)) {
     if (!laneIndex.has(group.lane) || !Number.isInteger(group.fromCol) || !Number.isInteger(group.toCol)
@@ -5251,21 +5305,21 @@ function measuredContentBounds() {
     const span = groupSpan(group);
     includeRect({
       x: span.x,
-      y: laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET,
+      y: laneTop(group.lane) + layout.laneTitleH + typography.groupInset,
       width: span.width,
       height: workflow.schema_version === 2
         ? laneHeight(group.lane) - layout.laneTitleH
-          - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET
+          - typography.groupInset - GROUP_FRAME_BOTTOM_INSET
         : layout.laneH - layout.laneTitleH - 16,
     }, `group ${group.id}`);
     if (workflow.schema_version === 2) {
-      const frameY = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
+      const frameY = laneTop(group.lane) + layout.laneTitleH + typography.groupInset;
       const labelBaseline = frameY + GROUP_LABEL_BASELINE_OFFSET;
       includeRect({
         x: span.x + 10,
-        y: labelBaseline - GROUP_LABEL_MASK_ASCENT,
-        width: textUnits(group.label) * 5.6,
-        height: GROUP_LABEL_MASK_H,
+        y: labelBaseline - typography.groupAscent,
+        width: textUnits(group.label) * typography.headingAdvance,
+        height: typography.groupHeight,
       }, `group ${group.id} label`);
     }
   }
@@ -5365,7 +5419,7 @@ function renderLane(lane, index) {
   const labelClass = lane.variant === 'exception' ? 't-security' : 't-muted';
   const prefix = lane.variant === 'exception' ? 'EX' : String(index + 1).padStart(2, '0');
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-${index}" x="${layout.laneX}" y="${y}" width="${layout.laneW}" height="${height}" rx="10" class="c-lane" stroke-width="1"/>${exception}
-        <text x="${layout.laneX + 14}" y="${y + 22}" class="${labelClass}" font-size="10" font-weight="600">${prefix} / ${esc(lane.label)}</text>`;
+        <text x="${layout.laneX + 14}" y="${y + typography.laneBaseline}" class="${labelClass}" font-size="${typography.laneFont}" font-weight="600">${prefix} / ${esc(lane.label)}</text>`;
 }
 
 function renderPhase(phase) {
@@ -5374,26 +5428,26 @@ function renderPhase(phase) {
   const [lineClass] = arrowClassMap[phase.variant || 'default'] || arrowClassMap.default;
   // A hairline spans the phase's columns; only the label is masked, so the
   // span itself stays visible.
-  const labelW = Math.min(span.width - 12, workflowLabelWidth(phase.label) + 10);
+  const labelW = Math.min(span.width - 12, workflowLabelWidth(phase.label, typography) + 10);
   const x1 = span.x + 8;
   const x2 = span.x + span.width - 8;
-  return `        <path d="M ${x1} 35 H ${x2}" class="${lineClass} phase-rule" stroke-width="1" stroke-linecap="round" fill="none"/>
-        <rect x="${span.cx - labelW / 2}" y="27" width="${labelW}" height="16" rx="8" class="c-mask phase-chip"/>
-        <text x="${span.cx}" y="38.5" class="${accent}" font-size="8" font-weight="600" text-anchor="middle" letter-spacing=".04em">${esc(phase.label)}</text>`;
+  return `        <path d="M ${x1} ${typography.phaseLineY} H ${x2}" class="${lineClass} phase-rule" stroke-width="1" stroke-linecap="round" fill="none"/>
+        <rect x="${span.cx - labelW / 2}" y="27" width="${labelW}" height="${typography.phaseHeight}" rx="8" class="c-mask phase-chip"/>
+        <text x="${span.cx}" y="${27 + 11.5 * typography.scale}" class="${accent}" font-size="${typography.phaseFont}" font-weight="600" text-anchor="middle" letter-spacing=".04em">${esc(phase.label)}</text>`;
 }
 
 function renderGroup(group, index) {
   const span = groupSpan(group);
-  const y = laneTop(group.lane) + layout.laneTitleH + GROUP_FRAME_TOP_INSET;
+  const y = laneTop(group.lane) + layout.laneTitleH + typography.groupInset;
   const height = workflow.schema_version === 2
     ? laneHeight(group.lane) - layout.laneTitleH
-      - GROUP_FRAME_TOP_INSET - GROUP_FRAME_BOTTOM_INSET
+      - typography.groupInset - GROUP_FRAME_BOTTOM_INSET
     : layout.laneH - layout.laneTitleH - 16;
   const cls = group.variant === 'security' ? 'c-security-group' : 'c-lane';
   const textClass = variantAccent(group.variant);
   const labelY = workflow.schema_version === 2 ? y + GROUP_LABEL_BASELINE_OFFSET : y + 14;
   return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="group" data-composition-frame-id="group-${index}" x="${span.x}" y="${y}" width="${span.width}" height="${height}" rx="9" class="${cls}" stroke-width="1"/>
-        <text x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="7" font-weight="600">${esc(group.label)}</text>`;
+        <text x="${span.x + 10}" y="${labelY}" class="${textClass}" font-size="${typography.groupFont}" font-weight="600">${esc(group.label)}</text>`;
 }
 
 // Automatic showcase canvases stop sublabel shrinking at the desktop floor.
@@ -5448,15 +5502,9 @@ function renderNode(node) {
   const fill = componentFill[node.type] || 'c-external';
   const accent = componentText[node.type] || 't-muted';
   const hasSub = node.sublabel != null && node.sublabel !== '';
-  const labelFontSize = fittedNodeFontSize(node.label, brandLabelFitWidth(node, node.width), nodeTextFit.labelPreferred, nodeTextFit.labelMinimum);
-  const sublabelMinimum = Math.min(nodeTextFit.sublabelPreferred, readableSublabelMinimum());
-  const sublabelFontSize = fittedNodeFontSize(node.sublabel, node.width, nodeTextFit.sublabelPreferred, sublabelMinimum);
-  const tagFontSize = fittedNodeFontSize(node.tag, node.width, nodeTextFit.tagPreferred, nodeTextFit.tagMinimum);
-  const textRows = [{ text: node.label, font: labelFontSize, y: 21 }];
-  if (hasSub) textRows.push({ text: node.sublabel, font: sublabelFontSize, y: 38 });
-  if (node.tag) textRows.push({ text: node.tag, font: tagFontSize, y: node.height - 12 });
-  const labelLayout = nodeLabelLayout({ width: node.width, height: node.height, rows: textRows,
-    brand: Boolean(brandMarkFor(node)), source: Boolean(sourceEvidence?.nodes?.[node.id]?.length) });
+  const { labelFont: labelFontSize, sublabelFont: sublabelFontSize, tagFont: tagFontSize, layout: labelLayout } = workflowNodeText(
+    node, { ...typography, sublabelMinimum: Math.min(typography.sublabelPreferred, readableSublabelMinimum()) }, Boolean(sourceEvidence?.nodes?.[node.id]?.length),
+  );
   const sub = hasSub
     ? `\n          <text data-detail="context" x="${node.cx}" y="${node.y + labelLayout.ys[1]}" class="t-muted" font-size="${sublabelFontSize}" text-anchor="middle">${esc(node.sublabel)}</text>`
     : '';
@@ -5502,10 +5550,10 @@ function renderEdgeLabel(edge, index) {
   if (!edge.label) return '';
   const routed = pathFor(edge);
   const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
-  const labelW = workflowLabelWidth(edge.label);
+  const labelW = workflowLabelWidth(edge.label, typography);
   return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}>
-          <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
+          <rect x="${lx - labelW / 2}" y="${ly - typography.edgeAscent}" width="${labelW}" height="${typography.edgeHeight}" rx="3" class="c-mask"/>
+          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="${typography.edgeFont}" text-anchor="middle">${esc(edge.label)}</text>
         </g>`;
 }
 
@@ -5611,8 +5659,17 @@ function measuredPlanReceipt(diagnostics, requiredFrame) {
     labels: workflow.edges.flatMap((edge) => {
       if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) return [];
       const { lx: x, ly: y } = LABEL_RECT_CACHE.get(pathCache.get(edge));
-      return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label), height: 14 }];
+      return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label, typography), height: typography.edgeHeight }];
     }),
+    ...(typography.scale !== 1 ? { typography: {
+      scale: typography.scale,
+      nodes: [...nodes.values()].map((node) => {
+        const text = workflowNodeText(node, typography, Boolean(sourceEvidence?.nodes?.[node.id]?.length));
+        return { id: node.id, label: text.labelFont,
+          ...(node.sublabel ? { sublabel: text.sublabelFont } : {}),
+          ...(node.tag ? { tag: text.tagFont } : {}) };
+      }),
+    } } : {}),
     diagnostics,
   };
 }
@@ -5913,7 +5970,7 @@ function compileWorkflowWithFeedback({ workflow, qualityProfile, sourceEvidence,
       changed = true;
     }
     if (!changed) break;
-    repairWorkflow ||= cloneWorkflow(workflow);
+    repairWorkflow ||= preserveResolvedWorkflowBrands(workflow, cloneWorkflow(workflow));
     result = compileWithLayoutFeedback({ ...options, workflow: repairWorkflow, widthOverrides });
   }
   return result;
@@ -5938,7 +5995,7 @@ function addVerifiedCrossingRepair(result, options) {
     const key = JSON.stringify(removals);
     if (!removals.length || seen.has(key)) continue;
     seen.add(key);
-    const candidate = cloneWorkflow(workflow);
+    const candidate = preserveResolvedWorkflowBrands(workflow, cloneWorkflow(workflow));
     for (const symbol of Object.getOwnPropertySymbols(workflow)) candidate[symbol] = workflow[symbol];
     for (const { index, field } of removals) delete candidate.edges[index][field];
     const verified = withDiagnosticRecordingSuppressed(() => compileWorkflowWithFeedback({
@@ -5968,7 +6025,7 @@ function addVerifiedPlacementRepair(result, options) {
   const proposal = proposeWorkflowPlacement(workflow);
   if (!proposal.eligible || !proposal.changes.length) return result;
   const verified = withDiagnosticRecordingSuppressed(() => compileWorkflowWithFeedback({
-    ...options, workflow: proposal.proposed, discoverFixes: false,
+    ...options, workflow: preserveResolvedWorkflowBrands(workflow, proposal.proposed), discoverFixes: false,
   }));
   if (!verified.ok) return result;
   const diagnostic = errors[0];

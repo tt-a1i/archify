@@ -1,0 +1,1029 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/workflow-typography.test.mjs test/workflow-placed-label-evidence.test.mjs test/workflow-vertical-label.test.mjs test/workflow-controlled-order.test.mjs test/workflow-routing-clarity.test.mjs test/workflow-compiler-hard-contract.test.mjs
+
+Repository tests: 6 files, concurrency 4
+TAP version 13
+# Subtest: readable-v2 auto routing selects a feasible corridor around a same-lane obstacle
+ok 1 - readable-v2 auto routing selects a feasible corridor around a same-lane obstacle
+  ---
+  duration_ms: 24.278042
+  type: 'test'
+  ...
+# Subtest: readable-v2 evaluates automatic endpoint sides against the complete labeled route
+ok 2 - readable-v2 evaluates automatic endpoint sides against the complete labeled route
+  ---
+  duration_ms: 17.031708
+  type: 'test'
+  ...
+# Subtest: readable-v2 retries automatic endpoint sides against already planned routes
+ok 3 - readable-v2 retries automatic endpoint sides against already planned routes
+  ---
+  duration_ms: 43.620459
+  type: 'test'
+  ...
+# Subtest: readable-v2 expands an outside corridor for deterministic labeled fan-out
+ok 4 - readable-v2 expands an outside corridor for deterministic labeled fan-out
+  ---
+  duration_ms: 197.339667
+  type: 'test'
+  ...
+# Subtest: readable-v2 expands an outside corridor without moving the lane geometry
+ok 5 - readable-v2 expands an outside corridor without moving the lane geometry
+  ---
+  duration_ms: 96.884208
+  type: 'test'
+  ...
+# Subtest: readable-v2 may expand an unlabeled edge around already placed labels
+ok 6 - readable-v2 may expand an unlabeled edge around already placed labels
+  ---
+  duration_ms: 191.057084
+  type: 'test'
+  ...
+# Subtest: readable-v2 feeds a measured outside-channel constraint back into layout
+ok 7 - readable-v2 feeds a measured outside-channel constraint back into layout
+  ---
+  duration_ms: 12.215417
+  type: 'test'
+  ...
+# Subtest: readable-v2 feeds a measured adjacent-rank gutter back into layout
+ok 8 - readable-v2 feeds a measured adjacent-rank gutter back into layout
+  ---
+  duration_ms: 0.646041
+  type: 'test'
+  ...
+# Subtest: readable-v2 feeds a measured lane gap back into layout
+ok 9 - readable-v2 feeds a measured lane gap back into layout
+  ---
+  duration_ms: 1.671208
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects duplicate authored via points with a typed explicit-pin diagnostic
+ok 10 - readable-v2 rejects duplicate authored via points with a typed explicit-pin diagnostic
+  ---
+  duration_ms: 2.3045
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects diagonal authored via geometry with a typed explicit-pin diagnostic
+ok 11 - readable-v2 rejects diagonal authored via geometry with a typed explicit-pin diagnostic
+  ---
+  duration_ms: 6.056917
+  type: 'test'
+  ...
+# Subtest: readable-v2 duplicate evidence excludes a compatible channel assertion
+ok 12 - readable-v2 duplicate evidence excludes a compatible channel assertion
+  ---
+  duration_ms: 1.239625
+  type: 'test'
+  ...
+# Subtest: readable-v2 obstacle evidence excludes a compatible channel assertion
+ok 13 - readable-v2 obstacle evidence excludes a compatible channel assertion
+  ---
+  duration_ms: 1.5915
+  type: 'test'
+  ...
+# Subtest: readable-v2 infers omitted endpoint sides around an authored via
+ok 14 - readable-v2 infers omitted endpoint sides around an authored via
+  ---
+  duration_ms: 4.310625
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports an infeasible authored target side with its verified single-pin repair
+ok 15 - readable-v2 reports an infeasible authored target side with its verified single-pin repair
+  ---
+  duration_ms: 12.656625
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports via and fromSide as a minimal conflict with two verified repairs
+ok 16 - readable-v2 reports via and fromSide as a minimal conflict with two verified repairs
+  ---
+  duration_ms: 1.819
+  type: 'test'
+  ...
+# Subtest: readable-v2 infers endpoint sides for auto channel pins
+ok 17 - readable-v2 infers endpoint sides for auto channel pins
+  ---
+  duration_ms: 1.659917
+  type: 'test'
+  ...
+# Subtest: readable-v2 treats an omitted preset side as a solver choice
+ok 18 - readable-v2 treats an omitted preset side as a solver choice
+  ---
+  duration_ms: 3.413208
+  type: 'test'
+  ...
+# Subtest: readable-v2 treats an infeasible route preset as a candidate-family conflict, not a coordinate pin
+ok 19 - readable-v2 treats an infeasible route preset as a candidate-family conflict, not a coordinate pin
+  ---
+  duration_ms: 11.596125
+  type: 'test'
+  ...
+# Subtest: readable-v2 verifies preset repairs with the public straight-route reservation
+ok 20 - readable-v2 verifies preset repairs with the public straight-route reservation
+  ---
+  duration_ms: 97.535667
+  type: 'test'
+  ...
+# Subtest: a preset that crosses a node reports the blocked segment before a label-only repair
+ok 21 - a preset that crosses a node reports the blocked segment before a label-only repair
+  ---
+  duration_ms: 7.253541
+  type: 'test'
+  ...
+# Subtest: readable-v2 preset label repair preserves the explicit route and semantic content (standard)
+ok 22 - readable-v2 preset label repair preserves the explicit route and semantic content (standard)
+  ---
+  duration_ms: 2.805042
+  type: 'test'
+  ...
+# Subtest: readable-v2 preset label repair preserves the explicit route and semantic content (showcase)
+ok 23 - readable-v2 preset label repair preserves the explicit route and semantic content (showcase)
+  ---
+  duration_ms: 2.028084
+  type: 'test'
+  ...
+# Subtest: readable-v2 preset label repair requires a complete same-profile pass
+ok 24 - readable-v2 preset label repair requires a complete same-profile pass
+  ---
+  duration_ms: 3.984458
+  type: 'test'
+  ...
+# Subtest: readable-v2 preset label repair respects authored zero-valued controls
+ok 25 - readable-v2 preset label repair respects authored zero-valued controls
+  ---
+  duration_ms: 5.611917
+  type: 'test'
+  ...
+# Subtest: workflow validate JSON exposes an executable preset label repair
+ok 26 - workflow validate JSON exposes an executable preset label repair
+  ---
+  duration_ms: 444.377459
+  type: 'test'
+  ...
+# Subtest: readable-v2 never accepts a same-lane drop through the preset-only fallback
+ok 27 - readable-v2 never accepts a same-lane drop through the preset-only fallback
+  ---
+  duration_ms: 7.40375
+  type: 'test'
+  ...
+# Subtest: readable-v2 preset diagnostics identify the blocked node rather than blaming segment rhythm
+ok 28 - readable-v2 preset diagnostics identify the blocked node rather than blaming segment rhythm
+  ---
+  duration_ms: 4.272792
+  type: 'test'
+  ...
+# Subtest: readable-v2 preset diagnostics measure the segment that actually violates rhythm
+ok 29 - readable-v2 preset diagnostics measure the segment that actually violates rhythm
+  ---
+  duration_ms: 1.0835
+  type: 'test'
+  ...
+# Subtest: readable-v2 direct rhythm rejection and acceptance agree at the 28px boundary
+ok 30 - readable-v2 direct rhythm rejection and acceptance agree at the 28px boundary
+  ---
+  duration_ms: 2.26275
+  type: 'test'
+  ...
+# Subtest: readable-v2 endpoint rhythm runs before the separate preset-family rejection
+ok 31 - readable-v2 endpoint rhythm runs before the separate preset-family rejection
+  ---
+  duration_ms: 6.125416
+  type: 'test'
+  ...
+# Subtest: readable-v2 interior rhythm precedes node clearance and accepts a cleared 16px segment
+ok 32 - readable-v2 interior rhythm precedes node clearance and accepts a cleared 16px segment
+  ---
+  duration_ms: 4.666958
+  type: 'test'
+  ...
+# Subtest: readable-v2 never silently ignores coordinate pins that conflict with a route preset
+ok 33 - readable-v2 never silently ignores coordinate pins that conflict with a route preset
+  ---
+  duration_ms: 7.869417
+  type: 'test'
+  ...
+# Subtest: readable-v2 preset compatibility reports both authored causal paths and verified repairs
+ok 34 - readable-v2 preset compatibility reports both authored causal paths and verified repairs
+  ---
+  duration_ms: 1.550208
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects a raw via that does not belong to its route preset family
+ok 35 - readable-v2 rejects a raw via that does not belong to its route preset family
+  ---
+  duration_ms: 0.964959
+  type: 'test'
+  ...
+# Subtest: readable-v2 preserves a compatible straight via without normalization
+ok 36 - readable-v2 preserves a compatible straight via without normalization
+  ---
+  duration_ms: 0.263334
+  type: 'test'
+  ...
+# Subtest: readable-v2 preserves a compatible drop via without normalization
+ok 37 - readable-v2 preserves a compatible drop via without normalization
+  ---
+  duration_ms: 0.242333
+  type: 'test'
+  ...
+# Subtest: readable-v2 preserves a compatible outside-right via without normalization
+ok 38 - readable-v2 preserves a compatible outside-right via without normalization
+  ---
+  duration_ms: 0.216416
+  type: 'test'
+  ...
+# Subtest: readable-v2 preserves a compatible return-left via without normalization
+ok 39 - readable-v2 preserves a compatible return-left via without normalization
+  ---
+  duration_ms: 0.208042
+  type: 'test'
+  ...
+# Subtest: readable-v2 preserves a compatible bottom-channel via without normalization
+ok 40 - readable-v2 preserves a compatible bottom-channel via without normalization
+  ---
+  duration_ms: 0.201708
+  type: 'test'
+  ...
+# Subtest: readable-v2 preserves a compatible up-channel via without normalization
+ok 41 - readable-v2 preserves a compatible up-channel via without normalization
+  ---
+  duration_ms: 0.262792
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps a compatible channel pin authoritative inside its route preset
+ok 42 - readable-v2 keeps a compatible channel pin authoritative inside its route preset
+  ---
+  duration_ms: 0.275834
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps channelX authoritative for outside-right
+ok 43 - readable-v2 keeps channelX authoritative for outside-right
+  ---
+  duration_ms: 0.242
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps channelX authoritative for return-left
+ok 44 - readable-v2 keeps channelX authoritative for return-left
+  ---
+  duration_ms: 0.220417
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps channelY authoritative for bottom-channel
+ok 45 - readable-v2 keeps channelY authoritative for bottom-channel
+  ---
+  duration_ms: 0.202333
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps channelY authoritative for up-channel
+ok 46 - readable-v2 keeps channelY authoritative for up-channel
+  ---
+  duration_ms: 0.213125
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects outside-right when its channel belongs to another route family
+ok 47 - readable-v2 rejects outside-right when its channel belongs to another route family
+  ---
+  duration_ms: 1.021042
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects return-left when its channel belongs to another route family
+ok 48 - readable-v2 rejects return-left when its channel belongs to another route family
+  ---
+  duration_ms: 1.4285
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects bottom-channel when its channel belongs to another route family
+ok 49 - readable-v2 rejects bottom-channel when its channel belongs to another route family
+  ---
+  duration_ms: 2.127875
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects up-channel when its channel belongs to another route family
+ok 50 - readable-v2 rejects up-channel when its channel belongs to another route family
+  ---
+  duration_ms: 1.129042
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects drop when its channel belongs to another route family
+ok 51 - readable-v2 rejects drop when its channel belongs to another route family
+  ---
+  duration_ms: 0.9035
+  type: 'test'
+  ...
+# Subtest: readable-v2 treats channels beside via as assertions over the authored path
+ok 52 - readable-v2 treats channels beside via as assertions over the authored path
+  ---
+  duration_ms: 3.190333
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports via and channelY as a minimal assertion conflict with two verified repairs
+ok 53 - readable-v2 reports via and channelY as a minimal assertion conflict with two verified repairs
+  ---
+  duration_ms: 0.976625
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports conflicts between absolute label and route pins as typed geometry
+ok 54 - readable-v2 reports conflicts between absolute label and route pins as typed geometry
+  ---
+  duration_ms: 47.029667
+  type: 'test'
+  ...
+# Subtest: readable-v2 derives label-route pins from joint verified removals when route plans first
+ok 55 - readable-v2 derives label-route pins from joint verified removals when route plans first
+  ---
+  duration_ms: 79.057209
+  type: 'test'
+  ...
+# Subtest: readable-v2 derives both causal pins when label plans before the authored route
+ok 56 - readable-v2 derives both causal pins when label plans before the authored route
+  ---
+  duration_ms: 88.248667
+  type: 'test'
+  ...
+# Subtest: readable-v2 classifies an authored labelAt colliding with an earlier automatic route
+ok 57 - readable-v2 classifies an authored labelAt colliding with an earlier automatic route
+  ---
+  duration_ms: 81.904958
+  type: 'test'
+  ...
+# Subtest: readable-v2 classifies an automatic label colliding with a later authored route
+ok 58 - readable-v2 classifies an automatic label colliding with a later authored route
+  ---
+  duration_ms: 15.386167
+  type: 'test'
+  ...
+# Subtest: readable-v2 classifies an authored labelAt colliding with an earlier automatic label
+ok 59 - readable-v2 classifies an authored labelAt colliding with an earlier automatic label
+  ---
+  duration_ms: 89.751208
+  type: 'test'
+  ...
+# Subtest: readable-v2 derives the causal labelAt from joint verified label removals
+ok 60 - readable-v2 derives the causal labelAt from joint verified label removals
+  ---
+  duration_ms: 87.033166
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports conflicts between two absolute label pins without deleting semantics
+ok 61 - readable-v2 reports conflicts between two absolute label pins without deleting semantics
+  ---
+  duration_ms: 9.193083
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports showcase crossings between two absolute route pins
+ok 62 - readable-v2 reports showcase crossings between two absolute route pins
+  ---
+  duration_ms: 10.348583
+  type: 'test'
+  ...
+# Subtest: readable-v2 catches an automatic route crossing exactly at an authored straight-through via
+ok 63 - readable-v2 catches an automatic route crossing exactly at an authored straight-through via
+  ---
+  duration_ms: 11.211875
+  type: 'test'
+  ...
+# Subtest: readable-v2 catches two pinned routes crossing exactly at their straight-through vias
+ok 64 - readable-v2 catches two pinned routes crossing exactly at their straight-through vias
+  ---
+  duration_ms: 12.632209
+  type: 'test'
+  ...
+# Subtest: readable-v2 classifies a side-only authored route crossing an automatic route
+ok 65 - readable-v2 classifies a side-only authored route crossing an automatic route
+  ---
+  duration_ms: 11.489542
+  type: 'test'
+  ...
+# Subtest: readable-v2 classifies a side-only authored route sharing an automatic corridor
+ok 66 - readable-v2 classifies a side-only authored route sharing an automatic corridor
+  ---
+  duration_ms: 12.998875
+  type: 'test'
+  ...
+# Subtest: readable-v2 routes an automatic edge clear of a preset channel
+ok 67 - readable-v2 routes an automatic edge clear of a preset channel
+  ---
+  duration_ms: 3.203709
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports unknown edge endpoints with a precise semantic diagnostic
+ok 68 - readable-v2 reports unknown edge endpoints with a precise semantic diagnostic
+  ---
+  duration_ms: 5.832208
+  type: 'test'
+  ...
+# Subtest: unknown endpoint diagnostics retain the authored edge pointer after canonical sorting
+ok 69 - unknown endpoint diagnostics retain the authored edge pointer after canonical sorting
+  ---
+  duration_ms: 8.482875
+  type: 'test'
+  ...
+# Subtest: unknown-endpoint supportedFixes list the complete verified edit set and recompile verbatim
+ok 70 - unknown-endpoint supportedFixes list the complete verified edit set and recompile verbatim
+  ---
+  duration_ms: 26.810792
+  type: 'test'
+  ...
+# Subtest: unknown node lane diagnostics retain the authored node pointer after canonical sorting
+ok 71 - unknown node lane diagnostics retain the authored node pointer after canonical sorting
+  ---
+  duration_ms: 0.552416
+  type: 'test'
+  ...
+# Subtest: duplicate lane id diagnostics name both authored source pointers
+ok 72 - duplicate lane id diagnostics name both authored source pointers
+  ---
+  duration_ms: 0.363458
+  type: 'test'
+  ...
+# Subtest: duplicate node id diagnostics name both authored source pointers
+ok 73 - duplicate node id diagnostics name both authored source pointers
+  ---
+  duration_ms: 0.339
+  type: 'test'
+  ...
+# Subtest: showcase rejects nested authored outside-right corridors while standard permits them
+ok 74 - showcase rejects nested authored outside-right corridors while standard permits them
+  ---
+  duration_ms: 4.15275
+  type: 'test'
+  ...
+# Subtest: an explicit standard profile overrides an ambient showcase profile
+ok 75 - an explicit standard profile overrides an ambient showcase profile
+  ---
+  duration_ms: 0.478208
+  type: 'test'
+  ...
+# Subtest: failed automatic routes retain diagnostics when an earlier route has a label pin
+ok 76 - failed automatic routes retain diagnostics when an earlier route has a label pin
+  ---
+  duration_ms: 14.516667
+  type: 'test'
+  ...
+# Subtest: readable-v2 never advertises an unverified blocking-node repair
+ok 77 - readable-v2 never advertises an unverified blocking-node repair
+  ---
+  duration_ms: 2.556583
+  type: 'test'
+  ...
+# Subtest: standard profile rejects a 4px endpoint stub as a hard route constraint
+ok 78 - standard profile rejects a 4px endpoint stub as a hard route constraint
+  ---
+  duration_ms: 5.89375
+  type: 'test'
+  ...
+# Subtest: standard profile rejects a 12px interior turn segment as a hard route constraint
+ok 79 - standard profile rejects a 12px interior turn segment as a hard route constraint
+  ---
+  duration_ms: 2.887833
+  type: 'test'
+  ...
+# Subtest: readable-v2 reports collapsed channel pins without escaping the compiler boundary
+ok 80 - readable-v2 reports collapsed channel pins without escaping the compiler boundary
+  ---
+  duration_ms: 7.650667
+  type: 'test'
+  ...
+# Subtest: parallel anonymous edges remain byte-deterministic when their input order changes
+ok 81 - parallel anonymous edges remain byte-deterministic when their input order changes
+  ---
+  duration_ms: 18.769666
+  type: 'test'
+  ...
+# Subtest: compileWorkflow returns a diagnostic result instead of throwing when meta is absent
+ok 82 - compileWorkflow returns a diagnostic result instead of throwing when meta is absent
+  ---
+  duration_ms: 1.078958
+  type: 'test'
+  ...
+# Subtest: compileWorkflow returns typed failures for non-document public inputs without throwing
+ok 83 - compileWorkflow returns typed failures for non-document public inputs without throwing
+  ---
+  duration_ms: 0.220916
+  type: 'test'
+  ...
+# Subtest: compileWorkflow enforces the canonical workflow schema at its public boundary
+ok 84 - compileWorkflow enforces the canonical workflow schema at its public boundary
+  ---
+  duration_ms: 0.594209
+  type: 'test'
+  ...
+# Subtest: compileWorkflow applies the shared cross-collection contracts the renderer enforces
+ok 85 - compileWorkflow applies the shared cross-collection contracts the renderer enforces
+  ---
+  duration_ms: 82.881333
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects a negative absolute label pin without an explicit viewBox
+ok 86 - readable-v2 rejects a negative absolute label pin without an explicit viewBox
+  ---
+  duration_ms: 26.548416
+  type: 'test'
+  ...
+# Subtest: readable-v2 rejects an explicit channel that crosses the measured legend
+ok 87 - readable-v2 rejects an explicit channel that crosses the measured legend
+  ---
+  duration_ms: 2.102375
+  type: 'test'
+  ...
+# Subtest: readable-v2 explicit-pin diagnostics name the first intersected node and segment
+ok 88 - readable-v2 explicit-pin diagnostics name the first intersected node and segment
+  ---
+  duration_ms: 2.077666
+  type: 'test'
+  ...
+# Subtest: fixed-v1 publishes only repairs that survive complete replanning
+ok 89 - fixed-v1 publishes only repairs that survive complete replanning
+  ---
+  duration_ms: 8.731041
+  type: 'test'
+  ...
+# Subtest: fixed-v1 verifies the exact serialized values in every rounded-width repair
+ok 90 - fixed-v1 verifies the exact serialized values in every rounded-width repair
+  ---
+  duration_ms: 9.726583
+  type: 'test'
+  ...
+# Subtest: rejected layout receipt retains complete fixed-v1 geometry and authored label coordinates
+ok 91 - rejected layout receipt retains complete fixed-v1 geometry and authored label coordinates
+  ---
+  duration_ms: 1.634292
+  type: 'test'
+  ...
+# Subtest: rejected layout CLI receipt preserves failure diagnostics and writes no HTML
+ok 92 - rejected layout CLI receipt preserves failure diagnostics and writes no HTML
+  ---
+  duration_ms: 295.050875
+  type: 'test'
+  ...
+# Subtest: rejected layout receipt retains the attempted readable-v2 frame and measured required frame
+ok 93 - rejected layout receipt retains the attempted readable-v2 frame and measured required frame
+  ---
+  duration_ms: 11.807833
+  type: 'test'
+  ...
+# Subtest: early causal failures retain diagnostic-only receipts after a complete rejected layout
+ok 94 - early causal failures retain diagnostic-only receipts after a complete rejected layout
+  ---
+  duration_ms: 8.758583
+  type: 'test'
+  ...
+# Subtest: rejected layout receipt belongs to the selected best route-order attempt
+ok 95 - rejected layout receipt belongs to the selected best route-order attempt
+  ---
+  duration_ms: 902.274041
+  type: 'test'
+  ...
+# Subtest: rejected fixed-v1 label overflow reports its footprint without changing the attempted canvas
+ok 96 - rejected fixed-v1 label overflow reports its footprint without changing the attempted canvas
+  ---
+  duration_ms: 0.66875
+  type: 'test'
+  ...
+# Subtest: relative drop forks recover without changing source constraints or semantics
+ok 97 - relative drop forks recover without changing source constraints or semantics
+  ---
+  duration_ms: 246.575083
+  type: 'test'
+  ...
+# Subtest: relative drop recovery is stable when eligible forks exceed the retry limit
+ok 98 - relative drop recovery is stable when eligible forks exceed the retry limit
+  ---
+  duration_ms: 772.905209
+  type: 'test'
+  ...
+# Subtest: standard placed-label diagnostics expose the actual label-label conflict
+ok 99 - standard placed-label diagnostics expose the actual label-label conflict
+  ---
+  duration_ms: 60.560292
+  type: 'test'
+  ...
+# Subtest: showcase placed-label diagnostics expose the actual label-label conflict
+ok 100 - showcase placed-label diagnostics expose the actual label-label conflict
+  ---
+  duration_ms: 27.861209
+  type: 'test'
+  ...
+# Subtest: standard placed-label diagnostics expose the actual route-label conflict
+ok 101 - standard placed-label diagnostics expose the actual route-label conflict
+  ---
+  duration_ms: 21.138708
+  type: 'test'
+  ...
+# Subtest: showcase placed-label diagnostics expose the actual route-label conflict
+ok 102 - showcase placed-label diagnostics expose the actual route-label conflict
+  ---
+  duration_ms: 27.2975
+  type: 'test'
+  ...
+# Subtest: standard placed-label diagnostics expose the actual label-route conflict
+ok 103 - standard placed-label diagnostics expose the actual label-route conflict
+  ---
+  duration_ms: 35.761333
+  type: 'test'
+  ...
+# Subtest: showcase placed-label diagnostics expose the actual label-route conflict
+ok 104 - showcase placed-label diagnostics expose the actual label-route conflict
+  ---
+  duration_ms: 15.036834
+  type: 'test'
+  ...
+# Subtest: standard scaled placed-label diagnostics preserve measured geometry and replayable repairs
+ok 105 - standard scaled placed-label diagnostics preserve measured geometry and replayable repairs
+  ---
+  duration_ms: 22.624542
+  type: 'test'
+  ...
+# Subtest: showcase scaled placed-label diagnostics preserve measured geometry and replayable repairs
+ok 106 - showcase scaled placed-label diagnostics preserve measured geometry and replayable repairs
+  ---
+  duration_ms: 22.8055
+  type: 'test'
+  ...
+# Subtest: placed-label acceptance retains the 2px overlap tolerance and 4px route clearance boundary
+ok 107 - placed-label acceptance retains the 2px overlap tolerance and 4px route clearance boundary
+  ---
+  duration_ms: 4.309708
+  type: 'test'
+  ...
+# Subtest: readable-v2 separates unrelated automatic branches that meet at a bend
+ok 108 - readable-v2 separates unrelated automatic branches that meet at a bend
+  ---
+  duration_ms: 50.863625
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps a clear vertical main step straight when its source also branches
+ok 109 - readable-v2 keeps a clear vertical main step straight when its source also branches
+  ---
+  duration_ms: 23.406875
+  type: 'test'
+  ...
+# Subtest: readable-v2 uses a clear internal corridor for a long same-column branch
+ok 110 - readable-v2 uses a clear internal corridor for a long same-column branch
+  ---
+  duration_ms: 84.742375
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps clear backward branches straight after provisional port spreading
+ok 111 - readable-v2 keeps clear backward branches straight after provisional port spreading
+  ---
+  duration_ms: 46.385292
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps clear adjacent routes straight without moving nodes or enlarging the canvas
+ok 112 - readable-v2 keeps clear adjacent routes straight without moving nodes or enlarging the canvas
+  ---
+  duration_ms: 142.000209
+  type: 'test'
+  ...
+# Subtest: readable-v2 separates opposing routes that meet at a shared node
+ok 113 - readable-v2 separates opposing routes that meet at a shared node
+  ---
+  duration_ms: 76.279875
+  type: 'test'
+  ...
+# Subtest: readable-v2 routing remains deterministic and preserves every authored relationship
+ok 114 - readable-v2 routing remains deterministic and preserves every authored relationship
+  ---
+  duration_ms: 158.539208
+  type: 'test'
+  ...
+# Subtest: readable-v2 preserves authored sides, routes, channels, vias, and label positions
+ok 115 - readable-v2 preserves authored sides, routes, channels, vias, and label positions
+  ---
+  duration_ms: 1244.72375
+  type: 'test'
+  ...
+# Subtest: fixed-v1 stays outside the automatic workflow routing contract
+ok 116 - fixed-v1 stays outside the automatic workflow routing contract
+  ---
+  duration_ms: 3.8495
+  type: 'test'
+  ...
+# Subtest: readable-v2 keeps emphasis and wide-arrow fan-in marker bounds disjoint
+ok 117 - readable-v2 keeps emphasis and wide-arrow fan-in marker bounds disjoint
+  ---
+  duration_ms: 14.05925
+  type: 'test'
+  ...
+# Subtest: public validate and rendered HTML agree on automatic workflow routing
+ok 118 - public validate and rendered HTML agree on automatic workflow routing
+  ---
+  duration_ms: 810.3105
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: ordinary
+ok 119 - omitted and explicit typography_scale 1 preserve identical HTML: ordinary
+  ---
+  duration_ms: 426.743125
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: dense
+ok 120 - omitted and explicit typography_scale 1 preserve identical HTML: dense
+  ---
+  duration_ms: 417.468084
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: cjk
+ok 121 - omitted and explicit typography_scale 1 preserve identical HTML: cjk
+  ---
+  duration_ms: 384.515042
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: ordinary/1.5
+ok 122 - scaled text participates in layout without losing content: ordinary/1.5
+  ---
+  duration_ms: 662.551458
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: ordinary/2
+ok 123 - scaled text participates in layout without losing content: ordinary/2
+  ---
+  duration_ms: 691.00725
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: dense/1.5
+ok 124 - scaled text participates in layout without losing content: dense/1.5
+  ---
+  duration_ms: 903.096834
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: cjk/1.5
+ok 125 - scaled text participates in layout without losing content: cjk/1.5
+  ---
+  duration_ms: 578.715709
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: 0.99
+ok 126 - schema rejects an invalid typography_scale: 0.99
+  ---
+  duration_ms: 119.612625
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: 2.01
+ok 127 - schema rejects an invalid typography_scale: 2.01
+  ---
+  duration_ms: 123.203458
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: "1.5"
+ok 128 - schema rejects an invalid typography_scale: "1.5"
+  ---
+  duration_ms: 124.758208
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: null
+ok 129 - schema rejects an invalid typography_scale: null
+  ---
+  duration_ms: 126.803167
+  type: 'test'
+  ...
+# Subtest: v1 rejects the new typography option without implicit migration
+ok 130 - v1 rejects the new typography option without implicit migration
+  ---
+  duration_ms: 118.978417
+  type: 'test'
+  ...
+# Subtest: omitted configuration preserves frozen ordinary, dense, CJK and v1 SVG output
+ok 131 - omitted configuration preserves frozen ordinary, dense, CJK and v1 SVG output
+  ---
+  duration_ms: 783.191666
+  type: 'test'
+  ...
+# Subtest: undersized authored nodes fail instead of silently growing
+ok 132 - undersized authored nodes fail instead of silently growing
+  ---
+  duration_ms: 427.966
+  type: 'test'
+  ...
+# Subtest: an authored viewBox that cannot contain scaled content stays authoritative
+ok 133 - an authored viewBox that cannot contain scaled content stays authoritative
+  ---
+  duration_ms: 219.689625
+  type: 'test'
+  ...
+# Subtest: sufficient authored node dimensions and canvas dimensions are preserved
+ok 134 - sufficient authored node dimensions and canvas dimensions are preserved
+  ---
+  duration_ms: 410.947458
+  type: 'test'
+  ...
+# Subtest: a compact authored label-only node is accepted when its actual text fits
+ok 135 - a compact authored label-only node is accepted when its actual text fits
+  ---
+  duration_ms: 378.664459
+  type: 'test'
+  ...
+# Subtest: caption and tag collisions in a short authored node remain capacity errors
+ok 136 - caption and tag collisions in a short authored node remain capacity errors
+  ---
+  duration_ms: 182.81075
+  type: 'test'
+  ...
+# Subtest: absolute via and labelAt controls remain at their authored positions
+ok 137 - absolute via and labelAt controls remain at their authored positions
+  ---
+  duration_ms: 297.592916
+  type: 'test'
+  ...
+# Subtest: scaled workflows preserve the absolute channelX coordinate
+ok 138 - scaled workflows preserve the absolute channelX coordinate
+  ---
+  duration_ms: 303.169083
+  type: 'test'
+  ...
+# Subtest: scaled workflows preserve the absolute channelY coordinate
+ok 139 - scaled workflows preserve the absolute channelY coordinate
+  ---
+  duration_ms: 289.638041
+  type: 'test'
+  ...
+# Subtest: layout receipts report rendered fonts without mutating the authored input
+ok 140 - layout receipts report rendered fonts without mutating the authored input
+  ---
+  duration_ms: 51.958334
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source-only 1.01
+ok 141 - source-backed automatic typography validates and renders: source-only 1.01
+  ---
+  duration_ms: 657.534542
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source and brand 1.1
+ok 142 - source-backed automatic typography validates and renders: source and brand 1.1
+  ---
+  duration_ms: 625.70625
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source and tag 1.5
+ok 143 - source-backed automatic typography validates and renders: source and tag 1.5
+  ---
+  duration_ms: 628.104125
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source, brand and tag 2
+ok 144 - source-backed automatic typography validates and renders: source, brand and tag 2
+  ---
+  duration_ms: 633.1145
+  type: 'test'
+  ...
+# Subtest: source-backed repair verification keeps other authored source constraints: source-only
+ok 145 - source-backed repair verification keeps other authored source constraints: source-only
+  ---
+  duration_ms: 1540.977209
+  type: 'test'
+  ...
+# Subtest: source-backed repair verification keeps other authored source constraints: source and brand
+ok 146 - source-backed repair verification keeps other authored source constraints: source and brand
+  ---
+  duration_ms: 1522.748375
+  type: 'test'
+  ...
+# Subtest: source-backed automatic height participates in offset lane planning
+ok 147 - source-backed automatic height participates in offset lane planning
+  ---
+  duration_ms: 770.478875
+  type: 'test'
+  ...
+# Subtest: source-backed omitted and scale-one typography preserve identical HTML
+ok 148 - source-backed omitted and scale-one typography preserve identical HTML
+  ---
+  duration_ms: 607.254875
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves authored width with automatic height
+ok 149 - source-backed typography preserves authored width with automatic height
+  ---
+  duration_ms: 695.856792
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves authored height with automatic branded width
+ok 150 - source-backed typography preserves authored height with automatic branded width
+  ---
+  duration_ms: 652.992959
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves both authored dimensions with brand and tag
+ok 151 - source-backed typography preserves both authored dimensions with brand and tag
+  ---
+  duration_ms: 630.559834
+  type: 'test'
+  ...
+# Subtest: every typography repair replays with verified source context: source-only
+ok 152 - every typography repair replays with verified source context: source-only
+  ---
+  duration_ms: 1350.615792
+  type: 'test'
+  ...
+# Subtest: every typography repair replays with verified source context: source and brand
+ok 153 - every typography repair replays with verified source context: source and brand
+  ---
+  duration_ms: 1335.92475
+  type: 'test'
+  ...
+# Subtest: scaled layout preserves upstream phase chips, muted edge labels and reusable input sizing
+ok 154 - scaled layout preserves upstream phase chips, muted edge labels and reusable input sizing
+  ---
+  duration_ms: 47.281041
+  type: 'test'
+  ...
+# Subtest: scaled edge labels select a fitting segment using their visible height
+ok 155 - scaled edge labels select a fitting segment using their visible height
+  ---
+  duration_ms: 719.286
+  type: 'test'
+  ...
+# Subtest: workflow v2 downward straight label fits the corridor (standard)
+ok 156 - workflow v2 downward straight label fits the corridor (standard)
+  ---
+  duration_ms: 13.302417
+  type: 'test'
+  ...
+# Subtest: workflow v2 downward straight label fits the corridor (showcase)
+ok 157 - workflow v2 downward straight label fits the corridor (showcase)
+  ---
+  duration_ms: 2.028458
+  type: 'test'
+  ...
+# Subtest: workflow v2 upward straight label fits the corridor (standard)
+ok 158 - workflow v2 upward straight label fits the corridor (standard)
+  ---
+  duration_ms: 2.376875
+  type: 'test'
+  ...
+# Subtest: workflow v2 upward straight label fits the corridor (showcase)
+ok 159 - workflow v2 upward straight label fits the corridor (showcase)
+  ---
+  duration_ms: 0.844791
+  type: 'test'
+  ...
+# Subtest: workflow CLI validates and renders the labeled vertical straight route
+ok 160 - workflow CLI validates and renders the labeled vertical straight route
+  ---
+  duration_ms: 443.000333
+  type: 'test'
+  ...
+# Subtest: workflow v2 explicit labelAt remains authoritative over offsets and labelSegment
+ok 161 - workflow v2 explicit labelAt remains authoritative over offsets and labelSegment
+  ---
+  duration_ms: 5.74775
+  type: 'test'
+  ...
+# Subtest: workflow v2 preserves authored vertical offsets {"labelDy":40}
+ok 162 - workflow v2 preserves authored vertical offsets {"labelDy":40}
+  ---
+  duration_ms: 0.894041
+  type: 'test'
+  ...
+# Subtest: workflow v2 preserves authored vertical offsets {"labelDx":80}
+ok 163 - workflow v2 preserves authored vertical offsets {"labelDx":80}
+  ---
+  duration_ms: 0.669541
+  type: 'test'
+  ...
+# Subtest: workflow v2 preserves explicit zero or segment placement {"labelDx":0}
+ok 164 - workflow v2 preserves explicit zero or segment placement {"labelDx":0}
+  ---
+  duration_ms: 8.515792
+  type: 'test'
+  ...
+# Subtest: workflow v2 preserves explicit zero or segment placement {"labelDy":0}
+ok 165 - workflow v2 preserves explicit zero or segment placement {"labelDy":0}
+  ---
+  duration_ms: 4.2745
+  type: 'test'
+  ...
+# Subtest: workflow v2 preserves explicit zero or segment placement {"labelDx":0,"labelDy":0}
+ok 166 - workflow v2 preserves explicit zero or segment placement {"labelDx":0,"labelDy":0}
+  ---
+  duration_ms: 2.747958
+  type: 'test'
+  ...
+# Subtest: workflow v2 preserves explicit zero or segment placement {"labelSegment":0}
+ok 167 - workflow v2 preserves explicit zero or segment placement {"labelSegment":0}
+  ---
+  duration_ms: 3.870917
+  type: 'test'
+  ...
+# Subtest: workflow v2 horizontal two-point default placement is unchanged
+ok 168 - workflow v2 horizontal two-point default placement is unchanged
+  ---
+  duration_ms: 0.745875
+  type: 'test'
+  ...
+# Subtest: workflow v1 upward two-point default placement is unchanged
+ok 169 - workflow v1 upward two-point default placement is unchanged
+  ---
+  duration_ms: 0.389208
+  type: 'test'
+  ...
+1..169
+# tests 169
+# suites 0
+# pass 169
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20977.04375

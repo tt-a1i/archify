@@ -1,0 +1,100 @@
+
+> test:browser
+> node scripts/run-browser-tests.mjs test/workflow-typography-browser.test.mjs test/reader-readability-maintained-browser.test.mjs test/workflow-edge-label-contrast-browser.test.mjs --concurrency=2
+
+Browser tests: 3 files, concurrency 2
+TAP version 13
+# Subtest: declared wide synthetic reader preserves geometry and reaches edge/node readability
+ok 1 - declared wide synthetic reader preserves geometry and reaches edge/node readability
+  ---
+  duration_ms: 11584.87425
+  type: 'test'
+  ...
+# Subtest: workflow default labels and lane headings remain readable without recoloring semantic ink
+    # Subtest: light Full-detail labels and normal lane headings meet classic contrast
+    ok 1 - light Full-detail labels and normal lane headings meet classic contrast
+      ---
+      duration_ms: 261.700166
+      type: 'test'
+      ...
+    # Subtest: dark Full-detail labels and normal lane headings meet classic contrast
+    ok 2 - dark Full-detail labels and normal lane headings meet classic contrast
+      ---
+      duration_ms: 114.652375
+      type: 'test'
+      ...
+    1..2
+ok 2 - workflow default labels and lane headings remain readable without recoloring semantic ink
+  ---
+  duration_ms: 6495.518291
+  type: 'test'
+  ...
+# light 01 / Work: flat 5.793714:1, CSS dot peak 5.373301:1; fill rgb(91, 100, 116); flat background 250.45000000000002,251.75,253.05; dot peak background 240.3,243.35,246.4
+# light 02 / Normal: flat 5.793714:1, CSS dot peak 5.373301:1; fill rgb(91, 100, 116); flat background 250.45000000000002,251.75,253.05; dot peak background 240.3,243.35,246.4
+# light fallback label: 5.966:1; foreground 91,100,116; background 255,255,255
+# light default label: 5.966:1; foreground 91,100,116; background 255,255,255
+# dark 01 / Work: flat 7.359138:1, CSS dot peak 6.116047:1; fill rgb(148, 163, 184); flat background 9.93,16.37,34.59; dot peak background 27.3396,34.902800000000006,53.49720000000001
+# dark 02 / Normal: flat 7.359138:1, CSS dot peak 6.116047:1; fill rgb(148, 163, 184); flat background 9.93,16.37,34.59; dot peak background 27.3396,34.902800000000006,53.49720000000001
+# dark fallback label: 6.963:1; foreground 148,163,184; background 15,23,42
+# dark default label: 6.963:1; foreground 148,163,184; background 15,23,42
+# Subtest: real browser preserves text bounds and improves measured workflow typography: ordinary/1.5
+ok 3 - real browser preserves text bounds and improves measured workflow typography: ordinary/1.5
+  ---
+  duration_ms: 7073.426958
+  type: 'test'
+  ...
+# ordinary/1.5/1440x900/light: visible caption 13.28 -> 18.76; all authored captions/tags 11.62 -> 16.41 CSS px
+# ordinary/1.5/1440x900/dark: visible caption 13.28 -> 18.76; all authored captions/tags 11.62 -> 16.41 CSS px
+# ordinary/1.5/1920x1080/light: visible caption 18.01 -> 25.45; all authored captions/tags 15.76 -> 22.27 CSS px
+# ordinary/1.5/1920x1080/dark: visible caption 18.01 -> 25.45; all authored captions/tags 15.76 -> 22.27 CSS px
+# Subtest: real browser preserves text bounds and improves measured workflow typography: ordinary/2
+ok 4 - real browser preserves text bounds and improves measured workflow typography: ordinary/2
+  ---
+  duration_ms: 7116.3865
+  type: 'test'
+  ...
+# ordinary/2/1440x900/light: visible caption 13.28 -> 22.69; all authored captions/tags 11.62 -> 19.86 CSS px
+# ordinary/2/1440x900/dark: visible caption 13.28 -> 22.69; all authored captions/tags 11.62 -> 19.86 CSS px
+# ordinary/2/1920x1080/light: visible caption 18.01 -> 29.79; all authored captions/tags 15.76 -> 26.07 CSS px
+# ordinary/2/1920x1080/dark: visible caption 18.01 -> 29.79; all authored captions/tags 15.76 -> 26.07 CSS px
+# Subtest: real browser preserves text bounds and improves measured workflow typography: dense/1.5
+ok 5 - real browser preserves text bounds and improves measured workflow typography: dense/1.5
+  ---
+  duration_ms: 7324.230625
+  type: 'test'
+  ...
+# dense/1.5/1440x900/light: visible caption 9.72 -> 15.98; all authored captions/tags 9.32 -> 13.99 CSS px
+# dense/1.5/1440x900/dark: visible caption 9.72 -> 15.98; all authored captions/tags 9.32 -> 13.99 CSS px
+# dense/1.5/1920x1080/light: visible caption 11.21 -> 18.43; all authored captions/tags 10.75 -> 16.13 CSS px
+# dense/1.5/1920x1080/dark: visible caption 11.21 -> 18.43; all authored captions/tags 10.75 -> 16.13 CSS px
+# Subtest: real browser preserves text bounds and improves measured workflow typography: cjk/1.5
+ok 6 - real browser preserves text bounds and improves measured workflow typography: cjk/1.5
+  ---
+  duration_ms: 7092.2735
+  type: 'test'
+  ...
+# cjk/1.5/1440x900/light: visible caption 13.05 -> 17.11; all authored captions/tags 11.42 -> 14.97 CSS px
+# cjk/1.5/1440x900/dark: visible caption 13.05 -> 17.11; all authored captions/tags 11.42 -> 14.97 CSS px
+# cjk/1.5/1920x1080/light: visible caption 17.71 -> 23.21; all authored captions/tags 15.49 -> 20.31 CSS px
+# cjk/1.5/1920x1080/dark: visible caption 17.71 -> 23.21; all authored captions/tags 15.49 -> 20.31 CSS px
+# Subtest: source-backed browser keeps evidence discoverable and decorated text contained: source-fractional
+ok 7 - source-backed browser keeps evidence discoverable and decorated text contained: source-fractional
+  ---
+  duration_ms: 1687.970166
+  type: 'test'
+  ...
+# Subtest: source-backed browser keeps evidence discoverable and decorated text contained: source-brand-tag
+ok 8 - source-backed browser keeps evidence discoverable and decorated text contained: source-brand-tag
+  ---
+  duration_ms: 2272.031209
+  type: 'test'
+  ...
+1..8
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 39203.841875

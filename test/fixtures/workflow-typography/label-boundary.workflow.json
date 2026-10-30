@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Boundary label",
+    "output": "out.html",
+    "typography_scale": 2,
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    {
+      "id": "l",
+      "label": "Lane"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "a",
+      "lane": "l",
+      "col": 0,
+      "type": "backend",
+      "label": "A",
+      "height": 60
+    },
+    {
+      "id": "b",
+      "lane": "l",
+      "col": 4,
+      "type": "backend",
+      "label": "B",
+      "height": 100
+    },
+    {
+      "id": "tall",
+      "lane": "l",
+      "col": 5,
+      "type": "backend",
+      "label": "T",
+      "height": 280
+    }
+  ],
+  "edges": [
+    {
+      "id": "e",
+      "from": "a",
+      "to": "b",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "A long follow-up label",
+      "labelDy": 50,
+      "via": [
+        [
+          300,
+          272
+        ],
+        [
+          300,
+          340
+        ],
+        [
+          400,
+          340
+        ],
+        [
+          400,
+          272
+        ]
+      ]
+    }
+  ]
+}

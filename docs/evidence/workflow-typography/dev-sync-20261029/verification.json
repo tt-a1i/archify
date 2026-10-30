@@ -1,0 +1,49 @@
+{
+  "base": "847146aeb93b492592adb78dc220f57e4a8b4636",
+  "previousHead": "baf73e81fdb25fd59d3f9c2c1c61215aee86e8a4",
+  "runtimeCommit": "93279dda9d9e1b28680da0650a8d8b91000760e0",
+  "runtimeSourceFingerprint": {
+    "sha256": "573a7fb511e5e517d5d0a75b217ba72f9307d96046a82c43947c7a91b9a3aee4",
+    "files": 239,
+    "method": "sorted JSON array of tracked archify paths and SHA256 values, compact separators"
+  },
+  "validation": {
+    "focused": {
+      "passed": 100,
+      "failed": 0,
+      "skipped": 0
+    },
+    "integrationContracts": {
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0
+    },
+    "core": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "browser": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "defaultHTMLComparison": {
+      "passed": 16,
+      "failed": 0
+    },
+    "extractedTypographyHTMLComparison": {
+      "passed": 6,
+      "failed": 0
+    },
+    "generated": "pass",
+    "canonicalZip": "two builds byte-identical",
+    "zipSHA256": "1ab1f34c62601e7d00972e6a2c06596ef6a12c49b7db51bb4ae9ef2dc34eea15"
+  },
+  "evidenceReuse": "Earlier zoom/product-value and timing comparisons retain their original revisions; no new benchmark claim. Tests/browser capture on the merged working tree match all tracked runtime file hashes in runtimeCommit. Final exact-commit default comparison rerun on runtimeCommit.",
+  "perceptualReview": {
+    "reviewer": "Codex AI",
+    "screenshots": 5,
+    "humanReview": "not claimed"
+  }
+}

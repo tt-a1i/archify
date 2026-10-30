@@ -1,0 +1,2006 @@
+{
+  "sourceCommit": "853dbb21e75195ac2f32aa1c3010d9cd6251af15",
+  "captureAttribution": "Screenshots were captured before committing the same merged runtime source. The later change adds test coverage only.",
+  "node": "22.23.1",
+  "chrome": "154.0.8037.98",
+  "records": [
+    {
+      "screenshot": "ordinary-scale-1.5.png",
+      "measurements": [
+        {
+          "version": "before",
+          "typographyScale": 1,
+          "width": 1440,
+          "height": 900,
+          "theme": "light",
+          "scrollWidth": 1440,
+          "svg": {
+            "left": 47,
+            "right": 1393,
+            "top": 67,
+            "bottom": 548.296875,
+            "width": 1346,
+            "height": 481.296875
+          },
+          "nodes": [
+            {
+              "id": "receive",
+              "shape": {
+                "left": 126.67713165283203,
+                "right": 279.36441802978516,
+                "top": 221.346923828125,
+                "bottom": 334.2027587890625,
+                "width": 152.68728637695312,
+                "height": 112.8558349609375
+              },
+              "texts": [
+                {
+                  "text": "Receive",
+                  "box": {
+                    "left": 164.69265747070312,
+                    "right": 241.34889221191406,
+                    "top": 237.199462890625,
+                    "bottom": 261.199462890625,
+                    "width": 76.65623474121094,
+                    "height": 24
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 18.256088362068965,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "request",
+                  "box": {
+                    "left": 175.15357971191406,
+                    "right": 230.88795471191406,
+                    "top": 270.41339111328125,
+                    "bottom": 288.4134216308594,
+                    "width": 55.734375,
+                    "height": 18.000030517578125
+                  },
+                  "sourceFont": 8,
+                  "projectedFont": 13.277155172413794,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "incoming",
+                  "box": {
+                    "left": 175.15357971191406,
+                    "right": 230.88795471191406,
+                    "top": 302.2869873046875,
+                    "bottom": 317.2870178222656,
+                    "width": 55.734375,
+                    "height": 15.000030517578125
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 11.617510775862069,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "validate",
+              "shape": {
+                "left": 357.0357666015625,
+                "right": 509.7230224609375,
+                "top": 221.346923828125,
+                "bottom": 334.2027587890625,
+                "width": 152.687255859375,
+                "height": 112.8558349609375
+              },
+              "texts": [
+                {
+                  "text": "Validate",
+                  "box": {
+                    "left": 389.57470703125,
+                    "right": 477.1841125488281,
+                    "top": 237.199462890625,
+                    "bottom": 261.199462890625,
+                    "width": 87.60940551757812,
+                    "height": 24
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 18.256088362068965,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "policy checks",
+                  "box": {
+                    "left": 381.62158203125,
+                    "right": 485.13720703125,
+                    "top": 270.41339111328125,
+                    "bottom": 288.4134216308594,
+                    "width": 103.515625,
+                    "height": 18.000030517578125
+                  },
+                  "sourceFont": 8,
+                  "projectedFont": 13.277155172413794,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "checked",
+                  "box": {
+                    "left": 408.99658203125,
+                    "right": 457.76220703125,
+                    "top": 302.2869873046875,
+                    "bottom": 317.2870178222656,
+                    "width": 48.765625,
+                    "height": 15.000030517578125
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 11.617510775862069,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "record",
+              "shape": {
+                "left": 595.3607177734375,
+                "right": 748.0479736328125,
+                "top": 221.346923828125,
+                "bottom": 334.2027587890625,
+                "width": 152.687255859375,
+                "height": 112.8558349609375
+              },
+              "texts": [
+                {
+                  "text": "Record",
+                  "box": {
+                    "left": 638.852783203125,
+                    "right": 704.555908203125,
+                    "top": 237.199462890625,
+                    "bottom": 261.199462890625,
+                    "width": 65.703125,
+                    "height": 24
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 18.256088362068965,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "store evidence",
+                  "box": {
+                    "left": 615.969970703125,
+                    "right": 727.438720703125,
+                    "top": 270.41339111328125,
+                    "bottom": 288.4134216308594,
+                    "width": 111.46875,
+                    "height": 18.000030517578125
+                  },
+                  "sourceFont": 8,
+                  "projectedFont": 13.277155172413794,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "complete",
+                  "box": {
+                    "left": 643.8370971679688,
+                    "right": 699.571533203125,
+                    "top": 302.2869873046875,
+                    "bottom": 317.2870178222656,
+                    "width": 55.73443603515625,
+                    "height": 15.000030517578125
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 11.617510775862069,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            }
+          ],
+          "maskOverflow": [],
+          "outsideSvg": [],
+          "headerNodeOverlap": [],
+          "textContent": [
+            "01 / Processing",
+            "Prepare and record",
+            "Audit trail",
+            "Receive",
+            "request",
+            "incoming",
+            "Validate",
+            "policy checks",
+            "checked",
+            "Record",
+            "store evidence",
+            "complete",
+            "persist",
+            "submit",
+            "Legend",
+            "User UI",
+            "1",
+            "Agent logic",
+            "1",
+            "Context / trace",
+            "1"
+          ],
+          "captionMin": 11.617510775862069,
+          "visibleCaptionMin": 13.277155172413794,
+          "focusedNode": {
+            "id": "receive",
+            "shape": {
+              "left": 198.3865509033203,
+              "right": 488.4923858642578,
+              "top": 188.5339813232422,
+              "bottom": 402.9600830078125,
+              "width": 290.1058349609375,
+              "height": 214.4261016845703
+            },
+            "texts": [
+              {
+                "text": "Receive",
+                "box": {
+                  "left": 270.61602783203125,
+                  "right": 416.26287841796875,
+                  "top": 218.65379333496094,
+                  "bottom": 264.2537841796875,
+                  "width": 145.6468505859375,
+                  "height": 45.59999084472656
+                },
+                "sourceFont": 11,
+                "projectedFont": 34.68656745267197,
+                "caption": false,
+                "role": "label",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "request",
+                "box": {
+                  "left": 290.4917907714844,
+                  "right": 396.3871154785156,
+                  "top": 281.76031494140625,
+                  "bottom": 315.9603271484375,
+                  "width": 105.89532470703125,
+                  "height": 34.20001220703125
+                },
+                "sourceFont": 8,
+                "projectedFont": 25.22659451103416,
+                "caption": true,
+                "role": "sublabel",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "incoming",
+                "box": {
+                  "left": 290.4917907714844,
+                  "right": 396.3871154785156,
+                  "top": 342.32012939453125,
+                  "bottom": 370.82012939453125,
+                  "width": 105.89532470703125,
+                  "height": 28.5
+                },
+                "sourceFont": 7,
+                "projectedFont": 22.07327019715489,
+                "caption": true,
+                "role": "tag",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              }
+            ],
+            "overflow": [],
+            "overlaps": []
+          }
+        },
+        {
+          "version": "after",
+          "typographyScale": 1.5,
+          "width": 1440,
+          "height": 900,
+          "theme": "light",
+          "scrollWidth": 1440,
+          "svg": {
+            "left": 47,
+            "right": 1393,
+            "top": 67,
+            "bottom": 654.796875,
+            "width": 1346,
+            "height": 587.796875
+          },
+          "nodes": [
+            {
+              "id": "receive",
+              "shape": {
+                "left": 122.04174041748047,
+                "right": 265.86437225341797,
+                "top": 259.28460693359375,
+                "bottom": 418.7401428222656,
+                "width": 143.8226318359375,
+                "height": 159.45553588867188
+              },
+              "texts": [
+                {
+                  "text": "Receive",
+                  "box": {
+                    "left": 139.78900146484375,
+                    "right": 248.11712646484375,
+                    "top": 293.94024658203125,
+                    "bottom": 327.94024658203125,
+                    "width": 108.328125,
+                    "height": 34
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 25.79427775930851,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "request",
+                  "box": {
+                    "left": 154.57806396484375,
+                    "right": 233.32806396484375,
+                    "top": 334.3946228027344,
+                    "bottom": 359.3946228027344,
+                    "width": 78.75,
+                    "height": 25
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 18.759474734042552,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "incoming",
+                  "box": {
+                    "left": 154.56243896484375,
+                    "right": 233.34368896484375,
+                    "top": 373.6009216308594,
+                    "bottom": 395.6009216308594,
+                    "width": 78.78125,
+                    "height": 22
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 16.414540392287233,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "validate",
+              "shape": {
+                "left": 361.5376892089844,
+                "right": 520.9932861328125,
+                "top": 259.28460693359375,
+                "bottom": 418.7401428222656,
+                "width": 159.45559692382812,
+                "height": 159.45553588867188
+              },
+              "texts": [
+                {
+                  "text": "Validate",
+                  "box": {
+                    "left": 379.3670654296875,
+                    "right": 503.1639404296875,
+                    "top": 293.94024658203125,
+                    "bottom": 327.94024658203125,
+                    "width": 123.796875,
+                    "height": 34
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 25.79427775930851,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "policy checks",
+                  "box": {
+                    "left": 368.1405029296875,
+                    "right": 514.3905029296875,
+                    "top": 334.3946228027344,
+                    "bottom": 359.3946228027344,
+                    "width": 146.25,
+                    "height": 25
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 18.759474734042552,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "checked",
+                  "box": {
+                    "left": 406.7967224121094,
+                    "right": 475.73419189453125,
+                    "top": 373.6009216308594,
+                    "bottom": 395.6009216308594,
+                    "width": 68.93746948242188,
+                    "height": 22
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 16.414540392287233,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "record",
+              "shape": {
+                "left": 627.9222412109375,
+                "right": 798.32080078125,
+                "top": 259.28460693359375,
+                "bottom": 418.7401428222656,
+                "width": 170.3985595703125,
+                "height": 159.45553588867188
+              },
+              "texts": [
+                {
+                  "text": "Record",
+                  "box": {
+                    "left": 666.6996459960938,
+                    "right": 759.5433959960938,
+                    "top": 282.5281982421875,
+                    "bottom": 316.5281982421875,
+                    "width": 92.84375,
+                    "height": 34
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 25.79427775930851,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "store evidence",
+                  "box": {
+                    "left": 634.3715209960938,
+                    "right": 791.8714599609375,
+                    "top": 329.3921203613281,
+                    "bottom": 354.3921203613281,
+                    "width": 157.49993896484375,
+                    "height": 25
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 18.759474734042552,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "complete",
+                  "box": {
+                    "left": 673.7308349609375,
+                    "right": 752.5120849609375,
+                    "top": 373.6009216308594,
+                    "bottom": 395.6009216308594,
+                    "width": 78.78125,
+                    "height": 22
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 16.414540392287233,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            }
+          ],
+          "maskOverflow": [],
+          "outsideSvg": [],
+          "headerNodeOverlap": [],
+          "textContent": [
+            "01 / Processing",
+            "Prepare and record",
+            "Audit trail",
+            "Receive",
+            "request",
+            "incoming",
+            "Validate",
+            "policy checks",
+            "checked",
+            "Record",
+            "store evidence",
+            "complete",
+            "persist",
+            "submit",
+            "Legend",
+            "User UI",
+            "1",
+            "Agent logic",
+            "1",
+            "Context / trace",
+            "1"
+          ],
+          "captionMin": 16.414540392287233,
+          "visibleCaptionMin": 18.759474734042552,
+          "focusedNode": {
+            "id": "receive",
+            "shape": {
+              "left": 189.5792999267578,
+              "right": 462.84230041503906,
+              "top": 197.32452392578125,
+              "bottom": 500.2900085449219,
+              "width": 273.26300048828125,
+              "height": 302.9654846191406
+            },
+            "texts": [
+              {
+                "text": "Receive",
+                "box": {
+                  "left": 223.29910278320312,
+                  "right": 429.1225280761719,
+                  "top": 263.170166015625,
+                  "bottom": 327.77020263671875,
+                  "width": 205.82342529296875,
+                  "height": 64.60003662109375
+                },
+                "sourceFont": 16.5,
+                "projectedFont": 49.00912712770266,
+                "caption": false,
+                "role": "label",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "request",
+                "box": {
+                  "left": 251.3983154296875,
+                  "right": 401.0233154296875,
+                  "top": 340.03350830078125,
+                  "bottom": 387.5335388183594,
+                  "width": 149.625,
+                  "height": 47.500030517578125
+                },
+                "sourceFont": 12,
+                "projectedFont": 35.64300154742012,
+                "caption": true,
+                "role": "sublabel",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "incoming",
+                "box": {
+                  "left": 251.36863708496094,
+                  "right": 401.0530090332031,
+                  "top": 414.5254821777344,
+                  "bottom": 456.3254699707031,
+                  "width": 149.6843719482422,
+                  "height": 41.79998779296875
+                },
+                "sourceFont": 10.5,
+                "projectedFont": 31.187626353992602,
+                "caption": true,
+                "role": "tag",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              }
+            ],
+            "overflow": [],
+            "overlaps": []
+          }
+        }
+      ]
+    },
+    {
+      "screenshot": "dense-scale-1.5.png",
+      "measurements": [
+        {
+          "version": "before",
+          "typographyScale": 1,
+          "width": 1440,
+          "height": 900,
+          "theme": "light",
+          "scrollWidth": 1440,
+          "svg": {
+            "left": 54,
+            "right": 1386,
+            "top": 67,
+            "bottom": 812.90625,
+            "width": 1332,
+            "height": 745.90625
+          },
+          "nodes": [
+            {
+              "id": "read",
+              "shape": {
+                "left": 117.94709777832031,
+                "right": 240.4888458251953,
+                "top": 181.54989624023438,
+                "bottom": 272.12420654296875,
+                "width": 122.541748046875,
+                "height": 90.57431030273438
+              },
+              "texts": [
+                {
+                  "text": "Read",
+                  "box": {
+                    "left": 161.63204956054688,
+                    "right": 196.80392456054688,
+                    "top": 194.52139282226562,
+                    "bottom": 213.52137756347656,
+                    "width": 35.171875,
+                    "height": 18.999984741210938
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 14.651729910714284,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 123.81172943115234,
+                    "right": 234.62423706054688,
+                    "top": 222.1649627685547,
+                    "bottom": 235.1649627685547,
+                    "width": 110.81250762939453,
+                    "height": 13
+                  },
+                  "sourceFont": 7.3,
+                  "projectedFont": 9.72342075892857,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "request",
+                  "box": {
+                    "left": 159.63986206054688,
+                    "right": 198.7960968017578,
+                    "top": 246.14051818847656,
+                    "bottom": 259.1405029296875,
+                    "width": 39.15623474121094,
+                    "height": 12.999984741210938
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 9.323828124999999,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "validate",
+              "shape": {
+                "left": 309.2187805175781,
+                "right": 431.7605285644531,
+                "top": 181.54989624023438,
+                "bottom": 272.12420654296875,
+                "width": 122.541748046875,
+                "height": 90.57431030273438
+              },
+              "texts": [
+                {
+                  "text": "Validate",
+                  "box": {
+                    "left": 335.32562255859375,
+                    "right": 405.6537170410156,
+                    "top": 194.52139282226562,
+                    "bottom": 213.52137756347656,
+                    "width": 70.32809448242188,
+                    "height": 18.999984741210938
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 14.651729910714284,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 315.08343505859375,
+                    "right": 425.89593505859375,
+                    "top": 222.1649627685547,
+                    "bottom": 235.1649627685547,
+                    "width": 110.8125,
+                    "height": 13
+                  },
+                  "sourceFont": 7.3,
+                  "projectedFont": 9.72342075892857,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "checked",
+                  "box": {
+                    "left": 350.91156005859375,
+                    "right": 390.06781005859375,
+                    "top": 246.14051818847656,
+                    "bottom": 259.1405029296875,
+                    "width": 39.15625,
+                    "height": 12.999984741210938
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 9.323828124999999,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "allocate",
+              "shape": {
+                "left": 494.0969543457031,
+                "right": 616.638671875,
+                "top": 181.54989624023438,
+                "bottom": 272.12420654296875,
+                "width": 122.54171752929688,
+                "height": 90.57431030273438
+              },
+              "texts": [
+                {
+                  "text": "Allocate",
+                  "box": {
+                    "left": 520.2037353515625,
+                    "right": 590.5318603515625,
+                    "top": 194.52139282226562,
+                    "bottom": 213.52137756347656,
+                    "width": 70.328125,
+                    "height": 18.999984741210938
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 14.651729910714284,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 499.9615783691406,
+                    "right": 610.7740478515625,
+                    "top": 222.1649627685547,
+                    "bottom": 235.1649627685547,
+                    "width": 110.81246948242188,
+                    "height": 13
+                  },
+                  "sourceFont": 7.3,
+                  "projectedFont": 9.72342075892857,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "reserved",
+                  "box": {
+                    "left": 532.9927978515625,
+                    "right": 577.7427978515625,
+                    "top": 246.14051818847656,
+                    "bottom": 259.1405029296875,
+                    "width": 44.75,
+                    "height": 12.999984741210938
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 9.323828124999999,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "load",
+              "shape": {
+                "left": 117.94709777832031,
+                "right": 240.4888458251953,
+                "top": 358.70263671875,
+                "bottom": 449.2769470214844,
+                "width": 122.541748046875,
+                "height": 90.57431030273438
+              },
+              "texts": [
+                {
+                  "text": "Load",
+                  "box": {
+                    "left": 161.63204956054688,
+                    "right": 196.80392456054688,
+                    "top": 371.67413330078125,
+                    "bottom": 390.67413330078125,
+                    "width": 35.171875,
+                    "height": 19
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 14.651729910714284,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 123.81172943115234,
+                    "right": 234.62423706054688,
+                    "top": 399.31768798828125,
+                    "bottom": 412.31768798828125,
+                    "width": 110.81250762939453,
+                    "height": 13
+                  },
+                  "sourceFont": 7.3,
+                  "projectedFont": 9.72342075892857,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "available",
+                  "box": {
+                    "left": 154.05392456054688,
+                    "right": 204.38204956054688,
+                    "top": 423.29327392578125,
+                    "bottom": 436.29327392578125,
+                    "width": 50.328125,
+                    "height": 13
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 9.323828124999999,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "reserve",
+              "shape": {
+                "left": 309.2187805175781,
+                "right": 431.7605285644531,
+                "top": 358.70263671875,
+                "bottom": 449.2769470214844,
+                "width": 122.541748046875,
+                "height": 90.57431030273438
+              },
+              "texts": [
+                {
+                  "text": "Reserve",
+                  "box": {
+                    "left": 339.7240295410156,
+                    "right": 401.2552795410156,
+                    "top": 371.67413330078125,
+                    "bottom": 390.67413330078125,
+                    "width": 61.53125,
+                    "height": 19
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 14.651729910714284,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 315.08343505859375,
+                    "right": 425.89593505859375,
+                    "top": 399.31768798828125,
+                    "bottom": 412.31768798828125,
+                    "width": 110.8125,
+                    "height": 13
+                  },
+                  "sourceFont": 7.3,
+                  "projectedFont": 9.72342075892857,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "pending",
+                  "box": {
+                    "left": 350.91156005859375,
+                    "right": 390.06781005859375,
+                    "top": 423.29327392578125,
+                    "bottom": 436.29327392578125,
+                    "width": 39.15625,
+                    "height": 13
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 9.323828124999999,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "save",
+              "shape": {
+                "left": 494.0969543457031,
+                "right": 616.638671875,
+                "top": 358.70263671875,
+                "bottom": 449.2769470214844,
+                "width": 122.54171752929688,
+                "height": 90.57431030273438
+              },
+              "texts": [
+                {
+                  "text": "Save",
+                  "box": {
+                    "left": 537.7818603515625,
+                    "right": 572.9537353515625,
+                    "top": 371.67413330078125,
+                    "bottom": 390.67413330078125,
+                    "width": 35.171875,
+                    "height": 19
+                  },
+                  "sourceFont": 11,
+                  "projectedFont": 14.651729910714284,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 499.9615783691406,
+                    "right": 610.7740478515625,
+                    "top": 399.31768798828125,
+                    "bottom": 412.31768798828125,
+                    "width": 110.81246948242188,
+                    "height": 13
+                  },
+                  "sourceFont": 7.3,
+                  "projectedFont": 9.72342075892857,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "durable",
+                  "box": {
+                    "left": 535.7896728515625,
+                    "right": 574.9459228515625,
+                    "top": 423.29327392578125,
+                    "bottom": 436.29327392578125,
+                    "width": 39.15625,
+                    "height": 13
+                  },
+                  "sourceFont": 7,
+                  "projectedFont": 9.323828124999999,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            }
+          ],
+          "maskOverflow": [],
+          "outsideSvg": [],
+          "headerNodeOverlap": [],
+          "textContent": [
+            "01 / Order processing",
+            "02 / Inventory evidence",
+            "Prepare",
+            "Commit",
+            "Reservation details",
+            "Read",
+            "InventoryRecordType",
+            "request",
+            "Validate",
+            "InventoryRecordType",
+            "checked",
+            "Allocate",
+            "InventoryRecordType",
+            "reserved",
+            "Load",
+            "InventoryRecordType",
+            "available",
+            "Reserve",
+            "InventoryRecordType",
+            "pending",
+            "Save",
+            "InventoryRecordType",
+            "durable",
+            "accept",
+            "inspect",
+            "reserve",
+            "commit",
+            "Legend",
+            "Agent logic",
+            "3",
+            "Policy",
+            "1",
+            "Context / trace",
+            "2"
+          ],
+          "captionMin": 9.323828124999999,
+          "visibleCaptionMin": 9.72342075892857,
+          "focusedNode": {
+            "id": "read",
+            "shape": {
+              "left": 175.49948120117188,
+              "right": 408.32879638671875,
+              "top": 284.644775390625,
+              "bottom": 456.73602294921875,
+              "width": 232.82931518554688,
+              "height": 172.09124755859375
+            },
+            "texts": [
+              {
+                "text": "Read",
+                "box": {
+                  "left": 258.5008544921875,
+                  "right": 325.32745361328125,
+                  "top": 309.2906494140625,
+                  "bottom": 345.390625,
+                  "width": 66.82659912109375,
+                  "height": 36.0999755859375
+                },
+                "sourceFont": 11,
+                "projectedFont": 27.838286481032682,
+                "caption": false,
+                "role": "label",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "InventoryRecordType",
+                "box": {
+                  "left": 186.6422882080078,
+                  "right": 397.18603515625,
+                  "top": 361.81341552734375,
+                  "bottom": 386.513427734375,
+                  "width": 210.5437469482422,
+                  "height": 24.70001220703125
+                },
+                "sourceFont": 7.3,
+                "projectedFont": 18.474499210139868,
+                "caption": true,
+                "role": "sublabel",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "request",
+                "box": {
+                  "left": 254.71571350097656,
+                  "right": 329.1125793457031,
+                  "top": 407.3669738769531,
+                  "bottom": 432.06695556640625,
+                  "width": 74.39686584472656,
+                  "height": 24.699981689453125
+                },
+                "sourceFont": 7,
+                "projectedFont": 17.715273215202615,
+                "caption": true,
+                "role": "tag",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              }
+            ],
+            "overflow": [],
+            "overlaps": []
+          }
+        },
+        {
+          "version": "after",
+          "typographyScale": 1.5,
+          "width": 1440,
+          "height": 900,
+          "theme": "light",
+          "scrollWidth": 1440,
+          "svg": {
+            "left": 54,
+            "right": 1386,
+            "top": 67,
+            "bottom": 812.90625,
+            "width": 1332,
+            "height": 745.90625
+          },
+          "nodes": [
+            {
+              "id": "read",
+              "shape": {
+                "left": 117.94709777832031,
+                "right": 311.0835266113281,
+                "top": 212.18531799316406,
+                "bottom": 348.04681396484375,
+                "width": 193.1364288330078,
+                "height": 135.8614959716797
+              },
+              "texts": [
+                {
+                  "text": "Read",
+                  "box": {
+                    "left": 188.14813232421875,
+                    "right": 240.88250732421875,
+                    "top": 232.14254760742188,
+                    "bottom": 261.1425476074219,
+                    "width": 52.734375,
+                    "height": 29
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 21.977594866071428,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 123.42154693603516,
+                    "right": 305.6090774536133,
+                    "top": 272.1079406738281,
+                    "bottom": 293.1079406738281,
+                    "width": 182.18753051757812,
+                    "height": 21
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 15.983705357142856,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "request",
+                  "box": {
+                    "left": 185.15594482421875,
+                    "right": 243.87469482421875,
+                    "top": 310.0712890625,
+                    "bottom": 328.0712585449219,
+                    "width": 58.71875,
+                    "height": 17.999969482421875
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 13.9857421875,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "validate",
+              "shape": {
+                "left": 402.1906433105469,
+                "right": 595.3270874023438,
+                "top": 212.18531799316406,
+                "bottom": 348.04681396484375,
+                "width": 193.13644409179688,
+                "height": 135.8614959716797
+              },
+              "texts": [
+                {
+                  "text": "Validate",
+                  "box": {
+                    "left": 446.0245361328125,
+                    "right": 551.4932861328125,
+                    "top": 232.14254760742188,
+                    "bottom": 261.1425476074219,
+                    "width": 105.46875,
+                    "height": 29
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 21.977594866071428,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 407.6651611328125,
+                    "right": 589.8526611328125,
+                    "top": 272.1079406738281,
+                    "bottom": 293.1079406738281,
+                    "width": 182.1875,
+                    "height": 21
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 15.983705357142856,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "checked",
+                  "box": {
+                    "left": 469.3995056152344,
+                    "right": 528.1182861328125,
+                    "top": 310.0712890625,
+                    "bottom": 328.0712585449219,
+                    "width": 58.718780517578125,
+                    "height": 17.999969482421875
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 13.9857421875,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "allocate",
+              "shape": {
+                "left": 676.843994140625,
+                "right": 869.9804077148438,
+                "top": 212.18531799316406,
+                "bottom": 348.04681396484375,
+                "width": 193.13641357421875,
+                "height": 135.8614959716797
+              },
+              "texts": [
+                {
+                  "text": "Allocate",
+                  "box": {
+                    "left": 720.6777954101562,
+                    "right": 826.1466064453125,
+                    "top": 232.14254760742188,
+                    "bottom": 261.1425476074219,
+                    "width": 105.46881103515625,
+                    "height": 29
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 21.977594866071428,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 682.3184204101562,
+                    "right": 864.5059204101562,
+                    "top": 272.1079406738281,
+                    "bottom": 293.1079406738281,
+                    "width": 182.1875,
+                    "height": 21
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 15.983705357142856,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "reserved",
+                  "box": {
+                    "left": 739.8575439453125,
+                    "right": 806.9669189453125,
+                    "top": 310.0712890625,
+                    "bottom": 328.0712585449219,
+                    "width": 67.109375,
+                    "height": 17.999969482421875
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 13.9857421875,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "load",
+              "shape": {
+                "left": 117.94709777832031,
+                "right": 311.0835266113281,
+                "top": 463.9286804199219,
+                "bottom": 599.7901611328125,
+                "width": 193.1364288330078,
+                "height": 135.86148071289062
+              },
+              "texts": [
+                {
+                  "text": "Load",
+                  "box": {
+                    "left": 188.14813232421875,
+                    "right": 240.88250732421875,
+                    "top": 483.88592529296875,
+                    "bottom": 512.8859252929688,
+                    "width": 52.734375,
+                    "height": 29
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 21.977594866071428,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 123.42154693603516,
+                    "right": 305.6090774536133,
+                    "top": 523.851318359375,
+                    "bottom": 544.851318359375,
+                    "width": 182.18753051757812,
+                    "height": 21
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 15.983705357142856,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "available",
+                  "box": {
+                    "left": 176.76531982421875,
+                    "right": 252.26531982421875,
+                    "top": 561.8146362304688,
+                    "bottom": 579.8146362304688,
+                    "width": 75.5,
+                    "height": 18
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 13.9857421875,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "reserve",
+              "shape": {
+                "left": 402.1906433105469,
+                "right": 595.3270874023438,
+                "top": 463.9286804199219,
+                "bottom": 599.7901611328125,
+                "width": 193.13644409179688,
+                "height": 135.86148071289062
+              },
+              "texts": [
+                {
+                  "text": "Reserve",
+                  "box": {
+                    "left": 452.6182861328125,
+                    "right": 544.8995361328125,
+                    "top": 483.88592529296875,
+                    "bottom": 512.8859252929688,
+                    "width": 92.28125,
+                    "height": 29
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 21.977594866071428,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 407.6651611328125,
+                    "right": 589.8526611328125,
+                    "top": 523.851318359375,
+                    "bottom": 544.851318359375,
+                    "width": 182.1875,
+                    "height": 21
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 15.983705357142856,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "pending",
+                  "box": {
+                    "left": 469.3995056152344,
+                    "right": 528.1182861328125,
+                    "top": 561.8146362304688,
+                    "bottom": 579.8146362304688,
+                    "width": 58.718780517578125,
+                    "height": 18
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 13.9857421875,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            },
+            {
+              "id": "save",
+              "shape": {
+                "left": 676.843994140625,
+                "right": 869.9804077148438,
+                "top": 463.9286804199219,
+                "bottom": 599.7901611328125,
+                "width": 193.13641357421875,
+                "height": 135.86148071289062
+              },
+              "texts": [
+                {
+                  "text": "Save",
+                  "box": {
+                    "left": 747.0450439453125,
+                    "right": 799.7794189453125,
+                    "top": 483.88592529296875,
+                    "bottom": 512.8859252929688,
+                    "width": 52.734375,
+                    "height": 29
+                  },
+                  "sourceFont": 16.5,
+                  "projectedFont": 21.977594866071428,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "InventoryRecordType",
+                  "box": {
+                    "left": 682.3184204101562,
+                    "right": 864.5059204101562,
+                    "top": 523.851318359375,
+                    "bottom": 544.851318359375,
+                    "width": 182.1875,
+                    "height": 21
+                  },
+                  "sourceFont": 12,
+                  "projectedFont": 15.983705357142856,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "durable",
+                  "box": {
+                    "left": 744.0527954101562,
+                    "right": 802.7715454101562,
+                    "top": 561.8146362304688,
+                    "bottom": 579.8146362304688,
+                    "width": 58.71875,
+                    "height": 18
+                  },
+                  "sourceFont": 10.5,
+                  "projectedFont": 13.9857421875,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            }
+          ],
+          "maskOverflow": [],
+          "outsideSvg": [],
+          "headerNodeOverlap": [],
+          "textContent": [
+            "01 / Order processing",
+            "02 / Inventory evidence",
+            "Prepare",
+            "Commit",
+            "Reservation details",
+            "Read",
+            "InventoryRecordType",
+            "request",
+            "Validate",
+            "InventoryRecordType",
+            "checked",
+            "Allocate",
+            "InventoryRecordType",
+            "reserved",
+            "Load",
+            "InventoryRecordType",
+            "available",
+            "Reserve",
+            "InventoryRecordType",
+            "pending",
+            "Save",
+            "InventoryRecordType",
+            "durable",
+            "accept",
+            "inspect",
+            "reserve",
+            "commit",
+            "Legend",
+            "Agent logic",
+            "3",
+            "Policy",
+            "1",
+            "Context / trace",
+            "2"
+          ],
+          "captionMin": 13.9857421875,
+          "visibleCaptionMin": 15.983705357142856,
+          "focusedNode": {
+            "id": "read",
+            "shape": {
+              "left": 161.43112182617188,
+              "right": 485.9002990722656,
+              "top": 310.91131591796875,
+              "bottom": 539.1586303710938,
+              "width": 324.46917724609375,
+              "height": 228.247314453125
+            },
+            "texts": [
+              {
+                "text": "Read",
+                "box": {
+                  "left": 279.36883544921875,
+                  "right": 367.9626159667969,
+                  "top": 344.4394836425781,
+                  "bottom": 393.15948486328125,
+                  "width": 88.59378051757812,
+                  "height": 48.720001220703125
+                },
+                "sourceFont": 16.5,
+                "projectedFont": 36.92235822222927,
+                "caption": false,
+                "role": "label",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "InventoryRecordType",
+                "box": {
+                  "left": 170.62820434570312,
+                  "right": 476.70318603515625,
+                  "top": 411.5813293457031,
+                  "bottom": 446.861328125,
+                  "width": 306.0749816894531,
+                  "height": 35.279998779296875
+                },
+                "sourceFont": 12,
+                "projectedFont": 26.85262416162129,
+                "caption": true,
+                "role": "sublabel",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              },
+              {
+                "text": "request",
+                "box": {
+                  "left": 274.34197998046875,
+                  "right": 372.9894714355469,
+                  "top": 475.3597412109375,
+                  "bottom": 505.5997009277344,
+                  "width": 98.64749145507812,
+                  "height": 30.239959716796875
+                },
+                "sourceFont": 10.5,
+                "projectedFont": 23.496046141418628,
+                "caption": true,
+                "role": "tag",
+                "computedOpacity": 1,
+                "computedVisibility": "visible",
+                "computedDisplay": "block",
+                "effectiveOpacity": 1,
+                "visible": true
+              }
+            ],
+            "overflow": [],
+            "overlaps": []
+          }
+        }
+      ]
+    },
+    {
+      "screenshot": "source-brand-tag.png",
+      "measurements": {
+        "initial": {
+          "width": 1440,
+          "height": 900,
+          "scrollWidth": 1440,
+          "svg": {
+            "left": 47,
+            "right": 1393,
+            "top": 67,
+            "bottom": 786.609375,
+            "width": 1346,
+            "height": 719.609375
+          },
+          "nodes": [
+            {
+              "id": "process",
+              "shape": {
+                "left": 125.50452423095703,
+                "right": 455.87064361572266,
+                "top": 282.8828125,
+                "bottom": 505.3075256347656,
+                "width": 330.3661193847656,
+                "height": 222.42471313476562
+              },
+              "texts": [
+                {
+                  "text": "ProcessData",
+                  "box": {
+                    "left": 171.95318603515625,
+                    "right": 409.42193603515625,
+                    "top": 328.3107604980469,
+                    "bottom": 376.3107604980469,
+                    "width": 237.46875,
+                    "height": 48
+                  },
+                  "sourceFont": 22,
+                  "projectedFont": 35.98046875,
+                  "caption": false,
+                  "role": "label",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "subtitle",
+                  "box": {
+                    "left": 227.89849853515625,
+                    "right": 353.47662353515625,
+                    "top": 383.7770080566406,
+                    "bottom": 418.7770080566406,
+                    "width": 125.578125,
+                    "height": 35
+                  },
+                  "sourceFont": 16,
+                  "projectedFont": 26.167613636363637,
+                  "caption": true,
+                  "role": "sublabel",
+                  "computedOpacity": 1,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 1,
+                  "visible": true
+                },
+                {
+                  "text": "verified",
+                  "box": {
+                    "left": 235.75006103515625,
+                    "right": 345.62506103515625,
+                    "top": 443.05609130859375,
+                    "bottom": 473.05609130859375,
+                    "width": 109.875,
+                    "height": 30
+                  },
+                  "sourceFont": 14,
+                  "projectedFont": 22.896661931818183,
+                  "caption": true,
+                  "role": "tag",
+                  "computedOpacity": 0,
+                  "computedVisibility": "visible",
+                  "computedDisplay": "block",
+                  "effectiveOpacity": 0,
+                  "visible": false
+                }
+              ],
+              "overflow": [],
+              "overlaps": []
+            }
+          ],
+          "maskOverflow": [],
+          "outsideSvg": [],
+          "headerNodeOverlap": [],
+          "textContent": [
+            "01 / Processing",
+            "ProcessData",
+            "subtitle",
+            "verified",
+            "Legend",
+            "Agent logic",
+            "1"
+          ],
+          "captionMin": 22.896661931818183,
+          "visibleCaptionMin": 26.167613636363637
+        },
+        "source": {
+          "sourceCount": "1",
+          "sourceAria": "Focus ProcessData, subtitle, Processing, OpenAI, 1 verified source reference",
+          "sources": [
+            {
+              "path": "source.js",
+              "line": 1,
+              "href": "https://github.com/example/archify-review-fixture/blob/3dd27e80db642a741cb6976906c191ea08e932ed/source.js#L1"
+            }
+          ],
+          "sourcePanelVisible": true,
+          "sourceLinks": [
+            "https://github.com/example/archify-review-fixture/blob/3dd27e80db642a741cb6976906c191ea08e932ed/source.js#L1"
+          ],
+          "sourceBadges": 0,
+          "hasBrand": true,
+          "decorationOverflow": [],
+          "decorationTextOverlap": []
+        }
+      }
+    }
+  ]
+}

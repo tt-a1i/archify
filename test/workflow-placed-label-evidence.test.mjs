@@ -67,6 +67,43 @@ for (const kind of ['label-label', 'route-label', 'label-route']) {
   }
 }
 
+for (const qualityProfile of ['standard', 'showcase']) {
+  test(`${qualityProfile} scaled placed-label diagnostics preserve measured geometry and replayable repairs`, () => {
+    const document = fixture('label-label', 151);
+    document.meta.typography_scale = 1.5;
+    // 作者顺序与路由顺序相反，诊断仍须指向作者的原始边索引。
+    document.edges.reverse();
+    const result = compileWorkflow({ workflow: document, qualityProfile });
+    assert.equal(result.ok, false);
+    const diagnostic = result.diagnostics.find(({ code }) => code === 'workflow/route-preset-conflict');
+    assert.ok(diagnostic);
+    const evidence = diagnostic.evidence;
+    assert.equal(evidence.invariant, 'placed edge-label clearance');
+    assert.equal(evidence.conflictType, 'label-label');
+    assert.deepEqual(evidence.candidateEdge, { edge: 'z-candidate', from: 'c', to: 'd', path: '/edges/0' });
+    assert.deepEqual(evidence.otherEdge, { edge: 'a-placed', from: 'a', to: 'b', path: '/edges/1' });
+    // 固定此输入的实际矩形，避免用实现中的字体换算公式生成预期值。
+    assert.deepEqual(evidence.candidateLabel, {
+      label: 'Candidate', rect: { x: 176.6, y: 274, width: 74.8, height: 21 },
+    });
+    assert.deepEqual(evidence.otherLabel, {
+      label: 'Placed', rect: { x: 187.4, y: 274, width: 53.2, height: 21 },
+    });
+    assert.equal(evidence.overlapPx.y, 21);
+    assert.ok(diagnostic.supportedFixes.length > 0);
+    for (const fix of diagnostic.supportedFixes) {
+      const repaired = structuredClone(document);
+      const preset = fix.match(/verified preset "([^"]+)"/)?.[1];
+      if (preset) repaired.edges[0].route = preset;
+      else {
+        assert.match(fix, /^remove route from edge "z-candidate"/);
+        delete repaired.edges[0].route;
+      }
+      assert.equal(compileWorkflow({ workflow: repaired, qualityProfile }).ok, true, fix);
+    }
+  });
+}
+
 test('placed-label acceptance retains the 2px overlap tolerance and 4px route clearance boundary', () => {
   for (const qualityProfile of ['standard', 'showcase']) {
     for (const [kind, offset] of [['label-label', 112], ['route-label', 148], ['label-route', -122]]) {

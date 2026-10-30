@@ -106,3 +106,22 @@ test('a proposed route repair that still fails text checks is not advertised as 
   assert.equal(result.ok, false);
   assert.equal(findRepair(result), undefined);
 });
+
+test('source and brand context survives scaled optional placement repair probes', async t => {
+  const { sourceTypographyFixture, runWorkflow, sourceEvidencePayload } = await import('./helpers/workflow-typography.mjs');
+  const source = sourceTypographyFixture(t, { scale: 1.01 });
+  const input = fixture();
+  input.meta.typography_scale = 1.01;
+  input.meta.repository = source.diagram.meta.repository;
+  Object.assign(input.nodes[0], { brand: 'openai', sources: [{ path: 'source.js', line: 1 }] });
+  const options = { repoRoot: source.root, quality: 'showcase' };
+  const failed = runWorkflow(t, input, 'validate', options);
+  assert.equal(failed.status, 1, failed.stdout + failed.stderr);
+  const repair = findRepair(failed.receipt);
+  assert.ok(repair, failed.stdout);
+  const repaired = applyRepair(input, repair);
+  const rendered = runWorkflow(t, repaired, 'render', options);
+  assert.equal(rendered.status, 0, rendered.stdout + rendered.stderr);
+  assert.match(rendered.svg, /data-brand-mark="openai"/);
+  assert.equal(sourceEvidencePayload(rendered.html).referenceCount, 1);
+});

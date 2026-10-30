@@ -1,0 +1,615 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/workflow-typography.test.mjs test/legend-typography.test.mjs test/workflow-controlled-order.test.mjs test/workflow-migration-semantics.test.mjs test/workflow-automatic-width.test.mjs test/workflow-absolute-sizing-diagnostics.test.mjs test/workflow-placement-repair.test.mjs test/workflow-crossing-repair.test.mjs test/workflow-placed-label-evidence.test.mjs test/legend-contract.test.mjs
+
+Repository tests: 10 files, concurrency 4
+TAP version 13
+# Subtest: public typed renderers default to auto and expose only authored semantic kinds
+ok 1 - public typed renderers default to auto and expose only authored semantic kinds
+  ---
+  duration_ms: 888.956792
+  type: 'test'
+  ...
+# Subtest: Dataflow database node facts are interactive while flow variants stay visual-only
+ok 2 - Dataflow database node facts are interactive while flow variants stay visual-only
+  ---
+  duration_ms: 279.012458
+  type: 'test'
+  ...
+# Subtest: Issue \#52 dataflow and lifecycle reproductions publish truthful default legends
+ok 3 - Issue \#52 dataflow and lifecycle reproductions publish truthful default legends
+  ---
+  duration_ms: 314.430666
+  type: 'test'
+  ...
+# Subtest: all mode follows each renderer-owned stable catalog order
+ok 4 - all mode follows each renderer-owned stable catalog order
+  ---
+  duration_ms: 766.475
+  type: 'test'
+  ...
+# Subtest: hidden mode removes the complete legend and overrides visible true
+ok 5 - hidden mode removes the complete legend and overrides visible true
+  ---
+  duration_ms: 704.300166
+  type: 'test'
+  ...
+# Subtest: visibility overrides apply after auto/all and empty legends leave no chrome
+ok 6 - visibility overrides apply after auto/all and empty legends leave no chrome
+  ---
+  duration_ms: 1917.289375
+  type: 'test'
+  ...
+# Subtest: label overrides round-trip through all five public renderers
+ok 7 - label overrides round-trip through all five public renderers
+  ---
+  duration_ms: 827.126292
+  type: 'test'
+  ...
+# Subtest: label overrides preserve stable kinds and exact Semantic Legend boundaries
+ok 8 - label overrides preserve stable kinds and exact Semantic Legend boundaries
+  ---
+  duration_ms: 561.646792
+  type: 'test'
+  ...
+# Subtest: strict per-renderer schemas reject malformed legend contracts with path-prefixed errors
+ok 9 - strict per-renderer schemas reject malformed legend contracts with path-prefixed errors
+  ---
+  duration_ms: 4481.65775
+  type: 'test'
+  ...
+# Subtest: measured legends fail explicitly instead of wrapping into diagram content
+ok 10 - measured legends fail explicitly instead of wrapping into diagram content
+  ---
+  duration_ms: 232.192
+  type: 'test'
+  ...
+# Subtest: explicit Architecture viewBox rejects legend title rectangles that overlap content
+ok 11 - explicit Architecture viewBox rejects legend title rectangles that overlap content
+  ---
+  duration_ms: 127.492417
+  type: 'test'
+  ...
+# Subtest: a single unfit label fails with a path-specific width diagnostic
+ok 12 - a single unfit label fails with a path-specific width diagnostic
+  ---
+  duration_ms: 137.340084
+  type: 'test'
+  ...
+# Subtest: measured legend rows share baselines and stay within the viewBox for localized labels
+ok 13 - measured legend rows share baselines and stay within the viewBox for localized labels
+  ---
+  duration_ms: 126.096708
+  type: 'test'
+  ...
+# Subtest: legend entries reserve the width of their rendered label font
+ok 14 - legend entries reserve the width of their rendered label font
+  ---
+  duration_ms: 5.224584
+  type: 'test'
+  ...
+# Subtest: omitted legend typography keeps the existing rendering and placement
+ok 15 - omitted legend typography keeps the existing rendering and placement
+  ---
+  duration_ms: 3.432667
+  type: 'test'
+  ...
+# Subtest: explicit legend typography measures the font that is rendered
+ok 16 - explicit legend typography measures the font that is rendered
+  ---
+  duration_ms: 3.241166
+  type: 'test'
+  ...
+# Subtest: large legend rows reserve enough space even with the default line gap
+ok 17 - large legend rows reserve enough space even with the default line gap
+  ---
+  duration_ms: 0.232917
+  type: 'test'
+  ...
+# Subtest: scaled legend retains renderer-owned label ink and weight
+ok 18 - scaled legend retains renderer-owned label ink and weight
+  ---
+  duration_ms: 0.100792
+  type: 'test'
+  ...
+# Subtest: scaled legend rejects routes in the enlarged text bounds
+ok 19 - scaled legend rejects routes in the enlarged text bounds
+  ---
+  duration_ms: 0.483292
+  type: 'test'
+  ...
+# Subtest: scaled title and wrapped rows participate in available-height validation
+ok 20 - scaled title and wrapped rows participate in available-height validation
+  ---
+  duration_ms: 0.095458
+  type: 'test'
+  ...
+# Subtest: an absolute-route failure also reports omitted widths that stopped fitting
+ok 21 - an absolute-route failure also reports omitted widths that stopped fitting
+  ---
+  duration_ms: 137.818833
+  type: 'test'
+  ...
+# Subtest: sizing evidence distinguishes an authored canvas and preserves unrelated explicit widths
+ok 22 - sizing evidence distinguishes an authored canvas and preserves unrelated explicit widths
+  ---
+  duration_ms: 5.032875
+  type: 'test'
+  ...
+# Subtest: short labels, explicit widths and schema v1 do not acquire automatic-sizing warnings
+ok 23 - short labels, explicit widths and schema v1 do not acquire automatic-sizing warnings
+  ---
+  duration_ms: 9.827083
+  type: 'test'
+  ...
+# Subtest: successful automatic and valid absolute plans remain deterministic and preserve input
+ok 24 - successful automatic and valid absolute plans remain deterministic and preserve input
+  ---
+  duration_ms: 15.33175
+  type: 'test'
+  ...
+# Subtest: omitted workflow widths fit sublabels at the final showcase canvas minimum
+ok 25 - omitted workflow widths fit sublabels at the final showcase canvas minimum
+  ---
+  duration_ms: 37.684458
+  type: 'test'
+  ...
+# Subtest: automatic width feedback handles a new sublabel failure caused by the first batch
+ok 26 - automatic width feedback handles a new sublabel failure caused by the first batch
+  ---
+  duration_ms: 71.365542
+  type: 'test'
+  ...
+# Subtest: a mixed document repairs automatic widths and preserves explicit widths and endpoint sides
+ok 27 - a mixed document repairs automatic widths and preserves explicit widths and endpoint sides
+  ---
+  duration_ms: 7.656375
+  type: 'test'
+  ...
+# Subtest: same-object edits and quality overrides agree with a fresh input after every compile
+ok 28 - same-object edits and quality overrides agree with a fresh input after every compile
+  ---
+  duration_ms: 279.417375
+  type: 'test'
+  ...
+# Subtest: migration absolute-geometry policy survives eligibility checks before cloning
+ok 29 - migration absolute-geometry policy survives eligibility checks before cloning
+  ---
+  duration_ms: 2.658666
+  type: 'test'
+  ...
+# Subtest: public migration verifies overlap advice under the original geometry policy
+ok 30 - public migration verifies overlap advice under the original geometry policy
+  ---
+  duration_ms: 69.361
+  type: 'test'
+  ...
+# Subtest: ordinary authored canvas removal advice can still verify an automatic-width repair
+ok 31 - ordinary authored canvas removal advice can still verify an automatic-width repair
+  ---
+  duration_ms: 18.564667
+  type: 'test'
+  ...
+# Subtest: explicit undersizing, automatic capacity and the fixed text-row ceiling remain failures
+ok 32 - explicit undersizing, automatic capacity and the fixed text-row ceiling remain failures
+  ---
+  duration_ms: 13.517959
+  type: 'test'
+  ...
+# Subtest: already successful automatic and preserved-geometry output keeps exact baseline geometry receipts
+ok 33 - already successful automatic and preserved-geometry output keeps exact baseline geometry receipts
+  ---
+  duration_ms: 14.032458
+  type: 'test'
+  ...
+# Subtest: relative drop forks recover without changing source constraints or semantics
+ok 34 - relative drop forks recover without changing source constraints or semantics
+  ---
+  duration_ms: 230.369833
+  type: 'test'
+  ...
+# Subtest: relative drop recovery is stable when eligible forks exceed the retry limit
+ok 35 - relative drop recovery is stable when eligible forks exceed the retry limit
+  ---
+  duration_ms: 707.323416
+  type: 'test'
+  ...
+# Subtest: a crossing reports an executable full-workflow repair without applying it to authored constraints
+ok 36 - a crossing reports an executable full-workflow repair without applying it to authored constraints
+  ---
+  duration_ms: 99.781625
+  type: 'test'
+  ...
+# Subtest: repair paths use authored edge indexes after source reordering
+ok 37 - repair paths use authored edge indexes after source reordering
+  ---
+  duration_ms: 49.785833
+  type: 'test'
+  ...
+# Subtest: standard warning and absolute geometry retain their original acceptance without optional repair suggestions
+ok 38 - standard warning and absolute geometry retain their original acceptance without optional repair suggestions
+  ---
+  duration_ms: 5.20725
+  type: 'test'
+  ...
+# Subtest: an unrelated error does not acquire a claim of a complete repair
+ok 39 - an unrelated error does not acquire a claim of a complete repair
+  ---
+  duration_ms: 10.29725
+  type: 'test'
+  ...
+# Subtest: fallback migration preserves valid requiredEdges
+ok 40 - fallback migration preserves valid requiredEdges
+  ---
+  duration_ms: 847.239792
+  type: 'test'
+  ...
+# Subtest: fallback migration preserves valid requiredPaths
+ok 41 - fallback migration preserves valid requiredPaths
+  ---
+  duration_ms: 883.826916
+  type: 'test'
+  ...
+# Subtest: fallback migration preserves valid allowedRoots
+ok 42 - fallback migration preserves valid allowedRoots
+  ---
+  duration_ms: 755.096333
+  type: 'test'
+  ...
+# Subtest: fallback migration preserves valid allowedTerminals
+ok 43 - fallback migration preserves valid allowedTerminals
+  ---
+  duration_ms: 785.49225
+  type: 'test'
+  ...
+# Subtest: fallback migration preserves valid combined contracts
+ok 44 - fallback migration preserves valid combined contracts
+  ---
+  duration_ms: 1480.652833
+  type: 'test'
+  ...
+# Subtest: authored invalid requiredEdges still rejects validation and migration
+ok 45 - authored invalid requiredEdges still rejects validation and migration
+  ---
+  duration_ms: 232.2065
+  type: 'test'
+  ...
+# Subtest: authored invalid requiredPaths still rejects validation and migration
+ok 46 - authored invalid requiredPaths still rejects validation and migration
+  ---
+  duration_ms: 229.066583
+  type: 'test'
+  ...
+# Subtest: authored invalid allowedRoots still rejects validation and migration
+ok 47 - authored invalid allowedRoots still rejects validation and migration
+  ---
+  duration_ms: 230.859625
+  type: 'test'
+  ...
+# Subtest: authored invalid allowedTerminals still rejects validation and migration
+ok 48 - authored invalid allowedTerminals still rejects validation and migration
+  ---
+  duration_ms: 226.350542
+  type: 'test'
+  ...
+# Subtest: only the incomplete planning projection omits semantic contracts without mutating the source
+ok 49 - only the incomplete planning projection omits semantic contracts without mutating the source
+  ---
+  duration_ms: 23.094834
+  type: 'test'
+  ...
+# Subtest: planning keeps semantic contracts when it retains every authored edge
+ok 50 - planning keeps semantic contracts when it retains every authored edge
+  ---
+  duration_ms: 13.274292
+  type: 'test'
+  ...
+# Subtest: standard placed-label diagnostics expose the actual label-label conflict
+ok 51 - standard placed-label diagnostics expose the actual label-label conflict
+  ---
+  duration_ms: 54.581708
+  type: 'test'
+  ...
+# Subtest: showcase placed-label diagnostics expose the actual label-label conflict
+ok 52 - showcase placed-label diagnostics expose the actual label-label conflict
+  ---
+  duration_ms: 16.709125
+  type: 'test'
+  ...
+# Subtest: standard placed-label diagnostics expose the actual route-label conflict
+ok 53 - standard placed-label diagnostics expose the actual route-label conflict
+  ---
+  duration_ms: 16.085416
+  type: 'test'
+  ...
+# Subtest: showcase placed-label diagnostics expose the actual route-label conflict
+ok 54 - showcase placed-label diagnostics expose the actual route-label conflict
+  ---
+  duration_ms: 14.25325
+  type: 'test'
+  ...
+# Subtest: standard placed-label diagnostics expose the actual label-route conflict
+ok 55 - standard placed-label diagnostics expose the actual label-route conflict
+  ---
+  duration_ms: 14.194625
+  type: 'test'
+  ...
+# Subtest: showcase placed-label diagnostics expose the actual label-route conflict
+ok 56 - showcase placed-label diagnostics expose the actual label-route conflict
+  ---
+  duration_ms: 12.210333
+  type: 'test'
+  ...
+# Subtest: standard scaled placed-label diagnostics preserve measured geometry and replayable repairs
+ok 57 - standard scaled placed-label diagnostics preserve measured geometry and replayable repairs
+  ---
+  duration_ms: 12.4615
+  type: 'test'
+  ...
+# Subtest: showcase scaled placed-label diagnostics preserve measured geometry and replayable repairs
+ok 58 - showcase scaled placed-label diagnostics preserve measured geometry and replayable repairs
+  ---
+  duration_ms: 18.031833
+  type: 'test'
+  ...
+# Subtest: placed-label acceptance retains the 2px overlap tolerance and 4px route clearance boundary
+ok 59 - placed-label acceptance retains the 2px overlap tolerance and 4px route clearance boundary
+  ---
+  duration_ms: 2.600084
+  type: 'test'
+  ...
+# Subtest: failed workflow offers a complete optional placement repair without applying it
+ok 60 - failed workflow offers a complete optional placement repair without applying it
+  ---
+  duration_ms: 1229.429208
+  type: 'test'
+  ...
+# Subtest: placement patch indexes follow authored node order and do not depend on domain IDs
+ok 61 - placement patch indexes follow authored node order and do not depend on domain IDs
+  ---
+  duration_ms: 983.78575
+  type: 'test'
+  ...
+# Subtest: standard acceptance and an authored canvas do not acquire placement suggestions
+ok 62 - standard acceptance and an authored canvas do not acquire placement suggestions
+  ---
+  duration_ms: 844.054084
+  type: 'test'
+  ...
+# Subtest: a proposed route repair that still fails text checks is not advertised as complete
+ok 63 - a proposed route repair that still fails text checks is not advertised as complete
+  ---
+  duration_ms: 197.97825
+  type: 'test'
+  ...
+# Subtest: source and brand context survives scaled optional placement repair probes
+ok 64 - source and brand context survives scaled optional placement repair probes
+  ---
+  duration_ms: 2906.249875
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: ordinary
+ok 65 - omitted and explicit typography_scale 1 preserve identical HTML: ordinary
+  ---
+  duration_ms: 380.139666
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: dense
+ok 66 - omitted and explicit typography_scale 1 preserve identical HTML: dense
+  ---
+  duration_ms: 417.076125
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: cjk
+ok 67 - omitted and explicit typography_scale 1 preserve identical HTML: cjk
+  ---
+  duration_ms: 404.3355
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: ordinary/1.5
+ok 68 - scaled text participates in layout without losing content: ordinary/1.5
+  ---
+  duration_ms: 593.995667
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: ordinary/2
+ok 69 - scaled text participates in layout without losing content: ordinary/2
+  ---
+  duration_ms: 605.676916
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: dense/1.5
+ok 70 - scaled text participates in layout without losing content: dense/1.5
+  ---
+  duration_ms: 1145.2315
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: cjk/1.5
+ok 71 - scaled text participates in layout without losing content: cjk/1.5
+  ---
+  duration_ms: 824.22125
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: 0.99
+ok 72 - schema rejects an invalid typography_scale: 0.99
+  ---
+  duration_ms: 131.1065
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: 2.01
+ok 73 - schema rejects an invalid typography_scale: 2.01
+  ---
+  duration_ms: 127.523667
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: "1.5"
+ok 74 - schema rejects an invalid typography_scale: "1.5"
+  ---
+  duration_ms: 134.287708
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: null
+ok 75 - schema rejects an invalid typography_scale: null
+  ---
+  duration_ms: 129.461209
+  type: 'test'
+  ...
+# Subtest: v1 rejects the new typography option without implicit migration
+ok 76 - v1 rejects the new typography option without implicit migration
+  ---
+  duration_ms: 134.2765
+  type: 'test'
+  ...
+# Subtest: omitted configuration preserves frozen ordinary, dense, CJK and v1 SVG output
+ok 77 - omitted configuration preserves frozen ordinary, dense, CJK and v1 SVG output
+  ---
+  duration_ms: 942.570291
+  type: 'test'
+  ...
+# Subtest: undersized authored nodes fail instead of silently growing
+ok 78 - undersized authored nodes fail instead of silently growing
+  ---
+  duration_ms: 757.382666
+  type: 'test'
+  ...
+# Subtest: an authored viewBox that cannot contain scaled content stays authoritative
+ok 79 - an authored viewBox that cannot contain scaled content stays authoritative
+  ---
+  duration_ms: 432.359083
+  type: 'test'
+  ...
+# Subtest: sufficient authored node dimensions and canvas dimensions are preserved
+ok 80 - sufficient authored node dimensions and canvas dimensions are preserved
+  ---
+  duration_ms: 495.863375
+  type: 'test'
+  ...
+# Subtest: a compact authored label-only node is accepted when its actual text fits
+ok 81 - a compact authored label-only node is accepted when its actual text fits
+  ---
+  duration_ms: 362.270833
+  type: 'test'
+  ...
+# Subtest: caption and tag collisions in a short authored node remain capacity errors
+ok 82 - caption and tag collisions in a short authored node remain capacity errors
+  ---
+  duration_ms: 177.730125
+  type: 'test'
+  ...
+# Subtest: absolute via and labelAt controls remain at their authored positions
+ok 83 - absolute via and labelAt controls remain at their authored positions
+  ---
+  duration_ms: 277.920083
+  type: 'test'
+  ...
+# Subtest: scaled workflows preserve the absolute channelX coordinate
+ok 84 - scaled workflows preserve the absolute channelX coordinate
+  ---
+  duration_ms: 292.159834
+  type: 'test'
+  ...
+# Subtest: scaled workflows preserve the absolute channelY coordinate
+ok 85 - scaled workflows preserve the absolute channelY coordinate
+  ---
+  duration_ms: 286.590208
+  type: 'test'
+  ...
+# Subtest: layout receipts report rendered fonts without mutating the authored input
+ok 86 - layout receipts report rendered fonts without mutating the authored input
+  ---
+  duration_ms: 45.270375
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source-only 1.01
+ok 87 - source-backed automatic typography validates and renders: source-only 1.01
+  ---
+  duration_ms: 601.421083
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source and brand 1.1
+ok 88 - source-backed automatic typography validates and renders: source and brand 1.1
+  ---
+  duration_ms: 632.122167
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source and tag 1.5
+ok 89 - source-backed automatic typography validates and renders: source and tag 1.5
+  ---
+  duration_ms: 587.737875
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source, brand and tag 2
+ok 90 - source-backed automatic typography validates and renders: source, brand and tag 2
+  ---
+  duration_ms: 717.000375
+  type: 'test'
+  ...
+# Subtest: source-backed repair verification keeps other authored source constraints: source-only
+ok 91 - source-backed repair verification keeps other authored source constraints: source-only
+  ---
+  duration_ms: 4079.927292
+  type: 'test'
+  ...
+# Subtest: source-backed repair verification keeps other authored source constraints: source and brand
+ok 92 - source-backed repair verification keeps other authored source constraints: source and brand
+  ---
+  duration_ms: 4302.935083
+  type: 'test'
+  ...
+# Subtest: source-backed automatic height participates in offset lane planning
+ok 93 - source-backed automatic height participates in offset lane planning
+  ---
+  duration_ms: 1459.771625
+  type: 'test'
+  ...
+# Subtest: source-backed omitted and scale-one typography preserve identical HTML
+ok 94 - source-backed omitted and scale-one typography preserve identical HTML
+  ---
+  duration_ms: 666.414125
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves authored width with automatic height
+ok 95 - source-backed typography preserves authored width with automatic height
+  ---
+  duration_ms: 763.8855
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves authored height with automatic branded width
+ok 96 - source-backed typography preserves authored height with automatic branded width
+  ---
+  duration_ms: 748.729
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves both authored dimensions with brand and tag
+ok 97 - source-backed typography preserves both authored dimensions with brand and tag
+  ---
+  duration_ms: 608.076625
+  type: 'test'
+  ...
+# Subtest: every typography repair replays with verified source context: source-only
+ok 98 - every typography repair replays with verified source context: source-only
+  ---
+  duration_ms: 1384.312042
+  type: 'test'
+  ...
+# Subtest: every typography repair replays with verified source context: source and brand
+ok 99 - every typography repair replays with verified source context: source and brand
+  ---
+  duration_ms: 1295.470916
+  type: 'test'
+  ...
+# Subtest: scaled layout preserves upstream phase chips, muted edge labels and reusable input sizing
+ok 100 - scaled layout preserves upstream phase chips, muted edge labels and reusable input sizing
+  ---
+  duration_ms: 50.785333
+  type: 'test'
+  ...
+1..100
+# tests 100
+# suites 0
+# pass 100
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 28203.287583

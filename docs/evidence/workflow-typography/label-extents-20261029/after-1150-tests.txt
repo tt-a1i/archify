@@ -1,0 +1,577 @@
+
+> test:focus
+> node scripts/run-tests.mjs --require-files test/readme-showcase.test.mjs test/architecture-delta.test.mjs test/workflow-typography.test.mjs
+
+Repository tests: 3 files, concurrency 4
+TAP version 13
+# Subtest: architecture compare classifies authored facts separately from geometry and presentation
+ok 1 - architecture compare classifies authored facts separately from geometry and presentation
+  ---
+  duration_ms: 2.637
+  type: 'test'
+  ...
+# Subtest: legend-only changes are presentation changes and never topology changes
+ok 2 - legend-only changes are presentation changes and never topology changes
+  ---
+  duration_ms: 0.382708
+  type: 'test'
+  ...
+# Subtest: canonical architecture ignores formatting, entity order, and set-like order
+ok 3 - canonical architecture ignores formatting, entity order, and set-like order
+  ---
+  duration_ms: 0.611292
+  type: 'test'
+  ...
+# Subtest: compare reports brand-only changes in the receipt and exact review target
+ok 4 - compare reports brand-only changes in the receipt and exact review target
+  ---
+  duration_ms: 2496.3085
+  type: 'test'
+  ...
+# Subtest: compare reports icon-only changes in the receipt and exact review target
+ok 5 - compare reports icon-only changes in the receipt and exact review target
+  ---
+  duration_ms: 2982.042541
+  type: 'test'
+  ...
+# Subtest: compare reports locale-only changes as presentation changes
+ok 6 - compare reports locale-only changes as presentation changes
+  ---
+  duration_ms: 783.26025
+  type: 'test'
+  ...
+# Subtest: change navigator order is exact-ID based, complete, unique, and stable
+ok 7 - change navigator order is exact-ID based, complete, unique, and stable
+  ---
+  duration_ms: 0.539333
+  type: 'test'
+  ...
+# Subtest: exact identity fails closed instead of guessing relationships or unrelated systems
+ok 8 - exact identity fails closed instead of guessing relationships or unrelated systems
+  ---
+  duration_ms: 0.440166
+  type: 'test'
+  ...
+# Subtest: evidence-only component changes keep an enabled exact review contract
+ok 9 - evidence-only component changes keep an enabled exact review contract
+  ---
+  duration_ms: 0.65625
+  type: 'test'
+  ...
+# Subtest: mixed semantic and geometry component changes retain both exact forms
+ok 10 - mixed semantic and geometry component changes retain both exact forms
+  ---
+  duration_ms: 873.160833
+  type: 'test'
+  ...
+# Subtest: mixed semantic and geometry relationship changes retain both exact routes
+ok 11 - mixed semantic and geometry relationship changes retain both exact routes
+  ---
+  duration_ms: 850.803834
+  type: 'test'
+  ...
+# Subtest: baseline boundary title masks stay below current components and carry delta identity
+ok 12 - baseline boundary title masks stay below current components and carry delta identity
+  ---
+  duration_ms: 720.589417
+  type: 'test'
+  ...
+# Subtest: same-label node id changes remain one removal plus one addition
+ok 13 - same-label node id changes remain one removal plus one addition
+  ---
+  duration_ms: 0.341333
+  type: 'test'
+  ...
+# Subtest: repository mismatch fails and verified matching revisions remain evidence-bounded
+ok 14 - repository mismatch fails and verified matching revisions remain evidence-bounded
+  ---
+  duration_ms: 0.737291
+  type: 'test'
+  ...
+# Subtest: provenance-only changes stay separate from graph changes and remain visible
+ok 15 - provenance-only changes stay separate from graph changes and remain visible
+  ---
+  duration_ms: 2.741083
+  type: 'test'
+  ...
+# Subtest: legacy schema-v1 provenance receipts render a generic notice without inventing details
+ok 16 - legacy schema-v1 provenance receipts render a generic notice without inventing details
+  ---
+  duration_ms: 1.450583
+  type: 'test'
+  ...
+# Subtest: repository location representation changes stay redacted in provenance output
+ok 17 - repository location representation changes stay redacted in provenance output
+  ---
+  duration_ms: 0.881459
+  type: 'test'
+  ...
+# Subtest: public compare keeps a revision-only provenance change out of graph identities
+ok 18 - public compare keeps a revision-only provenance change out of graph identities
+  ---
+  duration_ms: 1121.368209
+  type: 'test'
+  ...
+# Subtest: unchanged provenance preserves the ordinary empty graph state
+ok 19 - unchanged provenance preserves the ordinary empty graph state
+  ---
+  duration_ms: 1.108792
+  type: 'test'
+  ...
+# Subtest: portable compare retains link settings and uses the same repository identity rules
+ok 20 - portable compare retains link settings and uses the same repository identity rules
+  ---
+  duration_ms: 0.973583
+  type: 'test'
+  ...
+# Subtest: portable compare preserves literal SCP paths and rejects different Git locations
+ok 21 - portable compare preserves literal SCP paths and rejects different Git locations
+  ---
+  duration_ms: 1.127667
+  type: 'test'
+  ...
+# Subtest: compare CLI writes a deterministic three-state artifact and complete sidecar receipt
+ok 22 - compare CLI writes a deterministic three-state artifact and complete sidecar receipt
+  ---
+  duration_ms: 2545.1235
+  type: 'test'
+  ...
+# Subtest: compare cleanup preserves an unexpected claimant in private staging
+ok 23 - compare cleanup preserves an unexpected claimant in private staging
+  ---
+  duration_ms: 1921.767375
+  type: 'test'
+  ...
+# Subtest: compare default receipts preserve distinct HTML extension spellings only when the filesystem does
+ok 24 - compare default receipts preserve distinct HTML extension spellings only when the filesystem does
+  ---
+  duration_ms: 1654.859209
+  type: 'test'
+  ...
+# Subtest: compare prepares a missing nested parent before deriving its default receipt
+ok 25 - compare prepares a missing nested parent before deriving its default receipt
+  ---
+  duration_ms: 817.736
+  type: 'test'
+  ...
+# Subtest: compare validates an explicit receipt directory before preparing a missing output parent
+ok 26 - compare validates an explicit receipt directory before preparing a missing output parent
+  ---
+  duration_ms: 48.387875
+  type: 'test'
+  ...
+# Subtest: compare rejects an indeterminate default receipt namespace before creating outputs
+ok 27 - compare rejects an indeterminate default receipt namespace before creating outputs
+  ---
+  duration_ms: 53.622541
+  type: 'test'
+  ...
+# Subtest: checked-in Checkout compare artifact is reproducible from its authoritative inputs
+ok 28 - checked-in Checkout compare artifact is reproducible from its authoritative inputs
+  ---
+  duration_ms: 839.378084
+  type: 'test'
+  ...
+# Subtest: compare artifact exports standalone SVG with a UTF-8 XML declaration
+ok 29 - compare artifact exports standalone SVG with a UTF-8 XML declaration
+  ---
+  duration_ms: 839.623833
+  type: 'test'
+  ...
+# Subtest: artifact validation fails closed on missing, duplicate, or self-blessed review identity
+ok 30 - artifact validation fails closed on missing, duplicate, or self-blessed review identity
+  ---
+  duration_ms: 1050.249458
+  type: 'test'
+  ...
+# Subtest: formatting-only input changes raw proof but not semantic hash or artifact bytes
+ok 31 - formatting-only input changes raw proof but not semantic hash or artifact bytes
+  ---
+  duration_ms: 1676.367291
+  type: 'test'
+  ...
+# Subtest: compare failure preserves an existing trusted artifact
+ok 32 - compare failure preserves an existing trusted artifact
+  ---
+  duration_ms: 754.463708
+  type: 'test'
+  ...
+# Subtest: compare validates raw snapshots before canonicalization can discard invalid fields
+ok 33 - compare validates raw snapshots before canonicalization can discard invalid fields
+  ---
+  duration_ms: 123.195167
+  type: 'test'
+  ...
+# Subtest: compare rejects either unsupported target before staging a trusted pair
+ok 34 - compare rejects either unsupported target before staging a trusted pair
+  ---
+  duration_ms: 41.236333
+  type: 'test'
+  ...
+# Subtest: compare validates captured base bytes when the original becomes invalid
+ok 35 - compare validates captured base bytes when the original becomes invalid
+  ---
+  duration_ms: 844.409
+  type: 'test'
+  ...
+# Subtest: compare validates captured base bytes when the original becomes valid
+ok 36 - compare validates captured base bytes when the original becomes valid
+  ---
+  duration_ms: 126.281416
+  type: 'test'
+  ...
+# Subtest: compare validates captured head bytes when the original becomes invalid
+ok 37 - compare validates captured head bytes when the original becomes invalid
+  ---
+  duration_ms: 830.894792
+  type: 'test'
+  ...
+# Subtest: compare validates captured head bytes when the original becomes valid
+ok 38 - compare validates captured head bytes when the original becomes valid
+  ---
+  duration_ms: 301.642083
+  type: 'test'
+  ...
+# Subtest: compare reports a base snapshot write failure as a preparation error
+ok 39 - compare reports a base snapshot write failure as a preparation error
+  ---
+  duration_ms: 53.802625
+  type: 'test'
+  ...
+# Subtest: compare reports a head snapshot write failure as a preparation error
+ok 40 - compare reports a head snapshot write failure as a preparation error
+  ---
+  duration_ms: 55.310375
+  type: 'test'
+  ...
+# Subtest: README motion proof is compact, looping, and backed by current gallery artifacts
+ok 41 - README motion proof is compact, looping, and backed by current gallery artifacts
+  ---
+  duration_ms: 6.863708
+  type: 'test'
+  ...
+# Subtest: Windows command lookup and ffmpeg launch keep their boundary diagnostics
+ok 42 - Windows command lookup and ffmpeg launch keep their boundary diagnostics
+  ---
+  duration_ms: 3.085208
+  type: 'test'
+  ...
+# Subtest: showcase shutdown clears its timer and bounds a forced stop
+ok 43 - showcase shutdown clears its timer and bounds a forced stop
+  ---
+  duration_ms: 42.782458
+  type: 'test'
+  ...
+# To /var/folders/lj/9zb09nc966b856h2hdj4ddfh0000gn/T/archify-star-history-1S9kjm/remote.git
+#  * [new branch]      main -> main
+# Switched to a new branch 'star-history'
+# To /var/folders/lj/9zb09nc966b856h2hdj4ddfh0000gn/T/archify-star-history-1S9kjm/remote.git
+#  * [new branch]      HEAD -> star-history
+# Cloning into '/var/folders/lj/9zb09nc966b856h2hdj4ddfh0000gn/T/archify-star-history-1S9kjm/second'...
+# done.
+# HEAD is now at 1a8b95e chore: update star history chart
+# To /var/folders/lj/9zb09nc966b856h2hdj4ddfh0000gn/T/archify-star-history-1S9kjm/remote.git
+#    1a8b95e..d17a6ef  HEAD -> star-history
+# Subtest: showcase navigation failure cancels its unused load waiter
+ok 44 - showcase navigation failure cancels its unused load waiter
+  ---
+  duration_ms: 0.914042
+  type: 'test'
+  ...
+# Subtest: every README header links to the other languages
+ok 45 - every README header links to the other languages
+  ---
+  duration_ms: 1.563584
+  type: 'test'
+  ...
+# Subtest: all README languages show the brand mark and localized launch video
+ok 46 - all README languages show the brand mark and localized launch video
+  ---
+  duration_ms: 1.022625
+  type: 'test'
+  ...
+# Subtest: README installation tables contain a complete DeepSeek Harness row
+ok 47 - README installation tables contain a complete DeepSeek Harness row
+  ---
+  duration_ms: 0.722125
+  type: 'test'
+  ...
+# Subtest: README installation tables include Hermes Agent before DeepSeek Harness
+ok 48 - README installation tables include Hermes Agent before DeepSeek Harness
+  ---
+  duration_ms: 0.837042
+  type: 'test'
+  ...
+# Subtest: README demos use checked-in captures and live deep links below the existing hero
+ok 49 - README demos use checked-in captures and live deep links below the existing hero
+  ---
+  duration_ms: 2.397584
+  type: 'test'
+  ...
+# Subtest: README preserves the visual proof set and key content
+ok 50 - README preserves the visual proof set and key content
+  ---
+  duration_ms: 0.992375
+  type: 'test'
+  ...
+# Subtest: all README languages end with the self-hosted star history chart
+ok 51 - all README languages end with the self-hosted star history chart
+  ---
+  duration_ms: 0.871208
+  type: 'test'
+  ...
+# Subtest: Windows Git Bash discovery ignores GIT_EXEC_PATH
+ok 52 - Windows Git Bash discovery ignores GIT_EXEC_PATH # SKIP
+  ---
+  duration_ms: 0.075208
+  type: 'test'
+  ...
+# Subtest: Star History publishing advances the data branch without a force push
+ok 53 - Star History publishing advances the data branch without a force push
+  ---
+  duration_ms: 746.18125
+  type: 'test'
+  ...
+# Subtest: showcase CLI runs through a filesystem alias while imports remain inert
+ok 54 - showcase CLI runs through a filesystem alias while imports remain inert
+  ---
+  duration_ms: 110.392834
+  type: 'test'
+  ...
+# Subtest: outer capture cleanup retains a live Chrome profile and cleans ordinary failures
+ok 55 - outer capture cleanup retains a live Chrome profile and cleans ordinary failures
+  ---
+  duration_ms: 11.299542
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: ordinary
+ok 56 - omitted and explicit typography_scale 1 preserve identical HTML: ordinary
+  ---
+  duration_ms: 320.7195
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: dense
+ok 57 - omitted and explicit typography_scale 1 preserve identical HTML: dense
+  ---
+  duration_ms: 336.80425
+  type: 'test'
+  ...
+# Subtest: omitted and explicit typography_scale 1 preserve identical HTML: cjk
+ok 58 - omitted and explicit typography_scale 1 preserve identical HTML: cjk
+  ---
+  duration_ms: 341.607541
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: ordinary/1.5
+ok 59 - scaled text participates in layout without losing content: ordinary/1.5
+  ---
+  duration_ms: 585.455958
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: ordinary/2
+ok 60 - scaled text participates in layout without losing content: ordinary/2
+  ---
+  duration_ms: 699.297875
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: dense/1.5
+ok 61 - scaled text participates in layout without losing content: dense/1.5
+  ---
+  duration_ms: 846.451083
+  type: 'test'
+  ...
+# Subtest: scaled text participates in layout without losing content: cjk/1.5
+ok 62 - scaled text participates in layout without losing content: cjk/1.5
+  ---
+  duration_ms: 555.676083
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: 0.99
+ok 63 - schema rejects an invalid typography_scale: 0.99
+  ---
+  duration_ms: 115.151292
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: 2.01
+ok 64 - schema rejects an invalid typography_scale: 2.01
+  ---
+  duration_ms: 118.448
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: "1.5"
+ok 65 - schema rejects an invalid typography_scale: "1.5"
+  ---
+  duration_ms: 124.334084
+  type: 'test'
+  ...
+# Subtest: schema rejects an invalid typography_scale: null
+ok 66 - schema rejects an invalid typography_scale: null
+  ---
+  duration_ms: 116.481291
+  type: 'test'
+  ...
+# Subtest: v1 rejects the new typography option without implicit migration
+ok 67 - v1 rejects the new typography option without implicit migration
+  ---
+  duration_ms: 116.407334
+  type: 'test'
+  ...
+# Subtest: omitted configuration preserves frozen ordinary, dense, CJK and v1 SVG output
+ok 68 - omitted configuration preserves frozen ordinary, dense, CJK and v1 SVG output
+  ---
+  duration_ms: 614.932167
+  type: 'test'
+  ...
+# Subtest: undersized authored nodes fail instead of silently growing
+ok 69 - undersized authored nodes fail instead of silently growing
+  ---
+  duration_ms: 395.485667
+  type: 'test'
+  ...
+# Subtest: an authored viewBox that cannot contain scaled content stays authoritative
+ok 70 - an authored viewBox that cannot contain scaled content stays authoritative
+  ---
+  duration_ms: 204.614208
+  type: 'test'
+  ...
+# Subtest: sufficient authored node dimensions and canvas dimensions are preserved
+ok 71 - sufficient authored node dimensions and canvas dimensions are preserved
+  ---
+  duration_ms: 383.430917
+  type: 'test'
+  ...
+# Subtest: a compact authored label-only node is accepted when its actual text fits
+ok 72 - a compact authored label-only node is accepted when its actual text fits
+  ---
+  duration_ms: 357.82875
+  type: 'test'
+  ...
+# Subtest: caption and tag collisions in a short authored node remain capacity errors
+ok 73 - caption and tag collisions in a short authored node remain capacity errors
+  ---
+  duration_ms: 169.054375
+  type: 'test'
+  ...
+# Subtest: absolute via and labelAt controls remain at their authored positions
+ok 74 - absolute via and labelAt controls remain at their authored positions
+  ---
+  duration_ms: 269.269125
+  type: 'test'
+  ...
+# Subtest: scaled workflows preserve the absolute channelX coordinate
+ok 75 - scaled workflows preserve the absolute channelX coordinate
+  ---
+  duration_ms: 305.006125
+  type: 'test'
+  ...
+# Subtest: scaled workflows preserve the absolute channelY coordinate
+ok 76 - scaled workflows preserve the absolute channelY coordinate
+  ---
+  duration_ms: 277.921833
+  type: 'test'
+  ...
+# Subtest: layout receipts report rendered fonts without mutating the authored input
+ok 77 - layout receipts report rendered fonts without mutating the authored input
+  ---
+  duration_ms: 44.065292
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source-only 1.01
+ok 78 - source-backed automatic typography validates and renders: source-only 1.01
+  ---
+  duration_ms: 590.079625
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source and brand 1.1
+ok 79 - source-backed automatic typography validates and renders: source and brand 1.1
+  ---
+  duration_ms: 596.291917
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source and tag 1.5
+ok 80 - source-backed automatic typography validates and renders: source and tag 1.5
+  ---
+  duration_ms: 566.182917
+  type: 'test'
+  ...
+# Subtest: source-backed automatic typography validates and renders: source, brand and tag 2
+ok 81 - source-backed automatic typography validates and renders: source, brand and tag 2
+  ---
+  duration_ms: 588.410375
+  type: 'test'
+  ...
+# Subtest: source-backed repair verification keeps other authored source constraints: source-only
+ok 82 - source-backed repair verification keeps other authored source constraints: source-only
+  ---
+  duration_ms: 1464.665041
+  type: 'test'
+  ...
+# Subtest: source-backed repair verification keeps other authored source constraints: source and brand
+ok 83 - source-backed repair verification keeps other authored source constraints: source and brand
+  ---
+  duration_ms: 1493.380583
+  type: 'test'
+  ...
+# Subtest: source-backed automatic height participates in offset lane planning
+ok 84 - source-backed automatic height participates in offset lane planning
+  ---
+  duration_ms: 734.191167
+  type: 'test'
+  ...
+# Subtest: source-backed omitted and scale-one typography preserve identical HTML
+ok 85 - source-backed omitted and scale-one typography preserve identical HTML
+  ---
+  duration_ms: 504.808
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves authored width with automatic height
+ok 86 - source-backed typography preserves authored width with automatic height
+  ---
+  duration_ms: 569.201083
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves authored height with automatic branded width
+ok 87 - source-backed typography preserves authored height with automatic branded width
+  ---
+  duration_ms: 601.167166
+  type: 'test'
+  ...
+# Subtest: source-backed typography preserves both authored dimensions with brand and tag
+ok 88 - source-backed typography preserves both authored dimensions with brand and tag
+  ---
+  duration_ms: 592.701417
+  type: 'test'
+  ...
+# Subtest: every typography repair replays with verified source context: source-only
+ok 89 - every typography repair replays with verified source context: source-only
+  ---
+  duration_ms: 1252.755291
+  type: 'test'
+  ...
+# Subtest: every typography repair replays with verified source context: source and brand
+ok 90 - every typography repair replays with verified source context: source and brand
+  ---
+  duration_ms: 1288.4045
+  type: 'test'
+  ...
+# Subtest: scaled layout preserves upstream phase chips, muted edge labels and reusable input sizing
+ok 91 - scaled layout preserves upstream phase chips, muted edge labels and reusable input sizing
+  ---
+  duration_ms: 45.388333
+  type: 'test'
+  ...
+# Subtest: scaled edge labels select a fitting segment using their visible height
+ok 92 - scaled edge labels select a fitting segment using their visible height
+  ---
+  duration_ms: 683.635834
+  type: 'test'
+  ...
+1..92
+# tests 92
+# suites 0
+# pass 91
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 24489.630417

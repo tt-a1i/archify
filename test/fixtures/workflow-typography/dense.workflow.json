@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": { "title": "Inventory caption workflow", "output": "dense.html", "quality_profile": "showcase", "viewBox": [1000, 560] },
+  "lanes": [{ "id": "orders", "label": "Order processing" }, { "id": "inventory", "label": "Inventory evidence" }],
+  "phases": [{ "id": "prepare", "label": "Prepare", "fromCol": 0, "toCol": 1 }, { "id": "commit", "label": "Commit", "fromCol": 2, "toCol": 2 }],
+  "groups": [{ "id": "reservation", "label": "Reservation details", "lane": "inventory", "fromCol": 0, "toCol": 2 }],
+  "nodes": [
+    { "id": "read", "type": "backend", "lane": "orders", "col": 0, "label": "Read", "sublabel": "InventoryRecordType", "tag": "request" },
+    { "id": "validate", "type": "security", "lane": "orders", "col": 1, "label": "Validate", "sublabel": "InventoryRecordType", "tag": "checked" },
+    { "id": "allocate", "type": "backend", "lane": "orders", "col": 2, "label": "Allocate", "sublabel": "InventoryRecordType", "tag": "reserved" },
+    { "id": "load", "type": "database", "lane": "inventory", "col": 0, "label": "Load", "sublabel": "InventoryRecordType", "tag": "available" },
+    { "id": "reserve", "type": "backend", "lane": "inventory", "col": 1, "label": "Reserve", "sublabel": "InventoryRecordType", "tag": "pending" },
+    { "id": "save", "type": "database", "lane": "inventory", "col": 2, "label": "Save", "sublabel": "InventoryRecordType", "tag": "durable" }
+  ],
+  "edges": [
+    { "id": "order-read", "from": "read", "to": "validate", "label": "inspect" },
+    { "id": "order-allocate", "from": "validate", "to": "allocate", "label": "accept" },
+    { "id": "stock-read", "from": "load", "to": "reserve", "label": "reserve" },
+    { "id": "stock-save", "from": "reserve", "to": "save", "label": "commit" }
+  ]
+}

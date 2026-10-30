@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": { "title": "库存校验与归档", "locale": "zh-CN", "output": "cjk.html", "quality_profile": "showcase" },
+  "lanes": [{ "id": "processing", "label": "库存处理" }],
+  "phases": [{ "id": "prepare", "label": "接收、校验和归档", "fromCol": 0, "toCol": 2 }],
+  "groups": [{ "id": "audit", "label": "业务证据", "lane": "processing", "fromCol": 0, "toCol": 2 }],
+  "nodes": [
+    { "id": "receive", "type": "frontend", "lane": "processing", "col": 0, "label": "接收订单", "sublabel": "仓库库存记录类型", "tag": "待处理" },
+    { "id": "validate", "type": "backend", "lane": "processing", "col": 1, "label": "校验库存", "sublabel": "库存变更请求校验", "tag": "已校验" },
+    { "id": "record", "type": "database", "lane": "processing", "col": 2, "label": "记录证据", "sublabel": "保存完整库存记录", "tag": "已保存" }
+  ],
+  "edges": [
+    { "id": "submit", "from": "receive", "to": "validate", "label": "提交校验" },
+    { "id": "persist", "from": "validate", "to": "record", "label": "保存结果" }
+  ]
+}

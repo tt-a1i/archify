@@ -1,0 +1,474 @@
+{
+  "case": "release-overview",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "zoom": 1.25,
+  "method": "Trusted pointer drags on empty diagram background: 230px right then 450px left; camera clamps at its bounds. These are demonstration gestures, not an optimized navigation minimum.",
+  "states": [
+    {
+      "direction": "reveal-left",
+      "clip": {
+        "bottom": 792.87109375,
+        "height": 700.15625,
+        "left": 47,
+        "right": 1378,
+        "top": 92.71484375,
+        "width": 1331
+      },
+      "detail": "read",
+      "edgeIds": [
+        "build-verify",
+        "checks-identity",
+        "identity-build",
+        "verify-publish",
+        "windows-checks"
+      ],
+      "fullyVisibleNodes": [
+        "windows",
+        "checks",
+        "identity",
+        "build"
+      ],
+      "inFrameSublabelMinCssPx": 15.814172725866335,
+      "logicalViewport": {
+        "height": 323.2,
+        "scale": 1.25,
+        "width": 614.5417142857143,
+        "x": 0,
+        "y": 40.4
+      },
+      "nodeCount": 6,
+      "nodes": [
+        {
+          "fullyInViewport": true,
+          "id": "windows",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 319.31243896484375,
+            "height": 112.64891052246094,
+            "left": 150.9897918701172,
+            "right": 350.29168701171875,
+            "top": 206.6635284423828,
+            "width": 199.30189514160156
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "Node 22 + 24"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "checks",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 410.94879150390625,
+            "right": 610.2506713867188,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 15.814172725866335,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "unit, WebM, browser"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "identity",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 670.9078369140625,
+            "right": 870.209716796875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "version + channel"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "build",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 930.8668212890624,
+            "right": 1130.168701171875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "build-zip.sh"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": false,
+          "id": "verify",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 1190.8258056640625,
+            "right": 1390.127685546875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 16.680702738242577,
+              "fullyInViewport": false,
+              "shown": true,
+              "text": "smoke + byte match"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": false,
+          "id": "publish",
+          "partlyInViewport": false,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 1450.7847900390625,
+            "right": 1650.086669921875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": false,
+              "shown": true,
+              "text": "archify.zip asset"
+            }
+          ],
+          "textOverflow": []
+        }
+      ],
+      "pageScroll": {
+        "scrollHeight": 1273,
+        "scrollWidth": 1425,
+        "x": 0,
+        "y": 0
+      },
+      "panel": {
+        "bottom": 861.8515625,
+        "height": 778.15625,
+        "left": 32,
+        "right": 1393,
+        "top": 83.6953125,
+        "width": 1361
+      },
+      "partlyVisibleNodes": [
+        "windows",
+        "checks",
+        "identity",
+        "build",
+        "verify"
+      ],
+      "scale": 1.25,
+      "sublabelMinCssPx": 15.814172725866335,
+      "svg": {
+        "bottom": 880.390625,
+        "height": 875.1953125,
+        "left": 47,
+        "right": 1710.75,
+        "top": 5.1953125,
+        "width": 1663.75
+      },
+      "textContent": [
+        "01 / Windows matrix",
+        "02 / Ubuntu release job",
+        "Windows paths",
+        "Node 22 + 24",
+        "Regressions",
+        "unit, WebM, browser",
+        "Identity",
+        "version + channel",
+        "Build archive",
+        "build-zip.sh",
+        "Verify package",
+        "smoke + byte match",
+        "GitHub Release",
+        "archify.zip asset",
+        "needs",
+        "Legend",
+        "Agent logic",
+        "2",
+        "Policy",
+        "3",
+        "External system",
+        "1"
+      ],
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "viewBox": "0 0 768 404",
+      "viewport": {
+        "devicePixelRatio": 1,
+        "height": 900,
+        "width": 1440
+      }
+    },
+    {
+      "direction": "reveal-right",
+      "clip": {
+        "bottom": 792.87109375,
+        "height": 700.15625,
+        "left": 47,
+        "right": 1378,
+        "top": 92.71484375,
+        "width": 1331
+      },
+      "detail": "read",
+      "edgeIds": [
+        "build-verify",
+        "checks-identity",
+        "identity-build",
+        "verify-publish",
+        "windows-checks"
+      ],
+      "fullyVisibleNodes": [
+        "checks",
+        "identity",
+        "build",
+        "verify",
+        "publish"
+      ],
+      "inFrameSublabelMinCssPx": 15.814172725866335,
+      "logicalViewport": {
+        "height": 323.2,
+        "scale": 1.25,
+        "width": 614.5417142857143,
+        "x": 153.4582857142857,
+        "y": 40.4
+      },
+      "nodeCount": 6,
+      "nodes": [
+        {
+          "fullyInViewport": false,
+          "id": "windows",
+          "partlyInViewport": false,
+          "shape": {
+            "bottom": 319.31243896484375,
+            "height": 112.64891052246094,
+            "left": -181.7602081298828,
+            "right": 17.54168701171875,
+            "top": 206.6635284423828,
+            "width": 199.30189514160156
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": false,
+              "shown": true,
+              "text": "Node 22 + 24"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "checks",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 78.19879150390625,
+            "right": 277.50067138671875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 15.814172725866335,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "unit, WebM, browser"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "identity",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 338.1578369140625,
+            "right": 537.459716796875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "version + channel"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "build",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 598.1168212890625,
+            "right": 797.418701171875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "build-zip.sh"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "verify",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 858.0758056640625,
+            "right": 1057.377685546875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 16.680702738242577,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "smoke + byte match"
+            }
+          ],
+          "textOverflow": []
+        },
+        {
+          "fullyInViewport": true,
+          "id": "publish",
+          "partlyInViewport": true,
+          "shape": {
+            "bottom": 587.936767578125,
+            "height": 112.64892578125,
+            "left": 1118.0347900390625,
+            "right": 1317.336669921875,
+            "top": 475.287841796875,
+            "width": 199.3018798828125
+          },
+          "sublabels": [
+            {
+              "cssPx": 17.330600247524753,
+              "fullyInViewport": true,
+              "shown": true,
+              "text": "archify.zip asset"
+            }
+          ],
+          "textOverflow": []
+        }
+      ],
+      "pageScroll": {
+        "scrollHeight": 1273,
+        "scrollWidth": 1425,
+        "x": 0,
+        "y": 0
+      },
+      "panel": {
+        "bottom": 861.8515625,
+        "height": 778.15625,
+        "left": 32,
+        "right": 1393,
+        "top": 83.6953125,
+        "width": 1361
+      },
+      "partlyVisibleNodes": [
+        "checks",
+        "identity",
+        "build",
+        "verify",
+        "publish"
+      ],
+      "scale": 1.25,
+      "sublabelMinCssPx": 15.814172725866335,
+      "svg": {
+        "bottom": 880.390625,
+        "height": 875.1953125,
+        "left": -285.75,
+        "right": 1378,
+        "top": 5.1953125,
+        "width": 1663.75
+      },
+      "textContent": [
+        "01 / Windows matrix",
+        "02 / Ubuntu release job",
+        "Windows paths",
+        "Node 22 + 24",
+        "Regressions",
+        "unit, WebM, browser",
+        "Identity",
+        "version + channel",
+        "Build archive",
+        "build-zip.sh",
+        "Verify package",
+        "smoke + byte match",
+        "GitHub Release",
+        "archify.zip asset",
+        "needs",
+        "Legend",
+        "Agent logic",
+        "2",
+        "Policy",
+        "3",
+        "External system",
+        "1"
+      ],
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "viewBox": "0 0 768 404",
+      "viewport": {
+        "devicePixelRatio": 1,
+        "height": 900,
+        "width": 1440
+      }
+    }
+  ]
+}

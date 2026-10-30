@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "status": "complete",
+  "generatedAt": "2026-10-04T07:12:04.776Z",
+  "source": {
+    "repository": "https://github.com/tt-a1i/archify",
+    "commit": "98c839a43eedb95f38700aa5243ea778c0482777",
+    "path": ".github/workflows/release.yml",
+    "sha256": "f72ab807b5c8d04432e7779037cc64a24404a7ef8f134a3130946536545d1c26"
+  },
+  "base": {
+    "commit": "98c839a43eedb95f38700aa5243ea778c0482777",
+    "runtimeSha256": "ebef86f24d0b5554751a8246c24137c03a5a86e804ee2a92834931a4cfde4304",
+    "runtimeFileCount": 63,
+    "dirtyRuntimeInputs": false
+  },
+  "candidate": {
+    "commit": "ae9255f7412799488544dc4910892a306da45caf",
+    "runtimeSha256": "384f7b6ae119c260f431918631273a621070686d4c22e285d70eeeb305b6edc8",
+    "runtimeFileCount": 64,
+    "dirtyRuntimeInputs": false
+  },
+  "toolchain": {
+    "node": "22.23.1",
+    "zlib": "1.3.1-e00f703",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "generatorSha256": "4b1c9c81562579bbe297c0bf3e1497b8e71a415ec35e1f6114e879b2f0dbacd4",
+  "typographyScale": 1.5,
+  "cases": [
+    {
+      "name": "release-overview",
+      "input": "release-overview.workflow.json",
+      "inputSha256": "f888179fe7f3c1e1d4ca785c5a9ed6a5e9d4195bc28d3a8b7cfd7049e7374985",
+      "scaledInputSha256": "224c46f84aebff6d2ffda7630b480d82ee2bb1f6c45faf4346ff08710d0a3e18",
+      "topologySha256": "87a9fc55f2236133edff044b0f16c37a711490d2c2537ca7dffc0054c74ba488",
+      "onlyTypographyScaleChanged": true,
+      "authoredNodeCount": 6,
+      "authoredEdgeCount": 5,
+      "variants": {
+        "before": {
+          "html": "release-overview/before.html",
+          "htmlSha256": "3b3ea8647345a1f3f148f1b1876138a4140a5d64893cfec53d8ea0a33a9d64a1",
+          "htmlBytes": 750561,
+          "svgSha256": "bc551c10756548bf8b5efcce812c2cf1bc8acf6cea36614801ff5c2e128ed3f5",
+          "viewBox": "0 0 768 404",
+          "renderedTextCount": 19,
+          "validation": {
+            "ok": true,
+            "diagnostics": [],
+            "desktopReadability": {
+              "budgetBasis": "legacy-930",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "limit": "legacy",
+              "requestedTargetPx": null,
+              "requestedTargetMet": null,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "node",
+                "id": "checks"
+              },
+              "minimumSourceTextPx": 7.3,
+              "minimumProjectedTextPx": 7.3,
+              "semanticTextCount": 13
+            }
+          }
+        },
+        "after": {
+          "html": "release-overview/after.html",
+          "htmlSha256": "fc786ff03a076d2fc33add1ff42685fcb1da5ae9e3c778352b6947c7616ac18a",
+          "htmlBytes": 750670,
+          "svgSha256": "23369fb70b5f9f7126bf5a8f6979b115910a2aa1c3f4bff142a8e7af1c48a0e6",
+          "viewBox": "0 0 1007 488",
+          "renderedTextCount": 19,
+          "validation": {
+            "ok": true,
+            "diagnostics": [],
+            "desktopReadability": {
+              "budgetBasis": "legacy-930",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "limit": "legacy",
+              "requestedTargetPx": null,
+              "requestedTargetMet": null,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "node",
+                "id": "windows"
+              },
+              "minimumSourceTextPx": 12,
+              "minimumProjectedTextPx": 11.082423038728898,
+              "semanticTextCount": 13
+            }
+          }
+        },
+        "candidate-default": {
+          "temporaryArtifact": true,
+          "htmlSha256": "3b3ea8647345a1f3f148f1b1876138a4140a5d64893cfec53d8ea0a33a9d64a1",
+          "htmlBytes": 750561,
+          "svgSha256": "bc551c10756548bf8b5efcce812c2cf1bc8acf6cea36614801ff5c2e128ed3f5",
+          "viewBox": "0 0 768 404",
+          "renderedTextCount": 19,
+          "validation": {
+            "ok": true,
+            "diagnostics": [],
+            "desktopReadability": {
+              "budgetBasis": "legacy-930",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "limit": "legacy",
+              "requestedTargetPx": null,
+              "requestedTargetMet": null,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "node",
+                "id": "checks"
+              },
+              "minimumSourceTextPx": 7.3,
+              "minimumProjectedTextPx": 7.3,
+              "semanticTextCount": 13
+            }
+          }
+        }
+      },
+      "defaultHtmlByteIdentical": true,
+      "defaultSvgByteIdentical": true,
+      "renderedTextContentRetained": true
+    },
+    {
+      "name": "stable-release-gates",
+      "input": "stable-release-gates.workflow.json",
+      "inputSha256": "a598faa3eedbba6254409511056cf76173c3401653cd4ec3fdc777cafad0fcdb",
+      "scaledInputSha256": "0d6be2a9755817f7bc09486bdc8941804637c4ea74102377e875f2dcc346b8e6",
+      "topologySha256": "21191308fdb061303ce554591f11ad84d56a95be23dd752776d79d64eaa5b4f8",
+      "onlyTypographyScaleChanged": true,
+      "authoredNodeCount": 10,
+      "authoredEdgeCount": 9,
+      "variants": {
+        "before": {
+          "html": "stable-release-gates/before.html",
+          "htmlSha256": "ebfc8c36113b8252e05deeec8f06b3818d4d28459a18f4fcd79bdd540e22fc3e",
+          "htmlBytes": 757502,
+          "svgSha256": "72fee942b70403a0a0f85bf4119e8a515464e871fdebd74780e8ecd8fa58088d",
+          "viewBox": "0 0 768 864",
+          "renderedTextCount": 30,
+          "validation": {
+            "ok": true,
+            "diagnostics": [],
+            "desktopReadability": {
+              "budgetBasis": "legacy-930",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "limit": "legacy",
+              "requestedTargetPx": null,
+              "requestedTargetMet": null,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "node",
+                "id": "checks"
+              },
+              "minimumSourceTextPx": 7.3,
+              "minimumProjectedTextPx": 7.3,
+              "semanticTextCount": 22
+            }
+          }
+        },
+        "after": {
+          "html": "stable-release-gates/after.html",
+          "htmlSha256": "b3094107d95fc5a9cffd0057f44a85945481d73e0e61d19c826ec11b29223816",
+          "htmlBytes": 757798,
+          "svgSha256": "35a80916f1bc51af948291ecdcdcaeac81bf1f9ea633f01cadb5e624346161db",
+          "viewBox": "0 0 875 1030",
+          "renderedTextCount": 30,
+          "validation": {
+            "ok": true,
+            "diagnostics": [],
+            "desktopReadability": {
+              "budgetBasis": "legacy-930",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "limit": "legacy",
+              "requestedTargetPx": null,
+              "requestedTargetMet": null,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "node",
+                "id": "windows"
+              },
+              "minimumSourceTextPx": 12,
+              "minimumProjectedTextPx": 12,
+              "semanticTextCount": 22
+            }
+          }
+        },
+        "candidate-default": {
+          "temporaryArtifact": true,
+          "htmlSha256": "ebfc8c36113b8252e05deeec8f06b3818d4d28459a18f4fcd79bdd540e22fc3e",
+          "htmlBytes": 757502,
+          "svgSha256": "72fee942b70403a0a0f85bf4119e8a515464e871fdebd74780e8ecd8fa58088d",
+          "viewBox": "0 0 768 864",
+          "renderedTextCount": 30,
+          "validation": {
+            "ok": true,
+            "diagnostics": [],
+            "desktopReadability": {
+              "budgetBasis": "legacy-930",
+              "readerContract": "declared-wide-v1",
+              "availableDiagramWidth": 930,
+              "actualBudgetPx": 930,
+              "limit": "legacy",
+              "requestedTargetPx": null,
+              "requestedTargetMet": null,
+              "hardFloorPx": 6,
+              "hardFloorMet": true,
+              "minimumOwner": {
+                "kind": "node",
+                "id": "checks"
+              },
+              "minimumSourceTextPx": 7.3,
+              "minimumProjectedTextPx": 7.3,
+              "semanticTextCount": 22
+            }
+          }
+        }
+      },
+      "defaultHtmlByteIdentical": true,
+      "defaultSvgByteIdentical": true,
+      "renderedTextContentRetained": true
+    }
+  ],
+  "benchmark": "generation-benchmark.json"
+}

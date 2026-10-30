@@ -44,6 +44,7 @@ export const browserTestFiles = [
   'edge-label-contrast-browser.test.mjs',
   'lifecycle-note-contrast-browser.test.mjs',
   'sequence-segment-contrast-browser.test.mjs',
+  'workflow-typography-browser.test.mjs',
   'toolbar-keyboard-browser.test.mjs',
   'bottom-node-index-browser.test.mjs',
   'explainer-browser.test.mjs',
