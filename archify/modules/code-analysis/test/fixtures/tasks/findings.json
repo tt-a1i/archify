@@ -15,13 +15,14 @@
     "coupling/import-cycle",
     "coupling/cycle",
     "coupling/hub",
+    "coupling/internal-leak",
     "architecture/boundary",
     "complexity/function"
   ],
   "summary": {
     "errors": 0,
     "warnings": 2,
-    "info": 2,
+    "info": 4,
     "suppressed": 0
   },
   "analysis": {
@@ -38,7 +39,8 @@
       "complexity/function": 1,
       "coupling/cycle": 1,
       "coupling/hub": 1,
-      "coupling/import-cycle": 1
+      "coupling/import-cycle": 1,
+      "coupling/internal-leak": 1
     },
     "coverage": {
       "files": 9,
@@ -316,6 +318,106 @@
           "app/b.py"
         ],
         "sha256": "d1c02b515886c5360db7ca128d1ea09403eccb6cd38fabb337571456504e7578"
+      }
+    },
+    {
+      "id": "COUP-2c7a6dad8b09",
+      "code": "coupling/internal-leak",
+      "dimension": "coupling",
+      "severity": "info",
+      "confidence": 1,
+      "message": "domain has an entry point (domain/__init__.py), but 1 import from 1 module reach 1 of its internal files directly.",
+      "subject": {
+        "module": "domain"
+      },
+      "evidence": {
+        "entries": [
+          "domain/__init__.py"
+        ],
+        "entrySource": "detected",
+        "internalFiles": [
+          "domain/model.py"
+        ],
+        "moduleFiles": 3,
+        "consumers": [
+          "ui"
+        ],
+        "viaEntry": 1,
+        "totalImports": 1,
+        "files": [
+          "ui/view.py"
+        ],
+        "imports": [
+          {
+            "file": "ui/view.py",
+            "line": 2,
+            "to": "domain/model.py"
+          }
+        ],
+        "threshold": {
+          "minFiles": 3
+        }
+      },
+      "supportedFixes": [
+        "export what consumers need from domain/__init__.py and change the cited imports to use it",
+        "if a file is meant to be public, add it to rules.coupling.internalLeak.entries"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "domain/model.py",
+          "ui/view.py"
+        ],
+        "sha256": "3af49bf23d2671819b40d9009eaa856746f4910d135ad74693702bad740e3bfd"
+      }
+    },
+    {
+      "id": "COUP-81b9df85cf15",
+      "code": "coupling/internal-leak",
+      "dimension": "coupling",
+      "severity": "info",
+      "confidence": 1,
+      "message": "ui has an entry point (ui/__init__.py), but 1 import from 1 module reach 1 of its internal files directly.",
+      "subject": {
+        "module": "ui"
+      },
+      "evidence": {
+        "entries": [
+          "ui/__init__.py"
+        ],
+        "entrySource": "detected",
+        "internalFiles": [
+          "ui/view.py"
+        ],
+        "moduleFiles": 2,
+        "consumers": [
+          "domain"
+        ],
+        "viaEntry": 1,
+        "totalImports": 1,
+        "files": [
+          "domain/order.py"
+        ],
+        "imports": [
+          {
+            "file": "domain/order.py",
+            "line": 3,
+            "to": "ui/view.py"
+          }
+        ],
+        "threshold": {
+          "minFiles": 3
+        }
+      },
+      "supportedFixes": [
+        "export what consumers need from ui/__init__.py and change the cited imports to use it",
+        "if a file is meant to be public, add it to rules.coupling.internalLeak.entries"
+      ],
+      "evidenceDigest": {
+        "files": [
+          "domain/order.py",
+          "ui/view.py"
+        ],
+        "sha256": "32567b9facb6745b8eb919959e6d336b8f865ab31438a088323090989a79df8b"
       }
     }
   ]

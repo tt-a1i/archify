@@ -105,3 +105,20 @@ test('atlas: the overlay embeds the atlas before the Classic script only when ra
   const without = buildOverlay({ ir, graph, html, facts: null, findings }).html;
   assert.ok(!without.includes('id="bauify-atlas-data"') && !without.includes('id="bauify-atlas-script"'), 'no atlas without raw facts');
 });
+
+test('atlas: an internal-imports finding draws its cited imports and marks its module and entry files', (t) => {
+  const { facts, graph, findings } = analyze(t);
+  const target = graph.modules.find((m) => facts.imports.some((i) => i.resolved && graph.fileModules[i.to] === m.id && graph.fileModules[i.from] !== m.id));
+  const cited = facts.imports.filter((i) => i.resolved && graph.fileModules[i.to] === target.id && graph.fileModules[i.from] && graph.fileModules[i.from] !== target.id).slice(0, 2);
+  const entryFile = Object.keys(graph.fileModules).find((p) => graph.fileModules[p] === target.id);
+  const leak = { id: 'COUP-leak', code: 'coupling/internal-leak', severity: 'info', subject: { module: target.id },
+    evidence: { entries: [entryFile, 'not/analyzed.py'], imports: cited.map((i) => ({ file: i.from, line: i.line, to: i.to })) } };
+  const atlas = buildAtlas({ graph, facts, findings: [...findings, leak] });
+  const paths = atlas.files.map((f) => f[0]);
+  const entry = atlas.findings.find((f) => f.id === 'COUP-leak');
+  assert.equal(entry.kind, 'edges');
+  assert.equal(atlas.modules[entry.module].id, target.id);
+  assert.deepEqual(entry.edges.map(([a, b]) => `${paths[a]}>${paths[b]}`), cited.map((i) => `${i.from}>${i.to}`));
+  assert.deepEqual(entry.entries.map((i) => paths[i]), [entryFile], 'entry files outside the atlas are dropped');
+  assert.match(entry.title, /^Internal imports · /);
+});

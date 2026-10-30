@@ -7,6 +7,7 @@
 // the finding's evidence so a reader can re-check the call.
 import * as cycle from './rules/coupling/cycle.mjs';
 import * as hub from './rules/coupling/hub.mjs';
+import * as internalLeak from './rules/coupling/internal-leak.mjs';
 import * as importCycle from './rules/coupling/import-cycle.mjs';
 import * as boundary from './rules/architecture/boundary.mjs';
 import * as complexity from './rules/complexity/function.mjs';
@@ -15,7 +16,7 @@ import fs from 'node:fs';
 
 const PACKAGE = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-export const RULES = [importCycle, cycle, hub, boundary, complexity];
+export const RULES = [importCycle, cycle, hub, internalLeak, boundary, complexity];
 
 export function evaluate(graph, config = {}, facts = null) {
   const suppressed = new Set(config.ignore || []);
@@ -90,7 +91,7 @@ function assignIds(diagnostics, graph) {
 // evidenceDigest pins a finding to the source it was computed from: a hash
 // over the text of only the files the finding is about (the subject's files,
 // every file of the subject's modules, or both ends of each import crossing a
-// boundary; for a function, only that function's lines). Editing an unrelated file leaves it
+// boundary or reaching inside a module; for a function, only that function's lines). Editing an unrelated file leaves it
 // unchanged; repository.snapshotId changes on any edit and is too coarse to
 // tell whether this finding's evidence is still current.
 function attachEvidenceDigests(diagnostics, graph, facts) {
@@ -119,8 +120,8 @@ function subjectFiles(finding, moduleFiles) {
   const subject = finding.subject;
   if (Array.isArray(subject?.files)) return subject.files;
   if (typeof subject?.file === 'string') return [subject.file];
-  // A boundary finding is about the imports that cross it: both ends of each.
-  if (subject?.boundary) return (finding.evidence?.imports || []).flatMap((i) => [i.file, i.to]);
+  // A boundary or internal-leak finding is about the imports it cites: both ends of each.
+  if (subject?.boundary || finding.code === 'coupling/internal-leak') return (finding.evidence?.imports || []).flatMap((i) => [i.file, i.to]);
   const modules = Array.isArray(subject?.modules) ? subject.modules : typeof subject?.module === 'string' ? [subject.module] : [];
   return modules.flatMap((id) => moduleFiles.get(id) || []);
 }
