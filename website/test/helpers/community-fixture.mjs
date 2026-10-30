@@ -25,7 +25,7 @@ export function createCommunityFixture() {
   const tracked = execFileSync('git', ['ls-files', '-z', '--',
     'website/src/', 'website/public/', 'website/astro.config.mjs', 'website/scripts/', 'website/package.json',
     'archify/package.json', 'archify/skill-release.json', 'archify/recipes/',
-    'scripts/site-copy.mjs', 'scripts/check-community-packages.mjs',
+    'scripts/site-copy.mjs', 'scripts/check-community-packages.mjs', 'scripts/checker-options.mjs',
     'docs/gallery/', 'docs/assets/', 'docs/cases/life/'], { cwd: repoRoot, encoding: 'utf8' })
     .split('\0').filter(Boolean);
   for (const relative of tracked) copy(relative);

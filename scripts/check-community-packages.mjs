@@ -8,9 +8,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { checkerOption } from './checker-options.mjs';
+
 const scriptRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const rootFlag = process.argv.indexOf('--root');
-const repoRoot = rootFlag === -1 ? scriptRoot : path.resolve(process.argv[rootFlag + 1] || '');
+const repoRoot = path.resolve(checkerOption(process.argv.slice(2), '--root', scriptRoot));
 
 export const PACKAGE_TYPES = Object.freeze(['skill', 'recipe', 'brand-marks', 'locale', 'wrapper']);
 export const REQUIRED_FIELDS = Object.freeze(['name', 'type', 'summary', 'author', 'repository', 'archify', 'schemaVersions']);

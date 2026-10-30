@@ -13,9 +13,10 @@ import {
   validateStableUpdateManifest,
 } from '../archify/scripts/update-contract.mjs';
 
+import { checkerOption } from './checker-options.mjs';
+
 const scriptRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const rootFlag = process.argv.indexOf('--root');
-const repoRoot = rootFlag === -1 ? scriptRoot : path.resolve(process.argv[rootFlag + 1] || '');
+const repoRoot = path.resolve(checkerOption(process.argv.slice(2), '--root', scriptRoot));
 const failures = [];
 
 function fail(message) {
