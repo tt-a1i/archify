@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "修改第一个任务后的引用",
+    "output": "object-map.html",
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "原版独有"
+        },
+        "frontend": {
+          "label": "新版独有"
+        },
+        "database": {
+          "label": "两版共享"
+        }
+      }
+    },
+    "translations": {
+      "viewer.kind.external": "原版独有",
+      "viewer.kind.frontend": "新版独有",
+      "viewer.kind.database": "两版共享",
+      "viewer.lens.title": "比较对象分组",
+      "viewer.lens.instruction": "最多选择两组对象。选择一组可查看相关引用；选择两组可比较它们之间的直接引用。"
+    }
+  },
+  "components": [
+    {
+      "id": "base",
+      "label": "原版 root",
+      "type": "external",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    },
+    {
+      "id": "next",
+      "label": "新版 root",
+      "type": "frontend",
+      "pos": [
+        250,
+        40
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    },
+    {
+      "id": "oldtasks",
+      "label": "原版 tasks",
+      "type": "external",
+      "pos": [
+        40,
+        245
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    },
+    {
+      "id": "newtasks",
+      "label": "新版 tasks",
+      "type": "frontend",
+      "pos": [
+        250,
+        245
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    },
+    {
+      "id": "user",
+      "label": "共享 user",
+      "type": "database",
+      "pos": [
+        145,
+        145
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    },
+    {
+      "id": "oldfirst",
+      "label": "原版首项 false",
+      "type": "external",
+      "pos": [
+        40,
+        365
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    },
+    {
+      "id": "newfirst",
+      "label": "新版首项 true",
+      "type": "frontend",
+      "pos": [
+        250,
+        365
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    },
+    {
+      "id": "second",
+      "label": "共享第二项",
+      "type": "database",
+      "pos": [
+        145,
+        500
+      ],
+      "size": [
+        132,
+        60
+      ],
+      "icon": "none"
+    }
+  ],
+  "connections": [
+    {
+      "id": "base-to-oldtasks-1",
+      "from": "base",
+      "to": "oldtasks",
+      "label": "tasks"
+    },
+    {
+      "id": "next-to-newtasks-1",
+      "from": "next",
+      "to": "newtasks",
+      "label": "tasks"
+    },
+    {
+      "id": "base-to-user-1",
+      "from": "base",
+      "to": "user",
+      "label": "user"
+    },
+    {
+      "id": "next-to-user-1",
+      "from": "next",
+      "to": "user",
+      "label": "user"
+    },
+    {
+      "id": "oldtasks-to-oldfirst-1",
+      "from": "oldtasks",
+      "to": "oldfirst",
+      "label": "0"
+    },
+    {
+      "id": "newtasks-to-newfirst-1",
+      "from": "newtasks",
+      "to": "newfirst",
+      "label": "0"
+    },
+    {
+      "id": "oldtasks-to-second-1",
+      "from": "oldtasks",
+      "to": "second",
+      "label": "1"
+    },
+    {
+      "id": "newtasks-to-second-1",
+      "from": "newtasks",
+      "to": "second",
+      "label": "1"
+    }
+  ]
+}

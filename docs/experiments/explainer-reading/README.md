@@ -283,3 +283,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ### Round 49 — a complete graph in a narrow column
 
 [Immer narrow reference map](immer-narrow-map/README.md) keeps all eight objects, eight references and every word/code line from round48. Explicit vertical geometry removes the phone graph’s 264 px horizontal overflow; two equal desktop columns reduce empty side space. Phone height increases by 89 px and desktop by 146 px. Native strict checks, four reading states, actual Copy, native Viewer and two PNG exports are recorded. This is a fixed-input authored layout, not a general automatic-layout improvement. Runtime/package evidence remains round47.
+
+### Round 50 — keep domain wording consistent in interactions
+
+[Immer object-group labels](immer-domain-labels/README.md) removes misleading architecture icons and names from the reference-map specimen. First changing only legend labels left Lens saying database/frontend; the retained candidate uses the supported per-document message overrides too. Lens, Finder and node details now use old-only/new-only/shared wording. Chinese locale and a concrete Lens instruction replace unrelated system-role/traffic language. Graph geometry, prose and executable code are preserved; no runtime code or general label-inheritance change.

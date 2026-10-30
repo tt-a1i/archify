@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c6ffd124-f6ef-4a5a-80ff-b30409021106",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-domain-labels/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-domain-labels/candidate.html",
+  "specification": {
+    "sha256": "a04a2009f7f7d7c96bc6ff975bbf7764f7a74b4acae3739294a509808e1711f5",
+    "bytes": 3742
+  },
+  "artifact": {
+    "sha256": "7904a8a7ab309a03820fef297ca2ff9c42a313005ac44210ca94fd1a719a1d1d",
+    "bytes": 572101
+  },
+  "explainer": {
+    "preparedSha256": "487c4003c4341df8cc7fe66aadebd65fe419fce24a871cc1a2639ce6b2760d93",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "object-map",
+        "path": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/immer-domain-labels/object-map.architecture.json",
+        "relativePath": "object-map.architecture.json",
+        "sha256": "3ed844ea1570da1377fe8846357bb560bd28b15247b6e59b3ecad2a4fa1551c2",
+        "bytes": 3492
+      }
+    ]
+  }
+}

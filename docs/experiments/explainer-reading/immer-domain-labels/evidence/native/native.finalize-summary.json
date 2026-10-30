@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round50/object-map.architecture.json",
+    "sha256": "72f0d4d070d2b64a6d0299a8f87d5f08fe790f82bdd087555293db28b50e3656",
+    "bytes": 3126
+  },
+  "artifact": {
+    "path": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round50/native.html",
+    "sha256": "4f7025c0293eae5568d773ce2861178e735bd4b58d5a7e34dbf665282341437a",
+    "bytes": 866297
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round50/native/native.finalize.json",
+    "summaryReceipt": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round50/native/native.finalize-summary.json",
+    "browserCheckReceipt": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round50/native/native.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.1-dev.1",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-26T23:50:51.017Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 1789,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

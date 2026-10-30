@@ -1,0 +1,26 @@
+{
+  "nodes": 8,
+  "edges": 8,
+  "allNodeFieldsExceptDecorativeIconIdentical": true,
+  "allConnectionsIdentical": true,
+  "explainerSourceByteIdentical": true,
+  "locale": "zh-CN",
+  "legendLabels": {
+    "external": {
+      "label": "原版独有"
+    },
+    "frontend": {
+      "label": "新版独有"
+    },
+    "database": {
+      "label": "两版共享"
+    }
+  },
+  "viewerMessageOverrides": {
+    "viewer.kind.external": "原版独有",
+    "viewer.kind.frontend": "新版独有",
+    "viewer.kind.database": "两版共享",
+    "viewer.lens.title": "比较对象分组",
+    "viewer.lens.instruction": "最多选择两组对象。选择一组可查看相关引用；选择两组可比较它们之间的直接引用。"
+  }
+}

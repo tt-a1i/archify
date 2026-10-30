@@ -1,0 +1,8 @@
+{
+  "base": "81905d27132887032904ff72f98abe0b27c56ece",
+  "fetchedDev": "54b5e98355c630630ad5f70e50e1eaa584ce3018",
+  "canonicalHtmlSha256": "7904a8a7ab309a03820fef297ca2ff9c42a313005ac44210ca94fd1a719a1d1d",
+  "resumedScope": "finish round50 only; no continuous goal recreated",
+  "devChangeSinceOriginalBase": "54b5e9835 removes a sponsor entry from README files and adjusts README showcase test; no explainer, renderer, template or schema changes",
+  "devMergedIntoExperiment": false
+}

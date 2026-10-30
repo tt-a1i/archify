@@ -1,0 +1,255 @@
+{
+  "node": "22.23.3",
+  "immer": "11.2.9",
+  "scope": "Fresh plain object/array tree per case; default autoFreeze; no plugins, aliases, cycles, external inserted objects or performance measurement.",
+  "cases": [
+    {
+      "id": "change_first_task",
+      "base": {
+        "user": {
+          "name": "Lin"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": false
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "next": {
+        "user": {
+          "name": "Lin"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": true
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": false,
+        "user": true,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": false,
+        "user": true,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    },
+    {
+      "id": "no_op",
+      "base": {
+        "user": {
+          "name": "Lin"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": false
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "next": {
+        "user": {
+          "name": "Lin"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": false
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    },
+    {
+      "id": "assign_same_value",
+      "base": {
+        "user": {
+          "name": "Lin"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": false
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "next": {
+        "user": {
+          "name": "Lin"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": false
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    },
+    {
+      "id": "change_user",
+      "base": {
+        "user": {
+          "name": "Lin"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": false
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "next": {
+        "user": {
+          "name": "Mei"
+        },
+        "tasks": [
+          {
+            "title": "Read",
+            "done": false
+          },
+          {
+            "title": "Write",
+            "done": false
+          }
+        ]
+      },
+      "baseValuesUnchanged": true,
+      "sameReference": {
+        "root": false,
+        "user": false,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "frozenBefore": {
+        "root": false,
+        "user": false,
+        "tasks": false,
+        "firstTask": false,
+        "secondTask": false
+      },
+      "baseFrozenAfter": {
+        "root": false,
+        "user": false,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      },
+      "nextFrozenAfter": {
+        "root": true,
+        "user": true,
+        "tasks": true,
+        "firstTask": true,
+        "secondTask": true
+      }
+    }
+  ]
+}

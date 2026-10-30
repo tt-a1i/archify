@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "18c4c1fa-76bb-49ca-9d21-8e432647cc0b",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round50/object-map.architecture.json",
+  "output": "/Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round50/native.html",
+  "specification": {
+    "sha256": "3ed844ea1570da1377fe8846357bb560bd28b15247b6e59b3ecad2a4fa1551c2",
+    "bytes": 3492
+  },
+  "artifact": {
+    "sha256": "1052d7932af2bb93fc83c63ea1853ca4c6f453ac0ff9d5d4b4635abbe61f07b8",
+    "bytes": 866300
+  }
+}
