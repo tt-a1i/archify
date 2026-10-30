@@ -31,7 +31,6 @@ import { fail } from '../extract/shared/diagnostics.mjs';
 import { sourceChanges } from './source-changes.mjs';
 import { buildOverview } from './overview.mjs';
 import { buildTaskPayloads } from '../lib/task.mjs';
-import { buildAtlas, ATLAS_CSS, ATLAS_JS } from './atlas.mjs';
 
 export function buildOverlay({ ir, graph, html, map, facts = null, findings = [], findingsDocument = null, sourceRoot = null, run = {} }) {
   if (!html.includes('data-node-id=') || !html.includes('class="toolbar"')) {
@@ -109,12 +108,7 @@ export function buildOverlay({ ir, graph, html, map, facts = null, findings = []
     snippets: sourceRoot ? collectSnippets(findings, sourceRoot, components.concat(unmapped.filter((m) => listed.some((f) => (f.moduleIds || []).includes(m.id)))), facts) : {},
   };
 
-  // The Atlas view needs raw facts (files, dependencies, functions); without them only the Classic view exists.
-  const atlas = buildAtlas({ graph, facts, findings, review: run.review });
-  // Its data precedes the Classic script, which offers the Atlas button only when the data is present.
-  const atlasData = atlas ? `<script type="application/json" id="bauify-atlas-data">${scriptSafeJson(atlas)}</script>\n` : '';
-  const atlasView = atlas ? `<style id="bauify-atlas-style">${ATLAS_CSS}</style>\n<script id="bauify-atlas-script">${ATLAS_JS}</script>\n` : '';
-  const injection = `\n<!-- bauify overlay: authored diagram untouched; analysis layer below -->\n<script type="application/json" id="bauify-analysis">${scriptSafeJson(payload)}</script>\n${atlasData}<style id="bauify-style">${CSS}</style>\n<script id="bauify-script">${JS}</script>\n${atlasView}`;
+  const injection = `\n<!-- bauify overlay: authored diagram untouched; analysis layer below -->\n<script type="application/json" id="bauify-analysis">${scriptSafeJson(payload)}</script>\n<style id="bauify-style">${CSS}</style>\n<script id="bauify-script">${JS}</script>\n`;
   const idx = html.lastIndexOf('</body>');
   const out = idx === -1 ? html + injection : html.slice(0, idx) + injection + html.slice(idx);
   return { html: out, overview: payload.overview, mapped: components.filter((c) => c.modules.length).length, components: components.length, edges: edges.length, unmapped: unmapped.length, snippets: Object.keys(payload.snippets).length };
@@ -585,9 +579,7 @@ const JS = `
 
   var reader = document.createElement('aside');
   reader.id = 'bauify-reader'; reader.hidden = true; reader.setAttribute('aria-label', 'Code analysis reader');
-  reader.innerHTML = '<nav class="reader-nav" aria-label="Analysis navigation"><span class="reader-path">Analysis / Overview</span><span class="reader-actions">' +
-    (document.getElementById('bauify-atlas-data') ? '<button type="button" class="reader-atlas" title="Whole-repository view of files, dependencies and functions">Atlas</button> ' : '') +
-    '<button type="button" class="reader-toggle" aria-expanded="true">View diagram</button></span></nav>';
+  reader.innerHTML = '<nav class="reader-nav" aria-label="Analysis navigation"><span class="reader-path">Analysis / Overview</span><button type="button" class="reader-toggle" aria-expanded="true">View diagram</button></nav>';
   document.body.appendChild(reader);
   var readerCollapsed = false;
   function setReaderCollapsed(collapsed) {
@@ -600,8 +592,6 @@ const JS = `
     if (changed) requestAnimationFrame(function () { if (window.Archify && Archify.view && Archify.view.centerAt && focused.length) locateComponents(focused); });
   }
   reader.querySelector('.reader-toggle').addEventListener('click', function () { setReaderCollapsed(!readerCollapsed); });
-  var atlasButton = reader.querySelector('.reader-atlas');
-  if (atlasButton) atlasButton.addEventListener('click', function () { if (window.__archifyAtlas) window.__archifyAtlas.open(); });
   function readerPage(name) {
     reader.hidden = false;
     reader.querySelector('.reader-path').textContent = 'Analysis / ' + name;
@@ -1382,12 +1372,6 @@ const JS = `
     } else { setFocus([]); if (layer) layer.remove(); layer = null; panel.hidden = true; detail.hidden = true; codePane.hidden = true; overview.hidden = true; svg.querySelectorAll('.bauify-mapped').forEach(function (g) { g.classList.remove('bauify-mapped'); }); }
   }
   btn.addEventListener('click', function () { setOn(root.getAttribute('data-bauify') !== 'on'); });
-  // The Atlas view hands a finding back here to show its source evidence.
-  window.__archifyShowFinding = function (id) {
-    if (!findingById[id]) return;
-    if (root.getAttribute('data-bauify') !== 'on') setOn(true);
-    showFinding(id);
-  };
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'c' && e.key !== 'C') return;
     if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || e.isComposing || e.defaultPrevented) return;
