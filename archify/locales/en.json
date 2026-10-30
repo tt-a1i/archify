@@ -497,5 +497,9 @@
   "viewer.passport.back": "Back to parent",
   "viewer.passport.back.aria": "Return to the parent diagram",
   "viewer.nav.back": "Back",
-  "viewer.nav.back.title": "Return to the parent diagram"
+  "viewer.nav.back.title": "Return to the parent diagram",
+  "viewer.preset.blossom": "Blossom",
+  "viewer.preset.blossom.short": "Blossom",
+  "viewer.preset.blossom.hint": "Warm personal showcase",
+  "viewer.preset.badge.blossom": "BLOSSOM"
 }

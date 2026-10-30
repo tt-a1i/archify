@@ -497,5 +497,9 @@
   "viewer.passport.back": "返回上一级",
   "viewer.passport.back.aria": "返回父级图",
   "viewer.nav.back": "返回",
-  "viewer.nav.back.title": "返回父级图"
+  "viewer.nav.back.title": "返回父级图",
+  "viewer.preset.blossom": "花开",
+  "viewer.preset.blossom.short": "花开",
+  "viewer.preset.blossom.hint": "个人作品展示",
+  "viewer.preset.badge.blossom": "花开"
 }

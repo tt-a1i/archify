@@ -217,6 +217,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <span class="preset-option-copy"><strong>{{i18n:viewer.preset.editorial}}</strong><small>{{i18n:viewer.preset.editorial.hint}}</small></span>
           <span class="preset-option-check" aria-hidden="true"></span>
         </button>
+        <button class="preset-option" data-preset-value="blossom" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">
+          <span class="preset-option-swatch blossom" aria-hidden="true"></span>
+          <span class="preset-option-copy"><strong>{{i18n:viewer.preset.blossom}}</strong><small>{{i18n:viewer.preset.blossom.hint}}</small></span>
+          <span class="preset-option-check" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
     <button id="btn-motion" type="button" hidden
@@ -283,7 +288,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <div class="header-row"
            data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
            data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
-           data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}">
+           data-preset-badge-editorial="{{i18n:viewer.preset.badge.editorial}}"
+           data-preset-badge-blossom="{{i18n:viewer.preset.badge.blossom}}">
         <div class="pulse-dot"></div>
         <h1>[PROJECT NAME] Architecture</h1>
       </div>
@@ -812,12 +818,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        URL, or a later diagram's authored default.
        ============================================================ */
     Archify.preset = (function () {
-      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial'];
+      var PRESETS = ['classic', 'signal-flow', 'blueprint', 'editorial', 'blossom'];
       var LABELS = {
         classic: viewerText('viewer.preset.classic.short'),
         'signal-flow': viewerText('viewer.preset.flow.short'),
         blueprint: viewerText('viewer.preset.blueprint'),
-        editorial: viewerText('viewer.preset.editorial')
+        editorial: viewerText('viewer.preset.editorial'),
+        blossom: viewerText('viewer.preset.blossom')
       };
       var html = document.documentElement;
       var svg = document.querySelector('.diagram-container svg');
