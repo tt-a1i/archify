@@ -1,0 +1,16 @@
+{
+  "runs": 2,
+  "casesPerRun": 7,
+  "jsonBytesIdentical": true,
+  "probeSha256": "fa21aba02c8f12b0f3c4800064a11797dfafeea1a05e46b8b0c0a5c67444b123",
+  "outputSha256": "f771194016c430f4062727cd6f0a900394e8c876845f64f8f797df59e839238f",
+  "environment": {
+    "python": "3.12.13",
+    "polars": "2.1.0",
+    "runtime": "2.1.0",
+    "buildInfo": {
+      "version": "2.1.0"
+    },
+    "installedSeriesSha256": "8fff4b04a1afe96e31cb19bf7fe6854ac2660d2dec157ee8fdc7ad17675bcdb4"
+  }
+}

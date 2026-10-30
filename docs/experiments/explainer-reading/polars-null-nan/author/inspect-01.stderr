@@ -1,0 +1,234 @@
+[p1 "为什么 fill_null 后还有 NaN？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "为什么 fill_null 后还有 NaN？ · Archify"]
+root
+  anchor [ref=668, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#board]
+    text "跳至正文"
+  container
+    container
+      heading
+        text "为什么 fill_null 后还有 NaN？"
+      container
+        group "主题"
+          button [ref=669]
+            text "系统"
+          button [ref=670]
+            text "浅色"
+          button [ref=671]
+            text "深色"
+        button "样式" [ref=672, loc=css:button[aria-label="样式"]]
+          text "杂志"
+          svg_root
+        button [ref=673]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=674]
+            text "追问"
+        container
+          paragraph
+            text "null"
+            text "和"
+            text "NaN"
+            text "是两种不同的状态："
+            text "fill_null(0)"
+            text "只替换"
+            text "null"
+            text "，因此浮点值"
+            text "NaN"
+            text "仍会留下。把缺失值换成零也会改变均值的分母，不能默认等同于排除它。"
+            anchor [ref=675, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-guide]
+              text "1"
+          ordered_list
+            list_item
+              text "1"
+              text "null"
+              text "表示缺失；"
+              text "NaN"
+              text "是特殊浮点值，在 Polars 中不算"
+              text "null"
+              text "。"
+              anchor [ref=676, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-defs]
+                text "2"
+            list_item
+              text "2"
+              text "此例中均值跳过"
+              text "null"
+              text "，但"
+              text "NaN"
+              text "会传播；换成零则把零纳入均值。"
+              anchor [ref=677, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-guide]
+                text "1"
+        paragraph
+          text "适用于"
+          text "Polars 2.1.0"
+          text "Float64 示例"
+          text "实际运行结果"
+      container
+        container
+          anchor "两种状态，分别处理" [ref=678, loc=css:a[aria-label="两种状态，分别处理"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#distinction]
+            text "1"
+          heading
+            text "两种状态，分别处理"
+          button [ref=679]
+            text "追问"
+        container
+          table
+            table_row
+              table_cell
+                text "状态"
+              table_cell
+                text "含义"
+              table_cell
+                text "对应操作"
+            table_row
+              table_cell
+                text "null"
+              table_cell
+                text "缺失数据"
+              table_cell
+                text "fill_null"
+                text "替换它"
+                anchor [ref=680, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-fillnull]
+                  text "3"
+            table_row
+              table_cell
+                text "NaN"
+              table_cell
+                text "特殊浮点值，不计入 null 数"
+              table_cell
+                text "fill_nan"
+                text "替换它"
+                anchor [ref=681, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-fillnan]
+                  text "4"
+          paragraph
+            text "NaN"
+            text "不是 null，并不意味着它是有效的现实测量值。"
+            anchor [ref=682, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-defs]
+              text "2"
+      container
+        container
+          anchor "同一组数据，均值为什么不同？" [ref=683, loc=css:a[aria-label="同一组数据，均值为什么不同？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#mean]
+            text "2"
+          heading
+            text "同一组数据，均值为什么不同？"
+          button [ref=684]
+            text "追问"
+        paragraph
+          text "原始值为"
+          text "[1.0, null, NaN, 3.0]"
+          text "。下表使用 Polars 显示记法；这是一个具体示例，不是通用清洗规则。"
+        table
+          table_row
+            table_cell
+              text "操作"
+            table_cell
+              text "结果"
+            table_cell
+              text "均值"
+          table_row
+            table_cell
+              text "fill_null(0)"
+            table_cell
+              text "[1.0, 0.0, NaN, 3.0]"
+            table_cell
+              text "NaN"
+          table_row
+            table_cell
+              text "fill_nan(None)"
+            table_cell
+              text "[1.0, null, null, 3.0]"
+            table_cell
+              text "2.0"
+          table_row
+            table_cell
+              text "两者都填零"
+            table_cell
+              text "[1.0, 0.0, 0.0, 3.0]"
+            table_cell
+              text "1.0"
+        paragraph
+          text "转换为"
+          text "null"
+          text "："
+          text "(1 + 3) / 2 = 2"
+          text "；两者填零："
+          text "(1 + 0 + 0 + 3) / 4 = 1"
+          text "。零被算作一个观测值，排除缺失值则不会。"
+      container
+        container
+          anchor "自己运行这个例子" [ref=685, loc=css:a[aria-label="自己运行这个例子"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#reproduce]
+            text "3"
+          heading
+            text "自己运行这个例子"
+          button [ref=686]
+            text "追问"
+        paragraph
+          text "以下输出是 Python"
+          text "to_list()"
+          text "的记法："
+          text "None"
+          text "对应 Polars 的"
+          text "null"
+          text "，"
+          text "nan"
+          text "对应"
+          text "NaN"
+          text "。"
+        container
+          text "复现三种结果"
+          text "python"
+          button [ref=687]
+            text "复制"
+          container [ref=688]
+            text "import polars as pl s = pl.Series("x", [1.0, None, float("nan"), 3.0], dtype=pl.Float64) cases = { "fill_null": s.fill_null(0), "nan_to_null": s.fill_nan(None), "both_to_zero": s.fill_null(0).fill_nan..."
+      container
+        container
+          anchor "选择前检查什么？" [ref=689, loc=css:a[aria-label="选择前检查什么？"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#checks]
+            text "4"
+          heading
+            text "选择前检查什么？"
+          button [ref=690]
+            text "追问"
+        unordered_list
+          list_item
+            checkbox [ref=691]
+            text "分别检查"
+            text "null_count()"
+            text "和"
+            text "is_nan().sum()"
+            text "；null 数为零不代表没有 NaN。"
+            anchor [ref=692, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-guide]
+              text "1"
+          list_item
+            checkbox [ref=693]
+            text "根据数据含义决定零是否是真实值；否则先确认要排除还是另行处理。"
+    container
+      container
+        heading
+          text "来源"
+        ordered_list
+          list_item
+            anchor [ref=694, url=https://github.com/pola-rs/polars/blob/7f902bd3ffd27ff82d14278a09a295ff2f7aed92/docs/source/user-guide/expressions/missing-data.md#L166-L180]
+              text "Polars: Missing data (pinned 2.1.0)"
+          list_item
+            anchor [ref=695, url=https://github.com/pola-rs/polars/blob/7f902bd3ffd27ff82d14278a09a295ff2f7aed92/docs/source/user-guide/expressions/missing-data.md#L5-L12]
+              text "Polars: null and NaN definitions"
+          list_item
+            anchor [ref=696, url=https://github.com/pola-rs/polars/blob/7f902bd3ffd27ff82d14278a09a295ff2f7aed92/py-polars/src/polars/series/series.py#L5737-L5767]
+              text "Series.fill_null"
+          list_item
+            anchor [ref=697, url=https://github.com/pola-rs/polars/blob/7f902bd3ffd27ff82d14278a09a295ff2f7aed92/py-polars/src/polars/series/series.py#L5705-L5735]
+              text "Series.fill_nan"
+      anchor [ref=698, loc=href:https://github.com/tt-a1i/archify, url=https://github.com/tt-a1i/archify]
+        svg_root
+        text "Archify"
+        text "把你想理解、规划或分享的事，变成可以互动的可视化作品。"
+      paragraph
+        text "4 个面板"
+        text "·"
+        text "4 个来源"

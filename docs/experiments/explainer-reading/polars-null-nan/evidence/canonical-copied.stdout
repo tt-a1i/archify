@@ -1,0 +1,3 @@
+fill_null [1.0, 0.0, nan, 3.0] mean: nan
+nan_to_null [1.0, None, None, 3.0] mean: 2.0
+both_to_zero [1.0, 0.0, 0.0, 3.0] mean: 1.0

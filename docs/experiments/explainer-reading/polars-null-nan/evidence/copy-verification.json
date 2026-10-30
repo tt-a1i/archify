@@ -1,0 +1,16 @@
+{
+  "checks": [
+    {
+      "version": "author",
+      "exit": 0,
+      "stdoutMatchesThreeProbeResultsAndMeans": true
+    },
+    {
+      "version": "candidate-1",
+      "exit": 0,
+      "stdoutMatchesThreeProbeResultsAndMeans": true
+    }
+  ],
+  "pythonASTIdentical": true,
+  "clipboard": "Actual Copy controls captured through an instrumented Clipboard API; not an OS clipboard-permission test."
+}

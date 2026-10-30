@@ -1,0 +1,125 @@
+[p1 "为什么 fill_null 后还有 NaN？ · Archify" | space "Explainer continuous reading 2026-10-29"(14): 1 managed, 0 untracked — p1* "为什么 fill_null 后还有 NaN？ · Archify"]
+root
+  container
+    container
+      heading
+        text "为什么 fill_null 后还有 NaN？"
+      container
+        group "主题"
+          button [ref=669]
+            text "系统"
+          button [ref=670]
+            text "浅色"
+          button [ref=671]
+            text "深色"
+        container
+          button "样式" [ref=672, loc=css:button[aria-label="样式"]]
+            text "杂志"
+            svg_root
+          menu "样式"
+            menuitemradio [ref=699]
+              text "简洁"
+            menuitemradio [ref=700]
+              text "杂志"
+              svg_root
+            menuitemradio [ref=701]
+              text "产品"
+            menuitemradio [ref=702]
+              text "网格"
+        button [ref=673]
+          svg_root
+          text "导出"
+          svg_root
+    container
+      container
+        container
+          text "答"
+          heading
+            text "结论"
+          button [ref=674]
+            text "追问"
+        container
+          paragraph
+            text "null"
+            text "和"
+            text "NaN"
+            text "是两种不同的状态："
+            text "fill_null(0)"
+            text "只替换"
+            text "null"
+            text "，因此浮点值"
+            text "NaN"
+            text "仍会留下。把缺失值换成零也会改变均值的分母，不能默认等同于排除它。"
+            anchor [ref=675, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-guide]
+              text "1"
+          ordered_list
+            list_item
+              text "1"
+              text "null"
+              text "表示缺失；"
+              text "NaN"
+              text "是特殊浮点值，在 Polars 中不算"
+              text "null"
+              text "。"
+              anchor [ref=676, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-defs]
+                text "2"
+            list_item
+              text "2"
+              text "此例中均值跳过"
+              text "null"
+              text "，但"
+              text "NaN"
+              text "会传播；换成零则把零纳入均值。"
+              anchor [ref=677, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-guide]
+                text "1"
+        paragraph
+          text "适用于"
+          text "Polars 2.1.0"
+          text "Float64 示例"
+          text "实际运行结果"
+      container
+        container
+          anchor "两种状态，分别处理" [ref=678, loc=css:a[aria-label="两种状态，分别处理"], url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#distinction]
+            text "1"
+          heading
+            text "两种状态，分别处理"
+          button [ref=679]
+            text "追问"
+        container
+          table
+            table_row
+              table_cell
+                text "状态"
+              table_cell
+                text "含义"
+              table_cell
+                text "对应操作"
+            table_row
+              table_cell
+                text "null"
+              table_cell
+                text "缺失数据"
+              table_cell
+                text "fill_null"
+                text "替换它"
+                anchor [ref=680, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-fillnull]
+                  text "3"
+            table_row
+              table_cell
+                text "NaN"
+              table_cell
+                text "特殊浮点值，不计入 null 数"
+              table_cell
+                text "fill_nan"
+                text "替换它"
+                anchor [ref=681, url=file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html#source-fillnan]
+                  text "4"
+          paragraph
+            text "NaN"
+            text "不是 null，并不意味着它是有效的现实测量值。"
+
+Page.screenshot
+
+Capture this Page to a PNG file. Options: path: Absolute output path; missing parent directories are created. fullPage: Capture the full scrollable page. clip: CSS-pixel clipping rectangle. scale (css): Output scale mode; css uses CSS-pixel sizing and is the default. raw: Bypass device-pixel-ratio correction.
+
+await page.screenshot({ path?, fullPage?, clip?, scale?, raw? })

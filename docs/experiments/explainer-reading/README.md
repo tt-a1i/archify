@@ -1,6 +1,6 @@
 # Explainer reading laboratory
 
-Open [the local review page](index.html) to switch between twenty-three reading questions across twenty-one projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
+Open [the local review page](index.html) to switch between twenty-four reading questions across twenty-two projects, retained alternatives, and 390/1440 px previews. It identifies adopted branch changes separately from rejected experiments. Download/check out this directory to use the HTML; a GitHub source view is not the rendered preview.
 
 Experimental branch, authorized by the maintainer's 2026-10-29 request to explore clearer, more attractive explainers from latest `dev` and push the results to a remote branch. This is not a request for final review or merge.
 
@@ -267,3 +267,7 @@ All 16 Explainer browser tests pass, with existing table/code/diff completeness 
 ## Continued exploration — round 45
 
 [Node.js comparison and array mutation](node-sort/README.md) separates default string-order comparison from mutation/copy behavior using five cases repeated twice. The independent author inspected its own browser result and repaired the phone table before handoff. Parent reflowed the same executable code, linked actual probes and shortened the repeated opening. Actual Copy bytes run successfully and match all four numeric cases plus element types. Code fits the phone at the cost of additional page height. This single supplied-evidence author workflow is not a general quality or speed comparison; unchanged runtime/package evidence is reused from round 40.
+
+## Continued exploration — round 46
+
+[Polars null and NaN](polars-null-nan/README.md) checks seven operations twice on one explicit Float64 fixture. The retained page explains why fill_null leaves NaN and contrasts two versus four values participating in a mean. Parent formats the actual copied Python without changing its AST or results, separates the arithmetic explanations and keeps the author’s scrolling variant for comparison. Longer page height is reported. The author inspected both widths and acknowledged code scrolling; this is supplied-evidence discovery, not proof of universal self-inspection improvement. Runtime/package evidence is reused from round 40.

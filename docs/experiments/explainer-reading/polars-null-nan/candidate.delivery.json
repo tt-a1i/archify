@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "7f20add0-869f-4966-9761-7c6db6da9103",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/polars-null-nan/candidate.archify.md",
+  "output": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/polars-null-nan/candidate.html",
+  "specification": {
+    "sha256": "0dfe4ad52ca3340cb5f74dce3e067c9c065ab446687eba27f1e12e720d747d1d",
+    "bytes": 3256
+  },
+  "artifact": {
+    "sha256": "b42d690f914312884a5215d89d0b3f079f5307287236b200a1572535928dae18",
+    "bytes": 164219
+  },
+  "explainer": {
+    "preparedSha256": "7138e5e6a78e36a50ffc86219008c7899a451fd9080956567c2ec6f7892b9353",
+    "dependencies": []
+  }
+}

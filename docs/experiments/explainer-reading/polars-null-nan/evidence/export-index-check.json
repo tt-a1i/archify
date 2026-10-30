@@ -1,0 +1,56 @@
+{
+  "png": {
+    "width": 780,
+    "height": 5530
+  },
+  "counts": {
+    "questions": 24,
+    "variants": 58
+  },
+  "checks": [
+    {
+      "versionIndex": 0,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "polars-null-nan/candidate.html",
+      "open": "polars-null-nan/candidate.html",
+      "report": "polars-null-nan/README.md",
+      "version": "完整代码与均值解释",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 0,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "polars-null-nan/candidate.html",
+      "open": "polars-null-nan/candidate.html",
+      "report": "polars-null-nan/README.md",
+      "version": "完整代码与均值解释",
+      "frameWidth": "1440px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 390,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "polars-null-nan/author/answer.html",
+      "open": "polars-null-nan/author/answer.html",
+      "report": "polars-null-nan/README.md",
+      "version": "作者自查版",
+      "frameWidth": "390px"
+    },
+    {
+      "versionIndex": 1,
+      "previewWidth": 1440,
+      "width": 390,
+      "pageWidth": 390,
+      "frame": "polars-null-nan/author/answer.html",
+      "open": "polars-null-nan/author/answer.html",
+      "report": "polars-null-nan/README.md",
+      "version": "作者自查版",
+      "frameWidth": "1440px"
+    }
+  ]
+}

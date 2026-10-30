@@ -1,0 +1,3 @@
+{"before":{"client":356,"scroll":540,"overflow":"auto","left":0},"after":184}
+screenshot /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/screen-390-code-scrolled.png
+page { url: 'file:///Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/author/answer.html', title: '为什么 fill_null 后还有 NaN？ · Archify', w: 390, h: 900, sx: 0, sy: 0, pw: 390, ph: 2400 }

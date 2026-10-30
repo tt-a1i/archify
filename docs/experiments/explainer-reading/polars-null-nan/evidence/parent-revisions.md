@@ -1,0 +1,3 @@
+# Parent revision 1
+
+Start 2026-10-30T00:25:03.216395+00:00; two revisions / fifteen minutes maximum. Author correctly reported the 356/540 px phone code and verified its scroll affordance. Parent reflows the same Python operations for immediate reading, shortens split operation labels in the result table while preserving all values, separates the two denominator explanations, names the Polars context in the opening, and corrects a reference to absent displayed output (the page has runnable code, not an output fence). Actual Copy program will be executed and Python AST compared; inspect the longer page before retention. Keep layout automatic and runtime unchanged.

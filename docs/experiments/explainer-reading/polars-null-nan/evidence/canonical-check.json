@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "file": "/Users/tsk/.codex/worktrees/explainer-reading-lab/archify/docs/experiments/explainer-reading/polars-null-nan/candidate.html",
+  "family": "explainer",
+  "artifact": {
+    "sha256": "b42d690f914312884a5215d89d0b3f079f5307287236b200a1572535928dae18",
+    "bytes": 164219
+  },
+  "checks": [
+    {
+      "name": "explainer_structure",
+      "ok": true,
+      "details": [
+        "32 unique DOM IDs"
+      ]
+    },
+    {
+      "name": "explainer_payload_identity",
+      "ok": true,
+      "details": []
+    },
+    {
+      "name": "explainer_dependencies",
+      "ok": true,
+      "details": [
+        "0 frozen dependencies"
+      ]
+    },
+    {
+      "name": "explainer_native_diagrams",
+      "ok": true,
+      "details": []
+    }
+  ],
+  "composition": {
+    "schemaVersion": 1,
+    "profile": "showcase",
+    "status": "pass",
+    "summary": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "issues": [],
+    "nativeDiagrams": []
+  },
+  "diagnostics": [],
+  "provenance": "current",
+  "deliveryReceiptId": "7f20add0-869f-4966-9761-7c6db6da9103"
+}

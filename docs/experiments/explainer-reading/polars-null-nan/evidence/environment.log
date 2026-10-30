@@ -1,0 +1,11 @@
+Using CPython 3.12.13
+Creating virtual environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/venv
+Activate with: source /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/venv/bin/activate
+Using Python 3.12.13 environment at: /Users/tsk/.local/share/archify-tuning/rounds/2026-10-30-reading-round46/venv
+Resolved 2 packages in 9.31s
+Downloading polars-runtime-32 (45.4MiB)
+ Downloaded polars-runtime-32
+Prepared 2 packages in 9.93s
+Installed 2 packages in 6ms
+ + polars==2.1.0
+ + polars-runtime-32==2.1.0

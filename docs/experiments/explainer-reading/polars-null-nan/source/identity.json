@@ -1,0 +1,23 @@
+{
+  "tag": "py-2.1.0",
+  "commit": "7f902bd3ffd27ff82d14278a09a295ff2f7aed92",
+  "archify": "2131cd2c0d16f39ea8e727576fa1f32da8e4b880",
+  "product": "e16dbcfb8916cb621efb0806e7f23d0b1497ac10",
+  "environment": {
+    "python": "3.12.13",
+    "polars": "2.1.0",
+    "runtime": "2.1.0",
+    "buildInfo": {
+      "version": "2.1.0"
+    },
+    "installedSeriesSha256": "8fff4b04a1afe96e31cb19bf7fe6854ac2660d2dec157ee8fdc7ad17675bcdb4"
+  },
+  "installedSeriesMatchesPinned": true,
+  "pinnedPath": "py-polars/src/polars/series/series.py",
+  "sourceHashes": {
+    "series.py": "8fff4b04a1afe96e31cb19bf7fe6854ac2660d2dec157ee8fdc7ad17675bcdb4",
+    "missing-data.md": "0c3dfd0ccdcbb7542289eae9b739a1e473fd171a9f5014f66901d70637b992f2",
+    "pyproject.toml": "02e68554bac8597fe36cc278a6c827c48353e540200eb0e48da21524eba78b3b"
+  },
+  "qualification": "Only Python Series wrapper byte identity; Rust binary was not rebuilt or compared with pinned source."
+}

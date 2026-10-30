@@ -1,0 +1,496 @@
+{
+  "environment": {
+    "python": "3.12.13",
+    "polars": "2.1.0",
+    "runtime": "2.1.0",
+    "buildInfo": {
+      "version": "2.1.0"
+    },
+    "installedSeriesSha256": "8fff4b04a1afe96e31cb19bf7fe6854ac2660d2dec157ee8fdc7ad17675bcdb4"
+  },
+  "cases": [
+    {
+      "id": "original",
+      "before": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "result": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "originalAfter": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "dtype": "Float64",
+      "nullCount": 1,
+      "nanCount": 1,
+      "nullMask": [
+        false,
+        true,
+        false,
+        false
+      ],
+      "nanMask": [
+        false,
+        null,
+        true,
+        false
+      ],
+      "mean": {
+        "kind": "nan"
+      }
+    },
+    {
+      "id": "fill_null_0",
+      "before": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "result": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "number",
+          "value": 0.0
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "originalAfter": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "dtype": "Float64",
+      "nullCount": 0,
+      "nanCount": 1,
+      "nullMask": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "nanMask": [
+        false,
+        false,
+        true,
+        false
+      ],
+      "mean": {
+        "kind": "nan"
+      }
+    },
+    {
+      "id": "fill_nan_0",
+      "before": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "result": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "number",
+          "value": 0.0
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "originalAfter": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "dtype": "Float64",
+      "nullCount": 1,
+      "nanCount": 0,
+      "nullMask": [
+        false,
+        true,
+        false,
+        false
+      ],
+      "nanMask": [
+        false,
+        null,
+        false,
+        false
+      ],
+      "mean": {
+        "kind": "number",
+        "value": 1.3333333333333333
+      }
+    },
+    {
+      "id": "nan_to_null",
+      "before": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "result": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "originalAfter": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "dtype": "Float64",
+      "nullCount": 2,
+      "nanCount": 0,
+      "nullMask": [
+        false,
+        true,
+        true,
+        false
+      ],
+      "nanMask": [
+        false,
+        null,
+        null,
+        false
+      ],
+      "mean": {
+        "kind": "number",
+        "value": 2.0
+      }
+    },
+    {
+      "id": "both_to_0",
+      "before": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "result": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "number",
+          "value": 0.0
+        },
+        {
+          "kind": "number",
+          "value": 0.0
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "originalAfter": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "dtype": "Float64",
+      "nullCount": 0,
+      "nanCount": 0,
+      "nullMask": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "nanMask": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "mean": {
+        "kind": "number",
+        "value": 1.0
+      }
+    },
+    {
+      "id": "drop_nulls",
+      "before": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "result": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "originalAfter": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "dtype": "Float64",
+      "nullCount": 0,
+      "nanCount": 1,
+      "nullMask": [
+        false,
+        false,
+        false
+      ],
+      "nanMask": [
+        false,
+        true,
+        false
+      ],
+      "mean": {
+        "kind": "nan"
+      }
+    },
+    {
+      "id": "drop_nans",
+      "before": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "result": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "originalAfter": [
+        {
+          "kind": "number",
+          "value": 1.0
+        },
+        {
+          "kind": "null"
+        },
+        {
+          "kind": "nan"
+        },
+        {
+          "kind": "number",
+          "value": 3.0
+        }
+      ],
+      "dtype": "Float64",
+      "nullCount": 1,
+      "nanCount": 0,
+      "nullMask": [
+        false,
+        true,
+        false
+      ],
+      "nanMask": [
+        false,
+        null,
+        false
+      ],
+      "mean": {
+        "kind": "number",
+        "value": 2.0
+      }
+    }
+  ],
+  "encoding": "Strict JSON: each value has kind null, nan or number. These tags preserve distinctions; they are not literal Polars string values.",
+  "scope": "Explicit eager Float64 Series from a Python list. Zero replacement is an experimental operation, not a general data-cleaning recommendation. No interoperability, lazy-streaming, statistical-policy or performance claim."
+}

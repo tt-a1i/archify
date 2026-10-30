@@ -1,0 +1,482 @@
+[
+  {
+    "version": "author",
+    "width": 390,
+    "theme": "light",
+    "pageWidth": 390,
+    "height": 2400,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 415.6796875,
+        "top": 219,
+        "right": 378,
+        "bottom": 634.6796875,
+        "left": 12
+      },
+      {
+        "id": "distinction",
+        "x": 12,
+        "y": 646.6796875,
+        "width": 366,
+        "height": 296.6953125,
+        "top": 646.6796875,
+        "right": 378,
+        "bottom": 943.375,
+        "left": 12
+      },
+      {
+        "id": "mean",
+        "x": 12,
+        "y": 955.375,
+        "width": 366,
+        "height": 484.5703125,
+        "top": 955.375,
+        "right": 378,
+        "bottom": 1439.9453125,
+        "left": 12
+      },
+      {
+        "id": "reproduce",
+        "x": 12,
+        "y": 1451.9453125,
+        "width": 366,
+        "height": 412.8203125,
+        "top": 1451.9453125,
+        "right": 378,
+        "bottom": 1864.765625,
+        "left": 12
+      },
+      {
+        "id": "checks",
+        "x": 12,
+        "y": 1876.765625,
+        "width": 366,
+        "height": 205.28125,
+        "top": 1876.765625,
+        "right": 378,
+        "bottom": 2082.046875,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "状态",
+            "含义",
+            "对应操作"
+          ],
+          [
+            "null",
+            "缺失数据",
+            "fill_null 替换它 3"
+          ],
+          [
+            "NaN",
+            "特殊浮点值，不计入 null 数",
+            "fill_nan 替换它 4"
+          ]
+        ]
+      },
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "操作",
+            "结果",
+            "均值"
+          ],
+          [
+            "fill_null(0)",
+            "[1.0, 0.0, NaN, 3.0]",
+            "NaN"
+          ],
+          [
+            "fill_nan(None)",
+            "[1.0, null, null, 3.0]",
+            "2.0"
+          ],
+          [
+            "两者都填零",
+            "[1.0, 0.0, 0.0, 3.0]",
+            "1.0"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 540,
+        "text": "import polars as pl\n\ns = pl.Series(\"x\", [1.0, None, float(\"nan\"), 3.0], dtype=pl.Float64)\ncases = {\n    \"fill_null\": s.fill_null(0),\n    \"nan_to_null\": s.fill_nan(None),\n    \"both_to_zero\": s.fill_null(0).fill_nan(0),\n}\nfor name, values in cases.items():\n    print(name, values.to_list(), \"mean:\", values.mean())"
+      }
+    ]
+  },
+  {
+    "version": "author",
+    "width": 1440,
+    "theme": "light",
+    "pageWidth": 1440,
+    "height": 1225,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 632,
+        "height": 301,
+        "top": 116.5,
+        "right": 712,
+        "bottom": 417.5,
+        "left": 80
+      },
+      {
+        "id": "distinction",
+        "x": 728,
+        "y": 116.5,
+        "width": 632,
+        "height": 301,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 417.5,
+        "left": 728
+      },
+      {
+        "id": "mean",
+        "x": 80,
+        "y": 433.5,
+        "width": 632,
+        "height": 388,
+        "top": 433.5,
+        "right": 712,
+        "bottom": 821.5,
+        "left": 80
+      },
+      {
+        "id": "reproduce",
+        "x": 728,
+        "y": 433.5,
+        "width": 632,
+        "height": 388,
+        "top": 433.5,
+        "right": 1360,
+        "bottom": 821.5,
+        "left": 728
+      },
+      {
+        "id": "checks",
+        "x": 80,
+        "y": 837.5,
+        "width": 1280,
+        "height": 154,
+        "top": 837.5,
+        "right": 1360,
+        "bottom": 991.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "rows": [
+          [
+            "状态",
+            "含义",
+            "对应操作"
+          ],
+          [
+            "null",
+            "缺失数据",
+            "fill_null 替换它 3"
+          ],
+          [
+            "NaN",
+            "特殊浮点值，不计入 null 数",
+            "fill_nan 替换它 4"
+          ]
+        ]
+      },
+      {
+        "client": 624,
+        "scroll": 624,
+        "rows": [
+          [
+            "操作",
+            "结果",
+            "均值"
+          ],
+          [
+            "fill_null(0)",
+            "[1.0, 0.0, NaN, 3.0]",
+            "NaN"
+          ],
+          [
+            "fill_nan(None)",
+            "[1.0, null, null, 3.0]",
+            "2.0"
+          ],
+          [
+            "两者都填零",
+            "[1.0, 0.0, 0.0, 3.0]",
+            "1.0"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 622,
+        "scroll": 622,
+        "text": "import polars as pl\n\ns = pl.Series(\"x\", [1.0, None, float(\"nan\"), 3.0], dtype=pl.Float64)\ncases = {\n    \"fill_null\": s.fill_null(0),\n    \"nan_to_null\": s.fill_nan(None),\n    \"both_to_zero\": s.fill_null(0).fill_nan(0),\n}\nfor name, values in cases.items():\n    print(name, values.to_list(), \"mean:\", values.mean())"
+      }
+    ]
+  },
+  {
+    "version": "candidate-1",
+    "width": 390,
+    "theme": "light",
+    "pageWidth": 390,
+    "height": 2716,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 12,
+        "y": 219,
+        "width": 366,
+        "height": 415.6796875,
+        "top": 219,
+        "right": 378,
+        "bottom": 634.6796875,
+        "left": 12
+      },
+      {
+        "id": "distinction",
+        "x": 12,
+        "y": 646.6796875,
+        "width": 366,
+        "height": 296.6953125,
+        "top": 646.6796875,
+        "right": 378,
+        "bottom": 943.375,
+        "left": 12
+      },
+      {
+        "id": "mean",
+        "x": 12,
+        "y": 955.375,
+        "width": 366,
+        "height": 513.1171875,
+        "top": 955.375,
+        "right": 378,
+        "bottom": 1468.4921875,
+        "left": 12
+      },
+      {
+        "id": "reproduce",
+        "x": 12,
+        "y": 1480.4921875,
+        "width": 366,
+        "height": 604.0703125,
+        "top": 1480.4921875,
+        "right": 378,
+        "bottom": 2084.5625,
+        "left": 12
+      },
+      {
+        "id": "checks",
+        "x": 12,
+        "y": 2096.5625,
+        "width": 366,
+        "height": 205.28125,
+        "top": 2096.5625,
+        "right": 378,
+        "bottom": 2301.84375,
+        "left": 12
+      }
+    ],
+    "tables": [
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "状态",
+            "含义",
+            "对应操作"
+          ],
+          [
+            "null",
+            "缺失数据",
+            "fill_null 替换它 3"
+          ],
+          [
+            "NaN",
+            "特殊浮点值，不计入 null 数",
+            "fill_nan 替换它 4"
+          ]
+        ]
+      },
+      {
+        "client": 358,
+        "scroll": 358,
+        "rows": [
+          [
+            "操作",
+            "结果",
+            "均值"
+          ],
+          [
+            "null → 0",
+            "[1.0, 0.0, NaN, 3.0]",
+            "NaN"
+          ],
+          [
+            "NaN → null",
+            "[1.0, null, null, 3.0]",
+            "2.0"
+          ],
+          [
+            "两者都填零",
+            "[1.0, 0.0, 0.0, 3.0]",
+            "1.0"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 356,
+        "scroll": 356,
+        "text": "import polars as pl\n\ns = pl.Series(\n    \"x\",\n    [1.0, None, float(\"nan\"), 3.0],\n    dtype=pl.Float64,\n)\ncases = {\n    \"fill_null\": s.fill_null(0),\n    \"nan_to_null\": s.fill_nan(None),\n    \"both_to_zero\": (\n        s.fill_null(0).fill_nan(0)\n    ),\n}\nfor name, values in cases.items():\n    print(\n        name, values.to_list(),\n        \"mean:\", values.mean()\n    )"
+      }
+    ]
+  },
+  {
+    "version": "candidate-1",
+    "width": 1440,
+    "theme": "light",
+    "pageWidth": 1440,
+    "height": 1465,
+    "panels": [
+      {
+        "id": "answer",
+        "x": 80,
+        "y": 116.5,
+        "width": 632,
+        "height": 301,
+        "top": 116.5,
+        "right": 712,
+        "bottom": 417.5,
+        "left": 80
+      },
+      {
+        "id": "distinction",
+        "x": 728,
+        "y": 116.5,
+        "width": 632,
+        "height": 301,
+        "top": 116.5,
+        "right": 1360,
+        "bottom": 417.5,
+        "left": 728
+      },
+      {
+        "id": "mean",
+        "x": 80,
+        "y": 433.5,
+        "width": 632,
+        "height": 579,
+        "top": 433.5,
+        "right": 712,
+        "bottom": 1012.5,
+        "left": 80
+      },
+      {
+        "id": "reproduce",
+        "x": 728,
+        "y": 433.5,
+        "width": 632,
+        "height": 579,
+        "top": 433.5,
+        "right": 1360,
+        "bottom": 1012.5,
+        "left": 728
+      },
+      {
+        "id": "checks",
+        "x": 80,
+        "y": 1028.5,
+        "width": 1280,
+        "height": 154,
+        "top": 1028.5,
+        "right": 1360,
+        "bottom": 1182.5,
+        "left": 80
+      }
+    ],
+    "tables": [
+      {
+        "client": 624,
+        "scroll": 624,
+        "rows": [
+          [
+            "状态",
+            "含义",
+            "对应操作"
+          ],
+          [
+            "null",
+            "缺失数据",
+            "fill_null 替换它 3"
+          ],
+          [
+            "NaN",
+            "特殊浮点值，不计入 null 数",
+            "fill_nan 替换它 4"
+          ]
+        ]
+      },
+      {
+        "client": 624,
+        "scroll": 624,
+        "rows": [
+          [
+            "操作",
+            "结果",
+            "均值"
+          ],
+          [
+            "null → 0",
+            "[1.0, 0.0, NaN, 3.0]",
+            "NaN"
+          ],
+          [
+            "NaN → null",
+            "[1.0, null, null, 3.0]",
+            "2.0"
+          ],
+          [
+            "两者都填零",
+            "[1.0, 0.0, 0.0, 3.0]",
+            "1.0"
+          ]
+        ]
+      }
+    ],
+    "code": [
+      {
+        "client": 622,
+        "scroll": 622,
+        "text": "import polars as pl\n\ns = pl.Series(\n    \"x\",\n    [1.0, None, float(\"nan\"), 3.0],\n    dtype=pl.Float64,\n)\ncases = {\n    \"fill_null\": s.fill_null(0),\n    \"nan_to_null\": s.fill_nan(None),\n    \"both_to_zero\": (\n        s.fill_null(0).fill_nan(0)\n    ),\n}\nfor name, values in cases.items():\n    print(\n        name, values.to_list(),\n        \"mean:\", values.mean()\n    )"
+      }
+    ]
+  }
+]
