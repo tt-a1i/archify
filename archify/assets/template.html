@@ -2547,12 +2547,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          card's min-content width, spills past its track in every rail placement,
          and pushes the whole page into horizontal overflow at desktop widths.
          `anywhere` rather than `break-word` because only `anywhere` shrinks the
-         intrinsic minimum the layout is sized from.
-         word-break: keep-all ensures Korean/CJK sentences break between words
-         at ordinary spaces rather than mid-syllable, while overflow-wrap: anywhere
-         protects against unbroken run overflow. */
-      word-break: keep-all;
+         intrinsic minimum the layout is sized from. */
       overflow-wrap: anywhere;
+      /* `keep-all` ensures Korean/CJK prose wraps naturally at whitespace
+         boundaries between words rather than mid-syllable, while `overflow-wrap: anywhere`
+         protects against continuous unbroken overflow. */
+      word-break: keep-all;
     }
 
     html[data-preset="signal-flow"] .card {

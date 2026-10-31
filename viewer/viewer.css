@@ -2380,6 +2380,10 @@ html[data-preset="blueprint"] .node-finder-results { border-radius: 0.18rem; }
      `anywhere` rather than `break-word` because only `anywhere` shrinks the
      intrinsic minimum the layout is sized from. */
   overflow-wrap: anywhere;
+  /* `keep-all` ensures Korean/CJK prose wraps naturally at whitespace
+     boundaries between words rather than mid-syllable, while `overflow-wrap: anywhere`
+     protects against continuous unbroken overflow. */
+  word-break: keep-all;
 }
 
 html[data-preset="signal-flow"] .card {
