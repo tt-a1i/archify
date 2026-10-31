@@ -36,7 +36,10 @@ export function declaredExplainerInputPaths(sourceText, inputPath) {
   const inputs = [path.resolve(inputPath)];
   for (const panel of Array.isArray(parsed.document.panels) ? parsed.document.panels : []) {
     for (const block of Array.isArray(panel?.blocks) ? panel.blocks : []) {
-      const reference = block?.type === 'chart' ? block.data?.path : block?.type === 'diagram' ? block.source : undefined;
+      const reference = block?.type === 'chart' ? block.data?.path
+        : block?.type === 'diagram' ? block.source
+          : block?.type === 'image' ? block.path
+            : undefined;
       if (typeof reference === 'string') inputs.push(path.resolve(path.dirname(inputPath), reference));
     }
   }
