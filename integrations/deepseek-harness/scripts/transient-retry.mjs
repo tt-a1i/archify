@@ -15,7 +15,7 @@ export function runWithTransientNetworkRetry(runAttempt, { maxAttempts = 2 } = {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     result = runAttempt(attempt);
     if (!result.error && result.status === 0) return { result, attempts: attempt };
-    if (attempt === maxAttempts || !isTransientNetworkFailure(result)) {
+    if (result.signal || attempt === maxAttempts || !isTransientNetworkFailure(result)) {
       return { result, attempts: attempt };
     }
   }
