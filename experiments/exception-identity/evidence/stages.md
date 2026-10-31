@@ -1,0 +1,18 @@
+# Stage record
+
+Base: `e837dc4cb83042d2b6c596e039692e25ec62c2da`. Scope: experiment files only.
+Environment verified this turn: `/opt/homebrew/opt/node@22/bin/node --version` → `v22.23.3`; fixture records Python `3.13.16`. Installed root lockfile dependencies using `npm ci --ignore-scripts --no-audit --no-fund` (17 packages), with Node22 on PATH. No live Archify installation.
+
+1. Read repository contribution/review instructions, tuning/test-value guidance and native authoring/delivery contracts; read the historical research report as a resumed hypothesis, not present authorization or present execution evidence.
+2. Opened pinned upstream formatting test, complete mixed MIT/PSF license, Python exception and traceback docs fresh through web. Wrote an original synthetic fixture rather than copying formatter or tests.
+3. Executed fixture. First local stdout exposed an absolute filename in stdlib output. Kept raw local output and normalized exactly the known fixture filename for portable evidence; no generic parser or source reconstruction was added. This was an evidence privacy correction, not a semantic model repair.
+4. First candidate: complete native finalize passed validate/deliver/check/browser-check with zero diagnostics. First captures passed all checks. Original candidate and first screenshot retained in `drafts/`; portable first receipt summaries retained here. First screenshot showed conclusion cards below the fold, so the artifact needed visible scope/count copy.
+5. Added synthetic scope to title and object/print count tags; automated gates passed. Captures revealed tags were hidden by normal READ detail. This content attempt did not achieve first-screen readability of the central claim.
+6. Replaced tag-only count copy with always-visible sublabels, preserving marker names, object topology and all edge meanings. Final script reproduced fixture, 5 semantic tests, complete showcase finalize and four light/dark captures successfully. See `latest-run.json` for exact command start timestamps, command results and artifact hashes. Raw logs remain local under unique `raw/run-*` directories.
+7. Agent visually inspected four final CLI screenshots. The reciprocal contains / caused-by edges and three objects are readable without crossing; synthetic scope and printed counts now belong to title/sublabels. Cards require scrolling. Independent interactive browser inspection belongs to the parent and is not claimed here.
+
+All CLI commands executed so far exited zero. No speed comparison or generalization is claimed. CLI stage durations are scoped machine timings, not total authoring time. Initial reading was not timed, so this record does not invent complete elapsed time.
+
+Test-value assessment: five narrow tests protect direct object identity, actual repeated formatted output, and reject wrong edge kinds/directions or duplicate identity nodes. They consult live fixture objects, not only generated JSON. No root test already owns this isolated fixture; no renderer/shared behavior changed, so a full renderer regression suite would not establish the content claim. The existing native finalization/browser gates protect the real output. No duplicated runtime layer was added; no simplification audit was warranted.
+
+Pre-commit whitespace check: `git diff --cached --check` reported trailing whitespace in 15 lines of the CLI-generated standalone HTML. The artifact was preserved byte-for-byte to retain its verified hash/provenance; no manual renderer-output cleanup was applied. The scoped whitespace check excluding this generated HTML passed. This is a generated-template formatting limitation, not a failed Archify gate.

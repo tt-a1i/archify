@@ -1,0 +1,68 @@
+{
+  "note": "Portable summary; not an original provenance receipt",
+  "result": {
+    "schemaVersion": 1,
+    "command": "visual-check",
+    "ok": true,
+    "status": "pass",
+    "evidenceKind": "automated-browser",
+    "visualReview": "pending",
+    "artifact": {
+      "path": "experiments/exception-identity/exception-identity.html",
+      "sha256": "273db33079fca2b2daef57aedca6275448ee06ba10517fdf771b71e30bf4e6da",
+      "bytes": 859916
+    },
+    "provenance": "current",
+    "deliveryReceiptId": "72beee23-eb9b-4875-bca9-d5cdfc8d26c2",
+    "state": {
+      "detail": "read",
+      "motion": "still"
+    },
+    "chrome": {
+      "status": "available",
+      "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    },
+    "checks": {
+      "containment": "pass",
+      "readability": "pass",
+      "viewerChrome": "pass",
+      "themeStates": "pass",
+      "captures": "pass"
+    },
+    "diagnostics": [],
+    "evidence": {
+      "receipt": "experiments/exception-identity/raw/visual-check/exception-identity.visual-check.json",
+      "contactSheet": "experiments/exception-identity/raw/visual-check/exception-identity.visual-check.html",
+      "screenshots": [
+        {
+          "path": "experiments/exception-identity/raw/visual-check/exception-identity.visual-check.1440x900.light.png",
+          "width": 1440,
+          "height": 900,
+          "theme": "light",
+          "resolvedTheme": "light"
+        },
+        {
+          "path": "experiments/exception-identity/raw/visual-check/exception-identity.visual-check.1440x900.dark.png",
+          "width": 1440,
+          "height": 900,
+          "theme": "dark",
+          "resolvedTheme": "dark"
+        },
+        {
+          "path": "experiments/exception-identity/raw/visual-check/exception-identity.visual-check.2048x1320.light.png",
+          "width": 2048,
+          "height": 1320,
+          "theme": "light",
+          "resolvedTheme": "light"
+        },
+        {
+          "path": "experiments/exception-identity/raw/visual-check/exception-identity.visual-check.2048x1320.dark.png",
+          "width": 2048,
+          "height": 1320,
+          "theme": "dark",
+          "resolvedTheme": "dark"
+        }
+      ]
+    }
+  }
+}
