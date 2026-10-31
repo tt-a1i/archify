@@ -146,7 +146,7 @@ function memberRows(type) {
 // longer than a whole line is split by character, never dropped.
 const PARAMETER_INDENT = 4;
 
-function fillLines(pieces, limit, firstIndent, indent) {
+function fillLines(pieces, limit, firstIndent, indent, preserveWhitespace = false) {
   const lines = [];
   let current = '';
   const room = () => limit - (lines.length ? indent : firstIndent);
@@ -156,8 +156,8 @@ function fillLines(pieces, limit, firstIndent, indent) {
       current += piece;
       continue;
     }
-    if (current) push(current.trimEnd());
-    current = piece.trimStart();
+    if (current) push(preserveWhitespace ? current : current.trimEnd());
+    current = preserveWhitespace ? piece : piece.trimStart();
     while (textUnits(current) > room()) {
       const chars = Array.from(current);
       let cut = 0;
@@ -166,7 +166,7 @@ function fillLines(pieces, limit, firstIndent, indent) {
       current = chars.slice(Math.max(1, cut)).join('');
     }
   }
-  if (current) push(current.trimEnd());
+  if (current) push(preserveWhitespace ? current : current.trimEnd());
   return lines;
 }
 
@@ -182,7 +182,7 @@ function wrapMember(text, availablePx) {
   const tail = text.slice(close);
   return [
     ...fillLines([head], limit, 0, CONTINUATION_INDENT),
-    ...fillLines(parameters, limit, PARAMETER_INDENT, PARAMETER_INDENT),
+    ...fillLines(parameters, limit, PARAMETER_INDENT, PARAMETER_INDENT, true),
     ...fillLines([tail], limit, CONTINUATION_INDENT, CONTINUATION_INDENT),
   ];
 }
@@ -882,7 +882,7 @@ function memberColumns(member, kind) {
   if (kind === 'attributes') return { left: punctuated(member.name), right: member.type };
   const parameters = member.parameters
     ? String(member.parameters).split(/(,\s*)/).map((part) => {
-      if (/^,\s*$/.test(part)) return `<tspan class="t-muted cl-punct">,</tspan> `;
+      if (/^,\s*$/.test(part)) return `<tspan class="t-muted cl-punct">,</tspan>${esc(part.slice(1))}`;
       const [name, ...annotation] = part.split(':');
       return annotation.length
         ? `<tspan class="cl-param">${esc(name)}</tspan><tspan class="t-muted cl-punct">:</tspan><tspan class="t-muted cl-type-ref">${esc(annotation.join(':'))}</tspan>`
@@ -905,6 +905,7 @@ function renderMembers(type) {
       const style = [
         member.static ? 'text-decoration: underline' : '',
         member.abstract ? 'font-style: italic' : '',
+        compartment.kind === 'methods' ? 'white-space: pre' : '',
       ].filter(Boolean).join('; ');
       const styleAttr = style ? ` style="${style}"` : '';
       const rowTop = top + layout.compartmentPad + line * layout.rowH;
