@@ -370,6 +370,7 @@ dialog::backdrop{background:rgb(10 10 12/.55);backdrop-filter:blur(2px)}
 .viewer-close .tool-icon{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
 .viewer-close kbd{padding:3px 6px;border-radius:5px;background:rgb(255 255 255/.14);font:500 10.5px/1 var(--sans);color:rgb(255 255 255/.8)}
 .viewer-dialog iframe{width:100%;flex:1;border:0;min-height:0}
+.reader-disclosure-dialog{width:min(620px,calc(100vw - 32px));height:auto;max-height:calc(100dvh - 48px);overflow:auto}.reader-disclosure-content{padding:18px 20px}.reader-disclosure-content dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 14px}.reader-disclosure-content dt{color:var(--muted)}.reader-disclosure-content dd{margin:0;overflow-wrap:anywhere}.reader-disclosure-content>div{display:flex;flex-wrap:wrap;gap:8px}.reader-disclosure-content a{text-decoration:none}
 .dialog-loading{margin:auto;font-size:13px;color:var(--muted)}
 .dialog-loading[hidden]{display:none}
 .dialog-open{overflow:hidden}

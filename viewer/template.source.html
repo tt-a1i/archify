@@ -619,6 +619,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <button id="btn-semantic-lens" type="button" aria-label="{{i18n:viewer.nav.lens}}" aria-haspopup="dialog" aria-expanded="false" aria-pressed="false" aria-controls="semantic-lens" title="{{i18n:viewer.nav.lens.title}}">{{i18n:viewer.nav.lens.short}}</button>
         <button id="btn-node-finder" type="button" aria-label="{{i18n:viewer.nav.find}}" aria-haspopup="dialog" aria-expanded="false" aria-controls="node-finder" title="{{i18n:viewer.nav.find.title}}" data-node-finder-trigger><span class="diagram-nav-icon find" aria-hidden="true"></span></button>
         <button id="btn-diagram-guide" type="button" aria-label="{{i18n:viewer.nav.guide}}" aria-haspopup="dialog" aria-expanded="false" aria-controls="diagram-guide" title="{{i18n:viewer.nav.guide.title}}"><span class="diagram-nav-icon guide" aria-hidden="true"></span></button>
+        <button id="btn-reader-update" type="button" aria-haspopup="dialog" aria-controls="reader-update" title="Artifact version and update">Version</button>
         <button data-view="out" type="button" aria-label="{{i18n:viewer.nav.zoomOut}}" title="{{i18n:viewer.nav.zoomOut.title}}"><span class="diagram-nav-icon minus" aria-hidden="true"></span></button>
         <button data-view="reset" type="button" aria-label="{{i18n:viewer.nav.reset}}" title="{{i18n:viewer.nav.reset.title}}"><span class="diagram-nav-detail" data-view-detail hidden>{{i18n:viewer.nav.read}}</span><span class="diagram-nav-percent" data-view-percent>100%</span></button>
         <button data-view="in" type="button" aria-label="{{i18n:viewer.nav.zoomIn}}" title="{{i18n:viewer.nav.zoomIn.title}}"><span class="diagram-nav-icon plus" aria-hidden="true"></span></button>
@@ -683,6 +684,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
   </div>
 
+  <dialog class="reader-disclosure no-print" id="reader-update" aria-labelledby="reader-update-title">
+    <form method="dialog">
+      <header><h2 id="reader-update-title">Artifact version</h2><button id="reader-update-close" type="submit" aria-label="Close artifact version">Close</button></header>
+      <dl id="reader-update-facts"></dl>
+      <p id="reader-update-current"></p><p id="reader-update-available"></p>
+      <ul id="reader-update-summaries"></ul>
+      <a id="reader-update-release-notes" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden>Release notes</a>
+      <p class="reader-disclosure-status" id="reader-update-status" role="status"></p>
+      <div class="reader-disclosure-actions"><button type="button" id="reader-update-check">Check for update</button></div>
+    </form>
+  </dialog>
+
+    <!-- ARCHIFY:READER_UPDATE_DATA -->
   <script>
     var Archify = {};
     var archifyI18nData = (function () {
@@ -1112,6 +1126,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     };
 
 /* ARCHIFY:READER_LAYOUT */
+/* ARCHIFY:READER_DISCLOSURE */
 /* ARCHIFY:CHROME_LAYOUT */
     Archify.layoutStability = {
       whenStable: function () {

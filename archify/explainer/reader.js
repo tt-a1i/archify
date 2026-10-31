@@ -11,6 +11,49 @@
   const all = (selector, within = document) => [...within.querySelectorAll(selector)];
   let toastTimer;
   function notify(text) { const toast=byId('toast');toast.textContent=text;toast.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('visible'),3000); }
+  function setupReaderUpdate() {
+    const trigger = document.querySelector('[data-reader-update]'), dialog = byId('reader-update');
+    let disclosure;
+    try { disclosure = read('archify-reader-update-data'); } catch { trigger?.remove(); return; }
+    const safe = value => { try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password && !url.hash && url.href === value ? url : null; } catch { return null; } };
+    const stableVersion = value => typeof value === 'string' && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(value);
+    const exactKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).sort().join('\0') === [...keys].sort().join('\0');
+    const readBoundedManifestText = response => {
+      const limit=65536, declaredLength=Number(response.headers.get('content-length'));
+      if(Number.isFinite(declaredLength)&&declaredLength>limit)return Promise.reject(new Error('manifest too large'));
+      if(!response.body?.getReader)return Promise.reject(new Error('manifest body unavailable'));
+      const reader=response.body.getReader(),decoder=new TextDecoder();let text='';
+      const read=()=>reader.read().then(chunk=>{
+        if(chunk.done){text+=decoder.decode();if(text.length>limit)throw new Error('manifest too large');return text;}
+        text+=decoder.decode(chunk.value,{stream:true});
+        if(text.length>limit){reader.cancel();throw new Error('manifest too large');}
+        return read();
+      });
+      return read();
+    };
+    const validManifest = value => {
+      if (!exactKeys(value,['schemaVersion','skillId','channel','version','publishedAt','source','artifact','summary','releaseNotes','severity']) || value.schemaVersion!==1 || value.skillId!=='archify' || value.channel!=='stable' || !stableVersion(value.version) || !exactKeys(value.source,['repository','ref','treeSha']) || value.source.repository!=='https://github.com/tt-a1i/archify' || value.source.ref!=='v'+value.version || !/^[a-f0-9]{40}$/.test(value.source.treeSha) || !exactKeys(value.artifact,['sha256']) || !/^[a-f0-9]{64}$/.test(value.artifact.sha256) || typeof value.summary!=='string' || !value.summary || value.summary.length>160 || /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/u.test(value.summary) || value.releaseNotes!=='https://github.com/tt-a1i/archify/releases/tag/v'+value.version || !['normal','security'].includes(value.severity) || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(value.publishedAt)) return null;
+      const publishedAt = Date.parse(value.publishedAt);
+      if (!Number.isFinite(publishedAt) || new Date(publishedAt).toISOString() !== value.publishedAt.replace('Z','.000Z')) return null;
+      return value;
+    };
+    const compareStableVersion = (left,right) => { const a=left.split('.').map(Number),b=right.split('.').map(Number); for(let index=0;index<3;index+=1)if(a[index]!==b[index])return a[index]<b[index]?-1:1;return 0; };
+    const artifact = disclosure?.artifact, update = disclosure?.update;
+    if (!trigger || !dialog || disclosure?.schemaVersion !== 1 || !artifact || !/^[a-f0-9]{64}$/.test(artifact.contentSha256) || !safe(update?.manifestUrl)) { trigger?.remove(); return; }
+    const facts = dialog.querySelector('[data-reader-update-facts]');
+    [['Type',artifact.type],['Generator',artifact.generatorVersion],['Content identity',artifact.contentSha256]].forEach(([key,value]) => { const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;facts.append(dt,dd); });
+    trigger.textContent = say('Version ', '版本 ') + artifact.generatorVersion;
+    const status = dialog.querySelector('[data-reader-update-status]');
+    let opener;
+    trigger.addEventListener('click',()=>{opener=trigger;dialog.showModal();});
+    dialog.querySelector('[data-close-reader-update]').addEventListener('click',()=>dialog.close());
+    dialog.addEventListener('close',()=>opener?.focus());
+    dialog.querySelector('[data-reader-update-check]').addEventListener('click',function () {
+      if (!stableVersion(artifact.generatorVersion)) { status.textContent=say('Update status unavailable for this development artifact. No update result was recorded.','开发版生成物无法确定更新状态，未记录任何更新结果。'); return; }
+      const button=this, controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),5000); button.disabled=true;status.textContent=say('Checking the fixed stable manifest…','正在检查固定的稳定版清单…');
+      fetch(update.manifestUrl,{method:'GET',credentials:'omit',cache:'no-store',redirect:'error',signal:controller.signal}).then(response=>{if(!response.ok)throw new Error('unavailable');return readBoundedManifestText(response);}).then(text=>{const manifest=validManifest(JSON.parse(text));if(!manifest)throw new Error('invalid manifest');if(compareStableVersion(artifact.generatorVersion,manifest.version)>=0){status.textContent=say('No newer stable version was found.','未发现更新的稳定版本。');return;}trigger.textContent=say('New version ','新版本 ')+manifest.version;dialog.querySelector('[data-reader-update-current]').textContent=say('Current version: ','当前版本：')+artifact.generatorVersion;dialog.querySelector('[data-reader-update-available]').textContent=say('New version: ','新版本：')+manifest.version;const summaries=dialog.querySelector('[data-reader-update-summaries]');summaries.replaceChildren();[manifest.summary].slice(0,3).forEach(summary=>{const item=document.createElement('li');item.textContent=summary;summaries.append(item);});const notes=dialog.querySelector('[data-reader-update-release-notes]');notes.href=manifest.releaseNotes;notes.hidden=false;status.textContent=say('A newer stable version is available.','有新的稳定版本可用。');}).catch(()=>status.textContent=say('Update status unavailable. No update result was recorded.','更新状态不可用，未记录任何更新结果。')).finally(()=>{clearTimeout(timeout);button.disabled=false;});
+    });
+  }
   // Measured board layout. Each panel is measured at every column width, then each column template is
   // simulated and the one with the least page height and blank area wins. Panels keep source order on
   // a 1px row grid, so the DOM and reading order never change.
@@ -682,6 +725,7 @@
   setupWalks();
   setupAsk();
   setupSourceCards();
+  setupReaderUpdate();
   layoutBoard();
   const relayout = () => { layoutBoard(); ensureDiagramReadability(); };
   Promise.resolve(document.fonts?.ready).then(()=>requestAnimationFrame(()=>requestAnimationFrame(relayout)));
