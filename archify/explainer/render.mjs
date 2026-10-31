@@ -36,7 +36,7 @@ const dictionaries = {
 /** Render a validated canonical explainer with separately prepared, immutable resources. */
 export function renderExplainer(document, options = {}) {
   const { preparedBundle, sourceText = JSON.stringify(document), sourceMap = {}, sourcePath, preparedSources = {}, preparedDiagrams = {}, diagnostics = [], pageDirectory } = options;
-  const locale = document.meta.locale || 'zh-CN';
+  const locale = document.meta.locale || 'en';
   // Chinese pages get Chinese controls; every other language gets the English ones.
   const english = !locale.startsWith('zh');
   const words = dictionaries[english ? 'en' : 'zh'];

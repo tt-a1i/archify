@@ -49,6 +49,7 @@ Deliver it with the command under [Delivery](#delivery).
 
 ### Rules that keep a draft valid
 
+- Every draft includes `@meta locale=<code>` — the page's `lang` attribute and reader controls follow it. Use the language the user is communicating in when it is supported (`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`); otherwise use `en`.
 - IDs are unique across the whole document: panels, blocks, diagrams and steps share one namespace. Give a block an `id` only when a step, link or patch targets it; omit it on callouts, facts and lists. Name a diagram after its content (`handshake-flow`), not after its panel (`handshake`).
 - Prose is plain text. Wrap file paths, globs, `<placeholders>`, operators and code in backticks: a bare `<`, `>` or `*` in prose fails as HTML or emphasis. Inline code is shown literally.
 - Directive rows are pipe rows, one per line, each with the documented number of cells: `| first | second |`. Write a literal pipe inside a cell as `\|`. A blank line or the next `##` or `@` line ends the rows.
@@ -220,7 +221,7 @@ A chart states where its numbers come from the same way text does: measured, fro
 | Directive | Header arguments | Rows |
 | --- | --- | --- |
 | `@answer` | `scope="..."` | none |
-| `@meta` | `locale` (`en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
+| `@meta` | `locale` (required; `en`, `zh-CN`, `zh-TW`, `es`, `ko`, `ar`), `quality_profile`, `style` (`clean`, `editorial`, `product`, `swiss`; readers can switch), `repo_url`, `repo_revision` | none |
 | `@source <id>` | `title`, `url`, or `path` with `lines=start:end` | none |
 | `@steps` | `id` | `id | title | detail? | diagram-id? | node? | from~to? | edge-ids?` (node and route are exclusive) |
 | `@callout` | `id`, `level=note|warning|open-question`, `title` | one cell per row; rows join into paragraphs |
