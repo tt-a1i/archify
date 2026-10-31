@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "kind": "explicit-fixed-raw-record-selection",
+  "indices": [
+    2077,
+    2078,
+    2079,
+    2082,
+    2083,
+    2084
+  ],
+  "events": [
+    {
+      "index": 2077,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23924,
+        "ts": 1496640971725,
+        "ph": "B",
+        "name": "SyncChannel::SendWithTimeout",
+        "args": {
+          "class": 11,
+          "line": 340
+        }
+      }
+    },
+    {
+      "index": 2078,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23924,
+        "ts": 1496640971731,
+        "ph": "s",
+        "name": "MessageLoop::PostTask",
+        "args": {},
+        "id": "0xafbe9607544ea9db"
+      }
+    },
+    {
+      "index": 2079,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23924,
+        "ts": 1496640971745,
+        "ph": "E",
+        "name": "SyncChannel::SendWithTimeout",
+        "args": {}
+      }
+    },
+    {
+      "index": 2082,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23930,
+        "ts": 1496640971809,
+        "ph": "f",
+        "name": "MessageLoop::PostTask",
+        "args": {
+          "queue_duration": 0
+        },
+        "id": "0xafbe9607544ea9db"
+      }
+    },
+    {
+      "index": 2083,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23930,
+        "ts": 1496640971814,
+        "ph": "B",
+        "name": "MessageLoop::RunTask",
+        "args": {
+          "src_file": "../../ipc/ipc_channel_proxy.cc",
+          "src_func": "Send"
+        }
+      }
+    },
+    {
+      "index": 2084,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23930,
+        "ts": 1496640971839,
+        "ph": "E",
+        "name": "MessageLoop::RunTask",
+        "args": {}
+      }
+    }
+  ],
+  "link": {
+    "from": 2078,
+    "to": 2082
+  }
+}

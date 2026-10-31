@@ -1,0 +1,512 @@
+[
+  {
+    "step": 1,
+    "tag": "A",
+    "id": "",
+    "text": "跳至正文",
+    "aria": null,
+    "href": "#board",
+    "visible": true,
+    "top": 8,
+    "bottom": 48.9375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 2,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "系统",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 41.546875,
+    "bottom": 65.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 3,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "浅色",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 41.546875,
+    "bottom": 65.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 4,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "深色",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 41.546875,
+    "bottom": 65.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 5,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "简洁",
+    "aria": "样式",
+    "href": null,
+    "visible": true,
+    "top": 38.546875,
+    "bottom": 68.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 6,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "导出",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 38.546875,
+    "bottom": 68.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 7,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 107.328125,
+    "bottom": 129.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 8,
+    "tag": "A",
+    "id": "",
+    "text": "1",
+    "aria": "连线只来自两个明示的 flow 端点",
+    "href": "#flow-panel",
+    "visible": true,
+    "top": 353.328125,
+    "bottom": 375.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 9,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 353.328125,
+    "bottom": 375.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 10,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "打开交互图",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 403.5625,
+    "bottom": 431.5625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 11,
+    "tag": "g",
+    "id": "preview-flow-map-node-flow-start",
+    "text": "记录2078 · s · 架构组件\n          \n          \n          \n            \n          \n          记录2078 · s",
+    "aria": "记录2078 · s",
+    "href": null,
+    "visible": true,
+    "top": 449.0625,
+    "bottom": 524.0625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 12,
+    "tag": "A",
+    "id": "",
+    "text": "阅读这段 ↗",
+    "aria": null,
+    "href": "#start-note",
+    "visible": true,
+    "top": 646.3515625,
+    "bottom": 666.984375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 13,
+    "tag": "A",
+    "id": "",
+    "text": "打开原文 ↗",
+    "aria": null,
+    "href": "https://github.com/catapult-project/catapult/blob/6fd8bbe723677254ff1130a1a416988b8b3e285e/tracing/test_data/flow.json",
+    "visible": true,
+    "top": 646.3515625,
+    "bottom": 666.984375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 14,
+    "tag": "g",
+    "id": "preview-flow-map-node-flow-end",
+    "text": "记录2082 · f · 架构组件\n          \n          \n          \n            \n          \n          记录2082 · f",
+    "aria": "记录2082 · f",
+    "href": null,
+    "visible": true,
+    "top": 449.0625,
+    "bottom": 524.0625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 15,
+    "tag": "A",
+    "id": "",
+    "text": "阅读这段 ↗",
+    "aria": null,
+    "href": "#end-note",
+    "visible": true,
+    "top": 666.3515625,
+    "bottom": 686.984375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 16,
+    "tag": "A",
+    "id": "",
+    "text": "打开原文 ↗",
+    "aria": null,
+    "href": "https://github.com/catapult-project/catapult/blob/6fd8bbe723677254ff1130a1a416988b8b3e285e/tracing/test_data/flow.json",
+    "visible": true,
+    "top": 666.3515625,
+    "bottom": 686.984375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 17,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "▶ 逐步看",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 517.515625,
+    "bottom": 545.515625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 18,
+    "tag": "A",
+    "id": "",
+    "text": "记录2078 · s ↗",
+    "aria": null,
+    "href": "#flow-map",
+    "visible": true,
+    "top": 558.515625,
+    "bottom": 575.515625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 19,
+    "tag": "A",
+    "id": "",
+    "text": "记录2082 · f ↗",
+    "aria": null,
+    "href": "#flow-map",
+    "visible": true,
+    "top": 620.984375,
+    "bottom": 637.984375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 20,
+    "tag": "A",
+    "id": "",
+    "text": "2",
+    "aria": "原字段与索引逐条保留",
+    "href": "#records",
+    "visible": true,
+    "top": 819.328125,
+    "bottom": 841.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 21,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 819.328125,
+    "bottom": 841.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 22,
+    "tag": "A",
+    "id": "",
+    "text": "1",
+    "aria": null,
+    "href": "#source-raw",
+    "visible": true,
+    "top": 874.234375,
+    "bottom": 885.734375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 23,
+    "tag": "A",
+    "id": "",
+    "text": "打开原文 ↗",
+    "aria": null,
+    "href": "https://github.com/catapult-project/catapult/blob/6fd8bbe723677254ff1130a1a416988b8b3e285e/tracing/test_data/flow.json",
+    "visible": true,
+    "top": 832.5234375,
+    "bottom": 853.15625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 24,
+    "tag": "A",
+    "id": "",
+    "text": "3",
+    "aria": "三种时间量不要混读",
+    "href": "#time-meaning",
+    "visible": true,
+    "top": 438.828125,
+    "bottom": 460.828125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 25,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 438.828125,
+    "bottom": 460.828125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 26,
+    "tag": "A",
+    "id": "",
+    "text": "2",
+    "aria": null,
+    "href": "#source-binding",
+    "visible": true,
+    "top": 706.2421875,
+    "bottom": 717.7421875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 27,
+    "tag": "A",
+    "id": "",
+    "text": "打开原文 ↗",
+    "aria": null,
+    "href": "https://github.com/catapult-project/catapult/blob/6fd8bbe723677254ff1130a1a416988b8b3e285e/tracing/tracing/extras/importer/trace_event_importer.html#L2107-L2350",
+    "visible": true,
+    "top": 794.03125,
+    "bottom": 814.6640625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 28,
+    "tag": "A",
+    "id": "",
+    "text": "4",
+    "aria": "完整选择与原始JSON",
+    "href": "#selection",
+    "visible": true,
+    "top": 779.828125,
+    "bottom": 801.828125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 29,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 779.828125,
+    "bottom": 801.828125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 30,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "复制",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 441.1875,
+    "bottom": 459.1875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 31,
+    "tag": "A",
+    "id": "",
+    "text": "Catapult 固定原始 trace",
+    "aria": null,
+    "href": "https://github.com/catapult-project/catapult/blob/6fd8bbe723677254ff1130a1a416988b8b3e285e/tracing/test_data/flow.json",
+    "visible": true,
+    "top": 770.7265625,
+    "bottom": 785.2265625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 32,
+    "tag": "A",
+    "id": "",
+    "text": "固定 v1 flow 配对与端点绑定源码",
+    "aria": null,
+    "href": "https://github.com/catapult-project/catapult/blob/6fd8bbe723677254ff1130a1a416988b8b3e285e/tracing/tracing/extras/importer/trace_event_importer.html#L2107-L2350",
+    "visible": true,
+    "top": 770.7265625,
+    "bottom": 785.2265625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 33,
+    "tag": "A",
+    "id": "",
+    "text": "Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+    "aria": null,
+    "href": "https://github.com/tt-a1i/archify",
+    "visible": true,
+    "top": 835.7265625,
+    "bottom": 868.171875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 34,
+    "tag": "BODY",
+    "id": "",
+    "text": "跳至正文这条跨线程连线，依据是什么？系统浅色深色简洁简洁杂志产品网格导出长图PNG最清晰WebP体积最小JPG兼容最好打印 / PDF答结论追问它来自原始记录中的同一 flow 键；78 微秒只是两个端点的时间戳差。选取上游公开历史 trace 的 6 条记录，没有重新采集。连线",
+    "aria": null,
+    "href": null,
+    "visible": false,
+    "top": -2956.5,
+    "bottom": 900.171875,
+    "viewport": [
+      1440,
+      900
+    ]
+  }
+]

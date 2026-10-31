@@ -1,0 +1,154 @@
+{
+  "kind": "portable-browser-summary-not-original-receipt",
+  "status": "fail",
+  "artifactSha256": "97ccdee5dcbf6b467fcd725e2ac12e36c0a1efcb9d91aee476162f4fcbdccb98",
+  "checks": {
+    "containment": "pass",
+    "readability": "pass",
+    "viewerChrome": "pass",
+    "themeStates": "pass",
+    "captures": "pass"
+  },
+  "diagnosticCount": 12,
+  "diagnostics": [
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Catapult 固定原始 trace",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 固定 v1 flow 配对与端点绑定源码",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Catapult 固定原始 trace",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 固定 v1 flow 配对与端点绑定源码",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "light"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Catapult 固定原始 trace",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 固定 v1 flow 配对与端点绑定源码",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Catapult 固定原始 trace",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A 固定 v1 flow 配对与端点绑定源码",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "dark"
+      }
+    },
+    {
+      "code": "explainer/browser-keyboard-traversal",
+      "severity": "error",
+      "message": "This active control was not reached by Tab or native radio ArrowRight navigation. A Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "theme": "dark"
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "review.visual-check.1440x900.light.png",
+      "sha256": "b6b231b506083eedbc28ab8b65f2eca07438e8a3b08605a1ac490e7a7584a7dd"
+    },
+    {
+      "path": "review.visual-check.1280x900.light.png",
+      "sha256": "0e37f908bcca7228401f592b749c66d3f4a0c0cef03f49975a44a8ce5295b59a"
+    },
+    {
+      "path": "review.visual-check.1440x900.dark.png",
+      "sha256": "a8db13a0f8081d2e50ab66171472ebf679bca9a3fa2d576e2595a34758479828"
+    },
+    {
+      "path": "review.visual-check.1280x900.dark.png",
+      "sha256": "2772c12cec535fee57d52900bc1727aabc3f971984659da60c5d38ca2922aad6"
+    }
+  ],
+  "visualReview": "pending; screenshot existence does not override diagnostics"
+}

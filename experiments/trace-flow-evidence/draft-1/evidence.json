@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "kind": "fixed-record-flow-evidence",
+  "origin": {
+    "repository": "https://github.com/catapult-project/catapult",
+    "commit": "6fd8bbe723677254ff1130a1a416988b8b3e285e",
+    "path": "tracing/test_data/flow.json",
+    "sha256": "b17fa02df4a8584d230ad1014ef3578c2f141795681a8c682a644cf7eaf9d1f2",
+    "bytes": 690902
+  },
+  "provenance": "Upstream published historical fixture; collection not independently reproduced; no new execution measurement.",
+  "originalEventCount": 5017,
+  "selectedCount": 6,
+  "notProjectedCount": 5011,
+  "phases": {
+    "s": 866,
+    "B": 1625,
+    "E": 1622,
+    "f": 886,
+    "M": 18
+  },
+  "clientInfo": {
+    "command_line": "out/Release/chrome --flag-switches-begin --flag-switches-end",
+    "version": "Chrome/30.0.1574.0"
+  },
+  "records": [
+    {
+      "index": 2077,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23924,
+        "ts": 1496640971725,
+        "ph": "B",
+        "name": "SyncChannel::SendWithTimeout",
+        "args": {
+          "class": 11,
+          "line": 340
+        }
+      }
+    },
+    {
+      "index": 2078,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23924,
+        "ts": 1496640971731,
+        "ph": "s",
+        "name": "MessageLoop::PostTask",
+        "args": {},
+        "id": "0xafbe9607544ea9db"
+      }
+    },
+    {
+      "index": 2079,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23924,
+        "ts": 1496640971745,
+        "ph": "E",
+        "name": "SyncChannel::SendWithTimeout",
+        "args": {}
+      }
+    },
+    {
+      "index": 2082,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23930,
+        "ts": 1496640971809,
+        "ph": "f",
+        "name": "MessageLoop::PostTask",
+        "args": {
+          "queue_duration": 0
+        },
+        "id": "0xafbe9607544ea9db"
+      }
+    },
+    {
+      "index": 2083,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23930,
+        "ts": 1496640971814,
+        "ph": "B",
+        "name": "MessageLoop::RunTask",
+        "args": {
+          "src_file": "../../ipc/ipc_channel_proxy.cc",
+          "src_func": "Send"
+        }
+      }
+    },
+    {
+      "index": 2084,
+      "event": {
+        "cat": "task",
+        "pid": 23924,
+        "tid": 23930,
+        "ts": 1496640971839,
+        "ph": "E",
+        "name": "MessageLoop::RunTask",
+        "args": {}
+      }
+    }
+  ],
+  "link": {
+    "from": 2078,
+    "to": 2082,
+    "key": {
+      "cat": "task",
+      "name": "MessageLoop::PostTask",
+      "id": "0xafbe9607544ea9db"
+    },
+    "allMatchingFlowIndices": [
+      2078,
+      2082
+    ],
+    "meaning": "Explicit recorded flow association, not a complete causal proof or inferred slice dependency."
+  },
+  "endpointDifferenceUs": 78,
+  "sourceQueueDurationField": 0,
+  "timeMeaning": "Timestamp difference between the selected s/f records only. queue_duration is preserved without interpreting its unit, rounding or instrumentation."
+}
