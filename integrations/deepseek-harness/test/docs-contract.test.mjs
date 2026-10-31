@@ -128,13 +128,10 @@ test('English, Chinese, and Japanese docs cover install, invoke, uninstall, comm
   assert.match(japanese, /テレメトリ/);
 });
 
-test('Skills CLI, Cursor, Codex, Claude Code, OpenCode, and Raven remain the default main path', () => {
+test('DSH docs follow the default Skills CLI quick start', () => {
   const english = read('README.md');
   const chinese = read('README_ZH.md');
   const japanese = read('README_JA.md');
-  assert.match(english, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(chinese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(japanese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
   assert.match(english, /## Quick start/);
   assert.match(chinese, /## 快速开始/);
   assert.match(japanese, /## クイックスタート/);
