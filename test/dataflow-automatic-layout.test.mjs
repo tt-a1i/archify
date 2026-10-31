@@ -50,6 +50,18 @@ function pipeline() {
   };
 }
 
+test('unknown-flow diagnostics retain their collection index', t => {
+  const diagram = pipeline();
+  diagram.flows[2].to = 'ghost';
+  const { result, receipt } = inspect(t, diagram);
+  assert.notEqual(result.status, 0);
+  const diagnostic = receipt.diagnostics.find(({ code }) => code === 'dataflow/unknown-endpoint');
+  assert.ok(diagnostic);
+  assert.equal(diagnostic.subject.path, '/flows/2/to');
+  assert.ok(diagnostic.supportedFixes.length > 0);
+  assert.ok(diagnostic.supportedFixes.every(fix => fix.startsWith('set /flows/2/to to ')));
+});
+
 test('automatic dataflow width contains a nearby authored label without moving its pin', t => {
   const diagram = {
     schema_version: 1, diagram_type: 'dataflow',
