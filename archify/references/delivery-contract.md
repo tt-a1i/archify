@@ -446,8 +446,9 @@ accepted only with a renderer-declared contract and measured readable text.
 Automatic canvases declare `data-reader-fit="intrinsic-height"` (height fitting)
 or `data-reader-fit="width-first"` (Sequence and Waterfall reading width); their adaptive
 Reader must reach its readable width and expose `data-reader-overflow="authored"`.
-Architecture with an explicit `meta.viewBox` instead declares
-`data-diagram-type="architecture"` and `data-reader-fit="authored-height"`:
+Architecture with an explicit `meta.viewBox`, and schema-v2 workflows with at
+least two lanes and an explicit `meta.viewBox` whose height is greater than
+800, declare `data-diagram-type="architecture"` (or `"workflow"`) and `data-reader-fit="authored-height"`:
 its SVG coordinates, aspect ratio and existing Reader width behavior stay
 unchanged. Its full SVG must remain inside the diagram panel without internal
 scrolling or clipping, and the document must permit vertical scrolling.
