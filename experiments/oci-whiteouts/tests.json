@@ -1,0 +1,17 @@
+{
+  "kind": "local-focused-test-observation",
+  "python": "3.15.0",
+  "command": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-m",
+    "unittest",
+    "-v",
+    "test_fixture.py"
+  ],
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": "test_all_six_upper_orders_preserve_spec_derived_visibility (test_fixture.WhiteoutReading.test_all_six_upper_orders_preserve_spec_derived_visibility) ... ok\ntest_build_rejects_existing_directory_before_writing (test_fixture.WhiteoutReading.test_build_rejects_existing_directory_before_writing) ... ok\ntest_changed_payload_or_missing_marker_cannot_inherit_fixed_model (test_fixture.WhiteoutReading.test_changed_payload_or_missing_marker_cannot_inherit_fixed_model) ... ok\ntest_deleting_same_layer_new_or_leaking_marker_is_rejected (test_fixture.WhiteoutReading.test_deleting_same_layer_new_or_leaking_marker_is_rejected) ... ok\ntest_deterministic_archives_and_duplicate_order_rejection (test_fixture.WhiteoutReading.test_deterministic_archives_and_duplicate_order_rejection) ... ok\ntest_lower_removals_and_same_layer_survivor_are_distinct (test_fixture.WhiteoutReading.test_lower_removals_and_same_layer_survivor_are_distinct) ... ok\ntest_observed_members_are_complete_and_markers_are_empty (test_fixture.WhiteoutReading.test_observed_members_are_complete_and_markers_are_empty) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.042s\n\nOK\n"
+}

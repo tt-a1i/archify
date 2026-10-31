@@ -1,0 +1,3 @@
+raw/
+__pycache__/
+**/*.delivery.json

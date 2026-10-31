@@ -1,0 +1,203 @@
+{
+  "kind": "portable-stage-summary-not-original-receipt",
+  "python": "3.15.0",
+  "nodeCommand": "/opt/homebrew/opt/node@22/bin/node",
+  "stages": [
+    {
+      "command": [
+        "/opt/homebrew/opt/node@22/bin/node",
+        "<checkout>/archify/bin/archify.mjs",
+        "finalize",
+        "architecture",
+        "<checkout>/experiments/oci-whiteouts/draft-1/native.json",
+        "<checkout>/experiments/oci-whiteouts/draft-1/native.html",
+        "--out-dir",
+        "<checkout>/experiments/oci-whiteouts/raw/run-20261027T000346872134Z/architecture",
+        "--json"
+      ],
+      "exitCode": 0,
+      "result": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "finalize",
+        "status": "pass",
+        "type": "architecture",
+        "quality": "showcase",
+        "specification": {
+          "path": "<checkout>/experiments/oci-whiteouts/draft-1/native.json",
+          "sha256": "f4c546643740f0d1832176859322b5377b5ae6608b1e54dd16e27567261057f6",
+          "bytes": 4435
+        },
+        "artifact": {
+          "path": "<checkout>/experiments/oci-whiteouts/draft-1/native.html",
+          "sha256": "42650d4b3b8c10fa296b7736858f68edf18429482dc8493cf88a5c17b690c3e2",
+          "bytes": 867048
+        },
+        "gates": {
+          "validate": "pass",
+          "deliver": "pass",
+          "check": "pass",
+          "browser-check": "pass"
+        },
+        "diagnostics": [],
+        "diagnosticSummary": {
+          "total": 0,
+          "shown": 0,
+          "truncated": false
+        },
+        "evidence": {
+          "receipt": "<checkout>/experiments/oci-whiteouts/raw/run-20261027T000346872134Z/architecture/native.finalize.json",
+          "summaryReceipt": "<checkout>/experiments/oci-whiteouts/raw/run-20261027T000346872134Z/architecture/native.finalize-summary.json",
+          "browserCheckReceipt": "<checkout>/experiments/oci-whiteouts/raw/run-20261027T000346872134Z/architecture/native.browser-check.json"
+        },
+        "update": {
+          "status": "current",
+          "installedVersion": "3.2.1-dev.1",
+          "availableVersion": "3.2.0",
+          "releaseNotes": null,
+          "checkedAt": "2026-10-26T23:50:51.017Z",
+          "source": "cache",
+          "noticeRequired": false,
+          "noticeText": null
+        },
+        "visualReview": "not-requested",
+        "durationMs": 2381,
+        "browserCheck": {
+          "requested": true,
+          "ran": true
+        }
+      }
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/node@22/bin/node",
+        "<checkout>/archify/bin/archify.mjs",
+        "finalize",
+        "explainer",
+        "<checkout>/experiments/oci-whiteouts/draft-1/explainer.json",
+        "<checkout>/experiments/oci-whiteouts/draft-1/explainer.html",
+        "--out-dir",
+        "<checkout>/experiments/oci-whiteouts/raw/run-20261027T000346872134Z/explainer",
+        "--json"
+      ],
+      "exitCode": 1,
+      "result": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "finalize",
+        "status": "fail",
+        "type": "explainer",
+        "quality": "showcase",
+        "specification": {
+          "path": "<checkout>/experiments/oci-whiteouts/draft-1/explainer.json"
+        },
+        "artifact": {
+          "path": "<checkout>/experiments/oci-whiteouts/draft-1/explainer.html"
+        },
+        "gates": {
+          "validate": "not-run",
+          "deliver": "not-run",
+          "check": "not-run",
+          "browser-check": "not-run"
+        },
+        "browserCheck": {
+          "requested": false,
+          "ran": false
+        },
+        "diagnostics": [
+          {
+            "code": "explainer/content-reference",
+            "severity": "error",
+            "message": "Node content must reference a prose, callout, list or facts block.",
+            "subject": {
+              "line": 40,
+              "column": 28,
+              "component": "diagram",
+              "path": "/panels/0/blocks/1/nodeBlocks/visible-new",
+              "panelId": "meaning",
+              "input": "<checkout>/experiments/oci-whiteouts/draft-1/explainer.json"
+            },
+            "evidence": {
+              "reason": "Node content must reference a prose, callout, list or facts block.",
+              "example": "@prose id=node-notes\nThe node's explanation."
+            },
+            "supportedFixes": [
+              "Use a valid form, for example: @prose id=node-notes\nThe node's explanation."
+            ]
+          },
+          {
+            "code": "explainer/inline-emphasis",
+            "severity": "error",
+            "message": "Emphasis needs matching nonempty delimiters. Escape a literal asterisk.",
+            "subject": {
+              "line": 131,
+              "column": 8,
+              "component": "comparison",
+              "panelId": "projection",
+              "input": "<checkout>/experiments/oci-whiteouts/draft-1/explainer.json",
+              "path": "/panels/2/blocks/0/rows/4/label"
+            },
+            "evidence": {
+              "reason": "Emphasis needs matching nonempty delimiters. Escape a literal asterisk.",
+              "example": "**important** or \\*"
+            },
+            "supportedFixes": [
+              "Use the supported form: **important** or \\*"
+            ]
+          },
+          {
+            "code": "explainer/writing-paragraph-length",
+            "severity": "warning",
+            "message": "This paragraph has 9 sentences and 35 reading units; long paragraphs are what the page should replace.",
+            "subject": {
+              "line": 53,
+              "component": "prose",
+              "panelId": "rules",
+              "input": "<checkout>/experiments/oci-whiteouts/draft-1/explainer.json"
+            },
+            "evidence": {
+              "rule": "paragraph-length",
+              "reason": "This paragraph has 9 sentences and 35 reading units; long paragraphs are what the page should replace.",
+              "example": "把并列要点写成列表，把先后动作写成 @steps，把方案差异写成对比表。 / Turn parallel points into a list, ordered actions into @steps and option differences into a comparison.",
+              "units": 35,
+              "limit": 120
+            },
+            "supportedFixes": [
+              "Split the paragraph into a list, steps or a comparison; keep at most two or three short sentences of prose."
+            ]
+          },
+          {
+            "code": "explainer/writing-paragraph-length",
+            "severity": "warning",
+            "message": "This paragraph has 7 sentences and 42 reading units; long paragraphs are what the page should replace.",
+            "subject": {
+              "line": 63,
+              "component": "prose",
+              "panelId": "rules",
+              "input": "<checkout>/experiments/oci-whiteouts/draft-1/explainer.json"
+            },
+            "evidence": {
+              "rule": "paragraph-length",
+              "reason": "This paragraph has 7 sentences and 42 reading units; long paragraphs are what the page should replace.",
+              "example": "把并列要点写成列表，把先后动作写成 @steps，把方案差异写成对比表。 / Turn parallel points into a list, ordered actions into @steps and option differences into a comparison.",
+              "units": 42,
+              "limit": 120
+            },
+            "supportedFixes": [
+              "Split the paragraph into a list, steps or a comparison; keep at most two or three short sentences of prose."
+            ]
+          }
+        ],
+        "visualReview": "not-requested"
+      }
+    }
+  ],
+  "files": {
+    "explainer.json": "465f3a04e3b4d74869117e97855f5342304319852320afcc250aaddb05210742",
+    "observation.json": "27541585f1c3e5cedfb972a8d06573565850760ec5ef0d9d7feba7207c309038",
+    "native.json": "f4c546643740f0d1832176859322b5377b5ae6608b1e54dd16e27567261057f6",
+    "native.html": "42650d4b3b8c10fa296b7736858f68edf18429482dc8493cf88a5c17b690c3e2",
+    "upper.tar": "fc96ae9972d9ea3d17612c6e5797d574cb409f7809e42eba5f0b5c7a8b12cddc",
+    "lower.tar": "124e05344310e0520e2a65a94701241ceab1a0b80ab09dcfc06f2c34087b4127"
+  }
+}

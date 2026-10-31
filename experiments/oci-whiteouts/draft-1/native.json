@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "同层 new 保留；可见性是规范推导",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "native.html",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "实测归档成员"
+        },
+        "frontend": {
+          "label": "规范推导可见路径"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "opaque",
+      "label": "Opaque 标记",
+      "sublabel": "upper · cache/.wh..wh..opq",
+      "type": "backend",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    },
+    {
+      "id": "old",
+      "label": "cache/old.txt",
+      "sublabel": "lower · 推导为不可见",
+      "type": "backend",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    },
+    {
+      "id": "new",
+      "label": "cache/new.txt",
+      "sublabel": "upper · tar 中先于 opaque",
+      "type": "backend",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    },
+    {
+      "id": "visible-new",
+      "label": "cache/new.txt 保留",
+      "sublabel": "规范推导 · 来源 upper",
+      "type": "frontend",
+      "pos": [
+        430,
+        200
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    },
+    {
+      "id": "ordinary",
+      "label": "显式删除标记",
+      "sublabel": "upper · app/.wh.config.txt",
+      "type": "backend",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    },
+    {
+      "id": "config",
+      "label": "app/config.txt",
+      "sublabel": "lower · 推导为不可见",
+      "type": "backend",
+      "pos": [
+        430,
+        360
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    },
+    {
+      "id": "keep",
+      "label": "app/keep.txt",
+      "sublabel": "lower · 无标记影响",
+      "type": "backend",
+      "pos": [
+        40,
+        520
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    },
+    {
+      "id": "visible-keep",
+      "label": "app/keep.txt 保留",
+      "sublabel": "规范推导 · 来源 lower",
+      "type": "frontend",
+      "pos": [
+        430,
+        520
+      ],
+      "size": [
+        240,
+        80
+      ],
+      "explanation": "原创两层固定 tar；app/ 与 app/cache/ 的完整目录记录在解释页 inventory。此图不是容器运行或解压结果。"
+    }
+  ],
+  "connections": [
+    {
+      "id": "opaque-lower",
+      "from": "opaque",
+      "to": "old",
+      "label": "隐藏下层子项"
+    },
+    {
+      "id": "same-layer",
+      "from": "new",
+      "to": "visible-new",
+      "label": "同层不受隐藏"
+    },
+    {
+      "id": "explicit-lower",
+      "from": "ordinary",
+      "to": "config",
+      "label": "隐藏下层目标"
+    },
+    {
+      "id": "keep-visible",
+      "from": "keep",
+      "to": "visible-keep",
+      "label": "未被遮蔽"
+    }
+  ],
+  "cards": [
+    {
+      "title": "证据边界",
+      "dot": "cyan",
+      "items": [
+        "归档成员与顺序实测；可见性规范推导",
+        "两个标记本身都不进入可见文件系统",
+        "未运行 Docker、mount 或任何解压程序"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "repository": "opencontainers/image-spec",
+    "commit": "4feed4a6674e59d301b9294f187ac46acb2de99f",
+    "path": "LICENSE",
+    "url": "https://raw.githubusercontent.com/opencontainers/image-spec/4feed4a6674e59d301b9294f187ac46acb2de99f/LICENSE",
+    "local": "image-spec-LICENSE",
+    "bytes": 11358,
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "repository": "opencontainers/image-spec",
+    "commit": "4feed4a6674e59d301b9294f187ac46acb2de99f",
+    "path": "layer.md",
+    "url": "https://raw.githubusercontent.com/opencontainers/image-spec/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md",
+    "local": "image-spec-layer.md",
+    "bytes": 15348,
+    "sha256": "e4bcea539746c5a63d707d9b7d1dab55990a7d2dc33a2d181d87b7636aa8092f"
+  },
+  {
+    "repository": "wagoodman/dive",
+    "commit": "d6c691947f8fda635c952a17ee3b7555379d58f0",
+    "path": "LICENSE",
+    "url": "https://raw.githubusercontent.com/wagoodman/dive/d6c691947f8fda635c952a17ee3b7555379d58f0/LICENSE",
+    "local": "dive-LICENSE",
+    "bytes": 1069,
+    "sha256": "080b4830ca506c8b460b08ba8319951d718a43e5d249bc8523c1c5eeccb25329"
+  },
+  {
+    "repository": "wagoodman/dive",
+    "commit": "d6c691947f8fda635c952a17ee3b7555379d58f0",
+    "path": "dive/filetree/file_tree.go",
+    "url": "https://raw.githubusercontent.com/wagoodman/dive/d6c691947f8fda635c952a17ee3b7555379d58f0/dive/filetree/file_tree.go",
+    "local": "dive-dive-filetree-file_tree.go",
+    "bytes": 11976,
+    "sha256": "0c0bc3a5f62a2813593983871a7b11c04d918a4a88790c124781809e722bf22c"
+  },
+  {
+    "repository": "wagoodman/dive",
+    "commit": "d6c691947f8fda635c952a17ee3b7555379d58f0",
+    "path": "dive/filetree/file_node.go",
+    "url": "https://raw.githubusercontent.com/wagoodman/dive/d6c691947f8fda635c952a17ee3b7555379d58f0/dive/filetree/file_node.go",
+    "local": "dive-dive-filetree-file_node.go",
+    "bytes": 9516,
+    "sha256": "427550ecf6f054afbdc04f097df1cfad58dbf4fe46f20f95879814094712f41a"
+  },
+  {
+    "repository": "wagoodman/dive",
+    "commit": "d6c691947f8fda635c952a17ee3b7555379d58f0",
+    "path": "dive/filetree/file_tree_test.go",
+    "url": "https://raw.githubusercontent.com/wagoodman/dive/d6c691947f8fda635c952a17ee3b7555379d58f0/dive/filetree/file_tree_test.go",
+    "local": "dive-dive-filetree-file_tree_test.go",
+    "bytes": 21630,
+    "sha256": "194686ac8290d8adc74497ddde5ee4d24f8c3497f951c50698a742cdf5fa420a"
+  }
+]

@@ -1,0 +1,557 @@
+[
+  {
+    "step": 1,
+    "tag": "A",
+    "id": "",
+    "text": "跳至正文",
+    "aria": null,
+    "href": "#board",
+    "visible": true,
+    "top": 8,
+    "bottom": 48.9375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 2,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "系统",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 41.546875,
+    "bottom": 65.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 3,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "浅色",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 41.546875,
+    "bottom": 65.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 4,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "深色",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 41.546875,
+    "bottom": 65.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 5,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "简洁",
+    "aria": "样式",
+    "href": null,
+    "visible": true,
+    "top": 38.546875,
+    "bottom": 68.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 6,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "导出",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 38.546875,
+    "bottom": 68.546875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 7,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 107.328125,
+    "bottom": 129.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 8,
+    "tag": "A",
+    "id": "",
+    "text": "1",
+    "aria": "先分清归档成员与可见性",
+    "href": "#meaning",
+    "visible": true,
+    "top": 353.328125,
+    "bottom": 375.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 9,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 353.328125,
+    "bottom": 375.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 10,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "打开交互图",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 492.578125,
+    "bottom": 520.578125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 11,
+    "tag": "g",
+    "id": "preview-whiteout-map-node-opaque",
+    "text": "Opaque 标记 · upper · cache/.wh..wh..opq · 架构组件\n          \n          \n          \n            \n          \n          Opaque 标记\n        upper · c",
+    "aria": "Opaque 标记",
+    "href": null,
+    "visible": true,
+    "top": 538.078125,
+    "bottom": 638.078125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 12,
+    "tag": "A",
+    "id": "",
+    "text": "阅读这段 ↗",
+    "aria": null,
+    "href": "#rule-opaque",
+    "visible": true,
+    "top": 772.078125,
+    "bottom": 792.7109375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 13,
+    "tag": "g",
+    "id": "preview-whiteout-map-node-new",
+    "text": "cache/new.txt · upper · tar 中先于 opaque · 架构组件\n          \n          \n          \n            \n          \n          cache/new.txt\n        upper",
+    "aria": "cache/new.txt",
+    "href": null,
+    "visible": true,
+    "top": 738.078125,
+    "bottom": 838.078125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 14,
+    "tag": "A",
+    "id": "",
+    "text": "阅读这段 ↗",
+    "aria": null,
+    "href": "#rule-same-layer",
+    "visible": true,
+    "top": 696.078125,
+    "bottom": 716.7109375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 15,
+    "tag": "g",
+    "id": "preview-whiteout-map-node-visible-new",
+    "text": "cache/new.txt 保留 · 规范推导 · 来源 upper · 架构组件\n          \n          \n          \n            \n            \n            \n            \n          \n  ",
+    "aria": "cache/new.txt 保留",
+    "href": null,
+    "visible": true,
+    "top": 738.078125,
+    "bottom": 838.078125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 16,
+    "tag": "A",
+    "id": "",
+    "text": "阅读这段 ↗",
+    "aria": null,
+    "href": "#rule-same-layer",
+    "visible": true,
+    "top": 696.078125,
+    "bottom": 716.7109375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 17,
+    "tag": "g",
+    "id": "preview-whiteout-map-node-ordinary",
+    "text": "显式删除标记 · upper · app/.wh.config.txt · 架构组件\n          \n          \n          \n            \n          \n          显式删除标记\n        upper · app/.wh",
+    "aria": "显式删除标记",
+    "href": null,
+    "visible": true,
+    "top": 400.078125,
+    "bottom": 500.078125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 18,
+    "tag": "A",
+    "id": "",
+    "text": "阅读这段 ↗",
+    "aria": null,
+    "href": "#rule-explicit",
+    "visible": true,
+    "top": 634.078125,
+    "bottom": 654.7109375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 19,
+    "tag": "A",
+    "id": "",
+    "text": "2",
+    "aria": "标记只作用于下层",
+    "href": "#rules",
+    "visible": true,
+    "top": 842.328125,
+    "bottom": 864.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 20,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 842.328125,
+    "bottom": 864.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 21,
+    "tag": "A",
+    "id": "",
+    "text": "1",
+    "aria": null,
+    "href": "#source-oci-opaque",
+    "visible": false,
+    "top": 888.734375,
+    "bottom": 900.234375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 22,
+    "tag": "A",
+    "id": "",
+    "text": "打开原文 ↗",
+    "aria": null,
+    "href": "https://github.com/opencontainers/image-spec/blob/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md#opaque-whiteout",
+    "visible": true,
+    "top": 847.0234375,
+    "bottom": 867.65625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 23,
+    "tag": "A",
+    "id": "",
+    "text": "2",
+    "aria": null,
+    "href": "#source-oci-whiteouts",
+    "visible": true,
+    "top": 444.171875,
+    "bottom": 455.671875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 24,
+    "tag": "A",
+    "id": "",
+    "text": "打开原文 ↗",
+    "aria": null,
+    "href": "https://github.com/opencontainers/image-spec/blob/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md#whiteouts",
+    "visible": true,
+    "top": 531.9609375,
+    "bottom": 552.59375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 25,
+    "tag": "A",
+    "id": "",
+    "text": "2",
+    "aria": null,
+    "href": "#source-oci-whiteouts",
+    "visible": true,
+    "top": 485.109375,
+    "bottom": 496.609375,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 26,
+    "tag": "A",
+    "id": "",
+    "text": "打开原文 ↗",
+    "aria": null,
+    "href": "https://github.com/opencontainers/image-spec/blob/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md#whiteouts",
+    "visible": true,
+    "top": 572.8984375,
+    "bottom": 593.53125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 27,
+    "tag": "A",
+    "id": "",
+    "text": "3",
+    "aria": "规范推导：哪些 regular 路径可见？",
+    "href": "#projection",
+    "visible": true,
+    "top": 559.328125,
+    "bottom": 581.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 28,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 559.328125,
+    "bottom": 581.328125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 29,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "复制",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 873.6015625,
+    "bottom": 891.6015625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 30,
+    "tag": "A",
+    "id": "",
+    "text": "4",
+    "aria": "实际 tar 成员：目录、顺序与 payload 摘要",
+    "href": "#inventory",
+    "visible": true,
+    "top": 438.828125,
+    "bottom": 460.828125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 31,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "追问",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 438.828125,
+    "bottom": 460.828125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 32,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "复制",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 565.25,
+    "bottom": 583.25,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 33,
+    "tag": "BUTTON",
+    "id": "",
+    "text": "复制",
+    "aria": null,
+    "href": null,
+    "visible": true,
+    "top": 440.8828125,
+    "bottom": 458.8828125,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 34,
+    "tag": "A",
+    "id": "",
+    "text": "OCI Image Spec · Opaque Whiteout（固定 commit）",
+    "aria": null,
+    "href": "https://github.com/opencontainers/image-spec/blob/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md#opaque-whiteout",
+    "visible": true,
+    "top": 770.7265625,
+    "bottom": 785.2265625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 35,
+    "tag": "A",
+    "id": "",
+    "text": "OCI Image Spec · Whiteouts（固定 commit）",
+    "aria": null,
+    "href": "https://github.com/opencontainers/image-spec/blob/4feed4a6674e59d301b9294f187ac46acb2de99f/layer.md#whiteouts",
+    "visible": true,
+    "top": 770.7265625,
+    "bottom": 785.2265625,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 36,
+    "tag": "A",
+    "id": "",
+    "text": "Archify把你想理解、规划或分享的事，变成可以互动的可视化作品。",
+    "aria": null,
+    "href": "https://github.com/tt-a1i/archify",
+    "visible": true,
+    "top": 835.7265625,
+    "bottom": 868.171875,
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "step": 37,
+    "tag": "BODY",
+    "id": "",
+    "text": "跳至正文删的是下层：同层新增文件为什么还在？系统浅色深色简洁简洁杂志产品网格导出长图PNG最清晰WebP体积最小JPG兼容最好打印 / PDF答结论追问app/cache/new.txt 保留。归档内容是实测；可见结果是 OCI 规范推导，未运行容器。普通 whiteout 只隐",
+    "aria": null,
+    "href": null,
+    "visible": false,
+    "top": -4649.5,
+    "bottom": 900.171875,
+    "viewport": [
+      1440,
+      900
+    ]
+  }
+]
