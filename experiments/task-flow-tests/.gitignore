@@ -1,0 +1,2 @@
+# Original delivery receipts retain absolute paths for local provenance checks.
+**/*.delivery.json

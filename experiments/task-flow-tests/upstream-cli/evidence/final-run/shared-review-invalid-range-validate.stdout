@@ -1,0 +1,63 @@
+{
+  "valid": false,
+  "exitCode": 1,
+  "schemaVersion": 1,
+  "errors": [
+    {
+      "code": "range_out_of_bounds",
+      "path": "/nodes/1/ref",
+      "status": "unresolved",
+      "repo": "archify",
+      "file": "benchmarks/diagram-quality/comparison.mjs",
+      "lines": [
+        999999,
+        999999
+      ],
+      "message": "lines 999999-999999 end past the last line (158) of benchmarks/diagram-quality/comparison.mjs",
+      "hint": "the file has 158 lines in this state; adjust the range"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "unmentioned_hunk",
+      "repo": "archify",
+      "file": "benchmarks/diagram-quality/comparison.mjs",
+      "lines": [
+        137,
+        139
+      ],
+      "message": "changed lines not covered by any node",
+      "hint": "add a node with a range covering lines 137-139, or explain in notes"
+    },
+    {
+      "code": "no_language",
+      "path": "/nodes/0/ref",
+      "repo": "archify",
+      "file": "benchmarks/diagram-quality/comparison.mjs",
+      "message": "benchmarks/diagram-quality/comparison.mjs matches no language; it is shown as plain text",
+      "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+    },
+    {
+      "code": "no_language",
+      "path": "/nodes/2/ref",
+      "repo": "archify",
+      "file": "test/diagram-quality-comparison.test.mjs",
+      "message": "test/diagram-quality-comparison.test.mjs matches no language; it is shown as plain text",
+      "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+    },
+    {
+      "code": "no_language",
+      "path": "/nodes/3/ref",
+      "repo": "archify",
+      "file": "benchmarks/diagram-quality/score-report.mjs",
+      "message": "benchmarks/diagram-quality/score-report.mjs matches no language; it is shown as plain text",
+      "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+    }
+  ],
+  "summary": {
+    "verified": 4,
+    "contradicted": 0,
+    "unresolved": 1,
+    "agentStatements": 9
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "exitCode": 2,
+  "stdout": "experiments/task-flow-tests/reading-probe-round65/archify/browser-01.stderr:250: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/archify/browser-02.stderr:64: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/archify/browser-03.stderr:75: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/archify/browser-04.stderr:82: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/cleanup.stderr:2: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/native/browser-01.stderr:216: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/native/browser-02.stderr:346: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/native/browser-03.stderr:255: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/native/browser-04.stderr:378: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/native/browser-05.stderr:329: new blank line at EOF.\nexperiments/task-flow-tests/reading-probe-round65/native/browser-06.stderr:330: new blank line at EOF.\n",
+  "stderr": "",
+  "note": "All 11 diagnostics are original browser/cleanup stderr EOF blank lines, preserved exactly. Authored files checked separately."
+}

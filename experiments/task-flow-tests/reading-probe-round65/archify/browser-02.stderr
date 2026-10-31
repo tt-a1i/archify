@@ -1,0 +1,64 @@
+startedAt 2026-10-29T14:55:36.201Z
+[p1 "这条改动路径，关联了哪个测试？ · Archify" | space "Archify research 20261026"(17): 1 managed, 0 untracked — p1* "这条改动路径，关联了哪个测试？ · Archify"]
+root
+  container
+    container
+      container [ref=94]
+        text "const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row..."
+      container
+        container
+          anchor "回归测试：缺失产物" [ref=95, loc=css:a[aria-label="回归测试：缺失产物"], url=http://127.0.0.1:8882/final/review.html#node-regression]
+            text "4"
+          heading
+            text "回归测试：缺失产物"
+          button [ref=96]
+            text "追问"
+        container
+          paragraph
+            text "我的解释：新增测试构造历史评分但缺少产物的情形，断言无人工分并保留报告。这里只审阅测试源码，本实验没有执行该历史测试。"
+          paragraph
+            text "固定源码位置"
+            anchor [ref=97, loc=href:/final/review.html#source-ref-regression, url=http://127.0.0.1:8882/final/review.html#source-ref-regression]
+              text "3"
+            text "。复用原映射的引用吻合结果，本轮未重做 Git 核对。测试源码，不是执行结果。"
+          container
+            container
+              container
+                text "head · L85–L95 · 原映射摘录"
+                text "js"
+              button [ref=98]
+                text "复制"
+            container [ref=99]
+              text "test('stored ratings with a missing artifact do not abort the comparison or gain human credit',async t=>{ const dir=temp(t),{plan,write}=comparisonFixture(dir); const receipt=JSON.parse(fs.readFileSyn..."
+    container
+      container
+        heading
+          text "来源"
+        ordered_list
+          list_item
+            anchor [ref=100, url=https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/comparison.mjs#L137-L139]
+              text "新增：交付条件 · benchmarks/diagram-quality/comparison.mjs:137–139"
+          list_item
+            anchor [ref=101, url=https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/benchmarks/diagram-quality/score-report.mjs#L55-L55]
+              text "报告展示缺测原因 · benchmarks/diagram-quality/score-report.mjs:55–55"
+          list_item
+            anchor [ref=102, url=https://github.com/tt-a1i/archify/blob/ed62bfefaf490e831259261fdc12f985267590fb/test/diagram-quality-comparison.test.mjs#L85-L95]
+              text "回归测试：缺失产物 · test/diagram-quality-comparison.test.mjs:85–95"
+      container
+        anchor [ref=103, loc=href:https://github.com/tt-a1i/archify, url=https://github.com/tt-a1i/archify]
+          svg_root
+          container
+            text "Archify"
+            text "把你想理解、规划或分享的事，变成可以互动的可视化作品。"
+        paragraph
+          text "4 个面板"
+          container
+            text "·"
+            text "1 张图已通过结构校验"
+          container
+            text "·"
+            text "3 个来源"
+
+visible source [ 'js', "   const storedReviews=original.human?.reviews??[];\n   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);\n   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');", "   const storedReviews=original.human?.reviews??[];\n   if(receipt.delivery.status==='delivered')for(const review of storedReviews)receipt=attachHumanReview(receipt,review);\n   else if(storedReviews.length)evidence.missing.push('stored human reviews not bound: final artifact unavailable');", 'js', ' const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row.sourceEvidence??null,missing:row.missing??[],human:row.human??null};', ' const defects={evidenceMissing:evidence.missing??[],semanticMeasurements:row.semanticMeasurements??null,semanticDefects:row.semanticDefects??[],layoutDetails:row.layoutDetails??null,sourceEvidence:row.sourceEvidence??null,missing:row.missing??[],human:row.human??null};', 'js', "test('stored ratings with a missing artifact do not abort the comparison or gain human credit',async t=>{\n const dir=temp(t),{plan,write}=comparisonFixture(dir);\n const receipt=JSON.parse(fs.readFileSync(path.join(dir,'base.json')));\n receipt.human={status:'completed',reviews:[{taskId:'one',artifactHash:receipt.artifactHash,status:'completed',reviewerId:'historical-rater',rubricVersion:'diagram-quality-human-v1',independent:true,ratings:{readability:4,hierarchy:4,layout:4,style:4,aesthetics:4}}]};\n write('base.json',receipt);delete plan.runs[0].artifact;write('plan.json',plan);\n const {comparison}=await compareFromFiles({plan:path.join(dir,'plan.json'),output:path.join(dir,'out')});\n const row=comparison.pairs[0].base;\n assert.equal(row.delivery.status,'unverified');assert.equal(row.scores.human,null);\n assert.ok(row.evidence.missing.some(reason=>reason.includes('stored human reviews')));\n assert.ok(fs.existsSync(path.join(dir,'out/index.html')));\n});", "test('stored ratings with a missing artifact do not abort the comparison or gain human credit',async t=>{\n const dir=temp(t),{plan,write}=comparisonFixture(dir);\n const receipt=JSON.parse(fs.readFileSync(path.join(dir,'base.json')));\n receipt.human={status:'completed',reviews:[{taskId:'one',artifactHash:receipt.artifactHash,status:'completed',reviewerId:'historical-rater',rubricVersion:'diagram-quality-human-v1',independent:true,ratings:{readability:4,hierarchy:4,layout:4,style:4,aesthetics:4}}]};\n write('base.json',receipt);delete plan.runs[0].artifact;write('plan.json',plan);\n const {comparison}=await compareFromFiles({plan:path.join(dir,'plan.json'),output:path.join(dir,'out')});\n const row=comparison.pairs[0].base;\n assert.equal(row.delivery.status,'unverified');assert.equal(row.scores.human,null);\n assert.ok(row.evidence.missing.some(reason=>reason.includes('stored human reviews')));\n assert.ok(fs.existsSync(path.join(dir,'out/index.html')));\n});" ]
+finishedAt 2026-10-29T14:55:37.806Z
+

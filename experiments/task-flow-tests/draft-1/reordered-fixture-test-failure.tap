@@ -1,0 +1,67 @@
+TAP version 13
+# Subtest: normal, missing-artifact and synthetic omission keep distinct test associations
+ok 1 - normal, missing-artifact and synthetic omission keep distinct test associations
+  ---
+  duration_ms: 1.859791
+  type: 'test'
+  ...
+# Subtest: step targets, linked test and original snippets remain one identity across projections
+ok 2 - step targets, linked test and original snippets remain one identity across projections
+  ---
+  duration_ms: 0.534375
+  type: 'test'
+  ...
+# Subtest: changed, missing or forged mapping references cannot inherit reused verification
+ok 3 - changed, missing or forged mapping references cannot inherit reused verification
+  ---
+  duration_ms: 0.30425
+  type: 'test'
+  ...
+# Subtest: unknown node and non-directed path fail instead of drawing a misleading walk
+ok 4 - unknown node and non-directed path fail instead of drawing a misleading walk
+  ---
+  duration_ms: 0.193416
+  type: 'test'
+  ...
+# Subtest: test links cannot point outside the path or invent a test result
+ok 5 - test links cannot point outside the path or invent a test result
+  ---
+  duration_ms: 0.269667
+  type: 'test'
+  ...
+# Subtest: duplicate flow, step and test-link identity is rejected
+ok 6 - duplicate flow, step and test-link identity is rejected
+  ---
+  duration_ms: 0.234666
+  type: 'test'
+  ...
+# Subtest: an authored alternate one-step reading remains allowed without new topology
+not ok 7 - an authored alternate one-step reading remains allowed without new topology
+  ---
+  duration_ms: 0.296458
+  type: 'test'
+  location: '<checkout>/experiments/task-flow-tests/project.test.mjs:78:1'
+  failureType: 'testCodeFailure'
+  error: 'Test link must name a known test and a step in this flow'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    reject (file://<checkout>/experiments/task-flow-tests/project.mjs:7:35)
+    file://<checkout>/experiments/task-flow-tests/project.mjs:51:105
+    Array.map (<anonymous>)
+    project (file://<checkout>/experiments/task-flow-tests/project.mjs:34:31)
+    TestContext.<anonymous> (file://<checkout>/experiments/task-flow-tests/project.test.mjs:80:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 6
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71.958

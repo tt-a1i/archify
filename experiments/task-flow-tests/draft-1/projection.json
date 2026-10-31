@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "kind": "authored-flow-test-projection",
+  "mappingSha256": "e04fea9bb1b29fce4926311c6101ad12d8d8d98efaa5eb2f0659a4828557b4cf",
+  "mappingOrigin": {
+    "commit": "dcedd53856b82d3e403a9651dca0e15840496942",
+    "path": "experiments/task-review-map/output/complete/mapping.json"
+  },
+  "sidecarSha256": "fe7e594e2baaa430b58efcda3fe4aa5bbfbee14370e4af0f31b479f8842b0285",
+  "author": "Codex 实验作者；路径和测试关联未经历史提交作者确认",
+  "repository": "https://github.com/tt-a1i/archify",
+  "base": "de004edf47228b6134fd3d29ef91cd5e010c867b",
+  "head": "ed62bfefaf490e831259261fdc12f985267590fb",
+  "testExecution": "not-run",
+  "meaning": "Paths and test associations are authored statements. Matching references do not prove semantic correctness, execution or test coverage.",
+  "knownTests": [
+    "regression"
+  ],
+  "flows": [
+    {
+      "id": "delivered",
+      "title": "产物已交付：沿用历史评分",
+      "scope": "已交付分支的源码阅读；未执行历史代码",
+      "synthetic": false,
+      "steps": [
+        {
+          "node": "guard",
+          "detail": "条件为 delivered，遍历 storedReviews 并绑定评分。",
+          "tests": []
+        },
+        {
+          "node": "report",
+          "detail": "报告对象仍列出 evidenceMissing，缺失数组可以为空。",
+          "tests": []
+        }
+      ],
+      "unassignedTests": [
+        "regression"
+      ]
+    },
+    {
+      "id": "missing",
+      "title": "缺少产物：记录评分未绑定",
+      "scope": "缺产物且存在历史评分的源码阅读；未执行历史代码",
+      "synthetic": false,
+      "steps": [
+        {
+          "node": "guard",
+          "detail": "条件不是 delivered 且存在历史评分，追加未绑定原因。",
+          "tests": [
+            {
+              "test": "regression",
+              "step": "guard",
+              "why": "测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。",
+              "execution": "not-run",
+              "referenceStatus": "reference-matches"
+            }
+          ]
+        },
+        {
+          "node": "report",
+          "detail": "报告对象把 evidence.missing 暴露为 evidenceMissing。",
+          "tests": []
+        }
+      ],
+      "unassignedTests": []
+    },
+    {
+      "id": "omitted-link",
+      "title": "对照：移除测试关联声明",
+      "scope": "人为遗漏关联的合成对照；Git 映射与源码未变",
+      "synthetic": true,
+      "steps": [
+        {
+          "node": "guard",
+          "detail": "与缺产物路径相同，但作者没有给出测试关联。",
+          "tests": []
+        },
+        {
+          "node": "report",
+          "detail": "没有声明关联，不表示不存在测试，也不表示代码有缺陷。",
+          "tests": []
+        }
+      ],
+      "unassignedTests": [
+        "regression"
+      ]
+    }
+  ]
+}

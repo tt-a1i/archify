@@ -1,0 +1,8 @@
+ElementResolutionError: Stale ref: @820; take a new snapshot
+    at #refMapForAction (file:////[eval1]:19304:23)
+    at async #resolveActionTargets (file:////[eval1]:19108:24)
+    at async #retryElementAction (file:////[eval1]:19140:34)
+    at async file:////[eval1]:19242:29
+    at async file:////[eval1]:16940:28
+
+ego's nodejs process exited with code 1.

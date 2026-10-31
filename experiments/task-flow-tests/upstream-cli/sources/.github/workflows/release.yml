@@ -1,0 +1,44 @@
+# Builds the release binaries and publishes a GitHub release when a version
+# tag (v1.2.3, v1.2.3-rc.1) is pushed. Pushes to branches never run it.
+name: release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Vet and test
+        run: |
+          go vet ./...
+          go test ./...
+
+      # Pure Go with CGO off, so one Linux runner cross-compiles every target:
+      # linux amd64/arm64, windows amd64, darwin amd64 (Intel) and arm64
+      # (Apple silicon).
+      - name: Build
+        run: make release VERSION="${GITHUB_REF_NAME#v}"
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=""
+          case "$GITHUB_REF_NAME" in *-*) prerelease="--prerelease" ;; esac
+
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            $prerelease

@@ -1,0 +1,75 @@
+startedAt 2026-10-29T14:55:43.956Z
+[p1 "这条改动路径，关联了哪个测试？ · Archify" | space "Archify research 20261026"(17): 1 managed, 0 untracked — p1* "这条改动路径，关联了哪个测试？ · Archify"]
+root
+  container
+    container
+      anchor "沿同一张图比较路径与测试声明" [ref=71, loc=css:a[aria-label="沿同一张图比较路径与测试声明"], url=http://127.0.0.1:8882/final/review.html#paths]
+        text "1"
+      heading
+        text "沿同一张图比较路径与测试声明"
+      button [ref=72]
+        text "追问"
+    container
+      container
+        container
+          text "同一组变更节点"
+          button [ref=73]
+            svg_root
+            text "打开交互图"
+        image "同一组变更节点"
+          image "新增：交付条件 作者声明 · 非运行轨迹 报告展示缺测原因 作者声明 · 非运行轨迹 声明：缺测呈现 图例 后端"
+            text "新增：交付条件"
+            text "作者声明 · 非运行轨迹"
+            text "报告展示缺测原因"
+            text "作者声明 · 非运行轨迹"
+            text "声明：缺测呈现"
+      container
+        container
+          heading
+            text "声明关联，未执行"
+          paragraph
+            text "路径与关联由实验作者编写。源码引用吻合不证明代码正确或测试通过。正常路径未分配回归测试，不表示它没有测试。"
+        paragraph
+          text "缺少产物：记录评分未绑定"
+          text "。缺产物且存在历史评分的源码阅读；未执行历史代码。"
+        container
+          button [ref=74]
+            text "▶ 逐步看"
+          ordered_list
+            list_item
+              text "1"
+              anchor [ref=75, url=http://127.0.0.1:8882/final/review.html#change-path]
+                text "新增：交付条件"
+                text "↗"
+              paragraph
+                text "条件不是 delivered 且存在历史评分，追加未绑定原因。 声明关联："
+                anchor [ref=76, url=http://127.0.0.1:8882/final/review.html#source-regression]
+                  text "回归测试：缺失产物"
+                text "；未执行。测试源码移除产物，断言 delivery 为 unverified、human 为 null，并检查缺失原因。"
+            list_item
+              text "2"
+              anchor [ref=77, url=http://127.0.0.1:8882/final/review.html#change-path]
+                text "报告展示缺测原因"
+                text "↗"
+              paragraph
+                text "报告对象把 evidence.missing 暴露为 evidenceMissing。 此步骤未声明测试关联。"
+        paragraph
+          text "本路径的已知测试均有声明关联；未执行，不表示测试覆盖完整。"
+        paragraph
+          text "产物已交付：沿用历史评分"
+          text "。已交付分支的源码阅读；未执行历史代码。"
+        container
+          button [ref=78]
+            text "▶ 逐步看"
+          ordered_list
+            list_item
+              text "1"
+              anchor [ref=79, url=http://127.0.0.1:8882/final/review.html#change-path]
+                text "新增：交付条件"
+                text "↗"
+              paragraph
+                text "条件为 delivered，遍历 storedReviews 并绑定评分。 此步骤未声明测试关联。"
+
+screenshot ARCHIVED_RUNTIME/archify/paths.png
+finishedAt 2026-10-29T14:55:45.960Z
+

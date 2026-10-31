@@ -1,0 +1,10 @@
+{
+  "portableBinarySha256": "4b4d5b7076db29c31ca70c6693ec88d7ed57b30f39a7e2e1c4b090413b6d9f1a",
+  "inputTemplates": {
+    "shared-review-invalid-range.json": "d4f7d0f638d7c812a4a4c8d55bb7f17cdbcca4dc76448a9626049b13470e15e0",
+    "shared-review.json": "4552cc4e4e7258a2524f84791fc781a0b773baa041865d297e5daf325674f6d9"
+  },
+  "repositoryHead": "ed62bfefaf490e831259261fdc12f985267590fb",
+  "repositoryStatusBeforeAfter": "clean",
+  "scope": "Native public review validation and HTML generation only; no historical code, test, build or installation commands."
+}

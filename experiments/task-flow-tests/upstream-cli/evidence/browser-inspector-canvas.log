@@ -1,0 +1,257 @@
+[p1 "Change review · archify" | space "Archify research 20261026"(13): 1 managed, 0 untracked — p1* "Change review · archify"]
+root
+  container
+    container
+      button [ref=1]
+        svg_root
+      container
+        svg_root
+        text "task-view"
+      container
+        text "/"
+        text "archify"
+        text "/"
+        text "shared-review.json"
+      container
+        button [ref=2]
+          svg_root
+          text "5"
+          text "verified"
+        button [ref=3]
+          svg_root
+          text "0"
+          text "contradicted"
+        button [ref=4]
+          svg_root
+          text "0"
+          text "unresolved"
+        button [ref=5]
+          svg_root
+          text "9"
+          text "agent statements"
+        button [ref=6]
+          svg_root
+          text "0"
+          text "errors"
+        button [ref=7]
+          svg_root
+          text "3"
+          text "warnings"
+        container
+          svg_root
+          text "0/5"
+          text "read"
+      button [ref=8]
+        svg_root
+    container
+      container [ref=9]
+        container
+          heading
+            svg_root
+            text "SUMMARY"
+          container
+            container
+              svg_root
+              text "AGENT SAYS"
+            paragraph
+              text "历史评分绑定与缺失产物报告的作者声明式审阅；未执行历史代码或测试。"
+        container
+          heading
+            svg_root
+            text "REPOSITORIES"
+            text "1"
+          container
+            container
+              svg_root
+              text "archify"
+              text "changed"
+              container
+                text "3 files"
+                text "+15"
+                text "−2"
+            text "../run/repository"
+            container
+              container
+                text "ed62bfefa"
+                text "fix(benchmarks): preserve reports when reviewed artifacts are missing"
+              container
+                text "de004edf4"
+                text "base · fix(benchmarks): retain malformed candidates as failed evidence"
+        container
+          heading
+            svg_root
+            text "FINDINGS"
+            text "3"
+          button [ref=10]
+            svg_root
+            text "Other warnings"
+            text "3"
+          button [ref=11]
+            svg_root
+            text "Changed tests"
+            text "1"
+        container
+          heading
+            svg_root
+            text "AGENT NOTES"
+            text "10"
+          unordered_list
+            list_item
+              text "路径和关联均由实验作者声明，未经历史提交作者确认；路径不表示真实运行轨迹。"
+            list_item
+              text "全局 tests 边只表示代码级测试关联，不表示测试执行、通过或分支覆盖。"
+            list_item
+              text "历史 mapping 的 reference-matches 和 range-accounted 是此前记录，未在本输入中作为当前验证结果。"
+            list_item
+              text "路径 missing：缺产物且存在历史评分的源码阅读；未执行历史代码；条件不是 delivered 且存在历史评分，追加未绑定原因。；报告对象把 evidence.missing 暴�..."
+      splitter
+      container
+        container [ref=28]
+          button [ref=29]
+            svg_root
+            text "Flows"
+            text "3"
+          button [ref=30]
+            svg_root
+            text "Graph"
+            text "5"
+          button [ref=31]
+            svg_root
+            text "Diff map"
+            text "3"
+          button [ref=32]
+            svg_root
+            text "Claims"
+            text "0"
+          container
+            container
+              svg_root
+              text "产物已交付：沿用历史评分"
+              button [ref=33]
+                svg_root
+            button [ref=34]
+              text "Collapse all"
+            searchbox [ref=35, loc=css:input[placeholder="Find node…  /"]]
+              text "Find node… /"
+            text "Unchanged (0)"
+        container
+          container
+            canvas
+            canvas
+            canvas
+          svg_root
+          text "新增：交付条件"
+          text "code · comparison.mjs:137–139"
+          button [ref=36]
+            text "+1"
+          svg_root
+          text "回归测试：缺失产物"
+          text "test · diagram-quality-comparison.test.mjs:85–95"
+          svg_root
+          text "报告展示缺测原因"
+          text "code · score-report.mjs:55"
+          button [ref=37]
+          container
+            button [ref=38]
+              svg_root
+            button [ref=39]
+              svg_root
+            button [ref=40]
+              svg_root
+          container
+            button [ref=41]
+              svg_root
+            heading
+              text "REFERENCE STATUS"
+            text "Verified"
+            text "Contradicted"
+            text "Unresolved"
+            text "Agent statement"
+            heading
+              text "CHANGE"
+            text "Added"
+            text "Modified"
+            text "Deleted"
+            text "Unchanged"
+            heading
+              text "EDGES"
+            text "Verified site"
+            text "No reference"
+      container
+        splitter
+        container
+          svg_root
+          container
+            heading
+              text "新增：交付条件"
+            text "guard · code"
+            text "Modified"
+        container
+          container
+            text "archify"
+            text "›"
+            text "benchmarks/diagram-quality/comparison.mjs:137–139"
+            text "range"
+            text "ed62bfe"
+          tablist
+            tab [ref=42]
+              text "Code"
+            tab [ref=43]
+              text "Agent's account"
+          container
+            container
+              svg_root
+              text "benchmarks/diagram-quality/comparison.mjs:137–139"
+              tablist
+            container [ref=44]
+              table
+                table_row
+                  table_cell
+                    text "134"
+                  table_cell
+                    text "134"
+                table_row
+                  table_cell
+                    text "135"
+                  table_cell
+                    text "135"
+                table_row
+                  table_cell
+                    text "136"
+                  table_cell
+                    text "136"
+                table_row
+                  table_cell
+                    text "137"
+                  table_cell
+                table_row
+                  table_cell
+                  table_cell
+                    text "137"
+                table_row
+                  table_cell
+                  table_cell
+                    text "138"
+                table_row
+                  table_cell
+                  table_cell
+                    text "139"
+                table_row
+                  table_cell
+                    text "138"
+                  table_cell
+                    text "140"
+                table_row
+                  table_cell
+                    text "139"
+                  table_cell
+                    text "141"
+                table_row
+                  table_cell
+                    text "140"
+                  table_cell
+                    text "142"
+  text "新增：交付条件"
+  text "Modified code · archify benchmarks/diagram-quality/comparison.mjs:137–139"
+
+

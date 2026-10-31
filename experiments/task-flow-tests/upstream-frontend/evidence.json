@@ -1,0 +1,105 @@
+{
+  "finalImages": [
+    {
+      "image": "images/inspector-code.png",
+      "sha256": "a671b03e637f39050c6859f30455ba23f782d98d8517d6d0eaaff545f504c6b5",
+      "page": "pages/shared.html",
+      "pageSha256": "e88b6de48bb7c6ba0a1c03f1e9bb5ac21290d2ce33d76144e651bcd88ceb156a",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/inspector-tests.png",
+      "sha256": "012c5b8352c096dea44b33614ec3488c40dcb6569c6b7d061f5b7bcc50a80bc9",
+      "page": "pages/shared.html",
+      "pageSha256": "e88b6de48bb7c6ba0a1c03f1e9bb5ac21290d2ce33d76144e651bcd88ceb156a",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/legacy-only-delivered.png",
+      "sha256": "208398921d1b635bc161fccac707aea13bb0be7732b01c619149d6217bee84d9",
+      "page": "pages/legacy-only.html",
+      "pageSha256": "2529b27b87d18065f54146b1dfdf4666f2dbec7b974306b043d1dbf6ac25d4c0",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/legacy-only-missing.png",
+      "sha256": "a5047a372606c86bde9b06f3c82741fba998d53a453772b3db97894b25a5c573",
+      "page": "pages/legacy-only.html",
+      "pageSha256": "2529b27b87d18065f54146b1dfdf4666f2dbec7b974306b043d1dbf6ac25d4c0",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/legacy-only-omitted-link.png",
+      "sha256": "c2949b0560b7b3629b7b16dcb221eca8f2851400fad8cfaa2260108b5e48532f",
+      "page": "pages/legacy-only.html",
+      "pageSha256": "2529b27b87d18065f54146b1dfdf4666f2dbec7b974306b043d1dbf6ac25d4c0",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/occurrences-delivered.png",
+      "sha256": "395077c12f45c64d3e0ed8713662f3570225ee515e0fd86d67e4b71dd8af073a",
+      "page": "pages/occurrences.html",
+      "pageSha256": "231d0e7f27105d45e6f7b42f22094f58782953988e9e6c6212310de788d27629",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/occurrences-missing.png",
+      "sha256": "23f5e4245c2be4d79bfbc244a724d0b3af8c6effaeedbb875c45a2b82e286875",
+      "page": "pages/occurrences.html",
+      "pageSha256": "231d0e7f27105d45e6f7b42f22094f58782953988e9e6c6212310de788d27629",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/occurrences-omitted-link.png",
+      "sha256": "6cb386e43d201368496f3b08b2c2453a0608c6f4983896aa031c4d03cb3bfd46",
+      "page": "pages/occurrences.html",
+      "pageSha256": "231d0e7f27105d45e6f7b42f22094f58782953988e9e6c6212310de788d27629",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/shared-delivered.png",
+      "sha256": "aab05f51ae5bed25d10fde4ec46bc27cc19542e385cce43232cb7000fa3888ef",
+      "page": "pages/shared.html",
+      "pageSha256": "e88b6de48bb7c6ba0a1c03f1e9bb5ac21290d2ce33d76144e651bcd88ceb156a",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/shared-missing.png",
+      "sha256": "7feea3644cfddb35156a485b072a83da6a520f8385f054243ba2b04b67efd2cf",
+      "page": "pages/shared.html",
+      "pageSha256": "e88b6de48bb7c6ba0a1c03f1e9bb5ac21290d2ce33d76144e651bcd88ceb156a",
+      "visuallyInspected": true
+    },
+    {
+      "image": "images/shared-omitted-link.png",
+      "sha256": "b17c1e31d33e31e29e664926d1733c385c5c78bf236b0eed47bfc541a1210285",
+      "page": "pages/shared.html",
+      "pageSha256": "e88b6de48bb7c6ba0a1c03f1e9bb5ac21290d2ce33d76144e651bcd88ceb156a",
+      "visuallyInspected": true
+    }
+  ],
+  "originalExperiment": [
+    {
+      "path": "../input/mapping.json",
+      "sha256": "e04fea9bb1b29fce4926311c6101ad12d8d8d98efaa5eb2f0659a4828557b4cf",
+      "unchangedFrom": "843c877b251baf89925f99e11594fc5630c1c165"
+    },
+    {
+      "path": "../flows.json",
+      "sha256": "cd61df03f5182ef43c05a80d7a551000f79af5d86bc93d7ef6a7a56ef8f09d11",
+      "unchangedFrom": "843c877b251baf89925f99e11594fc5630c1c165"
+    },
+    {
+      "path": "../project.mjs",
+      "sha256": "da51354e07fae054af8473541e959b0950aefbcfeb3eeaa02007fb48aafe7b83",
+      "unchangedFrom": "843c877b251baf89925f99e11594fc5630c1c165"
+    },
+    {
+      "path": "../final/review.html",
+      "sha256": "f8c908b1d9e4e2eccf127387d886eba425aa06106448fbd212eac931f6f4b17b",
+      "unchangedFrom": "843c877b251baf89925f99e11594fc5630c1c165"
+    }
+  ],
+  "browser": "Ego task space 3, p1; explicit 1440x900",
+  "limits": "Frontend only; manually projected viewData, not native checker output. Initial artifacts excluded from final validation."
+}

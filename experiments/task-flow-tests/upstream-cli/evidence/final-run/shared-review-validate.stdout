@@ -1,0 +1,38 @@
+{
+  "valid": true,
+  "exitCode": 0,
+  "schemaVersion": 1,
+  "errors": [],
+  "warnings": [
+    {
+      "code": "no_language",
+      "path": "/nodes/0/ref",
+      "repo": "archify",
+      "file": "benchmarks/diagram-quality/comparison.mjs",
+      "message": "benchmarks/diagram-quality/comparison.mjs matches no language; it is shown as plain text",
+      "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+    },
+    {
+      "code": "no_language",
+      "path": "/nodes/2/ref",
+      "repo": "archify",
+      "file": "test/diagram-quality-comparison.test.mjs",
+      "message": "test/diagram-quality-comparison.test.mjs matches no language; it is shown as plain text",
+      "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+    },
+    {
+      "code": "no_language",
+      "path": "/nodes/3/ref",
+      "repo": "archify",
+      "file": "benchmarks/diagram-quality/score-report.mjs",
+      "message": "benchmarks/diagram-quality/score-report.mjs matches no language; it is shown as plain text",
+      "hint": "add a glob for it to repo \"archify\"'s `languages`, or set `language` on the ref"
+    }
+  ],
+  "summary": {
+    "verified": 5,
+    "contradicted": 0,
+    "unresolved": 0,
+    "agentStatements": 9
+  }
+}
