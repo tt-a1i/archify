@@ -80,12 +80,14 @@ function workflowWidth(nodes, edges) {
 function rankedPlacement(nodes, edges) {
   const ids = new Set(nodes.map(node => node.id));
   const incoming = new Map(nodes.map(node => [node.id, 0]));
+  const outgoing = new Map(nodes.map(node => [node.id, []]));
   for (const edge of edges) if (ids.has(edge.from) && ids.has(edge.to) && edge.from !== edge.to) incoming.set(edge.to, incoming.get(edge.to) + 1);
+  for (const edge of edges) if (edge.from !== edge.to) outgoing.get(edge.from)?.push(edge);
   const rank = new Map();
   const queue = nodes.filter(node => incoming.get(node.id) === 0).map(node => node.id);
   const visit = id => {
     if (!rank.has(id)) rank.set(id, 0);
-    for (const edge of edges.filter(edge => edge.from === id && edge.to !== id)) {
+    for (const edge of outgoing.get(id)) {
       if (!ids.has(edge.to)) continue;
       incoming.set(edge.to, incoming.get(edge.to) - 1);
       rank.set(edge.to, Math.max(rank.get(edge.to) || 0, rank.get(id) + 1));

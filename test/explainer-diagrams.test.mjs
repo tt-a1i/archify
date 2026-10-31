@@ -231,6 +231,17 @@ test('explainer diagrams: a single upstream architecture node is centred against
   assert.equal(row('api'), 1);
 });
 
+test('explainer diagrams: large sparse workflows retain every ranked step', () => {
+  const count = 750;
+  const nodes = Array.from({ length: count }, (_, index) => `step${index} | Step ${index}`);
+  const edges = Array.from({ length: count - 1 }, (_, index) => `step${index} > step${index + 1}`);
+  const spec = compileExplainerDiagram('workflow', [...nodes, ...edges], { id: 'large-sparse' });
+  assert.equal(spec.nodes.length, count);
+  assert.equal(spec.edges.length, count - 1);
+  assert.deepEqual(spec.nodes.map(node => node.id), Array.from({ length: count }, (_, index) => `step${index}`));
+  assert.ok(spec.nodes.every(node => node.col >= 0 && node.col <= 5));
+});
+
 test('explainer diagrams: a phase that recurs later in the flow keeps phase rows instead of reordering the flow', () => {
   const spec = compileExplainerDiagram('workflow', ['lane run | Orchestrate', 'lane work | Work', 'start | Start | backend | run', 'do | Do | backend | work', 'end | Record | backend | run', 'start > do', 'do > end'], { id: 'recur' });
   assert.equal(spec.lanes.length, 2, 'the recurring phase stays a lane');
