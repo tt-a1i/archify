@@ -251,6 +251,15 @@ To try without installing:
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
+If `npx skills add` stops with `Clone timed out after 300s` on a slow connection, raise the clone timeout, or clone once and install from the local path:
+
+```bash
+SKILLS_CLONE_TIMEOUT_MS=900000 npx skills add tt-a1i/archify -g
+# or
+git clone --depth 1 https://github.com/tt-a1i/archify.git
+npx skills add ./archify --skill archify -g
+```
+
 [DSH community opt-in](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`
 
 The [agent switcher](https://archify.si/start.html?agent=cursor&type=architecture) covers `cursor`, `codex`, `claude-code`, `opencode`, and `github-copilot`.

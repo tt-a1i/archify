@@ -127,6 +127,15 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --age
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
+네트워크가 느려 `npx skills add`가 `Clone timed out after 300s`로 중단되면, 클론 타임아웃을 늘리거나 먼저 로컬에 클론한 뒤 로컬 경로로 설치하세요:
+
+```bash
+SKILLS_CLONE_TIMEOUT_MS=900000 npx skills add tt-a1i/archify -g
+# 또는
+git clone --depth 1 https://github.com/tt-a1i/archify.git
+npx skills add ./archify --skill archify -g
+```
+
 Archify는 선택적 업데이트 알림을 위해 고정된 stable manifest를 GET할 수 있지만, 업데이트를 다운로드하거나 설치하지는 않습니다. `ARCHIFY_UPDATE_CHECK_DISABLED=1`을 설정하면 네트워크 요청과 알림 상태 저장을 모두 끌 수 있습니다.
 
 </details>

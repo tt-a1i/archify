@@ -225,6 +225,15 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --age
 npx skills use tt-a1i/archify@archify --agent codex
 ```
 
+通信が遅く、`npx skills add` が `Clone timed out after 300s` で止まる場合は、クローンのタイムアウトを延ばすか、先にローカルへクローンしてからローカルパスでインストールしてください:
+
+```bash
+SKILLS_CLONE_TIMEOUT_MS=900000 npx skills add tt-a1i/archify -g
+# または
+git clone --depth 1 https://github.com/tt-a1i/archify.git
+npx skills add ./archify --skill archify -g
+```
+
 [DSH コミュニティ版（任意）](integrations/deepseek-harness/README.md): `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`
 
 [エージェント切り替え](https://archify.si/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode`、`github-copilot` に対応しています。
