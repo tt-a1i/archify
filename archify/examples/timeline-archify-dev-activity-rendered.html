@@ -2690,6 +2690,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
          `anywhere` rather than `break-word` because only `anywhere` shrinks the
          intrinsic minimum the layout is sized from. */
       overflow-wrap: anywhere;
+      /* Korean (and CJK) prose otherwise breaks between syllables mid-word under
+         `word-break: normal` (e.g. `롤백합니` / `다.`). `keep-all` holds words
+         together and wraps at spaces instead. Non-CJK text is unaffected
+         (`keep-all` behaves as `normal` there), and `overflow-wrap: anywhere`
+         above still guarantees a break for exceptionally long unbroken runs, so
+         the overflow protection documented above is retained. */
+      word-break: keep-all;
     }
 
     html[data-preset="signal-flow"] .card {
