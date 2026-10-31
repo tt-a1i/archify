@@ -4,7 +4,7 @@ import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../share
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, renderDrilldownMark, resolveNodeDrilldowns, wrapSingleChildAnchor, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, measureLegend, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
-import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, cleanLabelCanvasContainmentProblems, routePointsValue, asArray, isFinitePoint, edgeLabelAccent } from '../shared/geometry.mjs';
+import { componentFill, arrowClassMap, rectsOverlap, cleanFlowProblems, cleanCrossingProblems, cleanAmbiguousCorridorProblems, cleanBorderRunProblems, cleanRouteRhythmProblems, cleanLabelRouteClearanceProblems, cleanLabelCanvasContainmentProblems, polylinePath, routePointsValue, asArray, isFinitePoint, edgeLabelAccent } from '../shared/geometry.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
@@ -59,16 +59,56 @@ function spreadColumnGeometry(canvasWidth, width = spreadParticipantWidth(canvas
   const margin = Math.max(40, Math.min(62, canvasWidth - 40 - span));
   return { width, margin, gap: count > 1 ? Math.max(width + 16, (canvasWidth - 40 - margin - width) / (count - 1)) : 108 };
 }
+const selfMessageLayout = {
+  minimumWidth: 56,
+  labelPadding: 15,
+  height: 42,
+  canvasMargin: 40,
+  lifelineClearance: 18,
+};
+
+function messageLabelWidth(message) {
+  const unitWidth = sequence.meta?.quality_profile === 'showcase' ? 6.6 : 5.2;
+  return Math.max(34, textUnits(message.label) * unitWidth + 12);
+}
+
+// Also used while choosing an automatic width, before final columns exist.
+function selfMessageGeometry(message, cx, index, count) {
+  const direction = count > 1 && index === count - 1 ? -1 : 1;
+  const start = cx + direction * 7;
+  const outer = cx + direction * Math.max(selfMessageLayout.minimumWidth,
+    messageLabelWidth(message) + selfMessageLayout.labelPadding);
+  return {
+    self: true, direction, start, end: start, outer, center: (start + outer) / 2,
+    points: [[start, message.y], [outer, message.y],
+      [outer, message.y + selfMessageLayout.height], [start, message.y + selfMessageLayout.height]],
+  };
+}
+
+function selfMessageBoundary(neighbourCx, direction, width) {
+  return direction > 0
+    ? (neighbourCx ?? width - selfMessageLayout.canvasMargin) - selfMessageLayout.lifelineClearance
+    : (neighbourCx ?? selfMessageLayout.canvasMargin) + selfMessageLayout.lifelineClearance;
+}
+
 // Evaluate the same spread coordinates and full masks used by the renderer;
 // short participant names alone do not imply a compact timeline will fit.
 function timelineLabelsFit(canvasWidth) {
   const { width, margin, gap } = spreadColumnGeometry(canvasWidth);
   const centers = new Map(asArray(sequence.participants).map((participant, index) => [participant.id, margin + width / 2 + index * gap]));
-  const unitWidth = sequence.meta?.quality_profile === 'showcase' ? 6.6 : 5.2;
   return asArray(sequence.messages).every((message) => {
     if (!centers.has(message.from) || !centers.has(message.to)) return true;
+    if (message.from === message.to) {
+      const list = asArray(sequence.participants);
+      const index = list.findIndex((participant) => participant.id === message.from);
+      const geometry = selfMessageGeometry(message, centers.get(message.from), index, list.length);
+      const neighbour = list[index + geometry.direction];
+      const boundary = selfMessageBoundary(
+        neighbour ? centers.get(neighbour.id) : null, geometry.direction, canvasWidth);
+      return geometry.direction * (geometry.outer - boundary) <= 0.0001;
+    }
     const center = (centers.get(message.from) + centers.get(message.to)) / 2;
-    const halfWidth = Math.max(34, textUnits(message.label) * unitWidth + 12) / 2;
+    const halfWidth = messageLabelWidth(message) / 2;
     return center - halfWidth >= 0 && center + halfWidth <= canvasWidth;
   }) && asArray(sequence.segments).every((segment) => 56 + Math.max(42, textUnits(segment.label) * 5.2 + 14) <= canvasWidth - 48);
 }
@@ -158,6 +198,36 @@ const participantIndexById = new Map(asArray(sequence.participants).map((partici
 
 function participantX(index) {
   return leftX + index * colGap;
+}
+
+function messageGeometry(message) {
+  const fromIndex = participantIndexById.get(message.from);
+  const toIndex = participantIndexById.get(message.to);
+  if (fromIndex === undefined || toIndex === undefined || typeof message.y !== 'number') return null;
+  const from = participantX(fromIndex);
+  const to = participantX(toIndex);
+  if (message.from === message.to) return selfMessageGeometry(message, from, fromIndex, participantCount);
+  const direction = to > from ? 1 : -1;
+  const start = from + direction * 7;
+  const end = to - direction * 7;
+  return { self: false, start, end, center: (start + end) / 2,
+    points: [[start, message.y], [end, message.y]] };
+}
+
+function messageBottom(message) {
+  return message.y + (message.from === message.to ? selfMessageLayout.height : 0);
+}
+
+function messageMaximumY(message) {
+  return layout.lifelineBottom - (message.from === message.to ? selfMessageLayout.height + 4 : 18);
+}
+
+function messageSpan(message) {
+  const geometry = messageGeometry(message);
+  if (geometry?.self) return [Math.min(geometry.start, geometry.outer), Math.max(geometry.start, geometry.outer)];
+  const from = participantX(participantIndexById.get(message.from));
+  const to = participantX(participantIndexById.get(message.to));
+  return [Math.min(from, to), Math.max(from, to)];
 }
 
 // A note wraps inside one gap between neighbouring lifelines, so it never
@@ -270,20 +340,32 @@ function noteLayout(message) {
   let result = null;
   const fromIndex = participantIndexById.get(message.from);
   const toIndex = participantIndexById.get(message.to);
-  if (message.note && typeof message.y === 'number' && fromIndex !== undefined && toIndex !== undefined && fromIndex !== toIndex) {
-    const gap = noteGapIndex(fromIndex, toIndex);
+  if (message.note && typeof message.y === 'number' && fromIndex !== undefined && toIndex !== undefined) {
+    const geometry = messageGeometry(message);
+    // Self-call notes use the adjacent lane on the loop side; ordinary
+    // note placements stay put.
+    const gap = geometry.self
+      ? (geometry.direction > 0 ? fromIndex : fromIndex - 1)
+      : noteGapIndex(fromIndex, toIndex);
     const x = participantX(gap) + NOTE_ARROW_INSET + NOTE_TEXT_INSET;
-    const maxWidth = Math.max(1, participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE - x);
+    const right = gap + 1 < participantCount
+      ? participantX(gap + 1) - NOTE_LIFELINE_CLEARANCE
+      : canvasWidth - selfMessageLayout.canvasMargin;
+    const maxWidth = Math.max(1, right - x);
     const lines = noteTextWidth(message.note) <= maxWidth ? [message.note] : wrapNoteText(message.note, maxWidth);
-    const baseline = message.y + 18;
+    const baseline = messageBottom(message) + 18;
+    const width = Math.max(...lines.map(noteTextWidth));
+    const rightAligned = geometry.self && geometry.direction < 0;
     result = {
-      x,
+      x: rightAligned ? right - width : x,
+      textX: rightAligned ? right : x,
+      anchor: rightAligned ? 'end' : null,
       baseline,
       lines,
-      width: Math.max(...lines.map(noteTextWidth)),
+      width,
       // Include fallback-font ascent in the same bounds used for title clearance.
       top: baseline - NOTE_FONT_SIZE * 1.2,
-      bottom: message.y + 22 + (lines.length - 1) * NOTE_LINE_HEIGHT,
+      bottom: baseline + 4 + (lines.length - 1) * NOTE_LINE_HEIGHT,
     };
   }
   noteLayouts.set(message, result);
@@ -293,8 +375,8 @@ function noteLayout(message) {
 const contentBottom = Math.max(
   0,
   ...asArray(sequence.messages).map((message) => (message.note
-    ? noteLayout(message)?.bottom ?? message.y + 22
-    : message.y + 6)),
+    ? noteLayout(message)?.bottom ?? messageBottom(message) + 22
+    : messageBottom(message) + 6)),
   ...asArray(sequence.activations).map((activation) => activation.to),
   ...asArray(sequence.segments).map((segment) => segment.to),
 );
@@ -311,7 +393,7 @@ const SEQUENCE_MIN_AUTO_HEIGHT = 327;
 // Timeline clearance is independent of legend visibility. Messages need 18px
 // before the lifeline bottom; notes, activations and frames need their footer.
 const timelineRequiredHeight = Math.max(contentBottom + 65,
-  ...asArray(sequence.messages).map((message) => message.y + 18 + 65));
+  ...asArray(sequence.messages).map((message) => messageBottom(message) + 18 + 65));
 const automaticHeight = Math.max(SEQUENCE_MIN_AUTO_HEIGHT, timelineRequiredHeight, legendRequiredHeight(automaticWidth));
 const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 // The timeline scales with viewBox height: a taller viewBox gains message room,
@@ -319,7 +401,6 @@ const viewBox = sequence.meta?.viewBox || [automaticWidth, automaticHeight];
 
 // Showcase is the fast-authoring default; standard retains legacy label geometry.
 const messageFontSize = readableMessages ? 11 : 9;
-const messageUnitWidth = readableMessages ? 6.6 : 5.2;
 const layout = {
   topY: 72,
   participantW,
@@ -361,20 +442,11 @@ const participants = new Map(asArray(sequence.participants).map((participant, in
   }
 ]));
 
-function messageGeometry(message) {
-  const from = participants.get(message.from);
-  const to = participants.get(message.to);
-  if (!from || !to || typeof message.y !== 'number') return null;
-  const direction = to.cx > from.cx ? 1 : -1;
-  const start = from.cx + direction * 7;
-  const end = to.cx - direction * 7;
-  return { start, end, center: (start + end) / 2 };
-}
 
 function messageLabelBox(message, relationIndex = null) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
-  const width = Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const width = messageLabelWidth(message);
   return {
     relation: message,
     relationIndex,
@@ -389,11 +461,12 @@ function messageLabelBox(message, relationIndex = null) {
 function messageRouteBox(message) {
   const geometry = messageGeometry(message);
   if (!geometry) return null;
+  const xs = geometry.points.map(([x]) => x);
   return {
-    x: Math.min(geometry.start, geometry.end),
+    x: Math.min(...xs) - (geometry.self ? 2 : 0),
     y: message.y - 2,
-    width: Math.abs(geometry.end - geometry.start),
-    height: 4,
+    width: Math.max(...xs) - Math.min(...xs) + (geometry.self ? 4 : 0),
+    height: messageBottom(message) - message.y + 4,
   };
 }
 
@@ -497,19 +570,23 @@ function messageFitsAt(messageIndex, y) {
   if (y < layout.lifelineTop + 18) return false;
   // An automatic canvas recalculates its height after this edit; an authored
   // canvas must still fit the suggested position without a second repair.
-  if (sequence.meta?.viewBox && y > layout.lifelineBottom - 18) return false;
-  const span = (message) => {
-    const from = participants.get(message.from)?.cx;
-    const to = participants.get(message.to)?.cx;
-    return [Math.min(from, to), Math.max(from, to)];
-  };
+  if (sequence.meta?.viewBox && y > messageMaximumY(messages[messageIndex])) return false;
   const moved = { ...messages[messageIndex], y };
-  const [left, right] = span(moved);
+  // Keep both horizontal legs clear of phase borders, as validation requires.
+  const arrowYs = [moved.y, messageBottom(moved)];
+  if (asArray(sequence.segments).some((segment) =>
+    [segment.from, segment.to].some((border) =>
+      arrowYs.some((arrowY) => Math.abs(border - arrowY) < 4)
+    )
+  )) return false;
+  const [left, right] = messageSpan(moved);
+  if (sequence.meta?.viewBox && noteLayout(moved)?.bottom > layout.lifelineBottom + 20) return false;
   const movedRects = [messageLabelBox(moved), messageRouteBox(moved), noteRect(moved)].filter(Boolean);
   return messages.every((other, otherIndex) => {
     if (otherIndex === messageIndex || typeof other.y !== 'number') return true;
-    const [otherLeft, otherRight] = span(other);
-    if (Math.abs(other.y - y) < 28 && left < otherRight && otherLeft < right) return false;
+    const [otherLeft, otherRight] = messageSpan(other);
+    const separation = y >= other.y ? y - messageBottom(other) : other.y - messageBottom(moved);
+    if (separation < 28 && left < otherRight && otherLeft < right) return false;
     const otherRects = [messageLabelBox(other), messageRouteBox(other), noteRect(other)].filter(Boolean);
     return !movedRects.some((rect) => otherRects.some((otherRect) => rectsOverlap(rect, otherRect, 2)));
   });
@@ -544,6 +621,8 @@ const compositionFrames = asArray(sequence.segments).map((segment, index) => ({
 }));
 
 function messagePath(message) {
+  const geometry = messageGeometry(message);
+  if (geometry?.self) return { points: geometry.points };
   return {
     points: participants.has(message.from) && participants.has(message.to)
       ? [[participants.get(message.from).cx, message.y], [participants.get(message.to).cx, message.y]]
@@ -625,35 +704,39 @@ function validateSequence() {
       problems.push(problem);
     }
     if (typeof message.y !== 'number') problems.push(`Message "${message.label}" must provide a numeric y.`);
-    if (message.y < layout.lifelineTop + 18 || message.y > layout.lifelineBottom - 18) {
-      problems.push(`Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${layout.lifelineBottom - 18}.`);
+    const maximumY = messageMaximumY(message);
+    if (message.y < layout.lifelineTop + 18 || message.y > maximumY) {
+      const problem = `Message "${message.label}" sits outside the readable timeline — keep y between ${layout.lifelineTop + 18} and ${maximumY}${message.from === message.to ? ' so its self-call loop stays inside the lifeline' : ''}.`;
+      problems.push(problem);
+      if (message.from === message.to) {
+        const requiredHeight = Math.ceil(Math.max(messageBottom(message) + 69,
+          (noteLayout(message)?.bottom ?? 0) + 45, legendRequiredHeight(viewBox[0])));
+        diagnostics.push({
+          code: 'sequence/self-message-timeline', severity: 'error', message: problem,
+          subject: { diagramType: 'sequence', path: `/messages/${messageIndex}/y`, from: message.from, to: message.to },
+          evidence: { y: message.y, minimumY: layout.lifelineTop + 18, maximumY, loopHeight: selfMessageLayout.height,
+            ...(message.y > maximumY ? { requiredViewBoxHeight: requiredHeight } : {}) },
+          supportedFixes: message.y > maximumY ? [`set /meta/viewBox/1 to ${requiredHeight}`] : [],
+        });
+      }
     }
     if (participants.has(message.from) && participants.has(message.to)) {
       if (message.from === message.to) {
-        const problem = `Message "${message.label}" is a self-message on participant "${message.from}"; this Sequence renderer supports only messages between distinct participants. Participant spacing cannot repair it. Preserve the internal step's meaning and order in a supported representation such as a note on a real message or a card; do not invent a participant.`;
-        diagnostics.push({
-          code: 'sequence/self-message-unsupported', severity: 'error', message: problem,
-          subject: {
-            diagramType: 'sequence',
-            message: message.label,
-            collection: 'messages',
-            index: messageIndex,
-            path: `/messages/${messageIndex}`,
-            ...(message.id ? { id: message.id } : {}),
-            from: message.from,
-            to: message.to,
-            fromPath: `/messages/${messageIndex}/from`,
-            toPath: `/messages/${messageIndex}/to`,
-          },
-          evidence: {
-            participant: message.from,
-            participantPath: `/participants/${participantOrder.get(message.from)}`,
-            y: message.y,
-            supportedMessageGeometry: 'horizontal-between-distinct-participants',
-          },
-          supportedFixes: [],
-        });
-        problems.push(problem);
+        const geometry = messageGeometry(message);
+        const index = participantOrder.get(message.from);
+        const neighbour = participantList[index + geometry.direction];
+        const boundary = selfMessageBoundary(
+          neighbour ? participants.get(neighbour.id).cx : null, geometry.direction, viewBox[0]);
+        if (geometry.direction * (geometry.outer - boundary) > 0.0001) {
+          const problem = `Self-message "${message.label}" does not fit beside participant "${message.from}" — increase meta.viewBox[0], use meta.column_fit "spread", or shorten the label while preserving its meaning.`;
+          problems.push(problem);
+          diagnostics.push({
+            code: 'sequence/self-message-space', severity: 'error', message: problem,
+            subject: { diagramType: 'sequence', path: `/messages/${messageIndex}/label`, from: message.from, to: message.to },
+            evidence: { outerX: geometry.outer, boundaryX: boundary, direction: geometry.direction, labelWidth: messageLabelWidth(message) },
+            supportedFixes: [],
+          });
+        }
       } else {
         const distance = Math.abs(participants.get(message.to).cx - participants.get(message.from).cx);
         if (distance < 60) problems.push(`Message "${message.label}" spans ${Math.round(distance)}px (minimum 60px) — give its participants more column distance.`);
@@ -715,17 +798,29 @@ function validateSequence() {
   // disjoint arrows may legitimately run in parallel rows.
   const placed = asArray(sequence.messages)
     .filter((m) => participants.has(m.from) && participants.has(m.to))
-    .map((m) => ({
-      label: m.label,
-      y: m.y,
-      x1: Math.min(participants.get(m.from).cx, participants.get(m.to).cx),
-      x2: Math.max(participants.get(m.from).cx, participants.get(m.to).cx)
-    }))
+    .map((m) => {
+      const [x1, x2] = messageSpan(m);
+      return { message: m, label: m.label, y: m.y, bottom: messageBottom(m), x1, x2 };
+    })
     .sort((a, b) => a.y - b.y);
   for (let i = 0; i < placed.length; i += 1) {
-    for (let j = i + 1; j < placed.length && placed[j].y - placed[i].y < 28; j += 1) {
+    for (let j = i + 1; j < placed.length && placed[j].y - placed[i].bottom < 28; j += 1) {
       if (placed[i].x1 < placed[j].x2 && placed[j].x1 < placed[i].x2) {
-        problems.push(`Messages "${placed[i].label}" and "${placed[j].label}" are less than 28px apart and share horizontal space — spread their y values.`);
+        const self = placed[i].message.from === placed[i].message.to || placed[j].message.from === placed[j].message.to;
+        const problem = self
+          ? `Messages "${placed[i].label}" and "${placed[j].label}" crowd a self-call loop — leave at least 28px after the earlier route ends at y=${placed[i].bottom}, including room for the next label.`
+          : `Messages "${placed[i].label}" and "${placed[j].label}" are less than 28px apart and share horizontal space — spread their y values.`;
+        problems.push(problem);
+        if (self) {
+          const index = messageList.indexOf(placed[j].message);
+          const requiredY = placed[i].bottom + 28;
+          diagnostics.push({
+            code: 'sequence/self-message-overlap', severity: 'error', message: problem,
+            subject: { diagramType: 'sequence', path: `/messages/${index}/y`, from: placed[j].message.from, to: placed[j].message.to },
+            evidence: { earlierMessage: placed[i].label, routeBottomY: placed[i].bottom, y: placed[j].y, requiredY },
+            supportedFixes: messageFitsAt(index, requiredY) ? [`set /messages/${index}/y to ${requiredY}`] : [],
+          });
+        }
       }
     }
   }
@@ -995,7 +1090,7 @@ function messageLabel(message, x1, x2) {
   const box = messageLabelBox(message);
   const center = box ? box.x + box.width / 2 : (x1 + x2) / 2;
   const y = message.y - 10;
-  const labelW = box?.width || Math.max(34, textUnits(message.label) * messageUnitWidth + 12);
+  const labelW = box?.width || messageLabelWidth(message);
   // A colored line gets a label in the same color, as in the legend swatches.
   // Gray lines (default and return) keep the readable muted text color.
   const accent = ['emphasis', 'security', 'dashed'].includes(message.variant) ? edgeLabelAccent(message.variant) : 't-muted';
@@ -1022,21 +1117,21 @@ function noteBackdrop(message) {
 }
 
 function renderMessage(message, index) {
-  const { start, end } = messageGeometry(message);
+  const { start, end, points } = messageGeometry(message);
   const [cls, marker] = arrowClass[message.variant || 'default'] || arrowClass.default;
   const strokeWidth = message.variant === 'emphasis' ? 1.8 : 1.4;
   const dash = message.variant === 'return' ? ' stroke-dasharray="3,5"' : '';
   const noteBox = noteLayout(message);
   const noteContent = noteBox?.lines.length > 1
-    ? noteBox.lines.map((line, lineIndex) => `<tspan x="${noteBox.x}" dy="${lineIndex ? NOTE_LINE_HEIGHT : 0}">${esc(line)}</tspan>`).join('')
+    ? noteBox.lines.map((line, lineIndex) => `<tspan x="${noteBox.textX}" dy="${lineIndex ? NOTE_LINE_HEIGHT : 0}">${esc(line)}</tspan>`).join('')
     : esc(message.note);
   // Notes carry message conditions and already reserve timeline space. Keep
   // them readable at the default depth; Map still hides context without reflow.
   const note = noteBox
-    ? `\n        <text data-detail="context" x="${noteBox.x}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}">${noteContent}</text>`
+    ? `\n        <text data-detail="context" x="${noteBox.textX}" y="${noteBox.baseline}" class="t-muted" font-size="${NOTE_FONT_SIZE}"${noteBox.anchor ? ` text-anchor="${noteBox.anchor}"` : ''}>${noteContent}</text>`
     : '';
   return `        <g ${focusEdgeAttrs(message.from, message.to, message.label, index, message.id)}>
-          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue([[start, message.y], [end, message.y]])}" d="M ${start} ${message.y} L ${end} ${message.y}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
+          <path data-composition-edge-from="${esc(message.from)}" data-composition-edge-to="${esc(message.to)}"${message.id ? ` data-composition-edge-id="${esc(message.id)}"` : ''} data-composition-points="${routePointsValue(points)}" d="${polylinePath(points)}" class="${cls}"${animateAttr(sequence.meta, 'edge', index)} stroke-width="${strokeWidth}"${dash} marker-end="url(#${marker})"/>
 ${messageLabel(message, start, end)}${noteBackdrop(message)}${note}
         </g>`;
 }

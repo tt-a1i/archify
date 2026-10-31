@@ -73,8 +73,10 @@ muted text color.
 | Lifelines | from y 142 down to height − 65 (drawn to just above the legend); band must be ≥120px tall |
 | Message `y` range | `[160, height − 83]` |
 | Message spacing | ≥28px vertical between messages that share horizontal space |
-| Arrow span | ≥60px horizontal between the two participants |
-| Message notes | 7px context text under the arrow, visible at normal Read zoom (Map hides it without changing timeline geometry), wrapped at 11px line spacing inside one gap between neighbouring lifelines (the widest gap the message spans; gaps within 0.5px count as equal and resolve to the left-most, where notes have always started), clear of activation bars; long unbroken text breaks after `/ . - ? & = # _`, otherwise at any character, so the full note is kept in every export. In `showcase`, a note that reaches a later message fails as `sequence/note-overlap` with the `y` that message needs, a note past the canvas content limit fails as `sequence/note-canvas-limit` with the `meta.viewBox[1]` it needs, and a segment label still covering a message label, route or note after its four upward steps fails as `sequence/segment-label-overlap`; each diagnostic names the source path and offers a verified `supportedFixes` edit when one exists |
+| Arrow span | ≥60px horizontal between distinct participants |
+| Self-message | Same `from` and `to`: a 42px-high orthogonal loop, right by default and left at the rightmost participant. Width follows the label at the active quality profile. The loop ends at or above `height − 69`; automatic height includes the full loop and wrapped note. Insufficient lane space fails as `sequence/self-message-space`; a loop outside the timeline fails as `sequence/self-message-timeline` |
+| Self-message spacing | In shared horizontal space, leave at least 28px after the previous route ends, so the next label clears the loop (70px between unannotated self-call starts). Crowding fails as `sequence/self-message-overlap`; wrapped notes may require more space and use the existing note diagnostics |
+| Message notes | 7px context text under the arrow (under the return leg for a self-message), visible at normal Read zoom (Map hides it without changing timeline geometry), wrapped at 11px line spacing inside one gap between neighbouring lifelines (the loop-side gap for a self-message; otherwise the widest gap the message spans; gaps within 0.5px count as equal and resolve to the left-most, where notes have always started), clear of activation bars; long unbroken text breaks after `/ . - ? & = # _`, otherwise at any character, so the full note is kept in every export. In `showcase`, a note that reaches a later message fails as `sequence/note-overlap` with the `y` that message needs, a note past the canvas content limit fails as `sequence/note-canvas-limit` with the `meta.viewBox[1]` it needs, and a segment label still covering a message label, route or note after its four upward steps fails as `sequence/segment-label-overlap`; each diagnostic names the source path and offers a verified `supportedFixes` edit when one exists |
 | Segments | y pixel ranges with `to > from`, inside `[72, lifeline bottom + 20]` |
 | Legend | last row baseline at height − 54; extra rows wrap upward and stay 12px below the timeline content |
 
@@ -105,14 +107,12 @@ for the bounded authoring repair and explicit-fixed preservation rules.
 
 ## Design Rules
 
-- Messages currently require distinct `from` and `to` participants. Although
-  schema-v1 accepts matching IDs, this renderer does not draw self-call loops
-  and rejects them with `sequence/self-message-unsupported`, naming the message
-  path and participant. Increasing column distance cannot repair a self-message.
-  Preserve an internal step's wording, ownership, and order in a note on an
-  actual interaction or an explicitly ordered card. Do not invent another
-  participant or change the target merely to pass validation. These authoring
-  choices require semantic review and are not advertised as automatic fixes.
+- Use identical `from` and `to` IDs for work inside one participant. The loop
+  turns right by default and left at the rightmost participant. Keep enough
+  lane space for the complete label.
+  Loops and their notes retain authored ownership, wording and time order.
+  Notes on inward left-turning loops align toward their owner, rather than
+  appearing beneath the previous participant.
 - Put participants across the top, ordered by the story the reader should
   follow.
 - Time moves downward.

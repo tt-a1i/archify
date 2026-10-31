@@ -7,6 +7,7 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 > Development identity: `v3.2.1-dev.1`. Not a stable release.
 
 ### Added
+- **Sequence self-messages.** Messages whose `from` and `to` name the same participant now render as loop-back arrows, turn inward at the right edge, retain stable edge identity and Viewer interactions, and include the complete loop and wrapped note in automatic sizing. Active-profile label widths and route-end spacing keep labels, notes and subsequent messages clear; structured diagnostics identify insufficient lane space, crowded loops and timeline overflow.
 - **Authored node explanations in the Semantic Passport.** Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text explanations up to1200 characters. Explain opens a viewport-bounded reading face with scrollable prose and a reachable Back action; Escape restores the Passport. Prose remains outside canonical SVG and visual exports, and existing diagram geometry is preserved.
 - **Cross-diagram navigation.** Nodes may list sibling `.html` targets via `drilldowns` or a one-entry `href` shorthand. One child uses a native SVG link and visible mark (click follows, Alt-click focuses). Several children keep click-to-focus, with Passport listing every target and Ctrl/double-click opening the first. Child pages can author `meta.parentHref` for header Back; the Viewer also accepts `?from=`.
 
