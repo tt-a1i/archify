@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1172,
+  "author": "tt-a1i",
+  "title": "docs(distribution): preserve unmanaged files before updates",
+  "mergedAt": "2026-10-31T03:32:39Z",
+  "mergeCommit": "a4065941f12be7967436261d9934784e381d423c",
+  "url": "https://github.com/tt-a1i/archify/pull/1172"
+}
