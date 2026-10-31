@@ -64,3 +64,25 @@ test('Cloudflare output resolves nested-page assets against the HTML base', t =>
   fs.rmSync(path.join(root, 'site.css'));
   assert.throws(() => checkCloudflareOutput(root), /missing local target site\.css/);
 });
+
+test('Cloudflare sitemap accepts equivalent canonical link attribute order and quoting', t => {
+  const root = fixture(t), file = path.join(root, 'guide.html');
+  const html = fs.readFileSync(file, 'utf8').replace('<link rel="canonical" href="https://archify.si/guide">', "<link href='https://archify.si/guide' rel='canonical'>");
+  fs.writeFileSync(file, html);
+  assert.equal(checkCloudflareOutput(root), 11);
+});
+test('a commented canonical link cannot prove a sitemap page has live canonical metadata', t => {
+  const root = fixture(t), file = path.join(root, 'guide.html');
+  const html = fs.readFileSync(file, 'utf8').replace('<link rel="canonical" href="https://archify.si/guide">', '<!-- <link rel="canonical" href="https://archify.si/guide"> -->');
+  fs.writeFileSync(file, html);
+  assert.throws(() => checkCloudflareOutput(root), /Missing matching canonical/);
+});
+
+for (const separator of [' ', '\t', '\n', '\f', '\r', '\u00a0', '\v']) {
+  test(`Cloudflare canonical rel recognizes only HTML ASCII whitespace: ${JSON.stringify(separator)}`, t => {
+    const root = fixture(t), file = path.join(root, 'guide.html');
+    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('rel="canonical"', `rel="alternate${separator}canonical"`));
+    if (['\u00a0', '\v'].includes(separator)) assert.throws(() => checkCloudflareOutput(root), /Missing matching canonical/);
+    else assert.equal(checkCloudflareOutput(root), 11);
+  });
+}
