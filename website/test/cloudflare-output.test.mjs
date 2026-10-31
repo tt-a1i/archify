@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -63,4 +64,12 @@ test('Cloudflare output resolves nested-page assets against the HTML base', t =>
   assert.equal(checkCloudflareOutput(root), 11);
   fs.rmSync(path.join(root, 'site.css'));
   assert.throws(() => checkCloudflareOutput(root), /missing local target site\.css/);
+});
+
+
+test('Cloudflare static output rejects FIFOs instead of accepting them as zero-byte assets', { skip: process.platform === 'win32' }, t => {
+  const root = fixture(t), fifo = path.join(root, 'stream.bin');
+  const created = spawnSync('mkfifo', [fifo], { encoding: 'utf8' });
+  assert.equal(created.status, 0, created.stderr);
+  assert.throws(() => checkCloudflareOutput(root), /regular file/);
 });
