@@ -240,12 +240,20 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   }
 
   const revision = repository.revision.toLowerCase();
-  const commit = runGit(realRoot, ['cat-file', '-e', `${revision}^{commit}`]);
+  const commit = runGit(realRoot, ['cat-file', '-t', revision]);
   if (commit.status !== 0) {
     evidenceFailure('repository-evidence/revision-unavailable', `Evidence revision ${revision} is not available in the local repository.`, {
       subject: { repoRoot: realRoot },
       evidence: { revision },
       supportedFixes: ['fetch the pinned commit or pin an available full commit SHA'],
+    });
+  }
+
+  if (commit.stdout.trim() !== 'commit') {
+    evidenceFailure('repository-evidence/revision-not-commit', `Evidence revision ${revision} must identify a commit object.`, {
+      subject: { repoRoot: realRoot },
+      evidence: { revision, objectType: commit.stdout.trim() },
+      supportedFixes: ['pin the full peeled commit SHA instead of a tag, tree or blob object ID'],
     });
   }
 
