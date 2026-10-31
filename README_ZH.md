@@ -12,8 +12,6 @@
 
 <p align="center">从一个想法、一个问题或一份计划开始。把它描述给 AI Agent，Archify 就能生成可以探索、修改和分享的交互式 HTML。从旅行行程、知识地图到复杂系统，你都可以继续扩展，做成自己需要的样子。</p>
 
-<p align="center">看看社区正在创造什么，也想想你还能用它做些什么。</p>
-
 <p align="center">
   <a href="https://archify.si/zh/gallery"><strong>交互演示</strong></a> &nbsp;·&nbsp;
   <a href="#start"><strong>开始使用</strong></a> &nbsp;·&nbsp;
@@ -32,7 +30,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#安装方式"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
+  <a href="#快速开始"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
 </p>
 
@@ -44,7 +42,18 @@
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
 </p>
 
-<p align="center"><a href="#sponsors"><strong>❤️ 合作与赞助伙伴：Kimi Work · Supercode · OpenLux</strong></a></p>
+<p align="center"><a href="#sponsors"><strong>❤️ 合作与赞助伙伴</strong></a> · 特别合作：<a href="https://www.kimi.com/?aff=archify"><strong>Archify × Kimi Work</strong></a></p>
+
+<table align="center">
+<tr>
+  <td align="center" width="140"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.openlux.ai/register?channel=c_qdvanbpc"><img src="docs/assets/sponsors/openlux-logo.png" alt="OpenLux" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.packyapi.ai/register?aff=bN97"><img src="docs/assets/sponsors/packycode-logo.png" alt="PackyCode" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL"><img src="docs/assets/sponsors/aicodemirror-logo.jpg" alt="AICodeMirror" width="140" /></a></td>
+  <td align="center" width="140"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="48" /></a></td>
+  <td align="center" width="140"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc 无限星河" width="64" /></a></td>
+</tr>
+</table>
 
 ## 看看 Archify 能做什么
 
@@ -54,48 +63,92 @@ https://github.com/user-attachments/assets/88cff7dd-bdf3-4b97-950c-37cc079898b1
 
 **一句话，看懂你的项目。** 35 秒演示：探索交互图、查看源码关联、追踪完整路径。[试试可交互示例 ↗](https://archify.si/zh/gallery)
 
+### 用图把事情讲明白
+
+| 讲清 Agent 如何调用工具 | 跟随一次缓存回源请求 | 看清服务与数据库的关系 |
+|---|---|---|
+| [![Agent 工作流中 Planner 驱动的全部下游](docs/assets/archify-demo-reach.png)](https://archify.si/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1#focus=planner&reach=downstream) | [![缓存未命中时从 Web App 到 Postgres 的路径](docs/assets/archify-demo-route.png)](https://archify.si/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![生产架构中后端与数据库角色的真实关系](docs/assets/archify-demo-lens.png)](https://archify.si/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
+| 追踪一个步骤影响到的全部下游。 | 点亮 Web App 到数据库的路径。 | 聚焦后端与数据库之间已定义的连接。 |
+
+[Proof Lab](https://archify.si/zh/gallery) 收录全部 11 个仓库内场景、JSON 源和校验回执。
+
 <a id="start"></a>
 
-### 安装，然后说出你的想法
+## 快速开始
 
-支持 Cursor、Claude Code、Codex CLI 和 OpenCode；更多接入方式见下方安装选项。
+**当前开发版本：** `v3.2.1-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
 
-**让 AI Agent 安装。** 把下面这句原样发给 Agent：
+### 1. 安装
+
+**让 AI Agent 安装**
+
+把下面这句原样发给 Agent：
 
 ```text
 Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
-把这句话发给你的 Agent：
+也可以直接非交互安装。`--agent` 写一个，或为每个切换器目标各写一次（`cursor`、`codex`、`claude-code`、`opencode`、`github-copilot`）。`--copy` 会复制 Skill，而不是创建符号链接：
+
+只安装到 Cursor：
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+```
+
+或者，仅在需要全部五个 Agent 时运行：
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
+```
+
+<details>
+<summary>更多安装方式、集成与更新检查</summary>
+
+如果只想临时体验：
+
+```bash
+npx skills use tt-a1i/archify@archify --agent codex
+```
+
+DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
+
+| 使用位置 | 安装位置或方法 | 能力 |
+|---|---|---|
+| **Claude Code** | `~/.claude/skills/` 或 `.claude/skills/` | 完整 Renderer + Validation 工作流 |
+| **Codex CLI** | `~/.agents/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
+| **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
+| **Claude.ai** | Settings → Capabilities → Skills 中上传 `archify.zip` | 取决于沙箱是否提供 Node.js |
+| **Project Knowledge** | 把 `archify.zip` 上传到项目 | Prompt 驱动的 Architecture Fallback |
+| **Hermes Agent** | 显式启用：`hermes skills install skills-sh/tt-a1i/archify/archify -y` | 社区 Skill-only；Node `>=18`；不是 Nous 官方产品。没有遥测。非切换器目标。[详情](integrations/hermes-agent/README.md)。 |
+| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.1.2-rc.1` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
+
+**获取更新：** 在本仓库顶部选择 **Watch → Custom → Releases**，或查看[版本说明](https://github.com/tt-a1i/archify/releases)、订阅[版本更新源](https://github.com/tt-a1i/archify/releases.atom)。
+
+安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。
+
+</details>
+
+### 2. 直接从描述开始——不需要代码库
+
+**不需要绑定代码库：**直接描述你想看的内容。
 
 ```text
 用 Archify 画出一个网站的请求流程：浏览器请求 API，
 API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 ```
 
-继续说：“添加鉴权步骤”“突出缓存未命中的路径”“切换浅色主题”。
-
-**不需要绑定代码库：**从描述开始即可。也可以让 Agent 阅读仓库，生成有源码依据的架构图。
-
-[按 Agent 选择安装方式](https://archify.si/zh/start?agent=cursor&type=architecture) · [安装细节与更新检查](#快速开始)
-
-## 问一个问题，得到一页讲清楚的答案
-
-不是每个答案都是一张图。让 agent 用一页来回答，Archify 会生成一份 **explainer**：先给结论，再按问题分成几个面板，用表格、步骤、图表、代码和经过校验的图把理由讲清楚。
-
-[![一页式解答：结论在前，步骤和它讲解的流程图左右并排](docs/assets/explainer-p99-zh.png)](https://archify.si/cases/explainer/p99-tail-latency.html)
-
-- **结论先行。** 先写答案和理由，每个面板只回答一个问题。
-- **图和文字一起讲。** 步骤放在它讲解的图旁边，读到哪一步，图上就亮起哪一部分；点任意节点进入完整的交互图。
-- **能核对。** 结论标注编号来源；仓库代码固定到具体提交，悬停即可看到原文。
-- **好分享。** 一个 HTML 文件，四种样式，浅色深色都有；可导出 PNG、WebP、JPG 长图或打印成 PDF。对任何面板都能追问，生成的追问让 agent 只改这一块。
+需要源码证据时，打开仓库后改用：
 
 ```text
-用 Archify 一页回答：接口 P99 从 80 ms 涨到 600 ms，平均值几乎没变，
-可能是什么原因，应该怎么排查？
+分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
+只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
+辅助信息放进说明卡片，不要继续增加连线。
 ```
 
-在线示例：[P99 延迟排查](https://archify.si/cases/explainer/p99-tail-latency.html) · [读 Archify 仓库：finalize 怎么保住旧产物](https://archify.si/cases/explainer/finalize-delivery.html) · [第一次租房要确认什么](https://archify.si/cases/explainer/first-rental.html) · [第一次打开 HTTPS 网站（英文）](https://archify.si/cases/explainer/tls-first-visit.html)
+### 3. 在对话中细调
+
+继续说：`增加 Redis`、`把鉴权移到左侧`、`突出回滚路径`。Archify 会保留 Typed Source，只修改相关部分。
 
 <a id="sponsors"></a>
 
@@ -136,14 +189,20 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 > 想赞助 Archify？[欢迎通过邮件联系我们。](mailto:2801884530@qq.com)
 
-## 用图把事情讲明白
+## 更多案例
 
-| 讲清 Agent 如何调用工具 | 跟随一次缓存回源请求 | 看清服务与数据库的关系 |
-|---|---|---|
-| [![Agent 工作流中 Planner 驱动的全部下游](docs/assets/archify-demo-reach.png)](https://archify.si/gallery/artifacts/agent-tool-call.workflow.html?theme=dark&present=1#focus=planner&reach=downstream) | [![缓存未命中时从 Web App 到 Postgres 的路径](docs/assets/archify-demo-route.png)](https://archify.si/gallery/artifacts/cache-miss.sequence.html?theme=dark&present=1#route=web~db) | [![生产架构中后端与数据库角色的真实关系](docs/assets/archify-demo-lens.png)](https://archify.si/gallery/artifacts/production-deployment.architecture.html?theme=dark&present=1#lens=backend~database) |
-| 追踪一个步骤影响到的全部下游。 | 点亮 Web App 到数据库的路径。 | 聚焦后端与数据库之间已定义的连接。 |
+### 问一个问题，得到一页讲清楚的答案
 
-[Proof Lab](https://archify.si/zh/gallery) 收录全部 11 个仓库内场景、JSON 源和校验回执。
+不是每个答案都是一张图。让 agent 用一页来回答，Archify 会生成一份 **explainer**：先给结论，再按问题分成几个面板，用表格、步骤、图表、代码和经过校验的图把理由讲清楚。结论标注编号来源；整页是一个 HTML 文件，也能导出长图或打印成 PDF。
+
+[![一页式解答：结论在前，步骤和它讲解的流程图左右并排](docs/assets/explainer-p99-zh.png)](https://archify.si/cases/explainer/p99-tail-latency.html)
+
+```text
+用 Archify 一页回答：接口 P99 从 80 ms 涨到 600 ms，平均值几乎没变，
+可能是什么原因，应该怎么排查？
+```
+
+在线示例：[P99 延迟排查](https://archify.si/cases/explainer/p99-tail-latency.html) · [读 Archify 仓库：finalize 怎么保住旧产物](https://archify.si/cases/explainer/finalize-delivery.html) · [第一次租房要确认什么](https://archify.si/cases/explainer/first-rental.html) · [第一次打开 HTTPS 网站（英文）](https://archify.si/cases/explainer/tls-first-visit.html)
 
 ### 看懂一个真实代码仓库
 
@@ -153,141 +212,24 @@ API 优先读取 Redis，缓存未命中时查询 PostgreSQL 并回填缓存。
 
 Archify 追踪 [`mco-org/mco`](https://github.com/mco-org/mco) 的 `9f1a1cf` 版本并生成这张校验地图。**[打开成品 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [追踪下游 ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [Typed Source](docs/cases/mco-runtime.architecture.json)
 
-### 易于扩展，社区还在不断创造新用法
+### 做成你自己的作品
 
 <sub>COMMUNITY STORIES · 社区用户提供的部分案例</sub>
 
-**生成之后，还可以继续创造。** Archify 开源，成品是独立 HTML，你可以让 Agent 在此基础上继续修改、接入链接、扩展交互，做出适合自己场景的作品。社区已经把它用到了团队协作、旅行规划、法律核验、合同审查和故障复盘；下面只是其中一部分。
+**生成之后，还可以继续创造。** 成品是一个独立的 HTML 文件：用浏览器打开就能用，发给别人交互也一起保留。你可以让 Agent 在此基础上继续修改、接入链接、扩展交互。社区已经把它用到了团队协作、旅行规划、法律核验、合同审查和故障复盘。
 
-一位用户从纸上手绘的多智能体架构开始，让 Agent 生成交互图，再通过对话加入 Kimi 执行池。另一些用户让 Agent 阅读项目，把生成的架构图带进飞书或钉钉，继续和团队讨论。
-
-还有用户把上海 CityWalk 攻略整理成了四天行程图：按天切换路线，点击节点查看地点信息，并跳转高德地图、小红书和大众点评。作者还扩展了到达打卡和停留记录，让一张路线图变成旅途中可以实际使用的小工具。这些扩展由社区作者为该作品添加。
-
-**[▶ 点击体验上海 CityWalk 交互版](https://archify.si/cases/community/shanghai-citywalk.html)**
+一位用户把上海 CityWalk 攻略整理成了四天行程图：按天切换路线，点击节点查看地点信息，并跳转高德地图、小红书和大众点评。作者还扩展了到达打卡和停留记录。这些扩展由社区作者为该作品添加。
 
 [![社区用户创作的上海 CityWalk 四天行程图](docs/assets/community/shanghai-citywalk.png)](https://archify.si/cases/community/shanghai-citywalk.html)
 
-**[▶ 点击体验交互版](https://archify.si/cases/community/shanghai-citywalk.html)** · 切换 D1–D4 行程，点击地点查看详情。
+**[▶ 点击体验上海 CityWalk 交互版](https://archify.si/cases/community/shanghai-citywalk.html)** · **[下载 HTML ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
 
-<sub>社区作品 · 上海 CityWalk · 四天行程与地点链接</sub>
-
-### 下载下来，亲手点一点
-
-成品是一个独立的 HTML 文件。下载后用浏览器打开，即可使用该作品包含的节点详情和路径探索，无需安装 Archify。把 HTML 文件发给别人，交互也会一起保留；外部网站和地图链接需要网络。
-
-**[打开上海 CityWalk 交互版 ↗](https://archify.si/cases/community/shanghai-citywalk.html)** · **[下载 HTML ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
-
-<sub>试试切换 D1–D4、点击地点卡片，或打开地图链接。行程中的时间和地点信息为作者创作时的记录。</sub>
-
-## 社区与关注
-
-- **GitHub Trending 全球仓库周榜第一。** [作者于 2026 年 9 月 1 日发布的榜单截图](https://x.com/t20000622yy/status/2094656813576880285)，筛选为所有语言、This week。
-- **量子位报道与人物采访。** [项目报道](https://www.qbitai.com/2026/09/482469.html) · [开发者故事](https://www.qbitai.com/2026/09/488519.html)。
-- **开发者社区推荐。** [midudev 分享](https://x.com/midudev/status/2094425974406320207)。
-
-<sub>这里选列部分公开报道、分享与历史里程碑；排名日期及来源见链接。</sub>
-
-## 预览
-
-<details>
-<summary>深浅主题、导出菜单与分享卡片</summary>
-
-同一张图，两套主题，一键切换：
-
-| 深色 | 浅色 |
-|---|---|
-| ![深色主题](docs/assets/archify-dark.png) | ![浅色主题](docs/assets/archify-light.png) |
-
-Export 菜单支持复制 PNG，并下载静态或动态格式：
-
-![导出菜单](docs/assets/archify-menu.png)
-
-路径解析后，**Export → Route Share Card** 会把真实路径下载为 1200×630 PNG，并保留完整拓扑上下文。
-
-![Route Share Card：突出 Users 到 API Server 的精确路径，同时保留完整架构作为上下文](docs/assets/archify-route-share-card.png)
-
-完成 authored `Upstream` 或 `Downstream` reach 后，**Export → Reach Share Card** 会捕获这次阅读结果，但不冒充运行时影响分析。
-
-![MCO downstream Reach Share Card：展示从 Command Router 出发的已创作关系](docs/assets/mco-runtime-reach-share-card.png)
-
-在本地打开 [`examples/web-app.html`](examples/web-app.html)，即可体验完整 Viewer。
-
-</details>
-
-## 快速开始
-
-**当前开发版本：** `v3.2.1-dev.1`。详见[版本历史](CHANGELOG.md#unreleased)。
-
-### 1. 安装
-
-**让 AI Agent 安装**
-
-把下面这句原样发给 Agent：
-
-```text
-Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
-```
-
-也可以直接非交互安装。`--agent` 写一个，或为每个切换器目标各写一次（`cursor`、`codex`、`claude-code`、`opencode`、`github-copilot`）。`--copy` 会复制 Skill，而不是创建符号链接：
-
-只安装到 Cursor：
-
-```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
-```
-
-或者，仅在需要全部五个 Agent 时运行：
-
-```bash
-npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
-```
-
-<details>
-<summary>更多安装方式与更新检查说明</summary>
-
-如果只想临时体验：
-
-```bash
-npx skills use tt-a1i/archify@archify --agent codex
-```
-
-DeepSeek Harness（社区集成、显式启用）：运行 `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；参见[兼容范围、限制与安全说明](integrations/deepseek-harness/README.md)。[Agent 切换器](https://archify.si/zh/start?agent=cursor&type=architecture)为 `cursor`、`codex`、`claude-code`、`opencode` 和 `github-copilot` 生成命令。
-
-安装后的 Skill 包含一个低频、失败静默的发布检查，它最多只显示可选更新提醒，绝不会自行下载或安装更新。一次成功检查后，下次网络请求通常约在 24 小时（±20%）后发出；检查失败后，活跃使用可能在首次 6 小时、后续 24 小时退避到期时重试。请求只访问 `https://archify.si/skill-updates/archify/stable.json`。服务端会自然获得 IP、请求时间和常规 HTTP 元数据；检查器不会发送本地版本、Agent、项目数据、用户输入、账户/设备标识，也不会保存或回传 ETag。是否更新以及何时更新始终由你决定。如需完全关闭检查（包括网络请求和提醒状态写入），请在 Agent 环境中设置 `ARCHIFY_UPDATE_CHECK_DISABLED=1`。
-
-</details>
-
-### 获取更新
-
-- **订阅新版本：** 在本 GitHub 仓库顶部选择 **Watch → Custom → Releases**，订阅版本发布通知。点 Star 不会自动订阅更新。
-- **查看更新内容：** [版本说明](https://github.com/tt-a1i/archify/releases)。
-- **使用 RSS 阅读器：** [订阅版本更新源](https://github.com/tt-a1i/archify/releases.atom)。
-
-带有更新检查器的安装版本，也会在交付图时检查新的稳定版，并可显示提醒。不带检查器的旧安装需要先手动更新，才能获得这项功能。是否升级、何时升级由你决定，Archify 不会自动安装更新。
-
-### 2. 直接从描述开始——不需要代码库
-
-```text
-用 Archify 画出：Browser -> API -> Redis 缓存 -> PostgreSQL 回源。
-```
-
-需要源码证据时，打开仓库后改用：
-
-```text
-分析这个仓库，然后使用 archify 生成一张高层运行时架构图。
-只保留 8–12 个核心组件，突出一条主要路径，并标出外部依赖与信任边界。
-辅助信息放进说明卡片，不要继续增加连线。
-```
-
-### 3. 在对话中细调
-
-继续说：`增加 Redis`、`把鉴权移到左侧`、`突出回滚路径`。Archify 会保留 Typed Source，只修改相关部分。
+<sub>社区作品 · 行程中的时间和地点信息为作者创作时的记录；外部地图链接需要网络。</sub>
 
 ## 选择合适的图表
 
 <details>
 <summary>十种图表、架构差异对比与示例</summary>
-
 
 | 类型 | 最适合 | Prompt 中应包含 |
 |---|---|---|
@@ -375,7 +317,6 @@ Architecture 示例：[`Web App`](examples/web-app.html) · [`Archify Pipeline`]
 <details>
 <summary>这些体验背后的工程能力</summary>
 
-
 - **用布局判断代替通用自动布局** —— Agent 根据故事选择层级、留白、线路和强调关系；共享的自动端点会确定性展开，不再让多支箭头堆在同一个中点。
 - **Typed JSON IR** —— 每种 Renderer 模式都有 Schema 和可复现的源文件。
 - **原子交付前校验** —— Schema、布局、HTML/SVG、线路和标签到其他路径的净空检查必须全部通过，Showcase 成品才会替换上一份可信结果。
@@ -389,7 +330,42 @@ Archify 不是通用绘图编辑器，也不是 Mermaid 主题；它负责把技
 
 </details>
 
-## 工作原理
+<details>
+<summary>深浅主题、导出菜单与分享卡片</summary>
+
+同一张图，两套主题，一键切换：
+
+| 深色 | 浅色 |
+|---|---|
+| ![深色主题](docs/assets/archify-dark.png) | ![浅色主题](docs/assets/archify-light.png) |
+
+Export 菜单支持复制 PNG，并下载静态或动态格式：
+
+![导出菜单](docs/assets/archify-menu.png)
+
+路径解析后，**Export → Route Share Card** 会把真实路径下载为 1200×630 PNG，并保留完整拓扑上下文。
+
+![Route Share Card：突出 Users 到 API Server 的精确路径，同时保留完整架构作为上下文](docs/assets/archify-route-share-card.png)
+
+完成 authored `Upstream` 或 `Downstream` reach 后，**Export → Reach Share Card** 会捕获这次阅读结果，但不冒充运行时影响分析。
+
+![MCO downstream Reach Share Card：展示从 Command Router 出发的已创作关系](docs/assets/mco-runtime-reach-share-card.png)
+
+在本地打开 [`examples/web-app.html`](examples/web-app.html)，即可体验完整 Viewer。
+
+</details>
+
+## 参考
+
+- [Schema 说明](archify/schemas/README.md)
+- [Skill 与 Renderer 契约](archify/SKILL.md)
+- [示例](archify/examples/)
+- [Agent 编图手册](docs/authoring-cookbook.zh-CN.md) · [English](docs/authoring-cookbook.md)
+- [版本历史](CHANGELOG.md)
+- [路线图](ROADMAP.md)
+- [自动生成的 Proof Lab](https://archify.si/zh/gallery)
+
+自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
 
 <details>
 <summary>生成、校验、预览与交付的技术细节</summary>
@@ -436,7 +412,8 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 </details>
 
-## 探索与分享
+<details>
+<summary>快捷键与可分享链接</summary>
 
 | 操作 | 控制方式 |
 |---|---|
@@ -452,31 +429,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 稳定链接可以恢复 `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>` 和 `#lens=<kind>~<kind>`。动态模式持续播放连线流动，直到读者暂停；语义预览仍有限运行。动效遵守 `prefers-reduced-motion`，并且不会进入标准导出。
 
-完整生成与 Viewer 契约请查看 [`archify/SKILL.md`](archify/SKILL.md)。
-
-## 安装方式
-
-| 使用位置 | 安装位置或方法 | 能力 |
-|---|---|---|
-| **Claude Code** | `~/.claude/skills/` 或 `.claude/skills/` | 完整 Renderer + Validation 工作流 |
-| **Codex CLI** | `~/.agents/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
-| **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/` 或 `.agents/skills/` | 完整 Renderer + Validation 工作流 |
-| **Claude.ai** | Settings → Capabilities → Skills 中上传 `archify.zip` | 取决于沙箱是否提供 Node.js |
-| **Project Knowledge** | 把 `archify.zip` 上传到项目 | Prompt 驱动的 Architecture Fallback |
-| **Hermes Agent** | 显式启用：`hermes skills install skills-sh/tt-a1i/archify/archify -y` | 社区 Skill-only；Node `>=18`；不是 Nous 官方产品。没有遥测。非切换器目标。[详情](integrations/hermes-agent/README.md)。 |
-| **DeepSeek Harness** | 显式启用：`dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`；调用：`Use the archify skill to map this repository's runtime architecture.`；卸载：`dsh plugin --profile web remove @tt-a1i/archify-dsh`。 | 面向开发者预览版 `@deepseek-ai/dsh@0.1.2-rc.1` 的社区集成；Node `^22.19.0 \|\| >=24.0.0`；不是 DeepSeek 官方产品。没有遥测；shell 文件不会自动进入 Web Produced Files，请返回精确工作区路径。[详情](integrations/deepseek-harness/README.md)。 |
-
-## 参考与边界
-
-- [Schema 说明](archify/schemas/README.md)
-- [Skill 与 Renderer 契约](archify/SKILL.md)
-- [示例](archify/examples/)
-- [Agent 编图手册](docs/authoring-cookbook.zh-CN.md) · [English](docs/authoring-cookbook.md)
-- [版本历史](CHANGELOG.md)
-- [路线图](ROADMAP.md)
-- [自动生成的 Proof Lab](https://archify.si/zh/gallery)
-
-自动 Mermaid Parser、通用自动布局、托管分享服务和 WYSIWYG 编辑器目前都不在产品范围内。
+</details>
 
 ## 社区交流
 
@@ -495,19 +448,21 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 </tr>
 </table>
 
+- **GitHub Trending 全球仓库周榜第一。** [作者于 2026 年 9 月 1 日发布的榜单截图](https://x.com/t20000622yy/status/2094656813576880285)，筛选为所有语言、This week。
+- **量子位报道与人物采访。** [项目报道](https://www.qbitai.com/2026/09/482469.html) · [开发者故事](https://www.qbitai.com/2026/09/488519.html)。
+- **开发者社区推荐。** [midudev 分享](https://x.com/midudev/status/2094425974406320207)。
+
+<sub>这里选列部分公开报道、分享与历史里程碑；排名日期及来源见链接。</sub>
+
 <a id="official-services"></a>
 
-## 官方入口与第三方服务
+## License 与官方入口
 
-- **开源项目：** 当前源码及由其构建的安装包可按 [Apache-2.0 协议](LICENSE)使用；历史发行版保留原有许可。
-- **官方网站：** [archify.si](https://archify.si) 目前提供项目介绍、示例和安装指引。
-- **第三方服务：** 是否收费、如何处理数据、提供什么支持，由第三方运营方决定。名称或域名相似不代表官方合作。
-
-## License
-
-[Apache-2.0](LICENSE) —— 可以自由使用、修改和分发。
+[Apache-2.0](LICENSE) —— 可以自由使用、修改和分发。当前源码及由其构建的安装包按此协议提供；历史发行版保留原有许可。
 
 历史 MIT 授权继续有效，见 [NOTICE](NOTICE) 和 [LICENSE-MIT](LICENSE-MIT)。第三方组件保留各自许可；软件许可不改变用户原创内容的权属，也不授予一般性的 Archify 商标使用权。
+
+官方网站 [archify.si](https://archify.si) 提供项目介绍、示例和安装指引。第三方服务是否收费、如何处理数据、提供什么支持，由其运营方决定；名称或域名相似不代表官方合作。
 
 ## 参与贡献
 

@@ -12,8 +12,6 @@
 
 <p align="center">アイデア、疑問、計画のどれから始めても構いません。AI エージェントに説明すれば、Archify が探索・カスタマイズ・共有できるインタラクティブな HTML を生成します。旅行の行程や学習マップから複雑なシステムまで、あなた自身のものに作り込めます。</p>
 
-<p align="center">コミュニティが何を作っているかを見て、自分なら次に何を作れるかを考えてみてください。</p>
-
 <p align="center">
   <a href="https://archify.si/gallery.html"><strong>ライブデモ</strong></a> &nbsp;·&nbsp;
   <a href="#start"><strong>使ってみる</strong></a> &nbsp;·&nbsp;
@@ -32,7 +30,7 @@
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
   <a href="https://skills.sh/tt-a1i/archify/archify"><img src="https://img.shields.io/badge/installs-130K%2B-0EA5E9?style=flat-square" alt="130K+ installs on skills.sh" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
-  <a href="#インストール方法"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
+  <a href="#クイックスタート"><img src="https://img.shields.io/badge/works_with-Claude_Code_%7C_Codex_%7C_Cursor_%7C_OpenCode-7C3AED?style=flat-square" alt="Works with Claude Code, Codex, Cursor, and OpenCode" /></a>
   <a href="CHANGELOG.md#unreleased"><img src="https://img.shields.io/badge/version-3.2.1--dev.1-0891b2?style=flat-square" alt="Development version 3.2.1-dev.1" /></a>
 </p>
 
@@ -44,6 +42,19 @@
   <a href="https://x.com/t20000622yy"><img src="https://img.shields.io/badge/Creator_on_X-181717?style=for-the-badge&amp;logo=x&amp;logoColor=white" alt="Follow the creator on X" /></a>
 </p>
 
+<p align="center"><a href="#sponsors"><strong>❤️ パートナー & スポンサー</strong></a> · 注目のコラボ：<a href="https://www.kimi.ai/?aff=archify"><strong>Archify × Kimi Work</strong></a></p>
+
+<table align="center">
+<tr>
+  <td align="center" width="140"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.openlux.ai/register?channel=c_qdvanbpc"><img src="docs/assets/sponsors/openlux-logo.png" alt="OpenLux" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.packyapi.ai/register?aff=bN97"><img src="docs/assets/sponsors/packycode-logo.png" alt="PackyCode" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL"><img src="docs/assets/sponsors/aicodemirror-logo.jpg" alt="AICodeMirror" width="140" /></a></td>
+  <td align="center" width="140"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="48" /></a></td>
+  <td align="center" width="140"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc" width="64" /></a></td>
+</tr>
+</table>
+
 ## 実際の Archify
 
 <!-- archify-launch-video -->
@@ -52,65 +63,7 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 
 **ひと言で、リポジトリを可視化。** 約35秒の英語デモで、図の操作、ソースコードへのリンク、経路の追跡をご覧ください。[インタラクティブな作例を試す ↗](https://archify.si/gallery.html)
 
-<a id="start"></a>
-
-### インストールして、アイデアを説明する
-
-Cursor、Claude Code、Codex CLI、OpenCode で利用できます。その他の連携については下記のインストール方法を参照してください。
-
-**AI エージェントに任せる。** 次の文をそのまま貼り付けてください:
-
-```text
-Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
-```
-
-エージェントにこう送ってください:
-
-```text
-Use Archify to diagram a web request: Browser calls the API,
-the API checks Redis, and a cache miss queries PostgreSQL and fills the cache.
-```
-
-そのまま「認証を追加して」「キャッシュミスの経路を強調して」「ライトテーマに切り替えて」と続けられます。
-
-**リポジトリは不要です:** 説明から始めることも、リポジトリを読ませてソースに基づくアーキテクチャ図を作らせることもできます。
-
-[エージェントを選ぶ](https://archify.si/start.html?agent=cursor&type=architecture) · [インストールの詳細と更新チェック](#クイックスタート)
-
-## 質問すると、1 ページで答えが返る
-
-答えがいつも 1 枚の図とは限りません。エージェントに「1 ページで答えて」と頼むと、Archify は **explainer** を作ります。結論を先に示し、質問ごとのパネルで、表・手順・チャート・コード・検証済みの図を使って理由を説明します。
-
-[![explainer の例：結論が先頭にあり、手順がそれを説明するシーケンス図の横に並ぶ](docs/assets/explainer-tls-en.png)](https://archify.si/cases/explainer/tls-first-visit.html)
-
-- **結論が先。** 答えと理由が先頭に来て、各パネルは 1 つの質問に答えます。
-- **図と文章が連動する。** 手順は説明対象の図の横に並び、読んでいる手順に合わせて図の該当部分が光ります。ノードをクリックすると完全なインタラクティブ表示が開きます。
-- **確かめられる。** 主張には番号付きの出典が付き、リポジトリの抜粋は特定のコミットに固定され、ソースカードで開けます。
-- **共有しやすい。** 1 つの HTML ファイルに 4 つのスタイルとライト／ダークテーマ。PNG・WebP・JPG の縦長画像や PDF 印刷で書き出せます。どのパネルにも追加の質問ができ、エージェントはそのパネルだけを直せます。
-
-```text
-Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 600 ms に上がったが、
-平均はほとんど変わらない。考えられる原因と調べ方は？
-```
-
-ライブ例：[初めての HTTPS 接続（英語）](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 レイテンシ（中国語）](https://archify.si/cases/explainer/p99-tail-latency.html) · [Archify の finalize をリポジトリから読む（中国語）](https://archify.si/cases/explainer/finalize-delivery.html) · [初めての賃貸チェックリスト（中国語）](https://archify.si/cases/explainer/first-rental.html)
-
-## ❤️ スポンサー
-
-<table>
-<tr>
-  <td align="center" width="240"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="200"/></a><br/><strong><a href="https://supercode.sh/?utm_source=archify">supercode.sh</a></strong></td>
-<td><a href="https://supercode.sh/?utm_source=archify">Supercode</a> は Archify をスポンサーし、トークン最適化・厳選された Skills・仕様駆動開発によって Codex と Cursor を強化しています。Archify は <a href="https://supercode.sh/en/skills/tt-a1i/archify/archify">Supercode Editor’s Choice</a> スキルに選出されています。<br/><br/><a href="https://supercode.sh/en/skills/tt-a1i/archify/archify"><img src="https://supercode.sh/badges/editors-choice.svg" alt="Supercode Editor’s Choice — Archify" width="240" height="55"/></a></td>
-</tr>
-<tr>
-<td align="center" width="240"><a href="https://www.openlux.ai/register?channel=c_qdvanbpc"><img src="docs/assets/sponsors/openlux-logo.png" alt="OpenLux" width="200" /></a><br/><strong><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">OpenLux</a></strong></td>
-<td>OpenLux による本プロジェクトへのスポンサー支援に感謝します！OpenLux は、世界の主要プロバイダーの AI モデルを集約した企業向けのオールインワン AI プラットフォームです。高速で安定したサービスと迅速な技術サポートを提供し、Claude、OpenAI、Gemini シリーズの基本料金は、それぞれ公式料金の 8.82%、4%、8% から利用できます。<br/><br/>Archify ユーザー限定特典：専用リンクから登録すると、クレジットのチャージが最大 7.5% 割引になります！<br/><br/><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">OpenLux を試す →</a></td>
-</tr>
-</table>
-
-> Archify のスポンサーをご検討ですか？ [メールでお問い合わせください。](mailto:2801884530@qq.com)
-
-## 伝えたいことを見せる
+### 伝えたいことを見せる
 
 | エージェントのワークフローを説明する | キャッシュミスを追う | サービス間の関係を調べる |
 |---|---|---|
@@ -119,74 +72,7 @@ Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 6
 
 [Proof Lab](https://archify.si/gallery.html) には、チェックイン済みの 11 シナリオすべてと、その JSON ソース、検証レシートが含まれています。
 
-### 実際のリポジトリを理解する
-
-<sub>CODE → DIAGRAM · ソースに基づくシステムマップ</sub>
-
-[![公開リポジトリ mco-org/mco から生成した MCO ランタイムアーキテクチャ](docs/assets/mco-runtime-share-card.png)](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)
-
-Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解析し、この検証済みマップを生成しました。**[開く ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [到達範囲をトレース ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [型付きソース](docs/cases/mco-runtime.architecture.json)
-
-### 拡張しやすい。自分のものにする方法はいくつもある。
-
-<sub>COMMUNITY STORIES · ユーザーが共有してくれた事例の一部</sub>
-
-**図ができたあとも作り続けられます。** Archify はオープンソースで、出力は単体で動く HTML です。エージェントに頼んで手を加えたり、役立つリンクをつないだり、自分のワークフロー向けのインタラクションを足したりできます。コミュニティの作例はチームのコラボレーション、旅行の計画、法令引用のチェック、契約レビュー、インシデントの振り返りにまで広がっています。ここに挙げたのはその一部です。
-
-あるユーザーは手描きのマルチエージェント構成図から始めてインタラクティブな図に変え、さらに会話を重ねて Kimi の実行プールを追加しました。別のユーザーはエージェントにプロジェクトを読ませ、できあがったアーキテクチャを Feishu や DingTalk に持ち込んでチームで議論しています。
-
-上海 CityWalk のガイドを 4 日間の行程表に変えたユーザーもいます。日ごとに切り替え、立ち寄り先を確認し、Amap・Xiaohongshu・Dianping へ飛べます。作者は到着時のチェックインや立ち寄り先のメモも追加し、旅行中に使える小さなツールに仕立てました。これらの拡張は、この成果物のためにコミュニティの作者自身が加えたものです。
-
-**[▶ インタラクティブな上海 CityWalk を見る](https://archify.si/cases/community/shanghai-citywalk.html)**
-
-[![コミュニティが作成した 4 日間の上海 CityWalk 行程表](docs/assets/community/shanghai-citywalk.png)](https://archify.si/cases/community/shanghai-citywalk.html)
-
-**[▶ インタラクティブ版を試す](https://archify.si/cases/community/shanghai-citywalk.html)** · D1〜D4 を切り替え、場所をクリックして探索できます。
-
-<sub>コミュニティ成果物 · 上海 CityWalk · 4 日分のルートと場所のリンク</sub>
-
-### ダウンロードして、開いて、探索する
-
-出力は単体で完結する HTML ファイルです。ダウンロードしてブラウザで開けば、その成果物に含まれるノードの詳細と経路の探索をそのまま使えます。閲覧に Archify のインストールは必要ありません。HTML を誰かに送れば操作性もそのまま届きます。外部サイトや地図のリンクにはネットワーク接続が必要です。
-
-**[上海 CityWalk を見る ↗](https://archify.si/cases/community/shanghai-citywalk.html)** · **[HTML をダウンロード ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
-
-<sub>D1〜D4 の切り替え、場所カードを開く、地図リンクをたどる、といった操作を試してみてください。時刻や場所の情報は作者の元の行程に基づいています。</sub>
-
-## コミュニティと評価
-
-- **GitHub Trending の週間・全言語リポジトリランキングで 1 位。** [作者が 2026 年 9 月 1 日に公開したランキングのスクリーンショット](https://x.com/t20000622yy/status/2094656813576880285)（全言語・「This week」を選択した状態）。
-- **QbitAI（量子位）に取り上げられ、インタビューを受けました。** [プロジェクト紹介](https://www.qbitai.com/2026/09/482469.html) · [開発者のストーリー](https://www.qbitai.com/2026/09/488519.html)。
-- **開発者コミュニティで共有されました。** [midudev の投稿](https://x.com/midudev/status/2094425974406320207)。
-
-<sub>公開された記事、コミュニティでの共有、これまでの節目から一部を挙げています。日付と出典は各リンクを参照してください。</sub>
-
-## プレビュー
-
-<details>
-<summary>テーマ、エクスポート、シェアカード</summary>
-
-同じ図を 2 つのテーマで、ワンクリック切り替え:
-
-| ダーク | ライト |
-|---|---|
-| ![ダークテーマ](docs/assets/archify-dark.png) | ![ライトテーマ](docs/assets/archify-light.png) |
-
-Export メニューから PNG をクリップボードにコピーしたり、静止画・モーション形式でダウンロードできます:
-
-![Export メニュー](docs/assets/archify-menu.png)
-
-ルートをトレースしたあと、**Export → Route Share Card** を選ぶと、その記述済みパスを 1200×630 の PNG としてダウンロードできます。図全体も文脈として保持されます。
-
-![Users から API Server への正確な経路を、アーキテクチャ全体を文脈として保持したまま示す Route Share Card](docs/assets/archify-route-share-card.png)
-
-記述された `Upstream` / `Downstream` の到達範囲をトレースしたあと、**Export → Reach Share Card** はランタイム上の影響を主張することなく、その読み取り結果をそのまま切り出します。
-
-![Command Router からの記述済み関係を示す MCO の下流 Reach Share Card](docs/assets/mco-runtime-reach-share-card.png)
-
-完全なビューアを試すには、[`examples/web-app.html`](examples/web-app.html) をローカルで開いてください。
-
-</details>
+<a id="start"></a>
 
 ## クイックスタート
 
@@ -217,7 +103,7 @@ npx -y skills@latest add https://archify.si --skill archify --agent cursor --age
 ```
 
 <details>
-<summary>その他のインストール方法と更新チェックの詳細</summary>
+<summary>その他のインストール方法、連携、更新チェック</summary>
 
 インストールせずに試す場合:
 
@@ -229,14 +115,29 @@ npx skills use tt-a1i/archify@archify --agent codex
 
 [エージェント切り替え](https://archify.si/start.html?agent=cursor&type=architecture)は `cursor`、`codex`、`claude-code`、`opencode`、`github-copilot` に対応しています。
 
+| 環境 | インストール先または方法 | 機能 |
+|---|---|---|
+| **Claude Code** | `~/.claude/skills/` または `.claude/skills/` | レンダラー + 検証ワークフローのフル機能 |
+| **Codex CLI** | `~/.agents/skills/` または `.agents/skills/` | レンダラー + 検証ワークフローのフル機能 |
+| **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/`、または `.agents/skills/` | レンダラー + 検証ワークフローのフル機能 |
+| **Claude.ai** | Settings → Capabilities → Skills から `archify.zip` をアップロード | サンドボックスでの Node.js 利用可否に依存 |
+| **Project Knowledge** | プロジェクトに `archify.zip` をアップロード | プロンプト駆動のアーキテクチャフォールバック |
+| **Hermes Agent** | 明示的に有効化: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | コミュニティ版の Skill のみの統合。Node `>=18`。Nous 公式製品ではありません。テレメトリはありません。切り替え対象には含まれません。[詳細](integrations/hermes-agent/README.md)。 |
+| **DeepSeek Harness** | 明示的に有効化: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`。呼び出し: `Use the archify skill to map this repository's runtime architecture.` 削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh` | 開発者プレビュー版 `@deepseek-ai/dsh@0.1.2-rc.1` 向けのコミュニティ統合。Node `^22.19.0 \|\| >=24.0.0`。DeepSeek 公式製品ではなく、テレメトリもありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。 |
+
+**更新を受け取る：** このリポジトリの **Watch → Custom → Releases** を選ぶか、[リリースノート](https://github.com/tt-a1i/archify/releases)や[リリースフィード](https://github.com/tt-a1i/archify/releases.atom)をご利用ください。
+
 Archify は固定の安定版マニフェストを GET して任意の更新リマインダーを表示することがありますが、更新をダウンロードしたりインストールしたりすることはありません。チェックに成功すると次回まで約 24 時間（±20%）待機し、失敗した場合はアクティブに使用していれば 6 時間後、その後は 24 時間後に再試行します。サーバーが受け取るのは通常の HTTP メタデータ（IP と時刻）だけで、バージョン、Agent、プロジェクトデータ、プロンプト、アカウント／デバイス ID、ETag は送信されません。更新するかどうか、いつ更新するかは常にあなたが決めます。`ARCHIFY_UPDATE_CHECK_DISABLED=1` を設定すると、ネットワーク通信とリマインダー状態の書き込みを無効化できます。
 
 </details>
 
 ### 2. 説明から始める — リポジトリは不要
 
+**リポジトリは不要です:** 見たいものを説明するだけで始められます。
+
 ```text
-Use Archify to draw: Browser -> API -> Redis cache -> PostgreSQL fallback.
+Use Archify to diagram a web request: Browser calls the API,
+the API checks Redis, and a cache miss queries PostgreSQL and fills the cache.
 ```
 
 ソースを根拠にしたい場合は、リポジトリを開いてこう依頼します:
@@ -251,11 +152,66 @@ Put supporting detail in cards instead of adding more edges.
 
 `add Redis`、`move auth to the left`、`highlight the rollback path` のように、焦点を絞った依頼を続けてください。Archify は型付きソースを保持しているため、狙った箇所だけを反復できます。
 
+<a id="sponsors"></a>
+
+## ❤️ スポンサー
+
+<table>
+<tr>
+  <td align="center" width="240"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="200"/></a><br/><strong><a href="https://supercode.sh/?utm_source=archify">supercode.sh</a></strong></td>
+<td><a href="https://supercode.sh/?utm_source=archify">Supercode</a> は Archify をスポンサーし、トークン最適化・厳選された Skills・仕様駆動開発によって Codex と Cursor を強化しています。Archify は <a href="https://supercode.sh/en/skills/tt-a1i/archify/archify">Supercode Editor’s Choice</a> スキルに選出されています。<br/><br/><a href="https://supercode.sh/en/skills/tt-a1i/archify/archify"><img src="https://supercode.sh/badges/editors-choice.svg" alt="Supercode Editor’s Choice — Archify" width="240" height="55"/></a></td>
+</tr>
+<tr>
+<td align="center" width="240"><a href="https://www.openlux.ai/register?channel=c_qdvanbpc"><img src="docs/assets/sponsors/openlux-logo.png" alt="OpenLux" width="200" /></a><br/><strong><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">OpenLux</a></strong></td>
+<td>OpenLux による本プロジェクトへのスポンサー支援に感謝します！OpenLux は、世界の主要プロバイダーの AI モデルを集約した企業向けのオールインワン AI プラットフォームです。高速で安定したサービスと迅速な技術サポートを提供し、Claude、OpenAI、Gemini シリーズの基本料金は、それぞれ公式料金の 8.82%、4%、8% から利用できます。<br/><br/>Archify ユーザー限定特典：専用リンクから登録すると、クレジットのチャージが最大 7.5% 割引になります！<br/><br/><a href="https://www.openlux.ai/register?channel=c_qdvanbpc">OpenLux を試す →</a></td>
+</tr>
+</table>
+
+> Archify のスポンサーをご検討ですか？ [メールでお問い合わせください。](mailto:2801884530@qq.com)
+
+すべてのスポンサーの詳細は[英語版 README](./README.md#sponsors) を参照してください。
+
+## その他の作例
+
+### 質問すると、1 ページで答えが返る
+
+答えがいつも 1 枚の図とは限りません。エージェントに「1 ページで答えて」と頼むと、Archify は **explainer** を作ります。結論を先に示し、質問ごとのパネルで、表・手順・チャート・コード・検証済みの図を使って理由を説明します。主張には番号付きの出典が付き、ページは 1 つの HTML ファイルとして、または縦長画像や PDF として書き出せます。
+
+[![explainer の例：結論が先頭にあり、手順がそれを説明するシーケンス図の横に並ぶ](docs/assets/explainer-tls-en.png)](https://archify.si/cases/explainer/tls-first-visit.html)
+
+```text
+Archify で 1 ページにまとめて答えて：API の P99 が 80 ms から 600 ms に上がったが、
+平均はほとんど変わらない。考えられる原因と調べ方は？
+```
+
+ライブ例：[初めての HTTPS 接続（英語）](https://archify.si/cases/explainer/tls-first-visit.html) · [P99 レイテンシ（中国語）](https://archify.si/cases/explainer/p99-tail-latency.html) · [Archify の finalize をリポジトリから読む（中国語）](https://archify.si/cases/explainer/finalize-delivery.html) · [初めての賃貸チェックリスト（中国語）](https://archify.si/cases/explainer/first-rental.html)
+
+### 実際のリポジトリを理解する
+
+<sub>CODE → DIAGRAM · ソースに基づくシステムマップ</sub>
+
+[![公開リポジトリ mco-org/mco から生成した MCO ランタイムアーキテクチャ](docs/assets/mco-runtime-share-card.png)](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)
+
+Archify は [`mco-org/mco`](https://github.com/mco-org/mco) の `9f1a1cf` を解析し、この検証済みマップを生成しました。**[開く ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark&present=1)** · [到達範囲をトレース ↗](https://archify.si/cases/mco-runtime.architecture.html?theme=dark#focus=router&reach=downstream) · [型付きソース](docs/cases/mco-runtime.architecture.json)
+
+### 自分のものにする
+
+<sub>COMMUNITY STORIES · ユーザーが共有してくれた事例の一部</sub>
+
+**図ができたあとも作り続けられます。** 出力は単体で動く 1 つの HTML ファイルです。ブラウザで開くだけで使え、誰かに送れば操作性もそのまま届きます。エージェントに頼んで手を加えたり、役立つリンクをつないだり、インタラクションを足したりできます。コミュニティの作例はチームのコラボレーション、旅行の計画、法令引用のチェック、契約レビュー、インシデントの振り返りにまで広がっています。
+
+上海 CityWalk のガイドを 4 日間の行程表に変えたユーザーもいます。日ごとに切り替え、立ち寄り先を確認し、Amap・Xiaohongshu・Dianping へ飛べます。作者は到着時のチェックインや立ち寄り先のメモも追加しました。これらの拡張は、この成果物のためにコミュニティの作者自身が加えたものです。
+
+[![コミュニティが作成した 4 日間の上海 CityWalk 行程表](docs/assets/community/shanghai-citywalk.png)](https://archify.si/cases/community/shanghai-citywalk.html)
+
+**[▶ インタラクティブな上海 CityWalk を見る](https://archify.si/cases/community/shanghai-citywalk.html)** · **[HTML をダウンロード ↓](https://github.com/tt-a1i/archify/raw/refs/heads/main/docs/cases/community/shanghai-citywalk.html)**
+
+<sub>コミュニティ成果物 · 時刻や場所の情報は作者の元の行程に基づきます。外部の地図リンクにはネットワーク接続が必要です。</sub>
+
 ## 適切な図を選ぶ
 
 <details>
 <summary>10 種類の図、アーキテクチャの比較、サンプル</summary>
-
 
 | 種類 | 向いている対象 | プロンプトに含めるもの |
 |---|---|---|
@@ -340,7 +296,6 @@ Architecture の例: [`web-app`](examples/web-app.html) · [`Archify pipeline`](
 <details>
 <summary>この体験を支えているエンジニアリング</summary>
 
-
 - **汎用オートレイアウトではなくレイアウトの判断** — 階層、余白、経路、強調をエージェントが選択します。共有される自動接続点は決定論的に分散し、1 点に矢印が集中することはありません。
 - **型付き JSON IR** — レンダラーが担うすべてのモードにスキーマと再現可能なソースがあります。
 - **提供前のアトミックな検証** — スキーマ、レイアウト、HTML/SVG、経路、ラベルと経路のクリアランスのすべてのチェックに合格して初めて、ショーケース成果物が直前の正常な出力を置き換えます。
@@ -354,7 +309,39 @@ Archify は汎用の作図エディタでも Mermaid のテーマでもありま
 
 </details>
 
-## 仕組み
+<details>
+<summary>テーマ、エクスポート、シェアカード</summary>
+
+同じ図を 2 つのテーマで、ワンクリック切り替え:
+
+| ダーク | ライト |
+|---|---|
+| ![ダークテーマ](docs/assets/archify-dark.png) | ![ライトテーマ](docs/assets/archify-light.png) |
+
+Export メニューから PNG をクリップボードにコピーしたり、静止画・モーション形式でダウンロードできます:
+
+![Export メニュー](docs/assets/archify-menu.png)
+
+ルートをトレースしたあと、**Export → Route Share Card** を選ぶと、その記述済みパスを 1200×630 の PNG としてダウンロードできます。図全体も文脈として保持されます。
+
+![Users から API Server への正確な経路を、アーキテクチャ全体を文脈として保持したまま示す Route Share Card](docs/assets/archify-route-share-card.png)
+
+記述された `Upstream` / `Downstream` の到達範囲をトレースしたあと、**Export → Reach Share Card** はランタイム上の影響を主張することなく、その読み取り結果をそのまま切り出します。
+
+![Command Router からの記述済み関係を示す MCO の下流 Reach Share Card](docs/assets/mco-runtime-reach-share-card.png)
+
+完全なビューアを試すには、[`examples/web-app.html`](examples/web-app.html) をローカルで開いてください。
+
+</details>
+
+## リファレンス
+
+- [スキーマリファレンス](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [サンプル](archify/examples/) · [エージェント向けクックブック](docs/authoring-cookbook.md)
+- [変更履歴](CHANGELOG.md)
+- [ロードマップ](ROADMAP.md)
+- [生成された Proof Lab](https://archify.si/gallery.html)
+
+Mermaid の自動パース、汎用オートレイアウト、ホスティング型の共有、WYSIWYG 編集は、現時点では意図的にスコープ外としています。
 
 <details>
 <summary>生成、検証、プレビュー、デリバリーの詳細</summary>
@@ -401,7 +388,8 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 </details>
 
-## 出力を探索して共有する
+<details>
+<summary>ショートカットと共有リンク</summary>
 
 | 操作 | ショートカット |
 |---|---|
@@ -417,28 +405,7 @@ node bin/archify.mjs deliver workflow examples/agent-tool-call.workflow.json /tm
 
 安定したリンクで `#focus=<id>`、`#focus=<id>&reach=upstream|downstream`、`#relation=<id>`、`#route=<source>~<target>`、`#lens=<kind>~<kind>` を復元できます。Live は一時停止するまで接続の流れを繰り返し、意味的なプレビューは有限のままです。モーションは `prefers-reduced-motion` を尊重し、正規のエクスポートには含まれません。
 
-生成とビューアの完全な仕様は [`archify/SKILL.md`](archify/SKILL.md) にあります。
-
-## インストール方法
-
-| 環境 | インストール先または方法 | 機能 |
-|---|---|---|
-| **Claude Code** | `~/.claude/skills/` または `.claude/skills/` | レンダラー + 検証ワークフローのフル機能 |
-| **Codex CLI** | `~/.agents/skills/` または `.agents/skills/` | レンダラー + 検証ワークフローのフル機能 |
-| **opencode** | `~/.config/opencode/skills/`、`.opencode/skills/`、または `.agents/skills/` | レンダラー + 検証ワークフローのフル機能 |
-| **Claude.ai** | Settings → Capabilities → Skills から `archify.zip` をアップロード | サンドボックスでの Node.js 利用可否に依存 |
-| **Project Knowledge** | プロジェクトに `archify.zip` をアップロード | プロンプト駆動のアーキテクチャフォールバック |
-| **Hermes Agent** | 明示的に有効化: `hermes skills install skills-sh/tt-a1i/archify/archify -y` | コミュニティ版の Skill のみの統合。Node `>=18`。Nous 公式製品ではありません。テレメトリはありません。切り替え対象には含まれません。[詳細](integrations/hermes-agent/README.md)。 |
-| **DeepSeek Harness** | 明示的に有効化: `dsh plugin --profile web add @tt-a1i/archify-dsh@1.0.0`。呼び出し: `Use the archify skill to map this repository's runtime architecture.` 削除: `dsh plugin --profile web remove @tt-a1i/archify-dsh` | 開発者プレビュー版 `@deepseek-ai/dsh@0.1.2-rc.1` 向けのコミュニティ統合。Node `^22.19.0 \|\| >=24.0.0`。DeepSeek 公式製品ではなく、テレメトリもありません。シェルファイルには Web Produced Files ではなく、正確なワークスペースパスが必要です。[詳細](integrations/deepseek-harness/README.md)。 |
-
-## リファレンスとスコープ
-
-- [スキーマリファレンス](archify/schemas/README.md) · [Skill](archify/SKILL.md) · [サンプル](archify/examples/) · [エージェント向けクックブック](docs/authoring-cookbook.md)
-- [変更履歴](CHANGELOG.md)
-- [ロードマップ](ROADMAP.md)
-- [生成された Proof Lab](https://archify.si/gallery.html)
-
-Mermaid の自動パース、汎用オートレイアウト、ホスティング型の共有、WYSIWYG 編集は、現時点では意図的にスコープ外としています。
+</details>
 
 ## コミュニティ
 
@@ -450,6 +417,9 @@ Mermaid の自動パース、汎用オートレイアウト、ホスティング
 - <img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat: 下の QR コードをスキャンしてください。WeChat のグループコードは定期的に失効します。失効していた場合は、Discord か QQ で最新のコードを尋ねてください。
 - <img src="docs/assets/community/qq.svg" alt="" width="18" /> QQ グループ: `1121948602`
 
+<details>
+<summary>WeChat と QQ グループの QR コード</summary>
+
 <table>
 <tr>
   <td align="center"><strong><img src="docs/assets/community/wechat.svg" alt="" width="18" /> WeChat</strong><br/><img src="docs/assets/community/wechat-qr.png" alt="Archify Official WeChat group QR code" width="300" height="300" /></td>
@@ -457,19 +427,23 @@ Mermaid の自動パース、汎用オートレイアウト、ホスティング
 </tr>
 </table>
 
+</details>
+
+- **GitHub Trending の週間・全言語リポジトリランキングで 1 位。** [作者が 2026 年 9 月 1 日に公開したランキングのスクリーンショット](https://x.com/t20000622yy/status/2094656813576880285)（全言語・「This week」を選択した状態）。
+- **QbitAI（量子位）に取り上げられ、インタビューを受けました。** [プロジェクト紹介](https://www.qbitai.com/2026/09/482469.html) · [開発者のストーリー](https://www.qbitai.com/2026/09/488519.html)。
+- **開発者コミュニティで共有されました。** [midudev の投稿](https://x.com/midudev/status/2094425974406320207)。
+
+<sub>公開された記事、コミュニティでの共有、これまでの節目から一部を挙げています。日付と出典は各リンクを参照してください。</sub>
+
 <a id="official-services"></a>
 
-## 公式リンクと第三者サービス
+## ライセンスと公式リンク
 
-- **オープンソースプロジェクト：** 現在のソースコードとそれから構築したパッケージには [Apache-2.0 ライセンス](LICENSE)が適用され、過去のリリースは元の許諾を維持します。
-- **公式サイト：** [archify.si](https://archify.si) は現在、プロジェクトの紹介、サンプル、インストール手順を提供しています。
-- **第三者サービス：** 料金、データの取り扱い、サポートは各運営者が決定します。名称やドメインが似ていても、公式の提携を意味するものではありません。
-
-## ライセンス
-
-[Apache-2.0](LICENSE) — 自由に利用・改変・配布できます。
+[Apache-2.0](LICENSE) — 自由に利用・改変・配布できます。現在のソースコードとそれから構築したパッケージにこのライセンスが適用され、過去のリリースは元の許諾を維持します。
 
 過去の MIT 許諾は引き続き有効です。[NOTICE](NOTICE) と [LICENSE-MIT](LICENSE-MIT) を参照してください。第三者コンポーネントには各自のライセンスが適用されます。ソフトウェアの許諾はユーザー作成コンテンツの権利を変更せず、Archify の商標を一般的に使用する権利も付与しません。
+
+公式サイト [archify.si](https://archify.si) は、プロジェクトの紹介、サンプル、インストール手順を提供しています。第三者サービスの料金、データの取り扱い、サポートは各運営者が決定します。名称やドメインが似ていても、公式の提携を意味するものではありません。
 
 ## コントリビュート
 

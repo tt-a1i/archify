@@ -21,7 +21,6 @@ const readmeLanguages = [
     href: './README.md',
     label: 'English',
     demos: '## See Archify in action',
-    preview: '## Preview',
     quickStart: '## Quick start',
     contributing: '## Contributing',
     noRepository: /No repository is required/,
@@ -31,7 +30,6 @@ const readmeLanguages = [
     href: './README.md',
     label: 'English',
     demos: '## See Archify in action',
-    preview: '## Preview',
     quickStart: '## Quick start',
     contributing: '## Contributing',
     noRepository: /No repository is required/,
@@ -41,7 +39,6 @@ const readmeLanguages = [
     href: './README_ZH.md',
     label: '简体中文',
     demos: '## 看看 Archify 能做什么',
-    preview: '## 预览',
     quickStart: '## 快速开始',
     contributing: '## 参与贡献',
     noRepository: /不需要绑定代码库/,
@@ -51,7 +48,6 @@ const readmeLanguages = [
     href: './README_JA.md',
     label: '日本語',
     demos: '## 実際の Archify',
-    preview: '## プレビュー',
     quickStart: '## クイックスタート',
     contributing: '## コントリビュート',
     noRepository: /リポジトリは不要です/,
@@ -397,12 +393,11 @@ test('README demos use checked-in captures and live deep links below the existin
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
     const markIndex = readme.indexOf('docs/assets/archify-lockup-light.svg');
     const proofIndex = readme.indexOf('<!-- archify-launch-video -->');
-    const previewIndex = sectionIndex(readme, filename, language.preview);
     const demosIndex = sectionIndex(readme, filename, language.demos);
     const quickStartIndex = sectionIndex(readme, filename, language.quickStart);
     assert.ok(markIndex >= 0 && markIndex < demosIndex, `${filename}: brand mark must precede the demos`);
-    assert.ok(demosIndex < previewIndex && previewIndex < quickStartIndex, `${filename}: demo section is misplaced`);
-    assert.ok(demosIndex < proofIndex && proofIndex < previewIndex, `${filename}: launch video is outside the demo section`);
+    assert.ok(demosIndex < quickStartIndex, `${filename}: demo section must precede Quick start`);
+    assert.ok(demosIndex < proofIndex && proofIndex < quickStartIndex, `${filename}: launch video is outside the demo section`);
     for (const demo of demos) {
       assert.match(readme, new RegExp(`docs/assets/${demo.asset.replaceAll('.', '\\.')}`));
       assert.ok(readme.includes(demo.link), `${filename}: missing ${demo.link}`);
@@ -430,8 +425,18 @@ test('README preserves the visual proof set and key content', () => {
 
   for (const { file: filename, noRepository } of readmeLanguages) {
     const readme = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
-    const supercode = readme.indexOf('https://supercode.sh/?utm_source=archify');
-    assert.ok(supercode >= 0, `${filename}: Supercode sponsor entry is missing`);
+    const header = readme.slice(0, readme.indexOf(readmeLanguages.find((entry) => entry.file === filename).demos));
+    for (const sponsor of [
+      'https://supercode.sh/?utm_source=archify',
+      'https://www.openlux.ai/register?channel=c_qdvanbpc',
+      'https://www.packyapi.ai/register?aff=bN97',
+      'https://www.aicodemirror.ai/register?invitecode=WC26FL',
+      'https://zturbo.top',
+      'https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link',
+    ]) {
+      assert.ok(header.includes(`<a href="${sponsor}">`), `${filename}: header sponsor strip must link ${sponsor}`);
+    }
+    assert.ok(readme.includes('<a id="sponsors"></a>'), `${filename}: sponsor section anchor is missing`);
     assert.match(readme, noRepository, `${filename}: the no-repository entry point is missing`);
     for (const asset of commonAssets) {
       assert.ok(readme.includes(`docs/assets/${asset}`), `${filename}: visual proof ${asset} was removed`);

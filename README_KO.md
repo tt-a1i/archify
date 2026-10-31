@@ -26,6 +26,19 @@
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
 </p>
 
+<p align="center"><a href="./README.md#sponsors"><strong>❤️ 파트너 & 스폰서</strong></a> · 협업: <a href="https://www.kimi.ai/?aff=archify"><strong>Archify × Kimi Work</strong></a></p>
+
+<table align="center">
+<tr>
+  <td align="center" width="140"><a href="https://supercode.sh/?utm_source=archify"><img src="https://cdn.supercode.sh/sponsors/supercode-logo.png" alt="Supercode" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.openlux.ai/register?channel=c_qdvanbpc"><img src="docs/assets/sponsors/openlux-logo.png" alt="OpenLux" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.packyapi.ai/register?aff=bN97"><img src="docs/assets/sponsors/packycode-logo.png" alt="PackyCode" width="120" /></a></td>
+  <td align="center" width="140"><a href="https://www.aicodemirror.ai/register?invitecode=WC26FL"><img src="docs/assets/sponsors/aicodemirror-logo.jpg" alt="AICodeMirror" width="140" /></a></td>
+  <td align="center" width="140"><a href="https://zturbo.top"><img src="docs/assets/sponsors/zturbo-logo.png" alt="ZTURBO" width="48" /></a></td>
+  <td align="center" width="140"><a href="https://www.infistar.cc/register?aff=9N89LEMV&amp;ref_source=link"><img src="docs/assets/sponsors/infistar-logo.svg" alt="Infistar.cc" width="64" /></a></td>
+</tr>
+</table>
+
 ## Archify 살펴보기
 
 <!-- archify-launch-video -->
