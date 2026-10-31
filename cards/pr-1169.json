@@ -1,0 +1,10 @@
+{
+  "templateVersion": 1,
+  "repository": "tt-a1i/archify",
+  "number": 1169,
+  "author": "tt-a1i",
+  "title": "fix(distribution): publish lightweight stable Skill source",
+  "mergedAt": "2026-10-31T03:12:35Z",
+  "mergeCommit": "14e44eb397ed17feb8f20464421bff4f489247a1",
+  "url": "https://github.com/tt-a1i/archify/pull/1169"
+}
