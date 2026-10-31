@@ -1,0 +1,31 @@
+name: NPMscan
+
+on:
+  pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - archify/package.json
+      - archify/package-lock.json
+      - .github/workflows/npmscan.yml
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  npmscan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: Run NPMscan
+        uses: NPMscan/npmscan-action@de14168f65640a4ed1f0e82ad3ad8c80483d360d # v1.3.0
+        with:
+          files: |
+            package.json
+            package-lock.json
+            archify/package.json
+            archify/package-lock.json
+          mode: warn
+          fail-on-error: false
