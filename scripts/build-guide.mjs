@@ -30,7 +30,7 @@ const replacements = {
 
 let output = fs.readFileSync(templatePath, 'utf8');
 for (const [placeholder, value] of Object.entries(replacements)) {
-  output = output.replaceAll(placeholder, value);
+  output = output.replaceAll(placeholder, () => value);
 }
 
 if (/\[\[[A-Z0-9_]+\]\]/.test(output)) {
