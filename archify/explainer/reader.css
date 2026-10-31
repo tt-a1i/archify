@@ -449,7 +449,7 @@ dialog::backdrop{background:rgb(10 10 12/.55);backdrop-filter:blur(2px)}
 /* Narrow desktop windows */
 @media(max-width:1255px){.diagram-panel,.diagram-panel+.panel,.panel:has(+.diagram-panel){grid-column:span 12}}
 @media(max-width:1100px){.shell{width:calc(100% - 40px)}.masthead{align-items:flex-start;flex-wrap:wrap}.board{gap:12px}.panel-head{padding:12px 16px}.panel-body{padding:14px 16px 16px}.answer-scope{padding:10px 16px 12px}}
-@media(max-width:760px){.shell{width:calc(100% - 24px)}.board{display:flex;flex-direction:column}.sources ol{grid-template-columns:1fr}h1{font-size:22px}.verdict{font-size:18px}}
+@media(max-width:760px){.shell{width:calc(100% - 24px)}.board{display:flex;flex-direction:column}.sources ol{grid-template-columns:1fr}h1{font-size:22px}.verdict{font-size:18px}.js .tools{position:relative;min-width:0;max-width:100%;flex-wrap:wrap}.tools .tool-menu{position:static}.tools .menu-options{left:0;right:auto;max-width:100%;top:calc(100% + 6px)}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 /* Print */
