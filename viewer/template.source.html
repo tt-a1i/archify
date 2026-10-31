@@ -1051,6 +1051,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         node: function (id) {
           var sources = payload && payload.nodes ? payload.nodes[id] : null;
           return Array.isArray(sources) ? sources.slice() : [];
+        },
+        relationship: function (id) {
+          var sources = payload && payload.relationships ? payload.relationships[id] : null;
+          return Array.isArray(sources) ? sources.slice() : [];
         }
       };
     })();

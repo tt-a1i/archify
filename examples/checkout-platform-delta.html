@@ -13707,6 +13707,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         node: function (id) {
           var sources = payload &amp;&amp; payload.nodes ? payload.nodes[id] : null;
           return Array.isArray(sources) ? sources.slice() : [];
+        },
+        relationship: function (id) {
+          var sources = payload &amp;&amp; payload.relationships ? payload.relationships[id] : null;
+          return Array.isArray(sources) ? sources.slice() : [];
         }
       };
     })();
@@ -14034,6 +14038,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var result = reachabilityFor(activeIds[0], direction);
         if (!result || result.nodeIds.length &lt;= 1) return false;
         clearRelationshipPreview({ clearPin: true });
+        renderSourceEvidence(activeIds[0]);
         clearReachability({ updateUrl: false });
         reachabilityMode = direction;
         activeReachability = result;
@@ -14186,12 +14191,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         element.textContent = normalized;
         element.hidden = !normalized;
       }
-      function renderSourceEvidence(id) {
+      function renderSourceEvidence(id, relationship) {
         evidenceLinks.textContent = &#39;&#39;;
         repositoryLink.removeAttribute(&#39;href&#39;);
         repositoryLink.removeAttribute(&#39;aria-label&#39;);
         repositoryLink.textContent = &#39;&#39;;
-        var sources = Archify.sourceEvidence.node(id);
+        var sources = relationship ? Archify.sourceEvidence.relationship(id) : Archify.sourceEvidence.node(id);
         var repository = Archify.sourceEvidence.repository();
         if (!repository || !sources.length) {
           evidence.hidden = true;
@@ -14877,6 +14882,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var target = relationshipHitTarget(key);
         if (target) target.setAttribute(&#39;aria-pressed&#39;, &#39;true&#39;);
         renderRelationshipCopyAction();
+        if (record.id &amp;&amp; Archify.sourceEvidence.relationship(record.id).length) {
+          renderSourceEvidence(record.id, true);
+        }
         summary.textContent = viewerText(&#39;viewer.passport.relationship.pinned&#39;, {
           from: record.fromLabel,
           to: record.toLabel,
@@ -29460,6 +29468,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         node: function (id) {
           var sources = payload &amp;&amp; payload.nodes ? payload.nodes[id] : null;
           return Array.isArray(sources) ? sources.slice() : [];
+        },
+        relationship: function (id) {
+          var sources = payload &amp;&amp; payload.relationships ? payload.relationships[id] : null;
+          return Array.isArray(sources) ? sources.slice() : [];
         }
       };
     })();
@@ -29787,6 +29799,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var result = reachabilityFor(activeIds[0], direction);
         if (!result || result.nodeIds.length &lt;= 1) return false;
         clearRelationshipPreview({ clearPin: true });
+        renderSourceEvidence(activeIds[0]);
         clearReachability({ updateUrl: false });
         reachabilityMode = direction;
         activeReachability = result;
@@ -29939,12 +29952,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         element.textContent = normalized;
         element.hidden = !normalized;
       }
-      function renderSourceEvidence(id) {
+      function renderSourceEvidence(id, relationship) {
         evidenceLinks.textContent = &#39;&#39;;
         repositoryLink.removeAttribute(&#39;href&#39;);
         repositoryLink.removeAttribute(&#39;aria-label&#39;);
         repositoryLink.textContent = &#39;&#39;;
-        var sources = Archify.sourceEvidence.node(id);
+        var sources = relationship ? Archify.sourceEvidence.relationship(id) : Archify.sourceEvidence.node(id);
         var repository = Archify.sourceEvidence.repository();
         if (!repository || !sources.length) {
           evidence.hidden = true;
@@ -30630,6 +30643,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var target = relationshipHitTarget(key);
         if (target) target.setAttribute(&#39;aria-pressed&#39;, &#39;true&#39;);
         renderRelationshipCopyAction();
+        if (record.id &amp;&amp; Archify.sourceEvidence.relationship(record.id).length) {
+          renderSourceEvidence(record.id, true);
+        }
         summary.textContent = viewerText(&#39;viewer.passport.relationship.pinned&#39;, {
           from: record.fromLabel,
           to: record.toLabel,

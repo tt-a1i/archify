@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Repository Evidence Relationship",
+    "output": "architecture-relationship-evidence.html",
+    "repository": {
+      "url": "https://github.com/tt-a1i/archify",
+      "revision": "500d4a65211ffe607fde6b3ce7505027b45bb59e"
+    }
+  },
+  "components": [
+    { "id": "author", "type": "external", "label": "Author", "pos": [80, 180], "size": [160, 64] },
+    { "id": "verifier", "type": "backend", "label": "Evidence verifier", "pos": [360, 180], "size": [180, 64] }
+  ],
+  "connections": [
+    {
+      "id": "author-to-verifier",
+      "from": "author",
+      "to": "verifier",
+      "label": "declares source",
+      "sources": [
+        { "path": "archify/renderers/shared/repository-evidence.mjs", "line": 1, "label": "Repository evidence verifier" }
+      ]
+    }
+  ]
+}

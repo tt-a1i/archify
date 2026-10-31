@@ -32,7 +32,7 @@ function render(mode, inputPath, outPath) {
     path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`),
     inputPath,
     outPath,
-  ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  ], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, ARCHIFY_REPO_ROOT: repoRoot } });
 }
 
 function normalizeNewlines(text) {

@@ -140,26 +140,46 @@ const EVIDENCE_NODE_COLLECTIONS = {
   waterfall: 'spans',
 };
 
-function evidenceNodes(diagramType, diagram) {
+function evidenceCollections(diagramType, diagram) {
   const collection = EVIDENCE_NODE_COLLECTIONS[diagramType];
-  if (!collection) return null;
-  return { collection, nodes: Array.isArray(diagram?.[collection]) ? diagram[collection] : [] };
+  if (!collection) return [];
+  const collections = [{
+    collection,
+    kind: 'node',
+    targets: Array.isArray(diagram?.[collection]) ? diagram[collection] : [],
+  }];
+  if (diagramType === 'architecture') {
+    collections.push({
+      collection: 'connections',
+      kind: 'relationship',
+      targets: Array.isArray(diagram?.connections) ? diagram.connections : [],
+    });
+  }
+  return collections;
 }
 
 export function hasRepositoryEvidence(diagramType, diagram) {
-  const authored = evidenceNodes(diagramType, diagram);
-  if (!authored) return false;
-  return Boolean(diagram?.meta?.repository) || authored.nodes.some((node) => Array.isArray(node?.sources) && node.sources.length);
+  const collections = evidenceCollections(diagramType, diagram);
+  if (!collections.length) return false;
+  return Boolean(diagram?.meta?.repository) || collections.some(({ targets }) =>
+    targets.some((target) => Array.isArray(target?.sources) && target.sources.length));
 }
 
 export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   if (!hasRepositoryEvidence(diagramType, diagram)) return null;
-  const { collection, nodes: authoredNodes } = evidenceNodes(diagramType, diagram);
+  const collections = evidenceCollections(diagramType, diagram);
+  const primaryCollection = collections[0].collection;
+  const sourcedCollections = collections
+    .filter(({ targets }) => targets.some((target) => Array.isArray(target?.sources) && target.sources.length))
+    .map(({ collection }) => collection);
+  const missingRepositoryCollection = sourcedCollections.length === 1
+    ? sourcedCollections[0]
+    : primaryCollection;
 
   const repository = diagram.meta?.repository;
   if (!repository) evidenceFailure('repository-evidence/repository-required', 'Repository evidence requires /meta/repository.', {
-    subject: { path: '/meta/repository', diagramType, collection },
-    supportedFixes: [`add the pinned repository metadata or remove /${collection} sources`],
+    subject: { path: '/meta/repository', diagramType, collection: missingRepositoryCollection },
+    supportedFixes: [`add the pinned repository metadata or remove /${missingRepositoryCollection} sources`],
   });
   if (!FULL_SHA_RE.test(repository.revision || '')) {
     evidenceFailure('repository-evidence/revision-invalid', '/meta/repository/revision must be a full 40-character commit SHA.', {
@@ -253,37 +273,53 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
   // check still runs in source order in the verification loop below, so a
   // citation the batch cannot answer for never reorders the diagnostics.
   const citedObjects = new Map();
-  for (const [nodeIndex, node] of authoredNodes.entries()) {
-    if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
-    for (const [sourceIndex, authored] of node.sources.entries()) {
-      const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
-      let sourcePath;
-      try {
-        sourcePath = withDiagnosticRecordingSuppressed(() => verifiedSourcePath(authored.path, `${at}/path`));
-      } catch {
-        continue;
+  for (const { collection, targets } of collections) {
+    for (const [targetIndex, target] of targets.entries()) {
+      if (!Array.isArray(target.sources) || target.sources.length === 0) continue;
+      for (const [sourceIndex, authored] of target.sources.entries()) {
+        const at = `/${collection}/${targetIndex}/sources/${sourceIndex}`;
+        let sourcePath;
+        try {
+          sourcePath = withDiagnosticRecordingSuppressed(() => verifiedSourcePath(authored.path, `${at}/path`));
+        } catch {
+          continue;
+        }
+        const object = `${revision}:${sourcePath}`;
+        citedObjects.set(object, citedObjects.get(object) || Boolean(authored.line));
       }
-      const object = `${revision}:${sourcePath}`;
-      citedObjects.set(object, citedObjects.get(object) || Boolean(authored.line));
     }
   }
   const prefetchedBlobs = prefetchBlobs(realRoot, citedObjects);
 
   const nodes = Object.create(null);
+  const relationships = Object.create(null);
   const sourceDiagnostics = [];
   let referenceCount = 0;
-  for (const [nodeIndex, node] of authoredNodes.entries()) {
-    if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
-    // `componentId` shipped with the architecture-only path; keep it beside the
-    // type-neutral `nodeId` so existing agent handling stays valid.
-    const nodeSubject = collection === 'components'
-      ? { diagramType, collection, nodeId: node.id, componentId: node.id }
-      : { diagramType, collection, nodeId: node.id };
-    const verified = [];
-    for (const [sourceIndex, authored] of node.sources.entries()) {
-      const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
-      const where = `${at}/path`;
-      try {
+  for (const { collection, kind, targets } of collections) {
+    for (const [targetIndex, target] of targets.entries()) {
+      if (!Array.isArray(target.sources) || target.sources.length === 0) continue;
+      if (kind === 'relationship' && !target.id) {
+        sourceDiagnostics.push({
+          code: 'repository-evidence/relationship-id-required',
+          severity: 'error',
+          message: `/${collection}/${targetIndex}/id is required when the relationship declares sources.`,
+          subject: { surface: 'repository-evidence', path: `/${collection}/${targetIndex}/id`, diagramType, collection },
+          supportedFixes: ['add one stable relationship id or remove the relationship sources'],
+        });
+        continue;
+      }
+      // `componentId` shipped with the architecture-only path; keep it beside the
+      // type-neutral `nodeId` so existing agent handling stays valid.
+      const targetSubject = kind === 'relationship'
+        ? { diagramType, collection, relationshipId: target.id }
+        : collection === 'components'
+          ? { diagramType, collection, nodeId: target.id, componentId: target.id }
+          : { diagramType, collection, nodeId: target.id };
+      const verified = [];
+      for (const [sourceIndex, authored] of target.sources.entries()) {
+        const at = `/${collection}/${targetIndex}/sources/${sourceIndex}`;
+        const where = `${at}/path`;
+        try {
         const source = {
           path: verifiedSourcePath(authored.path, where),
           ...(authored.line ? { line: authored.line } : {}),
@@ -292,13 +328,13 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         };
         if (source.endLine && !source.line) {
           evidenceFailure('repository-evidence/line-required', `${at}/end_line requires line.`, {
-            subject: { path: `${at}/end_line`, ...nodeSubject },
+            subject: { path: `${at}/end_line`, ...targetSubject },
             supportedFixes: ['add line or remove end_line'],
           });
         }
         if (source.endLine && source.endLine < source.line) {
           evidenceFailure('repository-evidence/line-range-invalid', `${at}/end_line must be greater than or equal to line.`, {
-            subject: { path: at, ...nodeSubject },
+            subject: { path: at, ...targetSubject },
             evidence: { line: source.line, endLine: source.endLine },
             supportedFixes: ['use an end_line greater than or equal to line'],
           });
@@ -322,13 +358,13 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           });
           if (knownBlob) {
             evidenceFailure('repository-evidence/object-unavailable', `${where} exists at revision ${revision}, but its content is unavailable in the local repository.`, {
-              subject: { path: where, ...nodeSubject },
+              subject: { path: where, ...targetSubject },
               evidence: { sourcePath: source.path, revision },
               supportedFixes: ['explicitly fetch the pinned source objects into the local checkout, then retry verification'],
             });
           }
           evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
-            subject: { path: where, ...nodeSubject },
+            subject: { path: where, ...targetSubject },
             evidence: { sourcePath: source.path, revision },
             supportedFixes: ['use a file path that exists at the pinned revision'],
           });
@@ -338,7 +374,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
             ? { status: 0, stdout: prefetched.content }
             : runGit(realRoot, ['show', object]);
           if (content.status !== 0) evidenceFailure('repository-evidence/file-unreadable', `${where} could not be read at revision ${revision}.`, {
-            subject: { path: where, ...nodeSubject },
+            subject: { path: where, ...targetSubject },
             evidence: { sourcePath: source.path, revision },
             supportedFixes: ['verify the pinned blob is readable in the local checkout'],
           });
@@ -346,7 +382,7 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           const requestedLine = source.endLine || source.line;
           if (requestedLine > lineCount) {
             evidenceFailure('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
-              subject: { path: at, ...nodeSubject },
+              subject: { path: at, ...targetSubject },
               evidence: { sourcePath: source.path, line: source.line, ...(source.endLine ? { endLine: source.endLine } : {}), requestedLine, lineCount, revision },
               supportedFixes: [source.endLine && source.line <= lineCount
                 ? `set end_line to ${lineCount}, the last line of ${source.path}`
@@ -368,15 +404,17 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
         }
       }
     }
-    nodes[node.id] = verified;
+      if (kind === 'relationship') relationships[target.id] = verified;
+      else nodes[target.id] = verified;
+    }
   }
   if (sourceDiagnostics.length) {
     throwDiagnosticError(sourceDiagnostics[0].message, sourceDiagnostics);
   }
   if (referenceCount === 0) {
-    evidenceFailure('repository-evidence/source-required', `/meta/repository requires at least one /${collection} source reference.`, {
-      subject: { path: '/meta/repository', diagramType, collection },
-      supportedFixes: [`add at least one verified /${collection} source or remove repository metadata`],
+    evidenceFailure('repository-evidence/source-required', `/meta/repository requires at least one /${primaryCollection} source reference.`, {
+      subject: { path: '/meta/repository', diagramType, collection: primaryCollection },
+      supportedFixes: [`add at least one verified /${primaryCollection} source or remove repository metadata`],
     });
   }
 
@@ -392,5 +430,6 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
     },
     referenceCount,
     nodes,
+    ...(Object.keys(relationships).length ? { relationships } : {}),
   };
 }

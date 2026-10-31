@@ -147,7 +147,8 @@
           "labelDx": { "type": "number" },
           "labelDy": { "type": "number" },
           "labelSegment": { "type": "integer", "minimum": 0 },
-          "width": { "$ref": "common.schema.json#/$defs/relationshipWidth" }
+          "width": { "$ref": "common.schema.json#/$defs/relationshipWidth" },
+          "sources": { "$ref": "common.schema.json#/$defs/sourceReferences" }
         }
       }
     },

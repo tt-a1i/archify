@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, '..');
+const repositoryRoot = path.resolve(skillRoot, '..');
 const outputRoot = path.resolve(process.argv[2] || path.join(skillRoot, 'examples'));
 
 const TARGETS = [
@@ -32,5 +33,5 @@ for (const [mode, input, output] of TARGETS) {
     path.join(skillRoot, `renderers/${mode}/render-${mode}.mjs`),
     path.join(skillRoot, 'examples', input),
     path.join(outputRoot, output),
-  ], { stdio: 'inherit' });
+  ], { stdio: 'inherit', env: { ...process.env, ARCHIFY_REPO_ROOT: repositoryRoot } });
 }
