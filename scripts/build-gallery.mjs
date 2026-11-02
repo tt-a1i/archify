@@ -55,7 +55,10 @@ for (const item of CASES) {
     path.join(skillRoot, 'renderers', item.type, `render-${item.type}.mjs`),
     inputPath,
     artifactPath,
-  ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  ], {
+    stdio: ['ignore', 'ignore', 'pipe'],
+    env: { ...process.env, ARCHIFY_REPO_ROOT: repoRoot },
+  });
   fs.copyFileSync(inputPath, sourcePath);
 
   const checkOutput = execFileSync(process.execPath, [

@@ -30,6 +30,10 @@ export function fixture() {
   const revision = git(root, 'rev-parse', 'HEAD');
 
   const diagram = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', 'web-app.architecture.json'), 'utf8'));
+  // The shared example now demonstrates a real relationship citation. Fixtures
+  // add only the citations that each test intends to exercise against this
+  // synthetic repository.
+  for (const connection of diagram.connections) delete connection.sources;
   diagram.meta.repository = {
     url: 'https://github.com/example/evidence-repo',
     revision,

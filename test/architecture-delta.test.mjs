@@ -46,11 +46,11 @@ function provenanceFixture() {
   git(root, 'config', 'user.name', 'Archify Tests');
   git(root, 'config', 'user.email', 'archify@example.test');
   git(root, 'remote', 'add', 'origin', 'git@github.com:example/provenance-repo.git');
-  fs.writeFileSync(path.join(sourceDirectory, 'service.js'), 'export const version = 1;\n');
+  fs.writeFileSync(path.join(sourceDirectory, 'service.js'), 'export const version = 1;\nexport const ready = true;\n');
   git(root, 'add', 'src/service.js');
   git(root, 'commit', '-m', 'base');
   const baseRevision = git(root, 'rev-parse', 'HEAD');
-  fs.writeFileSync(path.join(sourceDirectory, 'service.js'), 'export const version = 2;\n');
+  fs.writeFileSync(path.join(sourceDirectory, 'service.js'), 'export const version = 2;\nexport const ready = true;\n');
   git(root, 'add', 'src/service.js');
   git(root, 'commit', '-m', 'head');
   const headRevision = git(root, 'rev-parse', 'HEAD');
@@ -106,6 +106,7 @@ test('architecture compare classifies authored facts separately from geometry an
   assert.deepEqual(receipt.summary.connections, {
     added: 1,
     changed: 2,
+    evidenceChanged: 0,
     removed: 1,
     rerouted: 1,
   });
@@ -156,6 +157,7 @@ test('legend-only changes are presentation changes and never topology changes', 
   assert.deepEqual(receipt.summary.connections, {
     added: 0,
     changed: 0,
+    evidenceChanged: 0,
     removed: 0,
     rerouted: 0,
   });
@@ -314,6 +316,45 @@ test('mixed semantic and geometry component changes retain both exact forms', ()
   const html = fs.readFileSync(output, 'utf8');
   assert.match(html, /data-change-key="component:queue"[^>]+data-change-target-signature="g:changed:geometry,semantic\|g:moved-from:geometry,semantic"/);
   assert.deepEqual(validateArchitectureDeltaHtml(html, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+});
+
+test('a relationship whose only change is its sources is evidence-changed', () => {
+  const { root, basePath, headPath } = provenanceFixture();
+  const connection = {
+    id: 'service-call',
+    from: 'service',
+    to: 'peer',
+    label: 'calls',
+    sources: [{ path: 'src/service.js', line: 1 }],
+  };
+  for (const file of [basePath, headPath]) {
+    const diagram = JSON.parse(fs.readFileSync(file, 'utf8'));
+    diagram.components.push({ id: 'peer', type: 'backend', label: 'Peer', pos: [360, 100], size: [160, 80] });
+    diagram.connections = [connection];
+    fs.writeFileSync(file, JSON.stringify(diagram));
+  }
+  const head = JSON.parse(fs.readFileSync(headPath, 'utf8'));
+  head.connections[0] = { ...connection, sources: [{ path: 'src/service.js', line: 2 }] };
+  fs.writeFileSync(headPath, JSON.stringify(head));
+  const output = path.join(root, 'relationship-evidence-delta.html');
+
+  const result = run(['compare', 'architecture', basePath, headPath, output, '--repo-root', root, '--json']);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  const serviceCall = receipt.changes.connections.find((change) => change.id === 'service-call');
+  assert.equal(receipt.changes.connections.length, 1);
+  assert.equal(serviceCall.status, 'evidence-changed');
+  assert.deepEqual(serviceCall.classifications, ['evidence']);
+  assert.deepEqual(serviceCall.changedFields, ['/sources']);
+  assert.equal(receipt.summary.connections.evidenceChanged, 1);
+  const html = fs.readFileSync(output, 'utf8');
+  assert.match(html, /data-edge-id="service-call"[^>]*data-delta-state="evidence-changed"[^>]*data-delta-classifications="evidence"/);
+  const validation = validateArchitectureDeltaHtml(html, receipt);
+  assert.deepEqual(validation, { ok: true, checksPassed: 10, checkCount: 10 }, JSON.stringify(validation));
+
+  const reordered = structuredClone(JSON.parse(fs.readFileSync(basePath, 'utf8')));
+  reordered.connections[0].sources = [{ line: 1, path: 'src/service.js' }];
+  assert.deepEqual(compareArchitecture(JSON.parse(fs.readFileSync(basePath, 'utf8')), reordered).changes.connections, []);
 });
 
 test('mixed semantic and geometry relationship changes retain both exact routes', () => {
