@@ -1,0 +1,98 @@
+{
+  "capturedAt": "2026-11-02T08:26:38.299Z",
+  "failure": "Clipboard API rejects; execCommand returns false",
+  "observations": [
+    {
+      "phase": "before",
+      "lang": "en",
+      "width": 1440,
+      "theme": "light",
+      "filename": "copy-failure-en-light-1440.png",
+      "button": "Copied",
+      "status": null,
+      "temporaryTextareas": 1,
+      "overflow": 0
+    },
+    {
+      "phase": "before",
+      "lang": "en",
+      "width": 390,
+      "theme": "dark",
+      "filename": "copy-failure-en-dark-390.png",
+      "button": "Copied",
+      "status": null,
+      "temporaryTextareas": 1,
+      "overflow": 0
+    },
+    {
+      "phase": "before",
+      "lang": "zh",
+      "width": 1440,
+      "theme": "light",
+      "filename": "copy-failure-zh-light-1440.png",
+      "button": "已复制",
+      "status": null,
+      "temporaryTextareas": 1,
+      "overflow": 0
+    },
+    {
+      "phase": "before",
+      "lang": "zh",
+      "width": 390,
+      "theme": "dark",
+      "filename": "copy-failure-zh-dark-390.png",
+      "button": "已复制",
+      "status": null,
+      "temporaryTextareas": 1,
+      "overflow": 0
+    },
+    {
+      "phase": "after",
+      "lang": "en",
+      "width": 1440,
+      "theme": "light",
+      "filename": "copy-failure-en-light-1440.png",
+      "button": "Copy prompt",
+      "status": "Copy failed. Select the text manually.",
+      "temporaryTextareas": 1,
+      "overflow": 0
+    },
+    {
+      "phase": "after",
+      "lang": "en",
+      "width": 390,
+      "theme": "dark",
+      "filename": "copy-failure-en-dark-390.png",
+      "button": "Copy prompt",
+      "status": "Copy failed. Select the text manually.",
+      "temporaryTextareas": 1,
+      "overflow": 0
+    },
+    {
+      "phase": "after",
+      "lang": "zh",
+      "width": 1440,
+      "theme": "light",
+      "filename": "copy-failure-zh-light-1440.png",
+      "button": "复制提示词",
+      "status": "复制失败，请手动选择文本。",
+      "temporaryTextareas": 1,
+      "overflow": 0
+    },
+    {
+      "phase": "after",
+      "lang": "zh",
+      "width": 390,
+      "theme": "dark",
+      "filename": "copy-failure-zh-dark-390.png",
+      "button": "复制提示词",
+      "status": "复制失败，请手动选择文本。",
+      "temporaryTextareas": 1,
+      "overflow": 0
+    }
+  ],
+  "ablation": {
+    "guarded": 0,
+    "withoutGuard": 1
+  }
+}
