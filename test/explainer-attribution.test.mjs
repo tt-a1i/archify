@@ -33,6 +33,25 @@ test('claim evidence reports dangling IDs without changing legacy documents', ()
   assert.equal(validateExplainer(documentOf()).ok, true);
 });
 
+test('claim evidence rejects panel, step, and comparison-row IDs', () => {
+  const document = documentOf(['results']);
+  document.panels[0].blocks.push(
+    { id: 'rollout', type: 'steps', items: [{ id: 'rollout-step', text: 'Ship the change.' }] },
+    { id: 'options', type: 'comparison', columns: ['Before'], rows: [{ id: 'options-row', label: 'Latency', cells: [{ text: '120' }] }] },
+  );
+  for (const id of ['results', 'rollout-step', 'options-row']) {
+    document.answer.evidence = [id];
+    const result = validateExplainer(document);
+    assert.equal(result.ok, false, id);
+    assert.ok(result.diagnostics.some(diagnostic => (
+      diagnostic.code === 'explainer/unresolved-reference'
+      && diagnostic.subject.path === '/answer/evidence/0'
+    )), id);
+  }
+  document.answer.evidence = ['rollout', 'options'];
+  assert.equal(validateExplainer(document).ok, true);
+});
+
 test('claim evidence rejects an ID shared by a source and content target', () => {
   const document = documentOf(['latency-chart']);
   document.sources[0].id = 'latency-chart';
