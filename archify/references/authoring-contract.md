@@ -148,6 +148,22 @@ or cards. Include one short supporting line only when the user explicitly asks
 for a subtitle; an omitted or blank subtitle must not leave an empty visual row
 in the generated viewer.
 
+For a longer text alternative to a native diagram, use optional
+`meta.description`: plain text, at most 2,000 Unicode code points (not UTF-16
+code units or grapheme clusters). It is written only to the SVG `<desc>` and
+retained in standalone SVG exports; it never becomes a visible subtitle or a
+raster title band. Write it in the reader's language from supported facts and
+update it when the diagram changes; `meta.locale` does not translate it.
+
+A nonblank description takes precedence over `meta.subtitle`, then the existing
+localized default (including translation overrides). Empty or whitespace-only
+descriptions use that same fallback; nonblank text retains its original spacing.
+Only a nonblank description separates the SVG's title-based accessible name
+from its description. Without one, existing SVG text and attributes stay
+unchanged. Host pages using an SVG through `<img>` still need appropriate `alt`
+text and a long-description strategy; the file's `<desc>` is not a substitute
+for the host's text alternative.
+
 ## Executable geometry rules
 
 Generate one responsive artifact for laptops and external displays, preserving the authored SVG/viewBox, proportions, semantic geometry, and normal document flow. Use meaningful content rows and the Reader-declared readable page-scroll behavior when the complete diagram needs more height; viewport fitting does not authorize alternate topology or smaller typography.

@@ -372,7 +372,7 @@ export function validateCrossCollectionContracts(diagramType, diagram) {
   validateRelationshipIds(diagramType, diagram);
 }
 
-// Accessible name for the generated diagram SVG.
+// Accessible name and optional authored description for the diagram SVG.
 export function svgRootAttrs(meta, explicitQualityProfile) {
   // Motion is a Viewer capability for every diagram; Live/Still controls playback.
   const animation = ' data-animation="trace"';
@@ -389,14 +389,21 @@ export function svgRootAttrs(meta, explicitQualityProfile) {
   const requestedProfile = explicitQualityProfile || process.env.ARCHIFY_QUALITY_PROFILE || meta.quality_profile;
   const qualityProfile = requestedProfile === 'showcase' ? 'showcase' : 'standard';
   const advisory = requestedProfile ? '' : ' data-quality-gates="advisory"';
-  return `role="img" lang="${esc(resolveLocale(meta.locale))}" aria-labelledby="archify-diagram-title archify-diagram-description"${animation}${preset}${engineeringProfile}${parentHref} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
+  // Keep legacy output unchanged; a long authored description must not also
+  // become part of the image's short accessible name.
+  const accessibleAttrs = meta.description?.trim()
+    ? 'aria-labelledby="archify-diagram-title" aria-describedby="archify-diagram-description"'
+    : 'aria-labelledby="archify-diagram-title archify-diagram-description"';
+  return `role="img" lang="${esc(resolveLocale(meta.locale))}" ${accessibleAttrs}${animation}${preset}${engineeringProfile}${parentHref} data-quality-profile="${esc(qualityProfile)}"${advisory}`;
 }
 
-// Keep the accessible name inside the SVG so it survives standalone SVG
+// Keep accessible text inside the SVG so it survives standalone SVG
 // export and embedding. The fixed IDs are deterministic because an Archify
 // artifact intentionally contains one primary diagram SVG.
 export function svgAccessibleText(meta, kind) {
-  const description = meta.subtitle || translateMessage(meta.locale, `diagram.description.${kind}`);
+  const description = meta.description?.trim()
+    ? meta.description
+    : meta.subtitle || translateMessage(meta.locale, `diagram.description.${kind}`);
   return `        <title id="archify-diagram-title">${esc(meta.title)}</title>\n        <desc id="archify-diagram-description">${esc(description)}</desc>`;
 }
 

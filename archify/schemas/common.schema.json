@@ -12,6 +12,11 @@
       "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
       "maxLength": 35
     },
+    "diagramDescription": {
+      "description": "Authored plain-text SVG description, never drawn. Blank text falls back to subtitle or the localized default.",
+      "type": "string",
+      "maxLength": 2000
+    },
     "translations": {
       "type": "object",
       "propertyNames": { "pattern": "^[a-z][a-zA-Z0-9]*(\\.[a-z][a-zA-Z0-9]*)*$" },
