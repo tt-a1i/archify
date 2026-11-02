@@ -16,6 +16,8 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 - **Architecture Delta translation changes (#600).** Compare reports additions, removals and edits to `meta.translations` as presentation changes; translation-key order and empty-versus-omitted catalogs do not affect presentation classification or entity-change counts.
 
+- **Waterfall timing window (#1021, #1028).** The end/duration agreement window is capped at half the rendered span, so an epoch-sized contradiction such as `start: 1e16, end: 1e16, duration: 2` is diagnosed instead of collapsing the recorded duration into a zero-length bar labelled `0 ms`.
+
 - **Explainer chart data (#1008, #1011).** Preserve quotes and backslashes in labels, parse quoted multiline CSV records, and normalize ordinary display whitespace without rewriting source data. Malformed records, missing values and unsupported control characters still fail before replacing an existing delivery.
 
 - Viewer toolbar arrow-key and Home/End navigation includes visible Style and Export triggers (#899).
