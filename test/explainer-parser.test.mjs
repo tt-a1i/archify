@@ -128,6 +128,13 @@ test('answer reasons, scope, numbered source syntax and explicit spans normalize
  for(const list of ['1. Ordered','- First\n  - Nested'])assert.equal(parseExplainer('# Title\n\nAnswer.\n\n'+list).document,null);
 });
 
+test('answer evidence does not hide the conclusion source location',()=>{
+ const result=parseExplainer('# Title\n\n@answer evidence=panel\n\nA direct answer.\n\n## Why?\n\n@prose id=panel text="Evidence"\n');
+ assert.equal(result.sourceMap['/answer/evidence'].line,3);
+ assert.equal(result.sourceMap['/answer/summary'].line,5);
+ assert.equal(result.sourceMap['/answer'].line,5);
+});
+
 test('comparison row IDs stay stable',()=>{
  const result=parse(draft('@comparison columns="A,B"\nCost {#cost-row} | Low {good} | High {bad}'));
  assert.equal(result.document.panels[0].blocks[0].rows[0].id,'cost-row');assert.equal(validateExplainer(result.document).ok,true);

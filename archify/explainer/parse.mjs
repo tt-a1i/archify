@@ -174,7 +174,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
         }
       }
       const allowed = {
-        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope'],
+        source:['title','url','path','lines','revision'],meta:['locale','quality_profile','style','repo_url','repo_revision','repo_provider','repo_link_mode'],answer:['scope','evidence'],
         prose:['id','text'],list:['id','ordered'],callout:['id','level','title','text'],facts:['id'],metric:['id','label','value','limit','unit','note','typical'],steps:['id'],diagram:['id','source','spec','title','changes'],code:['id','source','language'],diff:['id','caption'],image:['id','path','alt','caption'],comparison:['id','columns','label'],chart:['id','title','type','data','x','y','unit']
       }[type];
       if (!allowed) { fail(at+1,'directive',`Unsupported component @${type}.`,'@facts\n| key | value |'); return; }
@@ -189,7 +189,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
         const pointer=`/sources/${document.sources.length}`;document.sources.push(source);map(pointer,source,descriptor(at,cursor));return;
       }
       if (type==='meta') { Object.assign(document.meta,select(a,['locale','quality_profile','style'])); if(a.repo_url || a.repo_revision) document.meta.repository={url:a.repo_url,revision:a.repo_revision,...(a.repo_provider?{provider:a.repo_provider}:{}),...(a.repo_link_mode?{link_mode:a.repo_link_mode}:{})}; for(const key of ['locale','quality_profile','style','repository'])if(document.meta[key]!==undefined)map(`/meta/${key}`,document.meta[key],descriptor(at,cursor));return; }
-      if (type==='answer') { if(a.scope!==undefined){document.answer.scope=a.scope;sourceMap['/answer/scope']=descriptor(at,cursor);}return; }
+      if (type==='answer') { if(a.scope!==undefined){document.answer.scope=a.scope;sourceMap['/answer/scope']=descriptor(at,cursor);} if(a.evidence!==undefined){document.answer.evidence=csv(a.evidence);sourceMap['/answer/evidence']=descriptor(at,cursor);}return; }
       let block={type,...(a.id?{id:a.id}:{})};
       switch(type) {
         case 'prose': rowWidth(rows,1,1,type);block.text=a.text??rows.map(r=>r.cells[0]).join('\n');break;
@@ -291,7 +291,7 @@ export function parseExplainer(sourceText, { inputPath, output } = {}) {
       if(!panel) {
         if(!titleSeen)fail(at+1,'answer','The document title must precede the short answer.','# A title\n\nA direct answer.');
         if(answerSeen)fail(at+1,'answer','The short answer is one paragraph before the panels.','A direct answer in one paragraph.\n\n## Why?');
-        document.answer.summary=text;answerSeen=true;reasonsAllowed=true;map('/answer',document.answer,descriptor(at,cursor));
+        document.answer.summary=text;answerSeen=true;reasonsAllowed=true;map('/answer/summary',document.answer.summary,descriptor(at,cursor));if(!Object.prototype.hasOwnProperty.call(sourceMap,'/answer'))sourceMap['/answer']={...descriptor(at,cursor)};
       } else addBlock({type:'prose',text},at,cursor);
     }
     closePanel(sourceText.length);

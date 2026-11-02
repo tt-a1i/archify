@@ -53,7 +53,7 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
     }
     return {ok:false,diagnostics};
   }
-  const targets=new Map([['answer',{pointer:'/answer',component:'answer'}]]), sourceIds=new Map(), diagrams=new Map(), invalidNative=new Set();
+  const targets=new Map([['answer',{pointer:'/answer',component:'answer'}]]), sourceIds=new Map(), diagrams=new Map(), invalidNative=new Set(), blockIds=new Map();
   function id(value,pointer,component,panelId,registry=targets) {
     if(!ID.test(value)||value.length>100)fail('id',pointer,component,'IDs require an ASCII letter followed by letters, digits, hyphens or underscores.','id=request-path',panelId);
     if(registry.has(value))fail('duplicate-id',pointer,component,'This identity is already used. Use an explicit distinct ID.','id=request-path-branch',panelId);
@@ -64,7 +64,7 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
   for(const [pi,panel]of document.panels.entries()) {
     const pp=`/panels/${pi}`;id(panel.id,`${pp}/id`,'panel',panel.id);
     for(const [bi,block]of panel.blocks.entries()) {
-      const bp=`${pp}/blocks/${bi}`;id(block.id,`${bp}/id`,block.type,panel.id);
+      const bp=`${pp}/blocks/${bi}`;id(block.id,`${bp}/id`,block.type,panel.id);blockIds.set(block.id,{pointer:`${bp}/id`,component:block.type,panelId:panel.id});
       if(block.type==='diagram') {
         diagrams.set(block.id,{block,pointer:bp,panelId:panel.id});
         if(block.spec) {
@@ -81,6 +81,9 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
     }
   }
   for(const sourceId of sourceIds.keys())if(targets.has(`source-${sourceId}`))fail('reserved-id',targets.get(`source-${sourceId}`).pointer,'source','This identity collides with a generated source anchor.','id=reader-section');
+  const answerEvidenceTargets = new Map([...blockIds].concat([...sourceIds].map(([id,value])=>[id,{...value,component:'source'}])));
+  for(const [index, id] of (document.answer.evidence || []).entries()) if(blockIds.has(id) && sourceIds.has(id)) fail('ambiguous-reference',`/answer/evidence/${index}`,'answer','This claim evidence ID names both a source and a content block. Use distinct IDs.','evidence:["chart-id"]');
+  references(document.answer.evidence,'/answer/evidence','answer',undefined,answerEvidenceTargets,'evidence:["chart-id"]');
   function reference(value,pointer,component,panelId,registry,example) {
     if(!registry.has(value))fail('unresolved-reference',pointer,component,'The referenced identity does not exist or has the wrong component type.',example,panelId);
   }

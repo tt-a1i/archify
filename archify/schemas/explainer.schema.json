@@ -65,6 +65,9 @@
         "summary": {
           "$ref": "#/$defs/text"
         },
+        "evidence": {
+          "$ref": "#/$defs/refs"
+        },
         "reasons": {
           "type": "array",
           "items": {
