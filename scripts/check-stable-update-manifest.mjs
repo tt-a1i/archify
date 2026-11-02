@@ -8,11 +8,12 @@ import { fileURLToPath } from 'node:url';
 
 import { validateStableUpdateManifest } from '../archify/scripts/update-contract.mjs';
 
+import { checkerOption } from './checker-options.mjs';
+
 const scriptRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function argument(name, fallback = null) {
-  const index = process.argv.indexOf(name);
-  return index === -1 ? fallback : process.argv[index + 1] || null;
+  return checkerOption(process.argv.slice(2), name, fallback);
 }
 
 const repoRoot = path.resolve(argument('--root', scriptRoot));
