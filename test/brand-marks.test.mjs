@@ -190,6 +190,32 @@ test('all five renderers keep the semantic sigil and add one export-safe brand b
   }
 });
 
+test('compact architecture centers the existing 16px badge without resizing the node', () => {
+  for (const height of [23, 24, 28]) {
+    const name = `centered-brand-${height}`;
+    const input = writeFixture('architecture', name, 'openai', (_diagram, node) => {
+      node.size = [120, height];
+      delete node.sublabel;
+      delete node.tag;
+    });
+    const { result, html } = renderSync('architecture', input, name);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const id = JSON.parse(fs.readFileSync(input, 'utf8')).components[0].id;
+    const block = nodeBlock(html, id);
+    const frame = block.match(/<rect x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)" rx="[^"]+" class="c-mask"\/>/);
+    const brand = block.match(/data-brand-mark="openai"[^>]+translate\(([-\d.]+) ([-\d.]+)\)">\s*<rect width="([-\d.]+)" height="([-\d.]+)"/);
+    assert.ok(frame && brand, block);
+    const [x, y, width, actualHeight] = frame.slice(1, 5).map(Number);
+    const [brandX, brandY, brandWidth, brandHeight] = brand.slice(1, 5).map(Number);
+    assert.equal(width, 120);
+    assert.equal(actualHeight, height);
+    assert.equal(brandWidth, 16);
+    assert.equal(brandHeight, 16);
+    assert.equal(brandY - y, y + actualHeight - brandY - brandHeight, 'equal top and bottom space');
+    assert.equal(x + width - brandX - brandWidth, 6, 'preserve horizontal placement');
+  }
+});
+
 test('a branded node fails before its semantic sigil, label, and brand badge can overlap', () => {
   const input = writeFixture('workflow', 'narrow-brand-rail', 'openai', (_diagram, node) => {
     node.label = 'A';

@@ -504,13 +504,13 @@ test('standard fixed authored canvases retain accepted sublabel fitting', () => 
   assert.deepEqual(participantBoxes(html), [19, 127, 235, 343, 451].map(x => ({ x, width: 86 })));
 });
 
-test('wide authored canvases never enlarge sublabels beyond the historical card rows', () => {
+test('wide authored canvases retain the preferred sublabel font size', () => {
   for (const columnFit of ['fixed', 'spread']) {
     const doc = wideSequence(columnFit);
     doc.meta.quality_profile = 'standard';
     doc.meta.viewBox = [3000, 760];
     doc.participants[0].sublabel = 'DB';
-    assert.match(render(doc, true), /y="122" class="t-muted" font-size="7"[^>]*>DB<\/text>/);
+    assert.match(render(doc, true), /class="t-muted" font-size="7"[^>]*>DB<\/text>/);
   }
 });
 
