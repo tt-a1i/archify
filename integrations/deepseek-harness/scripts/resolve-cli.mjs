@@ -26,11 +26,12 @@ function nodeCliPath(command, {
   if (npmExecPath) {
     candidates.push(pathApi.join(pathApi.dirname(npmExecPath), script));
   }
-  candidates.push(pathApi.join(pathApi.dirname(execPath), 'node_modules', 'npm', 'bin', script));
   const pathValue = env.PATH || env.Path || env.path || '';
   for (const entry of pathValue.split(pathApi.delimiter).filter(Boolean)) {
     candidates.push(pathApi.join(entry, 'node_modules', 'npm', 'bin', script));
   }
+  // The effective child environment selects the CLI; Node's sibling is a fallback.
+  candidates.push(pathApi.join(pathApi.dirname(execPath), 'node_modules', 'npm', 'bin', script));
   return candidates.find((candidate) => existsSync(candidate));
 }
 
@@ -40,8 +41,8 @@ export function resolveCliInvocation(command, args = [], options = {}) {
     const env = options.env || process.env;
     const existsSync = options.existsSync || fs.existsSync;
     const execPath = options.execPath || process.execPath;
-    const roots = [path.win32.dirname(execPath), env.PNPM_HOME,
-      ...(env.PATH || env.Path || env.path || '').split(';')].filter(Boolean);
+    const roots = [env.PNPM_HOME,
+      ...(env.PATH || env.Path || env.path || '').split(';'), path.win32.dirname(execPath)].filter(Boolean);
     // action-setup and npm-global installs expose pnpm.cmd, which cannot be
     // spawned directly without a shell. Launch its JS entry with Node instead.
     const candidates = roots.flatMap((root) => [
@@ -55,7 +56,8 @@ export function resolveCliInvocation(command, args = [], options = {}) {
   if (platform === 'win32' && command === 'tar') {
     const env = options.env || process.env;
     const existsSync = options.existsSync || fs.existsSync;
-    const systemRoot = env.SystemRoot || env.SYSTEMROOT || env.windir || env.WINDIR;
+    const systemRoot = env.SystemRoot || env.SYSTEMROOT || env.windir || env.WINDIR
+      || process.env.SystemRoot || process.env.SYSTEMROOT || process.env.windir || process.env.WINDIR;
     const systemTar = systemRoot && path.win32.join(systemRoot, 'System32', 'tar.exe');
     if (systemTar && existsSync(systemTar)) return { command: systemTar, args };
   }
@@ -70,11 +72,11 @@ export function resolveCliInvocation(command, args = [], options = {}) {
 }
 
 export function spawnCliSync(command, args, options) {
-  const invocation = resolveCliInvocation(command, args);
+  const invocation = resolveCliInvocation(command, args, { env: options?.env });
   return spawnSync(invocation.command, invocation.args, options);
 }
 
 export function spawnCli(command, args, options) {
-  const invocation = resolveCliInvocation(command, args);
+  const invocation = resolveCliInvocation(command, args, { env: options?.env });
   return spawn(invocation.command, invocation.args, options);
 }
