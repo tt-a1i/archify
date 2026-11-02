@@ -109,8 +109,22 @@ const generated = catalog.marks.map((entry, index) => {
         ...(custom.guidelines ? { guidelines: custom.guidelines } : {}),
       },
     };
+  } else if (entry.logoOnly) {
+    // Full-colour logo only (brand-marks/logos.json); no monochrome path.
+    if (!entry.title) fail(`${entry.id} logo-only mark requires a title`);
+    mark = {
+      id: entry.id,
+      title: entry.title,
+      category: entry.category,
+      aliases,
+      domains: entryDomains,
+      viewBox: 24,
+      hex: null,
+      path: null,
+      provenance: { provider: 'Full-colour logo', source: 'brand-marks/logos.json' },
+    };
   } else {
-    fail(`${entry.id} must provide simpleIcon or custom`);
+    fail(`${entry.id} must provide simpleIcon, custom, or logoOnly`);
   }
   if (!mark.category || !mark.title) fail(`${entry.id} is missing category or title`);
   for (const form of lookupForms(mark.title)) {

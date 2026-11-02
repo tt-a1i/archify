@@ -8,6 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { BRAND_MARKS } from '../archify/renderers/shared/generated-brand-marks.mjs';
+import { BRAND_LOGOS } from '../archify/renderers/shared/generated-brand-logos.mjs';
 import { isPrivateBrandAddress, prepareDiagramBrandMarks } from '../archify/renderers/shared/brand-marks.mjs';
 import {
   THIRD_PARTY_NOTICE_DISCLOSURE_COUNT,
@@ -30,9 +31,9 @@ test('third-party notices cover every recorded individual mark license', () => {
   const notices = fs.readFileSync(path.join(skillRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
   const licensedMarks = BRAND_MARKS.filter((mark) => mark.provenance?.license);
 
-  assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 39, 'notice contract changed without review');
+  assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 45, 'notice contract changed without review');
   assert.deepEqual(validateThirdPartyNotices(notices), { ok: true, missing: [] });
-  assert.equal(licensedMarks.length, 8, 'pinned Simple Icons license inventory changed');
+  assert.equal(licensedMarks.length, 20, 'pinned Simple Icons license inventory changed');
   for (const mark of licensedMarks) {
     assert.match(notices, new RegExp(`\\| ${mark.title.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')} \\|`));
     assert.ok(notices.includes(mark.provenance.source), `${mark.id} source must be disclosed`);
@@ -128,12 +129,19 @@ function nodeBlock(html, id) {
 }
 
 test('generated catalog exposes a substantial, unique, provenance-backed preset library', () => {
-  assert.equal(BRAND_MARKS.length, 107);
+  assert.equal(BRAND_MARKS.length, 226);
   assert.equal(new Set(BRAND_MARKS.map((mark) => mark.id)).size, BRAND_MARKS.length);
+  const logoIds = new Set(BRAND_LOGOS.map((logo) => logo.id));
   for (const mark of BRAND_MARKS) {
     assert.match(mark.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     assert.ok(mark.title);
     assert.ok(mark.category);
+    if (mark.path === null) {
+      // Logo-only presets have no monochrome path; the full-colour logo is required.
+      assert.equal(mark.hex, null, mark.id);
+      assert.ok(logoIds.has(mark.id), `${mark.id} is logo-only but has no logo`);
+      continue;
+    }
     assert.match(mark.hex, /^[0-9A-F]{6}$/i);
     assert.match(mark.path, /^[Mm]/);
     assert.ok(mark.provenance?.source);
@@ -158,7 +166,7 @@ test('brand discovery resolves model names, aliases, domains, and Chinese channe
   }
 });
 
-test('all five renderers keep the semantic sigil and add one export-safe brand badge', () => {
+test('all five renderers mark the brand once; architecture cards show it as the tile logo', () => {
   for (const type of Object.keys(cases)) {
     const input = writeFixture(type, `preset-${type}`, 'openai', (_diagram, node) => {
       if (type === 'lifecycle') Object.assign(node, { step: node.step || '01', icon: 'start' });
@@ -167,13 +175,28 @@ test('all five renderers keep the semantic sigil and add one export-safe brand b
     assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
     assert.match(html, /data-node-brand="OpenAI"/i, type);
     assert.match(html, /data-brand-mark="openai"[^>]+data-brand-status="preset"/i, type);
-    assert.match(html, /class="semantic-sigil /, type);
     assert.match(html, /<title>[^<]*OpenAI<\/title>/i, type);
 
     const [, collection] = cases[type];
     const diagram = JSON.parse(fs.readFileSync(input, 'utf8'));
     const block = nodeBlock(html, diagram[collection][0].id);
     const frame = block.match(/<rect x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)" rx="[^"]+" class="c-mask"\/>/);
+    if (type === 'architecture') {
+      // Architecture cards carry the brand as the full-colour tile logo, which
+      // is the node's single icon: no second semantic sigil on a rail.
+      const logo = block.match(/data-brand-mark="openai"[^>]+data-brand-logo="CC0-1.0"[^>]*>\s*<rect x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)"/);
+      assert.ok(frame && logo, 'architecture: expected node frame and tile logo');
+      assert.equal(block.match(/data-brand-mark=/g).length, 1, 'one brand mark');
+      assert.doesNotMatch(block, /data-semantic-sigil/, 'branded tile replaces the sigil');
+      const [frameX, frameY, , frameHeight] = frame.slice(1, 5).map(Number);
+      const [logoX, logoY, logoW, logoH] = logo.slice(1, 5).map(Number);
+      assert.equal(logoW, logoH, 'square logo tile');
+      assert.ok(logoW >= 20 && logoW <= 36, `logo tile size ${logoW}`);
+      assert.equal(logoX - frameX, 10, 'logo tile left inset');
+      assert.equal(logoY + logoH / 2, frameY + frameHeight / 2, 'logo tile is vertically centred');
+      continue;
+    }
+    assert.match(html, /class="semantic-sigil /, type);
     const semantic = block.match(/data-semantic-sigil[^>]+translate\(([-\d.]+) ([-\d.]+)\)/);
     const brand = block.match(/data-brand-mark="openai"[^>]+translate\(([-\d.]+) ([-\d.]+)\)">\s*<rect width="([-\d.]+)" height="([-\d.]+)" rx="([-\d.]+)" class="brand-mark-badge"\/>/);
     assert.ok(frame && semantic && brand, `${type}: expected node frame, semantic sigil, and brand badge`);
@@ -181,17 +204,6 @@ test('all five renderers keep the semantic sigil and add one export-safe brand b
     const [frameX, frameY, frameWidth, frameHeight] = frame.slice(1, 5).map(Number);
     const [semanticX, semanticY] = semantic.slice(1, 3).map(Number);
     const [brandX, brandY, brandWidth, brandHeight, brandRadius] = brand.slice(1, 6).map(Number);
-    if (type === 'architecture') {
-      // Architecture cards carry the brand as the left logo tile and move the
-      // semantic sigil to the top-right rail, so neither replaces the other.
-      assert.equal(brandWidth, brandHeight, 'square logo tile');
-      assert.ok(brandWidth >= 20 && brandWidth <= 32, `logo tile size ${brandWidth}`);
-      assert.equal(brandX - frameX, 10, 'logo tile left inset');
-      assert.equal(brandY + brandHeight / 2, frameY + frameHeight / 2, 'logo tile is vertically centred');
-      assert.equal(semanticY - frameY, 6, 'semantic sigil top inset');
-      assert.equal(frameX + frameWidth - semanticX, 17, 'semantic sigil sits on the right rail');
-      continue;
-    }
     assert.equal(brandWidth, 16, `${type}: brand badge width`);
     assert.equal(brandHeight, 16, `${type}: brand badge height`);
     assert.equal(brandRadius, 4, `${type}: brand badge radius`);

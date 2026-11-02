@@ -3,6 +3,7 @@ import { lookup } from 'node:dns/promises';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
+import { BRAND_LOGOS } from './generated-brand-logos.mjs';
 import { BRAND_MARKS } from './generated-brand-marks.mjs';
 import { throwDiagnosticError } from './diagnostics.mjs';
 import { esc, textUnits } from './utils.mjs';
@@ -14,6 +15,7 @@ const COLLECTIONS = Object.freeze({
   dataflow: 'nodes',
   lifecycle: 'states',
 });
+const LOGO_BY_ID = new Map(BRAND_LOGOS.map((logo) => [logo.id, logo]));
 const MARK_BY_LOOKUP = new Map();
 const MARK_BY_DOMAIN = new Map();
 const RESOLVED_BY_NODE = new WeakMap();
@@ -742,6 +744,8 @@ export const BRAND_INK_PLATE_LUMINANCE = 0.7;
 export function renderBrandMark(node, { x, y, size = 16, inset = 3, radius = 4 } = {}) {
   const mark = brandMarkFor(node);
   if (!mark) return '';
+  // Logo-only catalogue entries have no monochrome path; draw their logo.
+  if (mark.kind === 'preset' && !mark.path) return renderBrandLogo(node, { x, y, size, inset, radius });
   const inkPlate = mark.kind === 'preset' && brandHexLuminance(mark.hex) >= BRAND_INK_PLATE_LUMINANCE;
   let content;
   if (mark.kind === 'preset') {
@@ -757,5 +761,42 @@ export function renderBrandMark(node, { x, y, size = 16, inset = 3, radius = 4 }
             <rect width="${size}" height="${size}" rx="${radius}" class="brand-mark-badge"/>
             ${content}
             <rect width="${size}" height="${size}" rx="${radius}" class="brand-mark-frame"/>
+          </g>`;
+}
+
+export function brandLogoFor(node) {
+  const mark = brandMarkFor(node);
+  return mark?.kind === 'preset' ? LOGO_BY_ID.get(mark.id) || null : null;
+}
+
+// Inline <defs> inside an icon body become plain groups so the icon defs
+// block never nests <defs> (paint servers work anywhere in the document).
+export function iconSymbol(id, viewBox, body) {
+  const flat = body.replace(/<(\/?)defs(?=[\s>/])/g, '<$1g');
+  return `<symbol id="${esc(id)}" viewBox="${viewBox.join(' ')}" preserveAspectRatio="xMidYMid meet" overflow="visible">${flat}</symbol>`;
+}
+
+// One <defs data-archify-icons> block per diagram holding only the logo and
+// icon symbols the diagram uses; nodes reference them with <use>.
+export function renderIconDefs(symbols) {
+  if (!symbols?.size) return '';
+  return `        <defs data-archify-icons="">\n          ${[...symbols.values()].join('\n          ')}\n        </defs>`;
+}
+
+// Full-colour logo tile. Only the logos a diagram actually uses are embedded
+// (once each, as <symbol>s registered in `symbols`), with per-logo namespaced
+// ids. Marks without a vendored colour logo fall back to the monochrome mark.
+export function renderBrandLogo(node, { x, y, size, inset = Math.round(size * 0.17), radius = 8, symbols } = {}) {
+  const mark = brandMarkFor(node);
+  if (!mark) return '';
+  const logo = brandLogoFor(node);
+  if (!logo || !symbols) return renderBrandMark(node, { x, y, size, inset: Math.round(size * 0.2), radius });
+  const symbolId = `al-sym-${logo.id}`;
+  if (!symbols.has(symbolId)) symbols.set(symbolId, iconSymbol(symbolId, logo.viewBox, logo.body));
+  const inner = size - inset * 2;
+  return `<g aria-hidden="true" ${markAttrs(mark)} data-brand-logo="${esc(logo.provenance.license)}" class="brand-mark brand-logo${logo.inkPlate ? ' brand-mark-ink' : ''}">
+            <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${radius}" class="brand-mark-badge"/>
+            <use href="#${symbolId}" x="${x + inset}" y="${y + inset}" width="${inner}" height="${inner}"/>
+            <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${radius}" class="brand-mark-frame"/>
           </g>`;
 }

@@ -7,10 +7,11 @@ import { componentBox, boundaryBox, connectionPath } from '../shared/layout-repo
 import { rendererFailure, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
-import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandLogo, renderBrandMark, renderIconDefs } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
-import { autoCardWidth, cardLayout, layeredCardStyle } from './card.mjs';
+import { renderGenericIcon } from './generic-icons.mjs';
+import { autoCardWidth, cardLayout, layeredCardStyle, sublabelCardWidth } from './card.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
@@ -90,6 +91,8 @@ const LEGEND_CATALOG = [
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
 // ---- Measure components from free coordinates --------------------------------
+const cardMetricsMaxWidth = 240;
+
 function measureComponent(c) {
   const [x, y] = resolveComponentPos(c, grid);
   // Authored sizes are kept verbatim; unsized cards grow to fit their text,
@@ -97,10 +100,57 @@ function measureComponent(c) {
   const [w, h] = Array.isArray(c.size)
     ? c.size
     : [autoCardWidth(c, grid ? Math.max(layout.defaultW, grid.cellW) : undefined), layout.defaultH];
-  return { ...c, x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 };
+  return { ...c, x, y, width: w, height: h, authoredWidth: w, cx: x + w / 2, cy: y + h / 2 };
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
+growAuthoredCards(components);
+
+// Authored sizes are minimums: a card widens symmetrically (so its centre and
+// any aligned edges stay put) until its label reads at the preferred size,
+// and further toward the full context line, but only when the wider box keeps
+// the 8px component gap and stays inside an authored viewBox.
+// Layered cards treat an authored size as a minimum: when the logo tile and a
+// one-line context line genuinely do not fit, the card widens symmetrically to
+// the next 8px step (capped, never into a neighbour or past the viewBox).
+// Compact cards keep their authored size exactly; lint still judges the
+// authored width (`authoredWidth`).
+function growAuthoredCards(map) {
+  // Side-by-side neighbours keep room for a minimum-length connection plus
+  // its arrowhead; stacked neighbours only need a visual gap.
+  const sideGap = 40;
+  const gap = 8;
+  const step = 8;
+  const vbW = Array.isArray(arch.meta?.viewBox) ? arch.meta.viewBox[0] : Infinity;
+  // Growing must not move an authored boundary frame: a member may only widen
+  // inside the horizontal extent its frame already spans.
+  const frames = asArray(arch.boundaries).map((b) => asArray(b.wraps).map((id) => map.get(id)).filter(Boolean))
+    .filter((members) => members.length)
+    .map((members) => ({
+      members: new Set(members),
+      minX: members.reduce((v, m) => Math.min(v, m.x), Infinity),
+      maxX: members.reduce((v, m) => Math.max(v, m.x + m.width), -Infinity),
+    }));
+  for (const c of map.values()) {
+    if (!Array.isArray(c.size)) continue;
+    if (!cardLayout(c).tiled) continue;
+    const need = sublabelCardWidth(c);
+    if (need <= c.width) continue;
+    const target = Math.min(cardMetricsMaxWidth, Math.ceil(need / step) * step);
+    if (target <= c.width) continue;
+    const x = c.x - Math.floor((target - c.width) / 2);
+    if (x < 0 || x + target > vbW) continue;
+    if (frames.some((f) => f.members.has(c) && (x < f.minX || x + target > f.maxX))) continue;
+    const clear = [...map.values()].every((o) => o === c
+      || c.y + c.height + gap <= o.y || o.y + o.height + gap <= c.y
+      || x + target + sideGap <= o.x || o.x + o.width + sideGap <= x
+      // An authored gap that was already tighter may not shrink at all.
+      || (x + target <= o.x && o.x - (x + target) >= Math.min(sideGap, o.x - (c.x + c.width)))
+      || (o.x + o.width <= x && x - (o.x + o.width) >= Math.min(sideGap, c.x - (o.x + o.width))));
+    if (!clear) continue;
+    Object.assign(c, { x, width: target, cx: x + target / 2 });
+  }
+}
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
@@ -571,10 +621,10 @@ function validateArchitecture() {
     if (brandRailProblem) problems.push(brandRailProblem);
     // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
     // handles the ordinary case, this rejects what it cannot rescue.
-    const availableTextW = availableNodeTextWidth(c.width);
+    const availableTextW = availableNodeTextWidth(c.authoredWidth ?? c.width);
     // Card sublabels truncate with an ellipsis (full text on hover); only the
     // compact centred layout still has to fit its sublabel on one line.
-    const compact = !cardLayout(c, { branded: Boolean(brandMetadataFor(c).brand) }).tiled;
+    const compact = !cardLayout({ ...c, width: c.authoredWidth ?? c.width }).tiled;
     for (const [field, value, minimum] of [
       ...(compact ? [['Sublabel', c.sublabel, componentTextFit.sublabelMinimum]] : []),
       ['Tag', c.tag, componentTextFit.tagMinimum],
@@ -1091,14 +1141,17 @@ function renderCompactComponent(c) {
   const drilldowns = resolveNodeDrilldowns(c);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
-  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)} data-node-card="compact">
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="c-mask"/>
-          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill} node-card"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
           <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}
         </g>`, drilldowns);
 }
+
+// Logo and generic-icon symbols used by this diagram (filled while nodes render).
+const iconSymbols = new Map();
 
 function renderComponent(c) {
   const fill = componentFill[c.type] || 'c-external';
@@ -1114,10 +1167,13 @@ function renderComponent(c) {
   let tile = '';
   if (card.tile) {
     const { x, y, size } = card.tile;
-    const brand = renderBrandMark(c, { x, y, size, inset: Math.round(size * 0.2), radius: 7 });
+    const radius = Math.round(size * 0.22);
+    const brand = renderBrandLogo(c, { x, y, size, radius, symbols: iconSymbols });
+    // The tile is the node's single icon: the brand logo, otherwise Archify's
+    // generic icon (`icon: "none"` hides it and leaves the plain tile).
     tile = brand
-      ? `\n          ${brand}\n          ${renderSemanticSigil(c.type, { icon: c.icon, x: card.rail.x, y: card.rail.y })}`
-      : `\n          <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="7" class="node-card-tile"/>\n          ${renderSemanticSigil(c.type, { icon: c.icon, x: x + size * 0.22, y: y + size * 0.22, size: size * 0.56 })}`;
+      ? `\n          ${brand}`
+      : `\n          <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${radius}" class="node-card-tile"/>${c.icon === 'none' ? '' : `\n          ${renderGenericIcon(c, { x: x + size * 0.2, y: y + size * 0.2, size: size * 0.6, symbols: iconSymbols })}`}`;
   }
   // The ⓘ tooltip repeats only on-canvas text; authored explanation prose
   // stays in the Semantic Passport (Explain) and never enters the SVG.
@@ -1179,9 +1235,12 @@ function renderSvg() {
   // shrinking a semantically rich graph to the universal emergency floor.
   const readerMinimumText = arch.meta?.viewBox ? '' : ' data-reader-min-text="7.5"';
   const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
+  // Nodes render first so the icon defs carry exactly the symbols they use.
+  const componentMarkup = [...components.values()].map(renderComponent).join('\n\n');
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)} ${NODE_CARD_ATTR}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
+${renderIconDefs(iconSymbols)}
 ${nodeCardStyle()}
 ${layeredCardStyle()}
 
@@ -1195,7 +1254,7 @@ ${boundaries.map(renderBoundaryFrame).join('\n\n')}
 ${asArray(arch.connections).map(renderConnectionPath).join('\n')}
 
         <!-- Components -->
-${[...components.values()].map(renderComponent).join('\n\n')}
+${componentMarkup}
 
         <!-- Connection labels -->
 ${asArray(arch.connections).map(renderConnectionLabel).join('\n')}

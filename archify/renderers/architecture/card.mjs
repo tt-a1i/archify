@@ -8,22 +8,19 @@ import { textUnits } from '../shared/utils.mjs';
 
 export const cardMetrics = {
   pad: 10,
-  tileMax: 32,
+  tileMax: 36,
   tileMin: 20,
   tileGap: 10,
   infoReserve: 14,
-  // Branded tiles move the semantic sigil to the top-right rail; the slot is
-  // reserved whether or not an icon is drawn so icon overrides never move text.
-  railSlot: 15,
   labelPreferred: 12,
-  labelMinimum: 8,
+  labelMinimum: 10.5,
   sublabelPreferred: 9.5,
   sublabelMinimum: 8,
   autoMinWidth: 120,
   autoMaxWidth: 240,
-  // Card text is set in the sans UI stack, whose advance is narrower than the
-  // monospace factor used elsewhere; CJK still measures a full em per glyph.
-  widthFactor: 0.56,
+  // Card text uses the bundled viewer font (JetBrains Mono) like every other
+  // node, so offline layout never depends on a locally installed sans face.
+  widthFactor: 0.6,
 };
 
 const ELLIPSIS = '…';
@@ -66,11 +63,15 @@ export function cardLayout(c, { branded = false } = {}) {
   const tiled = tile >= m.tileMin && (textRight - (c.x + m.pad + tile + m.tileGap)) >= labelNeed;
   const textX = c.x + m.pad + (tiled ? tile + m.tileGap : 0);
   // The ⓘ lives in the top-right corner, beside the label row.
-  const rail = tiled && branded ? m.railSlot : 0;
+  const rail = 0;
   const firstPass = textRight - textX;
   const subFull = hasSub ? truncateToWidth(c.sublabel, firstPass, m.sublabelPreferred) : null;
   const info = hasExplanation || Boolean(subFull?.truncated);
-  const labelWidth = Math.max(1, textRight - textX - rail - (info ? m.infoReserve : 0));
+  // The ⓘ sits in the top-right corner; it only narrows the label when the
+  // label's cap height would reach the corner row (short cards).
+  const labelTop = c.y + c.height / 2 - (hasSub ? 2 : -m.labelPreferred * 0.35) - m.labelPreferred * 0.75;
+  const infoClear = labelTop >= c.y + 17;
+  const labelWidth = Math.max(1, textRight - textX - rail - (info && !infoClear ? m.infoReserve : 0));
   const labelFont = Math.max(m.labelMinimum, Math.min(m.labelPreferred,
     Math.floor((labelWidth / Math.max(1, textUnits(c.label) * m.widthFactor)) * 10) / 10));
   const sub = hasSub ? truncateToWidth(c.sublabel, firstPass, m.sublabelPreferred) : null;
@@ -92,10 +93,18 @@ export function cardLayout(c, { branded = false } = {}) {
 export function autoCardWidth(c, cap = cardMetrics.autoMaxWidth) {
   const m = cardMetrics;
   const chrome = m.pad * 2 + m.tileMax + m.tileGap;
-  const label = textWidth(c.label, m.labelPreferred) + m.infoReserve + (c.brand ? m.railSlot : 0);
+  const label = textWidth(c.label, m.labelPreferred) + m.infoReserve;
   const sub = hasText(c.sublabel) ? textWidth(c.sublabel, m.sublabelPreferred) : 0;
   const need = Math.ceil(chrome + Math.max(label, sub));
   return Math.max(m.autoMinWidth, Math.min(cap, need));
+}
+
+// Width a layered card needs so its context line reads on one line at the
+// preferred size beside the tile (0 when it has no context line).
+export function sublabelCardWidth(c) {
+  const m = cardMetrics;
+  if (!hasText(c.sublabel)) return 0;
+  return Math.ceil(m.pad * 2 + m.tileMax + m.tileGap + textWidth(c.sublabel, m.sublabelPreferred));
 }
 
 // Paint for the layered card. Lives in the SVG so canonical exports keep it.
@@ -103,19 +112,23 @@ export function autoCardWidth(c, cap = cardMetrics.autoMaxWidth) {
 // card with a matching hairline. Brand tiles keep a light plate in both themes
 // (vendor colours are tuned for light grounds); near-white marks get ink.
 export function layeredCardStyle() {
-  const card = 'svg[data-node-ui] [data-node-card="layered"]';
-  const dark = ':is([data-theme="dark"] svg[data-node-ui], svg[data-node-ui][data-theme="dark"]) [data-node-card="layered"]';
+  // Compact cards (boxes too small for the tile) share the same paint.
+  const card = 'svg[data-node-ui] [data-node-card]';
+  // Editorial keeps its flat card styling, so the dark lift skips it.
+  const dark = ':is([data-theme="dark"] svg[data-node-ui]:not([data-preset="editorial"]), svg[data-node-ui][data-theme="dark"]:not([data-preset="editorial"])) [data-node-card]';
   return `        <style>
-          ${card} > rect.node-card { fill: var(--mask); stroke: color-mix(in srgb, var(--text) 14%, var(--mask)); stroke-dasharray: none; filter: drop-shadow(0 1px 1.5px rgba(15, 23, 42, 0.06)); }
-          ${dark} > rect.node-card.node-card { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 16%, var(--mask)); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)); }
+          ${card} > rect.node-card { fill: var(--mask); stroke: color-mix(in srgb, var(--text) 14%, var(--mask)); stroke-dasharray: none; }
+          ${dark} > rect.node-card.node-card { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 16%, var(--mask)); }
           ${card} > .node-card-tile { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 10%, var(--mask)); stroke-width: .8px; }
           ${dark} > .node-card-tile { fill: color-mix(in srgb, var(--text) 9%, var(--mask)); }
-          ${card} > text { font-family: Inter, "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
           ${card} > .semantic-sigil { opacity: .9; }
           ${card} > .brand-mark .brand-mark-badge { fill: #f6f8fb; }
           ${card} > .brand-mark .brand-mark-frame { stroke: #e2e8f0; }
           ${card} > .brand-mark.brand-mark-ink .brand-mark-badge { fill: #1f2937; }
           ${card} > .brand-mark.brand-mark-ink .brand-mark-frame { stroke: #1f2937; }
+          ${card} .generic-icon { fill: none; stroke: color-mix(in srgb, var(--text) 78%, var(--mask)); stroke-width: 1.7px; stroke-linecap: round; stroke-linejoin: round; }
+          ${['frontend', 'backend', 'database', 'cloud', 'security', 'messagebus', 'external'].map((t) => `${card} .generic-icon.gi-${t} { --gi-fill: color-mix(in srgb, var(--${t}-stroke) 22%, transparent); }`).join('\n          ')}
+          svg[data-node-ui] symbol[id^="gi-"] .f { fill: var(--gi-fill, none); }
           ${card} > .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
         </style>`;
 }
