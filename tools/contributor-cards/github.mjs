@@ -74,10 +74,15 @@ export async function publishCard(api, record, png, { commenter = 'github-action
 async function verifyPublicImage(url, png) {
   const expected = createHash('sha256').update(png).digest('hex');
   for (let attempt = 0; attempt < 6; attempt++) {
-    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (response.ok) {
-      const bytes = Buffer.from(await response.arrayBuffer());
-      if (createHash('sha256').update(bytes).digest('hex') === expected) return;
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (response.ok) {
+        const bytes = Buffer.from(await response.arrayBuffer());
+        if (createHash('sha256').update(bytes).digest('hex') === expected) return;
+      }
+    } catch {
+      // CDN timeouts and interrupted response bodies consume the same bounded
+      // attempts as HTTP failures; a reply still requires matching image bytes.
     }
     if (attempt < 5) await new Promise(resolve => setTimeout(resolve, 2000));
   }
