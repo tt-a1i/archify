@@ -222,7 +222,13 @@ const placed = rows.map((row, index) => {
 // The legend names the services (when more than one does work) and any status
 // that changes a bar's paint; a single-service trace with only ok spans needs
 // no key.
-const presentStatuses = new Set(placed.map((row) => row.status));
+// Only statuses that change a bar's paint get a key: error/cancelled recolor
+// it, and an incomplete span is dashed/open only when it has no recorded end.
+// An incomplete span with a recorded end paints like a solid span, so it must
+// not claim an "incomplete" key (#1022).
+const presentStatuses = new Set(placed
+  .filter((row) => row.status !== 'incomplete' || row.open)
+  .map((row) => row.status));
 // Past five services the palette repeats. Services that share a colour share
 // one entry, so the key never claims a colour belongs to a single service.
 const serviceLegendEntries = [...services.reduce((byTone, service) => {
