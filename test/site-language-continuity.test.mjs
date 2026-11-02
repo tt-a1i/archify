@@ -482,6 +482,130 @@ test('real Chrome preserves language through entry, navigation, selection, refre
     }, sessionId);
 
     if (builtSite) {
+      // #918: retain the selected question from discovery to a real proof and
+      // canonical starter. Exercise browser focus rather than source strings.
+      const promoted = ['class', 'tree', 'timeline', 'waterfall'];
+      const key = async (key, code, virtualKey) => {
+        await browser.cdp.send('Input.dispatchKeyEvent', {
+          type: 'keyDown', key, code, windowsVirtualKeyCode: virtualKey,
+          ...(key === 'Enter' ? { text: '\r', unmodifiedText: '\r' } : {}),
+        }, sessionId);
+        await browser.cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: virtualKey }, sessionId);
+      };
+      for (const language of ['en', 'zh']) {
+        for (const type of promoted) {
+          const recipe = SCENARIO_RECIPES.find(recipe => recipe.type === type);
+          await navigate(browser, sessionId, pageUrl('index.html', language));
+          await evaluate(browser, sessionId, `document.querySelector('.type-item[data-type="${type}"] button').focus()`);
+          await key('Enter', 'Enter', 13);
+          const choice = await evaluate(browser, sessionId, `({
+            href: document.querySelector('.type-more').href,
+            imageHref: document.querySelector('.type-plate').href,
+            label: document.querySelector('.type-more').textContent,
+            selected: document.querySelector('.type-item.is-active').dataset.type
+          })`);
+          assert.equal(choice.selected, type);
+          assert.equal(choice.href, pageUrl('gallery.html', language, `?type=${type}#proof-${recipe.proof}`));
+          assert.equal(choice.imageHref, choice.href, 'preview opens the same selected proof');
+          assert.ok(choice.label.includes(recipe[language].title), 'action identifies the selected example');
+          await clickAndNavigate(browser, sessionId, '.type-more');
+          assert.deepEqual(await evaluate(browser, sessionId, `[...document.querySelectorAll('.showcase-card:not([hidden])')].map(card => card.id)`), [`proof-${recipe.proof}`]);
+          await clickAndNavigate(browser, sessionId, `#proof-${recipe.proof} .card-actions a[href*="start"]`);
+          assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".type-tab[aria-selected=true]").dataset.type'), type);
+          const expectedPrompt = recipe.start[language].descriptionPrompt;
+          assert.equal(await evaluate(browser, sessionId, 'document.getElementById("recipe-prompt").textContent'), expectedPrompt);
+        }
+
+        await navigate(browser, sessionId, pageUrl('index.html', language, '?type=class#types'));
+        await clickAndNavigate(browser, sessionId, '[data-language-switch]');
+        assert.equal(await evaluate(browser, sessionId, 'document.querySelector(".type-item.is-active").dataset.type'), 'class', 'language navigation preserves homepage selection');
+
+        await navigate(browser, sessionId, pageUrl('guide.html', language));
+        for (const type of promoted) {
+          await evaluate(browser, sessionId, `document.querySelector('#filters [data-filter="${type}"]').focus()`);
+          await key('Enter', 'Enter', 13);
+          assert.deepEqual(await evaluate(browser, sessionId, `({
+            focus:document.activeElement.dataset.filter,
+            selected:document.querySelector('#filters [aria-pressed="true"]')?.dataset.filter,
+            cards:[...document.querySelectorAll('#cards [data-recipe]')].map(card=>card.dataset.recipe)
+          })`), { focus:type, selected:type, cards:SCENARIO_RECIPES.filter(recipe=>recipe.type===type).map(recipe=>recipe.id) });
+        }
+        await evaluate(browser, sessionId, `document.getElementById('scenario').value='system overview agent tool call';document.getElementById('recommend').click();document.querySelector('[data-alt]').focus()`);
+        await key('Enter', 'Enter', 13);
+        assert.equal(await evaluate(browser, sessionId, 'document.activeElement.id'), 'result-title', 'replacing a focused alternative moves focus to its result');
+
+        // #987's Guide copy contract: success requires an actual API/fallback
+        // success, and a delayed attempt must not update a different recipe.
+        const success = language === 'zh' ? '已复制到剪贴板。' : 'Copied to clipboard.';
+        const failure = language === 'zh' ? '复制失败，请手动选择文本。' : 'Copy failed. Select the text manually.';
+        for (const [api, fallback] of [['success', 'throw'], ['missing', 'true'], ['missing', 'false'], ['missing', 'throw'], ['reject', 'true'], ['reject', 'false'], ['reject', 'throw']]) {
+          const receipt = await evaluate(browser, sessionId, `(async () => {
+            const button = document.getElementById('copy-prompt');
+            const status = document.getElementById(button.getAttribute('aria-describedby'));
+            const expected = document.querySelector('#result .prompt-text').textContent;
+            const writes = [], legacy = [];
+            Object.defineProperty(navigator, 'clipboard', { configurable:true, value:${JSON.stringify(api)} === 'missing' ? undefined : {writeText:async text=>{writes.push(text);if (${JSON.stringify(api)} === 'reject') throw Error('denied');}} });
+            document.execCommand = () => { legacy.push(document.activeElement.value);if (${JSON.stringify(fallback)} === 'throw') throw Error('unsupported');return ${JSON.stringify(fallback)} === 'true'; };
+            status.textContent = '';
+            button.focus();
+            const areas = document.querySelectorAll('textarea').length;
+            button.click();
+            await Promise.resolve();await Promise.resolve();await Promise.resolve();
+            return {expected,writes,legacy,status:status.textContent,role:status.getAttribute('role'),focus:document.activeElement===button,areas:document.querySelectorAll('textarea').length-areas};
+          })()`);
+          assert.equal(receipt.status, api === 'success' || fallback === 'true' ? success : failure, `${api}/${fallback}: truthful Guide feedback`);
+          assert.deepEqual(receipt.writes, api === 'missing' ? [] : [receipt.expected]);
+          assert.deepEqual(receipt.legacy, api === 'success' ? [] : [receipt.expected]);
+          assert.equal(receipt.role, 'status');
+          assert.equal(receipt.focus, true, 'fallback restores the focused copy control');
+          assert.equal(receipt.areas, 0, 'temporary copy textarea is always removed');
+        }
+        for (const late of ['resolve', 'reject']) {
+          const stale = await evaluate(browser, sessionId, `(async () => {
+            let settle, calls=0, fallbacks=0;
+            const button=document.getElementById('copy-prompt'), status=document.getElementById('prompt-copy-status');
+            Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>++calls===1?new Promise((resolve,reject)=>{settle=()=>${JSON.stringify(late)}==='resolve'?resolve():reject(Error('late'));}):Promise.reject(Error('denied'))}});
+            document.execCommand=()=>{fallbacks++;return false;};
+            button.click();button.click();
+            await Promise.resolve();await Promise.resolve();await Promise.resolve();
+            const latest=status.textContent;
+            settle();await Promise.resolve();await Promise.resolve();await Promise.resolve();
+            const concurrent={latest,after:status.textContent,fallbacks};
+            calls=0;fallbacks=0;button.click();
+            document.querySelector('#cards [data-recipe]').click();
+            const focused=document.activeElement;
+            settle();await Promise.resolve();await Promise.resolve();await Promise.resolve();
+            return {concurrent,fallbacks,focus:document.activeElement===focused,status:document.getElementById('prompt-copy-status').textContent};
+          })()`);
+          assert.deepEqual(stale, {concurrent:{latest:failure,after:failure,fallbacks:1},fallbacks:0,focus:true,status:''}, 'stale copy cannot overwrite newer feedback or touch a replaced recipe');
+        }
+
+        await browser.cdp.send('Emulation.setScriptExecutionDisabled', { value: true }, sessionId);
+        try {
+          for (const [page, selector] of [['index.html', '#type-recipes'], ['start.html', '#start-fallback']]) {
+            await navigate(browser, sessionId, pageUrl(page, language, '?type=class'));
+            const fallback = await evaluate(browser, sessionId, `({
+              visible:document.querySelector('${selector}').getBoundingClientRect().height > 0,
+              links:[...document.querySelectorAll('${selector} a')].map(a=>a.href),
+              misleadingRecipe:document.getElementById('recipe-title')?.getBoundingClientRect().height || 0
+            })`);
+            assert.equal(fallback.visible, true, `${page}: static recipes remain usable`);
+            assert.equal(fallback.links.length, 10);
+            assert.equal(new Set(fallback.links).size, 10);
+            assert.equal(fallback.misleadingRecipe, 0, 'do not display the default recipe for an unprocessed type query');
+            const recipe = SCENARIO_RECIPES.find(recipe=>recipe.type==='class');
+            const target = pageUrl('guide.html', language, '#recipe-'+recipe.id);
+            assert.ok(fallback.links.includes(target));
+            await navigate(browser, sessionId, target);
+            assert.equal(await evaluate(browser, sessionId, `document.querySelector('#recipe-${recipe.id} .recipe-reference-prompt').textContent`), recipe[language].prompt);
+          }
+        } finally {
+          await browser.cdp.send('Emulation.setScriptExecutionDisabled', { value: false }, sessionId);
+        }
+      }
+    }
+
+    if (builtSite) {
       const staticContent = {
         'index.html': ['.hero h1', '.hero h1 .l', '.hero-sub', '.fade-up', '.product-facts h2', '.product-facts article h3', '.product-facts article p'],
         'gallery.html': ['.hero h1', '.hero-copy', '.showcase-card', '.showcase-card .card-title', '.showcase-card .card-description'],

@@ -229,6 +229,11 @@
        TYPES — index list + lightbox preview
     ══════════════════════════════════════ */
     .types-index { display:grid; grid-template-columns:minmax(0,11fr) minmax(0,13fr); gap:3rem; align-items:start; }
+    #types-list[hidden], #type-recipes[hidden] { display:none; }
+    .type-recipes { display:flex; flex-direction:column; gap:.75rem; font-size:1rem; line-height:1.5; }
+    .type-recipes a { color:var(--text); text-underline-offset:.2em; }
+    .type-plate { display:block; }
+    .type-plate:focus-visible, .type-more:focus-visible, .type-recipes a:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
     .types-list { list-style:none; border-top:1px solid var(--line-hi); counter-reset:type; }
     .type-item { position:relative; border-bottom:1px solid var(--line-hi); }
     .type-item::before { content:''; position:absolute; left:0; top:-1px; width:0; height:1px; background:var(--accent); transition:width .45s var(--ease-out); }
