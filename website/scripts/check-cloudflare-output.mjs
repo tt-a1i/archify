@@ -63,7 +63,13 @@ export function checkCloudflareOutput(root) {
     const file = !relative || relative.endsWith('/') ? `${relative}index.html` : `${relative}.html`;
     const html = fs.readFileSync(path.join(root, file), 'utf8');
     assert.ok(html.includes(`rel="canonical" href="${location}"`), `Missing matching canonical: ${location}`);
-    assert.ok(!/<meta[^>]+(?:name="robots"[^>]+content="[^"]*noindex|content="[^"]*noindex[^>]+name="robots")/i.test(html), `Noindex sitemap page: ${location}`);
+    const hasNoindex = node => {
+      const attributes = Object.fromEntries((node.attrs ?? []).map(({ name, value }) => [name, value]));
+      return (node.tagName === 'meta' && attributes.name?.trim().toLowerCase() === 'robots'
+        && (attributes.content ?? '').toLowerCase().split(/[\s,]+/).includes('noindex'))
+        || (node.childNodes ?? []).some(hasNoindex);
+    };
+    assert.ok(!hasNoindex(parse(html)) && !hasNoindex(parse(html, { scriptingEnabled: false })), `Noindex sitemap page: ${location}`);
   }
   assert.equal(fs.readFileSync(path.join(root, 'robots.txt'), 'utf8').includes('Sitemap: https://archify.si/sitemap.xml'), true);
   assert.match(fs.readFileSync(path.join(root, '_headers'), 'utf8'), /\/\*\.json\n  X-Robots-Tag: noindex/);
