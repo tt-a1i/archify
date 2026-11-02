@@ -3804,8 +3804,10 @@ async function commandCompareWorkflow(args) {
     }
   };
   compare('lanes', baseLanes, headLanes, new Set());
-  compare('phases', basePhases, headPhases, new Set(['fromCol', 'toCol']));
-  compare('groups', baseGroups, headGroups, new Set(['fromCol', 'toCol']));
+  // Column ranges decide which nodes a phase or group frames, so a range change
+  // is a scope change, not a presentation change.
+  compare('phases', basePhases, headPhases, new Set());
+  compare('groups', baseGroups, headGroups, new Set());
   compare('nodes', baseNodes, headNodes);
   compare('edges', baseEdges, headEdges);
   if (JSON.stringify(base.mainPath || []) !== JSON.stringify(head.mainPath || [])) changes.mainPath.push({ change: 'modified', base: base.mainPath || [], head: head.mainPath || [] });

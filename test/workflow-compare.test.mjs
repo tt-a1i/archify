@@ -49,6 +49,21 @@ test('Workflow compare ignores presentation-only fields and remains deterministi
   assert.deepEqual(first, second);
 });
 
+test('Workflow compare reports phase and group column-range changes', () => {
+  const base = fixture();
+  const head = structuredClone(base);
+  head.groups[0].fromCol += 1;
+  head.groups[0].toCol += 1;
+  const compared = run(base, head);
+  assert.equal(compared.result.status, 0, compared.result.stderr);
+  assert.deepEqual(compared.receipt.changes.groups.map(change => [change.id, change.change]), [[base.groups[0].id, 'modified']]);
+  assert.notEqual(compared.receipt.changes.groups[0].base.fromCol, compared.receipt.changes.groups[0].head.fromCol);
+
+  const unchanged = structuredClone(base);
+  unchanged.groups[0].label = base.groups[0].label;
+  assert.deepEqual(run(base, unchanged).receipt.changes.groups, []);
+});
+
 test('Workflow compare reports lane labels and rejects unknown options', () => {
   const base = fixture();
   const head = structuredClone(base);
