@@ -7,7 +7,8 @@ header or raster title band. This implements the [agreed scope](https://github.c
 
 Base: `dev@63c9263e84bd3993cab8e09b3d69888857858635`.
 Candidate implementation: `21807732c94496512c4bb1dd76d377a43e8d751d`.
-This evidence-only follow-up does not change product or test code.
+The captures were added in evidence-only commit `f53b9bda`; the XML character
+validation follow-up below reuses them because it changes rejected inputs only.
 
 ![Before and after moving the same explanation from subtitle to description](comparison.png)
 
@@ -81,6 +82,24 @@ local checks. Screenshots were visually inspected by Codex; human review and rea
 VoiceOver/NVDA speech tests remain unperformed. Safari, Firefox, Windows, Linux,
 and host-document `img` embedding are not claimed as tested. Hosts using `img`
 still need their own `alt` and long-description strategy.
+
+## XML character validation follow-up
+
+CodeRabbit identified a malformed-export edge case. On `f53b9bda`, the public CLI
+accepted `A\u0001B`; Chrome's actual SVG exporter retained U+0001, and reparsing
+the exported string as `image/svg+xml` produced a `parsererror`.
+
+The common description schema now rejects XML 1.0 forbidden controls, U+FFFE,
+U+FFFF and unpaired surrogates before rendering. Tabs, line breaks, BMP boundary
+characters and supplementary code points remain accepted. Existing descriptions
+containing valid text retain the same rendering; legacy fields are not changed.
+
+The added regression failed before this schema constraint and passed afterward.
+All four description tests and the focused real-browser SVG/PNG export test
+passed after the change; generated checks, canonical ZIP rebuilding and extracted
+package smoke were also rerun. This is an input-boundary fix with no new runtime
+helper or rendering branch. The earlier screenshot/legacy-byte receipts retain
+their original candidate identity rather than being presented as new captures.
 
 ## Reproduce
 

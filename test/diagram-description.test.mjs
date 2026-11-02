@@ -31,7 +31,7 @@ test('native descriptions accept plain text up to 2,000 Unicode code points', ()
   for (const type of Object.keys(examples)) {
     const doc = example(type);
     assert.doesNotThrow(() => validateSchema(type, doc));
-    for (const description of ['', ' \n\t ', '界'.repeat(2000), '😀'.repeat(2000)]) {
+    for (const description of ['', ' \n\t\r ', '界'.repeat(2000), '😀'.repeat(2000), '\uD7FF\uE000\uFFFD\u{10000}\u{10FFFF}']) {
       doc.meta.description = description;
       assert.doesNotThrow(() => validateSchema(type, doc), type);
     }
@@ -43,6 +43,26 @@ test('native descriptions accept plain text up to 2,000 Unicode code points', ()
     doc.meta.translations = { [`diagram.description.${type}`]: 'a'.repeat(401) };
     assert.throws(() => validateSchema(type, doc), /400/, 'translation limit stays unchanged');
   }
+});
+
+test('native descriptions reject XML-forbidden characters before rendering', t => {
+  const forbidden = [
+    ...Array.from({ length: 32 }, (_, code) => code).filter(code => ![9, 10, 13].includes(code)),
+    0xD800, 0xDFFF, 0xFFFE, 0xFFFF,
+  ];
+  for (const type of Object.keys(examples)) {
+    const doc = example(type);
+    for (const code of forbidden) {
+      doc.meta.description = `A${String.fromCodePoint(code)}B`;
+      assert.throws(() => validateSchema(type, doc), /description/, `${type}: U+${code.toString(16)}`);
+    }
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-description-xml-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const doc = example('architecture');
+  doc.meta.description = 'A\u0001B';
+  assert.throws(() => render(dir, 'architecture', doc), /description/);
+  assert.equal(fs.existsSync(path.join(dir, 'architecture.html')), false);
 });
 
 test('public native renderers preserve descriptions as text without changing visible headers', t => {

@@ -15,7 +15,8 @@
     "diagramDescription": {
       "description": "Authored plain-text SVG description, never drawn. Blank text falls back to subtitle or the localized default.",
       "type": "string",
-      "maxLength": 2000
+      "maxLength": 2000,
+      "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\uD800-\\uDFFF\\uFFFE\\uFFFF]*$"
     },
     "translations": {
       "type": "object",

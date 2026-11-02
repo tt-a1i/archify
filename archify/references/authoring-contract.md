@@ -150,7 +150,9 @@ in the generated viewer.
 
 For a longer text alternative to a native diagram, use optional
 `meta.description`: plain text, at most 2,000 Unicode code points (not UTF-16
-code units or grapheme clusters). It is written only to the SVG `<desc>` and
+code units or grapheme clusters). Characters forbidden by XML 1.0, including
+unpaired surrogates, are rejected so standalone SVG remains valid. Tabs and
+line breaks are allowed. It is written only to the SVG `<desc>` and
 retained in standalone SVG exports; it never becomes a visible subtitle or a
 raster title band. Write it in the reader's language from supported facts and
 update it when the diagram changes; `meta.locale` does not translate it.
