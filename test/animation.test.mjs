@@ -150,6 +150,15 @@ test('all five renderers add one geometry-neutral semantic sigil per sigil-beari
     const traceSvg = svgBlock(traceHtml);
     const sigils = (svg) => [...svg.matchAll(/<g aria-hidden="true" data-semantic-sigil="[^"]+"[\s\S]*?<\/g>/g)].map((match) => match[0]);
 
+    if (mode === 'architecture') {
+      // Layered cards show exactly one tile icon per node (brand logo or
+      // generic icon); compact cards keep the semantic sigil.
+      const icons = (svg) => svg.match(/data-semantic-sigil="|data-generic-icon="|data-brand-mark="/g) || [];
+      assert.equal(icons(staticSvg).length, expected, mode);
+      assert.deepEqual(icons(traceSvg), icons(staticSvg), 'architecture trace must not change icons');
+      assert.match(staticHtml, /svg \.s-database\s+\{ color: var\(--database-stroke\); \}/, mode);
+      continue;
+    }
     assert.equal(sigils(staticSvg).length, expected, mode);
     assert.deepEqual(sigils(traceSvg), sigils(staticSvg), `${mode} trace must not change sigil geometry`);
     assert.match(staticHtml, /svg \.semantic-sigil \{/i, mode);

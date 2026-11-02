@@ -26,10 +26,18 @@ for (const [mode, [example, collection, index = 0]] of Object.entries(cases)) {
         fs.writeFileSync(input, JSON.stringify(spec));
         const result = spawnSync(process.execPath, [path.join(root, `renderers/${mode}/render-${mode}.mjs`), input, output], { encoding: 'utf8' });
         assert.equal(result.status, 0, result.stderr);
-        return fs.readFileSync(output, 'utf8');
+        const html = fs.readFileSync(output, 'utf8');
+        // Architecture defs hold one symbol per generic icon in use; compare
+        // node markup without them (their contents follow the icon choice).
+        return mode === 'architecture' ? html.replace(/\s*<symbol id="gi-[^"]+"[\s\S]*?<\/symbol>/g, '') : html;
       };
       const baseline = render();
-      const sigil = /<g aria-hidden="true" data-semantic-sigil="[^"]+"[^>]*>[\s\S]*?<\/g>/;
+      // Architecture layered cards draw Archify's generic icon in the tile;
+      // the other renderers draw the semantic sigil.
+      const arch = mode === 'architecture';
+      const sigil = arch
+        ? /\n\s*<use aria-hidden="true" class="generic-icon [^"]+" data-generic-icon="[^"]+"[^>]*\/>/
+        : /<g aria-hidden="true" data-semantic-sigil="[^"]+"[^>]*>[\s\S]*?<\/g>/;
       const old = baseline.match(sigil)?.[0];
       assert.ok(old);
       // geometry.test.mjs covers the full shared icon catalog. Every renderer
@@ -42,7 +50,7 @@ for (const [mode, [example, collection, index = 0]] of Object.entries(cases)) {
           assert.equal(html, baseline.replace(old, ''));
         } else {
           const current = html.match(sigil)?.[0];
-          assert.ok(current.includes(`data-semantic-sigil="${icon}"`));
+          assert.ok(current.includes(arch ? 'data-generic-icon="scheduler"' : `data-semantic-sigil="${icon}"`));
           assert.equal(current.match(/class="([^"]+)"/)[1], old.match(/class="([^"]+)"/)[1]);
           assert.equal(html.replace(current, ''), baseline.replace(old, ''));
         }
@@ -50,8 +58,16 @@ for (const [mode, [example, collection, index = 0]] of Object.entries(cases)) {
       delete spec[collection][index].icon;
       spec[collection][index].brand = 'openai';
       const branded = render();
-      const brandedSigil = branded.match(sigil)[0];
-      for (const icon of ['calendar', 'none']) {
+      if (arch) {
+        // A brand logo is the tile's only icon, so icon overrides leave it untouched.
+        assert.match(branded, /data-brand-logo="CC0-1.0"/);
+        for (const icon of ['calendar', 'none']) {
+          spec[collection][index].icon = icon;
+          assert.equal(render(), branded);
+        }
+      }
+      const brandedSigil = arch ? '' : branded.match(sigil)[0];
+      for (const icon of arch ? [] : ['calendar', 'none']) {
         spec[collection][index].icon = icon;
         const html = render();
         assert.match(html, /data-brand-mark="openai"/);

@@ -497,5 +497,6 @@
   "viewer.passport.back": "返回上一級",
   "viewer.passport.back.aria": "返回父級圖",
   "viewer.nav.back": "返回",
-  "viewer.nav.back.title": "返回父級圖"
+  "viewer.nav.back.title": "返回父級圖",
+  "node.details": "詳情"
 }

@@ -35,6 +35,16 @@ const REQUIRED_DISCLOSURES = [
   ['clearance boundary', 'does not state that every packaged mark has\nbeen cleared for every commercial, promotional, or redistributive use'],
 ];
 
+// Required only when the package ships the full-colour logo set.
+const LOGO_DISCLOSURES = [
+  ['gilbarbara/logos pinned source', 'https://github.com/gilbarbara/logos/tree/d6960edc1b7309d392c76e40d3a320df7f9ff85c'],
+  ['gilbarbara/logos license', 'CC0 1.0 Universal](https://github.com/gilbarbara/logos/blob/d6960edc1b7309d392c76e40d3a320df7f9ff85c/LICENSE.txt)'],
+  ['devicon pinned source', 'https://github.com/devicons/devicon/tree/32fe1d3b3f36ad11f90ab94f7db59738139c2bf6'],
+  ['devicon copyright', 'Copyright (c) 2015 konpa'],
+  ['devicon license file', '`third_party/devicon/LICENSE`'],
+  ['logo trademark statement', 'Logos are trademarks of their respective owners.'],
+];
+
 const FONT_DISCLOSURES = [
   ['JetBrains Mono section', '## JetBrains Mono'],
   ['JetBrains Mono source', 'https://github.com/JetBrains/JetBrainsMono'],
@@ -43,11 +53,11 @@ const FONT_DISCLOSURES = [
   ['embedded-font treatment', 'embed the JetBrains Mono variable font\nsubsets served by Google Fonts'],
 ];
 
-export function validateThirdPartyNotices(content, { embeddedFonts = true } = {}) {
+export function validateThirdPartyNotices(content, { embeddedFonts = true, brandLogos = true } = {}) {
   if (typeof content !== 'string' || content.length === 0) {
     return { ok: false, missing: ['non-empty notice'] };
   }
-  const missing = [...REQUIRED_DISCLOSURES, ...(embeddedFonts ? FONT_DISCLOSURES : [])]
+  const missing = [...REQUIRED_DISCLOSURES, ...(brandLogos ? LOGO_DISCLOSURES : []), ...(embeddedFonts ? FONT_DISCLOSURES : [])]
     .filter(([, fragment]) => !content.includes(fragment))
     .map(([label]) => label);
   return { ok: missing.length === 0, missing };
@@ -60,4 +70,4 @@ export function assertThirdPartyNotices(content, subject = 'THIRD_PARTY_NOTICES.
   }
 }
 
-export const THIRD_PARTY_NOTICE_DISCLOSURE_COUNT = REQUIRED_DISCLOSURES.length + FONT_DISCLOSURES.length;
+export const THIRD_PARTY_NOTICE_DISCLOSURE_COUNT = REQUIRED_DISCLOSURES.length + LOGO_DISCLOSURES.length + FONT_DISCLOSURES.length;

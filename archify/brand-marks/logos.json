@@ -1,0 +1,1084 @@
+{
+  "schemaVersion": 1,
+  "providers": {
+    "gilbarbara": {
+      "name": "gilbarbara/logos",
+      "license": "CC0-1.0",
+      "repository": "https://github.com/gilbarbara/logos",
+      "commit": "d6960edc1b7309d392c76e40d3a320df7f9ff85c"
+    },
+    "devicon": {
+      "name": "devicon",
+      "license": "MIT",
+      "repository": "https://github.com/devicons/devicon",
+      "commit": "32fe1d3b3f36ad11f90ab94f7db59738139c2bf6"
+    }
+  },
+  "logos": [
+    {
+      "id": "openai",
+      "provider": "gilbarbara",
+      "file": "logos/openai-icon.svg"
+    },
+    {
+      "id": "claude",
+      "provider": "gilbarbara",
+      "file": "logos/claude-icon.svg"
+    },
+    {
+      "id": "anthropic",
+      "provider": "gilbarbara",
+      "file": "logos/anthropic-icon.svg"
+    },
+    {
+      "id": "google-gemini",
+      "provider": "gilbarbara",
+      "file": "logos/google-gemini-icon.svg"
+    },
+    {
+      "id": "deepseek",
+      "provider": "gilbarbara",
+      "file": "logos/deepseek-icon.svg"
+    },
+    {
+      "id": "qwen",
+      "provider": "gilbarbara",
+      "file": "logos/qwen-icon.svg"
+    },
+    {
+      "id": "meta",
+      "provider": "gilbarbara",
+      "file": "logos/meta-icon.svg"
+    },
+    {
+      "id": "mistral-ai",
+      "provider": "gilbarbara",
+      "file": "logos/mistral-ai-icon.svg"
+    },
+    {
+      "id": "hugging-face",
+      "provider": "devicon",
+      "file": "icons/huggingface/huggingface-original.svg"
+    },
+    {
+      "id": "ollama",
+      "provider": "gilbarbara",
+      "file": "logos/ollama.svg"
+    },
+    {
+      "id": "openrouter",
+      "provider": "gilbarbara",
+      "file": "logos/openrouter-icon.svg"
+    },
+    {
+      "id": "perplexity",
+      "provider": "gilbarbara",
+      "file": "logos/perplexity-icon.svg"
+    },
+    {
+      "id": "google-cloud",
+      "provider": "gilbarbara",
+      "file": "logos/google-cloud.svg"
+    },
+    {
+      "id": "cloudflare",
+      "provider": "gilbarbara",
+      "file": "logos/cloudflare-icon.svg"
+    },
+    {
+      "id": "vercel",
+      "provider": "gilbarbara",
+      "file": "logos/vercel-icon.svg"
+    },
+    {
+      "id": "netlify",
+      "provider": "gilbarbara",
+      "file": "logos/netlify-icon.svg"
+    },
+    {
+      "id": "digitalocean",
+      "provider": "gilbarbara",
+      "file": "logos/digital-ocean-icon.svg"
+    },
+    {
+      "id": "railway",
+      "provider": "gilbarbara",
+      "file": "logos/railway.svg"
+    },
+    {
+      "id": "fly-io",
+      "provider": "gilbarbara",
+      "file": "logos/fly-icon.svg"
+    },
+    {
+      "id": "cloudinary",
+      "provider": "gilbarbara",
+      "file": "logos/cloudinary-icon.svg"
+    },
+    {
+      "id": "firebase",
+      "provider": "gilbarbara",
+      "file": "logos/firebase-icon.svg"
+    },
+    {
+      "id": "supabase",
+      "provider": "gilbarbara",
+      "file": "logos/supabase-icon.svg"
+    },
+    {
+      "id": "neon",
+      "provider": "gilbarbara",
+      "file": "logos/neon-icon.svg"
+    },
+    {
+      "id": "github",
+      "provider": "gilbarbara",
+      "file": "logos/github-icon.svg"
+    },
+    {
+      "id": "gitlab",
+      "provider": "gilbarbara",
+      "file": "logos/gitlab-icon.svg"
+    },
+    {
+      "id": "bitbucket",
+      "provider": "gilbarbara",
+      "file": "logos/bitbucket.svg"
+    },
+    {
+      "id": "docker",
+      "provider": "gilbarbara",
+      "file": "logos/docker-icon.svg"
+    },
+    {
+      "id": "kubernetes",
+      "provider": "gilbarbara",
+      "file": "logos/kubernetes.svg"
+    },
+    {
+      "id": "terraform",
+      "provider": "gilbarbara",
+      "file": "logos/terraform-icon.svg"
+    },
+    {
+      "id": "pulumi",
+      "provider": "gilbarbara",
+      "file": "logos/pulumi-icon.svg"
+    },
+    {
+      "id": "ansible",
+      "provider": "gilbarbara",
+      "file": "logos/ansible.svg"
+    },
+    {
+      "id": "jenkins",
+      "provider": "devicon",
+      "file": "icons/jenkins/jenkins-original.svg"
+    },
+    {
+      "id": "circleci",
+      "provider": "gilbarbara",
+      "file": "logos/circleci.svg"
+    },
+    {
+      "id": "github-actions",
+      "provider": "gilbarbara",
+      "file": "logos/github-actions.svg"
+    },
+    {
+      "id": "argo",
+      "provider": "gilbarbara",
+      "file": "logos/argo-icon.svg"
+    },
+    {
+      "id": "helm",
+      "provider": "gilbarbara",
+      "file": "logos/helm.svg"
+    },
+    {
+      "id": "grafana",
+      "provider": "gilbarbara",
+      "file": "logos/grafana.svg"
+    },
+    {
+      "id": "prometheus",
+      "provider": "gilbarbara",
+      "file": "logos/prometheus.svg"
+    },
+    {
+      "id": "sentry",
+      "provider": "gilbarbara",
+      "file": "logos/sentry-icon.svg"
+    },
+    {
+      "id": "datadog",
+      "provider": "gilbarbara",
+      "file": "logos/datadog-icon.svg"
+    },
+    {
+      "id": "pagerduty",
+      "provider": "gilbarbara",
+      "file": "logos/pagerduty-icon.svg"
+    },
+    {
+      "id": "postgresql",
+      "provider": "gilbarbara",
+      "file": "logos/postgresql.svg"
+    },
+    {
+      "id": "mysql",
+      "provider": "gilbarbara",
+      "file": "logos/mysql-icon.svg"
+    },
+    {
+      "id": "mongodb",
+      "provider": "gilbarbara",
+      "file": "logos/mongodb-icon.svg"
+    },
+    {
+      "id": "redis",
+      "provider": "gilbarbara",
+      "file": "logos/redis.svg"
+    },
+    {
+      "id": "apache-kafka",
+      "provider": "gilbarbara",
+      "file": "logos/kafka-icon.svg"
+    },
+    {
+      "id": "rabbitmq",
+      "provider": "gilbarbara",
+      "file": "logos/rabbitmq-icon.svg"
+    },
+    {
+      "id": "clickhouse",
+      "provider": "devicon",
+      "file": "icons/clickhouse/clickhouse-original.svg"
+    },
+    {
+      "id": "elasticsearch",
+      "provider": "gilbarbara",
+      "file": "logos/elasticsearch.svg"
+    },
+    {
+      "id": "opensearch",
+      "provider": "gilbarbara",
+      "file": "logos/opensearch-icon.svg"
+    },
+    {
+      "id": "snowflake",
+      "provider": "gilbarbara",
+      "file": "logos/snowflake-icon.svg"
+    },
+    {
+      "id": "databricks",
+      "provider": "gilbarbara",
+      "file": "logos/databricks-icon.svg"
+    },
+    {
+      "id": "planetscale",
+      "provider": "gilbarbara",
+      "file": "logos/planetscale.svg"
+    },
+    {
+      "id": "prisma",
+      "provider": "gilbarbara",
+      "file": "logos/prisma.svg"
+    },
+    {
+      "id": "sqlite",
+      "provider": "devicon",
+      "file": "icons/sqlite/sqlite-original.svg"
+    },
+    {
+      "id": "mariadb",
+      "provider": "gilbarbara",
+      "file": "logos/mariadb-icon.svg"
+    },
+    {
+      "id": "influxdb",
+      "provider": "devicon",
+      "file": "icons/influxdb/influxdb-original.svg"
+    },
+    {
+      "id": "apache-airflow",
+      "provider": "gilbarbara",
+      "file": "logos/airflow-icon.svg"
+    },
+    {
+      "id": "notion",
+      "provider": "gilbarbara",
+      "file": "logos/notion-icon.svg"
+    },
+    {
+      "id": "figma",
+      "provider": "gilbarbara",
+      "file": "logos/figma.svg"
+    },
+    {
+      "id": "jira",
+      "provider": "gilbarbara",
+      "file": "logos/jira.svg"
+    },
+    {
+      "id": "linear",
+      "provider": "gilbarbara",
+      "file": "logos/linear-icon.svg"
+    },
+    {
+      "id": "discord",
+      "provider": "gilbarbara",
+      "file": "logos/discord-icon.svg"
+    },
+    {
+      "id": "zoom",
+      "provider": "gilbarbara",
+      "file": "logos/zoom-icon.svg"
+    },
+    {
+      "id": "trello",
+      "provider": "gilbarbara",
+      "file": "logos/trello.svg"
+    },
+    {
+      "id": "asana",
+      "provider": "gilbarbara",
+      "file": "logos/asana-icon.svg"
+    },
+    {
+      "id": "airtable",
+      "provider": "gilbarbara",
+      "file": "logos/airtable.svg"
+    },
+    {
+      "id": "miro",
+      "provider": "gilbarbara",
+      "file": "logos/miro-icon.svg"
+    },
+    {
+      "id": "shopify",
+      "provider": "gilbarbara",
+      "file": "logos/shopify.svg"
+    },
+    {
+      "id": "paypal",
+      "provider": "gilbarbara",
+      "file": "logos/paypal.svg"
+    },
+    {
+      "id": "intercom",
+      "provider": "gilbarbara",
+      "file": "logos/intercom-icon.svg"
+    },
+    {
+      "id": "zendesk",
+      "provider": "gilbarbara",
+      "file": "logos/zendesk-icon.svg"
+    },
+    {
+      "id": "wordpress",
+      "provider": "gilbarbara",
+      "file": "logos/wordpress-icon.svg"
+    },
+    {
+      "id": "woocommerce",
+      "provider": "gilbarbara",
+      "file": "logos/woocommerce-icon.svg"
+    },
+    {
+      "id": "youtube",
+      "provider": "gilbarbara",
+      "file": "logos/youtube-icon.svg"
+    },
+    {
+      "id": "tiktok",
+      "provider": "gilbarbara",
+      "file": "logos/tiktok-icon.svg"
+    },
+    {
+      "id": "x",
+      "provider": "gilbarbara",
+      "file": "logos/x.svg"
+    },
+    {
+      "id": "instagram",
+      "provider": "gilbarbara",
+      "file": "logos/instagram-icon.svg"
+    },
+    {
+      "id": "facebook",
+      "provider": "gilbarbara",
+      "file": "logos/facebook.svg"
+    },
+    {
+      "id": "reddit",
+      "provider": "gilbarbara",
+      "file": "logos/reddit-icon.svg"
+    },
+    {
+      "id": "telegram",
+      "provider": "gilbarbara",
+      "file": "logos/telegram.svg"
+    },
+    {
+      "id": "whatsapp",
+      "provider": "gilbarbara",
+      "file": "logos/whatsapp-icon.svg"
+    },
+    {
+      "id": "pinterest",
+      "provider": "gilbarbara",
+      "file": "logos/pinterest.svg"
+    },
+    {
+      "id": "python",
+      "provider": "gilbarbara",
+      "file": "logos/python.svg"
+    },
+    {
+      "id": "typescript",
+      "provider": "gilbarbara",
+      "file": "logos/typescript-icon.svg"
+    },
+    {
+      "id": "javascript",
+      "provider": "gilbarbara",
+      "file": "logos/javascript.svg"
+    },
+    {
+      "id": "go",
+      "provider": "devicon",
+      "file": "icons/go/go-original.svg"
+    },
+    {
+      "id": "rust",
+      "provider": "gilbarbara",
+      "file": "logos/rust.svg"
+    },
+    {
+      "id": "node-js",
+      "provider": "gilbarbara",
+      "file": "logos/nodejs-icon.svg"
+    },
+    {
+      "id": "react",
+      "provider": "gilbarbara",
+      "file": "logos/react.svg"
+    },
+    {
+      "id": "vue",
+      "provider": "gilbarbara",
+      "file": "logos/vue.svg"
+    },
+    {
+      "id": "next-js",
+      "provider": "gilbarbara",
+      "file": "logos/nextjs-icon.svg"
+    },
+    {
+      "id": "pytorch",
+      "provider": "gilbarbara",
+      "file": "logos/pytorch-icon.svg"
+    },
+    {
+      "id": "tensorflow",
+      "provider": "gilbarbara",
+      "file": "logos/tensorflow.svg"
+    },
+    {
+      "id": "angular",
+      "provider": "gilbarbara",
+      "file": "logos/angular-icon.svg"
+    },
+    {
+      "id": "svelte",
+      "provider": "gilbarbara",
+      "file": "logos/svelte-icon.svg"
+    },
+    {
+      "id": "django",
+      "provider": "gilbarbara",
+      "file": "logos/django-icon.svg"
+    },
+    {
+      "id": "flask",
+      "provider": "gilbarbara",
+      "file": "logos/flask.svg"
+    },
+    {
+      "id": "fastapi",
+      "provider": "gilbarbara",
+      "file": "logos/fastapi-icon.svg"
+    },
+    {
+      "id": "spring",
+      "provider": "gilbarbara",
+      "file": "logos/spring-icon.svg"
+    },
+    {
+      "id": "dotnet",
+      "provider": "gilbarbara",
+      "file": "logos/dotnet.svg"
+    },
+    {
+      "id": "nuxt",
+      "provider": "gilbarbara",
+      "file": "logos/nuxt-icon.svg"
+    },
+    {
+      "id": "solid",
+      "provider": "gilbarbara",
+      "file": "logos/solidjs-icon.svg"
+    },
+    {
+      "id": "astro",
+      "provider": "gilbarbara",
+      "file": "logos/astro-icon.svg"
+    },
+    {
+      "id": "remix",
+      "provider": "gilbarbara",
+      "file": "logos/remix-icon.svg"
+    },
+    {
+      "id": "qwik",
+      "provider": "gilbarbara",
+      "file": "logos/qwik-icon.svg"
+    },
+    {
+      "id": "preact",
+      "provider": "gilbarbara",
+      "file": "logos/preact.svg"
+    },
+    {
+      "id": "ember",
+      "provider": "devicon",
+      "file": "icons/ember/ember-original.svg"
+    },
+    {
+      "id": "jquery",
+      "provider": "devicon",
+      "file": "icons/jquery/jquery-original.svg"
+    },
+    {
+      "id": "vite",
+      "provider": "devicon",
+      "file": "icons/vitejs/vitejs-original.svg"
+    },
+    {
+      "id": "webpack",
+      "provider": "gilbarbara",
+      "file": "logos/webpack.svg"
+    },
+    {
+      "id": "rollup",
+      "provider": "gilbarbara",
+      "file": "logos/rollupjs.svg"
+    },
+    {
+      "id": "esbuild",
+      "provider": "gilbarbara",
+      "file": "logos/esbuild.svg"
+    },
+    {
+      "id": "babel",
+      "provider": "devicon",
+      "file": "icons/babel/babel-original.svg"
+    },
+    {
+      "id": "tailwind-css",
+      "provider": "gilbarbara",
+      "file": "logos/tailwindcss-icon.svg"
+    },
+    {
+      "id": "sass",
+      "provider": "gilbarbara",
+      "file": "logos/sass.svg"
+    },
+    {
+      "id": "apple",
+      "provider": "gilbarbara",
+      "file": "logos/apple.svg"
+    },
+    {
+      "id": "android",
+      "provider": "gilbarbara",
+      "file": "logos/android-icon.svg"
+    },
+    {
+      "id": "swift",
+      "provider": "gilbarbara",
+      "file": "logos/swift.svg"
+    },
+    {
+      "id": "kotlin",
+      "provider": "gilbarbara",
+      "file": "logos/kotlin-icon.svg"
+    },
+    {
+      "id": "flutter",
+      "provider": "gilbarbara",
+      "file": "logos/flutter-icon.svg"
+    },
+    {
+      "id": "dart",
+      "provider": "gilbarbara",
+      "file": "logos/dart.svg"
+    },
+    {
+      "id": "react-native",
+      "provider": "gilbarbara",
+      "file": "logos/react.svg"
+    },
+    {
+      "id": "expo",
+      "provider": "gilbarbara",
+      "file": "logos/expo-icon.svg"
+    },
+    {
+      "id": "electron",
+      "provider": "gilbarbara",
+      "file": "logos/electron.svg"
+    },
+    {
+      "id": "tauri",
+      "provider": "gilbarbara",
+      "file": "logos/tauri.svg"
+    },
+    {
+      "id": "deno",
+      "provider": "gilbarbara",
+      "file": "logos/deno.svg"
+    },
+    {
+      "id": "bun",
+      "provider": "gilbarbara",
+      "file": "logos/bun.svg"
+    },
+    {
+      "id": "java",
+      "provider": "gilbarbara",
+      "file": "logos/java.svg"
+    },
+    {
+      "id": "csharp",
+      "provider": "gilbarbara",
+      "file": "logos/c-sharp.svg"
+    },
+    {
+      "id": "php",
+      "provider": "gilbarbara",
+      "file": "logos/php.svg"
+    },
+    {
+      "id": "laravel",
+      "provider": "gilbarbara",
+      "file": "logos/laravel.svg"
+    },
+    {
+      "id": "ruby",
+      "provider": "gilbarbara",
+      "file": "logos/ruby.svg"
+    },
+    {
+      "id": "rails",
+      "provider": "devicon",
+      "file": "icons/rails/rails-plain.svg"
+    },
+    {
+      "id": "elixir",
+      "provider": "devicon",
+      "file": "icons/elixir/elixir-original.svg"
+    },
+    {
+      "id": "phoenix",
+      "provider": "gilbarbara",
+      "file": "logos/phoenix.svg"
+    },
+    {
+      "id": "scala",
+      "provider": "gilbarbara",
+      "file": "logos/scala.svg"
+    },
+    {
+      "id": "clojure",
+      "provider": "gilbarbara",
+      "file": "logos/clojure.svg"
+    },
+    {
+      "id": "haskell",
+      "provider": "gilbarbara",
+      "file": "logos/haskell-icon.svg"
+    },
+    {
+      "id": "cplusplus",
+      "provider": "gilbarbara",
+      "file": "logos/c-plusplus.svg"
+    },
+    {
+      "id": "erlang",
+      "provider": "gilbarbara",
+      "file": "logos/erlang.svg"
+    },
+    {
+      "id": "express",
+      "provider": "devicon",
+      "file": "icons/express/express-original.svg"
+    },
+    {
+      "id": "nestjs",
+      "provider": "gilbarbara",
+      "file": "logos/nestjs.svg"
+    },
+    {
+      "id": "fastify",
+      "provider": "gilbarbara",
+      "file": "logos/fastify-icon.svg"
+    },
+    {
+      "id": "hono",
+      "provider": "gilbarbara",
+      "file": "logos/hono.svg"
+    },
+    {
+      "id": "graphql",
+      "provider": "gilbarbara",
+      "file": "logos/graphql.svg"
+    },
+    {
+      "id": "apollo",
+      "provider": "gilbarbara",
+      "file": "logos/apollostack.svg"
+    },
+    {
+      "id": "trpc",
+      "provider": "gilbarbara",
+      "file": "logos/trpc.svg"
+    },
+    {
+      "id": "grpc",
+      "provider": "devicon",
+      "file": "icons/grpc/grpc-original.svg"
+    },
+    {
+      "id": "openapi",
+      "provider": "gilbarbara",
+      "file": "logos/swagger.svg"
+    },
+    {
+      "id": "socket-io",
+      "provider": "gilbarbara",
+      "file": "logos/socket.io.svg"
+    },
+    {
+      "id": "nginx",
+      "provider": "gilbarbara",
+      "file": "logos/nginx.svg"
+    },
+    {
+      "id": "microsoft-sql-server",
+      "provider": "devicon",
+      "file": "icons/microsoftsqlserver/microsoftsqlserver-original.svg"
+    },
+    {
+      "id": "oracle",
+      "provider": "devicon",
+      "file": "icons/oracle/oracle-original.svg"
+    },
+    {
+      "id": "memcached",
+      "provider": "gilbarbara",
+      "file": "logos/memcached.svg"
+    },
+    {
+      "id": "cassandra",
+      "provider": "gilbarbara",
+      "file": "logos/cassandra.svg"
+    },
+    {
+      "id": "duckdb",
+      "provider": "devicon",
+      "file": "icons/duckdb/duckdb-original.svg"
+    },
+    {
+      "id": "neo4j",
+      "provider": "devicon",
+      "file": "icons/neo4j/neo4j-original.svg"
+    },
+    {
+      "id": "couchbase",
+      "provider": "gilbarbara",
+      "file": "logos/couchbase.svg"
+    },
+    {
+      "id": "dynamodb",
+      "provider": "gilbarbara",
+      "file": "logos/aws-dynamodb.svg"
+    },
+    {
+      "id": "nats",
+      "provider": "gilbarbara",
+      "file": "logos/nats-icon.svg"
+    },
+    {
+      "id": "temporal",
+      "provider": "gilbarbara",
+      "file": "logos/temporal-icon.svg"
+    },
+    {
+      "id": "apache-spark",
+      "provider": "gilbarbara",
+      "file": "logos/spark.svg"
+    },
+    {
+      "id": "hadoop",
+      "provider": "gilbarbara",
+      "file": "logos/hadoop.svg"
+    },
+    {
+      "id": "dbt",
+      "provider": "gilbarbara",
+      "file": "logos/dbt-icon.svg"
+    },
+    {
+      "id": "airbyte",
+      "provider": "gilbarbara",
+      "file": "logos/airbyte-icon.svg"
+    },
+    {
+      "id": "metabase",
+      "provider": "gilbarbara",
+      "file": "logos/metabase.svg"
+    },
+    {
+      "id": "superset",
+      "provider": "gilbarbara",
+      "file": "logos/apache-superset-icon.svg"
+    },
+    {
+      "id": "tableau",
+      "provider": "gilbarbara",
+      "file": "logos/tableau-icon.svg"
+    },
+    {
+      "id": "looker",
+      "provider": "gilbarbara",
+      "file": "logos/looker-icon.svg"
+    },
+    {
+      "id": "langchain",
+      "provider": "gilbarbara",
+      "file": "logos/langchain-icon.svg"
+    },
+    {
+      "id": "weaviate",
+      "provider": "gilbarbara",
+      "file": "logos/weaviate-icon.svg"
+    },
+    {
+      "id": "qdrant",
+      "provider": "gilbarbara",
+      "file": "logos/qdrant-icon.svg"
+    },
+    {
+      "id": "milvus",
+      "provider": "gilbarbara",
+      "file": "logos/milvus-icon.svg"
+    },
+    {
+      "id": "jupyter",
+      "provider": "gilbarbara",
+      "file": "logos/jupyter.svg"
+    },
+    {
+      "id": "aws",
+      "provider": "gilbarbara",
+      "file": "logos/aws.svg"
+    },
+    {
+      "id": "azure",
+      "provider": "gilbarbara",
+      "file": "logos/microsoft-azure.svg"
+    },
+    {
+      "id": "heroku",
+      "provider": "gilbarbara",
+      "file": "logos/heroku-icon.svg"
+    },
+    {
+      "id": "linode",
+      "provider": "gilbarbara",
+      "file": "logos/linode.svg"
+    },
+    {
+      "id": "appwrite",
+      "provider": "gilbarbara",
+      "file": "logos/appwrite-icon.svg"
+    },
+    {
+      "id": "podman",
+      "provider": "devicon",
+      "file": "icons/podman/podman-original.svg"
+    },
+    {
+      "id": "istio",
+      "provider": "devicon",
+      "file": "icons/istio/istio-original.svg"
+    },
+    {
+      "id": "linkerd",
+      "provider": "gilbarbara",
+      "file": "logos/linkerd.svg"
+    },
+    {
+      "id": "envoy",
+      "provider": "gilbarbara",
+      "file": "logos/envoy-icon.svg"
+    },
+    {
+      "id": "traefik",
+      "provider": "devicon",
+      "file": "icons/traefikproxy/traefikproxy-original.svg"
+    },
+    {
+      "id": "chef",
+      "provider": "gilbarbara",
+      "file": "logos/chef.svg"
+    },
+    {
+      "id": "puppet",
+      "provider": "gilbarbara",
+      "file": "logos/puppet-icon.svg"
+    },
+    {
+      "id": "vagrant",
+      "provider": "gilbarbara",
+      "file": "logos/vagrant-icon.svg"
+    },
+    {
+      "id": "git",
+      "provider": "gilbarbara",
+      "file": "logos/git-icon.svg"
+    },
+    {
+      "id": "buildkite",
+      "provider": "gilbarbara",
+      "file": "logos/buildkite-icon.svg"
+    },
+    {
+      "id": "drone",
+      "provider": "gilbarbara",
+      "file": "logos/drone-icon.svg"
+    },
+    {
+      "id": "teamcity",
+      "provider": "devicon",
+      "file": "icons/teamcity/teamcity-original.svg"
+    },
+    {
+      "id": "gitea",
+      "provider": "devicon",
+      "file": "icons/gitea/gitea-original.svg"
+    },
+    {
+      "id": "new-relic",
+      "provider": "gilbarbara",
+      "file": "logos/new-relic-icon.svg"
+    },
+    {
+      "id": "kibana",
+      "provider": "gilbarbara",
+      "file": "logos/kibana.svg"
+    },
+    {
+      "id": "logstash",
+      "provider": "gilbarbara",
+      "file": "logos/logstash.svg"
+    },
+    {
+      "id": "jaeger",
+      "provider": "devicon",
+      "file": "icons/jaegertracing/jaegertracing-original.svg"
+    },
+    {
+      "id": "opentelemetry",
+      "provider": "gilbarbara",
+      "file": "logos/opentelemetry-icon.svg"
+    },
+    {
+      "id": "loki",
+      "provider": "devicon",
+      "file": "icons/grafanaloki/grafanaloki-original.svg"
+    },
+    {
+      "id": "auth0",
+      "provider": "gilbarbara",
+      "file": "logos/auth0-icon.svg"
+    },
+    {
+      "id": "okta",
+      "provider": "gilbarbara",
+      "file": "logos/okta-icon.svg"
+    },
+    {
+      "id": "clerk",
+      "provider": "gilbarbara",
+      "file": "logos/clerk-icon.svg"
+    },
+    {
+      "id": "vault",
+      "provider": "gilbarbara",
+      "file": "logos/vault-icon.svg"
+    },
+    {
+      "id": "lets-encrypt",
+      "provider": "gilbarbara",
+      "file": "logos/letsencrypt.svg"
+    },
+    {
+      "id": "oauth",
+      "provider": "gilbarbara",
+      "file": "logos/oauth.svg"
+    },
+    {
+      "id": "jwt",
+      "provider": "gilbarbara",
+      "file": "logos/jwt-icon.svg"
+    },
+    {
+      "id": "square",
+      "provider": "gilbarbara",
+      "file": "logos/square.svg"
+    },
+    {
+      "id": "twilio",
+      "provider": "gilbarbara",
+      "file": "logos/twilio-icon.svg"
+    },
+    {
+      "id": "sendgrid",
+      "provider": "gilbarbara",
+      "file": "logos/sendgrid-icon.svg"
+    },
+    {
+      "id": "mailgun",
+      "provider": "gilbarbara",
+      "file": "logos/mailgun-icon.svg"
+    },
+    {
+      "id": "slack",
+      "provider": "gilbarbara",
+      "file": "logos/slack-icon.svg"
+    },
+    {
+      "id": "segment",
+      "provider": "gilbarbara",
+      "file": "logos/segment-icon.svg"
+    },
+    {
+      "id": "amplitude",
+      "provider": "gilbarbara",
+      "file": "logos/amplitude-icon.svg"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { lookup } from 'node:dns/promises';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
+import { BRAND_LOGOS } from './generated-brand-logos.mjs';
 import { BRAND_MARKS } from './generated-brand-marks.mjs';
 import { throwDiagnosticError } from './diagnostics.mjs';
 import { esc, textUnits } from './utils.mjs';
@@ -14,6 +15,7 @@ const COLLECTIONS = Object.freeze({
   dataflow: 'nodes',
   lifecycle: 'states',
 });
+const LOGO_BY_ID = new Map(BRAND_LOGOS.map((logo) => [logo.id, logo]));
 const MARK_BY_LOOKUP = new Map();
 const MARK_BY_DOMAIN = new Map();
 const RESOLVED_BY_NODE = new WeakMap();
@@ -634,6 +636,46 @@ async function mapConcurrent(values, limit, visit) {
   await Promise.all(workers);
 }
 
+// Architecture nodes whose label or id explicitly names one of these brands
+// get its logo without an authored `brand`. Only distinctive names qualify:
+// ordinary words that are also brands (Go, X, Meta, Render, Vault, Spring,
+// Linear, Square, Segment...) never auto-apply. Extra spellings map here.
+export const AUTO_BRAND_TERMS = Object.freeze({
+  openai: ['openai'], anthropic: ['anthropic'], 'apache-kafka': ['kafka', 'apache kafka'],
+  kubernetes: ['kubernetes', 'k8s'], prometheus: ['prometheus'], grafana: ['grafana'],
+  datadog: ['datadog'], auth0: ['auth0'], okta: ['okta'], cloudflare: ['cloudflare'],
+  nginx: ['nginx'], elasticsearch: ['elasticsearch'], opensearch: ['opensearch'],
+  redis: ['redis'], postgresql: ['postgresql', 'postgres'], mysql: ['mysql'],
+  mongodb: ['mongodb', 'mongo'], rabbitmq: ['rabbitmq'], clickhouse: ['clickhouse'],
+  snowflake: ['snowflake'], sentry: ['sentry'], pagerduty: ['pagerduty'],
+  stripe: ['stripe'], supabase: ['supabase'], firebase: ['firebase'], docker: ['docker'],
+  github: ['github'], gitlab: ['gitlab'], slack: ['slack'], twilio: ['twilio'],
+  sendgrid: ['sendgrid'], kibana: ['kibana'], jaeger: ['jaeger'], opentelemetry: ['opentelemetry', 'otel'],
+  envoy: ['envoy'], traefik: ['traefik'], istio: ['istio'], memcached: ['memcached'],
+  cassandra: ['cassandra'], dynamodb: ['dynamodb'], terraform: ['terraform'], jenkins: ['jenkins'],
+  'new-relic': ['new relic', 'newrelic'], splunk: ['splunk'], 'apache-airflow': ['airflow'],
+  'apache-spark': ['spark'], 'apache-flink': ['flink'], databricks: ['databricks'],
+  'hugging-face': ['hugging face', 'huggingface'], 'google-gemini': ['gemini'], deepseek: ['deepseek'],
+});
+
+const AUTO_BRAND_RULES = Object.entries(AUTO_BRAND_TERMS).map(([id, terms]) => [id,
+  new RegExp(`(?:^|[^a-z0-9])(?:${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[\\s_-]?')).join('|')})(?![a-z0-9])`)]);
+
+export function autoBrandIdFor(node) {
+  const text = `${node?.label ?? ''} ${node?.id ?? ''}`.toLowerCase();
+  for (const [id, re] of AUTO_BRAND_RULES) if (re.test(text)) return id;
+  return null;
+}
+
+// Drop an auto-applied mark (never an authored one), e.g. when a compact
+// card has no room for it.
+export function dropAutoBrandMark(node) {
+  if (!brandMarkFor(node)?.auto) return false;
+  delete node[RESOLVED_MARK];
+  RESOLVED_BY_NODE.delete(node);
+  return true;
+}
+
 export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const collection = COLLECTIONS[diagramType];
   const nodes = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
@@ -641,7 +683,16 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const remoteByUrl = new Map();
   const deadline = Date.now() + captureTimeoutMilliseconds();
   await mapConcurrent(nodes, MAX_CAPTURE_CONCURRENCY, async (node, index) => {
-    if (!node.brand) return;
+    if (!node.brand) {
+      const autoId = diagramType === 'architecture' ? autoBrandIdFor(node) : null;
+      const preset = autoId ? findBrandMark(autoId) : null;
+      if (preset) {
+        const resolved = { ...preset, kind: 'preset', status: 'preset', auto: true, sourceUrl: preset.provenance.source };
+        node[RESOLVED_MARK] = resolved;
+        RESOLVED_BY_NODE.set(node, resolved);
+      }
+      return;
+    }
     if (typeof node.brand === 'object') {
       const url = asUrl(node.brand.url);
       const resolved = url ? await remoteBrand(url.href, remoteByUrl, deadline) : null;
@@ -724,10 +775,27 @@ function markAttrs(mark) {
   ].filter(Boolean).join(' ');
 }
 
-export function renderBrandMark(node, { x, y, size = 16 } = {}) {
+// Relative luminance of a 6-digit hex colour, 0 (black) to 1 (white).
+export function brandHexLuminance(hex) {
+  const value = String(hex || '').replace(/^#/, '');
+  if (!/^[0-9a-f]{6}$/i.test(value)) return 0;
+  const channel = (offset) => {
+    const c = Number.parseInt(value.slice(offset, offset + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+}
+
+// A white or near-white brand colour would vanish on the light plate; those
+// marks get an ink plate instead so the authored identity stays legible.
+export const BRAND_INK_PLATE_LUMINANCE = 0.7;
+
+export function renderBrandMark(node, { x, y, size = 16, inset = 3, radius = 4 } = {}) {
   const mark = brandMarkFor(node);
   if (!mark) return '';
-  const inset = 3;
+  // Logo-only catalogue entries have no monochrome path; draw their logo.
+  if (mark.kind === 'preset' && !mark.path) return renderBrandLogo(node, { x, y, size, inset, radius });
+  const inkPlate = mark.kind === 'preset' && brandHexLuminance(mark.hex) >= BRAND_INK_PLATE_LUMINANCE;
   let content;
   if (mark.kind === 'preset') {
     const scale = (size - inset * 2) / mark.viewBox;
@@ -738,9 +806,46 @@ export function renderBrandMark(node, { x, y, size = 16 } = {}) {
     const scale = size / 20;
     content = `<g transform="scale(${scale})" class="brand-mark-fallback"><circle cx="10" cy="10" r="5.2"/><path d="M4.8 10h10.4M10 4.8c1.6 1.6 2.4 3.3 2.4 5.2s-.8 3.6-2.4 5.2M10 4.8C8.4 6.4 7.6 8.1 7.6 10s.8 3.6 2.4 5.2"/></g>`;
   }
-  return `<g aria-hidden="true" ${markAttrs(mark)} class="brand-mark" transform="translate(${x} ${y})">
-            <rect width="${size}" height="${size}" rx="4" class="brand-mark-badge"/>
+  return `<g aria-hidden="true" ${markAttrs(mark)} class="brand-mark${inkPlate ? ' brand-mark-ink' : ''}" transform="translate(${x} ${y})">
+            <rect width="${size}" height="${size}" rx="${radius}" class="brand-mark-badge"/>
             ${content}
-            <rect width="${size}" height="${size}" rx="4" class="brand-mark-frame"/>
+            <rect width="${size}" height="${size}" rx="${radius}" class="brand-mark-frame"/>
+          </g>`;
+}
+
+export function brandLogoFor(node) {
+  const mark = brandMarkFor(node);
+  return mark?.kind === 'preset' ? LOGO_BY_ID.get(mark.id) || null : null;
+}
+
+// Inline <defs> inside an icon body become plain groups so the icon defs
+// block never nests <defs> (paint servers work anywhere in the document).
+export function iconSymbol(id, viewBox, body) {
+  const flat = body.replace(/<(\/?)defs(?=[\s>/])/g, '<$1g');
+  return `<symbol id="${esc(id)}" viewBox="${viewBox.join(' ')}" preserveAspectRatio="xMidYMid meet" overflow="visible">${flat}</symbol>`;
+}
+
+// One <defs data-archify-icons> block per diagram holding only the logo and
+// icon symbols the diagram uses; nodes reference them with <use>.
+export function renderIconDefs(symbols) {
+  if (!symbols?.size) return '';
+  return `        <defs data-archify-icons="">\n          ${[...symbols.values()].join('\n          ')}\n        </defs>`;
+}
+
+// Full-colour logo tile. Only the logos a diagram actually uses are embedded
+// (once each, as <symbol>s registered in `symbols`), with per-logo namespaced
+// ids. Marks without a vendored colour logo fall back to the monochrome mark.
+export function renderBrandLogo(node, { x, y, size, inset = Math.round(size * 0.17), radius = 8, symbols } = {}) {
+  const mark = brandMarkFor(node);
+  if (!mark) return '';
+  const logo = brandLogoFor(node);
+  if (!logo || !symbols) return renderBrandMark(node, { x, y, size, inset: Math.round(size * 0.2), radius });
+  const symbolId = `al-sym-${logo.id}`;
+  if (!symbols.has(symbolId)) symbols.set(symbolId, iconSymbol(symbolId, logo.viewBox, logo.body));
+  const inner = size - inset * 2;
+  return `<g aria-hidden="true" ${markAttrs(mark)} data-brand-logo="${esc(logo.provenance.license)}" class="brand-mark brand-logo${logo.inkPlate ? ' brand-mark-ink' : ''}">
+            <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${radius}" class="brand-mark-badge"/>
+            <use href="#${symbolId}" x="${x + inset}" y="${y + inset}" width="${inner}" height="${inner}"/>
+            <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${radius}" class="brand-mark-frame"/>
           </g>`;
 }

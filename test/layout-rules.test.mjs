@@ -335,7 +335,8 @@ const CASES = [
   ['architecture: label wider than component', 'architecture',
     (d) => { d.components[0].label = 'An Extremely Long Component Label Overflow'; }, ['wider than component', 'shorten the label']],
   ['architecture: component sublabel wider than its legible minimum', 'architecture',
-    (d) => { d.components[0].sublabel = 'This supporting sentence is far too long for one architecture component'; },
+    // Only boxes too small for the card tile fall back to one centred line.
+    (d) => { d.components[0].size = [60, 40]; d.components[0].label = 'Web'; d.components[0].sublabel = 'This supporting sentence is far too long for one architecture component'; },
     ['Sublabel', 'legible', 'widen size']],
   ['architecture: component tag wider than its legible minimum', 'architecture',
     (d) => { d.components[0].tag = 'This tag is far too long to sit inside one architecture component box'; },
@@ -679,7 +680,6 @@ test('architecture: boundary title masks cannot obscure connection labels', () =
 // not overflow — otherwise the common case still paints over its neighbours.
 const SHRINK_CASES = [
   // [mode, mutate(doc), preferredFontSize, selector for the sublabel <text>]
-  ['architecture', (d) => { d.components[0].sublabel = 'Browser and mobile apps'; }, 9],
   ['sequence', (d) => {
     // On a wider canvas 7px is already the smallest size that reads on desktop.
     d.meta.column_fit = 'fixed';
@@ -707,6 +707,21 @@ for (const [mode, mutate, preferred] of SHRINK_CASES) {
     assert.ok(fontSize >= 6, `expected the sublabel to stay legible, got ${fontSize}`);
   });
 }
+
+test('architecture: an over-long card sublabel truncates with an ellipsis and keeps the full text on hover', () => {
+  const d = load('architecture');
+  const full = 'Browser and mobile apps talking to the platform through the public edge';
+  d.components[0].sublabel = full;
+  const { code, stderr, outPath } = render('architecture', d);
+  assert.equal(code, 0, stderr);
+  const html = fs.readFileSync(outPath, 'utf8');
+  const sub = html.match(/<text data-detail="context"[^>]*class="t-muted node-card-sub" font-size="([\d.]+)">([^<]*)<title>([^<]*)<\/title><\/text>/);
+  assert.ok(sub, 'expected a truncated card sublabel with a hover title');
+  assert.equal(Number(sub[1]), 9.5, 'card sublabels keep their reading size instead of shrinking');
+  assert.ok(sub[2].endsWith('…') && full.startsWith(sub[2].slice(0, -1).trimEnd()), sub[2]);
+  assert.equal(sub[3], full);
+  assert.match(html, /data-node-info=""/, 'a truncated sublabel offers the ⓘ affordance');
+});
 
 const TAG_SHRINK_CASES = [
   // [mode, collection, tag, preferredFontSize]

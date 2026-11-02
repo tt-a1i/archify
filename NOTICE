@@ -22,5 +22,10 @@ and the license files beside those components. Names and logos do not imply
 official endorsement, and the software license grants no general trademark
 permission.
 
+Full-colour architecture logos come from gilbarbara/logos (CC0-1.0) and
+devicon (MIT, Copyright (c) 2015 konpa; see archify/third_party/devicon/LICENSE),
+pinned and recorded per logo in archify/brand-marks/logos.json. Logos are
+trademarks of their respective owners.
+
 These software licenses cover Archify's embedded runtime and templates, not
 ownership of a user's authored content, business data, or source repository.

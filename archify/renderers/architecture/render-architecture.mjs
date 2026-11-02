@@ -7,9 +7,11 @@ import { componentBox, boundaryBox, connectionPath } from '../shared/layout-repo
 import { rendererFailure, throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
-import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
+import { brandLabelFitWidth, dropAutoBrandMark, brandMetadataFor, brandTopRailProblem, renderBrandLogo, renderBrandMark, renderIconDefs } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { renderGenericIcon } from './generic-icons.mjs';
+import { autoCardWidth, cardLayout, cardNeedWidth, layeredCardStyle, sublabelCardWidth } from './card.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
@@ -89,14 +91,203 @@ const LEGEND_CATALOG = [
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 
 // ---- Measure components from free coordinates --------------------------------
+const cardMetricsMaxWidth = 240;
+
 function measureComponent(c) {
   const [x, y] = resolveComponentPos(c, grid);
-  const [w, h] = Array.isArray(c.size) ? c.size : [layout.defaultW, layout.defaultH];
-  return { ...c, x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 };
+  // Authored sizes are kept verbatim; unsized cards grow to fit their text,
+  // capped by the grid cell so automatic placement cannot collide.
+  const [w, h] = Array.isArray(c.size)
+    ? c.size
+    : [autoCardWidth(c, grid ? Math.max(layout.defaultW, grid.cellW) : undefined), layout.defaultH];
+  return { ...c, x, y, width: w, height: h, authoredWidth: w, cx: x + w / 2, cy: y + h / 2 };
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
+if (arch.meta?.cardSizing === 'uniform') normalizeCards(components);
+else growAuthoredCards(components);
+
+// Authored sizes are minimums: a card widens symmetrically (so its centre and
+// any aligned edges stay put) until its label reads at the preferred size,
+// and further toward the full context line, but only when the wider box keeps
+// the 8px component gap and stays inside an authored viewBox.
+// Layered cards treat an authored size as a minimum: when the logo tile and a
+// one-line context line genuinely do not fit, the card widens symmetrically to
+// the next 8px step (capped, never into a neighbour or past the viewBox).
+// Compact cards keep their authored size exactly; lint still judges the
+// authored width (`authoredWidth`).
+function growAuthoredCards(map) {
+  // Side-by-side neighbours keep room for a minimum-length connection plus
+  // its arrowhead; stacked neighbours only need a visual gap.
+  const sideGap = 40;
+  const gap = 8;
+  const step = 8;
+  const vbW = Array.isArray(arch.meta?.viewBox) ? arch.meta.viewBox[0] : Infinity;
+  // Growing must not move an authored boundary frame: a member may only widen
+  // inside the horizontal extent its frame already spans.
+  const frames = asArray(arch.boundaries).map((b) => asArray(b.wraps).map((id) => map.get(id)).filter(Boolean))
+    .filter((members) => members.length)
+    .map((members) => ({
+      members: new Set(members),
+      minX: members.reduce((v, m) => Math.min(v, m.x), Infinity),
+      maxX: members.reduce((v, m) => Math.max(v, m.x + m.width), -Infinity),
+    }));
+  for (const c of map.values()) {
+    if (!Array.isArray(c.size)) continue;
+    if (!cardLayout(c).tiled) continue;
+    const need = sublabelCardWidth(c);
+    if (need <= c.width) continue;
+    const target = Math.min(cardMetricsMaxWidth, Math.ceil(need / step) * step);
+    if (target <= c.width) continue;
+    const x = c.x - Math.floor((target - c.width) / 2);
+    if (x < 0 || x + target > vbW) continue;
+    if (frames.some((f) => f.members.has(c) && (x < f.minX || x + target > f.maxX))) continue;
+    const clear = [...map.values()].every((o) => o === c
+      || c.y + c.height + gap <= o.y || o.y + o.height + gap <= c.y
+      || x + target + sideGap <= o.x || o.x + o.width + sideGap <= x
+      // An authored gap that was already tighter may not shrink at all.
+      || (x + target <= o.x && o.x - (x + target) >= Math.min(sideGap, o.x - (c.x + c.width)))
+      || (o.x + o.width <= x && x - (o.x + o.width) >= Math.min(sideGap, c.x - (o.x + o.width))));
+    if (!clear) continue;
+    Object.assign(c, { x, width: target, cx: x + target / 2 });
+  }
+}
+
+// Layered cards are normalised per diagram so every node reads as the same
+// object: one height (standard 56–72px with a 36px tile, or a 48px small card
+// with a 28px tile when every authored card is smaller than standard), and
+// one width — the widest need among the authored widths, the label beside
+// the tile, and the one-line context line — rounded up to the 8px grid and
+// capped at 240px. Each card keeps its centre; columns and rows that would
+// now crowd each other move apart, keeping their original edge gaps (at
+// least 24px), and the canvas/viewBox grows with them. Boundary frames are
+// derived from their members, so they grow too. Lint still judges the
+// authored size (`authoredWidth`).
+function normalizeCards(map) {
+  const cards = [...map.values()];
+  if (!cards.length || arch.meta?.cardSizing !== 'uniform') return;
+  // Authored geometry that already collides or leaves the canvas is the
+  // author's to repair: keep it verbatim so diagnostics and offered repairs
+  // speak in the author's own coordinates.
+  const [vbW, vbH] = Array.isArray(arch.meta?.viewBox) ? arch.meta.viewBox : [Infinity, Infinity];
+  const broken = cards.some((c, i) => c.x < 0 || c.y < 0 || c.x + c.width > vbW || c.y + c.height > vbH
+    || cards.slice(i + 1).some((o) => c.x < o.x + o.width + 8 && o.x < c.x + c.width + 8
+      && c.y < o.y + o.height + 8 && o.y < c.y + c.height + 8));
+  if (broken) return;
+  const step = 8;
+  const minGap = 24;
+  const small = cards.every((c) => c.height < 56);
+  const H = small ? 48 : Math.min(72, Math.ceil(Math.max(56, ...cards.map((c) => c.height)) / 4) * 4);
+  const W = Math.min(cardMetricsMaxWidth, Math.ceil(Math.max(...cards.map((c) => Math.max(c.width, cardNeedWidth(c)))) / step) * step);
+  const original = cards.map((c) => ({ c, x: c.x, y: c.y, w: c.width, h: c.height, cx: c.x + c.width / 2, cy: c.y + c.height / 2 }));
+  // Resolve one axis: cluster centres, then push later clusters so that any
+  // two overlapping-in-the-other-axis cards keep their original edge gap.
+  const spread = (centre, size, otherLo, otherHi, newSize, otherNewSize, banded) => {
+    // Cards whose spans overlap on this axis (a stack, or a column of
+    // offset cards) form one cluster and move together, so a connection
+    // between them keeps its authored side and stays orthogonal.
+    const lo = (o) => centre(o) - size(o) / 2;
+    const hi = (o) => centre(o) + size(o) / 2;
+    const sorted = [...original].sort((p, q) => lo(p) - lo(q));
+    const clusters = [];
+    for (const o of sorted) {
+      const last = clusters[clusters.length - 1];
+      if (last && lo(o) < last.hi) { last.items.push(o); last.hi = Math.max(last.hi, hi(o)); }
+      else clusters.push({ items: [o], lo: lo(o), hi: hi(o), shift: 0 });
+    }
+    const clusterOf = new Map();
+    clusters.forEach((k) => k.items.forEach((o) => clusterOf.set(o, k)));
+    for (let i = 0; i < clusters.length; i += 1) {
+      let need = 0;
+      for (const o of clusters[i].items) {
+        for (let j = 0; j < i; j += 1) {
+          for (const p of clusters[j].items) {
+            // Columns keep every original gap (connections run through
+            // them); rows only separate cards that share a column band.
+            const oc = (otherLo(o) + otherHi(o)) / 2;
+            const pc = (otherLo(p) + otherHi(p)) / 2;
+            if (banded && Math.abs(oc - pc) >= otherNewSize) continue;
+            const gap0 = Math.max(minGap, lo(o) - hi(p));
+            const want = newSize + gap0;
+            const have = centre(o) - centre(p) + (clusters[i - 1].shift - clusters[j].shift);
+            need = Math.max(need, want - have);
+          }
+        }
+      }
+      clusters[i].shift = (i ? clusters[i - 1].shift : 0) + Math.max(0, need);
+    }
+    // Authored points (via bends, label anchors) move with the cluster they
+    // fall in and stretch proportionally across the gaps between clusters.
+    const mapPoint = (v) => {
+      if (v <= clusters[0].hi) return v + clusters[0].shift;
+      for (let i = 1; i < clusters.length; i += 1) {
+        const [a, b] = [clusters[i - 1], clusters[i]];
+        if (v < b.lo) {
+          const a2 = a.hi + a.shift;
+          const b2 = b.lo + b.shift;
+          return a2 + (v - a.hi) * (b2 - a2) / (b.lo - a.hi);
+        }
+        if (v <= b.hi) return v + b.shift;
+      }
+      return v + clusters[clusters.length - 1].shift;
+    };
+    return { of: (o) => clusterOf.get(o).shift, mapPoint };
+  };
+  const dx = spread((o) => o.cx, (o) => o.w, (o) => o.y, (o) => o.y + o.h, W, H, false);
+  const dy = spread((o) => o.cy, (o) => o.h, (o) => o.x, (o) => o.x + o.w, H, W, true);
+  for (const o of original) {
+    const cx = o.cx + dx.of(o);
+    const cy = o.cy + dy.of(o);
+    Object.assign(o.c, { x: Math.round(cx - W / 2), y: Math.round(cy - H / 2), width: W, height: H, uniformCard: true });
+  }
+  // A card outside a frame keeps 16px clear of that frame's border, so a
+  // grown frame never lands on (or brushes) a neighbouring card.
+  const allBoundaries = asArray(arch.boundaries);
+  for (const [index, boundary] of allBoundaries.entries()) {
+    const ids = new Set(asArray(boundary.wraps));
+    const rect = boundaryRect(boundary, index, allBoundaries);
+    if (!rect) continue;
+    const f = { l: rect.x, r: rect.x + rect.width, t: rect.y, b: rect.y + rect.height };
+    const clear = 16;
+    for (const c of cards) {
+      if (ids.has(c.id)) continue;
+      const hit = c.x < f.r + clear && c.x + c.width > f.l - clear && c.y < f.b + clear && c.y + c.height > f.t - clear;
+      if (!hit) continue;
+      const cx = c.x + c.width / 2;
+      const cy = c.y + c.height / 2;
+      // Only cards outside the frame move; one inside it is the author's.
+      if (cx > f.l && cx < f.r && cy > f.t && cy < f.b) continue;
+      const pushes = [
+        [f.b + clear - c.y, 0, 1], [c.y + c.height - (f.t - clear), 0, -1],
+        [f.r + clear - c.x, 1, 0], [c.x + c.width - (f.l - clear), -1, 0],
+      ].filter(([d, sx, sy]) => d > 0 && ((sy === 1 && cy >= f.b) || (sy === -1 && cy <= f.t) || (sx === 1 && cx >= f.r) || (sx === -1 && cx <= f.l)));
+      if (!pushes.length) continue;
+      const [d, sx, sy] = pushes.sort((p, q) => p[0] - q[0])[0];
+      c.x += sx * d;
+      c.y += sy * d;
+    }
+  }
+  // Keep everything on the canvas.
+  const minX = Math.min(...cards.map((c) => c.x));
+  const minY = Math.min(...cards.map((c) => c.y));
+  const ox = minX < 24 ? 24 - minX : 0;
+  const oy = minY < 24 ? 24 - minY : 0;
+  for (const c of cards) Object.assign(c, { x: c.x + ox, y: c.y + oy, cx: c.x + ox + W / 2, cy: c.y + oy + H / 2 });
+  const movePoint = ([x, y]) => [Math.round(dx.mapPoint(x) + ox), Math.round(dy.mapPoint(y) + oy)];
+  for (const conn of asArray(arch.connections)) {
+    if (Array.isArray(conn.via)) conn.via = conn.via.map(movePoint);
+    if (Array.isArray(conn.labelAt)) conn.labelAt = movePoint(conn.labelAt);
+  }
+  if (Array.isArray(arch.meta?.viewBox)) {
+    const right = Math.max(...original.map((o) => o.x + o.w));
+    const bottom = Math.max(...original.map((o) => o.y + o.h));
+    const newRight = Math.max(...cards.map((c) => c.x + c.width));
+    const newBottom = Math.max(...cards.map((c) => c.y + c.height));
+    const [vw, vh, ...rest] = arch.meta.viewBox;
+    arch.meta.viewBox = [vw + Math.max(0, Math.ceil(newRight - right)), vh + Math.max(0, Math.ceil(newBottom - bottom)), ...rest];
+  }
+}
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
   if (!componentSteps.has(conn.from)) componentSteps.set(conn.from, index);
@@ -107,7 +298,7 @@ for (const [index, c] of asArray(arch.components).entries()) {
 }
 
 // ---- Boundaries computed from the `wraps` id list ---------------------------
-function boundaryRect(boundary) {
+function boundaryRect(boundary, index = -1, all = []) {
   const members = asArray(boundary.wraps).map((id) => components.get(id)).filter(Boolean);
   if (!members.length) return null;
   let minX = Infinity;
@@ -120,7 +311,8 @@ function boundaryRect(boundary) {
     maxX = Math.max(maxX, member.x + member.width);
     maxY = Math.max(maxY, member.y + member.height);
   }
-  const pad = boundary.pad ?? layout.boundaryPad;
+  // Uniform cards keep at least 16px of breathing room inside every frame.
+  const pad = Math.max(boundary.pad ?? layout.boundaryPad, arch.meta?.cardSizing === 'uniform' ? 16 : 0);
   const topPad = Math.max(
     pad,
     layout.boundaryLabelBaseline + layout.boundaryLabelClearance,
@@ -129,12 +321,44 @@ function boundaryRect(boundary) {
       ? layout.boundaryLabelMaskHeight + layout.boundaryLabelClearance + layout.boundaryLabelFrameInset
       : 0,
   );
+  if (arch.meta?.cardSizing !== 'uniform') {
+    return {
+      ...boundary,
+      x: minX - pad,
+      y: minY - topPad,
+      width: maxX - minX + pad * 2,
+      height: maxY - minY + topPad + layout.boundaryExtraBottom,
+      memberTop: minY,
+    };
+  }
+  // Uniform cards: every side keeps the frame's padding, and a frame that
+  // nests another (its members are a subset; equal sets nest in authored
+  // order) wraps that frame with its own inset and title band, so nested
+  // borders never coincide.
+  let left = minX - pad;
+  let top = minY - topPad;
+  let right = maxX + pad;
+  let bottom = maxY + Math.max(pad, layout.boundaryExtraBottom);
+  const mine = new Set(asArray(boundary.wraps));
+  const nestInset = 12;
+  all.forEach((other, j) => {
+    if (j === index || !other) return;
+    const theirs = asArray(other.wraps);
+    if (!theirs.length || !theirs.every((id) => mine.has(id))) return;
+    if (theirs.length === mine.size && j < index) return;
+    const r = boundaryRect(other, j, all);
+    if (!r) return;
+    left = Math.min(left, r.x - nestInset);
+    top = Math.min(top, r.y - topPad);
+    right = Math.max(right, r.x + r.width + nestInset);
+    bottom = Math.max(bottom, r.y + r.height + nestInset);
+  });
   return {
     ...boundary,
-    x: minX - pad,
-    y: minY - topPad,
-    width: maxX - minX + pad * 2,
-    height: maxY - minY + topPad + layout.boundaryExtraBottom,
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
     memberTop: minY,
   };
 }
@@ -349,7 +573,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // reads components, connections and the member-derived boundary frames (so an
 // automatic route never borrows a frame border as its corridor), never the
 // title-expanded frames or the viewBox.
-const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const rawBoundaries = asArray(arch.boundaries).map((b, i, all) => boundaryRect(b, i, all)).filter(Boolean);
 const { pathFor, connectionSides, connectionEndpointSide } = createArchitectureRouter(components, arch.connections, {
   fixedCanvas: Boolean(arch.meta?.viewBox),
   frames: rawBoundaries.map((boundary) => ({
@@ -562,13 +786,17 @@ function validateArchitecture() {
       });
       problems.push(message);
     }
-    const brandRailProblem = brandTopRailProblem(c, c.width, 8, 'Component');
+    let brandRailProblem = cardLayout(c).tiled ? null : brandTopRailProblem(c, c.width, 8, 'Component');
+    if (brandRailProblem && dropAutoBrandMark(c)) brandRailProblem = null;
     if (brandRailProblem) problems.push(brandRailProblem);
     // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
     // handles the ordinary case, this rejects what it cannot rescue.
-    const availableTextW = availableNodeTextWidth(c.width);
+    const availableTextW = availableNodeTextWidth(c.authoredWidth ?? c.width);
+    // Card sublabels truncate with an ellipsis (full text on hover); only the
+    // compact centred layout still has to fit its sublabel on one line.
+    const compact = !cardLayout({ ...c, width: c.authoredWidth ?? c.width }).tiled;
     for (const [field, value, minimum] of [
-      ['Sublabel', c.sublabel, componentTextFit.sublabelMinimum],
+      ...(compact ? [['Sublabel', c.sublabel, componentTextFit.sublabelMinimum]] : []),
       ['Tag', c.tag, componentTextFit.tagMinimum],
     ]) {
       if (!value) continue;
@@ -1063,7 +1291,8 @@ function renderConnectionLabel(conn, index) {
         </g>`;
 }
 
-function renderComponent(c) {
+// Compact boxes too small for the card tile keep the centred text layout.
+function renderCompactComponent(c) {
   const fill = componentFill[c.type] || 'c-external';
   const accent = componentText[c.type] || 't-muted';
   const cx = c.cx;
@@ -1082,12 +1311,53 @@ function renderComponent(c) {
   const drilldowns = resolveNodeDrilldowns(c);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
-  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)} data-node-card="compact">
           ${focusNodeTitle(c.label, passport)}
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="c-mask"/>
-          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill} node-card"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
           <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}
+        </g>`, drilldowns);
+}
+
+// Logo and generic-icon symbols used by this diagram (filled while nodes render).
+const iconSymbols = new Map();
+
+function renderComponent(c) {
+  const fill = componentFill[c.type] || 'c-external';
+  const accent = componentText[c.type] || 't-muted';
+  const card = cardLayout(c, { branded: Boolean(brandMetadataFor(c).brand) });
+  if (!card.tiled) return renderCompactComponent(c);
+  const sub = card.sub
+    ? `\n          <text data-detail="context" x="${card.textX}" y="${card.sub.y}" class="t-muted node-card-sub" font-size="${card.sub.font}">${esc(card.sub.text)}${card.sub.truncated ? `<title>${esc(c.sublabel)}</title>` : ''}</text>`
+    : '';
+  const tag = c.tag
+    ? `\n          <text data-detail="fine" x="${c.x + c.width - 10}" y="${c.y + c.height - 7}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width / 2, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="end">${esc(c.tag)}</text>`
+    : '';
+  let tile = '';
+  if (card.tile) {
+    const { x, y, size } = card.tile;
+    const radius = Math.round(size * 0.22);
+    const brand = renderBrandLogo(c, { x, y, size, radius, symbols: iconSymbols });
+    // The tile is the node's single icon: the brand logo, otherwise Archify's
+    // generic icon (`icon: "none"` hides it and leaves the plain tile).
+    tile = brand
+      ? `\n          ${brand}`
+      : `\n          <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${radius}" class="node-card-tile"/>${c.icon === 'none' ? '' : `\n          ${renderGenericIcon(c, { x: x + size * 0.2, y: y + size * 0.2, size: size * 0.6, symbols: iconSymbols })}`}`;
+  }
+  // The ⓘ is a 16px outlined "i" whose tooltip just says "Details"; the full
+  // context line and authored explanation stay in the Semantic Passport.
+  const info = card.info
+    ? `\n          <g class="node-card-info" data-node-info="" transform="translate(${card.info.cx} ${card.info.cy})"><title>${esc(i18nText(arch.meta.locale, 'node.details'))}</title><circle r="${card.info.r - 0.5}"/><path d="M0 -0.5v4.5"/><circle class="node-card-info-dot" cy="-3.6" r="0.9"/></g>`
+    : '';
+  const drilldowns = resolveNodeDrilldowns(c);
+  const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
+  const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)} data-node-card="layered">
+          ${focusNodeTitle(c.label, passport)}
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="10" class="c-mask"/>
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="10" class="${fill} node-card"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1"/>${tile}
+          <text data-node-label=""${card.sub ? ' data-detail-anchor=""' : ''} x="${card.textX}" y="${card.labelY}" class="t-primary" font-size="${card.labelFont}" font-weight="650">${esc(c.label)}</text>${sub}${tag}${info}${mark}
         </g>`, drilldowns);
 }
 
@@ -1134,10 +1404,14 @@ function renderSvg() {
   // shrinking a semantically rich graph to the universal emergency floor.
   const readerMinimumText = arch.meta?.viewBox ? '' : ' data-reader-min-text="7.5"';
   const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
+  // Nodes render first so the icon defs carry exactly the symbols they use.
+  const componentMarkup = [...components.values()].map(renderComponent).join('\n\n');
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)} ${NODE_CARD_ATTR}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
+${renderIconDefs(iconSymbols)}
 ${nodeCardStyle()}
+${layeredCardStyle()}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -1149,7 +1423,7 @@ ${boundaries.map(renderBoundaryFrame).join('\n\n')}
 ${asArray(arch.connections).map(renderConnectionPath).join('\n')}
 
         <!-- Components -->
-${[...components.values()].map(renderComponent).join('\n\n')}
+${componentMarkup}
 
         <!-- Connection labels -->
 ${asArray(arch.connections).map(renderConnectionLabel).join('\n')}

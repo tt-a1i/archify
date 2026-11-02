@@ -191,9 +191,11 @@ test('repair receipt: readability identifies the failing node despite repeated c
       const input = writeFixture(`readability-${command}-${failingIndex}.json`, {
         schema_version: 1, diagram_type: 'architecture',
         meta: { title: 'Worker pools', viewBox: [1200, 400] },
+        // A short failing box falls back to the compact one-line layout, whose
+        // sublabel still shrinks; card-sized boxes truncate instead.
         components: ids.map((id, i) => ({
           id, type: 'backend', label: 'Worker', sublabel: 'Processes queued jobs',
-          pos: [80 + i * 420, 100], size: [i === failingIndex ? 100 : 300, 70],
+          pos: [80 + i * 420, 100], size: i === failingIndex ? [100, 38] : [300, 70],
         })),
         connections: [],
       });

@@ -45,6 +45,10 @@
             }
           }
         },
+        "cardSizing": {
+          "enum": ["authored", "uniform"],
+          "description": "uniform: one card height for the diagram and grid-rounded shared widths; cards keep their centres and are spaced apart. authored (default): keep authored geometry."
+        },
         "viewBox": {
           "type": "array",
           "prefixItems": [

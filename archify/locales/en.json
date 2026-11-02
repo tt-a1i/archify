@@ -497,5 +497,6 @@
   "viewer.passport.back": "Back to parent",
   "viewer.passport.back.aria": "Return to the parent diagram",
   "viewer.nav.back": "Back",
-  "viewer.nav.back.title": "Return to the parent diagram"
+  "viewer.nav.back.title": "Return to the parent diagram",
+  "node.details": "Details"
 }

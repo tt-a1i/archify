@@ -15,6 +15,7 @@
     "generate:viewer": "node ../scripts/generate-viewer.mjs",
     "check:viewer": "node ../scripts/generate-viewer.mjs --check",
     "generate:brand-marks": "node scripts/generate-brand-marks.mjs",
+    "generate:brand-logos": "node scripts/generate-brand-logos.mjs",
     "check:brand-marks": "node scripts/generate-brand-marks.mjs --check",
     "generate:validators": "node scripts/generate-validators.mjs",
     "check:validators": "node scripts/generate-validators.mjs --check",

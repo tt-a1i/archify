@@ -497,5 +497,6 @@
   "viewer.passport.back": "상위 다이어그램으로 돌아가기",
   "viewer.passport.back.aria": "상위 다이어그램으로 돌아가기",
   "viewer.nav.back": "뒤로",
-  "viewer.nav.back.title": "상위 다이어그램으로 돌아가기"
+  "viewer.nav.back.title": "상위 다이어그램으로 돌아가기",
+  "node.details": "세부 정보"
 }

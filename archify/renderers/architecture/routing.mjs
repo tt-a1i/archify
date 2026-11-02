@@ -785,12 +785,26 @@ export function createRouter(components, connections = [], {
       incidentEndpoints.set(conn[field], entries);
     }
   }
+  function routeAxisSides(conn, from, to) {
+    if (!from || !to || conn.via) return null;
+    if (conn.route === 'orthogonal-v') {
+      return from.cy <= to.cy ? { fromSide: 'bottom', toSide: 'top' } : { fromSide: 'top', toSide: 'bottom' };
+    }
+    if (conn.route === 'orthogonal-h') {
+      return from.cx <= to.cx ? { fromSide: 'right', toSide: 'left' } : { fromSide: 'left', toSide: 'right' };
+    }
+    return null;
+  }
   function inferredConnectionSides(conn) {
     const from = components.get(conn.from);
     const to = components.get(conn.to);
+    // A declared orthogonal-v/-h route fixes the axis it leaves and enters
+    // on; a geometry guess on the other axis would draw a vertical segment
+    // out of a side port (and an arrow into a card corner).
+    const axis = routeAxisSides(conn, from, to);
     return {
-      fromSide: chosenSide(conn.fromSide, inferredSide(conn, 'source') || defaultFromSide(from, to)),
-      toSide: chosenSide(conn.toSide, inferredSide(conn, 'target') || defaultToSide(from, to)),
+      fromSide: chosenSide(conn.fromSide, inferredSide(conn, 'source') || axis?.fromSide || defaultFromSide(from, to)),
+      toSide: chosenSide(conn.toSide, inferredSide(conn, 'target') || axis?.toSide || defaultToSide(from, to)),
     };
   }
 
