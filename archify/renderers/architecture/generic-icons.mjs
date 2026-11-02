@@ -21,6 +21,7 @@ export const GENERIC_ICONS = Object.freeze({
   container: '<rect class="f" x="2.5" y="6" width="19" height="13" rx="2"/><path d="M6.5 6v13M10.5 6v13M14.5 6v13M18 6v13M2.5 4.5h19"/>',
   gateway: '<path class="f" d="M4 21V9.5L12 3l8 6.5V21z"/><path d="M9 21v-6h6v6M8 11h8"/>',
   'load-balancer': '<circle class="f" cx="12" cy="5" r="2.5"/><circle class="f" cx="5" cy="19" r="2.5"/><circle class="f" cx="12" cy="19" r="2.5"/><circle class="f" cx="19" cy="19" r="2.5"/><path d="M12 7.5v9M10.5 7 6 16.6M13.5 7l4.5 9.6"/>',
+  cloud: '<path class="f" d="M7 18.5h10.2a4.3 4.3 0 0 0 .6-8.56A6 6 0 0 0 6.3 9.2 4.7 4.7 0 0 0 7 18.5z"/>',
   cdn: '<circle class="f" cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9M12 3C9.5 5.6 8.3 8.6 8.3 12s1.2 6.4 3.7 9"/>',
   database: '<ellipse class="f" cx="12" cy="5.5" rx="8" ry="3"/><path class="f" d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
   cache: '<ellipse class="f" cx="10" cy="6" rx="7" ry="2.7"/><path class="f" d="M3 6v11c0 1.5 3.1 2.7 7 2.7"/><path d="M17 6v4M3 11.5c0 1.5 3.1 2.7 7 2.7"/><path class="f" d="M16.5 11.5 13 17h3.5l-1 4.5 4.5-6h-3.5z"/>',
@@ -55,7 +56,7 @@ const KEYWORDS = [
   ['cache', /\b(cache|caching|memcache)\b|缓存/],
   ['queue', /\b(queue|sqs|mq|jobs? queue|broker)\b|队列/],
   ['stream', /\b(stream|topic|event bus|events|kinesis|pub\/?sub)\b|事件|消息流|主题/],
-  ['bucket', /\b(bucket|s3|object stor(e|age)|blob|gcs|r2|assets)\b|对象存储|存储桶/],
+  ['bucket', /\b(bucket|s3|object stor(e|age)|blob|gcs|r2|assets|archives?)\b|对象存储|存储桶/],
   ['file', /\b(file|files|document|report|csv|logs?)\b|文件|文档|日志/],
   ['search', /\b(search|index|elastic)\b|搜索|检索/],
   ['scheduler', /\b(cron|scheduler|schedule|timer|batch)\b|定时|调度/],
@@ -70,14 +71,14 @@ const KEYWORDS = [
 ];
 
 const DEFAULT_BY_TYPE = {
-  frontend: 'browser', backend: 'service', database: 'database', cloud: 'cdn',
+  frontend: 'browser', backend: 'service', database: 'database', cloud: 'cloud',
   security: 'auth', messagebus: 'queue', external: 'user',
 };
 
 // The existing `icon` enum still steers the pick when authored.
 const ICON_FIELD = {
   person: 'user', frontend: 'browser', backend: 'service', database: 'database',
-  cloud: 'cdn', security: 'auth', messagebus: 'queue', external: 'external',
+  cloud: 'cloud', security: 'auth', messagebus: 'queue', external: 'external',
   calendar: 'scheduler', clock: 'scheduler',
 };
 

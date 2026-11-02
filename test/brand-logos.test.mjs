@@ -98,7 +98,7 @@ test('a diagram embeds only the logos it uses, unrecoloured', (t) => {
 });
 
 test('unbranded nodes fall back to a generic icon picked from their type and name', (t) => {
-  assert.equal(Object.keys(GENERIC_ICONS).length, 25);
+  assert.equal(Object.keys(GENERIC_ICONS).length, 26);
   assert.equal(genericIconFor({ type: 'database', label: 'Orders' }), 'database');
   assert.equal(genericIconFor({ type: 'backend', label: 'Redis cache' }), 'cache');
   assert.equal(genericIconFor({ type: 'messagebus', label: '消息队列' }), 'queue');
@@ -123,7 +123,8 @@ test('dark theme keeps logos on a light plate and tints generic icons from theme
   assert.match(html, /\[data-theme="dark"\][^{]*\[data-node-card\] > rect\.node-card\.node-card \{ fill:/);
   assert.match(html, /\[data-node-card\] > \.brand-mark \.brand-mark-badge \{ fill: #f6f8fb; \}/, 'logo plate stays light in dark');
   assert.match(html, /\.generic-icon \{ fill: none; stroke: color-mix\(in srgb, var\(--text\) 78%, var\(--mask\)\)/);
-  assert.match(html, /\.generic-icon\.gi-messagebus \{ --gi-fill: color-mix\(in srgb, var\(--messagebus-stroke\) 22%, transparent\); \}/);
+  assert.match(html, /\.generic-icon\.gi-messagebus \{ --gi-fill: color-mix\(in srgb, var\(--messagebus-stroke\) 22%, transparent\); stroke: color-mix\(in srgb, var\(--messagebus-stroke\) 80%, var\(--text\)\); \}/);
+  assert.match(html, /rect\.node-card\.c-messagebus[^{]*\{ stroke: color-mix\(in srgb, var\(--messagebus-stroke\) 55%, var\(--mask\)\); \}/, 'card border keeps its semantic type colour');
   assert.match(html, /<symbol id="gi-queue" viewBox="0 0 24 24"/);
   assert.match(html, /<symbol id="al-sym-github"/);
 });

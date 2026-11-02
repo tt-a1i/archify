@@ -140,7 +140,8 @@ export function layeredCardStyle() {
           ${card} > .brand-mark.brand-mark-ink .brand-mark-badge { fill: #1f2937; }
           ${card} > .brand-mark.brand-mark-ink .brand-mark-frame { stroke: #1f2937; }
           ${card} .generic-icon { fill: none; stroke: color-mix(in srgb, var(--text) 78%, var(--mask)); stroke-width: 1.7px; stroke-linecap: round; stroke-linejoin: round; }
-          ${['frontend', 'backend', 'database', 'cloud', 'security', 'messagebus', 'external'].map((t) => `${card} .generic-icon.gi-${t} { --gi-fill: color-mix(in srgb, var(--${t}-stroke) 22%, transparent); }`).join('\n          ')}
+          ${['frontend', 'backend', 'database', 'cloud', 'security', 'messagebus', 'external'].map((t) => `${card} .generic-icon.gi-${t} { --gi-fill: color-mix(in srgb, var(--${t}-stroke) 22%, transparent); stroke: color-mix(in srgb, var(--${t}-stroke) 80%, var(--text)); }
+          ${card} > rect.node-card.c-${t}, ${dark} > rect.node-card.node-card.c-${t} { stroke: color-mix(in srgb, var(--${t}-stroke) 55%, var(--mask)); }`).join('\n          ')}
           svg[data-node-ui] symbol[id^="gi-"] .f { fill: var(--gi-fill, none); }
           ${card} > .node-card-info { fill: none; stroke: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke-width: 1px; stroke-linecap: round; cursor: help; pointer-events: bounding-box; transition: stroke .15s; }
           ${card} > .node-card-info > .node-card-info-dot { fill: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke: none; }

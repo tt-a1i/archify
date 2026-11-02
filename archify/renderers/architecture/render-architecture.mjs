@@ -104,6 +104,7 @@ function measureComponent(c) {
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
+const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 if (arch.meta?.cardSizing === 'uniform') normalizeCards(components);
 else growAuthoredCards(components);
 
@@ -183,41 +184,55 @@ function normalizeCards(map) {
   // Resolve one axis: cluster centres, then push later clusters so that any
   // two overlapping-in-the-other-axis cards keep their original edge gap.
   const spread = (centre, size, otherLo, otherHi, newSize, otherNewSize, banded) => {
-    const keys = [...new Set(original.map((o) => Math.round(centre(o))))].sort((p, q) => p - q);
-    const shift = new Map();
-    let acc = 0;
-    for (let i = 0; i < keys.length; i += 1) {
+    // Cards whose spans overlap on this axis (a stack, or a column of
+    // offset cards) form one cluster and move together, so a connection
+    // between them keeps its authored side and stays orthogonal.
+    const lo = (o) => centre(o) - size(o) / 2;
+    const hi = (o) => centre(o) + size(o) / 2;
+    const sorted = [...original].sort((p, q) => lo(p) - lo(q));
+    const clusters = [];
+    for (const o of sorted) {
+      const last = clusters[clusters.length - 1];
+      if (last && lo(o) < last.hi) { last.items.push(o); last.hi = Math.max(last.hi, hi(o)); }
+      else clusters.push({ items: [o], lo: lo(o), hi: hi(o), shift: 0 });
+    }
+    const clusterOf = new Map();
+    clusters.forEach((k) => k.items.forEach((o) => clusterOf.set(o, k)));
+    for (let i = 0; i < clusters.length; i += 1) {
       let need = 0;
-      const here = original.filter((o) => Math.round(centre(o)) === keys[i]);
-      for (const o of here) {
-        for (const p of original) {
-          if (Math.round(centre(p)) >= keys[i]) continue;
-          // Columns keep every original horizontal gap (connections run
-          // through them); rows only separate cards that share a column band.
-          const oc = (otherLo(o) + otherHi(o)) / 2;
-          const pc = (otherLo(p) + otherHi(p)) / 2;
-          if (banded && Math.abs(oc - pc) >= otherNewSize) continue;
-          const gap0 = Math.max(minGap, (centre(o) - centre(p)) - (size(o) + size(p)) / 2);
-          const want = newSize + gap0;
-          const have = (centre(o) + 0) - centre(p) + (acc - (shift.get(Math.round(centre(p))) ?? 0));
-          need = Math.max(need, want - have);
+      for (const o of clusters[i].items) {
+        for (let j = 0; j < i; j += 1) {
+          for (const p of clusters[j].items) {
+            // Columns keep every original gap (connections run through
+            // them); rows only separate cards that share a column band.
+            const oc = (otherLo(o) + otherHi(o)) / 2;
+            const pc = (otherLo(p) + otherHi(p)) / 2;
+            if (banded && Math.abs(oc - pc) >= otherNewSize) continue;
+            const gap0 = Math.max(minGap, lo(o) - hi(p));
+            const want = newSize + gap0;
+            const have = centre(o) - centre(p) + (clusters[i - 1].shift - clusters[j].shift);
+            need = Math.max(need, want - have);
+          }
         }
       }
-      acc += Math.max(0, need);
-      shift.set(keys[i], acc);
+      clusters[i].shift = (i ? clusters[i - 1].shift : 0) + Math.max(0, need);
     }
-    // Authored points between cards (via bends, label anchors) follow the
-    // cards proportionally within each stretched gap.
+    // Authored points (via bends, label anchors) move with the cluster they
+    // fall in and stretch proportionally across the gaps between clusters.
     const mapPoint = (v) => {
-      if (v <= keys[0]) return v + shift.get(keys[0]);
-      const last = keys[keys.length - 1];
-      if (v >= last) return v + shift.get(last);
-      const i = keys.findIndex((k, n) => v >= k && v <= keys[n + 1]);
-      const [a, b] = [keys[i], keys[i + 1]];
-      const [a2, b2] = [a + shift.get(a), b + shift.get(b)];
-      return a2 + (v - a) * (b2 - a2) / (b - a);
+      if (v <= clusters[0].hi) return v + clusters[0].shift;
+      for (let i = 1; i < clusters.length; i += 1) {
+        const [a, b] = [clusters[i - 1], clusters[i]];
+        if (v < b.lo) {
+          const a2 = a.hi + a.shift;
+          const b2 = b.lo + b.shift;
+          return a2 + (v - a.hi) * (b2 - a2) / (b.lo - a.hi);
+        }
+        if (v <= b.hi) return v + b.shift;
+      }
+      return v + clusters[clusters.length - 1].shift;
     };
-    return { of: (o) => shift.get(Math.round(centre(o))) ?? 0, mapPoint };
+    return { of: (o) => clusterOf.get(o).shift, mapPoint };
   };
   const dx = spread((o) => o.cx, (o) => o.w, (o) => o.y, (o) => o.y + o.h, W, H, false);
   const dy = spread((o) => o.cy, (o) => o.h, (o) => o.x, (o) => o.x + o.w, H, W, true);
@@ -225,6 +240,33 @@ function normalizeCards(map) {
     const cx = o.cx + dx.of(o);
     const cy = o.cy + dy.of(o);
     Object.assign(o.c, { x: Math.round(cx - W / 2), y: Math.round(cy - H / 2), width: W, height: H, uniformCard: true });
+  }
+  // A card outside a frame keeps 16px clear of that frame's border, so a
+  // grown frame never lands on (or brushes) a neighbouring card.
+  const allBoundaries = asArray(arch.boundaries);
+  for (const [index, boundary] of allBoundaries.entries()) {
+    const ids = new Set(asArray(boundary.wraps));
+    const rect = boundaryRect(boundary, index, allBoundaries);
+    if (!rect) continue;
+    const f = { l: rect.x, r: rect.x + rect.width, t: rect.y, b: rect.y + rect.height };
+    const clear = 16;
+    for (const c of cards) {
+      if (ids.has(c.id)) continue;
+      const hit = c.x < f.r + clear && c.x + c.width > f.l - clear && c.y < f.b + clear && c.y + c.height > f.t - clear;
+      if (!hit) continue;
+      const cx = c.x + c.width / 2;
+      const cy = c.y + c.height / 2;
+      // Only cards outside the frame move; one inside it is the author's.
+      if (cx > f.l && cx < f.r && cy > f.t && cy < f.b) continue;
+      const pushes = [
+        [f.b + clear - c.y, 0, 1], [c.y + c.height - (f.t - clear), 0, -1],
+        [f.r + clear - c.x, 1, 0], [c.x + c.width - (f.l - clear), -1, 0],
+      ].filter(([d, sx, sy]) => d > 0 && ((sy === 1 && cy >= f.b) || (sy === -1 && cy <= f.t) || (sx === 1 && cx >= f.r) || (sx === -1 && cx <= f.l)));
+      if (!pushes.length) continue;
+      const [d, sx, sy] = pushes.sort((p, q) => p[0] - q[0])[0];
+      c.x += sx * d;
+      c.y += sy * d;
+    }
   }
   // Keep everything on the canvas.
   const minX = Math.min(...cards.map((c) => c.x));
@@ -246,7 +288,6 @@ function normalizeCards(map) {
     arch.meta.viewBox = [vw + Math.max(0, Math.ceil(newRight - right)), vh + Math.max(0, Math.ceil(newBottom - bottom)), ...rest];
   }
 }
-const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
   if (!componentSteps.has(conn.from)) componentSteps.set(conn.from, index);
@@ -257,7 +298,7 @@ for (const [index, c] of asArray(arch.components).entries()) {
 }
 
 // ---- Boundaries computed from the `wraps` id list ---------------------------
-function boundaryRect(boundary) {
+function boundaryRect(boundary, index = -1, all = []) {
   const members = asArray(boundary.wraps).map((id) => components.get(id)).filter(Boolean);
   if (!members.length) return null;
   let minX = Infinity;
@@ -270,7 +311,8 @@ function boundaryRect(boundary) {
     maxX = Math.max(maxX, member.x + member.width);
     maxY = Math.max(maxY, member.y + member.height);
   }
-  const pad = boundary.pad ?? layout.boundaryPad;
+  // Uniform cards keep at least 16px of breathing room inside every frame.
+  const pad = Math.max(boundary.pad ?? layout.boundaryPad, arch.meta?.cardSizing === 'uniform' ? 16 : 0);
   const topPad = Math.max(
     pad,
     layout.boundaryLabelBaseline + layout.boundaryLabelClearance,
@@ -279,12 +321,44 @@ function boundaryRect(boundary) {
       ? layout.boundaryLabelMaskHeight + layout.boundaryLabelClearance + layout.boundaryLabelFrameInset
       : 0,
   );
+  if (arch.meta?.cardSizing !== 'uniform') {
+    return {
+      ...boundary,
+      x: minX - pad,
+      y: minY - topPad,
+      width: maxX - minX + pad * 2,
+      height: maxY - minY + topPad + layout.boundaryExtraBottom,
+      memberTop: minY,
+    };
+  }
+  // Uniform cards: every side keeps the frame's padding, and a frame that
+  // nests another (its members are a subset; equal sets nest in authored
+  // order) wraps that frame with its own inset and title band, so nested
+  // borders never coincide.
+  let left = minX - pad;
+  let top = minY - topPad;
+  let right = maxX + pad;
+  let bottom = maxY + Math.max(pad, layout.boundaryExtraBottom);
+  const mine = new Set(asArray(boundary.wraps));
+  const nestInset = 12;
+  all.forEach((other, j) => {
+    if (j === index || !other) return;
+    const theirs = asArray(other.wraps);
+    if (!theirs.length || !theirs.every((id) => mine.has(id))) return;
+    if (theirs.length === mine.size && j < index) return;
+    const r = boundaryRect(other, j, all);
+    if (!r) return;
+    left = Math.min(left, r.x - nestInset);
+    top = Math.min(top, r.y - topPad);
+    right = Math.max(right, r.x + r.width + nestInset);
+    bottom = Math.max(bottom, r.y + r.height + nestInset);
+  });
   return {
     ...boundary,
-    x: minX - pad,
-    y: minY - topPad,
-    width: maxX - minX + pad * 2,
-    height: maxY - minY + topPad + layout.boundaryExtraBottom,
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
     memberTop: minY,
   };
 }
@@ -499,7 +573,7 @@ function layoutBoundaryTitles(rawBoundaries, minimumFontSize) {
 // reads components, connections and the member-derived boundary frames (so an
 // automatic route never borrows a frame border as its corridor), never the
 // title-expanded frames or the viewBox.
-const rawBoundaries = asArray(arch.boundaries).map(boundaryRect).filter(Boolean);
+const rawBoundaries = asArray(arch.boundaries).map((b, i, all) => boundaryRect(b, i, all)).filter(Boolean);
 const { pathFor, connectionSides, connectionEndpointSide } = createArchitectureRouter(components, arch.connections, {
   fixedCanvas: Boolean(arch.meta?.viewBox),
   frames: rawBoundaries.map((boundary) => ({
