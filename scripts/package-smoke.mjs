@@ -171,8 +171,12 @@ async function verifyPackage() {
   if (embeddedFonts && !fs.existsSync(path.join(skillRoot, 'assets/JetBrainsMono-OFL.txt'))) {
     throw new Error('embedded viewer font requires assets/JetBrainsMono-OFL.txt');
   }
-  assertThirdPartyNotices(repositoryNotices, 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts });
-  assertThirdPartyNotices(packageNotices, 'packaged THIRD_PARTY_NOTICES.md', { embeddedFonts });
+  const brandLogos = fs.existsSync(path.join(skillRoot, 'renderers/shared/generated-brand-logos.mjs'));
+  if (brandLogos && !fs.existsSync(path.join(skillRoot, 'third_party/devicon/LICENSE'))) {
+    throw new Error('third_party/devicon/LICENSE is required when full-colour logos are packaged');
+  }
+  assertThirdPartyNotices(repositoryNotices, 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts, brandLogos });
+  assertThirdPartyNotices(packageNotices, 'packaged THIRD_PARTY_NOTICES.md', { embeddedFonts, brandLogos });
   if (packageNotices !== repositoryNotices) {
     throw new Error('packaged THIRD_PARTY_NOTICES.md must byte-match the repository notice');
   }

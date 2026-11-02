@@ -478,8 +478,12 @@ function validateThirdPartyNoticeInputs(repoRoot, packageEntries) {
     throw new Error('embedded viewer font requires assets/JetBrainsMono-OFL.txt');
   }
   const packagedNotices = packagedEntry.content;
-  assertThirdPartyNotices(repositoryNotices.toString('utf8'), 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts });
-  assertThirdPartyNotices(packagedNotices.toString('utf8'), 'archify/THIRD_PARTY_NOTICES.md', { embeddedFonts });
+  const brandLogos = packageEntries.some((entry) => entry.relative === 'archify/renderers/shared/generated-brand-logos.mjs');
+  if (brandLogos && !packageEntries.some((entry) => entry.relative === 'archify/third_party/devicon/LICENSE')) {
+    throw new Error('archify/third_party/devicon/LICENSE is required when full-colour logos are packaged');
+  }
+  assertThirdPartyNotices(repositoryNotices.toString('utf8'), 'repository THIRD_PARTY_NOTICES.md', { embeddedFonts, brandLogos });
+  assertThirdPartyNotices(packagedNotices.toString('utf8'), 'archify/THIRD_PARTY_NOTICES.md', { embeddedFonts, brandLogos });
   if (!packagedNotices.equals(repositoryNotices)) {
     throw new Error('archify/THIRD_PARTY_NOTICES.md must byte-match the repository notice');
   }

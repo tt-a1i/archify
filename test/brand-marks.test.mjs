@@ -33,6 +33,9 @@ test('third-party notices cover every recorded individual mark license', () => {
 
   assert.equal(THIRD_PARTY_NOTICE_DISCLOSURE_COUNT, 45, 'notice contract changed without review');
   assert.deepEqual(validateThirdPartyNotices(notices), { ok: true, missing: [] });
+  const withoutLogos = notices.replace('Logos are trademarks of their respective owners.', '');
+  assert.deepEqual(validateThirdPartyNotices(withoutLogos).missing, ['logo trademark statement']);
+  assert.deepEqual(validateThirdPartyNotices(withoutLogos, { brandLogos: false }), { ok: true, missing: [] });
   assert.equal(licensedMarks.length, 20, 'pinned Simple Icons license inventory changed');
   for (const mark of licensedMarks) {
     assert.match(notices, new RegExp(`\\| ${mark.title.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')} \\|`));
