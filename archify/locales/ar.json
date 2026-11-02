@@ -497,5 +497,6 @@
   "viewer.passport.back": "العودة إلى المخطط الأصل",
   "viewer.passport.back.aria": "العودة إلى المخطط الأصل",
   "viewer.nav.back": "رجوع",
-  "viewer.nav.back.title": "العودة إلى المخطط الأصل"
+  "viewer.nav.back.title": "العودة إلى المخطط الأصل",
+  "node.details": "التفاصيل"
 }

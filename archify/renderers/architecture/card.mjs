@@ -11,7 +11,11 @@ export const cardMetrics = {
   tileMax: 36,
   tileMin: 20,
   tileGap: 10,
-  infoReserve: 14,
+  infoReserve: 20,
+  // Auto-sized cards keep their historical label allowance so unsized
+  // diagrams do not reflow.
+  autoInfoReserve: 14,
+  infoRadius: 8,
   labelPreferred: 12,
   labelMinimum: 10.5,
   sublabelPreferred: 9.5,
@@ -57,21 +61,20 @@ export function cardLayout(c, { branded = false } = {}) {
   const hasExplanation = hasText(c.explanation);
   const tile = tileSizeFor(c.height);
   const textRight = c.x + c.width - m.pad;
-  const labelNeed = textWidth(c.label, m.labelMinimum);
-  // The tile needs room for the label at its legible minimum; otherwise the
-  // card falls back to a text-only layout instead of squeezing the label.
-  const tiled = tile >= m.tileMin && (textRight - (c.x + m.pad + tile + m.tileGap)) >= labelNeed;
+  // Every layered card keeps its icon tile; card widths are normalised so the
+  // label fits beside it, and a long label shrinks toward its legible minimum.
+  const tiled = tile >= m.tileMin && (c.uniformCard || (textRight - (c.x + m.pad + tile + m.tileGap)) >= textWidth(c.label, m.labelMinimum));
   const textX = c.x + m.pad + (tiled ? tile + m.tileGap : 0);
-  // The ⓘ lives in the top-right corner, beside the label row.
   const rail = 0;
   const firstPass = textRight - textX;
   const subFull = hasSub ? truncateToWidth(c.sublabel, firstPass, m.sublabelPreferred) : null;
   const info = hasExplanation || Boolean(subFull?.truncated);
-  // The ⓘ sits in the top-right corner; it only narrows the label when the
-  // label's cap height would reach the corner row (short cards).
+  // The ⓘ sits in the top-right corner and always keeps its own column.
+  // It only narrows the label when the label's cap height would reach the
+  // marker's row (short cards).
   const labelTop = c.y + c.height / 2 - (hasSub ? 2 : -m.labelPreferred * 0.35) - m.labelPreferred * 0.75;
-  const infoClear = labelTop >= c.y + 17;
-  const labelWidth = Math.max(1, textRight - textX - rail - (info && !infoClear ? m.infoReserve : 0));
+  const infoClear = labelTop >= c.y + 14 + m.infoRadius + 2;
+  const labelWidth = Math.max(1, textRight - textX - (info && !infoClear ? m.infoReserve : 0));
   const labelFont = Math.max(m.labelMinimum, Math.min(m.labelPreferred,
     Math.floor((labelWidth / Math.max(1, textUnits(c.label) * m.widthFactor)) * 10) / 10));
   const sub = hasSub ? truncateToWidth(c.sublabel, firstPass, m.sublabelPreferred) : null;
@@ -84,7 +87,7 @@ export function cardLayout(c, { branded = false } = {}) {
     labelY: hasSub ? cy - 2 : cy + labelFont * 0.35,
     sub: sub ? { ...sub, font: m.sublabelPreferred, y: cy + 12 } : null,
     rail: rail ? { x: c.x + c.width - 17, y: c.y + 6 } : null,
-    info: info ? { cx: c.x + c.width - 11 - rail, cy: c.y + 11 } : null,
+    info: info ? { cx: c.x + c.width - 14, cy: c.y + 14, r: m.infoRadius } : null,
   };
 }
 
@@ -93,10 +96,20 @@ export function cardLayout(c, { branded = false } = {}) {
 export function autoCardWidth(c, cap = cardMetrics.autoMaxWidth) {
   const m = cardMetrics;
   const chrome = m.pad * 2 + m.tileMax + m.tileGap;
-  const label = textWidth(c.label, m.labelPreferred) + m.infoReserve;
+  const label = textWidth(c.label, m.labelPreferred) + m.autoInfoReserve;
   const sub = hasText(c.sublabel) ? textWidth(c.sublabel, m.sublabelPreferred) : 0;
   const need = Math.ceil(chrome + Math.max(label, sub));
   return Math.max(m.autoMinWidth, Math.min(cap, need));
+}
+
+// Width a layered card needs so its label (at the preferred size, plus the ⓘ
+// column when it has an explanation) and its context line both read on one
+// line beside the tile.
+export function cardNeedWidth(c) {
+  const m = cardMetrics;
+  const chrome = m.pad * 2 + m.tileMax + m.tileGap;
+  const label = textWidth(c.label, m.labelPreferred) + (hasText(c.explanation) ? m.infoReserve : 0);
+  return Math.ceil(Math.max(chrome + label, sublabelCardWidth(c)));
 }
 
 // Width a layered card needs so its context line reads on one line at the
@@ -129,6 +142,9 @@ export function layeredCardStyle() {
           ${card} .generic-icon { fill: none; stroke: color-mix(in srgb, var(--text) 78%, var(--mask)); stroke-width: 1.7px; stroke-linecap: round; stroke-linejoin: round; }
           ${['frontend', 'backend', 'database', 'cloud', 'security', 'messagebus', 'external'].map((t) => `${card} .generic-icon.gi-${t} { --gi-fill: color-mix(in srgb, var(--${t}-stroke) 22%, transparent); }`).join('\n          ')}
           svg[data-node-ui] symbol[id^="gi-"] .f { fill: var(--gi-fill, none); }
-          ${card} > .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+          ${card} > .node-card-info { fill: none; stroke: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke-width: 1px; stroke-linecap: round; cursor: help; pointer-events: bounding-box; transition: stroke .15s; }
+          ${card} > .node-card-info > .node-card-info-dot { fill: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke: none; }
+          ${card} > .node-card-info:hover, ${card}:focus-visible > .node-card-info, ${card}:focus-within > .node-card-info { stroke: var(--text); }
+          ${card} > .node-card-info:hover > .node-card-info-dot, ${card}:focus-visible > .node-card-info > .node-card-info-dot, ${card}:focus-within > .node-card-info > .node-card-info-dot { fill: var(--text); }
         </style>`;
 }

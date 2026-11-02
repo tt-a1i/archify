@@ -11,7 +11,7 @@ import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandL
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { renderGenericIcon } from './generic-icons.mjs';
-import { autoCardWidth, cardLayout, layeredCardStyle, sublabelCardWidth } from './card.mjs';
+import { autoCardWidth, cardLayout, cardNeedWidth, layeredCardStyle, sublabelCardWidth } from './card.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
@@ -104,7 +104,8 @@ function measureComponent(c) {
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
-growAuthoredCards(components);
+if (arch.meta?.cardSizing === 'uniform') normalizeCards(components);
+else growAuthoredCards(components);
 
 // Authored sizes are minimums: a card widens symmetrically (so its centre and
 // any aligned edges stay put) until its label reads at the preferred size,
@@ -149,6 +150,100 @@ function growAuthoredCards(map) {
       || (o.x + o.width <= x && x - (o.x + o.width) >= Math.min(sideGap, c.x - (o.x + o.width))));
     if (!clear) continue;
     Object.assign(c, { x, width: target, cx: x + target / 2 });
+  }
+}
+
+// Layered cards are normalised per diagram so every node reads as the same
+// object: one height (standard 56–72px with a 36px tile, or a 48px small card
+// with a 28px tile when every authored card is smaller than standard), and
+// one width — the widest need among the authored widths, the label beside
+// the tile, and the one-line context line — rounded up to the 8px grid and
+// capped at 240px. Each card keeps its centre; columns and rows that would
+// now crowd each other move apart, keeping their original edge gaps (at
+// least 24px), and the canvas/viewBox grows with them. Boundary frames are
+// derived from their members, so they grow too. Lint still judges the
+// authored size (`authoredWidth`).
+function normalizeCards(map) {
+  const cards = [...map.values()];
+  if (!cards.length || arch.meta?.cardSizing !== 'uniform') return;
+  // Authored geometry that already collides or leaves the canvas is the
+  // author's to repair: keep it verbatim so diagnostics and offered repairs
+  // speak in the author's own coordinates.
+  const [vbW, vbH] = Array.isArray(arch.meta?.viewBox) ? arch.meta.viewBox : [Infinity, Infinity];
+  const broken = cards.some((c, i) => c.x < 0 || c.y < 0 || c.x + c.width > vbW || c.y + c.height > vbH
+    || cards.slice(i + 1).some((o) => c.x < o.x + o.width + 8 && o.x < c.x + c.width + 8
+      && c.y < o.y + o.height + 8 && o.y < c.y + c.height + 8));
+  if (broken) return;
+  const step = 8;
+  const minGap = 24;
+  const small = cards.every((c) => c.height < 56);
+  const H = small ? 48 : Math.min(72, Math.ceil(Math.max(56, ...cards.map((c) => c.height)) / 4) * 4);
+  const W = Math.min(cardMetricsMaxWidth, Math.ceil(Math.max(...cards.map((c) => Math.max(c.width, cardNeedWidth(c)))) / step) * step);
+  const original = cards.map((c) => ({ c, x: c.x, y: c.y, w: c.width, h: c.height, cx: c.x + c.width / 2, cy: c.y + c.height / 2 }));
+  // Resolve one axis: cluster centres, then push later clusters so that any
+  // two overlapping-in-the-other-axis cards keep their original edge gap.
+  const spread = (centre, size, otherLo, otherHi, newSize, otherNewSize, banded) => {
+    const keys = [...new Set(original.map((o) => Math.round(centre(o))))].sort((p, q) => p - q);
+    const shift = new Map();
+    let acc = 0;
+    for (let i = 0; i < keys.length; i += 1) {
+      let need = 0;
+      const here = original.filter((o) => Math.round(centre(o)) === keys[i]);
+      for (const o of here) {
+        for (const p of original) {
+          if (Math.round(centre(p)) >= keys[i]) continue;
+          // Columns keep every original horizontal gap (connections run
+          // through them); rows only separate cards that share a column band.
+          const oc = (otherLo(o) + otherHi(o)) / 2;
+          const pc = (otherLo(p) + otherHi(p)) / 2;
+          if (banded && Math.abs(oc - pc) >= otherNewSize) continue;
+          const gap0 = Math.max(minGap, (centre(o) - centre(p)) - (size(o) + size(p)) / 2);
+          const want = newSize + gap0;
+          const have = (centre(o) + 0) - centre(p) + (acc - (shift.get(Math.round(centre(p))) ?? 0));
+          need = Math.max(need, want - have);
+        }
+      }
+      acc += Math.max(0, need);
+      shift.set(keys[i], acc);
+    }
+    // Authored points between cards (via bends, label anchors) follow the
+    // cards proportionally within each stretched gap.
+    const mapPoint = (v) => {
+      if (v <= keys[0]) return v + shift.get(keys[0]);
+      const last = keys[keys.length - 1];
+      if (v >= last) return v + shift.get(last);
+      const i = keys.findIndex((k, n) => v >= k && v <= keys[n + 1]);
+      const [a, b] = [keys[i], keys[i + 1]];
+      const [a2, b2] = [a + shift.get(a), b + shift.get(b)];
+      return a2 + (v - a) * (b2 - a2) / (b - a);
+    };
+    return { of: (o) => shift.get(Math.round(centre(o))) ?? 0, mapPoint };
+  };
+  const dx = spread((o) => o.cx, (o) => o.w, (o) => o.y, (o) => o.y + o.h, W, H, false);
+  const dy = spread((o) => o.cy, (o) => o.h, (o) => o.x, (o) => o.x + o.w, H, W, true);
+  for (const o of original) {
+    const cx = o.cx + dx.of(o);
+    const cy = o.cy + dy.of(o);
+    Object.assign(o.c, { x: Math.round(cx - W / 2), y: Math.round(cy - H / 2), width: W, height: H });
+  }
+  // Keep everything on the canvas.
+  const minX = Math.min(...cards.map((c) => c.x));
+  const minY = Math.min(...cards.map((c) => c.y));
+  const ox = minX < 24 ? 24 - minX : 0;
+  const oy = minY < 24 ? 24 - minY : 0;
+  for (const c of cards) Object.assign(c, { x: c.x + ox, y: c.y + oy, cx: c.x + ox + W / 2, cy: c.y + oy + H / 2 });
+  const movePoint = ([x, y]) => [Math.round(dx.mapPoint(x) + ox), Math.round(dy.mapPoint(y) + oy)];
+  for (const conn of asArray(arch.connections)) {
+    if (Array.isArray(conn.via)) conn.via = conn.via.map(movePoint);
+    if (Array.isArray(conn.labelAt)) conn.labelAt = movePoint(conn.labelAt);
+  }
+  if (Array.isArray(arch.meta?.viewBox)) {
+    const right = Math.max(...original.map((o) => o.x + o.w));
+    const bottom = Math.max(...original.map((o) => o.y + o.h));
+    const newRight = Math.max(...cards.map((c) => c.x + c.width));
+    const newBottom = Math.max(...cards.map((c) => c.y + c.height));
+    const [vw, vh, ...rest] = arch.meta.viewBox;
+    arch.meta.viewBox = [vw + Math.max(0, Math.ceil(newRight - right)), vh + Math.max(0, Math.ceil(newBottom - bottom)), ...rest];
   }
 }
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
@@ -1175,11 +1270,10 @@ function renderComponent(c) {
       ? `\n          ${brand}`
       : `\n          <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${radius}" class="node-card-tile"/>${c.icon === 'none' ? '' : `\n          ${renderGenericIcon(c, { x: x + size * 0.2, y: y + size * 0.2, size: size * 0.6, symbols: iconSymbols })}`}`;
   }
-  // The ⓘ tooltip repeats only on-canvas text; authored explanation prose
-  // stays in the Semantic Passport (Explain) and never enters the SVG.
-  const infoText = c.sublabel || c.label;
+  // The ⓘ is a 16px outlined "i" whose tooltip just says "Details"; the full
+  // context line and authored explanation stay in the Semantic Passport.
   const info = card.info
-    ? `\n          <g class="node-card-info" data-node-info="" transform="translate(${card.info.cx} ${card.info.cy})"><title>${esc(infoText)}</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>`
+    ? `\n          <g class="node-card-info" data-node-info="" transform="translate(${card.info.cx} ${card.info.cy})"><title>${esc(i18nText(arch.meta.locale, 'node.details'))}</title><circle r="${card.info.r - 0.5}"/><path d="M0 -0.5v4.5"/><circle class="node-card-info-dot" cy="-3.6" r="0.9"/></g>`
     : '';
   const drilldowns = resolveNodeDrilldowns(c);
   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };

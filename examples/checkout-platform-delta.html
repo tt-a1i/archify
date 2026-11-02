@@ -10634,7 +10634,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-node-ui] [data-node-card] .generic-icon.gi-messagebus { --gi-fill: color-mix(in srgb, var(--messagebus-stroke) 22%, transparent); }
           svg[data-node-ui] [data-node-card] .generic-icon.gi-external { --gi-fill: color-mix(in srgb, var(--external-stroke) 22%, transparent); }
           svg[data-node-ui] symbol[id^=&quot;gi-&quot;] .f { fill: var(--gi-fill, none); }
-          svg[data-node-ui] [data-node-card] &gt; .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info { fill: none; stroke: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke-width: 1px; stroke-linecap: round; cursor: help; pointer-events: bounding-box; transition: stroke .15s; }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info &gt; .node-card-info-dot { fill: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke: none; }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info:hover, svg[data-node-ui] [data-node-card]:focus-visible &gt; .node-card-info, svg[data-node-ui] [data-node-card]:focus-within &gt; .node-card-info { stroke: var(--text); }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info:hover &gt; .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-visible &gt; .node-card-info &gt; .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-within &gt; .node-card-info &gt; .node-card-info-dot { fill: var(--text); }
         &lt;/style&gt;
 
         &lt;!-- Background Grid --&gt;
@@ -10762,9 +10765,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-backend node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:3&quot; stroke-width=&quot;1&quot;/&gt;
           &lt;rect x=&quot;650&quot; y=&quot;412&quot; width=&quot;36&quot; height=&quot;36&quot; rx=&quot;8&quot; class=&quot;node-card-tile&quot;/&gt;
           &lt;use aria-hidden=&quot;true&quot; class=&quot;generic-icon gi-backend&quot; data-generic-icon=&quot;scheduler&quot; href=&quot;#gi-scheduler&quot; x=&quot;657.2&quot; y=&quot;419.2&quot; width=&quot;21.599999999999998&quot; height=&quot;21.599999999999998&quot;/&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;696&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;10.6&quot; font-weight=&quot;650&quot;&gt;Fulfilment&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;696&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;10.5&quot; font-weight=&quot;650&quot;&gt;Fulfilment&lt;/text&gt;
           &lt;text data-detail=&quot;context&quot; x=&quot;696&quot; y=&quot;442&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;async work…&lt;title&gt;async worker&lt;/title&gt;&lt;/text&gt;
-          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(759 411)&quot;&gt;&lt;title&gt;async worker&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(756 414)&quot;&gt;&lt;title&gt;Details&lt;/title&gt;&lt;circle r=&quot;7.5&quot;/&gt;&lt;path d=&quot;M0 -0.5v4.5&quot;/&gt;&lt;circle class=&quot;node-card-info-dot&quot; cy=&quot;-3.6&quot; r=&quot;0.9&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
         &lt;!-- Connection labels --&gt;
@@ -20666,7 +20669,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-node-ui] [data-node-card] .generic-icon.gi-messagebus { --gi-fill: color-mix(in srgb, var(--messagebus-stroke) 22%, transparent); }
           svg[data-node-ui] [data-node-card] .generic-icon.gi-external { --gi-fill: color-mix(in srgb, var(--external-stroke) 22%, transparent); }
           svg[data-node-ui] symbol[id^="gi-"] .f { fill: var(--gi-fill, none); }
-          svg[data-node-ui] [data-node-card] > .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+          svg[data-node-ui] [data-node-card] > .node-card-info { fill: none; stroke: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke-width: 1px; stroke-linecap: round; cursor: help; pointer-events: bounding-box; transition: stroke .15s; }
+          svg[data-node-ui] [data-node-card] > .node-card-info > .node-card-info-dot { fill: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke: none; }
+          svg[data-node-ui] [data-node-card] > .node-card-info:hover, svg[data-node-ui] [data-node-card]:focus-visible > .node-card-info, svg[data-node-ui] [data-node-card]:focus-within > .node-card-info { stroke: var(--text); }
+          svg[data-node-ui] [data-node-card] > .node-card-info:hover > .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-visible > .node-card-info > .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-within > .node-card-info > .node-card-info-dot { fill: var(--text); }
         </style>
 
         <!-- Background Grid -->
@@ -20807,10 +20813,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <rect x="640" y="100" width="130" height="60" rx="10" class="c-security node-card" data-animate="node" style="--step:0" stroke-width="1"/>
           <rect x="650" y="112" width="36" height="36" rx="8" class="node-card-tile"/>
           <use aria-hidden="true" class="generic-icon gi-security" data-generic-icon="auth" href="#delta-head-gi-auth" x="657.2" y="119.2" width="21.599999999999998" height="21.599999999999998"/>
-          <text data-node-label="" data-detail-anchor="" x="696" y="128" class="t-primary" font-size="10.6" font-weight="650">Fraud Gate</text>
+          <text data-node-label="" data-detail-anchor="" x="696" y="128" class="t-primary" font-size="10.5" font-weight="650">Fraud Gate</text>
           <text data-detail="context" x="696" y="142" class="t-muted node-card-sub" font-size="9.5">policy sco…<title>policy scoring</title></text>
           <text data-detail="fine" x="760" y="153" class="t-security" font-size="7" text-anchor="end">new owner</text>
-          <g class="node-card-info" data-node-info="" transform="translate(759 111)"><title>policy scoring</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
+          <g class="node-card-info" data-node-info="" transform="translate(756 114)"><title>Details</title><circle r="7.5"/><path d="M0 -0.5v4.5"/><circle class="node-card-info-dot" cy="-3.6" r="0.9"/></g>
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="761" cy="109" r="8"/><text x="761" y="112" text-anchor="middle">+</text></g>
         </g>
@@ -20859,9 +20865,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <rect x="640" y="400" width="130" height="60" rx="10" class="c-backend node-card" data-animate="node" style="--step:3" stroke-width="1"/>
           <rect x="650" y="412" width="36" height="36" rx="8" class="node-card-tile"/>
           <use aria-hidden="true" class="generic-icon gi-backend" data-generic-icon="scheduler" href="#delta-head-gi-scheduler" x="657.2" y="419.2" width="21.599999999999998" height="21.599999999999998"/>
-          <text data-node-label="" data-detail-anchor="" x="696" y="428" class="t-primary" font-size="10.6" font-weight="650">Fulfilment</text>
+          <text data-node-label="" data-detail-anchor="" x="696" y="428" class="t-primary" font-size="10.5" font-weight="650">Fulfilment</text>
           <text data-detail="context" x="696" y="442" class="t-muted node-card-sub" font-size="9.5">async work…<title>async worker</title></text>
-          <g class="node-card-info" data-node-info="" transform="translate(759 411)"><title>async worker</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
+          <g class="node-card-info" data-node-info="" transform="translate(756 414)"><title>Details</title><circle r="7.5"/><path d="M0 -0.5v4.5"/><circle class="node-card-info-dot" cy="-3.6" r="0.9"/></g>
         </g>
 
         <!-- Connection labels -->
@@ -26430,7 +26436,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-node-ui] [data-node-card] .generic-icon.gi-messagebus { --gi-fill: color-mix(in srgb, var(--messagebus-stroke) 22%, transparent); }
           svg[data-node-ui] [data-node-card] .generic-icon.gi-external { --gi-fill: color-mix(in srgb, var(--external-stroke) 22%, transparent); }
           svg[data-node-ui] symbol[id^=&quot;gi-&quot;] .f { fill: var(--gi-fill, none); }
-          svg[data-node-ui] [data-node-card] &gt; .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info { fill: none; stroke: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke-width: 1px; stroke-linecap: round; cursor: help; pointer-events: bounding-box; transition: stroke .15s; }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info &gt; .node-card-info-dot { fill: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke: none; }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info:hover, svg[data-node-ui] [data-node-card]:focus-visible &gt; .node-card-info, svg[data-node-ui] [data-node-card]:focus-within &gt; .node-card-info { stroke: var(--text); }
+          svg[data-node-ui] [data-node-card] &gt; .node-card-info:hover &gt; .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-visible &gt; .node-card-info &gt; .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-within &gt; .node-card-info &gt; .node-card-info-dot { fill: var(--text); }
         &lt;/style&gt;
 
         &lt;!-- Background Grid --&gt;
@@ -26507,10 +26516,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           &lt;rect x=&quot;640&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-security node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:0&quot; stroke-width=&quot;1&quot;/&gt;
           &lt;rect x=&quot;650&quot; y=&quot;112&quot; width=&quot;36&quot; height=&quot;36&quot; rx=&quot;8&quot; class=&quot;node-card-tile&quot;/&gt;
           &lt;use aria-hidden=&quot;true&quot; class=&quot;generic-icon gi-security&quot; data-generic-icon=&quot;auth&quot; href=&quot;#gi-auth&quot; x=&quot;657.2&quot; y=&quot;119.2&quot; width=&quot;21.599999999999998&quot; height=&quot;21.599999999999998&quot;/&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;696&quot; y=&quot;128&quot; class=&quot;t-primary&quot; font-size=&quot;10.6&quot; font-weight=&quot;650&quot;&gt;Fraud Gate&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;696&quot; y=&quot;128&quot; class=&quot;t-primary&quot; font-size=&quot;10.5&quot; font-weight=&quot;650&quot;&gt;Fraud Gate&lt;/text&gt;
           &lt;text data-detail=&quot;context&quot; x=&quot;696&quot; y=&quot;142&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;policy sco…&lt;title&gt;policy scoring&lt;/title&gt;&lt;/text&gt;
           &lt;text data-detail=&quot;fine&quot; x=&quot;760&quot; y=&quot;153&quot; class=&quot;t-security&quot; font-size=&quot;7&quot; text-anchor=&quot;end&quot;&gt;new owner&lt;/text&gt;
-          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(759 111)&quot;&gt;&lt;title&gt;policy scoring&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(756 114)&quot;&gt;&lt;title&gt;Details&lt;/title&gt;&lt;circle r=&quot;7.5&quot;/&gt;&lt;path d=&quot;M0 -0.5v4.5&quot;/&gt;&lt;circle class=&quot;node-card-info-dot&quot; cy=&quot;-3.6&quot; r=&quot;0.9&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-orders&quot; data-node-id=&quot;orders&quot; data-node-label=&quot;Orders&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Orders, PostgreSQL, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;database&quot; data-node-sublabel=&quot;PostgreSQL&quot; data-node-context=&quot;Production region › Checkout trust zone&quot; data-node-card=&quot;layered&quot;&gt;
@@ -26555,9 +26564,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-backend node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:3&quot; stroke-width=&quot;1&quot;/&gt;
           &lt;rect x=&quot;650&quot; y=&quot;412&quot; width=&quot;36&quot; height=&quot;36&quot; rx=&quot;8&quot; class=&quot;node-card-tile&quot;/&gt;
           &lt;use aria-hidden=&quot;true&quot; class=&quot;generic-icon gi-backend&quot; data-generic-icon=&quot;scheduler&quot; href=&quot;#gi-scheduler&quot; x=&quot;657.2&quot; y=&quot;419.2&quot; width=&quot;21.599999999999998&quot; height=&quot;21.599999999999998&quot;/&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;696&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;10.6&quot; font-weight=&quot;650&quot;&gt;Fulfilment&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;696&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;10.5&quot; font-weight=&quot;650&quot;&gt;Fulfilment&lt;/text&gt;
           &lt;text data-detail=&quot;context&quot; x=&quot;696&quot; y=&quot;442&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;async work…&lt;title&gt;async worker&lt;/title&gt;&lt;/text&gt;
-          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(759 411)&quot;&gt;&lt;title&gt;async worker&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(756 414)&quot;&gt;&lt;title&gt;Details&lt;/title&gt;&lt;circle r=&quot;7.5&quot;/&gt;&lt;path d=&quot;M0 -0.5v4.5&quot;/&gt;&lt;circle class=&quot;node-card-info-dot&quot; cy=&quot;-3.6&quot; r=&quot;0.9&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
         &lt;!-- Connection labels --&gt;

@@ -643,3 +643,15 @@ an appropriate legend label for make-up work. Keep the node label meaningful:
 icons are decorative and are hidden from assistive technology.
 
 See [holiday planning](../examples/holiday-planning.workflow.json) for a complete workflow example.
+
+## Uniform cards (`meta.cardSizing`)
+
+Set `"cardSizing": "uniform"` in an architecture `meta` to render every card
+as the same object: one height for the diagram (56–72px with a 36px icon tile,
+or 48px with a 28px tile when every authored card is smaller), one width
+rounded up to the 8px grid that fits the widest label and context line
+(capped at 240px). Cards keep their centres; crowded rows and columns move
+apart, authored `via`/`labelAt` points follow, and frames and an authored
+`viewBox` grow with them. Diagrams whose authored cards already overlap or
+leave the canvas are left unchanged so their diagnostics still apply. The
+default, `"authored"`, keeps authored geometry exactly.

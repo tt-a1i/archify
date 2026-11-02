@@ -14,7 +14,7 @@ function render(t, components, extra = {}) {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const input = path.join(dir, 'in.json');
   const output = path.join(dir, 'out.html');
-  fs.writeFileSync(input, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Cards', output: 'out.html' }, components, connections: [], ...extra }));
+  fs.writeFileSync(input, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Cards', output: 'out.html', cardSizing: 'uniform' }, components, connections: [], ...extra }));
   const result = spawnSync(process.execPath, [cli, 'render', 'architecture', input, output], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   return fs.readFileSync(output, 'utf8');
@@ -49,33 +49,87 @@ test('near-white brand colours get an ink plate; coloured brands keep the light 
   assert.doesNotMatch(pg, /brand-mark-ink/);
 });
 
-test('unsized cards auto-size to their text; authored sizes are minimums', t => {
-  const width = (html, id) => Number(node(html, id).match(/<rect x="[\d.-]+" y="[\d.-]+" width="([\d.]+)"[^>]*class="c-mask"/)[1]);
+const box = (html, id) => {
+  const m = node(html, id).match(/<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[^>]*class="c-mask"/);
+  return { x: Number(m[1]), y: Number(m[2]), width: Number(m[3]), height: Number(m[4]) };
+};
+
+test('cards share one grid-aligned width that fits the widest label and context line', t => {
   const html = render(t, [
     { id: 'short', type: 'backend', label: 'API', pos: [40, 40] },
-    { id: 'long', type: 'backend', label: 'Payment Reconciliation', sublabel: 'nightly ledger sync', pos: [40, 140] },
+    { id: 'long', type: 'backend', label: 'Payment Reconciliation', sublabel: 'nightly ledger sync', pos: [40, 160] },
     { id: 'sized', type: 'backend', label: 'Gateway', sublabel: 'routes partner traffic', size: [140, 60], pos: [400, 40] },
-    { id: 'compact', type: 'backend', label: 'Notify', sublabel: 'email', size: [64, 40], pos: [400, 140] },
+    { id: 'compact', type: 'backend', label: 'Notify', sublabel: 'email', size: [64, 40], pos: [400, 160] },
   ]);
-  assert.equal(width(html, 'short'), 120);
-  assert.ok(width(html, 'long') > 120 && width(html, 'long') <= 240);
-  // A layered card widens (to the 8px grid) only when its tile and one-line
-  // context line do not fit; it grows symmetrically about its authored centre.
-  const sized = width(html, 'sized');
-  assert.ok(sized > 140 && sized <= 240 && sized % 8 === 0, `sized width ${sized}`);
-  assert.doesNotMatch(node(html, 'sized'), /data-node-info/, 'context line fits after growing');
-  // Compact cards keep the authored size exactly.
-  assert.equal(width(html, 'compact'), 64);
-  assert.match(node(html, 'compact'), /data-node-card="compact"/);
+  const widths = ['short', 'long', 'sized', 'compact'].map((id) => box(html, id).width);
+  assert.equal(new Set(widths).size, 1, `uniform width ${widths}`);
+  assert.ok(widths[0] % 8 === 0 && widths[0] > 140 && widths[0] <= 240, `width ${widths[0]}`);
+  // An authored compact size becomes the same card, never a text-only box.
+  assert.match(node(html, 'compact'), /data-node-card="layered"/);
+  for (const id of ['short', 'long', 'sized', 'compact']) assert.doesNotMatch(node(html, id), /data-node-info/, `${id} fits without truncation`);
 });
 
-test('layered and compact cards ship light and dark card paint', t => {
+test('every layered card has the same height and an icon tile, with no corner sigil', t => {
+  const html = render(t, [
+    { id: 'users', type: 'external', label: 'Users', sublabel: 'Browser', size: [130, 68], pos: [40, 40] },
+    { id: 'next', type: 'frontend', label: 'Next.js', sublabel: 'App Router UI', brand: 'next-js', size: [140, 68], pos: [260, 40] },
+    { id: 'api', type: 'backend', label: 'Route handlers', sublabel: 'Server actions / API', size: [150, 68], pos: [480, 40] },
+    { id: 'notify', type: 'backend', label: 'Notify', size: [64, 40], pos: [480, 200] },
+  ]);
+  const heights = new Set();
+  for (const id of ['users', 'next', 'api', 'notify']) {
+    const card = node(html, id);
+    heights.add(box(html, id).height);
+    assert.match(card, /data-node-card="layered"/, `${id} is layered`);
+    assert.match(card, /data-brand-logo|class="node-card-tile"/, `${id} has an icon tile`);
+    assert.doesNotMatch(card, /data-semantic-sigil/, `${id} has no corner sigil`);
+    assert.ok((card.match(/<g [^>]*data-brand-(?:mark|logo)/g) || []).length <= 1, `${id} has no extra corner badge`);
+  }
+  assert.equal(heights.size, 1, `uniform height ${[...heights]}`);
+  assert.match(node(html, 'api'), /data-generic-icon="api"/, 'route handlers use the API icon');
+});
+
+test('a diagram of only small authored cards renders uniform small cards with a tile', t => {
+  const html = render(t, [
+    { id: 'a', type: 'backend', label: 'Auth', size: [80, 40], pos: [40, 40] },
+    { id: 'b', type: 'backend', label: 'Mail', size: [64, 36], pos: [240, 40] },
+  ]);
+  assert.equal(box(html, 'a').height, 48);
+  assert.equal(box(html, 'b').height, 48);
+  assert.match(node(html, 'b'), /class="node-card-tile"/);
+});
+
+test('the info marker is a 16px outlined i with a localized Details tooltip', t => {
+  const html = render(t, [{ id: 'o', type: 'backend', label: 'Orders', pos: [40, 40], explanation: 'Owns orders.' }]);
+  assert.match(node(html, 'o'), /data-node-info=""[^>]*><title>Details<\/title><circle r="7.5"\/>/);
+  const zh = render(t, [{ id: 'o', type: 'backend', label: '订单', pos: [40, 40], explanation: '负责订单。' }],
+    { meta: { title: 'Cards', output: 'out.html', locale: 'zh-CN', cardSizing: 'uniform' } });
+  assert.match(node(zh, 'o'), /<title>详情<\/title>/);
+  assert.match(html, /\.node-card-info:hover/);
+});
+
+test('layered cards ship light and dark card paint', t => {
   const html = render(t, [
     { id: 'big', type: 'backend', label: 'Big', pos: [40, 40] },
     { id: 'tiny', type: 'backend', label: 'Tiny', size: [60, 30], pos: [240, 40] },
   ]);
   assert.match(node(html, 'big'), /data-node-card="layered"/);
-  assert.match(node(html, 'tiny'), /data-node-card="compact"/);
+  assert.match(node(html, 'tiny'), /data-node-card="layered"/);
   assert.match(html, /\[data-theme="dark"\] svg\[data-node-ui\][^{]*\[data-node-card\] > rect\.node-card\.node-card \{ fill:/);
   assert.match(html, /svg\[data-node-ui\] \[data-node-card\] > rect\.node-card \{ fill: var\(--mask\)/);
+});
+
+test('authored card sizing (the default) keeps authored geometry but still draws a tile', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-card-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const input = path.join(dir, 'in.json');
+  const output = path.join(dir, 'out.html');
+  fs.writeFileSync(input, JSON.stringify({ schema_version: 1, diagram_type: 'architecture', meta: { title: 'Cards', output: 'out.html' },
+    components: [{ id: 'a', type: 'backend', label: 'API', pos: [40, 40], size: [130, 60] }], connections: [] }));
+  const result = spawnSync(process.execPath, [cli, 'render', 'architecture', input, output], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(output, 'utf8');
+  const card = node(html, 'a');
+  assert.match(card, /width="130"/);
+  assert.match(card, /node-card-tile/);
 });

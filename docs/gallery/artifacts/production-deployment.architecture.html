@@ -5487,7 +5487,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-node-ui] [data-node-card] .generic-icon.gi-messagebus { --gi-fill: color-mix(in srgb, var(--messagebus-stroke) 22%, transparent); }
           svg[data-node-ui] [data-node-card] .generic-icon.gi-external { --gi-fill: color-mix(in srgb, var(--external-stroke) 22%, transparent); }
           svg[data-node-ui] symbol[id^="gi-"] .f { fill: var(--gi-fill, none); }
-          svg[data-node-ui] [data-node-card] > .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+          svg[data-node-ui] [data-node-card] > .node-card-info { fill: none; stroke: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke-width: 1px; stroke-linecap: round; cursor: help; pointer-events: bounding-box; transition: stroke .15s; }
+          svg[data-node-ui] [data-node-card] > .node-card-info > .node-card-info-dot { fill: color-mix(in srgb, var(--text) 38%, var(--mask)); stroke: none; }
+          svg[data-node-ui] [data-node-card] > .node-card-info:hover, svg[data-node-ui] [data-node-card]:focus-visible > .node-card-info, svg[data-node-ui] [data-node-card]:focus-within > .node-card-info { stroke: var(--text); }
+          svg[data-node-ui] [data-node-card] > .node-card-info:hover > .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-visible > .node-card-info > .node-card-info-dot, svg[data-node-ui] [data-node-card]:focus-within > .node-card-info > .node-card-info-dot { fill: var(--text); }
         </style>
 
         <!-- Background Grid -->
@@ -5639,10 +5642,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <rect x="1190" y="300" width="126" height="60" rx="10" class="c-backend node-card" data-animate="node" style="--step:9" stroke-width="1"/>
           <rect x="1200" y="312" width="36" height="36" rx="8" class="node-card-tile"/>
           <use aria-hidden="true" class="generic-icon gi-backend" data-generic-icon="scheduler" href="#gi-scheduler" x="1207.2" y="319.2" width="21.599999999999998" height="21.599999999999998"/>
-          <text data-node-label="" data-detail-anchor="" x="1246" y="328" class="t-primary" font-size="12" font-weight="650">Workers</text>
+          <text data-node-label="" data-detail-anchor="" x="1246" y="328" class="t-primary" font-size="10.5" font-weight="650">Workers</text>
           <text data-detail="context" x="1246" y="342" class="t-muted node-card-sub" font-size="9.5">private w…<title>private workload</title></text>
           <text data-detail="fine" x="1306" y="353" class="t-backend" font-size="7" text-anchor="end">app team</text>
-          <g class="node-card-info" data-node-info="" transform="translate(1305 311)"><title>private workload</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
+          <g class="node-card-info" data-node-info="" transform="translate(1302 314)"><title>Details</title><circle r="7.5"/><path d="M0 -0.5v4.5"/><circle class="node-card-info-dot" cy="-3.6" r="0.9"/></g>
         </g>
 
         <g id="node-replica" data-node-id="replica" data-node-label="DR Replica" tabindex="0" role="button" aria-label="Focus DR Replica, eu-west-1, AWS eu-west-1 / disaster recovery › DR private subnet" aria-pressed="false" data-node-kind="database" data-node-sublabel="eu-west-1" data-node-tag="data team" data-node-context="AWS eu-west-1 / disaster recovery › DR private subnet" data-node-card="compact">

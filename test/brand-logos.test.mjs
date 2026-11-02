@@ -98,7 +98,7 @@ test('a diagram embeds only the logos it uses, unrecoloured', (t) => {
 });
 
 test('unbranded nodes fall back to a generic icon picked from their type and name', (t) => {
-  assert.equal(Object.keys(GENERIC_ICONS).length, 24);
+  assert.equal(Object.keys(GENERIC_ICONS).length, 25);
   assert.equal(genericIconFor({ type: 'database', label: 'Orders' }), 'database');
   assert.equal(genericIconFor({ type: 'backend', label: 'Redis cache' }), 'cache');
   assert.equal(genericIconFor({ type: 'messagebus', label: '消息队列' }), 'queue');
