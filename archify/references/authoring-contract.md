@@ -164,6 +164,38 @@ Generate one responsive artifact for laptops and external displays, preserving t
 
 ### Explicit `via` coordinates
 
+Architecture alone also accepts an endpoint-relative coordinate on either axis
+of a `via` point: a number stays fixed, while `{ "anchor": "from", "offset": 40 }`
+uses that axis of the source port plus 40 SVG units (`offset` defaults to zero).
+`"to"` selects the target port. Each referenced endpoint requires an explicit
+`fromSide` or `toSide`; its port is the midpoint of that side on the measured
+component, including grid placement, `pos` overrides and size. For example:
+
+```json
+{
+  "fromSide": "bottom", "toSide": "top",
+  "via": [
+    [{ "anchor": "from" }, { "anchor": "from", "offset": 40 }],
+    [340, { "anchor": "from", "offset": 40 }],
+    [340, { "anchor": "to", "offset": -40 }],
+    [{ "anchor": "to" }, { "anchor": "to", "offset": -40 }]
+  ],
+  "labelSegment": 2, "labelDy": 10
+}
+```
+
+The x=340 channel stays fixed while its ends follow their respective nodes.
+Coordinates resolve on every render; the source JSON keeps the references.
+Use this only for required authored corridors; ordinary automatic routes need
+no bindings. It does not move nodes, resize the canvas, or bypass clearance and
+endpoint-direction checks. Moving nodes can still make the constraints invalid.
+Absolute points may coexist with relative coordinates. Authored point order,
+including collinear points, is preserved. For a label on a relative route,
+`labelSegment` (default 1) must identify an existing nonzero segment in
+`[source port, ...via, target port]`; a collapsed or out-of-range selection fails
+explicitly. `labelAt` remains an absolute override. Other diagram types continue
+to accept only their existing numeric `via` points.
+
 Use the resolved departure anchor `S = [sx, sy]` and arrival anchor
 `T = [tx, ty]`. Anchors start at side midpoints, but automatic routing and
 Port Spread can move them as described above; do not assume an anchor copied
