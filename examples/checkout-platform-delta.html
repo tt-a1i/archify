@@ -10610,6 +10610,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-node-ui][data-preset=&quot;blueprint&quot;] :is([data-graph-role=&quot;structural-frame-label-mask&quot;], g[data-edge-from] &gt; rect.c-mask, .phase-chip) { rx: 2px; }
           svg[data-node-ui][data-preset=&quot;editorial&quot;] :is([data-graph-role=&quot;structural-frame-label-mask&quot;], g[data-edge-from] &gt; rect.c-mask, .phase-chip) { rx: 3px; }
         &lt;/style&gt;
+        &lt;style&gt;
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; rect.node-card { fill: var(--mask); stroke: color-mix(in srgb, var(--text) 14%, var(--mask)); stroke-dasharray: none; filter: drop-shadow(0 1px 1.5px rgba(15, 23, 42, 0.06)); }
+          :is([data-theme=&quot;dark&quot;] svg[data-node-ui], svg[data-node-ui][data-theme=&quot;dark&quot;]) [data-node-card=&quot;layered&quot;] &gt; rect.node-card.node-card { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 16%, var(--mask)); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)); }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .node-card-tile { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 10%, var(--mask)); stroke-width: .8px; }
+          :is([data-theme=&quot;dark&quot;] svg[data-node-ui], svg[data-node-ui][data-theme=&quot;dark&quot;]) [data-node-card=&quot;layered&quot;] &gt; .node-card-tile { fill: color-mix(in srgb, var(--text) 9%, var(--mask)); }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; text { font-family: Inter, &quot;Noto Sans CJK SC&quot;, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .semantic-sigil { opacity: .9; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark .brand-mark-badge { fill: #f6f8fb; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark .brand-mark-frame { stroke: #e2e8f0; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark.brand-mark-ink .brand-mark-badge { fill: #1f2937; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark.brand-mark-ink .brand-mark-frame { stroke: #1f2937; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+        &lt;/style&gt;
 
         &lt;!-- Background Grid --&gt;
         &lt;rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;url(#grid)&quot; /&gt;
@@ -10650,99 +10663,110 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         &lt;/g&gt;
 
         &lt;!-- Components --&gt;
-        &lt;g id=&quot;node-buyers&quot; data-node-id=&quot;buyers&quot; data-node-label=&quot;Buyers&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Buyers, Web + mobile, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;Web + mobile&quot; data-node-context=&quot;Architecture component&quot;&gt;
+        &lt;g id=&quot;node-buyers&quot; data-node-id=&quot;buyers&quot; data-node-label=&quot;Buyers&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Buyers, Web + mobile, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;Web + mobile&quot; data-node-context=&quot;Architecture component&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Buyers · Web + mobile · Architecture component&lt;/title&gt;
-          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-external&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(46 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-external node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;50&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(57.04 271.04) scale(1.12)&quot;&gt;
             &lt;rect x=&quot;2.5&quot; y=&quot;5&quot; width=&quot;8.5&quot; height=&quot;8&quot; rx=&quot;1.5&quot;/&gt;
             &lt;path d=&quot;M8 2.5h5.5V8M13.5 2.5 7.5 8.5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;100&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Buyers&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;100&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Web + mobile&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;92&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Buyers&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;92&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;Web + mob…&lt;title&gt;Web + mobile&lt;/title&gt;&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(149 261)&quot;&gt;&lt;title&gt;Web + mobile&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-cache&quot; data-node-id=&quot;cache&quot; data-node-label=&quot;Session Cache&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Session Cache, Redis, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;database&quot; data-node-sublabel=&quot;Redis&quot; data-node-context=&quot;Production region&quot;&gt;
+        &lt;g id=&quot;node-cache&quot; data-node-id=&quot;cache&quot; data-node-label=&quot;Session Cache&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Session Cache, Redis, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;database&quot; data-node-sublabel=&quot;Redis&quot; data-node-context=&quot;Production region&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Session Cache · Redis · Production region&lt;/title&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-database&quot; data-animate=&quot;node&quot; style=&quot;--step:7&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;database&quot; class=&quot;semantic-sigil s-database&quot; transform=&quot;translate(436 106) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-database node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:7&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;440&quot; y=&quot;114&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;database&quot; class=&quot;semantic-sigil s-database&quot; transform=&quot;translate(447.04 121.04) scale(1.12)&quot;&gt;
             &lt;ellipse cx=&quot;8&quot; cy=&quot;4&quot; rx=&quot;5&quot; ry=&quot;2&quot;/&gt;
             &lt;path d=&quot;M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;495&quot; y=&quot;128&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Session Cache&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;495&quot; y=&quot;144&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Redis&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;482&quot; y=&quot;128&quot; class=&quot;t-primary&quot; font-size=&quot;9.3&quot; font-weight=&quot;650&quot;&gt;Session Cache&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;482&quot; y=&quot;142&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;Redis&lt;/text&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-checkout&quot; data-node-id=&quot;checkout&quot; data-node-label=&quot;Checkout API&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Checkout API, v1 service, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;v1 service&quot; data-node-context=&quot;Production region › Checkout trust zone&quot;&gt;
+        &lt;g id=&quot;node-checkout&quot; data-node-id=&quot;checkout&quot; data-node-label=&quot;Checkout API&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Checkout API, v1 service, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;v1 service&quot; data-node-context=&quot;Production region › Checkout trust zone&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Checkout API · v1 service · Production region › Checkout trust zone&lt;/title&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-backend&quot; data-animate=&quot;node&quot; style=&quot;--step:4&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(436 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-backend node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:4&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;440&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(447.04 271.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;495&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Checkout API&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;495&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;v1 service&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;482&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;10.1&quot; font-weight=&quot;650&quot;&gt;Checkout API&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;482&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;v1 service&lt;/text&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-edge&quot; data-node-id=&quot;edge&quot; data-node-label=&quot;Edge Gateway&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Edge Gateway, TLS + routing, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;cloud&quot; data-node-sublabel=&quot;TLS + routing&quot; data-node-context=&quot;Production region&quot;&gt;
+        &lt;g id=&quot;node-edge&quot; data-node-id=&quot;edge&quot; data-node-label=&quot;Edge Gateway&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Edge Gateway, TLS + routing, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;cloud&quot; data-node-sublabel=&quot;TLS + routing&quot; data-node-context=&quot;Production region&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Edge Gateway · TLS + routing · Production region&lt;/title&gt;
-          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-cloud&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(226 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-cloud node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;230&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(237.04 271.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;285&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Edge Gateway&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;285&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;TLS + routing&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;272&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;8&quot; font-weight=&quot;650&quot;&gt;Edge Gateway&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;272&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;TLS + routi…&lt;title&gt;TLS + routing&lt;/title&gt;&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(339 261)&quot;&gt;&lt;title&gt;TLS + routing&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-orders&quot; data-node-id=&quot;orders&quot; data-node-label=&quot;Orders&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Orders, PostgreSQL, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;database&quot; data-node-sublabel=&quot;PostgreSQL&quot; data-node-context=&quot;Production region › Checkout trust zone&quot;&gt;
+        &lt;g id=&quot;node-orders&quot; data-node-id=&quot;orders&quot; data-node-label=&quot;Orders&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Orders, PostgreSQL, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;database&quot; data-node-sublabel=&quot;PostgreSQL&quot; data-node-context=&quot;Production region › Checkout trust zone&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Orders · PostgreSQL · Production region › Checkout trust zone&lt;/title&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-database&quot; data-animate=&quot;node&quot; style=&quot;--step:0&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;database&quot; class=&quot;semantic-sigil s-database&quot; transform=&quot;translate(646 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-database node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:0&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;650&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;database&quot; class=&quot;semantic-sigil s-database&quot; transform=&quot;translate(657.04 271.04) scale(1.12)&quot;&gt;
             &lt;ellipse cx=&quot;8&quot; cy=&quot;4&quot; rx=&quot;5&quot; ry=&quot;2&quot;/&gt;
             &lt;path d=&quot;M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;705&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Orders&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;705&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;PostgreSQL&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;692&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Orders&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;692&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;PostgreSQL&lt;/text&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-payments&quot; data-node-id=&quot;payments&quot; data-node-label=&quot;Payment Rail&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Payment Rail, external, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;external&quot; data-node-context=&quot;Architecture component&quot;&gt;
+        &lt;g id=&quot;node-payments&quot; data-node-id=&quot;payments&quot; data-node-label=&quot;Payment Rail&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Payment Rail, external, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;external&quot; data-node-context=&quot;Architecture component&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Payment Rail · external · Architecture component&lt;/title&gt;
-          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-external&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(856 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-external node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;860&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(867.04 271.04) scale(1.12)&quot;&gt;
             &lt;rect x=&quot;2.5&quot; y=&quot;5&quot; width=&quot;8.5&quot; height=&quot;8&quot; rx=&quot;1.5&quot;/&gt;
             &lt;path d=&quot;M8 2.5h5.5V8M13.5 2.5 7.5 8.5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;915&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Payment Rail&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;915&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;external&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;902&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;10.1&quot; font-weight=&quot;650&quot;&gt;Payment Rail&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;902&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;external&lt;/text&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-queue&quot; data-node-id=&quot;queue&quot; data-node-label=&quot;Order Events&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Order Events, durable queue, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;messagebus&quot; data-node-sublabel=&quot;durable queue&quot; data-node-context=&quot;Production region&quot;&gt;
+        &lt;g id=&quot;node-queue&quot; data-node-id=&quot;queue&quot; data-node-label=&quot;Order Events&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Order Events, durable queue, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;messagebus&quot; data-node-sublabel=&quot;durable queue&quot; data-node-context=&quot;Production region&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Order Events · durable queue · Production region&lt;/title&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-messagebus&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;messagebus&quot; class=&quot;semantic-sigil s-messagebus&quot; transform=&quot;translate(436 406) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-messagebus node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;440&quot; y=&quot;414&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;messagebus&quot; class=&quot;semantic-sigil s-messagebus&quot; transform=&quot;translate(447.04 421.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M2.5 4.5h11M2.5 8h11M2.5 11.5h11&quot;/&gt;
             &lt;circle cx=&quot;5&quot; cy=&quot;4.5&quot; r=&quot;1&quot; class=&quot;sigil-fill&quot;/&gt;
             &lt;circle cx=&quot;10.5&quot; cy=&quot;8&quot; r=&quot;1&quot; class=&quot;sigil-fill&quot;/&gt;
             &lt;circle cx=&quot;7&quot; cy=&quot;11.5&quot; r=&quot;1&quot; class=&quot;sigil-fill&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;495&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Order Events&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;495&quot; y=&quot;444&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;durable queue&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;482&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;8&quot; font-weight=&quot;650&quot;&gt;Order Events&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;482&quot; y=&quot;442&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;durable que…&lt;title&gt;durable queue&lt;/title&gt;&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(549 411)&quot;&gt;&lt;title&gt;durable queue&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-worker&quot; data-node-id=&quot;worker&quot; data-node-label=&quot;Fulfilment&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Fulfilment, async worker, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;async worker&quot; data-node-context=&quot;Production region&quot;&gt;
+        &lt;g id=&quot;node-worker&quot; data-node-id=&quot;worker&quot; data-node-label=&quot;Fulfilment&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Fulfilment, async worker, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;async worker&quot; data-node-context=&quot;Production region&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Fulfilment · async worker · Production region&lt;/title&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-backend&quot; data-animate=&quot;node&quot; style=&quot;--step:3&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(646 406) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-backend node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:3&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;650&quot; y=&quot;414&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(657.04 421.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;705&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Fulfilment&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;705&quot; y=&quot;444&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;async worker&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;692&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Fulfilment&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;692&quot; y=&quot;442&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;async worker&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;!-- Connection labels --&gt;
@@ -20619,6 +20643,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-node-ui][data-preset="blueprint"] :is([data-graph-role="structural-frame-label-mask"], g[data-edge-from] > rect.c-mask, .phase-chip) { rx: 2px; }
           svg[data-node-ui][data-preset="editorial"] :is([data-graph-role="structural-frame-label-mask"], g[data-edge-from] > rect.c-mask, .phase-chip) { rx: 3px; }
         </style>
+        <style>
+          svg[data-node-ui] [data-node-card="layered"] > rect.node-card { fill: var(--mask); stroke: color-mix(in srgb, var(--text) 14%, var(--mask)); stroke-dasharray: none; filter: drop-shadow(0 1px 1.5px rgba(15, 23, 42, 0.06)); }
+          :is([data-theme="dark"] svg[data-node-ui], svg[data-node-ui][data-theme="dark"]) [data-node-card="layered"] > rect.node-card.node-card { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 16%, var(--mask)); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)); }
+          svg[data-node-ui] [data-node-card="layered"] > .node-card-tile { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 10%, var(--mask)); stroke-width: .8px; }
+          :is([data-theme="dark"] svg[data-node-ui], svg[data-node-ui][data-theme="dark"]) [data-node-card="layered"] > .node-card-tile { fill: color-mix(in srgb, var(--text) 9%, var(--mask)); }
+          svg[data-node-ui] [data-node-card="layered"] > text { font-family: Inter, "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+          svg[data-node-ui] [data-node-card="layered"] > .semantic-sigil { opacity: .9; }
+          svg[data-node-ui] [data-node-card="layered"] > .brand-mark .brand-mark-badge { fill: #f6f8fb; }
+          svg[data-node-ui] [data-node-card="layered"] > .brand-mark .brand-mark-frame { stroke: #e2e8f0; }
+          svg[data-node-ui] [data-node-card="layered"] > .brand-mark.brand-mark-ink .brand-mark-badge { fill: #1f2937; }
+          svg[data-node-ui] [data-node-card="layered"] > .brand-mark.brand-mark-ink .brand-mark-frame { stroke: #1f2937; }
+          svg[data-node-ui] [data-node-card="layered"] > .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+        </style>
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#delta-head-grid)" />
@@ -20688,136 +20725,152 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         </g>
 
         <!-- Baseline removed and move-from component phantoms -->
-<g id="delta-base-node-cache" data-node-id="cache" data-node-label="Session Cache" role="group" aria-label="Session Cache, Redis, Production region" data-node-kind="database" data-node-sublabel="Redis" data-node-context="Production region" data-delta-state="removed" data-delta-classifications="semantic">
+<g id="delta-base-node-cache" data-node-id="cache" data-node-label="Session Cache" role="group" aria-label="Session Cache, Redis, Production region" data-node-kind="database" data-node-sublabel="Redis" data-node-context="Production region" data-node-card="layered" data-delta-state="removed" data-delta-classifications="semantic">
           <title>Session Cache · Redis · Production region</title>
-          <rect x="430" y="100" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="430" y="100" width="130" height="60" rx="8" class="c-database" data-animate="node" style="--step:7" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(436 106) scale(0.6875)">
+          <rect x="430" y="100" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="430" y="100" width="130" height="60" rx="10" class="c-database node-card" data-animate="node" style="--step:7" stroke-width="1"/>
+          <rect x="440" y="114" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(447.04 121.04) scale(1.12)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="495" y="128" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Session Cache</text>
-        <text data-detail="context" x="495" y="144" class="t-muted" font-size="9" text-anchor="middle">Redis</text>
+          <text data-node-label="" data-detail-anchor="" x="482" y="128" class="t-primary" font-size="9.3" font-weight="650">Session Cache</text>
+          <text data-detail="context" x="482" y="142" class="t-muted node-card-sub" font-size="9.5">Redis</text>
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="551" cy="109" r="8"/><text x="551" y="112" text-anchor="middle">−</text></g>
         </g>
-<g id="delta-base-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved-from" data-delta-classifications="geometry">
+<g id="delta-base-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-node-card="layered" data-delta-state="moved-from" data-delta-classifications="geometry">
           <title>Order Events · durable queue · Production region</title>
-          <rect x="430" y="400" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="430" y="400" width="130" height="60" rx="8" class="c-messagebus" data-animate="node" style="--step:2" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(436 406) scale(0.6875)">
+          <rect x="430" y="400" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="430" y="400" width="130" height="60" rx="10" class="c-messagebus node-card" data-animate="node" style="--step:2" stroke-width="1"/>
+          <rect x="440" y="414" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(447.04 421.04) scale(1.12)">
             <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
             <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="495" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Order Events</text>
-        <text data-detail="context" x="495" y="444" class="t-muted" font-size="9" text-anchor="middle">durable queue</text>
+          <text data-node-label="" data-detail-anchor="" x="482" y="428" class="t-primary" font-size="8" font-weight="650">Order Events</text>
+          <text data-detail="context" x="482" y="442" class="t-muted node-card-sub" font-size="9.5">durable que…<title>durable queue</title></text>
+          <g class="node-card-info" data-node-info="" transform="translate(549 411)"><title>durable queue</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="551" cy="409" r="8"/><text x="551" y="412" text-anchor="middle">↔</text></g>
         </g>
 
         <!-- Components -->
-        <g id="delta-head-node-buyers" data-node-id="buyers" data-node-label="Buyers" role="group" aria-label="Buyers, Web + mobile, Architecture component" data-node-kind="external" data-node-sublabel="Web + mobile" data-node-context="Architecture component" data-delta-state="same">
+        <g id="delta-head-node-buyers" data-node-id="buyers" data-node-label="Buyers" role="group" aria-label="Buyers, Web + mobile, Architecture component" data-node-kind="external" data-node-sublabel="Web + mobile" data-node-context="Architecture component" data-node-card="layered" data-delta-state="same">
           <title>Buyers · Web + mobile · Architecture component</title>
-          <rect x="40" y="250" width="120" height="60" rx="8" class="c-mask"/>
-          <rect x="40" y="250" width="120" height="60" rx="8" class="c-external" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 256) scale(0.6875)">
+          <rect x="40" y="250" width="120" height="60" rx="10" class="c-mask"/>
+          <rect x="40" y="250" width="120" height="60" rx="10" class="c-external node-card" data-animate="node" style="--step:1" stroke-width="1"/>
+          <rect x="50" y="264" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(57.04 271.04) scale(1.12)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="100" y="278" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Buyers</text>
-        <text data-detail="context" x="100" y="294" class="t-muted" font-size="9" text-anchor="middle">Web + mobile</text>
+          <text data-node-label="" data-detail-anchor="" x="92" y="278" class="t-primary" font-size="12" font-weight="650">Buyers</text>
+          <text data-detail="context" x="92" y="292" class="t-muted node-card-sub" font-size="9.5">Web + mob…<title>Web + mobile</title></text>
+          <g class="node-card-info" data-node-info="" transform="translate(149 261)"><title>Web + mobile</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
         </g>
 
-        <g id="delta-head-node-checkout" data-node-id="checkout" data-node-label="Checkout API" role="group" aria-label="Checkout API, v2 idempotent, Production region › Checkout trust zone" data-node-kind="backend" data-node-sublabel="v2 idempotent" data-node-context="Production region › Checkout trust zone" data-delta-state="changed" data-delta-classifications="semantic">
+        <g id="delta-head-node-checkout" data-node-id="checkout" data-node-label="Checkout API" role="group" aria-label="Checkout API, v2 idempotent, Production region › Checkout trust zone" data-node-kind="backend" data-node-sublabel="v2 idempotent" data-node-context="Production region › Checkout trust zone" data-node-card="layered" data-delta-state="changed" data-delta-classifications="semantic">
           <title>Checkout API · v2 idempotent · Production region › Checkout trust zone</title>
-          <rect x="430" y="250" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="430" y="250" width="130" height="60" rx="8" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(436 256) scale(0.6875)">
+          <rect x="430" y="250" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="430" y="250" width="130" height="60" rx="10" class="c-backend node-card" data-animate="node" style="--step:4" stroke-width="1"/>
+          <rect x="440" y="264" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(447.04 271.04) scale(1.12)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="495" y="278" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Checkout API</text>
-        <text data-detail="context" x="495" y="294" class="t-muted" font-size="9" text-anchor="middle">v2 idempotent</text>
+          <text data-node-label="" data-detail-anchor="" x="482" y="278" class="t-primary" font-size="8" font-weight="650">Checkout API</text>
+          <text data-detail="context" x="482" y="292" class="t-muted node-card-sub" font-size="9.5">v2 idempote…<title>v2 idempotent</title></text>
+          <g class="node-card-info" data-node-info="" transform="translate(549 261)"><title>v2 idempotent</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="551" cy="259" r="8"/><text x="551" y="262" text-anchor="middle">~</text></g>
         </g>
 
-        <g id="delta-head-node-edge" data-node-id="edge" data-node-label="Edge Gateway" role="group" aria-label="Edge Gateway, TLS + routing, Production region" data-node-kind="cloud" data-node-sublabel="TLS + routing" data-node-context="Production region" data-delta-state="same">
+        <g id="delta-head-node-edge" data-node-id="edge" data-node-label="Edge Gateway" role="group" aria-label="Edge Gateway, TLS + routing, Production region" data-node-kind="cloud" data-node-sublabel="TLS + routing" data-node-context="Production region" data-node-card="layered" data-delta-state="same">
           <title>Edge Gateway · TLS + routing · Production region</title>
-          <rect x="220" y="250" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="220" y="250" width="130" height="60" rx="8" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(226 256) scale(0.6875)">
+          <rect x="220" y="250" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="220" y="250" width="130" height="60" rx="10" class="c-cloud node-card" data-animate="node" style="--step:2" stroke-width="1"/>
+          <rect x="230" y="264" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(237.04 271.04) scale(1.12)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="285" y="278" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Edge Gateway</text>
-        <text data-detail="context" x="285" y="294" class="t-muted" font-size="9" text-anchor="middle">TLS + routing</text>
+          <text data-node-label="" data-detail-anchor="" x="272" y="278" class="t-primary" font-size="8" font-weight="650">Edge Gateway</text>
+          <text data-detail="context" x="272" y="292" class="t-muted node-card-sub" font-size="9.5">TLS + routi…<title>TLS + routing</title></text>
+          <g class="node-card-info" data-node-info="" transform="translate(339 261)"><title>TLS + routing</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
         </g>
 
-        <g id="delta-head-node-fraud" data-node-id="fraud" data-node-label="Fraud Gate" role="group" aria-label="Fraud Gate, policy scoring, Production region › Checkout trust zone" data-node-kind="security" data-node-sublabel="policy scoring" data-node-tag="new owner" data-node-context="Production region › Checkout trust zone" data-delta-state="added" data-delta-classifications="semantic">
+        <g id="delta-head-node-fraud" data-node-id="fraud" data-node-label="Fraud Gate" role="group" aria-label="Fraud Gate, policy scoring, Production region › Checkout trust zone" data-node-kind="security" data-node-sublabel="policy scoring" data-node-tag="new owner" data-node-context="Production region › Checkout trust zone" data-node-card="layered" data-delta-state="added" data-delta-classifications="semantic">
           <title>Fraud Gate · policy scoring · Production region › Checkout trust zone · new owner</title>
-          <rect x="640" y="100" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="640" y="100" width="130" height="60" rx="8" class="c-security" data-animate="node" style="--step:0" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(646 106) scale(0.6875)">
+          <rect x="640" y="100" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="640" y="100" width="130" height="60" rx="10" class="c-security node-card" data-animate="node" style="--step:0" stroke-width="1"/>
+          <rect x="650" y="114" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(657.04 121.04) scale(1.12)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="705" y="128" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Fraud Gate</text>
-        <text data-detail="context" x="705" y="144" class="t-muted" font-size="9" text-anchor="middle">policy scoring</text>
-        <text data-detail="fine" x="705" y="152" class="t-security" font-size="7" text-anchor="middle">new owner</text>
+          <text data-node-label="" data-detail-anchor="" x="692" y="128" class="t-primary" font-size="9.6" font-weight="650">Fraud Gate</text>
+          <text data-detail="context" x="692" y="142" class="t-muted node-card-sub" font-size="9.5">policy scor…<title>policy scoring</title></text>
+          <text data-detail="fine" x="760" y="153" class="t-security" font-size="7" text-anchor="end">new owner</text>
+          <g class="node-card-info" data-node-info="" transform="translate(759 111)"><title>policy scoring</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="761" cy="109" r="8"/><text x="761" y="112" text-anchor="middle">+</text></g>
         </g>
 
-        <g id="delta-head-node-orders" data-node-id="orders" data-node-label="Orders" role="group" aria-label="Orders, PostgreSQL, Production region › Checkout trust zone" data-node-kind="database" data-node-sublabel="PostgreSQL" data-node-context="Production region › Checkout trust zone" data-delta-state="same">
+        <g id="delta-head-node-orders" data-node-id="orders" data-node-label="Orders" role="group" aria-label="Orders, PostgreSQL, Production region › Checkout trust zone" data-node-kind="database" data-node-sublabel="PostgreSQL" data-node-context="Production region › Checkout trust zone" data-node-card="layered" data-delta-state="same">
           <title>Orders · PostgreSQL · Production region › Checkout trust zone</title>
-          <rect x="640" y="250" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="640" y="250" width="130" height="60" rx="8" class="c-database" data-animate="node" style="--step:6" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(646 256) scale(0.6875)">
+          <rect x="640" y="250" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="640" y="250" width="130" height="60" rx="10" class="c-database node-card" data-animate="node" style="--step:6" stroke-width="1"/>
+          <rect x="650" y="264" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(657.04 271.04) scale(1.12)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="705" y="278" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Orders</text>
-        <text data-detail="context" x="705" y="294" class="t-muted" font-size="9" text-anchor="middle">PostgreSQL</text>
+          <text data-node-label="" data-detail-anchor="" x="692" y="278" class="t-primary" font-size="12" font-weight="650">Orders</text>
+          <text data-detail="context" x="692" y="292" class="t-muted node-card-sub" font-size="9.5">PostgreSQL</text>
         </g>
 
-        <g id="delta-head-node-payments" data-node-id="payments" data-node-label="Payment Rail" role="group" aria-label="Payment Rail, external, Architecture component" data-node-kind="external" data-node-sublabel="external" data-node-context="Architecture component" data-delta-state="same">
+        <g id="delta-head-node-payments" data-node-id="payments" data-node-label="Payment Rail" role="group" aria-label="Payment Rail, external, Architecture component" data-node-kind="external" data-node-sublabel="external" data-node-context="Architecture component" data-node-card="layered" data-delta-state="same">
           <title>Payment Rail · external · Architecture component</title>
-          <rect x="850" y="250" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="850" y="250" width="130" height="60" rx="8" class="c-external" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(856 256) scale(0.6875)">
+          <rect x="850" y="250" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="850" y="250" width="130" height="60" rx="10" class="c-external node-card" data-animate="node" style="--step:1" stroke-width="1"/>
+          <rect x="860" y="264" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(867.04 271.04) scale(1.12)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="915" y="278" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Payment Rail</text>
-        <text data-detail="context" x="915" y="294" class="t-muted" font-size="9" text-anchor="middle">external</text>
+          <text data-node-label="" data-detail-anchor="" x="902" y="278" class="t-primary" font-size="10.1" font-weight="650">Payment Rail</text>
+          <text data-detail="context" x="902" y="292" class="t-muted node-card-sub" font-size="9.5">external</text>
         </g>
 
-        <g id="delta-head-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-delta-state="moved" data-delta-classifications="geometry">
+        <g id="delta-head-node-queue" data-node-id="queue" data-node-label="Order Events" role="group" aria-label="Order Events, durable queue, Production region" data-node-kind="messagebus" data-node-sublabel="durable queue" data-node-context="Production region" data-node-card="layered" data-delta-state="moved" data-delta-classifications="geometry">
           <title>Order Events · durable queue · Production region</title>
-          <rect x="430" y="420" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="430" y="420" width="130" height="60" rx="8" class="c-messagebus" data-animate="node" style="--step:2" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(436 426) scale(0.6875)">
+          <rect x="430" y="420" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="430" y="420" width="130" height="60" rx="10" class="c-messagebus node-card" data-animate="node" style="--step:2" stroke-width="1"/>
+          <rect x="440" y="434" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(447.04 441.04) scale(1.12)">
             <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
             <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="495" y="448" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Order Events</text>
-        <text data-detail="context" x="495" y="464" class="t-muted" font-size="9" text-anchor="middle">durable queue</text>
+          <text data-node-label="" data-detail-anchor="" x="482" y="448" class="t-primary" font-size="8" font-weight="650">Order Events</text>
+          <text data-detail="context" x="482" y="462" class="t-muted node-card-sub" font-size="9.5">durable que…<title>durable queue</title></text>
+          <g class="node-card-info" data-node-info="" transform="translate(549 431)"><title>durable queue</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="551" cy="429" r="8"/><text x="551" y="432" text-anchor="middle">↔</text></g>
         </g>
 
-        <g id="delta-head-node-worker" data-node-id="worker" data-node-label="Fulfilment" role="group" aria-label="Fulfilment, async worker, Production region" data-node-kind="backend" data-node-sublabel="async worker" data-node-context="Production region" data-delta-state="same">
+        <g id="delta-head-node-worker" data-node-id="worker" data-node-label="Fulfilment" role="group" aria-label="Fulfilment, async worker, Production region" data-node-kind="backend" data-node-sublabel="async worker" data-node-context="Production region" data-node-card="layered" data-delta-state="same">
           <title>Fulfilment · async worker · Production region</title>
-          <rect x="640" y="400" width="130" height="60" rx="8" class="c-mask"/>
-          <rect x="640" y="400" width="130" height="60" rx="8" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(646 406) scale(0.6875)">
+          <rect x="640" y="400" width="130" height="60" rx="10" class="c-mask"/>
+          <rect x="640" y="400" width="130" height="60" rx="10" class="c-backend node-card" data-animate="node" style="--step:3" stroke-width="1"/>
+          <rect x="650" y="414" width="32" height="32" rx="7" class="node-card-tile"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(657.04 421.04) scale(1.12)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="705" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Fulfilment</text>
-        <text data-detail="context" x="705" y="444" class="t-muted" font-size="9" text-anchor="middle">async worker</text>
+          <text data-node-label="" data-detail-anchor="" x="692" y="428" class="t-primary" font-size="12" font-weight="650">Fulfilment</text>
+          <text data-detail="context" x="692" y="442" class="t-muted node-card-sub" font-size="9.5">async worker</text>
         </g>
 
         <!-- Connection labels -->
@@ -26361,6 +26414,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           svg[data-node-ui][data-preset=&quot;blueprint&quot;] :is([data-graph-role=&quot;structural-frame-label-mask&quot;], g[data-edge-from] &gt; rect.c-mask, .phase-chip) { rx: 2px; }
           svg[data-node-ui][data-preset=&quot;editorial&quot;] :is([data-graph-role=&quot;structural-frame-label-mask&quot;], g[data-edge-from] &gt; rect.c-mask, .phase-chip) { rx: 3px; }
         &lt;/style&gt;
+        &lt;style&gt;
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; rect.node-card { fill: var(--mask); stroke: color-mix(in srgb, var(--text) 14%, var(--mask)); stroke-dasharray: none; filter: drop-shadow(0 1px 1.5px rgba(15, 23, 42, 0.06)); }
+          :is([data-theme=&quot;dark&quot;] svg[data-node-ui], svg[data-node-ui][data-theme=&quot;dark&quot;]) [data-node-card=&quot;layered&quot;] &gt; rect.node-card.node-card { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 16%, var(--mask)); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)); }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .node-card-tile { fill: color-mix(in srgb, var(--text) 5%, var(--mask)); stroke: color-mix(in srgb, var(--text) 10%, var(--mask)); stroke-width: .8px; }
+          :is([data-theme=&quot;dark&quot;] svg[data-node-ui], svg[data-node-ui][data-theme=&quot;dark&quot;]) [data-node-card=&quot;layered&quot;] &gt; .node-card-tile { fill: color-mix(in srgb, var(--text) 9%, var(--mask)); }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; text { font-family: Inter, &quot;Noto Sans CJK SC&quot;, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .semantic-sigil { opacity: .9; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark .brand-mark-badge { fill: #f6f8fb; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark .brand-mark-frame { stroke: #e2e8f0; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark.brand-mark-ink .brand-mark-badge { fill: #1f2937; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .brand-mark.brand-mark-ink .brand-mark-frame { stroke: #1f2937; }
+          svg[data-node-ui] [data-node-card=&quot;layered&quot;] &gt; .node-card-info { fill: none; stroke: var(--text-muted); stroke-width: .9px; stroke-linecap: round; opacity: .75; cursor: help; }
+        &lt;/style&gt;
 
         &lt;!-- Background Grid --&gt;
         &lt;rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;url(#grid)&quot; /&gt;
@@ -26398,100 +26464,113 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         &lt;/g&gt;
 
         &lt;!-- Components --&gt;
-        &lt;g id=&quot;node-buyers&quot; data-node-id=&quot;buyers&quot; data-node-label=&quot;Buyers&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Buyers, Web + mobile, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;Web + mobile&quot; data-node-context=&quot;Architecture component&quot;&gt;
+        &lt;g id=&quot;node-buyers&quot; data-node-id=&quot;buyers&quot; data-node-label=&quot;Buyers&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Buyers, Web + mobile, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;Web + mobile&quot; data-node-context=&quot;Architecture component&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Buyers · Web + mobile · Architecture component&lt;/title&gt;
-          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-external&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(46 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;40&quot; y=&quot;250&quot; width=&quot;120&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-external node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;50&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(57.04 271.04) scale(1.12)&quot;&gt;
             &lt;rect x=&quot;2.5&quot; y=&quot;5&quot; width=&quot;8.5&quot; height=&quot;8&quot; rx=&quot;1.5&quot;/&gt;
             &lt;path d=&quot;M8 2.5h5.5V8M13.5 2.5 7.5 8.5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;100&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Buyers&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;100&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Web + mobile&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;92&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Buyers&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;92&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;Web + mob…&lt;title&gt;Web + mobile&lt;/title&gt;&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(149 261)&quot;&gt;&lt;title&gt;Web + mobile&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-checkout&quot; data-node-id=&quot;checkout&quot; data-node-label=&quot;Checkout API&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Checkout API, v2 idempotent, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;v2 idempotent&quot; data-node-context=&quot;Production region › Checkout trust zone&quot;&gt;
+        &lt;g id=&quot;node-checkout&quot; data-node-id=&quot;checkout&quot; data-node-label=&quot;Checkout API&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Checkout API, v2 idempotent, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;v2 idempotent&quot; data-node-context=&quot;Production region › Checkout trust zone&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Checkout API · v2 idempotent · Production region › Checkout trust zone&lt;/title&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-backend&quot; data-animate=&quot;node&quot; style=&quot;--step:4&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(436 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-backend node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:4&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;440&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(447.04 271.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;495&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Checkout API&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;495&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;v2 idempotent&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;482&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;8&quot; font-weight=&quot;650&quot;&gt;Checkout API&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;482&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;v2 idempote…&lt;title&gt;v2 idempotent&lt;/title&gt;&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(549 261)&quot;&gt;&lt;title&gt;v2 idempotent&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-edge&quot; data-node-id=&quot;edge&quot; data-node-label=&quot;Edge Gateway&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Edge Gateway, TLS + routing, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;cloud&quot; data-node-sublabel=&quot;TLS + routing&quot; data-node-context=&quot;Production region&quot;&gt;
+        &lt;g id=&quot;node-edge&quot; data-node-id=&quot;edge&quot; data-node-label=&quot;Edge Gateway&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Edge Gateway, TLS + routing, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;cloud&quot; data-node-sublabel=&quot;TLS + routing&quot; data-node-context=&quot;Production region&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Edge Gateway · TLS + routing · Production region&lt;/title&gt;
-          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-cloud&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(226 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;220&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-cloud node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;230&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(237.04 271.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;285&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Edge Gateway&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;285&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;TLS + routing&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;272&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;8&quot; font-weight=&quot;650&quot;&gt;Edge Gateway&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;272&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;TLS + routi…&lt;title&gt;TLS + routing&lt;/title&gt;&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(339 261)&quot;&gt;&lt;title&gt;TLS + routing&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-fraud&quot; data-node-id=&quot;fraud&quot; data-node-label=&quot;Fraud Gate&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Fraud Gate, policy scoring, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;security&quot; data-node-sublabel=&quot;policy scoring&quot; data-node-tag=&quot;new owner&quot; data-node-context=&quot;Production region › Checkout trust zone&quot;&gt;
+        &lt;g id=&quot;node-fraud&quot; data-node-id=&quot;fraud&quot; data-node-label=&quot;Fraud Gate&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Fraud Gate, policy scoring, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;security&quot; data-node-sublabel=&quot;policy scoring&quot; data-node-tag=&quot;new owner&quot; data-node-context=&quot;Production region › Checkout trust zone&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Fraud Gate · policy scoring · Production region › Checkout trust zone · new owner&lt;/title&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-security&quot; data-animate=&quot;node&quot; style=&quot;--step:0&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;security&quot; class=&quot;semantic-sigil s-security&quot; transform=&quot;translate(646 106) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;100&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-security node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:0&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;650&quot; y=&quot;114&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;security&quot; class=&quot;semantic-sigil s-security&quot; transform=&quot;translate(657.04 121.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z&quot;/&gt;
             &lt;path d=&quot;m5.8 8 1.5 1.5 3-3&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;705&quot; y=&quot;128&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Fraud Gate&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;705&quot; y=&quot;144&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;policy scoring&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;705&quot; y=&quot;152&quot; class=&quot;t-security&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;new owner&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;692&quot; y=&quot;128&quot; class=&quot;t-primary&quot; font-size=&quot;9.6&quot; font-weight=&quot;650&quot;&gt;Fraud Gate&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;692&quot; y=&quot;142&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;policy scor…&lt;title&gt;policy scoring&lt;/title&gt;&lt;/text&gt;
+          &lt;text data-detail=&quot;fine&quot; x=&quot;760&quot; y=&quot;153&quot; class=&quot;t-security&quot; font-size=&quot;7&quot; text-anchor=&quot;end&quot;&gt;new owner&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(759 111)&quot;&gt;&lt;title&gt;policy scoring&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-orders&quot; data-node-id=&quot;orders&quot; data-node-label=&quot;Orders&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Orders, PostgreSQL, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;database&quot; data-node-sublabel=&quot;PostgreSQL&quot; data-node-context=&quot;Production region › Checkout trust zone&quot;&gt;
+        &lt;g id=&quot;node-orders&quot; data-node-id=&quot;orders&quot; data-node-label=&quot;Orders&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Orders, PostgreSQL, Production region › Checkout trust zone&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;database&quot; data-node-sublabel=&quot;PostgreSQL&quot; data-node-context=&quot;Production region › Checkout trust zone&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Orders · PostgreSQL · Production region › Checkout trust zone&lt;/title&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-database&quot; data-animate=&quot;node&quot; style=&quot;--step:6&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;database&quot; class=&quot;semantic-sigil s-database&quot; transform=&quot;translate(646 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-database node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:6&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;650&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;database&quot; class=&quot;semantic-sigil s-database&quot; transform=&quot;translate(657.04 271.04) scale(1.12)&quot;&gt;
             &lt;ellipse cx=&quot;8&quot; cy=&quot;4&quot; rx=&quot;5&quot; ry=&quot;2&quot;/&gt;
             &lt;path d=&quot;M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;705&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Orders&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;705&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;PostgreSQL&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;692&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Orders&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;692&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;PostgreSQL&lt;/text&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-payments&quot; data-node-id=&quot;payments&quot; data-node-label=&quot;Payment Rail&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Payment Rail, external, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;external&quot; data-node-context=&quot;Architecture component&quot;&gt;
+        &lt;g id=&quot;node-payments&quot; data-node-id=&quot;payments&quot; data-node-label=&quot;Payment Rail&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Payment Rail, external, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;external&quot; data-node-context=&quot;Architecture component&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Payment Rail · external · Architecture component&lt;/title&gt;
-          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-external&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(856 256) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;850&quot; y=&quot;250&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-external node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:1&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;860&quot; y=&quot;264&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(867.04 271.04) scale(1.12)&quot;&gt;
             &lt;rect x=&quot;2.5&quot; y=&quot;5&quot; width=&quot;8.5&quot; height=&quot;8&quot; rx=&quot;1.5&quot;/&gt;
             &lt;path d=&quot;M8 2.5h5.5V8M13.5 2.5 7.5 8.5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;915&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Payment Rail&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;915&quot; y=&quot;294&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;external&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;902&quot; y=&quot;278&quot; class=&quot;t-primary&quot; font-size=&quot;10.1&quot; font-weight=&quot;650&quot;&gt;Payment Rail&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;902&quot; y=&quot;292&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;external&lt;/text&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-queue&quot; data-node-id=&quot;queue&quot; data-node-label=&quot;Order Events&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Order Events, durable queue, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;messagebus&quot; data-node-sublabel=&quot;durable queue&quot; data-node-context=&quot;Production region&quot;&gt;
+        &lt;g id=&quot;node-queue&quot; data-node-id=&quot;queue&quot; data-node-label=&quot;Order Events&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Order Events, durable queue, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;messagebus&quot; data-node-sublabel=&quot;durable queue&quot; data-node-context=&quot;Production region&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Order Events · durable queue · Production region&lt;/title&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;420&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;430&quot; y=&quot;420&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-messagebus&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;messagebus&quot; class=&quot;semantic-sigil s-messagebus&quot; transform=&quot;translate(436 426) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;420&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;430&quot; y=&quot;420&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-messagebus node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:2&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;440&quot; y=&quot;434&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;messagebus&quot; class=&quot;semantic-sigil s-messagebus&quot; transform=&quot;translate(447.04 441.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M2.5 4.5h11M2.5 8h11M2.5 11.5h11&quot;/&gt;
             &lt;circle cx=&quot;5&quot; cy=&quot;4.5&quot; r=&quot;1&quot; class=&quot;sigil-fill&quot;/&gt;
             &lt;circle cx=&quot;10.5&quot; cy=&quot;8&quot; r=&quot;1&quot; class=&quot;sigil-fill&quot;/&gt;
             &lt;circle cx=&quot;7&quot; cy=&quot;11.5&quot; r=&quot;1&quot; class=&quot;sigil-fill&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;495&quot; y=&quot;448&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Order Events&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;495&quot; y=&quot;464&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;durable queue&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;482&quot; y=&quot;448&quot; class=&quot;t-primary&quot; font-size=&quot;8&quot; font-weight=&quot;650&quot;&gt;Order Events&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;482&quot; y=&quot;462&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;durable que…&lt;title&gt;durable queue&lt;/title&gt;&lt;/text&gt;
+          &lt;g class=&quot;node-card-info&quot; data-node-info=&quot;&quot; transform=&quot;translate(549 431)&quot;&gt;&lt;title&gt;durable queue&lt;/title&gt;&lt;circle r=&quot;5&quot;/&gt;&lt;path d=&quot;M0 -0.4v3M0 -2.6v.1&quot;/&gt;&lt;/g&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-worker&quot; data-node-id=&quot;worker&quot; data-node-label=&quot;Fulfilment&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Fulfilment, async worker, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;async worker&quot; data-node-context=&quot;Production region&quot;&gt;
+        &lt;g id=&quot;node-worker&quot; data-node-id=&quot;worker&quot; data-node-label=&quot;Fulfilment&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus Fulfilment, async worker, Production region&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;async worker&quot; data-node-context=&quot;Production region&quot; data-node-card=&quot;layered&quot;&gt;
           &lt;title&gt;Fulfilment · async worker · Production region&lt;/title&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;8&quot; class=&quot;c-backend&quot; data-animate=&quot;node&quot; style=&quot;--step:3&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(646 406) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;640&quot; y=&quot;400&quot; width=&quot;130&quot; height=&quot;60&quot; rx=&quot;10&quot; class=&quot;c-backend node-card&quot; data-animate=&quot;node&quot; style=&quot;--step:3&quot; stroke-width=&quot;1&quot;/&gt;
+          &lt;rect x=&quot;650&quot; y=&quot;414&quot; width=&quot;32&quot; height=&quot;32&quot; rx=&quot;7&quot; class=&quot;node-card-tile&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(657.04 421.04) scale(1.12)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;705&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;Fulfilment&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;705&quot; y=&quot;444&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;async worker&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;692&quot; y=&quot;428&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Fulfilment&lt;/text&gt;
+          &lt;text data-detail=&quot;context&quot; x=&quot;692&quot; y=&quot;442&quot; class=&quot;t-muted node-card-sub&quot; font-size=&quot;9.5&quot;&gt;async worker&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;!-- Connection labels --&gt;

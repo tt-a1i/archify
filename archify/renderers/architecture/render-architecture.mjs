@@ -10,6 +10,7 @@ import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
+import { autoCardWidth, cardLayout, layeredCardStyle } from './card.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
@@ -91,7 +92,11 @@ const LEGEND_CATALOG = [
 // ---- Measure components from free coordinates --------------------------------
 function measureComponent(c) {
   const [x, y] = resolveComponentPos(c, grid);
-  const [w, h] = Array.isArray(c.size) ? c.size : [layout.defaultW, layout.defaultH];
+  // Authored sizes are kept verbatim; unsized cards grow to fit their text,
+  // capped by the grid cell so automatic placement cannot collide.
+  const [w, h] = Array.isArray(c.size)
+    ? c.size
+    : [autoCardWidth(c, grid ? Math.max(layout.defaultW, grid.cellW) : undefined), layout.defaultH];
   return { ...c, x, y, width: w, height: h, cx: x + w / 2, cy: y + h / 2 };
 }
 
@@ -562,13 +567,16 @@ function validateArchitecture() {
       });
       problems.push(message);
     }
-    const brandRailProblem = brandTopRailProblem(c, c.width, 8, 'Component');
+    const brandRailProblem = cardLayout(c).tiled ? null : brandTopRailProblem(c, c.width, 8, 'Component');
     if (brandRailProblem) problems.push(brandRailProblem);
     // sublabel and tag render as single unwrapped <text> elements; shrink-to-fit
     // handles the ordinary case, this rejects what it cannot rescue.
     const availableTextW = availableNodeTextWidth(c.width);
+    // Card sublabels truncate with an ellipsis (full text on hover); only the
+    // compact centred layout still has to fit its sublabel on one line.
+    const compact = !cardLayout(c, { branded: Boolean(brandMetadataFor(c).brand) }).tiled;
     for (const [field, value, minimum] of [
-      ['Sublabel', c.sublabel, componentTextFit.sublabelMinimum],
+      ...(compact ? [['Sublabel', c.sublabel, componentTextFit.sublabelMinimum]] : []),
       ['Tag', c.tag, componentTextFit.tagMinimum],
     ]) {
       if (!value) continue;
@@ -1063,7 +1071,8 @@ function renderConnectionLabel(conn, index) {
         </g>`;
 }
 
-function renderComponent(c) {
+// Compact boxes too small for the card tile keep the centred text layout.
+function renderCompactComponent(c) {
   const fill = componentFill[c.type] || 'c-external';
   const accent = componentText[c.type] || 't-muted';
   const cx = c.cx;
@@ -1088,6 +1097,42 @@ function renderComponent(c) {
           <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="8" class="${fill}"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1.5"/>
           ${renderSemanticSigil(c.type, { icon: c.icon, x: c.x + 6, y: c.y + 6 })}${brand ? `\n          ${brand}` : ''}
           <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${cx}" y="${labelY}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(c.label)}</text>${sub}${tag}${mark}
+        </g>`, drilldowns);
+}
+
+function renderComponent(c) {
+  const fill = componentFill[c.type] || 'c-external';
+  const accent = componentText[c.type] || 't-muted';
+  const card = cardLayout(c, { branded: Boolean(brandMetadataFor(c).brand) });
+  if (!card.tiled) return renderCompactComponent(c);
+  const sub = card.sub
+    ? `\n          <text data-detail="context" x="${card.textX}" y="${card.sub.y}" class="t-muted node-card-sub" font-size="${card.sub.font}">${esc(card.sub.text)}${card.sub.truncated ? `<title>${esc(c.sublabel)}</title>` : ''}</text>`
+    : '';
+  const tag = c.tag
+    ? `\n          <text data-detail="fine" x="${c.x + c.width - 10}" y="${c.y + c.height - 7}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width / 2, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="end">${esc(c.tag)}</text>`
+    : '';
+  let tile = '';
+  if (card.tile) {
+    const { x, y, size } = card.tile;
+    const brand = renderBrandMark(c, { x, y, size, inset: Math.round(size * 0.2), radius: 7 });
+    tile = brand
+      ? `\n          ${brand}\n          ${renderSemanticSigil(c.type, { icon: c.icon, x: card.rail.x, y: card.rail.y })}`
+      : `\n          <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="7" class="node-card-tile"/>\n          ${renderSemanticSigil(c.type, { icon: c.icon, x: x + size * 0.22, y: y + size * 0.22, size: size * 0.56 })}`;
+  }
+  // The ⓘ tooltip repeats only on-canvas text; authored explanation prose
+  // stays in the Semantic Passport (Explain) and never enters the SVG.
+  const infoText = c.sublabel || c.label;
+  const info = card.info
+    ? `\n          <g class="node-card-info" data-node-info="" transform="translate(${card.info.cx} ${card.info.cy})"><title>${esc(infoText)}</title><circle r="5"/><path d="M0 -0.4v3M0 -2.6v.1"/></g>`
+    : '';
+  const drilldowns = resolveNodeDrilldowns(c);
+  const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), drilldowns, href: c.href, ...brandMetadataFor(c) };
+  const mark = drilldowns.length ? `\n          ${renderDrilldownMark(c)}` : '';
+  return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)} data-node-card="layered">
+          ${focusNodeTitle(c.label, passport)}
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="10" class="c-mask"/>
+          <rect x="${c.x}" y="${c.y}" width="${c.width}" height="${c.height}" rx="10" class="${fill} node-card"${animateAttr(arch.meta, 'node', componentSteps.get(c.id))} stroke-width="1"/>${tile}
+          <text data-node-label=""${card.sub ? ' data-detail-anchor=""' : ''} x="${card.textX}" y="${card.labelY}" class="t-primary" font-size="${card.labelFont}" font-weight="650">${esc(c.label)}</text>${sub}${tag}${info}${mark}
         </g>`, drilldowns);
 }
 
@@ -1138,6 +1183,7 @@ function renderSvg() {
 ${svgAccessibleText(arch.meta, 'architecture')}
 ${renderDefinitions()}
 ${nodeCardStyle()}
+${layeredCardStyle()}
 
         <!-- Background Grid -->
         <rect width="100%" height="100%" fill="url(#grid)" />

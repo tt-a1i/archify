@@ -141,8 +141,8 @@
       "engineeringProfile": "deployment-ownership",
       "nodeCount": 12,
       "edgeCount": 12,
-      "artifactBytes": 883475,
-      "artifactSha256": "a6cf8b5f3fafd70fddb772e1ef2387cda5eb5191d2c0dc2b760d33e8c5a8edf8",
+      "artifactBytes": 888146,
+      "artifactSha256": "12be33840d5b71a7698faeafdcc9a469721940aa593ff310787503932b0f2ee6",
       "sourceBytes": 4734,
       "sourceSha256": "610a5614667e8f108bdcf1769c9d7af5c3ce0fb62be3ea50550b10eb752e4bda",
       "checks": [
@@ -225,13 +225,7 @@
           "detours": []
         },
         "leadingSpace": {
-          "measured": true,
-          "emptyTopPx": 85,
-          "emptyTopRatio": 0.108,
-          "occupiedTop": 85,
-          "viewBoxTop": 0,
-          "canvasHeight": 790,
-          "typicalNodeHeight": 62,
+          "measured": false,
           "reviewSuggested": false
         },
         "desktopReadability": {
@@ -248,10 +242,8 @@
           "hardFloorPx": 6,
           "hardFloorMet": true,
           "minimumOwner": {
-            "kind": "edge",
-            "id": null,
-            "from": "clients",
-            "to": "edge"
+            "kind": "node",
+            "id": "api_a"
           },
           "minimumSourceTextPx": 8,
           "minimumProjectedTextPx": 7.5,
@@ -1417,8 +1409,8 @@
       "engineeringProfile": null,
       "nodeCount": 10,
       "edgeCount": 9,
-      "artifactBytes": 876014,
-      "artifactSha256": "15df5e284e11e8cc271bd8ab6963700d6446b4730d37504cd0ec56f450e1aa58",
+      "artifactBytes": 879588,
+      "artifactSha256": "2b5a6f54e4cebe47bb9b450de93f5311e65bd739d71c7dfa1327a6db268f2b72",
       "sourceBytes": 3197,
       "sourceSha256": "95e051b27a9e4a3307e194c0f666fca4af51470be7e2228d400ff48aea5b353b",
       "checks": [
@@ -1514,13 +1506,7 @@
           ]
         },
         "leadingSpace": {
-          "measured": true,
-          "emptyTopPx": 110,
-          "emptyTopRatio": 0.187,
-          "occupiedTop": 110,
-          "viewBoxTop": 0,
-          "canvasHeight": 588,
-          "typicalNodeHeight": 60,
+          "measured": false,
           "reviewSuggested": false
         },
         "desktopReadability": {

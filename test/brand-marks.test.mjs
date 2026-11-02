@@ -178,9 +178,20 @@ test('all five renderers keep the semantic sigil and add one export-safe brand b
     const brand = block.match(/data-brand-mark="openai"[^>]+translate\(([-\d.]+) ([-\d.]+)\)">\s*<rect width="([-\d.]+)" height="([-\d.]+)" rx="([-\d.]+)" class="brand-mark-badge"\/>/);
     assert.ok(frame && semantic && brand, `${type}: expected node frame, semantic sigil, and brand badge`);
 
-    const [frameX, frameY, frameWidth] = frame.slice(1, 4).map(Number);
-    const [, semanticY] = semantic.slice(1, 3).map(Number);
+    const [frameX, frameY, frameWidth, frameHeight] = frame.slice(1, 5).map(Number);
+    const [semanticX, semanticY] = semantic.slice(1, 3).map(Number);
     const [brandX, brandY, brandWidth, brandHeight, brandRadius] = brand.slice(1, 6).map(Number);
+    if (type === 'architecture') {
+      // Architecture cards carry the brand as the left logo tile and move the
+      // semantic sigil to the top-right rail, so neither replaces the other.
+      assert.equal(brandWidth, brandHeight, 'square logo tile');
+      assert.ok(brandWidth >= 20 && brandWidth <= 32, `logo tile size ${brandWidth}`);
+      assert.equal(brandX - frameX, 10, 'logo tile left inset');
+      assert.equal(brandY + brandHeight / 2, frameY + frameHeight / 2, 'logo tile is vertically centred');
+      assert.equal(semanticY - frameY, 6, 'semantic sigil top inset');
+      assert.equal(frameX + frameWidth - semanticX, 17, 'semantic sigil sits on the right rail');
+      continue;
+    }
     assert.equal(brandWidth, 16, `${type}: brand badge width`);
     assert.equal(brandHeight, 16, `${type}: brand badge height`);
     assert.equal(brandRadius, 4, `${type}: brand badge radius`);

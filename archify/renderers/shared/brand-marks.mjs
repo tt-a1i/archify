@@ -724,10 +724,25 @@ function markAttrs(mark) {
   ].filter(Boolean).join(' ');
 }
 
-export function renderBrandMark(node, { x, y, size = 16 } = {}) {
+// Relative luminance of a 6-digit hex colour, 0 (black) to 1 (white).
+export function brandHexLuminance(hex) {
+  const value = String(hex || '').replace(/^#/, '');
+  if (!/^[0-9a-f]{6}$/i.test(value)) return 0;
+  const channel = (offset) => {
+    const c = Number.parseInt(value.slice(offset, offset + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+}
+
+// A white or near-white brand colour would vanish on the light plate; those
+// marks get an ink plate instead so the authored identity stays legible.
+export const BRAND_INK_PLATE_LUMINANCE = 0.7;
+
+export function renderBrandMark(node, { x, y, size = 16, inset = 3, radius = 4 } = {}) {
   const mark = brandMarkFor(node);
   if (!mark) return '';
-  const inset = 3;
+  const inkPlate = mark.kind === 'preset' && brandHexLuminance(mark.hex) >= BRAND_INK_PLATE_LUMINANCE;
   let content;
   if (mark.kind === 'preset') {
     const scale = (size - inset * 2) / mark.viewBox;
@@ -738,9 +753,9 @@ export function renderBrandMark(node, { x, y, size = 16 } = {}) {
     const scale = size / 20;
     content = `<g transform="scale(${scale})" class="brand-mark-fallback"><circle cx="10" cy="10" r="5.2"/><path d="M4.8 10h10.4M10 4.8c1.6 1.6 2.4 3.3 2.4 5.2s-.8 3.6-2.4 5.2M10 4.8C8.4 6.4 7.6 8.1 7.6 10s.8 3.6 2.4 5.2"/></g>`;
   }
-  return `<g aria-hidden="true" ${markAttrs(mark)} class="brand-mark" transform="translate(${x} ${y})">
-            <rect width="${size}" height="${size}" rx="4" class="brand-mark-badge"/>
+  return `<g aria-hidden="true" ${markAttrs(mark)} class="brand-mark${inkPlate ? ' brand-mark-ink' : ''}" transform="translate(${x} ${y})">
+            <rect width="${size}" height="${size}" rx="${radius}" class="brand-mark-badge"/>
             ${content}
-            <rect width="${size}" height="${size}" rx="4" class="brand-mark-frame"/>
+            <rect width="${size}" height="${size}" rx="${radius}" class="brand-mark-frame"/>
           </g>`;
 }
