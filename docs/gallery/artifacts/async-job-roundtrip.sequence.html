@@ -188,6 +188,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #94a3b8;
       --arrow-emphasis: #34d399;
+      --edge-label: var(--arrow);
 
       /* Opaque mask color used behind semi-transparent component fills
          so the arrows drawn underneath are properly hidden. */
@@ -231,6 +232,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #64748b;
       --arrow-emphasis: #059669;
+      --edge-label: var(--text-muted);
 
       --mask: #ffffff;
 
@@ -291,6 +293,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a5b4c7;
       --arrow: #7890ad;
       --arrow-emphasis: #2dd4bf;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 16, 30, 0.86);
       --toolbar-border: #29415f;
       --toolbar-menu-bg: #07101e;
@@ -326,6 +329,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #607a8c;
       --arrow: #7b97aa;
       --arrow-emphasis: #0d9488;
+      --edge-label: var(--text-muted);
     }
 
     /* ==========================================================
@@ -362,6 +366,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a7cad9;
       --arrow: #78a3b7;
       --arrow-emphasis: #64dfc1;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 28, 45, 0.92);
       --toolbar-border: #34799a;
       --toolbar-text: #d8f3ff;
@@ -397,6 +402,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #506f7e;
       --arrow: #6d93a5;
       --arrow-emphasis: #087f69;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(247, 252, 254, 0.94);
       --toolbar-border: #8ab5c5;
       --toolbar-text: #294f61;
@@ -439,6 +445,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #b8ad99;
       --arrow: #948978;
       --arrow-emphasis: #dd6b3d;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(35, 31, 24, 0.92);
       --toolbar-border: #625a4a;
       --toolbar-text: #eee5d5;
@@ -476,6 +483,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #746b5e;
       --arrow: #8a806f;
       --arrow-emphasis: #bb4c23;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(251, 248, 241, 0.94);
       --toolbar-border: #c4b9a6;
       --toolbar-text: #40392f;
@@ -3224,6 +3232,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         --lane-stroke: #cbd5e1;
         --arrow: #94a3b8;
         --arrow-emphasis: #059669;
+        --edge-label: var(--text-muted);
         --frontend-fill:    rgba(34, 211, 238, 0.15);
         --frontend-stroke:  #0891b2;
         --backend-fill:     rgba(52, 211, 153, 0.18);
@@ -4291,8 +4300,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
-    /* Relationship labels share the exact color token used by their path. */
-    .t-edge-default  { fill: var(--arrow); }
+    /* Colored relationship labels share the exact color token used by their path.
+       Default labels use --edge-label so light palettes can keep a quiet stroke
+       while the text stays readable on the label mask. */
+    .t-edge-default  { fill: var(--edge-label); }
     .t-edge-emphasis { fill: var(--arrow-emphasis); }
     .t-edge-security { fill: var(--security-stroke); }
     .t-edge-dashed   { fill: var(--database-stroke); }
@@ -4305,7 +4316,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.4px) 0 0 / 20px 20px,
         var(--panel);
     }
-    html[data-preset="classic"] .diagram-container > svg .c-grid { stroke: transparent; }
+    svg[data-preset="classic"] .c-grid { stroke: transparent; }
     html[data-preset="classic"][data-theme="light"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
       --ambient-node-base-filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
       filter: var(--ambient-node-base-filter);
@@ -5603,8 +5614,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="105" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Client</text>
-          <text data-detail="context" x="105" y="122" class="t-muted" font-size="7" text-anchor="middle">mobile app</text>
+          <text data-node-label="" data-detail-anchor="" x="105" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Client</text>
+          <text data-detail="context" x="105" y="115" class="t-muted" font-size="7" text-anchor="middle">mobile app</text>
         </g>
 
         <g id="node-api" data-node-id="api" data-node-label="Jobs API" tabindex="0" role="button" aria-label="Focus Jobs API, request edge, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="request edge" data-node-context="Sequence participant">
@@ -5614,8 +5625,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(173.33333333333331 78) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="210.33333333333331" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Jobs API</text>
-          <text data-detail="context" x="210.33333333333331" y="122" class="t-muted" font-size="7" text-anchor="middle">request edge</text>
+          <text data-node-label="" data-detail-anchor="" x="210.33333333333331" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Jobs API</text>
+          <text data-detail="context" x="210.33333333333331" y="115" class="t-muted" font-size="7" text-anchor="middle">request edge</text>
         </g>
 
         <g id="node-queue" data-node-id="queue" data-node-label="Queue" tabindex="0" role="button" aria-label="Focus Queue, durable work, Sequence participant" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="durable work" data-node-context="Sequence participant">
@@ -5628,8 +5639,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="315.66666666666663" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Queue</text>
-          <text data-detail="context" x="315.66666666666663" y="122" class="t-muted" font-size="7" text-anchor="middle">durable work</text>
+          <text data-node-label="" data-detail-anchor="" x="315.66666666666663" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Queue</text>
+          <text data-detail="context" x="315.66666666666663" y="115" class="t-muted" font-size="7" text-anchor="middle">durable work</text>
         </g>
 
         <g id="node-worker" data-node-id="worker" data-node-label="Worker" tabindex="0" role="button" aria-label="Focus Worker, background, Sequence participant" aria-pressed="false" data-node-kind="backend" data-node-sublabel="background" data-node-context="Sequence participant">
@@ -5639,8 +5650,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(384 78) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="421" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Worker</text>
-          <text data-detail="context" x="421" y="122" class="t-muted" font-size="7" text-anchor="middle">background</text>
+          <text data-node-label="" data-detail-anchor="" x="421" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Worker</text>
+          <text data-detail="context" x="421" y="115" class="t-muted" font-size="7" text-anchor="middle">background</text>
         </g>
 
         <g id="node-provider" data-node-id="provider" data-node-label="Provider" tabindex="0" role="button" aria-label="Focus Provider, external API, Sequence participant" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="external API" data-node-context="Sequence participant">
@@ -5650,8 +5661,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(489.33333333333326 78) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="526.3333333333333" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Provider</text>
-          <text data-detail="context" x="526.3333333333333" y="122" class="t-muted" font-size="7" text-anchor="middle">external API</text>
+          <text data-node-label="" data-detail-anchor="" x="526.3333333333333" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Provider</text>
+          <text data-detail="context" x="526.3333333333333" y="115" class="t-muted" font-size="7" text-anchor="middle">external API</text>
         </g>
 
         <g id="node-store" data-node-id="store" data-node-label="Job Store" tabindex="0" role="button" aria-label="Focus Job Store, source of truth, Sequence participant" aria-pressed="false" data-node-kind="database" data-node-sublabel="source of truth" data-node-context="Sequence participant">
@@ -5662,8 +5673,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="631.6666666666666" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Job Store</text>
-          <text data-detail="context" x="631.6666666666666" y="122" class="t-muted" font-size="7" text-anchor="middle">source of truth</text>
+          <text data-node-label="" data-detail-anchor="" x="631.6666666666666" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Job Store</text>
+          <text data-detail="context" x="631.6666666666666" y="115" class="t-muted" font-size="7" text-anchor="middle">source of truth</text>
         </g>
 
         <g id="node-notify" data-node-id="notify" data-node-label="Notifier" tabindex="0" role="button" aria-label="Focus Notifier, webhook, Sequence participant" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="webhook" data-node-context="Sequence participant">
@@ -5676,8 +5687,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="737" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Notifier</text>
-          <text data-detail="context" x="737" y="122" class="t-muted" font-size="7" text-anchor="middle">webhook</text>
+          <text data-node-label="" data-detail-anchor="" x="737" y="101" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Notifier</text>
+          <text data-detail="context" x="737" y="115" class="t-muted" font-size="7" text-anchor="middle">webhook</text>
         </g>
 
         <!-- Legend -->

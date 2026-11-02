@@ -53,8 +53,12 @@ try {
 
 if (isExplainerHtml(html)) {
   const result = checkExplainerHtml(html, { file: htmlPath });
-  console.log(JSON.stringify(result, null, 2));
-  process.exit(result.ok ? 0 : 1);
+  // Piped stdout is asynchronous on macOS. Exit only after the full receipt
+  // has flushed, and keep the diagram path below from emitting a second one.
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`, () => {
+    process.exit(result.ok ? 0 : 1);
+  });
+  await new Promise(() => {});
 }
 
 const checks = [];

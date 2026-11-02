@@ -7,6 +7,7 @@ Template only: replace placeholders, retain failures and use **unknown/not run**
 - User problem and intended benefit:
 - Observed improvement / unchanged cases / regressions:
 - Evidence status: author report / independently checked / reused / pending:
+- Evidence route: fresh real-repository generation / fixed-JSON replay / Viewer presentation or export replay / narrower scope or exemption (rationale and scope agreement):
 - Important limitations and requested decisions:
 
 ## Frozen plan
@@ -49,5 +50,6 @@ Repeat this section for each project/type. Include a named reviewer and explicit
 - Missing outputs, unavailable metrics, redactions and truncated logs:
 - Failure/retry/timeout summary and links to session events (no separate failure log); supplemental logs only for output missing from the export:
 - Reused evidence with original SHA and relevance to current head:
+- Remaining evidence gaps and which claims they leave unverified (fixed-JSON replay alone does not measure Agent authoring outcomes):
 - Execution cost if available; evidence assembly time; maintainer review time:
 - Useful defects discovered and any excessive verification work:
