@@ -459,5 +459,20 @@
   "legend.waterfall.ok": "Завершено",
   "legend.waterfall.error": "Ошибка",
   "legend.waterfall.cancelled": "Отменено",
-  "legend.waterfall.incomplete": "Не завершено (конец не записан)"
+  "legend.waterfall.incomplete": "Не завершено (конец не записан)",
+  "viewer.update.button": "Версия {version}",
+  "viewer.update.title": "Версия артефакта",
+  "viewer.update.close": "Закрыть версию артефакта",
+  "viewer.update.fact.type": "Тип",
+  "viewer.update.fact.generator": "Генератор",
+  "viewer.update.fact.content": "Идентификатор содержимого",
+  "viewer.update.check": "Проверить обновление",
+  "viewer.update.checking": "Проверка фиксированного стабильного манифеста…",
+  "viewer.update.unavailable": "Состояние обновления недоступно. Результат обновления не записан.",
+  "viewer.update.unavailableDevelopment": "Состояние обновления недоступно для этого артефакта разработки. Результат обновления не записан.",
+  "viewer.update.none": "Более новая стабильная версия не найдена.",
+  "viewer.update.available": "Доступна более новая стабильная версия.",
+  "viewer.update.newVersion": "Новая версия {version}",
+  "viewer.update.current": "Текущая версия: {version}",
+  "viewer.update.releaseNotes": "Примечания к выпуску"
 }

@@ -181,7 +181,7 @@ The output is a self-contained HTML file. Download it and open it in your browse
 
 ### Standalone artifact updates
 
-A forwarded artifact remains offline-first: opening it performs no update request or background polling. A reader can explicitly open **Artifact version** and choose **Check for update**; only a strictly validated newer stable release changes the control to **New version X** and exposes up to three release summaries with the release-notes link. Reader feedback, diagnostic copying, and recipient routing are intentionally deferred to a future, separate issue.
+A forwarded artifact remains offline-first: opening it performs no update request or background polling. A reader can explicitly open **Artifact version** and choose **Check for update**; only a strictly validated newer stable release changes the control to **New version X** and exposes the release summary with the release-notes link. Reader feedback, diagnostic copying, and recipient routing are intentionally deferred to a future, separate issue.
 
 
 ## Community and recognition

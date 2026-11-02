@@ -459,5 +459,20 @@
   "legend.waterfall.ok": "完了",
   "legend.waterfall.error": "エラー",
   "legend.waterfall.cancelled": "キャンセル済み",
-  "legend.waterfall.incomplete": "未完了（終了記録なし）"
+  "legend.waterfall.incomplete": "未完了（終了記録なし）",
+  "viewer.update.button": "バージョン {version}",
+  "viewer.update.title": "成果物のバージョン",
+  "viewer.update.close": "成果物のバージョンを閉じる",
+  "viewer.update.fact.type": "種類",
+  "viewer.update.fact.generator": "生成器",
+  "viewer.update.fact.content": "内容の識別子",
+  "viewer.update.check": "更新を確認",
+  "viewer.update.checking": "固定の安定版マニフェストを確認しています…",
+  "viewer.update.unavailable": "更新状態を確認できません。更新結果は記録されていません。",
+  "viewer.update.unavailableDevelopment": "この開発版の成果物では更新状態を確認できません。更新結果は記録されていません。",
+  "viewer.update.none": "より新しい安定版は見つかりませんでした。",
+  "viewer.update.available": "より新しい安定版があります。",
+  "viewer.update.newVersion": "新しいバージョン {version}",
+  "viewer.update.current": "現在のバージョン: {version}",
+  "viewer.update.releaseNotes": "リリースノート"
 }

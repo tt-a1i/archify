@@ -497,5 +497,20 @@
   "viewer.passport.back": "返回上一级",
   "viewer.passport.back.aria": "返回父级图",
   "viewer.nav.back": "返回",
-  "viewer.nav.back.title": "返回父级图"
+  "viewer.nav.back.title": "返回父级图",
+  "viewer.update.button": "版本 {version}",
+  "viewer.update.title": "生成版本",
+  "viewer.update.close": "关闭版本信息",
+  "viewer.update.fact.type": "类型",
+  "viewer.update.fact.generator": "生成器",
+  "viewer.update.fact.content": "内容标识",
+  "viewer.update.check": "检查更新",
+  "viewer.update.checking": "正在检查固定的稳定版清单…",
+  "viewer.update.unavailable": "更新状态不可用。没有记录更新结果。",
+  "viewer.update.unavailableDevelopment": "此开发版本的更新状态不可用。没有记录更新结果。",
+  "viewer.update.none": "没有找到更新的稳定版本。",
+  "viewer.update.available": "有更新的稳定版本可用。",
+  "viewer.update.newVersion": "新版本 {version}",
+  "viewer.update.current": "当前版本：{version}",
+  "viewer.update.releaseNotes": "发布说明"
 }

@@ -497,5 +497,20 @@
   "viewer.passport.back": "Back to parent",
   "viewer.passport.back.aria": "Return to the parent diagram",
   "viewer.nav.back": "Back",
-  "viewer.nav.back.title": "Return to the parent diagram"
+  "viewer.nav.back.title": "Return to the parent diagram",
+  "viewer.update.button": "Version {version}",
+  "viewer.update.title": "Artifact version",
+  "viewer.update.close": "Close artifact version",
+  "viewer.update.fact.type": "Type",
+  "viewer.update.fact.generator": "Generator",
+  "viewer.update.fact.content": "Content identity",
+  "viewer.update.check": "Check for update",
+  "viewer.update.checking": "Checking the fixed stable manifest…",
+  "viewer.update.unavailable": "Update status unavailable. No update result was recorded.",
+  "viewer.update.unavailableDevelopment": "Update status unavailable for this development artifact. No update result was recorded.",
+  "viewer.update.none": "No newer stable version was found.",
+  "viewer.update.available": "A newer stable version is available.",
+  "viewer.update.newVersion": "New version {version}",
+  "viewer.update.current": "Current version: {version}",
+  "viewer.update.releaseNotes": "Release notes"
 }

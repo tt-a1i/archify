@@ -497,5 +497,20 @@
   "viewer.passport.back": "返回上一級",
   "viewer.passport.back.aria": "返回父級圖",
   "viewer.nav.back": "返回",
-  "viewer.nav.back.title": "返回父級圖"
+  "viewer.nav.back.title": "返回父級圖",
+  "viewer.update.button": "版本 {version}",
+  "viewer.update.title": "產生版本",
+  "viewer.update.close": "關閉版本資訊",
+  "viewer.update.fact.type": "類型",
+  "viewer.update.fact.generator": "產生器",
+  "viewer.update.fact.content": "內容識別",
+  "viewer.update.check": "檢查更新",
+  "viewer.update.checking": "正在檢查固定的穩定版清單…",
+  "viewer.update.unavailable": "更新狀態無法使用。沒有記錄更新結果。",
+  "viewer.update.unavailableDevelopment": "此開發版本的更新狀態無法使用。沒有記錄更新結果。",
+  "viewer.update.none": "沒有找到更新的穩定版本。",
+  "viewer.update.available": "有更新的穩定版本可用。",
+  "viewer.update.newVersion": "新版本 {version}",
+  "viewer.update.current": "目前版本：{version}",
+  "viewer.update.releaseNotes": "發行說明"
 }

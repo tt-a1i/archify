@@ -482,5 +482,20 @@
   "legend.waterfall.ok": "Terminé",
   "legend.waterfall.error": "Erreur",
   "legend.waterfall.cancelled": "Annulé",
-  "legend.waterfall.incomplete": "Incomplet (fin non enregistrée)"
+  "legend.waterfall.incomplete": "Incomplet (fin non enregistrée)",
+  "viewer.update.button": "Version {version}",
+  "viewer.update.title": "Version de l'artefact",
+  "viewer.update.close": "Fermer la version de l'artefact",
+  "viewer.update.fact.type": "Type",
+  "viewer.update.fact.generator": "Générateur",
+  "viewer.update.fact.content": "Identité du contenu",
+  "viewer.update.check": "Vérifier la mise à jour",
+  "viewer.update.checking": "Vérification du manifeste stable fixe…",
+  "viewer.update.unavailable": "L'état de mise à jour n'est pas disponible. Aucun résultat n'a été enregistré.",
+  "viewer.update.unavailableDevelopment": "L'état de mise à jour n'est pas disponible pour cet artefact de développement. Aucun résultat n'a été enregistré.",
+  "viewer.update.none": "Aucune version stable plus récente n'a été trouvée.",
+  "viewer.update.available": "Une version stable plus récente est disponible.",
+  "viewer.update.newVersion": "Nouvelle version {version}",
+  "viewer.update.current": "Version actuelle : {version}",
+  "viewer.update.releaseNotes": "Notes de version"
 }

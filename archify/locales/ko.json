@@ -497,5 +497,20 @@
   "viewer.passport.back": "상위 다이어그램으로 돌아가기",
   "viewer.passport.back.aria": "상위 다이어그램으로 돌아가기",
   "viewer.nav.back": "뒤로",
-  "viewer.nav.back.title": "상위 다이어그램으로 돌아가기"
+  "viewer.nav.back.title": "상위 다이어그램으로 돌아가기",
+  "viewer.update.button": "버전 {version}",
+  "viewer.update.title": "산출물 버전",
+  "viewer.update.close": "산출물 버전 닫기",
+  "viewer.update.fact.type": "유형",
+  "viewer.update.fact.generator": "생성기",
+  "viewer.update.fact.content": "콘텐츠 식별자",
+  "viewer.update.check": "업데이트 확인",
+  "viewer.update.checking": "고정된 안정 매니페스트를 확인하는 중…",
+  "viewer.update.unavailable": "업데이트 상태를 확인할 수 없습니다. 업데이트 결과가 기록되지 않았습니다.",
+  "viewer.update.unavailableDevelopment": "이 개발 산출물의 업데이트 상태를 확인할 수 없습니다. 업데이트 결과가 기록되지 않았습니다.",
+  "viewer.update.none": "더 새로운 안정 버전을 찾지 못했습니다.",
+  "viewer.update.available": "더 새로운 안정 버전을 사용할 수 있습니다.",
+  "viewer.update.newVersion": "새 버전 {version}",
+  "viewer.update.current": "현재 버전: {version}",
+  "viewer.update.releaseNotes": "릴리스 정보"
 }

@@ -11475,21 +11475,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   var summaries = document.getElementById('reader-update-summaries');
   var notes = document.getElementById('reader-update-release-notes');
   var originalFocus = null;
-  [['Type', artifact.type], ['Generator', artifact.generatorVersion], ['Content identity', artifact.contentSha256]].forEach(function (pair) {
+  [['viewer.update.fact.type', artifact.type], ['viewer.update.fact.generator', artifact.generatorVersion], ['viewer.update.fact.content', artifact.contentSha256]].forEach(function (pair) {
     var term = document.createElement('dt'); term.textContent = pair[0];
     var definition = document.createElement('dd'); definition.textContent = pair[1];
     facts.appendChild(term); facts.appendChild(definition);
   });
-  trigger.textContent = 'Version ' + artifact.generatorVersion;
+  trigger.textContent = viewerText('viewer.update.button', { version: artifact.generatorVersion });
   trigger.addEventListener('click', function () { originalFocus = trigger; dialog.showModal(); dialog.querySelector('header button').focus(); });
   dialog.addEventListener('close', function () { if (originalFocus) originalFocus.focus(); });
   document.getElementById('reader-update-check').addEventListener('click', function () {
     var button = this;
     if (!stableVersion(artifact.generatorVersion)) {
-      status.textContent = 'Update status unavailable for this development artifact. No update result was recorded.';
+      status.textContent = viewerText('viewer.update.unavailableDevelopment');
       return;
     }
-    button.disabled = true; status.textContent = 'Checking the fixed stable manifest…';
+    button.disabled = true; status.textContent = viewerText('viewer.update.checking');
     var controller = new AbortController();
     var timeout = setTimeout(function () { controller.abort(); }, 5000);
     fetch(update.manifestUrl, { method: 'GET', credentials: 'omit', cache: 'no-store', redirect: 'error', signal: controller.signal })
@@ -11498,19 +11498,19 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var manifest = validManifest(JSON.parse(text));
         if (!manifest) throw new Error('invalid manifest');
         if (compareStableVersion(artifact.generatorVersion, manifest.version) >= 0) {
-          status.textContent = 'No newer stable version was found.';
+          status.textContent = viewerText('viewer.update.none');
           return;
         }
-        trigger.textContent = 'New version ' + manifest.version;
-        current.textContent = 'Current version: ' + artifact.generatorVersion;
-        available.textContent = 'New version: ' + manifest.version;
+        trigger.textContent = viewerText('viewer.update.newVersion', { version: manifest.version });
+        current.textContent = viewerText('viewer.update.current', { version: artifact.generatorVersion });
+        available.textContent = viewerText('viewer.update.newVersion', { version: manifest.version });
         summaries.replaceChildren();
         [manifest.summary].slice(0, 3).forEach(function (summary) { var item = document.createElement('li'); item.textContent = summary; summaries.appendChild(item); });
         notes.href = manifest.releaseNotes;
         notes.hidden = false;
-        status.textContent = 'A newer stable version is available.';
+        status.textContent = viewerText('viewer.update.available');
       })
-      .catch(function () { status.textContent = 'Update status unavailable. No update result was recorded.'; })
+      .catch(function () { status.textContent = viewerText('viewer.update.unavailable'); })
       .finally(function () { clearTimeout(timeout); button.disabled = false; });
   });
 })();
