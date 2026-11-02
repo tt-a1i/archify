@@ -109,8 +109,8 @@
         });
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         agentState.textContent = agentName + (language === 'zh' ? ' · 同一份 Skill' : ' · same Skill');
-        installCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --global --copy --yes';
-        projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --copy --yes';
+        installCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --agent ' + agent + ' --global --copy --yes';
+        projectCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
         prompt.textContent = currentPrompt();
@@ -143,10 +143,10 @@
       function starterText() {
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         if (language === 'zh') {
-          return '为 ' + agentName + ' 安装 Archify：\n' + installCommand.textContent.trim()
+          return '为 ' + agentName + ' 安装 Archify：\n' + document.getElementById('agent-install-prompt').textContent.trim()
             + (input === 'description' ? '\n\n然后在任意新对话中直接告诉 ' : '\n\n然后在目标仓库中让 ') + agentName + '：\n' + currentPrompt();
         }
-        return 'Install Archify for ' + agentName + ':\n' + installCommand.textContent.trim()
+        return 'Install Archify for ' + agentName + ':\n' + document.getElementById('agent-install-prompt').textContent.trim()
           + (input === 'description' ? '\n\nThen start any new chat and tell ' : '\n\nThen, in your target repository, ask ') + agentName + ':\n' + currentPrompt();
       }
 
@@ -220,7 +220,11 @@
 
       document.querySelectorAll('[data-copy-source]').forEach(function (button) {
         button.addEventListener('click', function () {
-          var step = button.dataset.copySource === 'install-command' ? 'global_install_copy' : 'project_install_copy';
+          var step = {
+            'install-command': 'global_install_copy',
+            'project-command': 'project_install_copy',
+            'agent-install-prompt': 'agent_install_prompt_copy'
+          }[button.dataset.copySource];
           copyText(document.getElementById(button.dataset.copySource).textContent.trim(), step);
         });
       });

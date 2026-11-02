@@ -4,6 +4,7 @@ import { productChannel } from '../data/product-facts';
 import { packages, typeOrder, typeCounts, type PackageType } from '../data/community';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
+import SponsorsSection from '../components/SponsorsSection.astro';
 import head from '../data/community-head.html?raw';
 import css from '../styles/community.css?raw';
 import pageScript from '../scripts/community.js?raw';
@@ -40,6 +41,8 @@ const { lang = 'en' } = Astro.props;
         </div>
       </div>
     </section>
+
+    <SponsorsSection lang={lang} />
 
     <section class="controls" aria-label="Catalog controls">
       <div class="shell controls-inner">
