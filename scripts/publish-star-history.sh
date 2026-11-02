@@ -23,12 +23,24 @@ for chart in "$light_chart" "$dark_chart"; do
   fi
 done
 
+# ls-remote uses 2 for no matching branch; transport/auth failures are errors.
+remote_exists=false
+if git ls-remote --exit-code --heads origin "refs/heads/$data_branch" >/dev/null 2>&1; then
+  remote_exists=true
+else
+  remote_status=$?
+  if [[ "$remote_status" -ne 2 ]]; then
+    echo "Cannot inspect remote Star History branch (git exit $remote_status)." >&2
+    exit "$remote_status"
+  fi
+fi
+
 temp_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 snapshot_dir="$(mktemp -d "${temp_root%/}/archify-star-history.XXXXXX")"
 mv -- "$light_chart" "$snapshot_dir/light.svg"
 mv -- "$dark_chart" "$snapshot_dir/dark.svg"
 
-if git ls-remote --exit-code --heads origin "refs/heads/$data_branch" >/dev/null 2>&1; then
+if [[ "$remote_exists" == true ]]; then
   git fetch --no-tags origin "refs/heads/$data_branch:refs/remotes/origin/$data_branch"
   git switch --detach "refs/remotes/origin/$data_branch"
 else
