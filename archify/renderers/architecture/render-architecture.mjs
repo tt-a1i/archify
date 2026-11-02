@@ -224,7 +224,7 @@ function normalizeCards(map) {
   for (const o of original) {
     const cx = o.cx + dx.of(o);
     const cy = o.cy + dy.of(o);
-    Object.assign(o.c, { x: Math.round(cx - W / 2), y: Math.round(cy - H / 2), width: W, height: H });
+    Object.assign(o.c, { x: Math.round(cx - W / 2), y: Math.round(cy - H / 2), width: W, height: H, uniformCard: true });
   }
   // Keep everything on the canvas.
   const minX = Math.min(...cards.map((c) => c.x));
