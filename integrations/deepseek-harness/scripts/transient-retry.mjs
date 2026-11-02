@@ -11,6 +11,9 @@ export function isTransientNetworkFailure(result = {}) {
 }
 
 export function runWithTransientNetworkRetry(runAttempt, { maxAttempts = 2 } = {}) {
+  if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1) {
+    throw new Error("maxAttempts must be a positive safe integer");
+  }
   let result;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     result = runAttempt(attempt);
