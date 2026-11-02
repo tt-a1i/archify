@@ -636,6 +636,46 @@ async function mapConcurrent(values, limit, visit) {
   await Promise.all(workers);
 }
 
+// Architecture nodes whose label or id explicitly names one of these brands
+// get its logo without an authored `brand`. Only distinctive names qualify:
+// ordinary words that are also brands (Go, X, Meta, Render, Vault, Spring,
+// Linear, Square, Segment...) never auto-apply. Extra spellings map here.
+export const AUTO_BRAND_TERMS = Object.freeze({
+  openai: ['openai'], anthropic: ['anthropic'], 'apache-kafka': ['kafka', 'apache kafka'],
+  kubernetes: ['kubernetes', 'k8s'], prometheus: ['prometheus'], grafana: ['grafana'],
+  datadog: ['datadog'], auth0: ['auth0'], okta: ['okta'], cloudflare: ['cloudflare'],
+  nginx: ['nginx'], elasticsearch: ['elasticsearch'], opensearch: ['opensearch'],
+  redis: ['redis'], postgresql: ['postgresql', 'postgres'], mysql: ['mysql'],
+  mongodb: ['mongodb', 'mongo'], rabbitmq: ['rabbitmq'], clickhouse: ['clickhouse'],
+  snowflake: ['snowflake'], sentry: ['sentry'], pagerduty: ['pagerduty'],
+  stripe: ['stripe'], supabase: ['supabase'], firebase: ['firebase'], docker: ['docker'],
+  github: ['github'], gitlab: ['gitlab'], slack: ['slack'], twilio: ['twilio'],
+  sendgrid: ['sendgrid'], kibana: ['kibana'], jaeger: ['jaeger'], opentelemetry: ['opentelemetry', 'otel'],
+  envoy: ['envoy'], traefik: ['traefik'], istio: ['istio'], memcached: ['memcached'],
+  cassandra: ['cassandra'], dynamodb: ['dynamodb'], terraform: ['terraform'], jenkins: ['jenkins'],
+  'new-relic': ['new relic', 'newrelic'], splunk: ['splunk'], 'apache-airflow': ['airflow'],
+  'apache-spark': ['spark'], 'apache-flink': ['flink'], databricks: ['databricks'],
+  'hugging-face': ['hugging face', 'huggingface'], 'google-gemini': ['gemini'], deepseek: ['deepseek'],
+});
+
+const AUTO_BRAND_RULES = Object.entries(AUTO_BRAND_TERMS).map(([id, terms]) => [id,
+  new RegExp(`(?:^|[^a-z0-9])(?:${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[\\s_-]?')).join('|')})(?![a-z0-9])`)]);
+
+export function autoBrandIdFor(node) {
+  const text = `${node?.label ?? ''} ${node?.id ?? ''}`.toLowerCase();
+  for (const [id, re] of AUTO_BRAND_RULES) if (re.test(text)) return id;
+  return null;
+}
+
+// Drop an auto-applied mark (never an authored one), e.g. when a compact
+// card has no room for it.
+export function dropAutoBrandMark(node) {
+  if (!brandMarkFor(node)?.auto) return false;
+  delete node[RESOLVED_MARK];
+  RESOLVED_BY_NODE.delete(node);
+  return true;
+}
+
 export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const collection = COLLECTIONS[diagramType];
   const nodes = collection && Array.isArray(diagram[collection]) ? diagram[collection] : [];
@@ -643,7 +683,16 @@ export async function prepareDiagramBrandMarks(diagramType, diagram) {
   const remoteByUrl = new Map();
   const deadline = Date.now() + captureTimeoutMilliseconds();
   await mapConcurrent(nodes, MAX_CAPTURE_CONCURRENCY, async (node, index) => {
-    if (!node.brand) return;
+    if (!node.brand) {
+      const autoId = diagramType === 'architecture' ? autoBrandIdFor(node) : null;
+      const preset = autoId ? findBrandMark(autoId) : null;
+      if (preset) {
+        const resolved = { ...preset, kind: 'preset', status: 'preset', auto: true, sourceUrl: preset.provenance.source };
+        node[RESOLVED_MARK] = resolved;
+        RESOLVED_BY_NODE.set(node, resolved);
+      }
+      return;
+    }
     if (typeof node.brand === 'object') {
       const url = asUrl(node.brand.url);
       const resolved = url ? await remoteBrand(url.href, remoteByUrl, deadline) : null;

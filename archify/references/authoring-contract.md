@@ -655,3 +655,19 @@ apart, authored `via`/`labelAt` points follow, and frames and an authored
 `viewBox` grow with them. Diagrams whose authored cards already overlap or
 leave the canvas are left unchanged so their diagnostics still apply. The
 default, `"authored"`, keeps authored geometry exactly.
+
+## Node icons (architecture)
+
+Each card shows one icon, picked in this order: an authored `brand` > an
+authored `icon` > a brand the label or id names explicitly (Kafka, K8s,
+Prometheus, Grafana, Datadog, Auth0, Okta, Cloudflare, Nginx, Elasticsearch,
+OpenAI, Postgres, Redis…; ordinary words such as Go, X or Vault never count) >
+a generic icon chosen from label/id keywords (English with word boundaries,
+Chinese by specific compounds, highest priority wins) > the type's default.
+An auto-detected brand is dropped when a compact card has no room for it.
+Generic icons cover gateway, edge, firewall/WAF, event bus, stream, queue,
+worker, job, scheduler, observability, monitoring, logs, tracing, auth,
+identity, secrets, search, model/LLM, notification, email, payment, analytics,
+warehouse, container, cluster, network/VPC, webhook, user and user groups,
+among others. Name the node by what it is ("Event Bus", "Workers") and the
+icon follows; set `icon` only to override.

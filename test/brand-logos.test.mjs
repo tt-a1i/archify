@@ -98,11 +98,11 @@ test('a diagram embeds only the logos it uses, unrecoloured', (t) => {
 });
 
 test('unbranded nodes fall back to a generic icon picked from their type and name', (t) => {
-  assert.equal(Object.keys(GENERIC_ICONS).length, 26);
+  assert.equal(Object.keys(GENERIC_ICONS).length, 45);
   assert.equal(genericIconFor({ type: 'database', label: 'Orders' }), 'database');
   assert.equal(genericIconFor({ type: 'backend', label: 'Redis cache' }), 'cache');
   assert.equal(genericIconFor({ type: 'messagebus', label: '消息队列' }), 'queue');
-  assert.equal(genericIconFor({ type: 'frontend', label: 'Users' }), 'user');
+  assert.equal(genericIconFor({ type: 'frontend', label: 'Users' }), 'users');
   assert.equal(genericIconFor({ type: 'backend', label: 'Orders', icon: 'calendar' }), 'scheduler');
   assert.equal(genericIconFor({ type: 'unknown-kind', label: 'Thing' }), 'service');
   for (const name of Object.keys(GENERIC_ICONS)) assert.deepEqual(logoBodyProblems(GENERIC_ICONS[name]), [], name);
