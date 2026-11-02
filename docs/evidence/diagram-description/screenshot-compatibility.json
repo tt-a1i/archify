@@ -1,0 +1,50 @@
+[
+  {
+    "screenshot": "architecture-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "workflow-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "sequence-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "dataflow-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "lifecycle-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "erd-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "class-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "tree-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "timeline-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "waterfall-legacy-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "architecture-short-1280.png",
+    "byteIdentical": true
+  },
+  {
+    "screenshot": "architecture-short-390.png",
+    "byteIdentical": true
+  }
+]

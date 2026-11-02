@@ -1,0 +1,985 @@
+{
+  "phase": "after",
+  "sha": "21807732c94496512c4bb1dd76d377a43e8d751d",
+  "productDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "workingTree": "clean product source",
+  "node": "v20.20.2",
+  "date": "2026-11-02T07:17:31.514Z",
+  "compatibility": [
+    {
+      "name": "architecture-legacy",
+      "byteIdentical": true,
+      "sha256": "15df5e284e11e8cc271bd8ab6963700d6446b4730d37504cd0ec56f450e1aa58"
+    },
+    {
+      "name": "architecture-default",
+      "byteIdentical": true,
+      "sha256": "e96daf5b6f4bdc3ba2bd8900c5966af24ca5b8fe7ede22b00c9ec3afde624b32"
+    },
+    {
+      "name": "architecture-translation",
+      "byteIdentical": true,
+      "sha256": "7e87e774ed6c36cabb6c9f5d44d9acf59e242ae77ca853579d17bb41081291d3"
+    },
+    {
+      "name": "workflow-legacy",
+      "byteIdentical": true,
+      "sha256": "77a30e64ac863c95371ccaa6c6b6c2d906454307764aa5e6a67d9a772795bd28"
+    },
+    {
+      "name": "workflow-default",
+      "byteIdentical": true,
+      "sha256": "2898dc86658d1ae03c62de670dd583bce6536923030b8e8aa671b1df8ff46ec6"
+    },
+    {
+      "name": "workflow-translation",
+      "byteIdentical": true,
+      "sha256": "eb12a505fd076da138cf866f81421f5a668d5e45fb7cc498c728b227cb8082f6"
+    },
+    {
+      "name": "sequence-legacy",
+      "byteIdentical": true,
+      "sha256": "ca273484a235600f96a74351ac3976cdb6bffb1cfb5d0b86f9ced8c21bd1aa80"
+    },
+    {
+      "name": "sequence-default",
+      "byteIdentical": true,
+      "sha256": "21a25a7db11fa08e1c4b6891dc395c20b189eda749566939c215ac320e6cab44"
+    },
+    {
+      "name": "sequence-translation",
+      "byteIdentical": true,
+      "sha256": "ea7ba88e5f1dd13a25d16696c34407288818a5ce9bfb75a925ef5634c165ccaf"
+    },
+    {
+      "name": "dataflow-legacy",
+      "byteIdentical": true,
+      "sha256": "c299b2e22e3b86f3c6f430c192c79918dcb3c2800b03c7f99aa21c3d15387ad4"
+    },
+    {
+      "name": "dataflow-default",
+      "byteIdentical": true,
+      "sha256": "2db4bb650338b02e9ac014f16afdc330a1c09e75cd6b2a446ae1f6fa5067129a"
+    },
+    {
+      "name": "dataflow-translation",
+      "byteIdentical": true,
+      "sha256": "b38a7131c5f2b39fbc497cbcd93c6c74931c0c99f17323075a5da15c9c9183d4"
+    },
+    {
+      "name": "lifecycle-legacy",
+      "byteIdentical": true,
+      "sha256": "3046c2bbf9e644dddc3b0a77d159ec3b223ecdea5f615fb06e88956d6b3a04f6"
+    },
+    {
+      "name": "lifecycle-default",
+      "byteIdentical": true,
+      "sha256": "38e801c9c5eee088f1e009068bc3d33d5f715152373e8cf3de30f1662bba2739"
+    },
+    {
+      "name": "lifecycle-translation",
+      "byteIdentical": true,
+      "sha256": "96f3043c4e9c975d39eb15a29a860ba83aaeb8c6b8e847ce1ccf4be98c9363b2"
+    },
+    {
+      "name": "erd-legacy",
+      "byteIdentical": true,
+      "sha256": "3f8829ee0e35221682a4f6aaf2b436fd5bf4e7adf1532c4710cb0bfac571ba74"
+    },
+    {
+      "name": "erd-default",
+      "byteIdentical": true,
+      "sha256": "bf8f596bdb74194f9b44ca99d5f7219a53cdfd98d6ef5873540d62b03c3b0f0d"
+    },
+    {
+      "name": "erd-translation",
+      "byteIdentical": true,
+      "sha256": "8be0c5909d4857ccf422790db5f8d16e24ca7fc4d568e471f759e338ba197832"
+    },
+    {
+      "name": "class-legacy",
+      "byteIdentical": true,
+      "sha256": "230bb4e03768b5a416d2a7dce4f6c261763ad48eb9a0db4a6b6da572dfa28ce0"
+    },
+    {
+      "name": "class-default",
+      "byteIdentical": true,
+      "sha256": "d843819f01652116086e0a267e8d75f279f38f037713a0861ebb28b46717df7c"
+    },
+    {
+      "name": "class-translation",
+      "byteIdentical": true,
+      "sha256": "d9d54a2c719ffcbb0eac32ebd3fdf333e9ad87c20dadc140380c6e8196374816"
+    },
+    {
+      "name": "tree-legacy",
+      "byteIdentical": true,
+      "sha256": "2869ee286f53244b87606f6fff47ee9bf1eee143edbb04bcadcdb1cb34883f4a"
+    },
+    {
+      "name": "tree-default",
+      "byteIdentical": true,
+      "sha256": "d45ada48d1d38e8bb8a8b5bbd5b4e754201500326901c6934dea7a100036cebf"
+    },
+    {
+      "name": "tree-translation",
+      "byteIdentical": true,
+      "sha256": "d0d739fd7bcb4d77b186a11019298e0d0601ac65a9305754370cb81cc0d12b5b"
+    },
+    {
+      "name": "timeline-legacy",
+      "byteIdentical": true,
+      "sha256": "979cfcd545f1b15af07c2015e59b1dafe1163a11c0bf212d7995af9a26cbfdf5"
+    },
+    {
+      "name": "timeline-default",
+      "byteIdentical": true,
+      "sha256": "020d74fad19fd9deb1266f991867790c5d1f7e767803e54ff44b329011d497a4"
+    },
+    {
+      "name": "timeline-translation",
+      "byteIdentical": true,
+      "sha256": "2277e7e16a64d27fcca8e7b765789badd46e18b082d1d5de2740f9ffaef6bc7f"
+    },
+    {
+      "name": "waterfall-legacy",
+      "byteIdentical": true,
+      "sha256": "d04184562774a50448f820d8c700e1567d1eb794522e47b05b2658b51c37cbd7"
+    },
+    {
+      "name": "waterfall-default",
+      "byteIdentical": true,
+      "sha256": "0c6d7666c55042a68f08f441f5a47007b1ae701587bff3a2e00da8cd78da3ded"
+    },
+    {
+      "name": "waterfall-translation",
+      "byteIdentical": true,
+      "sha256": "d92a4d59636c997bdd0a15724a82572b500aec4eac72b5eba8f25cafbaa7cf8a"
+    }
+  ],
+  "captures": [
+    {
+      "name": "architecture-legacy",
+      "width": 1280,
+      "screenshot": "architecture-legacy-1280.png",
+      "title": "Sample Web App",
+      "desc": "An architecture diagram generated by Archify.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Sample Web App",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Sample Web App An architecture diagram generated by Archify.",
+          "description": "An architecture diagram generated by Archify."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Sample Web App An architecture diagram generated by Archify.",
+          "description": "An architecture diagram generated by Archify."
+        }
+      ],
+      "export": {
+        "desc": "An architecture diagram generated by Archify.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "architecture-description",
+      "width": 1280,
+      "screenshot": "architecture-description-1280.png",
+      "title": "Sample Web App",
+      "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Sample Web App",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "export": {
+        "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "workflow-legacy",
+      "width": 1280,
+      "screenshot": "workflow-legacy-1280.png",
+      "title": "Agent Tool Call Workflow",
+      "desc": "A workflow diagram generated by Archify.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Agent Tool Call Workflow",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Agent Tool Call Workflow A workflow diagram generated by Archify.",
+          "description": "A workflow diagram generated by Archify."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Agent Tool Call Workflow A workflow diagram generated by Archify.",
+          "description": "A workflow diagram generated by Archify."
+        }
+      ],
+      "export": {
+        "desc": "A workflow diagram generated by Archify.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "workflow-description",
+      "width": 1280,
+      "screenshot": "workflow-description-1280.png",
+      "title": "Agent Tool Call Workflow",
+      "desc": "workflow: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Agent Tool Call Workflow",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Agent Tool Call Workflow",
+          "description": "workflow: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Agent Tool Call Workflow",
+          "description": "workflow: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "export": {
+        "desc": "workflow: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "sequence-legacy",
+      "width": 1280,
+      "screenshot": "sequence-legacy-1280.png",
+      "title": "Cache Miss Request Sequence",
+      "desc": "A sequence diagram generated by Archify.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Cache Miss Request Sequence",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Cache Miss Request Sequence A sequence diagram generated by Archify.",
+          "description": "A sequence diagram generated by Archify."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Cache Miss Request Sequence A sequence diagram generated by Archify.",
+          "description": "A sequence diagram generated by Archify."
+        }
+      ],
+      "export": {
+        "desc": "A sequence diagram generated by Archify.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "sequence-description",
+      "width": 1280,
+      "screenshot": "sequence-description-1280.png",
+      "title": "Cache Miss Request Sequence",
+      "desc": "sequence: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Cache Miss Request Sequence",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Cache Miss Request Sequence",
+          "description": "sequence: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Cache Miss Request Sequence",
+          "description": "sequence: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "export": {
+        "desc": "sequence: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "dataflow-legacy",
+      "width": 1280,
+      "screenshot": "dataflow-legacy-1280.png",
+      "title": "Product Analytics Data Flow",
+      "desc": "A data-flow diagram generated by Archify.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Product Analytics Data Flow",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Product Analytics Data Flow A data-flow diagram generated by Archify.",
+          "description": "A data-flow diagram generated by Archify."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Product Analytics Data Flow A data-flow diagram generated by Archify.",
+          "description": "A data-flow diagram generated by Archify."
+        }
+      ],
+      "export": {
+        "desc": "A data-flow diagram generated by Archify.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "dataflow-description",
+      "width": 1280,
+      "screenshot": "dataflow-description-1280.png",
+      "title": "Product Analytics Data Flow",
+      "desc": "dataflow: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Product Analytics Data Flow",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Product Analytics Data Flow",
+          "description": "dataflow: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Product Analytics Data Flow",
+          "description": "dataflow: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "export": {
+        "desc": "dataflow: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "lifecycle-legacy",
+      "width": 1280,
+      "screenshot": "lifecycle-legacy-1280.png",
+      "title": "Agent Run Lifecycle",
+      "desc": "A lifecycle diagram generated by Archify.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Agent Run Lifecycle",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Agent Run Lifecycle A lifecycle diagram generated by Archify.",
+          "description": "A lifecycle diagram generated by Archify."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Agent Run Lifecycle A lifecycle diagram generated by Archify.",
+          "description": "A lifecycle diagram generated by Archify."
+        }
+      ],
+      "export": {
+        "desc": "A lifecycle diagram generated by Archify.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "lifecycle-description",
+      "width": 1280,
+      "screenshot": "lifecycle-description-1280.png",
+      "title": "Agent Run Lifecycle",
+      "desc": "lifecycle: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Agent Run Lifecycle",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Agent Run Lifecycle",
+          "description": "lifecycle: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Agent Run Lifecycle",
+          "description": "lifecycle: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "export": {
+        "desc": "lifecycle: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "erd-legacy",
+      "width": 1280,
+      "screenshot": "erd-legacy-1280.png",
+      "title": "Order management schema",
+      "desc": "An entity-relationship diagram generated by Archify.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Order management schema",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Order management schema An entity-relationship diagram generated by Archify.",
+          "description": "An entity-relationship diagram generated by Archify."
+        },
+        {
+          "name": "Primary key"
+        },
+        {
+          "name": "Foreign key"
+        },
+        {
+          "name": "Unique key"
+        },
+        {
+          "name": "One"
+        },
+        {
+          "name": "Many"
+        },
+        {
+          "name": "Optional"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Order management schema An entity-relationship diagram generated by Archify.",
+          "description": "An entity-relationship diagram generated by Archify."
+        },
+        {
+          "name": "Primary key"
+        },
+        {
+          "name": "Foreign key"
+        },
+        {
+          "name": "Unique key"
+        },
+        {
+          "name": "One"
+        },
+        {
+          "name": "Many"
+        },
+        {
+          "name": "Optional"
+        }
+      ],
+      "export": {
+        "desc": "An entity-relationship diagram generated by Archify.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "erd-description",
+      "width": 1280,
+      "screenshot": "erd-description-1280.png",
+      "title": "Order management schema",
+      "desc": "erd: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Order management schema",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Order management schema",
+          "description": "erd: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        },
+        {
+          "name": "Primary key"
+        },
+        {
+          "name": "Foreign key"
+        },
+        {
+          "name": "Unique key"
+        },
+        {
+          "name": "One"
+        },
+        {
+          "name": "Many"
+        },
+        {
+          "name": "Optional"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Order management schema",
+          "description": "erd: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        },
+        {
+          "name": "Primary key"
+        },
+        {
+          "name": "Foreign key"
+        },
+        {
+          "name": "Unique key"
+        },
+        {
+          "name": "One"
+        },
+        {
+          "name": "Many"
+        },
+        {
+          "name": "Optional"
+        }
+      ],
+      "export": {
+        "desc": "erd: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "class-legacy",
+      "width": 1280,
+      "screenshot": "class-legacy-1280.png",
+      "title": "Payment module types",
+      "desc": "OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Payment module types\n\nOrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Payment module types OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+          "description": "OrderService depends on the PaymentGateway contract; card and wallet gateways implement it."
+        },
+        {
+          "name": "Depends on"
+        },
+        {
+          "name": "Implements"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Payment module types OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+          "description": "OrderService depends on the PaymentGateway contract; card and wallet gateways implement it."
+        },
+        {
+          "name": "Depends on"
+        },
+        {
+          "name": "Implements"
+        }
+      ],
+      "export": {
+        "desc": "OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "class-description",
+      "width": 1280,
+      "screenshot": "class-description-1280.png",
+      "title": "Payment module types",
+      "desc": "class: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Payment module types\n\nOrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Payment module types",
+          "description": "class: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        },
+        {
+          "name": "Depends on"
+        },
+        {
+          "name": "Implements"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Payment module types",
+          "description": "class: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        },
+        {
+          "name": "Depends on"
+        },
+        {
+          "name": "Implements"
+        }
+      ],
+      "export": {
+        "desc": "class: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "tree-legacy",
+      "width": 1280,
+      "screenshot": "tree-legacy-1280.png",
+      "title": "Payment platform capabilities",
+      "desc": "Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Payment platform capabilities\n\nIllustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Payment platform capabilities Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+          "description": "Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Payment platform capabilities Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+          "description": "Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls."
+        }
+      ],
+      "export": {
+        "desc": "Illustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "tree-description",
+      "width": 1280,
+      "screenshot": "tree-description-1280.png",
+      "title": "Payment platform capabilities",
+      "desc": "tree: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Payment platform capabilities\n\nIllustrative decomposition: each capability belongs to exactly one parent. Links show containment, not calls.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Payment platform capabilities",
+          "description": "tree: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Payment platform capabilities",
+          "description": "tree: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "export": {
+        "desc": "tree: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "timeline-legacy",
+      "width": 1280,
+      "screenshot": "timeline-legacy-1280.png",
+      "title": "Payment failure incident",
+      "desc": "Illustrative incident: release, monitoring, and response events on one clock.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Payment failure incident\n\nIllustrative incident: release, monitoring, and response events on one clock.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Payment failure incident Illustrative incident: release, monitoring, and response events on one clock.",
+          "description": "Illustrative incident: release, monitoring, and response events on one clock."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Payment failure incident Illustrative incident: release, monitoring, and response events on one clock.",
+          "description": "Illustrative incident: release, monitoring, and response events on one clock."
+        }
+      ],
+      "export": {
+        "desc": "Illustrative incident: release, monitoring, and response events on one clock.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "timeline-description",
+      "width": 1280,
+      "screenshot": "timeline-description-1280.png",
+      "title": "Payment failure incident",
+      "desc": "timeline: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Payment failure incident\n\nIllustrative incident: release, monitoring, and response events on one clock.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Payment failure incident",
+          "description": "timeline: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Payment failure incident",
+          "description": "timeline: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "export": {
+        "desc": "timeline: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "waterfall-legacy",
+      "width": 1280,
+      "screenshot": "waterfall-legacy-1280.png",
+      "title": "Checkout request execution",
+      "desc": "Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+      "labelledby": "archify-diagram-title archify-diagram-description",
+      "describedby": null,
+      "header": "Checkout request execution\n\nIllustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Checkout request execution Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+          "description": "Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Checkout request execution Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+          "description": "Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows."
+        }
+      ],
+      "export": {
+        "desc": "Illustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "waterfall-description",
+      "width": 1280,
+      "screenshot": "waterfall-description-1280.png",
+      "title": "Checkout request execution",
+      "desc": "waterfall: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Checkout request execution\n\nIllustrative timing: inventory lookup and discount calculation run concurrently; payment follows.",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Checkout request execution",
+          "description": "waterfall: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Checkout request execution",
+          "description": "waterfall: 中文 A&B <cache> \"quote\" </desc><script>alert(1)</script>"
+        }
+      ],
+      "export": {
+        "desc": "waterfall: 中文 A&B <cache> \"quote\"\n</desc><script>alert(1)</script>",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "architecture-long",
+      "width": 1280,
+      "screenshot": "architecture-long-1280.png",
+      "title": "Sample Web App",
+      "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Sample Web App",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "export": {
+        "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "architecture-long",
+      "width": 390,
+      "screenshot": "architecture-long-390.png",
+      "title": "Sample Web App",
+      "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Sample Web App",
+      "headerHeight": 44,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "export": {
+        "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "architecture-short",
+      "width": 1280,
+      "screenshot": "architecture-short-1280.png",
+      "title": "Sample Web App",
+      "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Sample Web App\n\nRequest path and asynchronous work",
+      "headerHeight": 69.6875,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "export": {
+        "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    },
+    {
+      "name": "architecture-short",
+      "width": 390,
+      "screenshot": "architecture-short-390.png",
+      "title": "Sample Web App",
+      "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+      "labelledby": "archify-diagram-title",
+      "describedby": "archify-diagram-description",
+      "header": "Sample Web App\n\nRequest path and asynchronous work",
+      "headerHeight": 68.140625,
+      "svgScripts": 0,
+      "inlineAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "standaloneAX": [
+        {
+          "name": "Sample Web App",
+          "description": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication."
+        }
+      ],
+      "export": {
+        "desc": "This example shows a web application and its authored connections. Users connect to CloudFront, followed by a load balancer and an API server. The API has connections to Redis for read-through caching and to PostgreSQL for SQL access. CloudFront also connects to S3 for static assets. The asynchronous branch runs from the API to an SQS queue and then to a worker. An Auth Provider is connected to the API by a relationship labelled verify JWT. The diagram groups the cloud components within an AWS region and places the load balancer and API within a security group. It illustrates structure and labelled relationships; it does not establish measured latency, runtime availability, or the exact chronological order of authentication.",
+        "errors": 0,
+        "scripts": 0,
+        "refs": true
+      }
+    }
+  ],
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/156.0.8078.74",
+    "revision": "@d331de35ca8ab1358c7a17e4bd41627d55eaef51",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "jsVersion": "15.6.75.25"
+  }
+}
