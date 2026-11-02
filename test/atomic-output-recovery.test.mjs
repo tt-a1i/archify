@@ -162,6 +162,25 @@ function portableRecoveryFixture(t) {
   return { output, recovery, backup, previous };
 }
 
+test('recovery CLI invalid arguments preserve a recoverable publication without action', (t) => {
+  const data = portableRecoveryFixture(t);
+  const record = path.join(data.recovery, 'publication-recovery-v1.json');
+  const beforeRecord = fs.readFileSync(record);
+  for (const args of [
+    [data.recovery, '--json', '--json'],
+    [data.recovery, 'extra-directory'],
+    [data.recovery, '--unknown-option'],
+  ]) {
+    const result = spawnSync(process.execPath, [recoveryCli, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 64, result.stdout + result.stderr);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, /^Usage:/);
+    assert.equal(fs.existsSync(data.output), false, 'invalid invocation recovered a public output');
+    assert.equal(fs.readFileSync(data.backup, 'utf8'), data.previous);
+    assert.deepEqual(fs.readFileSync(record), beforeRecord);
+  }
+});
+
 function interruptedReplacement(t, { phase = 'before-link', throughAlias = false } = {}) {
   if (process.platform === 'win32') {
     t.skip('SIGKILL recovery regression is POSIX-only');
