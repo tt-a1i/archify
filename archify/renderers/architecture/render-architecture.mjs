@@ -1075,7 +1075,8 @@ function renderComponent(c) {
   const tag = c.tag
     ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
     : '';
-  const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
+  const brandYInset = Math.min(6, Math.max(0, (c.height - 16) / 2));
+  const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + brandYInset });
   const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
   // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
   const drilldowns = resolveNodeDrilldowns(c);
