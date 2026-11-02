@@ -34,9 +34,6 @@ test('DSH documentation identifies the published release and its pinned snapshot
   assert.ok(integration.includes(`currently published npm package is **v${published.adapterVersion}**`));
   assert.ok(integration.includes(`@deepseek-ai/dsh@${published.dshVersion}`));
   assert.ok(integration.includes(`Archify Skill **${published.skillVersion}**`));
-  assert.equal(bundled.adapterVersion, published.adapterVersion);
-  assert.equal(bundled.skillVersion, published.skillVersion);
-  assert.equal(bundled.dshVersion, published.dshVersion);
   assert.ok(integration.includes(`Archify ${bundled.skillVersion}`));
   assert.ok(integration.includes(bundled.sourceCommit));
   assert.ok(integration.includes(`@deepseek-ai/dsh@${bundled.dshVersion}`));
@@ -57,6 +54,22 @@ test('DSH documentation identifies the published release and its pinned snapshot
   assert.match(integration, /`!!js` expression that DSH evaluates during host activation/);
   assert.match(integration, /locating its packaged `skills` directory/);
   assert.match(integration, /rather than entirely declarative data/);
+});
+
+test('candidate and publication remain separate while upgrade and shadowing acceptance is pending', () => {
+  const integration = read('integrations/deepseek-harness/README.md');
+  const candidate = integration.split('## Pending 1.1.0 candidate — not published')[1]?.split('## Default Skill roots:')[0];
+  assert.ok(candidate, 'candidate must not replace the published support statement');
+  assert.ok(candidate.includes(`adapter ${bundled.adapterVersion}`));
+  assert.ok(candidate.includes(`Archify ${bundled.skillVersion}`));
+  assert.ok(candidate.includes(bundled.sourceCommit));
+  assert.ok(candidate.includes(`@deepseek-ai/dsh@${bundled.dshVersion}`));
+  assert.match(candidate, /both 0\.1\.0 and 1\.0\.0/);
+  assert.match(candidate, /actual loaded body and source path/);
+  assert.match(candidate, /does \*\*not\*\* necessarily upgrade the effective Skill/);
+  assert.match(candidate, /LICENSE-MIT.*NOTICE.*THIRD_PARTY_NOTICES/);
+  assert.match(candidate, /adapter remains MIT-licensed/);
+  assert.match(candidate, /Desktop.*not covered by a CLI pass/);
 });
 
 test('default-root fix is distinguished from the immutable published package and Desktop evidence', () => {
