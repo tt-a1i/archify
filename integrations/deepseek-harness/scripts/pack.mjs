@@ -10,7 +10,10 @@ import { adapterCommit, manifest, release, releaseSnapshot, stageAdapter } from 
 
 function argValue(flag) {
   const index = process.argv.indexOf(flag);
-  return index === -1 ? undefined : process.argv[index + 1];
+  if (index === -1) return undefined;
+  const value = process.argv[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${flag} requires a path value.`);
+  return value;
 }
 
 const json = process.argv.includes('--json');
