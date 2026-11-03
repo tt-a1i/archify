@@ -1,0 +1,698 @@
+[
+  {
+    "id": "ordinary",
+    "type": "architecture",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 9.970238095238095,
+        "afterMinimum": 9.970238095238095,
+        "beforePageHeight": 1297,
+        "afterPageHeight": 1297,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 7.503613945578231,
+        "afterMinimum": 7.503613945578231,
+        "beforePageHeight": 1115,
+        "afterPageHeight": 1115,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 11.703656462585034,
+        "afterMinimum": 11.703656462585034,
+        "beforePageHeight": 1490,
+        "afterPageHeight": 1490,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 5.333333333333333,
+        "afterMinimum": 5.333333333333333,
+        "beforePageHeight": 1050,
+        "afterPageHeight": 1050,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "wide",
+    "type": "architecture",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 7.5405453257790365,
+        "afterMinimum": 7.5405453257790365,
+        "beforePageHeight": 1229,
+        "afterPageHeight": 1229,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 7.501239376770538,
+        "afterMinimum": 7.501239376770538,
+        "beforePageHeight": 1226,
+        "afterPageHeight": 1226,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 9.742209631728045,
+        "afterMinimum": 9.742209631728045,
+        "beforePageHeight": 1490,
+        "afterPageHeight": 1490,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 4.033463172804533,
+        "afterMinimum": 4.033463172804533,
+        "beforePageHeight": 1148,
+        "afterPageHeight": 1148,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "wide-pinned",
+    "type": "architecture",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 1,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 7.5405453257790365,
+        "afterMinimum": 7.5405453257790365,
+        "beforePageHeight": 1229,
+        "afterPageHeight": 1229,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 5.209985835694051,
+        "afterMinimum": 7.501239376770538,
+        "beforePageHeight": 1131,
+        "afterPageHeight": 1226,
+        "firstScreenshotEqual": false
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 9.742209631728045,
+        "afterMinimum": 9.742209631728045,
+        "beforePageHeight": 1490,
+        "afterPageHeight": 1490,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 4.033463172804533,
+        "afterMinimum": 4.033463172804533,
+        "beforePageHeight": 1148,
+        "afterPageHeight": 1148,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "dark",
+        "beforeMinimum": 5.209985835694051,
+        "afterMinimum": 7.501239376770538,
+        "beforePageHeight": 1131,
+        "afterPageHeight": 1226,
+        "firstScreenshotEqual": false
+      }
+    ]
+  },
+  {
+    "id": "tall",
+    "type": "architecture",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 6.669297138047138,
+        "afterMinimum": 6.669297138047138,
+        "beforePageHeight": 1578,
+        "afterPageHeight": 1578,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 6.669297138047138,
+        "afterMinimum": 6.669297138047138,
+        "beforePageHeight": 1578,
+        "afterPageHeight": 1578,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 6.669297138047138,
+        "afterMinimum": 6.669297138047138,
+        "beforePageHeight": 1644,
+        "afterPageHeight": 1644,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 2.710122053872054,
+        "afterMinimum": 2.710122053872054,
+        "beforePageHeight": 954,
+        "afterPageHeight": 954,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "minimal-legacy",
+    "type": "architecture",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 1,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 7.5405453257790365,
+        "afterMinimum": 7.5405453257790365,
+        "beforePageHeight": 934,
+        "afterPageHeight": 934,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 5.209985835694051,
+        "afterMinimum": 7.501239376770538,
+        "beforePageHeight": 728,
+        "afterPageHeight": 930,
+        "firstScreenshotEqual": false
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 9.742209631728045,
+        "afterMinimum": 9.742209631728045,
+        "beforePageHeight": 1194,
+        "afterPageHeight": 1194,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 4.033463172804533,
+        "afterMinimum": 4.033463172804533,
+        "beforePageHeight": 844,
+        "afterPageHeight": 844,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "workflow",
+    "type": "workflow",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 8.721856725146198,
+        "afterMinimum": 8.721856725146198,
+        "beforePageHeight": 1401,
+        "afterPageHeight": 1401,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 6.714729532163743,
+        "afterMinimum": 6.714729532163743,
+        "beforePageHeight": 1230,
+        "afterPageHeight": 1230,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 10.057748538011696,
+        "afterMinimum": 10.057748538011696,
+        "beforePageHeight": 1582,
+        "afterPageHeight": 1582,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 5.198464912280702,
+        "afterMinimum": 5.198464912280702,
+        "beforePageHeight": 982,
+        "afterPageHeight": 982,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "sequence",
+    "type": "sequence",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 8.723976293103448,
+        "afterMinimum": 8.723976293103448,
+        "beforePageHeight": 1173,
+        "afterPageHeight": 1173,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 6.027693965517241,
+        "afterMinimum": 6.027693965517241,
+        "beforePageHeight": 1012,
+        "afterPageHeight": 1012,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 10.37667025862069,
+        "afterMinimum": 10.37667025862069,
+        "beforePageHeight": 1331,
+        "afterPageHeight": 1331,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 4.666540948275863,
+        "afterMinimum": 4.666540948275863,
+        "beforePageHeight": 1200,
+        "afterPageHeight": 1200,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "dataflow",
+    "type": "dataflow",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 8.723918269230769,
+        "afterMinimum": 8.723918269230769,
+        "beforePageHeight": 1431,
+        "afterPageHeight": 1431,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 6.027614182692307,
+        "afterMinimum": 6.027614182692307,
+        "beforePageHeight": 1293,
+        "afterPageHeight": 1293,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 11.57587139423077,
+        "afterMinimum": 11.57587139423077,
+        "beforePageHeight": 1688,
+        "afterPageHeight": 1688,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 4.666526442307693,
+        "afterMinimum": 4.666526442307693,
+        "beforePageHeight": 1222,
+        "afterPageHeight": 1222,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "lifecycle",
+    "type": "lifecycle",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 10.515374999999999,
+        "afterMinimum": 10.515374999999999,
+        "beforePageHeight": 1009,
+        "afterPageHeight": 1009,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 8.03109375,
+        "afterMinimum": 8.03109375,
+        "beforePageHeight": 871,
+        "afterPageHeight": 871,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 13.5,
+        "afterMinimum": 13.5,
+        "beforePageHeight": 1351,
+        "afterPageHeight": 1351,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 5.625,
+        "afterMinimum": 5.625,
+        "beforePageHeight": 876,
+        "afterPageHeight": 876,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "erd",
+    "type": "erd",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 12.126024590163935,
+        "afterMinimum": 12.126024590163935,
+        "beforePageHeight": 1092,
+        "afterPageHeight": 1092,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 8.37813780737705,
+        "afterMinimum": 8.37813780737705,
+        "beforePageHeight": 962,
+        "afterPageHeight": 962,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 13.5,
+        "afterMinimum": 13.5,
+        "beforePageHeight": 1318,
+        "afterPageHeight": 1318,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 6.486328125,
+        "afterMinimum": 6.486328125,
+        "beforePageHeight": 1248,
+        "afterPageHeight": 1248,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "class",
+    "type": "class",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 12.877125726744186,
+        "afterMinimum": 12.877125726744186,
+        "beforePageHeight": 990,
+        "afterPageHeight": 990,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 8.897274709302327,
+        "afterMinimum": 8.897274709302327,
+        "beforePageHeight": 832,
+        "afterPageHeight": 832,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 14.25,
+        "afterMinimum": 14.25,
+        "beforePageHeight": 1308,
+        "afterPageHeight": 1308,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 6.888190406976745,
+        "afterMinimum": 6.888190406976745,
+        "beforePageHeight": 844,
+        "afterPageHeight": 844,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "tree",
+    "type": "tree",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 13.850260416666666,
+        "afterMinimum": 13.850260416666666,
+        "beforePageHeight": 974,
+        "afterPageHeight": 974,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 11.071614583333334,
+        "afterMinimum": 11.071614583333334,
+        "beforePageHeight": 928,
+        "afterPageHeight": 928,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 16.5,
+        "afterMinimum": 16.5,
+        "beforePageHeight": 1376,
+        "afterPageHeight": 1376,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 7.408420138888889,
+        "afterMinimum": 7.408420138888889,
+        "beforePageHeight": 844,
+        "afterPageHeight": 844,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "timeline",
+    "type": "timeline",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 14.981878221649483,
+        "afterMinimum": 14.981878221649483,
+        "beforePageHeight": 1070,
+        "afterPageHeight": 1070,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 10.829977448453608,
+        "afterMinimum": 10.829977448453608,
+        "beforePageHeight": 909,
+        "afterPageHeight": 909,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 18.75,
+        "afterMinimum": 18.75,
+        "beforePageHeight": 1389,
+        "afterPageHeight": 1389,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 8.013853092783506,
+        "afterMinimum": 8.013853092783506,
+        "beforePageHeight": 844,
+        "afterPageHeight": 844,
+        "firstScreenshotEqual": true
+      }
+    ]
+  },
+  {
+    "id": "waterfall",
+    "type": "waterfall",
+    "svgBodyUnchanged": true,
+    "beforeDelivery": 0,
+    "afterDelivery": 0,
+    "states": [
+      {
+        "width": 1440,
+        "height": 900,
+        "theme": "light",
+        "beforeMinimum": 15.4493455762987,
+        "afterMinimum": 15.4493455762987,
+        "beforePageHeight": 964,
+        "afterPageHeight": 964,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1440,
+        "height": 600,
+        "theme": "light",
+        "beforeMinimum": 15.4493455762987,
+        "afterMinimum": 15.4493455762987,
+        "beforePageHeight": 964,
+        "afterPageHeight": 964,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 1920,
+        "height": 1080,
+        "theme": "light",
+        "beforeMinimum": 18.75,
+        "afterMinimum": 18.75,
+        "beforePageHeight": 1483,
+        "afterPageHeight": 1483,
+        "firstScreenshotEqual": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "theme": "light",
+        "beforeMinimum": 8.264001623376624,
+        "afterMinimum": 8.264001623376624,
+        "beforePageHeight": 844,
+        "afterPageHeight": 844,
+        "firstScreenshotEqual": true
+      }
+    ]
+  }
+]

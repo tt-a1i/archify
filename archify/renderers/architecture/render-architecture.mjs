@@ -8,7 +8,7 @@ import { rendererFailure, throwDiagnosticProblems } from '../shared/diagnostics.
 import { legendFootprint, relationshipLegendObstacles, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
 import { availableNodeTextWidth, fittedNodeFontSize, minimumNodeTextWidth } from '../shared/text-fit.mjs';
 import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandMark } from '../shared/brand-marks.mjs';
-import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
+import { DECLARED_WIDE_READER_RATIO, minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
@@ -1124,7 +1124,7 @@ function renderSvg() {
   // An automatic architecture canvas is compiler-measured geometry. Let the
   // Reader spend the real desktop height budget on it, including when an
   // outer route makes the canvas taller than the ordinary wide-diagram
-  // threshold. Authored viewBoxes keep their geometry and existing Reader width policy;
+  // threshold. Authored viewBoxes keep their geometry and fit identity;
   // their declared height may use readable document scrolling without reflow.
   const readerFit = arch.meta?.viewBox
     ? ' data-diagram-type="architecture" data-reader-fit="authored-height"'
@@ -1132,7 +1132,8 @@ function renderSvg() {
   // A complete repository architecture is allowed to use normal page scroll;
   // keep its common-desktop text at a comfortable reading size instead of
   // shrinking a semantically rich graph to the universal emergency floor.
-  const readerMinimumText = arch.meta?.viewBox ? '' : ' data-reader-min-text="7.5"';
+  const readerMinimumText = !arch.meta?.viewBox || viewBox[0] / viewBox[1] >= DECLARED_WIDE_READER_RATIO
+    ? ' data-reader-min-text="7.5"' : '';
   const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)} ${NODE_CARD_ATTR}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}

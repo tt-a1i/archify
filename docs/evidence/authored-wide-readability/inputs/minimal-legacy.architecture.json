@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Synthetic minimal legacy budget probe",
+    "output": "minimal-legacy.html",
+    "quality_profile": "showcase",
+    "viewBox": [1428, 706]
+  },
+  "components": [
+    { "id": "client", "type": "frontend", "label": "Client", "sublabel": "Complete request", "pos": [80, 250], "size": [180, 78] },
+    { "id": "service", "type": "backend", "label": "Service", "sublabel": "Complete response", "pos": [560, 250], "size": [180, 78] }
+  ],
+  "connections": [
+    { "id": "request", "from": "client", "to": "service", "label": "request context" }
+  ]
+}

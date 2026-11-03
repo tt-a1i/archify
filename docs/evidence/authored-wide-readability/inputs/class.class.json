@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "diagram_type": "class",
+  "meta": {
+    "title": "Payment module types",
+    "subtitle": "OrderService depends on the PaymentGateway contract; card and wallet gateways implement it.",
+    "output": "payments-class.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "types": [
+    {
+      "id": "order_service",
+      "label": "OrderService",
+      "kind": "class",
+      "sublabel": "Creates orders and starts payment",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        { "name": "gateway", "type": "PaymentGateway", "visibility": "private" }
+      ],
+      "methods": [
+        { "name": "createOrder", "parameters": "cart: Cart", "returns": "Order", "visibility": "public" },
+        { "name": "checkout", "parameters": "order: Order", "returns": "Receipt", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "payment_gateway",
+      "label": "PaymentGateway",
+      "kind": "interface",
+      "sublabel": "Payment contract every channel fulfils",
+      "row": 0,
+      "col": 1.5,
+      "methods": [
+        { "name": "pay", "parameters": "amount: Money", "returns": "Result", "visibility": "public", "abstract": true }
+      ]
+    },
+    {
+      "id": "order",
+      "label": "Order",
+      "kind": "class",
+      "sublabel": "Order identity, amount, and status",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        { "name": "id", "type": "OrderId", "visibility": "public" },
+        { "name": "amount", "type": "Money", "visibility": "public" },
+        { "name": "status", "type": "OrderStatus", "visibility": "public" }
+      ],
+      "methods": [
+        { "name": "markPaid", "returns": "void", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "card_gateway",
+      "label": "CardGateway",
+      "kind": "class",
+      "sublabel": "Charges a bank card",
+      "row": 1,
+      "col": 1,
+      "methods": [
+        { "name": "pay", "parameters": "amount: Money", "returns": "Result", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "wallet_gateway",
+      "label": "WalletGateway",
+      "kind": "class",
+      "sublabel": "Debits a stored wallet balance",
+      "row": 1,
+      "col": 2,
+      "methods": [
+        { "name": "pay", "parameters": "amount: Money", "returns": "Result", "visibility": "public" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "uses_gateway", "from": "order_service", "to": "payment_gateway", "kind": "dependency", "label": "pays through" },
+    { "id": "creates_order", "from": "order_service", "to": "order", "kind": "dependency", "label": "creates" },
+    { "id": "card_implements", "from": "card_gateway", "to": "payment_gateway", "kind": "realization" },
+    { "id": "wallet_implements", "from": "wallet_gateway", "to": "payment_gateway", "kind": "realization" }
+  ]
+}

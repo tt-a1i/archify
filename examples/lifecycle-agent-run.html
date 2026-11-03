@@ -10949,6 +10949,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var requestedMinimumText = Number.isFinite(declaredMinimumText)
         ? Math.max(MIN_PROJECTED_NODE_TEXT_PX, declaredMinimumText)
         : MIN_PROJECTED_NODE_TEXT_PX;
+      // Text guarantees do not imply automatic canvas sizing or enlargement.
+      // An authored wide canvas can retain its geometry and declare the same
+      // reading floor, using document scroll when height cannot accommodate it.
+      var declaredWideReading = (measuredHeightFit || readerFit === 'authored-height') &&
+        ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText) && declaredMinimumText > 0;
       var declaredPrimaryText = svg ? parseFloat(svg.getAttribute('data-reader-primary-text') || '') : null;
       var SAFE_BOTTOM_GAP = 12;
       // Wide viewports move summary cards beside the diagram, so the height
@@ -11015,7 +11020,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             nodeMinimum = nodeMinimum == null ? sourceFontPx : Math.min(nodeMinimum, sourceFontPx);
           }
         });
-        var edgeTarget = measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)
+        var edgeTarget = declaredWideReading
           ? requestedMinimumText
           : MIN_PROJECTED_NODE_TEXT_PX;
         var scale = 0;
@@ -11245,19 +11250,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var maxWidth = Math.min(MAX_READER_WIDTH, viewportCap);
         var readableMinimumWidth = automaticSequence || measuredHeightFit && ratio < WIDE_RATIO
           ? readableWidth
-          : measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)
+          : declaredWideReading
             ? Math.max(MIN_READER_WIDTH, readableWidth)
             : MIN_READER_WIDTH;
-        var minWidth;
-        if (automaticSequence) {
-          minWidth = Math.min(readableMinimumWidth, maxWidth);
-        } else if (measuredHeightFit && ratio < WIDE_RATIO) {
-          minWidth = Math.min(readableMinimumWidth, viewportCap);
-        } else if (measuredHeightFit && ratio >= WIDE_RATIO && Number.isFinite(declaredMinimumText)) {
-          minWidth = Math.min(readableMinimumWidth, maxWidth);
-        } else {
-          minWidth = Math.min(readableMinimumWidth, viewportCap);
-        }
+        var minWidth = Math.min(readableMinimumWidth,
+          automaticSequence || declaredWideReading ? maxWidth : viewportCap);
         var primaryWidth = primaryReadingWidth();
         var railExtra = RAIL_WIDTH + RAIL_GAP;
         var mode = null;

@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WorldScope 极高路线可读滚动",
+    "output": "readable-scroll-worldscope.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "React 工作台",
+      "sublabel": "浏览器端交互界面",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "读取模型 API",
+      "sublabel": "FastAPI",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "地图 Agent",
+      "sublabel": "Agent 编排",
+      "pos": [
+        530,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "模型端点",
+      "sublabel": "外部 LLM 服务",
+      "pos": [
+        790,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "公开数据源",
+      "sublabel": "外部公开数据",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "采集 Worker",
+      "sublabel": "定时采集任务",
+      "pos": [
+        410,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "缓存 / last-good",
+      "pos": [
+        290,
+        480
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "context",
+      "type": "database",
+      "label": "World Context",
+      "sublabel": "PostgreSQL + PostGIS",
+      "pos": [
+        560,
+        480
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "archive",
+      "type": "database",
+      "label": "历史证据归档",
+      "sublabel": "大体量离线资料",
+      "pos": [
+        790,
+        1056
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "browser-to-api",
+      "from": "browser",
+      "to": "api",
+      "label": "REST / SSE"
+    },
+    {
+      "id": "api-to-agent",
+      "from": "api",
+      "to": "agent",
+      "label": "受信附件身份"
+    },
+    {
+      "id": "agent-to-llm",
+      "from": "agent",
+      "to": "llm",
+      "label": "流式回答"
+    },
+    {
+      "id": "api-to-context",
+      "from": "api",
+      "to": "context",
+      "label": "事实检索"
+    },
+    {
+      "id": "agent-to-context",
+      "from": "agent",
+      "to": "context",
+      "label": "证据检索"
+    },
+    {
+      "id": "api-to-cache",
+      "from": "api",
+      "to": "cache",
+      "label": "读取缓存"
+    },
+    {
+      "id": "sources-to-worker",
+      "from": "sources",
+      "to": "worker",
+      "label": "定时采集",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          135,
+          610
+        ],
+        [
+          485,
+          610
+        ]
+      ]
+    },
+    {
+      "id": "worker-to-context",
+      "from": "worker",
+      "to": "context",
+      "label": "写入证据"
+    },
+    {
+      "id": "worker-to-cache",
+      "from": "worker",
+      "to": "cache",
+      "label": "刷新 last-good"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "后端服务",
+      "wraps": [
+        "api",
+        "agent",
+        "worker"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "读取路径",
+      "items": [
+        "React 工作台经 REST / SSE 访问 FastAPI",
+        "API 直查 World Context 事实库并读穿 Redis 缓存",
+        "地图 Agent 携受信附件身份向模型端点流式提问"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "采集路径",
+      "items": [
+        "Worker 定时从公开数据源采集证据",
+        "证据写入 PostgreSQL + PostGIS 持久事实库",
+        "同时刷新 Redis 的 last-good 快照"
+      ]
+    }
+  ]
+}

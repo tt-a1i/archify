@@ -1,0 +1,55 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Agent Run Lifecycle",
+    "output": "examples/lifecycle-agent-run.html",
+    "animation": "trace",
+    "quality_profile": "showcase"
+  },
+  "mainPath": ["queued", "planning", "executing", "reviewing", "completed"],
+  "states": [
+    { "id": "queued", "type": "start", "label": "Queued", "sublabel": "request accepted", "tag": "entry", "step": "01" },
+    { "id": "planning", "type": "active", "label": "Planning", "sublabel": "build task graph", "tag": "model", "step": "02" },
+    { "id": "executing", "type": "active", "label": "Executing", "sublabel": "tool calls", "tag": "work", "step": "03" },
+    { "id": "reviewing", "type": "decision", "label": "Reviewing", "sublabel": "quality gate", "tag": "check", "step": "04" },
+    { "id": "completed", "type": "success", "label": "Completed", "sublabel": "final response", "tag": "done", "step": "05" },
+    { "id": "approval", "type": "waiting", "label": "Needs Approval", "sublabel": "human gate", "tag": "pause" },
+    { "id": "failed", "type": "failure", "label": "Failed", "sublabel": "recoverable error", "tag": "retryable" },
+    { "id": "blocked", "type": "waiting", "label": "Blocked", "sublabel": "missing input", "tag": "wait" },
+    { "id": "cancelled", "type": "failure", "label": "Cancelled", "sublabel": "user stopped", "tag": "terminal" },
+    { "id": "expired", "type": "failure", "label": "Expired", "sublabel": "timeout", "tag": "terminal" }
+  ],
+  "transitions": [
+    { "id": "queued-planning", "from": "queued", "to": "planning", "label": "start" },
+    { "id": "planning-executing", "from": "planning", "to": "executing", "label": "plan ready" },
+    { "id": "executing-reviewing", "from": "executing", "to": "reviewing", "label": "steps done" },
+    { "id": "reviewing-completed", "from": "reviewing", "to": "completed", "label": "pass" },
+    { "id": "executing-approval", "from": "executing", "to": "approval", "label": "risky tool", "variant": "security" },
+    { "id": "approval-executing", "from": "approval", "to": "executing", "label": "approved" },
+    { "id": "approval-cancelled", "from": "approval", "to": "cancelled", "label": "user denies", "variant": "security" },
+    { "id": "executing-failed", "from": "executing", "to": "failed", "label": "tool error", "variant": "security" },
+    { "id": "failed-executing", "from": "failed", "to": "executing", "label": "retry", "variant": "dashed" },
+    { "id": "reviewing-blocked", "from": "reviewing", "to": "blocked", "label": "needs input" },
+    { "id": "blocked-reviewing", "from": "blocked", "to": "reviewing", "label": "input given" },
+    { "id": "blocked-expired", "from": "blocked", "to": "expired", "label": "no reply 24h", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Main Path + Waits",
+      "items": [
+        "The run has five ordered phases from queue to completion",
+        "Approval and missing input pause the run without ending it"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Recovery + Terminal Exits",
+      "items": [
+        "Failed loops back while retry budget remains",
+        "Cancelled and Expired are terminal exits with no return path"
+      ]
+    }
+  ]
+}

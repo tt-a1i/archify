@@ -1318,7 +1318,7 @@ test('architecture: an auto viewBox grows to contain a wide connection label', (
   assert.match(pinned.stderr, /\[composition\/label-canvas-containment\]/);
 });
 
-test('architecture: measured auto canvases opt into height-aware reader fitting', () => {
+test('architecture: authored wide reading targets preserve a distinct fit from measured auto canvases', () => {
   const automatic = load('architecture');
   delete automatic.meta.viewBox;
   const rendered = render('architecture', automatic);
@@ -1336,7 +1336,15 @@ test('architecture: measured auto canvases opt into height-aware reader fitting'
   assert.ok(authoredSvg, 'expected an SVG root for the authored canvas');
   assert.match(authoredSvg, /data-reader-fit="authored-height"/);
   assert.match(authoredSvg, /data-diagram-type="architecture"/);
-  assert.doesNotMatch(authoredSvg, /data-reader-min-text=/);
+  assert.match(authoredSvg, /data-reader-min-text="7\.5"/);
+  assert.doesNotMatch(authoredSvg, /data-reader-primary-text=/);
+
+  authored.meta.viewBox = [1080, 800];
+  const narrow = render('architecture', authored);
+  assert.equal(narrow.code, 0, narrow.stderr);
+  const narrowSvg = fs.readFileSync(narrow.outPath, 'utf8').match(/<svg\b[^>]*>/)?.[0];
+  assert.match(narrowSvg, /data-reader-fit="authored-height"/);
+  assert.doesNotMatch(narrowSvg, /data-reader-min-text=/);
 });
 
 // Automatic Sequence declares width-first; Dataflow declares intrinsic-height.

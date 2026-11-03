@@ -194,16 +194,38 @@ test('render output check: recognized declared-wide Reader admits the hard floor
   assert.ok(result.composition.desktopReadability.minimumProjectedTextPx < 7.5);
 });
 
-test('render output check: width-first preserves the intrinsic declared-wide readability budget', () => {
+test('render output check: declared reading fits preserve the same wide readability budget', () => {
   const body = '<g data-node-id="node"><text data-node-label x="160" y="126" class="t-primary" font-size="8">Node</text></g>';
   const head = '<meta name="archify-reader-contract" content="declared-wide-v1">';
   const intrinsic = checkHtml('intrinsic-budget', body, 'showcase', '0 0 1438 800', head, ' data-reader-fit="intrinsic-height" data-reader-min-text="7.5"');
-  const widthFirst = checkHtml('width-first-budget', body, 'showcase', '0 0 1438 800', head, ' data-reader-fit="width-first" data-reader-min-text="7.5"');
-  assert.equal(widthFirst.code, intrinsic.code);
-  assert.deepEqual(widthFirst.result.composition.desktopReadability, intrinsic.result.composition.desktopReadability);
+  for (const fit of ['width-first', 'authored-height']) {
+    const declared = checkHtml(`${fit}-budget`, body, 'showcase', '0 0 1438 800', head, ` data-reader-fit="${fit}" data-reader-min-text="7.5"`);
+    assert.equal(declared.code, intrinsic.code, fit);
+    assert.deepEqual(declared.result.composition.desktopReadability, intrinsic.result.composition.desktopReadability, fit);
+  }
   for (const marker of ['data-sequence-column-fit="fixed"', 'data-waterfall-ui=""', 'data-reader-fit="unknown"']) {
     const undeclared = checkHtml('undeclared-budget', body, 'showcase', '0 0 1438 800', head, ` ${marker} data-reader-min-text="7.5"`);
     assert.equal(undeclared.result.composition.desktopReadability.budgetBasis, 'legacy-930');
+  }
+});
+
+test('render output check: authored reading needs valid wide proof and still rejects the physical cap', () => {
+  const body = '<g data-node-id="node"><text data-node-label x="160" y="126" font-size="8">Complete label</text></g>';
+  const marker = '<meta name="archify-reader-contract" content="declared-wide-v1">';
+  for (const [name, head, minimum, viewBox, basis] of [
+    ['old-authored', marker, '', '0 0 1428 706', 'legacy-930'],
+    ['missing-contract', '', '7.5', '0 0 1428 706', 'legacy-930'],
+    ['duplicate-contract', marker + marker, '7.5', '0 0 1428 706', 'legacy-930'],
+    ['invalid-minimum', marker, 'NaN', '0 0 1428 706', 'legacy-930'],
+    ['nonpositive-minimum', marker, '0', '0 0 1428 706', 'legacy-930'],
+    ['portrait', marker, '7.5', '0 0 1428 1000', 'legacy-930'],
+    ['physically-too-wide', marker, '7.5', '0 0 2400 1000', 'recognized-declared-wide'],
+  ]) {
+    const { code, result } = checkHtml(name, body, 'showcase', viewBox, head,
+      ` data-reader-fit="authored-height"${minimum ? ` data-reader-min-text="${minimum}"` : ''}`);
+    assert.notEqual(code, 0, name);
+    assert.equal(result.composition.desktopReadability.budgetBasis, basis, name);
+    assert.equal(result.composition.desktopReadability.hardFloorMet, false, name);
   }
 });
 
