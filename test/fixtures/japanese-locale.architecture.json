@@ -427,43 +427,7 @@
       "viewer.common.close": "閉じる"
     },
     "output": "japanese-locale.html",
-    "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "request-path",
-        "label": "基本リクエスト経路",
-        "focus": [
-          "users",
-          "cdn",
-          "lb",
-          "api",
-          "db"
-        ],
-        "note": "エッジからストレージまで顧客リクエストをたどります。"
-      },
-      {
-        "id": "identity-and-cache",
-        "label": "認証とキャッシュ",
-        "focus": [
-          "auth",
-          "api",
-          "cache"
-        ],
-        "note": "認証と読み取りキャッシュをリクエスト経路の隣に分離します。"
-      },
-      {
-        "id": "async-work",
-        "label": "静的・非同期処理",
-        "focus": [
-          "cdn",
-          "s3",
-          "api",
-          "queue",
-          "worker"
-        ],
-        "note": "付随する2つの経路を本経路と重ならないように示します。"
-      }
-    ]
+    "quality_profile": "showcase"
   },
   "components": [
     {

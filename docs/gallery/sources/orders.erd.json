@@ -5,39 +5,7 @@
     "title": "Order management schema",
     "locale": "en",
     "output": "examples/erd-orders-rendered.html",
-    "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "identity",
-        "label": "Reference rows",
-        "focus": [
-          "customer",
-          "product"
-        ],
-        "note": "The rows everything else points at, with their unique keys."
-      },
-      {
-        "id": "checkout",
-        "label": "Checkout core",
-        "focus": [
-          "order",
-          "order_item",
-          "customer"
-        ],
-        "note": "order is the hub: order_item and payment both point back at it."
-      },
-      {
-        "id": "followups",
-        "label": "Payment and stock",
-        "focus": [
-          "payment",
-          "order",
-          "inventory",
-          "product"
-        ],
-        "note": "One optional dashed link and one mandatory stock link."
-      }
-    ]
+    "quality_profile": "showcase"
   },
   "layout": {
     "mode": "grid",
