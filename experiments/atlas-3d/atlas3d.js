@@ -4,9 +4,12 @@
 //   trunk      the module that the most other modules depend on, directly or
 //              through others; its files make up the trunk
 //   height     dependency layer: the longest chain of imports from a module
-//              down to one that imports nothing in-tree
-//   branch     each module's strongest dependency (most file dependencies);
-//              every other dependency between modules is drawn as a thread
+//              down to one that imports nothing in-tree, with each module cycle
+//              collapsed first; inside a cycle, one level per branch from the
+//              point where the cycle meets the tree
+//   branch     grown outward from the trunk: each module joins the tree on its
+//              strongest dependency (most file dependencies) on a module already
+//              in it; every other dependency between modules is a thread
 //   blossom    a file; each bright point is one of its functions, coloured by
 //              the finding the analyzer reported for it (none, info, warning),
 //              and the haze around it is its lines of code (1 speck per 4 lines)
@@ -36,26 +39,68 @@
   });
   const out = M.map(() => []), inn = M.map(() => []);
   for (const [k, w] of pairCount) { const [a, b] = k.split('>').map(Number); out[a].push([b, w]); inn[b].push([a, w]); }
-  const rank = [];
-  const visiting = new Set();
-  const depth = (m) => {
-    if (rank[m] !== undefined) return rank[m];
-    if (visiting.has(m)) return 0; // a module cycle: the back edge adds no layer
-    visiting.add(m);
-    let d = 0;
-    for (const [b] of out[m]) d = Math.max(d, depth(b) + 1);
-    visiting.delete(m); rank[m] = d; return d;
-  };
-  M.forEach((_, i) => depth(i));
-  const maxRank = Math.max(...rank, 1);
   const reach = M.map((_, m) => { const seen = new Set([m]); const st = [m]; while (st.length) { const x = st.pop(); for (const [a] of inn[x]) if (!seen.has(a)) { seen.add(a); st.push(a); } } return seen.size - 1; });
-  const trunk = M.map((_, i) => i).filter((i) => rank[i] === 0).sort((a, b) => reach[b] - reach[a] || locOf[b] - locOf[a])[0];
-  const parent = M.map((_, m) => {
-    const lower = out[m].filter(([b]) => rank[b] < rank[m]);
-    if (!lower.length) return -1;
-    return lower.slice().sort((p, q) => q[1] - p[1] || reach[q[0]] - reach[p[0]] || (M[p[0]].label < M[q[0]].label ? -1 : 1))[0][0];
+  // Dependency layers on the graph with each module cycle collapsed to one node
+  // (Tarjan): a cycle has no order inside it, so its members share a layer.
+  const comp = M.map(() => -1), compSize = [];
+  {
+    let index = 0; const idx = M.map(() => -1), low = M.map(() => 0), onStack = M.map(() => false), stack = [];
+    const strong = (v) => {
+      idx[v] = low[v] = index++; stack.push(v); onStack[v] = true;
+      for (const [w] of out[v]) {
+        if (idx[w] === -1) { strong(w); low[v] = Math.min(low[v], low[w]); } else if (onStack[w]) low[v] = Math.min(low[v], idx[w]);
+      }
+      if (low[v] === idx[v]) { const c = compSize.length; let n = 0, w; do { w = stack.pop(); onStack[w] = false; comp[w] = c; n += 1; } while (w !== v); compSize.push(n); }
+    };
+    M.forEach((_, v) => { if (idx[v] === -1) strong(v); });
+  }
+  // Tarjan numbers components in reverse topological order: a component's
+  // dependencies are numbered before it, so one pass in number order settles layers.
+  const compLayer = compSize.map(() => 0);
+  for (let c = 0; c < compSize.length; c += 1) {
+    M.forEach((_, m) => { if (comp[m] !== c) return; for (const [b] of out[m]) if (comp[b] !== c) compLayer[c] = Math.max(compLayer[c], compLayer[comp[b]] + 1); });
+  }
+  const layer = M.map((_, m) => compLayer[comp[m]]);
+  const inCycle = (m) => compSize[comp[m]] > 1;
+  const cycles = compSize.some((n) => n > 1);
+  // The trunk: the module the most others depend on, directly or through others.
+  const trunk = M.map((_, i) => i).sort((a, b) => reach[b] - reach[a] || (M[b].fanIn ?? 0) - (M[a].fanIn ?? 0) || locOf[b] - locOf[a])[0];
+  // Branches grow outward from the trunk: repeatedly, the module with the strongest
+  // dependency on a module already in the tree joins it on that dependency.
+  // Modules that depend on nothing in the tree start their own small trees on the ground.
+  const parent = M.map(() => -1), rootOf = M.map(() => -1), order = [];
+  const inTree = new Set();
+  const grow = () => {
+    for (;;) {
+      let best = null;
+      M.forEach((_, m) => {
+        if (inTree.has(m)) return;
+        for (const [x, w] of out[m]) {
+          if (!inTree.has(x)) continue;
+          if (!best || w > best.w || (w === best.w && (reach[x] > reach[best.x] || (reach[x] === reach[best.x] && M[m].label < M[best.m].label)))) best = { m, x, w };
+        }
+      });
+      if (!best) return;
+      parent[best.m] = best.x; rootOf[best.m] = rootOf[best.x]; inTree.add(best.m); order.push(best.m);
+    }
+  };
+  inTree.add(trunk); rootOf[trunk] = trunk; order.push(trunk); grow();
+  while (inTree.size < M.length) {
+    const rest = M.map((_, i) => i).filter((i) => !inTree.has(i));
+    const roots = rest.filter((i) => !out[i].some(([b]) => rest.includes(b) && comp[b] !== comp[i]));
+    const pick = (roots.length ? roots : rest).sort((a, b) => reach[b] - reach[a] || locOf[b] - locOf[a])[0];
+    inTree.add(pick); rootOf[pick] = pick; order.push(pick); grow();
+  }
+  // Height level: the dependency layer above the tree's root; inside a module
+  // cycle, where layers do not exist, one level per branch from the cycle's entry.
+  const rank = M.map(() => 0);
+  order.forEach((m) => {
+    const p = parent[m];
+    if (p === -1) { rank[m] = 0; return; }
+    rank[m] = comp[m] === comp[p] ? rank[p] + 1 : Math.max(rank[p] + 1, layer[m] - layer[rootOf[m]]);
   });
-  const children = M.map(() => []); M.forEach((_, m) => { if (parent[m] !== -1) children[parent[m]].push(m); });
+  const maxRank = Math.max(...rank, 1);
+  const children = M.map(() => []); order.forEach((m) => { if (parent[m] !== -1) children[parent[m]].push(m); });
   const isBranch = (a, b) => parent[a] === b;
   const surface = M.map(() => new Map()); // files of a module imported from other modules -> Set(importing modules)
   E.forEach(([a, b]) => { const x = F[a][1], y = F[b][1]; if (x !== y) { const s = surface[y]; (s.get(b) || s.set(b, new Set()).get(b)).add(x); } });
@@ -295,7 +340,7 @@
   const layerLabels = [];
   for (let r = 0; r <= maxRank; r += 1) {
     const el = document.createElement('span'); el.className = 'layer';
-    el.textContent = r === 0 ? 'Layer 0 · foundations' : `Layer ${r}`;
+    el.textContent = cycles ? (r === 0 ? 'Level 0 · trunk and ground' : `Level ${r}`) : (r === 0 ? `Layer ${layer[trunk]} · foundations` : `Layer ${layer[trunk] + r}`);
     labelLayer.append(el); layerLabels.push([el, r]);
   }
   const v = new THREE.Vector3();
@@ -394,7 +439,8 @@
     if (state.module !== -1) {
       const m = state.module, s = surface[m];
       const deps = out[m].slice().sort((a, b) => b[1] - a[1]);
-      return `<div class="card"><div class="card-k">${m === trunk ? 'Core · trunk' : `Layer ${rank[m]}`}</div><h3>${esc(M[m].label)}</h3>
+      const where = `${m === trunk ? 'Core · trunk · ' : parent[m] === -1 ? 'On the ground · ' : ''}dependency layer ${layer[m]}${inCycle(m) ? ` · in a cycle of ${compSize[comp[m]]} modules` : ''}`;
+      return `<div class="card"><div class="card-k">${where}</div><h3>${esc(M[m].label)}</h3>
         <p class="muted">${esc(M[m].path || '.')} · ${plural(filesOf[m].length, 'file')} · ${plural(filesOf[m].reduce((t, fi) => t + fnsOf[fi].length, 0), 'function')} · ${plural(locOf[m], 'line')}</p>
         <p>Fan-in ${M[m].fanIn} · fan-out ${M[m].fanOut} · ${plural(reach[m], 'module')} depend on it directly or through others.</p>
         <p>${deps.length ? `Depends on ${deps.map(([b, w]) => `${esc(M[b].label)} (${w}${isBranch(m, b) ? ', branch' : ''})`).join(', ')}.` : 'Imports nothing in-tree.'}</p>
@@ -402,6 +448,8 @@
     }
     return '<div class="card muted">Drag to turn the model, scroll to zoom, double-click to reset. Click a blossom for its file, a label for its module, or a finding below.</div>';
   }
+  const bigCycles = compSize.filter((n) => n > 1);
+  const cycleNote = cycles ? `<p class="muted" style="margin-top:8px">${bigCycles.length === 1 ? `${bigCycles[0]} modules form one dependency cycle` : `${bigCycles.length} module cycles`}, so dependency layers do not order them. Height there is the number of branches from where the cycle meets the tree; the branches and threads are still their real dependencies.</p>` : '';
   const crossDeps = E.length - insideDeps;
   const branchDeps = branches.reduce((s, b) => s + b.w, 0), threadDeps = threads.reduce((s, t) => s + t.w, 0);
   const drawnFiles = new Set(aFile.filter((x) => x !== -1)).size, drawnFns = aFn.filter((x) => x !== -1).length;
@@ -415,7 +463,7 @@
       <div class="check ${consistent ? 'ok' : 'bad'}">${consistent ? 'Every file, function and finding of the run is in the model.' : 'The model does not account for every item of the run.'}
         <dl><dt>Files</dt><dd>${fmt(drawnFiles)} / ${fmt(F.length)}</dd><dt>Functions</dt><dd>${fmt(drawnFns)} / ${fmt(FN.length)}</dd>
         <dt>File dependencies</dt><dd>${fmt(E.length)}: ${fmt(branchDeps)} in ${plural(branches.length, 'branch', 'branches')}, ${fmt(threadDeps)} in ${plural(threads.length, 'thread')}, ${fmt(insideDeps)} inside modules (not drawn)</dd>
-        <dt>Findings</dt><dd>${fmt(FD.length)} / ${fmt(A.run.summary.errors + A.run.summary.warnings + A.run.summary.info)}</dd></dl></div>
+        <dt>Findings</dt><dd>${fmt(FD.length)} / ${fmt(A.run.summary.errors + A.run.summary.warnings + A.run.summary.info)}</dd></dl>${cycleNote}</div>
       <div class="k">Findings · ${fmt(FD.length)}</div>
       ${Object.keys(groups).sort().map((code) => {
         const list = groups[code].slice().sort((a, b) => ({ error: 0, warning: 1, info: 2 }[FD[a].severity] - { error: 0, warning: 1, info: 2 }[FD[b].severity]) || (FD[a].fn != null && FD[b].fn != null ? FN[FD[b].fn][3] - FN[FD[a].fn][3] : FD[a].title < FD[b].title ? -1 : 1));
@@ -484,7 +532,7 @@
     if (dirty) { renderer.render(scene, camera); placeLabels(); dirty = false; document.documentElement.dataset.drawn = String(drawnFns); }
     requestAnimationFrame(frame);
   }
-  window.__atlas3d = { select, state, consistent, counts: { files: drawnFiles, functions: drawnFns, branchDeps, threadDeps, insideDeps }, trunk: M[trunk].label, rank: M.map((m, i) => [m.label, rank[i]]) };
+  window.__atlas3d = { select, state, consistent, counts: { files: drawnFiles, functions: drawnFns, branchDeps, threadDeps, insideDeps }, trunk: M[trunk].label, rank: M.map((m, i) => [m.label, rank[i], layer[i], parent[i] === -1 ? '-' : M[parent[i]].label]) };
   resize(); updateCamera(); renderSide(); applyMarks();
   requestAnimationFrame(frame);
 })();

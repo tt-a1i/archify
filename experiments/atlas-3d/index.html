@@ -27,7 +27,11 @@ header { display: flex; justify-content: space-between; align-items: flex-end; g
 h1 { margin: 0; font: 600 22px/1.15 var(--sans); letter-spacing: -0.01em; }
 h1 span { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 10px; font-family: var(--mono); }
 header p { margin: 4px 0 0; color: var(--muted); max-width: 72ch; font-size: 13px; }
-header .tools { display: flex; gap: 8px; }
+header .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sets { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.sets a { color: var(--muted); text-decoration: none; font-size: 13px; padding: 5px 10px; }
+.sets a + a { border-left: 1px solid var(--line); }
+.sets a[aria-current="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
 button { font: inherit; }
 .ghost { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
 .ghost:hover { border-color: var(--muted); }
@@ -83,7 +87,7 @@ details summary { cursor: pointer; padding: 5px 0; font-weight: 500; }
     <header>
       <div><h1>Atlas 3D<span id="counts"></span></h1>
         <p id="lede"></p></div>
-      <div class="tools"><button type="button" class="ghost" id="reset">Clear selection</button></div>
+      <div class="tools"><span class="sets" id="sets" role="group" aria-label="Repository"></span><button type="button" class="ghost" id="reset">Clear selection</button></div>
     </header>
     <div id="stage"><div id="labels"></div><div id="tip" hidden></div></div>
     <div class="legend">
@@ -91,20 +95,28 @@ details summary { cursor: pointer; padding: 5px 0; font-weight: 500; }
       <span><i style="background:var(--info)"></i>info finding</span>
       <span><i style="background:var(--warning)"></i>warning finding</span>
       <span>point size: complexity · haze: lines of code (1 speck per 4 lines)</span>
-      <span>height: dependency layer · branch: strongest dependency</span>
+      <span>height: dependency layer · branch: strongest dependency toward the trunk</span>
       <span><i class="thread"></i>thread: other dependency between modules</span>
     </div>
   </section>
   <aside id="side" aria-live="polite"></aside>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="data.js"></script>
+<script src="data-archify.js"></script>
+<script src="data-langchain-core.js"></script>
 <script>
   (function () {
+    // One dataset per page load, named by the URL hash; switching reloads so nothing carries over.
+    var sets = window.ATLAS_DATASETS || {}, ids = Object.keys(sets);
+    var id = sets[location.hash.slice(1)] ? location.hash.slice(1) : ids[0];
+    window.ATLAS_DATA = sets[id];
+    document.getElementById('sets').innerHTML = ids.map(function (k) { return '<a href="#' + k + '"' + (k === id ? ' aria-current="true"' : '') + '>' + sets[k].run.repository.split(' · ')[0] + '</a>'; }).join('');
+    window.addEventListener('hashchange', function () { if (location.hash.slice(1) !== id) location.reload(); });
     var A = window.ATLAS_DATA; if (!A) return;
     var fmt = function (n) { return Number(n).toLocaleString('en-US'); };
+    document.title = 'Atlas 3D';
     document.getElementById('counts').textContent = A.run.repository + ' @ ' + String(A.run.revision || 'working tree').slice(0, 8) + ' · ' + fmt(A.files.length) + ' files · ' + fmt(A.edges.length) + ' file dependencies · ' + fmt(A.functions.length) + ' functions';
-    document.getElementById('lede').textContent = 'The Atlas of the same run as a tree. The core module is the trunk; every other module grows at the height of its dependency layer, on a branch to the module it depends on most. Every file is a blossom and every function a point in it.';
+    document.getElementById('lede').textContent = 'The Atlas of the same run as a tree. The trunk is the module the most others depend on; every other module grows at the height of its dependency layer, on a branch along its strongest dependency toward the trunk. Every file is a blossom and every function a point in it.';
   })();
 </script>
 <script src="atlas3d.js"></script>
