@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repository Briefing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --cobalt: #2337c6; --mint: #b9f0d7; --cream: #fff6e8; --coral: #ff6b57; --lilac: #d9d2ff; --ink: #14183a; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; color: var(--ink); font: 17px/1.55 Sora, system-ui, sans-serif; }
+section { min-height: 100vh; padding: 10vh 8vw; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
+h2 { font: 800 clamp(30px, 4.4vw, 58px)/1.02 Unbounded, sans-serif; margin: 0; letter-spacing: -0.02em; max-width: 18ch; }
+p.lead { margin: 0; max-width: 56ch; font-size: 19px; }
+.hero { background: var(--cobalt); color: var(--cream); }
+.hero a { color: var(--lilac); font-size: 14px; }
+.hero h1 { margin: 0; font: 800 clamp(44px, 8vw, 128px)/0.92 Unbounded, sans-serif; letter-spacing: -0.03em; }
+.hero h1 span { display: block; }
+.hero h1 .n { color: var(--mint); }
+.hero h1 .bad { color: var(--coral); }
+.hero .meta { color: var(--lilac); font-size: 14px; }
+.weight { background: var(--mint); }
+.strip { display: flex; height: 34vh; min-height: 160px; gap: 3px; width: 100%; }
+.strip div { position: relative; background: var(--ink); color: var(--mint); min-width: 3px; display: flex; flex-direction: column; justify-content: space-between; padding: 8px; overflow: hidden; border-radius: 4px; }
+.strip div b { font: 800 13px Unbounded; white-space: nowrap; }
+.strip div i { font-style: normal; font-size: 12px; white-space: nowrap; }
+.strip div .heat { position: absolute; left: 0; right: 0; bottom: 0; background: var(--coral); }
+.strip div > * { position: relative; }
+.keyline { font-size: 14px; display: flex; gap: 22px; flex-wrap: wrap; }
+.keyline span::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--ink); }
+.keyline span.h::before { background: var(--coral); }
+.wanted { background: var(--cream); }
+.board { display: grid; gap: 10px; max-width: 980px; }
+.wantedrow { display: grid; grid-template-columns: 56px minmax(0, 1fr) minmax(120px, 280px) auto; gap: 18px; align-items: center; background: #fff; border-radius: 14px; padding: 12px 16px; }
+.wantedrow .rank { font: 800 28px Unbounded; color: var(--cobalt); }
+.wantedrow .who b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wantedrow .who small { color: #5a5f80; overflow-wrap: anywhere; }
+.bar { height: 14px; background: #efe6d6; border-radius: 7px; position: relative; }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--coral); border-radius: 7px; }
+.bar em { position: absolute; right: -2px; top: -22px; font: 800 15px Unbounded; font-style: normal; }
+button { font: 600 14px Sora, sans-serif; border-radius: 999px; padding: 9px 16px; cursor: pointer; border: 2px solid var(--ink); background: var(--ink); color: var(--cream); }
+button.ghost { background: transparent; color: var(--ink); }
+button:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+.rules { background: var(--coral); }
+.rule { background: var(--ink); color: var(--cream); border-radius: 18px; padding: 22px 24px; max-width: 900px; display: grid; gap: 10px; }
+.rule h3 { margin: 0; font: 800 22px Unbounded; color: var(--coral); }
+.rule code { display: block; font: 14px/1.7 ui-monospace, Menlo, Consolas, monospace; color: var(--mint); overflow-wrap: anywhere; }
+.rule button { justify-self: start; background: var(--coral); color: var(--ink); border-color: var(--coral); }
+.fine { background: var(--lilac); }
+.goods { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 1000px; }
+.good { background: var(--cream); border-radius: 18px; padding: 20px; }
+.good b { display: block; font: 800 40px/1 Unbounded; color: var(--cobalt); }
+.foot { font-size: 14px; }
+@media (max-width: 720px) { .wantedrow { grid-template-columns: 40px 1fr; } .wantedrow .bar, .wantedrow button { grid-column: 2; } }
+</style>
+</head>
+<body>
+<section class="hero">
+  <a href="index.html">All views</a>
+  <h1 id="hero"></h1>
+  <div class="meta" id="meta"></div>
+</section>
+<section class="weight">
+  <h2>Where the code lives</h2>
+  <p class="lead" id="weightLead"></p>
+  <div class="strip" id="strip" role="img" aria-label="Modules by lines of code"></div>
+  <div class="keyline"><span>Lines of code, to scale</span><span class="h">Share of functions past the info line</span></div>
+</section>
+<section class="wanted">
+  <h2>The ten hardest functions</h2>
+  <p class="lead" id="wantedLead"></p>
+  <div class="board" id="board"></div>
+  <div><button id="all">Copy all ten as one task for AI</button></div>
+</section>
+<section class="rules">
+  <h2 id="rulesTitle"></h2>
+  <div id="rules" style="display:grid;gap:16px"></div>
+</section>
+<section class="fine">
+  <h2>What already holds up</h2>
+  <div class="goods" id="goods"></div>
+  <p class="foot" id="foot"></p>
+</section>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, boundary, T, level, fmt, esc, promptFor, copyPrompt, topFunctions, totals } = Atlas;
+document.getElementById('hero').innerHTML = `
+  <span><span class="n">${fmt(totals.files)}</span> files.</span>
+  <span><span class="n">${fmt(totals.functions)}</span> functions.</span>
+  <span><span class="bad">${totals.fnWarnings}</span> need a closer look.</span>
+  <span><span class="bad">${totals.boundary}</span> broken rules.</span>`;
+document.getElementById('meta').textContent = `${D.repository.name} @ ${(D.repository.revision || 'working tree').slice(0, 10)} · read by ${D.repository.adapter} · every number below comes from that run`;
+
+const byLoc = modules.slice().sort((a, b) => b.loc - a.loc);
+const top3 = byLoc.slice(0, 3);
+document.getElementById('weightLead').textContent = `${fmt(totals.loc)} lines in ${totals.modules} modules. ${top3.map((m) => m.label).join(', ')} hold ${Math.round(top3.reduce((s, m) => s + m.loc, 0) / totals.loc * 100)}% of them.`;
+document.getElementById('strip').innerHTML = byLoc.map((m) => {
+  const heat = m.fns ? (m.warnings + m.infos) / m.fns : 0;
+  return `<div style="flex:${m.loc}" title="${esc(m.label)}: ${fmt(m.loc)} lines, ${m.warnings} past ${T.warning.complexity}"><span class="heat" style="height:${Math.round(heat * 100)}%"></span><b>${esc(m.label)}</b><i>${fmt(m.loc)}</i></div>`;
+}).join('');
+
+const wanted = topFunctions(10);
+const maxCC = wanted[0].fn[3];
+document.getElementById('wantedLead').textContent = `Complexity counts the independent paths through a function. Past ${T.warning.complexity} it is hard to read and harder to test fully. These ten top the list; each prompt carries the evidence an AI agent needs.`;
+document.getElementById('board').innerHTML = wanted.map(({ fn }, k) => `
+  <div class="wantedrow">
+    <span class="rank">${k + 1}</span>
+    <span class="who"><b title="${esc(fn[1])}">${esc(fn[1])}</b><small>${esc(files[fn[0]].path)}:${fn[2]} · ${fn[5]} lines · nesting ${fn[4]}</small></span>
+    <span class="bar"><i style="width:${(fn[3] / maxCC) * 100}%"></i><em style="left:calc(${(fn[3] / maxCC) * 100}% - 24px)">${fn[3]}</em></span>
+    ${fn[6] !== -1 ? `<button class="ghost" data-f="${fn[6]}">Copy fix prompt</button>` : '<span></span>'}
+  </div>`).join('');
+document.querySelectorAll('#board button').forEach((b) => b.addEventListener('click', () => copyPrompt(Number(b.dataset.f), b)));
+document.getElementById('all').addEventListener('click', async (e) => {
+  const text = `Work through these ${wanted.length} functions from ${D.repository.name}, one commit each:\n\n` + wanted.filter(({ fn }) => fn[6] !== -1).map(({ fn }, k) => `${k + 1}. ${promptFor(fn[6])}`).join('\n\n');
+  try { await navigator.clipboard.writeText(text); } catch { /* clipboard unavailable */ }
+  const b = e.currentTarget; const old = b.textContent; b.textContent = 'Copied ten tasks for AI'; setTimeout(() => (b.textContent = old), 1400);
+});
+
+document.getElementById('rulesTitle').textContent = boundary.length ? `${boundary.reduce((s, b) => s + (b.imports || []).length, 0)} imports break ${boundary.length} lines you drew` : 'No boundary rule is broken';
+document.getElementById('rules').innerHTML = boundary.map((b, k) => `
+  <div class="rule"><h3>${esc(b.title)}</h3><div>${esc(b.message)}</div>
+    <code>${(b.imports || []).map((im) => `${esc(im.file)}:${im.line}  imports  ${esc(im.to)}`).join('<br>')}</code>
+    <button data-b="${k}">Copy fix prompt for AI</button></div>`).join('');
+document.querySelectorAll('[data-b]').forEach((b) => b.addEventListener('click', () => copyPrompt(boundary[Number(b.dataset.b)], b)));
+
+const simple = D.functions.filter((fn) => fn[3] < T.info.complexity).length;
+const pos = new Map(modules.slice().sort((a, b) => b.rank - a.rank).map((m, k) => [m.i, k]));
+const upward = (D.moduleEdges || []).filter(([a, b]) => a !== b && pos.get(a) > pos.get(b)).length;
+const quietModules = modules.filter((m) => !m.warnings).length;
+document.getElementById('goods').innerHTML = `
+  <div class="good"><b>${Math.round((simple / totals.functions) * 100)}%</b>of functions stay under complexity ${T.info.complexity}.</div>
+  <div class="good"><b>${upward}</b>module imports point back up the dependency order.</div>
+  <div class="good"><b>${quietModules}</b>of ${totals.modules} modules have no function past ${T.warning.complexity}.</div>
+  <div class="good"><b>${Math.round((D.coverage.resolved / D.coverage.records) * 100)}%</b>of import records resolved to a file; the rest are external packages or unknown (${D.coverage.unknown}).</div>`;
+document.getElementById('foot').textContent = 'Complexity is a maintenance signal, not a defect. A missing import line is not proof of missing coupling: unresolved imports draw nothing.';
+</script>
+</body>
+</html>

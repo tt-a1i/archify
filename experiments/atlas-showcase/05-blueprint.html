@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repository Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=IBM+Plex+Sans+Condensed:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #1d4d8a; --line: #e8f1ff; --faint: rgba(232, 241, 255, .14); --pencil: #ff7b6b; --amber: #ffd27d; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background-color: var(--paper); background-image: linear-gradient(var(--faint) 1px, transparent 1px), linear-gradient(90deg, var(--faint) 1px, transparent 1px), linear-gradient(rgba(232,241,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(232,241,255,.06) 1px, transparent 1px); background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px; color: var(--line); font: 14px/1.45 'IBM Plex Sans Condensed', system-ui, sans-serif; min-height: 100vh; }
+.sheet { margin: 20px; border: 2px solid var(--line); outline: 1px solid var(--line); outline-offset: 5px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; height: calc(100vh - 40px); min-height: 640px; }
+.drawing { padding: 22px; position: relative; display: flex; flex-direction: column; min-height: 0; }
+h1 { font: 400 34px/1.1 'Architects Daughter', cursive; margin: 0; }
+.drawing > p { margin: 2px 0 12px; opacity: .8; font-family: 'Architects Daughter', cursive; }
+#plan { flex: 1; width: 100%; min-height: 0; }
+.room { cursor: pointer; }
+.room rect.r { fill: rgba(232, 241, 255, .02); stroke: var(--line); stroke-width: 1; }
+.room:hover rect.r, .room:focus-visible rect.r { fill: rgba(255, 210, 125, .18); outline: none; }
+.room.sel rect.r { fill: rgba(255, 123, 107, .22); stroke-width: 2; }
+.wall { fill: none; stroke: var(--line); stroke-width: 4; }
+.lbl { font: 400 12px 'Architects Daughter', cursive; fill: var(--line); pointer-events: none; }
+.wing { font: 400 16px 'Architects Daughter', cursive; fill: var(--amber); pointer-events: none; }
+.cloud { fill: none; stroke: var(--pencil); stroke-width: 1.6; pointer-events: none; }
+.delta { fill: var(--paper); stroke: var(--pencil); stroke-width: 1.5; }
+.delta-t { font: 600 10px 'IBM Plex Sans Condensed'; fill: var(--pencil); text-anchor: middle; pointer-events: none; }
+aside { border-left: 2px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+aside section { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+aside h2 { font: 600 12px 'IBM Plex Sans Condensed'; letter-spacing: .04em; margin: 0 0 8px; opacity: .8; }
+a.back { color: var(--line); opacity: .75; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+td, th { border-top: 1px solid rgba(232,241,255,.35); padding: 5px 4px; text-align: left; vertical-align: top; }
+th { font-weight: 600; opacity: .8; }
+td.n { width: 26px; color: var(--pencil); font-weight: 600; }
+td.cc { text-align: right; font-weight: 600; }
+tr { cursor: pointer; }
+tr:hover td, tr.sel td { background: rgba(255, 123, 107, .16); }
+.sched { overflow: auto; }
+#note { font-family: 'Architects Daughter', cursive; font-size: 14px; overflow-wrap: anywhere; }
+#note button { margin-top: 8px; font: 600 12px 'IBM Plex Sans Condensed'; background: var(--line); color: var(--paper); border: 0; padding: 6px 10px; cursor: pointer; }
+#note button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.title-block { display: grid; grid-template-columns: 1fr 1fr; font-size: 12px; }
+.title-block div { border-top: 1px solid var(--line); padding: 6px 10px; }
+.title-block div:nth-child(odd) { border-right: 1px solid var(--line); }
+.title-block b { display: block; font: 400 15px 'Architects Daughter', cursive; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .sheet { grid-template-columns: 1fr; } aside { border-left: 0; border-top: 2px solid var(--line); } }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="drawing">
+    <a class="back" href="index.html">All views</a>
+    <h1 id="h1"></h1>
+    <p id="sub"></p>
+    <svg id="plan" role="img" aria-label="Floor plan: wings are modules, rooms are files"></svg>
+  </div>
+  <aside>
+    <section id="note" aria-live="polite"></section>
+    <section class="sched">
+      <h2>Revision schedule: rooms with the hardest functions</h2>
+      <table><thead><tr><th>Rev</th><th>Room</th><th style="text-align:right">Max</th></tr></thead><tbody id="sched"></tbody></table>
+    </section>
+    <div class="title-block" id="tb"></div>
+  </aside>
+</div>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, T, level, fmt, esc, copyPrompt, squarify, totals } = Atlas;
+document.getElementById('h1').textContent = `${D.repository.name}: ground floor plan`;
+document.getElementById('sub').textContent = `Rooms are sized by lines of code. Hatched rooms hold a function past complexity ${T.info.complexity}; the 15 rooms with the hardest functions are clouded for revision.`;
+
+const svg = document.getElementById('plan');
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a, p = svg) => { const e = document.createElementNS(NS, t); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); p.append(e); return e; };
+const revisions = files.filter((f) => f.warnings).sort((a, b) => b.maxCC - a.maxCC);
+const revNo = new Map(revisions.map((f, k) => [f.i, k + 1]));
+
+// Revision cloud: scalloped outline around a rectangle.
+function cloud(x, y, w, h) {
+  const r = Math.max(4, Math.min(9, Math.min(w, h) / 5));
+  const pts = [];
+  const side = (x0, y0, x1, y1) => {
+    const len = Math.hypot(x1 - x0, y1 - y0); const n = Math.max(1, Math.round(len / (r * 1.6)));
+    for (let k = 0; k < n; k += 1) pts.push([x0 + (x1 - x0) * (k / n), y0 + (y1 - y0) * (k / n)]);
+  };
+  const o = 3;
+  side(x - o, y - o, x + w + o, y - o); side(x + w + o, y - o, x + w + o, y + h + o);
+  side(x + w + o, y + h + o, x - o, y + h + o); side(x - o, y + h + o, x - o, y - o);
+  pts.push(pts[0]);
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let k = 1; k < pts.length; k += 1) {
+    const [px, py] = pts[k - 1], [qx, qy] = pts[k];
+    const rr = Math.hypot(qx - px, qy - py) / 2;
+    d += ` A${rr},${rr} 0 0 1 ${qx},${qy}`;
+  }
+  return d;
+}
+
+let selected = -1;
+function render() {
+  svg.innerHTML = '';
+  const r = svg.getBoundingClientRect();
+  const W = r.width, H = r.height;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const wings = modules.map((m) => ({ m, value: Math.max(1, m.loc) }));
+  squarify(wings, 8, 8, W - 16, H - 16);
+  wings.forEach((wg) => {
+    const pad = 12;
+    const rooms = wg.m.files.map((fi) => ({ f: files[fi], value: Math.max(1, files[fi].loc) }));
+    squarify(rooms, wg.x + pad, wg.y + pad + 14, Math.max(0, wg.w - pad * 2), Math.max(0, wg.h - pad * 2 - 14));
+    rooms.forEach((rm) => {
+      const g = el('g', { class: `room${rm.f.i === selected ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': `${rm.f.path}, most complex function ${rm.f.maxCC}` });
+      el('rect', { class: 'r', x: rm.x, y: rm.y, width: Math.max(0, rm.w), height: Math.max(0, rm.h) }, g);
+      // Hatching density follows the room's worst function.
+      const lv = level(rm.f.maxCC);
+      if (lv) {
+        const step = lv === 2 ? 6 : 12;
+        for (let k = -rm.h; k < rm.w; k += step) {
+          const x0 = rm.x + Math.max(0, k), y0 = rm.y + Math.max(0, -k);
+          const len = Math.min(rm.w - Math.max(0, k), rm.h - Math.max(0, -k));
+          if (len > 0) el('line', { x1: x0, y1: y0, x2: x0 + len, y2: y0 + len, stroke: 'rgba(232,241,255,.22)', 'stroke-width': 0.7 }, g);
+        }
+      }
+      // Door: a quarter arc on the longest wall, for the drawing's sake.
+      if (rm.w > 26 && rm.h > 26) {
+        const dw = Math.min(14, rm.w / 4);
+        el('path', { d: `M${rm.x + 6},${rm.y + rm.h} A${dw},${dw} 0 0 1 ${rm.x + 6 + dw},${rm.y + rm.h - dw}`, fill: 'none', stroke: 'rgba(232,241,255,.6)', 'stroke-width': 0.8 }, g);
+      }
+      if (rm.w > 64 && rm.h > 28) {
+        const t = el('text', { class: 'lbl', x: rm.x + 5, y: rm.y + 15 }, g);
+        const name = rm.f.name.length * 6.4 > rm.w - 10 ? `${rm.f.name.slice(0, Math.max(3, Math.floor((rm.w - 16) / 6.4)))}…` : rm.f.name;
+        t.textContent = name;
+        if (rm.h > 42) { const t2 = el('text', { class: 'lbl', x: rm.x + 5, y: rm.y + 30, opacity: 0.75 }, g); t2.textContent = `max ${rm.f.maxCC} · ${fmt(rm.f.loc)} ln`; }
+      }
+      if (revNo.get(rm.f.i) <= 15 && rm.w > 6 && rm.h > 6) {
+        el('path', { class: 'cloud', d: cloud(rm.x + 2, rm.y + 2, rm.w - 4, rm.h - 4) });
+        const n = revNo.get(rm.f.i);
+        if (rm.w > 16) {
+          const cx = rm.x + rm.w - 14, cy = rm.y + 16;
+          el('path', { class: 'delta', d: `M${cx},${cy - 8} L${cx + 8},${cy + 6} L${cx - 8},${cy + 6} Z` });
+          const t = el('text', { class: 'delta-t', x: cx, y: cy + 4 }); t.textContent = n;
+        }
+      }
+      g.addEventListener('click', () => select(rm.f.i));
+      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(rm.f.i); } });
+    });
+    el('rect', { class: 'wall', x: wg.x + 4, y: wg.y + 4, width: Math.max(0, wg.w - 8), height: Math.max(0, wg.h - 8) });
+    if (wg.w > 40) { const t = el('text', { class: 'wing', x: wg.x + 12, y: wg.y + 20 }); t.textContent = wg.m.label; }
+  });
+}
+
+function select(fi) {
+  selected = fi;
+  const f = files[fi];
+  const worst = f.fns.map((i) => D.functions[i]).sort((a, b) => b[3] - a[3])[0];
+  const note = document.getElementById('note');
+  note.innerHTML = `<h2>Room note</h2><div>${esc(f.path)}</div>
+    <div>${fmt(f.loc)} lines · ${f.fns.length} functions · ${f.warnings} past ${T.warning.complexity}, ${f.infos} past ${T.info.complexity}</div>
+    ${worst ? `<div>Worst: ${esc(worst[1])} (${worst[3]}) at line ${worst[2]}</div>` : ''}
+    ${worst && worst[6] !== -1 ? '<button id="cp">Copy fix prompt for AI</button>' : ''}`;
+  const b = document.getElementById('cp');
+  if (b) b.addEventListener('click', () => copyPrompt(worst[6], b));
+  document.querySelectorAll('#sched tr').forEach((tr) => tr.classList.toggle('sel', Number(tr.dataset.f) === fi));
+  render();
+}
+
+const sched = document.getElementById('sched');
+revisions.slice(0, 15).forEach((f, k) => {
+  const tr = document.createElement('tr');
+  tr.dataset.f = f.i; tr.tabIndex = 0;
+  tr.innerHTML = `<td class="n">${k + 1}</td><td>${esc(f.name)}<br><span style="opacity:.65">${esc(modules[f.module].label)}</span></td><td class="cc">${f.maxCC}</td>`;
+  tr.addEventListener('click', () => select(f.i));
+  tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') select(f.i); });
+  sched.append(tr);
+});
+document.getElementById('tb').innerHTML = `
+  <div>Project<b>${esc(D.repository.name)}</b></div><div>Revision<b>${esc((D.repository.revision || 'working tree').slice(0, 10))}</b></div>
+  <div>Rooms<b>${totals.files} files</b></div><div>Clouded<b>${Math.min(15, revisions.length)} of ${revisions.length} rooms past ${T.warning.complexity}</b></div>
+  <div>Scale<b>1 room = 1 file</b></div><div>Drawn by<b>${esc(D.repository.adapter || '')}</b></div>`;
+window.addEventListener('resize', render);
+select(revisions[0].i);
+</script>
+</body>
+</html>

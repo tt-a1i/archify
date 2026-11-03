@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dependency Matrix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400;62..125,600;62..125,800&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #fdfdfb; --ink: #1b2233; --muted: #7b8294; --rule: #dfe2e8; --blue: #2b59c3; --red: #e63946; --amber: #f2a541; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.45 Archivo, system-ui, sans-serif; }
+.page { display: grid; grid-template-columns: 340px minmax(0, 1fr); min-height: 100vh; }
+.intro { padding: 32px 28px; border-right: 1px solid var(--rule); display: flex; flex-direction: column; gap: 20px; }
+a.back { color: var(--muted); font-size: 13px; }
+h1 { font: 800 64px/0.88 Archivo, sans-serif; font-stretch: 62%; margin: 0; letter-spacing: -0.01em; }
+.intro p { margin: 0; color: var(--muted); }
+.fact { border-top: 3px solid var(--ink); padding-top: 8px; }
+.fact b { display: block; font: 800 44px/1 Archivo; font-stretch: 75%; }
+.fact.red { border-color: var(--red); } .fact.red b { color: var(--red); }
+#detail { border-top: 1px solid var(--rule); padding-top: 14px; font-size: 13px; }
+#detail h2 { font: 800 20px/1.1 Archivo; font-stretch: 85%; margin: 0 0 6px; overflow-wrap: anywhere; }
+#detail ul { margin: 6px 0; padding-left: 16px; }
+#detail li { overflow-wrap: anywhere; }
+#detail button { margin-top: 8px; background: var(--ink); color: var(--paper); border: 0; padding: 8px 12px; font: 600 13px Archivo; cursor: pointer; }
+#detail button.red { background: var(--red); }
+#detail button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.stage { padding: 24px; overflow: auto; display: grid; place-items: center; }
+svg text { font-family: Archivo, sans-serif; }
+.cell { cursor: pointer; }
+.cell:focus-visible { outline: none; stroke: var(--blue); stroke-width: 2; }
+@media (max-width: 960px) { .page { grid-template-columns: 1fr; } .intro { border-right: 0; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="intro">
+    <a class="back" href="index.html">All views</a>
+    <h1>Who depends on whom</h1>
+    <p id="lede"></p>
+    <div class="fact"><b id="f1"></b>module pairs with imports</div>
+    <div class="fact red"><b id="f2"></b>pairs crossing a forbidden boundary</div>
+    <div class="fact"><b id="f3"></b>imports pointing back up the order</div>
+    <div id="detail" aria-live="polite"></div>
+  </section>
+  <section class="stage"><svg id="m" role="img" aria-label="Dependency structure matrix"></svg></section>
+</div>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, boundary, T, fmt, esc, copyPrompt, totals } = Atlas;
+const order = modules.slice().sort((a, b) => b.rank - a.rank || b.loc - a.loc).map((m) => m.i);
+const pos = new Map(order.map((m, k) => [m, k]));
+const weight = new Map((D.moduleEdges || []).filter(([a, b]) => a !== b).map(([a, b, w]) => [`${a}>${b}`, w]));
+const closed = new Map();
+boundary.forEach((bf) => (bf.edges || []).forEach(([a, c]) => closed.set(`${files[a].module}>${files[c].module}`, bf)));
+const upward = [...weight.keys()].filter((k) => { const [a, b] = k.split('>').map(Number); return pos.get(a) > pos.get(b); });
+
+document.getElementById('lede').textContent = `Rows import columns. Modules run from entry points (top left) to foundations (bottom right), so in a layered ${D.repository.name} every mark sits above the diagonal. Bars at the right count functions past complexity ${T.warning.complexity}.`;
+document.getElementById('f1').textContent = weight.size;
+document.getElementById('f2').textContent = new Set(closed.keys()).size;
+document.getElementById('f3').textContent = upward.length;
+
+const N = order.length, C = 30, LBL = 150, TOP = 150, BAR = 120;
+const svg = document.getElementById('m');
+const W = LBL + N * C + 24 + BAR, H = TOP + N * C + 10;
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+svg.style.height = `min(calc(100vh - 72px), ${H * 1.2}px)`; svg.style.maxWidth = "100%";
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a, p = svg) => { const e = document.createElementNS(NS, t); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); p.append(e); return e; };
+const maxW = Math.max(...weight.values());
+const maxWarn = Math.max(1, ...modules.map((m) => m.warnings));
+
+// Upper triangle tint: where healthy imports belong.
+let tri = `M${LBL},${TOP}`;
+for (let k = 0; k < N; k += 1) tri += ` L${LBL + (k + 1) * C},${TOP + k * C} L${LBL + (k + 1) * C},${TOP + (k + 1) * C}`;
+tri += ` L${LBL + N * C},${TOP} Z`;
+el('path', { d: tri, fill: '#eef2fb' });
+const hl = el('g', {});
+for (let k = 0; k <= N; k += 1) {
+  el('line', { x1: LBL, x2: LBL + N * C, y1: TOP + k * C, y2: TOP + k * C, stroke: '#dfe2e8' });
+  el('line', { y1: TOP, y2: TOP + N * C, x1: LBL + k * C, x2: LBL + k * C, stroke: '#dfe2e8' });
+}
+el('line', { x1: LBL, y1: TOP, x2: LBL + N * C, y2: TOP + N * C, stroke: '#1b2233', 'stroke-width': 1.5 });
+
+order.forEach((m, k) => {
+  const mod = modules[m];
+  const row = el('text', { x: LBL - 8, y: TOP + k * C + C / 2 + 4, 'text-anchor': 'end', 'font-size': 12, fill: '#1b2233' });
+  row.textContent = mod.label;
+  const cx = LBL + k * C + C / 2, cy = TOP - 8;
+  const col = el('text', { x: cx, y: cy, transform: `rotate(-55 ${cx} ${cy})`, 'font-size': 12, fill: '#1b2233' });
+  col.textContent = mod.label;
+  // Margin bar: functions past the warning line.
+  const bw = (mod.warnings / maxWarn) * (BAR - 34);
+  el('rect', { x: LBL + N * C + 18, y: TOP + k * C + 8, width: Math.max(1, bw), height: C - 16, fill: mod.warnings ? '#f2a541' : '#dfe2e8' });
+  const t = el('text', { x: LBL + N * C + 22 + bw, y: TOP + k * C + C / 2 + 4, 'font-size': 11, fill: '#7b8294' });
+  t.textContent = mod.warnings || '';
+});
+const bh = el('text', { x: LBL + N * C + 18, y: TOP - 12, 'font-size': 11, fill: '#7b8294' }); bh.textContent = `past ${T.warning.complexity}`;
+
+order.forEach((a, i) => order.forEach((b, j) => {
+  const key = `${a}>${b}`;
+  if (!weight.has(key)) return;
+  const w = weight.get(key);
+  const bad = closed.has(key);
+  const up = i > j;
+  const s = 6 + (C - 10) * Math.sqrt(w / maxW);
+  const g = el('g', { class: 'cell', tabindex: 0, role: 'button', 'aria-label': `${modules[a].label} imports ${modules[b].label} ${w} times${bad ? ', forbidden by a boundary rule' : ''}` });
+  el('rect', { x: LBL + j * C + (C - s) / 2, y: TOP + i * C + (C - s) / 2, width: s, height: s, fill: bad ? '#e63946' : up ? '#f2a541' : '#2b59c3' }, g);
+  if (bad) el('path', { d: `M${LBL + j * C + 3},${TOP + i * C + 3} L${LBL + (j + 1) * C - 3},${TOP + (i + 1) * C - 3}`, stroke: '#fdfdfb', 'stroke-width': 2 }, g);
+  el('rect', { x: LBL + j * C, y: TOP + i * C, width: C, height: C, fill: 'transparent' }, g);
+  g.addEventListener('click', () => show(a, b, i, j));
+  g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(a, b, i, j); } });
+}));
+
+function show(a, b, i, j) {
+  hl.innerHTML = '';
+  el('rect', { x: LBL, y: TOP + i * C, width: N * C, height: C, fill: 'rgba(43,89,195,.08)' }, hl);
+  el('rect', { x: LBL + j * C, y: TOP, width: C, height: N * C, fill: 'rgba(43,89,195,.08)' }, hl);
+  const imports = D.edges.filter(([x, y]) => files[x].module === a && files[y].module === b);
+  const bf = closed.get(`${a}>${b}`);
+  const d = document.getElementById('detail');
+  d.innerHTML = `<h2>${esc(modules[a].label)} imports ${esc(modules[b].label)}</h2>
+    <div>${weight.get(`${a}>${b}`)} import statements, ${imports.length} file pairs${i > j ? '; this one points back up the order' : ''}.</div>
+    <ul>${imports.slice(0, 6).map(([x, y]) => `<li>${esc(files[x].path)} → ${esc(files[y].name)}</li>`).join('')}</ul>
+    ${imports.length > 6 ? `<div>and ${imports.length - 6} more</div>` : ''}
+    ${bf ? `<div style="color:var(--red)">${esc(bf.message)}</div><button class="red" id="cp">Copy fix prompt for AI</button>` : ''}`;
+  const cp = document.getElementById('cp');
+  if (cp) cp.addEventListener('click', () => copyPrompt(bf, cp));
+}
+const first = [...closed.keys()][0];
+if (first) { const [a, b] = first.split('>').map(Number); show(a, b, pos.get(a), pos.get(b)); }
+</script>
+</body>
+</html>

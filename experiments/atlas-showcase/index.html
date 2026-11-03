@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #eef0f3; --ink: #20232b; --muted: #646b7a; --card: #ffffff; --line: #d6dae2; --focus: #3557d6; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 Manrope, system-ui, sans-serif; }
+main { max-width: 1240px; margin: 0 auto; padding: 56px 28px 72px; }
+h1 { font: 800 clamp(34px, 5vw, 56px)/1.02 Manrope, sans-serif; letter-spacing: -0.03em; margin: 0 0 14px; max-width: 18ch; }
+.lede { max-width: 64ch; color: var(--muted); margin: 0 0 8px; }
+.facts { color: var(--muted); font-size: 14px; margin: 0 0 40px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 28px 24px; }
+a.tile { display: flex; flex-direction: column; color: inherit; text-decoration: none; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+a.tile:hover { border-color: #9aa3b5; }
+a.tile:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+a.tile img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; display: block; border-bottom: 1px solid var(--line); }
+.body { padding: 14px 16px 18px; display: grid; gap: 6px; }
+.body h2 { margin: 0; font: 800 20px/1.2 Manrope, sans-serif; letter-spacing: -0.01em; }
+.body p { margin: 0; font-size: 14px; color: var(--muted); }
+.body p b { color: var(--ink); font-weight: 600; }
+footer { margin-top: 48px; color: var(--muted); font-size: 14px; max-width: 70ch; }
+code { font-size: 13px; background: #e2e5ea; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ten ways to read a code analysis</h1>
+  <p class="lede">Each page draws the same Code Analysis run in a different visual language, so we can choose what the Atlas view should feel like. Every number comes from the run; every finding can be copied as a fix prompt for an AI agent.</p>
+  <p class="facts" id="facts"></p>
+  <div class="grid" id="grid"></div>
+  <footer>
+    Data: <code>data.js</code>, built by <code>build-data.mjs</code> from a <code>code-analysis check</code> output with the Atlas payload builder (<code>overlay/atlas.mjs</code>). Point it at another run to see any repository in all ten views. Fonts load from Google Fonts and fall back to system faces offline.
+  </footer>
+</main>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, totals, fmt } = Atlas;
+document.getElementById('facts').textContent = `Sample run: ${D.repository.name} @ ${(D.repository.revision || 'working tree').slice(0, 10)} · ${totals.files} files · ${fmt(totals.functions)} functions · ${totals.fnWarnings} functions past the warning line · ${totals.boundary} boundary findings`;
+const views = [
+  ['01-skyline', 'Skyline', 'Which files tower over the rest, and how many of their functions light up.', 'a striking first screen and a quick sense of scale.'],
+  ['02-terrain', 'Terrain', 'Where complexity clusters: hills are functions, and the contour lines are the info and warning thresholds.', 'spotting hot regions inside large modules.'],
+  ['03-constellations', 'Star chart', 'How files hold together inside each module, and which imports cross a forbidden boundary.', 'coupling stories and showing boundary breaks.'],
+  ['04-metro', 'Metro map', 'The dependency order from entry points to foundations, with closed routes for rule breaks.', 'explaining architecture to someone new.'],
+  ['05-blueprint', 'Blueprint', 'Where the space goes, with the fifteen rooms most in need of work clouded for revision.', 'planning refactoring work as a schedule.'],
+  ['06-strata', 'Strata', 'How deep the layering goes; healthy imports only drill downward, faults are forbidden ones.', 'checking layering at a glance.'],
+  ['07-matrix', 'Matrix', 'Every module pair at once; marks below the diagonal or in red are the problems.', 'precise review by engineers.'],
+  ['08-seismograph', 'Seismograph', 'All functions in reading order, so spikes show exactly where in the code reading gets hard.', 'walking through a repository end to end.'],
+  ['09-briefing', 'Briefing', 'A one-minute story: the headline numbers, the ten hardest functions, the broken rules and what holds up.', 'sharing with people who will not open a diagram.'],
+  ['10-microscope', 'Microscope', 'Every function as a stained granule; brown ones are past the warning line.', 'zooming from the whole repository down to one file.'],
+];
+document.getElementById('grid').innerHTML = views.map(([file, name, obvious, best]) => `
+  <a class="tile" href="${file}.html">
+    <img src="shots/${file}.webp" alt="${name} view" loading="lazy" width="960" height="600">
+    <div class="body"><h2>${name}</h2><p>${obvious}</p><p><b>Best for</b> ${best}</p></div>
+  </a>`).join('');
+</script>
+</body>
+</html>

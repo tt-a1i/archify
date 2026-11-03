@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complexity Terrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;1,500&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #eef0e2; --ink: #3b3226; --muted: #7a6f5d; --water: #9cc3c8; --info: #c8701e; --warn: #b3261e; --line: #8a7454; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 Barlow, system-ui, sans-serif; }
+.wrap { display: grid; grid-template-columns: minmax(0, 1fr) 320px; min-height: 100vh; }
+.map { position: relative; padding: 24px 28px; height: 100vh; min-height: 640px; display: flex; flex-direction: column; gap: 12px; }
+.title { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+h1 { font: 700 44px/1 'Barlow Condensed', sans-serif; margin: 0; }
+h1 small { font: italic 500 20px 'Barlow Condensed', sans-serif; color: var(--muted); margin-left: 10px; }
+.stage { position: relative; flex: 1; min-height: 0; border: 2px solid var(--ink); background: #e4e8d2; }
+.stage::after { content: ''; position: absolute; inset: 4px; border: 1px solid var(--ink); pointer-events: none; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+#tip { position: absolute; pointer-events: none; background: var(--paper); border: 1px solid var(--ink); padding: 3px 8px; font: 500 13px 'Barlow Condensed', sans-serif; }
+#tip[hidden] { display: none; }
+aside { border-left: 2px solid var(--ink); padding: 24px 22px; background: #f6f5ec; display: flex; flex-direction: column; gap: 18px; }
+a.back { color: var(--muted); font-size: 13px; }
+h2 { font: 700 22px/1.1 'Barlow Condensed', sans-serif; margin: 0 0 6px; }
+.key { display: grid; grid-template-columns: 36px 1fr; gap: 6px 10px; font-size: 13px; align-items: center; }
+.swatch { height: 12px; }
+.contour { height: 0; border-top: 2px solid; }
+.summits { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.summits button { width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px dotted var(--line); padding: 6px 2px; font: inherit; color: inherit; cursor: pointer; display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: baseline; }
+.summits button:hover, .summits button:focus-visible, .summits button[aria-pressed="true"] { background: #e6e3cf; outline: none; }
+.summits b { font: 700 18px 'Barlow Condensed', sans-serif; }
+.summits span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.summits i { font-style: normal; color: var(--muted); font-size: 12px; }
+#detail { border: 1px solid var(--ink); padding: 12px; background: var(--paper); font-size: 13px; }
+#detail p { margin: 6px 0; overflow-wrap: anywhere; }
+#detail button { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); padding: 6px 12px; font: 500 13px Barlow, sans-serif; cursor: pointer; }
+#detail button:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+.note { font-size: 12px; color: var(--muted); }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } aside { border-left: 0; border-top: 2px solid var(--ink); } .map { height: 80vh; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="map">
+    <div class="title"><h1 id="h1"></h1><span class="note" id="scale"></span></div>
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="Topographic map: hills are complex functions"></canvas>
+      <div id="tip" hidden></div>
+    </div>
+  </section>
+  <aside>
+    <a class="back" href="index.html">All views</a>
+    <div>
+      <h2>Reading the map</h2>
+      <div class="key">
+        <span class="swatch" style="background:linear-gradient(90deg,#dfe6c9,#c9d6a4)"></span><span>Lowland: simple functions</span>
+        <span class="contour" style="border-color:var(--info)"></span><span>Contour at complexity <b id="ti"></b> (info)</span>
+        <span class="contour" style="border-color:var(--warn)"></span><span>Contour at complexity <b id="tw"></b> (warning)</span>
+        <span class="swatch" style="background:linear-gradient(90deg,#b98a5a,#f4efe6)"></span><span>Peaks above <span id="tw2"></span></span>
+        <span class="contour" style="border-top:1px dashed var(--ink)"></span><span>Module border; parcels are files, sized by lines</span>
+      </div>
+    </div>
+    <div>
+      <h2>Highest summits</h2>
+      <ol class="summits" id="summits"></ol>
+    </div>
+    <div id="detail" aria-live="polite"></div>
+    <p class="note" id="src"></p>
+  </aside>
+</div>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, T, fmt, esc, copyPrompt, squarify, rng, fitCanvas, topFunctions, totals } = Atlas;
+document.getElementById('h1').innerHTML = `The ${esc(D.repository.name)} range <small>${fmt(totals.functions)} functions, ${totals.fnWarnings} above the snow line</small>`;
+['ti'].forEach((id) => (document.getElementById(id).textContent = T.info.complexity));
+['tw', 'tw2'].forEach((id) => (document.getElementById(id).textContent = T.warning.complexity));
+document.getElementById('src').textContent = `Real run of ${D.repository.name} @ ${(D.repository.revision || '').slice(0, 10)}. Hill height is cyclomatic complexity; hill width grows with function length.`;
+
+const canvas = document.getElementById('c');
+const tip = document.getElementById('tip');
+let peaks = [], selected = -1, geometry = null;
+
+function compute(w, h) {
+  const pad = 10;
+  const mods = modules.map((m) => ({ m, value: Math.max(1, m.loc) }));
+  squarify(mods, pad, pad, w - pad * 2, h - pad * 2);
+  const parcels = [];
+  mods.forEach((mm) => {
+    const items = mm.m.files.map((fi) => ({ f: files[fi], value: Math.max(1, files[fi].loc) }));
+    squarify(items, mm.x + 3, mm.y + 3, mm.w - 6, mm.h - 6);
+    parcels.push(...items);
+  });
+  const cell = 4;
+  const gw = Math.ceil(w / cell), gh = Math.ceil(h / cell);
+  const field = new Float32Array(gw * gh);
+  peaks = [];
+  parcels.forEach((p) => {
+    const r = rng(p.f.i * 2654435761);
+    p.f.fns.forEach((fnIdx) => {
+      const fn = D.functions[fnIdx];
+      const cx = p.x + 4 + r() * Math.max(1, p.w - 8);
+      const cy = p.y + 4 + r() * Math.max(1, p.h - 8);
+      const sigma = Math.min(36, 4 + Math.sqrt(fn[5]) * 1.4);
+      const amp = fn[3];
+      peaks.push({ x: cx, y: cy, fnIdx, amp });
+      const R = sigma * 2.6;
+      const x0 = Math.max(0, Math.floor((cx - R) / cell)), x1 = Math.min(gw - 1, Math.ceil((cx + R) / cell));
+      const y0 = Math.max(0, Math.floor((cy - R) / cell)), y1 = Math.min(gh - 1, Math.ceil((cy + R) / cell));
+      for (let gy = y0; gy <= y1; gy += 1) for (let gx = x0; gx <= x1; gx += 1) {
+        const dx = gx * cell - cx, dy = gy * cell - cy;
+        const v = amp * Math.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma));
+        const k = gy * gw + gx;
+        if (v > field[k]) field[k] = v;
+      }
+    });
+  });
+  return { mods, parcels, field, gw, gh, cell };
+}
+
+const LEVELS = [4, 8, T.info.complexity, 20, T.warning.complexity, 40, 60, 90, 130, 180];
+function tint(v) {
+  const stops = [[0, [223, 230, 201]], [8, [201, 214, 164]], [T.info.complexity, [214, 200, 140]], [T.warning.complexity, [199, 158, 104]], [60, [170, 120, 80]], [120, [222, 206, 186]], [200, [246, 242, 234]]];
+  for (let i = 1; i < stops.length; i += 1) if (v <= stops[i][0]) {
+    const [a, ca] = stops[i - 1], [b, cb] = stops[i];
+    const t = (v - a) / (b - a);
+    return ca.map((c, j) => Math.round(c + (cb[j] - c) * t));
+  }
+  return stops[stops.length - 1][1];
+}
+
+function draw() {
+  const { ctx, w, h } = fitCanvas(canvas);
+  geometry = geometry && geometry.w === w && geometry.h === h ? geometry : { ...compute(w, h), w, h };
+  const { mods, parcels, field, gw, gh, cell } = geometry;
+  // Hypsometric tint.
+  const img = ctx.createImageData(gw, gh);
+  for (let k = 0; k < field.length; k += 1) {
+    const [r, g, b] = tint(field[k]);
+    img.data[k * 4] = r; img.data[k * 4 + 1] = g; img.data[k * 4 + 2] = b; img.data[k * 4 + 3] = 255;
+  }
+  const off = document.createElement('canvas'); off.width = gw; off.height = gh;
+  off.getContext('2d').putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = true; ctx.drawImage(off, 0, 0, gw * cell, gh * cell);
+
+  // Contours via marching squares.
+  LEVELS.forEach((lv) => {
+    const strong = lv === T.info.complexity || lv === T.warning.complexity;
+    ctx.strokeStyle = lv === T.warning.complexity ? '#b3261e' : lv === T.info.complexity ? '#c8701e' : 'rgba(110, 86, 52, .55)';
+    ctx.lineWidth = strong ? 1.8 : 0.8;
+    ctx.beginPath();
+    for (let y = 0; y < gh - 1; y += 1) for (let x = 0; x < gw - 1; x += 1) {
+      const a = field[y * gw + x], b = field[y * gw + x + 1], c = field[(y + 1) * gw + x + 1], d = field[(y + 1) * gw + x];
+      const idx = (a > lv ? 8 : 0) | (b > lv ? 4 : 0) | (c > lv ? 2 : 0) | (d > lv ? 1 : 0);
+      if (idx === 0 || idx === 15) continue;
+      const lerp = (p, q) => (lv - p) / (q - p);
+      const top = [(x + lerp(a, b)) * cell, y * cell], right = [(x + 1) * cell, (y + lerp(b, c)) * cell];
+      const bottom = [(x + lerp(d, c)) * cell, (y + 1) * cell], left = [x * cell, (y + lerp(a, d)) * cell];
+      const seg = { 1: [left, bottom], 2: [bottom, right], 3: [left, right], 4: [top, right], 5: [left, top, bottom, right], 6: [top, bottom], 7: [left, top],
+        8: [left, top], 9: [top, bottom], 10: [top, right, left, bottom], 11: [top, right], 12: [left, right], 13: [bottom, right], 14: [left, bottom] }[idx];
+      for (let s = 0; s < seg.length; s += 2) { ctx.moveTo(seg[s][0], seg[s][1]); ctx.lineTo(seg[s + 1][0], seg[s + 1][1]); }
+    }
+    ctx.stroke();
+  });
+
+  // Parcels and module borders.
+  ctx.strokeStyle = 'rgba(59, 50, 38, .18)'; ctx.lineWidth = 0.6;
+  parcels.forEach((p) => ctx.strokeRect(p.x, p.y, p.w, p.h));
+  ctx.setLineDash([5, 3]); ctx.strokeStyle = '#3b3226'; ctx.lineWidth = 1.2;
+  mods.forEach((m) => ctx.strokeRect(m.x, m.y, m.w, m.h));
+  ctx.setLineDash([]);
+  ctx.font = 'italic 500 15px "Barlow Condensed", sans-serif';
+  mods.forEach((m) => {
+    if (m.w < 50 || m.h < 22) return;
+    ctx.fillStyle = 'rgba(238, 240, 226, .82)';
+    const tw = ctx.measureText(m.m.label).width;
+    ctx.fillRect(m.x + 6, m.y + 6, tw + 8, 18);
+    ctx.fillStyle = '#3b3226'; ctx.fillText(m.m.label, m.x + 10, m.y + 20);
+  });
+
+  // Summit markers for the highest peaks.
+  const top = peaks.slice().sort((a, b) => b.amp - a.amp).slice(0, 10);
+  ctx.font = '700 13px "Barlow Condensed", sans-serif';
+  top.forEach((p, k) => {
+    const sel = p.fnIdx === selected;
+    ctx.fillStyle = sel ? '#b3261e' : '#3b3226';
+    ctx.beginPath(); ctx.moveTo(p.x, p.y - 7); ctx.lineTo(p.x + 6, p.y + 4); ctx.lineTo(p.x - 6, p.y + 4); ctx.closePath(); ctx.fill();
+    ctx.fillText(`${k + 1}  ${p.amp}`, p.x + 9, p.y + 4);
+  });
+  if (selected !== -1 && !top.some((p) => p.fnIdx === selected)) {
+    const p = peaks.find((q) => q.fnIdx === selected);
+    if (p) { ctx.strokeStyle = '#b3261e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2); ctx.stroke(); }
+  }
+}
+
+function showDetail(fnIdx) {
+  selected = fnIdx;
+  const fn = D.functions[fnIdx];
+  const f = files[fn[0]];
+  const finding = fn[6] === -1 ? null : D.findings[fn[6]];
+  document.getElementById('detail').innerHTML = `<h2>${esc(fn[1])}</h2>
+    <p>${esc(f.path)}:${fn[2]}</p>
+    <p>Complexity <b>${fn[3]}</b> · nesting ${fn[4]} · ${fn[5]} lines</p>
+    ${finding ? `<p>${esc(finding.fix ? `First step: ${finding.fix}.` : '')}</p><button id="copy">Copy fix prompt for AI</button>` : '<p>Below the info threshold; nothing reported.</p>'}`;
+  const b = document.getElementById('copy');
+  if (b) b.addEventListener('click', () => copyPrompt(fn[6], b));
+  document.querySelectorAll('.summits button').forEach((x) => x.setAttribute('aria-pressed', String(Number(x.dataset.fn) === fnIdx)));
+  draw();
+}
+
+const list = document.getElementById('summits');
+topFunctions(10).forEach(({ fn, i }, k) => {
+  const li = document.createElement('li');
+  li.innerHTML = `<button data-fn="${i}" aria-pressed="false"><b>${k + 1}</b><span title="${esc(fn[1])}">${esc(fn[1])}<br><i>${esc(files[fn[0]].path)}</i></span><b>${fn[3]}</b></button>`;
+  li.firstChild.addEventListener('click', () => showDetail(i));
+  list.append(li);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 18 * 18;
+  peaks.forEach((p) => { const d = (p.x - x) ** 2 + (p.y - y) ** 2; if (d < bd && p.amp >= 5) { bd = d; best = p; } });
+  if (!best) { tip.hidden = true; canvas.dataset.fn = ''; return; }
+  const fn = D.functions[best.fnIdx];
+  tip.hidden = false; tip.textContent = `${fn[1]} · ${fn[3]}`;
+  tip.style.left = `${Math.min(x + 12, r.width - 220)}px`; tip.style.top = `${y - 28}px`;
+  canvas.dataset.fn = best.fnIdx;
+});
+canvas.addEventListener('mouseleave', () => (tip.hidden = true));
+canvas.addEventListener('click', () => { if (canvas.dataset.fn !== '' && canvas.dataset.fn !== undefined) showDetail(Number(canvas.dataset.fn)); });
+document.getElementById('scale').textContent = `${fmt(totals.loc)} lines across ${totals.files} files`;
+window.addEventListener('resize', () => { geometry = null; draw(); });
+showDetail(topFunctions(1)[0].i);
+</script>
+</body>
+</html>

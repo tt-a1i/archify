@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complexity Seismograph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root { --paper: #f4f6ec; --grid: #d5e0c9; --grid2: #e6eddc; --ink: #24352d; --muted: #6c7a6f; --pen: #c8322b; --pen2: #d9822b; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--paper); color: var(--ink); font: 14px/1.45 'Instrument Sans', system-ui, sans-serif; display: flex; flex-direction: column; }
+header { padding: 22px 28px 8px; display: flex; justify-content: space-between; gap: 20px; align-items: flex-end; flex-wrap: wrap; }
+h1 { margin: 2px 0 0; font: 400 46px/1 'Instrument Serif', serif; }
+h1 i { color: var(--muted); }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 64ch; }
+a.back { color: var(--muted); font-size: 13px; }
+.readout { font-size: 13px; color: var(--muted); text-align: right; }
+.readout b { color: var(--ink); font-weight: 700; }
+.roll { margin: 8px 28px 0; position: relative; height: 76px; border: 1px solid #b8c6ad; background: #eef2e4; }
+.chart { margin: 10px 28px 0; position: relative; flex: 1; min-height: 300px; border: 1px solid #b8c6ad; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.roll canvas { cursor: crosshair; }
+.chart canvas { cursor: zoom-in; }
+#tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 12px; padding: 4px 8px; border-radius: 3px; white-space: nowrap; }
+#tip[hidden] { display: none; }
+.log { margin: 10px 28px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.event { border-left: 3px solid var(--pen); background: #fbfcf6; padding: 8px 10px; font-size: 12.5px; }
+.event.info { border-left-color: var(--pen2); }
+.event b { font: 400 22px/1 'Instrument Serif', serif; display: block; }
+.event span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.event em { color: var(--muted); font-style: normal; }
+.event button { margin-top: 6px; border: 1px solid var(--ink); background: none; color: var(--ink); padding: 3px 8px; font: 500 12px 'Instrument Sans'; cursor: pointer; }
+.event button:hover, .event button:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
+.hint { margin: 6px 28px 0; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a class="back" href="index.html">All views</a>
+    <h1>Seismic record of <i id="repo"></i></h1>
+    <p id="lede"></p>
+  </div>
+  <div class="readout" id="readout"></div>
+</header>
+<div class="roll"><canvas id="ov" aria-label="Overview of the whole repository; drag to choose a window"></canvas></div>
+<div class="hint">Drag across the roll to zoom into a stretch. Scroll on the chart to zoom, click a spike to log it.</div>
+<div class="chart"><canvas id="ch" aria-label="Zoomed seismogram: each spike is a function, height is its complexity"></canvas><div id="tip" hidden></div></div>
+<div class="log" id="log" aria-live="polite"></div>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, T, level, fmt, esc, copyPrompt, fitCanvas, reducedMotion, totals } = Atlas;
+document.getElementById('repo').textContent = D.repository.name;
+document.getElementById('lede').textContent = `Every function in reading order, module by module and file by file. Spike height is cyclomatic complexity; the red pen line is the warning threshold (${T.warning.complexity}), orange is info (${T.info.complexity}).`;
+
+// Functions already arrive sorted by file then line; files are grouped by module.
+const N = D.functions.length;
+const maxCC = Math.max(...D.functions.map((f) => f[3]));
+let view = [0, N];
+const ov = document.getElementById('ov'), ch = document.getElementById('ch'), tip = document.getElementById('tip');
+let drag = null, hover = -1, pinned = -1, drawn = 0;
+
+const yOf = (cc, h, mid) => (Math.log1p(cc) / Math.log1p(maxCC)) * (h / 2 - 14);
+
+function drawGrid(ctx, w, h, step) {
+  ctx.strokeStyle = '#e6eddc'; ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += step / 5) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += step / 5) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.strokeStyle = '#d5e0c9';
+  for (let x = 0; x < w; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+}
+
+function trace(ctx, w, h, a, b, progress = 1) {
+  const mid = h / 2;
+  const span = b - a;
+  const end = a + Math.floor(span * progress);
+  ctx.strokeStyle = '#24352d'; ctx.lineWidth = span > 800 ? 0.8 : 1.3; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(0, mid);
+  for (let i = a; i < end; i += 1) {
+    const fn = D.functions[i];
+    const x0 = ((i - a) / span) * w, x1 = ((i - a + 1) / span) * w;
+    const amp = yOf(fn[3], h, mid);
+    // A quick swing up and down per function, like a stylus.
+    ctx.lineTo(x0 + (x1 - x0) * 0.25, mid - amp);
+    ctx.lineTo(x0 + (x1 - x0) * 0.6, mid + amp * 0.75);
+    ctx.lineTo(x1, mid);
+  }
+  ctx.stroke();
+}
+
+function drawOverview() {
+  const { ctx, w, h } = fitCanvas(ov);
+  drawGrid(ctx, w, h, 40);
+  trace(ctx, w, h, 0, N);
+  // Module bands.
+  let start = 0;
+  ctx.font = '500 10px "Instrument Sans", sans-serif'; ctx.fillStyle = '#6c7a6f';
+  for (let i = 1; i <= N; i += 1) {
+    const m = i < N ? files[D.functions[i][0]].module : -1;
+    if (m !== files[D.functions[i - 1][0]].module) {
+      const x = (i / N) * w;
+      ctx.fillStyle = 'rgba(36,53,45,.25)'; ctx.fillRect(x, 0, 1, h);
+      const label = modules[files[D.functions[i - 1][0]].module].label;
+      const xs = (start / N) * w;
+      ctx.fillStyle = '#6c7a6f';
+      if (x - xs > ctx.measureText(label).width + 6) ctx.fillText(label, xs + 3, 11);
+      start = i;
+    }
+  }
+  const [a, b] = view;
+  ctx.fillStyle = 'rgba(200,50,43,.10)'; ctx.fillRect((a / N) * w, 0, ((b - a) / N) * w, h);
+  ctx.strokeStyle = '#c8322b'; ctx.lineWidth = 1.5; ctx.strokeRect((a / N) * w, 1, ((b - a) / N) * w, h - 2);
+}
+
+function drawChart(progress = 1) {
+  const { ctx, w, h } = fitCanvas(ch);
+  drawGrid(ctx, w, h, 60);
+  const mid = h / 2;
+  const [a, b] = view;
+  [[T.info.complexity, '#d9822b'], [T.warning.complexity, '#c8322b']].forEach(([cc, col]) => {
+    const amp = yOf(cc, h, mid);
+    ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.setLineDash([6, 4]);
+    [mid - amp, mid + amp * 0.75].forEach((y) => { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); });
+    ctx.setLineDash([]); ctx.fillStyle = col; ctx.font = '500 11px "Instrument Sans", sans-serif';
+    ctx.fillText(`${cc}`, w - 24, mid - amp - 4);
+  });
+  // File boundaries with names when there is room.
+  ctx.font = '500 11px "Instrument Sans", sans-serif';
+  let fStart = a;
+  for (let i = a + 1; i <= b; i += 1) {
+    if (i === b || D.functions[i][0] !== D.functions[i - 1][0]) {
+      const x = ((i - a) / (b - a)) * w, xs = ((fStart - a) / (b - a)) * w;
+      ctx.fillStyle = 'rgba(36,53,45,.18)'; ctx.fillRect(x, 0, 1, h);
+      const name = files[D.functions[i - 1][0]].name;
+      if (x - xs > ctx.measureText(name).width + 10) { ctx.fillStyle = '#6c7a6f'; ctx.fillText(name, xs + 5, h - 8); }
+      fStart = i;
+    }
+  }
+  trace(ctx, w, h, a, b, progress);
+  // Event markers on spikes past the info line, labelled when wide enough.
+  const span = b - a;
+  for (let i = a; i < b; i += 1) {
+    const fn = D.functions[i];
+    const lv = level(fn[3]);
+    if (!lv) continue;
+    const x = ((i - a + 0.25) / span) * w, y = mid - yOf(fn[3], h, mid);
+    ctx.fillStyle = lv === 2 ? '#c8322b' : '#d9822b';
+    ctx.beginPath(); ctx.arc(x, y, i === hover || i === pinned ? 5 : 2.6, 0, Math.PI * 2); ctx.fill();
+    if (span <= 200 && lv === 2) {
+      ctx.save(); ctx.translate(x + 4, y - 6); ctx.rotate(-Math.PI / 5);
+      ctx.fillStyle = '#24352d'; ctx.fillText(`${fn[1].split('.').pop()} ${fn[3]}`, 0, 0); ctx.restore();
+    }
+  }
+  const r = view;
+  document.getElementById('readout').innerHTML = `Window <b>${fmt(r[1] - r[0])}</b> of ${fmt(N)} functions<br><b>${countIn(2)}</b> past ${T.warning.complexity} · <b>${countIn(1)}</b> past ${T.info.complexity} in view`;
+}
+const countIn = (lv) => { let c = 0; for (let i = view[0]; i < view[1]; i += 1) if (level(D.functions[i][3]) === lv) c += 1; return c; };
+
+function updateLog() {
+  const [a, b] = view;
+  const ids = [];
+  for (let i = a; i < b; i += 1) if (D.functions[i][6] !== -1) ids.push(i);
+  ids.sort((x, y) => D.functions[y][3] - D.functions[x][3]);
+  const pick = pinned !== -1 ? [pinned, ...ids.filter((i) => i !== pinned)] : ids;
+  const log = document.getElementById('log');
+  log.innerHTML = pick.slice(0, 6).map((i) => {
+    const fn = D.functions[i];
+    return `<div class="event ${level(fn[3]) === 2 ? '' : 'info'}"><b>M ${fn[3]}</b><span title="${esc(fn[1])}">${esc(fn[1])}</span><em>${esc(files[fn[0]].path)}:${fn[2]} · ${fn[5]} lines</em><br><button data-f="${fn[6]}">Copy fix prompt for AI</button></div>`;
+  }).join('') || '<div class="event info">Quiet stretch: nothing past the info line here.</div>';
+  log.querySelectorAll('button').forEach((bt) => bt.addEventListener('click', () => copyPrompt(Number(bt.dataset.f), bt)));
+}
+
+function render() { drawOverview(); drawChart(); updateLog(); }
+
+ov.addEventListener('pointerdown', (e) => { const r = ov.getBoundingClientRect(); drag = ((e.clientX - r.left) / r.width) * N; ov.setPointerCapture(e.pointerId); });
+ov.addEventListener('pointermove', (e) => {
+  if (drag === null) return;
+  const r = ov.getBoundingClientRect(); const x = Math.max(0, Math.min(N, ((e.clientX - r.left) / r.width) * N));
+  view = [Math.floor(Math.min(drag, x)), Math.ceil(Math.max(drag, x))];
+  if (view[1] - view[0] < 20) view[1] = Math.min(N, view[0] + 20);
+  drawOverview(); drawChart();
+});
+ov.addEventListener('pointerup', () => { drag = null; updateLog(); });
+ch.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = ch.getBoundingClientRect(); const f = (e.clientX - r.left) / r.width;
+  const [a, b] = view; const span = b - a; const at = a + span * f;
+  const ns = Math.max(20, Math.min(N, span * (e.deltaY > 0 ? 1.25 : 0.8)));
+  let na = Math.round(at - ns * f); na = Math.max(0, Math.min(N - ns, na));
+  view = [na, Math.round(na + ns)]; render();
+}, { passive: false });
+ch.addEventListener('mousemove', (e) => {
+  const r = ch.getBoundingClientRect(); const [a, b] = view;
+  const i = Math.floor(a + ((e.clientX - r.left) / r.width) * (b - a));
+  hover = i >= a && i < b ? i : -1;
+  if (hover === -1) { tip.hidden = true; return; }
+  const fn = D.functions[hover];
+  tip.hidden = false; tip.textContent = `${fn[1]} · ${fn[3]} · ${files[fn[0]].name}`;
+  tip.style.left = `${Math.min(e.clientX - r.left + 12, r.width - 300)}px`; tip.style.top = `${e.clientY - r.top - 30}px`;
+  drawChart();
+});
+ch.addEventListener('mouseleave', () => { hover = -1; tip.hidden = true; drawChart(); });
+ch.addEventListener('click', () => { if (hover !== -1) { pinned = hover; updateLog(); drawChart(); } });
+window.addEventListener('resize', render);
+
+// Open on the stretch around the strongest quake, after drawing the full record in.
+const peak = D.functions.reduce((best, fn, i) => (fn[3] > D.functions[best][3] ? i : best), 0);
+drawOverview(); updateLog();
+if (reducedMotion) { view = [Math.max(0, peak - 90), Math.min(N, peak + 90)]; render(); }
+else {
+  const t0 = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / 1600);
+    drawChart(p);
+    if (p < 1) requestAnimationFrame(step);
+    else setTimeout(() => { view = [Math.max(0, peak - 90), Math.min(N, peak + 90)]; render(); }, 500);
+  };
+  requestAnimationFrame(step);
+}
+</script>
+</body>
+</html>

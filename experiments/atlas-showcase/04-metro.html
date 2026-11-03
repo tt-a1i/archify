@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dependency Metro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #fbfaf7; --ink: #1f2430; --muted: #6b7180; --closed: #e0262f; --board: #22304a; --amber: #ffb81c; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 Overpass, system-ui, sans-serif; }
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding: 26px 32px 8px; flex-wrap: wrap; }
+h1 { margin: 0; font: 800 40px/1 Overpass, sans-serif; letter-spacing: -0.01em; }
+h1 .roundel { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 8px solid var(--closed); margin-right: 12px; vertical-align: -6px; }
+.top p { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+a.back { color: var(--muted); font-size: 13px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 0; }
+.mapwrap { padding: 8px 16px 24px 24px; overflow: auto; }
+#map { width: 100%; height: calc(100vh - 200px); min-height: 520px; display: block; }
+.legend svg { width: 40px; height: 14px; }
+.station { cursor: pointer; }
+.station:focus-visible circle.ring { stroke: var(--amber); stroke-width: 5; }
+.station text { font: 600 13px Overpass, sans-serif; fill: var(--ink); }
+.board { background: var(--board); color: #e9eef8; padding: 22px 22px 28px; min-height: 100%; }
+.board h2 { margin: 0; font: 800 26px/1.1 Overpass, sans-serif; color: var(--amber); overflow-wrap: anywhere; }
+.board .sub { color: #a9b6d0; font-size: 13px; margin-top: 4px; }
+.rows { margin-top: 14px; display: grid; gap: 0; }
+.row { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; padding: 7px 0; border-top: 1px solid #364766; font-size: 14px; align-items: baseline; }
+.row .k { color: #a9b6d0; font-size: 12px; }
+.row b { color: var(--amber); font-weight: 800; }
+.row.bad b, .row.bad .k { color: #ff7a7f; }
+.board button { margin-top: 14px; background: var(--amber); color: var(--board); border: 0; padding: 8px 14px; border-radius: 4px; font: 800 13px Overpass, sans-serif; cursor: pointer; }
+.board button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.legend { display: flex; gap: 22px; flex-wrap: wrap; padding: 0 32px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.legend svg { width: 40px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+@media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <a class="back" href="index.html">All views</a>
+    <h1><span class="roundel" aria-hidden="true"></span><span id="title"></span></h1>
+    <p id="lede"></p>
+  </div>
+</div>
+<div class="legend">
+  <span><svg viewBox="0 0 40 14"><line x1="2" y1="7" x2="38" y2="7" stroke="#0098d4" stroke-width="6" stroke-linecap="round"/></svg>Import route, thicker for more imports</span>
+  <span><svg viewBox="0 0 40 14"><line x1="2" y1="7" x2="38" y2="7" stroke="#e0262f" stroke-width="5" stroke-dasharray="6 4"/></svg>Closed: crosses a forbidden boundary</span>
+  <span><svg viewBox="0 0 40 14"><circle cx="20" cy="7" r="5" fill="#fff" stroke="#1f2430" stroke-width="3"/></svg>Station: module, bigger with more files</span>
+  <span><svg viewBox="0 0 40 14"><rect x="10" y="1" width="20" height="12" rx="6" fill="#ffb81c"/></svg>Delays: functions past the warning line</span>
+</div>
+<div class="layout">
+  <div class="mapwrap"><svg id="map" role="img" aria-label="Metro map of module dependencies"></svg></div>
+  <aside class="board" id="board" aria-live="polite"></aside>
+</div>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, modules, files, boundary, T, fmt, esc, copyPrompt, totals } = Atlas;
+document.getElementById('title').textContent = `${D.repository.name} dependency metro`;
+document.getElementById('lede').textContent = `${totals.modules} stations, ${(D.moduleEdges || []).length} routes. Trains run from callers on the left toward foundations on the right; ${totals.boundary} routes are closed by the boundary rules.`;
+
+const LINE_COLOURS = ['#0098d4', '#00843d', '#9b0058', '#f3a9bb', '#a0a5a9', '#ee7c0e', '#84b817', '#7156a5', '#b26300', '#00a4a7', '#e32017', '#003688', '#95cdba', '#ffd300'];
+const closedPairs = new Set();
+boundary.forEach((b) => (b.edges || []).forEach(([a, c]) => closedPairs.add(`${files[a].module}>${files[c].module}`)));
+
+// Columns by dependency rank (higher rank = more callers above it = further left).
+const maxRank = Math.max(...modules.map((m) => m.rank));
+const cols = Array.from({ length: maxRank + 1 }, () => []);
+modules.forEach((m) => cols[maxRank - m.rank].push(m.i));
+const edges = (D.moduleEdges || []).filter(([a, b]) => a !== b);
+const nbrs = modules.map(() => []);
+edges.forEach(([a, b]) => { nbrs[a].push(b); nbrs[b].push(a); });
+const pos = new Map();
+cols.forEach((c) => c.sort((a, b) => modules[b].files.length - modules[a].files.length).forEach((m, k) => pos.set(m, k)));
+for (let sweep = 0; sweep < 6; sweep += 1) {
+  cols.forEach((c) => {
+    const bary = (m) => (nbrs[m].length ? nbrs[m].reduce((s, n) => s + pos.get(n), 0) / nbrs[m].length : pos.get(m));
+    c.sort((a, b) => bary(a) - bary(b)).forEach((m, k) => pos.set(m, k));
+  });
+}
+
+const svg = document.getElementById('map');
+const COLW = 260, ROWH = 74, PADX = 70, PADY = 70;
+const maxRows = Math.max(...cols.map((c) => c.length));
+const W = PADX * 2 + COLW * (cols.length - 1) + 140, H = PADY * 2 + ROWH * (maxRows - 1);
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+const xy = (m) => {
+  const col = maxRank - modules[m].rank;
+  const c = cols[col];
+  const off = ((maxRows - c.length) * ROWH) / 2;
+  return [PADX + col * COLW, PADY + off + pos.get(m) * ROWH];
+};
+
+// Octilinear route: horizontal run, then a 45° diagonal into the target row.
+function route(a, b, lane) {
+  const [x1, y1] = xy(a), [x2, y2] = xy(b);
+  const o = lane * 7;
+  const dy = (y2 + o) - (y1 + o), dx = x2 - x1;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    const sx = x2 - Math.sign(dx || 1) * Math.abs(dy) - Math.sign(dx || 1) * 30;
+    return `M${x1},${y1 + o} L${sx},${y1 + o} L${sx + Math.sign(dx || 1) * Math.abs(dy)},${y2 + o} L${x2},${y2 + o}`;
+  }
+  const mid = y1 + Math.sign(dy) * Math.abs(dx);
+  return `M${x1},${y1 + o} L${x2},${mid + o} L${x2},${y2 + o}`;
+}
+
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); parent.append(e); return e; };
+const routes = el('g', {});
+// Lane offsets so parallel routes leaving one station sit side by side.
+const laneOf = new Map();
+modules.forEach((m) => {
+  const outs = edges.filter(([a]) => a === m.i);
+  outs.forEach((e, k) => laneOf.set(e, k - (outs.length - 1) / 2));
+});
+const pathEls = [];
+edges.forEach((e) => {
+  const [a, b, w] = e;
+  const closed = closedPairs.has(`${a}>${b}`);
+  const colour = closed ? '#e0262f' : LINE_COLOURS[a % LINE_COLOURS.length];
+  const d = route(a, b, laneOf.get(e) || 0);
+  el('path', { d, fill: 'none', stroke: '#fbfaf7', 'stroke-width': Math.min(12, 3 + Math.sqrt(w) * 1.3) + 4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, routes);
+  const p = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': Math.min(12, 3 + Math.sqrt(w) * 1.3), 'stroke-linejoin': 'round', 'stroke-linecap': 'round', ...(closed ? { 'stroke-dasharray': '10 7' } : {}) }, routes);
+  p.dataset.a = a; p.dataset.b = b;
+  const t = el('title', {}, p); t.textContent = `${modules[a].label} → ${modules[b].label}: ${w} imports${closed ? ' (closed by a boundary rule)' : ''}`;
+  pathEls.push(p);
+  if (closed) {
+    const len = p.getTotalLength();
+    const pt = p.getPointAtLength(len * 0.5);
+    el('circle', { cx: pt.x, cy: pt.y, r: 11, fill: '#fff', stroke: '#e0262f', 'stroke-width': 3 }, routes);
+    el('path', { d: `M${pt.x - 5},${pt.y - 5} L${pt.x + 5},${pt.y + 5} M${pt.x + 5},${pt.y - 5} L${pt.x - 5},${pt.y + 5}`, stroke: '#e0262f', 'stroke-width': 3, 'stroke-linecap': 'round' }, routes);
+  }
+});
+
+const stations = el('g', {});
+modules.forEach((m) => {
+  const [x, y] = xy(m.i);
+  const g = el('g', { class: 'station', tabindex: 0, role: 'button', 'aria-label': `${m.label}: ${m.files.length} files` }, stations);
+  const r = 7 + Math.sqrt(m.files.length) * 2.2;
+  const interchange = m.fanIn >= 3;
+  if (interchange) el('rect', { x: x - r - 4, y: y - r, width: (r + 4) * 2, height: r * 2, rx: r, fill: '#fff', stroke: '#1f2430', 'stroke-width': 4, class: 'ring' }, g);
+  else el('circle', { cx: x, cy: y, r, fill: '#fff', stroke: '#1f2430', 'stroke-width': 4, class: 'ring' }, g);
+  const label = el('text', { x: x + 4, y: y - r - 10, transform: `rotate(-28 ${x + 4} ${y - r - 10})` }, g);
+  label.textContent = m.label;
+  if (m.warnings) {
+    const bx = x + r - 2, by = y + r - 4;
+    el('rect', { x: bx, y: by, width: 12 + String(m.warnings).length * 7, height: 18, rx: 9, fill: '#ffb81c' }, g);
+    const t = el('text', { x: bx + 6, y: by + 13, style: 'font-weight:800;font-size:12px;fill:#22304a' }, g);
+    t.textContent = m.warnings;
+  }
+  g.addEventListener('click', () => select(m.i));
+  g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(m.i); } });
+});
+
+const board = document.getElementById('board');
+function select(mi) {
+  const m = modules[mi];
+  pathEls.forEach((p) => { const on = Number(p.dataset.a) === mi || Number(p.dataset.b) === mi; p.style.opacity = on ? 1 : 0.3; });
+  const out = edges.filter(([a]) => a === mi), inn = edges.filter(([, b]) => b === mi);
+  const worst = m.files.flatMap((fi) => files[fi].fns).map((i) => D.functions[i]).sort((a, b) => b[3] - a[3])[0];
+  board.innerHTML = `<h2>${esc(m.label)}</h2><div class="sub">${esc(m.path || '.')} · ${m.files.length} files · ${fmt(m.loc)} lines</div>
+    <div class="rows">
+      ${out.map(([, b, w]) => `<div class="row ${closedPairs.has(`${mi}>${b}`) ? 'bad' : ''}"><span class="k">${closedPairs.has(`${mi}>${b}`) ? 'Closed' : 'Departs'}</span><span>${esc(modules[b].label)}</span><b>${w}</b></div>`).join('')}
+      ${inn.map(([a, , w]) => `<div class="row ${closedPairs.has(`${a}>${mi}`) ? 'bad' : ''}"><span class="k">Arrives</span><span>from ${esc(modules[a].label)}</span><b>${w}</b></div>`).join('')}
+      <div class="row ${m.warnings ? 'bad' : ''}"><span class="k">Delays</span><span>functions past ${T.warning.complexity}</span><b>${m.warnings}</b></div>
+      ${worst ? `<div class="row"><span class="k">Slowest</span><span>${esc(worst[1])}</span><b>${worst[3]}</b></div>` : ''}
+    </div>
+    ${worst && worst[6] !== -1 ? '<button id="cp">Copy fix prompt for the slowest function</button>' : ''}
+    ${boundary.filter((b) => (b.edges || []).some(([a, c]) => files[a].module === mi || files[c].module === mi)).map((b, k) => `<button data-b="${boundary.indexOf(b)}">Copy fix prompt: ${esc(b.title)}</button>`).join('')}`;
+  const cp = document.getElementById('cp');
+  if (cp) cp.addEventListener('click', () => copyPrompt(worst[6], cp));
+  board.querySelectorAll('[data-b]').forEach((b) => b.addEventListener('click', () => copyPrompt(boundary[Number(b.dataset.b)], b)));
+}
+select(modules.find((m) => m.label === 'migrations')?.i ?? 0);
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Under the Microscope</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root { --bench: #2b2a33; --glass: #fbf1f3; --eosin: #f2b9cc; --hema: #5b3b8c; --dab: #8a4b1f; --label: #f6f3ea; --ink: #2b2a33; --muted: #8d8798; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: radial-gradient(circle at 40% 50%, #3a3844, var(--bench) 70%); color: var(--label); font: 14px/1.5 Lexend, system-ui, sans-serif; display: grid; grid-template-columns: minmax(0, 1fr) 320px; overflow: hidden; }
+.scope { position: relative; display: grid; place-items: center; }
+.eyepiece { position: relative; width: min(88vh, 92%); aspect-ratio: 1; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 14px #17161c, 0 0 0 16px #47454f, 0 30px 80px rgba(0,0,0,.55); }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+canvas:active { cursor: grabbing; }
+.eyepiece::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; box-shadow: inset 0 0 70px 30px rgba(43, 42, 51, .55); }
+.mag { position: absolute; left: 24px; bottom: 24px; color: var(--muted); font-size: 13px; }
+.mag b { color: var(--label); font-weight: 600; font-size: 22px; display: block; }
+.title { position: absolute; left: 24px; top: 20px; }
+.title a { color: var(--muted); font-size: 13px; }
+h1 { margin: 2px 0 0; font: 300 30px/1.1 Lexend, sans-serif; }
+aside { background: var(--label); color: var(--ink); padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; overflow: auto; border-left: 6px solid #d9cfc0; }
+.slide-label { border: 1.5px solid var(--ink); padding: 10px 12px; font-size: 12px; display: grid; gap: 2px; }
+.slide-label b { font: 600 15px Lexend; overflow-wrap: anywhere; }
+h2 { font: 600 16px Lexend; margin: 0 0 6px; }
+.stains { display: grid; grid-template-columns: 18px 1fr; gap: 6px 10px; font-size: 12.5px; align-items: center; }
+.stains i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+#finding { font-size: 13px; display: grid; gap: 6px; }
+#finding ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+#finding li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+#finding li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#finding li b { color: var(--dab); }
+aside button { justify-self: start; border: 0; background: var(--hema); color: #fff; padding: 8px 14px; border-radius: 6px; font: 600 13px Lexend; cursor: pointer; }
+aside button:focus-visible { outline: 3px solid var(--dab); outline-offset: 2px; }
+.muted { color: var(--muted); font-size: 12px; }
+#tip { position: absolute; pointer-events: none; background: rgba(23,22,28,.9); color: var(--label); font-size: 12px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; }
+#tip[hidden] { display: none; }
+@media (max-width: 900px) { body { grid-template-columns: 1fr; overflow: auto; } .scope { min-height: 90vh; } }
+</style>
+</head>
+<body>
+<section class="scope">
+  <div class="title"><a href="index.html">All views</a><h1 id="h1"></h1></div>
+  <div class="eyepiece"><canvas id="c" aria-label="Microscope view: cells are modules, nuclei are files, granules are functions"></canvas></div>
+  <div class="mag"><b id="mag">×10</b>scroll to change magnification, drag to move the slide</div>
+  <div id="tip" hidden></div>
+</section>
+<aside>
+  <div class="slide-label" id="label"></div>
+  <div>
+    <h2>Stains</h2>
+    <div class="stains">
+      <i style="background:#f2b9cc"></i><span>Eosin: cell body, one module</span>
+      <i style="background:#c7a6e0"></i><span>Nucleus: one file, sized by lines</span>
+      <i style="background:#5b3b8c"></i><span>Granule: one function, larger when more complex</span>
+      <i style="background:#8a4b1f"></i><span>DAB-positive: complexity ≥ <b id="tw"></b></span>
+    </div>
+  </div>
+  <div id="finding" aria-live="polite"></div>
+  <p class="muted" id="src"></p>
+</aside>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, T, level, fmt, esc, copyPrompt, rng, fitCanvas, totals } = Atlas;
+document.getElementById('h1').textContent = `${D.repository.name}, stained`;
+document.getElementById('tw').textContent = T.warning.complexity;
+document.getElementById('src').textContent = `Real run @ ${(D.repository.revision || '').slice(0, 10)}. ${totals.fnWarnings} of ${fmt(totals.functions)} granules stain positive.`;
+
+// Greedy circle packing: place circles largest first, each at the first spot on
+// a spiral that overlaps nothing placed so far.
+function pack(items, gap) {
+  const placed = [];
+  items.sort((a, b) => b.r - a.r).forEach((it, k) => {
+    if (!k) { it.x = 0; it.y = 0; placed.push(it); return; }
+    for (let t = 0; t < 20000; t += 1) {
+      const ang = t * 0.25, rad = 2 + t * 0.35;
+      const x = Math.cos(ang) * rad, y = Math.sin(ang) * rad;
+      if (placed.every((p) => Math.hypot(p.x - x, p.y - y) >= p.r + it.r + gap)) { it.x = x; it.y = y; break; }
+    }
+    placed.push(it);
+  });
+  const cx = placed.reduce((s, p) => s + p.x, 0) / placed.length, cy = placed.reduce((s, p) => s + p.y, 0) / placed.length;
+  placed.forEach((p) => { p.x -= cx; p.y -= cy; });
+  const R = Math.max(...placed.map((p) => Math.hypot(p.x, p.y) + p.r));
+  return R;
+}
+const cells = modules.map((m) => {
+  const nuclei = m.files.map((fi) => ({ f: files[fi], r: 6 + Math.sqrt(files[fi].loc) * 0.9 }));
+  const R = pack(nuclei, 5);
+  return { m, nuclei, r: R + 16 };
+});
+const worldR = pack(cells, 26) * 1.06;
+const jitter = rng(11);
+cells.forEach((c) => { c.wob = Array.from({ length: 24 }, () => 0.94 + jitter() * 0.1); });
+
+const canvas = document.getElementById('c');
+const tip = document.getElementById('tip');
+const lvOf = level;
+let zoom = 1, panX = 0, panY = 0, selected = -1, hoverFile = -1;
+
+function draw() {
+  const { ctx, w, h } = fitCanvas(canvas);
+  const base = (Math.min(w, h) / 2 - 10) / worldR;
+  const s = base * zoom;
+  ctx.fillStyle = '#fbf1f3'; ctx.fillRect(0, 0, w, h);
+  ctx.save(); ctx.translate(w / 2 + panX, h / 2 + panY); ctx.scale(s, s);
+  cells.forEach((c) => {
+    // Membrane: a slightly irregular blob.
+    ctx.beginPath();
+    c.wob.forEach((k, i) => {
+      const a = (i / c.wob.length) * Math.PI * 2;
+      const x = c.x + Math.cos(a) * c.r * k, y = c.y + Math.sin(a) * c.r * k;
+      if (!i) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(242, 185, 204, .65)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(199, 110, 150, .8)'; ctx.lineWidth = 2 / s; ctx.stroke();
+    c.nuclei.forEach((n) => {
+      const x = c.x + n.x, y = c.y + n.y;
+      const sel = n.f.i === selected, hov = n.f.i === hoverFile;
+      ctx.beginPath(); ctx.arc(x, y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = n.f.warnings ? 'rgba(199, 166, 224, .95)' : 'rgba(199, 166, 224, .7)'; ctx.fill();
+      ctx.strokeStyle = sel ? '#2b2a33' : hov ? '#5b3b8c' : 'rgba(91, 59, 140, .55)'; ctx.lineWidth = (sel ? 3 : 1) / s; ctx.stroke();
+      // Granules on a sunflower spiral, sized by complexity.
+      const fns = n.f.fns, k = fns.length;
+      fns.forEach((fnIdx, i) => {
+        const fn = D.functions[fnIdx];
+        const rr = (n.r - 3) * Math.sqrt((i + 0.5) / k), a = i * 2.39996;
+        const gr = Math.min(n.r * 0.32, (lvOf(fn[3]) === 2 ? 1.6 : 0.6) + Math.sqrt(fn[3]) * (lvOf(fn[3]) === 2 ? 0.55 : 0.36));
+        const lv = lvOf(fn[3]);
+        ctx.beginPath(); ctx.arc(x + Math.cos(a) * rr, y + Math.sin(a) * rr, gr, 0, Math.PI * 2);
+        ctx.fillStyle = lv === 2 ? '#9c4a12' : lv === 1 ? '#3f2468' : 'rgba(91, 59, 140, .8)'; ctx.fill();
+      });
+      if (n.r * s > 34) {
+        ctx.font = `${11 / s}px Lexend, sans-serif`; ctx.fillStyle = '#2b2a33'; ctx.textAlign = 'center';
+        ctx.fillText(n.f.name, x, y + n.r + 12 / s);
+      }
+    });
+    ctx.font = `600 ${13 / s}px Lexend, sans-serif`; ctx.fillStyle = 'rgba(122, 40, 80, .9)'; ctx.textAlign = 'center';
+    if (c.r * s > 28) ctx.fillText(c.m.label, c.x, c.y - c.r - 6 / s);
+  });
+  ctx.restore();
+  // Scale bar in "lines of code": the diameter of a nucleus of 1,000 lines.
+  const bar = 2 * (6 + Math.sqrt(1000) * 0.9) * s;
+  ctx.fillStyle = '#2b2a33'; ctx.fillRect(w / 2 - bar / 2, 34, bar, 3);
+  ctx.font = '11px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('nucleus of 1,000 lines', w / 2, 28);
+  ctx.textAlign = 'start';
+  document.getElementById('mag').textContent = `×${Math.round(10 * zoom)}`;
+}
+
+function toWorld(px, py) {
+  const r = canvas.getBoundingClientRect();
+  const base = (Math.min(r.width, r.height) / 2 - 10) / worldR, s = base * zoom;
+  return [(px - r.left - r.width / 2 - panX) / s, (py - r.top - r.height / 2 - panY) / s];
+}
+function fileAt(px, py) {
+  const [x, y] = toWorld(px, py);
+  for (const c of cells) for (const n of c.nuclei) if (Math.hypot(c.x + n.x - x, c.y + n.y - y) <= n.r) return n.f.i;
+  return -1;
+}
+
+let drag = null, moved = false;
+canvas.addEventListener('pointerdown', (e) => { drag = [e.clientX, e.clientY, panX, panY]; moved = false; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove', (e) => {
+  if (drag) {
+    if (Math.abs(e.clientX - drag[0]) + Math.abs(e.clientY - drag[1]) > 3) moved = true;
+    panX = drag[2] + e.clientX - drag[0]; panY = drag[3] + e.clientY - drag[1]; draw(); return;
+  }
+  hoverFile = fileAt(e.clientX, e.clientY);
+  const sr = document.querySelector('.scope').getBoundingClientRect();
+  if (hoverFile === -1) tip.hidden = true;
+  else { const f = files[hoverFile]; tip.hidden = false; tip.textContent = `${f.path} · ${f.fns.length} functions · max ${f.maxCC}`; tip.style.left = `${e.clientX - sr.left + 14}px`; tip.style.top = `${e.clientY - sr.top - 10}px`; }
+  draw();
+});
+canvas.addEventListener('pointerup', (e) => { drag = null; if (!moved) { const f = fileAt(e.clientX, e.clientY); if (f !== -1) select(f, false); } });
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const mx = e.clientX - r.left - r.width / 2, my = e.clientY - r.top - r.height / 2;
+  const nz = Math.max(1, Math.min(12, zoom * (e.deltaY > 0 ? 0.85 : 1.18)));
+  panX = mx - (mx - panX) * (nz / zoom); panY = my - (my - panY) * (nz / zoom);
+  zoom = nz; draw();
+}, { passive: false });
+
+function select(fi, centre) {
+  selected = fi;
+  const f = files[fi];
+  const c = cells.find((cc) => cc.m.i === f.module), n = c.nuclei.find((nn) => nn.f.i === fi);
+  if (centre) {
+    const r = canvas.getBoundingClientRect();
+    zoom = 3.2;
+    const s = ((Math.min(r.width, r.height) / 2 - 10) / worldR) * zoom;
+    panX = -(c.x + n.x) * s; panY = -(c.y + n.y) * s;
+  }
+  document.getElementById('label').innerHTML = `<span class="muted">Specimen</span><b>${esc(f.name)}</b><span>${esc(f.path)}</span><span>Cell: ${esc(modules[f.module].label)} · ${fmt(f.loc)} lines · ${f.fns.length} functions</span>`;
+  const pos = f.fns.map((i) => D.functions[i]).filter((fn) => fn[6] !== -1).sort((a, b) => b[3] - a[3]);
+  document.getElementById('finding').innerHTML = pos.length
+    ? `<h2>${f.warnings} DAB-positive, ${f.infos} borderline</h2><ul>${pos.slice(0, 8).map((fn) => `<li><span title="${esc(fn[1])}">${esc(fn[1])}</span><b>${fn[3]}</b></li>`).join('')}</ul><button id="cp">Copy fix prompt for the strongest stain</button>`
+    : '<h2>No positive granules</h2><div class="muted">Every function here is under the info line.</div>';
+  const b = document.getElementById('cp');
+  if (b) b.addEventListener('click', () => copyPrompt(pos[0][6], b));
+  draw();
+}
+window.addEventListener('resize', draw);
+draw();
+setTimeout(() => select(files.reduce((best, f) => (f.warnings > files[best].warnings ? f.i : best), 0), false), 0);
+</script>
+</body>
+</html>

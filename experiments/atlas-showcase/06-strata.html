@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dependency Strata</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root { --sky: #dfe9ec; --ink: #2f2a24; --muted: #6e6559; --fault: #b8322a; --panel: #f3ece0; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--sky); color: var(--ink); font: 15px/1.5 'Libre Franklin', system-ui, sans-serif; }
+.wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 100vh; }
+.section { padding: 26px 28px 20px; display: flex; flex-direction: column; min-height: 100vh; }
+h1 { font: 800 38px/1.05 'Libre Franklin', sans-serif; margin: 4px 0 4px; letter-spacing: -0.02em; }
+.section > p { margin: 0 0 14px; color: var(--muted); max-width: 70ch; }
+a.back { color: var(--muted); font-size: 13px; }
+#xs { flex: 1; width: 100%; min-height: 540px; }
+.formation { cursor: pointer; }
+.formation:focus-visible rect.f, .formation.sel rect.f { stroke: var(--ink); stroke-width: 3; outline: none; }
+.flabel { font: 800 13px 'Libre Franklin'; fill: #2f2a24; pointer-events: none; }
+.llabel { font: 600 12px 'Libre Franklin'; fill: #2f2a24; opacity: .7; }
+aside { background: var(--panel); border-left: 1px solid #cdbfa6; padding: 22px 20px; display: flex; flex-direction: column; gap: 12px; }
+aside h2 { margin: 0; font: 800 22px/1.1 'Libre Franklin'; overflow-wrap: anywhere; }
+aside .sub { color: var(--muted); font-size: 13px; }
+.core { display: grid; grid-template-columns: 26px 1fr; gap: 0 10px; }
+.tube { border: 2px solid var(--ink); border-radius: 13px; overflow: hidden; display: flex; flex-direction: column; }
+.tube span { display: block; border-bottom: 1px solid rgba(47,42,36,.25); }
+.samples { display: flex; flex-direction: column; font-size: 12px; }
+.samples div { display: flex; justify-content: space-between; gap: 8px; align-items: center; overflow: hidden; }
+.samples div span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.samples b { font-weight: 800; }
+aside button { align-self: flex-start; border: 2px solid var(--ink); background: var(--ink); color: var(--panel); padding: 7px 12px; font: 600 13px 'Libre Franklin'; cursor: pointer; border-radius: 3px; }
+aside button.alt { background: none; color: var(--fault); border-color: var(--fault); }
+aside button:focus-visible { outline: 3px solid var(--fault); outline-offset: 2px; }
+.legend { display: grid; grid-template-columns: 18px 1fr; gap: 4px 8px; font-size: 12px; color: var(--muted); margin-top: auto; align-items: center; }
+.legend i { width: 14px; height: 14px; border-radius: 4px; display: block; }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="section">
+    <a class="back" href="index.html">All views</a>
+    <h1 id="h1"></h1>
+    <p id="lede"></p>
+    <svg id="xs" role="img" aria-label="Geological cross-section of dependency layers"></svg>
+  </div>
+  <aside id="side" aria-live="polite"></aside>
+</div>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, boundary, T, level, fmt, esc, copyPrompt, rng, totals } = Atlas;
+const maxRank = Math.max(...modules.map((m) => m.rank));
+document.getElementById('h1').textContent = `${D.repository.name} in cross-section`;
+document.getElementById('lede').textContent = `${maxRank + 1} layers deep. Every module sits one layer above the deepest thing it imports, so healthy imports only drill down. Red faults are the ${totals.boundary} imports the boundary rules forbid.`;
+
+const LAYER_FILL = ['#8a8f97', '#a6764e', '#c49a5a', '#d9bd86', '#e6d3a8', '#efe2c2'];
+const PEBBLE = (lv) => (lv === 2 ? '#a33b2b' : lv === 1 ? '#d07f2c' : '#f6efdf');
+const svg = document.getElementById('xs');
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a, p = svg) => { const e = document.createElementNS(NS, t); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); p.append(e); return e; };
+let selected = -1;
+const boxes = new Map();
+
+function wavy(x0, x1, y, amp, seed) {
+  const r = rng(seed); let d = `M${x0},${y}`;
+  for (let x = x0; x <= x1; x += 40) d += ` Q${x + 20},${y + (r() - 0.5) * amp * 2} ${Math.min(x + 40, x1)},${y + (r() - 0.5) * amp}`;
+  return d;
+}
+
+function render() {
+  svg.innerHTML = '';
+  const W = svg.clientWidth, H = svg.clientHeight;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const top = 34, labelW = 92;
+  const layerH = (H - top - 10) / (maxRank + 1);
+  // Grass line.
+  el('path', { d: wavy(0, W, top, 3, 3) + ` L${W},${top + 8} L0,${top + 8} Z`, fill: '#7d9b5a' });
+  for (let r = maxRank; r >= 0; r -= 1) {
+    const depth = maxRank - r;
+    const y = top + 6 + depth * layerH;
+    const fill = ['#ece0c2', '#dcc496', '#c9a26a', '#b0804e', '#94704f', '#7c7066'][Math.min(5, depth)];
+    el('path', { d: `${wavy(0, W, y, 4, r + 11)} L${W},${y + layerH} L0,${y + layerH} Z`, fill });
+    // Grain: sparse dots.
+    const g = rng(r * 97 + 5);
+    for (let k = 0; k < 140; k += 1) el('circle', { cx: g() * W, cy: y + 6 + g() * (layerH - 12), r: g() * 1.4 + 0.3, fill: 'rgba(47,42,36,.18)' });
+    const lab = el('text', { class: 'llabel', x: 12, y: y + layerH / 2 + 4 });
+    lab.textContent = r === maxRank ? 'Surface: entry points' : r === 0 ? 'Bedrock: depends on nothing in-tree' : `Layer ${r}`;
+    // Formations: modules of this rank, width by lines of code.
+    const mods = modules.filter((m) => m.rank === r);
+    const totalLoc = mods.reduce((s, m) => s + Math.max(800, m.loc), 0);
+    let x = labelW + 120;
+    const avail = W - x - 20 - (mods.length - 1) * 14;
+    const flex = Math.max(0, avail - 54 * mods.length);
+    mods.forEach((m) => {
+      const w = 54 + (Math.max(800, m.loc) / totalLoc) * flex;
+      const fy = y + 10, fh = layerH - 20;
+      boxes.set(m.i, { x, y: fy, w, h: fh });
+      const fg = el('g', { class: `formation${m.i === selected ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': `${m.label}: ${m.files.length} files, ${m.warnings} functions past ${T.warning.complexity}` });
+      el('rect', { class: 'f', x, y: fy, width: w, height: fh, rx: 10, fill: 'rgba(255,255,255,.28)', stroke: 'rgba(47,42,36,.45)', 'stroke-width': 1 }, fg);
+      // Pebbles: one per file, packed in rows, sized by lines.
+      const pr = rng(m.i * 31 + 7);
+      // Scale pebbles so they cover roughly half the formation.
+      const sumLoc = m.files.reduce((t, fi) => t + files[fi].loc, 0) || 1;
+      const k = Math.sqrt((w - 16) * (fh - 30) * 0.42 / sumLoc);
+      let px = x + 8, py = fy + 22, rowH = 0;
+      m.files.map((fi) => files[fi]).sort((a, b) => b.maxCC - a.maxCC).forEach((f) => {
+        const s = Math.max(5, Math.min(fh - 30, Math.sqrt(f.loc) * k));
+        if (px + s > x + w - 6) { px = x + 8; py += rowH + 4; rowH = 0; }
+        if (py + s > fy + fh - 4) return;
+        const j = () => (pr() - 0.5) * s * 0.35;
+        el('path', { d: `M${px + s * 0.2 + j()},${py + j()} L${px + s + j()},${py + s * 0.15 + j()} L${px + s * 0.9 + j()},${py + s + j()} L${px + j()},${py + s * 0.85 + j()} Z`,
+          fill: PEBBLE(level(f.maxCC)), stroke: 'rgba(47,42,36,.5)', 'stroke-width': 0.8 }, fg).append(Object.assign(document.createElementNS(NS, 'title'), { textContent: `${f.path} · max ${f.maxCC}` }));
+        px += s + 4; rowH = Math.max(rowH, s);
+      });
+      const t = el('text', { class: 'flabel', x: x + 8, y: fy + 15 }, fg);
+      t.textContent = w > 70 ? `${m.label}${m.warnings ? `  ${m.warnings}▲` : ''}` : m.label.slice(0, 6);
+      fg.addEventListener('click', () => select(m.i));
+      fg.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(m.i); } });
+      x += w + 14;
+    });
+  }
+  // Drill lines: module imports, drawn from the importer down into the imported.
+  const drills = el('g', { 'pointer-events': 'none' });
+  const faulty = new Set();
+  boundary.forEach((b) => (b.edges || []).forEach(([a, c]) => faulty.add(`${files[a].module}>${files[c].module}`)));
+  (D.moduleEdges || []).forEach(([a, b, w]) => {
+    if (a === b) return;
+    const A = boxes.get(a), B = boxes.get(b);
+    if (!A || !B) return;
+    const x1 = A.x + A.w / 2, y1 = A.y + A.h, x2 = B.x + B.w / 2, y2 = B.y;
+    const isFault = faulty.has(`${a}>${b}`);
+    const lit = selected === -1 || selected === a || selected === b;
+    if (isFault) {
+      const r = rng(a * 13 + b); let d = `M${x1},${y1}`;
+      for (let k = 1; k <= 8; k += 1) d += ` L${x1 + (x2 - x1) * k / 8 + (k < 8 ? (r() - 0.5) * 18 : 0)},${y1 + (y2 - y1) * k / 8}`;
+      el('path', { d, fill: 'none', stroke: '#b8322a', 'stroke-width': 3.2, 'stroke-linejoin': 'bevel' }, drills);
+    } else {
+      el('path', { d: `M${x1},${y1} C${x1},${(y1 + y2) / 2} ${x2},${(y1 + y2) / 2} ${x2},${y2}`, fill: 'none', stroke: lit ? 'rgba(47,42,36,.75)' : 'rgba(47,42,36,.12)', 'stroke-width': Math.min(5, 0.8 + Math.sqrt(w) * 0.5), 'stroke-dasharray': '1 3', 'stroke-linecap': 'round' }, drills);
+    }
+  });
+}
+
+function select(mi) {
+  selected = mi;
+  const m = modules[mi];
+  const fs = m.files.map((fi) => files[fi]).sort((a, b) => b.maxCC - a.maxCC);
+  const totalLoc = fs.reduce((s, f) => s + f.loc, 0) || 1;
+  const worst = fs[0] && fs[0].fns.map((i) => D.functions[i]).sort((a, b) => b[3] - a[3])[0];
+  const faults = boundary.filter((b) => (b.edges || []).some(([a, c]) => files[a].module === mi || files[c].module === mi));
+  const shown = fs.slice(0, 14);
+  document.getElementById('side').innerHTML = `
+    <div><h2>Core sample: ${esc(m.label)}</h2><div class="sub">${esc(m.path || '.')} · layer ${m.rank} · ${fs.length} files · ${fmt(m.loc)} lines</div></div>
+    <div class="core">
+      <div class="tube">${shown.map((f) => `<span style="height:${Math.max(16, (f.loc / totalLoc) * 360)}px;background:${PEBBLE(level(f.maxCC))}"></span>`).join('')}</div>
+      <div class="samples">${shown.map((f) => `<div style="height:${Math.max(16, (f.loc / totalLoc) * 360)}px"><span title="${esc(f.path)}">${esc(f.name)}</span><b>${f.maxCC}</b></div>`).join('')}</div>
+    </div>
+    ${fs.length > shown.length ? `<div class="sub">${fs.length - shown.length} smaller files not shown</div>` : ''}
+    ${worst && worst[6] !== -1 ? `<button id="cp">Copy fix prompt: ${esc(worst[1].split('.').pop())}</button>` : ''}
+    ${faults.map((b) => `<button class="alt" data-b="${boundary.indexOf(b)}">Copy fix prompt: fault ${esc(b.title)}</button>`).join('')}
+    <div class="legend">
+      <i style="background:#f6efdf;border:1px solid #6e6559"></i><span>File with every function under ${T.info.complexity}</span>
+      <i style="background:#d07f2c"></i><span>A function past ${T.info.complexity}</span>
+      <i style="background:#a33b2b"></i><span>A function past ${T.warning.complexity}</span>
+      <i style="background:none;border-top:3px solid #b8322a;border-radius:0;height:0"></i><span>Fault: forbidden boundary import</span>
+    </div>`;
+  const cp = document.getElementById('cp');
+  if (cp) cp.addEventListener('click', () => copyPrompt(worst[6], cp));
+  document.querySelectorAll('[data-b]').forEach((b) => b.addEventListener('click', () => copyPrompt(boundary[Number(b.dataset.b)], b)));
+  render();
+}
+window.addEventListener('resize', render);
+select(modules.find((m) => m.label === 'workflow')?.i ?? 0);
+</script>
+</body>
+</html>

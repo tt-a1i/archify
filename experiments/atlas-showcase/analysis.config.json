@@ -1,0 +1,16 @@
+{
+  "boundaries": {
+    "layers": {
+      "shared": ["renderers/shared/**"],
+      "renderers": ["renderers/**"],
+      "explainer": ["explainer/**"],
+      "migrations": ["migrations/**"],
+      "cli": ["bin/**", "scripts/**"]
+    },
+    "rules": [
+      { "from": "renderers", "disallow": ["explainer", "migrations", "cli"], "reason": "renderers stay independent of authoring tools" },
+      { "from": "migrations", "allow": ["shared"], "reason": "migrations only use shared helpers" },
+      { "from": "shared", "allow": [], "reason": "shared is the bottom layer" }
+    ]
+  }
+}

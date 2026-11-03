@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Constellations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --night: #13204a; --deep: #0d1838; --gold: #d8b45a; --cream: #f2e7cc; --muted: #9aa6c8; --comet: #ff6b5b; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: radial-gradient(ellipse at 50% 40%, #1d2d63 0%, var(--night) 55%, var(--deep) 100%); color: var(--cream); font: 15px/1.5 Jost, system-ui, sans-serif; overflow: hidden; }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+.plate { position: fixed; left: 32px; top: 28px; max-width: 360px; pointer-events: none; }
+.plate > * { pointer-events: auto; }
+h1 { font: italic 500 54px/0.95 'Cormorant Garamond', serif; margin: 6px 0 10px; color: var(--cream); }
+.plate p { color: var(--muted); margin: 0 0 14px; }
+a.back { color: var(--muted); font-size: 13px; }
+.key { display: grid; grid-template-columns: 22px 1fr; gap: 5px 10px; font-size: 13px; color: var(--muted); align-items: center; }
+.dot { width: 10px; height: 10px; border-radius: 50%; justify-self: center; }
+#panel { position: fixed; right: 28px; top: 28px; width: min(360px, calc(100% - 56px)); border: 1px solid rgba(216, 180, 90, .55); border-radius: 4px; padding: 16px 18px; background: rgba(13, 24, 56, .88); }
+#panel h2 { font: 700 26px/1.05 'Cormorant Garamond', serif; margin: 0 0 4px; color: var(--gold); overflow-wrap: anywhere; }
+#panel .sub { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+#panel ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+#panel li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 10px; }
+#panel li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+#panel li span + span { text-align: right; color: var(--muted); }
+#panel button { margin-top: 12px; border: 1px solid var(--gold); background: none; color: var(--gold); padding: 6px 14px; border-radius: 2px; font: 500 13px Jost, sans-serif; cursor: pointer; }
+#panel button:hover, #panel button:focus-visible { background: var(--gold); color: var(--deep); outline: none; }
+#tip { position: fixed; pointer-events: none; font: italic 500 16px 'Cormorant Garamond', serif; color: var(--cream); text-shadow: 0 0 6px var(--deep); }
+#tip[hidden] { display: none; }
+.cometlist { position: fixed; left: 32px; bottom: 28px; display: grid; gap: 6px; }
+.cometlist button { text-align: left; border: 1px solid rgba(255, 107, 91, .6); background: rgba(13, 24, 56, .7); color: var(--cream); padding: 6px 12px; border-radius: 2px; font: 500 13px Jost, sans-serif; cursor: pointer; }
+.cometlist button:hover, .cometlist button:focus-visible { border-color: var(--comet); outline: none; background: rgba(255, 107, 91, .15); }
+@media (max-width: 760px) { .plate { max-width: 70vw; } h1 { font-size: 38px; } .cometlist { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Star chart: files are stars grouped into module constellations"></canvas>
+<div class="plate">
+  <a class="back" href="index.html">All views</a>
+  <h1>Constellations of <span id="repo"></span></h1>
+  <p id="lede"></p>
+  <div class="key">
+    <span class="dot" style="background:#cfe0ff"></span><span>Cool star: simple file</span>
+    <span class="dot" style="background:#ffc46b"></span><span>Warm star: a function past the info line</span>
+    <span class="dot" style="background:#ff6b5b"></span><span>Red giant: a function past the warning line</span>
+    <span class="dot" style="background:none;border:1px solid #d8b45a"></span><span>Lines join files that import each other</span>
+  </div>
+</div>
+<div class="cometlist" id="comets" aria-label="Boundary violations"></div>
+<aside id="panel" aria-live="polite"></aside>
+<div id="tip" hidden></div>
+<script src="data.js"></script>
+<script src="lib.js"></script>
+<script>
+const { D, files, modules, boundary, violatingEdge, level, fmt, esc, copyPrompt, rng, fitCanvas, reducedMotion, totals } = Atlas;
+document.getElementById('repo').textContent = D.repository.name;
+document.getElementById('lede').textContent = `${totals.files} stars in ${totals.modules} constellations, joined by ${fmt(totals.edges)} import lines. ${totals.boundary} comets cross a forbidden boundary.`;
+
+const canvas = document.getElementById('c');
+const tip = document.getElementById('tip');
+let W = 0, H = 0, nodes = [], selected = -1, hover = -1, focusComet = -1;
+const bg = rng(7);
+const dust = Array.from({ length: 420 }, () => [bg(), bg(), bg() * 1.1 + 0.2, bg()]);
+
+function layout() {
+  const cx = W * 0.55, cy = H * 0.52, R = Math.min(W * 0.36, H * 0.4);
+  const big = modules.slice().sort((a, b) => b.files.length - a.files.length);
+  const anchors = new Map();
+  // Larger constellations sit nearer the middle; the rest ring around them.
+  big.forEach((m, k) => {
+    const ring = k === 0 ? 0 : k < 6 ? 0.55 : 1;
+    const ang = k * 2.39996;
+    anchors.set(m.i, [cx + Math.cos(ang) * R * ring, cy + Math.sin(ang) * R * ring * 0.86]);
+  });
+  const r = rng(42);
+  nodes = files.map((f) => {
+    const [ax, ay] = anchors.get(f.module);
+    return { x: ax + (r() - 0.5) * 60, y: ay + (r() - 0.5) * 60, vx: 0, vy: 0, f };
+  });
+  for (let it = 0; it < 260; it += 1) {
+    const k = 1 - it / 260;
+    nodes.forEach((n) => {
+      const [ax, ay] = anchors.get(n.f.module);
+      n.vx += (ax - n.x) * 0.012; n.vy += (ay - n.y) * 0.012;
+    });
+    D.edges.forEach(([a, b]) => {
+      const A = nodes[a], B = nodes[b];
+      if (A.f.module !== B.f.module) return;
+      const dx = B.x - A.x, dy = B.y - A.y;
+      A.vx += dx * 0.004; A.vy += dy * 0.004; B.vx -= dx * 0.004; B.vy -= dy * 0.004;
+    });
+    for (let i = 0; i < nodes.length; i += 1) for (let j = i + 1; j < nodes.length; j += 1) {
+      const A = nodes[i], B = nodes[j];
+      const dx = B.x - A.x, dy = B.y - A.y;
+      const d2 = dx * dx + dy * dy + 0.01;
+      const same = A.f.module === B.f.module;
+      const min = same ? 26 : 48;
+      if (d2 < min * min) {
+        const d = Math.sqrt(d2), push = (min - d) / d * 0.25;
+        A.vx -= dx * push; A.vy -= dy * push; B.vx += dx * push; B.vy += dy * push;
+      }
+    }
+    nodes.forEach((n) => { n.x += n.vx * k; n.y += n.vy * k; n.vx *= 0.6; n.vy *= 0.6; });
+  }
+  // Fit to the viewport with a margin.
+  const xs = nodes.map((n) => n.x), ys = nodes.map((n) => n.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const left = Math.min(400, W * 0.3), m = 60, right = W > 1000 ? 400 : m;
+  const s = Math.min((W - left - right) / (x1 - x0 || 1), (H - 2 * m) / (y1 - y0 || 1));
+  nodes.forEach((n) => { n.x = left + (n.x - x0) * s; n.y = m + (n.y - y0) * s; });
+}
+
+const radius = (f) => 1.4 + Math.sqrt(f.loc) * 0.09;
+const colour = (f) => (level(f.maxCC) === 2 ? [255, 107, 91] : level(f.maxCC) === 1 ? [255, 196, 107] : [207, 224, 255]);
+
+function draw(now) {
+  const { ctx, w, h } = fitCanvas(canvas);
+  if (w !== W || h !== H) { W = w; H = h; layout(); }
+  ctx.clearRect(0, 0, w, h);
+  // Graticule.
+  ctx.strokeStyle = 'rgba(154, 166, 200, .09)'; ctx.lineWidth = 1;
+  const gx = w * 0.6, gy = h * 0.5;
+  for (let r = 120; r < Math.max(w, h); r += 120) { ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.stroke(); }
+  for (let a = 0; a < 12; a += 1) { ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + Math.cos(a * Math.PI / 6) * 2000, gy + Math.sin(a * Math.PI / 6) * 2000); ctx.stroke(); }
+  dust.forEach(([x, y, r, p]) => {
+    ctx.globalAlpha = reducedMotion ? 0.35 : 0.2 + 0.25 * Math.sin(now / 900 + p * 40);
+    ctx.fillStyle = '#c9d4f0'; ctx.fillRect(x * w, y * h, r, r);
+  });
+  ctx.globalAlpha = 1;
+
+  const focusFile = selected !== -1 ? selected : hover;
+  // Cross-module imports: faint dotted arcs.
+  ctx.setLineDash([1, 4]); ctx.lineWidth = 0.7;
+  D.edges.forEach(([a, b]) => {
+    const A = nodes[a], B = nodes[b];
+    if (A.f.module === B.f.module || violatingEdge.has(`${a}>${b}`)) return;
+    const lit = focusFile === a || focusFile === b;
+    ctx.strokeStyle = lit ? 'rgba(216, 180, 90, .75)' : 'rgba(154, 166, 200, .13)';
+    ctx.beginPath(); ctx.moveTo(A.x, A.y);
+    ctx.quadraticCurveTo((A.x + B.x) / 2 + (B.y - A.y) * 0.15, (A.y + B.y) / 2 - (B.x - A.x) * 0.15, B.x, B.y); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  // Constellation lines inside a module.
+  D.edges.forEach(([a, b]) => {
+    const A = nodes[a], B = nodes[b];
+    if (A.f.module !== B.f.module) return;
+    const lit = focusFile === a || focusFile === b;
+    ctx.strokeStyle = lit ? 'rgba(242, 231, 204, .95)' : 'rgba(216, 180, 90, .42)';
+    ctx.lineWidth = lit ? 1.3 : 0.8;
+    ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+  });
+  // Comets: boundary violations, with a travelling head.
+  boundary.forEach((bf, k) => (bf.edges || []).forEach(([a, b], j) => {
+    const A = nodes[a], B = nodes[b];
+    const strong = focusComet === -1 || focusComet === k;
+    const grad = ctx.createLinearGradient(A.x, A.y, B.x, B.y);
+    grad.addColorStop(0, 'rgba(255,107,91,0)'); grad.addColorStop(1, strong ? 'rgba(255,107,91,.95)' : 'rgba(255,107,91,.25)');
+    ctx.strokeStyle = grad; ctx.lineWidth = strong ? 2.2 : 1;
+    ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+    const t = reducedMotion ? 1 : ((now / 2200) + j * 0.3) % 1;
+    const hx = A.x + (B.x - A.x) * t, hy = A.y + (B.y - A.y) * t;
+    const glow = ctx.createRadialGradient(hx, hy, 0, hx, hy, 10);
+    glow.addColorStop(0, 'rgba(255,190,170,.95)'); glow.addColorStop(1, 'rgba(255,107,91,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(hx, hy, 10, 0, Math.PI * 2); ctx.fill();
+  }));
+  // Stars.
+  nodes.forEach((n, i) => {
+    const r = radius(n.f), [cr, cg, cb] = colour(n.f);
+    const tw = reducedMotion ? 1 : 0.85 + 0.15 * Math.sin(now / 600 + i * 1.7);
+    const halo = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 5);
+    halo.addColorStop(0, `rgba(${cr},${cg},${cb},${0.55 * tw})`); halo.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(n.x, n.y, r * 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgb(${cr},${cg},${cb})`; ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, Math.PI * 2); ctx.fill();
+    if (i === focusFile) { ctx.strokeStyle = '#f2e7cc'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(n.x, n.y, r + 6, 0, Math.PI * 2); ctx.stroke(); }
+  });
+  // Constellation names at their centroid.
+  ctx.font = 'italic 500 17px "Cormorant Garamond", serif'; ctx.textAlign = 'center';
+  modules.forEach((m) => {
+    const ns = m.files.map((fi) => nodes[fi]);
+    const x = ns.reduce((s, n) => s + n.x, 0) / ns.length;
+    const y = Math.max(...ns.map((n) => n.y)) + 22;
+    ctx.fillStyle = 'rgba(216, 180, 90, .9)'; ctx.fillText(m.label, x, y);
+  });
+  ctx.textAlign = 'start';
+  if (!reducedMotion) requestAnimationFrame(draw);
+}
+
+function pick(x, y) {
+  let best = -1, bd = 14 * 14;
+  nodes.forEach((n, i) => { const d = (n.x - x) ** 2 + (n.y - y) ** 2; if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+canvas.addEventListener('mousemove', (e) => {
+  hover = pick(e.clientX, e.clientY);
+  canvas.style.cursor = hover === -1 ? 'default' : 'pointer';
+  if (hover === -1) { tip.hidden = true; return; }
+  tip.hidden = false; tip.textContent = files[hover].name;
+  tip.style.left = `${e.clientX + 14}px`; tip.style.top = `${e.clientY - 12}px`;
+  if (reducedMotion) draw(0);
+});
+canvas.addEventListener('click', () => { if (hover !== -1) select(hover); });
+
+const panel = document.getElementById('panel');
+function select(fi) {
+  selected = fi; focusComet = -1;
+  const f = files[fi];
+  const top = f.fns.map((i) => D.functions[i]).sort((a, b) => b[3] - a[3]).slice(0, 4);
+  const worst = top[0];
+  panel.innerHTML = `<h2>${esc(f.name)}</h2><div class="sub">${esc(f.path)} · ${fmt(f.loc)} lines · imports ${f.out.length}, imported by ${f.in.length}</div>
+    <ul>${top.map((fn) => `<li><span>${esc(fn[1])}</span><span>${fn[3]}</span></li>`).join('')}</ul>
+    ${worst && worst[6] !== -1 ? '<button id="cp">Copy fix prompt for the brightest function</button>' : ''}`;
+  const b = document.getElementById('cp');
+  if (b) b.addEventListener('click', () => copyPrompt(worst[6], b));
+  if (reducedMotion) draw(0);
+}
+function selectComet(k) {
+  focusComet = k; selected = -1;
+  const bf = boundary[k];
+  panel.innerHTML = `<h2>${esc(bf.title)}</h2><div class="sub">${esc(bf.message)}</div>
+    <ul>${(bf.imports || []).map((im) => `<li><span>${esc(im.file)}:${im.line}</span><span>→ ${esc(im.to.split('/').pop())}</span></li>`).join('')}</ul>
+    <button id="cp">Copy fix prompt for AI</button>`;
+  document.getElementById('cp').addEventListener('click', (e) => copyPrompt(bf, e.currentTarget));
+  if (reducedMotion) draw(0);
+}
+const cl = document.getElementById('comets');
+boundary.forEach((bf, k) => {
+  const b = document.createElement('button');
+  b.textContent = `Comet: ${bf.title}`;
+  b.addEventListener('click', () => selectComet(k));
+  cl.append(b);
+});
+if (boundary.length) selectComet(0); else select(0);
+window.addEventListener('resize', () => reducedMotion && draw(0));
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
