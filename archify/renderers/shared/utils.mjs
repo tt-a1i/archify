@@ -133,6 +133,7 @@ const SUBTITLE_SLOT_RE = /^([ \t]*)<p class="subtitle">\[Subtitle description\]<
 const SOURCE_EVIDENCE_PLACEHOLDER = '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->';
 const I18N_PLACEHOLDER = '    <!-- ARCHIFY:I18N_DATA -->';
 const EXPLANATIONS_PLACEHOLDER = '    <!-- ARCHIFY:EXPLANATIONS_DATA -->';
+const READER_UPDATE_PLACEHOLDER = '    <!-- ARCHIFY:READER_UPDATE_DATA -->';
 
 function serializeScriptJson(value) {
   return JSON.stringify(value)
@@ -157,6 +158,7 @@ export function applyTemplate(template, {
   visualPreset = 'classic',
   sourceEvidence = null,
   explanations = null,
+  readerUpdate = null,
 }) {
   if (!SVG_SLOT_RE.test(template)) {
     throw new Error('applyTemplate: template missing ARCHIFY:SVG_SLOT sentinel');
@@ -190,6 +192,7 @@ export function applyTemplate(template, {
   // or rendered SVG must not be interpreted as a replacement pattern.
   const sourceEvidenceJson = serializeScriptJson(sourceEvidence);
   const explanationsJson = serializeScriptJson(hasExplanations ? explanations : null);
+  const readerUpdateJson = serializeScriptJson(readerUpdate);
   const resolvedLocale = resolveLocale(locale);
   const i18nJson = serializeScriptJson({ locale: resolvedLocale, messages: viewerCatalog(resolvedLocale) });
   const renderedSubtitle = typeof subtitle === 'string' && subtitle.trim()
@@ -211,6 +214,9 @@ export function applyTemplate(template, {
       : '')
     .replace(EXPLANATIONS_PLACEHOLDER, () => hasExplanations
       ? `    <script id="archify-explanations-data" type="application/json">${explanationsJson}</script>`
+      : '')
+    .replace(READER_UPDATE_PLACEHOLDER, () => readerUpdate
+      ? `    <script id="archify-reader-update-data" type="application/json">${readerUpdateJson}</script>`
       : '');
 }
 

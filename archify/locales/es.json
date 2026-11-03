@@ -497,5 +497,20 @@
   "viewer.passport.back": "Volver al diagrama principal",
   "viewer.passport.back.aria": "Volver al diagrama principal",
   "viewer.nav.back": "Volver",
-  "viewer.nav.back.title": "Volver al diagrama principal"
+  "viewer.nav.back.title": "Volver al diagrama principal",
+  "viewer.update.button": "Versión {version}",
+  "viewer.update.title": "Versión del artefacto",
+  "viewer.update.close": "Cerrar la versión del artefacto",
+  "viewer.update.fact.type": "Tipo",
+  "viewer.update.fact.generator": "Generador",
+  "viewer.update.fact.content": "Identidad del contenido",
+  "viewer.update.check": "Buscar actualización",
+  "viewer.update.checking": "Comprobando el manifiesto estable fijo…",
+  "viewer.update.unavailable": "El estado de actualización no está disponible. No se registró ningún resultado.",
+  "viewer.update.unavailableDevelopment": "El estado de actualización no está disponible para este artefacto de desarrollo. No se registró ningún resultado.",
+  "viewer.update.none": "No se encontró una versión estable más reciente.",
+  "viewer.update.available": "Hay una versión estable más reciente.",
+  "viewer.update.newVersion": "Nueva versión {version}",
+  "viewer.update.current": "Versión actual: {version}",
+  "viewer.update.releaseNotes": "Notas de la versión"
 }

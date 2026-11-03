@@ -497,5 +497,20 @@
   "viewer.passport.back": "العودة إلى المخطط الأصل",
   "viewer.passport.back.aria": "العودة إلى المخطط الأصل",
   "viewer.nav.back": "رجوع",
-  "viewer.nav.back.title": "العودة إلى المخطط الأصل"
+  "viewer.nav.back.title": "العودة إلى المخطط الأصل",
+  "viewer.update.button": "الإصدار {version}",
+  "viewer.update.title": "إصدار المخرج",
+  "viewer.update.close": "إغلاق إصدار المخرج",
+  "viewer.update.fact.type": "النوع",
+  "viewer.update.fact.generator": "المولّد",
+  "viewer.update.fact.content": "معرّف المحتوى",
+  "viewer.update.check": "التحقق من التحديث",
+  "viewer.update.checking": "جارٍ التحقق من بيان الإصدار المستقر الثابت…",
+  "viewer.update.unavailable": "حالة التحديث غير متاحة. لم تُسجَّل نتيجة تحديث.",
+  "viewer.update.unavailableDevelopment": "حالة التحديث غير متاحة لهذا المخرج التطويري. لم تُسجَّل نتيجة تحديث.",
+  "viewer.update.none": "لم يُعثر على إصدار مستقر أحدث.",
+  "viewer.update.available": "يتوفر إصدار مستقر أحدث.",
+  "viewer.update.newVersion": "إصدار جديد {version}",
+  "viewer.update.current": "الإصدار الحالي: {version}",
+  "viewer.update.releaseNotes": "ملاحظات الإصدار"
 }
