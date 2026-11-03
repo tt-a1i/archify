@@ -17,11 +17,20 @@ import { containedBy, sameLocation } from '../archify/renderers/shared/path-sema
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const sourceRoot = path.resolve(__dirname, '../docs/assets');
+const fontRoot = path.resolve(__dirname, '../website/public/fonts');
 const SITE_ASSETS = Object.freeze([
-  'site-language.js',
-  'site-navigation.css',
-  'archify-lockup-light.svg',
-  'archify-mark.svg',
+  ...[
+    'site-language.js', 'site-navigation.css', 'archify-lockup-light.svg', 'archify-mark.svg',
+  ].map(asset => [asset, path.join(sourceRoot, asset)]),
+  // Reuse the website's reviewed font bytes, declarations and provenance.
+  // Keeping them beside the CSS preserves its relative URLs in custom outputs.
+  ...[
+    'fonts.css', 'sources.json',
+    'fraunces-normal-latin.woff2', 'fraunces-italic-latin.woff2', 'fraunces-OFL.txt',
+    'inter-normal-latin.woff2', 'inter-OFL.txt',
+    'jetbrains-mono-normal-latin.woff2', 'jetbrainsmono-OFL.txt',
+    'space-grotesk-normal-latin.woff2', 'spacegrotesk-OFL.txt',
+  ].map(asset => [asset, path.join(fontRoot, asset)]),
 ]);
 
 function publicationError(asset, state) {
@@ -132,8 +141,7 @@ export function copySiteAssets(outputHtmlPath) {
   }
 
   const publications = [];
-  for (const asset of SITE_ASSETS) {
-    const source = path.join(sourceRoot, asset);
+  for (const [asset, source] of SITE_ASSETS) {
     const target = path.join(targetRoot, asset);
     const capture = captureAtomicOutput(target, {
       requestedEntryPolicy: 'regular-or-absent',

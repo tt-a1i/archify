@@ -420,6 +420,12 @@ test('copySiteAssets atomically refreshes regular assets and leaves no temporary
       fs.readFileSync(path.join(canonicalAssets, asset)),
     );
   }
+  const fontRoot = path.join(repoRoot, 'website/public/fonts');
+  const manifest = JSON.parse(fs.readFileSync(path.join(fontRoot, 'sources.json'), 'utf8'));
+  const fontFiles = ['fonts.css', 'sources.json', ...manifest.fonts.map(font => font.file), ...manifest.licenses.map(license => license.file)];
+  for (const asset of fontFiles) {
+    assert.deepEqual(fs.readFileSync(path.join(assets, asset)), fs.readFileSync(path.join(fontRoot, asset)), asset);
+  }
   if (process.platform !== 'win32') {
     assert.equal(fs.statSync(existing).mode & 0o777, 0o666);
   }
@@ -428,5 +434,6 @@ test('copySiteAssets atomically refreshes regular assets and leaves no temporary
     'archify-mark.svg',
     'site-language.js',
     'site-navigation.css',
-  ]);
+    ...fontFiles,
+  ].sort());
 });

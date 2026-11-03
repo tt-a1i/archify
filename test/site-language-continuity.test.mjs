@@ -310,6 +310,8 @@ test('all site pages consume one language runtime and one navigation contract', 
     const html = fs.readFileSync(path.join(repoRoot, relative), 'utf8');
     assert.match(html, /<script src="assets\/site-language\.js"><\/script>/, `${relative}: shared runtime missing`);
     assert.match(html, /<link rel="stylesheet" href="assets\/site-navigation\.css">/, `${relative}: shared navigation missing`);
+    assert.match(html, /<link rel="stylesheet" href="assets\/fonts\.css">/, `${relative}: local font stylesheet missing`);
+    assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/, `${relative}: fonts must not depend on a remote provider`);
     assert.match(html, /<nav class="site-nav" aria-label="Primary navigation">/, `${relative}: canonical navigation root missing`);
     assert.match(html, /ArchifySiteLanguage\.read\(/, `${relative}: shared language read missing`);
     assert.match(html, /ArchifySiteLanguage\.write\(/, `${relative}: shared language write missing`);
