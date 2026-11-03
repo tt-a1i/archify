@@ -12,6 +12,7 @@ import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
 import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
+import { resolveRelativeVia, relativeViaLabelProblem } from './relative-via.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
@@ -51,12 +52,13 @@ const componentTextFit = {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const layoutJsonMode = process.argv.includes('--layout-json');
 const cliArgs = process.argv.filter((arg) => arg !== '--layout-json');
-const { diagram: arch, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
+const { diagram: sourceArch, template, outPath, sourceEvidence } = await loadDiagramWithBrandMarks({
   rendererDir: __dirname,
   diagramType: 'architecture',
   defaultExample: 'web-app.architecture.json',
   argv: cliArgs,
 });
+const arch = { ...sourceArch };
 
 const grid = gridLayout(arch);
 
@@ -96,6 +98,7 @@ function measureComponent(c) {
 }
 
 const components = new Map(asArray(arch.components).map((c) => [c.id, measureComponent(c)]));
+arch.connections = resolveRelativeVia(sourceArch.connections, components);
 const enforcesBoundaryTitleComposition = Boolean(arch.meta?.quality_profile);
 const componentSteps = new Map();
 for (const [index, conn] of asArray(arch.connections).entries()) {
@@ -809,6 +812,11 @@ function validateArchitecture() {
     }
     if (components.has(conn.from) && components.has(conn.to)) {
       const routed = pathFor(conn);
+      const labelProblem = relativeViaLabelProblem(sourceArch.connections[connIndex], routed.points, connIndex);
+      if (labelProblem) {
+        diagnostics.push(labelProblem);
+        problems.push(labelProblem.message);
+      }
       const outsidePoints = routed.points.filter(([x, y]) => x < 0 || y < 0 || x > viewBox[0] || y > viewBox[1]);
       if (arch.meta?.quality_profile === 'showcase' && outsidePoints.length) {
         const message = `Connection "${conn.id || `${conn.from}->${conn.to}`}" extends outside the viewBox — move the measured outside route points inward or enlarge an authored viewBox for right/bottom overflow.`;
@@ -1187,6 +1195,6 @@ if (layoutJsonMode) {
     svg: renderSvg(),
     cards: arch.cards,
     sourceEvidence,
-    diagram: arch,
+    diagram: sourceArch,
   });
 }
