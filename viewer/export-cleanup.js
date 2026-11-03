@@ -1,4 +1,7 @@
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-passport-step]'), function (el) {
+          el.removeAttribute('data-passport-step');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('a[data-archify-authored-href]'), function (anchor) {
           anchor.setAttribute('href', anchor.getAttribute('data-archify-authored-href'));
           anchor.removeAttribute('data-archify-authored-href');
@@ -157,6 +160,7 @@
           el.setAttribute('aria-label', el.getAttribute('data-tree-label-collapse') || '');
         });
         return !clone.hasAttribute('data-view-scale') &&
+          !clone.querySelector('[data-passport-step]') &&
           !clone.hasAttribute('data-focus-active') &&
           !clone.hasAttribute('data-reach-active') &&
           !clone.hasAttribute('data-lens-active') &&

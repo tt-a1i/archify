@@ -37,11 +37,16 @@
     const nextMode=()=>modes[(modes.indexOf(selectedMode())+1)%modes.length];
     motion.hidden=false;
     const modeLabel=mode=>viewerText(mode==='story'?'viewer.story.label':'viewer.motion.'+mode);
+    let steps;
     function refresh(){
+      if(steps?.isPlaying()){
+        label.textContent=viewerText('viewer.steps.playing');motion.setAttribute('aria-label',viewerText('viewer.steps.pause'));motion.title=viewerText('viewer.steps.pause');motion.setAttribute('aria-pressed','true');motion.disabled=false;return;
+      }
       const selected=selectedMode();label.textContent=modeLabel(selected);
       motion.setAttribute('aria-label',viewerText('viewer.story.switch',{view:label.textContent}));motion.setAttribute('aria-pressed',String(selected!=='still'));motion.title=viewerText('viewer.story.next',{view:modeLabel(nextMode())});motion.disabled=false;
     }
-    motion.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();Archify.exportMenu.close(false);Archify.preset?.close(false);setView(nextMode(),{persist:true}).catch(showError);},true);
+    if(payload.nodeSequences?.length&&Archify.focus?.supportsPassportSteps)steps=installPassportSteps(payload.nodeSequences,refresh);
+    motion.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();if(steps?.isPlaying()){steps.pause();return;}Archify.exportMenu.close(false);Archify.preset?.close(false);setView(nextMode(),{persist:true}).catch(showError);},true);
     new MutationObserver(refresh).observe(root,{attributes:true,attributeFilter:['data-motion']});
     function loadFrame(frame,frozenAppearance,render=false){
       return new Promise((resolve,reject)=>{
@@ -65,6 +70,7 @@
     }
     async function setView(next,{persist=false}={}){
       if(!['live','still','story'].includes(next))throw Error('Unknown Viewer mode.');
+      if(steps?.isPlaying())steps.pause();
       const version=++viewVersion;
       if(next==='story'){
         if(view!=='story')diagram.style.setProperty('--story-native-width',diagram.getBoundingClientRect().width+'px');

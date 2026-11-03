@@ -26,6 +26,7 @@ export function compileBrief(brief, facts) {
   if(brief.opening&&!openingModes.includes(brief.opening))throw Error('Opening must be auto, fit, scan-x or scan-y.');
   const intro = required(brief.intro, 'Intro'), outro = required(brief.outro, 'Outro');
   const shots = [{duration: 6, preset: 'establish', label: '', phase: -1, headline: title, caption: intro, nodes: [], edges: [], annotations: []}];
+  const nodeSequences = [];
   for (const [index, scene] of brief.scenes.entries()) {
     const headline = required(scene.title, 'Scene title');
     if (!Array.isArray(scene.points) || !scene.points.length) throw Error('Every scene needs points.');
@@ -33,6 +34,8 @@ export function compileBrief(brief, facts) {
     if (scene.preset && !['follow', 'inspect'].includes(scene.preset)) throw Error('Scene preset must be follow or inspect.');
     const focus = [...(scene.focus || [])], selectedEdges = [], edgeTimes = {}, edgeDurations = {}, edgeModes = {}, annotations = [], captions = [], views = [];
     let cursor = 1.55;
+    const caller = scene.points[0].anchor, steps = [];
+    let localSequence = true;
     for (const point of scene.points) {
       if (!nodes.has(point.anchor)) throw Error('Unknown point anchor ' + point.anchor);
       const heading = required(point.title, 'Point title'), body = required(point.text, 'Point text');
@@ -45,6 +48,12 @@ export function compileBrief(brief, facts) {
       const duration = Math.max(secondsFor(point), .65 + motionSpan + 1);
       const pointNodes=unique([...(scene.focus||[]),...(point.focus||[]),point.anchor,...related.flatMap(id=>{const edge=edges.get(id);if(!edge)throw Error('Unknown point connection '+id);return [edge.from,edge.to];})]);
       for(const id of pointNodes)if(!nodes.has(id))throw Error('Unknown point focus '+id);
+      // Only a complete scene about one caller supplies a local walkthrough.
+      // Never infer call order from geometry, labels, or an arbitrary shot plan.
+      if (point.anchor !== caller || !related.length || action === 'relation' || related.some(id => edges.get(id).from !== caller)) localSequence = false;
+      for (const group of action === 'parallel' ? [related] : related.map(id => [id])) {
+        steps.push({title: heading, edges: group, targets: unique(group.map(id => nodes.get(edges.get(id).to).label || edges.get(id).to))});
+      }
       views.push({at:views.length?cursor-1.2:0,nodes:pointNodes,edges:related,note:annotations.length});
       for (const [order, id] of related.entries()) {
         const edge = edges.get(id);
@@ -64,13 +73,14 @@ export function compileBrief(brief, facts) {
       focus.push(point.anchor,...(point.focus||[])); cursor += duration;
     }
     const selectedNodes = unique([...focus, ...selectedEdges.flatMap(id => [edges.get(id).from, edges.get(id).to])]);
+    if (localSequence && steps.length > 1) nodeSequences.push({node: caller, title: headline, steps});
     for (const id of selectedNodes) if (!nodes.has(id)) throw Error('Unknown scene focus ' + id);
     shots.push({duration: cursor + .4, preset: scene.preset || 'follow', label: scene.label || headline, phase: index,
         headline, caption: captions[0].text, nodes: selectedNodes, edges: selectedEdges, annotations, captions, views, edgeTimes, edgeDurations, edgeModes});
   }
   shots.push({duration: 5, preset: 'resolve', label: '', phase: brief.scenes.length - 1, headline: brief.closingTitle || title,
     caption: outro, nodes: [], edges: [], annotations: []});
-  return {version: 1, defaultMode: 'explain', title, eyebrow: brief.eyebrow || 'ARCHIFY',
+  return {version: 1, defaultMode: 'explain', title, eyebrow: brief.eyebrow || 'ARCHIFY', nodeSequences,
     timing:{camera:1.2}, ...(brief.opening?{opening:brief.opening}:{}), ...(brief.scopeStyle?{scopeStyle:brief.scopeStyle}:{}), ...(brief.accent ? {accent: brief.accent} : {}), ...(brief.motion ? {motion: brief.motion} : {}), phases: brief.scenes.map(scene => ({label: scene.label || scene.title})), shots};
 }
 

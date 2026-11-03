@@ -1,0 +1,68 @@
+html[data-passport-steps] { --step-ink: #076f83; --step-wash: #e8f4f6; }
+html[data-passport-steps][data-theme="dark"] { --step-ink: #67e8f9; --step-wash: #14303b; }
+html[data-passport-steps] .diagram-container > svg [data-edge-from] { opacity: .46 !important; }
+html[data-passport-steps] .diagram-container > svg [data-node-id] { opacity: .88 !important; filter: none !important; }
+html[data-passport-steps] .diagram-container > svg [data-passport-step] { opacity: 1 !important; }
+html[data-passport-steps] .diagram-container > svg path[data-passport-step] { stroke: var(--step-ink) !important; filter: none !important; }
+html[data-passport-steps] .diagram-container > svg g[data-passport-step] text { fill: var(--step-ink); font-weight: 650; }
+html[data-passport-steps] #focus-chip { width: 22rem; max-width: calc(100% - 32px); }
+html[data-passport-steps] #focus-chip[data-steps-expanded] { width: 19.75rem; }
+html[data-passport-steps] :is(#focus-reach, #btn-focus-relations, #relationship-lens-list, #btn-focus-explain, #focus-drilldowns) { display: none !important; }
+.passport-steps[hidden], #focus-chip .passport-step-details[hidden], #focus-chip .passport-step-back[hidden], .passport-step-current[hidden], .passport-step-list[hidden], .passport-step-scenario[hidden] { display: none !important; }
+.passport-step-current { display: flex; align-items: center; gap: 12px; min-height: 62px; padding: 12px; }
+.passport-step-position { flex: none; display: flex; align-items: baseline; gap: 3px; font-variant-numeric: tabular-nums; color: var(--text-muted); font-size: 11px; }
+.passport-step-position strong { font-size: 16px; font-weight: 650; line-height: 1; color: var(--step-ink); }
+.passport-step-copy { min-width: 0; overflow-wrap: anywhere; }
+.passport-step-copy > strong { display: block; font-size: 13px; line-height: 1.5; font-weight: 650; }
+.passport-step-copy > span { display: block; margin-top: 2px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.passport-step-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 0 12px 12px; }
+#focus-chip :where(.passport-step-actions button, .passport-step, .passport-step-details, .passport-step-back) {
+  font-family: inherit; font-size: 12px; line-height: 1.4; cursor: pointer;
+  border: 1px solid transparent; color: var(--toolbar-text); background: transparent;
+  border-radius: 6px; min-height: 34px; padding: 6px 8px;
+}
+#focus-chip :is(.passport-step-actions button, .passport-step-details, .passport-step-back):hover { background: var(--step-wash); }
+#focus-chip :is(.passport-step-actions button, .passport-step, .passport-step-details, .passport-step-back, .passport-step-scenario):focus-visible { outline: 2px solid var(--step-ink, var(--frontend-stroke)); outline-offset: 2px; }
+#focus-chip .passport-step-actions button:disabled { opacity: .3; cursor: default; }
+#focus-chip .passport-step-actions .passport-step-toggle { margin-inline-end: auto; padding-inline-start: 2px; }
+#focus-chip .passport-step-actions .passport-step-arrow { display: grid; place-items: center; flex: 0 0 32px; padding: 6px; border-color: var(--toolbar-border); }
+.passport-step-actions svg { display: block; width: 14px; height: 14px; min-width: 0; flex: none; }
+#focus-chip .passport-step-actions .passport-step-play { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 80px; background: var(--step-wash); color: var(--step-ink); font-weight: 600; }
+#focus-chip .passport-step-actions .passport-step-play[aria-pressed="true"] { color: var(--toolbar-menu-bg); background: var(--step-ink); }
+.passport-step-list { margin: 0; padding: 3px 8px; list-style: none; max-height: 40vh; overflow-y: auto; }
+#focus-chip .passport-step { display: flex; gap: 10px; align-items: center; width: 100%; min-height: 30px; padding: 2px 7px; text-align: start; }
+.passport-step-number { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.passport-step-labels { display: flex; align-items: baseline; justify-content: space-between; width: 100%; min-width: 0; gap: 8px; overflow-wrap: anywhere; }
+.passport-step-labels strong { font-size: 13px; font-weight: 500; line-height: 1.4; }
+.passport-step-labels small { font-size: 11px; color: var(--text-muted); line-height: 1.4; text-align: end; }
+#focus-chip .passport-step:hover { background: color-mix(in srgb, var(--step-wash) 65%, transparent); }
+#focus-chip .passport-step[aria-current="step"] { background: var(--step-wash); }
+.passport-step[aria-current="step"] :is(strong, .passport-step-number) { color: var(--step-ink); font-weight: 650; }
+#focus-chip .passport-step-details { position: absolute; top: .8rem; inset-inline-end: 2.9rem; color: var(--text-muted); font-size: 10px; padding: 4px 5px; min-height: 28px; }
+#focus-chip .passport-step-back { margin: 10px 12px; color: var(--frontend-stroke); }
+.passport-step-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.passport-step-scenario { margin: 10px 12px 0; max-width: calc(100% - 24px); padding: 4px; color: var(--text); background: var(--toolbar-menu-bg); border: 1px solid var(--toolbar-border); border-radius: 6px; font: inherit; }
+#focus-chip[data-steps-expanded] .passport-step-actions { padding-top: 3px; padding-bottom: 5px; border-top: 1px solid var(--toolbar-border); }
+#focus-chip[data-steps-expanded] .relationship-lens-head { grid-template-columns: minmax(0, 1fr) 8rem; }
+#focus-chip[data-steps-expanded] :is(#focus-detail, #focus-passport-meta, #focus-summary) { display: none; }
+@media (max-width: 800px) {
+  html[data-passport-steps] .diagram-container { display: flex; flex-direction: column; }
+  html[data-passport-steps] #focus-chip, html[data-passport-steps] #focus-chip[data-steps-expanded] { position: relative !important; left: auto !important; top: auto !important; width: 100%; max-width: 100%; max-height: none; margin: 0 0 16px; flex: none; order: -1; }
+  html[data-passport-steps] #btn-focus-move { display: none; }
+  html[data-passport-steps] #focus-chip .passport-step-actions button { min-height: 38px; }
+  html[data-passport-steps] #focus-chip .passport-step { min-height: 40px; }
+}
+@media (min-width: 501px) and (max-width: 800px) {
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]):not(:has(.passport-step-scenario:not([hidden]))) { display: grid; grid-template-columns: .85fr 1.15fr; }
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]):not(:has(.passport-step-scenario:not([hidden]))) .relationship-lens-head { grid-column: 1; grid-row: 1; position: static; border-bottom: 0; background: none; padding: 10px 12px 6px; }
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]):not(:has(.passport-step-scenario:not([hidden]))) .passport-steps { display: contents; }
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]) .passport-step-current { grid-column: 2; grid-row: 1; min-height: 56px; padding: 6px 72px 6px 14px; }
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]) .passport-step-actions { grid-column: 1 / -1; padding-bottom: 8px; }
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]) #btn-focus-clear { position: absolute; right: 8px; top: 8px; }
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]) #btn-focus-copy { position: absolute; right: 10px; top: 36px; font-size: 9px; }
+  html[data-passport-steps] #focus-chip:not([data-steps-expanded]) :is(#focus-passport-meta, #focus-summary) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-passport-steps] .diagram-container, html[data-passport-steps] .diagram-container * { transition: none !important; animation: none !important; }
+}
+@media print { .passport-steps, .passport-step-back, .passport-step-details { display: none !important; } }

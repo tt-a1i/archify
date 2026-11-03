@@ -74,3 +74,32 @@ at the HTML's pinned revision, at most twenty lines; do not invent bindings.
 
 Deliver the enhanced HTML and editable brief. Rebuild from the original native
 HTML. Export video only when requested.
+
+## Read a caller's stages in its Passport
+
+An attached version-2 brief can also supply an in-place walkthrough in the
+native Semantic Passport. A qualifying scene has at least two stages, uses the
+same `anchor` for every point, and selects only outgoing relationships from
+that anchor. Every point must have `via` and use `trace` or `parallel`.
+`trace` presents its `via` entries in order; `parallel` keeps them together as
+one unordered stage. Mixed callers, incoming relationships, points without
+connections and `relation` scenes remain available in Story without being
+reinterpreted as a local call sequence. Multiple qualifying scenes remain
+separate scenarios in the Passport.
+
+Focus the caller to see the current stage. The panel starts collapsed and
+paused; expand it to select any stage or open the original node details.
+Play advances once from the current stage, pauses at the final stage and can
+be replayed. Manual selection, node changes, closing, changing Viewer modes
+or hiding the page pauses playback. Reduced-motion readers retain static
+highlights and manual controls, without moving paths or camera animation.
+The 2.4-second Passport interval is a reading cadence, independent of Story's
+authored durations and never an execution measurement.
+
+This uses existing author declarations, not connection labels, diagram
+geometry or connection-array order. Keep any needed static numbering and
+parallel wording in the diagram: Passport highlights and controls are absent
+from canonical exports. Existing schema-v1 diagrams and version-1 shot plans
+keep their prior behavior. Re-render an older native HTML before attaching
+the brief to enable the new Passport controls; older Viewers keep their
+original Passport and Story entry points.

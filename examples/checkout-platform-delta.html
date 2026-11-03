@@ -11364,6 +11364,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-passport-step]&#39;), function (el) {
+          el.removeAttribute(&#39;data-passport-step&#39;);
+        });
         Array.prototype.forEach.call(clone.querySelectorAll(&#39;a[data-archify-authored-href]&#39;), function (anchor) {
           anchor.setAttribute(&#39;href&#39;, anchor.getAttribute(&#39;data-archify-authored-href&#39;));
           anchor.removeAttribute(&#39;data-archify-authored-href&#39;);
@@ -11522,6 +11525,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           el.setAttribute(&#39;aria-label&#39;, el.getAttribute(&#39;data-tree-label-collapse&#39;) || &#39;&#39;);
         });
         return !clone.hasAttribute(&#39;data-view-scale&#39;) &amp;&amp;
+          !clone.querySelector(&#39;[data-passport-step]&#39;) &amp;&amp;
           !clone.hasAttribute(&#39;data-focus-active&#39;) &amp;&amp;
           !clone.hasAttribute(&#39;data-reach-active&#39;) &amp;&amp;
           !clone.hasAttribute(&#39;data-lens-active&#39;) &amp;&amp;
@@ -15230,6 +15234,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           lensFrame = 0;
         }
         if (chip.hidden || activeIds.length !== 1) return;
+        if (Archify.passportSteps &amp;&amp; Archify.passportSteps.place()) return;
         if (compactPassportViewport()) compactPassportHeight();
         else {
           chip.style.removeProperty(&#39;--passport-viewport-top&#39;);
@@ -15640,6 +15645,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Export consumes the active semantic snapshot; its controls are not
         // an outside selection. Genuine outside activation still clears it.
         if (target.closest(&#39;[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu&#39;)) return;
+        if (target.closest(&#39;#btn-motion&#39;) &amp;&amp; Archify.passportSteps &amp;&amp; Archify.passportSteps.isPlaying()) return;
         clear();
       }, true);
       window.addEventListener(&#39;scroll&#39;, requestLensPlacement, { passive: true });
@@ -15693,6 +15699,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       return {
         set: set,
+        supportsPassportSteps: true,
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
@@ -27117,6 +27124,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll(&#39;[data-passport-step]&#39;), function (el) {
+          el.removeAttribute(&#39;data-passport-step&#39;);
+        });
         Array.prototype.forEach.call(clone.querySelectorAll(&#39;a[data-archify-authored-href]&#39;), function (anchor) {
           anchor.setAttribute(&#39;href&#39;, anchor.getAttribute(&#39;data-archify-authored-href&#39;));
           anchor.removeAttribute(&#39;data-archify-authored-href&#39;);
@@ -27275,6 +27285,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           el.setAttribute(&#39;aria-label&#39;, el.getAttribute(&#39;data-tree-label-collapse&#39;) || &#39;&#39;);
         });
         return !clone.hasAttribute(&#39;data-view-scale&#39;) &amp;&amp;
+          !clone.querySelector(&#39;[data-passport-step]&#39;) &amp;&amp;
           !clone.hasAttribute(&#39;data-focus-active&#39;) &amp;&amp;
           !clone.hasAttribute(&#39;data-reach-active&#39;) &amp;&amp;
           !clone.hasAttribute(&#39;data-lens-active&#39;) &amp;&amp;
@@ -30983,6 +30994,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           lensFrame = 0;
         }
         if (chip.hidden || activeIds.length !== 1) return;
+        if (Archify.passportSteps &amp;&amp; Archify.passportSteps.place()) return;
         if (compactPassportViewport()) compactPassportHeight();
         else {
           chip.style.removeProperty(&#39;--passport-viewport-top&#39;);
@@ -31393,6 +31405,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Export consumes the active semantic snapshot; its controls are not
         // an outside selection. Genuine outside activation still clears it.
         if (target.closest(&#39;[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu&#39;)) return;
+        if (target.closest(&#39;#btn-motion&#39;) &amp;&amp; Archify.passportSteps &amp;&amp; Archify.passportSteps.isPlaying()) return;
         clear();
       }, true);
       window.addEventListener(&#39;scroll&#39;, requestLensPlacement, { passive: true });
@@ -31446,6 +31459,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       return {
         set: set,
+        supportsPassportSteps: true,
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
