@@ -1,0 +1,74 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Agent Tool Call Workflow",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "output": "examples/workflow-agent-tool-call-rendered.html"
+  },
+  "lanes": [
+    { "id": "ui", "label": "User Interface" },
+    { "id": "agent", "label": "Agent Runtime" },
+    { "id": "policy", "label": "Policy & Recovery", "variant": "exception" },
+    { "id": "tools", "label": "Tool Execution & Evidence" }
+  ],
+  "phases": [
+    { "id": "intake", "label": "Intake", "fromCol": 0, "toCol": 1 },
+    { "id": "reasoning", "label": "Plan + route", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "execution", "label": "Execute + report", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "agent_loop", "label": "Planning loop", "lane": "agent", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "exception_path", "label": "Human or policy stop", "lane": "policy", "fromCol": 3, "toCol": 5, "variant": "security" },
+    { "id": "evidence_path", "label": "Evidence path", "lane": "tools", "fromCol": 1, "toCol": 2, "variant": "dashed" },
+    { "id": "tool_work", "label": "Tool work", "lane": "tools", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["user", "chat", "planner", "router", "approval", "tool", "external", "final"],
+  "nodes": [
+    { "id": "user", "lane": "ui", "col": 0, "type": "external", "label": "User", "sublabel": "asks for work", "width": 132 },
+    { "id": "chat", "lane": "ui", "col": 1, "type": "frontend", "label": "Chat Surface", "sublabel": "thread + files", "width": 132 },
+    { "id": "final", "lane": "ui", "col": 5, "type": "backend", "label": "Final Reply", "sublabel": "answer + changes", "width": 132 },
+    { "id": "planner", "lane": "agent", "col": 2, "type": "backend", "label": "Agent Planner", "sublabel": "plan next step", "tag": "context aware", "width": 132 },
+    { "id": "router", "lane": "agent", "col": 3, "type": "backend", "label": "Tool Router", "sublabel": "choose capability", "width": 132 },
+    { "id": "approval", "lane": "policy", "col": 3, "type": "security", "label": "Approval Gate", "sublabel": "scope + consent", "tag": "block risky ops", "width": 132 },
+    { "id": "blocked", "lane": "policy", "col": 4, "type": "security", "label": "Blocked", "sublabel": "wait or reject", "width": 132 },
+    { "id": "retry", "lane": "policy", "col": 5, "type": "messagebus", "label": "Retry Path", "sublabel": "revise request", "width": 132 },
+    { "id": "tool", "lane": "tools", "col": 4, "type": "messagebus", "label": "Tool Call", "sublabel": "shell / browser / MCP", "tag": "structured result", "width": 132 },
+    { "id": "external", "lane": "tools", "col": 5, "type": "cloud", "label": "External API", "sublabel": "network service", "width": 132 },
+    { "id": "store", "lane": "tools", "col": 1, "type": "database", "label": "Context Store", "sublabel": "repo + memory", "width": 132 },
+    { "id": "trace", "lane": "tools", "col": 2, "type": "database", "label": "Trace Log", "sublabel": "events + output", "width": 132 }
+  ],
+  "edges": [
+    { "id": "request-chat", "from": "user", "to": "chat", "variant": "default" },
+    { "id": "plan-request", "from": "chat", "to": "planner", "label": "plan", "variant": "emphasis" },
+    { "id": "planner-route", "from": "planner", "to": "router", "variant": "default" },
+    { "id": "approval-check", "from": "router", "to": "approval", "label": "needs approval?", "variant": "security" },
+    { "id": "approved-tool", "from": "approval", "to": "tool", "variant": "emphasis" },
+    { "id": "approval-denied", "from": "approval", "to": "blocked", "label": "denied", "variant": "security", "role": "error" },
+    { "id": "retry-request", "from": "blocked", "to": "retry", "variant": "dashed", "role": "branch" },
+    { "id": "tool-external-call", "from": "tool", "to": "external", "variant": "default" },
+    { "id": "external-reply", "from": "external", "to": "final", "variant": "emphasis", "role": "return", "fromSide": "right", "toSide": "right", "route": "outside-right", "width": 1.2 },
+    { "id": "record-result", "from": "external", "to": "trace", "label": "record result", "variant": "dashed", "fromSide": "bottom", "toSide": "bottom", "route": "bottom-channel", "labelSegment": 1 },
+    { "id": "write-trace-memory", "from": "store", "to": "trace", "label": "trace + memory", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Compiler Contract",
+      "items": [
+        "Lanes and columns determine node placement",
+        "Labels reserve clearance; routes stay orthogonal"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Runtime Semantics",
+      "items": [
+        "Approval gates risky work before tool execution",
+        "Evidence returns through isolated trace and memory"
+      ]
+    }
+  ]
+}
