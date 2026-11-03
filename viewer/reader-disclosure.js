@@ -64,7 +64,7 @@
   var notes = document.getElementById('reader-update-release-notes');
   var originalFocus = null;
   [['viewer.update.fact.type', artifact.type], ['viewer.update.fact.generator', artifact.generatorVersion], ['viewer.update.fact.content', artifact.contentSha256]].forEach(function (pair) {
-    var term = document.createElement('dt'); term.textContent = pair[0];
+    var term = document.createElement('dt'); term.textContent = viewerText(pair[0]);
     var definition = document.createElement('dd'); definition.textContent = pair[1];
     facts.appendChild(term); facts.appendChild(definition);
   });
