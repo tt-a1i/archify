@@ -5,42 +5,7 @@
     "title": "Subscription billing schema",
     "locale": "en",
     "output": "examples/subscription-billing-rendered.html",
-    "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "tenancy",
-        "label": "Who belongs where",
-        "focus": [
-          "tenant",
-          "user_account",
-          "membership"
-        ],
-        "note": "A user reaches a tenant through membership, which is why both ids are foreign keys on that table."
-      },
-      {
-        "id": "billing-run",
-        "label": "One invoice run",
-        "focus": [
-          "subscription",
-          "invoice",
-          "invoice_line",
-          "price",
-          "plan"
-        ],
-        "note": "A subscription holds a price, an invoice holds its lines; the amount rolls up from the line."
-      },
-      {
-        "id": "money-in",
-        "label": "Money in and back out",
-        "focus": [
-          "payment_method",
-          "payment",
-          "refund",
-          "invoice"
-        ],
-        "note": "Payments are optional until a method is charged, and a refund only ever points at a captured payment."
-      }
-    ]
+    "quality_profile": "showcase"
   },
   "layout": {
     "mode": "grid",
