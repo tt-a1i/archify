@@ -442,43 +442,7 @@
       "viewer.rail.right": "패널을 다이어그램 옆으로 이동"
     },
     "output": "korean-locale.html",
-    "quality_profile": "showcase",
-    "views": [
-      {
-        "id": "request-path",
-        "label": "기본 요청 경로",
-        "focus": [
-          "users",
-          "cdn",
-          "lb",
-          "api",
-          "db"
-        ],
-        "note": "가장자리에서 저장소까지 고객 요청을 따라갑니다."
-      },
-      {
-        "id": "identity-and-cache",
-        "label": "인증과 캐시",
-        "focus": [
-          "auth",
-          "api",
-          "cache"
-        ],
-        "note": "인증과 읽기 캐시를 요청 경로 옆에 분리합니다."
-      },
-      {
-        "id": "async-work",
-        "label": "정적·비동기 작업",
-        "focus": [
-          "cdn",
-          "s3",
-          "api",
-          "queue",
-          "worker"
-        ],
-        "note": "부가 경로 두 개를 본 요청과 겹치지 않게 보여 줍니다."
-      }
-    ]
+    "quality_profile": "showcase"
   },
   "components": [
     {

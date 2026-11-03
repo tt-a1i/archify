@@ -54,7 +54,7 @@ test('explainer chart CJK axis titles stand upright and task lists become checkl
   const { status, html } = finalize(t, 'xychart-beta\n  x-axis ["前", "后"]\n  y-axis "延迟（毫秒）" 0 --> 700\n  bar [80, 600]\n```\n\n- [ ] 核对押金条款\n- [x] 拍下水电读数\n\n```text\nx');
   assert.equal(status, 0);
   assert.match(html, /<text[^>]*writing-mode="vertical-rl"[^>]*>延迟（毫秒）<\/text>/);
-  assert.match(html, /<ul class="checklist"><li><label><input type="checkbox"><span>核对押金条款<\/span><\/label><\/li><li><label><input type="checkbox"><span>拍下水电读数<\/span>/);
+  assert.match(html, /<ul class="checklist"><li><label><input type="checkbox"><span>核对押金条款<\/span><\/label><\/li><li><label><input type="checkbox" checked><span>拍下水电读数<\/span>/);
   const mixed = finalize(t, 'pie\n  "A" : 1\n```\n\n- [ ] Task\n- Plain\n\n```text\nx');
   assert.ok(mixed.receipt.diagnostics.some(d => d.code === 'explainer/parse-list' && /checklist/.test(d.message)));
 });

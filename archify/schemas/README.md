@@ -182,7 +182,6 @@ The five diagram schemas reference `common.schema.json#/$defs/...`:
   extend this list locally with `return`)
 - `legendMode` and `legendEntry` — the shared strict mode and label/visibility
   override shapes used by each renderer-owned key map
-- `guidedViews` — the retired `meta.views` shape, still accepted and ignored
 - `cards` — the summary-card blocks rendered below the SVG
 - `drilldowns` / `href` / `parentHref` — cross-HTML navigation. Targets are
   same-directory `*.html` files (optional `?` / `#`). `href` on a node is sugar

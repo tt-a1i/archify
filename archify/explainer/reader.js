@@ -668,7 +668,7 @@
   all('.checklist').forEach(list=>{
     const key = `archify-checklist:${root.dataset.artifact}:${list.closest('.block').id}`, boxes = all('input',list);
     let saved = []; try { saved = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
-    boxes.forEach((box,index)=>{ box.checked = saved[index] === 1; box.addEventListener('change',()=>{ try { localStorage.setItem(key,JSON.stringify(boxes.map(b=>b.checked ? 1 : 0))); } catch {} }); });
+    boxes.forEach((box,index)=>{ if(index < saved.length) box.checked = saved[index] === 1; box.addEventListener('change',()=>{ try { localStorage.setItem(key,JSON.stringify(boxes.map(b=>b.checked ? 1 : 0))); } catch {} }); });
   });
   // Native dialogs supply Escape, focus trapping and the accessible modal semantics.
   const printDetails = new Map();
