@@ -1,0 +1,121 @@
+{
+  "base": "63c9263e84bd3993cab8e09b3d69888857858635",
+  "productCommit": "b7eb6c089480660ceafbe9241beb84e7a4677a45",
+  "environment": {
+    "platform": "macOS arm64",
+    "node": "22.23.2",
+    "chrome": "156.0.8078.74"
+  },
+  "productFiles": [
+    {
+      "path": "docs/assets/fonts.css",
+      "sha256": "22f752d7c9a263ccc7abf8acdd1cca277ae391797be918503976cbbda6e0de63"
+    },
+    {
+      "path": "docs/assets/fraunces-OFL.txt",
+      "sha256": "6732d6cc72c5d09292ff754dc1f39d9ea14918f74e87a17afa3f00a5120c3d48"
+    },
+    {
+      "path": "docs/assets/fraunces-italic-latin.woff2",
+      "sha256": "f0c442fc4162c260ac42d234ec0f715e38977ca9e7da6a9703bbe003875c9692"
+    },
+    {
+      "path": "docs/assets/fraunces-normal-latin.woff2",
+      "sha256": "48282a415ec22e31beaf0a0666e6fae0c8cbddcd0b1f6e729f27c3ade8a64e43"
+    },
+    {
+      "path": "docs/assets/inter-OFL.txt",
+      "sha256": "5dd548d31a85f756e01d63e00d7faf1e324103ed3e9102fcbbabf2cc2db6dd39"
+    },
+    {
+      "path": "docs/assets/inter-normal-latin.woff2",
+      "sha256": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4"
+    },
+    {
+      "path": "docs/assets/jetbrains-mono-normal-latin.woff2",
+      "sha256": "2c32b9b3ee358c119e210f6f5195f9bd34894d78a785ff2e95d60e718e400af4"
+    },
+    {
+      "path": "docs/assets/jetbrainsmono-OFL.txt",
+      "sha256": "b2fe5e8987594e9ffd1d2ca52a2f5d73eb8335243893c5d6254b5ad69269591d"
+    },
+    {
+      "path": "docs/assets/sources.json",
+      "sha256": "5403df55d33ad909d5f2e3e728d3b986c644491ecef597ea377028642f053d7d"
+    },
+    {
+      "path": "docs/assets/space-grotesk-normal-latin.woff2",
+      "sha256": "a0d054c4af557de20afd6ca59f47ab353bcaec49c63ff04b6c9d39d0f8910557"
+    },
+    {
+      "path": "docs/assets/spacegrotesk-OFL.txt",
+      "sha256": "18a4de52385f6b988782639d5d0cc1326e5a8c2de9a7f01d7b20d9aedcc60943"
+    },
+    {
+      "path": "docs/gallery.html",
+      "sha256": "aeb04a144f32340f24f4b134a0ecacc03e37b4d4d6f7a0e93d410ee1cfc0a5a1"
+    },
+    {
+      "path": "docs/guide.html",
+      "sha256": "23bbc99acd12ec2351154eeb3cc3d946b5f80a6eb2452c07ebc5aae0d79409ec"
+    },
+    {
+      "path": "docs/index.html",
+      "sha256": "a316551365b006a898d1b312d23376d0bdd16f22a165d5ad06b8ea41fec22a70"
+    },
+    {
+      "path": "docs/start.html",
+      "sha256": "20169ad23932c8b1c55ee68ed25e09c6c2d25be08973c2d807a51ef2224fba8d"
+    },
+    {
+      "path": "scripts/copy-site-assets.mjs",
+      "sha256": "88c71a5f4a3557982ec793993c7d77ca35ebe98bf0d42a3db59685ca31d28574"
+    },
+    {
+      "path": "scripts/gallery-template.html",
+      "sha256": "9783ae0357f47773aa9f31a88893234276353830c373f1d51475b1ef63d80e61"
+    },
+    {
+      "path": "scripts/guide-template.html",
+      "sha256": "f0be722265986210e267f235e20077c5cef7c97efa8ac8e8d20f8def1287c65a"
+    },
+    {
+      "path": "scripts/start-template.html",
+      "sha256": "b3cceb993ddeb1806b68ccd638a2c36f945b3bc23fde4f66d807891ea6131b94"
+    },
+    {
+      "path": "test/copy-site-assets.test.mjs",
+      "sha256": "ac1ad08398eaf6ed592b2c9c72735cbf9b87588313c6834f39500a3795b47721"
+    },
+    {
+      "path": "test/site-language-continuity.test.mjs",
+      "sha256": "fa22732d71d252829749f13b7249a9ef396524ce33ad923d00bfecbf939df117"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "before/index-en-1440x900.png",
+      "sha256": "a41e6069b98c3f57e060202da0041f345551c8bc148b9e51b402fa4f4bca9e88"
+    },
+    {
+      "path": "after/index-en-1440x900.png",
+      "sha256": "5424a3fc67708d9a11446c036b9bd82b1371dce6e550957741d2794bd3205fe6"
+    },
+    {
+      "path": "before/index-en-390x844.png",
+      "sha256": "7b9831af7f0960e3bae7f7b3755b2932025dc7a657ee84f1704094de7f0fe5c6"
+    },
+    {
+      "path": "after/index-en-390x844.png",
+      "sha256": "a8c5504008fec54cb9a8054ee2e248971c288e1ec41a24342baafbac9bd11e04"
+    },
+    {
+      "path": "after/index-zh-390x844.png",
+      "sha256": "fe52ad7be21095d48512d7c783260334dc13c73e6c511b73e0e81e577bb54763"
+    },
+    {
+      "path": "after/gallery-en-1440x900.png",
+      "sha256": "1e30146dd9c8dcb6e1ed0eb1d3546d18da64eca5c944c50c47b1469f27de7d68"
+    }
+  ]
+}
