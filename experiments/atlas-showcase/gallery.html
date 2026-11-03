@@ -1,0 +1,131 @@
+<title>Atlas Showcase Gallery</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: a light table. Each view gets one wide lead frame and two smaller frames beside it. */
+:root {
+  --bg: #e9ebef; --surface: #f7f8fa; --ink: #1e2129; --muted: #626979; --line: #d3d7df; --focus: #3557d6;
+  --display: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #16181d; --surface: #1f2229; --ink: #eceef3; --muted: #9aa1b0; --line: #313642; --focus: #8ea6ff; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #16181d; --surface: #1f2229; --ink: #eceef3; --muted: #9aa1b0; --line: #313642; --focus: #8ea6ff; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--display); }
+main { max-width: 1320px; margin: 0 auto; padding-block: 48px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 56px; }
+header h1 { font: 800 clamp(30px, 4.6vw, 52px)/1.04 var(--display); letter-spacing: -0.03em; margin: 0 0 12px; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 66ch; }
+header nav { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+header nav a { color: var(--ink); text-decoration: none; font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+header nav a:hover { border-color: var(--muted); }
+header nav a:focus-visible, .frame:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.view { display: grid; gap: 14px; scroll-margin-top: 24px; }
+.view h2 { margin: 0; font: 800 24px/1.15 var(--display); letter-spacing: -0.01em; }
+.view h2 span { color: var(--muted); font-weight: 600; font-size: 15px; margin-left: 10px; letter-spacing: 0; }
+.view > p { margin: 0; color: var(--muted); max-width: 72ch; }
+.frames { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-template-rows: auto auto; gap: 12px; }
+.frame { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; cursor: zoom-in; border: 0; padding: 0; background: none; color: inherit; font: inherit; text-align: left; }
+.frame.lead { grid-row: span 2; }
+.frame .pic { position: relative; display: block; max-width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.frame.lead .pic { aspect-ratio: 16 / 10; }
+.frame:not(.lead) .pic { aspect-ratio: 16 / 9.4; }
+.frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.frame img.tall { object-fit: contain; padding: 6px; }
+.frame figcaption { font-size: 13px; color: var(--muted); }
+.frame figcaption b { color: var(--ink); font-weight: 600; }
+footer { color: var(--muted); font-size: 13px; }
+dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 96vh; }
+dialog::backdrop { background: rgba(10, 12, 16, .86); }
+dialog img { max-width: 94vw; max-height: 84vh; display: block; border-radius: 6px; margin: 0 auto; }
+dialog .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #e8eaf0; padding: 10px 2px 0; font-size: 14px; }
+dialog button { background: #2a2e38; color: #e8eaf0; border: 1px solid #454b59; border-radius: 6px; padding: 6px 12px; font: 600 13px var(--display); cursor: pointer; }
+dialog button:focus-visible { outline: 3px solid #8ea6ff; outline-offset: 2px; }
+@media (max-width: 760px) { .frames { grid-template-columns: 1fr; } .frame.lead { grid-row: auto; } }
+</style>
+
+<main>
+  <header>
+    <h1>Ten Atlas directions, three frames each</h1>
+    <p>Screenshots of the ten Code Analysis showcase pages, all drawn from one real run of Archify analyzing itself. The large frame is the first screen; the other two show an interaction and a close-up or phone view. Click any frame to enlarge it, then use the arrow keys to move through all thirty.</p>
+    <nav id="nav" aria-label="Jump to a view"></nav>
+  </header>
+  <div id="views" style="display:grid;gap:56px"></div>
+  <footer>Captured at 1440 × 900 (2× pixels) and 390 × 844 for phone views, from the pages in experiments/atlas-showcase.</footer>
+</main>
+<dialog id="box" aria-label="Enlarged screenshot">
+  <img id="boxImg" alt="">
+  <div class="bar"><span id="boxCap"></span><span style="display:flex;gap:6px"><button id="prev">Previous</button><button id="next">Next</button><button id="close">Close</button></span></div>
+</dialog>
+
+<script>
+const views = [
+  ['01-skyline', 'Skyline', 'Files as buildings: height is the most complex function, each lit window a function.', [
+    'First screen. The tallest tower, dataflow-compiler.mjs, is open with its hardest functions.',
+    'bin/archify.mjs selected: the CLI entry file and its five hardest functions, each with a fix prompt.',
+    'Phone width. The skyline compresses and the file card stays readable.']],
+  ['02-terrain', 'Terrain', 'Functions as hills on a topographic map; the orange and red contours are the 15 and 25 thresholds.', [
+    'First screen. Modules are counties, files are parcels; summits are numbered.',
+    'Summit 4, validateArchitecture, selected from the list of highest summits.',
+    'Close-up of the dataflow and architecture peaks, contours at both thresholds.']],
+  ['03-constellations', 'Star chart', 'Files as stars grouped into module constellations; boundary violations streak across as comets.', [
+    'First screen. The migrations → renderers comet is selected, with its three imports.',
+    'bin/archify.mjs selected: its import lines to other constellations light up in gold.',
+    'Close-up of code-analysis, vendor and shared. Red giants hold functions past 25.']],
+  ['04-metro', 'Metro map', 'Modules as stations, ordered from entry points to foundations; forbidden routes are closed.', [
+    'First screen. Migrations selected: its route to workflow is closed by a boundary rule.',
+    'Shared selected: the interchange every renderer arrives at, with its departure board.',
+    'Close-up of the closed migrations → workflow route and its delay badges.']],
+  ['05-blueprint', 'Blueprint', 'The repository as a floor plan; the fifteen rooms most in need of work carry revision clouds.', [
+    'First screen. Wings are modules, rooms are files; revision 1 is selected in the schedule.',
+    'Revision 2, workflow-compiler.mjs, selected from the schedule.',
+    'Close-up of the bin and code-analysis wings, hatching and revision clouds.']],
+  ['06-strata', 'Strata', 'Dependency depth as rock layers; files are pebbles, forbidden imports are red faults.', [
+    'First screen. The workflow formation is selected, with its core sample.',
+    'Bin selected at the surface: its drill lines run down to every layer it imports.',
+    'Close-up of layer 1 and the bedrock: shared, vendor and code-analysis.']],
+  ['07-matrix', 'Matrix', 'Every module pair at once, ordered so healthy imports stay above the diagonal.', [
+    'First screen. The migrations → workflow cell is selected; both violations are red.',
+    'renderers/explainer → explainer selected, with its file-level imports and fix prompt.',
+    'Close-up of the top-left block where the two boundary violations sit.']],
+  ['08-seismograph', 'Seismograph', 'All 2,833 functions in reading order as one trace; spikes are complexity.', [
+    'The full record, from bin to scripts, with module bands on the overview roll.',
+    'The default window around the strongest event, with the event log underneath.',
+    'Zoomed to 80 functions around compileDataflow.build, pinned in the log.']],
+  ['09-briefing', 'Briefing', 'A one-minute scrolling story for people who will not open a diagram.', [
+    'Opening screen: the four numbers that matter.',
+    'The ten hardest functions, each with a fix prompt, and one button to copy all ten.',
+    'The broken boundary rules with every offending import.']],
+  ['10-microscope', 'Microscope', 'Modules as cells, files as nuclei, functions as stained granules; brown means past 25.', [
+    'First screen at ×10, with workflow-compiler.mjs on the slide label.',
+    'Zoomed to ×32 on bin/archify.mjs, the file with the most positive granules.',
+    'Phone width: the eyepiece and the slide label stack.']],
+];
+const tall = new Set(['01-skyline-c', '10-microscope-c']);
+const all = [];
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+document.getElementById('nav').innerHTML = views.map(([id, name]) => `<a href="#${id}">${name}</a>`).join('');
+document.getElementById('views').innerHTML = views.map(([id, name, line, caps]) => `
+  <section class="view" id="${id}">
+    <h2>${name}<span><a href="${id}.html" style="color:inherit">Open the page</a></span></h2>
+    <p>${line}</p>
+    <div class="frames">
+      ${['a', 'b', 'c'].map((s, k) => { all.push({ src: `gallery/${id}-${s}.webp`, cap: `${name}: ${caps[k]}` }); const n = all.length - 1; return `
+      <button class="frame${k === 0 ? ' lead' : ''}" data-n="${n}" aria-label="Enlarge: ${esc(caps[k])}">
+        <span class="pic"><img src="gallery/${id}-${s}.webp" alt="${esc(name)}: ${esc(caps[k])}" loading="${n < 3 ? 'eager' : 'lazy'}" class="${tall.has(`${id}-${s}`) ? 'tall' : ''}"></span>
+        <figcaption>${esc(caps[k])}</figcaption>
+      </button>`; }).join('')}
+    </div>
+  </section>`).join('');
+
+const box = document.getElementById('box'), img = document.getElementById('boxImg'), cap = document.getElementById('boxCap');
+let cur = 0;
+const show = (n) => { cur = (n + all.length) % all.length; img.src = all[cur].src; img.alt = all[cur].cap; cap.textContent = `${cur + 1} / ${all.length} · ${all[cur].cap}`; };
+document.querySelectorAll('.frame').forEach((f) => f.addEventListener('click', () => { show(Number(f.dataset.n)); box.showModal(); }));
+document.getElementById('prev').addEventListener('click', () => show(cur - 1));
+document.getElementById('next').addEventListener('click', () => show(cur + 1));
+document.getElementById('close').addEventListener('click', () => box.close());
+box.addEventListener('click', (e) => { if (e.target === box) box.close(); });
+box.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') show(cur + 1); if (e.key === 'ArrowLeft') show(cur - 1); });
+</script>
