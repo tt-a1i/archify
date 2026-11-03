@@ -133,16 +133,11 @@ expectFailure('node id starting with a digit', 'workflow',
 expectFailure('extra property rejected', 'workflow',
   (d) => { d.nodes[0].colour = 'red'; }, 'additional properties');
 {
-  // Schema 1/2 files may still carry retired guided views: accept, ignore.
-  const d = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', GOLDEN.find(([m]) => m === 'workflow')[1]), 'utf8'));
-  d.meta.views = [{ id: 'v', label: 'Legacy view', focus: [d.nodes[0].id] }];
-  const input = path.join(tmp, 'legacy-views.json');
-  const out = path.join(tmp, 'legacy-views.html');
-  fs.writeFileSync(input, JSON.stringify(d));
-  let html = '';
-  try { render('workflow', input, out); html = fs.readFileSync(out, 'utf8'); } catch (_) {}
-  check('legacy meta.views accepted and ignored', html && !html.includes('Legacy view'),
-    'a file with meta.views must still render, without guided-view UI');
+  // Retired guided views are refused with a clear error (see #1190): a file
+  // carrying meta.views must fail schema validation, not render silently.
+  expectFailure('retired meta.views refused', 'workflow',
+    (d) => { d.meta.views = [{ id: 'v', label: 'Legacy view', focus: [d.nodes[0].id] }]; },
+    '"additionalProperty":"views"');
 }
 expectFailure('column beyond layout maximum', 'workflow',
   (d) => { d.nodes[0].col = 7; }, '<= 5');
