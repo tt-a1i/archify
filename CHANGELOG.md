@@ -12,6 +12,8 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 ### Fixed
 
+- **Workflow comparison scope (#1143).** Edits to a phase or group column range appear in the receipt. Moving a node does not: node coordinates stay presentation-only, so a node crossing a phase or group boundary is not reported as a membership change. Displayed titles and cards stay presentation-only.
+
 - **WebP brand container bounds (#602).** Reject missing or out-of-bounds image chunks, including incomplete animation frames, before reporting capture or pinned validation success. Preserve valid lossy, lossless, extended and animated containers and original-byte digests.
 
 - **Architecture Delta translation changes (#600).** Compare reports additions, removals and edits to `meta.translations` as presentation changes; translation-key order and empty-versus-omitted catalogs do not affect presentation classification or entity-change counts.
