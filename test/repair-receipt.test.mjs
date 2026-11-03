@@ -190,7 +190,9 @@ test('repair receipt: readability identifies the failing node despite repeated c
       const ids = ['billing-worker', 'email-worker'];
       const input = writeFixture(`readability-${command}-${failingIndex}.json`, {
         schema_version: 1, diagram_type: 'architecture',
-        meta: { title: 'Worker pools', viewBox: [1200, 400] },
+        // Exceed the declared Reader's physical width budget so the fitted
+        // sublabel still fails, while the same copy in the wider node fits.
+        meta: { title: 'Worker pools', viewBox: [1720, 400] },
         components: ids.map((id, i) => ({
           id, type: 'backend', label: 'Worker', sublabel: 'Processes queued jobs',
           pos: [80 + i * 420, 100], size: [i === failingIndex ? 100 : 300, 70],
@@ -207,7 +209,7 @@ test('repair receipt: readability identifies the failing node despite repeated c
       assert.equal(diagnostics.length, 1);
       assert.deepEqual(diagnostics[0].subject, { check: 'composition', nodeId: ids[failingIndex] });
       assert.equal(diagnostics[0].evidence.text, 'Processes queued jobs');
-      assert.equal(diagnostics[0].evidence.projectedFontPx, 5.6575);
+      assert.ok(diagnostics[0].evidence.projectedFontPx < diagnostics[0].evidence.minimumProjectedFontPx);
       assert.equal(fs.existsSync(output), false);
     }
   }
@@ -217,7 +219,7 @@ test('repair receipt: edge readability advises a projection-changing reflow, not
   const input = writeFixture('edge-readability.architecture.json', {
     schema_version: 1,
     diagram_type: 'architecture',
-    meta: { title: 'Edge readability', quality_profile: 'showcase', viewBox: [1438, 800] },
+    meta: { title: 'Edge readability', quality_profile: 'showcase', viewBox: [2000, 800] },
     components: [
       { id: 'listener', type: 'backend', label: 'Listener', pos: [120, 260], size: [180, 80] },
       { id: 'handler', type: 'backend', label: 'Handler', pos: [760, 260], size: [180, 80] },
@@ -231,11 +233,11 @@ test('repair receipt: edge readability advises a projection-changing reflow, not
   assert.equal(repair.evidence.owner.kind, 'edge');
   assert.equal(repair.evidence.owner.id, 'request');
   assert.equal(repair.evidence.sourceFontPx, 8);
-  assert.equal(repair.evidence.availableDiagramWidth, 930);
-  assert.equal(repair.evidence.viewBoxWidth, 1438);
+  assert.equal(repair.evidence.availableDiagramWidth, 1346);
+  assert.equal(repair.evidence.viewBoxWidth, 2000);
   const fix = repair.supportedFixes.join(' ');
-  assert.match(fix, /complete viewBox width is at most 1240px/);
-  assert.match(fix, /8px source text at 930px desktop budget/);
+  assert.match(fix, /complete viewBox width is at most 1794px/);
+  assert.match(fix, /8px source text at 1346px desktop budget/);
   assert.match(fix, /Preserve the semantic text and any supplied coordinates, routes, sides, channels, and labels/);
   assert.doesNotMatch(fix, /labelAt|labelDx|labelDy|labelSegment|reposition/i);
 });

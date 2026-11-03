@@ -475,9 +475,15 @@ or `data-reader-fit="width-first"` (Sequence and Waterfall reading width); their
 Reader must reach its readable width and expose `data-reader-overflow="authored"`.
 Architecture with an explicit `meta.viewBox` instead declares
 `data-diagram-type="architecture"` and `data-reader-fit="authored-height"`:
-its SVG coordinates, aspect ratio and existing Reader width behavior stay
-unchanged. Its full SVG must remain inside the diagram panel without internal
-scrolling or clipping, and the document must permit vertical scrolling.
+its SVG coordinates and aspect ratio stay unchanged. Current wide authored
+canvases (ratio at least 1.55) also declare a 7.5px reading target. The ordinary
+desktop Reader preserves that target when viewport width permits, using document
+scroll rather than shrinking further to fit a short window. The recognized
+declared-wide static budget uses the same target at its fixed 1440×900 baseline;
+it is an estimate, not a measurement of every viewport or presentation/export mode.
+The 6px hard floor remains unchanged, and narrower authored canvases keep their
+existing width policy. The full authored SVG must remain inside the diagram panel
+without internal scrolling or clipping, and the document must permit vertical scrolling.
 The receipt records `verticalScrollAccepted: true` and
 `overflowDisposition: "readable-vertical-scroll"`. Missing or unknown declarations,
 explicit viewBoxes in other modes, unreadable text, horizontal overflow,

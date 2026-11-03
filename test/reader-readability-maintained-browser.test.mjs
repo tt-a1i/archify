@@ -17,6 +17,65 @@ if (chromeConfigured && !chromePath) {
 // queue/worker gap 105px. Readability must not rely on detached label masks.
 const fixtureJson = path.join(root, '..', 'test/fixtures/reader-readability/synthetic-wide.architecture.json');
 
+test('authored wide canvas keeps readable text in a short window without changing geometry', {
+  skip: chromePath ? false : 'Set ARCHIFY_CHROME to run the maintained real browser regression.',
+}, async t => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-authored-wide-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const automatic = path.join(scratch, 'automatic.html');
+  const artifact = path.join(scratch, 'authored.html');
+  const input = path.join(scratch, 'authored.json');
+  const cli = path.join(root, 'bin/archify.mjs');
+  execFileSync(process.execPath, [cli, 'render', 'architecture', fixtureJson, automatic]);
+  const svg = html => html.match(/<svg\b[^>]*>([\s\S]*?)<\/svg>/);
+  const autoSvg = svg(fs.readFileSync(automatic, 'utf8'));
+  const viewBox = autoSvg[0].match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/).slice(1).map(Number);
+  const authored = JSON.parse(fs.readFileSync(fixtureJson, 'utf8'));
+  authored.meta.viewBox = viewBox;
+  fs.writeFileSync(input, JSON.stringify(authored));
+  execFileSync(process.execPath, [cli, 'render', 'architecture', input, artifact]);
+  const authoredSvg = svg(fs.readFileSync(artifact, 'utf8'));
+  assert.equal(authoredSvg[1], autoSvg[1], 'same authored nodes, text, routes and legend');
+  assert.deepEqual(authoredSvg[0].match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/).slice(1).map(Number), viewBox);
+
+  const browser = new ChromeVisualBrowser(chromePath);
+  try {
+    for (const [width, height] of [[1440, 600], [1440, 900], [1920, 1080]]) {
+      const metrics = await browser.inspect({ artifactPath: artifact, width, height, theme: 'light' });
+      assert.ok(metrics.minimumProjectedNodeTextPx >= 7.5 - 0.01,
+        `${width}x${height}: text must stay readable, even if the page needs scrolling: ${JSON.stringify(metrics)}`);
+      assert.ok(metrics.scrollWidth <= width, 'no horizontal page overflow');
+      assert.equal(metrics.documentScrollUnclipped, true, 'ordinary scrolling must expose the full authored canvas');
+      const session = await browser.sessionPromise;
+      const response = await browser.cdp.send('Runtime.evaluate', {
+        returnByValue: true, awaitPromise: true, expression: `(async () => {
+          const svg = document.querySelector('.diagram-container > svg');
+          window.scrollTo(0, document.documentElement.scrollHeight);
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          return {
+            nodes: [...svg.querySelectorAll('[data-node-id]')].map(node => node.getAttribute('data-node-id')),
+            edges: svg.querySelectorAll('path[data-edge-from][data-edge-to]').length,
+            svgBottom: svg.getBoundingClientRect().bottom,
+            cardsBottom: document.querySelector('.cards').getBoundingClientRect().bottom,
+            height: innerHeight
+          };
+        })()`,
+      }, session);
+      assert.equal(response.exceptionDetails, undefined);
+      const state = response.result.value;
+      assert.deepEqual(state.nodes.sort(), authored.components.map(node => node.id).sort());
+      assert.equal(state.edges, authored.connections.length);
+      assert.ok(state.svgBottom <= state.height && state.cardsBottom <= state.height, 'diagram and notes remain reachable');
+    }
+  } finally {
+    await browser.close();
+  }
+  const delivered = JSON.parse(execFileSync(process.execPath, [
+    cli, 'deliver', 'architecture', input, path.join(scratch, 'delivered.html'), '--quality', 'showcase', '--json',
+  ], { encoding: 'utf8' }));
+  assert.equal(delivered.ok, true, 'static delivery must recognize the demonstrated reading guarantee');
+});
+
 test('declared wide synthetic reader preserves geometry and reaches edge/node readability', {
   skip: chromePath ? false :
     'Set ARCHIFY_CHROME to run the maintained real browser regression.',
