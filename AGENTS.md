@@ -19,3 +19,11 @@ Install, update, reinstall, or remove a live Archify installation only when the 
 - Use the canonical remote source by default. Use a local source only when requested, from a durable checkout; live symlinks must not point into temporary directories or disposable worktrees.
 - Preserve unrelated files and existing unmanaged destinations. Report a destination conflict before replacing it unless that exact replacement is already explicitly authorized; use the installer's documented conflict handling within the approved scope.
 - Report the action, source, targets, and result, including skipped or failed destinations. A partial installation is not a complete success.
+
+---
+
+# Claude Code instructions
+
+Follow [AGENTS.md](AGENTS.md).
+
+@AGENTS.md
