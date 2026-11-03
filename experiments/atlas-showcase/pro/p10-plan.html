@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remediation Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.col { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.col-h { padding: 12px 14px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+.col-h h2 { margin: 0; font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.col-h h2 span { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.col-h p { margin: 0; font-size: 12px; color: var(--muted); }
+.col.now .col-h { border-top: 3px solid var(--bad); border-radius: 10px 10px 0 0; }
+.col.next .col-h { border-top: 3px solid var(--watch); border-radius: 10px 10px 0 0; }
+.col.later .col-h { border-top: 3px solid var(--faint); border-radius: 10px 10px 0 0; }
+.items { padding: 10px; display: grid; gap: 8px; max-height: 1100px; overflow: auto; }
+.item { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.item .t { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.item b { font-weight: 600; font-size: 13px; }
+.item .why { font-size: 12px; color: var(--muted); }
+.item details summary { font-size: 12px; color: var(--core); cursor: pointer; }
+.item details .evidence { margin-top: 6px; font-size: 11px; }
+.item .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.summary { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.sumcell { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+.sumcell b { display: block; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (max-width: 1100px) { .board { grid-template-columns: 1fr; } .summary { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Remediation plan</h1><p id="sub"></p></div></div>
+  <div class="summary" id="summary"></div>
+  <div class="board" id="board"></div>
+  <p class="foot">Now: a problem in a module others depend on. Next: a problem in a module nothing else depends on. Later: areas marked watch. Within a column, items are ordered by dependents, then by area.</p>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, DIMS, LEVEL, mods, shell, tierBadge, lvlBadge, evidence, evidenceHtml, promptFor, copy, esc } = Pro;
+shell('p10-plan');
+const items = [];
+mods.filter((m) => m.s.dims).forEach((m) => DIMS.forEach((d, k) => {
+  const v = m.s.dims[d.key];
+  if (!v.level) return;
+  const col = v.level === 2 ? (m.s.reach > 0 ? 'now' : 'next') : 'later';
+  items.push({ m, d, k, v, col });
+}));
+items.sort((a, b) => b.m.s.reach - a.m.s.reach || a.k - b.k || b.m.s.loc - a.m.s.loc);
+const COLS = [['now', 'Now', 'Problems in modules other code depends on'], ['next', 'Next', 'Problems in modules nothing else imports'], ['later', 'Later', 'Areas to watch']];
+document.getElementById('sub').textContent = `${items.filter((i) => i.col === 'now').length} items to do now, all in modules other code depends on. Each card carries its evidence and a prompt an AI agent can act on; copy a whole column to hand over a sprint.`;
+document.getElementById('summary').innerHTML = DIMS.map((d) => { const n = items.filter((i) => i.d.key === d.key && i.v.level === 2).length; return `<div class="sumcell"><b style="color:${n ? 'var(--bad)' : 'var(--ok)'}">${n}</b>${d.label}</div>`; }).join('');
+document.getElementById('board').innerHTML = COLS.map(([key, title, note]) => {
+  const list = items.filter((i) => i.col === key);
+  return `<section class="col ${key}"><div class="col-h"><h2>${title}<span>${list.length}</span></h2><p>${note}</p>${list.length ? `<div><button class="btn${key === 'now' ? '' : ' ghost'}" data-col="${key}">Copy ${title.toLowerCase()} as one AI task</button></div>` : ''}</div>
+    <div class="items">${list.map((it, n) => `<article class="item"><div class="t"><b>${esc(it.d.label)} · ${esc(it.m.label)}</b>${tierBadge(it.m.s.tier)}</div>
+      <div class="why">${lvlBadge(it.v.level)} ${it.v.value} ${esc(it.v.unit)}${it.v.note ? ` · ${esc(it.v.note)}` : ''}${it.m.s.reach ? ` · ${it.m.s.reach} modules depend on it` : ''}</div>
+      <details><summary>Evidence</summary>${evidenceHtml(evidence(it.m.i, it.d.key), 5)}</details>
+      <div class="row"><span class="muted" style="font-size:12px">${esc(it.d.ask)}</span><button class="btn ghost" data-m="${it.m.i}" data-k="${it.d.key}">Copy fix prompt</button></div></article>`).join('')}</div></section>`;
+}).join('');
+document.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => copy(promptFor(Number(b.dataset.m), b.dataset.k), b)));
+document.querySelectorAll('[data-col]').forEach((b) => b.addEventListener('click', () => {
+  const list = items.filter((i) => i.col === b.dataset.col);
+  copy(`Work through these ${list.length} architecture items in ${D.repository.name}, one commit each, in this order:\n\n${list.map((i, n) => `${n + 1}. ${promptFor(i.m.i, i.d.key)}`).join('\n\n')}`, b);
+}));
+</script>
+</body>
+</html>

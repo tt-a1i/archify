@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Health Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); gap: 18px; align-items: start; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.kpi { padding: 12px 16px; border-right: 1px solid var(--line); }
+.kpi:last-child { border-right: 0; }
+.kpi b { display: block; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpi span { color: var(--muted); font-size: 12px; }
+.kpi.core b { color: var(--core); } .kpi.bad b { color: var(--bad); }
+#map { width: 100%; height: auto; display: block; }
+.node { cursor: pointer; }
+.node:focus-visible circle.body { stroke: var(--focus); stroke-width: 3; }
+.areas { display: grid; }
+.area { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 12px; align-items: center; padding: 9px 16px; border-bottom: 1px solid var(--line); background: none; border-left: 0; border-right: 0; border-top: 0; text-align: left; color: inherit; cursor: pointer; }
+.area:last-child { border-bottom: 0; }
+.area:hover, .area[aria-pressed="true"] { background: var(--panel-2); }
+.area b { font-weight: 500; display: block; }
+.area small { color: var(--muted); font-size: 12px; }
+.stack { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--ok-soft); }
+.stack i { display: block; }
+.counts { font-size: 11px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.dimrow { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 10px; padding: 5px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+.dimrow:last-child { border-bottom: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); padding: 10px 16px; border-top: 1px solid var(--line); align-items: center; }
+.legend svg { vertical-align: middle; }
+@media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1 id="h1"></h1><p id="sub"></p></div></div>
+  <div class="grid">
+    <section class="panel">
+      <div class="panel-h">Module map <small>Core at the centre, each ring segment is one problem area</small></div>
+      <svg id="map" role="img" aria-label="Module map: core modules in the centre, health ring around each module"></svg>
+      <div class="legend" id="legend"></div>
+    </section>
+    <div style="display:grid;gap:18px;min-width:0">
+      <section class="panel">
+        <div class="kpis" id="kpis"></div>
+        <div class="panel-h" style="border-top:0">Problems by area <small>Click to highlight on the map</small></div>
+        <div class="areas" id="areas"></div>
+      </section>
+      <section class="panel" id="detail" aria-live="polite"></section>
+    </div>
+  </div>
+  <p class="foot" id="foot"></p>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, S, DIMS, TIERS, LEVEL, mods, ordered, levelSum, problems, shell, tierBadge, lvlBadge, evidence, evidenceHtml, promptFor, copy, esc, fmt } = Pro;
+shell('p01-overview');
+const live = mods.filter((m) => !m.s.vendor);
+const core = live.filter((m) => m.s.tier === 'core');
+const troubled = live.filter((m) => problems(m).length >= 3);
+document.getElementById('h1').textContent = `Architecture health of ${D.repository.name}`;
+document.getElementById('sub').textContent = `${core.map((m) => m.label).join(' and ')} ${core.length === 1 ? 'is' : 'are'} core: together they sit under ${Math.max(...core.map((m) => m.s.reach))} of ${live.length} modules. ${troubled.length} modules have problems in three or more areas: ${troubled.map((m) => m.label).join(', ')}.`;
+
+document.getElementById('kpis').innerHTML = `
+  <div class="kpi"><b>${live.length}</b><span>modules analyzed</span></div>
+  <div class="kpi core"><b>${core.length}</b><span>core modules</span></div>
+  <div class="kpi bad"><b>${live.filter((m) => problems(m).length).length}</b><span>with a problem area</span></div>
+  <div class="kpi"><b>${Atlas.totals.fnWarnings}</b><span>functions past complexity ${Atlas.T.warning.complexity}</span></div>`;
+
+let focusDim = null, selected = core[0]?.i ?? 0;
+const SEG = DIMS.length;
+const colourOf = (l) => ['var(--ok)', 'var(--watch)', 'var(--bad)'][l];
+
+function drawMap() {
+  const svg = document.getElementById('map');
+  const W = 820, H = 680, cx = W / 2, cy = H / 2 - 4;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const rings = { core: 0, supporting: 150, entry: 262, leaf: 262, isolated: 262, vendor: 262 };
+  const groups = {};
+  ordered.forEach((m) => { const r = rings[m.s.tier]; (groups[r] = groups[r] || []).push(m); });
+  const pos = {};
+  Object.entries(groups).forEach(([r, list]) => {
+    r = Number(r);
+    list.forEach((m, k) => {
+      if (r === 0) { const off = list.length > 1 ? 62 : 0; pos[m.i] = [cx + (k ? off : -off), cy]; return; }
+      const a = -Math.PI / 2 + (k / list.length) * Math.PI * 2 + (r > 200 ? 0.12 : 0);
+      pos[m.i] = [cx + Math.cos(a) * r * 1.22, cy + Math.sin(a) * r];
+    });
+  });
+  const rad = (m) => (m.s.tier === 'core' ? 34 : 9) + Math.sqrt(m.s.loc) * (m.s.tier === 'core' ? 0.12 : 0.1);
+  let html = '';
+  [150, 262].forEach((r, k) => { html += `<ellipse cx="${cx}" cy="${cy}" rx="${r * 1.22}" ry="${r}" fill="none" stroke="var(--line)" stroke-dasharray="3 4"/>`; });
+  
+  const bad = new Set();
+  Atlas.boundary.forEach((b) => (b.edges || []).forEach(([x, y]) => bad.add(`${Atlas.files[x].module}>${Atlas.files[y].module}`)));
+  (D.moduleEdges || []).forEach(([a, b, w]) => {
+    if (a === b || !pos[a] || !pos[b]) return;
+    const [x1, y1] = pos[a], [x2, y2] = pos[b];
+    const isBad = bad.has(`${a}>${b}`);
+    const lit = selected === a || selected === b;
+    const mx = (x1 + x2) / 2 + (cy - (y1 + y2) / 2) * 0.12, my = (y1 + y2) / 2 + ((x1 + x2) / 2 - cx) * 0.12;
+    html += `<path d="M${x1},${y1} Q${mx},${my} ${x2},${y2}" fill="none" stroke="${isBad ? 'var(--bad)' : lit ? 'var(--core)' : 'var(--line)'}" stroke-width="${isBad ? 2.2 : Math.min(4, 0.8 + Math.sqrt(w) * 0.35)}" ${isBad ? 'stroke-dasharray="5 3"' : ''} opacity="${isBad || lit ? 1 : 0.9}"/>`;
+  });
+  ordered.forEach((m) => {
+    const [x, y] = pos[m.i], r = rad(m);
+    const dimmed = focusDim && (!m.s.dims || m.s.dims[focusDim].level === 0);
+    let ring = '';
+    if (m.s.dims) DIMS.forEach((d, k) => {
+      const a0 = -Math.PI / 2 + (k / SEG) * Math.PI * 2 + 0.06, a1 = -Math.PI / 2 + ((k + 1) / SEG) * Math.PI * 2 - 0.06;
+      const R = r + 6;
+      const lv = m.s.dims[d.key].level;
+      const strong = !focusDim || focusDim === d.key;
+      ring += `<path d="M${x + Math.cos(a0) * R},${y + Math.sin(a0) * R} A${R},${R} 0 0 1 ${x + Math.cos(a1) * R},${y + Math.sin(a1) * R}" fill="none" stroke="${colourOf(lv)}" stroke-width="${focusDim === d.key ? 7 : 5}" opacity="${strong ? 1 : 0.25}"/>`;
+    });
+    const isCore = m.s.tier === 'core';
+    html += `<g class="node" tabindex="0" role="button" data-m="${m.i}" opacity="${dimmed ? 0.3 : 1}" aria-label="${esc(m.label)}, ${TIERS[m.s.tier]}">
+      <circle class="body" cx="${x}" cy="${y}" r="${r}" fill="${m.s.vendor ? 'var(--panel-2)' : isCore ? 'var(--core-soft)' : 'var(--panel)'}" stroke="${m.i === selected ? 'var(--ink)' : isCore ? 'var(--core)' : 'var(--line)'}" stroke-width="${m.i === selected ? 2.5 : isCore ? 2 : 1}"/>
+      ${ring}
+      ${isCore ? `<text x="${x}" y="${y - 2}" text-anchor="middle" font-size="14" font-weight="600" fill="var(--core)">${esc(m.label)}</text><text x="${x}" y="${y + 14}" text-anchor="middle" font-size="10" fill="var(--core)">${m.s.reach} depend on it</text>`
+        : `<text x="${x}" y="${y + r + 20}" text-anchor="middle" font-size="11" font-weight="500" fill="${m.s.vendor ? 'var(--faint)' : 'var(--ink)'}">${esc(m.label)}</text>${m.s.reach ? `<text x="${x}" y="${y + r + 33}" text-anchor="middle" font-size="10" fill="var(--muted)">${m.s.reach} depend on it</text>` : ''}`}
+    </g>`;
+  });
+  svg.innerHTML = html;
+  svg.querySelectorAll('.node').forEach((g) => {
+    g.addEventListener('click', () => select(Number(g.dataset.m)));
+    g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(Number(g.dataset.m)); } });
+  });
+}
+
+document.getElementById('legend').innerHTML = `<svg width="46" height="46" viewBox="-23 -23 46 46" aria-hidden="true">${DIMS.map((d, k) => { const a0 = -Math.PI / 2 + (k / SEG) * Math.PI * 2 + 0.06, a1 = -Math.PI / 2 + ((k + 1) / SEG) * Math.PI * 2 - 0.06; return `<path d="M${Math.cos(a0) * 17},${Math.sin(a0) * 17} A17,17 0 0 1 ${Math.cos(a1) * 17},${Math.sin(a1) * 17}" fill="none" stroke="var(--faint)" stroke-width="5"/><text x="${Math.cos((a0 + a1) / 2) * 6}" y="${Math.sin((a0 + a1) / 2) * 6 + 3}" font-size="7" text-anchor="middle" fill="var(--muted)">${k + 1}</text>`; }).join('')}</svg>
+  <span>Inner dashed ring: supporting modules; outer: entry points, leaves and vendored code.</span><span>Ring segments clockwise from the top: ${DIMS.map((d, k) => `${k + 1} ${d.label}`).join(' · ')}</span>
+  <span>${['Healthy', 'Watch', 'Problem'].map((l, k) => `<span class="lvl l${k}">${l}</span>`).join(' ')}</span>
+  <span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 3"/></svg> Import a boundary rule forbids</span>`;
+
+function drawAreas() {
+  document.getElementById('areas').innerHTML = DIMS.map((d) => {
+    const bad = live.filter((m) => m.s.dims[d.key].level === 2).length, watch = live.filter((m) => m.s.dims[d.key].level === 1).length;
+    return `<button class="area" type="button" data-k="${d.key}" aria-pressed="${focusDim === d.key}"><span><b>${d.label}</b><small>${d.ask}</small></span>
+      <span><span class="stack"><i style="width:${bad / live.length * 100}%;background:var(--bad)"></i><i style="width:${watch / live.length * 100}%;background:var(--watch)"></i></span><span class="counts">${bad} problem · ${watch} watch · ${live.length - bad - watch} healthy</span></span></button>`;
+  }).join('');
+  document.querySelectorAll('.area').forEach((b) => b.addEventListener('click', () => { focusDim = focusDim === b.dataset.k ? null : b.dataset.k; drawAreas(); drawMap(); }));
+}
+
+function select(mi) {
+  selected = mi;
+  const m = mods[mi];
+  const worst = m.s.dims ? DIMS.filter((d) => m.s.dims[d.key].level).sort((a, b) => m.s.dims[b.key].level - m.s.dims[a.key].level)[0] : null;
+  document.getElementById('detail').innerHTML = `<div class="panel-h"><span>${esc(m.label)} ${tierBadge(m.s.tier)}</span><small>${fmt(m.s.loc)} lines · ${m.s.files} files · ${m.s.reach} modules depend on it</small></div>
+    <div class="pad">${m.s.vendor ? '<p class="muted" style="margin:0">Vendored third-party code: shown for context, not assessed.</p>' : DIMS.map((d) => { const v = m.s.dims[d.key]; return `<div class="dimrow"><span>${lvlBadge(v.level, d.label)}</span><span class="muted">${v.value} ${esc(v.unit)}${v.note ? ` · ${esc(v.note)}` : ''}</span></div>`; }).join('')}
+    ${worst ? `<div style="margin-top:12px"><b style="font-size:13px">Evidence: ${worst.label}</b><div style="margin-top:6px">${evidenceHtml(evidence(mi, worst.key), 5)}</div><button class="btn" id="cp" style="margin-top:10px">Copy fix prompt: ${worst.label}</button></div>` : ''}</div>`;
+  const b = document.getElementById('cp');
+  if (b) b.addEventListener('click', () => copy(promptFor(mi, worst.key), b));
+  drawMap();
+}
+document.getElementById('foot').textContent = `Complexity and coupling come from the analyzer's findings; the other five areas are heuristic signals measured from the same run's source text, each with file:line evidence. ${S.files.filter((f) => f.vendor).length} vendored files are shown but not assessed.`;
+drawAreas();
+select(selected);
+</script>
+</body>
+</html>

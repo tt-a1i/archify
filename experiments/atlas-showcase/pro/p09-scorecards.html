@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module Scorecards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.filters button[aria-pressed="true"] { border-color: var(--core); background: var(--core-soft); color: var(--core); font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+.card { display: grid; grid-template-rows: auto 1fr auto; }
+.card.core { border-color: var(--core); box-shadow: inset 0 3px 0 var(--core); }
+.card .top { padding: 12px 14px 0; display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.card h2 { margin: 0; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.card .meta { color: var(--muted); font-size: 12px; }
+.card .body { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; padding: 8px 14px; align-items: center; }
+.card svg { width: 130px; height: 130px; display: block; }
+.dl { display: grid; gap: 3px; font-size: 12px; }
+.dl div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.dl span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+.card .foot2 { padding: 10px 14px 12px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card .foot2 small { color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Module scorecards</h1><p>Each card answers two questions for one module: how central is it, and which of the seven areas need work. The radar reaches outward for every area that is a problem, so a large shape means a module that needs attention.</p></div>
+    <div class="filters" id="filters" role="group" aria-label="Filter"></div></div>
+  <div class="cards" id="cards"></div>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, DIMS, LEVEL, mods, ordered, levelSum, problems, shell, tierBadge, lvlBadge, promptFor, copy, esc, fmt } = Pro;
+shell('p09-scorecards');
+const FILTERS = [['all', 'All modules'], ['core', 'Core'], ['problem', 'With a problem area'], ['clean', 'Healthy']];
+let filter = 'all';
+function radar(m) {
+  const n = DIMS.length, c = 65, R = 50;
+  const pt = (k, r) => [c + Math.cos(-Math.PI / 2 + (k / n) * Math.PI * 2) * r, c + Math.sin(-Math.PI / 2 + (k / n) * Math.PI * 2) * r];
+  let h = '';
+  [1, 2].forEach((lv) => { h += `<polygon points="${DIMS.map((_, k) => pt(k, (lv / 2) * R).join(',')).join(' ')}" fill="none" stroke="var(--line)"/>`; });
+  DIMS.forEach((d, k) => { const [x, y] = pt(k, R); h += `<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="var(--line)"/>`; const [tx, ty] = pt(k, R + 9); h += `<text x="${tx}" y="${ty + 3}" text-anchor="middle" font-size="8" fill="var(--faint)">${k + 1}</text>`; });
+  if (!m.s.dims) return `<svg viewBox="0 0 130 130" aria-hidden="true">${h}<text x="65" y="69" text-anchor="middle" font-size="11" fill="var(--faint)">not assessed</text></svg>`;
+  const pts = DIMS.map((d, k) => pt(k, Math.max(0.12, m.s.dims[d.key].level / 2) * R));
+  const worst = Math.max(...DIMS.map((d) => m.s.dims[d.key].level));
+  const col = ['var(--ok)', 'var(--watch)', 'var(--bad)'][worst];
+  h += `<polygon points="${pts.map((p) => p.join(',')).join(' ')}" fill="${col}" fill-opacity=".22" stroke="${col}" stroke-width="1.6"/>`;
+  pts.forEach(([x, y], k) => { h += `<circle cx="${x}" cy="${y}" r="2.6" fill="${['var(--ok)', 'var(--watch)', 'var(--bad)'][m.s.dims[DIMS[k].key].level]}"/>`; });
+  return `<svg viewBox="0 0 130 130" role="img" aria-label="Radar of seven areas">${h}</svg>`;
+}
+function render() {
+  document.getElementById('filters').innerHTML = FILTERS.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filter === k}">${l}</button>`).join('');
+  document.querySelectorAll('#filters button').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.f; render(); }));
+  const list = ordered.filter((m) => filter === 'all' || (filter === 'core' && m.s.tier === 'core') || (filter === 'problem' && problems(m).length) || (filter === 'clean' && m.s.dims && !problems(m).length));
+  document.getElementById('cards').innerHTML = list.map((m) => {
+    const worst = m.s.dims ? DIMS.filter((d) => m.s.dims[d.key].level === 2)[0] || DIMS.filter((d) => m.s.dims[d.key].level === 1)[0] : null;
+    return `<article class="panel card ${m.s.tier}">
+      <div class="top"><div><h2>${esc(m.label)}</h2><div class="meta">${esc(m.path || '.')} · ${fmt(m.s.loc)} lines · ${m.s.files} files</div></div>${tierBadge(m.s.tier)}</div>
+      <div class="body">${radar(m)}<div class="dl">${m.s.dims ? DIMS.map((d, k) => `<div>${lvlBadge(m.s.dims[d.key].level, `${k + 1} ${d.label}`)}<span>${m.s.dims[d.key].value}</span></div>`).join('') : '<div class="muted">Vendored third-party code.</div>'}</div></div>
+      <div class="foot2"><small>${m.s.reach ? `${m.s.reach} modules depend on it` : 'Nothing depends on it'}${m.s.dims ? ` · load ${levelSum(m)}` : ''}</small>${worst ? `<button class="btn ghost" data-m="${m.i}" data-k="${worst.key}">Fix ${worst.label.toLowerCase()}</button>` : ''}</div>
+    </article>`;
+  }).join('');
+  document.querySelectorAll('#cards [data-k]').forEach((b) => b.addEventListener('click', () => copy(promptFor(Number(b.dataset.m), b.dataset.k), b)));
+}
+render();
+</script>
+</body>
+</html>

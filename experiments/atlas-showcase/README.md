@@ -36,3 +36,13 @@ node experiments/atlas-showcase/build-data.mjs out/run my-repo
 - Unresolved imports draw no line, so a missing line is not proof of missing coupling.
 - Motion respects `prefers-reduced-motion`. Fonts come from Google Fonts and fall back to system faces offline.
 - These are design studies, not product code: nothing here is wired into `serve` or the packaged ZIP.
+
+## Architecture health set (`pro/`)
+
+A second set of ten views in one product design, built to show at a glance which modules are core and which have problems: complexity, coupling, separation of concerns (MVC-style roles), interfaces and entry points, locks and concurrency, duplication, and code organization. Open `pro/gallery.html` for screenshots or `pro/p01-overview.html` to start using it.
+
+Complexity and coupling come from analyzer findings. The other five areas are heuristic signals computed by `pro/build-signals.mjs` from the same run's source text, each with file:line evidence; "How it is measured" on every page states each rule. Regenerate after `build-data.mjs`:
+
+```sh
+node experiments/atlas-showcase/pro/build-signals.mjs out/run
+```

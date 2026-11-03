@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Layers and Roles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.callouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.callout .pad > * + * { margin-top: 8px; }
+.callout h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.callout .big { font-size: 28px; font-weight: 600; color: var(--bad); font-variant-numeric: tabular-nums; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+.lanes { overflow-x: auto; }
+.grid { display: grid; min-width: max-content; }
+.lane-h { position: sticky; left: 0; z-index: 2; background: var(--panel); padding: 10px 14px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); font-size: 12px; font-weight: 600; width: 168px; }
+.lane-h small { display: block; font-weight: 400; color: var(--muted); }
+.col-h { padding: 10px 6px 8px; border-bottom: 1px solid var(--line); font-size: 11px; font-weight: 600; text-align: center; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; height: 110px; display: flex; align-items: center; justify-content: flex-start; }
+.col-h.core { color: var(--core); }
+.cell { border-bottom: 1px solid var(--line); border-right: 1px dashed var(--line); padding: 6px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 3px; width: 64px; min-height: 52px; }
+.cell.vio { background: var(--bad-soft); }
+.f { width: 13px; height: 13px; border-radius: 3px; border: 0; padding: 0; cursor: pointer; background: var(--faint); opacity: .55; }
+.f.r-entry { background: #7b61c9; } .f.r-view { background: #2f8fd0; } .f.r-domain { background: #2e9466; } .f.r-model { background: #b0761a; } .f.r-io { background: #c0504d; } .f.r-shared { background: var(--faint); }
+.f { opacity: .9; }
+.f.mixed { outline: 2px solid var(--bad); outline-offset: 1px; }
+.f.hot { transform: scale(1.35); opacity: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); padding: 10px 16px; border-top: 1px solid var(--line); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.score { display: grid; grid-template-columns: 130px minmax(0, 1fr) 24px; gap: 8px; align-items: center; font-size: 12px; margin: 3px 0; }
+.score .b { height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+.score .b i { display: block; height: 100%; }
+#drawer .pad > * + * { margin-top: 10px; }
+@media (max-width: 1100px) { .layout, .callouts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Layers and roles</h1><p>An MVC-style split keeps the entry and controller code, the views, the domain logic and the I/O apart. Each square below is a file in the lane of its main role; a red outline means the file also does another role's job.</p></div></div>
+  <div class="callouts" id="callouts"></div>
+  <div class="layout">
+    <section class="panel lanes"><div class="grid" id="grid"></div><div class="legend" id="legend"></div></section>
+    <aside class="panel" id="drawer" aria-live="polite"></aside>
+  </div>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, S, ROLE, mods, ordered, shell, tierBadge, lvlBadge, evidence, evidenceHtml, promptFor, copy, esc, fmt } = Pro;
+shell('p04-layers');
+const LANES = ['entry', 'view', 'domain', 'model', 'io', 'shared'];
+const LANE_NOTE = { entry: 'parses args, exits', view: 'builds SVG / HTML', domain: 'layout, compile, parse', model: 'validate, schema', io: 'files, processes', shared: 'no dominant role' };
+const cols = ordered.filter((m) => !m.s.vendor);
+const files = S.files.filter((f) => !f.vendor);
+const mixed = files.filter((f) => f.mixed);
+const rendererCli = files.filter((f) => /^renderers\/(?!shared\/)/.test(f.path) && Object.values(f.lines).some((t) => t.includes('process.argv')));
+const rendererExit = rendererCli.filter((f) => Object.values(f.lines).some((t) => t.includes('process.exit')));
+const viewIo = files.filter((f) => f.viewIo);
+
+const sample = rendererExit[0] || rendererCli[0];
+const sampleLines = sample ? sample.evidence.entry.slice(0, 4).map((n) => ({ file: sample.path, line: n, text: sample.lines[n] })) : [];
+document.getElementById('callouts').innerHTML = `
+  <section class="panel callout"><div class="pad"><span class="big">${rendererCli.length}</span><h3>Renderers are also their own CLI</h3>
+    <div class="muted" style="font-size:13px">${rendererCli.length} renderer files read process.argv when they load and ${rendererExit.length} of them call process.exit: controller code lives inside the view, so it cannot be imported cleanly.</div>${evidenceHtml(sampleLines, 3)}</div></section>
+  <section class="panel callout"><div class="pad"><span class="big">${mixed.length}</span><h3>Files mix I/O or CLI with logic</h3>
+    <div class="muted" style="font-size:13px">Largest: ${mixed.slice().sort((a, b) => b.loc - a.loc).slice(0, 3).map((f) => `${esc(f.path)} (${fmt(f.loc)} lines, ${f.strong.map((r) => ROLE[r].toLowerCase()).join(' + ')})`).join('; ')}.</div></div></section>
+  <section class="panel callout"><div class="pad"><span class="big" style="color:${viewIo.length ? 'var(--bad)' : 'var(--ok)'}">${viewIo.length}</span><h3>Views that touch the file system</h3>
+    <div class="muted" style="font-size:13px">${viewIo.length ? viewIo.map((f) => esc(f.path)).join(', ') : 'No view file reads or writes files directly: rendering stays free of disk I/O.'}</div></div></section>`;
+
+let sel = null;
+function render() {
+  const g = document.getElementById('grid');
+  g.style.gridTemplateColumns = `168px repeat(${cols.length}, 64px)`;
+  let h = '<div class="lane-h" style="border-bottom:1px solid var(--line)">Role \\ module</div>';
+  cols.forEach((m) => { h += `<div class="col-h ${m.s.tier}" title="${esc(m.path)}">${esc(m.label)}${m.s.tier === 'core' ? ' · core' : ''}</div>`; });
+  LANES.forEach((r) => {
+    h += `<div class="lane-h">${ROLE[r]}<small>${LANE_NOTE[r]}</small></div>`;
+    cols.forEach((m) => {
+      const inLane = files.filter((f) => f.module === m.i && (f.primary === r || (f.mixed && f.strong.includes(r))));
+      const vio = inLane.some((f) => f.mixed && f.primary !== r);
+      h += `<div class="cell${vio ? ' vio' : ''}">${inLane.map((f) => `<button class="f r-${f.primary}${f.mixed ? ' mixed' : ''}${sel === f.path ? ' hot' : ''}" type="button" data-p="${esc(f.path)}" title="${esc(f.path)} · ${ROLE[f.primary]}${f.mixed ? ` + ${f.strong.filter((x) => x !== f.primary).map((x) => ROLE[x]).join(', ')}` : ''}" aria-label="${esc(f.path)}"></button>`).join('')}</div>`;
+    });
+  });
+  g.innerHTML = h;
+  g.querySelectorAll('.f').forEach((b) => {
+    b.addEventListener('click', () => open(b.dataset.p));
+    b.addEventListener('mouseenter', () => g.querySelectorAll(`.f[data-p="${CSS.escape(b.dataset.p)}"]`).forEach((x) => x.classList.add('hot')));
+    b.addEventListener('mouseleave', () => g.querySelectorAll(`.f[data-p="${CSS.escape(b.dataset.p)}"]`).forEach((x) => x.dataset.p !== sel && x.classList.remove('hot')));
+  });
+}
+document.getElementById('legend').innerHTML = LANES.map((r) => `<span><i class="r-${r}" style="background:${{ entry: '#7b61c9', view: '#2f8fd0', domain: '#2e9466', model: '#b0761a', io: '#c0504d', shared: 'var(--faint)' }[r]}"></i>${ROLE[r]}</span>`).join('') + '<span><i style="outline:2px solid var(--bad);outline-offset:1px;background:var(--panel)"></i>Mixed: appears in every lane it occupies</span><span><i style="background:var(--bad-soft)"></i>Lane cell holding a mixed file</span>';
+
+function open(p) {
+  sel = p;
+  const f = files.find((x) => x.path === p);
+  const m = mods[f.module];
+  const max = Math.max(...Object.values(f.scores), 1);
+  const ev = [...f.evidence.entry.slice(0, 3), ...f.evidence.io.slice(0, 3), ...f.evidence.view.slice(0, 2)].map((n) => ({ file: f.path, line: n, text: f.lines[n] }));
+  document.getElementById('drawer').innerHTML = `<div class="panel-h"><span style="overflow-wrap:anywhere">${esc(f.path.split('/').pop())}</span>${tierBadge(m.s.tier)}</div>
+    <div class="pad"><div class="muted mono" style="overflow-wrap:anywhere">${esc(f.path)} · ${fmt(f.loc)} lines</div>
+    <div>${f.mixed ? lvlBadge(2, 'Mixes roles') : f.blended ? lvlBadge(1, 'View holds layout logic') : lvlBadge(0, 'Single role')}</div>
+    <div>${Object.entries(f.scores).map(([r, v]) => `<div class="score"><span>${ROLE[r]}</span><span class="b"><i style="width:${v / max * 100}%;background:${v >= 4 ? 'var(--ink)' : 'var(--faint)'}"></i></span><span class="num">${v}</span></div>`).join('')}</div>
+    ${evidenceHtml(ev, 8)}
+    ${f.mixed || f.blended ? '<button class="btn" id="cp">Copy separation prompt for this module</button>' : ''}</div>`;
+  const b = document.getElementById('cp');
+  if (b) b.addEventListener('click', () => copy(promptFor(f.module, 'separation'), b));
+  render();
+}
+render();
+open((sample || mixed[0] || files[0]).path);
+</script>
+</body>
+</html>

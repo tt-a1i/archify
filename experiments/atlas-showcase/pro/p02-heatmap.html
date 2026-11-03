@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Health Matrix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; }
+th, td { padding: 0; border-bottom: 1px solid var(--line); }
+thead th { position: sticky; top: 0; background: var(--panel); font-weight: 600; font-size: 12px; color: var(--muted); text-align: left; padding: 10px 8px; vertical-align: bottom; white-space: nowrap; }
+thead th.dim { text-align: center; width: 104px; }
+td.name { padding: 8px 12px 8px 16px; white-space: nowrap; }
+td.name b { font-weight: 600; }
+td.name .path { display: block; color: var(--faint); font-size: 11px; }
+td.reach { padding: 0 10px; width: 130px; }
+.bar { height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--core); }
+td.reach small { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+td.cell { padding: 3px; }
+.cellbtn { width: 100%; height: 42px; border: 0; border-radius: 6px; cursor: pointer; display: grid; place-items: center; font: 600 13px var(--sans); font-variant-numeric: tabular-nums; }
+.cellbtn small { display: block; font-weight: 400; font-size: 10px; opacity: .85; }
+.cellbtn.l0 { background: var(--ok-soft); color: var(--ok); }
+.cellbtn.l1 { background: var(--watch-soft); color: var(--watch); }
+.cellbtn.l2 { background: var(--bad); color: #fff; }
+.cellbtn[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 1px; }
+.cellbtn.na { background: repeating-linear-gradient(45deg, var(--panel-2), var(--panel-2) 4px, var(--panel) 4px, var(--panel) 8px); color: var(--faint); cursor: default; }
+tr.group td { background: var(--panel-2); padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--muted); }
+tr.core td.name b { color: var(--core); }
+.drawer { position: sticky; top: 76px; }
+.drawer .pad > * + * { margin-top: 12px; }
+@media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } .drawer { position: static; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Health matrix</h1><p id="sub"></p></div><div id="legend" style="display:flex;gap:14px"></div></div>
+  <div class="layout">
+    <section class="panel tablewrap"><table id="t" aria-label="Modules by problem area"></table></section>
+    <aside class="panel drawer" id="drawer" aria-live="polite"></aside>
+  </div>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, DIMS, TIERS, TIER_ORDER, LEVEL, mods, ordered, shell, tierBadge, lvlBadge, evidence, evidenceHtml, promptFor, copy, esc, fmt } = Pro;
+shell('p02-heatmap');
+const live = mods.filter((m) => !m.s.vendor);
+document.getElementById('sub').textContent = `${live.length} modules × ${DIMS.length} areas. Rows run from core modules down to leaves; a red cell is a problem with evidence behind it, amber is worth watching.`;
+document.getElementById('legend').innerHTML = LEVEL.map((l, k) => lvlBadge(k, l)).join('');
+const maxReach = Math.max(...mods.map((m) => m.s.reach), 1);
+let sel = null;
+function render() {
+  let html = `<thead><tr><th style="padding-left:16px">Module</th><th>Depended on by</th>${DIMS.map((d) => `<th class="dim" title="${esc(d.ask)}">${d.label.replace(' & ', ' &amp;<br>').replace('Separation of concerns', 'Separation<br>(MVC)')}</th>`).join('')}</tr></thead><tbody>`;
+  TIER_ORDER.forEach((t) => {
+    const rows = ordered.filter((m) => m.s.tier === t);
+    if (!rows.length) return;
+    html += `<tr class="group"><td colspan="${DIMS.length + 2}">${TIERS[t]} · ${rows.length}</td></tr>`;
+    rows.forEach((m) => {
+      html += `<tr class="${t}"><td class="name"><b>${esc(m.label)}</b><span class="path">${esc(m.path || '.')} · ${fmt(m.s.loc)} lines</span></td>
+        <td class="reach"><div class="bar"><i style="width:${m.s.reach / maxReach * 100}%"></i></div><small>${m.s.reach} modules</small></td>
+        ${DIMS.map((d) => {
+          if (!m.s.dims) return '<td class="cell"><span class="cellbtn na" title="Vendored code is not assessed">n/a</span></td>';
+          const v = m.s.dims[d.key];
+          const on = sel && sel[0] === m.i && sel[1] === d.key;
+          return `<td class="cell"><button class="cellbtn l${v.level}" type="button" data-m="${m.i}" data-k="${d.key}" aria-pressed="${on}" aria-label="${esc(m.label)} ${d.label}: ${LEVEL[v.level]}">${v.value}<small>${LEVEL[v.level]}</small></button></td>`;
+        }).join('')}</tr>`;
+    });
+  });
+  document.getElementById('t').innerHTML = `${html}</tbody>`;
+  document.querySelectorAll('.cellbtn[data-m]').forEach((b) => b.addEventListener('click', () => open(Number(b.dataset.m), b.dataset.k)));
+}
+function open(mi, key) {
+  sel = [mi, key];
+  const m = mods[mi], d = DIMS.find((x) => x.key === key), v = m.s.dims[key];
+  document.getElementById('drawer').innerHTML = `<div class="panel-h"><span>${esc(m.label)} · ${d.label}</span>${tierBadge(m.s.tier)}</div>
+    <div class="pad"><div>${lvlBadge(v.level)} <span class="muted">${v.value} ${esc(v.unit)}${v.note ? ` · ${esc(v.note)}` : ''}</span></div>
+    <div class="muted" style="font-size:13px">${esc(d.ask)}.</div>
+    ${evidenceHtml(evidence(mi, key), 8)}
+    ${v.level ? '<button class="btn" id="cp">Copy fix prompt for AI</button>' : '<div class="muted">Healthy: nothing to fix here.</div>'}</div>`;
+  const b = document.getElementById('cp');
+  if (b) b.addEventListener('click', () => copy(promptFor(mi, key), b));
+  render();
+}
+render();
+const first = ordered.find((m) => m.s.dims && m.s.dims.separation.level === 2 && m.s.tier !== 'leaf') || ordered[0];
+open(first.i, 'separation');
+</script>
+</body>
+</html>

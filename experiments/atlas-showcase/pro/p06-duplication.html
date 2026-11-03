@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duplicate Code Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 18px; }
+.bars { padding: 10px 16px 14px; display: grid; gap: 7px; }
+.brow { display: grid; grid-template-columns: 130px minmax(0, 1fr) 110px; gap: 10px; align-items: center; font-size: 13px; }
+.brow .b { height: 12px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+.brow .b i { display: block; height: 100%; }
+.brow span:last-child { color: var(--muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
+.list { max-height: 620px; overflow: auto; }
+.clone { width: 100%; text-align: left; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 9px 14px; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; cursor: pointer; }
+.clone:hover, .clone[aria-pressed="true"] { background: var(--panel-2); }
+.clone b { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.clone b small { display: block; font-size: 10px; font-weight: 400; color: var(--muted); }
+.clone .where { display: block; font-family: var(--mono); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clone .tags { margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap; }
+.diff { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.side { min-width: 0; border-right: 1px solid var(--line); }
+.side:last-child { border-right: 0; }
+.side h3 { margin: 0; padding: 9px 14px; font: 500 12px var(--mono); border-bottom: 1px solid var(--line); background: var(--panel-2); overflow-wrap: anywhere; }
+.code { margin: 0; padding: 10px 0; font: 12px/1.65 var(--mono); overflow-x: auto; }
+.code div { white-space: pre; padding-right: 14px; }
+.code div.same { background: var(--watch-soft); }
+.code span { display: inline-block; width: 5ch; text-align: right; margin-right: 12px; color: var(--faint); user-select: none; }
+@media (max-width: 1100px) { .top, .layout, .diff { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Duplicate code</h1><p id="sub"></p></div></div>
+  <div class="top">
+    <section class="panel"><div class="panel-h">Repeated lines by module <small>share of the module's lines</small></div><div class="bars" id="bars"></div></section>
+    <section class="panel"><div class="panel-h">What kind of duplication <small>lines in the largest 120 pairs, by where the copies live</small></div><div class="bars" id="kinds"></div></section>
+  </div>
+  <div class="layout">
+    <section class="panel"><div class="panel-h">Largest repeated blocks <small id="cnt"></small></div><div class="list" id="list"></div></section>
+    <section class="panel" id="view" aria-live="polite"></section>
+  </div>
+  <p class="foot" id="foot"></p>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, S, mods, ordered, shell, tierBadge, copy, esc, fmt } = Pro;
+shell('p06-duplication');
+const modOf = (p) => S.files.find((f) => f.path === p)?.module;
+const live = ordered.filter((m) => !m.s.vendor && m.s.dupLines > 0).sort((a, b) => b.s.dupRatio - a.s.dupRatio);
+const totalDup = S.files.reduce((t, f) => t + f.dupLines, 0), totalLoc = S.files.filter((f) => !f.vendor).reduce((t, f) => t + f.loc, 0);
+document.getElementById('sub').textContent = `${fmt(totalDup)} of ${fmt(totalLoc)} lines (${(totalDup / totalLoc * 100).toFixed(1)}%) sit in blocks repeated elsewhere, in ${fmt(S.cloneCount)} matching pairs. Highest share: ${live[0].label} (${(live[0].s.dupRatio * 100).toFixed(1)}%); most lines: ${live.slice().sort((a, b) => b.s.dupLines - a.s.dupLines)[0].label}.`;
+const maxR = Math.max(...live.map((m) => m.s.dupRatio));
+document.getElementById('bars').innerHTML = live.slice(0, 10).map((m) => `<div class="brow"><span><b>${esc(m.label)}</b></span><span class="b"><i style="width:${m.s.dupRatio / maxR * 100}%;background:${['var(--ok)', 'var(--watch)', 'var(--bad)'][m.s.dims.duplication.level]}"></i></span><span>${(m.s.dupRatio * 100).toFixed(1)}% · ${fmt(m.s.dupLines)} lines</span></div>`).join('');
+const kinds = { 'Inside one file': 0, 'Across files in one module': 0, 'Across modules': 0 };
+const kindOf = (c) => (c.a.file === c.b.file ? 'Inside one file' : modOf(c.a.file) === modOf(c.b.file) ? 'Across files in one module' : 'Across modules');
+S.clones.forEach((c) => { kinds[kindOf(c)] += c.lines; });
+const maxK = Math.max(...Object.values(kinds), 1);
+document.getElementById('kinds').innerHTML = Object.entries(kinds).map(([k, v]) => `<div class="brow"><span>${k}</span><span class="b"><i style="width:${v / maxK * 100}%;background:var(--core)"></i></span><span>${fmt(v)} lines</span></div>`).join('') +
+  '<div class="muted" style="font-size:12px;margin-top:4px">Copies across modules usually want a shared helper; copies inside one file usually want a loop or a small function.</div>';
+document.getElementById('cnt').textContent = `top ${S.clones.length} of ${fmt(S.cloneCount)}`;
+let cur = 0;
+function list() {
+  document.getElementById('list').innerHTML = S.clones.map((c, k) => `<button class="clone" type="button" data-k="${k}" aria-pressed="${k === cur}"><b>${c.lines}<small>lines</small></b>
+    <span style="min-width:0"><span class="where" title="${esc(c.a.file)}:${c.a.start}">${esc(c.a.file)}:${c.a.start}</span><span class="where" title="${esc(c.b.file)}:${c.b.start}">${esc(c.b.file)}:${c.b.start}</span>
+    <span class="tags"><span class="chip">${kindOf(c)}</span>${[...new Set([modOf(c.a.file), modOf(c.b.file)])].map((m) => mods[m].s.tier === 'core' ? '<span class="tier core">Core</span>' : '').join('')}</span></span></button>`).join('');
+  document.querySelectorAll('.clone').forEach((b) => b.addEventListener('click', () => { cur = Number(b.dataset.k); list(); show(); }));
+}
+function codeHtml(side) {
+  return side.snippet.split('\n').map((l, k) => `<div class="same"><span>${side.start + k}</span>${esc(l)}</div>`).join('');
+}
+function show() {
+  const c = S.clones[cur];
+  document.getElementById('view').innerHTML = `<div class="panel-h"><span>${c.lines} repeated lines · ${kindOf(c)}</span><button class="btn" id="cp">Copy extract-function prompt</button></div>
+    <div class="diff"><div class="side"><h3>${esc(c.a.file)} · lines ${c.a.start}–${c.a.end}</h3><pre class="code">${codeHtml(c.a)}</pre></div>
+    <div class="side"><h3>${esc(c.b.file)} · lines ${c.b.start}–${c.b.end}</h3><pre class="code">${codeHtml(c.b)}</pre></div></div>`;
+  document.getElementById('cp').addEventListener('click', (e) => copy([
+    `Remove a duplicated block in ${D.repository.name}.`,
+    `${c.a.file}:${c.a.start}-${c.a.end} and ${c.b.file}:${c.b.start}-${c.b.end} repeat the same ${c.lines} lines (after removing comments and whitespace; strings and numbers may differ).`,
+    `Extract the shared logic into one function${kindOf(c) === 'Across modules' ? ' in a module both sides may import' : ''}, pass the differing values as parameters, and call it from both places.`,
+    'Keep behaviour identical, add a test for the extracted function, and re-run Archify code analysis.'].join('\n'), e.currentTarget));
+}
+document.getElementById('foot').textContent = S.method.duplication + ' Highlighted lines are the matched block; the view shows up to 14 lines of each side.';
+list(); show();
+</script>
+</body>
+</html>

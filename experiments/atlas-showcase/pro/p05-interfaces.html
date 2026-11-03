@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interfaces and Entry Points</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.tab { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.tab[aria-pressed="true"] { border-color: var(--core); background: var(--core-soft); color: var(--core); font-weight: 600; }
+.tab small { color: var(--muted); margin-left: 4px; }
+#wall { width: 100%; height: auto; display: block; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.stats div { padding: 10px 16px; border-right: 1px solid var(--line); }
+.stats div:last-child { border-right: 0; }
+.stats b { display: block; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 12px; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; color: var(--muted); font-weight: 600; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; }
+th.n { text-align: right; }
+.tablewrap { overflow-x: auto; }
+@media (max-width: 800px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Interfaces and entry points</h1><p id="sub"></p></div><button class="btn" id="cp">Copy interface prompt for AI</button></div>
+  <section class="panel">
+    <div class="tabs" id="tabs" role="group" aria-label="Choose a module"></div>
+    <svg id="wall" role="img" aria-label="Consumers on the left reaching files inside the module on the right"></svg>
+    <div class="stats" id="stats"></div>
+  </section>
+  <section class="panel tablewrap">
+    <div class="panel-h">Every module's public surface <small>JavaScript has no interface keyword, so the signals are entry files, JSDoc @typedef / @interface and classes</small></div>
+    <table id="tbl"></table>
+  </section>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, S, mods, ordered, shell, tierBadge, lvlBadge, promptFor, copy, esc, fmt } = Pro;
+shell('p05-interfaces');
+const withSurface = ordered.filter((m) => m.s.surface > 0 && !m.s.vendor).sort((a, b) => b.s.surface - a.s.surface);
+const noIndex = withSurface.filter((m) => !m.s.hasIndex);
+document.getElementById('sub').textContent = `${noIndex.length} of ${withSurface.length} modules that others import have no single entry point. ${withSurface[0].label} is imported through ${withSurface[0].s.surface} different internal files by ${withSurface[0].s.consumers} modules, and declares ${withSurface[0].s.typedefs} type contracts.`;
+let cur = withSurface[0].i;
+
+function draw() {
+  const m = mods[cur];
+  const edges = S.surfaceEdges.filter(([, b]) => b === cur);
+  const consumers = [...new Set(edges.map(([a]) => a))].sort((x, y) => D.modules[x].label.localeCompare(D.modules[y].label));
+  const targets = [...new Set(edges.flatMap(([, , fs]) => fs))];
+  const useCount = new Map(targets.map((t) => [t, edges.filter(([, , fs]) => fs.includes(t)).length]));
+  targets.sort((x, y) => useCount.get(y) - useCount.get(x) || D.files[x][0].localeCompare(D.files[y][0]));
+  const rowH = 22, H = Math.max(consumers.length, targets.length) * rowH + 80, W = 1100;
+  const svg = document.getElementById('wall');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const lx = 210, wx = 560, rx = 700;
+  const cy = (k) => 50 + (k + 0.5) * ((H - 70) / consumers.length);
+  const ty = (k) => 50 + (k + 0.5) * rowH;
+  const portY = 50 + (H - 70) / 2;
+  let h = `<text x="${lx}" y="28" text-anchor="end" font-size="12" font-weight="600" fill="var(--muted)">Consumers (${consumers.length} modules)</text>
+    <text x="${rx}" y="28" font-size="12" font-weight="600" fill="var(--muted)">Files reached inside ${esc(m.label)} (${targets.length} of ${m.s.files})</text>
+    <rect x="${wx - 6}" y="40" width="12" height="${H - 60}" rx="3" fill="${m.s.tier === 'core' ? 'var(--core-soft)' : 'var(--panel-2)'}" stroke="${m.s.tier === 'core' ? 'var(--core)' : 'var(--line)'}"/>
+    <text x="${wx}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">module boundary</text>`;
+  edges.forEach(([a, , fs]) => fs.forEach((t) => {
+    const y1 = cy(consumers.indexOf(a)), y2 = ty(targets.indexOf(t));
+    h += `<path d="M${lx + 8},${y1} C${(lx + wx) / 2},${y1} ${(wx + rx) / 2 - 60},${y2} ${rx - 8},${y2}" fill="none" stroke="var(--bad)" stroke-opacity=".35" stroke-width="1.2"/>`;
+  }));
+  if (!m.s.hasIndex) {
+    h += `<g><rect x="${wx - 54}" y="${portY - 15}" width="108" height="30" rx="6" fill="var(--panel)" stroke="var(--core)" stroke-dasharray="4 3"/>
+      <text x="${wx}" y="${portY - 1}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--core)">index.mjs</text>
+      <text x="${wx}" y="${portY + 10}" text-anchor="middle" font-size="9" fill="var(--core)">missing entry point</text></g>`;
+  }
+  consumers.forEach((a, k) => { h += `<circle cx="${lx}" cy="${cy(k)}" r="5" fill="var(--ink)"/><text x="${lx - 12}" y="${cy(k) + 4}" text-anchor="end" font-size="12" fill="var(--ink)">${esc(D.modules[a].label)}</text>`; });
+  targets.forEach((t, k) => {
+    const n = useCount.get(t);
+    h += `<rect x="${rx}" y="${ty(k) - 7}" width="${8 + n * 10}" height="14" rx="3" fill="var(--bad)" fill-opacity="${0.25 + 0.75 * n / consumers.length}"/>
+      <text x="${rx + 16 + n * 10}" y="${ty(k) + 4}" font-size="12" font-family="var(--mono)" fill="var(--ink)">${esc(D.files[t][0].split('/').pop())}</text>
+      <text x="${W - 8}" y="${ty(k) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${n} consumer${n > 1 ? 's' : ''}</text>`;
+  });
+  svg.innerHTML = h;
+  document.getElementById('stats').innerHTML = `<div><b>${targets.length}</b><span>internal files imported from outside</span></div><div><b>${consumers.length}</b><span>consumer modules</span></div>
+    <div><b style="color:${m.s.hasIndex ? 'var(--ok)' : 'var(--bad)'}">${m.s.hasIndex ? 'Yes' : 'None'}</b><span>single entry file (index.*)</span></div><div><b>${m.s.typedefs} / ${m.s.classes}</b><span>type contracts / classes declared</span></div>`;
+  document.getElementById('tabs').innerHTML = withSurface.map((x) => `<button class="tab" type="button" data-m="${x.i}" aria-pressed="${x.i === cur}">${esc(x.label)}<small>${x.s.surface}</small></button>`).join('');
+  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { cur = Number(b.dataset.m); draw(); }));
+}
+document.getElementById('cp').addEventListener('click', (e) => copy(promptFor(cur, 'abstraction'), e.currentTarget));
+document.getElementById('tbl').innerHTML = `<thead><tr><th>Module</th><th>Tier</th><th class="n">Files reached from outside</th><th class="n">Consumers</th><th>Entry file</th><th class="n">Type contracts</th><th class="n">Classes</th><th>Level</th></tr></thead><tbody>${ordered.filter((m) => !m.s.vendor).map((m) => `<tr><td><b>${esc(m.label)}</b></td><td>${tierBadge(m.s.tier)}</td><td class="n">${m.s.surface} of ${m.s.files}</td><td class="n">${m.s.consumers}</td><td>${m.s.hasIndex ? '<span class="lvl l0">index</span>' : m.s.surface ? '<span class="lvl l2">none</span>' : '<span class="muted">not imported</span>'}</td><td class="n">${m.s.typedefs}</td><td class="n">${m.s.classes}</td><td>${lvlBadge(m.s.dims.abstraction.level)}</td></tr>`).join('')}</tbody>`;
+draw();
+</script>
+</body>
+</html>

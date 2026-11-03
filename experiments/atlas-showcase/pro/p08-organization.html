@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Organization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+#ice { width: 100%; height: auto; display: block; }
+#ice rect { cursor: pointer; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); padding: 10px 16px; border-top: 1px solid var(--line); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.issue { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 9px 16px; border-bottom: 1px solid var(--line); width: 100%; background: none; border-left: 0; border-right: 0; border-top: 0; color: inherit; text-align: left; cursor: pointer; }
+.issue:hover, .issue[aria-pressed="true"] { background: var(--panel-2); }
+.issue b { font-weight: 500; font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.issue small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.mix { display: flex; height: 8px; border-radius: 2px; overflow: hidden; grid-column: 1 / -1; }
+.mix i { display: block; height: 100%; }
+.sect { padding: 8px 16px; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--panel-2); border-bottom: 1px solid var(--line); }
+@media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Code organization</h1><p id="sub"></p></div></div>
+  <div class="layout">
+    <section class="panel"><div class="panel-h">Directory tree <small>left to right: folders, then files; height is lines of code</small></div>
+      <svg id="ice" role="img" aria-label="Icicle chart of folders and files coloured by role"></svg><div class="legend" id="legend"></div></section>
+    <aside class="panel" id="issues"></aside>
+  </div>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, S, ROLE, mods, ordered, shell, tierBadge, promptFor, copy, esc, fmt } = Pro;
+shell('p08-organization');
+const ROLE_C = { entry: '#7b61c9', view: '#2f8fd0', domain: '#2e9466', model: '#b0761a', io: '#c0504d', shared: '#9aa1ad' };
+const T = S.thresholds.organization;
+const big = S.files.filter((f) => !f.vendor && f.loc > T.bigFile).sort((a, b) => b.loc - a.loc);
+const generic = S.files.filter((f) => !f.vendor && f.generic);
+const mixedMods = ordered.filter((m) => !m.s.vendor && m.s.roleKinds >= T.roleKinds).sort((a, b) => b.s.roleKinds - a.s.roleKinds);
+document.getElementById('sub').textContent = `${big.length} files are over ${fmt(T.bigFile)} lines (the largest, ${big[0].path}, has ${fmt(big[0].loc)}). ${mixedMods.length} modules hold files of ${T.roleKinds} or more different roles in one folder, and ${generic.length} ${generic.length === 1 ? 'file has a generic name' : 'files have generic names'} that ${generic.length === 1 ? 'says' : 'say'} nothing about what ${generic.length === 1 ? 'it holds' : 'they hold'}.`;
+
+// Build the folder tree.
+const root = { name: D.repository.name, children: new Map(), loc: 0, path: '' };
+S.files.forEach((f) => {
+  let n = root; n.loc += f.loc;
+  const parts = f.path.split('/');
+  parts.forEach((seg, k) => {
+    const last = k === parts.length - 1;
+    if (!n.children.has(seg)) n.children.set(seg, { name: seg, children: new Map(), loc: 0, path: parts.slice(0, k + 1).join('/'), file: last ? f : null });
+    n = n.children.get(seg); n.loc += f.loc;
+  });
+});
+const depth = (n) => (n.children.size ? 1 + Math.max(...[...n.children.values()].map(depth)) : 0);
+const maxD = depth(root);
+let hot = null;
+function draw() {
+  const svg = document.getElementById('ice');
+  const W = 1000, H = 760, colW = W / (maxD + 1);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let h = '';
+  const walk = (n, d, y0, y1) => {
+    const x = d * colW, hh = y1 - y0;
+    const f = n.file;
+    const isHot = hot && (n.path === hot || (hot && n.path.startsWith(`${hot}/`)));
+    let fill = 'var(--panel-2)', stroke = 'var(--line)';
+    if (f) { fill = f.vendor ? 'var(--vendor)' : ROLE_C[f.primary]; stroke = 'var(--panel)'; }
+    h += `<rect x="${x + 1}" y="${y0 + 0.5}" width="${colW - 2}" height="${Math.max(0.5, hh - 1)}" fill="${fill}" fill-opacity="${f ? (hot && !isHot ? 0.25 : 0.9) : 1}" stroke="${isHot ? 'var(--ink)' : stroke}" stroke-width="${isHot ? 2 : 1}" data-p="${esc(n.path)}"><title>${esc(n.path || n.name)} · ${fmt(n.loc)} lines${f ? ` · ${ROLE[f.primary]}` : ''}</title></rect>`;
+    if (f && !f.vendor && f.loc > T.bigFile) h += `<rect x="${x + 3}" y="${y0 + 2.5}" width="${colW - 6}" height="${Math.max(0.5, hh - 5)}" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 3" pointer-events="none"/>`;
+    if (f && f.generic) h += `<circle cx="${x + colW - 10}" cy="${y0 + Math.min(10, hh / 2)}" r="4" fill="var(--watch)" stroke="var(--panel)" pointer-events="none"/>`;
+    if (hh > 14) h += `<text x="${x + 7}" y="${y0 + Math.min(hh / 2 + 4, 16)}" font-size="11" font-family="${f ? 'var(--mono)' : 'var(--sans)'}" font-weight="${f ? 400 : 600}" fill="${f ? '#fff' : 'var(--ink)'}" pointer-events="none">${esc((n.name.length > 22 ? `${n.name.slice(0, 20)}…` : n.name))}${hh > 30 ? ` ${f ? '' : '· '}${fmt(n.loc)}` : ''}</text>`;
+    let y = y0;
+    [...n.children.values()].sort((a, b) => b.loc - a.loc).forEach((c) => { const ch = (c.loc / n.loc) * hh; walk(c, c.file ? Math.max(d + 1, 0) : d + 1, y, y + ch); y += ch; });
+  };
+  walk(root, 0, 0, H);
+  svg.innerHTML = h;
+  svg.querySelectorAll('rect[data-p]').forEach((r) => r.addEventListener('click', () => { hot = r.dataset.p || null; draw(); }));
+}
+document.getElementById('legend').innerHTML = Object.entries(ROLE_C).map(([r, c]) => `<span><i style="background:${c}"></i>${ROLE[r]}</span>`).join('') +
+  `<span><i style="background:var(--vendor)"></i>Vendored</span><span><i style="border:2px dashed var(--bad)"></i>Over ${fmt(T.bigFile)} lines</span><span><i style="background:var(--watch);border-radius:50%"></i>Generic file name</span>`;
+
+let sel = null;
+function issues() {
+  const mixBar = (m) => `<span class="mix">${Object.entries(m.s.roles).filter(([, n]) => n).map(([r, n]) => `<i style="width:${n / m.s.files * 100}%;background:${ROLE_C[r]}" title="${ROLE[r]}: ${n}"></i>`).join('')}</span>`;
+  document.getElementById('issues').innerHTML = `<div class="panel-h">What to reorganize</div>
+    <div class="sect">Folders mixing ${T.roleKinds}+ roles · ${mixedMods.length}</div>
+    ${mixedMods.map((m) => `<button class="issue" type="button" data-p="${esc(m.path)}" data-m="${m.i}" aria-pressed="${sel === m.path}"><b>${esc(m.path)}/</b>${tierBadge(m.s.tier)}${mixBar(m)}<small>${Object.entries(m.s.roles).filter(([, n]) => n).map(([r, n]) => `${ROLE[r]} ${n}`).join(' · ')}</small></button>`).join('')}
+    <div class="sect">Files over ${fmt(T.bigFile)} lines · ${big.length}</div>
+    ${big.slice(0, 8).map((f) => `<button class="issue" type="button" data-p="${esc(f.path)}" data-m="${f.module}" aria-pressed="${sel === f.path}"><b>${esc(f.path)}</b><span class="num">${fmt(f.loc)}</span><small>${f.strong.length > 1 ? `does ${f.strong.map((r) => ROLE[r].toLowerCase()).join(', ')}` : ROLE[f.primary]}</small></button>`).join('')}
+    <div class="sect">Generic names · ${generic.length}</div>
+    ${generic.map((f) => `<button class="issue" type="button" data-p="${esc(f.path)}" data-m="${f.module}" aria-pressed="${sel === f.path}"><b>${esc(f.path)}</b><span class="num">${fmt(f.loc)}</span><small>Name the file after what it contains.</small></button>`).join('')}
+    <div class="pad"><button class="btn" id="cp">Copy reorganization prompt for the selected item</button></div>`;
+  document.querySelectorAll('.issue').forEach((b) => b.addEventListener('click', () => { sel = b.dataset.p; hot = sel; cur = Number(b.dataset.m); issues(); draw(); }));
+  document.getElementById('cp').addEventListener('click', (e) => copy(promptFor(cur, 'organization'), e.currentTarget));
+}
+let cur = mixedMods[0]?.i ?? big[0].module;
+sel = mixedMods[0]?.path ?? null; hot = sel;
+issues(); draw();
+</script>
+</body>
+</html>

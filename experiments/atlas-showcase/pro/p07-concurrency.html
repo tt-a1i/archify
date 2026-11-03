@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locks and Concurrency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.locks { display: grid; gap: 18px; }
+.lock .pad { display: grid; gap: 12px; }
+.lock-h { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
+.lock-h h2 { margin: 0; font: 600 17px var(--mono); }
+.facts { display: flex; flex-wrap: wrap; gap: 6px; }
+.callsec svg { width: 100%; height: auto; display: block; }
+.verdict { font-size: 13px; }
+.matrix { overflow-x: auto; }
+table { border-collapse: separate; border-spacing: 3px; font-size: 13px; width: 100%; }
+th { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; padding: 6px; }
+th:first-child { text-align: left; }
+td.m { white-space: nowrap; padding-right: 10px; }
+td.c { text-align: center; padding: 0; }
+td.c button { width: 100%; min-width: 74px; height: 34px; border: 0; border-radius: 5px; font: 600 13px var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; background: var(--panel-2); color: var(--faint); }
+td.c button.on { background: var(--watch-soft); color: var(--watch); }
+td.c button.hi { background: var(--watch); color: #fff; }
+td.c button[aria-pressed="true"] { outline: 2px solid var(--ink); }
+.two { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 18px; align-items: start; }
+#ev .pad > * + * { margin-top: 10px; }
+@media (max-width: 1000px) { .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Locks and concurrency</h1><p id="sub"></p></div></div>
+  <div class="locks" id="locks"></div>
+  <div class="two">
+    <section class="panel matrix"><div class="panel-h">Concurrency sites by module <small>Click a count for its lines</small></div><div class="pad"><table id="mx"></table></div></section>
+    <aside class="panel" id="ev" aria-live="polite"></aside>
+  </div>
+  <p class="foot" id="foot"></p>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, S, mods, ordered, shell, tierBadge, lvlBadge, evidenceHtml, promptFor, copy, esc, fmt } = Pro;
+shell('p07-concurrency');
+const W25 = D.thresholds?.warning?.complexity ?? 25;
+const calls = S.locks.flatMap((l) => l.calls);
+const heavy = calls.filter((c) => (c.inComplexity ?? 0) >= W25);
+document.getElementById('sub').textContent = `${S.locks.length} lock${S.locks.length === 1 ? '' : 's'}, taken at ${calls.length} call sites. ${calls.every((c) => c.guarded) ? 'Every call site releases in a finally block, so an exception cannot leave a lock behind.' : `${calls.filter((c) => !c.guarded).length} call sites have no finally release.`} ${heavy.length ? `${heavy.length} of them hold the lock inside a function past complexity ${W25}, which is where a slow or failing step keeps the lock longest.` : ''}`;
+
+document.getElementById('locks').innerHTML = S.locks.map((l, k) => {
+  const mi = S.files.find((f) => f.path === l.file).module;
+  const maxHold = Math.max(...l.calls.map((c) => c.holdLines || 0), l.length, 1);
+  return `<section class="panel lock"><div class="pad">
+    <div class="lock-h"><h2>${esc(l.name)}()</h2><span class="muted mono">${esc(l.file)}:${l.line}</span>${tierBadge(mods[mi].s.tier)}</div>
+    <div class="facts"><span class="chip">${l.length} lines</span><span class="chip">complexity ${l.complexity}</span>${l.exclusiveCreate ? "<span class=\"chip\">lock file opened with 'wx' (exclusive create)</span>" : ''}<span class="chip">${l.selfGuarded ? 'releases in its own finally (callback style)' : 'caller must release'}</span><span class="chip">${l.calls.length} call site${l.calls.length === 1 ? '' : 's'}</span></div>
+    ${l.calls.map((c) => {
+      const w = 900, x0 = 170, len = Math.max(40, (c.holdLines / maxHold) * (w - x0 - 230));
+      const hot = (c.inComplexity ?? 0) >= W25;
+      return `<div class="callsec"><svg viewBox="0 0 ${w} 64" role="img" aria-label="${esc(c.in)} holds the lock for ${c.holdLines} lines">
+        <text x="0" y="22" font-size="13" font-weight="600" fill="var(--ink)">${esc((c.in || '').split('.').pop())}()</text>
+        <text x="0" y="40" font-size="11" fill="var(--muted)">${esc(c.file.split('/').pop())}:${c.line}</text>
+        <line x1="${x0}" x2="${x0 + len}" y1="28" y2="28" stroke="${hot ? 'var(--watch)' : 'var(--core)'}" stroke-width="14" stroke-linecap="butt" opacity=".9"/>
+        <circle cx="${x0}" cy="28" r="9" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/><path d="M${x0 - 3},${28} l2,3 l4,-6" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+        <rect x="${x0 + len - 2}" y="17" width="4" height="22" fill="${c.guarded ? 'var(--ok)' : 'var(--bad)'}"/>
+        <text x="${x0 + 14}" y="56" font-size="11" fill="var(--muted)">acquire at line ${c.line}</text>
+        <text x="${x0 + len + 10}" y="25" font-size="12" font-weight="600" fill="${c.guarded ? 'var(--ok)' : 'var(--bad)'}">${c.guarded ? 'released in finally' : 'no finally release'}</text>
+        <text x="${x0 + len + 10}" y="42" font-size="11" fill="var(--muted)">held ${c.holdLines} lines · complexity ${c.inComplexity}</text>
+      </svg></div>`;
+    }).join('')}
+    <div class="verdict">${l.calls.every((c) => c.guarded) ? lvlBadge(0, 'Release is safe') : lvlBadge(2, 'Release can be skipped')} ${l.calls.some((c) => (c.inComplexity ?? 0) >= W25) ? `&nbsp; ${lvlBadge(1, 'Critical section is long and branched')}` : ''}
+      <button class="btn ghost" data-m="${mi}" style="margin-left:12px">Copy lock-scope prompt</button></div>
+  </div></section>`;
+}).join('') || '<section class="panel"><div class="pad muted">No lock acquirers were found.</div></section>';
+document.querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', () => copy(promptFor(Number(b.dataset.m), 'concurrency'), b)));
+
+const KINDS = [['spawn', 'Child processes'], ['parallel', 'Parallel promises'], ['exclusiveCreate', "Exclusive create ('wx')"], ['timers', 'Timers'], ['workers', 'Workers']];
+const rows = ordered.filter((m) => !m.s.vendor).map((m) => {
+  const fs = S.files.filter((f) => f.module === m.i && !f.vendor);
+  const c = Object.fromEntries(KINDS.map(([k]) => [k, fs.reduce((t, f) => t + f.concurrency[k].count, 0)]));
+  return { m, fs, c, total: Object.values(c).reduce((a, b) => a + b, 0), awaits: fs.reduce((t, f) => t + f.concurrency.awaits, 0) };
+}).filter((r) => r.total || r.awaits).sort((a, b) => b.total - a.total);
+let sel = null;
+function matrix() {
+  document.getElementById('mx').innerHTML = `<thead><tr><th>Module</th>${KINDS.map(([, l]) => `<th>${l}</th>`).join('')}<th>await</th></tr></thead><tbody>${rows.map((r) => `<tr><td class="m"><b>${esc(r.m.label)}</b> ${r.m.s.tier === 'core' ? tierBadge('core') : ''}</td>
+    ${KINDS.map(([k]) => `<td class="c"><button type="button" class="${r.c[k] >= 5 ? 'hi' : r.c[k] ? 'on' : ''}" data-m="${r.m.i}" data-k="${k}" aria-pressed="${sel === `${r.m.i}|${k}`}" ${r.c[k] ? '' : 'disabled'}>${r.c[k] || '·'}</button></td>`).join('')}
+    <td class="c"><span class="muted num">${r.awaits}</span></td></tr>`).join('')}</tbody>`;
+  document.querySelectorAll('td.c button[data-k]').forEach((b) => b.addEventListener('click', () => open(Number(b.dataset.m), b.dataset.k)));
+}
+function open(mi, k) {
+  sel = `${mi}|${k}`;
+  const fs = S.files.filter((f) => f.module === mi && !f.vendor && f.concurrency[k].count);
+  const ev = fs.flatMap((f) => f.concurrency[k].lines.map((n) => ({ file: f.path, line: n, text: KINDS.find(([x]) => x === k)[1].toLowerCase() })));
+  document.getElementById('ev').innerHTML = `<div class="panel-h"><span>${esc(mods[mi].label)} · ${KINDS.find(([x]) => x === k)[1]}</span><small>${fs.reduce((t, f) => t + f.concurrency[k].count, 0)} sites in ${fs.length} files</small></div>
+    <div class="pad">${evidenceHtml(ev, 10)}<div class="muted" style="font-size:12px">${{ spawn: 'Each child process should have a timeout and an exit-code check.', parallel: 'Parallel promises fail fast with Promise.all; use allSettled where partial results matter.', exclusiveCreate: "Exclusive create is how these files act as locks: check each one is removed on every exit path.", timers: 'Timers keep the process alive unless cleared or unref()ed.', workers: 'Workers need an error and exit handler.' }[k]}</div></div>`;
+  matrix();
+}
+document.getElementById('foot').textContent = S.method.concurrency;
+matrix();
+if (rows[0]) open(rows[0].m.i, KINDS.find(([k]) => rows[0].c[k])[0]);
+</script>
+</body>
+</html>

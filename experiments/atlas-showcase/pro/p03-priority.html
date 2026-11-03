@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core vs Risk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pro.css">
+<style>
+.layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 18px; align-items: start; }
+#q { width: 100%; height: auto; display: block; }
+.bub { cursor: pointer; }
+.bub:focus-visible circle { stroke: var(--focus); stroke-width: 3; }
+ol.rank { list-style: none; margin: 0; padding: 0; }
+ol.rank li { border-bottom: 1px solid var(--line); }
+ol.rank li:last-child { border-bottom: 0; }
+.rk { width: 100%; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 16px; background: none; border: 0; color: inherit; text-align: left; cursor: pointer; }
+.rk:hover, .rk[aria-pressed="true"] { background: var(--panel-2); }
+.rk .n { color: var(--faint); font-variant-numeric: tabular-nums; }
+.rk b { font-weight: 600; }
+.rk .why { display: block; color: var(--muted); font-size: 12px; }
+.pips { display: flex; gap: 2px; }
+.pips i { width: 9px; height: 18px; border-radius: 2px; }
+#detail .pad > * + * { margin-top: 10px; }
+@media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="head"><div><h1>Core vs risk</h1><p id="sub"></p></div></div>
+  <div class="layout">
+    <section class="panel"><div class="panel-h">Where to look first <small>Bubble size is lines of code</small></div><svg id="q" role="img" aria-label="Quadrant chart: dependents against problem load"></svg></section>
+    <div style="display:grid;gap:18px;min-width:0">
+      <section class="panel"><div class="panel-h">Fix-first order <small>dependents + 1, times problem load</small></div><ol class="rank" id="rank"></ol></section>
+      <section class="panel" id="detail" aria-live="polite"></section>
+    </div>
+  </div>
+  <p class="foot">Problem load is the sum of the seven area levels (problem counts 2, watch counts 1), so the formula is visible and no area hides inside a single score.</p>
+</main>
+<script src="../data.js"></script>
+<script src="../lib.js"></script>
+<script src="signals.js"></script>
+<script src="pro.js"></script>
+<script>
+const { D, S, DIMS, TIERS, LEVEL, mods, levelSum, problems, shell, tierBadge, lvlBadge, evidence, evidenceHtml, promptFor, copy, esc, fmt } = Pro;
+shell('p03-priority');
+const live = mods.filter((m) => !m.s.vendor);
+const priority = (m) => (m.s.reach + 1) * levelSum(m);
+const ranked = live.slice().sort((a, b) => priority(b) - priority(a));
+const coreLine = Math.ceil(S.thresholds.core.reachShare * D.modules.length);
+const riskLine = 6;
+const fixFirst = live.filter((m) => m.s.reach >= coreLine && levelSum(m) >= riskLine);
+document.getElementById('sub').textContent = `${fixFirst.map((m) => m.label).join(' and ') || 'No module'} ${fixFirst.length === 1 ? 'is' : 'are'} both core and carrying problems: changes there reach the most code. Everything else on the right side is safer to change.`;
+let selected = ranked[0].i;
+
+function draw() {
+  const svg = document.getElementById('q');
+  const W = 820, H = 560, L = 64, R = 110, T = 24, B = 56;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const maxX = Math.max(...live.map((m) => m.s.reach), coreLine + 2);
+  const maxY = 14;
+  const xs = (v) => L + Math.sqrt(v / maxX) * (W - L - R);
+  const ys = (v) => H - B - (v / maxY) * (H - T - B);
+  const qx = xs(coreLine - 0.5), qy = ys(riskLine - 0.5);
+  let h = `<rect x="${qx}" y="${T}" width="${W - R - qx}" height="${qy - T}" fill="var(--bad-soft)"/>
+    <rect x="${L}" y="${T}" width="${qx - L}" height="${qy - T}" fill="var(--watch-soft)" opacity=".6"/>
+    <rect x="${qx}" y="${qy}" width="${W - R - qx}" height="${H - B - qy}" fill="var(--core-soft)" opacity=".7"/>`;
+  [[qx + 10, T + 18, 'Core and at risk: fix first', 'var(--bad)'], [L + 10, T + 18, 'Edge and at risk: fix when touched', 'var(--watch)'], [qx + 10, H - B - 10, 'Core and healthy: protect', 'var(--core)'], [L + 10, H - B - 10, 'Edge and healthy: leave as is', 'var(--faint)']]
+    .forEach(([x, y, t, c]) => { h += `<text x="${x}" y="${y}" font-size="12" font-weight="600" fill="${c}">${t}</text>`; });
+  for (let v = 0; v <= maxY; v += 2) h += `<line x1="${L}" x2="${W - R}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--line)" stroke-dasharray="${v ? '2 4' : ''}"/><text x="${L - 8}" y="${ys(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${v}</text>`;
+  [0, 1, 2, 5, 10, maxX].filter((v, i, a) => a.indexOf(v) === i && v <= maxX).forEach((v) => { h += `<line x1="${xs(v)}" x2="${xs(v)}" y1="${T}" y2="${H - B}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${xs(v)}" y="${H - B + 16}" text-anchor="middle" font-size="11" fill="var(--muted)">${v}</text>`; });
+  h += `<text x="${(L + W - R) / 2}" y="${H - 14}" text-anchor="middle" font-size="12" fill="var(--muted)">Modules that depend on it, directly or through others (square-root scale)</text>
+    <text transform="translate(16 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="var(--muted)">Problem load (0–14)</text>`;
+  // Spread modules that share a point so none hides behind another.
+  const seen = {};
+  live.slice().sort((a, b) => b.s.loc - a.s.loc).forEach((m) => {
+    const key = `${m.s.reach}|${levelSum(m)}`; const k = (seen[key] = (seen[key] || 0) + 1) - 1;
+    const r = 6 + Math.sqrt(m.s.loc) * 0.13;
+    const x = xs(m.s.reach) + (k % 3) * 22, y = ys(levelSum(m)) - Math.floor(k / 3) * 18;
+    const core = m.s.tier === 'core', sel = m.i === selected;
+    h += `<g class="bub" tabindex="0" role="button" data-m="${m.i}" aria-label="${esc(m.label)}: ${m.s.reach} dependents, load ${levelSum(m)}">
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${core ? 'var(--core)' : problems(m).length ? 'var(--bad)' : 'var(--ok)'}" fill-opacity="${core ? 0.85 : 0.55}" stroke="${sel ? 'var(--ink)' : 'var(--panel)'}" stroke-width="${sel ? 2.5 : 1.5}"/>
+      ${core || sel || ranked.indexOf(m) < 8 ? `<text x="${x + r + 5}" y="${y + 4}" font-size="12" font-weight="${core ? 600 : 500}" fill="var(--ink)">${esc(m.label)}</text>` : ''}</g>`;
+  });
+  svg.innerHTML = h;
+  svg.querySelectorAll('.bub').forEach((g) => { g.addEventListener('click', () => select(Number(g.dataset.m))); g.addEventListener('keydown', (e) => { if (e.key === 'Enter') select(Number(g.dataset.m)); }); });
+}
+
+function drawRank() {
+  document.getElementById('rank').innerHTML = ranked.slice(0, 8).map((m, k) => `<li><button class="rk" type="button" data-m="${m.i}" aria-pressed="${m.i === selected}">
+    <span class="n">${k + 1}</span>
+    <span><b>${esc(m.label)}</b> ${tierBadge(m.s.tier)}<span class="why">${m.s.reach} dependents · ${problems(m).map((d) => d.label).join(', ') || 'no problem areas'}</span></span>
+    <span class="pips" aria-hidden="true">${DIMS.map((d) => `<i style="background:${['var(--ok-soft)', 'var(--watch)', 'var(--bad)'][m.s.dims[d.key].level]}" title="${d.label}"></i>`).join('')}</span></button></li>`).join('');
+  document.querySelectorAll('.rk').forEach((b) => b.addEventListener('click', () => select(Number(b.dataset.m))));
+}
+
+function select(mi) {
+  selected = mi;
+  const m = mods[mi];
+  const worst = DIMS.filter((d) => m.s.dims[d.key].level === 2);
+  const key = (worst[0] || DIMS.find((d) => m.s.dims[d.key].level === 1) || DIMS[0]).key;
+  document.getElementById('detail').innerHTML = `<div class="panel-h"><span>${esc(m.label)} ${tierBadge(m.s.tier)}</span><small>load ${levelSum(m)} · priority ${priority(m)}</small></div>
+    <div class="pad"><div>${DIMS.filter((d) => m.s.dims[d.key].level).map((d) => lvlBadge(m.s.dims[d.key].level, d.label)).join(' &nbsp; ') || '<span class="muted">No problem areas.</span>'}</div>
+    <b style="font-size:13px">Evidence: ${DIMS.find((d) => d.key === key).label}</b>
+    ${evidenceHtml(evidence(mi, key), 5)}
+    <button class="btn" id="cp">Copy fix prompt for AI</button></div>`;
+  document.getElementById('cp').addEventListener('click', (e) => copy(promptFor(mi, key), e.currentTarget));
+  draw(); drawRank();
+}
+select(selected);
+</script>
+</body>
+</html>
