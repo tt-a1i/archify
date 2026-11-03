@@ -45,7 +45,10 @@ function crashingRenderer(t, count) {
 function runCrashingRenderer(script) {
   return spawnSync(process.execPath, [script], {
     encoding: 'utf8',
-    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json' },
+    // Mirror the CLI's renderer spawn contract: the machine-readable
+    // diagnostic channel requires stderr to carry exactly the receipt, so
+    // Node runtime warnings must not precede it.
+    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json', NODE_NO_WARNINGS: '1' },
     maxBuffer: 64 * 1024 * 1024,
   });
 }
@@ -72,7 +75,7 @@ test('the renderer boundary delivers a receipt larger than the pipe buffer', t =
 test('the renderer boundary waits for a stalled reader instead of truncating', async t => {
   const script = crashingRenderer(t, LARGE_DIAGNOSTIC_COUNT);
   const child = spawn(process.execPath, [script], {
-    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json' },
+    env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json', NODE_NO_WARNINGS: '1' },
     stdio: ['ignore', 'ignore', 'pipe'],
   });
   t.after(() => child.kill('SIGKILL'));
