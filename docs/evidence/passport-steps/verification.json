@@ -1,0 +1,39 @@
+{
+  "base": "63c9263e84bd3993cab8e09b3d69888857858635",
+  "node": "v22.23.2",
+  "zlib": "1.3.1-e00f703",
+  "geometry": [
+    {
+      "file": "before.html",
+      "sha256": "c95b3b1217c79e22711b90fc151eea50fb8fe889b29d6c910d0c641ba634bcdc"
+    },
+    {
+      "file": "after.html",
+      "sha256": "c95b3b1217c79e22711b90fc151eea50fb8fe889b29d6c910d0c641ba634bcdc"
+    },
+    {
+      "file": "before-zh.html",
+      "sha256": "7623e28d67ef4c7c7920311a82583accc3215c2715588e909efd4ce7df9f27e7"
+    },
+    {
+      "file": "after-zh.html",
+      "sha256": "7623e28d67ef4c7c7920311a82583accc3215c2715588e909efd4ce7df9f27e7"
+    }
+  ],
+  "zipSha256": "c8e356ed18f96593055a946ff56a993111622dded720afded5b87a3ae1c801ba",
+  "zipRebuild": "byte-identical",
+  "packageSmoke": "render + story attach from extracted ZIP outside checkout",
+  "packagePlatform": "darwin arm64",
+  "source": {
+    "archify/story/passport-steps.js": "6e49065c100e6caca82223eade899524061e9e61162867d043c25123d6b4e87a",
+    "archify/story/passport-steps.css": "24d19eefe6e33352e45d16cdc48265e464d39a93ce469c68bceb24574cbc45b3",
+    "archify/story/story-plan.mjs": "3c5e6fba506800c033849f061c3a3880a77739023998f8cd10e92846119a33cb",
+    "archify/story/story-attachment.mjs": "bafd35dafbfbea9677543ce55d51850c8e10aa0b9b3f6beb59c9b0a5e166f35b",
+    "archify/story/story-attachment.js": "217b71e44f0ed0f7c5e97925e136c936d525fc6080f56fe051dd5f75080811e8",
+    "archify/story/tool.mjs": "dbc560b6ea3260c11db9291dc2c20df6df14c48f6d3cd0f417bed50565b17c17",
+    "archify/story/messages.json": "34f8c741b10ad3c4296a2c53c48f770ad540450f75e3f1b379696687566126e2",
+    "viewer/focus.js": "89e3d0b6b8d6ec62f3b45a584eaab071f33b0c71ae3267f978364e271ef0cff9",
+    "viewer/export-cleanup.js": "5f48b9d980352958285b752df84580d1f2b8024a7fb317c1828378b285d5543a"
+  },
+  "productCommit": "a8e7b7dcde937936718a4ead0c0aaa18ad472f6f"
+}

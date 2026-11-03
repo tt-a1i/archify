@@ -1,0 +1,93 @@
+Browser tests: 1 files, concurrency 2
+TAP version 13
+# Subtest: Passport retains native appearance, keyboard focus, reach links, movement and dismissal
+    # Subtest: the inherited card shell and title styles match the native card in both themes
+    ok 1 - the inherited card shell and title styles match the native card in both themes
+      ---
+      duration_ms: 501.351875
+      type: 'test'
+      ...
+    # Subtest: stage arrows move focus with selection; Enter, Home, End and modifiers stay coherent
+    not ok 2 - stage arrows move focus with selection; Enter, Home, End and modifiers stay coherent
+      ---
+      duration_ms: 166.400417
+      type: 'test'
+      location: '<checkout>/test/story-node-steps-browser.test.mjs:34:11'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        'false' !== 'step'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'step'
+      actual: 'false'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file://<checkout>/test/story-node-steps-browser.test.mjs:36:12)
+        process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file://<checkout>/test/story-node-steps-browser.test.mjs:34:3)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    # Subtest: authored reach links open native details and returning to stages clears reach semantics
+    not ok 3 - authored reach links open native details and returning to stages clears reach semantics
+      ---
+      duration_ms: 104.473958
+      type: 'test'
+      location: '<checkout>/test/story-node-steps-browser.test.mjs:42:11'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        true !== false
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: false
+      actual: true
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file://<checkout>/test/story-node-steps-browser.test.mjs:44:12)
+        process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file://<checkout>/test/story-node-steps-browser.test.mjs:42:3)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    # Subtest: native drag handle keyboard movement, reset and Escape preserve stage state and return focus
+    ok 4 - native drag handle keyboard movement, reset and Escape preserve stage state and return focus
+      ---
+      duration_ms: 245.094916
+      type: 'test'
+      ...
+    1..4
+not ok 1 - Passport retains native appearance, keyboard focus, reach links, movement and dismissal
+  ---
+  duration_ms: 2695.145542
+  type: 'test'
+  location: '<checkout>/test/story-node-steps-browser.test.mjs:12:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Passport plays authored stages, yields cleanly and preserves canonical exports and narrow-screen access
+ok 2 - Passport plays authored stages, yields cleanly and preserves canonical exports and narrow-screen access
+  ---
+  duration_ms: 15023.546375
+  type: 'test'
+  ...
+# Checking viewport 615
+# Checking viewport 390
+# Checking viewport 768
+1..2
+# tests 6
+# suites 0
+# pass 3
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17791.315958

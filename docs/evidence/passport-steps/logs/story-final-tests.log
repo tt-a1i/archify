@@ -1,0 +1,145 @@
+Repository tests: 2 files, concurrency 4
+TAP version 13
+# Subtest: Story attachment exposes complete caller-local stages, preserving parallel batches and authored scene boundaries
+ok 1 - Story attachment exposes complete caller-local stages, preserving parallel batches and authored scene boundaries
+  ---
+  duration_ms: 1496.932667
+  type: 'test'
+  ...
+# Subtest: public story draft returns source identities and attach preserves the entire native document
+ok 2 - public story draft returns source identities and attach preserves the entire native document
+  ---
+  duration_ms: 649.382459
+  type: 'test'
+  ...
+# Subtest: public story commands preserve inputs and prior output on bad IDs, paths and arguments
+ok 3 - public story commands preserve inputs and prior output on bad IDs, paths and arguments
+  ---
+  duration_ms: 1192.878708
+  type: 'test'
+  ...
+# Subtest: draft refuses existing files and scan fails closed on conflicting native metadata
+ok 4 - draft refuses existing files and scan fails closed on conflicting native metadata
+  ---
+  duration_ms: 985.003334
+  type: 'test'
+  ...
+# Subtest: attachment uses the HTML body boundary instead of script or comment literals
+ok 5 - attachment uses the HTML body boundary instead of script or comment literals
+  ---
+  duration_ms: 467.037042
+  type: 'test'
+  ...
+# Subtest: non-object briefs have actionable diagnostics and preserve existing output
+ok 6 - non-object briefs have actionable diagnostics and preserve existing output
+  ---
+  duration_ms: 837.959833
+  type: 'test'
+  ...
+# Subtest: story accent accepts literal hex colors and rejects CSS declarations without replacing output
+ok 7 - story accent accepts literal hex colors and rejects CSS declarations without replacing output
+  ---
+  duration_ms: 2480.638042
+  type: 'test'
+  ...
+# Subtest: the brief link remains a file URL for reserved characters and scheme-like filenames
+ok 8 - the brief link remains a file URL for reserved characters and scheme-like filenames
+  ---
+  duration_ms: 389.523625
+  type: 'test'
+  ...
+# Subtest: a failed brief publication rolls back its owned source map so the draft can be retried
+ok 9 - a failed brief publication rolls back its owned source map so the draft can be retried
+  ---
+  duration_ms: 307.920875
+  type: 'test'
+  ...
+# Subtest: companion rollback preserves a replacement or an in-place edit by another writer
+ok 10 - companion rollback preserves a replacement or an in-place edit by another writer
+  ---
+  duration_ms: 4.782416
+  type: 'test'
+  ...
+# Subtest: draft failure retains its publication error when releasing the rollback handle fails
+ok 11 - draft failure retains its publication error when releasing the rollback handle fails
+  ---
+  duration_ms: 45.35125
+  type: 'test'
+  ...
+# Subtest: a failed candidate close preserves the original error and removes the temporary file
+ok 12 - a failed candidate close preserves the original error and removes the temporary file
+  ---
+  duration_ms: 1.326625
+  type: 'test'
+  ...
+# Subtest: draft rollback includes either file committed before a handle release fails
+    # Subtest: brief.source.json
+    ok 1 - brief.source.json
+      ---
+      duration_ms: 91.940167
+      type: 'test'
+      ...
+    # Subtest: brief.json
+    ok 2 - brief.json
+      ---
+      duration_ms: 103.611208
+      type: 'test'
+      ...
+    1..2
+ok 13 - draft rollback includes either file committed before a handle release fails
+  ---
+  duration_ms: 195.767708
+  type: 'test'
+  ...
+# Subtest: committed publication warnings retain the new output and report cleanup and recovery state
+    # Subtest: release
+    ok 1 - release
+      ---
+      duration_ms: 16.674334
+      type: 'test'
+      ...
+    # Subtest: backup
+    ok 2 - backup
+      ---
+      duration_ms: 8.599458
+      type: 'test'
+      ...
+    1..2
+ok 14 - committed publication warnings retain the new output and report cleanup and recovery state
+  ---
+  duration_ms: 25.538792
+  type: 'test'
+  ...
+# Subtest: streamed soundtrack blocks preserve samples and cues across a block boundary
+ok 15 - streamed soundtrack blocks preserve samples and cues across a block boundary
+  ---
+  duration_ms: 6692.164167
+  type: 'test'
+  ...
+# Subtest: all ten native families retain their source notation and valid default actions
+ok 16 - all ten native families retain their source notation and valid default actions
+  ---
+  duration_ms: 1478.114333
+  type: 'test'
+  ...
+# Subtest: authored figure captions and code references reach the presentation with pinned source ranges
+ok 17 - authored figure captions and code references reach the presentation with pinned source ranges
+  ---
+  duration_ms: 959.553791
+  type: 'test'
+  ...
+# Subtest: a package-only copy runs the full story chain outside the repository without dependencies
+ok 18 - a package-only copy runs the full story chain outside the repository without dependencies
+  ---
+  duration_ms: 593.56575
+  type: 'test'
+  ...
+1..18
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17402.757459
