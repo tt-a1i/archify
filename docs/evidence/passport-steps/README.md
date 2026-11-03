@@ -2,7 +2,7 @@
 
 This implements an in-place reading option for [#452](https://github.com/tt-a1i/archify/issues/452): retain the architecture components and boundaries while a reader selects or plays one caller's explicitly authored outgoing stages. The example is synthetic, inspired by the issue; it is not a runtime trace or the original application's input.
 
-Base: `dev@63c9263e84bd3993cab8e09b3d69888857858635`, fetched again before submission on 2026-11-03. Product commit: `a8e7b7dcde937936718a4ead0c0aaa18ad472f6f`. The subsequent evidence commit changes only this directory. [Verification receipt](verification.json) binds the product source, canonical ZIP, and before/after SVG hashes.
+Base: `dev@63c9263e84bd3993cab8e09b3d69888857858635`, fetched again before submission on 2026-11-03. Product commit: `a8e7b7dcde937936718a4ead0c0aaa18ad472f6f`. Subsequent evidence commits change only this directory. [Verification receipt](verification.json) binds the product source, canonical ZIP, and before/after SVG hashes.
 
 This is an implementation proposal for maintainer discussion. It uses existing Story v2 authoring instead of introducing the issue's proposed `connections[].order` syntax. It does not claim that the upstream interaction scope is already approved or that #452 should be closed.
 
@@ -59,7 +59,7 @@ An eligible complete scene uses one caller as every point's `anchor`, explicit o
 
 ## Evidence and limits
 
-All runs below are Agent-operated on macOS. The final product bytes match the receipt; no product changes were made during publication. Logs normalize local user/workspace/temp paths for publication, preserving results and diagnostics.
+All runs below are Agent-operated on macOS. The final product bytes match the receipt; no product changes were made during publication. Logs normalize local user/workspace/temp paths and trailing whitespace for publication, preserving results and diagnostics.
 
 | Check | Result and scope |
 | --- | --- |

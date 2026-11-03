@@ -55,7 +55,7 @@ ok 1 - Export cleanup preserves canonical artifacts and live interaction state
       error: |-
         Expected values to be strictly deep-equal:
         + actual - expected ... Lines skipped
-        
+
           [
             'active',
         ...

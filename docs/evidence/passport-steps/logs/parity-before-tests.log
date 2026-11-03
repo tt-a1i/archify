@@ -16,9 +16,9 @@ TAP version 13
       failureType: 'testCodeFailure'
       error: |-
         Expected values to be strictly equal:
-        
+
         'false' !== 'step'
-        
+
       code: 'ERR_ASSERTION'
       name: 'AssertionError'
       expected: 'step'
@@ -41,9 +41,9 @@ TAP version 13
       failureType: 'testCodeFailure'
       error: |-
         Expected values to be strictly equal:
-        
+
         true !== false
-        
+
       code: 'ERR_ASSERTION'
       name: 'AssertionError'
       expected: false
