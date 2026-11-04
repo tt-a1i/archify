@@ -27,8 +27,44 @@ import { textUnits } from '../shared/utils.mjs';
 import { reservedLabelRect } from '../shared/automatic-labels.mjs';
 
 export function connectionLabelBoxAt(conn, [lx, ly]) {
-  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10) + (conn.arrowPosition === 'label' ? 16 : 0);
   return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
+}
+
+// Label pins stay authoritative. Otherwise sit to the left of travel, placing
+// opposite directions on opposite sides of a shared path without moving it.
+function connectionLabelSegment(conn, points, point) {
+  const pinned = conn.labelSegment === undefined ? null : Math.min(points.length - 2, conn.labelSegment);
+  const segments = points.slice(1).flatMap((b, index) => {
+    if (pinned !== null && index !== pinned) return [];
+    const a = points[index], dx = b[0] - a[0], dy = b[1] - a[1];
+    const length = Math.hypot(dx, dy);
+    if (!length) return [];
+    const t = point ? Math.max(0, Math.min(1, ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / (length * length))) : 0;
+    return [{ a, b, dx, dy, length, distance: point ? Math.hypot(point[0] - a[0] - t * dx, point[1] - a[1] - t * dy) : 0 }];
+  });
+  // Geometry breaks ties, so reversing an unpinned path keeps both labels at
+  // the same physical segment instead of selecting opposite ends of a bend.
+  return segments.sort((a, b) => a.distance - b.distance || b.length - a.length
+    || (a.a[0] + a.b[0]) - (b.a[0] + b.b[0]) || (a.a[1] + a.b[1]) - (b.a[1] + b.b[1]))[0];
+}
+
+export function connectionLabelPoint(conn, points) {
+  if (conn.arrowPosition !== 'label' || conn.labelAt
+      || conn.labelDx !== undefined || conn.labelDy !== undefined) return labelPoint(conn, points);
+  const segment = connectionLabelSegment(conn, points);
+  if (!segment) return labelPoint(conn, points);
+  const { a, b, dx, dy, length } = segment;
+  const nx = dy / length, ny = -dx / length;
+  const { width } = connectionLabelBoxAt(conn, [0, 0]);
+  const distance = Math.abs(nx) * width / 2 + Math.abs(ny) * 7 + 5;
+  return [(a[0] + b[0]) / 2 + nx * distance, (a[1] + b[1]) / 2 + ny * distance + 3];
+}
+
+// Resolve the tangent at the final label position, including automatic repairs.
+export function connectionLabelVector(conn, points, point) {
+  const segment = connectionLabelSegment(conn, points, point);
+  return segment ? [segment.dx, segment.dy] : [1, 0];
 }
 
 // Use the same architecture route preferences for rendering and placement checks.
@@ -40,7 +76,7 @@ export function createArchitectureRouter(components, connections, { frames = [],
     readabilityBottomMargin: fixedCanvas ? 0 : 24,
     frames,
     labelRectFor: (conn, points, { routes, labels }) => (conn.label ? reservedLabelRect({
-      label: { relation: conn, label: conn.label, ...connectionLabelBoxAt(conn, labelPoint(conn, points)) },
+      label: { relation: conn, label: conn.label, ...connectionLabelBoxAt(conn, connectionLabelPoint(conn, points)) },
       points,
       routes: routes.map((route, index) => ({ relationIndex: index, points: route })),
       labels,

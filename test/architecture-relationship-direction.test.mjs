@@ -27,6 +27,79 @@ function run(dir, spec, command = 'render') {
 }
 function svgOf(html) { return extractSvgs(html).direct.find(svg => svg.includes('data-edge-id="shared-id"')); }
 
+const labelArrows = JSON.parse(fs.readFileSync(new URL('./fixtures/architecture-label-arrows.json', import.meta.url)));
+function labelSvg(html) { return extractSvgs(html).direct.find(svg => svg.includes('data-edge-id="request"')); }
+
+test('label arrows deliver shared paths with two directed identities and attributable labels', t => {
+  const result = run(workspace(t), labelArrows, 'deliver');
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const svg = labelSvg(result.html); parseXml(svg);
+  const paths = [...svg.matchAll(/<path\b[^>]*data-edge-id="([^"]+)"[^>]*>/g)];
+  assert.equal(paths.length, 2);
+  for (const [markup] of paths) assert.doesNotMatch(markup, /marker-(?:start|end)|data-edge-direction="(?:both|none)"/);
+  const groups = [...svg.matchAll(/<g\b[^>]*data-edge-id="([^"]+)"[^>]*>[\s\S]*?<\/g>/g)];
+  assert.equal(groups.length, 2);
+  for (const [markup] of groups) {
+    assert.match(markup, /data-label-arrow/);
+    assert.match(markup, /data-label-direction=/, 'direction-bearing labels must survive reduced detail');
+  }
+  assert.match(groups.find(([, id]) => id === 'request')[0], /rotate\(0\)/);
+  assert.match(groups.find(([, id]) => id === 'response')[0], /rotate\(180\)/);
+  assert.match(svg, /Label marker shows direction/);
+});
+
+test('label arrows follow vertical paths and preserve pinned label coordinates', t => {
+  const dir = workspace(t), spec = structuredClone(labelArrows);
+  spec.components[1].pos = [40, 330];
+  spec.connections[0].labelAt = [250, 230];
+  spec.connections[1].labelAt = [250, 260];
+  const result = run(dir, spec, 'deliver');
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const svg = labelSvg(result.html);
+  assert.match(svg, /rotate\(90\)/); assert.match(svg, /rotate\(-90\)/);
+  assert.match(svg, /<text x="250" y="230"[^>]*>Create task<\/text>/);
+  assert.match(svg, /<text x="250" y="260"[^>]*>Execution result<\/text>/);
+});
+
+test('label arrow opt-in rejects lost or contradictory direction information', t => {
+  const dir = workspace(t);
+  for (const change of [{ label: '' }, { label: '   ' }, { label: undefined }, { direction: 'both' }, { direction: 'none' }, { arrowPosition: 'middle' }]) {
+    const spec = structuredClone(labelArrows); Object.assign(spec.connections[0], change);
+    assert.notEqual(run(dir, spec, 'validate').status, 0, JSON.stringify(change));
+  }
+  const spec = structuredClone(fixture), before = run(dir, spec);
+  assert.equal(before.status, 0, before.stderr);
+  spec.connections.forEach(conn => { conn.arrowPosition = 'endpoints'; });
+  const after = run(dir, spec);
+  assert.equal(after.status, 0, after.stderr);
+  assert.equal(svgOf(after.html), svgOf(before.html), 'explicit default must preserve existing output');
+  assert.equal(compareArchitecture(fixture, spec).summary.connections.changed, 0);
+  const head = structuredClone(labelArrows), base = structuredClone(labelArrows);
+  base.connections.forEach(conn => { delete conn.arrowPosition; });
+  const changed = compareArchitecture(base, head).changes.connections.find(conn => conn.id === 'request');
+  assert.deepEqual(changed.changedFields, ['/arrowPosition']);
+  assert.deepEqual(changed.classifications, ['geometry']);
+});
+
+test('reversed bent paths keep their labels centered on the same segment', t => {
+  const spec = structuredClone(labelArrows);
+  spec.components[1].pos = [420, 250];
+  spec.connections[0].fromSide = 'right'; spec.connections[0].toSide = 'left';
+  spec.connections[1].fromSide = 'left'; spec.connections[1].toSide = 'right';
+  const via = [[210,110],[210,200],[330,200],[330,280]];
+  spec.connections[0].via = via;
+  spec.connections[1].via = [...via].reverse();
+  spec.connections.forEach(conn => { delete conn.route; });
+  const result = run(workspace(t), spec, 'deliver');
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const svg = labelSvg(result.html);
+  const request = svg.match(/<text x="([^"]+)" y="([^"]+)"[^>]*>Create task<\/text>/);
+  const response = svg.match(/<text x="([^"]+)" y="([^"]+)"[^>]*>Execution result<\/text>/);
+  assert.equal(request[1], response[1], 'both labels stay centered on the same authored corridor');
+  assert.ok(Number(request[2]) < 200 && Number(response[2]) > 200);
+  assert.match(svg, /rotate\(0\)/); assert.match(svg, /rotate\(180\)/);
+});
+
 test('Architecture delivers one identity per relation, accurate arrowheads and actual-style legends', t => {
   const dir = workspace(t), result = run(dir, fixture, 'deliver');
   assert.equal(result.status, 0, result.stdout + result.stderr);

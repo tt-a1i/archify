@@ -1,4 +1,5 @@
 {
+  "viewer.relationship.arrowPosition.label": "標籤旁標記表示方向",
   "viewer.relationship.direction.forward": "有向關係",
   "viewer.relationship.direction.both": "雙向關係",
   "viewer.relationship.direction.none": "無向關聯",

@@ -49,7 +49,7 @@ test('mixed Architecture relationships preserve direction, identity and static s
   }
   async function screenshot(name) {
     if (!evidence) return;
-    const captured = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
+    const captured = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
     fs.writeFileSync(path.join(evidence, name + '.png'), Buffer.from(captured.data, 'base64'));
   }
   await load(); await screenshot('mixed-light');
@@ -153,5 +153,67 @@ test('mixed Architecture relationships preserve direction, identity and static s
     assert.ok(both?.start&&both?.end);
     assert.deepEqual(await run('directionErrors'),[]);
     await screenshot('story-structural');
+  });
+  await t.test('shared label arrows keep their identities, visible direction and canonical exports', async () => {
+    execFileSync(process.execPath, [path.join(root, 'archify/bin/archify.mjs'), 'render', 'architecture',
+      path.join(root, 'test/fixtures/architecture-label-arrows.json'), output]);
+    for (const theme of ['light', 'dark']) {
+      await load(theme, true);
+      await run(`Archify.motionGovernor.setMode('still')`);
+      const geometry = await run(`(() => {
+        const svg = document.querySelector('.diagram-container > svg');
+        return {
+          paths: [...svg.querySelectorAll('path[data-edge-id]')].map(p => ({id:p.dataset.edgeId, points:p.dataset.compositionPoints})),
+          labels: [...svg.querySelectorAll('[data-label-direction]')].map(g => {
+            const mark = g.querySelector('[data-label-arrow]').getBoundingClientRect();
+            const text = g.querySelector('text').getBoundingClientRect();
+            const mask = g.querySelector('rect').getBoundingClientRect();
+            return {id:g.dataset.edgeId, inside:mark.left>=mask.left-0.1 && mark.right<=mask.right+0.1 && mark.top>=mask.top-0.1 && mark.bottom<=mask.bottom+0.1,
+              clearsText:mark.right<text.left || mark.left>text.right, width:mark.width};
+          })
+        };
+      })()`);
+      assert.equal(geometry.paths.length, 2); assert.equal(geometry.labels.length, 2);
+      assert.equal(geometry.paths[0].points, geometry.paths[1].points.split(';').reverse().join(';'));
+      for (const label of geometry.labels) {
+        assert.ok(label.inside, 'the reserved label footprint contains its direction marker');
+        assert.ok(label.clearsText, 'direction marker must not overlap its text');
+        assert.ok(label.width >= 3, 'direction marker must remain visible at the desktop viewport');
+      }
+      await screenshot('label-arrows-' + theme);
+      assert.equal(await route('manager', 'cli'), true);
+      assert.deepEqual(await run('Archify.routeProbe.exportSnapshot().edges.map(e=>e.id)'), ['request']);
+      assert.equal(await route('cli', 'manager'), true);
+      assert.deepEqual(await run('Archify.routeProbe.exportSnapshot().edges.map(e=>e.id)'), ['response']);
+      await run(`Archify.routeProbe.clear();Archify.focus.set('manager',{toggle:false});Archify.focus.reach('downstream')`);
+      assert.deepEqual((await run('Archify.focus.reachabilitySnapshot().edges.map(e=>e.id)')).sort(), ['request','response']);
+      await run(`Archify.focus.clear();document.querySelector('.diagram-container').setAttribute('data-detail-level','map')`);
+      assert.deepEqual(await run(`[...document.querySelectorAll('[data-label-direction]')].map(g=>getComputedStyle(g).opacity)`), ['1','1']);
+      await run(`Archify.exportMenu.run('svg');waitFor(()=>downloads.length===1)`);
+      const svg = await run('downloads[0].blob.text()');
+      assert.equal((svg.match(/data-label-arrow=/g)||[]).length, 2);
+      assert.match(svg, /Create task/); assert.match(svg, /Execution result/);
+      for (const [edge] of svg.matchAll(/<path\b[^>]*data-edge-id="(?:request|response)"[^>]*>/g)) assert.doesNotMatch(edge, /marker-(?:start|end)=/);
+      await run(`Archify.exportMenu.run('png')`);
+      const png = await run(`(async()=>{const bitmap=await createImageBitmap(downloads[1].blob);const size=[bitmap.width,bitmap.height];bitmap.close();return size;})()`);
+      assert.ok(png.every(n => n > 0));
+      if (evidence) {
+        fs.writeFileSync(path.join(evidence, 'label-arrows-' + theme + '.svg'), svg);
+        const data = await run(`new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(downloads[1].blob);})`);
+        fs.writeFileSync(path.join(evidence, 'label-arrows-export-' + theme + '.png'), Buffer.from(data,'base64'));
+        fs.copyFileSync(output,path.join(evidence,'label-arrows.html'));
+      }
+      assert.deepEqual(await run('directionErrors'), []);
+    }
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false });
+    await load('light', true);
+    await run(`Archify.motionGovernor.setMode('still')`);
+    assert.equal(await run(`document.querySelectorAll('[data-label-direction]').length`), 2);
+    assert.deepEqual(await run(`[...document.querySelectorAll('[data-label-direction]')].map(g=>getComputedStyle(g).opacity)`), ['1','1']);
+    assert.equal(await route('cli', 'manager'), true);
+    assert.deepEqual(await run('Archify.routeProbe.exportSnapshot().edges.map(e=>e.id)'), ['response']);
+    await run(`Archify.routeProbe.clear()`);
+    await screenshot('label-arrows-mobile');
+    assert.deepEqual(await run('directionErrors'), []);
   });
 });

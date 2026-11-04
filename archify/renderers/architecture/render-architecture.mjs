@@ -11,7 +11,7 @@ import { brandLabelFitWidth, brandMetadataFor, brandTopRailProblem, renderBrandM
 import { minimumReadableSourceTextPx } from '../shared/desktop-readability.mjs';
 import { translateMessage as i18nText } from '../shared/i18n.mjs';
 import { gridLayout, resolveComponentPos, validateGridPlacement } from './grid.mjs';
-import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
+import { createArchitectureRouter, connectionLabelBoxAt, connectionLabelPoint as labelPoint, connectionLabelVector } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
@@ -34,7 +34,6 @@ import {
   polylinePath,
   routePointsValue,
   authoredStraightRouteAttrs,
-  labelPoint,
   componentFill,
   componentText,
   arrowClassMap,
@@ -89,9 +88,10 @@ const LEGEND_CATALOG = [
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
 const relationshipDirections = new Set(asArray(arch.connections).map((conn) => conn.direction || 'forward'));
 const hasMixedDirections = relationshipDirections.has('both') || relationshipDirections.has('none');
+const hasLabelArrows = asArray(arch.connections).some(conn => conn.arrowPosition === 'label');
 const RELATIONSHIP_LEGEND = ['forward', 'both', 'none'].flatMap((direction) => {
   const variants = new Set(asArray(arch.connections)
-    .filter((conn) => (conn.direction || 'forward') === direction)
+    .filter((conn) => (conn.direction || 'forward') === direction && conn.arrowPosition !== 'label')
     .map((conn) => conn.variant || 'default'));
   return [...(variants.size ? variants : ['default'])].map((variant) => ({
     kind: `relation-${direction}`,
@@ -101,6 +101,12 @@ const RELATIONSHIP_LEGEND = ['forward', 'both', 'none'].flatMap((direction) => {
     swatchWidth: 32,
     interactive: false,
   }));
+});
+
+const labelArrowVariants = new Set(asArray(arch.connections).filter(conn => conn.arrowPosition === 'label').map(conn => conn.variant || 'default'));
+for (const variant of labelArrowVariants) RELATIONSHIP_LEGEND.push({
+  kind: 'relation-label', direction: 'forward', arrowPosition: 'label', variant,
+  label: i18nText(arch.meta.locale, 'viewer.relationship.arrowPosition.label'), swatchWidth: 32, interactive: false,
 });
 
 // ---- Measure components from free coordinates --------------------------------
@@ -171,7 +177,9 @@ const architectureLegendEntries = resolveLegend(
   [...LEGEND_CATALOG, ...RELATIONSHIP_LEGEND],
   new Set([
     ...[...components.values()].map((component) => component.type),
-    ...(hasMixedDirections ? [...relationshipDirections].map((direction) => `relation-${direction}`) : []),
+    ...(hasMixedDirections || hasLabelArrows
+      ? asArray(arch.connections).filter(conn => conn.arrowPosition !== 'label').map(conn => `relation-${conn.direction || 'forward'}`) : []),
+    ...(hasLabelArrows ? ['relation-label'] : []),
   ]),
 );
 
@@ -905,7 +913,7 @@ function validateArchitecture() {
   if ((process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile) === 'showcase') {
     const collisions = collectArrowheadCollisions({
       routedRelations: asArray(arch.connections)
-        .filter((conn) => components.has(conn.from) && components.has(conn.to) && hasAutomaticRouteGeometry(conn) && !conn.labelAt)
+        .filter((conn) => components.has(conn.from) && components.has(conn.to) && hasAutomaticRouteGeometry(conn) && !conn.labelAt && conn.arrowPosition !== 'label')
         .map((relation) => ({ relation, points: pathFor(relation).points })),
     });
     for (const hit of collisions) {
@@ -1060,7 +1068,7 @@ function renderConnectionPath(conn, index) {
   const routed = pathFor(conn);
   const strokeWidth = conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5);
   const direction = conn.direction || 'forward';
-  const arrows = direction === 'none' ? '' : ` marker-end="url(#${marker})"${direction === 'both' ? ` marker-start="url(#${marker}-start)"` : ''}`;
+  const arrows = direction === 'none' || conn.arrowPosition === 'label' ? '' : ` marker-end="url(#${marker})"${direction === 'both' ? ` marker-start="url(#${marker}-start)"` : ''}`;
   const automaticRoute = hasAutomaticRouteGeometry(conn);
   const underlay = automaticRoute
     ? `          <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>\n`
@@ -1077,9 +1085,17 @@ function renderConnectionPath(conn, index) {
 function renderConnectionLabel(conn, index) {
   const box = connectionLabelBox(conn);
   if (!box) return '';
-  return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id, conn.direction)}>
+  let arrow = '';
+  if (conn.arrowPosition === 'label') {
+    const [dx, dy] = connectionLabelVector(conn, pathFor(conn).points, [box.lx, box.ly - 3]);
+    const side = dx < 0 || (dx === 0 && dy < 0) ? -1 : 1;
+    const x = box.lx + side * (box.width / 2 - 5);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    arrow = `\n          <polygon data-label-arrow="" points="-2,-2.5 3,0 -2,2.5" transform="translate(${x} ${box.ly - 3}) rotate(${angle})" class="${edgeLabelAccent(conn.variant)}"/>`;
+  }
+  return `        <g data-detail="context" ${conn.arrowPosition === 'label' ? 'data-label-direction="" ' : ''}${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id, conn.direction)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
+          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>${arrow}
         </g>`;
 }
 
@@ -1133,12 +1149,13 @@ function renderLegend() {
       width: viewBox[0] - layout.margin * 2,
       minTitleY: contentBottom + 8,
       obstacles: relationshipObstacles,
-      unfit: arch.meta?.legend === undefined && !hasMixedDirections ? 'hide' : 'error',
+      unfit: arch.meta?.legend === undefined && !hasMixedDirections && !hasLabelArrows ? 'hide' : 'error',
       diagramType: 'architecture',
     },
     renderSwatch: (entry) => {
       if (!entry.direction) return `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`;
       const [cls, marker] = arrowClassMap[entry.variant];
+      if (entry.arrowPosition === 'label') return `<path d="M ${entry.x + 2} ${entry.baseline - 1} h 28" class="${cls}" stroke-width="1"/><polygon points="-2,-2.5 3,0 -2,2.5" transform="translate(${entry.x + 23} ${entry.baseline - 8})" class="${edgeLabelAccent(entry.variant)}"/>`;
       return `<path d="M ${entry.x + 2} ${entry.baseline - 4} h 28" class="${cls}" stroke-width="1"${entry.direction === 'none' ? '' : ` marker-end="url(#${marker})"`}${entry.direction === 'both' ? ` marker-start="url(#${marker}-start)"` : ''}/>`;
     },
   });

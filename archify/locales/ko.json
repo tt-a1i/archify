@@ -1,4 +1,5 @@
 {
+  "viewer.relationship.arrowPosition.label": "레이블 옆 표시가 방향을 나타냄",
   "viewer.relationship.direction.forward": "방향 관계",
   "viewer.relationship.direction.both": "양방향 관계",
   "viewer.relationship.direction.none": "무방향 연관",

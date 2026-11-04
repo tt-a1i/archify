@@ -1,4 +1,5 @@
 {
+  "viewer.relationship.arrowPosition.label": "علامة التسمية توضح الاتجاه",
   "viewer.relationship.direction.forward": "علاقة موجهة",
   "viewer.relationship.direction.both": "علاقة ثنائية الاتجاه",
   "viewer.relationship.direction.none": "ارتباط غير موجه",

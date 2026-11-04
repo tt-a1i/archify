@@ -16,6 +16,8 @@ Architecture connections may set `direction`: omitted/`forward` means a directed
 
 Both new directions permit two-way structural Route/Reach exploration, which does not prove runtime data flow. They remain static in previews and playback; Story uses the `relation` action. Other diagram schemas retain their existing relationship contracts.
 
+For two distinct actions sharing a corridor, keep two directed connections with separate IDs and labels. Architecture's optional `arrowPosition: "label"` moves each arrow from its endpoint to a small marker beside its label; it does not merge, reverse, or add a relationship. Use it on both directions of an intentionally shared path. For aligned nodes with a clear straight corridor, `route: "straight"` on both connections shares that path; for a supplied bent route, preserve the same geometry in reverse order. Unpinned labels sit at the selected segment's center on opposite sides of travel. Keep ordinary automatic routes when sharing adds ambiguity or crowding. A single summarized `both` relationship keeps its endpoint arrowheads and one label. See [Label arrows](authoring-contract.md#label-arrows) for constraints.
+
 Place Architecture nodes by their actual connections before assigning coordinates; the router cannot rearrange boxes, so placement decides whether lines stay straight. Classify each relationship first, then place:
 
 - **Main path**: the reader's main journey, neighbors adjacent in reading order. Let a medium path step through meaningful rows instead of making a shallow horizontal strip.

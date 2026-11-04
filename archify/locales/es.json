@@ -1,4 +1,5 @@
 {
+  "viewer.relationship.arrowPosition.label": "El marcador de etiqueta indica la dirección",
   "viewer.relationship.direction.forward": "Relación dirigida",
   "viewer.relationship.direction.both": "Relación bidireccional",
   "viewer.relationship.direction.none": "Asociación no dirigida",

@@ -1,4 +1,5 @@
 {
+  "viewer.relationship.arrowPosition.label": "标签旁标记表示方向",
   "page.title": "{title}",
   "diagram.description.architecture": "由 Archify 生成的架构图。",
   "diagram.description.workflow": "由 Archify 生成的工作流图。",
