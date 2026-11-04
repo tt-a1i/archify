@@ -79,6 +79,8 @@ def model(report, links):
         dependencies.setdefault(key, []).append(edge)
     return {'project': report['project'], 'digest': rr.report_digest(report),
         'groups': groups, 'modules': modules, 'findings': findings,
+        'evidence': [{k: e[k] for k in ('id', 'repository', 'path', 'start', 'end', 'label', 'excerpt', 'sha256')}
+                     for e in report['evidence']],
         'dependencies': [{'from': a, 'to': b, 'references': refs} for (a, b), refs in dependencies.items()],
         'coverage': architecture['coverage'], 'runs': report['runs'],
         'file_count': sum(n['kind'] == 'file' for n in by_id.values()),

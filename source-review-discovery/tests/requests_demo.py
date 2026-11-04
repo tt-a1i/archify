@@ -27,8 +27,9 @@ def main():
     evidence=[]
     def ev(id, repo, path, start, end, label):
         evidence.append(dict(id=id,repository=repo,path=path,start=start,end=end,kind='source',label=label))
-    ev('input','requests','requests/models.py',140,152,'字符串请求体保留原值')
-    ev('prepare','requests','requests/models.py',552,587,'准备请求体和 Content-Length')
+    ev('input','requests','requests/models.py',107,120,'字符串请求体保留原值')
+    ev('body','requests','requests/models.py',552,571,'准备请求体后计算长度')
+    ev('prepare','requests','requests/models.py',573,587,'计算长度并写入 Content-Length')
     ev('length','requests','requests/utils.py',133,148,'super_len 使用对象长度')
     ev('adapter','requests','requests/adapters.py',469,500,'适配器同时传递请求体和已有头部')
     ev('encode','urllib3','urllib3/util/request.py',189,219,'传输层将字符串转换为字节')
@@ -40,10 +41,10 @@ def main():
         node('encode','传输编码：转换为 UTF-8','guard','urllib3 2.0.7 按 UTF-8 生成实际发送字节。',['encode']),
         node('wire','发送给网络层的正文','step','真实编码路径输出字节；验证只替换网络发送端。',['transport'])]
     edges=[dict(**{'from':a,'to':b},label=label,basis='source',evidence=refs) for a,b,label,refs in [
-        ('input','length','准备长度',['input','prepare']),('length','header','写入头部',['length','prepare']),
+        ('input','length','准备长度',['input','body','prepare']),('length','header','写入头部',['length','prepare']),
         ('input','encode','传递正文',['adapter','encode']),('encode','wire','发送字节',['encode','transport'])]]
     reasons={'contract':('头部按字节标记长度；传输层生成字节并尊重已有 Content-Length。',['transport']),
-        'reachability':('合法 data 字符串经过 prepare_body，再由适配器同时传给 urllib3 的 body 和 headers。',['input','prepare','adapter']),
+        'reachability':('合法 data 字符串经过 prepare_body，再由适配器同时传给 urllib3 的 body 和 headers。',['input','body','prepare','adapter']),
         'violation':('准备长度时直接 len(str)，在传输编码前将字符数写为字节长度。',['length','prepare']),
         'impact':('多字节字符串的声明长度短于实际发送正文；接收端后果取决于其读取策略。',['encode','transport']),
         'protections':('提前编码的 bytes 和 ASCII 长度一致；已有长度头使传输层不再重算头部。',['length','transport'])}
@@ -67,7 +68,7 @@ def main():
     spec=dict(claim='已声明长度与真实传输编码后的字节数不一致；ASCII 和 bytes 为正常对照。',
         limitations=['仅替换网络发送端，保留原版准备、编码和头部处理函数。','没有请求公网或本地服务；不证明实际用户影响或发生频率。'],
         isolation=['禁止创建 socket；捕获原版 HTTPConnection.request 的发送参数。'],
-        input_basis=['input','prepare','encode'],targets=[{'repository':e['repository'],'path':e['path']} for e in evidence],
+        input_basis=['input','body','prepare','encode'],targets=[{'repository':e['repository'],'path':e['path']} for e in evidence],
         scripts=[str(probe)],command=[sys.executable,str(probe),str(root),str(deps)])
     record=verify_finding.run(report,f['id'],spec)
     assert record['outcome']=='reproduced',record['execution']

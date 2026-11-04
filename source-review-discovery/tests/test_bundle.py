@@ -55,6 +55,9 @@ class BundleTests(unittest.TestCase):
         self.assertEqual([m['path'] for m in fault],['response.py'])
         self.assertEqual(data['dependencies'][0]['references'][0]['line'],1)
         self.assertEqual(len(data['findings']),1)
+        citation=data['evidence'][0]
+        self.assertEqual(citation['excerpt'],self.report['evidence'][0]['excerpt'])
+        self.assertEqual((citation['path'],citation['start'],citation['end']),('response.py',1,3))
 
     def test_stale_or_conditional_verification_does_not_enter_default_queue(self):
         self.assertTrue(self.model()['findings'][0]['verified'])

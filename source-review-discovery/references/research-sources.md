@@ -4,6 +4,10 @@
 
 ## 已有 skill 的可复用机制
 
+**调查组织方式：REA / Reverse Engineer Anything。** 对照对象是 `rea-agents@6.4.0` 的 skill、证据记录、查询和能力目录实现；[官方项目](https://github.com/morluto/rea)作为来源入口。借鉴的是调用现有分析引擎、保留原生结果和限制、按需查询已留存观察，以及将支持、反证、未知和下一步持续关联的方式。本 skill 用源码分析器承担底层事实采集，以本地 CLI 和版本化文件实现调查工作目录，没有引入 REA 运行时、复制其实现或要求常驻 MCP 服务。具体接口见[调查工作目录](investigation-workspace.md)。
+
+REA 的该版本明确将普通完整源码仓库的架构分析排除在适用范围之外，因此这里是组织方式的借鉴，不是直接运行逆向工具审查源码。两者没有做发现率对照；保存证据与提供工具也不自动证明业务结论。统一的是观察的来源、输入身份、覆盖、引用和查询方式，不是各语言的 AST 或完整语义图。
+
 **与维护性目标最接近：Matt Pocock 的架构调查。** 已读取快照 `4ae2317ddb22b046e26455e4f9c9b3aaaf62212d` 的 [improve-codebase-architecture](https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/improve-codebase-architecture/SKILL.md) 和 [codebase-design](https://github.com/mattpocock/skills/blob/4ae2317ddb22b046e26455e4f9c9b3aaaf62212d/skills/engineering/codebase-design/SKILL.md)，根 LICENSE 为 MIT。它根据指定范围或修改热点调查理解成本、调用者负担和变化是否集中，参考领域词汇及 ADR，以前后对照图呈现候选。本项目借鉴删除一个抽象后复杂性会消失还是转移的追问；不把主观理解困难直接当缺陷，也不照搬固定词汇、自动修改领域文档、强制派发 agent 或依赖 CDN 的展示。其设计建议等级不等于本项目的证据充分程度。
 
 [Anthropic code-simplifier](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/pr-review-toolkit/agents/code-simplifier.md) 是 agent 定义而非 SKILL.md，本次读取 2026-11-04 可见版本。它侧重近期改动中的嵌套、冗余抽象和可读性，并要求保持行为。适合作为修复后的简化检查；其 JS/React 偏好不能直接转成跨语言审查规则，也不提供系统级发现完整性的保证。
