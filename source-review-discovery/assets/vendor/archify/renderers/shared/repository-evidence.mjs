@@ -1,0 +1,394 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { throwDiagnosticError, withDiagnosticRecordingSuppressed } from './diagnostics.mjs';
+import { sameEntry } from './path-semantics.mjs';
+import { parseRepositoryRemote, redactRepositoryRemote, repositorySourceHref, repositoryTreeHref } from './repository-location.mjs';
+
+const FULL_SHA_RE = /^[a-f0-9]{40}$/i;
+const CONTROL_CHARACTER_RE = /[\u0000-\u001f\u007f]/;
+const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
+
+function evidenceFailure(code, message, { subject = {}, evidence = {}, supportedFixes = [] } = {}) {
+  throwDiagnosticError(message, [{
+    code,
+    severity: 'error',
+    message,
+    subject: { surface: 'repository-evidence', ...subject },
+    evidence,
+    supportedFixes,
+  }]);
+}
+
+function runGit(repoRoot, args) {
+  // 固定 SHA 的来源必须读取原始对象，不能使用本地 replacement refs 的替换内容。
+  const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, ...args], {
+    encoding: 'utf8',
+    maxBuffer: MAX_SOURCE_BYTES,
+    // Older Git may ignore NO_LAZY_FETCH; no transport is needed for local reads.
+    env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '' },
+  });
+  if (result.error) evidenceFailure('repository-evidence/git-unavailable', `Could not run Git: ${result.error.message}`, {
+    evidence: { reason: result.error.message },
+    supportedFixes: ['install Git and ensure it is available on PATH'],
+  });
+  return result;
+}
+
+// Check types in one session, then read only blobs whose cited lines need
+// verification. Path-only references never require loading the file contents.
+function prefetchBlobs(repoRoot, objectNeedsContent) {
+  const blobs = readBatchObjects(repoRoot, [...objectNeedsContent.keys()], false);
+  if (!blobs) return null;
+  const readable = [...objectNeedsContent].filter(([object, needsContent]) => {
+    const blob = blobs.get(object);
+    return needsContent && blob?.type === 'blob' && blob.size <= MAX_SOURCE_BYTES;
+  }).map(([object]) => object);
+  const contents = readBatchObjects(repoRoot, readable, true);
+  if (contents) for (const [object, blob] of contents) blobs.set(object, blob);
+  // Failed or oversized reads fall back in source order to the original
+  // per-file path, preserving its size limit and diagnostic behavior.
+  return blobs;
+}
+
+function readBatchObjects(repoRoot, objects, includeContent) {
+  if (!objects.length) return new Map();
+  const mode = includeContent ? '--batch' : '--batch-check';
+  const result = spawnSync('git', ['--no-replace-objects', '-C', repoRoot, 'cat-file', mode], {
+    input: objects.join('\n') + '\n',
+    maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '' },
+  });
+  if (result.error || result.status !== 0 || !Buffer.isBuffer(result.stdout)) return null;
+  const buffer = result.stdout;
+  const blobs = new Map();
+  let cursor = 0;
+  for (const object of objects) {
+    const newline = buffer.indexOf(0x0a, cursor);
+    if (newline < 0) return null;
+    const header = buffer.toString('utf8', cursor, newline);
+    cursor = newline + 1;
+    if (header.endsWith(' missing')) {
+      blobs.set(object, { missing: true });
+      continue;
+    }
+    const parts = header.split(' ');
+    const size = Number(parts[2]);
+    if (parts.length !== 3 || !Number.isSafeInteger(size) || size < 0) return null;
+    const blob = { type: parts[1], size };
+    if (includeContent) {
+      if (cursor + size >= buffer.length || buffer[cursor + size] !== 0x0a) return null;
+      blob.content = buffer.toString('utf8', cursor, cursor + size);
+      cursor += size + 1;
+    }
+    blobs.set(object, blob);
+  }
+  return blobs;
+}
+
+function gitValue(repoRoot, args, failure) {
+  const result = runGit(repoRoot, args);
+  if (result.status !== 0) evidenceFailure('repository-evidence/git-command', failure, {
+    evidence: { gitArgs: args, exitCode: result.status },
+    supportedFixes: ['use the intended local Git repository and verify its origin and revision'],
+  });
+  // Remove Git's record terminator without changing whitespace in a path.
+  return result.stdout.replace(/\n$/, '');
+}
+
+function verifiedSourcePath(value, where) {
+  const sourcePath = String(value || '');
+  // path-contract-allow: git-path -- Git tree entries use repository-relative POSIX syntax.
+  if (!sourcePath || sourcePath.startsWith('/') || sourcePath.includes('\\') || CONTROL_CHARACTER_RE.test(sourcePath)) {
+    evidenceFailure('repository-evidence/path-invalid', `${where} must be a repo-relative POSIX path.`, {
+      subject: { path: where },
+      evidence: { authoredPath: sourcePath },
+      supportedFixes: ['use a repository-relative path with forward slashes'],
+    });
+  }
+  const segments = sourcePath.split('/');
+  if (segments.some((segment) => !segment || segment === '.' || segment === '..') || segments[0] === '.git') {
+    evidenceFailure('repository-evidence/path-escape', `${where} must stay inside the repository and may not address .git.`, {
+      subject: { path: where },
+      evidence: { authoredPath: sourcePath },
+      supportedFixes: ['remove empty, dot, parent, or .git path segments'],
+    });
+  }
+  return segments.join('/');
+}
+
+function sourceLineCount(content) {
+  if (!content.length) return 0;
+  const lines = content.split(/\r\n|\n|\r/);
+  return lines.length - (/(?:\r\n|\n|\r)$/.test(content) ? 1 : 0);
+}
+
+// Every diagram type carries its nodes under a different property name, and
+// source evidence is authored on those nodes. One table keeps the verification
+// below identical for all five types instead of branching per type: the only
+// per-type fact is which array to read and which JSON pointer to quote back.
+const EVIDENCE_NODE_COLLECTIONS = {
+  architecture: 'components',
+  workflow: 'nodes',
+  sequence: 'participants',
+  dataflow: 'nodes',
+  lifecycle: 'states',
+  erd: 'entities',
+  tree: 'nodes',
+  class: 'types',
+  timeline: 'events',
+  waterfall: 'spans',
+};
+
+function evidenceNodes(diagramType, diagram) {
+  const collection = EVIDENCE_NODE_COLLECTIONS[diagramType];
+  if (!collection) return null;
+  return { collection, nodes: Array.isArray(diagram?.[collection]) ? diagram[collection] : [] };
+}
+
+export function hasRepositoryEvidence(diagramType, diagram) {
+  const authored = evidenceNodes(diagramType, diagram);
+  if (!authored) return false;
+  return Boolean(diagram?.meta?.repository) || authored.nodes.some((node) => Array.isArray(node?.sources) && node.sources.length);
+}
+
+export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
+  if (!hasRepositoryEvidence(diagramType, diagram)) return null;
+  const { collection, nodes: authoredNodes } = evidenceNodes(diagramType, diagram);
+
+  const repository = diagram.meta?.repository;
+  if (!repository) evidenceFailure('repository-evidence/repository-required', 'Repository evidence requires /meta/repository.', {
+    subject: { path: '/meta/repository', diagramType, collection },
+    supportedFixes: [`add the pinned repository metadata or remove /${collection} sources`],
+  });
+  if (!FULL_SHA_RE.test(repository.revision || '')) {
+    evidenceFailure('repository-evidence/revision-invalid', '/meta/repository/revision must be a full 40-character commit SHA.', {
+      subject: { path: '/meta/repository/revision' },
+      evidence: { revision: repository.revision },
+      supportedFixes: ['pin one full 40-character commit SHA'],
+    });
+  }
+  const location = parseRepositoryRemote(repository.url, { authored: true, provider: repository.provider });
+  if (!location) {
+    // A filesystem path is the common authoring mistake: the field carries the
+    // remote origin identity, which `git remote get-url origin` reports.
+    const filesystemPath = /^(?:[\\/]|~|\.{1,2}(?:[\\/]|$)|[A-Za-z]:[\\/])/.test(String(repository.url ?? ''));
+    evidenceFailure('repository-evidence/url-invalid', '/meta/repository/url must be a credential-free HTTP(S) or Git SSH repository address without query, fragment, or dot segments.', {
+      subject: { path: '/meta/repository/url' },
+      evidence: filesystemPath ? { authoredValueLooksLike: 'local filesystem path; the expected value is the remote origin address' } : {},
+      supportedFixes: ['run `git remote get-url origin` inside --repo-root and declare that credential-free address', 'use link_mode: local-only for internal repositories'],
+    });
+  }
+  const linkMode = repository.link_mode ?? 'web';
+  if (!['web', 'local-only'].includes(linkMode)) evidenceFailure('repository-evidence/link-mode-invalid', 'Repository link_mode must be web or local-only.');
+  if (repository.provider !== undefined && (!['github', 'gitee', 'gitlab'].includes(repository.provider) || repository.provider !== location.provider)) {
+    evidenceFailure('repository-evidence/provider-invalid', 'Repository provider must match its supported public host (github.com, gitee.com or gitlab.com); gitlab also names a self-managed GitLab host.', {
+      subject: { path: '/meta/repository/provider' },
+      supportedFixes: ['use the matching provider or omit provider and select link_mode: local-only'],
+    });
+  }
+  // GitLab projects may sit in nested groups; GitHub and Gitee are owner/repository.
+  const webPath = location.provider === 'gitlab' ? /^[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+$/ : /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+  if (linkMode === 'web' && (!location.provider || location.protocol !== 'https:' || location.endpoint !== 'standard' || !webPath.test(location.path))) {
+    evidenceFailure('repository-evidence/links-unsupported', 'Web source links require a canonical GitHub, Gitee, or GitLab HTTPS repository URL.', {
+      subject: { path: '/meta/repository/url' },
+      supportedFixes: ['use a canonical GitHub, Gitee, or GitLab HTTPS URL; declare provider: gitlab for a self-managed GitLab host', 'select link_mode: local-only to retain local verification without web links'],
+    });
+  }
+  if (!repoRootInput) {
+    evidenceFailure('repository-evidence/root-required', 'This diagram declares source evidence. Pass --repo-root <repository> so Archify can verify it before rendering.', {
+      subject: { path: '/meta/repository' },
+      supportedFixes: ['pass --repo-root with the matching local Git checkout'],
+    });
+  }
+
+  const requestedRoot = path.resolve(repoRootInput);
+  let realRoot;
+  try {
+    realRoot = fs.realpathSync(requestedRoot);
+  } catch (error) {
+    evidenceFailure('repository-evidence/root-unreadable', `Could not resolve evidence repository root "${requestedRoot}": ${error.message}`, {
+      subject: { repoRoot: requestedRoot },
+      evidence: { reason: error.message },
+      supportedFixes: ['pass one readable local repository directory'],
+    });
+  }
+  const gitRoot = gitValue(realRoot, ['rev-parse', '--show-toplevel'], `Evidence root "${realRoot}" is not a Git repository.`);
+  const rootIdentity = sameEntry(realRoot, gitRoot);
+  if (rootIdentity.status === 'unknown') {
+    evidenceFailure('repository-evidence/root-identity-indeterminate', 'Could not determine whether the evidence root is the Git top-level directory.', {
+      subject: { repoRoot: realRoot },
+      evidence: { gitTopLevel: gitRoot, relation: rootIdentity.reason },
+      supportedFixes: ['pass the readable Git top-level directory using its canonical filesystem path'],
+    });
+  }
+  if (rootIdentity.status === 'different') {
+    evidenceFailure('repository-evidence/root-not-top-level', `Evidence root must be the Git top-level directory: ${gitRoot}`, {
+      subject: { repoRoot: realRoot },
+      evidence: { gitTopLevel: gitRoot },
+      supportedFixes: [`pass --repo-root ${gitRoot}`],
+    });
+  }
+  const origin = gitValue(realRoot, ['remote', 'get-url', 'origin'], 'Evidence repository must have an origin remote.').trim();
+  if (parseRepositoryRemote(origin, { provider: repository.provider })?.identity !== location.identity) {
+    const safeOrigin = redactRepositoryRemote(origin);
+    evidenceFailure('repository-evidence/origin-mismatch', `Evidence repository origin ${JSON.stringify(safeOrigin)} does not match ${JSON.stringify(repository.url)}.`, {
+      subject: { repoRoot: realRoot },
+      evidence: { localOrigin: safeOrigin, authoredRepository: repository.url },
+      supportedFixes: ['use the matching local checkout or correct the authored repository URL'],
+    });
+  }
+
+  const revision = repository.revision.toLowerCase();
+  const commit = runGit(realRoot, ['cat-file', '-e', `${revision}^{commit}`]);
+  if (commit.status !== 0) {
+    evidenceFailure('repository-evidence/revision-unavailable', `Evidence revision ${revision} is not available in the local repository.`, {
+      subject: { repoRoot: realRoot },
+      evidence: { revision },
+      supportedFixes: ['fetch the pinned commit or pin an available full commit SHA'],
+    });
+  }
+
+  // The batch is an optimization only: every path, line-range, file and line
+  // check still runs in source order in the verification loop below, so a
+  // citation the batch cannot answer for never reorders the diagnostics.
+  const citedObjects = new Map();
+  for (const [nodeIndex, node] of authoredNodes.entries()) {
+    if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
+    for (const [sourceIndex, authored] of node.sources.entries()) {
+      const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
+      let sourcePath;
+      try {
+        sourcePath = withDiagnosticRecordingSuppressed(() => verifiedSourcePath(authored.path, `${at}/path`));
+      } catch {
+        continue;
+      }
+      const object = `${revision}:${sourcePath}`;
+      citedObjects.set(object, citedObjects.get(object) || Boolean(authored.line));
+    }
+  }
+  const prefetchedBlobs = prefetchBlobs(realRoot, citedObjects);
+
+  const nodes = Object.create(null);
+  const sourceDiagnostics = [];
+  let referenceCount = 0;
+  for (const [nodeIndex, node] of authoredNodes.entries()) {
+    if (!Array.isArray(node.sources) || node.sources.length === 0) continue;
+    // `componentId` shipped with the architecture-only path; keep it beside the
+    // type-neutral `nodeId` so existing agent handling stays valid.
+    const nodeSubject = collection === 'components'
+      ? { diagramType, collection, nodeId: node.id, componentId: node.id }
+      : { diagramType, collection, nodeId: node.id };
+    const verified = [];
+    for (const [sourceIndex, authored] of node.sources.entries()) {
+      const at = `/${collection}/${nodeIndex}/sources/${sourceIndex}`;
+      const where = `${at}/path`;
+      try {
+        const source = {
+          path: verifiedSourcePath(authored.path, where),
+          ...(authored.line ? { line: authored.line } : {}),
+          ...(authored.end_line ? { endLine: authored.end_line } : {}),
+          ...(authored.label ? { label: authored.label } : {}),
+        };
+        if (source.endLine && !source.line) {
+          evidenceFailure('repository-evidence/line-required', `${at}/end_line requires line.`, {
+            subject: { path: `${at}/end_line`, ...nodeSubject },
+            supportedFixes: ['add line or remove end_line'],
+          });
+        }
+        if (source.endLine && source.endLine < source.line) {
+          evidenceFailure('repository-evidence/line-range-invalid', `${at}/end_line must be greater than or equal to line.`, {
+            subject: { path: at, ...nodeSubject },
+            evidence: { line: source.line, endLine: source.endLine },
+            supportedFixes: ['use an end_line greater than or equal to line'],
+          });
+        }
+        const object = `${revision}:${source.path}`;
+        const prefetched = prefetchedBlobs ? prefetchedBlobs.get(object) : undefined;
+        const objectIsBlob = prefetched
+          ? !prefetched.missing && prefetched.type === 'blob'
+          : (() => {
+            const type = runGit(realRoot, ['cat-file', '-t', object]);
+            return type.status === 0 && type.stdout.trim() === 'blob';
+          })();
+        if (!objectIsBlob) {
+          // A promisor blob can exist in the pinned tree without being stored
+          // locally. Do not tell the caller to change a correct source path.
+          const tree = runGit(realRoot, ['ls-tree', '-z', revision, '--', source.path]);
+          const knownBlob = tree.status === 0 && tree.stdout.split('\0').some((entry) => {
+            const separator = entry.indexOf('\t');
+            return entry.slice(separator + 1) === source.path
+              && /^\d+ blob [a-f0-9]+$/.test(entry.slice(0, separator));
+          });
+          if (knownBlob) {
+            evidenceFailure('repository-evidence/object-unavailable', `${where} exists at revision ${revision}, but its content is unavailable in the local repository.`, {
+              subject: { path: where, ...nodeSubject },
+              evidence: { sourcePath: source.path, revision },
+              supportedFixes: ['explicitly fetch the pinned source objects into the local checkout, then retry verification'],
+            });
+          }
+          evidenceFailure('repository-evidence/file-missing', `${where} does not identify a file at revision ${revision}.`, {
+            subject: { path: where, ...nodeSubject },
+            evidence: { sourcePath: source.path, revision },
+            supportedFixes: ['use a file path that exists at the pinned revision'],
+          });
+        }
+        if (source.line) {
+          const content = prefetched && Object.hasOwn(prefetched, 'content')
+            ? { status: 0, stdout: prefetched.content }
+            : runGit(realRoot, ['show', object]);
+          if (content.status !== 0) evidenceFailure('repository-evidence/file-unreadable', `${where} could not be read at revision ${revision}.`, {
+            subject: { path: where, ...nodeSubject },
+            evidence: { sourcePath: source.path, revision },
+            supportedFixes: ['verify the pinned blob is readable in the local checkout'],
+          });
+          const lineCount = sourceLineCount(content.stdout);
+          const requestedLine = source.endLine || source.line;
+          if (requestedLine > lineCount) {
+            evidenceFailure('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
+              subject: { path: at, ...nodeSubject },
+              evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
+              supportedFixes: ['use a line range that exists at the pinned revision'],
+            });
+          }
+        }
+        verified.push({ ...source, ...(linkMode === 'web' ? { href: repositorySourceHref(location.provider, location.url, revision, source) } : {}) });
+        referenceCount += 1;
+      } catch (error) {
+        // Independent citations can be repaired together. Keep the first
+        // diagnostic and source order; an invalid reference never verifies.
+        if (!error?.archifyDiagnostics?.length) throw error;
+        sourceDiagnostics.push(...error.archifyDiagnostics);
+        // An unavailable Git process or an oversized read is not a bad
+        // citation. Stop rather than repeat that failure for every source.
+        if (error.archifyDiagnostics.some(({ code }) => code === 'repository-evidence/git-unavailable')) {
+          throwDiagnosticError(sourceDiagnostics[0].message, sourceDiagnostics);
+        }
+      }
+    }
+    nodes[node.id] = verified;
+  }
+  if (sourceDiagnostics.length) {
+    throwDiagnosticError(sourceDiagnostics[0].message, sourceDiagnostics);
+  }
+  if (referenceCount === 0) {
+    evidenceFailure('repository-evidence/source-required', `/meta/repository requires at least one /${collection} source reference.`, {
+      subject: { path: '/meta/repository', diagramType, collection },
+      supportedFixes: [`add at least one verified /${collection} source or remove repository metadata`],
+    });
+  }
+
+  return {
+    schemaVersion: 1,
+    verified: true,
+    repository: {
+      url: location.url,
+      revision,
+      shortRevision: revision.slice(0, 7),
+      label: location.provider === 'github' ? location.path : location.url.replace(/^(?:https?:\/\/|ssh:\/\/git@|git@)/, ''),
+      ...(linkMode === 'web' ? { href: repositoryTreeHref(location.provider, location.url, revision) } : { linkMode }),
+    },
+    referenceCount,
+    nodes,
+  };
+}
