@@ -6,7 +6,7 @@ import { analyzeSvgPath } from '../renderers/shared/svg-path-analysis.mjs';
 import { textUnits } from '../renderers/shared/utils.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
+import { collectAmbiguousCorridors, collectArrowheadCollisions, collectBorderRuns, collectBoundaryMembership, collectLabelCanvasOverflow, collectLabelRouteClearance, collectRouteRhythmIssues, describeLabelCanvasOverflow, formatRect, forwardCollinearAnalysisSegments, minimumLabelRouteClearance, normalizeRoutePoints, routeBudgetMetrics } from '../renderers/shared/geometry.mjs';
 import {
   DESKTOP_READABILITY_VIEWPORT,
   DESKTOP_READER_DIAGRAM_WIDTH,
@@ -74,6 +74,9 @@ let composition = {
     resolvedCrossovers: 0,
     ambiguousCorridors: 0,
     containerBorderRuns: 0,
+    boundaryMembershipIssues: 0,
+    boundaryMembershipFramesChecked: 0,
+    boundaryMembershipFramesUnknown: 0,
     labelRouteClearanceIssues: 0,
     minLabelRouteClearance: null,
     labelCanvasOverflowIssues: 0,
@@ -424,6 +427,10 @@ if (svgBlocks.length === 1) {
     !hit.left.crossoverHalo || !hit.right.crossoverHalo
   ));
   const compositionFrames = collectCompositionFrames(beforeLegend);
+  const boundaryMembership = collectBoundaryMembership({
+    frames: compositionFrames,
+    nodes: collectComponentBoxes(beforeLegend),
+  });
   const containerBorderRuns = collectBorderRuns({
     routedRelations: arrows
       .filter((arrow) => arrow.from && arrow.to && arrow.borderSegments.length)
@@ -487,6 +494,11 @@ if (svgBlocks.length === 1) {
   const desktopReadabilityIsError = qualityProfile === 'showcase';
   // Certain geometry, but new: surface it as evidence first (CONTRIBUTING.md#product-and-compatibility-contracts).
   const viewportHeightIsError = false;
+  // Full enclosure falsely states ownership; a border straddle is ambiguous.
+  // Standard delivery remains compatible, and partial overlap only warns.
+  const membershipIsError = qualityProfile === 'showcase';
+  const enclosedNonMembers = boundaryMembership.hits.filter(hit => hit.containment === 'inside');
+  const straddlingNonMembers = boundaryMembership.hits.filter(hit => hit.containment === 'straddling');
   const compositionErrors = (crossingAnalysis.exhausted ? 1 : 0)
     + (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
@@ -495,7 +507,8 @@ if (svgBlocks.length === 1) {
     + (labelContainmentIsError ? labelCanvasOverflow.length : 0)
     + (rhythmIsError ? routeRhythmIssues.length : 0)
     + (desktopReadabilityIsError && desktopReadabilityIssue ? 1 : 0)
-    + (viewportHeightIsError && viewportHeightIssue ? 1 : 0);
+    + (viewportHeightIsError && viewportHeightIssue ? 1 : 0)
+    + (membershipIsError ? enclosedNonMembers.length : 0);
   const compositionWarnings = (qualityGatesEnforced ? 0 : containerBorderRuns.length)
     + (crossingIsError ? 0 : relationshipCrossings.length)
     + (corridorIsError ? 0 : ambiguousCorridors.length + arrowheadCollisions.length)
@@ -503,7 +516,9 @@ if (svgBlocks.length === 1) {
     + (labelContainmentIsError ? 0 : labelCanvasOverflow.length)
     + (rhythmIsError ? 0 : routeRhythmIssues.length)
     + (desktopReadabilityIsError || !desktopReadabilityIssue ? 0 : 1)
-    + (viewportHeightIsError || !viewportHeightIssue ? 0 : 1);
+    + (viewportHeightIsError || !viewportHeightIssue ? 0 : 1)
+    + (membershipIsError ? 0 : enclosedNonMembers.length)
+    + straddlingNonMembers.length;
   composition = {
     schemaVersion: 1,
     profile: qualityProfile,
@@ -518,6 +533,9 @@ if (svgBlocks.length === 1) {
       ambiguousCorridors: ambiguousCorridors.length,
       arrowheadCollisions: arrowheadCollisions.length,
       containerBorderRuns: containerBorderRuns.length,
+      boundaryMembershipIssues: boundaryMembership.hits.length,
+      boundaryMembershipFramesChecked: boundaryMembership.framesChecked,
+      boundaryMembershipFramesUnknown: boundaryMembership.framesUnknown,
       labelRouteClearanceIssues: labelRouteClearance.length,
       labelCanvasOverflowIssues: labelCanvasOverflow.length,
       minLabelRouteClearance: minimumLabelRouteClearance(labelRouteMeasurements),
@@ -557,6 +575,16 @@ if (svgBlocks.length === 1) {
     ...(sequenceNoteBorders.length ? { sequenceNoteBorders } : {}),
     desktopReadability: desktopReadability.evidence,
     issues: [
+      ...boundaryMembership.hits.map(hit => ({
+        severity: hit.containment === 'inside' && membershipIsError ? 'error' : 'warning',
+        code: 'composition/boundary-membership',
+        containment: hit.containment,
+        ...(hit.frame.scope || hit.node.scope ? { scope: hit.frame.scope || hit.node.scope } : {}),
+        node: { id: hit.node.id, label: hit.node.label, kind: hit.node.kind },
+        frame: { kind: hit.frame.kind, id: hit.frame.id, label: hit.frame.label },
+        nodeRect: roundedRect({ x: hit.node.x, y: hit.node.y, width: hit.node.width, height: hit.node.height }),
+        frameRect: roundedRect({ x: hit.frame.x, y: hit.frame.y, width: hit.frame.width, height: hit.frame.height }),
+      })),
       ...containerBorderRuns.map((hit) => ({
         severity: qualityGatesEnforced ? 'error' : 'warning',
         code: 'composition/container-border-run',
@@ -1179,6 +1207,64 @@ function relationshipRecord(arrow) {
   };
 }
 
+// Component boxes come from the node groups the renderers emit. This walks the
+// shared SVG tokenizer rather than a hand-rolled pattern so comments, CDATA and
+// every attribute quoting form behave, and it closes elements by name the way
+// the XML walker does, so an unclosed child cannot carry a node past its own
+// end tag and a stray close tag cannot end it early. A node's rectangle is
+// therefore always its own: markup outside the element can never supply it.
+function collectComponentBoxes(fragment) {
+  const boxes = [];
+  const stack = [];
+  let active = null;
+  for (const match of fragment.matchAll(SVG_TAG_TOKEN)) {
+    if (!match[2]) continue;
+    const element = match[2].toLowerCase();
+    if (match[1]) {
+      const index = stack.lastIndexOf(element);
+      if (index < 0) continue;
+      stack.length = index;
+      if (active && stack.length <= active.depth) active = null;
+      continue;
+    }
+    const attrs = parseAttrs(match[0]);
+    if (active && !active.captured && element === 'rect') {
+      const box = {
+        id: active.id,
+        label: active.label,
+        kind: active.kind,
+        scope: active.scope,
+        x: numberAttr(attrs, 'x'),
+        y: numberAttr(attrs, 'y'),
+        width: numberAttr(attrs, 'width'),
+        height: numberAttr(attrs, 'height'),
+      };
+      if ([box.x, box.y, box.width, box.height].every(Number.isFinite)) {
+        active.captured = true;
+        boxes.push(box);
+      }
+    }
+    // An element that cannot have children cannot hold a rectangle either, so
+    // it never opens a node.
+    const childless = /\/>$/.test(match[0]) || HTML_VOID_ELEMENTS.has(element);
+    const nodeId = attrs['data-node-id'];
+    // No dedupe by id: a compare artifact draws a moved node twice, and both
+    // drawn positions are real geometry that can sit inside the wrong frame.
+    if (!active && !childless && nodeId) {
+      active = {
+        id: nodeId,
+        label: attrs['data-node-label'] || nodeId,
+        kind: attrs['data-node-kind'] || null,
+        scope: attrs['data-composition-scope'],
+        depth: stack.length,
+        captured: false,
+      };
+    }
+    if (!childless) stack.push(element);
+  }
+  return boxes;
+}
+
 function collectCompositionFrames(fragment) {
   const frames = [];
   let pathIndex = 0;
@@ -1191,9 +1277,14 @@ function collectCompositionFrames(fragment) {
     if (!kind) continue;
     const identity = attrs['data-composition-frame-id'] || frames.length;
     if (name === 'rect') {
+      const declaredMembers = attrs['data-composition-frame-members'];
       const frame = {
         kind,
         id: identity,
+        label: attrs['data-composition-frame-label'],
+        // Missing metadata is unknown, whereas an empty declaration is checked.
+        members: declaredMembers === undefined ? undefined : declaredMembers.split(/\s+/).filter(Boolean),
+        scope: attrs['data-composition-scope'],
         x: numberAttr(attrs, 'x'),
         y: numberAttr(attrs, 'y'),
         width: numberAttr(attrs, 'width'),

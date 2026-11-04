@@ -30,7 +30,8 @@
     {
       "kind": "region",
       "label": "archify/ skill package",
-      "wraps": ["ir", "schemas", "renderers", "template", "checker"]
+      "wraps": ["ir", "schemas", "renderers", "template", "checker"],
+      "pad": 14
     }
   ],
   "connections": [

@@ -2711,6 +2711,7 @@ const CHECK_FIXES = {
 };
 
 const COMPOSITION_FIXES = {
+  'composition/boundary-membership': ['move the non-member clear of the boundary frame, or compact the wrapped members without changing membership', 'add the component to wraps only when it truly belongs inside'],
   'composition/proper-crossing': ['if authored via/route/channelX/channelY controls exist and are not required by the user, remove them to let the renderer re-plan; otherwise preserve that intent and adjust route/via or channel coordinates so unrelated relationships use separate corridors'],
   'composition/ambiguous-corridor': ['if authored via/route/channelX/channelY controls exist and are not required by the user, remove them to let the renderer re-plan; otherwise preserve that intent and adjust route/via or channel coordinates so unrelated relationships do not visually merge'],
   'composition/container-border-run': ['if authored via/route/channelX/channelY controls exist and are not required by the user, remove them to let the renderer re-plan; otherwise preserve that intent and route across the frame perpendicularly through a clear opening'],
@@ -2730,7 +2731,10 @@ function checkerDiagnostics(checker) {
       code,
       severity,
       message: `Final artifact failed ${code}.`,
-      subject: relationship ? { relationship } : { check: 'composition', ...(nodeId ? { nodeId } : {}) },
+      subject: relationship ? { relationship } : {
+        check: 'composition', ...(nodeId ? { nodeId } : {}),
+        ...(code === 'composition/boundary-membership' ? { component: issue.node.id, boundary: issue.frame } : {}),
+      },
       evidence,
       supportedFixes: compositionFixes(issue),
     }));
@@ -5681,6 +5685,11 @@ async function commandCheck(args) {
       process.stdout.write(result.stdout);
     }
     if (receipt) {
+      // Standalone check needs the same actionable composition diagnostics as
+      // validate/deliver, where the authored JSON is still available.
+      if (receipt.composition?.issues?.some(issue => issue.severity === 'error')) {
+        receipt.diagnostics = [...(receipt.diagnostics || []), ...checkerDiagnostics({ composition: receipt.composition })];
+      }
       if (provenance?.status === 'current' && ((provenance.type === 'explainer') !== (receipt.family === 'explainer'))) {
         receipt.ok = false;
         receipt.diagnostics = [...(receipt.diagnostics || []), diagnostic({code:'delivery/artifact-family-mismatch',message:'The checked artifact family differs from its delivery provenance.',subject:{artifact:artifactPath},evidence:{expectedType:provenance.type,actualFamily:receipt.family},supportedFixes:['Rebuild the artifact from its original specification.']})];

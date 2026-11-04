@@ -15,6 +15,7 @@ import { createArchitectureRouter, connectionLabelBoxAt } from './routing.mjs';
 import { placeAutomaticLabels } from '../shared/automatic-labels.mjs';
 import { cleanRouteDetourProblems } from '../shared/route-quality.mjs';
 import {
+  collectBoundaryMembership,
   asArray,
   isFinitePoint,
   rectsOverlap,
@@ -745,33 +746,34 @@ function validateArchitecture() {
   // A boundary frame is drawn as the padded box around its members, so a
   // component that is not in `wraps` but sits wholly inside that box reads as
   // a member. Report it instead of letting the picture claim false ownership.
-  // A box the frame border visibly cuts through does not claim membership,
-  // and earlier valid inputs depend on that, so only full enclosure fails.
-  // This new composition gate applies to showcase; standard keeps its existing
-  // acceptance contract while authors can opt into the stricter check.
-  if (arch.meta?.quality_profile === 'showcase') {
-    for (const b of boundaries) {
-      const members = new Set(asArray(b.wraps));
-      for (const component of components.values()) {
-        if (members.has(component.id) || !rectContains(b, component)) continue;
-        const message = `Component "${component.id}" is not wrapped by boundary "${b.label}" but sits inside its frame — `
-          + 'move it outside the frame, place the wrapped members in one compact axis-aligned cluster (no empty bay for a non-member), or add it to wraps only when it truly belongs there.';
-        problems.push(message);
-        diagnostics.push({
-          code: 'layout/boundary-encloses-non-member',
-          severity: 'error',
-          message,
-          subject: { diagramType: 'architecture', boundary: { kind: b.kind, label: b.label, wraps: b.wraps }, component: component.id },
-          evidence: {
-            bounds: { x: b.x, y: b.y, width: b.width, height: b.height },
-            component: componentBox(component),
-          },
-          supportedFixes: [
-            `move "${component.id}" outside the boundary frame`,
-            'reposition the wrapped members into one compact axis-aligned cluster (no empty bay) that leaves non-members outside',
-          ],
-        });
-      }
+  // Retain source diagnostics before artifact creation. The artifact checker
+  // uses the same geometry rule and also reports advisory partial overlaps.
+  // CLI quality has precedence over the source, as it does on the final SVG.
+  if ((process.env.ARCHIFY_QUALITY_PROFILE || arch.meta?.quality_profile) === 'showcase') {
+    const membership = collectBoundaryMembership({
+      frames: boundaries.map(boundary => ({ ...boundary, members: boundary.wraps })),
+      nodes: [...components.values()],
+    });
+    for (const { frame: b, node: component, containment } of membership.hits) {
+      if (containment !== 'inside') continue;
+      const message = `Component "${component.id}" is not wrapped by boundary "${b.label}" but sits inside its frame — `
+        + 'move it outside the frame, place the wrapped members in one compact axis-aligned cluster (no empty bay for a non-member), or add it to wraps only when it truly belongs there.';
+      problems.push(message);
+      diagnostics.push({
+        code: 'layout/boundary-encloses-non-member',
+        severity: 'error',
+        message,
+        subject: { diagramType: 'architecture', boundary: { kind: b.kind, label: b.label, wraps: b.wraps }, component: component.id },
+        evidence: {
+          bounds: { x: b.x, y: b.y, width: b.width, height: b.height },
+          component: componentBox(component),
+        },
+        supportedFixes: [
+          `move "${component.id}" outside the boundary frame`,
+          'reposition the wrapped members into one compact axis-aligned cluster (no empty bay) that leaves non-members outside',
+          `add "${component.id}" to wraps only when it truly belongs to "${b.label}"`,
+        ],
+      });
     }
   }
 
@@ -1026,7 +1028,7 @@ function buildLayoutReport() {
 function renderBoundaryFrame(b, index) {
   const cls = b.kind === 'security-group' ? 'c-security-group' : 'c-region';
   const rx = b.kind === 'security-group' ? 8 : 12;
-  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-id="${index}" data-composition-frame-label="${esc(b.label)}" x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>`;
+  return `        <rect data-graph-role="structural-frame" data-composition-frame-kind="${esc(b.kind || 'boundary')}" data-composition-frame-id="${index}" data-composition-frame-label="${esc(b.label)}" data-composition-frame-members="${esc(asArray(b.wraps).join(' '))}" x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${rx}" class="${cls}" stroke-width="1"/>`;
 }
 
 function renderBoundaryLabel(b, index) {
