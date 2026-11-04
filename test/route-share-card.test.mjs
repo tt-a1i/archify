@@ -66,7 +66,6 @@ test('Route Share Card snapshots copy exact resolved node and relationship ident
   assert.match(snapshotBlock, /key: edge\.getAttribute\('data-edge-key'\)/);
   assert.match(snapshotBlock, /seenNodeIds = Object\.create\(null\)/);
   assert.match(snapshotBlock, /seenEdgeKeys = Object\.create\(null\)/);
-  assert.match(snapshotBlock, /fragment\.getAttribute\('data-edge-from'\) === activeNodeIds\[index\]/);
   assert.match(snapshotBlock, /drawableFragments = fragments\.filter\(hasDrawableGeometry\)/);
   assert.match(snapshotBlock, /drawableFragments\.length !== 1/);
   assert.match(snapshotBlock, /drawableFragments\[0\] !== edge/);

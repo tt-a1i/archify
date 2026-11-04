@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": { "title": "Shared identifiers and system exchanges", "output": "directions.html" },
+  "layout": { "mode": "grid", "cols": 3, "gapX": 100, "gapY": 110 },
+  "components": [
+    { "id": "crm", "type": "frontend", "label": "CRM", "row": 0, "col": 0 },
+    { "id": "ppm", "type": "backend", "label": "Project tool", "row": 0, "col": 1 },
+    { "id": "erp", "type": "backend", "label": "ERP", "row": 0, "col": 2 },
+    { "id": "platform", "type": "cloud", "label": "Central platform", "row": 1, "col": 1 }
+  ],
+  "connections": [
+    { "id": "shared-id", "from": "crm", "to": "ppm", "label": "Shared opportunity ID", "direction": "none" },
+    { "id": "status-sync", "from": "ppm", "to": "erp", "label": "Synchronize status", "direction": "both", "variant": "dashed" },
+    { "id": "publish", "from": "ppm", "to": "platform", "label": "Publish project updates", "fromSide": "bottom", "toSide": "top", "labelAt": [330, 154] }
+  ]
+}

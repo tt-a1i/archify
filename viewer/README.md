@@ -151,6 +151,15 @@ and Lens keep their later positions. Required diagram SVG, Passport controls and
 relationship list remain required DOM. Shared viewerText/viewerCount/viewerKindLabel
 and hasDrawableGeometry stay in the template's classic-script scope.
 
+Architecture may supply `data-edge-direction="both"` or `"none"` on every
+fragment of a relationship; absent metadata retains the legacy `forward`
+contract. Shared `edgeDirection` rejects unknown values. Both new directions
+allow two-way structural traversal while keeping one authored ID and the
+original `from`/`to` endpoints. `none` is an undirected association, not a hidden
+arrow. Focus, Intent and Lens identify these relationships separately from
+incoming/outgoing transfers and keep them static. Their actual line variants
+and arrowheads appear in the renderer's legend and native exports.
+
 The interface is thirteen Focus methods: set, setMany, clear, copyLink, reach,
 clearReach, reachabilitySnapshot, inspectRelationship, inspectRelationshipById,
 reposition, relationship, reachability and active. The same closure also installs
@@ -274,6 +283,14 @@ The nineteen methods remain `begin`, `choose`, `clear`, `toggle`, `escape`,
 `copyLink`, `playJourney`, `pauseJourney`, `showOverview`, `selectJourneyIndex`,
 `syncMotion`, `isJourneyPlaying`, `finderContext`, `finderOpening`, `finderClosed`,
 `openFinder`, `exportSnapshot`, `active` and `result`. There is no mount/unmount API.
+
+Route respects the Architecture direction metadata described above. Its node
+sequence records the chosen walk, while snapshots retain authored endpoints
+and include `direction` for non-forward relationships. Reverse traversal does
+not reverse authored geometry or invent data flow; Journey may step through
+the nodes but does not animate these connections. Route/Reach snapshots reject
+changed directions or conflicting fragments before export. Forward-only
+artifacts retain their previous query, animation and snapshot behavior.
 
 - Route owns mode, endpoint IDs, path node arrays and exact edge DOM references,
   Journey index/playing/complete, timer/generation/elapsed time, Motion token,

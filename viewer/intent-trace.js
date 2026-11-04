@@ -109,14 +109,17 @@
         overlay.setAttribute('aria-hidden', 'true');
         var related = Object.create(null);
         var seen = {};
-        var counts = { out: 0, in: 0, loop: 0 };
+        var counts = { out: 0, in: 0, loop: 0, both: 0, none: 0 };
         related[id] = true;
 
         edgeList.forEach(function (edge) {
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
           if (from !== id && to !== id) return;
-          var direction = from === id && to === id ? 'loop' : (from === id ? 'out' : 'in');
+          var connectionDirection = edgeDirection(edge);
+          if (!connectionDirection) return;
+          var direction = connectionDirection !== 'forward' ? connectionDirection
+            : from === id && to === id ? 'loop' : (from === id ? 'out' : 'in');
           var key = edge.getAttribute('data-edge-key') ||
             (from + '\u0000' + to + '\u0000' + (edge.getAttribute('data-edge-label') || ''));
           if (!seen[key]) {
@@ -126,6 +129,7 @@
           related[from] = true;
           related[to] = true;
           edge.setAttribute('data-intent-trace-match', '');
+          if (connectionDirection !== 'forward') return;
           var wrapper = document.createElementNS(namespace, 'g');
           if (edge.hasAttribute('transform')) wrapper.setAttribute('transform', edge.getAttribute('transform'));
           edgeShapes(edge).forEach(function (shape) {
@@ -149,7 +153,7 @@
         activeId = id;
         svg.setAttribute('data-intent-trace-active', id);
         if (options.announce === true) {
-          var total = counts.out + counts.in + counts.loop;
+          var total = counts.out + counts.in + counts.loop + counts.both + counts.none;
           status.textContent = viewerText('viewer.intent.summary', {
             label: nodeLabel(selected, id),
             out: counts.out,
@@ -157,6 +161,7 @@
             loops: counts.loop ? viewerText('viewer.intent.loops', { count: counts.loop }) : '',
             total: total
           });
+          if (counts.both || counts.none) status.textContent += ' · ' + viewerText('viewer.relationship.counts', counts);
         }
         return true;
       }

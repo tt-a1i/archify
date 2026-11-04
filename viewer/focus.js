@@ -75,7 +75,7 @@
           var key = edge.getAttribute('data-edge-key') || (from + '\u0000' + to + '\u0000' + (edge.getAttribute('data-edge-label') || ''));
           if (!from || !to || seen[key]) return;
           seen[key] = true;
-          relationships.push({ key: key, from: from, to: to });
+          relationships.push({ key: key, from: from, to: to, direction: edgeDirection(edge) });
         });
         return relationships;
       }
@@ -92,7 +92,9 @@
             ? relationship.key : String(index);
           if (seenKeys[key]) return;
           seenKeys[key] = true;
-          records.push({ key: key, from: relationship.from, to: relationship.to });
+          var edgeDirectionValue = relationship.direction === undefined ? 'forward' : relationship.direction;
+          if (['forward', 'both', 'none'].indexOf(edgeDirectionValue) < 0) return;
+          records.push({ key: key, from: relationship.from, to: relationship.to, direction: edgeDirectionValue });
         });
 
         var depths = Object.create(null);
@@ -105,6 +107,8 @@
             var next = null;
             if (direction === 'downstream' && relationship.from === current) next = relationship.to;
             else if (direction === 'upstream' && relationship.to === current) next = relationship.from;
+            else if (relationship.direction !== 'forward' && relationship.from === current) next = relationship.to;
+            else if (relationship.direction !== 'forward' && relationship.to === current) next = relationship.from;
             if (next == null || Object.prototype.hasOwnProperty.call(depths, next)) return;
             depths[next] = depths[current] + 1;
             queue.push(next);
@@ -125,6 +129,7 @@
           originId: originId,
           nodeIds: order,
           edgeKeys: edgeKeys,
+          edgeDirections: Object.fromEntries(records.map(function (record) { return [record.key, record.direction]; })),
           depths: depths,
           maxDepth: maxDepth
         };
@@ -230,6 +235,9 @@
           hops: result.maxDepth
         });
         reachStatus.hidden = false;
+        if (result.edgeKeys.some(function (key) { return result.edgeDirections[key] !== 'forward'; })) {
+          reachStatus.textContent += ' ' + viewerText('viewer.relationship.structural');
+        }
         if (Archify.exportMenu && typeof Archify.exportMenu.syncReachShare === 'function') {
           Archify.exportMenu.syncReachShare();
         }
@@ -302,10 +310,12 @@
           var to = first.getAttribute('data-edge-to');
           var id = first.getAttribute('data-edge-id') || '';
           var labelValue = first.getAttribute('data-edge-label') || '';
-          if (!nodeIdSet[from] || !nodeIdSet[to] || !fragments.every(function (fragment) {
+          var direction = edgeDirection(first);
+          if (!direction || direction !== activeReachability.edgeDirections[key] ||
+              !nodeIdSet[from] || !nodeIdSet[to] || !fragments.every(function (fragment) {
             return fragment.getAttribute('data-edge-from') === from &&
               fragment.getAttribute('data-edge-to') === to &&
-              (fragment.getAttribute('data-edge-id') || '') === id;
+              (fragment.getAttribute('data-edge-id') || '') === id && edgeDirection(fragment) === direction;
           })) return true;
           seenEdgeKeys[key] = true;
           edgeRecords.push({
@@ -314,6 +324,7 @@
             from: from,
             to: to,
             label: labelValue,
+            ...(direction === 'forward' ? {} : { direction: direction }),
             depth: Math.max(depths[from], depths[to])
           });
           return false;
@@ -623,8 +634,11 @@
           var edgeId = edge.getAttribute('data-edge-id') || '';
           if (seen[edgeKey]) return;
           seen[edgeKey] = true;
-          var direction = from === id && to === id ? 'loop' : (from === id ? 'out' : 'in');
-          var neighborId = direction === 'in' ? from : to;
+          var connectionDirection = edgeDirection(edge);
+          if (!connectionDirection) return;
+          var direction = connectionDirection !== 'forward' ? connectionDirection
+            : from === id && to === id ? 'loop' : (from === id ? 'out' : 'in');
+          var neighborId = from === id ? to : from;
           var neighbor = byId[neighborId];
           relationships.push({
             key: edgeKey,
@@ -634,7 +648,9 @@
             direction: direction,
             neighborId: neighborId,
             neighborLabel: neighbor ? nodeLabel(neighbor, neighborId) : neighborId,
-            label: edgeLabel || viewerText(direction === 'loop'
+            label: edgeLabel || viewerText(connectionDirection !== 'forward'
+              ? 'viewer.relationship.direction.' + connectionDirection
+              : direction === 'loop'
               ? 'viewer.passport.relationship.loopsBack'
               : direction === 'out'
                 ? 'viewer.passport.relationship.connectsTo'
@@ -660,11 +676,12 @@
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
           var labelValue = edge.getAttribute('data-edge-label') || '';
+          var direction = edgeDirection(edge);
           var edgeId = edge.getAttribute('data-edge-id') || '';
           var key = edge.getAttribute('data-edge-key') || (from + '\u0000' + to + '\u0000' + labelValue);
           var existing = recordsByKey[key];
           if (existing) {
-            if (existing.from !== from || existing.to !== to || existing.labelValue !== labelValue || existing.id !== edgeId) {
+            if (existing.from !== from || existing.to !== to || existing.labelValue !== labelValue || existing.id !== edgeId || existing.direction !== direction) {
               existing.invalid = true;
               return;
             }
@@ -681,7 +698,9 @@
             fromLabel: byId[from] ? nodeLabel(byId[from], from) : from,
             toLabel: byId[to] ? nodeLabel(byId[to], to) : to,
             labelValue: labelValue,
-            label: labelValue || viewerText(from === to
+            direction: direction,
+            label: labelValue || viewerText(direction !== 'forward'
+              ? 'viewer.relationship.direction.' + direction : from === to
               ? 'viewer.passport.relationship.loopsBack'
               : 'viewer.passport.relationship.connectsTo'),
             edge: edge,
@@ -699,7 +718,13 @@
           }
           records.push(record);
         });
-        return records.filter(function (record) { return !record.invalid && record.from && record.to; });
+        return records.filter(function (record) {
+          return !record.invalid && record.from && record.to && record.direction && edges().every(function (fragment) {
+            return fragment.getAttribute('data-edge-key') !== record.key || (
+              fragment.getAttribute('data-edge-from') === record.from && fragment.getAttribute('data-edge-to') === record.to &&
+              (fragment.getAttribute('data-edge-id') || '') === record.id && edgeDirection(fragment) === record.direction);
+          });
+        });
       }
       function relationshipRecordForKey(key) {
         return relationshipHitRecords().find(function (record) { return record.key === key; }) || null;
@@ -856,7 +881,7 @@
         return token;
       }
       function createSemanticFlowToken(edge, shape, options) {
-        if (!edge || !shape) return null;
+        if (!edge || !shape || edgeDirection(edge) !== 'forward') return null;
         var key = edge.getAttribute('data-edge-key') || (
           edge.getAttribute('data-edge-from') + '\u0000' +
           edge.getAttribute('data-edge-to') + '\u0000' +
@@ -885,6 +910,7 @@
         overlay.setAttribute('aria-hidden', 'true');
         var tokenAdded = false;
         matchingEdges.forEach(function (edge) {
+          if (edgeDirection(edge) !== 'forward') return;
           var wrapper = document.createElementNS(svgNamespace, 'g');
           if (edge.hasAttribute('transform')) wrapper.setAttribute('transform', edge.getAttribute('transform'));
           var shapes = relationshipEdgeShapes(edge);
@@ -952,6 +978,9 @@
         var from = button.getAttribute('data-relationship-from');
         var to = button.getAttribute('data-relationship-to');
         if (!key || !from || !to) return;
+        var directional = edges().some(function (edge) {
+          return edge.getAttribute('data-edge-key') === key && edgeDirection(edge) === 'forward';
+        });
         svg.setAttribute('data-relationship-preview-active', key);
         if (options.direct === true) svg.setAttribute('data-relationship-direct-active', key);
         edges().forEach(function (edge) {
@@ -961,8 +990,8 @@
           var id = node.getAttribute('data-node-id');
           if (id !== from && id !== to) return;
           node.setAttribute('data-relationship-preview-node', '');
-          if (id === from) node.setAttribute('data-relationship-preview-source', '');
-          if (id === to) node.setAttribute('data-relationship-preview-target', '');
+          if (directional && id === from) node.setAttribute('data-relationship-preview-source', '');
+          if (directional && id === to) node.setAttribute('data-relationship-preview-target', '');
         });
         button.setAttribute('data-preview-active', 'true');
         if (!chip.hidden && options.direct !== true) chip.setAttribute('data-relationship-previewing', 'true');
@@ -1033,9 +1062,11 @@
         var target = relationshipHitTarget(key);
         if (target) target.setAttribute('aria-pressed', 'true');
         renderRelationshipCopyAction();
-        summary.textContent = viewerText('viewer.passport.relationship.pinned', {
+        summary.textContent = viewerText(record.direction === 'forward' ? 'viewer.passport.relationship.pinned' : 'viewer.relationship.pinned', {
           from: record.fromLabel,
           to: record.toLabel,
+          connector: edgeConnector(record.edge),
+          direction: viewerText('viewer.relationship.direction.' + record.direction),
           label: record.label
         });
         revealPinnedRelationship(record);
@@ -1080,9 +1111,10 @@
             to: record.toLabel,
             label: record.label
           });
+          if (record.direction !== 'forward') description += ' ' + viewerText('viewer.relationship.direction.' + record.direction);
           target.setAttribute('aria-label', description);
           var title = document.createElementNS(svgNamespace, 'title');
-          title.textContent = record.fromLabel + ' \u2192 ' + record.toLabel + ' \u00b7 ' + record.label;
+          title.textContent = record.fromLabel + ' ' + edgeConnector(record.edge) + ' ' + record.toLabel + ' \u00b7 ' + record.label;
           target.appendChild(title);
           record.shapes.forEach(function (shape) {
             target.appendChild(relationshipHitGeometry(shape));
@@ -1178,13 +1210,14 @@
         relationsBtn.setAttribute('aria-expanded', 'false');
         relationsBtn.textContent = viewerCount('viewer.passport.relationship.count', relationships.length);
         relationsBtn.setAttribute('aria-label', viewerCount('viewer.passport.relationship.show', relationships.length));
-        var counts = { out: 0, in: 0, loop: 0 };
+        var counts = { out: 0, in: 0, loop: 0, both: 0, none: 0 };
         relationships.forEach(function (relationship) { counts[relationship.direction] += 1; });
         summary.textContent = viewerText('viewer.passport.relationship.summary', {
           out: counts.out,
           in: counts.in,
           loops: counts.loop ? viewerText('viewer.passport.relationship.loops', { count: counts.loop }) : ''
         });
+        if (counts.both || counts.none) summary.textContent += ' · ' + viewerText('viewer.relationship.counts', counts);
         renderReachabilityControls(id);
         relationshipList.textContent = '';
         if (!relationships.length) {
@@ -1198,7 +1231,9 @@
         [
           { id: 'out', label: viewerText('viewer.passport.relationship.group.out') },
           { id: 'in', label: viewerText('viewer.passport.relationship.group.in') },
-          { id: 'loop', label: viewerText('viewer.passport.relationship.group.loop') }
+          { id: 'loop', label: viewerText('viewer.passport.relationship.group.loop') },
+          { id: 'both', label: viewerText('viewer.relationship.direction.both') },
+          { id: 'none', label: viewerText('viewer.relationship.direction.none') }
         ].forEach(function (group) {
           var items = relationships.filter(function (relationship) { return relationship.direction === group.id; });
           if (!items.length) return;
@@ -1226,7 +1261,7 @@
             var direction = document.createElement('span');
             direction.className = 'relationship-lens-direction';
             direction.setAttribute('aria-hidden', 'true');
-            direction.textContent = viewerText(relationship.direction === 'out'
+            direction.textContent = relationship.direction === 'both' ? '\u2194' : relationship.direction === 'none' ? '\u2014' : viewerText(relationship.direction === 'out'
               ? 'viewer.passport.relationship.direction.out'
               : relationship.direction === 'in'
                 ? 'viewer.passport.relationship.direction.in'

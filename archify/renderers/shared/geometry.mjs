@@ -827,7 +827,13 @@ function shortWorkflowTrunk(left, right, leftSegment, rightSegment, length) {
 export function collectArrowheadCollisions({ routedRelations, allowShortWorkflowTrunks = false }) {
   const incoming = new Map();
   const hits = [];
-  for (const entry of asArray(routedRelations)) {
+  const arrowEnds = asArray(routedRelations).flatMap((entry) => {
+    if (entry.relation?.direction === 'none') return [];
+    return entry.relation?.direction === 'both'
+      ? [entry, { ...entry, points: asArray(entry.points).slice().reverse(), markerEndpoint: 'from' }]
+      : [entry];
+  });
+  for (const entry of arrowEnds) {
     const points = normalizeRoutePoints(entry.points);
     if (points.length < 2 || !entry.relation?.to) continue;
     const tip = points.at(-1);
@@ -836,13 +842,14 @@ export function collectArrowheadCollisions({ routedRelations, allowShortWorkflow
     const axis = vertical ? 0 : 1;
     const direction = Math.sign(tip[1 - axis] - previous[1 - axis]);
     const halfWidth = 3.5 * (entry.relation.width || (entry.relation.variant === 'emphasis' ? 1.8 : 1.5));
-    const key = `${entry.relation.to}\u0000${axis}\u0000${direction}`;
+    const targetId = entry.relation[entry.markerEndpoint || 'to'];
+    const key = `${targetId}\u0000${axis}\u0000${direction}`;
     const siblings = incoming.get(key) || [];
-    const current = { ...entry, tip, halfWidth };
+    const current = { ...entry, tip, halfWidth, targetId };
     for (const sibling of siblings) {
       // One junction's merged drop into a state carries a single arrowhead.
       if (sibling.relation.junction && sibling.relation.junction === entry.relation.junction
-          && sibling.relation.to === entry.relation.to) continue;
+          && sibling.targetId === targetId) continue;
       if (Math.abs(tip[1 - axis] - sibling.tip[1 - axis]) > 0.0001) continue;
       const distance = Math.abs(tip[axis] - sibling.tip[axis]);
       const minimum = halfWidth + sibling.halfWidth;

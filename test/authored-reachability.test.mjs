@@ -78,6 +78,20 @@ test('reachability uses stable breadth-first depth, supports cycles, and dedupli
   assert.equal(compute('a', 'sideways', relationships), null);
 });
 
+test('mixed-direction reachability retains parallel identities and terminates through structural cycles', () => {
+  const compute = reachabilityFunction();
+  const both = { key: 'ab', from: 'a', to: 'b', direction: 'both' };
+  const relations = [both, both, { ...both, key: 'parallel' },
+    { key: 'bc', from: 'b', to: 'c', direction: 'none' },
+    { key: 'ca', from: 'c', to: 'a' },
+    { key: 'loop', from: 'a', to: 'a', direction: 'both' },
+    { key: 'da', from: 'd', to: 'a' }];
+  const downstream = compute('b', 'downstream', relations);
+  assert.deepEqual(Array.from(downstream.nodeIds), ['b', 'a', 'c']);
+  assert.deepEqual(Array.from(downstream.edgeKeys), ['ab', 'parallel', 'bc', 'ca', 'loop']);
+  assert.deepEqual(Array.from(compute('b', 'upstream', relations).nodeIds), ['b', 'a', 'c', 'd']);
+});
+
 test('reachability stays explicit, deep-linkable, keyboard reachable, and export-clean', () => {
   assert.match(template, /Authored Reachability is a bounded graph query over the relationships/);
   assert.match(template, /direction !== 'upstream' && direction !== 'downstream'/);

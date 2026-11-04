@@ -12,6 +12,10 @@ Relationship labels carry meaning. Give them clear space and preserve action, pr
 
 ## Layout and routing
 
+Architecture connections may set `direction`: omitted/`forward` means a directed relationship, `both` means the same relationship holds in both directions, and `none` means an undirected structural association. Use a precise business label and source evidence for that choice. Different requests and responses remain separate connections; do not merge them into `both`. `none` is not a cosmetic way to hide an arrow. Line color and dashes retain their existing visual variants, not a universal UML or async meaning. When a new direction occurs, the diagram legend explains the actual relationship directions and line styles. `meta.legend.entries.relation-forward`, `relation-both`, and `relation-none` support the existing label/visibility overrides.
+
+Both new directions permit two-way structural Route/Reach exploration, which does not prove runtime data flow. They remain static in previews and playback; Story uses the `relation` action. Other diagram schemas retain their existing relationship contracts.
+
 Place Architecture nodes by their actual connections before assigning coordinates; the router cannot rearrange boxes, so placement decides whether lines stay straight. Classify each relationship first, then place:
 
 - **Main path**: the reader's main journey, neighbors adjacent in reading order. Let a medium path step through meaningful rows instead of making a shallow horizontal strip.

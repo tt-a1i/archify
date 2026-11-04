@@ -262,7 +262,7 @@
     if(path?.hasAttribute('data-class-bus')){const start=attrs['marker-start'];delete attrs['marker-start'];if(attrs['marker-end'])attrs['marker-start']=attrs['marker-end'];if(start)attrs['marker-end']=start;else delete attrs['marker-end'];}
     return attrs;
   }
-  const needsArrow=id=>facts.defaultAction!=='relation'&&!edgeById.get(id).ends&&!edgeById.get(id).kind&&!Object.keys(edgePaint(id)).some(key=>key.startsWith('marker-'));
+  const needsArrow=id=>facts.defaultAction!=='relation'&&(!edgeById.get(id).direction||edgeById.get(id).direction==='forward')&&!edgeById.get(id).ends&&!edgeById.get(id).kind&&!Object.keys(edgePaint(id)).some(key=>key.startsWith('marker-'));
   const messageLabel=edge=>`${String(facts.edges.indexOf(edge)+1).padStart(2,'0')} · ${edge.label||''}`;
   function layoutBranches(drawing){
     const source=drawing.querySelector(':scope > rect[data-figure-node-id]'),targets=[...drawing.querySelectorAll('[data-branch-target]')];
@@ -300,7 +300,7 @@
       figure.append(drawing);return figure;
     }
     for(const id of ids){
-      const edge=edgeById.get(id),drawing=vector('svg',{viewBox:'0 0 350 82','aria-label':`${nodeById.get(edge.from).label} → ${nodeById.get(edge.to).label}`});
+      const edge=edgeById.get(id),drawing=vector('svg',{viewBox:'0 0 350 82','aria-label':`${nodeById.get(edge.from).label} ${edge.direction==='none'?'—':edge.direction==='both'?'↔':'→'} ${nodeById.get(edge.to).label}`});
       for(const [index,nodeId] of [edge.from,edge.to].entries())figureNode(drawing,nodeId,index?216:0,23);
       const paint=edgePaint(id),label=vector('text',{x:175,y:13,'text-anchor':'middle','font-size':9},drawing);label.style.fill=paint.stroke;label.textContent=facts.sequence?messageLabel(edge):edge.label||'';
       vector('path',{'data-figure-edge-id':id,d:needsArrow(id)?'M134 45 H211 M206 41 L211 45 L206 49':'M134 45 H216',fill:'none',...paint,'stroke-width':1.3},drawing);
@@ -311,9 +311,10 @@
 
   function directionalFigure(shot,spec){
     const active=spec.relations.map(id=>edgeById.get(id)),participants=[...new Set(active.flatMap(edge=>[edge.from,edge.to]))].sort((a,b)=>facts.nodes.findIndex(node=>node.id===a)-facts.nodes.findIndex(node=>node.id===b));
+    if(active.some(edge=>edge.direction==='both'||edge.direction==='none'))return null;
     const context=facts.edges.filter(edge=>shot.edges.includes(edge.id)&&participants.includes(edge.from)&&participants.includes(edge.to));
     // Only combine opposite connections explicitly selected in this scene.
-    const duplex=facts.defaultAction!=='relation'&&participants.length===2&&context.length===2&&context.every(edge=>!edge.ends&&!edge.kind)&&context[0].from===context[1].to&&context[0].to===context[1].from;
+    const duplex=facts.defaultAction!=='relation'&&participants.length===2&&context.length===2&&context.every(edge=>(!edge.direction||edge.direction==='forward')&&!edge.ends&&!edge.kind)&&context[0].from===context[1].to&&context[0].to===context[1].from;
     if(participants.length!==2||(!duplex&&(!facts.sequence||active.length!==1)))return null;
     const connections=duplex?context:active,messages=facts.sequence?connections:[...connections].sort((a,b)=>Number(b.from===participants[0])-Number(a.from===participants[0]));
     const labelFor=edge=>facts.sequence?messageLabel(edge):edge.label||'';

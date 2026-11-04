@@ -49,12 +49,15 @@ export function compileBrief(brief, facts) {
       for (const [order, id] of related.entries()) {
         const edge = edges.get(id);
         if (!edge) throw Error('Unknown point connection ' + id);
+        const structural = edge.direction === 'both' || edge.direction === 'none';
+        if (structural && (point.action || scene.action) && action !== 'relation') throw Error('Connection ' + id + ' requires the static relation action.');
+        const edgeMode = structural || action === 'relation' ? 'relation' : 'trace';
         if (selectedEdges.includes(id)) {
-          if (action === 'relation' && edgeModes[id] === 'relation') continue;
+          if (edgeMode === 'relation' && edgeModes[id] === 'relation') continue;
           throw Error('Repeated connection in one scene; put its replay in another scene: ' + id);
         }
         selectedEdges.push(id); edgeTimes[id] = cursor + .65 + (action === 'trace' ? order * (travel + .2) : 0);
-        edgeDurations[id] = travel; edgeModes[id] = action === 'relation' ? 'relation' : 'trace';
+        edgeDurations[id] = travel; edgeModes[id] = edgeMode;
       }
       annotations.push({anchor: point.anchor, title: heading, body, ...(point.meaning ? {kindExplanation: point.meaning} : {}),
         relations: related, ...(point.figureCaption || point.figure ? {figureCaption: point.figureCaption || point.figure} : {}),

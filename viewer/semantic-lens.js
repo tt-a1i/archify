@@ -53,7 +53,7 @@
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
           var key = edge.getAttribute('data-edge-key') || [from, to, edge.getAttribute('data-edge-label') || ''].join('\u0000');
-          if (!groups[key]) groups[key] = { key: key, from: from, to: to, members: [] };
+          if (!groups[key]) groups[key] = { key: key, from: from, to: to, direction: edgeDirection(edge), members: [] };
           groups[key].members.push(edge);
         });
         return Object.keys(groups).map(function (key) { return groups[key]; });
@@ -271,6 +271,7 @@
         overlay.setAttribute('data-semantic-lens-overlay', '');
         overlay.setAttribute('aria-hidden', 'true');
         entries.forEach(function (entry, step) {
+          if (entry.edge.direction !== 'forward') return;
           var wrapper = document.createElementNS(namespace, 'g');
           if (entry.edge.members[0].hasAttribute('transform')) {
             wrapper.setAttribute('transform', entry.edge.members[0].getAttribute('transform'));
@@ -394,6 +395,7 @@
         var touching = 0;
         var forward = 0;
         var reverse = 0;
+        var otherDirections = { both: 0, none: 0 };
         var crossKind = selectedKinds.length === 2;
         var matchedFlow = [];
         edgeGroups().forEach(function (edge) {
@@ -401,8 +403,9 @@
           var toKind = nodeKind[edge.to];
           var match = false;
           if (crossKind) {
-            if (fromKind === selectedKinds[0] && toKind === selectedKinds[1]) { match = true; forward += 1; }
-            if (fromKind === selectedKinds[1] && toKind === selectedKinds[0]) { match = true; reverse += 1; }
+            if (fromKind === selectedKinds[0] && toKind === selectedKinds[1]) { match = true; if (edge.direction === 'forward') forward += 1; }
+            if (fromKind === selectedKinds[1] && toKind === selectedKinds[0]) { match = true; if (edge.direction === 'forward') reverse += 1; }
+            if (match && (edge.direction === 'both' || edge.direction === 'none')) otherDirections[edge.direction] += 1;
           } else if (fromKind === selectedKinds[0] || toKind === selectedKinds[0]) {
             match = true;
             touching += 1;
@@ -429,13 +432,14 @@
         svg.setAttribute('data-lens-active', selectedKinds.join(' '));
         renderFlowOverlay(matchedFlow);
         if (crossKind) {
-          var total = forward + reverse;
+          var total = forward + reverse + otherDirections.both + otherDirections.none;
           status.textContent = viewerCount('viewer.lens.compare', total, {
             first: viewerKindLabel(selectedKinds[0]),
             second: viewerKindLabel(selectedKinds[1]),
             forward: forward,
             reverse: reverse
           });
+          if (otherDirections.both || otherDirections.none) status.textContent += ' · ' + viewerText('viewer.relationship.counts', otherDirections);
         } else {
           var nodeCount = collectKinds().filter(function (kind) { return kind.id === selectedKinds[0]; })[0].nodes.length;
           status.textContent = viewerText('viewer.lens.single', {

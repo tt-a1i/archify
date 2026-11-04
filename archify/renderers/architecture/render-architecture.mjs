@@ -87,6 +87,21 @@ const LEGEND_CATALOG = [
   'messagebus',
   'external',
 ].map((kind) => ({ kind, label: i18nText(arch.meta.locale, `legend.architecture.${kind}`) }));
+const relationshipDirections = new Set(asArray(arch.connections).map((conn) => conn.direction || 'forward'));
+const hasMixedDirections = relationshipDirections.has('both') || relationshipDirections.has('none');
+const RELATIONSHIP_LEGEND = ['forward', 'both', 'none'].flatMap((direction) => {
+  const variants = new Set(asArray(arch.connections)
+    .filter((conn) => (conn.direction || 'forward') === direction)
+    .map((conn) => conn.variant || 'default'));
+  return [...(variants.size ? variants : ['default'])].map((variant) => ({
+    kind: `relation-${direction}`,
+    direction,
+    variant,
+    label: i18nText(arch.meta.locale, `viewer.relationship.direction.${direction}`),
+    swatchWidth: 32,
+    interactive: false,
+  }));
+});
 
 // ---- Measure components from free coordinates --------------------------------
 function measureComponent(c) {
@@ -153,8 +168,11 @@ function boundaryLabelWidth(label, fontSize) {
 
 const architectureLegendEntries = resolveLegend(
   arch.meta?.legend,
-  LEGEND_CATALOG,
-  new Set([...components.values()].map((component) => component.type)),
+  [...LEGEND_CATALOG, ...RELATIONSHIP_LEGEND],
+  new Set([
+    ...[...components.values()].map((component) => component.type),
+    ...(hasMixedDirections ? [...relationshipDirections].map((direction) => `relation-${direction}`) : []),
+  ]),
 );
 
 // One source for connection label geometry: the rect the containment rule
@@ -893,13 +911,13 @@ function validateArchitecture() {
     for (const hit of collisions) {
       const left = hit.left.relation;
       const right = hit.right.relation;
-      const message = `[composition/arrowhead-collision] automatic connections "${left.id || left.from}" and "${right.id || right.from}" into "${left.to}" have arrowheads ${hit.distance}px apart (minimum ${hit.minimum}px) — enlarge or reposition the destination, or choose separate toSide ports.`;
+      const message = `[composition/arrowhead-collision] automatic connections "${left.id || left.from}" and "${right.id || right.from}" at "${hit.left.targetId}" have arrowheads ${hit.distance}px apart (minimum ${hit.minimum}px) — enlarge or reposition that component, or choose separate endpoint ports.`;
       problems.push(message);
       diagnostics.push({
         code: 'composition/arrowhead-collision', severity: 'error', message,
         subject: { diagramType: 'architecture', collection: 'connections', id: left.id, from: left.from, to: left.to },
-        evidence: { otherId: right.id, distancePx: hit.distance, minimumPx: hit.minimum, endpoints: [hit.left.tip, hit.right.tip] },
-        supportedFixes: ['enlarge or reposition the destination', 'choose separate toSide ports'],
+        evidence: { otherId: right.id, distancePx: hit.distance, minimumPx: hit.minimum, endpoints: [hit.left.tip, hit.right.tip], arrowEnds: [hit.left.markerEndpoint || 'to', hit.right.markerEndpoint || 'to'] },
+        supportedFixes: ['enlarge or reposition the component', 'choose separate fromSide/toSide ports'],
       });
     }
   }
@@ -1041,13 +1059,15 @@ function renderConnectionPath(conn, index) {
   const [cls, marker] = arrowClassMap[conn.variant || 'default'] || arrowClassMap.default;
   const routed = pathFor(conn);
   const strokeWidth = conn.width || (conn.variant === 'emphasis' ? 1.8 : 1.5);
+  const direction = conn.direction || 'forward';
+  const arrows = direction === 'none' ? '' : ` marker-end="url(#${marker})"${direction === 'both' ? ` marker-start="url(#${marker}-start)"` : ''}`;
   const automaticRoute = hasAutomaticRouteGeometry(conn);
   const underlay = automaticRoute
     ? `          <path data-graph-role="automatic-crossover-underlay" d="${routed.d}" fill="none" stroke="var(--mask)" stroke-width="${strokeWidth + 4}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>\n`
     : '';
   const crossover = automaticRoute
     ? ` data-composition-crossover="halo"${conn.labelAt ? '' : ' data-composition-independent="true"'}` : '';
-  const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${animateAttr(arch.meta, 'edge', index)} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  const edge = `        <path ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id, direction)} data-composition-points="${routePointsValue(routed.points)}"${crossover}${authoredStraightRouteAttrs(conn, routed.points)} d="${routed.d}" class="${cls}"${direction === 'forward' ? animateAttr(arch.meta, 'edge', index) : ''} stroke-width="${strokeWidth}"${arrows}/>`;
   if (!automaticRoute) return edge;
   // The wrapper is presentation-only: viewer state remains on the one semantic
   // edge, while CSS can keep its preceding mask underlay at the same opacity.
@@ -1057,7 +1077,7 @@ function renderConnectionPath(conn, index) {
 function renderConnectionLabel(conn, index) {
   const box = connectionLabelBox(conn);
   if (!box) return '';
-  return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
+  return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id, conn.direction)}>
           <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
           <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
         </g>`;
@@ -1113,10 +1133,14 @@ function renderLegend() {
       width: viewBox[0] - layout.margin * 2,
       minTitleY: contentBottom + 8,
       obstacles: relationshipObstacles,
-      unfit: arch.meta?.legend === undefined ? 'hide' : 'error',
+      unfit: arch.meta?.legend === undefined && !hasMixedDirections ? 'hide' : 'error',
       diagramType: 'architecture',
     },
-    renderSwatch: (entry) => `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`,
+    renderSwatch: (entry) => {
+      if (!entry.direction) return `<rect x="${entry.x}" y="${entry.baseline - 9}" width="16" height="10" rx="2.5" class="${componentFill[entry.kind] || 'c-external'}" stroke-width="1"/>`;
+      const [cls, marker] = arrowClassMap[entry.variant];
+      return `<path d="M ${entry.x + 2} ${entry.baseline - 4} h 28" class="${cls}" stroke-width="1"${entry.direction === 'none' ? '' : ` marker-end="url(#${marker})"`}${entry.direction === 'both' ? ` marker-start="url(#${marker}-start)"` : ''}/>`;
+    },
   });
 }
 
@@ -1136,7 +1160,9 @@ function renderSvg() {
   const readerPrimaryText = arch.meta?.viewBox ? '' : ' data-reader-primary-text="14"';
   return `      <svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" ${svgRootAttrs(arch.meta)} ${NODE_CARD_ATTR}${readerFit}${readerMinimumText}${readerPrimaryText}>
 ${svgAccessibleText(arch.meta, 'architecture')}
-${renderDefinitions()}
+${renderDefinitions(architectureLegendEntries.some((entry) => entry.direction === 'both') || relationshipDirections.has('both')
+  ? Object.values(arrowClassMap).map(([cls, marker]) => `<marker id="${marker}-start" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto-start-reverse"><polygon points="0 0, 10 3.5, 0 7" class="${cls.replace('a-', 'm-')}"/></marker>`).join('\n')
+  : '')}
 ${nodeCardStyle()}
 
         <!-- Background Grid -->
