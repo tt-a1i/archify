@@ -453,10 +453,10 @@ test('deliver 保留路径诊断并且不覆盖此前存在的 HTML', async t =>
 import fs from 'node:fs';
 import childProcess from 'node:child_process';
 import { syncBuiltinESMExports } from 'node:module';
-const original = childProcess.spawnSync;
-childProcess.spawnSync = (command, args, options) => {
-  const result = original(command, args, options);
-  if (String(args?.[0]).endsWith('render-architecture.mjs') && result.status === 0) {
+const dispatch = process.platform === 'win32' ? 'spawnSync' : 'execFile';
+const original = childProcess[dispatch];
+function damageSuccessfulRender(args, succeeded) {
+  if (String(args?.[0]).endsWith('render-architecture.mjs') && succeeded) {
     const html = fs.readFileSync(args[2], 'utf8');
     let replaced = false;
     const broken = html.replace(/<path\\b[^>]*>/g, tag => {
@@ -467,6 +467,14 @@ childProcess.spawnSync = (command, args, options) => {
     if (!replaced) throw new Error('fixture did not find a rendered arrow');
     fs.writeFileSync(args[2], broken);
   }
+}
+childProcess[dispatch] = (command, args, options, callback) => {
+  if (callback) return original(command, args, options, (error, stdout, stderr) => {
+    damageSuccessfulRender(args, !error);
+    callback(error, stdout, stderr);
+  });
+  const result = original(command, args, options);
+  damageSuccessfulRender(args, result.status === 0);
   return result;
 };
 syncBuiltinESMExports();

@@ -1064,7 +1064,11 @@ test('cli: compare reports an output-limit failure with the same diagnostic', ()
   assert.equal(failure.diagnostics[0].evidence.systemCode, 'ENOBUFS');
 });
 
-for (const command of ['validate', 'deliver', 'migrate', 'compare', 'check']) {
+// The zero-status-plus-error race is specific to spawnSync. POSIX cancellation
+// paths now use execFile, whose real overflow failures are exercised above and
+// below; retain these injections for the callers/platform still using spawnSync.
+for (const command of process.platform === 'win32'
+  ? ['validate', 'deliver', 'migrate', 'compare', 'check'] : ['migrate', 'compare']) {
   test(`cli: ${command} rejects checker ENOBUFS with status zero`, () => {
     const input = path.join(skillRoot, 'examples/web-app.architecture.json');
     const out = path.join(tmp, `spawn-error-${command}.html`);
@@ -1106,7 +1110,7 @@ await import(${JSON.stringify(pathToFileURL(cli).href)});
 for (const [command, args] of [
   ['inspect', ['inspect', 'architecture', path.join(skillRoot, 'examples/web-app.architecture.json'), '--json']],
   ['validate', ['validate', 'architecture', path.join(skillRoot, 'examples/web-app.architecture.json'), '--layout-json', '--json']],
-]) {
+].filter(([command]) => command === 'inspect' || process.platform === 'win32')) {
   test(`cli: ${command} rejects renderer ENOBUFS with status zero in layout mode`, () => {
     const wrapper = path.join(tmp, `renderer-spawn-error-${command}.mjs`);
     fs.writeFileSync(wrapper, `
@@ -1198,6 +1202,7 @@ require('node:module').syncBuiltinESMExports();
     check: ['check', artifact],
   };
   for (const [command, args] of Object.entries(cases)) {
+    if (process.platform !== 'win32' && !['migrate', 'compare'].includes(command)) continue;
     await t.test(`${command} preserves its output-limit diagnostic`, () => {
       const previous = 'trusted previous output\n';
       if (outputs[command]) fs.writeFileSync(outputs[command], previous);
@@ -2843,14 +2848,19 @@ import childProcess from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { syncBuiltinESMExports } from 'node:module';
-const spawnSync = childProcess.spawnSync;
+const dispatch = process.platform === 'win32' ? 'spawnSync' : 'execFile';
+const original = childProcess[dispatch];
 let rendererFailed = false;
-childProcess.spawnSync = (executable, args, options) => {
+childProcess[dispatch] = (executable, args, options, callback) => {
   if (!rendererFailed && String(args?.[0]).includes('render-workflow.mjs')) {
     rendererFailed = true;
+    if (callback) {
+      queueMicrotask(() => callback(Object.assign(new Error('renderer exit'), { code: 7 }), '', ''));
+      return { kill() {}, exitCode: null, signalCode: null };
+    }
     return { status: 7, stdout: '', stderr: '' };
   }
-  return spawnSync(executable, args, options);
+  return original(executable, args, options, callback);
 };
 syncBuiltinESMExports();
 const renameSync = fs.renameSync;
@@ -2893,12 +2903,13 @@ import childProcess from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { syncBuiltinESMExports } from 'node:module';
-const spawnSync = childProcess.spawnSync;
-childProcess.spawnSync = (executable, args, options) => {
+const dispatch = process.platform === 'win32' ? 'spawnSync' : 'execFile';
+const original = childProcess[dispatch];
+childProcess[dispatch] = (executable, args, options, callback) => {
   if (String(args?.[0]).includes('render-workflow.mjs')) {
     throw new Error('injected unexpected renderer dispatch failure');
   }
-  return spawnSync(executable, args, options);
+  return original(executable, args, options, callback);
 };
 syncBuiltinESMExports();
 const renameSync = fs.renameSync;
@@ -2944,8 +2955,9 @@ test('cli: portable delivery lock: final cleanup preserves successor state after
 import childProcess from 'node:child_process';
 import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
-const spawnSync = childProcess.spawnSync;
-childProcess.spawnSync = (executable, args, options) => {
+const dispatch = process.platform === 'win32' ? 'spawnSync' : 'execFile';
+const original = childProcess[dispatch];
+childProcess[dispatch] = (executable, args, options, callback) => {
   if (String(args?.[0]).includes('render-workflow.mjs')) {
     for (const [target, contents] of ${JSON.stringify([
       [lockPath, successor.lock],
@@ -2957,7 +2969,7 @@ childProcess.spawnSync = (executable, args, options) => {
     }
     throw new Error('injected unexpected failure after successor takeover');
   }
-  return spawnSync(executable, args, options);
+  return original(executable, args, options, callback);
 };
 syncBuiltinESMExports();
 process.argv = [process.execPath, ${JSON.stringify(cli)}, 'deliver', 'workflow', ${JSON.stringify(input)}, ${JSON.stringify(out)}, '--json'];

@@ -2274,6 +2274,14 @@ function runNode(args, options = {}) {
   return result;
 }
 
+function runCancellableNode(stage, args, options = {}) {
+  return cancellation ? cancellation.run(stage, args, {
+    cwd: options.cwd || process.cwd(),
+    env: options.env ? { ...process.env, ...options.env } : process.env,
+    maxBuffer: options.maxBuffer ?? DEFAULT_MAX_BUFFER,
+  }) : runNode(args, options);
+}
+
 // The artifact checker prints its whole receipt on stdout; a dense,
 // warning-heavy diagram can grow that receipt past spawnSync's 1 MiB
 // default, which kills the child before it reports a verdict. Deliver,
@@ -2663,6 +2671,7 @@ function inputDiagnostic(error, inputPath) {
 }
 
 function rendererFailure(result) {
+  if (result.interruption) return interruptionFailure(result);
   if (result.error) {
     return {
       error: 'Renderer process could not start.',
@@ -4903,7 +4912,7 @@ async function commandDeliver(args) {
         return;
       }
     }
-    const render = runNode([renderer, specificationSnapshotPath, candidatePath], {
+    const render = await runCancellableNode('render', [renderer, specificationSnapshotPath, candidatePath], {
       stdio: 'pipe',
       // The page is rendered in staging; paths inside it are written relative to where it is delivered.
       env: { ...rendererEnv(qualityArgs.quality, repoArgs.repoRoot, true), ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath, ARCHIFY_EXPLAINER_PAGE_DIR: path.dirname(outputPath) } : {}) },
@@ -4937,12 +4946,19 @@ async function commandDeliver(args) {
     }
 
     const checkMaxBuffer = artifactCheckMaxBuffer();
-    const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), candidatePath], {
+    const check = await runCancellableNode('check', [path.join(skillRoot, 'scripts/check-render-output.mjs'), candidatePath], {
       stdio: 'pipe',
       maxBuffer: checkMaxBuffer,
     });
     if (check.status !== 0) {
       if (check.stderr) process.stderr.write(check.stderr);
+      if (check.interruption) {
+        await reportDeliveryFailure({
+          json, stage: 'check', type, input: inputPath, output: outputPath,
+          ...interruptionFailure(check, { input: inputPath, output: outputPath }),
+        });
+        return;
+      }
       const outputLimit = checkerOutputLimitDiagnostics(check, checkMaxBuffer);
       if (outputLimit) {
         await reportDeliveryFailure({
@@ -5157,6 +5173,20 @@ async function commandDeliver(args) {
       if (explainerBundle) {
         const { assertPreparedDependencies } = await import('../explainer/prepare.mjs');
         assertPreparedDependencies(explainerBundle);
+      }
+      // Let a pending signal run before entering the synchronous publication
+      // protocol. Once publication starts its existing recovery rules apply.
+      if (cancellation) {
+        const interrupted = await cancellation.checkpoint('commit');
+        if (interrupted) {
+          await reportDeliveryFailure({
+            json, stage: 'commit', type, input: inputPath, output: outputPath,
+            ...interruptionFailure(interrupted, { input: inputPath, output: outputPath }),
+          });
+          return;
+        }
+        // Publication keeps its established signal/recovery semantics.
+        cancellation.dispose();
       }
       const committed = commitDeliveryPair({
         htmlCandidate: candidatePath,
@@ -5647,10 +5677,18 @@ async function commandCheck(args) {
     return;
   }
   const checkMaxBuffer = artifactCheckMaxBuffer();
-  const result = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), html], {
+  const result = await runCancellableNode('check', [path.join(skillRoot, 'scripts/check-render-output.mjs'), html], {
     stdio: 'pipe',
     maxBuffer: checkMaxBuffer,
   });
+  if (result.interruption) {
+    const failure = interruptionFailure(result, { artifact: artifactPath });
+    console.log(JSON.stringify({ schemaVersion: 1, ok: false, command: 'check',
+      artifact: { path: artifactPath }, file: artifactPath, error: failure.error,
+      diagnostics: failure.diagnostics }, null, 2));
+    process.exitCode = failure.status;
+    return;
+  }
   if (result.error) {
     if (result.stderr) process.stderr.write(result.stderr);
     const outputLimit = checkerOutputLimitDiagnostics(result, checkMaxBuffer);
@@ -5980,6 +6018,7 @@ async function commandFinalize(rawArgs) {
     result = await runFinalize({
       ...(preparedExplainer ? { preparedExplainer, env: { ...process.env, ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath } } : {}),
       cliPath: fileURLToPath(import.meta.url),
+      cancellation,
       type,
       input,
       output,
@@ -6098,6 +6137,13 @@ async function commandDoctor(args) {
     label: 'Finalize runtime',
     ok: fs.existsSync(finalizeRuntime),
     missing: fs.existsSync(finalizeRuntime) ? 0 : 1,
+  });
+
+  const cancellationRuntime = path.join(skillRoot, 'bin/command-cancellation.mjs');
+  checks.push({
+    label: 'Command cancellation runtime',
+    ok: fs.existsSync(cancellationRuntime),
+    missing: fs.existsSync(cancellationRuntime) ? 0 : 1,
   });
 
   const outputPathRuntime = path.join(skillRoot, 'renderers/shared/output-path.mjs');
@@ -7077,12 +7123,12 @@ async function commandValidate(args, invocation = {}) {
   if (layoutJson) {
     // Layout mode emits JSON without writing HTML; keep its unused target typed.
     const layoutOutput = path.join(os.tmpdir(), `archify-layout-${process.pid}-${type}.html`);
-    const result = runNode([renderer, input, layoutOutput, '--layout-json'], {
+    const result = await runCancellableNode('render', [renderer, input, layoutOutput, '--layout-json'], {
       stdio: 'pipe',
       env: rendererEnv(quality, repoRoot, true),
     });
     if (result.status !== 0) {
-      if (!result.error) {
+      if (!result.error && !result.interruption) {
         try {
           const receipt = JSON.parse(result.stdout);
           if (receipt?.contract && Array.isArray(receipt.diagnostics)) {
@@ -7126,7 +7172,7 @@ async function commandValidate(args, invocation = {}) {
       const { writePreparedBundle } = await import('../explainer/prepare.mjs');
       preparedBundlePath = writePreparedBundle(tmp, explainerBundle);
     }
-    const render = runNode([renderer, snapshot, out], {
+    const render = await runCancellableNode('render', [renderer, snapshot, out], {
       stdio: 'pipe',
       env: { ...rendererEnv(quality, repoRoot, true), ...(preparedBundlePath ? { ARCHIFY_EXPLAINER_PREPARED: preparedBundlePath, ARCHIFY_EXPLAINER_SNAPSHOT_INPUT: inputPath } : {}) },
     });
@@ -7147,14 +7193,17 @@ async function commandValidate(args, invocation = {}) {
       const localeWarnings = [...await specificationLocaleDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
       for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
       const checkMaxBuffer = artifactCheckMaxBuffer();
-      const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
+      const check = await runCancellableNode('check', [path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
         stdio: 'pipe',
         maxBuffer: checkMaxBuffer,
       });
       if (check.status !== 0) {
         exitCode = check.status ?? 1;
         const outputLimit = checkerOutputLimitDiagnostics(check, checkMaxBuffer);
-        if (outputLimit) {
+        if (check.interruption) {
+          report = () => reportFailure({ json, stage: 'check', type, input: path.resolve(input),
+            ...interruptionFailure(check, { input: path.resolve(input) }) });
+        } else if (outputLimit) {
           report = () => reportFailure({
             json,
             stage: 'check',
@@ -7230,6 +7279,7 @@ async function commandValidate(args, invocation = {}) {
     }
   } finally {
     try {
+      if (!cancellation?.requested) cancellation?.dispose();
       await temporary.cleanup();
     } catch (error) {
       exitCode = 1;
@@ -7261,6 +7311,16 @@ const [command, ...args] = process.argv.slice(2);
 // Only the sole --help form bypasses command argument parsing and operations.
 const soleCommandHelp = args.length === 1 && args[0] === '--help'
   && Object.hasOwn(COMMAND_USAGE, command);
+// POSIX terminal cancellation is verified here; Windows retains its existing
+// process behavior until native console/process-tree evidence is available.
+let cancellation;
+let interruptionFailure;
+if (process.platform !== 'win32' && !soleCommandHelp
+    && ['validate', 'deliver', 'check', 'finalize'].includes(command)) {
+  const runtime = await import('./command-cancellation.mjs');
+  cancellation = runtime.createCommandCancellation();
+  interruptionFailure = runtime.interruptionFailure;
+}
 
 try {
   switch (soleCommandHelp ? '--help' : command) {
@@ -7341,4 +7401,6 @@ try {
   } else {
     fail(error.message);
   }
+} finally {
+  cancellation?.dispose();
 }

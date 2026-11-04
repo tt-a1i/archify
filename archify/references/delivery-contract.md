@@ -44,6 +44,39 @@ their existing rule codes. Use the advertised `validate --json` or
 Unexpected implementation failures retain debugging information in human
 mode and remain `internal/unclassified` in machine receipts.
 
+### Interrupting subprocess work on POSIX
+
+During renderer or artifact-check subprocess work, `validate`, `deliver`,
+`check`, and the corresponding `finalize` gates handle SIGINT (terminal Ctrl-C)
+and SIGTERM. They stop launching later stages, forward the signal to the active
+child, wait for its exit, and use the existing owned cleanup/failure protocol.
+The failure diagnostic is `cli/interrupted`, with the signal, stage, whether it
+was received by the command or observed on its child, and whether a bounded
+stop required SIGKILL. Ordinary interruption exits 130 for SIGINT or 143 for
+SIGTERM; an ownership or cleanup failure can take precedence with exit 1.
+An interrupted inspection does not establish that the diagram is invalid.
+
+Repeated graceful signals are idempotent, including the same terminal signal
+received directly and forwarded by `finalize`. An unresponsive worker is killed
+after two seconds; `finalize` allows its CLI child five seconds to finish worker
+termination and failure recording. These are shutdown bounds, not work budgets.
+Children stay in the terminal process group so a forceful group termination
+still reaches the command and its workers together.
+
+Before publication, the previous HTML is preserved. Successful failure cleanup
+releases only the owned locks and staging; delivery records failed provenance
+and retains pending until a later successful delivery. Wait for the interrupted
+command to exit before retrying the original command. No manual lock removal is
+normally needed. If ownership changed or cleanup could not finish, follow the
+specific recovery diagnostic and preserve its named files.
+
+This graceful path covers subprocess gates and the checkpoint before delivery
+publication. Synchronous publication/recovery operations and `finalize`'s
+in-process browser phase retain their existing interruption behavior. SIGKILL,
+a killed coordinator, or an ownership conflict can still leave recovery data;
+use the recovery procedures below. Windows console/process behavior is unchanged
+and is not covered by the POSIX graceful-cancellation guarantee.
+
 Declared local Explainer chart data and native-diagram specification files are protected inputs, including physical aliases. Delivery and finalize refuse sidecars that would overwrite those inputs, including when resource preparation fails; an uninspectable draft cannot publish failure evidence.
 
 Each delivered output has two artifact-specific metadata paths. When an output

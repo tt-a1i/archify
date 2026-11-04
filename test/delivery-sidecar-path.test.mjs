@@ -597,12 +597,17 @@ import childProcess from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { syncBuiltinESMExports } from 'node:module';
-const spawnSync = childProcess.spawnSync;
-childProcess.spawnSync = (executable, args, options) => {
+const dispatch = process.platform === 'win32' ? 'spawnSync' : 'execFile';
+const original = childProcess[dispatch];
+childProcess[dispatch] = (executable, args, options, callback) => {
   if (String(args?.[0]).includes('render-workflow.mjs')) {
+    if (callback) {
+      queueMicrotask(() => callback(Object.assign(new Error('renderer exit'), { code: 7 }), '', ''));
+      return { kill() {}, exitCode: null, signalCode: null };
+    }
     return { status: 7, stdout: '', stderr: '' };
   }
-  return spawnSync(executable, args, options);
+  return original(executable, args, options, callback);
 };
 syncBuiltinESMExports();
 const writeFileSync = fs.writeFileSync;
@@ -648,10 +653,17 @@ import childProcess from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { syncBuiltinESMExports } from 'node:module';
-const spawnSync = childProcess.spawnSync;
-childProcess.spawnSync = (executable, args, options) => {
-  if (String(args?.[0]).includes('render-workflow.mjs')) return { status: 7, stdout: '', stderr: '' };
-  return spawnSync(executable, args, options);
+const dispatch = process.platform === 'win32' ? 'spawnSync' : 'execFile';
+const original = childProcess[dispatch];
+childProcess[dispatch] = (executable, args, options, callback) => {
+  if (String(args?.[0]).includes('render-workflow.mjs')) {
+    if (callback) {
+      queueMicrotask(() => callback(Object.assign(new Error('renderer exit'), { code: 7 }), '', ''));
+      return { kill() {}, exitCode: null, signalCode: null };
+    }
+    return { status: 7, stdout: '', stderr: '' };
+  }
+  return original(executable, args, options, callback);
 };
 syncBuiltinESMExports();
 const linkSync = fs.linkSync;

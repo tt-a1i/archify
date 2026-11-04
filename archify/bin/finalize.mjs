@@ -19,6 +19,7 @@ import {
 } from './visual-check.mjs';
 import { startDeliveryUpdateCheck } from './delivery-update.mjs';
 import { declaredExplainerInputPaths } from '../explainer/prepare.mjs';
+import { interruptionFailure } from './command-cancellation.mjs';
 
 export const FINALIZE_STAGES = Object.freeze(['validate', 'deliver', 'check', 'browser-check']);
 const FINALIZE_UPDATE_DEADLINE_MS = 4_000;
@@ -444,6 +445,11 @@ function consolidateDiagnostics(diagnostics) {
 }
 
 function failureDiagnostics(stage, result, receipt, quality) {
+  if (result.interruption) {
+    const diagnostics = Array.isArray(receipt?.diagnostics) ? receipt.diagnostics : [];
+    return diagnostics.some(entry => entry.code === 'cli/interrupted') ? diagnostics
+      : [...diagnostics, ...interruptionFailure(result).diagnostics];
+  }
   if (Array.isArray(receipt?.diagnostics) && receipt.diagnostics.length) return receipt.diagnostics;
   const invalidReceipt = (result.status ?? 1) === 0 && !validStageReceipt(stage, receipt, quality);
   return [{
@@ -499,7 +505,10 @@ function stageCaptureMaxBuffer(env = process.env) {
   return Math.max(knob, 4 * 1024 * 1024) + 64 * 1024;
 }
 
-function defaultRunner({ cliPath, args, cwd, env }) {
+function defaultRunner({ stage, cliPath, args, cwd, env, cancellation }) {
+  if (cancellation) return cancellation.run(stage, [cliPath, ...args], {
+    cwd, env, maxBuffer: stageCaptureMaxBuffer(env), coordinator: true,
+  });
   return new Promise((resolve) => {
     execFile(process.execPath, [cliPath, ...args], { cwd, env, encoding: 'utf8', maxBuffer: stageCaptureMaxBuffer(env) }, (error, stdout, stderr) => {
       resolve({
@@ -869,6 +878,7 @@ export async function runFinalize({
   cwd = process.cwd(),
   env = process.env,
   runCommand = defaultRunner,
+  cancellation,
   runBrowserCheck,
   startUpdateCheck = startDeliveryUpdateCheck,
   resolveChrome = findChrome,
@@ -1002,8 +1012,8 @@ export async function runFinalize({
           outDir: resolvedOutDir,
         });
         const inProcess = stage === 'browser-check' && runBrowserCheck;
-        let result;
-        if (preparedExplainer) {
+        let result = cancellation?.requested ? cancellation.interruptedResult(stage) : undefined;
+        if (!result && preparedExplainer) {
           try {
             const { assertPreparedDependencies } = await import('../explainer/prepare.mjs');
             assertPreparedDependencies(preparedExplainer);
@@ -1014,6 +1024,9 @@ export async function runFinalize({
         if (result) {
           // The original resources changed between gates; do not run another gate on them.
         } else if (inProcess) {
+          // This change covers the subprocess gates. Keep the browser's
+          // existing lifecycle and signal semantics after publication.
+          cancellation?.dispose();
           try {
             chromePath = resolveChrome({ env });
             if (chromePath) {
@@ -1049,7 +1062,7 @@ export async function runFinalize({
             });
           result = { status: checked.exitCode, stdout: JSON.stringify(checked.receipt) };
         } else {
-          result = await runCommand({ stage, cliPath, args, cwd,
+          result = await runCommand({ stage, cliPath, args, cwd, cancellation,
             env: stage === 'deliver' ? { ...env, ARCHIFY_UPDATE_CHECK_DISABLED: '1' } : env });
         }
         if (preparedExplainer && result.status === 0) {
