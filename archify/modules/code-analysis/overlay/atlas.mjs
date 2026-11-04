@@ -231,7 +231,7 @@ export const ATLAS_JS = `
   function shortLabel(label) { return label.length > 20 ? '…' + label.slice(-19) : label; }
   // Many curves add up: fainter strokes for denser graphs keep strands readable.
   function density(n, most) { return Math.max(0.05, Math.min(most, 8 / Math.sqrt(Math.max(n, 1)))); }
-  var geo = null, base = null;
+  var geo = null, marks = [];
 
   // ---- colours: module hues spaced around the wheel, lightness by theme ----
   function cssVar(name, fallback) { var v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fallback; }
@@ -310,7 +310,7 @@ export const ATLAS_JS = `
   // ---- what the current selection lights up ----
   function selection() {
     var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false };
-    if (state.focusModule !== -1) { sel.modules[state.focusModule] = true; sel.any = true; }
+    if (state.focusModule !== -1 && state.finding === -1) { sel.modules[state.focusModule] = true; sel.any = true; }
     var f = FD[state.finding];
     if (f) {
       sel.any = true; sel.tone = TONE[f.severity] || TONE.info;
@@ -412,6 +412,7 @@ export const ATLAS_JS = `
   }
   function paint(ctx) {
     var t = theme(), dpr = geo.dpr;
+    marks = [];
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, geo.w, geo.h);
     var sel = selection(), dimmed = state.finding !== -1;
@@ -419,7 +420,7 @@ export const ATLAS_JS = `
     ctx.lineWidth = 1; ctx.strokeStyle = t.grid;
     [0.42, 0.8, 1.0, 1.42].forEach(function (f) { ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.R * f, 0, 2 * Math.PI); ctx.stroke(); });
     // dependencies, one path per source module
-    var focusM = state.focusModule;
+    var focusM = state.finding === -1 ? state.focusModule : -1;
     var byModule = M.map(function () { return []; });
     E.forEach(function (e) { byModule[F[e[0]][1]].push(e); });
     ctx.lineCap = 'round';
@@ -466,6 +467,7 @@ export const ATLAS_JS = `
     F.forEach(function (f, i) {
       var a = geo.ang[i], p0 = pt(a, geo.R, f[1]), p1 = pt(a, geo.R + geo.tick, f[1]), on = !dimmed || inSel(sel, i);
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
+      marks.push({ type: 'file', index: i, p0: p0, p1: p1 });
       ctx.globalAlpha = moduleOpacity(f[1]);
       ctx.strokeStyle = sel.files[i] ? sel.tone : hue(f[1], t, on ? 0.95 : 0.2); ctx.lineWidth = sel.files[i] ? 2.4 : 1.3; ctx.stroke(); ctx.globalAlpha = 1;
     });
@@ -476,6 +478,7 @@ export const ATLAS_JS = `
       var on = !dimmed || inSel(sel, fn[0]) || sel.fns[i];
       var p0 = pt(a, geo.spike0, F[fn[0]][1]), p1 = pt(a, geo.spike0 + len, F[fn[0]][1]);
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
+      marks.push({ type: 'function', index: i, p0: p0, p1: p1 });
       ctx.strokeStyle = hit ? TONE[hit.severity] || TONE.info : t.muted;
       ctx.globalAlpha = (hit ? 1 : fn[3] >= 8 ? 0.85 : 0.45) * (on ? 1 : 0.15) * moduleOpacity(F[fn[0]][1]);
       ctx.lineWidth = hit ? 1.6 : 0.8; ctx.stroke(); ctx.globalAlpha = 1;
@@ -496,7 +499,7 @@ export const ATLAS_JS = `
       ctx.strokeStyle = hue(mi, t, on ? 1 : 0.25); ctx.lineWidth = hub ? 5 : 2; ctx.lineCap = 'butt'; ctx.stroke();
       var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label, mi);
       // A module too narrow for its own label is named only when selected or hovered.
-      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || sel.modules[mi];
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || sel.modules[mi] || focus[mi] > 0;
       if (!named) return;
       ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(flip ? a + Math.PI : a);
       ctx.textAlign = flip ? 'right' : 'left'; ctx.fillStyle = hue(mi, t, on ? 1 : 0.35);
@@ -519,39 +522,34 @@ export const ATLAS_JS = `
     ctx.restore();
   }
 
-  // ---- hit testing in polar coordinates ----
-  function nearestFile(a, tol, only) {
-    var best = -1, bestD = tol;
-    for (var i = 0; i < F.length; i++) { if (F[i][1] !== only) continue; var d = Math.abs(Math.atan2(Math.sin(a - geo.ang[i]), Math.cos(a - geo.ang[i]))); if (d < bestD) { bestD = d; best = i; } }
-    return best;
-  }
+  // Hit the rendered segments first. This covers tips and bodies (including
+  // unreported functions), and stays aligned during animation and resizing.
   function hit(x, y) {
     if (!geo) return null;
-    var a = Math.atan2(y - geo.cy, x - geo.cx), r = Math.hypot(x - geo.cx, y - geo.cy);
+    var best = null, bestDistance = 4;
+    marks.forEach(function (mark) {
+      var dx = mark.p1[0] - mark.p0[0], dy = mark.p1[1] - mark.p0[1];
+      var length2 = dx * dx + dy * dy;
+      var t = length2 ? Math.max(0, Math.min(1, ((x - mark.p0[0]) * dx + (y - mark.p0[1]) * dy) / length2)) : 0;
+      var distance = Math.hypot(x - mark.p0[0] - t * dx, y - mark.p0[1] - t * dy);
+      if (distance < bestDistance) { best = mark; bestDistance = distance; }
+    });
+    if (best) return { type: best.type, index: best.index };
+    var dx = x - geo.cx, dy = y - geo.cy, a = Math.atan2(dy, dx), r = Math.hypot(dx, dy);
     var order = M.map(function (_, mi) { return mi; }).sort(function (a, b) { return focus[b] - focus[a]; });
+    var measure = canvas.getContext('2d'); measure.font = LABEL_FONT;
     for (var j = 0; j < order.length; j++) {
       var mi = order[j], delta = Math.atan2(Math.sin(a - mid(mi)), Math.cos(a - mid(mi)));
-      var original = pt(mid(mi) + delta / focusScale(mi), r - geo.R * 0.62 * focus[mi]);
-      var found = hitModule(original[0], original[1], mi);
-      if (found) return found;
+      var half = (geo.span[mi][1] - geo.span[mi][0]) * focusScale(mi) / 2;
+      if (Math.abs(r - focusRadius(geo.arc, mi)) <= 5 && Math.abs(delta) <= half + 0.01) return { type: 'module', index: mi };
+      // Labels extend radially outwards on both halves of the circle. Do not
+      // treat the empty area outside an entire sector as a clickable label.
+      var along = dx * Math.cos(mid(mi)) + dy * Math.sin(mid(mi));
+      var across = -dx * Math.sin(mid(mi)) + dy * Math.cos(mid(mi));
+      var labelStart = focusRadius(geo.label, mi);
+      var named = (geo.span[mi][1] - geo.span[mi][0]) * geo.arc >= 12 || focus[mi] > 0;
+      if (named && Math.abs(across) <= 7 && along >= labelStart - 4 && along <= labelStart + measure.measureText(shortLabel(M[mi].label)).width + 4) return { type: 'module', index: mi };
     }
-    return null;
-  }
-  function hitModule(x, y, only) {
-    if (!geo) return null;
-    var dx = x - geo.cx, dy = y - geo.cy, r = Math.sqrt(dx * dx + dy * dy), a = Math.atan2(dy, dx);
-    if (r > geo.arc - 8 && r < geo.label + 140) {
-      var s = geo.span[only], d0 = ((a - s[0]) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-      if (d0 <= s[1] - s[0] + 0.01 || d0 >= 2 * Math.PI - 0.01) return { type: 'module', index: only };
-      return null;
-    }
-    if (r >= geo.spike0 - 2 && r <= geo.spike0 + geo.spikeMax + 6) {
-      var file = nearestFile(a, geo.slot * 0.75, only); if (file === -1) return null;
-      var best = -1, bestD = geo.slot;
-      fnsByFile[file].forEach(function (i) { var d = Math.abs(Math.atan2(Math.sin(a - fnAngle(i)), Math.cos(a - fnAngle(i)))); if (d <= bestD && r <= geo.spike0 + spikeLen(FN[i][3]) + 6) { bestD = d; best = i; } });
-      return best === -1 ? { type: 'file', index: file } : { type: 'function', index: best };
-    }
-    if (r >= geo.R - 4 && r <= geo.spike0) { var f2 = nearestFile(a, geo.slot * 0.75, only); return f2 === -1 ? null : { type: 'file', index: f2 }; }
     return null;
   }
   function tipText(h) {
@@ -574,11 +572,22 @@ export const ATLAS_JS = `
     var b = canvas.getBoundingClientRect(), h = hit(e.clientX - b.left, e.clientY - b.top);
     if (!h) { select(-1, -1); return; }
     if (h.type === 'module') select(state.focusModule === h.index ? -1 : h.index, -1);
-    else if (h.type === 'function' && FN[h.index][6] !== -1) select(-1, FN[h.index][6]);
+    else if (h.type === 'function' && FN[h.index][6] !== -1) selectFinding(FN[h.index][6]);
     else select(F[h.type === 'function' ? FN[h.index][0] : h.index][1], -1);
   });
 
   // ---- side panel ----
+  function selectFinding(index) {
+    if (index === -1) { select(state.focusModule, -1); return; }
+    var f = FD[index], modules = f.modules || [];
+    if (f.fn != null) modules = [F[FN[f.fn][0]][1]];
+    else if (f.module != null) modules = [f.module];
+    else if (f.files) modules = f.files.map(function (file) { return F[file][1]; });
+    // A single-module finding belongs in that module's expanded reading context;
+    // a cross-module finding needs the overview, not an unrelated dimmed sector.
+    var owner = modules.length && modules.every(function (mi) { return mi === modules[0]; }) ? modules[0] : -1;
+    select(owner, index);
+  }
   function select(module, finding) {
     var now = performance.now(), changing = module !== state.focusModule || !!anim.focus;
     if (anim.focus) updateFocus(now, false);
@@ -641,7 +650,7 @@ export const ATLAS_JS = `
       '<div class="note">' + fmt(cov.resolved) + ' resolved · ' + fmt(cov.external) + ' external · ' + fmt(cov.unknown) + ' could not be resolved' + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + ' failed to parse' : '') + '. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.</div>';
     h += '<div class="k">Reading the atlas</div><div class="legend"><span><i style="background:' + hue(0, theme()) + '"></i>outer arc: module (thick: reported hub)</span><span><i style="background:' + theme().muted + '"></i>tick: file · spike: function, length = complexity</span><span><i style="background:#FBBF24;height:8px;width:8px;border-radius:50%"></i>dot: reported function, severity colour</span><span><i style="background:' + hue(3, theme(), 0.6) + '"></i>curve: file dependency, coloured by the importing module</span></div>';
     side.innerHTML = h;
-    side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); select(-1, state.finding === i ? -1 : i); }); });
+    side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); selectFinding(state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
     var ev = side.querySelector('.atlas-evidence');
     if (ev) ev.addEventListener('click', function () { var id = ev.getAttribute('data-id'); close(); if (window.__archifyShowFinding) window.__archifyShowFinding(id); });
