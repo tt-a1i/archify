@@ -5505,7 +5505,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <!-- Edge paths -->
         <path data-edge-from="router" data-edge-to="approval" data-edge-label="needs approval?" data-edge-key="0" data-edge-id="approval-check" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="659.2,279;659.2,302;577.2,302;577.2,387;593.2,387" d="M 659.2 279 L 659.2 294 Q 659.2 302 651.2 302 L 585.2 302 Q 577.2 302 577.2 310 L 577.2 379 Q 577.2 387 585.2 387 L 593.2 387" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="approval" data-edge-to="blocked" data-edge-label="denied" data-edge-key="1" data-edge-id="approval-denied" data-composition-routing="workflow-v2-auto" data-edge-role="error" data-composition-points="725.2,387;772,387" d="M 725.2 387 L 772 387" class="a-security" data-animate="edge" style="--step:9" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="approval" data-edge-to="tool" data-edge-key="2" data-edge-id="approved-tool" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="659.2,421;659.2,521;772,521" d="M 659.2 421 L 659.2 513 Q 659.2 521 667.2 521 L 772 521" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="approval" data-edge-to="tool" data-edge-label="approved" data-edge-key="2" data-edge-id="approved-tool" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="659.2,421;659.2,521;772,521" d="M 659.2 421 L 659.2 513 Q 659.2 521 667.2 521 L 772 521" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="external" data-edge-to="final" data-edge-key="3" data-edge-id="external-reply" data-edge-role="return" data-composition-points="1068,521;1092,521;1092,120;1068,120" d="M 1068 521 L 1084 521 Q 1092 521 1092 513 L 1092 128 Q 1092 120 1084 120 L 1068 120" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.2" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="278,146;278,253;429.2,253" d="M 278 146 L 278 245 Q 278 253 286 253 L 429.2 253" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="planner" data-edge-to="router" data-edge-key="5" data-edge-id="planner-route" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="561.2,253;593.2,253" d="M 561.2 253 L 593.2 253" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.4" marker-end="url(#arrowhead)"/>
@@ -5576,13 +5576,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <text data-detail="context" x="659.2" y="265" class="t-muted" font-size="8" text-anchor="middle">choose capability</text>
         </g>
 
-        <g id="node-approval" data-node-id="approval" data-node-label="Approval Gate" tabindex="0" role="button" aria-label="Focus Approval Gate, scope + consent, Policy &amp; Recovery › Human or policy stop › Plan + route" aria-pressed="false" data-node-kind="security" data-node-sublabel="scope + consent" data-node-tag="block risky ops" data-node-context="Policy &amp; Recovery › Human or policy stop › Plan + route">
-          <title>Approval Gate · scope + consent · Policy &amp; Recovery › Human or policy stop › Plan + route · block risky ops</title>
+        <g id="node-approval" data-node-id="approval" data-node-label="Approval Gate" tabindex="0" role="button" aria-label="Focus Approval Gate, scope + consent, Decision · Policy &amp; Recovery › Human or policy stop › Plan + route" aria-pressed="false" data-node-kind="security" data-node-sublabel="scope + consent" data-node-tag="block risky ops" data-node-context="Decision · Policy &amp; Recovery › Human or policy stop › Plan + route">
+          <title>Approval Gate · scope + consent · Decision · Policy &amp; Recovery › Human or policy stop › Plan + route · block risky ops</title>
           <rect x="593.2" y="353" width="132" height="68" rx="8" class="c-mask"/>
           <rect x="593.2" y="353" width="132" height="68" rx="8" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(599.2 359) scale(0.6875)">
-            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
-            <path d="m5.8 8 1.5 1.5 3-3"/>
+          <g aria-hidden="true" data-semantic-sigil="decision" class="semantic-sigil s-security" transform="translate(599.2 359) scale(0.6875)">
+            <path d="M8 2.2 13.8 8 8 13.8 2.2 8Z"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="659.2" y="374" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Approval Gate</text>
           <text data-detail="context" x="659.2" y="391" class="t-muted" font-size="8" text-anchor="middle">scope + consent</text>
@@ -5674,7 +5673,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <rect x="729.2" y="367" width="38.8" height="14" rx="3" class="c-mask"/>
           <text x="748.6" y="377" class="t-edge-security" font-size="8" text-anchor="middle">denied</text>
         </g>
-
+        <g data-detail="context" data-edge-from="approval" data-edge-to="tool" data-edge-label="approved" data-edge-key="2" data-edge-id="approved-tool">
+          <rect x="691.4" y="501" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="715.6" y="511" class="t-edge-emphasis" font-size="8" text-anchor="middle">approved</text>
+        </g>
 
         <g data-detail="context" data-edge-from="chat" data-edge-to="planner" data-edge-label="plan" data-edge-key="4" data-edge-id="plan-request">
           <rect x="338.6" y="233" width="30" height="14" rx="3" class="c-mask"/>

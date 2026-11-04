@@ -300,6 +300,10 @@
             "type": "string"
           },
           "icon": { "$ref": "common.schema.json#/$defs/nodeIcon" },
+          "decision": {
+            "type": "boolean",
+            "description": "Explicit decision point, independent of type. Uses the decision icon unless icon is supplied. Outgoing edges without condition receive a warning."
+          },
           "brand": {
             "$ref": "common.schema.json#/$defs/brandMark"
           },
@@ -343,6 +347,15 @@
           },
           "label": {
             "type": "string"
+          },
+          "condition": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value"],
+            "description": "Authored branch condition, displayed before a distinct label. Free text, not executable logic or a completeness claim.",
+            "properties": {
+              "value": { "type": "string", "pattern": "\\S" }
+            }
           },
           "variant": {
             "$ref": "common.schema.json#/$defs/variant"

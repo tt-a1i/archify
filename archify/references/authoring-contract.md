@@ -37,6 +37,14 @@ omit `meta.viewBox`, and center nodes around the lane content with symmetric
 `yOffset` values such as `-90 / 0 / 90`. Keep semantic edge labels and act on
 compiler diagnostics.
 
+For an explicit branch point, set `nodes[].decision: true` while retaining its
+business `type`. Put a non-blank `condition.value` on each outgoing edge; a
+distinct `label` remains visible after the condition as `condition · label`.
+Use [decision points and branch conditions](../renderers/workflow/README.md#decision-points-and-branch-conditions)
+for icon precedence and text combinations. Missing conditions warn even in
+showcase; partial one-outcome views remain valid. Free text does not imply
+predicate execution or exhaustive branch coverage.
+
 ## Legend contract
 
 Omit `meta.legend` for the truthful default: `auto` lists only semantic kinds

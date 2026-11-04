@@ -19,10 +19,10 @@
       "engineeringProfile": null,
       "nodeCount": 12,
       "edgeCount": 11,
-      "artifactBytes": 881097,
-      "artifactSha256": "77a30e64ac863c95371ccaa6c6b6c2d906454307764aa5e6a67d9a772795bd28",
-      "sourceBytes": 4939,
-      "sourceSha256": "d67965d50872c97e4ff3476271e645bf19fab6b3ab44e111bdb44b063e3aa36f",
+      "artifactBytes": 881444,
+      "artifactSha256": "977ddf05915763184f85290c0ba526af88b7afef3d63b6d646f33e6c3b662465",
+      "sourceBytes": 5012,
+      "sourceSha256": "8bed8d8500749de9fb9acb6d2b0dde8fb9dd16db04db61a4278c77032b7092e0",
       "checks": [
         {
           "name": "single_svg",
@@ -122,7 +122,7 @@
           },
           "minimumSourceTextPx": 8,
           "minimumProjectedTextPx": 6.714801444043322,
-          "semanticTextCount": 29
+          "semanticTextCount": 30
         },
         "issues": []
       }
