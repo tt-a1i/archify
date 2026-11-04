@@ -112,6 +112,22 @@ test('native step opens the complete Viewer and focuses exact nodes and edges wi
  }finally{await browser.close();}
 });
 
+test('an editorial page opens its Viewer in the editorial preset without the standalone badges',{skip:!chrome},async()=>{
+ const {renderExplainer}=await import('../archify/explainer/render.mjs');const {compileExplainerDiagram,prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs');
+ const spec=compileExplainerDiagram('sequence',['actor api | API | backend','actor redis | Redis | database','api | redis | Read cache'],{title:'Cache lookup',id:'native',quality:'showcase'});
+ const doc=formalDocument();doc.meta.id='hosted-browser';doc.meta.style='editorial';doc.meta.quality_profile='showcase';doc.panels.push({id:'how',title:'Where does the request go?',blocks:[{id:'native',type:'diagram',diagramType:'sequence',spec},{id:'step',type:'steps',items:[{id:'read-step',text:'Read cache',target:{diagram:'native',node:'api',edges:['api-to-redis-1']}}]}]});
+ const preparedDiagrams=await prepareExplainerDiagrams(doc,{baseDir:dir,sourcePath:path.join(dir,'source.json'),quality:'showcase'});
+ const file=artifact('hosted',renderExplainer(doc,{sourceText:JSON.stringify(doc),preparedDiagrams,preparedSources:{sources:{example:{title:'Example'}}}}));
+ const browser=new ChromeVisualBrowser(chrome);try {
+  await inspectPublicHtml(browser,{artifactPath:file,width:1440,keyboard:false});
+  await keyboardActivate(browser,'[data-block-type=steps] [data-diagram-hash="focus=api"]');
+  // The host applies the page's preset once the Viewer reports ready.
+  let viewer;for(let attempt=0;attempt<40;attempt++){viewer=await inspectNativeViewer(browser);if(viewer.available&&viewer.preset==='editorial')break;await new Promise(resolve=>setTimeout(resolve,50));}
+  assert.equal(viewer.preset,'editorial',JSON.stringify(viewer));
+  assert.deepEqual(viewer.badges,['none','none'],'The header badge and the plate stay off in a hosted Viewer');
+ }finally{await browser.close();}
+});
+
 test('wide frozen native previews keep every node visible at 1280 and reclaim the 1440 text floor on live resize',{skip:!chrome},async()=>{
  const {renderExplainer}=await import('../archify/explainer/render.mjs'),{prepareExplainerDiagrams}=await import('../archify/explainer/diagrams.mjs'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
  const components=[{id:'browser',type:'external',label:'Browser',pos:[40,40],size:[120,64]},{id:'api',type:'backend',label:'API',pos:[300,40],size:[150,72]},{id:'postgres',type:'database',label:'PostgreSQL',pos:[690,40],size:[150,72]}];
