@@ -840,6 +840,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       pointer-events: none;
     }
     html[data-embed="true"][data-preset="editorial"] .diagram-container::after { display: none; }
+    /* A Viewer an explainer page opens keeps its tools and the preset's look; the page names the
+       diagram, so the standalone badges stay off, as the embedded plate does. */
+    html[data-hosted="explainer"][data-preset] .header-row::after,
+    html[data-hosted="explainer"][data-preset="editorial"] .diagram-container::after { display: none; }
     html[data-motion-capable="true"][data-preset="signal-flow"][data-ambient-entry="running"] .diagram-container::before {
       content: "";
       position: absolute;
