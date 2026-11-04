@@ -285,6 +285,15 @@ Choose overview or mechanism detail using [Composition and meaning](authoring-de
 
 Grid placement is preferred when the schema supports it. Free positions are appropriate for a bounded exception, not for prose-level coordinate planning. Keep external actors outside the system boundary when that is factually true. A boundary is drawn as the padded box around all of its members, so place them as one compact axis-aligned cluster (no empty bay that lets a non-member sit inside the padded frame) and keep every non-member outside that box; `layout/boundary-encloses-non-member` reports a component the box swallows in showcase quality. Standard retains its existing acceptance behavior.
 
+CLI `--quality` overrides the source quality for this check. Generated Architecture
+frames carry explicit `wraps` metadata, so standalone `check` can report
+`composition/boundary-membership`: full enclosure fails showcase and warns under
+standard; partial overlap warns under both. Older HTML without that metadata is
+accepted but counted in `boundaryMembershipFramesUnknown`, separately from
+`boundaryMembershipFramesChecked`. Compare frames use only their own version's
+membership and geometry. Move non-members outside or compact the member cluster;
+change `wraps` only when the actual system ownership supports that correction.
+
 ### Workflow
 
 Lanes express responsibility or phase. Columns `0..5` express logical
