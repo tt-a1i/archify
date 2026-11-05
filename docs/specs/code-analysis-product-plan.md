@@ -4,7 +4,7 @@
 
 最新复核：2026-10-17，`codex/code-analysis-module` / `3c4c4766200fa959ca5cd399d1d7bcb37820af8e`。当前完成状态和下一步建议以第 13 节为准；第 2–8 节保留最初讨论背景，其中单语言限制、重复检测缺失仍成立，但“需重启才能重新分析”“JS/TS 未测量函数”等描述已被后续实现取代。
 
-2026-11-04：第 0 节是当前的产品决定摘要（检查优先级与严重级别），优先于第 13 节的交付顺序；其余各节为讨论背景与实现记录。
+2026-11-04：第 0 节是当前的产品决定摘要（检查优先级与严重级别，以及 0.7 的三类视图），优先于第 13 节的交付顺序；其余各节为讨论背景与实现记录。
 
 后续实施分工见 [Code Analysis 协作实施计划](code-analysis-execution-plan.md)：Codex负责 UI 与前端验收，Claude负责分析引擎、数据接口与 AI 任务逻辑。
 
@@ -14,7 +14,7 @@
 
 ## 0. 摘要：检查优先级与严重级别（2026-11-04）
 
-产品决定：分析首先回答“代码有没有必须处理的问题”，再回答“哪里人维护起来吃力”。颜色只按这两类区分，不再按规则各自定级。下述目标级别与新增规则均为待实现，现状一栏以 `labs/code-analysis`（`883f37df`）为准。
+产品决定：分析首先回答“代码有没有必须处理的问题”，再回答“哪里人维护起来吃力”。颜色只按这两类区分，不再按规则各自定级。下述目标级别与新增规则均为待实现，现状一栏以 `labs/code-analysis`（`34c99b6f`）为准。
 
 ### 0.1 级别的含义
 
@@ -84,7 +84,7 @@ CodeRabbit 等 AI 审查工具可能把有意为之的业务或工作流逻辑�
 
 职责判断依赖命名和文本模式，属于启发式，`confidence` 为 0.7。原型参考同上：Archify 中有 15 个文件混合了命令行或 I/O 与其他逻辑；8 个渲染器在加载时读取 `process.argv`，其中 7 个调用 `process.exit`。
 
-`coupling/internal-leak` 已在 `claude/code-atlas`（`f94aef4b`）实现，尚未合入本分支。它目前在没有声明入口约定时报 info，只有项目在配置中声明入口文件后才报 warning，以免把常见的深层导入写法当成缺陷；是否按本节统一为 warning，需要在第一批真实项目验收后决定。
+`coupling/internal-leak` 已实现并合入 `labs/code-analysis`（#1206，`34c99b6f`）。它目前在没有声明入口约定时报 info，只有项目在配置中声明入口文件后才报 warning，以免把常见的深层导入写法当成缺陷；是否按本节统一为 warning，需要在第一批真实项目验收后决定。
 
 ### 0.4 审查后忽略
 
@@ -110,6 +110,34 @@ CodeRabbit 等 AI 审查工具可能把有意为之的业务或工作流逻辑�
 - 集中度与文件大小的默认阈值。
 - `coupling/internal-leak` 是否统一为 warning。
 - AI 审查结果的导入方式：SARIF、GitHub review comments，或由用户粘贴导出文件。
+
+### 0.7 三类视图与各自的读者
+
+同一次分析结果（`findings.json`、`raw-facts.json`、`module-graph.json`）有三种展示方式，面向不同的读者。三者的文件、函数、依赖和 finding 数量一致，只是详略不同。以下截图均为 Archify 自身（`labs/code-analysis` `34c99b6f`，`archify/` 包，TypeScript/JavaScript），深色主题。
+
+**1. Code Analysis 模块图（Classic）**
+
+在架构图上点击 Code Analysis 按钮后出现。每个组件按问题级别描边；点击组件进入它的 finding 列表，点击 finding 或证据路径直接打开对应源码行（例如 `shared/atomic-output.mjs` 第 320 行）。
+
+> 注释：真的工作需要，或者深挖代码的人，他们需要溯源去检查源码。
+
+![Code Analysis 模块图：选中 Shared rendering 组件的 Complex functions finding，左侧打开 shared/atomic-output.mjs 第 316–324 行源码](../assets/code-analysis-views/classic-source.png)
+
+**2. Atlas**
+
+在阅读栏点击 Atlas 打开。整个仓库画成一圈：外圈弧是模块，刺是文件，点是函数，黄色是 warning；圈内的线是文件依赖。右栏给出总数、finding 分组、复杂度分布和按耦合排序的模块。
+
+> 注释：任何人可看的总结图表。
+
+![Atlas：138 个文件、387 条文件依赖、2,841 个函数，右栏列出 318 条 finding 与模块耦合排序](../assets/code-analysis-views/atlas.png)
+
+**3. Atlas 3D**
+
+实验原型，位于 `experiments/atlas-3d/`（#1207），数据由同一次运行生成。把 Atlas 画成一棵树：被依赖最多的模块为树干，其他模块按依赖层高度生长在通向树干的最强依赖上，文件是花团，函数是其中的点。
+
+> 注释：有待定位。
+
+![Atlas 3D：以 shared 为树干，按依赖层分为 Layer 0–3，右栏核对文件、函数、依赖与 finding 均与 Atlas 一致](../assets/code-analysis-views/atlas-3d.png)
 
 ## 1. 目标
 
