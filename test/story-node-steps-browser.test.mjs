@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
-import {ChromeVisualBrowser,findChrome} from '../archify/bin/visual-check.mjs';
+import {findChrome} from '../archify/bin/visual-check.mjs';
+import {desktopBrowser} from './helpers/desktop-browser.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const chrome=process.env.ARCHIFY_CHROME?findChrome():null;
@@ -17,19 +18,14 @@ test('Passport retains native appearance, keyboard focus, reach links, movement 
   const native=path.join(dir,'native.html'),output=path.join(dir,'steps.html');
   execFileSync(process.execPath,[cli,'render','architecture',path.join(fixture,'diagram.json'),native]);
   execFileSync(process.execPath,[cli,'story','attach',native,path.join(fixture,'brief.json'),output]);
-  const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());const session=await browser.sessionPromise;
+  const browser=desktopBrowser(chrome);t.after(()=>browser.close());const session=await browser.sessionPromise;
   const send=(method,params={})=>browser.cdp.send(method,params,session,30000);
   const run=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});assert.equal(r.exceptionDetails,undefined,JSON.stringify(r.exceptionDetails));return r.result?.value;};
   const settle=()=>run('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
   let navigation=0;
   const load=async(file=output,hash='focus=page',theme='light')=>{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(file).href+'?theme='+theme+'&case='+(++navigation)+'#'+hash});await loaded;await settle();};
   const click=selector=>run(`document.querySelector(${JSON.stringify(selector)}).click()`);
-  const key=async(key,code=key,modifiers=0)=>{
-    const windowsVirtualKeyCode={ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,Home:36,End:35,Enter:13,Escape:27}[key];
-    await send('Input.dispatchKeyEvent',{type:'keyDown',key,code,modifiers,windowsVirtualKeyCode});
-    await send('Input.dispatchKeyEvent',{type:'keyUp',key,code,modifiers,windowsVirtualKeyCode});
-    await settle();
-  };
+  const key=async(key,code=key,modifiers=0)=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key,code,modifiers});await send('Input.dispatchKeyEvent',{type:'keyUp',key,code,modifiers});await settle();};
   await send('Network.enable');await send('Network.setBlockedURLs',{urls:['http://*','https://*']});
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   await t.test('the inherited card shell and title styles match the native card in both themes',async()=>{
@@ -76,7 +72,7 @@ test('Passport plays authored stages, yields cleanly and preserves canonical exp
   const native=path.join(dir,'native.html'),output=path.join(dir,'steps.html');
   execFileSync(process.execPath,[cli,'render','architecture',path.join(fixture,'diagram.json'),native]);
   execFileSync(process.execPath,[cli,'story','attach',native,path.join(fixture,'brief.json'),output]);
-  const browser=new ChromeVisualBrowser(chrome);t.after(()=>browser.close());const session=await browser.sessionPromise;
+  const browser=desktopBrowser(chrome);t.after(()=>browser.close());const session=await browser.sessionPromise;
   const send=(method,params={})=>browser.cdp.send(method,params,session,30000);
   const evaluate=async expression=>{let r;try{r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});}catch(error){error.message+='\nWhile evaluating: '+expression.slice(0,180);throw error;}assert.equal(r.exceptionDetails,undefined,JSON.stringify(r.exceptionDetails));return r.result?.value;};
   await send('Network.enable');await send('Network.setBlockedURLs',{urls:['http://*','https://*']});
