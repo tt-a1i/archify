@@ -27,6 +27,10 @@ const SHAPES = {
   dataflow: ['nodes', 'flows'],
   lifecycle: ['states', 'transitions'],
   erd: ['entities', 'relationships'],
+  class: ['types', 'relationships'],
+  tree: ['nodes', 'edges'],
+  timeline: ['events', 'transitions'],
+  waterfall: ['spans', 'phases'],
 };
 
 function digest(buffer) {
@@ -69,10 +73,14 @@ for (const item of CASES) {
     subtitle: source.meta.subtitle || '',
     schemaVersion: source.schema_version,
     visualPreset: source.meta.visual_preset || 'classic',
-    animation: source.meta.animation || 'static',
+    animation: ['class', 'tree', 'timeline', 'waterfall'].includes(item.type)
+      ? artifactBuffer.toString('utf8').match(/<svg\b[^>]*\bdata-animation="([^"]+)"/)?.[1] || 'static'
+      : source.meta.animation || 'static',
     engineeringProfile: source.meta.engineering_profile || null,
     nodeCount: Array.isArray(source[nodeKey]) ? source[nodeKey].length : 0,
-    edgeCount: Array.isArray(source[edgeKey]) ? source[edgeKey].length : 0,
+    edgeCount: ['tree', 'waterfall'].includes(item.type)
+      ? source[nodeKey].filter(node => node.parent).length
+      : Array.isArray(source[edgeKey]) ? source[edgeKey].length : 0,
     artifactBytes: artifactBuffer.byteLength,
     sourceBytes: sourceBuffer.byteLength,
     artifactSha256: digest(artifactBuffer),

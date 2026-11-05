@@ -188,6 +188,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #94a3b8;
       --arrow-emphasis: #34d399;
+      --edge-label: var(--arrow);
 
       /* Opaque mask color used behind semi-transparent component fills
          so the arrows drawn underneath are properly hidden. */
@@ -231,11 +232,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       --arrow: #64748b;
       --arrow-emphasis: #059669;
+      --edge-label: var(--text-muted);
 
       --mask: #ffffff;
 
       --frontend-fill: rgba(34, 211, 238, 0.15);
       --frontend-stroke: #0891b2;
+      /* #1040: darker accent for small bold reader text; the diagram stroke above is untouched. */
+      --reader-accent: #077f9c;
       --backend-fill: rgba(52, 211, 153, 0.18);
       --backend-stroke: #059669;
       --database-fill: rgba(167, 139, 250, 0.2);
@@ -289,6 +293,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a5b4c7;
       --arrow: #7890ad;
       --arrow-emphasis: #2dd4bf;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 16, 30, 0.86);
       --toolbar-border: #29415f;
       --toolbar-menu-bg: #07101e;
@@ -304,10 +309,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --text: #102638;
       --text-muted: #587287;
       --text-dim: #8aa2b4;
-      --text-faint: #668397;
+      --text-faint: #5d778a; /* #1040: was #668397 at 3.99:1 on reader surfaces */
       --mask: #ffffff;
       --frontend-fill: rgba(6, 182, 212, 0.09);
       --frontend-stroke: #0789a1;
+      /* #1040: darker accent for small bold reader text; the diagram stroke above is untouched. */
+      --reader-accent: #067e95;
       --backend-fill: rgba(5, 150, 105, 0.09);
       --backend-stroke: #087f69;
       --database-fill: rgba(124, 58, 237, 0.09);
@@ -322,6 +329,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #607a8c;
       --arrow: #7b97aa;
       --arrow-emphasis: #0d9488;
+      --edge-label: var(--text-muted);
     }
 
     /* ==========================================================
@@ -358,6 +366,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #a7cad9;
       --arrow: #78a3b7;
       --arrow-emphasis: #64dfc1;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(7, 28, 45, 0.92);
       --toolbar-border: #34799a;
       --toolbar-text: #d8f3ff;
@@ -375,7 +384,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --text: #123344;
       --text-muted: #4e7486;
       --text-dim: #86a6b4;
-      --text-faint: #668c9d;
+      --text-faint: #577786; /* #1040: was #668c9d at 3.54:1 on reader surfaces */
       --mask: #f9fdff;
       --frontend-fill: rgba(8, 145, 178, 0.08);
       --frontend-stroke: #087f9c;
@@ -393,6 +402,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #506f7e;
       --arrow: #6d93a5;
       --arrow-emphasis: #087f69;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(247, 252, 254, 0.94);
       --toolbar-border: #8ab5c5;
       --toolbar-text: #294f61;
@@ -435,6 +445,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #b8ad99;
       --arrow: #948978;
       --arrow-emphasis: #dd6b3d;
+      --edge-label: var(--arrow);
       --toolbar-bg: rgba(35, 31, 24, 0.92);
       --toolbar-border: #625a4a;
       --toolbar-text: #eee5d5;
@@ -452,10 +463,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --text: #242018;
       --text-muted: #6f6658;
       --text-dim: #a09788;
-      --text-faint: #817767;
+      --text-faint: #796f60; /* #1040: was #817767 at 4.15:1 on reader surfaces */
       --mask: #fbf8f1;
       --frontend-fill: rgba(31, 117, 126, 0.09);
       --frontend-stroke: #287e84;
+      /* #1040: darker accent for small bold reader text; the diagram stroke above is untouched. */
+      --reader-accent: #267a80;
       --backend-fill: rgba(42, 119, 75, 0.09);
       --backend-stroke: #397b53;
       --database-fill: rgba(105, 75, 130, 0.09);
@@ -470,6 +483,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       --external-stroke: #746b5e;
       --arrow: #8a806f;
       --arrow-emphasis: #bb4c23;
+      --edge-label: var(--text-muted);
       --toolbar-bg: rgba(251, 248, 241, 0.94);
       --toolbar-border: #c4b9a6;
       --toolbar-text: #40392f;
@@ -1869,6 +1883,121 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .semantic-passport-meta [hidden] { display: none; }
     html[data-preset="blueprint"] .semantic-passport-meta span,
     html[data-preset="blueprint"] .semantic-passport-meta code { border-radius: 0.1rem; }
+    /* 跨图下钻：Passport 列出全部子图；首项即 Ctrl/双击默认目标 */
+    .semantic-passport-drilldowns {
+      display: grid;
+      gap: 0.28rem;
+      margin-top: 0.52rem;
+      padding-top: 0.48rem;
+      border-top: 1px solid color-mix(in srgb, var(--toolbar-border) 76%, transparent);
+    }
+    .semantic-passport-drilldowns[hidden] { display: none; }
+    .semantic-passport-drilldowns-label {
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-drilldowns-list {
+      display: grid;
+      gap: 0.22rem;
+    }
+    .semantic-passport-drilldown {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-height: 2rem;
+      padding: 0.32rem 0.5rem;
+      border: 1px solid color-mix(in srgb, var(--toolbar-border) 86%, transparent);
+      border-radius: 0.35rem;
+      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+    .semantic-passport-drilldown:hover,
+    .semantic-passport-drilldown:focus-visible {
+      color: var(--backend-stroke);
+      border-color: color-mix(in srgb, var(--backend-stroke) 42%, var(--toolbar-border));
+    }
+    .semantic-passport-drilldown:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--backend-stroke) 55%, transparent);
+      outline-offset: 1px;
+    }
+    .semantic-passport-drilldown small {
+      color: var(--text-faint);
+      font-size: 0.5625rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-drilldowns-hint {
+      color: var(--text-faint);
+      font-size: 0.5625rem;
+      line-height: 1.35;
+    }
+    /* 返回上一级：放在页眉显眼位置，不进 Passport */
+    .parent-back-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin: 0 0 0.85rem;
+    }
+    .parent-back-bar[hidden] { display: none !important; }
+    .parent-back-bar button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 2.35rem;
+      padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+      border: 1px solid color-mix(in srgb, var(--backend-stroke) 48%, var(--toolbar-border));
+      border-radius: 0.55rem;
+      background: color-mix(in srgb, var(--backend-stroke) 14%, var(--panel));
+      color: var(--backend-stroke);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--backend-stroke) 12%, transparent);
+    }
+    .parent-back-bar button:hover,
+    .parent-back-bar button:focus-visible {
+      background: color-mix(in srgb, var(--backend-stroke) 22%, var(--panel));
+      border-color: color-mix(in srgb, var(--backend-stroke) 68%, var(--toolbar-border));
+      color: var(--text);
+    }
+    .parent-back-bar button:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--backend-stroke) 55%, transparent);
+      outline-offset: 2px;
+    }
+    .parent-back-bar button .parent-back-arrow {
+      font-size: 1rem;
+      line-height: 1;
+      opacity: 0.92;
+    }
+    html[data-preset="blueprint"] .parent-back-bar button { border-radius: 0.15rem; }
+    svg [data-node-id][data-node-drilldowns] { cursor: pointer; }
+    /* 单目标下钻：原生 SVG <a> 不画下划线；角标必须跟 SVG 一起导出 */
+    svg a.archify-drilldown-link {
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+    svg .archify-drilldown-mark-disc {
+      fill: color-mix(in srgb, var(--backend-stroke) 88%, var(--panel));
+      stroke: color-mix(in srgb, var(--backend-stroke) 55%, var(--toolbar-border));
+      stroke-width: 1;
+    }
+    svg .archify-drilldown-mark-arrow {
+      stroke: var(--panel);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .semantic-passport-evidence {
       margin-top: 0.52rem;
       padding: 0.5rem;
@@ -2529,6 +2658,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       color: var(--text-faint);
       font-size: 0.5625rem;
     }
+    /* #1040: small bold reader text in the semantic accent color (Passport
+       direction chip, Finder result count) falls below the 4.5:1 normal-text
+       floor in some light themes. Resolve a darker --reader-accent where the
+       preset defines one; the diagram's --frontend-stroke itself is untouched,
+       as are dark themes and presets that already pass. Zero counts stay faint
+       on purpose, so they are excluded from the darker rule. Route-target
+       finders keep their --security-stroke status color, so they are excluded
+       too. */
+    html[data-theme="light"] .semantic-passport-meta [data-passport="kind"],
+    html[data-theme="light"] .node-finder:not([data-context="route-target"]) .node-finder-result em:not([data-zero]) {
+      color: var(--reader-accent, var(--frontend-stroke));
+    }
 
     .cards {
       display: grid;
@@ -3091,6 +3232,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         --lane-stroke: #cbd5e1;
         --arrow: #94a3b8;
         --arrow-emphasis: #059669;
+        --edge-label: var(--text-muted);
         --frontend-fill:    rgba(34, 211, 238, 0.15);
         --frontend-stroke:  #0891b2;
         --backend-fill:     rgba(52, 211, 153, 0.18);
@@ -4158,8 +4300,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     .t-messagebus { fill: var(--messagebus-stroke); }
     .t-external   { fill: var(--external-stroke); }
 
-    /* Relationship labels share the exact color token used by their path. */
-    .t-edge-default  { fill: var(--arrow); }
+    /* Colored relationship labels share the exact color token used by their path.
+       Default labels use --edge-label so light palettes can keep a quiet stroke
+       while the text stays readable on the label mask. */
+    .t-edge-default  { fill: var(--edge-label); }
     .t-edge-emphasis { fill: var(--arrow-emphasis); }
     .t-edge-security { fill: var(--security-stroke); }
     .t-edge-dashed   { fill: var(--database-stroke); }
@@ -4172,7 +4316,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.4px) 0 0 / 20px 20px,
         var(--panel);
     }
-    html[data-preset="classic"] .diagram-container > svg .c-grid { stroke: transparent; }
+    svg[data-preset="classic"] .c-grid { stroke: transparent; }
     html[data-preset="classic"][data-theme="light"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
       --ambient-node-base-filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
       filter: var(--ambient-node-base-filter);
@@ -4613,7 +4757,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     html[data-embed="true"] .relationship-pulse-overlay { display: none; }
 
     /* Intent Trace is a temporary, pre-click exploration layer. Related
-       topology stays readable while a short viewer-only signal runs over
+       topology stays readable while a viewer-only signal follows the active trace over
        cloned edge geometry; the authored edge remains untouched underneath. */
     /* Keep the node's opaque backing mask intact while its visible ink dims.
        Fading the whole group also fades that mask and briefly exposes arrows
@@ -4638,7 +4782,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       stroke-dashoffset: 0;
       vector-effect: non-scaling-stroke;
       opacity: 0.94;
-      animation: archify-intent-trace-flow 1.15s linear 1 both;
+      animation: archify-intent-trace-flow 1.15s linear infinite;
     }
     /* Direction names describe each edge relative to the focused node only.
        The cloned geometry already runs from the authored source to target, so
@@ -5000,9 +5144,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
 
     @keyframes archify-intent-trace-flow {
-      0% { opacity: 0.28; stroke-dashoffset: 0; }
-      12%, 78% { opacity: 0.94; }
-      100% { opacity: 0; stroke-dashoffset: -1; }
+      0% { opacity: 0.94; stroke-dashoffset: 0; }
+      100% { opacity: 0.94; stroke-dashoffset: -1; }
     }
     @keyframes archify-route-probe-flow {
       0% { stroke-dashoffset: 0; opacity: 0.96; }
@@ -5081,6 +5224,74 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
       .relationship-pulse-overlay { display: none !important; }
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
+    }
+
+        /* Authored explanation face. It overlays the passport's own footprint so
+           the placement beside the focused node is untouched; the passport may
+           grow within the visible stage while its prose scrolls independently. */
+        .focus-chip[data-explaining="true"] > :not(.semantic-passport-explanation) { visibility: hidden; }
+        .semantic-passport-explanation {
+          position: absolute;
+          inset: 0;
+          display: none;
+          flex-direction: column;
+          gap: 0.35rem;
+          padding: 0.7rem 0.75rem;
+          overflow: hidden;
+          scrollbar-width: thin;
+          color: var(--text);
+        }
+        .focus-chip[data-explaining="true"] .semantic-passport-explanation {
+          display: flex;
+          animation: passport-explanation-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .semantic-passport-explanation > :not(.semantic-passport-explanation-body) { flex: none; }
+        .semantic-passport-explanation-eyebrow {
+          display: block;
+          color: var(--reader-accent, var(--text));
+          font-size: 0.5rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .semantic-passport-explanation-title { display: block; font-size: 0.8rem; line-height: 1.35; }
+        .semantic-passport-explanation-body { display: grid; align-content: start; flex: 1 1 auto; min-height: 0; gap: 0.35rem; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+        .semantic-passport-explanation-body:focus-visible { outline: 2px solid var(--reader-accent, var(--text)); outline-offset: 2px; }
+        .semantic-passport-explanation-body p { margin: 0; color: var(--text-muted); font-size: 0.6875rem; line-height: 1.5; overflow-wrap: anywhere; }
+        .semantic-passport-explanation-back {
+          align-self: flex-start;
+          margin-top: auto;
+          padding: 0.15rem 0;
+          border: 0;
+          background: none;
+          color: var(--reader-accent, var(--text));
+          font: inherit;
+          font-size: 0.625rem;
+          text-decoration: underline;
+          cursor: pointer;
+        }
+        .semantic-passport-explanation-back:hover { color: var(--text); }
+        .semantic-passport-explanation-back:focus-visible { outline: 2px solid var(--frontend-stroke); outline-offset: 2px; }
+        @keyframes passport-explanation-in {
+          from { transform: rotateY(-90deg); opacity: 0; }
+          to { transform: rotateY(0); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .focus-chip[data-explaining="true"] .semantic-passport-explanation { animation: none; }
+        }
+
+    /* A short mobile viewport cannot fit the Passport below the page header.
+       Keep its controls in the viewport without shrinking the drawing or prose. */
+    @media (max-width: 720px) and (max-height: 480px) {
+      .focus-chip {
+        position: fixed;
+        left: 8px !important;
+        top: var(--passport-viewport-top, 8px) !important;
+        width: min(22rem, calc(100vw - 16px));
+        max-width: calc(100vw - 16px);
+        max-height: calc(100vh - var(--passport-viewport-top, 8px) - 8px);
+        overflow-y: auto;
+      }
+      .focus-chip[data-explaining="true"] { overflow: hidden; }
     }
   </style>
 </head>
@@ -5188,6 +5399,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   <div class="container">
     <!-- Header -->
     <div class="header">
+      <div class="parent-back-bar no-print" id="parent-back-bar" hidden>
+        <button id="btn-parent-back" type="button" aria-label="{{i18n:viewer.passport.back.aria}}" title="{{i18n:viewer.nav.back.title}}">
+          <span class="parent-back-arrow" aria-hidden="true">&#8592;</span>
+          <span>{{i18n:viewer.passport.back}}</span>
+        </button>
+      </div>
       <div class="header-row"
            data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
            data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
@@ -5198,6 +5415,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <p class="subtitle">[Subtitle description]</p>
     </div>
 
+    <!-- ARCHIFY:EXPLANATIONS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
     <!-- Main Diagram -->
@@ -5429,6 +5647,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               </div>
               <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
             </div>
+            <div class="semantic-passport-drilldowns" id="focus-drilldowns" hidden>
+              <span class="semantic-passport-drilldowns-label">{{i18n:viewer.passport.drilldowns}}</span>
+              <div class="semantic-passport-drilldowns-list" id="focus-drilldowns-list" role="group" aria-label="{{i18n:viewer.passport.drilldowns.list}}"></div>
+              <small class="semantic-passport-drilldowns-hint">{{i18n:viewer.passport.drilldowns.hint}}</small>
+            </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
             <div class="semantic-passport-reach" id="focus-reach" hidden>
               <span class="semantic-passport-reach-label">{{i18n:viewer.passport.reach}}</span>
@@ -5446,10 +5669,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <div class="relationship-lens-actions">
             <button id="btn-focus-clear" type="button" aria-label="{{i18n:viewer.passport.close}}" title="{{i18n:viewer.common.close}}">&#215;</button>
             <button id="btn-focus-copy" type="button" aria-label="{{i18n:viewer.passport.copy.focus}}">{{i18n:viewer.passport.copy}}</button>
+            <button id="btn-focus-explain" type="button" hidden aria-label="{{i18n:viewer.passport.explain.show}}">{{i18n:viewer.passport.explain}}</button>
             <button id="btn-focus-relations" type="button" aria-label="{{i18n:viewer.passport.relations.show}}" aria-expanded="false" aria-controls="relationship-lens-list">{{i18n:viewer.passport.relations}}</button>
           </div>
         </div>
         <div class="relationship-lens-list" id="relationship-lens-list" aria-label="{{i18n:viewer.passport.relations.list}}"></div>
+        <div class="semantic-passport-explanation" id="focus-explanation" hidden>
+          <span class="semantic-passport-explanation-eyebrow">{{i18n:viewer.passport.explanation}}</span>
+          <strong class="semantic-passport-explanation-title" id="focus-explanation-title"></strong>
+          <div class="semantic-passport-explanation-body" id="focus-explanation-body" tabindex="0" aria-labelledby="focus-explanation-title"></div>
+          <button class="semantic-passport-explanation-back" id="focus-explanation-back" type="button">{{i18n:viewer.passport.explanation.backLink}}</button>
+        </div>
       </div>
       <div class="route-probe no-print" id="route-probe" hidden role="region" aria-labelledby="route-probe-title" data-state="idle">
         <div class="route-probe-head">
@@ -5625,6 +5855,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     function copyReaderText(value) {
       function fallbackCopy() {
+        var previousFocus = document.activeElement;
         var field = document.createElement('textarea');
         field.value = value;
         field.setAttribute('readonly', '');
@@ -5635,6 +5866,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var copied = false;
         try { copied = document.execCommand('copy'); } catch (_) {}
         field.remove();
+        if (previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function') {
+          try { previousFocus.focus({ preventScroll: true }); } catch (_) { try { previousFocus.focus(); } catch (_) {} }
+        }
         return copied;
       }
       var policy = document.permissionsPolicy || document.featurePolicy;
@@ -5917,9 +6151,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           .replace(/\s+Architecture(\s+Diagram)?$/i, '')
           .replace(/\s+Diagram$/i, '')
           .trim();
-        return title.replace(/[^a-z0-9_\-]+/gi, '-')
-                    .toLowerCase()
-                    .replace(/^-+|-+$/g, '') || 'diagram';
+        // A mark is kept only while attached to a letter or number base;
+        // a detached mark (the variation selector after an emoji, say)
+        // would otherwise survive as an invisible filename.
+        var name = title.replace(/([\p{L}\p{N}])(\p{M}+)|\p{M}+/gu, '$1$2')
+                        .replace(/[^\p{L}\p{M}\p{N}_\-]+/gu, '-')
+                        .toLowerCase()
+                        .replace(/^-+|-+$/g, '');
+        return name || 'diagram';
       }
 
       function currentBg() {
@@ -5927,6 +6166,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('a[data-archify-authored-href]'), function (anchor) {
+          anchor.setAttribute('href', anchor.getAttribute('data-archify-authored-href'));
+          anchor.removeAttribute('data-archify-authored-href');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-ambient-flow-overlay]'), function (el) {
           el.remove();
         });
@@ -6292,6 +6535,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var autoTheme = requestedTheme === 'auto';
         var svg = document.querySelector('.diagram-container svg');
         var clone = svg.cloneNode(true);
+        var softwareNotices = document.getElementById('archify-software-notices');
+        if (softwareNotices) {
+          var softwareMetadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
+          softwareMetadata.setAttribute('id', 'archify-software-notices');
+          softwareMetadata.textContent = JSON.parse(softwareNotices.textContent);
+          clone.insertBefore(softwareMetadata, clone.firstChild);
+        }
 
         var canonicalStateClean = cleanExportClone(clone);
 
@@ -7480,6 +7730,21 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var btn = document.getElementById('btn-motion');
       var label = document.getElementById('motion-label');
       var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+      var rendering = html.hasAttribute('data-motion-render');
+      if (rendering) {
+        // Render frames seek native animations, including styles from earlier HTML.
+        function prepareRules(rules) {
+          Array.prototype.forEach.call(rules, function (rule) {
+            if (rule.media && rule.media.mediaText === '(prefers-reduced-motion: reduce)') rule.media.mediaText = 'not all';
+            if (rule.cssRules) prepareRules(rule.cssRules);
+          });
+        }
+        Array.prototype.forEach.call(document.styleSheets, function (sheet) {
+          var rules;
+          try { rules = sheet.cssRules; } catch (_) { return; }
+          prepareRules(rules);
+        });
+      }
       var capable = !!(svg && svg.getAttribute('data-animation') === 'trace');
       var readerPaused = false;
       var suspensions = Object.create(null);
@@ -7992,7 +8257,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         } catch (_) {}
       }
       function reducedMotion() {
-        return !!(motionQuery && motionQuery.matches);
+        return !rendering && !!(motionQuery && motionQuery.matches);
       }
       function hasSuspension() {
         return Object.keys(suspensions).length > 0;
@@ -8103,7 +8368,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         };
       }
       function syncVisibility() {
-        if (document.hidden) {
+        if (document.hidden && !rendering) {
           suspensions.visibility = true;
           html.setAttribute('data-document-hidden', 'true');
         } else {
@@ -8131,6 +8396,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           release: function () { return false; },
           suspend: function () { return function () { return false; }; },
           isPaused: function () { return true; },
+          reducedMotion: reducedMotion,
           owner: function () { return ''; }
         };
       }
@@ -8178,10 +8444,32 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         release: release,
         suspend: suspend,
         isPaused: effectivePaused,
+        reducedMotion: reducedMotion,
         owner: function () { return owner; }
       };
     })();
 
+
+    /* Authored node explanations are passport-only prose. They are read from
+       one JSON block outside the SVG, so canonical exports stay free of them,
+       and an artifact without explanations carries no block at all. */
+    Archify.explanations = (function () {
+      var element = document.getElementById('archify-explanations-data');
+      var payload = null;
+      if (element) {
+        try {
+          var parsed = JSON.parse(element.textContent || 'null');
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) payload = parsed;
+        } catch (_) {}
+      }
+      return {
+        node: function (id) {
+          var value = payload && Object.prototype.hasOwnProperty.call(payload, id) ? payload[id] : null;
+          return typeof value === 'string' && value.trim() ? value : null;
+        },
+        count: function () { return payload ? Object.keys(payload).length : 0; }
+      };
+    })();
     /* Verified repository evidence is emitted only after the renderer checks
        the authored GitHub revision, source blobs, and optional line ranges
        against the explicit --repo-root. It remains outside the SVG so every
@@ -8384,8 +8672,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var downstreamCount = document.getElementById('focus-reach-downstream-count');
       var relationshipList = document.getElementById('relationship-lens-list');
       var copyBtn = document.getElementById('btn-focus-copy');
+      var explainBtn = document.getElementById('btn-focus-explain');
+      var explanationFace = document.getElementById('focus-explanation');
+      var explanationTitle = document.getElementById('focus-explanation-title');
+      var explanationBody = document.getElementById('focus-explanation-body');
+      var explanationBack = document.getElementById('focus-explanation-back');
+      var explanationBaseHeight = 0;
       var relationsBtn = document.getElementById('btn-focus-relations');
       var clearBtn = document.getElementById('btn-focus-clear');
+      var parentBackBar = document.getElementById('parent-back-bar');
+      var parentBackBtn = document.getElementById('btn-parent-back');
+      var drilldownsSection = document.getElementById('focus-drilldowns');
+      var drilldownsList = document.getElementById('focus-drilldowns-list');
       var moveBtn = document.getElementById('btn-focus-move');
       var activeIds = [];
       var hoveredRelationship = null;
@@ -8732,7 +9030,78 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         });
         evidence.hidden = false;
       }
+      function explanationFor(id) {
+        return Archify.explanations && typeof Archify.explanations.node === 'function' ? Archify.explanations.node(id) : null;
+      }
+      function compactPassportViewport() {
+        return window.innerWidth <= 720 && window.innerHeight <= 480;
+      }
+      function compactPassportHeight() {
+        var toolbar = document.querySelector('.toolbar');
+        var top = Math.max(8, toolbar ? toolbar.getBoundingClientRect().bottom + 8 : 8);
+        chip.style.setProperty('--passport-viewport-top', top + 'px');
+        return Math.max(0, window.innerHeight - top - 8);
+      }
+      function closeExplanation(options) {
+        options = options || {};
+        if (!explanationFace) return false;
+        var wasOpen = chip.getAttribute('data-explaining') === 'true';
+        chip.removeAttribute('data-explaining');
+        chip.style.height = '';
+        explanationBaseHeight = 0;
+        explanationFace.hidden = true;
+        if (wasOpen) placeRelationshipLens();
+        if (wasOpen && options.restoreFocus !== false && explainBtn && !explainBtn.hidden) {
+          try { explainBtn.focus({ preventScroll: true }); } catch (_) { try { explainBtn.focus(); } catch (_) {} }
+          if (compactPassportViewport()) {
+            var controlRect = explainBtn.getBoundingClientRect();
+            var panelRect = chip.getBoundingClientRect();
+            if (controlRect.bottom > panelRect.bottom) chip.scrollTop += controlRect.bottom - panelRect.bottom;
+            else if (controlRect.top < panelRect.top) chip.scrollTop -= panelRect.top - controlRect.top;
+          }
+        }
+        return wasOpen;
+      }
+      function fitExplanation() {
+        if (chip.getAttribute('data-explaining') !== 'true') return;
+        var rect = container.getBoundingClientRect();
+        var padding = window.innerWidth <= 720 ? 8 : 16;
+        var available = Math.max(0, Math.min(rect.bottom - padding, window.innerHeight - padding)
+          - Math.max(rect.top + padding, padding));
+        if (compactPassportViewport()) available = compactPassportHeight();
+        var needed = explanationFace.scrollHeight - explanationBody.clientHeight + explanationBody.scrollHeight + 2;
+        chip.style.height = Math.ceil(Math.min(available, Math.max(explanationBaseHeight, needed))) + 'px';
+      }
+      function openExplanation() {
+        if (!explanationFace || chip.hidden || activeIds.length !== 1) return false;
+        var text = explanationFor(activeIds[0]);
+        if (!text) return false;
+        var title = label.textContent;
+        explanationTitle.textContent = title;
+        while (explanationBody.firstChild) explanationBody.removeChild(explanationBody.firstChild);
+        text.split(/\n\s*\n/).forEach(function (paragraph) {
+          var trimmed = paragraph.trim();
+          if (!trimmed) return;
+          var p = document.createElement('p');
+          p.textContent = trimmed;
+          explanationBody.appendChild(p);
+        });
+        explanationBaseHeight = chip.offsetHeight;
+        explanationFace.hidden = false;
+        chip.setAttribute('data-explaining', 'true');
+        explanationBody.scrollTop = 0;
+        chip.scrollTop = 0;
+        fitExplanation();
+        placeRelationshipLens();
+        if (explanationBack) { try { explanationBack.focus({ preventScroll: true }); } catch (_) { try { explanationBack.focus(); } catch (_) {} } }
+        return true;
+      }
+      function toggleExplanation() {
+        return chip.getAttribute('data-explaining') === 'true' ? !closeExplanation() : openExplanation();
+      }
       function renderPassport(id, node) {
+        closeExplanation({ restoreFocus: false });
+        if (explainBtn) explainBtn.hidden = !explanationFor(id);
         setPassportValue(detail, node.getAttribute('data-node-sublabel'));
         setPassportValue(kind, viewerKindLabel(node.getAttribute('data-node-kind') || 'node'));
         setPassportValue(context, node.getAttribute('data-node-context'));
@@ -8740,8 +9109,154 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
         semanticId.textContent = id;
         semanticId.hidden = false;
+        renderDrilldowns(node);
         renderSourceEvidence(id);
       }
+      /**
+       * 仅允许同目录文件名.html（可选 ?query / #fragment）。
+       * 与 schema relativeHtmlHref / isSiblingHtmlHref 对齐：拒绝协议、/、..，防跳出产物目录。
+       */
+      function isSafeRelativeHtmlHref(value) {
+        if (typeof value !== 'string') return false;
+        var href = value.trim();
+        if (!href || href.length > 512) return false;
+        return /^[A-Za-z0-9][A-Za-z0-9._-]*\.html(?:\?[A-Za-z0-9._~/=&%+!?$-]*)?(?:#[A-Za-z0-9._~/=&%+!?$-]*)?$/.test(href);
+      }
+      function currentPageHref() {
+        var parts = (location.pathname || '').split('/');
+        var filename = parts[parts.length - 1] || '';
+        return withReaderContext(filename);
+      }
+      /**
+       * 跳子图时带上 ?from=当前页，子图无 meta.parentHref 时仍可返回。
+       */
+      function withReaderContext(targetHref) {
+        if (!isSafeRelativeHtmlHref(targetHref)) return null;
+        var hashIndex = targetHref.indexOf('#');
+        var hash = hashIndex >= 0 ? targetHref.slice(hashIndex) : '';
+        var target = hashIndex >= 0 ? targetHref.slice(0, hashIndex) : targetHref;
+        var queryIndex = target.indexOf('?');
+        var filename = queryIndex >= 0 ? target.slice(0, queryIndex) : target;
+        var params = new URLSearchParams(queryIndex >= 0 ? target.slice(queryIndex + 1) : '');
+        var current = new URLSearchParams(location.search);
+        ['theme', 'embed', 'present'].forEach(function (key) {
+          if (!params.has(key) && current.has(key)) params.set(key, current.get(key));
+        });
+        var query = params.toString();
+        return filename + (query ? '?' + query : '') + hash;
+      }
+      function hrefWithFrom(targetHref) {
+        var next = withReaderContext(targetHref);
+        if (!next) return null;
+        var from = currentPageHref();
+        if (!from || !isSafeRelativeHtmlHref(from)) return next;
+        var hashIndex = next.indexOf('#');
+        var hash = hashIndex >= 0 ? next.slice(hashIndex) : '';
+        var target = hashIndex >= 0 ? next.slice(0, hashIndex) : next;
+        var queryIndex = target.indexOf('?');
+        var filename = queryIndex >= 0 ? target.slice(0, queryIndex) : target;
+        var params = new URLSearchParams(queryIndex >= 0 ? target.slice(queryIndex + 1) : '');
+        params.set('from', from);
+        return filename + '?' + params.toString() + hash;
+      }
+      function resolveParentHref() {
+        try {
+          var from = new URLSearchParams(location.search).get('from');
+          if (from && isSafeRelativeHtmlHref(from)) return from.trim();
+        } catch (_) {}
+        var authored = svg.getAttribute('data-parent-href');
+        if (authored && isSafeRelativeHtmlHref(authored)) return authored.trim();
+        return null;
+      }
+      function navigateToRelativeHtml(href) {
+        var next = hrefWithFrom(href);
+        if (!next) return false;
+        location.assign(next);
+        return true;
+      }
+      function navigateToParent() {
+        var parent = resolveParentHref();
+        if (!parent) return false;
+        location.assign(withReaderContext(parent));
+        return true;
+      }
+      function syncParentBackControls() {
+        var parent = resolveParentHref();
+        if (parentBackBar) parentBackBar.hidden = !parent;
+        if (parentBackBtn) {
+          if (parent) parentBackBtn.setAttribute('data-parent-href', parent);
+          else parentBackBtn.removeAttribute('data-parent-href');
+        }
+      }
+      /**
+       * 渲染时 <a href> 是裸文件名；打开页后再补 ?from=，子图无 parentHref 也能回。
+       * 只改 data-archify-drilldown，不动 Passport / 证据链接。
+       */
+      function rewriteDrilldownAnchors() {
+        Array.prototype.forEach.call(svg.querySelectorAll('a[data-archify-drilldown]'), function (anchor) {
+          var authored = anchor.getAttribute('href');
+          anchor.setAttribute('data-archify-authored-href', authored);
+          var next = hrefWithFrom(authored);
+          if (next) anchor.setAttribute('href', next);
+        });
+      }
+      function parseNodeDrilldowns(node) {
+        if (!node) return [];
+        var raw = node.getAttribute('data-node-drilldowns');
+        if (!raw) return [];
+        try {
+          var list = JSON.parse(raw);
+          if (!Array.isArray(list)) return [];
+          return list.filter(function (entry) {
+            return entry
+              && typeof entry === 'object'
+              && isSafeRelativeHtmlHref(entry.href)
+              && entry.label
+              && String(entry.label).trim();
+          }).map(function (entry) {
+            return {
+              href: String(entry.href).trim(),
+              label: String(entry.label).trim(),
+              diagram_type: entry.diagram_type ? String(entry.diagram_type).trim() : ''
+            };
+          });
+        } catch (_) {
+          return [];
+        }
+      }
+      function openPrimaryDrilldown(node) {
+        var targets = parseNodeDrilldowns(node);
+        if (!targets.length) return false;
+        return navigateToRelativeHtml(targets[0].href);
+      }
+
+      function renderDrilldowns(node) {
+        if (!drilldownsSection || !drilldownsList) return;
+        drilldownsList.textContent = '';
+        var targets = parseNodeDrilldowns(node);
+        if (!targets.length) {
+          drilldownsSection.hidden = true;
+          return;
+        }
+        targets.forEach(function (target, index) {
+          var link = document.createElement('a');
+          link.className = 'semantic-passport-drilldown';
+          link.href = hrefWithFrom(target.href) || target.href;
+          link.setAttribute('data-drilldown-index', String(index));
+          link.setAttribute('aria-label', viewerText('viewer.passport.drilldowns.open', { label: target.label }));
+          var title = document.createElement('span');
+          title.textContent = target.label;
+          link.appendChild(title);
+          if (target.diagram_type) {
+            var type = document.createElement('small');
+            type.textContent = target.diagram_type;
+            link.appendChild(type);
+          }
+          drilldownsList.appendChild(link);
+        });
+        drilldownsSection.hidden = false;
+      }
+
       function relationshipsFor(id, byId) {
         var seen = {};
         var relationships = [];
@@ -9517,11 +10032,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           lensFrame = 0;
         }
         if (chip.hidden || activeIds.length !== 1) return;
+        if (compactPassportViewport()) compactPassportHeight();
+        else {
+          chip.style.removeProperty('--passport-viewport-top');
+          chip.scrollTop = 0;
+        }
         var node = svg.querySelector('[data-node-id="' + activeIds[0] + '"]');
         if (!node) return;
         var containerRect = container.getBoundingClientRect();
         var nodeRect = node.getBoundingClientRect();
         if (containerRect.bottom <= 0 || containerRect.top >= window.innerHeight) return;
+        fitExplanation();
         var padding = window.innerWidth <= 720 ? 8 : 16;
         var visibleTop = Math.max(padding, -containerRect.top + padding);
         var visibleBottom = Math.min(containerRect.height - padding, window.innerHeight - containerRect.top - padding);
@@ -9630,6 +10151,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           node.setAttribute('aria-pressed', 'false');
         });
         edges().forEach(function (edge) { edge.removeAttribute('data-focus-match'); });
+        closeExplanation({ restoreFocus: false });
+        if (explainBtn) explainBtn.hidden = true;
         chip.hidden = true;
         label.textContent = '';
         detail.textContent = '';
@@ -9774,6 +10297,18 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         if (container.getAttribute('data-just-panned') === 'true') return;
         var node = event.target.closest('[data-node-id]');
         if (node) {
+          // Ctrl/Cmd+单击：跳过 focus，直接打开 Passport 列表第一项子图
+          if ((event.ctrlKey || event.metaKey) && openPrimaryDrilldown(node)) {
+            event.preventDefault();
+            return;
+          }
+          // Alt+单击：即使节点包了原生 <a> 也不跳，只 focus（审稿：探路仍要能选中）
+          if (event.altKey) {
+            event.preventDefault();
+          } else if (event.target.closest('a[data-archify-drilldown]')) {
+            // 单目标：交给浏览器跟 <a>，不再 set(id) 以免抢导航
+            return;
+          }
           var id = node.getAttribute('data-node-id');
           set(id);
           if (activeIds.indexOf(id) !== -1 && Archify.view && typeof Archify.view.reveal === 'function') {
@@ -9782,6 +10317,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         }
         else if (activeIds.length) clear();
       });
+      // 双击同样默认打开排在最上面的子图（与 Ctrl+单击一致）
+      svg.addEventListener('dblclick', function (event) {
+        if (container.getAttribute('data-just-panned') === 'true') return;
+        var node = event.target.closest('[data-node-id]');
+        if (!node) return;
+        if (openPrimaryDrilldown(node)) {
+          event.preventDefault();
+        }
+      });
+
       svg.addEventListener('keydown', function (event) {
         var node = event.target.closest('[data-node-id]');
         if (!node || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -9805,6 +10350,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       moveBtn.addEventListener('keydown', moveLensWithKeyboard);
       clearBtn.addEventListener('click', function () { clear({ restoreFocus: true }); });
       copyBtn.addEventListener('click', copyFocusLink);
+      if (explainBtn) explainBtn.addEventListener('click', function (event) { event.stopPropagation(); toggleExplanation(); });
+      if (explanationBack) {
+        explanationBack.addEventListener('click', function (event) { event.stopPropagation(); closeExplanation(); });
+      }
+      if (parentBackBtn) parentBackBtn.addEventListener('click', navigateToParent);
+      rewriteDrilldownAnchors();
+      syncParentBackControls();
       upstreamBtn.addEventListener('click', function () { applyReachability('upstream'); });
       downstreamBtn.addEventListener('click', function () { applyReachability('downstream'); });
       relationsBtn.addEventListener('click', function () {
@@ -9946,6 +10498,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
+        explain: toggleExplanation,
+        explaining: function () { return chip.getAttribute('data-explaining') === 'true'; },
         reach: applyReachability,
         clearReach: clearReachability,
         reachabilitySnapshot: reachabilitySnapshot,
@@ -11135,6 +11689,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       var autoScrollUntil = 0;
       var originalFlowHeight = container.style.getPropertyValue('height');
       var originalFlowHeightPriority = container.style.getPropertyPriority('height');
+      var originalFlowAlignment = container.style.getPropertyValue('align-items');
+      var originalFlowAlignmentPriority = container.style.getPropertyPriority('align-items');
       var compactPageFlow = false;
 
       var viewBox = svg.viewBox && svg.viewBox.baseVal;
@@ -11283,10 +11839,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
             .reduce(function (total, key) { return total + (parseFloat(style[key]) || 0); }, 0);
           var flowHeight = Math.ceil(height * camera.scale + Math.max(0, camera.y) + chrome) + 'px';
           if (container.style.getPropertyValue('height') !== flowHeight) container.style.setProperty('height', flowHeight);
+          // The SVG keeps its unscaled layout box while the container is
+          // compacted. Centering that box would push the drawing above the
+          // frame, so pin its top until the ordinary flow is restored.
+          if (container.style.getPropertyValue('align-items') !== 'flex-start') container.style.setProperty('align-items', 'flex-start');
           compactPageFlow = true;
         } else if (compactPageFlow) {
           if (originalFlowHeight) container.style.setProperty('height', originalFlowHeight, originalFlowHeightPriority);
           else container.style.removeProperty('height');
+          if (originalFlowAlignment) container.style.setProperty('align-items', originalFlowAlignment, originalFlowAlignmentPriority);
+          else container.style.removeProperty('align-items');
           compactPageFlow = false;
         }
       }
@@ -14721,6 +15283,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
+      if (e.isComposing || e.keyCode === 229) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End')) return;
       if (e.defaultPrevented) return;
@@ -14786,6 +15349,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (e.key === 'Escape' && Archify.intentTrace.active()) {
         e.preventDefault();
         Archify.intentTrace.clear();
+      } else if (e.key === 'Escape' && Archify.focus.explaining()) {
+        e.preventDefault();
+        Archify.focus.explain();
       } else if (e.key === 'Escape' && Archify.focus.active()) {
         e.preventDefault();
         Archify.focus.clear({ restoreFocus: true });

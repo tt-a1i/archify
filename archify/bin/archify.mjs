@@ -2197,12 +2197,13 @@ const COMMAND_USAGE = {
     'task <analysis-dir> --finding <id> [--finding <id> …] [--root <repo-root>] [--command cmd] [--format md|json] [--out file] [--require-valid]',
     'task --verify <task.json> --root <repo-root> [--format md|json] [--out file] [--require-valid]',
   ],
+  story: ['scan <native.html> [--json]', 'draft <native.html> <brief.json> [--json]', 'attach <native.html> <brief.json> <enhanced.html> [--json] [--repo-root path]'],
   render: '<type> <input.json> [output.html] [--quality standard|showcase] [--repo-root path]',
   compare: 'architecture <base.json> <head.json> [output.html] [--receipt path] [--json] [--quality standard|showcase] [--repo-root path]',
   deliver: '<type> <input.json> [output.html] [--json] [--open] [--quality standard|showcase] [--repo-root path]',
   patch: 'explainer <artifact.html> <panel-id> <replacement-file> <output.html> [--json] [--quality standard|showcase] [--repo-root path]',
   finalize: '<type> <input.json> <output.html> [--json] [--browser-check] [--receipt path] [--out-dir <dir>] [--quality standard|showcase] [--repo-root path] [--candidate-sha256 hex]',
-  preview: '<diagram-type (excludes explainer)> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
+  preview: '<type> <input.json> [output.html] [--no-open] [--quality standard|showcase] [--repo-root path]',
   validate: '<type> <input.json> [--json] [--layout-json] [--quality standard|showcase] [--repo-root path]',
   migrate: 'workflow <old.json> <new.json> --to-schema 2 [--output portable.html] [--json] [--repo-root path]',
   inspect: '<type> <input.json>',
@@ -2771,6 +2772,7 @@ function checkerDiagnostics(checker) {
 
 function compositionFixes(issue) {
   if (issue.code === 'composition/viewport-height') return [String(issue.detail || '').replace(/^\[[^\]]+\]\s*/, '')];
+  if (issue.code === 'composition/crossing-analysis-budget') return issue.supportedFixes || [];
   if (issue.code !== 'composition/desktop-readability') return COMPOSITION_FIXES[issue.code] || [];
   const sourceFontPx = Number(issue.sourceFontPx);
   const actualBudgetPx = Number(issue.availableDiagramWidth);
@@ -4457,7 +4459,29 @@ async function commandDeliver(args) {
   let stagingDirectory;
   let stagingIdentity;
   let deliveryAliasOutput;
+  let protectedInputs = type === 'explainer' ? null : [path.resolve(input)];
+  const assertDeliveryInputPaths = output => {
+    if (type !== 'explainer' || !output || !/\.html?$/i.test(output)) return;
+    if (!protectedInputs) throw new Error('Explainer inputs could not be inspected; failure evidence was not written.');
+    for (const target of [deliveryProvenancePath(output), deliveryPendingPath(output), deliverySidecarPath(output, '.delivery-lock.json'), path.join(path.dirname(output), DELIVERY_DIRECTORY_LOCK)]) {
+      resolveOutputPath({requestedOutput:target,inputPaths:protectedInputs,requiredExtension:'.json',inputDescription:'an Explainer input'});
+    }
+  };
   const reportDeliveryFailure = async (options) => {
+    try {
+      assertDeliveryInputPaths(options.output);
+    } catch (error) {
+      await reportPreparedArtifactFailure({
+        ...options,
+        error: error.message,
+        diagnostics: [...(options.diagnostics || []), ...(error.archifyDiagnostics || [diagnostic({
+          code: 'explainer/input-publication', message: error.message,
+          subject: { input: path.resolve(input), output: options.output },
+          supportedFixes: ['repair the original draft and choose evidence paths distinct from its local inputs'],
+        })])],
+      });
+      return { ok: false, status: 'unrecorded' };
+    }
     const ownership = deliveryOwnership;
     deliveryOwnership = undefined;
     const recorded = writeDeliveryFailureReceipt({
@@ -4488,10 +4512,20 @@ async function commandDeliver(args) {
   try {
     specification = fs.readFileSync(inputPath);
     if (type === 'explainer') {
+      const { declaredExplainerInputPaths } = await import('../explainer/prepare.mjs');
+      protectedInputs = declaredExplainerInputPaths(specification.toString('utf8'), inputPath);
       explainerBundle = await prepareExplainerInput(specification, inputPath, { repoRoot: repoArgs.repoRoot, quality: qualityArgs.quality, writingMode: writingArgs.writingMode });
+      // Prepared patch/finalize inputs may retain resources relative to their
+      // original draft rather than the execution-only temporary input.
+      protectedInputs = [...new Set([...protectedInputs, explainerBundle.sourcePath,
+        ...(explainerBundle.dependencies || []).filter(entry => entry.kind !== 'repository' && !entry.inline && typeof entry.path === 'string').map(entry => entry.path),
+      ].filter(Boolean))];
       diagram = explainerBundle.document;
     } else diagram = JSON.parse(specification.toString('utf8'));
   } catch (error) {
+    // A rejected prepared bundle may name original resources outside this
+    // execution-only draft. Do not trust its paths or publish failure evidence.
+    if (type === 'explainer' && process.env.ARCHIFY_EXPLAINER_PREPARED) protectedInputs = null;
     const repair = inputDiagnostic(error, inputPath);
     await reportDeliveryFailure({
       json,
@@ -4515,7 +4549,7 @@ async function commandDeliver(args) {
       requestedOutput,
       authoredOutput,
       defaultOutput: `${type}.html`,
-      inputPaths: [inputPath],
+      inputPaths: protectedInputs,
     }));
     deliveryAliasOutput = outputPath;
     // Redelivery through a case, normalization, 8.3, or file-symlink alias
@@ -4581,12 +4615,13 @@ async function commandDeliver(args) {
   // directory. A later target snapshot still rejects any authored alias that
   // was retargeted across this boundary.
   try {
+    assertDeliveryInputPaths(outputPath);
     const defaultProvenancePath = deliveryProvenancePath(outputPath);
     ({ outputPath: provenancePath } = resolveOutputPath({
       requestedOutput: defaultProvenancePath,
       defaultOutput: defaultProvenancePath,
       requiredExtension: '.json',
-      inputPaths: [inputPath],
+      inputPaths: protectedInputs,
       inputDescription: 'the delivery input',
       otherOutputPaths: [outputPath],
     }));
@@ -4707,6 +4742,7 @@ async function commandDeliver(args) {
 
   try {
     try {
+      assertDeliveryInputPaths(outputPath);
       deliveryOwnership = acquireDeliveryLock(
         outputPath,
         receiptId,
@@ -5089,18 +5125,19 @@ async function commandDeliver(args) {
     }
 
     try {
+      assertDeliveryInputPaths(outputPath);
       const currentOutputPath = canonicalFuturePath(resolveOutputPath({
         requestedOutput,
         authoredOutput,
         defaultOutput: `${type}.html`,
-        inputPaths: [inputPath],
+        inputPaths: protectedInputs,
         otherOutputPaths: [provenancePath],
       }).outputPath);
       resolveOutputPath({
         requestedOutput: deliveryProvenancePath(currentOutputPath),
         defaultOutput: deliveryProvenancePath(currentOutputPath),
         requiredExtension: '.json',
-        inputPaths: [inputPath],
+        inputPaths: protectedInputs,
         inputDescription: 'the delivery input',
         otherOutputPaths: [currentOutputPath],
       });
@@ -5366,7 +5403,6 @@ async function commandPreview(args) {
   const positional = repoArgs.rest.filter((arg) => !knownOptions.has(arg));
   const [type, input, output] = positional;
   if (!type || !input || positional.length > 3) fail(usage());
-  if (type === 'explainer') fail('Live preview supports the ten diagram types only. For explainer, run finalize explainer <draft.md> <output.html>, then open the HTML in your browser.');
   rendererPath(type);
 
   try {
@@ -5536,6 +5572,18 @@ function inspectArtifactDeliveryProvenance(
       },
     });
     return result;
+  } catch (error) {
+    if (error?.code !== 'ARCHIFY_SIDECAR_NAMESPACE_INDETERMINATE') throw error;
+    return {
+      ok: false, status: 'unknown',
+      diagnostics: [diagnostic({
+        code: 'delivery/provenance-unknown',
+        message: error.message,
+        subject: { artifact: artifactPath },
+        evidence: { namespaceReason: error.sidecarNamespaceReason, systemCode: error.code },
+        supportedFixes: ['restore access to probe the artifact directory, then rerun the checker'],
+      })],
+    };
   } finally {
     releaseRegularFileBinding(artifactCapture.binding);
   }
@@ -6175,6 +6223,10 @@ async function commandDoctor(args) {
   const explainerRuntime = ['parse.mjs', 'validate.mjs', 'inline.mjs', 'sources.mjs', 'writing.mjs', 'diagrams.mjs', 'prepare.mjs', 'patch.mjs', 'diff.mjs', 'revision.mjs', 'layout.mjs', 'render.mjs', 'check.mjs', 'browser-check.mjs', 'charts.mjs', 'page-bundle.mjs', 'vendor/pele/core.js', 'reader.css', 'reader.js'];
   const missingExplainerRuntime = explainerRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'explainer', file))).length;
   checks.push({label:'Explainer runtime and reader assets',ok:missingExplainerRuntime===0,missing:missingExplainerRuntime});
+
+  const storyRuntime = ['cli.mjs','tool.mjs','output.mjs','story-plan.mjs','story.js','story.css','story-audio.js','story-webm.js','story-export.js','story-attachment.mjs','story-attachment.js','story-attachment.css','messages.json','scope-field.js','brand.svg','native-motion.js','vendor/html-parser.mjs'];
+  const missingStoryRuntime = storyRuntime.filter(file => !fs.existsSync(path.join(skillRoot, 'story', file))).length;
+  checks.push({label:'Story runtime and playback assets',ok:missingStoryRuntime===0,missing:missingStoryRuntime});
 
   console.log('Archify doctor\n');
   for (const check of checks) {
@@ -7254,6 +7306,9 @@ try {
     }
     case 'render':
       commandRender(args);
+      break;
+    case 'story':
+      (await import('../story/cli.mjs')).commandStory(args);
       break;
     case 'compare':
       await commandCompare(args);

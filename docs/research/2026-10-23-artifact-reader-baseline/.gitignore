@@ -1,0 +1,6 @@
+# Local capture outputs. The checked-in record is README.md, measurements.json,
+# and the three 390px screenshots. Re-running capture-baseline.mjs recreates
+# the rendered HTML, the full geometry dump, and the desktop screenshots.
+artifacts/
+observations.json
+screenshots/*1440x900*

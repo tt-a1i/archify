@@ -255,6 +255,7 @@ jobs:
         run: npm run test:webm
         env:
           ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
 
   webm-artifact:
     needs: [scope, browser-regression, webm-decode]
@@ -453,10 +454,6 @@ jobs:
         with:
           chrome-version: stable
           install-dependencies: true
-      - name: Install Chinese font coverage for website screenshots
-        run: |
-          sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
-          fc-match 'sans-serif:lang=zh-cn'
       - name: Verify built website navigation and language continuity
         run: npm run test:browser
         working-directory: website
@@ -479,13 +476,6 @@ jobs:
           ARCHIFY_SITE_INTEGRATION: '1'
           ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
           ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Upload homepage visual evidence
-        if: always()
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-        with:
-          name: website-homepage-evidence
-          path: website/.browser-evidence
-          if-no-files-found: warn
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: website-dist
@@ -583,6 +573,7 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: website/dist
+          include-hidden-files: true
       - name: Deploy verified website
         if: steps.deployment-head.outputs.current == 'true'
         id: deployment

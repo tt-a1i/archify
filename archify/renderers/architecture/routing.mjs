@@ -20,8 +20,34 @@ import {
   collectBorderRuns,
   collectRouteRhythmIssues,
   frameBorderSegments,
+  labelPoint,
 } from '../shared/geometry.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
+import { textUnits } from '../shared/utils.mjs';
+import { reservedLabelRect } from '../shared/automatic-labels.mjs';
+
+export function connectionLabelBoxAt(conn, [lx, ly]) {
+  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+  return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
+}
+
+// Use the same architecture route preferences for rendering and placement checks.
+export function createArchitectureRouter(components, connections, { frames = [], fixedCanvas = false } = {}) {
+  return createRouter(components, connections, {
+    distinctAutomaticPorts: true,
+    preferReadableRoutes: true,
+    // Intrinsic canvases can use one outward stub without shrinking their text.
+    readabilityBottomMargin: fixedCanvas ? 0 : 24,
+    frames,
+    labelRectFor: (conn, points, { routes, labels }) => (conn.label ? reservedLabelRect({
+      label: { relation: conn, label: conn.label, ...connectionLabelBoxAt(conn, labelPoint(conn, points)) },
+      points,
+      routes: routes.map((route, index) => ({ relationIndex: index, points: route })),
+      labels,
+      components: [...components.values()],
+    }) : null),
+  });
+}
 
 /**
  * Router bound to one set of measured component boxes.

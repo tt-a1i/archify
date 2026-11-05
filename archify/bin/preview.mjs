@@ -1,3 +1,4 @@
+import { softwareNoticesHtml } from '../renderers/shared/software-notices.mjs';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -58,7 +59,7 @@ function previewPage() {
   return `<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8">${softwareNoticesHtml}
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Archify Live Preview</title>
   <style>

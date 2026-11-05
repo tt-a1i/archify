@@ -23,7 +23,7 @@ export async function preparePanelPatch({artifactPath,panelId,replacementPath,re
   if(expectedArtifact && (artifactBytes.length!==expectedArtifact.bytes || createHash('sha256').update(artifactBytes).digest('hex')!==expectedArtifact.sha256)) fail('artifact-changed','The original artifact changed after validation.',artifactPath,panelId,'Finish other writes to the artifact and retry the panel patch.');
   const html = artifactBytes.toString('utf8');
   let previous;
-  try { previous = unpackPageBundle(embedded(html,'archify-explainer-prepared',artifactPath)); } catch (error) { if (error.diagnostics) throw error; fail('payload','Embedded native diagram payload cannot be inflated.',artifactPath,panelId,'Rebuild the original artifact before patching.'); }
+  try { previous = unpackPageBundle(embedded(html,'archify-explainer-prepared',artifactPath)); } catch (error) { if (error.archifyDiagnostics || error.diagnostics) throw error; fail('payload','Embedded native diagram payload cannot be inflated.',artifactPath,panelId,'Rebuild the original artifact before patching.'); }
   // The page names local files relative to itself; resolve them before reading or re-preparing.
   const near = value => typeof value === 'string' ? path.resolve(path.dirname(artifactPath), value) : value;
   const draft = {...previous,sourcePath:near(previous.sourcePath)};

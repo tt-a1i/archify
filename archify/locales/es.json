@@ -484,5 +484,18 @@
   "legend.waterfall.ok": "Completado",
   "legend.waterfall.error": "Error",
   "legend.waterfall.cancelled": "Cancelado",
-  "legend.waterfall.incomplete": "Incompleto (sin fin registrado)"
+  "legend.waterfall.incomplete": "Incompleto (sin fin registrado)",
+  "viewer.passport.explain": "Explicar",
+  "viewer.passport.explain.show": "Mostrar la explicación de este nodo",
+  "viewer.passport.explanation": "Explicación",
+  "viewer.passport.explanation.back": "Explicación de {label}. Activar para volver al pasaporte",
+  "viewer.passport.explanation.backLink": "Volver al pasaporte",
+  "viewer.passport.drilldowns": "Diagramas secundarios",
+  "viewer.passport.drilldowns.list": "Abrir un diagrama secundario",
+  "viewer.passport.drilldowns.hint": "Ctrl+clic o doble clic abre la primera entrada",
+  "viewer.passport.drilldowns.open": "Abrir {label}",
+  "viewer.passport.back": "Volver al diagrama principal",
+  "viewer.passport.back.aria": "Volver al diagrama principal",
+  "viewer.nav.back": "Volver",
+  "viewer.nav.back.title": "Volver al diagrama principal"
 }

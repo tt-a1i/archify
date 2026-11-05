@@ -63,6 +63,7 @@ test('classic preset remains the default for existing diagrams', () => {
   const html = render('architecture', CASES.architecture, null, null);
   assert.match(html, /<html lang="en" data-theme="dark" data-preset="classic">/);
   assert.match(svgBlock(html), /data-preset="classic"/);
+  assert.match(html, /svg\[data-preset="classic"\] \.c-grid/);
 });
 
 test('signal-flow preset reaches the page, SVG, and motion export surface', () => {

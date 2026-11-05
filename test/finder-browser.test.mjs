@@ -167,6 +167,28 @@ test('Finder preserves search, keyboard, contextual Route selection and cleanup'
     const reset = await snapshot('default-restored'); assert.equal(reset.context, 'focus'); assert.equal(reset.results.length, reset.count);
   });
 
+  await t.test('composing global shortcuts preserve Viewer state and default input behavior', async () => {
+    await load();
+    await run('Archify.preset.open()');
+    for (const signal of [{isComposing:true}, {isComposing:false,keyCode:229}]) {
+      for (const shortcut of ['/', '?', 't', 's', 'e', 'f', 'm', 'l', 'r', '+', '=', '-', '0', 'Escape']) {
+        const result = await run(`(async () => {
+          const state = () => ({finder:Archify.finder.isOpen(),guide:Archify.guide.isOpen(),presetOpen:Archify.preset.isOpen(),
+            preset:Archify.preset.current(),theme:document.documentElement.getAttribute('data-theme'),
+            exporting:Archify.exportMenu.isOpen(),presentation:Archify.presentation.active(),radar:Archify.radar.isOpen(),
+            lens:Archify.semanticLens.isOpen(),route:Archify.routeProbe.active(),camera:Archify.view.state(),
+            focus:document.activeElement.id,hash:location.hash});
+          const before = state(), event = new KeyboardEvent('keydown', ${JSON.stringify({key:shortcut,bubbles:true,cancelable:true,...signal})});
+          document.dispatchEvent(event);
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          return {before,after:state(),prevented:event.defaultPrevented};
+        })()`);
+        assert.equal(result.prevented, false, `${shortcut} ${JSON.stringify(signal)} remains owned by the input method`);
+        assert.deepEqual(result.after, result.before, `${shortcut} ${JSON.stringify(signal)} preserves Viewer state`);
+      }
+    }
+  });
+
   await t.test('trusted keyboard navigation, selection and Escape preserve focus boundaries', async () => {
     await load();
     await key('/', 'Slash', 191); await opened();

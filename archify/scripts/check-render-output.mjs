@@ -19,6 +19,16 @@ import {
 } from '../renderers/shared/desktop-readability.mjs';
 
 const input = process.argv[2];
+const DEFAULT_MAX_CROSSING_PAIR_CHECKS = 50_000;
+const DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS = 3_000_000;
+const maxCrossingPairChecks = positiveIntegerEnvironment(
+  'ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS',
+  DEFAULT_MAX_CROSSING_PAIR_CHECKS,
+);
+const maxCrossingSegmentPairChecks = positiveIntegerEnvironment(
+  'ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS',
+  DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS,
+);
 
 if (!input || input === '-h' || input === '--help') {
   console.error('Usage: node scripts/check-render-output.mjs <diagram.html>');
@@ -43,8 +53,12 @@ try {
 
 if (isExplainerHtml(html)) {
   const result = checkExplainerHtml(html, { file: htmlPath });
-  console.log(JSON.stringify(result, null, 2));
-  process.exit(result.ok ? 0 : 1);
+  // Piped stdout is asynchronous on macOS. Exit only after the full receipt
+  // has flushed, and keep the diagram path below from emitting a second one.
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`, () => {
+    process.exit(result.ok ? 0 : 1);
+  });
+  await new Promise(() => {});
 }
 
 const checks = [];
@@ -82,7 +96,11 @@ let composition = {
 
 const NON_FINITE_TOKEN = /\b(?:NaN|undefined|Infinity)\b/;
 // Consume comments/CDATA as whole tokens, including any tag-like prose.
-const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+// A quote opens a quoted attribute value only right after '='; anywhere
+// else (for example the apostrophe in data-note=it's) it is literal text,
+// so the tag pattern anchors quoted spans to '=' and lets a lone quote
+// through as an ordinary character.
+const SVG_TAG_TOKEN = /<!--[\s\S]*?(?:-->|$)|<!\[CDATA\[[\s\S]*?(?:\]\]>|$)|<(\/?)([A-Za-z][\w:-]*)(?=[\s/>])(?:=\s*"[^"]*"|=\s*'[^']*'|[^>"']|["'])*>/g;
 const AUTOMATIC_CROSSOVER_UNDERLAY_TAG = /<path\b[^>]*\bdata-graph-role="automatic-crossover-underlay"[^>]*\/>/i;
 const HTML_VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 const SVG_HTML_INTEGRATION_POINTS = new Set(['foreignobject', 'desc', 'title']);
@@ -112,12 +130,262 @@ function addCheck(name, ok, details = []) {
   checks.push({ name, ok, details });
 }
 
-const svgMatches = [...html.matchAll(/<svg\b[\s\S]*?<\/svg>/gi)];
-addCheck('single_svg', svgMatches.length === 1, [`found ${svgMatches.length} <svg> block(s)`]);
+// A '/' that ends an unquoted attribute value (for example data-note=value/>)
+// is value text per HTML, not the self-closing flag: parse5 keeps it, and the
+// finite_svg tests document x1="NaN/" for <line x1=NaN/>. A quote inside an
+// unquoted value is literal text too (data-note=it's/>), so a strip-the-quoted-
+// spans shortcut misreads that '/' as the flag. Walk the token with the same
+// value tracking as extractSvgBlocks: the flag is only a '/' that sits outside
+// every attribute value, immediately before the '>'.
+function isSelfClosingTag(token) {
+  let quote = null;
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'afterName' (whitespace after a name) | 'pending' (just after '=') | 'unquoted'
+  let slash = false; // the previous char was a '/' outside any attribute value
+  for (let k = 1; k < token.length; k += 1) {
+    const ch = token[k];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; value = 'none'; }
+      slash = false;
+    } else if (ch === '>') {
+      return slash;
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      // Whitespace after a name does not end the attribute: a following '='
+      // still belongs to it (data-note = "a/>b"). Resetting to 'none' here
+      // made '=' start a new attribute, so the quoted '/>' that followed
+      // was read as the self-closing flag and the rest of the root was cut
+      // off. A '/' here can be the self-closing flag when it terminates
+      // the tag name (<svg/>): only a '/' immediately before '>' sets the
+      // flag, so remember it instead of clearing it. A '/' inside an
+      // unquoted value never reaches this branch (it stays 'unquoted'),
+      // and '<svg / >' clears the flag on the space that follows.
+      else if (/[ \t\n\f\r]/.test(ch)) value = 'afterName';
+      else if (ch === '/') value = 'none';
+      slash = ch === '/';
+    } else if (value === 'afterName') {
+      if (ch === '=') value = 'pending';
+      else if (ch === '/') value = 'none';
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'aname';
+      slash = ch === '/';
+    } else if (value === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+      slash = false;
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+      slash = false;
+    } else {
+      if (ch === '=') value = 'aname';
+      else if (!/[ \t\n\f\r/]/.test(ch)) value = 'aname';
+      slash = ch === '/';
+    }
+  }
+  return false;
+}
 
-if (svgMatches.length === 1) {
-  const svg = svgMatches[0][0];
-  const svgRoot = svg.match(/<svg\b[^>]*>/i)?.[0] || '';
+// The root opener of a block: everything through the first '>' that sits
+// outside a quoted attribute value, walked with the same value tracking as
+// extractSvgBlocks. A quoted-spans pattern cannot express that rule: a lone
+// quote inside an unquoted value (data-note=x") opens a span there that
+// swallows the rest of the tag, the match fails, and every root attribute
+// (data-quality-profile included) is lost.
+function svgRootTag(block) {
+  let quote = null;
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'afterName' (whitespace after a name) | 'pending' (just after '=') | 'unquoted'
+  for (let k = 0; k < block.length; k += 1) {
+    const ch = block[k];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; value = 'none'; }
+    } else if (ch === '>') {
+      return block.slice(0, k + 1);
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      else if (/[ \t\n\f\r]/.test(ch)) value = 'afterName';
+      else if (ch === '/') value = 'none';
+    } else if (value === 'afterName') {
+      // Whitespace after a name does not end the attribute: a following
+      // '=' still belongs to it (data-note = "a/>b").
+      if (ch === '=') value = 'pending';
+      else if (ch === '/') value = 'none';
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'aname';
+    } else if (value === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+    } else if (ch === '=') {
+      value = 'aname';
+    } else if (!/[ \t\n\f\r/]/.test(ch)) {
+      value = 'aname';
+    }
+  }
+  return '';
+}
+
+// Consume a tag from `from` (just past its name scan) through its '>',
+// honoring quoted attribute values with the same value tracking the block
+// scan uses: a quote opens a quoted value only right after '=', inside a
+// name or an unquoted value it is literal text. Returns the index of the
+// '>', or -1 when the tag never terminates.
+function endOfTag(source, from) {
+  let quote = null;
+  let value = 'none'; // 'none' | 'aname' (in attribute name) | 'afterName' (whitespace after a name) | 'pending' (just after '=') | 'unquoted'
+  let k = from;
+  while (k < source.length) {
+    const ch = source[k];
+    if (quote !== null) {
+      if (ch === quote) { quote = null; value = 'none'; }
+    } else if (ch === '>') {
+      return k;
+    } else if (value === 'aname') {
+      if (ch === '=') value = 'pending';
+      else if (/[ \t\n\f\r]/.test(ch)) value = 'afterName';
+      else if (ch === '/') value = 'none';
+    } else if (value === 'afterName') {
+      // Whitespace after a name does not end the attribute: a following
+      // '=' still belongs to it (data-note = "a/>b").
+      if (ch === '=') value = 'pending';
+      else if (ch === '/') value = 'none';
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'aname';
+    } else if (value === 'pending') {
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (!/[ \t\n\f\r]/.test(ch)) value = 'unquoted';
+    } else if (value === 'unquoted') {
+      if (/[ \t\n\f\r]/.test(ch)) value = 'none';
+    } else if (ch === '=') {
+      value = 'aname';
+    } else if (!/[ \t\n\f\r/]/.test(ch)) {
+      value = 'aname';
+    }
+    k += 1;
+  }
+  return -1;
+}
+
+// Collect each top-level <svg> block. Matching lazily to the first </svg>
+// would cut a root short at a nested <svg> (for example inside foreignObject)
+// and drop the rest of the root from every check below; markup inside HTML
+// comments is not an element and must not count as a block either.
+//
+// The scan walks the source once, left to right, with the same quote- and
+// CDATA-aware token rules the other static checks use, so `<svg>` text inside
+// comments, CDATA sections, or quoted attribute values never moves the depth
+// counter. Case-insensitive like the HTML parser: <SVG> is the same element
+// as <svg>. A regex tokenizer is not used here: it retries its tag pattern
+// at every '<', so on a truncated candidate ending in unterminated quoted
+// tags each retry rescans the remaining suffix (quadratic overall), while
+// this scan consumes every position once.
+function extractSvgBlocks(source) {
+  const blocks = [];
+  let depth = 0;
+  let start = -1;
+  let i = 0;
+  while (i < source.length) {
+    const lt = source.indexOf('<', i);
+    if (lt === -1) break;
+    if (source.startsWith('<!--', lt)) {
+      // HTML also ends a comment on --!> and closes <!--> / <!---> outright.
+      let end = -1;
+      if (source[lt + 4] === '>') end = lt + 5;
+      else if (source.startsWith('->', lt + 4)) end = lt + 6;
+      else {
+        // Walk each '--' once instead of probing for --!> with a fresh
+        // suffix search per comment: with no --!> anywhere, that probe
+        // rescans the remaining suffix from every comment (quadratic).
+        let p = lt + 4;
+        while ((p = source.indexOf('--', p)) !== -1) {
+          if (source[p + 2] === '>') { end = p + 3; break; }
+          if (source[p + 2] === '!' && source[p + 3] === '>') { end = p + 4; break; }
+          p += 1;
+        }
+      }
+      i = end === -1 ? source.length : end;
+      continue;
+    }
+    if (source.startsWith('<![CDATA[', lt)) {
+      if (depth > 0) {
+        const end = source.indexOf(']]>', lt + 9);
+        i = end === -1 ? source.length : end + 3;
+      } else {
+        // Outside foreign content, <![CDATA[ is a bogus comment in HTML: it
+        // ends at the first '>' and the markup after it is real.
+        const end = source.indexOf('>', lt + 9);
+        i = end === -1 ? source.length : end + 1;
+      }
+      continue;
+    }
+    if (source.startsWith('<?', lt)) {
+      // A processing instruction is a bogus comment in HTML too: it ends
+      // at the first '>', so an <svg> inside it opens no element and the
+      // markup after that '>' stays real.
+      const end = source.indexOf('>', lt + 2);
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+    if (source.startsWith('<!', lt)) {
+      // Any other <!...> (a doctype, or a declaration like <!x) is a bogus
+      // comment in HTML: it ends at the first '>', so a <!-- inside it
+      // opens no comment and the markup after that '>' stays real.
+      const end = source.indexOf('>', lt + 2);
+      i = end === -1 ? source.length : end + 1;
+      continue;
+    }
+    let j = lt + 1;
+    const closing = source[j] === '/';
+    if (closing) j += 1;
+    const nameStart = j;
+    while (j < source.length && /[\w:-]/.test(source[j])) j += 1;
+    const name = source.slice(nameStart, j);
+    const after = source[j];
+    // Tag names end only at ASCII whitespace, '/' or '>' — JavaScript \s
+    // would also accept U+00A0 and friends, which HTML joins into the name.
+    if (!/^[A-Za-z]/.test(name) || (after !== undefined && !/[ \t\n\f\r/>]/.test(after))) {
+      // A rejected '<' is not always plain text. '</!' is a bogus comment in
+      // HTML that runs to its first '>', and a letter after '<' means the
+      // tag-name state swallowed the rest (e.g. <x"<svg>> is one malformed
+      // tag), so resuming at lt + 1 would expose an inner <svg> that HTML
+      // never tokenizes as an element. Anything else ('<3', '<<') is text,
+      // so resuming one byte later stays correct there.
+      if (source.startsWith('</!', lt)) {
+        const end = source.indexOf('>', lt + 3);
+        i = end === -1 ? source.length : end + 1;
+      } else if (/[A-Za-z]/.test(source[lt + 1] || '')) {
+        const gt = endOfTag(source, j);
+        i = gt === -1 ? source.length : gt + 1;
+      } else {
+        i = lt + 1;
+      }
+      continue;
+    }
+    // Consume the tag through its '>', honoring quoted attribute values.
+    // Per HTML, a quote opens a quoted value only right after '='; inside a
+    // name or an unquoted value it is literal text and the tag still ends
+    // at its '>'. An '=' in before-attribute-name position starts an
+    // attribute whose name is '=' (it does not open a value), so '=' moves
+    // to the attribute-name state instead of value-pending.
+    const gt = endOfTag(source, j);
+    if (gt === -1) break; // unterminated tag: the rest is its text
+    const token = source.slice(lt, gt + 1);
+    i = gt + 1;
+    if (name.toLowerCase() !== 'svg') continue;
+    if (closing) {
+      if (depth > 0 && --depth === 0) blocks.push(source.slice(start, gt + 1));
+    } else if (isSelfClosingTag(token)) {
+      if (depth === 0) blocks.push(token);
+    } else {
+      if (depth === 0) start = lt;
+      depth += 1;
+    }
+  }
+  return blocks;
+}
+
+const svgBlocks = extractSvgBlocks(html);
+addCheck('single_svg', svgBlocks.length === 1, [`found ${svgBlocks.length} <svg> block(s)`]);
+
+if (svgBlocks.length === 1) {
+  const svg = svgBlocks[0];
+  const svgRoot = svgRootTag(svg);
   const svgAttrs = parseAttrs(svgRoot);
   const qualityProfile = svgAttrs['data-quality-profile'] || 'standard';
   const workflowV2 = svgAttrs['data-layout-contract'] === 'readable-v2';
@@ -142,7 +410,13 @@ if (svgMatches.length === 1) {
     diagonal.length === 0,
     diagonal.map(({ arrow, segmentIndex }) => `${arrow.kind} ${arrow.index} segment ${segmentIndex + 1}: expected an orthogonal segment or an explicitly authored direct straight route; ${arrow.raw}`),
   );
-  const measuredRelationshipCrossings = collectRelationshipCrossings(arrows, workflowV2);
+  const crossingAnalysis = collectRelationshipCrossings(
+    arrows,
+    workflowV2,
+    maxCrossingPairChecks,
+    maxCrossingSegmentPairChecks,
+  );
+  const measuredRelationshipCrossings = crossingAnalysis.crossings;
   const resolvedCrossovers = measuredRelationshipCrossings.filter((hit) => (
     hit.left.crossoverHalo && hit.right.crossoverHalo
   ));
@@ -213,7 +487,8 @@ if (svgMatches.length === 1) {
   const desktopReadabilityIsError = qualityProfile === 'showcase';
   // Certain geometry, but new: surface it as evidence first (CONTRIBUTING.md#product-and-compatibility-contracts).
   const viewportHeightIsError = false;
-  const compositionErrors = (qualityGatesEnforced ? containerBorderRuns.length : 0)
+  const compositionErrors = (crossingAnalysis.exhausted ? 1 : 0)
+    + (qualityGatesEnforced ? containerBorderRuns.length : 0)
     + (crossingIsError ? relationshipCrossings.length : 0)
     + (corridorIsError ? ambiguousCorridors.length + arrowheadCollisions.length : 0)
     + (labelClearanceIsError ? labelRouteClearance.length : 0)
@@ -328,6 +603,17 @@ if (svgMatches.length === 1) {
         otherRelationship: relationshipRecord(hit.right),
         point: hit.point.map((value) => Math.round(value * 10) / 10),
       })),
+      ...(crossingAnalysis.exhausted ? [{
+        severity: 'error',
+        code: 'composition/crossing-analysis-budget',
+        attemptedPairs: crossingAnalysis.attemptedPairs,
+        attemptedSegmentPairs: crossingAnalysis.attemptedSegmentPairs,
+        pairLimit: maxCrossingPairChecks,
+        segmentPairLimit: maxCrossingSegmentPairChecks,
+        exhaustedBudget: crossingAnalysis.exhaustedBudget,
+        detail: crossingBudgetDetail(crossingAnalysis),
+        supportedFixes: crossingBudgetFixes(crossingAnalysis),
+      }] : []),
       ...ambiguousCorridors.map((hit) => ({
         severity: corridorIsError ? 'error' : 'warning',
         code: 'composition/ambiguous-corridor',
@@ -399,10 +685,10 @@ if (svgMatches.length === 1) {
   );
   addCheck(
     'relationship_crossings',
-    !crossingIsError || relationshipCrossings.length === 0,
-    relationshipCrossings.map((hit) => (
+    !crossingAnalysis.exhausted && (!crossingIsError || relationshipCrossings.length === 0),
+    [...relationshipCrossings.map((hit) => (
       `[composition/proper-crossing] ${qualityProfile} ${relationshipName(hit.left)} crosses ${relationshipName(hit.right)} at [${formatPoint(hit.point)}]`
-    )),
+    )), ...(crossingAnalysis.exhausted ? [`[composition/crossing-analysis-budget] ${crossingBudgetDetail(crossingAnalysis)}`] : [])],
   );
   addCheck(
     'relationship_corridors',
@@ -734,14 +1020,21 @@ function parseRoutePoints(value) {
   return points.length >= 2 && points.every(isPoint) ? points : null;
 }
 
-function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
-  const relationships = arrows.filter((arrow) => arrow.from && arrow.to && arrow.segments.length).map(arrow => ({
+function collectRelationshipCrossings(
+  arrows,
+  includeSharedEndpoints = false,
+  pairLimit = DEFAULT_MAX_CROSSING_PAIR_CHECKS,
+  segmentPairLimit = DEFAULT_MAX_CROSSING_SEGMENT_PAIR_CHECKS,
+) {
+  const relationships = arrows.filter((arrow) => arrow.from && arrow.to).map(arrow => ({
     ...arrow,
     // Readable-v2 routePoints come from the visible path, never its metadata.
     // A straight-through via is not a visual endpoint; preserve real bends.
     segments: includeSharedEndpoints ? arrow.routeSubpaths.flatMap(forwardCollinearAnalysisSegments) : arrow.segments,
-  }));
+  })).filter((arrow) => arrow.segments.length);
   const crossings = [];
+  let attemptedPairs = 0;
+  let attemptedSegmentPairs = 0;
   for (let leftIndex = 0; leftIndex < relationships.length; leftIndex += 1) {
     const left = relationships[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < relationships.length; rightIndex += 1) {
@@ -752,9 +1045,17 @@ function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
           && !includeSharedEndpoints
           && !(left.independentPorts && right.independentPorts)
           && !(left.automaticWorkflowRoute && right.automaticWorkflowRoute)) continue;
+      if (attemptedPairs >= pairLimit) {
+        return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: true, exhaustedBudget: 'relationship-pairs' };
+      }
+      attemptedPairs += 1;
       let point = null;
       for (const leftSegment of left.segments) {
         for (const rightSegment of right.segments) {
+          if (attemptedSegmentPairs >= segmentPairLimit) {
+            return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: true, exhaustedBudget: 'segment-pairs' };
+          }
+          attemptedSegmentPairs += 1;
           point = properSegmentIntersection(leftSegment.start, leftSegment.end, rightSegment.start, rightSegment.end);
           if (point) break;
         }
@@ -763,7 +1064,26 @@ function collectRelationshipCrossings(arrows, includeSharedEndpoints = false) {
       if (point) crossings.push({ left, right, point });
     }
   }
-  return crossings;
+  return { crossings, attemptedPairs, attemptedSegmentPairs, exhausted: false, exhaustedBudget: null };
+}
+
+function crossingBudgetDetail(analysis) {
+  const attempted = analysis.exhaustedBudget === 'segment-pairs'
+    ? `${analysis.attemptedSegmentPairs} segment pairs (limit ${maxCrossingSegmentPairChecks}) after ${analysis.attemptedPairs} relationship pairs`
+    : `${analysis.attemptedPairs} relationship pairs (limit ${maxCrossingPairChecks}) after ${analysis.attemptedSegmentPairs} segment pairs`;
+  return `Crossing analysis stopped after ${attempted}; inspection is incomplete.`;
+}
+
+function crossingBudgetFixes(analysis) {
+  return analysis.exhaustedBudget === 'segment-pairs'
+    ? ['increase ARCHIFY_CHECK_MAX_CROSSING_SEGMENT_PAIR_CHECKS for this known-large artifact and rerun the check']
+    : ['increase ARCHIFY_CHECK_MAX_CROSSING_PAIR_CHECKS for this known-large artifact and rerun the check'];
+}
+
+function positiveIntegerEnvironment(name, fallback) {
+  const value = process.env[name];
+  if (value === undefined || value === '') return fallback;
+  return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : fallback;
 }
 
 function relationshipName(arrow) {
@@ -1422,7 +1742,9 @@ function collectNonFiniteAttrs(svg) {
     }
     // HTML void elements do not open a context; SVG self-closing tags do not
     // either. A nested <svg> inside foreignObject restores SVG checking.
-    if (!(inSvg ? /\/\s*>$/.test(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
+    // The self-closing test is attribute-aware: a '/' ending an unquoted
+    // attribute value is value text, not the self-closing flag.
+    if (!(inSvg ? isSelfClosingTag(match[0]) : HTML_VOID_ELEMENTS.has(element))) {
       stack.push({ element, inSvg });
     }
   }

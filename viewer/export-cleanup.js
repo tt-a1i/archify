@@ -1,4 +1,8 @@
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('a[data-archify-authored-href]'), function (anchor) {
+          anchor.setAttribute('href', anchor.getAttribute('data-archify-authored-href'));
+          anchor.removeAttribute('data-archify-authored-href');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('[data-ambient-flow-overlay]'), function (el) {
           el.remove();
         });

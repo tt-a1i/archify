@@ -34,6 +34,15 @@ test('owned changes add their real gates without requiring every unrelated lane'
   assert.ok(classifyPaths(['docs/skill-updates/archify/stable.json']).manifest);
 });
 
+test('Windows evidence replacement fixtures retain their native host gate', () => {
+  const plan = classifyPaths(['test/repository-evidence-replacement.test.mjs']);
+  assert.equal(plan.scope, 'core');
+  assert.equal(plan.windows, true);
+  assert.deepEqual(plan.changedTests, ['test/repository-evidence-replacement.test.mjs']);
+  assert.equal(plan.browser, false);
+  assert.equal(plan.package, false);
+});
+
 test('recipe, schema and shared renderer owners include their real source consumers', () => {
   const available = ['test/guide.test.mjs', 'test/guide-page.test.mjs', 'test/gallery.test.mjs', 'test/start-page.test.mjs', 'test/engineering-profile.test.mjs', 'test/legend-contract.test.mjs', 'test/generate-validators.test.mjs'];
   const recipe = classifyPaths(['archify/recipes/scenarios.mjs']);

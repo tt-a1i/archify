@@ -4,12 +4,13 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import { softwareNoticesHtml } from '../archify/renderers/shared/software-notices.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const previewPath = path.resolve(here, '..', 'archify', 'bin', 'preview.mjs');
 
 // The preview server serves previewPage() verbatim. That function is a
-// substitution-free template literal, so cooking it here yields exactly the
+// template literal with its inert license payload supplied, so cooking it yields the
 // HTML a browser receives, without starting a server or a build.
 function shellPage() {
   const source = fs.readFileSync(previewPath, 'utf8');
@@ -31,7 +32,7 @@ function shellPage() {
     i += 1;
   }
   assert.ok(closeTick > openTick, 'previewPage() template literal not terminated');
-  return vm.runInNewContext(source.slice(openTick, closeTick + 1));
+  return vm.runInNewContext(source.slice(openTick, closeTick + 1), { softwareNoticesHtml });
 }
 
 function shellScript() {

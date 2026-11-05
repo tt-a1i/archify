@@ -19,6 +19,7 @@
 
   --arrow: #94a3b8;
   --arrow-emphasis: #34d399;
+  --edge-label: var(--arrow);
 
   /* Opaque mask color used behind semi-transparent component fills
      so the arrows drawn underneath are properly hidden. */
@@ -62,11 +63,14 @@
 
   --arrow: #64748b;
   --arrow-emphasis: #059669;
+  --edge-label: var(--text-muted);
 
   --mask: #ffffff;
 
   --frontend-fill: rgba(34, 211, 238, 0.15);
   --frontend-stroke: #0891b2;
+  /* #1040: darker accent for small bold reader text; the diagram stroke above is untouched. */
+  --reader-accent: #077f9c;
   --backend-fill: rgba(52, 211, 153, 0.18);
   --backend-stroke: #059669;
   --database-fill: rgba(167, 139, 250, 0.2);
@@ -120,6 +124,7 @@
   --external-stroke: #a5b4c7;
   --arrow: #7890ad;
   --arrow-emphasis: #2dd4bf;
+  --edge-label: var(--arrow);
   --toolbar-bg: rgba(7, 16, 30, 0.86);
   --toolbar-border: #29415f;
   --toolbar-menu-bg: #07101e;
@@ -135,10 +140,12 @@
   --text: #102638;
   --text-muted: #587287;
   --text-dim: #8aa2b4;
-  --text-faint: #668397;
+  --text-faint: #5d778a; /* #1040: was #668397 at 3.99:1 on reader surfaces */
   --mask: #ffffff;
   --frontend-fill: rgba(6, 182, 212, 0.09);
   --frontend-stroke: #0789a1;
+  /* #1040: darker accent for small bold reader text; the diagram stroke above is untouched. */
+  --reader-accent: #067e95;
   --backend-fill: rgba(5, 150, 105, 0.09);
   --backend-stroke: #087f69;
   --database-fill: rgba(124, 58, 237, 0.09);
@@ -153,6 +160,7 @@
   --external-stroke: #607a8c;
   --arrow: #7b97aa;
   --arrow-emphasis: #0d9488;
+  --edge-label: var(--text-muted);
 }
 
 /* ==========================================================
@@ -189,6 +197,7 @@
   --external-stroke: #a7cad9;
   --arrow: #78a3b7;
   --arrow-emphasis: #64dfc1;
+  --edge-label: var(--arrow);
   --toolbar-bg: rgba(7, 28, 45, 0.92);
   --toolbar-border: #34799a;
   --toolbar-text: #d8f3ff;
@@ -206,7 +215,7 @@
   --text: #123344;
   --text-muted: #4e7486;
   --text-dim: #86a6b4;
-  --text-faint: #668c9d;
+  --text-faint: #577786; /* #1040: was #668c9d at 3.54:1 on reader surfaces */
   --mask: #f9fdff;
   --frontend-fill: rgba(8, 145, 178, 0.08);
   --frontend-stroke: #087f9c;
@@ -224,6 +233,7 @@
   --external-stroke: #506f7e;
   --arrow: #6d93a5;
   --arrow-emphasis: #087f69;
+  --edge-label: var(--text-muted);
   --toolbar-bg: rgba(247, 252, 254, 0.94);
   --toolbar-border: #8ab5c5;
   --toolbar-text: #294f61;
@@ -266,6 +276,7 @@
   --external-stroke: #b8ad99;
   --arrow: #948978;
   --arrow-emphasis: #dd6b3d;
+  --edge-label: var(--arrow);
   --toolbar-bg: rgba(35, 31, 24, 0.92);
   --toolbar-border: #625a4a;
   --toolbar-text: #eee5d5;
@@ -283,10 +294,12 @@
   --text: #242018;
   --text-muted: #6f6658;
   --text-dim: #a09788;
-  --text-faint: #817767;
+  --text-faint: #796f60; /* #1040: was #817767 at 4.15:1 on reader surfaces */
   --mask: #fbf8f1;
   --frontend-fill: rgba(31, 117, 126, 0.09);
   --frontend-stroke: #287e84;
+  /* #1040: darker accent for small bold reader text; the diagram stroke above is untouched. */
+  --reader-accent: #267a80;
   --backend-fill: rgba(42, 119, 75, 0.09);
   --backend-stroke: #397b53;
   --database-fill: rgba(105, 75, 130, 0.09);
@@ -301,6 +314,7 @@
   --external-stroke: #746b5e;
   --arrow: #8a806f;
   --arrow-emphasis: #bb4c23;
+  --edge-label: var(--text-muted);
   --toolbar-bg: rgba(251, 248, 241, 0.94);
   --toolbar-border: #c4b9a6;
   --toolbar-text: #40392f;
@@ -1700,6 +1714,121 @@ html[data-preset="blueprint"] .focus-chip { border-radius: 0.3rem; }
 .semantic-passport-meta [hidden] { display: none; }
 html[data-preset="blueprint"] .semantic-passport-meta span,
 html[data-preset="blueprint"] .semantic-passport-meta code { border-radius: 0.1rem; }
+/* 跨图下钻：Passport 列出全部子图；首项即 Ctrl/双击默认目标 */
+.semantic-passport-drilldowns {
+  display: grid;
+  gap: 0.28rem;
+  margin-top: 0.52rem;
+  padding-top: 0.48rem;
+  border-top: 1px solid color-mix(in srgb, var(--toolbar-border) 76%, transparent);
+}
+.semantic-passport-drilldowns[hidden] { display: none; }
+.semantic-passport-drilldowns-label {
+  color: var(--text-faint);
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.semantic-passport-drilldowns-list {
+  display: grid;
+  gap: 0.22rem;
+}
+.semantic-passport-drilldown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2rem;
+  padding: 0.32rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--toolbar-border) 86%, transparent);
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+.semantic-passport-drilldown:hover,
+.semantic-passport-drilldown:focus-visible {
+  color: var(--backend-stroke);
+  border-color: color-mix(in srgb, var(--backend-stroke) 42%, var(--toolbar-border));
+}
+.semantic-passport-drilldown:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--backend-stroke) 55%, transparent);
+  outline-offset: 1px;
+}
+.semantic-passport-drilldown small {
+  color: var(--text-faint);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.semantic-passport-drilldowns-hint {
+  color: var(--text-faint);
+  font-size: 0.5625rem;
+  line-height: 1.35;
+}
+/* 返回上一级：放在页眉显眼位置，不进 Passport */
+.parent-back-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 0.85rem;
+}
+.parent-back-bar[hidden] { display: none !important; }
+.parent-back-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--backend-stroke) 48%, var(--toolbar-border));
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--backend-stroke) 14%, var(--panel));
+  color: var(--backend-stroke);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--backend-stroke) 12%, transparent);
+}
+.parent-back-bar button:hover,
+.parent-back-bar button:focus-visible {
+  background: color-mix(in srgb, var(--backend-stroke) 22%, var(--panel));
+  border-color: color-mix(in srgb, var(--backend-stroke) 68%, var(--toolbar-border));
+  color: var(--text);
+}
+.parent-back-bar button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--backend-stroke) 55%, transparent);
+  outline-offset: 2px;
+}
+.parent-back-bar button .parent-back-arrow {
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.92;
+}
+html[data-preset="blueprint"] .parent-back-bar button { border-radius: 0.15rem; }
+svg [data-node-id][data-node-drilldowns] { cursor: pointer; }
+/* 单目标下钻：原生 SVG <a> 不画下划线；角标必须跟 SVG 一起导出 */
+svg a.archify-drilldown-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+svg .archify-drilldown-mark-disc {
+  fill: color-mix(in srgb, var(--backend-stroke) 88%, var(--panel));
+  stroke: color-mix(in srgb, var(--backend-stroke) 55%, var(--toolbar-border));
+  stroke-width: 1;
+}
+svg .archify-drilldown-mark-arrow {
+  stroke: var(--panel);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .semantic-passport-evidence {
   margin-top: 0.52rem;
   padding: 0.5rem;
@@ -2360,6 +2489,18 @@ html[data-preset="blueprint"] .node-finder-results { border-radius: 0.18rem; }
   color: var(--text-faint);
   font-size: 0.5625rem;
 }
+/* #1040: small bold reader text in the semantic accent color (Passport
+   direction chip, Finder result count) falls below the 4.5:1 normal-text
+   floor in some light themes. Resolve a darker --reader-accent where the
+   preset defines one; the diagram's --frontend-stroke itself is untouched,
+   as are dark themes and presets that already pass. Zero counts stay faint
+   on purpose, so they are excluded from the darker rule. Route-target
+   finders keep their --security-stroke status color, so they are excluded
+   too. */
+html[data-theme="light"] .semantic-passport-meta [data-passport="kind"],
+html[data-theme="light"] .node-finder:not([data-context="route-target"]) .node-finder-result em:not([data-zero]) {
+  color: var(--reader-accent, var(--frontend-stroke));
+}
 
 .cards {
   display: grid;
@@ -2922,6 +3063,7 @@ html[data-reader-rail="bottom"] .node-outline-item::after {
     --lane-stroke: #cbd5e1;
     --arrow: #94a3b8;
     --arrow-emphasis: #059669;
+    --edge-label: var(--text-muted);
     --frontend-fill:    rgba(34, 211, 238, 0.15);
     --frontend-stroke:  #0891b2;
     --backend-fill:     rgba(52, 211, 153, 0.18);
@@ -3989,8 +4131,10 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
 .t-messagebus { fill: var(--messagebus-stroke); }
 .t-external   { fill: var(--external-stroke); }
 
-/* Relationship labels share the exact color token used by their path. */
-.t-edge-default  { fill: var(--arrow); }
+/* Colored relationship labels share the exact color token used by their path.
+   Default labels use --edge-label so light palettes can keep a quiet stroke
+   while the text stays readable on the label mask. */
+.t-edge-default  { fill: var(--edge-label); }
 .t-edge-emphasis { fill: var(--arrow-emphasis); }
 .t-edge-security { fill: var(--security-stroke); }
 .t-edge-dashed   { fill: var(--database-stroke); }
@@ -4003,7 +4147,7 @@ html[data-preset="classic"] .diagram-container {
     radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.4px) 0 0 / 20px 20px,
     var(--panel);
 }
-html[data-preset="classic"] .diagram-container > svg .c-grid { stroke: transparent; }
+svg[data-preset="classic"] .c-grid { stroke: transparent; }
 html[data-preset="classic"][data-theme="light"] .diagram-container > svg [data-node-id] > rect:not(.c-mask) {
   --ambient-node-base-filter: drop-shadow(0 1px 1px rgba(17, 24, 39, 0.05)) drop-shadow(0 6px 12px rgba(17, 24, 39, 0.06));
   filter: var(--ambient-node-base-filter);
@@ -4444,7 +4588,7 @@ svg[data-preset="editorial"] .semantic-flow-token { filter: none; }
 html[data-embed="true"] .relationship-pulse-overlay { display: none; }
 
 /* Intent Trace is a temporary, pre-click exploration layer. Related
-   topology stays readable while a short viewer-only signal runs over
+   topology stays readable while a viewer-only signal follows the active trace over
    cloned edge geometry; the authored edge remains untouched underneath. */
 /* Keep the node's opaque backing mask intact while its visible ink dims.
    Fading the whole group also fades that mask and briefly exposes arrows
@@ -4469,7 +4613,7 @@ svg[data-intent-trace-active] [data-intent-trace-selected] {
   stroke-dashoffset: 0;
   vector-effect: non-scaling-stroke;
   opacity: 0.94;
-  animation: archify-intent-trace-flow 1.15s linear 1 both;
+  animation: archify-intent-trace-flow 1.15s linear infinite;
 }
 /* Direction names describe each edge relative to the focused node only.
    The cloned geometry already runs from the authored source to target, so
@@ -4831,9 +4975,8 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
 }
 
 @keyframes archify-intent-trace-flow {
-  0% { opacity: 0.28; stroke-dashoffset: 0; }
-  12%, 78% { opacity: 0.94; }
-  100% { opacity: 0; stroke-dashoffset: -1; }
+  0% { opacity: 0.94; stroke-dashoffset: 0; }
+  100% { opacity: 0.94; stroke-dashoffset: -1; }
 }
 @keyframes archify-route-probe-flow {
   0% { stroke-dashoffset: 0; opacity: 0.96; }
@@ -4912,4 +5055,72 @@ html[data-ambient-motion="running"][data-motion="live"]:not([data-motion-owner])
   }
   .relationship-pulse-overlay { display: none !important; }
   svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
+}
+
+    /* Authored explanation face. It overlays the passport's own footprint so
+       the placement beside the focused node is untouched; the passport may
+       grow within the visible stage while its prose scrolls independently. */
+    .focus-chip[data-explaining="true"] > :not(.semantic-passport-explanation) { visibility: hidden; }
+    .semantic-passport-explanation {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding: 0.7rem 0.75rem;
+      overflow: hidden;
+      scrollbar-width: thin;
+      color: var(--text);
+    }
+    .focus-chip[data-explaining="true"] .semantic-passport-explanation {
+      display: flex;
+      animation: passport-explanation-in 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .semantic-passport-explanation > :not(.semantic-passport-explanation-body) { flex: none; }
+    .semantic-passport-explanation-eyebrow {
+      display: block;
+      color: var(--reader-accent, var(--text));
+      font-size: 0.5rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .semantic-passport-explanation-title { display: block; font-size: 0.8rem; line-height: 1.35; }
+    .semantic-passport-explanation-body { display: grid; align-content: start; flex: 1 1 auto; min-height: 0; gap: 0.35rem; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+    .semantic-passport-explanation-body:focus-visible { outline: 2px solid var(--reader-accent, var(--text)); outline-offset: 2px; }
+    .semantic-passport-explanation-body p { margin: 0; color: var(--text-muted); font-size: 0.6875rem; line-height: 1.5; overflow-wrap: anywhere; }
+    .semantic-passport-explanation-back {
+      align-self: flex-start;
+      margin-top: auto;
+      padding: 0.15rem 0;
+      border: 0;
+      background: none;
+      color: var(--reader-accent, var(--text));
+      font: inherit;
+      font-size: 0.625rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .semantic-passport-explanation-back:hover { color: var(--text); }
+    .semantic-passport-explanation-back:focus-visible { outline: 2px solid var(--frontend-stroke); outline-offset: 2px; }
+    @keyframes passport-explanation-in {
+      from { transform: rotateY(-90deg); opacity: 0; }
+      to { transform: rotateY(0); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .focus-chip[data-explaining="true"] .semantic-passport-explanation { animation: none; }
+    }
+
+/* A short mobile viewport cannot fit the Passport below the page header.
+   Keep its controls in the viewport without shrinking the drawing or prose. */
+@media (max-width: 720px) and (max-height: 480px) {
+  .focus-chip {
+    position: fixed;
+    left: 8px !important;
+    top: var(--passport-viewport-top, 8px) !important;
+    width: min(22rem, calc(100vw - 16px));
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - var(--passport-viewport-top, 8px) - 8px);
+    overflow-y: auto;
+  }
+  .focus-chip[data-explaining="true"] { overflow: hidden; }
 }

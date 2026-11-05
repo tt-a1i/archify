@@ -313,6 +313,7 @@ footer{padding:28px 0 32px}
 .source-card .line i{display:inline-block;width:3.2em;padding-right:10px;text-align:right;color:var(--faint);font-style:normal;user-select:none}
 .source-note{margin:0;padding:8px 12px;border-radius:8px;background:var(--sunk);box-shadow:inset 3px 0 0 var(--rule-strong);line-height:1.6}
 .source-note span{display:block;margin-top:2px;font-size:11.5px;color:var(--muted)}
+.source-content{white-space:pre-line;overflow-wrap:anywhere;max-height:280px;overflow:auto}
 .source-card footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 0;border-top:1px solid var(--rule);font-size:11.5px;color:var(--muted)}
 .source-pin code{font-size:11px}
 .source-card a{font-size:12px;font-weight:500}

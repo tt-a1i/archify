@@ -484,5 +484,18 @@
   "legend.waterfall.ok": "مكتمل",
   "legend.waterfall.error": "خطأ",
   "legend.waterfall.cancelled": "ملغى",
-  "legend.waterfall.incomplete": "غير مكتمل (بلا نهاية مسجَّلة)"
+  "legend.waterfall.incomplete": "غير مكتمل (بلا نهاية مسجَّلة)",
+  "viewer.passport.explain": "شرح",
+  "viewer.passport.explain.show": "عرض شرح هذه العقدة",
+  "viewer.passport.explanation": "الشرح",
+  "viewer.passport.explanation.back": "شرح {label}. فعّل للعودة إلى جواز المعلومات",
+  "viewer.passport.explanation.backLink": "العودة إلى جواز المعلومات",
+  "viewer.passport.drilldowns": "المخططات الفرعية",
+  "viewer.passport.drilldowns.list": "فتح مخطط فرعي",
+  "viewer.passport.drilldowns.hint": "يفتح Ctrl مع النقر أو النقر المزدوج العنصر الأول",
+  "viewer.passport.drilldowns.open": "فتح {label}",
+  "viewer.passport.back": "العودة إلى المخطط الأصل",
+  "viewer.passport.back.aria": "العودة إلى المخطط الأصل",
+  "viewer.nav.back": "رجوع",
+  "viewer.nav.back.title": "العودة إلى المخطط الأصل"
 }

@@ -484,5 +484,18 @@
   "legend.waterfall.ok": "Completed",
   "legend.waterfall.error": "Error",
   "legend.waterfall.cancelled": "Cancelled",
-  "legend.waterfall.incomplete": "Incomplete (no recorded end)"
+  "legend.waterfall.incomplete": "Incomplete (no recorded end)",
+  "viewer.passport.explain": "Explain",
+  "viewer.passport.explain.show": "Show the explanation for this node",
+  "viewer.passport.explanation": "Explanation",
+  "viewer.passport.explanation.back": "{label} explanation. Activate to return to the passport",
+  "viewer.passport.explanation.backLink": "Back to passport",
+  "viewer.passport.drilldowns": "Child diagrams",
+  "viewer.passport.drilldowns.list": "Open a child diagram",
+  "viewer.passport.drilldowns.hint": "Ctrl+click or double-click opens the first entry",
+  "viewer.passport.drilldowns.open": "Open {label}",
+  "viewer.passport.back": "Back to parent",
+  "viewer.passport.back.aria": "Return to the parent diagram",
+  "viewer.nav.back": "Back",
+  "viewer.nav.back.title": "Return to the parent diagram"
 }

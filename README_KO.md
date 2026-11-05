@@ -22,7 +22,7 @@
 
 <p align="center">
   <a href="https://github.com/tt-a1i/archify/stargazers"><img src="https://img.shields.io/github/stars/tt-a1i/archify?style=flat-square&amp;color=E5B650&amp;logo=github&amp;label=Stars" alt="GitHub stars" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-22c55e?style=flat-square" alt="Apache License 2.0" /></a>
   <a href="archify/SKILL.md"><img src="https://img.shields.io/badge/Agent-Skill-7C3AED?style=flat-square" alt="Agent Skill" /></a>
 </p>
 
@@ -40,8 +40,10 @@ https://github.com/user-attachments/assets/78570807-ba1d-4737-953f-55504a378a87
 
 Cursor, Claude Code, Codex CLI, OpenCode에서 사용할 수 있습니다.
 
-```bash
-npx skills add tt-a1i/archify -g
+**AI 에이전트에게 맡기기.** 다음 문장을 그대로 붙여 넣으세요.
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
 ```
 
 에이전트에게 다음과 같이 요청하세요.
@@ -94,18 +96,30 @@ Archify로 한 페이지로 답해 줘: API P99가 80 ms에서 600 ms로 올랐�
 
 ### 1. 설치
 
+**AI 에이전트에게 맡기기**
+
+다음 문장을 그대로 붙여 넣으세요.
+
+```text
+Install Archify for me by reading https://raw.githubusercontent.com/tt-a1i/archify/main/llms.txt
+```
+
+확인 없이 설치할 수도 있습니다. `--agent`는 하나, 또는 전환 대상마다 반복합니다 (`cursor`, `codex`, `claude-code`, `opencode`, `github-copilot`). `--copy`는 심볼릭 링크 대신 파일을 복사합니다.
+
+Cursor에만 설치:
+
 ```bash
-npx skills add tt-a1i/archify -g
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --global --copy --yes
+```
+
+또는 다섯 에이전트가 모두 필요한 경우에만:
+
+```bash
+npx -y skills@latest add https://archify.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes
 ```
 
 <details>
 <summary>다른 설치 방법과 업데이트 확인 동작</summary>
-
-비대화형 Cursor 설치:
-
-```bash
-npx -y skills add tt-a1i/archify --skill archify --agent cursor --global --copy --yes
-```
 
 설치하지 않고 사용해 보기:
 
@@ -219,11 +233,19 @@ node bin/archify.mjs validate workflow examples/agent-tool-call.workflow.json --
 
 ## 라이선스
 
-[MIT](LICENSE) — 자유롭게 사용, 수정, 배포할 수 있습니다.
+[Apache-2.0](LICENSE) — 자유롭게 사용, 수정, 배포할 수 있습니다.
+
+기존 MIT 허가는 계속 유효합니다. [NOTICE](NOTICE)와 [LICENSE-MIT](LICENSE-MIT)를 참조하세요. 타사 구성 요소는 각자의 라이선스를 유지합니다. 소프트웨어 라이선스는 사용자가 작성한 콘텐츠의 소유권을 변경하거나 Archify 상표의 일반적인 사용 권한을 부여하지 않습니다.
 
 ## 기여하기
 
 Issue, Pull Request, 실제 사용 사례 다이어그램을 환영합니다. [기여 가이드](CONTRIBUTING.md)에서 시작하세요. 실패는 재현 가능한 버그 양식으로 제보하고, 검증된 다이어그램은 [커뮤니티 Showcase 양식](https://github.com/tt-a1i/archify/issues/new?template=showcase.yml)으로 제출할 수 있습니다.
+
+## 기여자
+
+Archify를 함께 만들어 준 모든 분께 감사합니다. [팔로우해 보세요.](https://github.com/tt-a1i/archify/graphs/contributors) ❤️
+
+<p align="center"><a href="https://github.com/tt-a1i/archify/graphs/contributors"><img alt="Archify 기여자" src="https://raw.githubusercontent.com/tt-a1i/archify/contributors/contributors.svg" width="1000" /></a></p>
 
 ## Star History
 

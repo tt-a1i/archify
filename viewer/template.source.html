@@ -274,6 +274,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   <div class="container">
     <!-- Header -->
     <div class="header">
+      <div class="parent-back-bar no-print" id="parent-back-bar" hidden>
+        <button id="btn-parent-back" type="button" aria-label="{{i18n:viewer.passport.back.aria}}" title="{{i18n:viewer.nav.back.title}}">
+          <span class="parent-back-arrow" aria-hidden="true">&#8592;</span>
+          <span>{{i18n:viewer.passport.back}}</span>
+        </button>
+      </div>
       <div class="header-row"
            data-preset-badge-signal-flow="{{i18n:viewer.preset.badge.signalFlow}}"
            data-preset-badge-blueprint="{{i18n:viewer.preset.badge.blueprint}}"
@@ -284,6 +290,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       <p class="subtitle">[Subtitle description]</p>
     </div>
 
+    <!-- ARCHIFY:EXPLANATIONS_DATA -->
     <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->
     <!-- ARCHIFY:I18N_DATA -->
     <!-- Main Diagram -->
@@ -515,6 +522,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
               </div>
               <div class="semantic-passport-evidence-links" id="focus-evidence-links"></div>
             </div>
+            <div class="semantic-passport-drilldowns" id="focus-drilldowns" hidden>
+              <span class="semantic-passport-drilldowns-label">{{i18n:viewer.passport.drilldowns}}</span>
+              <div class="semantic-passport-drilldowns-list" id="focus-drilldowns-list" role="group" aria-label="{{i18n:viewer.passport.drilldowns.list}}"></div>
+              <small class="semantic-passport-drilldowns-hint">{{i18n:viewer.passport.drilldowns.hint}}</small>
+            </div>
             <span class="relationship-lens-summary" id="focus-summary" aria-live="polite"></span>
             <div class="semantic-passport-reach" id="focus-reach" hidden>
               <span class="semantic-passport-reach-label">{{i18n:viewer.passport.reach}}</span>
@@ -532,10 +544,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <div class="relationship-lens-actions">
             <button id="btn-focus-clear" type="button" aria-label="{{i18n:viewer.passport.close}}" title="{{i18n:viewer.common.close}}">&#215;</button>
             <button id="btn-focus-copy" type="button" aria-label="{{i18n:viewer.passport.copy.focus}}">{{i18n:viewer.passport.copy}}</button>
+            <button id="btn-focus-explain" type="button" hidden aria-label="{{i18n:viewer.passport.explain.show}}">{{i18n:viewer.passport.explain}}</button>
             <button id="btn-focus-relations" type="button" aria-label="{{i18n:viewer.passport.relations.show}}" aria-expanded="false" aria-controls="relationship-lens-list">{{i18n:viewer.passport.relations}}</button>
           </div>
         </div>
         <div class="relationship-lens-list" id="relationship-lens-list" aria-label="{{i18n:viewer.passport.relations.list}}"></div>
+        <div class="semantic-passport-explanation" id="focus-explanation" hidden>
+          <span class="semantic-passport-explanation-eyebrow">{{i18n:viewer.passport.explanation}}</span>
+          <strong class="semantic-passport-explanation-title" id="focus-explanation-title"></strong>
+          <div class="semantic-passport-explanation-body" id="focus-explanation-body" tabindex="0" aria-labelledby="focus-explanation-title"></div>
+          <button class="semantic-passport-explanation-back" id="focus-explanation-back" type="button">{{i18n:viewer.passport.explanation.backLink}}</button>
+        </div>
       </div>
       <div class="route-probe no-print" id="route-probe" hidden role="region" aria-labelledby="route-probe-title" data-state="idle">
         <div class="route-probe-head">
@@ -711,6 +730,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
     function copyReaderText(value) {
       function fallbackCopy() {
+        var previousFocus = document.activeElement;
         var field = document.createElement('textarea');
         field.value = value;
         field.setAttribute('readonly', '');
@@ -721,6 +741,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         var copied = false;
         try { copied = document.execCommand('copy'); } catch (_) {}
         field.remove();
+        if (previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function') {
+          try { previousFocus.focus({ preventScroll: true }); } catch (_) { try { previousFocus.focus(); } catch (_) {} }
+        }
         return copied;
       }
       var policy = document.permissionsPolicy || document.featurePolicy;
@@ -969,6 +992,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 /* ARCHIFY:MOTION_GOVERNOR */
 
+    /* Authored node explanations are passport-only prose. They are read from
+       one JSON block outside the SVG, so canonical exports stay free of them,
+       and an artifact without explanations carries no block at all. */
+    Archify.explanations = (function () {
+      var element = document.getElementById('archify-explanations-data');
+      var payload = null;
+      if (element) {
+        try {
+          var parsed = JSON.parse(element.textContent || 'null');
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) payload = parsed;
+        } catch (_) {}
+      }
+      return {
+        node: function (id) {
+          var value = payload && Object.prototype.hasOwnProperty.call(payload, id) ? payload[id] : null;
+          return typeof value === 'string' && value.trim() ? value : null;
+        },
+        count: function () { return payload ? Object.keys(payload).length : 0; }
+      };
+    })();
     /* Verified repository evidence is emitted only after the renderer checks
        the authored GitHub revision, source blobs, and optional line ranges
        against the explicit --repo-root. It remains outside the SVG so every
@@ -1390,6 +1433,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
        Ignored when focus is inside an input/textarea/contenteditable.
        ============================================================ */
     document.addEventListener('keydown', function (e) {
+      if (e.isComposing || e.keyCode === 229) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End')) return;
       if (e.defaultPrevented) return;
@@ -1455,6 +1499,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       } else if (e.key === 'Escape' && Archify.intentTrace.active()) {
         e.preventDefault();
         Archify.intentTrace.clear();
+      } else if (e.key === 'Escape' && Archify.focus.explaining()) {
+        e.preventDefault();
+        Archify.focus.explain();
       } else if (e.key === 'Escape' && Archify.focus.active()) {
         e.preventDefault();
         Archify.focus.clear({ restoreFocus: true });

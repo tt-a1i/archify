@@ -21,6 +21,7 @@ export function classifyPaths(paths) {
     if (name === 'archify.zip') { archiveChanged = true; plan.package = true; continue; }
     if (/^test\/[^/]+\.test\.mjs$/.test(name)) {
       plan.changedTests.push(name);
+      if (name === 'test/repository-evidence-replacement.test.mjs') plan.windows = true;
       if (browserTestFiles.includes(name.slice(5)) || name.endsWith('-browser.test.mjs')) {
         plan.browser = true;
         if (!plan.changedTests.includes('test/browser-gate.test.mjs')) plan.changedTests.push('test/browser-gate.test.mjs');

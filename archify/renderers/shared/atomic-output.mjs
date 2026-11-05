@@ -1118,7 +1118,7 @@ function restorePublicationBackup(binding, backupPath, commitPath, subject) {
  * The caller owns `binding` and must release it after this function returns.
  */
 export function publishRegularFileBinding(binding, candidatePath, snapshot, {
-  subject = 'candidate',
+  subject = 'candidate', expectedPreviousSha256, expectedPreviousBytes,
 } = {}) {
   const candidate = path.resolve(candidatePath);
   const commitPath = snapshot?.slot?.commitPath;
@@ -1199,6 +1199,8 @@ export function publishRegularFileBinding(binding, candidatePath, snapshot, {
   if (snapshot.target.kind === 'file') {
     const previous = captureRegularFileBinding(commitPath, {
       subject: 'previous-output',
+      ...(expectedPreviousSha256 === undefined ? {} : { expectedSha256: expectedPreviousSha256 }),
+      ...(expectedPreviousBytes === undefined ? {} : { expectedBytes: expectedPreviousBytes }),
       expectedIdentity: {
         device: snapshot.target.device,
         inode: snapshot.target.inode,

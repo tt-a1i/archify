@@ -1,3 +1,4 @@
+import { softwareNoticesHtml } from '../renderers/shared/software-notices.mjs';
 import { parseRepositoryRemote } from '../renderers/shared/repository-location.mjs';
 
 const COMPARATOR_VERSION = 1;
@@ -229,6 +230,7 @@ function presentationChanged(base, head) {
   const basePresentation = {
     title: base.meta?.title,
     locale: base.meta?.locale,
+    translations: Object.keys(base.meta?.translations || {}).length ? base.meta.translations : undefined,
     subtitle: base.meta?.subtitle,
     animation: base.meta?.animation,
     visual_preset: base.meta?.visual_preset,
@@ -242,6 +244,7 @@ function presentationChanged(base, head) {
   const headPresentation = {
     title: head.meta?.title,
     locale: head.meta?.locale,
+    translations: Object.keys(head.meta?.translations || {}).length ? head.meta.translations : undefined,
     subtitle: head.meta?.subtitle,
     animation: head.meta?.animation,
     visual_preset: head.meta?.visual_preset,
@@ -772,7 +775,7 @@ export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSv
     : headSvg;
   const html = `<!doctype html>
 <html lang="en" data-theme="dark" data-preset="${esc(receipt.view.visualPreset)}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(receipt.head.title)} Architecture Delta</title>
+<head><meta charset="utf-8">${softwareNoticesHtml}<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(receipt.head.title)} Architecture Delta</title>
 <style>
 ${artifactCss}
 :root{color-scheme:dark;--d-add:#34d399;--d-remove:#fb7185;--d-change:#fbbf24;--d-move:#7dd3fc;--d-focus:#7dd3fc;--d-ink:#e6edf5;--d-muted:#8aa0b5;--d-line:#25384a}
@@ -999,6 +1002,10 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     const source = deltaCanvas?.querySelector(':scope > svg');
     if (!source) throw new Error('Canonical Delta SVG is unavailable.');
     const clone = source.cloneNode(true);
+    const metadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
+    metadata.setAttribute('id', 'archify-software-notices');
+    metadata.textContent = JSON.parse(document.getElementById('archify-software-notices').textContent);
+    clone.insertBefore(metadata, clone.firstChild);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clone.removeAttribute('style');
     clone.querySelectorAll('[data-delta-review-current]').forEach((element) => element.removeAttribute('data-delta-review-current'));
