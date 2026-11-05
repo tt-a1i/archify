@@ -1,0 +1,892 @@
+[
+  {
+    "key": "index-en-1440x900",
+    "screenshot": "after/index-en-1440x900.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "From plain English\nto architecture you can trust.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "index-en-390x844",
+    "screenshot": "after/index-en-390x844.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "From plain English\nto architecture you can trust.",
+      "width": 390,
+      "scrollWidth": 390,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "gallery-en-1440x900",
+    "screenshot": "after/gallery-en-1440x900.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "Proof,\nnot promises.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "gallery-en-390x844",
+    "screenshot": "after/gallery-en-390x844.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "Proof,\nnot promises.",
+      "width": 390,
+      "scrollWidth": 390,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "guide-en-1440x900",
+    "screenshot": "after/guide-en-1440x900.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "Choose the question.\nGet the right diagram.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "guide-en-390x844",
+    "screenshot": "after/guide-en-390x844.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "Choose the question.\nGet the right diagram.",
+      "width": 390,
+      "scrollWidth": 390,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "start-en-1440x900",
+    "screenshot": "after/start-en-1440x900.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "Describe it. Archify maps it.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "start-en-390x844",
+    "screenshot": "after/start-en-390x844.png",
+    "metrics": {
+      "lang": "en",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "Describe it. Archify maps it.",
+      "width": 390,
+      "scrollWidth": 390,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "index-zh-1440x900",
+    "screenshot": "after/index-zh-1440x900.png",
+    "metrics": {
+      "lang": "zh-CN",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "\u7528\u81ea\u7136\u8bed\u8a00\uff0c\n\u751f\u6210\u53ef\u4fe1\u7684\u67b6\u6784\u56fe\u3002",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  },
+  {
+    "key": "index-zh-390x844",
+    "screenshot": "after/index-zh-390x844.png",
+    "metrics": {
+      "lang": "zh-CN",
+      "fonts": [
+        {
+          "spec": "400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "italic 400 16px \"Fraunces\"",
+          "loadedFaces": [
+            {
+              "family": "Fraunces",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Inter\"",
+          "loadedFaces": [
+            {
+              "family": "Inter",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"JetBrains Mono\"",
+          "loadedFaces": [
+            {
+              "family": "JetBrains Mono",
+              "status": "loaded"
+            }
+          ]
+        },
+        {
+          "spec": "400 16px \"Space Grotesk\"",
+          "loadedFaces": [
+            {
+              "family": "Space Grotesk",
+              "status": "loaded"
+            }
+          ]
+        }
+      ],
+      "heading": "\u7528\u81ea\u7136\u8bed\u8a00\uff0c\n\u751f\u6210\u53ef\u4fe1\u7684\u67b6\u6784\u56fe\u3002",
+      "width": 390,
+      "scrollWidth": 390,
+      "readyState": "complete"
+    },
+    "requests": [
+      {
+        "url": "<local-origin>/assets/fonts.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/site-navigation.css",
+        "type": "Stylesheet"
+      },
+      {
+        "url": "<local-origin>/assets/inter-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/jetbrains-mono-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-italic-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/fraunces-normal-latin.woff2",
+        "type": "Font"
+      },
+      {
+        "url": "<local-origin>/assets/space-grotesk-normal-latin.woff2",
+        "type": "Font"
+      }
+    ],
+    "remoteFontResources": []
+  }
+]

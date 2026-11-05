@@ -1,0 +1,37 @@
+[
+  {
+    "name": "complete",
+    "assets": [
+      "archify-lockup-light.svg",
+      "archify-mark.svg",
+      "fonts.css",
+      "fraunces-OFL.txt",
+      "fraunces-italic-latin.woff2",
+      "fraunces-normal-latin.woff2",
+      "inter-OFL.txt",
+      "inter-normal-latin.woff2",
+      "jetbrains-mono-normal-latin.woff2",
+      "jetbrainsmono-OFL.txt",
+      "site-language.js",
+      "site-navigation.css",
+      "sources.json",
+      "space-grotesk-normal-latin.woff2",
+      "spacegrotesk-OFL.txt"
+    ],
+    "localFontsComplete": true
+  },
+  {
+    "name": "without-font-copy",
+    "assets": [
+      "archify-lockup-light.svg",
+      "archify-mark.svg",
+      "site-language.js",
+      "site-navigation.css"
+    ],
+    "localFontsComplete": false
+  },
+  {
+    "name": "without-local-link",
+    "equalsObservedFailingBaseline": true
+  }
+]
