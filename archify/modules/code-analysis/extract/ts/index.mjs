@@ -14,7 +14,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 13;
+export const REVISION = 14;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -256,35 +256,43 @@ function resolve(record, containingFile, absRoot, fileSet, options, inputs) {
   // name merely starts with ".." (e.g. "..generated/") must not be misclassified.
   if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
   if (record.kind === 'require' && !record.typeOnly && /\.d\.(?:ts|cts|mts)$/.test(rel)) {
-    const entry = capturedDirectoryMain(specifier, containingFile, absRoot, fileSet, inputs);
-    if (entry) return { to: entry };
+    const runtime = resolveRelativeRequire(specifier, containingFile, absRoot, fileSet, inputs);
+    if (runtime) return runtime;
   }
   if (fileSet.has(rel)) return { to: rel };
   return { reason: 'unknown' };
 }
 
-// TypeScript may select a package's declaration. For a relative CommonJS
-// directory, use an exact, captured JS main (or index.js) when unambiguous.
-function capturedDirectoryMain(specifier, containingFile, root, fileSet, inputs) {
+// TypeScript can prefer a declaration even for a runtime require. Check only
+// relative files and directory entries using the analysis's frozen inventory.
+function resolveRelativeRequire(specifier, containingFile, root, fileSet, inputs) {
   const parts = specifier.split('/');
   if (!['.', '..'].includes(parts[0])) return;
-  const dir = path.resolve(path.dirname(containingFile), specifier);
-  const relative = path.relative(root, dir);
+  const requested = path.resolve(path.dirname(containingFile), specifier);
+  const relative = path.relative(root, requested);
   if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return;
-  if (!inputs.directoryExists(dir)) return;
-  // Without an explicit directory suffix, Node tries files before a directory.
+
+  const target = file => {
+    const rel = toPosix(path.relative(root, file));
+    return /\.[cm]?js$/.test(rel) && fileSet.has(rel) ? { to: rel } : { reason: 'unknown' };
+  };
+  // JSON, native, and excluded files also win before a directory. Their
+  // presence must stop the search even though they cannot supply a JS edge.
   const explicitDirectory = ['', '.', '..'].includes(parts.at(-1));
-  if (!explicitDirectory && ['', '.js', '.json', '.node'].some(ext => inputs.fileExists(dir + ext))) return;
-  const manifest = inputs.readFile(path.join(dir, 'package.json'));
+  if (!explicitDirectory) {
+    const file = ['', '.js', '.json', '.node'].map(ext => requested + ext).find(inputs.fileExists);
+    if (file) return target(file);
+  }
+  if (!inputs.directoryExists(requested)) return { reason: 'unknown' };
+  const manifest = inputs.readFile(path.join(requested, 'package.json'));
   let main = 'index.js';
   if (manifest !== undefined) {
     try {
       const pkg = JSON.parse(manifest);
-      if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) return;
+      if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) return { reason: 'unknown' };
       main = pkg.main || main;
-    } catch { return; }
+    } catch { return { reason: 'unknown' }; }
   }
-  if (typeof main !== 'string' || !/\.[cm]?js$/.test(main)) return;
-  const entry = toPosix(path.relative(root, path.resolve(dir, main)));
-  if (fileSet.has(entry)) return entry;
+  if (typeof main !== 'string' || !/\.[cm]?js$/.test(main)) return { reason: 'unknown' };
+  return target(path.resolve(requested, main));
 }

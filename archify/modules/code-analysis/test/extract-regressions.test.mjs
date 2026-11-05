@@ -57,14 +57,33 @@ test('capturing declarations distinguishes a directory require from a type-only 
   const root = fixture(t, {
     'package.json': JSON.stringify({ main: './index.js', types: './types/index.d.ts' }),
     'index.js': 'exports.value = 1;', 'types/index.d.ts': 'export declare const value: number;',
-    'test/use.cjs': "require('../');", 'test/use.cts': "import type lib = require('../');",
+    'test/use.cjs': "require('../'); require('../types/only');", 'test/use.cts': "import type lib = require('../');",
+    'types/only.d.ts': 'export declare const value: number;',
     'config.json': JSON.stringify({ exclude: [] }),
   });
   const result = extract(root, ['--language', 'ts', '--config', path.join(root, 'config.json')]);
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const { imports } = JSON.parse(result.stdout);
-  assert.equal(imports.find(edge => edge.from === 'test/use.cjs').to, 'index.js');
+  assert.equal(imports.find(edge => edge.from === 'test/use.cjs' && edge.specifier === '../').to, 'index.js');
+  assert.equal(imports.find(edge => edge.specifier === '../types/only').resolved, false);
   assert.equal(imports.find(edge => edge.typeOnly).to, 'types/index.d.ts');
+});
+
+test('extensionless and explicit CommonJS file loads use the JS implementation beside its declaration', (t) => {
+  const root = fixture(t, {
+    'lib/main.js': 'exports.value = 1;', 'lib/main.d.ts': 'export declare const value: number;',
+    'lib/typed.d.ts': 'export declare const value: number;',
+    'entry.cjs': "require('./lib/main'); require('./lib/main.js'); require('./lib/typed');",
+  });
+  const result = extract(root, ['--language', 'ts']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const { imports } = JSON.parse(result.stdout);
+  const runtime = createRequire(path.join(root, 'entry.cjs'));
+  for (const specifier of ['./lib/main', './lib/main.js']) {
+    const file = path.relative(fs.realpathSync(root), runtime.resolve(specifier)).split(path.sep).join('/');
+    assert.equal(imports.find(edge => edge.specifier === specifier).to, file, specifier);
+  }
+  assert.equal(imports.find(edge => edge.specifier === './lib/typed').resolved, false);
 });
 
 test('extract preserves import-equals and ignores locally bound require calls', (t) => {
