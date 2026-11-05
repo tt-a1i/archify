@@ -58,6 +58,7 @@ for (const [command, stage, signal, target] of [
   ['deliver', 'check', 'SIGTERM', 'group'],
   ['finalize', 'check', 'SIGINT', 'group'],
   ['finalize', 'render', 'SIGINT', 'parent'],
+  ['finalize', 'check', 'SIGINT', 'worker'],
   ['deliver', 'check', 'SIGINT', 'worker'],
   ['check', 'check', 'SIGINT', 'parent'],
   ['deliver', 'check', 'SIGKILL', 'group'],
@@ -98,7 +99,7 @@ for (const [command, stage, signal, target] of [
     assert.equal(diagnostic.evidence.origin, target === 'worker' ? 'child' : 'command');
     assert.equal(diagnostic.evidence.inspectionComplete, false);
     assert.ok(diagnostic.supportedFixes.length);
-    if (command === 'finalize' && stage === 'render' && target === 'parent') {
+    if (command === 'finalize' && ((stage === 'render' && target === 'parent') || (stage === 'check' && target === 'worker'))) {
       assert.equal(receipt.failedStage, 'deliver');
       assert.equal('nextAction' in receipt, false);
     }
