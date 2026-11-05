@@ -98,6 +98,10 @@ for (const [command, stage, signal, target] of [
     assert.equal(diagnostic.evidence.origin, target === 'worker' ? 'child' : 'command');
     assert.equal(diagnostic.evidence.inspectionComplete, false);
     assert.ok(diagnostic.supportedFixes.length);
+    if (command === 'finalize' && stage === 'render' && target === 'parent') {
+      assert.equal(receipt.failedStage, 'deliver');
+      assert.equal('nextAction' in receipt, false);
+    }
     assert.equal(fs.existsSync(path.join(root, '.archify-delivery-lock.json')), false);
     assert.equal(fs.existsSync(path.join(root, 'published.delivery-lock.json')), false);
     assert.deepEqual(fs.readdirSync(path.join(root, 'tmp')), []);

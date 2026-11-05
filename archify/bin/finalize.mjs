@@ -1137,8 +1137,9 @@ export async function runFinalize({
           };
           receipt.stages.deliver = stageEntry;
         } else if (stage === 'deliver') {
-          const validationFailed = stageDiagnostics?.some((diagnostic) => diagnostic.code === 'finalize/candidate-changed-during-delivery')
-            || ['input', 'render', 'check'].includes(stageReceipt?.stage);
+          const validationFailed = !result.interruption && (
+            stageDiagnostics?.some((diagnostic) => diagnostic.code === 'finalize/candidate-changed-during-delivery')
+            || ['input', 'render', 'check'].includes(stageReceipt?.stage));
           receipt.stages.validate = validationFailed ? {
             ...stageEntry,
             status: 'fail',
