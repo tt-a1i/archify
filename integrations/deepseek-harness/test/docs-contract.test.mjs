@@ -132,15 +132,17 @@ test('Skills CLI, Cursor, Codex, Claude Code, OpenCode, and Raven remain the def
   const english = read('README.md');
   const chinese = read('README_ZH.md');
   const japanese = read('README_JA.md');
-  assert.match(english, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(chinese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
-  assert.match(japanese, /^```bash\nnpx skills add tt-a1i\/archify -g\n```$/m);
+  const skillsCli = /^npx -y skills@latest add https:\/\/archify\.si --skill archify --agent cursor --global --copy --yes$/m;
+  assert.match(english, skillsCli);
+  assert.match(chinese, skillsCli);
+  assert.match(japanese, skillsCli);
   assert.match(english, /## Quick start/);
   assert.match(chinese, /## 快速开始/);
   assert.match(japanese, /## クイックスタート/);
   const dshEnglishIndex = english.indexOf('DeepSeek Harness');
   const quickStartIndex = english.indexOf('## Quick start');
   assert.ok(dshEnglishIndex > quickStartIndex, 'DSH docs must not precede the default quick start');
+  assert.ok(dshEnglishIndex > english.search(skillsCli), 'DSH docs must not precede the Skills CLI install');
 });
 
 test('npm README describes the packaged version independently of publication status', () => {
