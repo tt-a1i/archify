@@ -14,7 +14,9 @@
 
 ## 0. 摘要：检查优先级与严重级别（2026-11-04）
 
-产品决定：分析首先回答“代码有没有必须处理的问题”，再回答“哪里人维护起来吃力”。颜色只按这两类区分，不再按规则各自定级。下述目标级别与新增规则均为待实现，现状一栏以 `labs/code-analysis`（`34c99b6f`）为准。
+产品决定：分析首先回答“代码有没有必须处理的问题”，再回答“哪里人维护起来吃力”。颜色只按这两类区分，不再按规则各自定级。下述目标级别与新增规则除标 🟢 的项外均为待实现，现状一栏以 `labs/code-analysis`（`34c99b6f`）为准。
+
+完成标记：🟢 表示已在 `labs/code-analysis`（`34c99b6f`）实现，并已对照源码核对（2026-11-04）；没有标记的项尚未实现。
 
 ### 0.1 级别的含义
 
@@ -28,7 +30,7 @@
 
 ### 0.2 第一优先：严重问题标红（error）
 
-现状：目前没有任何规则产出 error，循环依赖全部低于红色。
+现状：目前没有任何规则产出 error，循环依赖全部低于红色。本节各项均未实现。
 
 | 规则 | 现状级别 | 目标级别 |
 |---|---|---|
@@ -48,13 +50,13 @@
 
 以下各项共同的规则：级别为 warning，用户审查后可以忽略（见 0.4），所有判断附 `file:line` 证据。依赖命名、文本模式等启发式判断的规则，`confidence` 设为 0.7 并在说明中写明判断方法。
 
-**代码冗余（`redundancy/duplicate-block`，新增）**
+**代码冗余（`redundancy/duplicate-block`，新增）**：未实现，概览中列为“duplicate code”未检查。
 
 运行没有问题，AI 读也没有问题，但同一段逻辑改一处漏一处，人维护吃力。按第 13 节 B 的方案，先做有最小长度门槛的 token 级完全重复，忽略格式与注释，默认排除测试、生成代码和第三方代码；展示全部位置、两处对照和重复行数。相似但业务不同的代码不自动合并，由人或 AI 判断。
 
 原型参考：`claude/atlas-showcase-demos` 分支的 `experiments/atlas-showcase/pro/build-signals.mjs`，以 7 行归一化窗口在 Archify 上找到 369 对重复块，约占非第三方代码的 2.1%；最大的一处是 `bin/preview.mjs` 与 `renderers/shared/cli.mjs` 之间 18 行相同的文件打开逻辑。原型只做实验，阈值和误报尚未在真实项目上标定。
 
-**单一模块集中度过高（`coupling/concentration`，新增）**
+**单一模块集中度过高（`coupling/concentration`，新增）**：未实现；🟢 现有 `coupling/hub`（warning）已覆盖其中“双向都多”的情况。
 
 现有 `coupling/hub` 只覆盖“被很多模块依赖、同时依赖很多模块”的情况（默认 fan-in 与 fan-out 都 ≥ 5），覆盖不到只进不出的核心模块和体量过大的模块。新规则在以下任一条件成立时报告，阈值可配置并在证据中回显：
 
@@ -64,14 +66,14 @@
 
 只报告事实与原值，不推断“应当拆分”，是否拆分取决于业务职责。Archify 自身的参考：其余 19 个模块中有 16 个直接或间接依赖 `renderers/shared`；`bin/archify.mjs` 一个文件 7,323 行。
 
-**AI 审查误报：业务逻辑不应更改（外部结果导入 + 审查后忽略）**
+**AI 审查误报：业务逻辑不应更改（外部结果导入 + 审查后忽略）**：外部结果导入未实现；忽略与复核复用已实现的基线（见 0.4）。
 
 CodeRabbit 等 AI 审查工具可能把有意为之的业务或工作流逻辑报成错误。这类结果不应当触发修改，但需要可见、可追溯：
 
 - 导入外部审查结果作为 finding，代码为 `external/<工具>`，保留原工具的规则、原文和位置；级别统一为 warning，不直接标红。格式优先支持 SARIF；CodeRabbit 没有标准导出格式，候选做法是通过 GitHub API 读取它在 PR 上的 review comments，需先确认可行性与权限。
 - 用户审查后选择“这是业务逻辑，保留”，必须填写原因，写入基线；之后该项不计入结论与 CI 失败，但仍列在已接受中。
-- 证据（`evidenceDigest`）变化时重新提示复核，避免业务逻辑被修改后旧的忽略理由继续生效。
-- 同一忽略能力适用于本模块自己的 warning，例如有意保留的复杂分支。
+- 🟢 证据（`evidenceDigest`）变化时重新提示复核，避免业务逻辑被修改后旧的忽略理由继续生效。
+- 🟢 同一忽略能力适用于本模块自己的 warning，例如有意保留的复杂分支。
 
 **可读性差、没有按工程目录分类（`organization/*`，新增）**
 
@@ -80,19 +82,20 @@ CodeRabbit 等 AI 审查工具可能把有意为之的业务或工作流逻辑�
 | `organization/mixed-roles` | 一个文件同时承担入口/命令行或文件读写，以及视图、模型或领域逻辑（没有 MVC 式分层） | 命中各类职责的行，例如 `process.argv`、`process.exit`、文件系统调用 |
 | `organization/folder-roles` | 一个目录里混放三种以上职责的文件 | 每种职责的文件列表 |
 | `organization/generic-name` | `util`、`helpers`、`misc`、`common` 等不说明内容的文件名 | 文件路径与大小 |
-| `coupling/internal-leak` | 其他模块绕过入口文件直接引用内部文件（缺少接口抽象） | 每一条越过入口的 import |
+| 🟢 `coupling/internal-leak` | 其他模块绕过入口文件直接引用内部文件（缺少接口抽象） | 每一条越过入口的 import |
 
 职责判断依赖命名和文本模式，属于启发式，`confidence` 为 0.7。原型参考同上：Archify 中有 15 个文件混合了命令行或 I/O 与其他逻辑；8 个渲染器在加载时读取 `process.argv`，其中 7 个调用 `process.exit`。
 
-`coupling/internal-leak` 已实现并合入 `labs/code-analysis`（#1206，`34c99b6f`）。它目前在没有声明入口约定时报 info，只有项目在配置中声明入口文件后才报 warning，以免把常见的深层导入写法当成缺陷；是否按本节统一为 warning，需要在第一批真实项目验收后决定。
+🟢 `coupling/internal-leak` 已实现并合入 `labs/code-analysis`（#1206，`34c99b6f`）。它目前在没有声明入口约定时报 info，只有项目在配置中声明入口文件后才报 warning，以免把常见的深层导入写法当成缺陷；是否按本节统一为 warning，需要在第一批真实项目验收后决定。
 
 ### 0.4 审查后忽略
 
-现有基线（`--baseline`，见第 11 节）已支持按稳定 ID 接受问题、记录原因和证据哈希。0.3 的“允许审查后忽略”在此基础上补齐：
+🟢 现有基线（`--baseline`，见第 11 节）已支持按稳定 ID 接受问题、记录原因和证据哈希：`check --update-baseline --reason` 写入；证据变化的已接受项重新计入 CI 失败；不再出现的基线条目列为过期；已接受项在 Classic 与 Atlas 中仍列出但不再给图着色。0.3 的“允许审查后忽略”在此基础上补齐：
 
-- 页面上直接提供“忽略并说明原因”，不必手工编辑基线文件；原因为必填。
+- 页面上直接提供“忽略并说明原因”，不必手工编辑基线文件；原因为必填。（现状：只能通过命令行写入，`--reason` 可省略并使用默认文字。）
 - 忽略只对 warning 开放。error 可以写入基线以免阻塞 CI，但页面保持红色并标注“已接受的严重问题”。
-- 已忽略项默认收起，可随时查看与撤销；证据变化后显示“已接受 · 证据已变化”，需要复核。
+- 已忽略项默认收起，可随时查看与撤销。（现状：已接受项以淡色和“accepted”标签列出，不收起，页面上不能撤销。）
+- 🟢 证据变化后显示“已接受 · 证据已变化”（界面文案为 “accepted · evidence changed”），需要复核。
 
 ### 0.5 调整后的顺序
 
@@ -115,7 +118,7 @@ CodeRabbit 等 AI 审查工具可能把有意为之的业务或工作流逻辑�
 
 同一次分析结果（`findings.json`、`raw-facts.json`、`module-graph.json`）有三种展示方式，面向不同的读者。三者的文件、函数、依赖和 finding 数量一致，只是详略不同。以下截图均为 Archify 自身（`labs/code-analysis` `34c99b6f`，`archify/` 包，TypeScript/JavaScript），深色主题。
 
-**1. Code Analysis 模块图（Classic）**
+**1. 🟢 Code Analysis 模块图（Classic）**
 
 在架构图上点击 Code Analysis 按钮后出现。每个组件按问题级别描边；点击组件进入它的 finding 列表，点击 finding 或证据路径直接打开对应源码行（例如 `shared/atomic-output.mjs` 第 320 行）。
 
@@ -123,7 +126,7 @@ CodeRabbit 等 AI 审查工具可能把有意为之的业务或工作流逻辑�
 
 ![Code Analysis 模块图：选中 Shared rendering 组件的 Complex functions finding，左侧打开 shared/atomic-output.mjs 第 316–324 行源码](../assets/code-analysis-views/classic-source.png)
 
-**2. Atlas**
+**2. 🟢 Atlas**
 
 在阅读栏点击 Atlas 打开。整个仓库画成一圈：外圈弧是模块，刺是文件，点是函数，黄色是 warning；圈内的线是文件依赖。右栏给出总数、finding 分组、复杂度分布和按耦合排序的模块。
 
@@ -131,7 +134,7 @@ CodeRabbit 等 AI 审查工具可能把有意为之的业务或工作流逻辑�
 
 ![Atlas：138 个文件、387 条文件依赖、2,841 个函数，右栏列出 318 条 finding 与模块耦合排序](../assets/code-analysis-views/atlas.png)
 
-**3. Atlas 3D**
+**3. 🟢 Atlas 3D（实验原型，未接入产品界面）**
 
 实验原型，位于 `experiments/atlas-3d/`（#1207），数据由同一次运行生成。把 Atlas 画成一棵树：被依赖最多的模块为树干，其他模块按依赖层高度生长在通向树干的最强依赖上，文件是花团，函数是其中的点。
 
