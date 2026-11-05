@@ -56,6 +56,28 @@ Each rule names a `from` layer and either `disallow` (layers it must not import)
 
 Boundaries come only from this config. The architecture diagram is not used as a rule: a missing arrow on the diagram does not forbid a dependency. Without `boundaries`, the overview lists architecture boundaries as not checked. Coverage shows how many files each layer matched; a layer matching no files usually means a mistyped glob. An invalid `boundaries` block stops analysis with `config/boundaries-invalid`.
 
+## Entry points
+
+`coupling/internal-leak` reports when other modules import a module's internal files instead of going through one entry point. Each such module is one finding listing every import that reaches inside it, the files reached, and the modules that import them.
+
+A module's entry files are, in order:
+
+1. files matching `rules.coupling.internalLeak.entries` in the config, when you declare your convention;
+2. otherwise an `index.*` (JS/TS) or `__init__.py` (Python) directly in the module's folder.
+
+```json
+{ "rules": { "coupling": { "internalLeak": { "entries": ["src/*/index.ts", "src/*/api.ts"], "minFiles": 3 } } } }
+```
+
+Severity follows what is known about your convention:
+
+- **warning**: you declared entry files and imports bypass them;
+- **info**: an `index.*` or `__init__.py` exists and imports bypass it, or the module has no entry file and other modules reach `minFiles` (default 3) or more of its files. Deep imports are a common, deliberate style in ES modules and Python packages, so without a declared convention this is a signal, not a defect.
+
+Imports within one module, test and generated files, and modules under a `vendor/` or `third_party/` folder are not checked. Java is not checked: a package's public classes are its interface. If deep imports are your convention, add `"coupling/internal-leak"` to `ignore`. An invalid option stops analysis with `config/internal-leak-invalid`.
+
+In the Atlas, focusing any module marks the files other modules import, whether or not the rule fired; see [Atlas view](#atlas-view).
+
 ## Function complexity
 
 Every Python and JS/TS function is measured the same way. **Cyclomatic complexity** is 1 plus one for each decision point:
@@ -143,7 +165,7 @@ The Classic view reads the result against your architecture diagram and opens so
 - each **dependency** between two analyzed files is a curve, coloured by the importing module and bundled through both modules, so heavy coupling shows as a thick strand;
 - each measured **function** is a spike outside its file, longer for higher cyclomatic complexity; a reported function carries a dot in its severity colour.
 
-Hover for names and numbers. Click a module arc (or a module in the side panel) to focus it: its own dependencies stay coloured, other modules' dependencies on it are drawn in a neutral colour, and the rest fades. Click a dotted spike or a finding in the side panel to draw that finding over everything else: a cycle's path, a module cycle's modules, a boundary's crossing imports, or a function and its file's dependencies. **Open evidence in Classic view** shows the same finding with its source excerpt and AI task.
+Hover for names and numbers. Click a module arc (or a module in the side panel) to focus it: its own dependencies stay coloured, other modules' dependencies on it are drawn in a neutral colour, and the rest fades. A mark inside the rim shows each of its files that other modules import (longer for more importing modules), and the side panel says how many of its files are imported from outside and by how many modules: the module's public surface as the code actually uses it. Click a dotted spike or a finding in the side panel to draw that finding over everything else: a cycle's path, a module cycle's modules, a boundary's crossing imports, the imports reaching inside a module (its arc thickens and its entry files, if any, are ringed), or a function and its file's dependencies. **Open evidence in Classic view** shows the same finding with its source excerpt and AI task.
 
 Motion is used only to show change: the picture grows out from the centre when the Atlas opens, a new focus or finding cross-fades in, and a light travels around a selected import cycle in the direction of its imports. With your system's reduced-motion setting on, everything is drawn at once and stays still.
 

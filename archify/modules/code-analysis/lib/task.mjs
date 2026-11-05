@@ -29,6 +29,7 @@ const IMPACT = {
   'coupling/import-cycle': 'These files cannot be read, tested or loaded independently of each other; load order may matter at import time (not proven).',
   'coupling/cycle': 'These modules cannot be changed, tested or reused independently of each other.',
   'coupling/hub': 'Changes here reach many dependents, and the module may combine several responsibilities.',
+  'coupling/internal-leak': 'Other modules depend on this module\'s internal files, so moving, renaming or splitting any of them breaks importers; there is no single interface to keep stable.',
   'architecture/boundary': 'Code in one layer depends on a layer the configured rule forbids, so changes in that layer can break it and the intended layering erodes.',
 };
 
@@ -47,6 +48,10 @@ const PRESERVE = {
   ],
   'coupling/hub': () => [
     'The interface dependents use; moving code must keep their imports working or update them in the same change.',
+  ],
+  'coupling/internal-leak': (d) => [
+    `Every name the cited importers use from ${d.subject.module}: export it from the entry file with the same behaviour.`,
+    'Runtime behaviour of the importing modules; only their import paths change.',
   ],
   'architecture/boundary': (d) => [
     `Behaviour of the code in layer "${d.subject.boundary.from}" that currently imports layer "${d.subject.boundary.to}".`,
@@ -71,6 +76,9 @@ const ACCEPTANCE = {
   'coupling/cycle': () => ['The modules no longer depend on each other in a cycle (re-analysis no longer reports this module cycle).'],
   'coupling/hub': (d) => [`Fan-in or fan-out of the module falls below the configured threshold (fan-in ${d.evidence.threshold.fanIn}, fan-out ${d.evidence.threshold.fanOut}), or the split is explained.`],
   'architecture/boundary': (d) => [`No import from layer "${d.subject.boundary.from}" to layer "${d.subject.boundary.to}" remains.`],
+  'coupling/internal-leak': (d) => [d.evidence.entries.length
+    ? `No module outside ${d.subject.module} imports its internal files; they import ${d.evidence.entries.join(', ')} instead.`
+    : `${d.subject.module} has an entry file other modules import instead of its internal files (or fewer than ${d.evidence.threshold.minFiles} internal files remain imported from outside).`],
 };
 
 // Build one task for the given finding ids from one analysis snapshot.
@@ -199,7 +207,7 @@ export function locationsOf(d) {
   }
   const importLoc = (i) => ({ file: i.file, startLine: i.line, endLine: i.line, kind: 'import', targets: [`${i.to}${i.deferred || i.lazy ? ' (deferred)' : ''}${i.typeOnly ? ' (type only)' : ''}`] });
   if (d.code === 'coupling/import-cycle') return uniqueLocations((ev.pathImports?.length ? ev.pathImports : ev.imports || []).filter((i) => i.file && Number.isInteger(i.line)).map(importLoc));
-  if (d.code === 'architecture/boundary' || d.code === 'coupling/cycle') return uniqueLocations((ev.imports || []).filter((i) => i.file && Number.isInteger(i.line)).map(importLoc));
+  if (d.code === 'architecture/boundary' || d.code === 'coupling/cycle' || d.code === 'coupling/internal-leak') return uniqueLocations((ev.imports || []).filter((i) => i.file && Number.isInteger(i.line)).map(importLoc));
   if (s.file && Number.isInteger(s.line)) return [{ file: s.file, startLine: s.line, endLine: Number.isInteger(s.endLine) ? s.endLine : s.line, kind: 'range' }];
   // Module-level findings without line evidence (coupling/hub): the files, no range.
   return (d.evidenceDigest?.files || []).slice(0, EXCERPT.maxLocations).map((file) => ({ file, kind: 'file' }));
@@ -309,6 +317,7 @@ function keyEvidence(d) {
     case 'coupling/cycle': return pick(['kind', 'path', 'totalImports']);
     case 'coupling/hub': return pick(['fanIn', 'fanOut', 'instability', 'threshold']);
     case 'architecture/boundary': return { ...pick(['rule', 'totalImports', 'files']), boundary: d.subject.boundary };
+    case 'coupling/internal-leak': return pick(['entries', 'entrySource', 'internalFiles', 'consumers', 'totalImports', 'threshold']);
     default: return pick(['threshold']);
   }
 }
@@ -320,6 +329,7 @@ function titleOf(selected) {
     if (d.code === 'coupling/import-cycle') return `Break the import cycle between ${s.files.length} files`;
     if (d.code === 'coupling/cycle') return `Break the dependency cycle between ${s.modules.length} modules`;
     if (d.code === 'coupling/hub') return `Reduce the coupling of hub module ${s.module}`;
+    if (d.code === 'coupling/internal-leak') return `Give module ${s.module} one entry point and import through it`;
     if (d.code === 'architecture/boundary') return `Remove the "${s.boundary.from}" → "${s.boundary.to}" boundary violation`;
     return `Address ${d.code}`;
   };
