@@ -193,6 +193,8 @@ function indicators(set, mods, findings, mapping, filePaths) {
   // Only present when boundaries are configured and one is crossed here: an
   // unconfigured check must not show up as a green "no violations".
   const boundaries = findings.filter((f) => f.code === 'architecture/boundary' && boundaryFiles(f).some((p) => filePaths.has(p)));
+  // Only present when the rule reported other modules reaching inside one of these modules.
+  const leaks = findings.filter((f) => f.code === 'coupling/internal-leak' && set.has(f.subject.module));
   // Only present when functions were measured and one here reaches a threshold.
   const complex = findings.filter((f) => f.code === 'complexity/function' && filePaths.has(f.subject.file))
     .sort((a, b) => b.evidence.complexity - a.evidence.complexity || b.evidence.nesting - a.evidence.nesting);
@@ -220,6 +222,13 @@ function indicators(set, mods, findings, mapping, filePaths) {
       value: boundaries.map((f) => `${f.subject.boundary.from} → ${f.subject.boundary.to} (${f.evidence.totalImports} import${f.evidence.totalImports === 1 ? '' : 's'})`).join(', ') + ' cross a configured boundary',
       detail: [],
       findings: boundaries.map((f) => f.id).filter(Boolean),
+    }] : []),
+    ...(leaks.length ? [{
+      key: 'entry', label: 'Entry point',
+      status: leaks.some((f) => f.severity === 'warning') ? 'amber' : 'blue',
+      value: leaks.map((f) => `${f.subject.module}: ${f.evidence.consumers.length} module${f.evidence.consumers.length === 1 ? '' : 's'} import ${f.evidence.internalFiles.length} internal file${f.evidence.internalFiles.length === 1 ? '' : 's'}${f.evidence.entries.length ? ', bypassing its entry point' : ', no entry file'}`).join('; '),
+      detail: [],
+      findings: leaks.map((f) => f.id).filter(Boolean),
     }] : []),
     ...(complex.length ? [{
       key: 'complexity', label: 'Complex functions',
@@ -771,6 +780,7 @@ const JS = `
       : f.code === 'coupling/import-cycle' ? 'Inspect the cited imports and initialization behavior before changing this dependency.'
       : f.code === 'coupling/cycle' ? 'Check which shared responsibility links these modules. A module cycle does not establish a file-level failure.'
       : f.code === 'architecture/boundary' ? 'Check what the cited imports need from the other layer: move it behind an interface in an allowed layer, or update the rule if this dependency is intended.'
+      : f.code === 'coupling/internal-leak' ? 'List what the cited imports use, export it from one entry file of the module, and point the imports there. If deep imports are the convention here, declare the entry files in the analysis config instead.'
       : f.code === 'complexity/function' ? 'Start at the deepest nested block: extract it into a named helper, or return early for edge cases. Make sure the current behavior is covered by tests before restructuring.'
       : 'Review the evidence and assumptions before changing code.';
     return '<div class="next-step"><b>Suggested next step</b><p>' + esc(text) + '</p></div>';
@@ -794,12 +804,18 @@ const JS = `
     if (f.evidence && f.evidence.imports && f.evidence.imports.length) {
       var isCycle = f.code === 'coupling/import-cycle' || f.code === 'coupling/cycle';
       var crossing = f.code === 'architecture/boundary' && f.subject && f.subject.boundary;
-      ev += '<div class="ev" style="margin-top:4px">' + (isCycle ? 'Imports on the cycle — click one to see the code:' : crossing ? 'Imports that cross the boundary — click one to see the code:' : 'Evidence — click to see the code:') + '</div>';
+      var leak = f.code === 'coupling/internal-leak';
+      ev += '<div class="ev" style="margin-top:4px">' + (isCycle ? 'Imports on the cycle — click one to see the code:' : crossing ? 'Imports that cross the boundary — click one to see the code:' : leak ? 'Imports that reach inside the module — click one to see the code:' : 'Evidence — click to see the code:') + '</div>';
       f.evidence.imports.slice(0, 8).forEach(function (v) {
         if (crossing) {
           var kind = data.repository.language === 'java' ? 'Java source dependency' : v.typeOnly ? 'type-only import' : (v.lazy || v.conditional) ? 'deferred or conditional import' : 'module-scope import';
           ev += ref(v.file, v.line, '<span>→ ' + esc(short(v.to)) + '</span> <em>· ' + kind + '</em>',
             'This import makes ' + crossing.from + ' depend on ' + crossing.to + ', which the configured rule forbids.' + (v.typeOnly ? ' It is type-only: nothing is loaded at runtime, but the layer still depends on code in the other layer.' : ''), tone);
+          return;
+        }
+        if (leak) {
+          ev += ref(v.file, v.line, '<span>→ ' + esc(short(v.to)) + '</span> <em>· internal file</em>',
+            'This import reaches a file inside ' + modLabel(f.subject.module) + (f.evidence.entries.length ? ' instead of its entry point (' + f.evidence.entries.map(short).join(', ') + ').' : ', which has no entry file.'), tone);
           return;
         }
         var deferred = v.lazy || v.conditional || v.deferred || v.typeOnly;
@@ -900,7 +916,7 @@ const JS = `
     'signals-only': { tone: 'blue', text: 'Signals only' },
     'none-found': { tone: 'green', text: 'No findings within the checks that ran' }
   };
-  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
+  var GROUPS = { 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations', 'complexity/function': 'Complex functions' };
   var LANGS = { py: 'Python', ts: 'JS/TS', java: 'Java' };
   function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
   function toneOf(severity) { return severity === 'error' ? 'red' : severity === 'warning' ? 'amber' : 'blue'; }
@@ -910,6 +926,7 @@ const JS = `
     if (f.code === 'coupling/import-cycle' && s.files) return 'Import cycle · ' + plural(s.files.length, 'file');
     if (f.code === 'coupling/cycle' && s.modules) return 'Module cycle · ' + plural(s.modules.length, 'module');
     if (f.code === 'coupling/hub' && s.module) return modLabel(s.module) + ' connects many modules';
+    if (f.code === 'coupling/internal-leak' && s.module) return modLabel(s.module) + ' is imported through its internals';
     if (f.code === 'architecture/boundary' && s.boundary) return s.boundary.from + ' depends on ' + s.boundary.to;
     // Java names carry their parameter types to tell overloads apart.
     if (f.code === 'complexity/function' && s.function) return s.function + (s.function.endsWith(')') ? '' : '()') + ' is complex';
@@ -920,6 +937,7 @@ const JS = `
     if (s.files) return 'Files: ' + s.files.slice(0, 3).map(short).join(', ') + (s.files.length > 3 ? ' …' : '');
     if (s.modules) return 'Modules: ' + s.modules.slice(0, 4).map(modLabel).join(', ') + (s.modules.length > 4 ? ' …' : '');
     if (f.code === 'coupling/hub' && f.evidence) return f.evidence.fanIn + ' modules depend on it; it depends on ' + f.evidence.fanOut + '.';
+    if (f.code === 'coupling/internal-leak' && f.evidence) return plural(f.evidence.totalImports, 'import') + ' from ' + plural(f.evidence.consumers.length, 'module') + ' reach ' + plural(f.evidence.internalFiles.length, 'internal file') + ' of ' + f.evidence.moduleFiles + (f.evidence.entries.length ? ' · entry point: ' + f.evidence.entries.map(short).join(', ') : ' · no entry file');
     if (f.code === 'complexity/function' && f.evidence) return 'complexity ' + f.evidence.complexity + ' · nesting ' + f.evidence.nesting + ' · ' + plural(f.evidence.length, 'line') + ' · ' + short(s.file);
     if (f.code === 'architecture/boundary' && f.evidence) return plural(f.evidence.totalImports, 'import') + ' in ' + plural(f.evidence.files.length, 'file') + ' · rule: ' + (f.evidence.rule.reason || s.boundary.from + ' must not depend on ' + s.boundary.to);
     return f.message;
@@ -1150,6 +1168,7 @@ const JS = `
     h += '<div class="k">' + esc(GROUPS[f.code] || f.code) + ' · ' + esc(scope.label) + '</div><h3><i class="bauify-' + tone + '"></i>' + esc(findingTitle(f)) + '</h3>';
     var explanation = f.code === 'coupling/hub' ? 'High incoming and outgoing coupling; inspect responsibilities before deciding to split.'
       : f.code === 'architecture/boundary' ? 'These imports break a boundary declared in the analysis config. The rule comes from the config, not from the diagram.'
+      : f.code === 'coupling/internal-leak' ? (f.evidence && f.evidence.entrySource === 'config' ? 'These imports bypass the entry files declared in the analysis config.' : 'Other modules depend on this module\\'s internal files, so moving or renaming any of them breaks importers. Deep imports can be a deliberate convention; this is a signal, not a defect.')
       : f.code === 'complexity/function' ? 'Cyclomatic complexity counts independent paths through the function. A high count is a maintenance signal, not a defect.' : lvl.text;
     h += '<div class="level"><b>' + esc(lvl.name) + '</b> — ' + esc(findingWhat(f)) + '<br>' + esc(explanation) + '</div>';
     if (f.review && f.review.reason) h += '<p class="ev"><span class="badge-accepted">' + (f.review.status === 'accepted-changed' ? 'accepted · evidence changed' : 'accepted') + '</span> ' + esc(f.review.reason) + (f.review.status === 'accepted-changed' ? ' — the code behind it changed since it was accepted; review it again.' : '') + '</p>';

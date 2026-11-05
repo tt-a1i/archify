@@ -10,7 +10,9 @@
 // - every measured function is a spike outside its file whose length is its
 //   cyclomatic complexity; reported functions carry a dot in their severity colour;
 // - a selected finding (import cycle path, module cycle, hub, boundary imports,
-//   complex function) is drawn over everything else.
+//   imports reaching inside a module, complex function) is drawn over everything else;
+// - a focused module marks the files other modules import, so its public
+//   surface (or the lack of one) shows without any rule having to fire.
 //
 // Nothing here is new analysis: the payload is a projection of raw facts, the
 // module graph and the findings already shown in the Classic view. Unresolved
@@ -51,6 +53,7 @@ function title(f, labelOf) {
   if (f.code === 'coupling/import-cycle' && s.files) return `Import cycle · ${s.files.length} files`;
   if (f.code === 'coupling/cycle' && s.modules) return `Module cycle · ${s.modules.length} modules`;
   if (f.code === 'coupling/hub' && s.module) return `Hub · ${labelOf(s.module)}`;
+  if (f.code === 'coupling/internal-leak' && s.module) return `Internal imports · ${labelOf(s.module)}`;
   if (f.code === 'architecture/boundary' && s.boundary) return `${s.boundary.from} → ${s.boundary.to}`;
   return f.code;
 }
@@ -111,6 +114,13 @@ export function buildAtlas({ graph, facts, findings = [], review = null }) {
     } else if (f.code === 'coupling/hub' && moduleIndex.has(s.module)) {
       entry.kind = 'module';
       entry.module = moduleIndex.get(s.module);
+    } else if (f.code === 'coupling/internal-leak' && moduleIndex.has(s.module)) {
+      // Drawn like a boundary finding (the cited imports), plus the module whose
+      // internals they reach and its entry files, if it has any.
+      entry.kind = 'edges';
+      entry.module = moduleIndex.get(s.module);
+      entry.edges = (f.evidence?.imports || []).filter((i) => fileIndex.has(i.file) && fileIndex.has(i.to)).map((i) => [fileIndex.get(i.file), fileIndex.get(i.to)]);
+      entry.entries = (f.evidence?.entries || []).filter((p) => fileIndex.has(p)).map((p) => fileIndex.get(p));
     } else if (f.code === 'architecture/boundary') {
       entry.kind = 'edges';
       entry.edges = (f.evidence?.imports || []).filter((i) => fileIndex.has(i.file) && fileIndex.has(i.to)).map((i) => [fileIndex.get(i.file), fileIndex.get(i.to)]);
@@ -203,7 +213,7 @@ export const ATLAS_JS = `
   var atlas = JSON.parse(source.textContent);
   var root = document.documentElement;
   var TONE = { error: '#FB7185', warning: '#FBBF24', info: '#60A5FA' };
-  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'architecture/boundary': 'Boundary violations' };
+  var NAMES = { 'complexity/function': 'Complex functions', 'coupling/import-cycle': 'Import cycles', 'coupling/cycle': 'Module cycles', 'coupling/hub': 'Hub modules', 'coupling/internal-leak': 'Internal imports', 'architecture/boundary': 'Boundary violations' };
   var M = atlas.modules, F = atlas.files, E = atlas.edges, FN = atlas.functions, FD = atlas.findings;
   function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
@@ -213,6 +223,13 @@ export const ATLAS_JS = `
   var edgesByModule = M.map(function () { return { out: 0, in: 0 }; });
   E.forEach(function (e) { var a = F[e[0]][1], b = F[e[1]][1]; if (a !== b) { edgesByModule[a].out++; edgesByModule[b].in++; } });
   var hubOf = {}; FD.forEach(function (f, i) { if (f.kind === 'module') hubOf[f.module] = i; });
+  // A module's public surface as the code uses it: its files that other modules
+  // import, with how many modules import each. A fact, not a finding.
+  var surface = M.map(function () { return { files: {}, consumers: {} }; });
+  E.forEach(function (e) {
+    var a = F[e[0]][1], b = F[e[1]][1]; if (a === b) return;
+    var s = surface[b]; (s.files[e[1]] = s.files[e[1]] || {})[a] = true; s.consumers[a] = true;
+  });
 
   var panel = document.createElement('section');
   panel.id = 'bauify-atlas'; panel.hidden = true; panel.setAttribute('aria-label', 'Code analysis atlas');
@@ -287,7 +304,7 @@ export const ATLAS_JS = `
 
   // ---- what the current selection lights up ----
   function selection() {
-    var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false };
+    var sel = { modules: {}, files: {}, edges: null, fns: {}, tone: null, any: false, arcs: {}, entries: {} };
     if (state.focusModule !== -1) { sel.modules[state.focusModule] = true; sel.any = true; }
     var f = FD[state.finding];
     if (f) {
@@ -297,6 +314,7 @@ export const ATLAS_JS = `
       if (f.kind === 'module') sel.modules[f.module] = true;
       if (f.kind === 'modules') f.modules.forEach(function (x) { sel.modules[x] = true; });
       if (f.kind === 'edges') { sel.edges = f.edges; f.edges.forEach(function (e) { sel.files[e[0]] = true; sel.files[e[1]] = true; }); }
+      if (f.kind === 'edges' && f.module != null) { sel.arcs[f.module] = true; (f.entries || []).forEach(function (x) { sel.entries[x] = true; }); }
     }
     return sel;
   }
@@ -431,6 +449,18 @@ export const ATLAS_JS = `
       ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
       ctx.strokeStyle = sel.files[i] ? sel.tone : hue(f[1], t, on ? 0.95 : 0.2); ctx.lineWidth = sel.files[i] ? 2.4 : 1.3; ctx.stroke();
     });
+    // A focused module's surface: a mark inside the rim on each file other modules import,
+    // longer for more importing modules.
+    if (focusM !== -1) Object.keys(surface[focusM].files).forEach(function (k) {
+      var i = Number(k), n = Object.keys(surface[focusM].files[k]).length, a = geo.ang[i];
+      var q0 = pt(a, geo.R * 0.985), q1 = pt(a, geo.R * (0.985 - Math.min(0.12, 0.025 + 0.012 * n)));
+      ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.lineTo(q1[0], q1[1]); ctx.strokeStyle = t.text; ctx.lineWidth = 2.6; ctx.stroke();
+    });
+    // Entry files of a selected internal-imports finding: a ring on the tick.
+    Object.keys(sel.entries).forEach(function (k) {
+      var p = pt(geo.ang[Number(k)], geo.R + geo.tick + 5);
+      ctx.beginPath(); ctx.arc(p[0], p[1], 4, 0, 2 * Math.PI); ctx.strokeStyle = t.text; ctx.lineWidth = 1.6; ctx.stroke();
+    });
     // functions as spikes; reported ones carry a dot in their severity colour
     var dots = [];
     FN.forEach(function (fn, i) {
@@ -451,8 +481,8 @@ export const ATLAS_JS = `
     // module arcs and labels
     ctx.font = LABEL_FONT; ctx.textBaseline = 'middle';
     M.forEach(function (m, mi) {
-      var on = !dimmed || sel.modules[mi] || F.some(function (f, i) { return f[1] === mi && sel.files[i]; });
-      var hub = hubOf[mi] != null;
+      var on = !dimmed || sel.modules[mi] || sel.arcs[mi] || F.some(function (f, i) { return f[1] === mi && sel.files[i]; });
+      var hub = hubOf[mi] != null || sel.arcs[mi];
       ctx.beginPath(); ctx.arc(geo.cx, geo.cy, geo.arc, geo.span[mi][0], Math.max(geo.span[mi][1], geo.span[mi][0] + 0.004));
       ctx.strokeStyle = hue(mi, t, on ? 1 : 0.25); ctx.lineWidth = hub ? 5 : 2; ctx.lineCap = 'butt'; ctx.stroke();
       var a = mid(mi), deg = (a * 180 / Math.PI + 360) % 360, flip = deg > 90 && deg < 270, p = pt(a, geo.label);
@@ -545,13 +575,21 @@ export const ATLAS_JS = `
       if (f.kind === 'modules') what = f.modules.map(function (x) { return M[x].label; }).join(', ');
       if (f.kind === 'module') what = 'fan-in ' + M[f.module].fanIn + ' · fan-out ' + M[f.module].fanOut;
       if (f.kind === 'edges') what = plural(f.edges.length, 'import') + ' cross the rule.';
+      if (f.kind === 'edges' && f.module != null) {
+        var reachedIn = {}; f.edges.forEach(function (e) { reachedIn[e[1]] = true; });
+        what = plural(f.edges.length, 'import') + ' from other modules reach ' + plural(Object.keys(reachedIn).length, 'internal file') + ' of ' + M[f.module].label + (f.entries && f.entries.length ? '; ringed: its entry point ' + f.entries.map(function (x) { return F[x][0].split('/').pop(); }).join(', ') : '; it has no entry file') + '.';
+      }
       return '<div class="selected"><h4>' + esc(f.title) + '</h4><p><span style="color:' + (TONE[f.severity] || TONE.info) + '">' + esc(f.severity) + '</span>' + (f.accepted ? ' · accepted in baseline' : '') + ' · ' + esc(what) + '</p>' +
         '<button type="button" class="atlas-evidence" data-id="' + esc(f.id) + '">Open evidence in Classic view</button></div>';
     }
     if (state.focusModule !== -1) {
       var m = M[state.focusModule], files = F.filter(function (x) { return x[1] === state.focusModule; }).length;
       var fns = FN.filter(function (fn) { return F[fn[0]][1] === state.focusModule; });
-      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + ' · fan-in ' + m.fanIn + ' · fan-out ' + m.fanOut + '<br>Coloured curves: dependencies inside it and its ' + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + ' on other modules. Neutral curves: ' + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + ' of other modules on it.</p></div>';
+      var sf = surface[state.focusModule], used = Object.keys(sf.files).sort(function (a, b) { return Object.keys(sf.files[b]).length - Object.keys(sf.files[a]).length || (F[a][0] < F[b][0] ? -1 : 1); });
+      var surfaceText = used.length
+        ? 'Imported from outside through ' + fmt(used.length) + ' of its ' + plural(files, 'file') + ', by ' + plural(Object.keys(sf.consumers).length, 'module') + ' (marked inside the rim): ' + used.slice(0, 4).map(function (k) { return F[k][0].split('/').pop() + ' ' + Object.keys(sf.files[k]).length; }).join(', ') + (used.length > 4 ? ' and ' + plural(used.length - 4, 'more', 'more') : '') + '.'
+        : 'No other module imports it.';
+      return '<div class="selected"><h4>' + esc(m.label) + '</h4><p>' + plural(files, 'file') + ' · ' + plural(fns.length, 'function') + ' · fan-in ' + m.fanIn + ' · fan-out ' + m.fanOut + '<br>Coloured curves: dependencies inside it and its ' + plural(edgesByModule[state.focusModule].out, 'dependency', 'dependencies') + ' on other modules. Neutral curves: ' + plural(edgesByModule[state.focusModule].in, 'dependency', 'dependencies') + ' of other modules on it.<br>' + esc(surfaceText) + '</p></div>';
     }
     return '<div class="note">Hover the circle for names. Click a module arc to focus it, a dotted spike or a finding below to light it up.</div>';
   }
@@ -584,7 +622,7 @@ export const ATLAS_JS = `
     var cov = atlas.coverage, total = Math.max(cov.records, 1);
     h += '<div class="k">Dependency records · ' + fmt(cov.records) + '</div><div class="bar" role="img" aria-label="' + fmt(cov.resolved) + ' resolved, ' + fmt(cov.external) + ' external, ' + fmt(cov.unknown) + ' unresolved"><span style="width:' + (100 * cov.resolved / total) + '%;background:#34D399"></span><span style="width:' + (100 * cov.external / total) + '%;background:#64748B"></span><span style="width:' + (100 * cov.unknown / total) + '%;background:#FBBF24"></span></div>' +
       '<div class="note">' + fmt(cov.resolved) + ' resolved · ' + fmt(cov.external) + ' external · ' + fmt(cov.unknown) + ' could not be resolved' + (cov.parseErrors ? ' · ' + plural(cov.parseErrors, 'file') + ' failed to parse' : '') + '. Unresolved records draw no curve, so a missing curve does not prove there is no dependency.</div>';
-    h += '<div class="k">Reading the atlas</div><div class="legend"><span><i style="background:' + hue(0, theme()) + '"></i>outer arc: module (thick: reported hub)</span><span><i style="background:' + theme().muted + '"></i>tick: file · spike: function, length = complexity</span><span><i style="background:#FBBF24;height:8px;width:8px;border-radius:50%"></i>dot: reported function, severity colour</span><span><i style="background:' + hue(3, theme(), 0.6) + '"></i>curve: file dependency, coloured by the importing module</span></div>';
+    h += '<div class="k">Reading the atlas</div><div class="legend"><span><i style="background:' + hue(0, theme()) + '"></i>outer arc: module (thick: reported hub)</span><span><i style="background:' + theme().muted + '"></i>tick: file · spike: function, length = complexity</span><span><i style="background:#FBBF24;height:8px;width:8px;border-radius:50%"></i>dot: reported function, severity colour</span><span><i style="background:' + hue(3, theme(), 0.6) + '"></i>curve: file dependency, coloured by the importing module</span><span><i style="background:' + theme().text + '"></i>mark inside the rim: a focused module\\'s file that other modules import</span></div>';
     side.innerHTML = h;
     side.querySelectorAll('[data-finding]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-finding')); select(-1, state.finding === i ? -1 : i); }); });
     side.querySelectorAll('[data-module]').forEach(function (el) { el.addEventListener('click', function () { var i = Number(el.getAttribute('data-module')); select(state.focusModule === i ? -1 : i, -1); }); });
