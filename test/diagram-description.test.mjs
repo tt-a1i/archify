@@ -61,7 +61,10 @@ test('native descriptions reject XML-forbidden characters before rendering', t =
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const doc = example('architecture');
   doc.meta.description = 'A\u0001B';
-  assert.throws(() => render(dir, 'architecture', doc), /description/);
+  assert.throws(() => render(dir, 'architecture', doc), error => {
+    assert.match(error.stderr.toString(), /meta\/description/);
+    return true;
+  });
   assert.equal(fs.existsSync(path.join(dir, 'architecture.html')), false);
 });
 
