@@ -552,6 +552,7 @@ const fullSuites = [
   'test/sidecar-path-length.test.mjs',
   'test/open-artifact.test.mjs',
   'test/repository-evidence.test.mjs',
+  'test/repository-evidence-replacement.test.mjs',
   'test/renderer-atomic-write.test.mjs',
   'test/atomic-output-recovery.test.mjs',
 ];

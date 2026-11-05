@@ -110,6 +110,20 @@ async function verifyPackagedExplainer() {
 
 }
 
+function verifyPackagedStory(){
+  const input=path.join(skillRoot,'examples/workflow-agent-tool-call-rendered.html'),brief=path.join(scratch,'story-brief.json'),output=path.join(scratch,'story-enhanced.html');
+  const options={cwd:scratch,env:{...process.env,NODE_PATH:'',ARCHIFY_UPDATE_CHECK_DISABLED:'1'}};
+  const draft=JSON.parse(run(['story','draft',input,brief,'--json'],options));
+  if(!draft.ok)throw Error('packaged story draft failed');
+  const facts=JSON.parse(fs.readFileSync(draft.sourceMap,'utf8')),edge=facts.edges[0];
+  fs.writeFileSync(brief,JSON.stringify({version:2,title:'Read the tool handoff',intro:'Establish its context.',outro:'Return to the original graph.',scenes:[{title:'Read the relationship',points:[{anchor:edge.to,via:edge.id,title:'Follow this handoff',text:'Explain the selected connection with its source endpoints.'}]}]}));
+  const receipt=JSON.parse(run(['story','attach',input,brief,output,'--json'],options));
+  if(!receipt.ok)throw Error('packaged story attachment failed');
+  const html=fs.readFileSync(output,'utf8'),start=html.indexOf('<style id="archify-story-attachment-style">');
+  if(start<0||html.slice(0,start)+html.slice(html.lastIndexOf('</body>'))!==fs.readFileSync(input,'utf8'))throw Error('packaged story changed the native HTML');
+  process.stdout.write('packaged story scan, draft and attachment passed without dependencies\n');
+}
+
 async function verifyPackage() {
   if (!fs.existsSync(cli)) throw new Error(`packaged CLI not found at ${cli}`);
   requireAbsent('node_modules');
@@ -130,16 +144,21 @@ async function verifyPackage() {
     throw new Error('packaged skill is missing LICENSE');
   }
   const packageLicense = fs.readFileSync(packageLicensePath, 'utf8');
-  const packageLicenseLines = packageLicense.split(/\r?\n/);
-  if (!packageLicenseLines.includes('Copyright (c) 2025 Cocoon AI')) {
-    throw new Error('packaged LICENSE is missing the exact Cocoon AI copyright line');
-  }
   const repositoryLicense = fs.readFileSync(path.join(repoRoot, 'LICENSE'), 'utf8');
   if (packageLicense !== repositoryLicense) {
     throw new Error('packaged LICENSE must byte-match the repository LICENSE');
   }
-  if (!packageLicense.includes('The above copyright notice and this permission notice shall be included in all')) {
-    throw new Error('packaged LICENSE is missing the MIT notice-preservation terms');
+  for (const name of ['LICENSE-MIT', 'NOTICE']) {
+    const target = path.join(skillRoot, name);
+    if (!fs.existsSync(target)) throw new Error(`packaged skill is missing ${name}`);
+    if (!fs.readFileSync(target).equals(fs.readFileSync(path.join(repoRoot, name)))) {
+      throw new Error(`packaged ${name} must byte-match the repository ${name}`);
+    }
+  }
+  const legacyLicense = fs.readFileSync(path.join(skillRoot, 'LICENSE-MIT'), 'utf8');
+  if (!legacyLicense.split(/\r?\n/).includes('Copyright (c) 2025 Cocoon AI') ||
+      !legacyLicense.includes('The above copyright notice and this permission notice shall be included in all')) {
+    throw new Error('packaged LICENSE-MIT is missing the original MIT copyright and permission notice');
   }
 
   const packageNoticesPath = path.join(skillRoot, 'THIRD_PARTY_NOTICES.md');
@@ -243,6 +262,8 @@ async function verifyPackage() {
   }
 
   await verifyPackagedExplainer();
+
+  verifyPackagedStory();
 
   const workflowLayout = JSON.parse(run([
     'validate', 'workflow', path.join(skillRoot, 'examples', fixtures[1][1]),

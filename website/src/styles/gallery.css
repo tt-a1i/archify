@@ -236,7 +236,7 @@
     .life-lang { padding:.15rem .45rem; border-radius:999px; border:1px solid var(--line-hi); color:var(--text-2); }
     .life-kind { color:var(--accent); }
     .life-q { font-family:var(--font-title); font-size:1.125rem; font-weight:500; letter-spacing:-.02em; line-height:1.3; color:var(--text); text-wrap:balance; }
-    .life-links { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:auto; }
+    .life-links { display:flex; gap:.5rem; margin-top:auto; }
     /* a whole one-page answer on a tall plate; hover scrolls the page through it */
     .life-plate.page-plate { aspect-ratio:4 / 5; container-type:size; background:var(--surface,#fff); }
     .page-plate img { height:auto; padding:0; object-fit:initial; background:none; transition:transform 1.2s var(--ease-out); }

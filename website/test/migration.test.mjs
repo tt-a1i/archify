@@ -5,8 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse, parseFragment } from 'parse5';
 import { CASES } from '../src/data/gallery-presentation.mjs';
-import { PUBLISHED_CASES } from '../src/data/published-cases.mjs';
-import { artifactMetadata, caseMetadata, SEO_BLOCK_START, SEO_BLOCK_END, stripPublishedArtifactMetadata } from '../scripts/publish-seo.mjs';
+import { artifactMetadata, SEO_BLOCK_START, SEO_BLOCK_END, stripPublishedArtifactMetadata } from '../scripts/publish-seo.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const docs = path.resolve(root, '../docs');
@@ -123,9 +122,8 @@ test('all existing non-page public URLs retain exact bytes outside the declared 
   const selected = new Map(CASES.map(presentation => {
     const entry = manifest.entries.find(item => item.id === presentation.id);
     assert.ok(entry, presentation.id);
-    return [entry.artifact, { entry, metadata: artifactMetadata(entry, presentation), isCase: false }];
+    return [entry.artifact, { entry, presentation }];
   }));
-  for (const entry of PUBLISHED_CASES) selected.set(entry.artifact, { entry, metadata: caseMetadata(entry), isCase: true });
   function publishedBytes(file) {
     const bytes = fs.readFileSync(path.join(dist, file));
     const proof = selected.get(file.replaceAll(path.sep, '/'));
@@ -136,9 +134,9 @@ test('all existing non-page public URLs retain exact bytes outside the declared 
     const start = html.indexOf(SEO_BLOCK_START), end = html.indexOf(SEO_BLOCK_END) + SEO_BLOCK_END.length;
     assert.ok(start > html.indexOf('<head>') && end < html.indexOf('</head>'), `${file}: metadata belongs only in head`);
     const block = html.slice(start, end) + '\n';
-    assert.equal(block, proof.metadata, `${file}: exact publication metadata`);
+    assert.equal(block, artifactMetadata(proof.entry, proof.presentation), `${file}: exact publication metadata`);
     const metadataNodes = (parseFragment(block).childNodes || []).filter(node => node.tagName);
-    assert.deepEqual(metadataNodes.map(node => node.tagName), ['link', 'meta', 'meta', 'meta', 'meta', 'meta', ...(proof.isCase ? ['meta', 'meta', 'meta'] : []), 'script']);
+    assert.deepEqual(metadataNodes.map(node => node.tagName), ['link', 'meta', 'meta', 'meta', 'meta', 'meta', 'script']);
     const structured = metadataNodes.at(-1);
     assert.equal(attr(structured, 'type'), 'application/ld+json', `${file}: no executable script permitted`);
     assert.equal(structured.attrs.length, 1);

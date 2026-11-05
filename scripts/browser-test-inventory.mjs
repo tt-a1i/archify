@@ -26,6 +26,8 @@ export const browserTestFiles = [
   'reading-address-browser.test.mjs',
   'route-probe-browser.test.mjs',
   'focus-browser.test.mjs',
+  'passport-explanation-browser.test.mjs',
+  'drilldown-context-browser.test.mjs',
   'crossover-state-browser.test.mjs',
   'semantic-passport-move-browser.test.mjs',
   'export-browser.test.mjs',
@@ -39,6 +41,7 @@ export const browserTestFiles = [
   'class-motion-browser.test.mjs',
   'dataflow-label-visibility-browser.test.mjs',
   'workflow-edge-label-contrast-browser.test.mjs',
+  'edge-label-contrast-browser.test.mjs',
   'lifecycle-note-contrast-browser.test.mjs',
   'sequence-segment-contrast-browser.test.mjs',
   'toolbar-keyboard-browser.test.mjs',
@@ -49,4 +52,7 @@ export const browserTestFiles = [
   'code-analysis-complexity-browser.test.mjs',
   'code-analysis-review-browser.test.mjs',
   'code-analysis-task-browser.test.mjs',
+  'story-browser.test.mjs',
+  // Benchmark observers and real export integration require this explicit Chrome lane.
+  'diagram-quality-e2e-browser.test.mjs',
 ];

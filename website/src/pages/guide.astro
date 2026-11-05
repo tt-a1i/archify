@@ -6,7 +6,6 @@ import Navigation from '../components/Navigation.astro';
 import RecipeReference from '../components/RecipeReference.astro';
 import head from '../data/guide-head.html?raw';
 import css from '../styles/guide.css?raw';
-import clipboardScript from '../scripts/clipboard.js?raw';
 import pageScript from '../scripts/guide.js?raw';
 const { lang = 'en' } = Astro.props;
 ---
@@ -54,16 +53,12 @@ const { lang = 'en' } = Astro.props;
       <div class="cards" id="cards"></div>
     </section>
     <RecipeReference recipes={guide} />
-    <aside class="agent-guide-link" aria-label={lang === 'zh' ? 'Agent 画图指南' : 'Agent diagramming guide'}>
-      <a href="agent-diagrams.html" data-en="From prompt to a diagram you can trust →" data-zh="从提示词到可检查的图 →">From prompt to a diagram you can trust →</a>
-      <p data-en="Learn how to author, review and share diagrams with your coding agent." data-zh="了解如何用 Coding Agent 编写、检查和分享图表。">Learn how to author, review and share diagrams with your coding agent.</p>
-    </aside>
   </main>
 
   <footer><div class="shell"><span data-i18n="footerLeft">Generated from the same recipe source as the Archify CLI.</span><span>archify guide "your scenario"</span><span data-i18n="versionLabel">Scenario guide / development / v{version}</span></div></footer>
 
   <script is:inline id="guide-data" type="application/json" set:html={jsonScript(guide)}></script>
   <script is:inline src="assets/site-language.js"></script>
-  <script is:inline set:html={versioned(clipboardScript + "\n" + pageScript)}></script>
+  <script is:inline set:html={versioned(pageScript)}></script>
 
 </SiteLayout>

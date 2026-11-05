@@ -1,7 +1,7 @@
 ---
 name: archify
-description: "Create validated architecture, workflow, sequence, data-flow, lifecycle/state, ERD, class, tree, timeline, and waterfall diagrams as explorable standalone HTML with dark/light themes, motion and image/SVG/WebM export. Accept requirements or Mermaid; inspect repository evidence for code-backed diagrams. Use when visualizing systems, API calls, pipelines, schemas, histories, timings, or everyday steps, parts, relationships and states. Also turn an answer into a one-page explainer, with the conclusion first, structured panels, native diagrams and charts, when the user asks for a page, an explainer or an answer to share (做成一页, 用页面讲), or proactively when the user's rules opt in with an [archify explainer: ...] line. Not for dashboards."
-license: MIT
+description: "Create validated architecture, workflow, sequence, data-flow, lifecycle/state, ERD, class, tree, timeline, and waterfall diagrams as explorable standalone HTML with dark/light themes, motion and image/SVG/WebM export. Accept requirements or Mermaid; inspect repository evidence for code-backed diagrams. Use when visualizing systems, API calls, pipelines, schemas, histories, timings, or everyday steps, parts, relationships and states. Also turn an answer into a one-page explainer, with the conclusion first, structured panels, native diagrams and charts, when the user asks for a page, an explainer or an answer to share (做成一页, 用页面讲), or proactively when the user's rules opt in with an [archify explainer: ...] line. Optionally add a guided story and video export to an existing native diagram. Not for dashboards."
+license: Apache-2.0
 metadata:
   version: "3.2"
   author: tt-a1i
@@ -18,6 +18,7 @@ For a native diagram of a real codebase, read [Repository authoring](references/
 ## Choose the artifact
 
 - When the user asks to draw or visualize a system, flow, schema or history, use a native diagram and the Type router.
+- For a guided walkthrough or explanation video of a native HTML diagram, read [Story authoring](references/story-authoring.md). Use `story draft` and `story attach` to add playback and video export to its existing Viewer.
 - Use `explainer` when the user asks for the answer as a page: a page, one page, an explainer, something to share (“做成一页”, “用页面讲”, “answer with a page”). Without such a request, answer in text or draw the requested diagram. A page made on request ends its reply with the one-line mode offer under Output.
 - A rules line in context changes this. `[archify explainer: proactive]`: also make a page, unasked, for an explanation, comparison, trade-off, decision, diagnosis, review or plan that needs a table, steps or several sections. `[archify explainer: always-on]`: every reply that reaches a conclusion also gets a compact page of at most four panels, delivered without opening it, its link closing the reply. `[archify explainer: on-demand]`: only when asked, and never offer a mode.
 - In every mode a page needs a conclusion with some structure behind it: chat, one-line answers, raw command output and text-only requests get none.
@@ -110,7 +111,20 @@ Analysis describes the working tree, not a committed snapshot. Keep authored com
 
 ## Optional viewer capabilities
 
+Architecture, Workflow, Sequence, Dataflow and Lifecycle nodes may carry optional plain-text `explanation` (1–1200 characters). The focused Semantic Passport offers Explain; prose stays outside canonical SVG and visual exports. Omit the field when the existing label, sublabel and sources are sufficient.
+
 Live motion is enabled by default for every rendered diagram; omit `meta.animation`. The Viewer’s Live/Still button controls playback.
+
+### Cross-diagram navigation
+
+When the user wants overview → module → detail navigation across multiple HTML artifacts:
+
+- Targets are same-directory `filename.html` only (optional `?` / `#`). No `../`, `/`, or schemes.
+- Node `href` is sugar for a one-entry list (label defaults to the node label). `drilldowns` wins if both are present.
+- One child: native SVG `<a>` + corner mark; click follows the link; Alt-click focuses Passport.
+- Several children: Passport lists every target; click focuses; Ctrl+click / double-click opens the first entry.
+- Child diagrams may set `meta.parentHref`. The header Back control appears when `parentHref` or URL `?from=` is present.
+- Examples: sibling pair `examples/drilldown-platform.architecture.json` ↔ `examples/drilldown-integrations.architecture.json`; multi-child `examples/drilldown-overview.architecture.json`.
 
 Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, deep links, presentation, search/focus, or another Viewer Runtime feature.
 

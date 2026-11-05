@@ -1,6 +1,6 @@
 # Authoring contract
 
-Read this reference only after the Fast authoring path calls for more detail. The schemas and examples remain authoritative.
+Read this reference only after Native diagram authoring calls for more detail. The schemas and examples remain authoritative.
 
 ## Composition repair
 

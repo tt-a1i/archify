@@ -16,6 +16,41 @@ function temporary(t) {const dir=fs.mkdtempSync(path.join(os.tmpdir(),'archify-e
 function write(dir,document=fixture()) {const input=path.join(dir,'author-draft.json');fs.writeFileSync(input,JSON.stringify(document,null,2)+'\n');return input;}
 function bundle(file) {const scripts=scanHtml(fs.readFileSync(file,'utf8')).scripts;return JSON.parse(scripts.find(script=>script.attrs.id==='archify-explainer-prepared').text);}
 
+test('compact cyclic diagrams remain deliverable with a stricter quality override',t=>{
+  const dir=temporary(t),input=path.join(dir,'ring.archify.md'),output=path.join(dir,'ring.html');
+  const examples=[{type:'architecture',rows:[...Array.from({length:10},(_,i)=>`n${i} | Node ${i}`),...Array.from({length:10},(_,i)=>`n${i} > n${(i+1)%10}`)]},
+    {type:'workflow',rows:[...Array.from({length:8},(_,i)=>`n${7-i} | N${7-i}`),...Array.from({length:8},(_,i)=>`n${i} > n${(i+1)%8}`),'n1 > n0','n1 > n3','n4 > n2']}];
+  for(const {type,rows} of examples){
+    const metadata='@meta quality_profile=standard locale=zh-CN';
+    const source=`# Ring\n\nKeep every connection readable.\n\n${type==='workflow'?metadata+'\n\n':''}## Connections {#connections}\n\n@${type}\n${rows.map(row=>`| ${row} |`).join('\n')}\n${type==='architecture'?'\n'+metadata+'\n':''}`;
+    fs.writeFileSync(input,source);
+    const delivered=run(['deliver','explainer',input,output,'--quality','showcase','--json']);
+    assert.equal(delivered.status,0,delivered.stdout+delivered.stderr);
+    assert.equal(bundle(output).quality,'showcase');
+    assert.equal(bundle(output).document.meta.quality_profile,'standard');
+    assert.equal(bundle(output).document.meta.locale,'zh-CN');
+    assert.equal(fs.readFileSync(input,'utf8'),source);
+    const checked=run(['check',output,'--json','--require-provenance']);
+    assert.equal(checked.status,0,checked.stdout+checked.stderr);
+    const standardOutput=path.join(dir,'standard',path.basename(output));fs.mkdirSync(path.dirname(standardOutput),{recursive:true});
+    const standard=run(['deliver','explainer',input,standardOutput,'--quality','standard','--json']);
+    assert.equal(standard.status,0,standard.stdout+standard.stderr);
+    assert.deepEqual(bundle(standardOutput).document,bundle(output).document,'render quality cannot change the normalized source or its automatic anchors');
+  }
+});
+
+test('patch quality changes resolve shorthand under the new context and preserve other authored panels',t=>{
+  const dir=temporary(t),input=path.join(dir,'draft.md'),output=path.join(dir,'original.html'),replacement=path.join(dir,'panel.md'),patched=path.join(dir,'patched.html');
+  const rows=[...Array.from({length:10},(_,i)=>`n${i} | Node ${i}`),...Array.from({length:10},(_,i)=>`n${i} > n${(i+1)%10}`)];
+  const source=`# Ring\n\nPreserve the graph.\n\n@meta quality_profile=standard\n\n## Notes {#notes}\n\nOriginal note.\n\n## Graph {#graph}\n\n@architecture id=ring\n${rows.join('\n')}\n`;
+  fs.writeFileSync(input,source);fs.writeFileSync(replacement,'## Notes {#notes}\n\nEdited note.\n\n');
+  const first=run(['deliver','explainer',input,output,'--quality','showcase','--json']);assert.equal(first.status,0,first.stdout+first.stderr);
+  const change=run(['patch','explainer',output,'notes',replacement,patched,'--quality','standard','--json']);assert.equal(change.status,0,change.stdout+change.stderr);
+  const saved=bundle(patched);assert.equal(saved.quality,'standard');assert.equal(saved.sourceText,source.replace('Original note.','Edited note.'));
+  assert.equal(saved.document.panels[1].id,'graph');assert.equal(saved.document.panels[1].blocks[0].spec.connections.length,10);
+  const checked=run(['check',patched,'--json','--require-provenance']);assert.equal(checked.status,0,checked.stdout+checked.stderr);
+});
+
 test('explainer CLI binds original draft bytes through validate, deliver and strict check',t=>{
   const dir=temporary(t),input=write(dir),output=path.join(dir,'result.html');
   const validation=run(['validate','explainer',input,'--json']);assert.equal(validation.status,0,validation.stdout+validation.stderr);
@@ -90,12 +125,59 @@ test('default explainer finalize succeeds without discovering or launching a bro
  const full=JSON.parse(fs.readFileSync(summary.evidence.receipt,'utf8'));assert.deepEqual(full.browserCheck,summary.browserCheck);assert.equal(full.stages['browser-check'].execution,'not-requested');
 });
 
-test('explainer live preview explains the supported delivery path before reading input', t => {
-  const dir = temporary(t), output = path.join(dir, 'result.html');
-  fs.writeFileSync(output, 'last good artifact');
-  const result = run(['preview', 'explainer', path.join(dir, 'missing.md'), output, '--no-open']);
-  assert.equal(result.status, 2);
-  assert.match(result.stderr, /Live preview supports the ten diagram types only/);
-  assert.match(result.stderr, /finalize explainer/);
-  assert.equal(fs.readFileSync(output, 'utf8'), 'last good artifact');
+test('CR-only drafts return structured failures through public commands and preserve output (#1083)',t=>{
+  const dir=temporary(t),input=path.join(dir,'cr-only.md'),output=path.join(dir,'result.html');
+  const source='# Title\r\rAnswer.\r\r## Question\r\rText.\r';
+  fs.writeFileSync(input,source);fs.writeFileSync(output,'previous verified artifact');
+  for(const command of ['validate','deliver','finalize']) {
+    const result=run([command,'explainer',input,...(command==='validate'?[]:[output]),'--json']);
+    assert.equal(result.status,1,result.stdout+result.stderr);
+    const receipt=JSON.parse(result.stdout);
+    assert.ok(receipt.diagnostics.some(entry=>entry.code.startsWith('explainer/parse-')),result.stdout);
+    assert.ok(receipt.diagnostics.every(entry=>entry.code!=='input/read'),result.stdout);
+    assert.doesNotMatch(result.stdout+result.stderr,/Cannot read properties of null/);
+    assert.equal(fs.readFileSync(output,'utf8'),'previous verified artifact');
+    assert.equal(fs.readFileSync(input,'utf8'),source);
+  }
+});
+
+
+test('literal heading separators survive public validate, deliver and finalize (#1083)',t=>{
+  const dir=temporary(t),input=path.join(dir,'headings.md'),output=path.join(dir,'result.html');
+  for(const separator of ['\r','\u2028','\u2029']) {
+    const source=`# Title${separator}continued {#heading}\n\nAnswer.\n\n## Question${separator}continued {#question span=7}\n\nText.\n`;
+    fs.writeFileSync(input,source);
+    for(const command of ['validate','deliver','finalize']) {
+      const result=run([command,'explainer',input,...(command==='validate'?[]:[output]),'--json']);
+      assert.equal(result.status,0,result.stdout+result.stderr);
+      assert.equal(JSON.parse(result.stdout).ok,true,result.stdout);
+      if(command!=='validate') {
+        const saved=bundle(output);
+        assert.equal(saved.sourceText,source);
+        assert.equal(saved.document.meta.title,`Title${separator}continued`);
+        assert.equal(saved.document.meta.id,'heading');
+        assert.equal(saved.document.panels[0].title,`Question${separator}continued`);
+        assert.equal(saved.document.panels[0].id,'question');
+        assert.equal(saved.document.panels[0].span,7);
+      }
+      assert.equal(fs.readFileSync(input,'utf8'),source);
+    }
+  }
+});
+
+test('workflow shorthand carries page locale into rendered lane labels (#1082)',t=>{
+  const dir=temporary(t);
+  for(const [locale,label] of [['en','Branch 1'],['es','Branch 1'],['zh-CN','分支 1'],['zh-TW','分支 1'],['zh-Hant','分支 1'],[undefined,'分支 1']]) {
+    const input=path.join(dir,`${locale||'default'}.md`),output=path.join(dir,`${locale||'default'}.html`);
+    const source=`# Release flow\n\nA build either ships or rolls back.\n\n${locale?`@meta locale=${locale}\n\n`:''}## How does a release branch? {#question}\n\n@workflow id=flow\n| a | Build | backend |\n| b | Ship | backend |\n| c | Roll back | backend |\n| a > b | green |\n| a > c | red |\n`;
+    fs.writeFileSync(input,source);
+    const result=run(['deliver','explainer',input,output,'--quality','standard','--json']);
+    assert.equal(result.status,0,result.stdout+result.stderr);
+    const frozen=bundle(output),html=fs.readFileSync(output,'utf8');
+    assert.equal(frozen.sourceText,source);
+    assert.equal(frozen.document.panels[0].blocks[0].spec.lanes[1].label,label);
+    assert.ok(html.includes(`data-node-context="${label}"`),locale||'default');
+    assert.ok(html.includes(`<title>Roll back · ${label}</title>`),locale||'default');
+    assert.match(html,new RegExp(`aria-label="[^"]*Roll back[^"]*${label}"`,'u'),locale||'default');
+  }
 });

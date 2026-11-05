@@ -7,11 +7,14 @@ import { promisify } from 'node:util';
 import { validateSchema } from '../renderers/shared/validator.mjs';
 import { textUnits, SEMANTIC_SIGIL_FOOTPRINT } from '../renderers/shared/utils.mjs';
 import { minimumNodeTextWidth } from '../renderers/shared/text-fit.mjs';
-import { throwDiagnosticError } from '../renderers/shared/diagnostics.mjs';
+import { throwDiagnosticError, withIsolatedDiagnosticRecording } from '../renderers/shared/diagnostics.mjs';
 import { createOwnedTempDirectory } from '../renderers/shared/owned-temp-directory.mjs';
 
 const runFile = promisify(execFile);
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Only shorthand-generated specs may try automatic alternatives. Explicit JSON
+// and serialized specs keep their authored geometry. Entries expire with the spec.
+const automaticLayouts = new WeakMap();
 const TYPES = new Set(['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall']);
 const MAX_SPEC_BYTES = 4 * 1024 * 1024;
 const MAX_DIAGRAM_BYTES = 32 * 1024 * 1024;
@@ -69,43 +72,71 @@ function duplicateCheck(items, context, kind) {
 const READABLE_WORKFLOW_WIDTH = 1100;
 function workflowWidth(nodes, edges) {
   const columns = Math.max(...nodes.map(node => node.col)) + 1;
-  const widest = Array.from({ length: columns }, (_, col) => Math.max(92, ...nodes.filter(node => node.col === col).map(node => node.width || 0)));
+  const widest = Array(columns).fill(92), gaps = Array(Math.max(0, columns - 1)).fill(34);
   const colOf = new Map(nodes.map(node => [node.id, node.col]));
-  const gaps = Array.from({ length: columns - 1 }, (_, col) => Math.max(34, ...edges.filter(edge => colOf.get(edge.from) === col && colOf.get(edge.to) === col + 1).map(edge => (edge.label ? textUnits(edge.label) * 5.4 : 0) + 16)));
+  for (const node of nodes) widest[node.col] = Math.max(widest[node.col], node.width || 0);
+  for (const edge of edges) {
+    const col = colOf.get(edge.from);
+    if (colOf.get(edge.to) === col + 1) gaps[col] = Math.max(gaps[col], (edge.label ? textUnits(edge.label) * 5.4 : 0) + 16);
+  }
   return widest.reduce((sum, width) => sum + width, 0) + gaps.reduce((sum, gap) => sum + gap, 0) + 80;
 }
 
 // Placement supplies native grid/lane hints only. Native renderers own sizing,
 // ports, routes, labels, and all quality validation.
-function rankedPlacement(nodes, edges) {
+function rankedPlacements(nodes, edges, maxColumns = Infinity) {
   const ids = new Set(nodes.map(node => node.id));
-  const incoming = new Map(nodes.map(node => [node.id, 0]));
-  for (const edge of edges) if (ids.has(edge.from) && ids.has(edge.to) && edge.from !== edge.to) incoming.set(edge.to, incoming.get(edge.to) + 1);
-  const rank = new Map();
-  const queue = nodes.filter(node => incoming.get(node.id) === 0).map(node => node.id);
-  const visit = id => {
-    if (!rank.has(id)) rank.set(id, 0);
-    for (const edge of edges.filter(edge => edge.from === id && edge.to !== id)) {
-      if (!ids.has(edge.to)) continue;
-      incoming.set(edge.to, incoming.get(edge.to) - 1);
-      rank.set(edge.to, Math.max(rank.get(edge.to) || 0, rank.get(id) + 1));
-      if (incoming.get(edge.to) === 0) queue.push(edge.to);
+  const outgoing = new Map(nodes.map(node => [node.id, []]));
+  for (const edge of edges) if (ids.has(edge.from) && ids.has(edge.to) && edge.from !== edge.to) outgoing.get(edge.from).push(edge);
+  // Only the placement graph omits DFS back edges. The native spec keeps every
+  // authored relationship, including returns, parallel edges and self loops.
+  const forward = new Map(nodes.map(node => [node.id, []]));
+  const state = new Map();
+  let feedback = false;
+  for (const node of nodes) {
+    if (state.has(node.id)) continue;
+    const stack = [{ id: node.id, next: 0 }];
+    state.set(node.id, 1);
+    while (stack.length) {
+      const frame = stack.at(-1), edge = outgoing.get(frame.id)[frame.next++];
+      if (!edge) { state.set(frame.id, 2); stack.pop(); continue; }
+      if (state.get(edge.to) === 1) { feedback = true; continue; }
+      forward.get(frame.id).push(edge);
+      if (!state.has(edge.to)) { state.set(edge.to, 1); stack.push({ id: edge.to, next: 0 }); }
     }
-  };
-  for (let cursor = 0; cursor < queue.length; cursor++) visit(queue[cursor]);
-  // A cyclic remainder stays a deterministic separate row; no authored edge is
-  // dropped or converted into an invented forward relation.
-  const nextRow = new Map();
-  return nodes.map(node => {
-    const col = rank.has(node.id) && incoming.get(node.id) === 0 ? rank.get(node.id) : 0;
-    const row = nextRow.get(col) || 0;
-    nextRow.set(col, row + 1);
-    return { ...node, row, col };
-  });
+  }
+  let proposed;
+  // Keep the original assignment as the stable source model and fallback.
+  for (const links of [forward, outgoing]) {
+    const incoming = new Map(nodes.map(node => [node.id, 0]));
+    for (const edges of links.values()) for (const edge of edges) incoming.set(edge.to, incoming.get(edge.to) + 1);
+    const rank = new Map();
+    const queue = nodes.filter(node => incoming.get(node.id) === 0).map(node => node.id);
+    const visit = id => {
+      if (!rank.has(id)) rank.set(id, 0);
+      for (const edge of links.get(id)) {
+        incoming.set(edge.to, incoming.get(edge.to) - 1);
+        rank.set(edge.to, Math.max(rank.get(edge.to) || 0, rank.get(id) + 1));
+        if (incoming.get(edge.to) === 0) queue.push(edge.to);
+      }
+    };
+    for (let cursor = 0; cursor < queue.length; cursor++) visit(queue[cursor]);
+    const columns = nodes.map(node => incoming.get(node.id) === 0 ? rank.get(node.id) : 0);
+    if (links === forward && columns.some(col => col >= maxColumns)) continue;
+    const nextRow = new Map();
+    const placed = nodes.map((node, index) => {
+      const col = columns[index];
+      const row = nextRow.get(col) || 0;
+      nextRow.set(col, row + 1);
+      return { ...node, row, col };
+    });
+    if (links === forward && feedback) { proposed = placed; continue; }
+    return { legacy: placed, proposed };
+  }
 }
 
 /** Compile a small author shorthand into an existing native Archify model. */
-export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1, quality = 'showcase' } = {}) {
+export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1, quality = 'showcase', locale = 'zh-CN' } = {}) {
   const context = { line, pointer: '/', id, diagramType, rowMap: {}, subject: { diagram: id, diagramType } };
   if (!TYPES.has(diagramType)) fail(context, 'diagram-type', 'Unknown native diagram type.', 'sequence');
   if (!Array.isArray(rows) || !rows.length) fail(context, 'diagram-rows', 'A shorthand diagram needs at least one row.', 'Client | API | 请求记录');
@@ -198,78 +229,99 @@ export function compileExplainerDiagram(diagramType, rows, { title, id, line = 1
       }
     }
     duplicateCheck(nodes, context, 'node');
-    const placed = rankedPlacement(nodes, edges);
-    if (diagramType === 'architecture') {
+    const fitWidth = node => Math.ceil(textUnits(node.label) * 6.6 + 16);
+    const architectureLayout = diagramType === 'architecture'
+      ? { mode: 'grid', cols: 12, cellW: Math.max(176, ...nodes.map(fitWidth)), cellH: 76, gapX: 100, gapY: 110 } : null;
+    const incoming = new Map(nodes.map(node => [node.id, []]));
+    for (const edge of edges) incoming.get(edge.to)?.push(edge.from);
+    const architectureModel = placed => {
       const cols = Math.max(1, ...placed.map(node => node.col + 1));
       if (cols > 12) fail(context, 'diagram-shorthand-limit', 'This architecture needs more than twelve native grid columns.', 'Use native JSON with explicit component positions.');
-      const fitWidth = node => Math.ceil(textUnits(node.label) * 6.6 + 16);
       // Order each column by where its upstream nodes sit, then centre it against the tallest column,
       // so a hub sits between the nodes it connects instead of on the first row.
       const height = Math.max(...Array.from({ length: cols }, (_, col) => placed.filter(node => node.col === col).length));
       const rowOf = new Map();
       for (let col = 0; col < cols; col++) {
         const column = placed.filter(node => node.col === col);
-        const upstream = node => { const rows = edges.filter(edge => edge.to === node.id && rowOf.has(edge.from)).map(edge => rowOf.get(edge.from)); return rows.length ? rows.reduce((sum, row) => sum + row, 0) / rows.length : node.row; };
-        column.sort((a, b) => upstream(a) - upstream(b) || a.row - b.row)
+        const upstream = new Map(column.map(node => {
+          const rows = incoming.get(node.id).filter(id => rowOf.has(id)).map(id => rowOf.get(id));
+          return [node.id, rows.length ? rows.reduce((sum, row) => sum + row, 0) / rows.length : node.row];
+        }));
+        column.sort((a, b) => upstream.get(a.id) - upstream.get(b.id) || a.row - b.row)
           .forEach((node, i) => rowOf.set(node.id, Math.floor((height - column.length) / 2) + i));
       }
-      spec.layout = { mode: 'grid', cols, cellW: Math.max(176, ...placed.map(fitWidth)), cellH: 76, gapX: 100, gapY: 110 };
-      spec.components = placed.map(node => ({ ...node, row: rowOf.get(node.id), ...(fitWidth(node) > 120 ? { size: [fitWidth(node), 60] } : {}) }));
-      spec.connections = edges;
-    } else if (lanes.size) {
-      for (const [id, { lane, context: ctx }] of nodeLanes) if (!lanes.has(lane)) fail(ctx, 'diagram-lane', `Node ${id} names an undeclared lane.`, 'lane locate | Locate the cause');
-      const first = lanes.keys().next().value;
-      const order = [...lanes.keys()];
-      const ranked = [...placed].sort((a, b) => a.col - b.col || a.row - b.row).map(({ row, col, ...node }) => ({ ...node, lane: nodeLanes.get(node.id)?.lane || first }));
-      // Prefer, in order: one row with phase labels above it; phase rows that step down so each hand-off
-      // edge drops straight; phase rows that each restart at the left. Take the first that stays within
-      // the readable width, since a wider canvas shrinks its edge labels below the native text floor.
-      const row = [...ranked].sort((a, b) => order.indexOf(a.lane) - order.indexOf(b.lane));
-      const used = [...lanes.values()].filter(lane => ranked.some(node => node.lane === lane.id));
-      const sizes = used.map(lane => ranked.filter(node => node.lane === lane.id).length);
-      const wrapped = stair => {
-        const starts = sizes.map((_, i) => stair ? sizes.slice(0, i).reduce((sum, size) => sum + size - 1, 0) : 0);
-        const nextCol = new Map(used.map((lane, i) => [lane.id, starts[i]]));
-        return ranked.map(node => { const col = nextCol.get(node.lane); nextCol.set(node.lane, col + 1); return { ...node, col }; });
-      };
-      const single = row.map(({ lane, ...node }, col) => ({ ...node, lane: 'flow', col }));
-      // Grouping by phase keeps the flow order only when each phase is one stretch of the flow.
-      const inOrder = ranked.every((node, i) => i === 0 || order.indexOf(node.lane) >= order.indexOf(ranked[i - 1].lane));
-      const candidates = [
-        ...(inOrder && ranked.length <= 6 && placed.every(node => node.row === 0) ? [{ nodes: single, single: true }] : []),
-        ...(inOrder && sizes.reduce((sum, size) => sum + size, 0) - (sizes.length - 1) <= 6 ? [{ nodes: wrapped(true) }] : []),
-        { nodes: wrapped(false) },
-      ];
-      const chosen = candidates.find(candidate => workflowWidth(candidate.nodes, edges) <= READABLE_WORKFLOW_WIDTH) || candidates.at(-1);
-      spec.nodes = chosen.nodes;
-      if (chosen.single) {
-        spec.lanes = [{ id: 'flow', label: spec.meta.title }];
-        spec.phases = order.map(id => ({ id, label: lanes.get(id).label, cols: row.flatMap((node, col) => node.lane === id ? [col] : []) })).filter(phase => phase.cols.length).map(({ cols, ...phase }) => ({ ...phase, fromCol: cols[0], toCol: cols.at(-1) }));
-      } else spec.lanes = used;
-      if (spec.nodes.some(node => node.col > 5)) fail(context, 'diagram-shorthand-limit', 'A workflow lane holds at most six nodes.', 'Split the process into another lane.');
-      spec.edges = edges;
-    } else {
-      // A process too wide for one readable row wraps by columns into stacked bands, keeping each
-      // band's branch rows, and steps each band down under the end of the previous one where six
-      // columns allow, the same way declared phases do.
-      const fits = laid => laid.every(node => node.col <= 5) && workflowWidth(laid, edges) <= READABLE_WORKFLOW_WIDTH;
-      let wrapped;
-      if (!fits(placed)) {
-        const branchRows = Math.max(...placed.map(node => node.row)) + 1;
-        for (let size = 5; size >= 2 && !wrapped; size--) {
-          for (const stair of [true, false]) {
-            const laid = placed.map(node => { const band = Math.floor(node.col / size); return { ...node, row: band * branchRows + node.row, col: (stair ? band * (size - 1) : 0) + node.col - band * size }; });
-            const used = [...new Set(laid.map(node => node.row))].sort((a, b) => a - b);
-            const compact = laid.map(node => ({ ...node, row: used.indexOf(node.row) }));
-            if (fits(compact)) { wrapped = compact; break; }
+      return { layout: { ...architectureLayout, cols },
+        components: placed.map(node => ({ ...node, row: rowOf.get(node.id), ...(fitWidth(node) > 120 ? { size: [fitWidth(node), 60] } : {}) })), connections: edges };
+    };
+    const workflowModel = placed => {
+      const model = {};
+      if (lanes.size) {
+        for (const [id, { lane, context: ctx }] of nodeLanes) if (!lanes.has(lane)) fail(ctx, 'diagram-lane', `Node ${id} names an undeclared lane.`, 'lane locate | Locate the cause');
+        const first = lanes.keys().next().value;
+        const order = [...lanes.keys()];
+        const ranked = [...placed].sort((a, b) => a.col - b.col || a.row - b.row).map(({ row, col, ...node }) => ({ ...node, lane: nodeLanes.get(node.id)?.lane || first }));
+        // Prefer, in order: one row with phase labels above it; phase rows that step down so each hand-off
+        // edge drops straight; phase rows that each restart at the left. Take the first that stays within
+        // the readable width, since a wider canvas shrinks its edge labels below the native text floor.
+        const row = [...ranked].sort((a, b) => order.indexOf(a.lane) - order.indexOf(b.lane));
+        const used = [...lanes.values()].filter(lane => ranked.some(node => node.lane === lane.id));
+        const sizes = used.map(lane => ranked.filter(node => node.lane === lane.id).length);
+        const wrapped = stair => {
+          const starts = sizes.map((_, i) => stair ? sizes.slice(0, i).reduce((sum, size) => sum + size - 1, 0) : 0);
+          const nextCol = new Map(used.map((lane, i) => [lane.id, starts[i]]));
+          return ranked.map(node => { const col = nextCol.get(node.lane); nextCol.set(node.lane, col + 1); return { ...node, col }; });
+        };
+        const single = row.map(({ lane, ...node }, col) => ({ ...node, lane: 'flow', col }));
+        // Grouping by phase keeps the flow order only when each phase is one stretch of the flow.
+        const inOrder = ranked.every((node, i) => i === 0 || order.indexOf(node.lane) >= order.indexOf(ranked[i - 1].lane));
+        const candidates = [
+          ...(inOrder && ranked.length <= 6 && placed.every(node => node.row === 0) ? [{ nodes: single, single: true }] : []),
+          ...(inOrder && sizes.reduce((sum, size) => sum + size, 0) - (sizes.length - 1) <= 6 ? [{ nodes: wrapped(true) }] : []),
+          { nodes: wrapped(false) },
+        ];
+        const chosen = candidates.find(candidate => workflowWidth(candidate.nodes, edges) <= READABLE_WORKFLOW_WIDTH) || candidates.at(-1);
+        model.nodes = chosen.nodes;
+        if (chosen.single) {
+          model.lanes = [{ id: 'flow', label: spec.meta.title }];
+          model.phases = order.map(id => ({ id, label: lanes.get(id).label, cols: row.flatMap((node, col) => node.lane === id ? [col] : []) })).filter(phase => phase.cols.length).map(({ cols, ...phase }) => ({ ...phase, fromCol: cols[0], toCol: cols.at(-1) }));
+        } else model.lanes = used;
+        if (model.nodes.some(node => node.col > 5)) fail(context, 'diagram-shorthand-limit', 'A workflow lane holds at most six nodes.', 'Split the process into another lane.');
+        model.edges = edges;
+      } else {
+        // A process too wide for one readable row wraps by columns into stacked bands, keeping each
+        // band's branch rows, and steps each band down under the end of the previous one where six
+        // columns allow, the same way declared phases do.
+        const fits = laid => laid.every(node => node.col <= 5) && workflowWidth(laid, edges) <= READABLE_WORKFLOW_WIDTH;
+        let wrapped;
+        if (!fits(placed)) {
+          const branchRows = Math.max(...placed.map(node => node.row)) + 1;
+          for (let size = 5; size >= 2 && !wrapped; size--) {
+            for (const stair of [true, false]) {
+              const laid = placed.map(node => { const band = Math.floor(node.col / size); return { ...node, row: band * branchRows + node.row, col: (stair ? band * (size - 1) : 0) + node.col - band * size }; });
+              const used = [...new Set(laid.map(node => node.row))].sort((a, b) => a - b);
+              const compact = laid.map(node => ({ ...node, row: used.indexOf(node.row) }));
+              if (fits(compact)) { wrapped = compact; break; }
+            }
           }
         }
+        const rows = wrapped || placed;
+        if (rows.some(node => node.col > 5)) fail(context, 'diagram-shorthand-limit', 'Native workflow columns are limited to 0–5.', 'Declare phase lanes with "lane <id> | label" rows and assign nodes to them.');
+        model.lanes = Array.from({ length: Math.max(1, ...rows.map(node => node.row + 1)) }, (_, row) => ({ id: `lane-${row}`, label: wrapped ? `${spec.meta.title} · ${row + 1}` : row ? `${locale.startsWith('zh') ? '分支' : 'Branch'} ${row}` : spec.meta.title }));
+        model.nodes = rows.map(({ row, ...node }) => ({ ...node, lane: `lane-${row}` }));
+        model.edges = edges;
       }
-      const rows = wrapped || placed;
-      if (rows.some(node => node.col > 5)) fail(context, 'diagram-shorthand-limit', 'Native workflow columns are limited to 0–5.', 'Declare phase lanes with "lane <id> | label" rows and assign nodes to them.');
-      spec.lanes = Array.from({ length: Math.max(1, ...rows.map(node => node.row + 1)) }, (_, row) => ({ id: `lane-${row}`, label: wrapped ? `${spec.meta.title} · ${row + 1}` : row ? `分支 ${row}` : spec.meta.title }));
-      spec.nodes = rows.map(({ row, ...node }) => ({ ...node, lane: `lane-${row}` }));
-      spec.edges = edges;
+      return model;
+    };
+    const placements = rankedPlacements(nodes, edges, diagramType === 'architecture' ? 12 : Infinity);
+    const model = architectureLayout ? architectureModel : workflowModel;
+    Object.assign(spec, model(placements.legacy));
+    if (placements.proposed) {
+      try {
+        const alternative = withIsolatedDiagnosticRecording(() => ({ ...spec, ...model(placements.proposed) }));
+        automaticLayouts.set(spec, { source: JSON.stringify(spec), spec: alternative });
+      } catch (error) {
+        if (!error.archifyDiagnostics?.length || !error.archifyDiagnostics.every(entry => entry.code === 'explainer/diagram-shorthand-limit')) throw error;
+      }
     }
   } else if (diagramType === 'tree') {
     spec.nodes = entries.map((entry, index) => {
@@ -431,7 +483,7 @@ function changesPreview(svg, changes, semantic, context) {
   });
 }
 
-async function nativeProcess(script, args, options, context, reason) {
+async function nativeProcess(script, args, options) {
   try {
     const result = await runFile(process.execPath, [script, ...args], { cwd: options.cwd || skillRoot, maxBuffer: MAX_DIAGRAM_BYTES,
       timeout: 120000, env: { ...process.env, ARCHIFY_DIAGNOSTIC_FORMAT: 'json', ARCHIFY_QUALITY_PROFILE: options.quality,
@@ -440,8 +492,22 @@ async function nativeProcess(script, args, options, context, reason) {
   } catch (error) {
     let native;
     for (const output of [error.stdout, error.stderr]) { try { native = JSON.parse(output); if (native.diagnostics) break; } catch {} }
-    rethrowNative(native || error, context, reason);
+    // Publish only the selected failure, after automatic alternatives are exhausted.
+    error.nativeResult = native;
+    throw error;
   }
+}
+
+function layoutCost(spec) {
+  const columns = new Map((spec.components || spec.nodes || []).map(node => [node.id, node.col]));
+  return (spec.connections || spec.edges || []).filter(edge => edge.from !== edge.to && columns.get(edge.from) === columns.get(edge.to)).length;
+}
+
+function retryableLayoutFailure(result) {
+  const diagnostics = (result.diagnostics || result.archifyDiagnostics || []).filter(entry => entry.severity !== 'warning');
+  if (diagnostics.length) return diagnostics.every(entry => /^(?:layout|composition|clean-flow|workflow)\//u.test(entry.code));
+  return result.composition?.status === 'fail' && result.checks?.every(check => check.ok
+    || !['file_readable', 'single_svg', 'finite_svg', 'svg_path_data'].includes(check.name));
 }
 
 /** Freeze native diagrams, validate, render, and check without a per-child browser gate. */
@@ -468,32 +534,55 @@ export async function prepareExplainerDiagrams(document, { repoRoot, baseDir, qu
     try { original = JSON.parse(originalBytes.toString('utf8')); } catch { fail(context, 'diagram-json', 'Diagram source is not valid JSON.', '{"schema_version":1,"diagram_type":"sequence","meta":{"title":"Request"},"participants":[],"messages":[]}'); }
     if (!original || typeof original !== 'object' || Array.isArray(original) || original.diagram_type !== block.diagramType) fail(context, 'diagram-type-mismatch', 'Native specification diagram_type must match its explainer block.', `diagram_type: ${block.diagramType}`);
     dependencies.push({ kind: 'diagram-spec', id: block.id, ...(block.source ? { path: path.resolve(baseDir, block.source), relativePath: block.source } : { inline: true }), ...freezeBytes(originalBytes) });
+    const automatic = automaticLayouts.get(block.spec);
+    const candidates = automatic?.source === originalBytes.toString('utf8')
+      ? [original, automatic.spec].sort((left, right) => layoutCost(left) - layoutCost(right)) : [original];
     const temporary = createOwnedTempDirectory('archify-explainer-diagram-');
     try {
-      const output = path.join(temporary.path, 'diagram.html'), input = path.join(temporary.path, 'diagram.json');
-      // Inline diagrams belong to the explainer's reading context. Keep the
-      // original author bytes frozen; apply inheritance only to native render
-      // input. Referenced standalone specs retain their own locale defaults.
-      const inheritedLocale = block.spec !== undefined && original.meta?.locale === undefined && document.meta?.locale !== undefined
-        ? { locale: document.meta.locale } : {};
-      const spec = { ...original, meta: { ...original.meta, ...inheritedLocale, output: 'diagram.html', quality_profile: quality } };
-      try { validateSchema(block.diagramType, spec); } catch (error) { rethrowNative(error, context, 'diagram-schema'); }
-      fs.writeFileSync(input, JSON.stringify(spec), { flag: 'wx' });
-      await nativeProcess(path.join(skillRoot, 'renderers', block.diagramType, `render-${block.diagramType}.mjs`), [input, output], { repoRoot, quality, cwd: temporary.path }, context, 'diagram-render');
-      const checked = await nativeProcess(path.join(skillRoot, 'scripts/check-render-output.mjs'), [output], { repoRoot, quality, cwd: temporary.path }, context, 'diagram-check');
-      let check;
-      try { check = JSON.parse(checked.stdout); } catch { fail(context, 'diagram-check-receipt', 'Native checker returned no structured receipt.', 'Rerun the native diagram check.'); }
-      if (check.ok === false) rethrowNative(check, context, 'diagram-check');
-      const bytes = fs.readFileSync(output);
-      if (bytes.length > MAX_DIAGRAM_BYTES) fail(context, 'diagram-artifact-size', 'The native diagram artifact exceeds 32 MiB.', 'Use a smaller native diagram.');
-      const html = bytes.toString('utf8'), svgMatch = html.match(/<svg\b[^>]*\bdata-quality-profile="[^"]*"[^>]*>[\s\S]*?<\/svg>/);
-      if (!svgMatch) fail(context, 'diagram-svg', 'The native renderer produced no primary semantic SVG.', 'Use a supported native diagram renderer.');
-      const canonicalSvg = svgMatch[0], semantic = semanticOf(canonicalSvg);
-      const svg = changesPreview(canonicalSvg, block.changes, semantic, context);
-      // Preview styles are derived from html at render time; storing them again would double the page.
-      diagrams[block.id] = { diagramType: block.diagramType, spec: original, html, svg, sha256: hash(bytes), bytes: bytes.length,
-        specification: freezeBytes(originalBytes), checks: { validate: { ok: true }, render: { ok: true }, check }, semantic,
-        ...(block.changes ? { changes: block.changes.map(change => ({ ...change })) } : {}) };
+      const failures = [];
+      for (const [index, candidate] of candidates.entries()) {
+        const directory = index ? path.join(temporary.path, String(index)) : temporary.path;
+        if (index) fs.mkdirSync(directory);
+        const output = path.join(directory, 'diagram.html'), input = path.join(directory, 'diagram.json');
+        // Inline diagrams belong to the explainer's reading context. Keep the
+        // original author bytes frozen; apply inheritance only to native render
+        // input. Referenced standalone specs retain their own locale defaults.
+        const inheritedLocale = block.spec !== undefined && candidate.meta?.locale === undefined && document.meta?.locale !== undefined
+          ? { locale: document.meta.locale } : {};
+        const spec = { ...candidate, meta: { ...candidate.meta, ...inheritedLocale, output: 'diagram.html', quality_profile: quality } };
+        try { validateSchema(block.diagramType, spec); } catch (error) { rethrowNative(error, context, 'diagram-schema'); }
+        fs.writeFileSync(input, JSON.stringify(spec), { flag: 'wx' });
+        let stage = 'diagram-render';
+        try {
+          await nativeProcess(path.join(skillRoot, 'renderers', block.diagramType, `render-${block.diagramType}.mjs`), [input, output], { repoRoot, quality, cwd: directory });
+          stage = 'diagram-check';
+          const checked = await nativeProcess(path.join(skillRoot, 'scripts/check-render-output.mjs'), [output], { repoRoot, quality, cwd: directory });
+          let check;
+          try { check = JSON.parse(checked.stdout); } catch { fail(context, 'diagram-check-receipt', 'Native checker returned no structured receipt.', 'Rerun the native diagram check.'); }
+          if (check.ok === false) throw Object.assign(new Error('Native diagram check failed.'), { nativeResult: check });
+          const bytes = fs.readFileSync(output);
+          if (bytes.length > MAX_DIAGRAM_BYTES) fail(context, 'diagram-artifact-size', 'The native diagram artifact exceeds 32 MiB.', 'Use a smaller native diagram.');
+          const html = bytes.toString('utf8'), svgMatch = html.match(/<svg\b[^>]*\bdata-quality-profile="[^"]*"[^>]*>[\s\S]*?<\/svg>/);
+          if (!svgMatch) fail(context, 'diagram-svg', 'The native renderer produced no primary semantic SVG.', 'Use a supported native diagram renderer.');
+          const canonicalSvg = svgMatch[0], semantic = semanticOf(canonicalSvg);
+          const svg = changesPreview(canonicalSvg, block.changes, semantic, context);
+          // Preview styles are derived from html at render time; storing them again would double the page.
+          diagrams[block.id] = { diagramType: block.diagramType, spec: original, html, svg, sha256: hash(bytes), bytes: bytes.length,
+            ...(spec.lanes ? { previewLanes: spec.lanes } : {}),
+            specification: freezeBytes(originalBytes), checks: { validate: { ok: true }, render: { ok: true }, check }, semantic,
+            ...(block.changes ? { changes: block.changes.map(change => ({ ...change })) } : {}) };
+          break;
+        } catch (error) {
+          if (!Object.hasOwn(error, 'nativeResult')) throw error;
+          const result = error.nativeResult || error;
+          if (!retryableLayoutFailure(result)) rethrowNative(result, context, stage);
+          failures.push({ candidate, result, stage });
+        }
+      }
+      if (!diagrams[block.id]) {
+        const failure = failures.find(entry => entry.candidate === original) || failures.at(-1);
+        rethrowNative(failure.result, context, failure.stage);
+      }
     } finally { await temporary.cleanup(); }
   }
   return { diagrams, dependencies };

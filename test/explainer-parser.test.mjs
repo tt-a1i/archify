@@ -180,8 +180,123 @@ test('an authored page style is kept and limited to the shipped styles',()=>{
   assert.equal(validateExplainer(parse('# T\n\nA.\n\n@meta style=neon\n\n## Q {#q}\n\nText.').document).ok,false);
 });
 
+test('node content references reuse explicit prose IDs and follow body edits without changing the native graph',()=>{
+  const draft='# T\n\nRead one shared explanation.\n\n@source docs title="Reference" url=https://example.com\n\n## How? {#how}\n\n@sequence id=flow\n| actor api | API | backend | block:api-notes | source:docs |\n| actor db | DB | database |\n| api | db | Read |\n\n@prose id=api-notes\n| First explanation. |';
+  const original=parse(draft), edited=parse(draft.replace('First explanation.','Updated explanation.'));
+  const block=original.document.panels[0].blocks[0];
+  assert.deepEqual(block.nodeBlocks,{api:'api-notes'});
+  assert.deepEqual(block.nodeSources,{api:'docs'});
+  const reordered=parse(draft.replace('| backend | block:api-notes | source:docs |','| source:docs | backend | block:api-notes |'));
+  assert.deepEqual(reordered.document.panels[0].blocks[0],block,'source cells keep their previously accepted positions');
+  assert.deepEqual(edited.document.panels[0].blocks[0],block);
+  assert.equal(edited.document.panels[0].blocks[1].text,'Updated explanation.');
+  assert.ok(!JSON.stringify(block.spec).includes('api-notes'));
+  assert.equal(validateExplainer(original.document).ok,true);
+  const invalid=parse(draft.replace('block:api-notes','block:missing'));
+  const result=validateExplainer(invalid.document,{sourceMap:invalid.sourceMap});
+  const diagnostic=result.diagnostics.find(entry=>entry.code==='explainer/unresolved-reference');
+  assert.equal(diagnostic.subject.line,10,'a missing reference points to its node row');
+  assert.equal(parseExplainer(draft.replace('block:api-notes','block:api-notes | block:other')).document,null);
+  const recursive=parse(draft.replace('block:api-notes','block:flow'));
+  assert.ok(validateExplainer(recursive.document).diagnostics.some(entry=>entry.code==='explainer/content-reference'));
+  const wrongNode=structuredClone(original.document);wrongNode.panels[0].blocks[0].nodeBlocks={missing:'api-notes'};
+  assert.ok(validateExplainer(wrongNode).diagnostics.some(entry=>entry.code==='explainer/diagram-node'));
+});
+
+test('diagram references reject message, phase, edge and field rows at the authored line',()=>{
+  const sequence='@sequence id=flow\n| actor api | API | backend |\n| actor db | DB | database |';
+  for(const reference of ['block:api-notes','source:docs'])for(const [declaration,row,tail]of [
+    [sequence,`| api | db | Read | ${reference} |`,''],
+    [sequence,`| phase | Read phase | ${reference} |`,'\n| api | db | Read |'],
+    ['@architecture id=flow\n| api | API | backend |\n| db | DB | database |',`| api > db | Read | ${reference} |`,''],
+    ['@erd id=flow\n| entity api | API |',`| api.id | bigint | pk | ${reference} |`,''],
+  ]){
+    const text=draft(`${declaration}\n${row}${tail}\n\n@prose id=api-notes\n| Explain the API. |`);
+    const result=parseExplainer(text,{inputPath:'answer.md'});
+    assert.equal(result.document,null,row);
+    const issue=result.diagnostics.find(d=>d.message==='A content reference belongs to a node, actor or entity row.');
+    assert.ok(issue,row);
+    assert.equal(issue.subject.line,text.split('\n').indexOf(row)+1,row);
+  }
+});
+
+test('declared nodes retain every previously accepted source-cell position',()=>{
+  for(const [type,cells,before,after]of [
+    ['architecture',['api','API','backend'],'','\n| db | DB | database |\n| api > db | Read |'],
+    ['workflow',['api','API','backend','serve'],'| lane serve | Serve |\n','\n| db | DB | database | serve |\n| api > db | Read |'],
+    ['sequence',['actor api','API','backend'],'','\n| actor db | DB | database |\n| api | db | Read |'],
+    ['erd',['entity api','API'],'','\n| api.id | bigint | pk |'],
+  ]){
+    const make=row=>draft(`@${type} id=flow\n${before}| ${row.join(' | ')} |${after}`);
+    const native=parse(make(cells)).document.panels[0].blocks[0].spec;
+    for(let index=1;index<=cells.length;index++){
+      const row=[...cells];row.splice(index,0,'source:docs');
+      const {document}=parse(make(row)),block=document.panels[0].blocks[0];
+      assert.deepEqual(block.nodeSources,{api:'docs'},`${type} cell ${index}`);
+      assert.deepEqual(block.spec,native,`${type} cell ${index}`);
+      assert.equal(validateExplainer(document).ok,true,`${type} cell ${index}`);
+    }
+  }
+});
+
+test('node references accept each documented content block and reject duplicate source bindings',()=>{
+  for(const body of [
+    '@prose id=notes\n| Explain the API. |',
+    '@callout id=notes level=note\n| Check this condition. |',
+    '@list id=notes\n| Check the request. |\n| Read the response. |',
+    '@facts id=notes\n| Owner | API team |',
+  ]){
+    const {document}=parse(draft(`@sequence id=flow\n| actor api | API | backend | block:notes |\n| actor db | DB | database |\n| api | db | Read |\n\n${body}`));
+    assert.deepEqual(document.panels[0].blocks[0].nodeBlocks,{api:'notes'});
+    assert.equal(validateExplainer(document).ok,true,body);
+  }
+  const duplicate=parseExplainer(draft('@sequence id=flow\n| actor api | API | backend | source:docs | source:docs |\n| actor db | DB | database |\n| api | db | Read |'));
+  assert.equal(duplicate.document,null);
+  assert.ok(duplicate.diagnostics.some(d=>d.message==='A node accepts one reference of each kind.'));
+});
+
 test('a badge-only comparison cell and a route written in the node column are accepted',()=>{
   const {document}=parse('# T\n\nA.\n\n## Q {#q}\n\n| Trap | Verdict |\n| --- | --- |\n| Flood car | {bad:Drop} |\n\n@sequence id=flow\n| actor a | A |\n| actor b | B |\n| a | b | hi |\n\n@steps id=walk\n| one | Hello | Detail | flow | a~b |\n| two | Back | Detail | flow | b |');
   assert.deepEqual(document.panels[0].blocks[0].rows[0].cells[0],{text:'Drop',assessment:'bad',verdict:'Drop'});
   assert.deepEqual(document.panels[0].blocks[2].items[0].target,{diagram:'flow',route:['a','b']});
+});
+
+test('heading line terminators remain literal text without crashing the parser (#1083)',()=>{
+  for(const separator of ['\r','\u2028','\u2029']) {
+    const source=`# Title${separator}continued {#heading}\n\nAnswer.\n\n## Question${separator}continued {#question span=7}\n\nText.\n`;
+    const result=parse(source);
+    assert.equal(result.document.meta.title,`Title${separator}continued`);
+    assert.equal(result.document.panels[0].title,`Question${separator}continued`);
+    assert.equal(result.document.meta.id,'heading');
+    assert.equal(result.document.panels[0].id,'question');
+    assert.equal(result.document.panels[0].span,7);
+    assert.equal(result.sourceText,source);
+    assert.equal(validateExplainer(result.document).ok,true);
+    const range=result.sourceMap['/panels/0'];
+    assert.equal(range.line,5);
+    assert.equal(source.slice(range.start,range.end),`## Question${separator}continued {#question span=7}\n\nText.\n`);
+  }
+  const malformed=parseExplainer('# Title\r\rAnswer.\r\r## Question\r\rText.\r');
+  assert.equal(malformed.document,null);
+  assert.ok(malformed.diagnostics.length);
+  assert.ok(malformed.diagnostics.every(entry=>entry.code.startsWith('explainer/parse-')));
+});
+
+test('workflow shorthand uses final page locale without moving its source locations (#1082)',()=>{
+ const workflow='@workflow\n| a | Build | backend |\n| b | Ship | backend |\n| c | Roll back | backend |\n| a > b | green |\n| a > c | red |\n';
+ const header='# Release flow\n\nA build ships or rolls back.\n\n';
+ const panel='## What happens? {#question}\n\n';
+ const early=parse(header+'@meta locale=en\n\n'+panel+workflow);
+ const source=header+panel+workflow+'\n@meta locale=en quality_profile=standard\n';
+ const late=parse(source);
+ assert.equal(late.document.meta.locale,'en');
+ assert.equal(late.document.panels[0].blocks[0].spec.lanes[1].label,'Branch 1');
+ assert.equal(late.document.panels[0].blocks[0].spec.meta.quality_profile,'showcase','late metadata does not change the original shorthand quality');
+ const original=parse(header+panel+workflow);
+ assert.equal(late.document.panels[0].blocks[0].id,original.document.panels[0].blocks[0].id,'locale cannot change an automatic source anchor');
+ assert.deepEqual(late.document.panels[0].blocks[0],early.document.panels[0].blocks[0]);
+ const location=late.sourceMap['/panels/0/blocks/0/spec/lanes/1/label'];
+ assert.equal(location.start,source.indexOf('@workflow'));
+ assert.ok(source.slice(location.start,location.end).startsWith(workflow.trimEnd()));
+ assert.equal(late.sourceMap['/meta/locale'].start,source.indexOf('@meta'));
 });

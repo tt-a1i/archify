@@ -30,7 +30,8 @@ function fixture(t, scenario) {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
   Object.assign(env, {
     GIT_CONFIG_NOSYSTEM: '1',
-    GIT_CONFIG_GLOBAL: os.devNull,
+    // Git for Windows cannot open Node's `\\.\nul`; `NUL` is its null device.
+    GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : os.devNull,
     GIT_TERMINAL_PROMPT: '0',
     ...(scenario.refBase ? { GIT_REPLACE_REF_BASE: scenario.refBase } : {}),
   });

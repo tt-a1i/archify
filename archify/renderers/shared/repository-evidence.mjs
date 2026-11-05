@@ -347,8 +347,10 @@ export function verifyRepositoryEvidence(diagramType, diagram, repoRootInput) {
           if (requestedLine > lineCount) {
             evidenceFailure('repository-evidence/line-out-of-range', `${at} requests line ${requestedLine}, but ${source.path} has ${lineCount} lines at revision ${revision}.`, {
               subject: { path: at, ...nodeSubject },
-              evidence: { sourcePath: source.path, requestedLine, lineCount, revision },
-              supportedFixes: ['use a line range that exists at the pinned revision'],
+              evidence: { sourcePath: source.path, line: source.line, ...(source.endLine ? { endLine: source.endLine } : {}), requestedLine, lineCount, revision },
+              supportedFixes: [source.endLine && source.line <= lineCount
+                ? `set end_line to ${lineCount}, the last line of ${source.path}`
+                : `reread ${source.path} (${lineCount} lines) and cite the lines that show the fact`],
             });
           }
         }

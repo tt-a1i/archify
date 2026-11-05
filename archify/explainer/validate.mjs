@@ -53,7 +53,7 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
     }
     return {ok:false,diagnostics};
   }
-  const targets=new Map([['answer',{pointer:'/answer',component:'answer'}]]), sourceIds=new Map(), diagrams=new Map();
+  const targets=new Map([['answer',{pointer:'/answer',component:'answer'}]]), sourceIds=new Map(), diagrams=new Map(), invalidNative=new Set();
   function id(value,pointer,component,panelId,registry=targets) {
     if(!ID.test(value)||value.length>100)fail('id',pointer,component,'IDs require an ASCII letter followed by letters, digits, hyphens or underscores.','id=request-path',panelId);
     if(registry.has(value))fail('duplicate-id',pointer,component,'This identity is already used. Use an explicit distinct ID.','id=request-path-branch',panelId);
@@ -65,7 +65,16 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
     const pp=`/panels/${pi}`;id(panel.id,`${pp}/id`,'panel',panel.id);
     for(const [bi,block]of panel.blocks.entries()) {
       const bp=`${pp}/blocks/${bi}`;id(block.id,`${bp}/id`,block.type,panel.id);
-      if(block.type==='diagram')diagrams.set(block.id,{block,pointer:bp,panelId:panel.id});
+      if(block.type==='diagram') {
+        diagrams.set(block.id,{block,pointer:bp,panelId:panel.id});
+        if(block.spec) {
+          if(block.spec.diagram_type!==block.diagramType)fail('diagram-type',`${bp}/spec/diagram_type`,block.type,'The native specification must match the declared diagram type.','@sequence source=request.sequence.json',panel.id);
+          try{validateSchema(block.diagramType,block.spec);}catch(error){
+            invalidNative.add(block);
+            for(const entry of error.archifyDiagnostics||[])diagnostics.push({...entry,code:`explainer/native-${entry.code}`,subject:location(`${bp}/spec${entry.subject?.path==='/'?'':entry.subject?.path||''}`,block.type,panel.id),evidence:{...entry.evidence,reason:entry.message,example:`Use valid native ${block.diagramType} JSON.`}});
+          }
+        }
+      }
       if(['comparison','steps'].includes(block.type))for(const [ii,item]of (block.rows||block.items).entries()) {
         const ip=`${bp}/${block.rows?'rows':'items'}/${ii}`;id(item.id,`${ip}/id`,block.type,panel.id);
       }
@@ -81,7 +90,7 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
   function diagramTarget(target,pointer,component,panelId) {
     if (target.node !== undefined && target.route !== undefined) fail('diagram-target-exclusive',pointer,component,'A diagram target cannot select a node and a route at the same time.','{"diagram":"request-path","node":"api"} or {"diagram":"request-path","route":["api","redis"]}',panelId);
     reference(target.diagram,`${pointer}/diagram`,component,panelId,diagrams,'Use the ID of a diagram block, such as request-path.');
-    const diagram=diagrams.get(target.diagram);if(!diagram?.block.spec)return;
+    const diagram=diagrams.get(target.diagram);if(!diagram?.block.spec||invalidNative.has(diagram.block))return;
     const spec=diagram.block.spec;
     const nodes=new Set((spec[NODE_KEYS[diagram.block.diagramType]]||[]).map(node=>node.id));
     const edges=spec[EDGE_KEYS[diagram.block.diagramType]]||[];
@@ -127,10 +136,11 @@ export function validateExplainer(document, {sourceMap = {}, inputPath, writingM
       if(component==='steps')block.items.forEach((item,i)=>{text(item.text,`${bp}/items/${i}/text`,component,panel.id);text(item.detail,`${bp}/items/${i}/detail`,component,panel.id);if(item.target)diagramTarget(item.target,`${bp}/items/${i}/target`,component,panel.id);});
       if(component==='code') {reference(block.source,`${bp}/source`,component,panel.id,sourceIds,'source=repository-snippet');if(sourceIds.has(block.source)&&document.sources.find(source=>source.id===block.source)?.path===undefined)fail('code-source-kind',`${bp}/source`,component,'Code blocks require a repository source whose commit and lines can be checked.','@source snippet title="Code" path=src/router.js lines=1:10',panel.id);}
       if(component==='diagram'&&block.nodeSources)for(const [node,source] of Object.entries(block.nodeSources))reference(source,`${bp}/nodeSources/${node}`,component,panel.id,sourceIds,`| ${node} | Label | backend | source:router |`);
-      if(component==='diagram'&&block.spec) {
-        if(block.spec.diagram_type!==block.diagramType)fail('diagram-type',`${bp}/spec/diagram_type`,component,'The native specification must match the declared diagram type.','@sequence source=request.sequence.json',panel.id);
-        try{validateSchema(block.diagramType,block.spec);}catch(error){for(const entry of error.archifyDiagnostics||[])diagnostics.push({...entry,code:`explainer/native-${entry.code}`,subject:location(`${bp}/spec${entry.subject?.path==='/'?'':entry.subject?.path||''}`,component,panel.id),evidence:{...entry.evidence,reason:entry.message,example:`Use valid native ${block.diagramType} JSON.`}});}
+      if(component==='diagram'&&block.nodeBlocks)for(const [node,target] of Object.entries(block.nodeBlocks)) {
+        reference(target,`${bp}/nodeBlocks/${node}`,component,panel.id,targets,`@prose id=${target}\nThe node's explanation.`);
+        if(targets.has(target)&&!['prose','callout','list','facts'].includes(targets.get(target).component))fail('content-reference',`${bp}/nodeBlocks/${node}`,component,'Node content must reference a prose, callout, list or facts block.','@prose id=node-notes\nThe node\'s explanation.',panel.id);
       }
+      if(component==='diagram')for(const key of ['nodeSources','nodeBlocks'])for(const node of Object.keys(block[key]||{}))diagramTarget({diagram:block.id,node},`${bp}/${key}/${node}`,component,panel.id);
     }
   }
   diagnostics.push(...lintExplainerWriting(entries,{mode:writingMode,locale:document.meta.locale||'auto'}).map(entry=>({...entry,subject:{...entry.subject,...(inputPath?{input:inputPath}:{})}})));

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": {"title": "天气告警 · 离线渲染样本", "output": "weather.html"},
+  "components": [
+    {"id":"n1","type":"external","label":"Weather Feed","pos":[40,210],"size":[180,80]},
+    {"id":"n2","type":"backend","label":"Alert API","pos":[450,210],"size":[180,80]},
+    {"id":"n3","type":"database","label":"Subscriber Store","pos":[920,60],"size":[220,80]},
+    {"id":"n4","type":"external","label":"SMS Provider","pos":[920,370],"size":[220,80]}
+  ],
+  "connections": [
+    {"from":"n1","to":"n2","label":"forecast"},
+    {"from":"n2","to":"n3","label":"lookup subscribers","fromSide":"top","toSide":"left","via":[[540,100],[850,100]]},
+    {"from":"n2","to":"n4","label":"send alert","fromSide":"bottom","toSide":"left","via":[[540,410],[850,410]]}
+  ]
+}

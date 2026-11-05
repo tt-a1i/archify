@@ -380,8 +380,8 @@
   all('[data-open-diagram]').forEach(button=>button.addEventListener('click',()=>openViewer(button.dataset.openDiagram,'',button)));
   // A node clicked in the preview opens the interactive view focused on it, with its links.
   all('.diagram-preview').forEach(preview=>preview.addEventListener('click',event=>{
-    const node = event.target.closest('[data-node-id]')?.dataset.nodeId, block = preview.closest('.block');
-    if (node) openViewer(block.id,`focus=${encodeURIComponent(node)}`,block.querySelector('[data-open-diagram]'));
+    const node = event.target.closest('[data-node-id]'), block = preview.closest('.block');
+    if (node) openViewer(block.id,`focus=${encodeURIComponent(node.dataset.nodeId)}`,node.hasAttribute('tabindex') ? node : block.querySelector('[data-open-diagram]'));
   }));
   // One spotlight for every text-to-diagram link: the named nodes and edges stay lit, the rest dims.
   const previewOf = id => byId(id)?.querySelector('.diagram-preview');
@@ -598,26 +598,31 @@
   };
   function setupSourceCards() {
     const sources = prepared.preparedSources?.sources || {};
-    const card = document.createElement('div'); card.className = 'source-card'; card.hidden = true; card.setAttribute('role','tooltip');
+    const card = document.createElement('div'); card.className = 'source-card'; card.hidden = true; card.setAttribute('role','group'); card.setAttribute('aria-label',say('Source details','来源详情'));
     document.body.append(card);
-    let hideTimer;
-    const hide = () => { hideTimer = setTimeout(()=>{ card.hidden = true; },160); };
+    let hideTimer, opener;
+    const hide = () => { clearTimeout(hideTimer); hideTimer = setTimeout(()=>{ if (!card.contains(document.activeElement)) card.hidden = true; },160); };
     card.addEventListener('mouseenter',()=>clearTimeout(hideTimer)); card.addEventListener('mouseleave',hide);
-    const show = (link, id = decodeURIComponent(link.getAttribute('href').slice('#source-'.length))) => {
-      const source = sources[id] || prepared.document?.sources?.find(entry=>entry.id === id);
-      if (!source) return;
+    card.addEventListener('focusin',()=>clearTimeout(hideTimer)); card.addEventListener('focusout',hide);
+    const show = (link, id = decodeURIComponent(link.getAttribute('href').slice('#source-'.length)), blockId) => {
+      const content = blockId && byId(blockId);
+      const source = sources[id] || prepared.document?.sources?.find(entry=>entry.id === id) || {};
+      if (!Object.keys(source).length && !content) return;
       clearTimeout(hideTimer);
+      opener = link;
       const escapeText = value => String(value ?? '').replace(/[&<>"]/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
       // A repository source shows its pinned excerpt; a web page its host; any other note its text.
       const host = (()=>{ try { return new URL(source.url).host.replace(/^www\./,''); } catch { return ''; } })();
-      const where = source.path ? `${source.path}${source.lines ? `:${source.lines.join('–')}` : ''}` : host;
+      const where = source.path ? `${source.path}${source.lines ? `:${source.lines.join('–')}` : ''}` : host || (content ? source.title || '' : '');
       const kind = source.path ? 'code' : source.url ? 'web' : 'note';
       const lines = source.path && typeof source.text === 'string' ? source.text.split('\n') : [];
       const first = source.lines?.[0] || 1;
       const excerpt = lines.length ? `<pre><code>${lines.slice(0,14).map((line,index)=>`<span class="line"><i>${first + index}</i>${escapeText(line) || ' '}</span>`).join('')}${lines.length > 14 ? `<span class="line more"><i></i>…</span>` : ''}</code></pre>` : '';
       const note = !source.path && (source.text || source.method) ? `<p class="source-note">${escapeText(source.text || '')}${source.method ? `<span>${escapeText(source.method)}</span>` : ''}</p>` : '';
+      const contentNote = content ? `<p class="source-note source-content">${escapeText((content.innerText || content.textContent).trim())}</p>` : '';
+      const title = content ? link.getAttribute('data-node-label') || content.closest('.panel')?.querySelector('h2')?.textContent : source.title || source.path || id;
       const number = /^\d+$/.test(link.textContent.trim()) ? link.textContent.trim() : '';
-      card.innerHTML = `<header><span class="source-icon" data-kind="${kind}" aria-hidden="true">${sourceIcons[kind]}</span><span class="source-head"><b>${escapeText(source.title || source.path || id)}</b>${where ? `<span class="source-where">${escapeText(where)}</span>` : ''}</span>${number ? `<span class="source-number">${number}</span>` : ''}</header>${excerpt}${note}${source.revision || source.url ? `<footer>${source.revision ? `<span class="source-pin">${say('Pinned at','固定在')} <code>${escapeText(String(source.revision).slice(0,7))}</code></span>` : '<span></span>'}${source.url ? `<a href="${escapeText(source.url)}" target="_blank" rel="noopener noreferrer">${say('Open source','打开原文')} ↗</a>` : ''}</footer>` : ''}`;
+      card.innerHTML = `<header><span class="source-icon" data-kind="${kind}" aria-hidden="true">${sourceIcons[kind]}</span><span class="source-head"><b>${escapeText(title)}</b>${where ? `<span class="source-where">${escapeText(where)}</span>` : ''}</span>${number ? `<span class="source-number">${number}</span>` : ''}</header>${contentNote}${excerpt}${note}${source.revision || source.url || content ? `<footer>${content ? `<a href="#${encodeURIComponent(blockId)}">${say('Read this paragraph','阅读这段')} ↗</a>` : ''}${source.revision ? `<span class="source-pin">${say('Pinned at','固定在')} <code>${escapeText(String(source.revision).slice(0,7))}</code></span>` : ''}${source.url ? `<a href="${escapeText(source.url)}" target="_blank" rel="noopener noreferrer">${say('Open source','打开原文')} ↗</a>` : ''}</footer>` : ''}`;
       card.hidden = false;
       const box = link.getBoundingClientRect(), width = Math.min(520,innerWidth - 24);
       card.style.width = `${width}px`;
@@ -630,15 +635,34 @@
       link.addEventListener('mouseleave',hide); link.addEventListener('blur',hide);
     });
     // A diagram node tied to a source opens the same card, so a code diagram doubles as a code tour.
-    all('.diagram-preview[data-node-sources]').forEach(preview=>{
-      let map = {}; try { map = JSON.parse(preview.dataset.nodeSources); } catch {}
+    all('.diagram-preview[data-node-sources],.diagram-preview[data-node-blocks]').forEach(preview=>{
+      let map = {}, blocks = {}; try { map = JSON.parse(preview.dataset.nodeSources || '{}'); blocks = JSON.parse(preview.dataset.nodeBlocks || '{}'); } catch {}
       all('[data-node-id]',preview).forEach(node=>{
-        const id = map[node.dataset.nodeId]; if (!id) return;
+        const nodeId = node.dataset.nodeId;
+        const id = Object.hasOwn(map,nodeId) ? map[nodeId] : '', blockId = Object.hasOwn(blocks,nodeId) ? blocks[nodeId] : ''; if (!id && !blockId) return;
         node.classList.add('has-source');
-        node.addEventListener('mouseenter',()=>show(node,id)); node.addEventListener('mouseleave',hide);
+        node.addEventListener('mouseenter',()=>show(node,id || '',blockId)); node.addEventListener('mouseleave',hide);
+        node.addEventListener('focus',()=>show(node,id || '',blockId)); node.addEventListener('blur',hide);
+        if (blockId) {
+          node.setAttribute('tabindex','0'); node.setAttribute('role','button');
+          node.setAttribute('aria-label',node.getAttribute('data-node-label') || node.dataset.nodeId);
+          node.setAttribute('aria-describedby',blockId);
+          node.addEventListener('keydown',event=>{ if (event.key==='Enter'||event.key===' ') { event.preventDefault(); node.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });
+        }
       });
     });
-    document.addEventListener('keydown',event=>{ if (event.key === 'Escape') card.hidden = true; });
+    document.addEventListener('keydown',event=>{
+      if (event.key === 'Escape') {
+        if (card.contains(document.activeElement)) opener?.focus();
+        clearTimeout(hideTimer); card.hidden = true;
+      } else if (event.key === 'Tab' && !card.hidden && opener) {
+        // Visit the floating links after their opener, then resume the document's normal tab order.
+        const links = all('a[href]',card);
+        if (!event.shiftKey && event.target === opener && links.length) { event.preventDefault(); links[0].focus(); }
+        else if (event.shiftKey && event.target === links[0]) { event.preventDefault(); opener.focus(); }
+        else if (!event.shiftKey && event.target === links.at(-1)) { opener.focus(); card.hidden = true; }
+      }
+    });
   }
   // Checklist ticks are the reader's own progress; keep them per page and block across reloads.
   all('.checklist').forEach(list=>{

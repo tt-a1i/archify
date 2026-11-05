@@ -3,7 +3,7 @@
       'use strict';
       var recipes = JSON.parse(document.getElementById('guide-data').textContent);
       var types = Array.from(new Set(recipes.map(function (recipe) { return recipe.type; })));
-      var colors = { architecture:'var(--hue-cyan)', workflow:'var(--hue-emerald)', sequence:'var(--hue-violet)', dataflow:'var(--hue-amber)', lifecycle:'var(--hue-rose)', erd:'var(--hue-emerald)' };
+      var colors = { architecture:'var(--hue-cyan)', workflow:'var(--hue-emerald)', sequence:'var(--hue-violet)', dataflow:'var(--hue-amber)', lifecycle:'var(--hue-rose)', erd:'var(--hue-emerald)', class:'var(--hue-rose)', tree:'var(--hue-emerald)', timeline:'var(--hue-cyan)', waterfall:'var(--hue-violet)' };
       var language = ArchifySiteLanguage.read();
       var activeType = 'all';
       var lastRecipe = null;
@@ -61,15 +61,8 @@
         document.getElementById('samples').innerHTML = t('samples').map(function (sample) { return '<button class="chip" type="button" data-query="'+escapeHtml(sample[1])+'">'+escapeHtml(sample[0])+'</button>'; }).join('');
       }
       function renderFilters() {
-        var labels = {"en":{"architecture":"Architecture","workflow":"Workflow","sequence":"Sequence","dataflow":"Data flow","lifecycle":"Lifecycle","erd":"Entity-relationship"},"zh":{"architecture":"架构图","workflow":"工作流","sequence":"时序图","dataflow":"数据流","lifecycle":"生命周期","erd":"实体关系图"}};
-        document.getElementById('filters').innerHTML = ['all'].concat(types).map(function (type) { return '<button class="filter '+(activeType === type ? 'active':'')+'" type="button" aria-pressed="'+(activeType === type)+'" data-filter="'+type+'">'+escapeHtml(type === 'all' ? t('all') : labels[language][type])+'</button>'; }).join('');
-      }
-      function updateFilters() {
-        document.querySelectorAll('[data-filter]').forEach(function (filter) {
-          var selected = filter.dataset.filter === activeType;
-          filter.classList.toggle('active', selected);
-          filter.setAttribute('aria-pressed', String(selected));
-        });
+        var labels = {"en":{"architecture":"Architecture","workflow":"Workflow","sequence":"Sequence","dataflow":"Data flow","lifecycle":"Lifecycle","erd":"Entity-relationship","class":"Class","tree":"Tree","timeline":"Timeline","waterfall":"Waterfall"},"zh":{"architecture":"架构图","workflow":"工作流","sequence":"时序图","dataflow":"数据流","lifecycle":"生命周期","erd":"实体关系图","class":"类图","tree":"树图","timeline":"时间线","waterfall":"瀑布图"}};
+        document.getElementById('filters').innerHTML = ['all'].concat(types).map(function (type) { return '<button class="filter '+(activeType === type ? 'active':'')+'" type="button" data-filter="'+type+'">'+escapeHtml(type === 'all' ? t('all') : labels[language][type])+'</button>'; }).join('');
       }
       function renderCards() {
         var visible = recipes.filter(function (recipe) { return activeType === 'all' || recipe.type === activeType; });
@@ -82,9 +75,9 @@
         var recipe = local(rawRecipe);
         lastRecipe = rawRecipe;
         var alt = alternatives || [];
-        var html = '<div class="result-main"><div><span class="result-kicker">'+escapeHtml(t('recommended'))+' · '+escapeHtml(confidence)+' '+escapeHtml(t('confidence'))+'</span><h3 id="result-title" tabindex="-1">'+escapeHtml(recipe.title)+'</h3><p class="result-question">'+escapeHtml(recipe.question)+'</p><p class="result-summary">'+escapeHtml(recipe.summary)+'</p>'+(recipe.proof ? '<a class="proof-link" href="'+ArchifySiteLanguage.page('gallery', '#proof-'+encodeURIComponent(recipe.proof))+'">'+escapeHtml(t('proofLink'))+'</a>' : '')+'</div><div class="boundary"><div class="boundary-item"><small>'+escapeHtml(t('use'))+'</small><p>'+escapeHtml(recipe.useWhen)+'</p></div><div class="boundary-item avoid"><small>'+escapeHtml(t('avoid'))+'</small><p>'+escapeHtml(recipe.avoidWhen)+'</p></div></div></div>';
+        var html = '<div class="result-main"><div><span class="result-kicker">'+escapeHtml(t('recommended'))+' · '+escapeHtml(confidence)+' '+escapeHtml(t('confidence'))+'</span><h3>'+escapeHtml(recipe.title)+'</h3><p class="result-question">'+escapeHtml(recipe.question)+'</p><p class="result-summary">'+escapeHtml(recipe.summary)+'</p>'+(recipe.proof ? '<a class="proof-link" href="'+ArchifySiteLanguage.page('gallery', '#proof-'+encodeURIComponent(recipe.proof))+'">'+escapeHtml(t('proofLink'))+'</a>' : '')+'</div><div class="boundary"><div class="boundary-item"><small>'+escapeHtml(t('use'))+'</small><p>'+escapeHtml(recipe.useWhen)+'</p></div><div class="boundary-item avoid"><small>'+escapeHtml(t('avoid'))+'</small><p>'+escapeHtml(recipe.avoidWhen)+'</p></div></div></div>';
         html += '<div class="result-grid"><div class="checklist"><div class="mini-heading">'+escapeHtml(t('must'))+'</div><ul>'+recipe.include.map(function (item) { return '<li>'+escapeHtml(item)+'</li>'; }).join('')+'</ul><div class="presentation"><span class="tag">'+escapeHtml(recipe.type)+'</span><span class="tag">'+escapeHtml(recipe.presentation.preset)+'</span><span class="tag">'+escapeHtml(recipe.presentation.motion)+'</span></div></div>';
-        html += '<div class="prompt-box"><div class="prompt-bar"><div class="mini-heading" style="margin:0">'+escapeHtml(t('prompt'))+'</div><button class="copy" id="copy-prompt" aria-describedby="prompt-copy-status" type="button">'+escapeHtml(t('copyPrompt'))+'</button></div><p id="prompt-copy-status" class="copy-status" role="status" aria-live="polite"></p><p class="prompt-text">'+escapeHtml(recipe.prompt)+'</p></div></div>';
+        html += '<div class="prompt-box"><div class="prompt-bar"><div class="mini-heading" style="margin:0">'+escapeHtml(t('prompt'))+'</div><button class="copy" id="copy-prompt" type="button">'+escapeHtml(t('copyPrompt'))+'</button></div><p class="prompt-text">'+escapeHtml(recipe.prompt)+'</p></div></div>';
         if (alt.length) html += '<div class="alternatives">'+escapeHtml(t('alternatives'))+alt.map(function (entry) { var item=local(entry.recipe); return '<button type="button" data-alt="'+item.id+'">'+escapeHtml(item.title)+' ['+item.type+']</button>'; }).join('')+'</div>';
         var result = document.getElementById('result');
         result.innerHTML = html;
@@ -108,30 +101,21 @@
         renderSamples(); renderFilters(); renderCards();
         if (lastRecipe) renderResult(lastRecipe,'selected',[]);
       }
-      var copyAttempt = 0;
       async function copyPrompt() {
         if (!lastRecipe) return;
-        var text = local(lastRecipe).prompt, recipe = lastRecipe;
-        var button = document.getElementById('copy-prompt');
-        var status = document.getElementById('prompt-copy-status');
-        var attempt = ++copyAttempt;
-        status.textContent = '';
-        var isCurrent = function () { return attempt === copyAttempt && button.isConnected && recipe === lastRecipe; };
-        var ok = await ArchifyClipboard.copy(text, isCurrent);
-        if (isCurrent()) status.textContent = t(ok ? 'copySuccess' : 'copyFailure');
+        var text = local(lastRecipe).prompt, button = document.getElementById('copy-prompt');
+        try { await navigator.clipboard.writeText(text); } catch (_) {
+          var area=document.createElement('textarea'); area.value=text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove();
+        }
+        button.textContent=t('copied'); setTimeout(function () { if (button.isConnected) button.textContent=t('copyPrompt'); },1200);
       }
       document.getElementById('recommend').addEventListener('click',runRecommendation);
       document.getElementById('clear').addEventListener('click',function () { document.getElementById('scenario').value=''; document.getElementById('result').classList.remove('visible'); lastRecipe=null; });
       document.getElementById('scenario').addEventListener('keydown',function (event) { if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') runRecommendation(); });
       document.getElementById('samples').addEventListener('click',function (event) { var chip=event.target.closest('[data-query]'); if (!chip) return; document.getElementById('scenario').value=chip.dataset.query; runRecommendation(); });
-      document.getElementById('filters').addEventListener('click',function (event) { var filter=event.target.closest('[data-filter]'); if (!filter) return; activeType=filter.dataset.filter; updateFilters(); renderCards(); });
+      document.getElementById('filters').addEventListener('click',function (event) { var filter=event.target.closest('[data-filter]'); if (!filter) return; activeType=filter.dataset.filter; renderFilters(); renderCards(); });
       document.getElementById('cards').addEventListener('click',function (event) { var card=event.target.closest('[data-recipe]'); if (!card) return; var recipe=recipes.find(function (item) { return item.id === card.dataset.recipe; }); renderResult(recipe,'selected',[]); document.getElementById('result').scrollIntoView({behavior:'smooth',block:'center'}); });
-      document.getElementById('result').addEventListener('click',function (event) { if (event.target.id === 'copy-prompt') copyPrompt(); var alt=event.target.closest('[data-alt]'); if (alt) {
-        // Only recover focus when this activation removes the focused control.
-        var restoreFocus = document.activeElement === alt;
-        renderResult(recipes.find(function (item) { return item.id === alt.dataset.alt; }),'selected',[]);
-        if (restoreFocus) document.getElementById('result-title').focus();
-      } });
+      document.getElementById('result').addEventListener('click',function (event) { if (event.target.id === 'copy-prompt') copyPrompt(); var alt=event.target.closest('[data-alt]'); if (alt) renderResult(recipes.find(function (item) { return item.id === alt.dataset.alt; }),'selected',[]); });
       document.getElementById('language').addEventListener('click', saveLanguageState);
       restoreLanguageState();
       applyLanguage(language);

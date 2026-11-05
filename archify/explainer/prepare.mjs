@@ -26,6 +26,23 @@ export function parseValidatedExplainer(sourceText, options = {}) {
   if (!validated.ok) throwDiagnosticError('Explainer draft is invalid.', validated.diagnostics);
   return { ...parsed, diagnostics: [...parsed.diagnostics, ...validated.diagnostics] };
 }
+
+// Discover declared inputs before reading their contents: failed preparation
+// must not overwrite the very JSON resource that made preparation fail.
+export function declaredExplainerInputPaths(sourceText, inputPath) {
+  if (Buffer.byteLength(sourceText) > MAX_SOURCE_BYTES) fail('source-limit', 'Explainer draft exceeds the 16 MiB source budget.', inputPath, 'source-byte-limit');
+  const parsed = parseExplainer(sourceText, { inputPath });
+  if (!parsed.document || parsed.diagnostics.some(entry => entry.severity !== 'warning')) throwDiagnosticError('Explainer inputs could not be inspected.', parsed.diagnostics);
+  const inputs = [path.resolve(inputPath)];
+  for (const panel of Array.isArray(parsed.document.panels) ? parsed.document.panels : []) {
+    for (const block of Array.isArray(panel?.blocks) ? panel.blocks : []) {
+      const reference = block?.type === 'chart' ? block.data?.path : block?.type === 'diagram' ? block.source : undefined;
+      if (typeof reference === 'string') inputs.push(path.resolve(path.dirname(inputPath), reference));
+    }
+  }
+  return [...new Set(inputs)];
+}
+
 export async function prepareExplainer(sourceText, options = {}) {
   const inputPath = path.resolve(options.inputPath);
   const parsed = parseValidatedExplainer(sourceText, { ...options, inputPath });
@@ -123,6 +140,7 @@ export function validatePreparedTargets(document, diagrams, options = {}) {
     panel.blocks.forEach((block,blockIndex)=>{
       const pointer=`/panels/${index}/blocks/${blockIndex}`;
       visit(block,pointer,panel.id,block.type);
+      if(block.type==='diagram')for(const key of ['nodeSources','nodeBlocks'])for(const node of Object.keys(block[key]||{}))validateExplainerDiagramTarget(diagrams,{diagram:block.id,node},{...options,pointer:`${pointer}/${key}/${node}`,line:options.sourceMap?.[`${pointer}/${key}/${node}`]?.line || options.sourceMap?.[pointer]?.line || 1});
       if(block.type==='steps') block.items.forEach((item,itemIndex)=>{
         if(item.target)validateExplainerDiagramTarget(diagrams,item.target,{...options,pointer:`${pointer}/items/${itemIndex}/target`,line:options.sourceMap?.[`${pointer}/items/${itemIndex}`]?.line || options.sourceMap?.[pointer]?.line || 1});
       });

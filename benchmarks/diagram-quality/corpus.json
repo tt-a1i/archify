@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 2,
+  "publicPilot": true,
+  "goldStatus": "authored-provisional",
+  "description": "Public authored pilot corpus. All tasks and gold facts are provisional; no independent human confirmation, hidden holdout, formal ranking, or optimization authorization.",
+  "profile": {
+    "minFontPx": 12,
+    "epsilonPx": 0.5,
+    "calibrated": false
+  },
+  "tasks": [
+    {
+      "id": "architecture-01",
+      "type": "architecture",
+      "family": "ticket-gateway",
+      "complexity": "small",
+      "split": "development",
+      "prompt": "活动售票入口。用户通过浏览器预订座位；网关转发预订，服务读写座位库。座位库还把可用性返回服务。 节点名称必须完整保留：Browser、Gateway、Ticket API、Seat Store。必需有向关系：Browser → Gateway（HTTPS）；Gateway → Ticket API（reserve）；Ticket API → Seat Store（hold seat）；Seat Store → Ticket API（availability）。所有节点和关系条件都应可见，交付可重新加载并局部编辑的结构化源与可读图。",
+      "expected": {
+        "nodes": [
+          {
+            "id": "n1",
+            "label": "Browser"
+          },
+          {
+            "id": "n2",
+            "label": "Gateway"
+          },
+          {
+            "id": "n3",
+            "label": "Ticket API"
+          },
+          {
+            "id": "n4",
+            "label": "Seat Store"
+          }
+        ],
+        "edges": [
+          {
+            "from": "n1",
+            "to": "n2",
+            "label": "HTTPS"
+          },
+          {
+            "from": "n2",
+            "to": "n3",
+            "label": "reserve"
+          },
+          {
+            "from": "n3",
+            "to": "n4",
+            "label": "hold seat"
+          },
+          {
+            "from": "n4",
+            "to": "n3",
+            "label": "availability"
+          }
+        ],
+        "requiredLabels": [
+          "Browser",
+          "Gateway",
+          "Ticket API",
+          "Seat Store",
+          "HTTPS",
+          "reserve",
+          "hold seat",
+          "availability"
+        ]
+      },
+      "goldStatus": "authored-provisional"
+    },
+    {
+      "id": "workflow-01",
+      "type": "workflow",
+      "family": "access-request",
+      "complexity": "small",
+      "split": "development",
+      "prompt": "权限申请。申请提交审核；批准后授权，拒绝后结束。保留批准与拒绝两条互斥条件。 节点名称必须完整保留：Request、Review、Grant、Reject。必需有向关系：Request → Review（submit）；Review → Grant（approved）；Review → Reject（denied）。所有节点和关系条件都应可见，交付可重新加载并局部编辑的结构化源与可读图。",
+      "expected": {
+        "nodes": [
+          {
+            "id": "n1",
+            "label": "Request"
+          },
+          {
+            "id": "n2",
+            "label": "Review"
+          },
+          {
+            "id": "n3",
+            "label": "Grant"
+          },
+          {
+            "id": "n4",
+            "label": "Reject"
+          }
+        ],
+        "edges": [
+          {
+            "from": "n1",
+            "to": "n2",
+            "label": "submit"
+          },
+          {
+            "from": "n2",
+            "to": "n3",
+            "label": "approved"
+          },
+          {
+            "from": "n2",
+            "to": "n4",
+            "label": "denied"
+          }
+        ],
+        "requiredLabels": [
+          "Request",
+          "Review",
+          "Grant",
+          "Reject",
+          "submit",
+          "approved",
+          "denied"
+        ]
+      },
+      "goldStatus": "authored-provisional"
+    },
+    {
+      "id": "architecture-04",
+      "type": "architecture",
+      "family": "stock-reservation",
+      "complexity": "medium",
+      "split": "calibration",
+      "prompt": "库存预留系统。商店界面结算时，订单接口请求库存服务预留并收取支付；库存服务更新库存库，支付服务把结果返回订单接口，订单接口记录审计。 节点名称必须完整保留：Shop UI、Order API、Inventory Service、Inventory DB、Payment Service、Audit Log。必需有向关系：Shop UI → Order API（checkout）；Order API → Inventory Service（reserve）；Inventory Service → Inventory DB（update）；Order API → Payment Service（charge）；Payment Service → Order API（payment result）；Order API → Audit Log（record）。所有节点和关系条件都应可见，交付可重新加载并局部编辑的结构化源与可读图。",
+      "expected": {
+        "nodes": [
+          {
+            "id": "n1",
+            "label": "Shop UI"
+          },
+          {
+            "id": "n2",
+            "label": "Order API"
+          },
+          {
+            "id": "n3",
+            "label": "Inventory Service"
+          },
+          {
+            "id": "n4",
+            "label": "Inventory DB"
+          },
+          {
+            "id": "n5",
+            "label": "Payment Service"
+          },
+          {
+            "id": "n6",
+            "label": "Audit Log"
+          }
+        ],
+        "edges": [
+          {
+            "from": "n1",
+            "to": "n2",
+            "label": "checkout"
+          },
+          {
+            "from": "n2",
+            "to": "n3",
+            "label": "reserve"
+          },
+          {
+            "from": "n3",
+            "to": "n4",
+            "label": "update"
+          },
+          {
+            "from": "n2",
+            "to": "n5",
+            "label": "charge"
+          },
+          {
+            "from": "n5",
+            "to": "n2",
+            "label": "payment result"
+          },
+          {
+            "from": "n2",
+            "to": "n6",
+            "label": "record"
+          }
+        ],
+        "requiredLabels": [
+          "Shop UI",
+          "Order API",
+          "Inventory Service",
+          "Inventory DB",
+          "Payment Service",
+          "Audit Log",
+          "checkout",
+          "reserve",
+          "update",
+          "charge",
+          "payment result",
+          "record"
+        ]
+      },
+      "goldStatus": "authored-provisional"
+    },
+    {
+      "id": "workflow-04",
+      "type": "workflow",
+      "family": "return-inspection",
+      "complexity": "medium",
+      "split": "calibration",
+      "prompt": "退货处理。退货申请先判断资格，无资格拒绝；有资格收包裹再检查，接受则退款，损坏则拒绝。 节点名称必须完整保留：Return Request、Eligibility Check、Reject、Receive Parcel、Inspect、Refund。必需有向关系：Return Request → Eligibility Check（submit）；Eligibility Check → Reject（ineligible）；Eligibility Check → Receive Parcel（eligible）；Receive Parcel → Inspect（arrived）；Inspect → Refund（accepted）；Inspect → Reject（damaged）。所有节点和关系条件都应可见，交付可重新加载并局部编辑的结构化源与可读图。",
+      "expected": {
+        "nodes": [
+          {
+            "id": "n1",
+            "label": "Return Request"
+          },
+          {
+            "id": "n2",
+            "label": "Eligibility Check"
+          },
+          {
+            "id": "n3",
+            "label": "Reject"
+          },
+          {
+            "id": "n4",
+            "label": "Receive Parcel"
+          },
+          {
+            "id": "n5",
+            "label": "Inspect"
+          },
+          {
+            "id": "n6",
+            "label": "Refund"
+          }
+        ],
+        "edges": [
+          {
+            "from": "n1",
+            "to": "n2",
+            "label": "submit"
+          },
+          {
+            "from": "n2",
+            "to": "n3",
+            "label": "ineligible"
+          },
+          {
+            "from": "n2",
+            "to": "n4",
+            "label": "eligible"
+          },
+          {
+            "from": "n4",
+            "to": "n5",
+            "label": "arrived"
+          },
+          {
+            "from": "n5",
+            "to": "n6",
+            "label": "accepted"
+          },
+          {
+            "from": "n5",
+            "to": "n3",
+            "label": "damaged"
+          }
+        ],
+        "requiredLabels": [
+          "Return Request",
+          "Eligibility Check",
+          "Reject",
+          "Receive Parcel",
+          "Inspect",
+          "Refund",
+          "submit",
+          "ineligible",
+          "eligible",
+          "arrived",
+          "accepted",
+          "damaged"
+        ]
+      },
+      "goldStatus": "authored-provisional"
+    }
+  ],
+  "id": "archify-before-after-pilot"
+}

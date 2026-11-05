@@ -3,10 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { canonicalUrl, sitePages, canonicalOrigin } from '../src/data/site-urls.mjs';
 import { CASES } from '../src/data/gallery-presentation.mjs';
-import { PUBLISHED_CASES } from '../src/data/published-cases.mjs';
 import { notifyIndexNow, parseSitemap, endpoint, key, keyLocation, sitemapLocation } from '../scripts/indexnow.mjs';
 
-const urls = [...sitePages.flatMap(page => ['en', 'zh'].map(lang => canonicalUrl(page, lang))), ...CASES.map(entry => `${canonicalOrigin}/gallery/artifacts/${entry.output.replace(/\.html$/, '')}`), ...PUBLISHED_CASES.map(entry => `${canonicalOrigin}/${entry.artifact.replace(/\.html$/, '')}`)];
+const urls = [...sitePages.flatMap(page => ['en', 'zh'].map(lang => canonicalUrl(page, lang))), ...CASES.map(entry => `${canonicalOrigin}/gallery/artifacts/${entry.output.replace(/\.html$/, '')}`)];
 const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(url => `<url><loc>${url}</loc></url>`).join('')}</urlset>`;
 function mock({ sitemap = xml, hostedKey = key, getStatus = 200, postStatus = 200 } = {}) {
   const calls = [];
@@ -56,15 +55,7 @@ test('public preflight requires HTTP 200 and matching deployed key before POST',
 
 test('sitemap XML parser rejects foreign, query, source, duplicate, incomplete and malformed inventories', () => {
   assert.deepEqual(parseSitemap(xml), urls);
-  assert.equal(urls.length, 31);
   for (const sitemap of [xml.replace('https://archify.si/', 'http://archify.si/'), xml.replace('https://archify.si/', 'https://other.example/'), xml.replace(urls[0], `${urls[0]}?preview=1`), xml.replace(urls[0], `${canonicalOrigin}/gallery/manifest.json`), xml.replace(urls[0], urls[1]), xml.replace(/<url>[\s\S]*?<\/url>/, ''), xml.replace('<loc>', '<wrong>'), '<!DOCTYPE foo>' + xml]) {
     assert.throws(() => parseSitemap(sitemap));
-  }
-  for (const entry of PUBLISHED_CASES) {
-    const url = `${canonicalOrigin}/${entry.artifact.replace(/\.html$/, '')}`;
-    for (const replacement of [url + '.html', url + '?lang=zh', `${canonicalOrigin}/${entry.input}`, `${canonicalOrigin}/zh/${entry.artifact.replace(/\.html$/, '')}`, `${canonicalOrigin}/cases/unlisted-example`]) {
-      assert.throws(() => parseSitemap(xml.replace(url, replacement)), /outside the published|Noncanonical/);
-    }
-    assert.throws(() => parseSitemap(xml.replace(`<url><loc>${url}</loc></url>`, '')), /must contain all/);
   }
 });

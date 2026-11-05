@@ -69,10 +69,6 @@
     .grid-bg::after { content:''; position:absolute; inset:0;
       background:radial-gradient(ellipse 45% 40% at 78% 0%, rgba(var(--accent-rgb),.16), transparent 70%), radial-gradient(ellipse 40% 35% at 12% 6%, rgba(var(--signal-rgb),.07), transparent 70%); }
 
-    .agent-guide-link { margin:3rem 0; padding:1.5rem; border:1px solid var(--line-hi); border-radius:16px; background:var(--surface); }
-    .agent-guide-link a { color:var(--accent-text); font-weight:600; text-underline-offset:4px; }
-    .agent-guide-link p { margin-top:.65rem; color:var(--text-2); line-height:1.7; }
-
     /* page titles — grotesk statement, Fraunces italic accent */
     h1 { background:linear-gradient(180deg,var(--title-top) 0%,var(--title-top) 55%,var(--title-end) 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
     html[lang^="zh"] h1 em { font-family:inherit!important; font-style:normal!important; font-weight:600!important; }

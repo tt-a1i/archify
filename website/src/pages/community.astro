@@ -4,6 +4,7 @@ import { productChannel } from '../data/product-facts';
 import { packages, typeOrder, typeCounts, type PackageType } from '../data/community';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Navigation from '../components/Navigation.astro';
+import SponsorsSection from '../components/SponsorsSection.astro';
 import head from '../data/community-head.html?raw';
 import css from '../styles/community.css?raw';
 import pageScript from '../scripts/community.js?raw';
@@ -40,6 +41,8 @@ const { lang = 'en' } = Astro.props;
         </div>
       </div>
     </section>
+
+    <SponsorsSection lang={lang} />
 
     <section class="controls" aria-label="Catalog controls">
       <div class="shell controls-inner">
@@ -134,7 +137,7 @@ const { lang = 'en' } = Astro.props;
   <footer>
     <div class="shell footer-inner">
       <span data-en="Community packages are maintained by their authors. Listing is not endorsement; Archify never executes package code." data-zh="社区包由各自作者维护。收录不代表官方背书；Archify 绝不执行第三方包的代码。">Community packages are maintained by their authors. Listing is not endorsement; Archify never executes package code.</span>
-      <span data-en={`Archify v${version} · ${productChannel} · MIT`} data-zh={`Archify v${version} · ${productChannel === 'stable' ? '稳定版' : '开发版'} · MIT`}>Archify v{version} · {productChannel} · MIT</span>
+      <span data-en={`Archify v${version} · ${productChannel} · Apache-2.0`} data-zh={`Archify v${version} · ${productChannel === 'stable' ? '稳定版' : '开发版'} · Apache-2.0`}>Archify v{version} · {productChannel} · Apache-2.0</span>
     </div>
   </footer>
 

@@ -399,15 +399,17 @@ function buildLayoutReport() {
 }
 
 if (layoutJsonMode) {
-  console.log(JSON.stringify(buildLayoutReport(), null, 2));
-  process.exit(0);
+  // No process.exit() here: let the write drain first, since exit would
+  // discard the part of the report still buffered for a pipe.
+  process.stdout.write(`${JSON.stringify(buildLayoutReport(), null, 2)}\n`);
+} else {
+  writeDiagram({
+    outPath,
+    template,
+    diagramType: 'waterfall',
+    meta: wf.meta,
+    svg: renderSvg(),
+    cards: wf.cards,
+    sourceEvidence,
+  });
 }
-writeDiagram({
-  outPath,
-  template,
-  diagramType: 'waterfall',
-  meta: wf.meta,
-  svg: renderSvg(),
-  cards: wf.cards,
-  sourceEvidence,
-});

@@ -323,4 +323,4 @@ For retriggering or pausing reviews, use the official [review commands](https://
 
 ## License
 
-By contributing, you agree to the repository's [MIT License](LICENSE). Submit only work you created or have the right to contribute.
+New contributions are submitted under the [Apache License 2.0](LICENSE), unless explicitly stated otherwise and accepted by the maintainers. Submit only work you created or have the right to contribute. Historical MIT contributions and third-party licenses remain in effect; see [NOTICE](NOTICE) and [LICENSE-MIT](LICENSE-MIT). Contributors retain copyright ownership; no copyright assignment is required.

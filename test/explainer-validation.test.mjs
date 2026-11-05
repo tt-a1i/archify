@@ -29,6 +29,24 @@ test('diagram references name real diagram blocks and inline topology nodes',()=
   blocks(parsed.document)[1].text='Read [missing](node:flow.missing).';check(parsed.document,'diagram-node');blocks(parsed.document)[1].text='Read [invalid](node:steps.redis).';check(parsed.document,'unresolved-reference');
 });
 
+test('native collection errors stay structured before resolving forward node references',()=>{
+  for(const type of ['architecture','workflow','sequence','lifecycle','erd','class','timeline','waterfall','dataflow','tree']) {
+    const key={architecture:'components',sequence:'participants',lifecycle:'states',erd:'entities',class:'types',timeline:'events',waterfall:'spans'}[type]||'nodes';
+    for(const value of [{},[null]]) {
+      const d=base();blocks(d)[0].text='Read [node](node:flow.api).';
+      blocks(d).push({id:'flow',type:'diagram',diagramType:type,nodeBlocks:{api:'claim'},spec:{schema_version:type==='workflow'?2:1,diagram_type:type,meta:{title:'Malformed'},[key]:value}});
+      const before=JSON.stringify(d),result=validateExplainer(d);
+      assert.equal(result.ok,false);
+      const native=result.diagnostics.find(issue=>issue.code.startsWith('explainer/native-schema/'));
+      assert.ok(native,JSON.stringify(result.diagnostics));
+      assert.match(native.subject.path,/^\/panels\/0\/blocks\/1\/spec/);
+      assert.ok(native.evidence.reason);assert.ok(native.evidence.example);
+      assert.equal(result.diagnostics.some(issue=>issue.code==='explainer/diagram-node'),false,'invalid topology must not produce misleading missing-node errors');
+      assert.equal(JSON.stringify(d),before);
+    }
+  }
+});
+
 test('writing warnings are configurable and literal code is excluded from prose rules',()=>{
   const d=base();blocks(d)[0].text='进行检查，大量请求。';const warn=validateExplainer(d);assert.equal(warn.ok,true);assert.ok(warn.diagnostics.some(entry=>entry.code==='explainer/writing-light-verb'));assert.equal(validateExplainer(d,{writingMode:'strict'}).ok,false);assert.deepEqual(validateExplainer(d,{writingMode:'off'}).diagnostics,[]);blocks(d)[0].text='`进行检查，大量请求。`';assert.deepEqual(validateExplainer(d).diagnostics,[]);
 });

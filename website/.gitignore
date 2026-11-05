@@ -3,4 +3,3 @@ dist/
 dist-cloudflare/
 .astro/
 .public/
-.browser-evidence/

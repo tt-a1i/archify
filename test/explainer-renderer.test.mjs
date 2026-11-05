@@ -34,6 +34,9 @@ const resources = () => ({preparedSources:{sources:{'code-source':{...source,rev
 
 test('renderer: every shape remains statically readable and authored text cannot become markup',()=>{
   const html = renderExplainer(fixture(),resources()); const tree = parse(html);
+  assert.ok(Buffer.byteLength(html.slice(0, html.indexOf('<meta charset='))) < 1024, 'charset must precede the software notices');
+  const softwareNotice = all(tree,node=>attr(node,'id') === 'archify-software-notices')[0];
+  assert.match(JSON.parse(text(softwareNotice)), /Apache License/);
   assert.equal(all(tree,node=>node.tagName === 'img').length,1);
   assert.equal(all(tree,node=>attr(node,'onerror')).length,0);
   assert.match(text(find(tree,'prose')),/Untrusted <img src=x onerror=alert\(1\)>/);
@@ -98,7 +101,7 @@ test('renderer: no-script content includes scope, system theme and inert operati
   const previewStyles = text(all(tree,node=>node.tagName === 'style' && node.parentNode?.attrs?.some(attribute=>attribute.value.includes('diagram-preview')))[0]);
   assert.match(previewStyles,/@media\(prefers-color-scheme:dark\)/);
   assert.match(previewStyles,/@media print/);
-  assert.equal(all(tree,node=>node.tagName === 'script' && attr(node,'type') === 'application/json').length,3,'one prepared bundle plus compact reader metadata');
+  assert.equal(all(tree,node=>node.tagName === 'script' && attr(node,'type') === 'application/json').length,4,'prepared bundle, reader metadata and software notices');
 });
 
 test('renderer: multiple native diagrams retain independent preview IDs and original payload hashes',()=>{

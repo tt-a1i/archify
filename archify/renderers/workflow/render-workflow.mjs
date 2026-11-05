@@ -43,5 +43,6 @@ if (layoutJson) {
     svg: compiled.svg,
     cards: workflow.cards,
     sourceEvidence,
+    diagram: workflow,
   });
 }

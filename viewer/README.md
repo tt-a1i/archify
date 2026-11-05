@@ -824,7 +824,7 @@ later; its existence checks remain necessary. The final `syncVisibility()`,
 translation helpers and authored animation metadata stay in their existing sources.
 
 The interface is `capable` plus `pause`, `resume`, `toggle`, `setMode`, `mode`,
-`claim`, `release`, `suspend`, `isPaused`, and `owner`. Capability is fixed from
+`claim`, `release`, `suspend`, `isPaused`, `reducedMotion`, and `owner`. Capability is fixed from
 the initial SVG `data-animation="trace"`. Non-trace pages hide the control, clear
 the existing root motion attributes, and return inert methods: false for pause/
 resume/toggle/release, zero for claim, still for modes, true for isPaused, an
@@ -841,6 +841,13 @@ ignored. An existing `still` value also stays Still. System suspension
 does not become a persisted user preference. Becoming live resumes continuous
 connection flow when no semantic owner is active; it does not restart Route
 playback or replay an already completed node entrance.
+
+`reducedMotion()` reports the effective system-motion policy. An isolated render
+document may set `data-motion-render` on its root before initialization to seek
+native animations independently of the system preference or document visibility.
+The governor also disables native reduced-motion media rules in that isolated
+document, including styles inherited from earlier HTML. Interactive documents
+retain the system preference; render mode does not persist a reader choice.
 
 Explicit claims override derived owners. Without a claim, SVG attributes select
 route, lens, relationship, intent, focus, legend,

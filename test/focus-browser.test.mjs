@@ -104,7 +104,7 @@ test('Focus preserves semantic selection, relationships, reachability and shared
   }
 
   await t.test('five modes expose the same Focus and flowTokens surfaces at cold start',async()=>{
-    const expected=['set','setMany','clear','copyLink','reach','clearReach','reachabilitySnapshot','inspectRelationship','inspectRelationshipById','reposition','relationship','reachability','active'].sort();
+    const expected=['set','setMany','clear','copyLink','explain','explaining','reach','clearReach','reachabilitySnapshot','inspectRelationship','inspectRelationshipById','reposition','relationship','reachability','active'].sort();
     for(const mode of Object.keys(cases)) {
       await load(mode);assert.deepEqual(await run('Object.keys(Archify.focus).sort()'),expected);assert.deepEqual(await run('Object.keys(Archify.flowTokens).sort()'),['create','kind','path']);
       const cold=await snapshot(mode+'-cold');assert.equal(cold.active,null);
@@ -186,8 +186,9 @@ test('Focus preserves semantic selection, relationships, reachability and shared
       await load();await select('cdn');await run(`Archify.focus.reach('downstream',{reveal:false})`);
       const r=await run(`(async()=>{let value;const exec=document.execCommand;Object.defineProperty(navigator,'clipboard',{configurable:true,value:${mode==='missing'?'undefined':`{writeText:text=>{value=text;return ${mode==='success'?'Promise.resolve()':'Promise.reject(new Error("denied"))'};}}`}});
         document.execCommand=()=>{value=document.querySelector('textarea[readonly]').value;${mode==='throw'?'throw new Error("copy denied");':`return ${mode==='false'?'false':'true'};`}};
-        try{const copied=await Archify.focus.copyLink();return {copied,hash:new URL(value).hash,query:new URL(value).search,label:document.getElementById('btn-focus-copy').textContent,remaining:document.querySelectorAll('textarea[readonly]').length};}finally{document.execCommand=exec;}})()`);
-      assert.equal(r.copied,!['false','throw'].includes(mode));assert.equal(r.hash,'#focus=cdn&reach=downstream');assert.match(r.query,/keep=yes/);assert.equal(r.remaining,0);assert.equal(r.label,r.copied?'Copied':'Copy failed');records.push({scenario:'copy-'+mode,...r});
+        const opener=document.getElementById('btn-focus-copy');opener.focus();
+        try{const copied=await Archify.focus.copyLink();return {focusRetained:document.activeElement===opener,copied,hash:new URL(value).hash,query:new URL(value).search,label:document.getElementById('btn-focus-copy').textContent,remaining:document.querySelectorAll('textarea[readonly]').length};}finally{document.execCommand=exec;}})()`);
+      assert.equal(r.focusRetained,true,'copy '+mode+' retains the keyboard opener');assert.equal(r.copied,!['false','throw'].includes(mode));assert.equal(r.hash,'#focus=cdn&reach=downstream');assert.match(r.query,/keep=yes/);assert.equal(r.remaining,0);assert.equal(r.label,r.copied?'Copied':'Copy failed');records.push({scenario:'copy-'+mode,...r});
       await run(`focusWait(()=>document.getElementById('btn-focus-copy').textContent===viewerText('viewer.passport.copy'))`);
     }
     await load();

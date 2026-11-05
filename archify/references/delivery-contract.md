@@ -4,6 +4,27 @@
 
 `finalize` stops at the first non-passing gate. Use compact stdout or `evidence.summaryReceipt`; read its full sidecar only when the summary lacks evidence needed for a coherent repair. A receipt with four artifact checks is basic validation, not showcase acceptance: require all nine checks, zero composition errors, and zero warnings. Fix `meta.quality_profile` and schema errors before geometry. A dense full-schema ERD may keep `standard` for its first complete-field pass: require zero structural errors, no edge-through-node failures, complete field rows, and a readable grouped grid, and record composition warnings instead of spending unbounded time on them.
 
+When every diagnostic from the first embedded validation is
+`repository-evidence/line-out-of-range`, `finalize` may narrow an existing
+citation's `end_line` to the last line of its pinned file and retry the complete
+gates once. The start line must already exist in that nonempty file; the source
+path, revision, start, and all other authored content stay unchanged. Automatic
+repair requires the original bytes to match `JSON.stringify(parsed, null, 2)`
+plus one LF exactly. Other formatting, a BOM, CRLF, or number spellings that
+would change on parsing and serialization require author repair, so reserialization
+cannot change unrelated bytes or numeric precision. Missing files, invalid starts,
+and mixed failures also require author repair. This only bounds
+the cited range; it does not establish or correct the cited fact. `autoRepair`
+records the changed ranges and original/repaired hashes in both receipts. A
+passing retry keeps the repaired candidate. Any later failure or exception
+attempts a byte-for-byte restore, guarded by the repaired candidate's identity
+and bytes, and invalidates only that retry's current-delivery sidecar. External
+edits are preserved and a returned receipt reports `restore-failed` if recovery
+cannot safely complete. Failure diagnostics and `specification` describe the
+checked retry; `autoRepair.outcome` states whether the original was restored.
+Thrown exceptions remain command failures and may leave the last persisted
+receipt at an earlier stage; only a completed passing command is a handoff.
+
 For a validation failure, edit the existing JSON in the connected neighborhood named by diagnostics before rerunning a command. Preserve requested semantics, meaningful labels, source evidence, and fixed or agreed topology. Several routes sharing nodes call for one placement repair; read [Architecture layout repair](architecture-layout-repair.md) for that case. Reflow a blocked main path rather than nudging unrelated labels. Keep unrelated geometry when its composition already reads clearly. Use `--layout-json` before editing only when compact evidence lacks needed measurements. Workflow v2 uses its stable compiler receipt, not solver internals, as authoring evidence.
 
 Keep the best candidate that cleared route checks before a viewport repair. If that repair introduces new route collisions, restore the measured layout and address its remaining canvas or text constraint.
@@ -22,6 +43,8 @@ their existing rule codes. Use the advertised `validate --json` or
 `deliver --json` interface for a machine receipt; `render` has no `--json` flag.
 Unexpected implementation failures retain debugging information in human
 mode and remain `internal/unclassified` in machine receipts.
+
+Declared local Explainer chart data and native-diagram specification files are protected inputs, including physical aliases. Delivery and finalize refuse sidecars that would overwrite those inputs, including when resource preparation fails; an uninspectable draft cannot publish failure evidence.
 
 Each delivered output has two artifact-specific metadata paths. When an output
 stem is too long for those derived filenames, Archify shortens it and appends a
@@ -394,6 +417,10 @@ The delivery interface exposes four separate claims:
 4. Perceptual visual review records a human or image-capable reviewer's judgment.
 
 Passing one claim never implies the others. Never claim that the deterministic receipt includes browser or perceptual review evidence.
+
+## Comparison presentation changes
+
+Architecture comparisons include authored `meta.translations` in presentation changes. Adding, removing or editing translations changes `summary.presentationChanged`; reordering translation keys does not. An empty translation object is equivalent to an omitted catalog for presentation classification; the canonical source digest still records the authored representation. Component, relationship, boundary and repository-provenance classifications remain independent.
 
 ## Recovering a failed comparison
 

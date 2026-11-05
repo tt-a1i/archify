@@ -1,3 +1,4 @@
+import { softwareNoticesHtml } from '../renderers/shared/software-notices.mjs';
 import { spawn } from 'node:child_process';
 import { isExplainerHtml } from '../explainer/check.mjs';
 import { EXPLAINER_VIEWPORTS, inspectExplainerBrowser, explainerObservation, explainerObservationDiagnostics } from '../explainer/browser-check.mjs';
@@ -2039,7 +2040,7 @@ function contactSheetHtml({ artifactPath, receipt, screenshots }) {
   return `<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8">${softwareNoticesHtml}
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Archify automated browser evidence · ${htmlEscape(path.basename(artifactPath))}</title>
 <style>
@@ -2386,7 +2387,21 @@ function persistBrowserEvidenceFailure(
   failure,
   { outDir, compareSidecarParents = sameParent, ownership, command = 'visual-check', capture = true, captureViewports = CAPTURE_VIEWPORTS } = {},
 ) {
-  const outputs = evidenceSidecarPaths(artifactPath, { outDir, command, capture, captureViewports });
+  let outputs;
+  try {
+    outputs = evidenceSidecarPaths(artifactPath, { outDir, command, capture, captureViewports });
+  } catch (error) {
+    if (error?.code !== 'ARCHIFY_SIDECAR_NAMESPACE_INDETERMINATE') throw error;
+    const failed = evidenceWriteFailure(artifactPath, error.message, [{
+      directory: path.resolve(outDir || path.dirname(artifactPath)),
+      namespaceReason: error.sidecarNamespaceReason,
+    }]);
+    return {
+      ...failure, ok: false, status: 'fail', error: failed.error,
+      sidecars: { files: [] },
+      diagnostics: [...(failure.diagnostics || []), failed.diagnostic],
+    };
+  }
   const directory = resolveSidecarDirectory(artifactPath, outputs, compareSidecarParents);
   const capturedArtifact = readRegularFileContents(artifactPath, {
     subject: 'failure-artifact',

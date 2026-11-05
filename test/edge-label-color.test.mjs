@@ -231,9 +231,10 @@ test('sequence repair height also holds a wrapped legend', () => {
   assert.ok(noteY + 2 < legendTitle - 12, `note at ${noteY}, legend title at ${legendTitle}`);
 });
 
-test('edge path and label classes resolve to the same theme token', () => {
+test('colored edge path and label classes resolve to the same theme token', () => {
   const template = fs.readFileSync(path.join(skillRoot, 'assets/template.html'), 'utf8');
-  for (const variant of VARIANTS) {
+  // Default labels use --edge-label; edge-label-contrast-browser.test.mjs measures them.
+  for (const variant of VARIANTS.filter((name) => name !== 'default')) {
     const pathMatch = template.match(new RegExp(`\\.a-${variant}\\s*\\{[^}]*stroke:\\s*var\\((--[^)]+)\\)`));
     const labelMatch = template.match(new RegExp(`\\.t-edge-${variant}\\s*\\{[^}]*fill:\\s*var\\((--[^)]+)\\)`));
     assert.ok(pathMatch, `missing path token for ${variant}`);

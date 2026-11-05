@@ -25,7 +25,7 @@
       var includeList = document.getElementById('include-list');
       var proofLink = document.getElementById('proof-link');
       var proofMeta = document.getElementById('proof-meta');
-      var copyReceipts = new Map();
+      var copyStatus = document.getElementById('copy-status');
       var languageButton = document.getElementById('language');
       var agentState = document.getElementById('agent-state');
       var installCommand = document.getElementById('install-command');
@@ -87,9 +87,7 @@
           : DATA[type][language].repositoryPrompt;
       }
 
-      var copyAttempt = 0;
       function render() {
-        copyAttempt++;
         language = ArchifySiteLanguage.write(language);
         var recipe = DATA[type];
         var copy = recipe[language];
@@ -111,8 +109,8 @@
         });
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         agentState.textContent = agentName + (language === 'zh' ? ' · 同一份 Skill' : ' · same Skill');
-        installCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --global --copy --yes';
-        projectCommand.textContent = 'npx -y skills add tt-a1i/archify --skill archify --agent ' + agent + ' --copy --yes';
+        installCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --agent ' + agent + ' --global --copy --yes';
+        projectCommand.textContent = 'npx -y skills@latest add https://archify.si --skill archify --agent ' + agent + ' --copy --yes';
         title.textContent = copy.title;
         question.textContent = copy.question;
         prompt.textContent = currentPrompt();
@@ -125,51 +123,46 @@
         proofMeta.textContent = language === 'zh'
           ? '验证成品 · ' + recipe.presentation.preset + ' · ' + recipe.presentation.motion
           : 'Verified proof · ' + recipe.presentation.preset + ' · ' + recipe.presentation.motion;
-        copyReceipts.forEach(function (receipt, status) {
-          if (receipt.text !== textForStep(receipt.step)) {
-            status.textContent = '';
-            copyReceipts.delete(status);
-          }
-        });
+        copyStatus.textContent = '';
         updateUrl();
+      }
+
+      function fallbackCopy(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        var ok = document.execCommand('copy');
+        area.remove();
+        if (!ok) throw new Error('copy failed');
       }
 
       function starterText() {
         var agentName = document.querySelector('[data-agent="' + agent + '"]').textContent;
         if (language === 'zh') {
-          return '为 ' + agentName + ' 安装 Archify：\n' + installCommand.textContent.trim()
+          return '为 ' + agentName + ' 安装 Archify：\n' + document.getElementById('agent-install-prompt').textContent.trim()
             + (input === 'description' ? '\n\n然后在任意新对话中直接告诉 ' : '\n\n然后在目标仓库中让 ') + agentName + '：\n' + currentPrompt();
         }
-        return 'Install Archify for ' + agentName + ':\n' + installCommand.textContent.trim()
+        return 'Install Archify for ' + agentName + ':\n' + document.getElementById('agent-install-prompt').textContent.trim()
           + (input === 'description' ? '\n\nThen start any new chat and tell ' : '\n\nThen, in your target repository, ask ') + agentName + ':\n' + currentPrompt();
       }
 
-      function textForStep(step) {
-        if (step === 'global_install_copy') return installCommand.textContent.trim();
-        if (step === 'project_install_copy') return projectCommand.textContent.trim();
-        if (step === 'prompt_copy') return currentPrompt();
-        return starterText();
-      }
-
-      async function copyText(step, statusId) {
-        var text = textForStep(step);
-        var copyStatus = document.getElementById(statusId);
-        var attempt = ++copyAttempt;
-        copyStatus.textContent = '';
-        copyReceipts.delete(copyStatus);
-        var isCurrent = function () { return attempt === copyAttempt; };
-        var ok = await ArchifyClipboard.copy(text, isCurrent);
-        if (!isCurrent()) return;
-        copyReceipts.set(copyStatus, { text: text, step: step });
-        if (ok && step) recordStep(step);
-        copyStatus.textContent = ok
-          ? (language === 'zh' ? '已复制到剪贴板。' : 'Copied to clipboard.')
-          : (language === 'zh' ? '复制失败，请手动选择文本。' : 'Copy failed. Select the text manually.');
+      async function copyText(text, step) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+          else fallbackCopy(text);
+          if (step) recordStep(step);
+          copyStatus.textContent = language === 'zh' ? '已复制到剪贴板。' : 'Copied to clipboard.';
+        } catch (_) {
+          copyStatus.textContent = language === 'zh' ? '复制失败，请手动选择文本。' : 'Copy failed. Select the text manually.';
+        }
       }
 
       document.querySelectorAll('[data-type]').forEach(function (button) {
         button.addEventListener('click', function () {
-          if (type === button.dataset.type) return;
           type = button.dataset.type;
           render();
         });
@@ -189,7 +182,6 @@
 
       document.querySelectorAll('[data-agent]').forEach(function (button) {
         button.addEventListener('click', function () {
-          if (agent === button.dataset.agent) return;
           agent = button.dataset.agent;
           render();
         });
@@ -209,7 +201,6 @@
 
       document.querySelectorAll('[data-input]').forEach(function (button) {
         button.addEventListener('click', function () {
-          if (input === button.dataset.input) return;
           input = button.dataset.input;
           render();
         });
@@ -229,15 +220,19 @@
 
       document.querySelectorAll('[data-copy-source]').forEach(function (button) {
         button.addEventListener('click', function () {
-          var step = button.dataset.copySource === 'install-command' ? 'global_install_copy' : 'project_install_copy';
-          copyText(step, button.getAttribute('aria-describedby'));
+          var step = {
+            'install-command': 'global_install_copy',
+            'project-command': 'project_install_copy',
+            'agent-install-prompt': 'agent_install_prompt_copy'
+          }[button.dataset.copySource];
+          copyText(document.getElementById(button.dataset.copySource).textContent.trim(), step);
         });
       });
       document.getElementById('copy-prompt').addEventListener('click', function () {
-        copyText('prompt_copy', 'copy-status');
+        copyText(currentPrompt(), 'prompt_copy');
       });
       document.getElementById('copy-starter').addEventListener('click', function () {
-        copyText('starter_copy', 'copy-status');
+        copyText(starterText(), 'starter_copy');
       });
       proofLink.addEventListener('click', function () { recordStep('proof_open'); });
 
