@@ -268,8 +268,12 @@ Optional-chain arguments and computed keys also guard CommonJS loads:
 The base in `require("./b")?.use` stays eager, as does the argument in
 `(sink?.use)(require("./b"))`, where grouping breaks the chain. These syntax
 flags do not prove whether a load runs or whether initialization is safe.
-The adapter uses tsconfig options when resolving aliases and inline type specifiers. Source
-text, in-root JSON configuration/package metadata, and the resolution file
+The adapter uses tsconfig options when resolving aliases and inline type specifiers.
+If TypeScript resolves a relative CommonJS directory load to a declaration,
+the adapter checks the captured package for an explicit JavaScript main or the default
+`index.js`. A confirmed runtime file takes precedence for the require, while a
+type-only import keeps its declaration target.
+Source text, in-root JSON configuration/package metadata, and the resolution file
 inventory are captured before compiler setup. Configuration parsing and module
 resolution use that inventory, including negative lookups, rather than rereading
 the working tree. Installed configuration packages and unusual configuration

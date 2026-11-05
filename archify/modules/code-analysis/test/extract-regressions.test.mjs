@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { EXTRACT_RUNNER } from './helpers.mjs';
 import { describeRepository, stripCredentials } from '../extract/shared/git.mjs';
@@ -18,6 +19,54 @@ function fixture(t, files) {
 function extract(root, extra = [], env = process.env) {
   return spawnSync(process.execPath, [EXTRACT_RUNNER, root, ...extra], { encoding: 'utf8', timeout: 20000, env });
 }
+test('CommonJS directory requires find the captured JS entry behind separate declarations', (t) => {
+  const root = fixture(t, {
+    'package.json': JSON.stringify({ main: './index.js', types: './types/index.d.ts' }),
+    'index.js': 'exports.value = 1;',
+    'types/index.d.ts': 'export declare const value: number;',
+    'test/use.cjs': [
+      "require('../');", "require('../nested');", "require('../default/');",
+      "require('../shadow/');", "require('../shadow');", "require('../data/');", "import('../');",
+    ].join('\n'),
+    'test/type.cts': "import type lib = require('../');",
+    'nested/package.json': JSON.stringify({ main: './lib/run.cjs', types: '../types/index.d.ts' }),
+    'nested/lib/run.cjs': 'module.exports = 1;',
+    'default/index.d.ts': 'export declare const value: number;',
+    'default/index.js': 'exports.value = 1;',
+    'shadow/package.json': JSON.stringify({ main: './index.js', types: '../types/index.d.ts' }),
+    'shadow/index.js': '', 'shadow.json': '{}',
+    'data/package.json': JSON.stringify({ main: './data.json', types: '../types/index.d.ts' }),
+    'data/data.json': '{}', 'data/index.js': '',
+  });
+  const file = path.join(root, 'facts.json');
+  const result = extract(root, ['--language', 'ts', '--out', file, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const { imports } = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const runtime = createRequire(path.join(root, 'test/use.cjs'));
+  const requires = imports.filter(edge => edge.from === 'test/use.cjs' && edge.kind === 'require');
+  assert.equal(requires.length, 6);
+  for (const edge of requires) {
+    const target = path.relative(fs.realpathSync(root), runtime.resolve(edge.specifier)).split(path.sep).join('/');
+    assert.equal(edge.to, target.endsWith('.json') ? undefined : target, edge.specifier);
+  }
+  assert.equal(imports.find(edge => edge.kind === 'dynamic').resolved, false);
+  assert.equal(imports.find(edge => edge.typeOnly).resolved, false);
+});
+
+test('capturing declarations distinguishes a directory require from a type-only import', (t) => {
+  const root = fixture(t, {
+    'package.json': JSON.stringify({ main: './index.js', types: './types/index.d.ts' }),
+    'index.js': 'exports.value = 1;', 'types/index.d.ts': 'export declare const value: number;',
+    'test/use.cjs': "require('../');", 'test/use.cts': "import type lib = require('../');",
+    'config.json': JSON.stringify({ exclude: [] }),
+  });
+  const result = extract(root, ['--language', 'ts', '--config', path.join(root, 'config.json')]);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const { imports } = JSON.parse(result.stdout);
+  assert.equal(imports.find(edge => edge.from === 'test/use.cjs').to, 'index.js');
+  assert.equal(imports.find(edge => edge.typeOnly).to, 'types/index.d.ts');
+});
+
 test('extract preserves import-equals and ignores locally bound require calls', (t) => {
   const root = fixture(t, {
     'dep.ts': 'export const value = 1;\n',
