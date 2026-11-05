@@ -103,7 +103,7 @@ function installPassportSteps(sequences, onChange) {
     if (index === sequence().steps.length - 1) index = 0;
     if (narrow()) expanded = false;
     previousMode = governor.mode();
-    claim = governor.claim('steps', () => pause(false));
+    claim = governor.claim('steps', () => { pause(false); governor.setMode(previousMode, {persist: false}); });
     governor.setMode('live', {persist: false}); playing = true; paint(); schedule();
   });
   prev.addEventListener('click', () => select(index - 1)); next.addEventListener('click', () => select(index + 1));

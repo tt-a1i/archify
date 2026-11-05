@@ -88,6 +88,18 @@ test('Passport plays authored stages, yields cleanly and preserves canonical exp
   const canonical=await exported();
   await evaluate(`Archify.focus.set('page',{toggle:false})`);await settle();
   assert.deepEqual(await state(),{active:true,stage:'1',playing:false,expanded:false,edges:['classify-call']});
+  await send('Emulation.setEmulatedMedia',{media:'print'});
+  const printStyles=await evaluate(`(()=>{const svg=document.querySelector('.diagram-container > svg');const selected=svg.querySelector('path[data-passport-step]'),unselected=svg.querySelector('path[data-edge-id="extract-call"]'),label=svg.querySelector('g[data-passport-step] text');const styles=()=>({stroke:getComputedStyle(selected).stroke,opacity:getComputedStyle(unselected).opacity,fill:getComputedStyle(label).fill,weight:getComputedStyle(label).fontWeight});const highlighted=styles();document.documentElement.removeAttribute('data-passport-steps');const canonical=styles();document.documentElement.setAttribute('data-passport-steps','');return {highlighted,canonical};})()`);
+  assert.deepEqual(printStyles.highlighted,printStyles.canonical,'printing ignores stage-only diagram styles');
+  await send('Emulation.setEmulatedMedia',{media:'screen'});
+  for(const mode of ['still','live']){
+    await evaluate(`Archify.motionGovernor.setMode(${JSON.stringify(mode)},{persist:false})`);
+    await click('.passport-step-play');
+    const preempted=await evaluate(`(()=>{const token=Archify.motionGovernor.claim('test-preempt',()=>{});const state={playing:Archify.passportSteps.isPlaying(),mode:Archify.motionGovernor.mode(),owner:Archify.motionGovernor.owner()};Archify.motionGovernor.release(token);return state;})()`);
+    assert.deepEqual(preempted,{playing:false,mode,owner:'test-preempt'},'competing motion retains the reader mode and owns the handoff');
+    assert.equal(await evaluate(`Archify.motionGovernor.mode()`),mode);
+  }
+  await evaluate(`Archify.motionGovernor.setMode('still',{persist:false})`);
   await click('.passport-step-toggle');assert.equal((await state()).expanded,true);
   assert.equal(await evaluate(`document.querySelectorAll('.passport-step-list button').length`),5);
   await click('.passport-step-play');await wait(`document.querySelector('.passport-step-position strong').textContent==='2'`);

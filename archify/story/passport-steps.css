@@ -1,10 +1,12 @@
 html[data-passport-steps] { --step-ink: #076f83; --step-wash: #e8f4f6; }
 html[data-passport-steps][data-theme="dark"] { --step-ink: #67e8f9; --step-wash: #14303b; }
+@media screen {
 html[data-passport-steps] .diagram-container > svg [data-edge-from] { opacity: .46 !important; }
 html[data-passport-steps] .diagram-container > svg [data-node-id] { opacity: .88 !important; filter: none !important; }
 html[data-passport-steps] .diagram-container > svg [data-passport-step] { opacity: 1 !important; }
 html[data-passport-steps] .diagram-container > svg path[data-passport-step] { stroke: var(--step-ink) !important; filter: none !important; }
 html[data-passport-steps] .diagram-container > svg g[data-passport-step] text { fill: var(--step-ink); font-weight: 650; }
+}
 html[data-passport-steps] #focus-chip { width: 22rem; max-width: calc(100% - 32px); }
 html[data-passport-steps] #focus-chip[data-steps-expanded] { width: 19.75rem; }
 html[data-passport-steps] :is(#focus-reach, #btn-focus-relations, #relationship-lens-list, #btn-focus-explain, #focus-drilldowns) { display: none !important; }
