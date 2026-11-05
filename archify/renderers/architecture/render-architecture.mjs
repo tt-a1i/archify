@@ -104,7 +104,7 @@ const RELATIONSHIP_LEGEND = ['forward', 'both', 'none'].flatMap((direction) => {
 });
 
 const labelArrowVariants = new Set(asArray(arch.connections).filter(conn => conn.arrowPosition === 'label').map(conn => conn.variant || 'default'));
-for (const variant of labelArrowVariants) RELATIONSHIP_LEGEND.push({
+for (const variant of labelArrowVariants.size ? labelArrowVariants : ['default']) RELATIONSHIP_LEGEND.push({
   kind: 'relation-label', direction: 'forward', arrowPosition: 'label', variant,
   label: i18nText(arch.meta.locale, 'viewer.relationship.arrowPosition.label'), swatchWidth: 32, interactive: false,
 });

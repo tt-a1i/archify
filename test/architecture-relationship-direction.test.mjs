@@ -145,6 +145,13 @@ test('relationship legends honor hidden and custom labels without changing autho
   labeled.meta.legend = { entries: { 'relation-label': { label: 'Call direction' } } };
   result = run(dir, labeled); assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(labelSvg(result.html), /Call direction/);
+  const unused = structuredClone(fixture);
+  unused.meta.legend = { entries: { 'relation-label': { visible: true } } };
+  result = run(dir, unused); assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(svgOf(result.html), /Label marker shows direction/);
+  unused.meta.legend = { mode: 'all' };
+  result = run(dir, unused); assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(svgOf(result.html), /Label marker shows direction/);
   spec.meta.legend.mode = 'hidden'; result = run(dir, spec);
   assert.equal(result.status, 0, result.stdout);
   assert.doesNotMatch(svgOf(result.html), /data-legend-semantic-kind=/);
