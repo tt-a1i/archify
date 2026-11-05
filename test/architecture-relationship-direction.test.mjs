@@ -141,6 +141,10 @@ test('relationship legends honor hidden and custom labels without changing autho
   spec.meta.legend = { entries: { 'relation-none': { label: 'Shared identifiers' } } };
   let result = run(dir, spec); assert.equal(result.status, 0, result.stdout);
   assert.match(svgOf(result.html), /Shared identifiers/);
+  const labeled = structuredClone(labelArrows);
+  labeled.meta.legend = { entries: { 'relation-label': { label: 'Call direction' } } };
+  result = run(dir, labeled); assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(labelSvg(result.html), /Call direction/);
   spec.meta.legend.mode = 'hidden'; result = run(dir, spec);
   assert.equal(result.status, 0, result.stdout);
   assert.doesNotMatch(svgOf(result.html), /data-legend-semantic-kind=/);

@@ -41,6 +41,7 @@
                 "security": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "messagebus": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "external": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "relation-label": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "relation-forward": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "relation-both": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "relation-none": { "$ref": "common.schema.json#/$defs/legendEntry" }
