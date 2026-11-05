@@ -71,6 +71,19 @@ test('Python TYPE_CHECKING else branch is runtime, unknown guards are conditiona
   assert.equal(facts.imports.find((e) => e.to === 'd.py').conditional, true);
 });
 
+test('Python match evaluates its subject before conditionally loading case guards and bodies', (t) => {
+  if (python(os.tmpdir(), 'import sys; print(sys.version_info >= (3, 10))').stdout.trim() !== 'True') return t.skip('requires Python 3.10+');
+  const { facts, cycles } = analyze(t, {
+    'a.py': 'match __import__("subject"):\n    case 1 if __import__("guard"):\n        import b\n',
+    'subject.py': '', 'guard.py': '', 'b.py': 'import a\n',
+  });
+  const loads = facts.imports.filter(edge => edge.from === 'a.py');
+  assert.deepEqual(loads.map(edge => [edge.to, Boolean(edge.conditional)]), [
+    ['subject.py', false], ['guard.py', true], ['b.py', true],
+  ]);
+  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['info', 'deferred']]);
+});
+
 test('Python dynamic and opaque imports inherit function scope; default expressions do not', (t) => {
   const { root, facts, cycles } = analyze(t, {
     'a.py': 'import importlib\ndef load(name):\n    importlib.import_module(name)\n    return importlib.import_module("b")\nclass A: pass\n',
@@ -147,6 +160,32 @@ test('JavaScript function-scope import() and require are deferred; top-level req
   assert.equal(actual.stdout.trim(), '1');
   const commonjs = analyze(t, { 'a.cjs': 'require("./b.cjs");\nfunction f() { return require("./b.cjs"); }\n', 'b.cjs': '' }, 'ts');
   assert.deepEqual(commonjs.facts.imports.map((e) => Boolean(e.lazy)), [false, true]);
+});
+
+test('CommonJS guarded requires are conditional while the expressions selecting a branch stay eager', (t) => {
+  const entry = [
+    'if (require("./eager.cjs")) require("./guarded.cjs"); else require(name);',
+    'require("./eager.cjs") ? require("./guarded.cjs") : require("./guarded.cjs");',
+    'require("./eager.cjs") && require("./guarded.cjs");',
+    'flag ||= require("./guarded.cjs");',
+    'for (require("./eager.cjs"); require("./eager.cjs"); require("./guarded.cjs")) require("./guarded.cjs");',
+    'for (entry[require("./guarded.cjs")] of require("./eager.cjs")) require("./guarded.cjs");',
+    'while (require("./eager.cjs")) require("./guarded.cjs");',
+    'do { require("./eager.cjs"); } while (false);',
+    'for (;;) { require("./eager.cjs"); break; }',
+    'switch (require("./eager.cjs")) { case require("./eager.cjs"): break; case require("./guarded.cjs"): default: require("./guarded.cjs"); }',
+    'switch (flag) { default: require("./eager.cjs"); }',
+    'try { require("./eager.cjs"); } catch { require("./guarded.cjs"); } finally { require("./eager.cjs"); }',
+  ].join('\n');
+  const { facts, cycles } = analyze(t, {
+    'a.cjs': entry, 'guarded.cjs': 'require("./a.cjs");', 'eager.cjs': '',
+  }, 'ts');
+  const loads = facts.imports.filter(edge => edge.from === 'a.cjs');
+  assert.equal(loads.length, entry.match(/require\(/g).length);
+  for (const edge of loads) {
+    assert.equal(Boolean(edge.conditional), edge.specifier !== './eager.cjs', `line ${edge.line}: ${edge.specifier}`);
+  }
+  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['info', 'deferred']]);
 });
 
 test('TypeScript uses tsconfig path aliases and ignores Python files in explicitly selected TS trees', (t) => {

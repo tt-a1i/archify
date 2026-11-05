@@ -8,8 +8,8 @@
     "url": null,
     "language": "py",
     "adapter": "python@3.13.17",
-    "adapterRevision": 1,
-    "snapshotId": "e414701d6bdde3ea4ac97af50ed6027fd31d94ea18cc91fbf601d10523f866b3"
+    "adapterRevision": 2,
+    "snapshotId": "b77a2fab75cbde72f410afeeea7a23bc5f8519815f0b71975dfd654e77835600"
   },
   "files": [
     {

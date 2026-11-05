@@ -258,9 +258,12 @@ Runtime-risk confidence 0.7 is an ordinal heuristic, not a measured probability.
 
 Python uses an AST visitor to distinguish function bodies from enclosing
 default/decorator expressions, mark TYPE_CHECKING-only and conditional edges,
-and include the package initializers a submodule import loads. TypeScript
-marks explicit type-only edges and deferred import()/require() calls, and
-uses tsconfig options when resolving aliases and inline type specifiers. Source
+and include the package initializers a submodule import loads. A `match` subject
+inherits its enclosing context; case guards and bodies are conditional.
+TypeScript marks explicit type-only edges, deferred import()/require() calls
+and guarded CommonJS loads. For example, `if (require("./a")) require("./b")`
+evaluates the first load before deciding whether to run the second.
+The adapter uses tsconfig options when resolving aliases and inline type specifiers. Source
 text, in-root JSON configuration/package metadata, and the resolution file
 inventory are captured before compiler setup. Configuration parsing and module
 resolution use that inventory, including negative lookups, rather than rereading
