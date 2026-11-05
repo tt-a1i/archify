@@ -243,13 +243,66 @@ at the active quality profile.
 - Preserve semantic edge labels. Readable v2 allocates measured label clearance;
   when a label does not fit, repair the reported capacity or route constraint
   instead of deleting meaning.
-- Use labels for decisions, approvals, protocols, async traces, return paths,
-  and any other relationship meaning not fully implied by its endpoints.
+- Use `decision` and `condition` for explicit decisions and branch conditions
+  (see below). Use labels for actions, protocols, async traces, return paths,
+  and other relationship meaning not fully implied by its endpoints.
 - Prefer route presets — `drop` (bend between lanes; `bias` 0–1 picks where),
   `outside-right`, `return-left`, `bottom-channel`, and `up-channel` — before
   using raw `via` points. `straight` and the default `auto` cover the rest.
 - Keep workflow examples compact enough to render well in narrow chat/browser
   previews.
+
+### Decision points and branch conditions
+
+Both schema versions accept optional `nodes[].decision` and
+`edges[].condition`. A decision keeps its component type, color and legend:
+
+```json
+{ "id": "approval", "lane": "policy", "col": 0,
+  "type": "security", "decision": true, "label": "Approval Gate" }
+```
+
+The existing diamond corner icon marks a decision by default. An explicitly
+authored `icon`, including `none`, still takes precedence. Its decision identity
+also appears in the existing Semantic Passport context, SVG title and accessible
+focus label. Decorative `icon: "decision"` alone does not declare a decision.
+
+```json
+{ "from": "approval", "to": "tool",
+  "condition": { "value": "Approved" }, "label": "run tool" }
+```
+
+| Authored text | Visible edge text |
+| --- | --- |
+| `label: "run tool"` only | `run tool` (unchanged) |
+| `condition: { "value": "Approved" }` only | `Approved` |
+| Condition and label both `Approved` | `Approved` once |
+| Condition `Approved`, label `run tool` | `Approved · run tool` |
+
+This same text is measured for routing and label clearance, drawn in HTML/SVG,
+and used by relationship details, exports and layout receipts. Text is escaped,
+never evaluated or silently truncated. Long conditions must satisfy the same
+layout constraints as ordinary labels; explicit geometry is still respected.
+Conditions may also label edges from an unmarked node without inferring a
+decision. `value` must be a non-blank string; `op` and other condition properties
+are not supported.
+
+Each outgoing edge of an explicit decision that omits `condition` gets a
+`workflow/missing-branch-condition` **warning**, including error and return edges.
+The diagnostic identifies its original input path and asks for `condition.value`;
+a plain label is not silently reinterpreted as a condition. The warning appears
+in direct-renderer stderr, compiler/layout receipts, and public `validate` and
+`deliver` output. It remains a warning in `showcase`.
+
+Zero-outgoing and single-outcome views remain valid. Two branches, different
+strings or repeated strings do not establish completeness, exclusion or
+contradiction. There is no predicate evaluation, AND/OR operator or inferred
+active branch. Existing documents without `decision: true` receive no new
+missing-condition warnings. Omitted or false `decision` retains the old behavior.
+
+The bundled approval workflow demonstrates this contract. The same fields can
+describe a backend retry decision with conditions such as `Budget remaining`
+and `Budget exhausted`; no approval-specific names or vocabulary are required.
 
 ### Optional semantic checks
 

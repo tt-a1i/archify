@@ -49,7 +49,10 @@ export function planningWorkflow(workflow) {
       if (edge[property] !== undefined) automatic[property] = edge[property];
     }
     if (edge.route === 'straight') automatic.route = 'straight';
-    if (edge.labelAt === undefined && edge.label !== undefined) automatic.label = edge.label;
+    if (edge.labelAt === undefined) {
+      if (edge.label !== undefined) automatic.label = edge.label;
+      if (edge.condition !== undefined) automatic.condition = edge.condition;
+    }
     return [automatic];
   });
 

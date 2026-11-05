@@ -1871,19 +1871,26 @@ function recordDeliveryFailure(options) {
   return recorded;
 }
 
-// Locale warnings for a successfully rendered candidate. Diagnostic renderers
+// Authoring warnings for a successfully rendered candidate. Diagnostic renderers
 // record them without printing text; validate/deliver disclose them before
 // checking the artifact and reuse the same diagnostics in successful receipts.
-async function specificationLocaleDiagnostics(type, specification) {
-  let meta;
+async function specificationAuthoringDiagnostics(type, specification) {
+  let diagram;
   try {
-    meta = JSON.parse(String(specification)).meta;
+    diagram = JSON.parse(String(specification));
   } catch {
     return [];
   }
-  if (!meta?.locale) return [];
-  const { localeDiagnostics } = await import('../renderers/shared/i18n.mjs');
-  return localeDiagnostics(type, meta);
+  const diagnostics = [];
+  if (diagram.meta?.locale) {
+    const { localeDiagnostics } = await import('../renderers/shared/i18n.mjs');
+    diagnostics.push(...localeDiagnostics(type, diagram.meta));
+  }
+  if (type === 'workflow') {
+    const { workflowDecisionDiagnostics } = await import('../renderers/workflow/workflow-decisions.mjs');
+    diagnostics.push(...workflowDecisionDiagnostics(diagram));
+  }
+  return diagnostics;
 }
 
 function deliverySuccessProvenance(receipt) {
@@ -4923,8 +4930,8 @@ async function commandDeliver(args) {
       return;
     }
     if (render.stderr) process.stderr.write(render.stderr);
-    const localeWarnings = [...await specificationLocaleDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
-    for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
+    const authoringWarnings = [...await specificationAuthoringDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
+    for (const warning of authoringWarnings) process.stderr.write(`archify: ${warning.message}\n`);
     try {
       const renderedCandidate = fs.readFileSync(candidatePath);
       if (preparedDeliveryTargets.artifact.mode !== null) {
@@ -5080,7 +5087,7 @@ async function commandDeliver(args) {
           ...(sourceEvidence.repository.linkMode ? { linkMode: sourceEvidence.repository.linkMode } : {}),
         },
       } : {}),
-      ...(localeWarnings.length ? { diagnostics: localeWarnings } : {}),
+      ...(authoringWarnings.length ? { diagnostics: authoringWarnings } : {}),
     };
 
     const provenanceBytes = Buffer.from(`${JSON.stringify(deliverySuccessProvenance(receipt), null, 2)}\n`);
@@ -7144,8 +7151,8 @@ async function commandValidate(args, invocation = {}) {
       exitCode = render.status ?? 1;
     } else {
       if (render.stderr) process.stderr.write(render.stderr);
-      const localeWarnings = [...await specificationLocaleDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
-      for (const warning of localeWarnings) process.stderr.write(`archify: ${warning.message}\n`);
+      const authoringWarnings = [...await specificationAuthoringDiagnostics(type, specification), ...(explainerBundle?.diagnostics.filter(entry => entry.severity === 'warning') || [])];
+      for (const warning of authoringWarnings) process.stderr.write(`archify: ${warning.message}\n`);
       const checkMaxBuffer = artifactCheckMaxBuffer();
       const check = runNode([path.join(skillRoot, 'scripts/check-render-output.mjs'), out], {
         stdio: 'pipe',
@@ -7217,7 +7224,7 @@ async function commandValidate(args, invocation = {}) {
             checks: result.checks,
             composition: result.composition,
             ...(engineeringProfile ? { engineeringProfile } : {}),
-            ...(localeWarnings.length ? { diagnostics: localeWarnings } : {}),
+            ...(authoringWarnings.length ? { diagnostics: authoringWarnings } : {}),
           };
           report = () => console.log(JSON.stringify(receipt, null, 2));
         } else {

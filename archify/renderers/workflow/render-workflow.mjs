@@ -35,6 +35,13 @@ if (layoutJson) {
 } else if (!compiled.ok) {
   throwDiagnosticError(compiled.error || 'Workflow compilation failed.', compiled.diagnostics);
 } else {
+  for (const diagnostic of compiled.receipt.diagnostics) {
+    if (diagnostic.code !== 'workflow/missing-branch-condition') continue;
+    recordDiagnostic(diagnostic);
+    if (process.env.ARCHIFY_DIAGNOSTIC_FORMAT !== 'json') {
+      console.warn(`warning [${diagnostic.code}] ${diagnostic.message}`);
+    }
+  }
   writeDiagram({
     outPath,
     template,

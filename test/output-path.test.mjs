@@ -297,6 +297,10 @@ test('deliver rechecks aliases immediately before committing a verified candidat
     path.join(skillRoot, 'renderers/shared/sidecar-path.mjs'),
     path.join(installedShared, 'sidecar-path.mjs'),
   );
+  fs.copyFileSync(
+    path.join(skillRoot, 'renderers/workflow/workflow-decisions.mjs'),
+    path.join(installedRenderer, 'workflow-decisions.mjs'),
+  );
   fs.writeFileSync(path.join(installedRenderer, 'render-workflow.mjs'), `
 import fs from 'node:fs';
 const [, output] = process.argv.slice(2);
@@ -329,7 +333,7 @@ console.log(JSON.stringify({
   fs.symlinkSync(initialOutputDirectory, linkedDirectory, 'dir');
   const input = path.join(inputDirectory, 'diagram.html');
   const output = path.join(linkedDirectory, 'diagram.html');
-  const source = Buffer.from('{"meta":{"title":"race input","output":"diagram.html"}}');
+  const source = Buffer.from('{"meta":{"title":"race input","output":"diagram.html"},"nodes":[],"edges":[]}');
   fs.writeFileSync(input, source);
   const marker = path.join(cwd, 'renderer-started');
   const release = path.join(cwd, 'renderer-release');
@@ -370,6 +374,7 @@ console.log(JSON.stringify({
   const status = await close;
 
   assert.equal(status, 1, stderr);
+  assert.ok(stdout.trim(), stderr);
   const receipt = JSON.parse(stdout);
   assert.equal(receipt.stage, 'commit');
   assert.equal(receipt.diagnostics[0].code, 'delivery/ownership-lost');

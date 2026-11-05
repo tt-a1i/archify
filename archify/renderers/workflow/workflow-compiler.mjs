@@ -1,4 +1,5 @@
 import { proposeWorkflowPlacement } from './workflow-placement-repair.mjs';
+import { workflowEdgeLabel, workflowDecisionDiagnostics } from './workflow-decisions.mjs';
 import { createSpatialGrid } from '../shared/spatial-grid.mjs';
 import { shortestOrthogonalGridRoute } from '../shared/route-quality.mjs';
 import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
@@ -294,11 +295,11 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     if ((Number(fromNode.yOffset) || 0) !== (Number(toNode.yOffset) || 0)) continue;
     const earlier = fromNode.col < toNode.col ? fromNode : toNode;
     const later = earlier === fromNode ? toNode : fromNode;
-    const labeledDirectClearance = edge.label && !edge.labelAt
-      ? Math.max(28, workflowLabelWidth(edge.label) + 8)
+    const labeledDirectClearance = workflowEdgeLabel(edge) && !edge.labelAt
+      ? Math.max(28, workflowLabelWidth(workflowEdgeLabel(edge)) + 8)
       : 28;
     const directLabelExpansionCost = Math.max(0, labeledDirectClearance - 28);
-    const canUseAutomaticLabelChannel = edge.label
+    const canUseAutomaticLabelChannel = workflowEdgeLabel(edge)
       && !edge.labelAt
       && (edge.route || 'auto') === 'auto'
       && !edge.fromSide
@@ -474,7 +475,7 @@ function createReadableLayout(workflow, layoutFeedback = {}) {
     const toNode = nodesById.get(edge.to);
     if (!fromNode || !toNode) return maximum;
     const labelCenter = (colXs[fromNode.col] + colXs[toNode.col]) / 2;
-    const labelLeft = labelCenter - workflowLabelWidth(edge.label) / 2;
+    const labelLeft = labelCenter - workflowLabelWidth(workflowEdgeLabel(edge)) / 2;
     return Math.max(maximum, 16 - labelLeft);
   }, 0);
   for (const phase of asArray(workflow.phases)) {
@@ -702,7 +703,7 @@ function compareWorkflowEdges(left, right) {
   return stableCompare(left.id, right.id)
     || stableCompare(left.from, right.from)
     || stableCompare(left.to, right.to)
-    || stableCompare(left.label, right.label)
+    || stableCompare(workflowEdgeLabel(left), workflowEdgeLabel(right))
     || stableCompare(left.route, right.route)
     || stableCompare(stableValueKey(left), stableValueKey(right));
 }
@@ -2029,7 +2030,7 @@ function classifyFailedAutomaticCandidatePins(edge, rawCandidates) {
   for (const { points } of rawCandidates) {
     const candidateRect = candidateLabelRect(edge, points);
     const candidateLabel = candidateRect
-      ? { ...candidateRect, relation: edge, relationIndex, label: edge.label }
+      ? { ...candidateRect, relation: edge, relationIndex, label: workflowEdgeLabel(edge) }
       : null;
     if (candidateLabel) {
       const priorLabel = priorLabels.find((otherLabel) => (
@@ -2837,8 +2838,8 @@ function validateWorkflow() {
   }
 
   for (const edge of workflow.edges) {
-    if (!nodes.has(edge.from)) problems.push(`Edge "${edge.label || edge.from}" references unknown source "${edge.from}".`);
-    if (!nodes.has(edge.to)) problems.push(`Edge "${edge.label || edge.to}" references unknown target "${edge.to}".`);
+    if (!nodes.has(edge.from)) problems.push(`Edge "${workflowEdgeLabel(edge) || edge.from}" references unknown source "${edge.from}".`);
+    if (!nodes.has(edge.to)) problems.push(`Edge "${workflowEdgeLabel(edge) || edge.to}" references unknown target "${edge.to}".`);
     if (nodes.has(edge.from) && nodes.has(edge.to)) {
       const routed = pathFor(edge);
       if (routed.points.length === 2) {
@@ -3392,7 +3393,7 @@ function oneBendCrossLaneVia(edge, start, end, fromSide, toSide) {
 
 const pathCache = new Map();
 const readableSideCache = new Map();
-const workflowDiagnostics = [];
+const workflowDiagnostics = workflowDecisionDiagnostics(qualityResolvedWorkflow);
 
 const { automaticOneBendSides } = createAutomaticSideSelection({
   workflow,
@@ -3448,9 +3449,9 @@ function routeMeetsHardRhythm(points) {
 }
 
 function routeLabelClearsNodes(edge, points) {
-  if (!edge.label || edge.labelAt) return true;
+  if (!workflowEdgeLabel(edge) || edge.labelAt) return true;
   const [lx, ly] = workflowEdgeLabelPoint(edge, points);
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(workflowEdgeLabel(edge));
   const rect = { x: lx - width / 2, y: ly - 10, width, height: 14 };
   // The comparison shrinks the rect by two pixels, so only nodes inside the
   // shrunk box can fail it.
@@ -3466,9 +3467,9 @@ function routeLabelClearsNodes(edge, points) {
 }
 
 function candidateLabelRect(edge, points) {
-  if (!edge.label) return null;
+  if (!workflowEdgeLabel(edge)) return null;
   const [lx, ly] = workflowEdgeLabelPoint(edge, points);
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(workflowEdgeLabel(edge));
   return { x: lx - width / 2, y: ly - 10, width, height: 14 };
 }
 
@@ -3503,7 +3504,7 @@ function labelRouteClearanceDeficit(edge, points, threshold = 8) {
         }, candidateLabel);
         if (clearance != null) deficit += Math.max(0, threshold - clearance);
       }
-    } else if (candidateLabel || !edge.label) {
+    } else if (candidateLabel || !workflowEdgeLabel(edge)) {
       for (let index = 0; index < points.length - 1; index += 1) {
         const clearance = segmentRectClearance({
           start: points[index],
@@ -3522,7 +3523,7 @@ function placedLabelConflictEvidence(edge, candidateLabel, item, conflictType, p
     path: `/edges/${sourceIndexes.edges.get(relation)}`,
   });
   const labelEvidence = (relation, rect) => ({
-    label: relation.label,
+    label: workflowEdgeLabel(relation),
     rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
   });
   return {
@@ -4258,7 +4259,7 @@ function readablePresetVia(edge, from, to, start, end, fromSide, toSide) {
   const edgeIndex = workflow.edges.indexOf(edge);
   const edgeName = workflowEdgeName(edge);
   const supportedFixes = [];
-  if (discoverFixes && rejection.invariant === 'edge-label node clearance' && edge.label
+  if (discoverFixes && rejection.invariant === 'edge-label node clearance' && workflowEdgeLabel(edge)
     && ['labelAt', 'labelDx', 'labelDy', 'labelSegment'].every((field) => edge[field] === undefined)) {
     for (let segment = 0; segment < Math.min(points.length - 1, 3); segment += 1) {
       const fix = verifiedEdgeFix(
@@ -4402,7 +4403,7 @@ function workflowEdgeLabelPoint(edge, points) {
       if (incoming.length && incoming.every(value => value < x)) labelSide = 1;
       else if (incoming.length && incoming.every(value => value > x)) labelSide = -1;
     }
-    return [x + labelSide * (workflowLabelWidth(edge.label) / 2 + 8),
+    return [x + labelSide * (workflowLabelWidth(workflowEdgeLabel(edge)) / 2 + 8),
       (points[0][1] + points[1][1]) / 2];
   }
   if (edge.labelAt || Number.isInteger(edge.labelSegment) || points.length <= 2) {
@@ -4430,7 +4431,7 @@ function workflowEdgeLabelPoint(edge, points) {
   // whole edge to manufacture a longer run. When the preferred run is that
   // short, use the next run that keeps the label clear of every node and
   // inside one lane, off the lane dividers, before giving up on it.
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(workflowEdgeLabel(edge));
   const clearOfNodes = ([lx, ly]) => {
     const rect = { x: lx - width / 2, y: ly - 10, width, height: 14 };
     return ![...nodes.values()].some((node) => rectsOverlap(rect, node, -2));
@@ -4442,7 +4443,7 @@ function workflowEdgeLabelPoint(edge, points) {
     return ly - 10 >= top + 4 && ly + 4 <= top + laneHeight(index) - 4;
   });
   const preferred = pointOn(segments[0]?.index ?? 0);
-  if (!edge.label || !segments[0]?.horizontal || segments[0].length >= width + 8
+  if (!workflowEdgeLabel(edge) || !segments[0]?.horizontal || segments[0].length >= width + 8
       || clearOfNodes(preferred)) return preferred;
   for (const segment of segments.slice(1)) {
     if (segment.length < 28) continue;
@@ -4492,7 +4493,7 @@ function allocatedPortSides(edge) {
 const automaticPorts = new Map([...automaticPortSpread(portRelations, nodes, {
   spacingFor: (left, right) => portOriginals.has(left) || portOriginals.has(right)
     ? Math.max(HARD_ROUTE_RHYTHM.interior,
-      (workflowLabelWidth(left.label) + workflowLabelWidth(right.label)) / 2 + 8) : 14,
+      (workflowLabelWidth(workflowEdgeLabel(left)) + workflowLabelWidth(workflowEdgeLabel(right))) / 2 + 8) : 14,
   sideFor: (edge, endpoint) => allocatedPortSides(portOriginals.get(edge) || edge)[endpoint === 'source' ? 'fromSide' : 'toSide'],
 })].map(([edge, ports]) => [portOriginals.get(edge) || edge, ports]));
 
@@ -5176,16 +5177,16 @@ function pathFor(edge, automaticPlan = null) {
 const LABEL_RECT_CACHE = new WeakMap();
 
 function labelRectFor(edge, relationIndex) {
-  if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) return null;
+  if (!workflowEdgeLabel(edge) || !nodes.has(edge.from) || !nodes.has(edge.to)) return null;
   const routed = pathFor(edge);
   const cached = LABEL_RECT_CACHE.get(routed);
   if (cached) return cached;
   const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
-  const width = workflowLabelWidth(edge.label);
+  const width = workflowLabelWidth(workflowEdgeLabel(edge));
   const rect = {
     relation: edge,
     relationIndex,
-    label: edge.label,
+    label: workflowEdgeLabel(edge),
     x: lx - width / 2,
     y: ly - 10,
     width,
@@ -5466,13 +5467,16 @@ function renderNode(node) {
   const brand = renderBrandMark(node, { x: node.x + node.width - 22, y: node.y + 6 });
   // drilldowns / href 简写一并解析：单目标会包 <a> + 角标，多目标只写 Passport 属性
   const drilldowns = resolveNodeDrilldowns(node);
-  const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context: nodeContext(node), drilldowns, href: node.href, ...brandMetadataFor(node) };
+  const context = node.decision
+    ? [i18nText(workflow.meta.locale, 'viewer.kind.decision'), nodeContext(node)].filter(Boolean).join(' · ')
+    : nodeContext(node);
+  const passport = { kind: node.type, sublabel: node.sublabel, tag: node.tag, context, drilldowns, href: node.href, ...brandMetadataFor(node) };
   const mark = drilldowns.length ? `\n          ${renderDrilldownMark(node)}` : '';
   return wrapSingleChildAnchor(`        <g ${focusNodeAttrs(node.id, node.label, passport, workflow.meta.locale)}>
           ${focusNodeTitle(node.label, passport)}
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="8" class="c-mask"/>
           <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="8" class="${fill}"${animateAttr(workflow.meta, 'node', nodeStep(node))} stroke-width="1.5"/>
-          ${renderSemanticSigil(node.type, { icon: node.icon, x: node.x + 6, y: node.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}
+          ${renderSemanticSigil(node.type, { icon: node.icon ?? (node.decision ? 'decision' : undefined), x: node.x + 6, y: node.y + labelLayout.sigilY, size: labelLayout.sigilSize })}${brand ? `\n          ${brand}` : ''}
           <text data-node-label=""${hasSub ? ' data-detail-anchor=""' : ''} x="${node.x + labelLayout.x}" y="${node.y + labelLayout.ys[0]}" class="t-primary" font-size="${labelFontSize}" font-weight="600" text-anchor="middle">${esc(node.label)}</text>${sub}${tag}${mark}
         </g>`, drilldowns);
 }
@@ -5495,17 +5499,17 @@ function renderEdgePath(edge, index) {
   const strokeWidth = edge.width || (edge.variant === 'emphasis' ? 1.8 : 1.4);
   const routing = independentAutomaticRoute(edge) ? ' data-composition-routing="workflow-v2-auto"' : '';
   const role = workflow.schema_version === 2 ? ` data-edge-role="${esc(edge.role || '')}"` : '';
-  return `        <path ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}${routing}${role} data-composition-points="${routePointsValue(routed.points)}" d="${roundedWorkflowPath(routed.points)}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
+  return `        <path ${focusEdgeAttrs(edge.from, edge.to, workflowEdgeLabel(edge), index, edge.id)}${routing}${role} data-composition-points="${routePointsValue(routed.points)}" d="${roundedWorkflowPath(routed.points)}" class="${cls}"${animateAttr(workflow.meta, 'edge', edgeSteps.get(edge))} stroke-width="${strokeWidth}" marker-end="url(#${marker})"/>`;
 }
 
 function renderEdgeLabel(edge, index) {
-  if (!edge.label) return '';
+  if (!workflowEdgeLabel(edge)) return '';
   const routed = pathFor(edge);
   const [lx, ly] = workflowEdgeLabelPoint(edge, routed.points);
-  const labelW = workflowLabelWidth(edge.label);
-  return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, edge.label, index, edge.id)}>
+  const labelW = workflowLabelWidth(workflowEdgeLabel(edge));
+  return `        <g data-detail="context" ${focusEdgeAttrs(edge.from, edge.to, workflowEdgeLabel(edge), index, edge.id)}>
           <rect x="${lx - labelW / 2}" y="${ly - 10}" width="${labelW}" height="14" rx="3" class="c-mask"/>
-          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(edge.label)}</text>
+          <text x="${lx}" y="${ly}" class="${!edge.variant || edge.variant === 'default' ? 't-muted' : edgeLabelAccent(edge.variant)}" font-size="8" text-anchor="middle">${esc(workflowEdgeLabel(edge))}</text>
         </g>`;
 }
 
@@ -5579,7 +5583,7 @@ function hasCompleteMeasuredPlan() {
     if (!Array.isArray(routed?.points) || routed.points.length < 2
       || !routed.points.every((point) => Array.isArray(point)
         && point.length === 2 && point.every(Number.isFinite))) return false;
-    if (!edge.label) continue;
+    if (!workflowEdgeLabel(edge)) continue;
     const rect = LABEL_RECT_CACHE.get(routed);
     if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height, rect.lx, rect.ly)
       || rect.width <= 0 || rect.height <= 0) return false;
@@ -5609,9 +5613,9 @@ function measuredPlanReceipt(diagnostics, requiredFrame) {
       points: pathCache.get(edge).points.map((point) => [...point]),
     })),
     labels: workflow.edges.flatMap((edge) => {
-      if (!edge.label || !nodes.has(edge.from) || !nodes.has(edge.to)) return [];
+      if (!workflowEdgeLabel(edge) || !nodes.has(edge.from) || !nodes.has(edge.to)) return [];
       const { lx: x, ly: y } = LABEL_RECT_CACHE.get(pathCache.get(edge));
-      return [{ edge: edge.id ?? null, label: edge.label, x, y, width: workflowLabelWidth(edge.label), height: 14 }];
+      return [{ edge: edge.id ?? null, label: workflowEdgeLabel(edge), x, y, width: workflowLabelWidth(workflowEdgeLabel(edge)), height: 14 }];
     }),
     diagnostics,
   };
