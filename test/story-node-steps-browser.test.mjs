@@ -24,7 +24,12 @@ test('Passport retains native appearance, keyboard focus, reach links, movement 
   let navigation=0;
   const load=async(file=output,hash='focus=page',theme='light')=>{const loaded=browser.cdp.waitFor('Page.loadEventFired',session);await send('Page.navigate',{url:pathToFileURL(file).href+'?theme='+theme+'&case='+(++navigation)+'#'+hash});await loaded;await settle();};
   const click=selector=>run(`document.querySelector(${JSON.stringify(selector)}).click()`);
-  const key=async(key,code=key,modifiers=0)=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key,code,modifiers});await send('Input.dispatchKeyEvent',{type:'keyUp',key,code,modifiers});await settle();};
+  const key=async(key,code=key,modifiers=0)=>{
+    const windowsVirtualKeyCode={ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,Home:36,End:35,Enter:13,Escape:27}[key];
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key,code,modifiers,windowsVirtualKeyCode});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key,code,modifiers,windowsVirtualKeyCode});
+    await settle();
+  };
   await send('Network.enable');await send('Network.setBlockedURLs',{urls:['http://*','https://*']});
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   await t.test('the inherited card shell and title styles match the native card in both themes',async()=>{
