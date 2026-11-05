@@ -601,6 +601,7 @@ const portabilityPattern = [
   'findChrome',
   'visual-check',
   'doctor identifies an incomplete installation',
+  'doctor reports a runtime whose path and handle file identities disagree',
 ].join('|');
 
 // Both lanes exercise controlled NTFS/UNC/8.3 paths below. Only the canonical

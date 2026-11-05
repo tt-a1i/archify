@@ -239,6 +239,7 @@ test('cli: doctor reports a complete installation is ready', () => {
   assert.match(result.stdout, /\[ok\] Example renderer/);
   assert.match(result.stdout, /\[ok\] Live preview runtime/);
   assert.match(result.stdout, /\[ok\] Atomic output safety runtime/);
+  assert.match(result.stdout, /\[ok\] File identity \(path and open-file stats agree\)/);
   assert.match(result.stdout, /\[ok\] Sidecar path naming runtime/);
   assert.match(result.stdout, /\[ok\] Finalize runtime/);
   assert.match(result.stdout, /\[ok\] Scenario recipe guide/);
@@ -281,6 +282,45 @@ test('cli: doctor rejects a corrupt standalone validator', () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /\[invalid\] Standalone schema validators/);
   assert.match(result.stderr, /Archify is not ready: 1 runtime check failed\./);
+});
+
+test('cli: doctor reports a runtime whose path and handle file identities disagree', () => {
+  // Mirrors Node 22.12, 22.16 and 24.0 (libuv 1.49-1.50) on Windows 11, where
+  // path-based stats report dev 0 and handle-based fstat reports the volume serial (#1012).
+  const probe = path.join(tmp, 'path-stat-dev-zero.mjs');
+  fs.writeFileSync(probe, `import fs from 'node:fs';
+for (const name of ['lstatSync', 'statSync']) {
+  const original = fs[name];
+  fs[name] = function (target, options) {
+    const stats = original.apply(this, arguments);
+    if (stats && options && options.bigint) stats.dev = 0n;
+    return stats;
+  };
+}
+`);
+  const nodeOptions = `${process.env.NODE_OPTIONS ? `${process.env.NODE_OPTIONS} ` : ''}--import=${pathToFileURL(probe).href}`;
+  const env = { ...process.env, NODE_OPTIONS: nodeOptions };
+
+  const doctor = run(['doctor'], { env });
+  assert.equal(doctor.status, 1);
+  assert.match(doctor.stdout, /\[unsupported\] File identity: path stats report device 0 but the open file reports device \d+/);
+  assert.match(doctor.stdout, /every delivery fails with output\/target-changed/);
+  assert.doesNotMatch(doctor.stdout, /Archify is ready\./);
+  assert.match(doctor.stderr, /Archify is not ready: 1 runtime check failed\./);
+
+  const demoDirectory = path.join(tmp, 'demo-path-stat-dev-zero');
+  const demo = run(['demo', demoDirectory], { env });
+  assert.equal(demo.status, 1);
+  assert.match(demo.stderr, /\[output\/target-changed\]/);
+  assert.equal(fs.existsSync(path.join(demoDirectory, 'archify-demo.html')), false);
+});
+
+test('cli: doctor skips the file identity probe without a usable temporary directory', () => {
+  const missing = path.join(tmp, 'missing-temporary-directory');
+  const result = run(['doctor'], { env: { ...process.env, TMPDIR: missing, TMP: missing, TEMP: missing } });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /\[skipped\] File identity probe could not run in the temporary directory \(ENOENT\)/);
+  assert.match(result.stdout, /Archify is ready\./);
 });
 
 test('cli: examples renders from an installed skill', () => {

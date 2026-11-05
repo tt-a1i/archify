@@ -6052,6 +6052,50 @@ function commandExamples(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
+// Compare path-based and handle-based identity the way atomic delivery does.
+function probeFileIdentity() {
+  let directory;
+  try {
+    directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-doctor-'));
+    const file = path.join(directory, 'identity-probe');
+    fs.writeFileSync(file, '');
+    const descriptor = fs.openSync(file, 'r');
+    let handle;
+    try {
+      handle = fs.fstatSync(descriptor, { bigint: true });
+    } finally {
+      fs.closeSync(descriptor);
+    }
+    const entry = fs.lstatSync(file, { bigint: true });
+    if (entry.dev === handle.dev && entry.ino === handle.ino) return { status: 'ok' };
+    return { status: 'mismatch', entry, handle };
+  } catch (error) {
+    return { status: 'skipped', reason: error.code || error.message };
+  } finally {
+    if (directory) fs.rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+function fileIdentityCheck() {
+  const probe = probeFileIdentity();
+  if (probe.status === 'ok') {
+    return { label: 'File identity (path and open-file stats agree)', ok: true, missing: 0 };
+  }
+  if (probe.status === 'skipped') {
+    return { label: `File identity probe could not run in the temporary directory (${probe.reason})`, ok: true, skipped: true, missing: 0 };
+  }
+  const field = probe.entry.dev !== probe.handle.dev ? 'device' : 'inode';
+  const pathValue = field === 'device' ? probe.entry.dev : probe.entry.ino;
+  const handleValue = field === 'device' ? probe.handle.dev : probe.handle.ino;
+  return {
+    label: `File identity: path stats report ${field} ${pathValue} but the open file reports ${field} ${handleValue}, so every delivery fails with output/target-changed. Node.js v${process.versions.node} uses libuv ${process.versions.uv}; try a newer Node.js release`,
+    ok: false,
+    missing: 0,
+    invalid: 1,
+    failureLabel: 'unsupported',
+  };
+}
+
 async function commandDoctor(args) {
   const unknown = args.find((arg) => arg.startsWith('--'));
   if (unknown) fail(`Unknown doctor option "${unknown}".`);
@@ -6113,6 +6157,7 @@ async function commandDoctor(args) {
     ok: fs.existsSync(atomicOutputRuntime),
     missing: fs.existsSync(atomicOutputRuntime) ? 0 : 1,
   });
+  checks.push(fileIdentityCheck());
 
   const pathSemanticsRuntime = path.join(skillRoot, 'renderers/shared/path-semantics.mjs');
   checks.push({
@@ -6223,7 +6268,7 @@ async function commandDoctor(args) {
 
   console.log('Archify doctor\n');
   for (const check of checks) {
-    console.log(`[${check.ok ? 'ok' : (check.failureLabel || 'missing')}] ${check.label}`);
+    console.log(`[${check.ok ? (check.skipped ? 'skipped' : 'ok') : (check.failureLabel || 'missing')}] ${check.label}`);
   }
 
   const nodeFailed = checks[0].ok ? 0 : 1;

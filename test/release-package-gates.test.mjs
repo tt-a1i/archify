@@ -1575,6 +1575,7 @@ test('CI and tagged releases keep real Windows paths on both Nodes and detailed 
   assert.match(runner, /watcher accepts/);
   assert.match(runner, /findChrome/);
   assert.match(runner, /doctor identifies an incomplete installation/);
+  assert.match(runner, /doctor reports a runtime whose path and handle file identities disagree/);
   assert.match(runner, /ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS/);
   assert.match(runner, /ARCHIFY_WINDOWS_CASE_SENSITIVE_ROOT/);
   assert.match(runner, /ARCHIFY_WINDOWS_UNC_ROOT/);
