@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atlas 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: the model fills a dark specimen case on the left; the evidence panel sits on the right (below it on narrow screens).
+   One deliberate dark look: the particles are additive light, which only reads on black. */
+:root {
+  color-scheme: dark;
+  --bg: #0c0a0e; --panel: #141117; --panel-2: #1b171f; --line: #2b2530; --ink: #f4ecef; --muted: #a99ca4; --faint: #75696f;
+  --plain: #f7e6ea; --info: #ff8fb1; --warning: #ff3b6b; --core: #c9b8ff; --focus: #ffb3c8;
+  --sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.app { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 380px; }
+.stage-wrap { position: relative; min-width: 0; display: flex; flex-direction: column; }
+header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 24px; flex-wrap: wrap; padding-block: 18px 10px; padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: 22px; }
+h1 { margin: 0; font: 600 22px/1.15 var(--sans); letter-spacing: -0.01em; }
+h1 span { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 10px; font-family: var(--mono); }
+header p { margin: 4px 0 0; color: var(--muted); max-width: 72ch; font-size: 13px; }
+header .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sets { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.sets a { color: var(--muted); text-decoration: none; font-size: 13px; padding: 5px 10px; }
+.sets a + a { border-left: 1px solid var(--line); }
+.sets a[aria-current="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
+button { font: inherit; }
+.ghost { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.ghost:hover { border-color: var(--muted); }
+#stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: radial-gradient(ellipse at 55% 45%, #221a22 0%, #120e13 55%, var(--bg) 100%); }
+#stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+#labels { position: absolute; inset: 0; pointer-events: none; }
+.lbl { position: absolute; left: 0; top: 0; pointer-events: auto; background: rgba(12, 10, 14, .55); border: 0; color: #e9dde2; font: 500 11px var(--mono); padding: 1px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+.lbl.core { color: var(--core); font-weight: 600; font-size: 12px; }
+.lbl.on { background: var(--ink); color: var(--bg); }
+.lbl[hidden] { display: none; }
+.layer { position: absolute; left: 0; top: 0; color: rgba(255, 255, 255, .62); font: 11px var(--mono); white-space: nowrap; }
+.layer[hidden] { display: none; }
+#tip { position: absolute; left: 0; top: 0; max-width: 300px; pointer-events: none; background: rgba(20, 17, 23, .94); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font: 11px/1.45 var(--mono); color: var(--muted); }
+#tip b { display: block; color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+#tip[hidden] { display: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 22px 14px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); background: var(--bg); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.legend .thread { width: 18px; height: 0; border-radius: 0; border-top: 1px solid #c9b8ff; vertical-align: 3px; }
+aside { background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 14px 16px 28px; padding-right: max(16px, env(safe-area-inset-right, 0px)); min-width: 0; }
+.k { color: var(--faint); font-size: 11px; letter-spacing: .06em; margin: 18px 0 6px; }
+.k:first-child { margin-top: 2px; }
+.card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; display: grid; gap: 6px; font-size: 13px; }
+.card h3 { margin: 0; font: 600 15px/1.3 var(--sans); overflow-wrap: anywhere; }
+.card h3.mono, .mono { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.card p { margin: 0; overflow-wrap: anywhere; }
+.card-k { font-size: 11px; color: var(--faint); }
+.muted { color: var(--muted); }
+.btn { justify-self: start; background: var(--ink); color: var(--bg); border: 0; border-radius: 6px; padding: 6px 11px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.check { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; }
+.check.ok { border-color: rgba(120, 220, 170, .35); }
+.check.bad { border-color: var(--warning); color: var(--warning); }
+.check dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 8px 0 0; color: var(--muted); }
+.check dt { color: var(--ink); }
+.check dd { margin: 0; font-variant-numeric: tabular-nums; }
+details summary { cursor: pointer; padding: 5px 0; font-weight: 500; }
+.list { display: grid; }
+.row { width: 100%; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 6px; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; border-radius: 5px; font-size: 12.5px; }
+.row:hover, .row.active { background: var(--panel-2); }
+.row i { width: 8px; height: 8px; border-radius: 50%; }
+.row .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
+.row .n { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.fallback { padding: 40px; color: var(--muted); }
+@media (max-width: 960px) {
+  .app { grid-template-columns: 1fr; height: auto; }
+  .stage-wrap { height: 78vh; }
+  aside { border-left: 0; border-top: 1px solid var(--line); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="stage-wrap">
+    <header>
+      <div><h1>Atlas 3D<span id="counts"></span></h1>
+        <p id="lede"></p></div>
+      <div class="tools"><span class="sets" id="sets" role="group" aria-label="Repository"></span><button type="button" class="ghost" id="reset">Clear selection</button></div>
+    </header>
+    <div id="stage"><div id="labels"></div><div id="tip" hidden></div></div>
+    <div class="legend">
+      <span><i style="background:var(--plain)"></i>function, nothing reported</span>
+      <span><i style="background:var(--info)"></i>info finding</span>
+      <span><i style="background:var(--warning)"></i>warning finding</span>
+      <span>point size: complexity · haze: lines of code (1 speck per 4 lines)</span>
+      <span>height: dependency layer · branch: strongest dependency toward the trunk</span>
+      <span><i class="thread"></i>thread: other dependency between modules</span>
+    </div>
+  </section>
+  <aside id="side" aria-live="polite"></aside>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="data-archify.js"></script>
+<script src="data-langchain-core.js"></script>
+<script>
+  (function () {
+    // One dataset per page load, named by the URL hash; switching reloads so nothing carries over.
+    var sets = window.ATLAS_DATASETS || {}, ids = Object.keys(sets);
+    var id = sets[location.hash.slice(1)] ? location.hash.slice(1) : ids[0];
+    window.ATLAS_DATA = sets[id];
+    document.getElementById('sets').innerHTML = ids.map(function (k) { return '<a href="#' + k + '"' + (k === id ? ' aria-current="true"' : '') + '>' + sets[k].run.repository.split(' · ')[0] + '</a>'; }).join('');
+    window.addEventListener('hashchange', function () { if (location.hash.slice(1) !== id) location.reload(); });
+    var A = window.ATLAS_DATA; if (!A) return;
+    var fmt = function (n) { return Number(n).toLocaleString('en-US'); };
+    document.title = 'Atlas 3D';
+    document.getElementById('counts').textContent = A.run.repository + ' @ ' + String(A.run.revision || 'working tree').slice(0, 8) + ' · ' + fmt(A.files.length) + ' files · ' + fmt(A.edges.length) + ' file dependencies · ' + fmt(A.functions.length) + ' functions';
+    document.getElementById('lede').textContent = 'The Atlas of the same run as a tree. The trunk is the module the most others depend on; every other module grows at the height of its dependency layer, on a branch along its strongest dependency toward the trunk. Every file is a blossom and every function a point in it.';
+  })();
+</script>
+<script src="atlas3d.js"></script>
+</body>
+</html>
