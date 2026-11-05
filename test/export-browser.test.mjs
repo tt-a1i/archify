@@ -10,6 +10,72 @@ import { ChromeVisualBrowser, findChrome } from '../archify/bin/visual-check.mjs
 const skillRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'archify');
 const chrome = process.env.ARCHIFY_CHROME ? findChrome() : null;
 
+test('authored descriptions survive SVG export without changing raster figures', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser Export checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-description-export-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  const run = async expression => {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result.value;
+  };
+  const navigate = async file => {
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: pathToFileURL(file).href });
+    await loaded;
+    await run('document.fonts.ready.then(()=>true)');
+  };
+  const imageAX = async () => (await send('Accessibility.getFullAXTree')).nodes
+    .find(n => !n.ignored && ['image', 'img'].includes(n.role?.value));
+  await browser.cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const description = 'The API connects to the database and cache. '.repeat(16) + '中文 A&B <cache> </desc><script>alert(1)</script>';
+  for (const subtitle of [undefined, 'Short visible subtitle']) {
+    let baseline;
+    for (const described of [false, true]) {
+      const source = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples/web-app.architecture.json')));
+      source.meta.subtitle = subtitle;
+      if (described) source.meta.description = description;
+      const input = path.join(scratch, 'input.json');
+      const html = path.join(scratch, 'figure.html');
+      fs.writeFileSync(input, JSON.stringify(source));
+      execFileSync(process.execPath, [path.join(skillRoot, 'bin/archify.mjs'), 'render', 'architecture', input, html]);
+      await navigate(html);
+      await run('(async()=>{await Archify.readerLayout.whenStable();await Archify.viewerChromeLayout.whenStable();return true})()');
+      const header = await run("document.querySelector('.header').innerText");
+      const inline = await imageAX();
+      const exported = await run(`(async()=>{
+        const original=URL.createObjectURL;const blobs={};
+        URL.createObjectURL=function(blob){blobs[blob.type.split(';')[0]]=blob;return original.call(this,blob)};
+        try{await Archify.exportMenu.run('svg');await Archify.exportMenu.run('png')}
+        finally{URL.createObjectURL=original}
+        const png=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blobs['image/png'])});
+        return {svg:await blobs['image/svg+xml'].text(),png};
+      })()`);
+      if (!described) { baseline = { header, png: exported.png }; continue; }
+      assert.equal(header, baseline.header);
+      assert.equal(exported.png, baseline.png, 'description must not change raster title bands or diagram pixels');
+      assert.equal(inline.name.value, source.meta.title);
+      assert.equal(inline.description.value, description);
+      const svg = path.join(scratch, 'figure.svg');
+      fs.writeFileSync(svg, exported.svg);
+      await navigate(svg);
+      const standalone = await imageAX();
+      assert.equal(standalone.name.value, source.meta.title);
+      assert.equal(standalone.description.value, description);
+      assert.deepEqual(await run(`(()=>{const s=document.documentElement;return {
+        desc:s.querySelector('desc').textContent, errors:document.querySelectorAll('parsererror,script').length,
+        references:['aria-labelledby','aria-describedby'].every(a=>s.getAttribute(a).split(' ').every(id=>!!document.getElementById(id)))
+      }})()`), { desc: description, errors: 0, references: true });
+    }
+  }
+});
+
 test('Export preserves menu, clipboard, semantic cards and recording lifecycles', {
   skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser Export checks.',
 }, async (t) => {

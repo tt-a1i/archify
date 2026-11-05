@@ -40,6 +40,7 @@
         "translations": {
           "$ref": "common.schema.json#/$defs/translations"
         },
+        "description": { "$ref": "common.schema.json#/$defs/diagramDescription" },
         "subtitle": {
           "type": "string"
         },
