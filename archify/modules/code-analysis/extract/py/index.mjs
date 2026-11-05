@@ -12,7 +12,7 @@ import { describeRepository } from '../shared/git.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 2;
+export const REVISION = 3;
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'extract.py');
 const PY_EXT = /\.py$/;
@@ -224,7 +224,7 @@ function resolveDotted(dotted, base, fileSet) {
   const rel = dotted.split('.').join('/');
   const prefixes = base === null ? ['', 'src/'] : [base ? `${base}/` : ''];
   for (const prefix of prefixes) {
-    for (const candidate of [`${prefix}${rel}.py`, `${prefix}${rel}/__init__.py`]) {
+    for (const candidate of [`${prefix}${rel}/__init__.py`, `${prefix}${rel}.py`]) {
       if (fileSet.has(candidate)) return candidate;
     }
   }

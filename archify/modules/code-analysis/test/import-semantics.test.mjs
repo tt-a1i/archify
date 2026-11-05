@@ -40,6 +40,28 @@ function python(root, code) {
   assert.fail('Python interpreter unavailable');
 }
 
+test('Python imports choose a regular package before its sibling module within one search root', (t) => {
+  const { facts } = analyze(t, {
+    'pkg/__init__.py': '',
+    'pkg/consumer.py': [
+      'from pkg.provider import value',
+      'from .provider import value',
+      'from .ordinary import value',
+      'import earlier',
+    ].join('\n'),
+    'pkg/provider/__init__.py': 'value = 1',
+    'pkg/provider.py': 'value = 2',
+    'pkg/ordinary.py': 'value = 3',
+    'pkg/ordinary/child.py': '',
+    'earlier.py': '',
+    'src/earlier/__init__.py': '',
+  });
+  const imports = facts.imports.filter((edge) => edge.from === 'pkg/consumer.py' && !edge.implicit);
+  assert.deepEqual(imports.map((edge) => edge.to), [
+    'pkg/provider/__init__.py', 'pkg/provider/__init__.py', 'pkg/ordinary.py', 'earlier.py',
+  ]);
+});
+
 test('Python TYPE_CHECKING aliases stay as structural edges, never runtime-cycle errors', (t) => {
   for (const [header, guard] of [
     ['from typing import TYPE_CHECKING', 'TYPE_CHECKING'],

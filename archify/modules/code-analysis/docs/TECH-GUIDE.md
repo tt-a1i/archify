@@ -162,7 +162,7 @@ The Python script only emits raw import statements; turning `from utils import l
 
 ### Python import semantics (the part newcomers find hardest)
 
-- **Package**: a directory with `__init__.py`. `import pkg` actually loads `pkg/__init__.py`.
+- **Package**: a directory with `__init__.py`. Within one search directory, Python prefers `pkg/__init__.py` to a sibling `pkg.py`. The adapter follows this order among captured sources.
 - **Relative import**: the dots in `from .a import x` mean "relative to the package this file is in". `level=1` is the same directory, `level=2` the parent. Leaving the analyzed root is recorded as `outside`.
 - **`from pkg import name`** has two readings: `name` is `pkg/name.py` (a submodule) or a variable defined in `pkg/__init__.py` (an attribute). The code tries the submodule first and falls back to the attribute, pointing at `__init__.py`.
 - **PEP 420 namespace packages**: since Python 3.3 a directory **without** `__init__.py` can be a package. ai-voice's `utils/` and `asr/` are of this kind. It has no file of its own, so only `from ns import submodule` yields an edge; `from ns import attribute` is `unknown`. This was discovered on a real repository: the first version had 56 resolution failures.

@@ -6,7 +6,7 @@
   },
   "py": {
     "fixture": "py-basic",
-    "revision": 2,
+    "revision": 3,
     "digest": "c38b44b6071507e9d34c88ad26445b94554e920e6cfdaab1669b7c4697594657"
   },
   "java": {
