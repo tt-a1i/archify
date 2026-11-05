@@ -274,6 +274,10 @@ test('deliver rechecks aliases immediately before committing a verified candidat
   fs.mkdirSync(installedScripts, { recursive: true });
   fs.copyFileSync(cli, path.join(installedBin, 'archify.mjs'));
   fs.copyFileSync(
+    path.join(skillRoot, 'bin/command-cancellation.mjs'),
+    path.join(installedBin, 'command-cancellation.mjs'),
+  );
+  fs.copyFileSync(
     path.join(skillRoot, 'bin/delivery-update.mjs'),
     path.join(installedBin, 'delivery-update.mjs'),
   );
