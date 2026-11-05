@@ -6,7 +6,7 @@
 
 2026-11-04：第 0 节是当前的产品决定摘要（检查优先级与严重级别，以及 0.7 的三类视图），优先于第 13 节的交付顺序；其余各节为讨论背景与实现记录。
 
-后续实施分工见 [Code Analysis 协作实施计划](code-analysis-execution-plan.md)：Codex负责 UI 与前端验收，Claude负责分析引擎、数据接口与 AI 任务逻辑。
+实施分工：Codex 负责 UI 与前端验收，Claude 负责分析引擎、数据接口与 AI 任务逻辑。
 
 讨论基线：`codex/code-analysis-module`，提交 `1a55ac68`（与本地 `upstream/labs/code-analysis` 引用一致）。
 
