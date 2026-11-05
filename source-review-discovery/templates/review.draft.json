@@ -1,0 +1,25 @@
+{
+  "project": "填写项目和审查范围",
+  "run": {
+    "id": "initial-001",
+    "label": "填写源码版本与审查范围",
+    "mode": "source",
+    "reviewer": "填写实际审查者",
+    "sources": [
+      {
+        "id": "repo",
+        "root": "/absolute/path/to/repository",
+        "revision": "填写实际提交或快照标识"
+      }
+    ],
+    "coverage": {
+      "status": "partial",
+      "checked": [],
+      "excluded": [],
+      "limitations": []
+    },
+    "tools": []
+  },
+  "evidence": [],
+  "findings": []
+}

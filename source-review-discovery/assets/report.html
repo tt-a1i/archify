@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><title>Source Review · 架构与问题</title>
+<style>/* REPORT_CSS */</style></head>
+<body><header class="masthead"><div class="brand"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M6 7h17M6 7v16h17"/><circle cx="6" cy="7" r="3"/><circle cx="23" cy="7" r="3"/><circle cx="23" cy="23" r="3"/></svg><span>Source Review</span></div><span id="scope" class="muted"></span><button id="export-report">导出报告</button></header>
+<main><div class="title-row"><div><h1>架构与问题</h1><p id="headline"></p></div><span id="run-label" class="mono muted"></span></div>
+<div id="snapshot" class="snapshot"></div><div id="summary" class="summary"></div>
+<div class="workspace"><aside class="queue" aria-label="问题导航"><div class="section-head"><h2>发现的问题</h2><span id="finding-count" class="count"></span></div>
+<label class="search-label" for="finding-search">搜索问题</label><input id="finding-search" type="search" placeholder="搜索问题或影响…" autocomplete="off">
+<label class="filter">显示 <select id="filter"><option value="all">全部记录</option><option value="static_confirmed">路径已确认</option><option value="conditional">条件待确认</option><option value="unresolved">待处理</option><option value="resolved">已修复</option></select></label>
+<div id="queue"></div><div id="deferred-note" class="deferred-note"></div>
+<details class="coverage"><summary>审查范围与工具</summary><div id="coverage"></div></details></aside>
+<div class="work-area"><nav id="view-switch" class="view-switch" aria-label="阅读方式" hidden><button id="view-map" aria-pressed="true">架构定位</button><button id="view-issues" aria-pressed="false">问题经过</button><span id="view-context">从问题回到代码</span></nav>
+<section id="atlas" hidden aria-label="架构与问题工作区">
+<div class="mobile-context"><button id="mobile-back">问题列表</button><span id="mobile-subject"></span></div>
+<div class="atlas-toolbar"><div id="breadcrumbs"></div><div class="map-actions"><button id="map-focus" aria-pressed="true">聚焦问题</button><button id="map-overview" aria-pressed="false">系统全景</button><button id="map-minus" aria-label="缩小地图">−</button><button id="map-plus" aria-label="放大地图">+</button><button id="map-fit">适应</button></div></div>
+<div class="atlas-layout"><div class="atlas-map"><div class="map-guide"><div><h2 id="map-title">系统全景</h2><p id="map-guide"></p></div><div class="map-search"><label for="module-search" class="sr-only">搜索模块或文件</label><input id="module-search" type="search" placeholder="查找模块或文件…" autocomplete="off"><div id="module-results" hidden></div></div></div>
+<div id="map-viewport" tabindex="0" aria-label="可拖动和缩放的架构地图"><svg id="architecture-map" preserveAspectRatio="xMidYMin meet" aria-label="模块结构与静态依赖"></svg></div>
+<section id="process-view" hidden aria-label="问题发生过程"></section>
+<div id="map-legend" class="map-legend"><span><i class="fault-key"></i>偏差位置</span><span><i class="related-key"></i>关联代码</span><span><i class="dependency-key"></i>静态 import</span><span class="legend-note">未标记不代表已审查</span></div>
+<details class="map-coverage"><summary id="map-coverage-label">地图覆盖范围</summary><div id="map-coverage-body"></div></details></div>
+<aside id="map-inspector" aria-label="问题与证据说明" aria-live="polite"></aside></div>
+</section><section id="detail" class="detail" aria-live="polite"></section></div></div>
+<section id="source-drawer" hidden aria-label="源码摘录"><div class="drawer-toolbar"><strong>源码依据</strong><button id="close-source">关闭源码</button></div><div id="evidence"></div></section>
+<footer>报告绑定源码快照。静态推导、最小验证和剩余未知分别记录。</footer></main>
+<script id="payload" type="application/json">REVIEW_PAYLOAD</script><script>/* REPORT_JS */</script></body></html>

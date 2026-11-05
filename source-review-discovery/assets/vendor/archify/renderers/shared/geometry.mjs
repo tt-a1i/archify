@@ -1,0 +1,2073 @@
+// Geometry helpers shared by all typed renderers. Every function here is
+// pure; renderers own their layout tables and pass measured rects
+// ({x, y, width, height, cx, cy}) in.
+
+import { recordDiagnostic } from './diagnostics.mjs';
+
+// In degraded mode (no ajv) a type-wrong top-level field reaches the renderer.
+// Coerce non-arrays to [] so the module-level Maps build without throwing and
+// the friendly validator checks (which run later) report the real problem.
+export function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+// A computed coordinate must be a finite number; NaN/undefined would silently
+// write `<rect x="NaN">` into the output. Used by the validators as a backstop.
+export function isFinitePoint(...coords) {
+  return coords.every((c) => Number.isFinite(c));
+}
+
+// Separation the layout solver guarantees and separation this check re-derives
+// travel through different arithmetic, so a pair the solver placed at exactly
+// its minimum can land a few ulps short of this comparison. In #583 the CLI's
+// own receipt has the pair `793.6 + 160 + 8` read as 2**-43 past a5's left edge
+// at 961.5999999999999 — one ulp at that magnitude. 0.0001 is the numeric
+// tolerance the route and layout geometry in this file already compares with.
+const NUMERIC_CLEARANCE_PX = 0.0001;
+
+export function rectsOverlap(a, b, gap = 0) {
+  // Non-finite geometry means "unknown", not "overlapping". Every comparison
+  // below is false for NaN, so without this guard the negation reports a
+  // collision for every pair. Callers surface non-finite pos/size through their
+  // own diagnostic; reporting it again as an overlap buries that message under
+  // one bogus separation hint per pair.
+  if (!isFinitePoint(a.x, a.y, a.width, a.height, b.x, b.y, b.width, b.height)) {
+    return false;
+  }
+  return !(
+    a.x + a.width + gap <= b.x + NUMERIC_CLEARANCE_PX ||
+    b.x + b.width + gap <= a.x + NUMERIC_CLEARANCE_PX ||
+    a.y + a.height + gap <= b.y + NUMERIC_CLEARANCE_PX ||
+    b.y + b.height + gap <= a.y + NUMERIC_CLEARANCE_PX
+  );
+}
+
+export function segmentIntersectsRect(segment, rect, gap = 0) {
+  const box = {
+    x1: rect.x - gap,
+    y1: rect.y - gap,
+    x2: rect.x + rect.width + gap,
+    y2: rect.y + rect.height + gap
+  };
+  const [a, b] = [segment.start, segment.end];
+  if (pointInBox(a, box) || pointInBox(b, box)) return true;
+  return (
+    segmentsIntersect(a, b, [box.x1, box.y1], [box.x2, box.y1]) ||
+    segmentsIntersect(a, b, [box.x2, box.y1], [box.x2, box.y2]) ||
+    segmentsIntersect(a, b, [box.x2, box.y2], [box.x1, box.y2]) ||
+    segmentsIntersect(a, b, [box.x1, box.y2], [box.x1, box.y1])
+  );
+}
+
+export function segmentRectClearance(segment, rect) {
+  if (!segment || !rect) return null;
+  const { start, end } = segment;
+  if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) return null;
+  if (!isFinitePoint(start[0], start[1], end[0], end[1], rect.x, rect.y, rect.width, rect.height)) return null;
+  if (rect.width < 0 || rect.height < 0) return null;
+  if (segmentIntersectsRect(segment, rect)) return 0;
+
+  const right = rect.x + rect.width;
+  const bottom = rect.y + rect.height;
+  let clearance = Math.min(pointRectDistance(start, rect), pointRectDistance(end, rect));
+  const corners = [rect.x, rect.y, right, rect.y, right, bottom, rect.x, bottom];
+  for (let index = 0; index < 8; index += 2) {
+    const distance = pointSegmentDistanceXY(corners[index], corners[index + 1], start, end);
+    if (distance < clearance) clearance = distance;
+  }
+  return clearance;
+}
+
+// The same clearance, but the caller already knows the threshold it compares
+// against: when an axis gap alone proves the distance cannot be smaller, the
+// exact distance is never computed and Infinity is returned.
+export function segmentRectClearanceWithin(segment, rect, limit) {
+  if (!segment || !rect) return segmentRectClearance(segment, rect);
+  const { start, end } = segment;
+  if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) return null;
+  if (!isFinitePoint(start[0], start[1], end[0], end[1], rect.x, rect.y, rect.width, rect.height)) return null;
+  if (rect.width < 0 || rect.height < 0) return null;
+  if (segmentIntersectsRect(segment, rect)) return 0;
+  const minX = Math.min(start[0], end[0]);
+  const maxX = Math.max(start[0], end[0]);
+  const minY = Math.min(start[1], end[1]);
+  const maxY = Math.max(start[1], end[1]);
+  const gapX = Math.max(rect.x - maxX, minX - (rect.x + rect.width));
+  const gapY = Math.max(rect.y - maxY, minY - (rect.y + rect.height));
+  if (Math.max(gapX, gapY) > limit) return Number.POSITIVE_INFINITY;
+  return segmentRectClearance(segment, rect);
+}
+
+export function segmentRectIntersectionLength(segment, rect) {
+  if (!segment || !rect) return null;
+  const { start, end } = segment;
+  if (!Array.isArray(start) || !Array.isArray(end) || start.length !== 2 || end.length !== 2) return null;
+  if (!isFinitePoint(...start, ...end, rect.x, rect.y, rect.width, rect.height)) return null;
+  if (rect.width < 0 || rect.height < 0) return null;
+
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const length = Math.hypot(dx, dy);
+  if (length <= 0.0000001) return 0;
+  const bounds = [
+    [-dx, start[0] - rect.x],
+    [dx, rect.x + rect.width - start[0]],
+    [-dy, start[1] - rect.y],
+    [dy, rect.y + rect.height - start[1]],
+  ];
+  let enter = 0;
+  let leave = 1;
+  for (const [direction, distance] of bounds) {
+    if (Math.abs(direction) <= 0.0000001) {
+      if (distance < -0.0000001) return 0;
+      continue;
+    }
+    const ratio = distance / direction;
+    if (direction < 0) enter = Math.max(enter, ratio);
+    else leave = Math.min(leave, ratio);
+    if (enter > leave + 0.0000001) return 0;
+  }
+  return length * Math.max(0, leave - enter);
+}
+
+const ROUTE_INDEX_CELL_SIZE = 128;
+const ROUTE_INDEX_MAX_CELLS_PER_ROUTE = 256;
+
+function routeBounds(route) {
+  let x1 = Infinity;
+  let y1 = Infinity;
+  let x2 = -Infinity;
+  let y2 = -Infinity;
+  for (const [x, y] of route.points) {
+    x1 = Math.min(x1, x);
+    y1 = Math.min(y1, y);
+    x2 = Math.max(x2, x);
+    y2 = Math.max(y2, y);
+  }
+  return { x1, y1, x2, y2 };
+}
+
+function createRouteCandidateIndex(routes) {
+  const cells = new Map();
+  const globalRouteIndexes = [];
+
+  routes.forEach((route, routeIndex) => {
+    const bounds = routeBounds(route);
+    const x1 = Math.floor(bounds.x1 / ROUTE_INDEX_CELL_SIZE);
+    const y1 = Math.floor(bounds.y1 / ROUTE_INDEX_CELL_SIZE);
+    const x2 = Math.floor(bounds.x2 / ROUTE_INDEX_CELL_SIZE);
+    const y2 = Math.floor(bounds.y2 / ROUTE_INDEX_CELL_SIZE);
+    if (![x1, y1, x2, y2].every(Number.isSafeInteger)) {
+      globalRouteIndexes.push(routeIndex);
+      return;
+    }
+    const cellCount = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+    // Very long routes are cheaper to test once per label than to duplicate
+    // across a large part of the index.
+    if (!Number.isSafeInteger(cellCount) || cellCount > ROUTE_INDEX_MAX_CELLS_PER_ROUTE) {
+      globalRouteIndexes.push(routeIndex);
+      return;
+    }
+    for (let y = y1; y <= y2; y += 1) {
+      for (let x = x1; x <= x2; x += 1) {
+        const key = `${x}:${y}`;
+        const bucket = cells.get(key);
+        if (bucket) bucket.push(routeIndex);
+        else cells.set(key, [routeIndex]);
+      }
+    }
+  });
+
+  return function candidates(rect, threshold) {
+    const x1 = Math.floor((rect.x - threshold) / ROUTE_INDEX_CELL_SIZE);
+    const y1 = Math.floor((rect.y - threshold) / ROUTE_INDEX_CELL_SIZE);
+    const x2 = Math.floor((rect.x + rect.width + threshold) / ROUTE_INDEX_CELL_SIZE);
+    const y2 = Math.floor((rect.y + rect.height + threshold) / ROUTE_INDEX_CELL_SIZE);
+    const cellCount = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+    // A huge threshold offers no selectivity and can overflow cell iteration.
+    if (![x1, y1, x2, y2].every(Number.isSafeInteger)
+      || !Number.isSafeInteger(cellCount)
+      || cellCount > Math.max(64, cells.size * 4)) return routes;
+
+    const routeIndexes = new Set(globalRouteIndexes);
+    for (let y = y1; y <= y2; y += 1) {
+      for (let x = x1; x <= x2; x += 1) {
+        for (const routeIndex of cells.get(`${x}:${y}`) || []) routeIndexes.add(routeIndex);
+      }
+    }
+    return [...routeIndexes]
+      .sort((left, right) => left - right)
+      .map((routeIndex) => routes[routeIndex]);
+  };
+}
+
+export function collectLabelRouteClearance({ labels, routedRelations, threshold }) {
+  if (!Number.isFinite(threshold) || threshold < 0) return [];
+  if (threshold === 0) return [];
+  const routeCandidates = asArray(routedRelations).map((entry, fallbackIndex) => {
+    const relation = entry?.relation || entry;
+    const points = normalizeRoutePoints(entry?.points || relation?.routePoints);
+    if (!relation || points.length < 2) return null;
+    return {
+      relation,
+      relationIndex: Number.isInteger(entry?.relationIndex) ? entry.relationIndex : fallbackIndex,
+      points,
+    };
+  }).filter(Boolean);
+  const seenRoutes = new Set();
+  const routes = routeCandidates.filter((route) => {
+    const identity = relationshipIdentity(route.relation, route.relationIndex);
+    if (seenRoutes.has(identity)) return false;
+    seenRoutes.add(identity);
+    return true;
+  });
+  const hits = [];
+  const seenLabels = new Set();
+  const candidateRoutes = createRouteCandidateIndex(routes);
+
+  for (const [fallbackIndex, label] of asArray(labels).entries()) {
+    const rect = label?.rect || label;
+    if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height) || rect.width < 0 || rect.height < 0) continue;
+    const relationIndex = Number.isInteger(label?.relationIndex) ? label.relationIndex : fallbackIndex;
+    const labelIdentity = relationshipIdentity(label?.relation, relationIndex);
+    if (seenLabels.has(labelIdentity)) continue;
+    seenLabels.add(labelIdentity);
+    for (const route of candidateRoutes(rect, threshold)) {
+      if (relationIndex === route.relationIndex || sameRelationship(label?.relation, route.relation)) continue;
+      let nearest = null;
+      for (let segmentIndex = 0; segmentIndex < route.points.length - 1; segmentIndex += 1) {
+        const start = route.points[segmentIndex];
+        const end = route.points[segmentIndex + 1];
+        const clearance = segmentRectClearance({ start, end }, rect);
+        if (clearance == null) continue;
+        if (!nearest || clearance < nearest.clearance) {
+          nearest = {
+            clearance,
+            intersectionLength: segmentRectIntersectionLength({ start, end }, rect),
+            segmentIndex,
+            start,
+            end,
+          };
+        }
+      }
+      if (!nearest || nearest.clearance + 0.0001 >= threshold) continue;
+      hits.push({
+        label,
+        labelRelation: label?.relation,
+        labelRelationIndex: relationIndex,
+        otherRelation: route.relation,
+        otherRelationIndex: route.relationIndex,
+        rect,
+        ...nearest,
+        threshold,
+      });
+    }
+  }
+  return hits;
+}
+
+export function minimumLabelRouteClearance(measurements) {
+  if (!asArray(measurements).length) return null;
+  const minimum = measurements.reduce(
+    (value, hit) => Math.min(value, hit.clearance),
+    Infinity,
+  );
+  return Math.round(minimum * 10) / 10;
+}
+
+function relationshipIdentity(relation, relationIndex) {
+  if (relation?.key !== undefined) return `key:${relation.key}`;
+  if (relation?.id) return `id:${relation.from || ''}\u0000${relation.to || ''}\u0000${relation.id}`;
+  return `index:${relationIndex}`;
+}
+
+function sameRelationship(left, right) {
+  if (!left || !right) return false;
+  if (left === right) return true;
+  if (left.key !== undefined && right.key !== undefined) return left.key === right.key;
+  return Boolean(left.id && right.id && left.id === right.id && left.from === right.from && left.to === right.to);
+}
+
+function relationshipSubject(diagramType, relationCollection, relationIndex, relation) {
+  return {
+    diagramType,
+    collection: relationCollection,
+    index: relationIndex,
+    ...(relation?.id ? { id: relation.id } : {}),
+    ...(relation?.from ? { from: relation.from } : {}),
+    ...(relation?.to ? { to: relation.to } : {}),
+  };
+}
+
+const AUTHORED_PLAN_KEYS = ['route', 'via', 'channelX', 'channelY', 'fromSide', 'toSide', 'bias', 'labelAt', 'labelDx', 'labelDy', 'labelSegment'];
+
+// Re-planning advice only applies when the failing relation actually carries
+// authored controls; telling an author to remove controls that do not exist
+// just sends them hunting for a field that was never written.
+function rePlanHint(relations, fallback) {
+  const controls = new Set();
+  for (const relation of asArray(relations)) {
+    for (const key of AUTHORED_PLAN_KEYS) if (relation?.[key] !== undefined) controls.add(key);
+  }
+  if (!controls.size) return fallback;
+  return `if the authored ${[...controls].join('/')} are not required by the user, remove them so the renderer can re-plan; otherwise preserve that intent and ${fallback}`;
+}
+
+const ENDPOINT_SIDE_RULES = {
+  left: {
+    axis: 'horizontal',
+    sourceSign: -1,
+    targetSign: 1,
+    sourceDirection: 'leftward',
+    targetDirection: 'rightward from the left',
+  },
+  right: {
+    axis: 'horizontal',
+    sourceSign: 1,
+    targetSign: -1,
+    sourceDirection: 'rightward',
+    targetDirection: 'leftward from the right',
+  },
+  top: {
+    axis: 'vertical',
+    sourceSign: -1,
+    targetSign: 1,
+    sourceDirection: 'upward',
+    targetDirection: 'downward from above',
+  },
+  bottom: {
+    axis: 'vertical',
+    sourceSign: 1,
+    targetSign: -1,
+    sourceDirection: 'downward',
+    targetDirection: 'upward from below',
+  },
+};
+
+function endpointSideIssue(points, endpoint, side) {
+  const rule = ENDPOINT_SIDE_RULES[side];
+  if (!rule) return null;
+  const normalized = normalizeRoutePoints(points);
+  if (normalized.length < 2) return null;
+  const segmentIndex = endpoint === 'source' ? 0 : normalized.length - 2;
+  const start = normalized[segmentIndex];
+  const end = normalized[segmentIndex + 1];
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const along = rule.axis === 'horizontal' ? dx : dy;
+  const across = rule.axis === 'horizontal' ? dy : dx;
+  const expectedSign = endpoint === 'source' ? rule.sourceSign : rule.targetSign;
+  if (Math.abs(across) <= 0.0001 && along * expectedSign > 0.0001) return null;
+  return {
+    endpoint,
+    side,
+    segmentIndex,
+    start,
+    end,
+    expectedAxis: rule.axis,
+    expectedDirection: endpoint === 'source' ? rule.sourceDirection : rule.targetDirection,
+  };
+}
+
+// A side is a direction contract, not just a point on a box border. This pure
+// predicate lets automatic routers prefer a dogleg whose first and final
+// segments leave/enter the chosen sides perpendicularly.
+export function routeHonorsEndpointSides(points, fromSide, toSide) {
+  return !endpointSideIssue(points, 'source', fromSide)
+    && !endpointSideIssue(points, 'target', toSide);
+}
+// Explicit fromSide/toSide are authored geometry, so a tangent or backwards
+// endpoint segment changes their meaning. Fail this universally instead of
+// leaving a malformed arrow for visual review to discover. Named routes and
+// authored via points already carry their own geometry semantics: when they
+// omit endpoint sides, do not invent a relative-position side and then reject
+// the route for disagreeing with that invention. Pure automatic routes may
+// still be checked against renderer-inferred sides.
+export function cleanEndpointSideProblems({
+  relations,
+  endpointIds,
+  pathFor,
+  diagramType,
+  relationCollection,
+  fromSideFor,
+  toSideFor,
+  shouldCheckRelation = () => true,
+  routeHint = 'align the first/final via segment with fromSide/toSide, change the side, or remove explicit routing so auto can choose a perpendicular approach',
+}) {
+  const problems = [];
+  for (const [relationIndex, relation] of asArray(relations).entries()) {
+    if (!relation || !endpointIds?.has(relation.from) || !endpointIds?.has(relation.to)) continue;
+    if (!shouldCheckRelation(relation, relationIndex)) continue;
+    const points = pathFor(relation)?.points;
+    if (!Array.isArray(points) || points.length < 2) continue;
+    const authoredFromSide = relation.fromSide && relation.fromSide !== 'auto' ? relation.fromSide : null;
+    const authoredToSide = relation.toSide && relation.toSide !== 'auto' ? relation.toSide : null;
+    const hasAuthoredRouteGeometry = Boolean(
+      (relation.route && relation.route !== 'auto') || Array.isArray(relation.via),
+    );
+    const inferredFromSide = !hasAuthoredRouteGeometry && typeof fromSideFor === 'function'
+      ? fromSideFor(relation)
+      : null;
+    const inferredToSide = !hasAuthoredRouteGeometry && typeof toSideFor === 'function'
+      ? toSideFor(relation)
+      : null;
+    const fromSide = authoredFromSide ?? inferredFromSide;
+    const toSide = authoredToSide ?? inferredToSide;
+    const checks = [
+      fromSide
+        ? { ...endpointSideIssue(points, 'source', fromSide), sideOrigin: authoredFromSide ? 'authored' : 'inferred' }
+        : null,
+      toSide
+        ? { ...endpointSideIssue(points, 'target', toSide), sideOrigin: authoredToSide ? 'authored' : 'inferred' }
+        : null,
+    ].filter((issue) => issue?.endpoint);
+    for (const issue of checks) {
+      const relationId = relation.id ? ` id "${relation.id}"` : '';
+      const authoredField = issue.endpoint === 'source' ? 'fromSide' : 'toSide';
+      const sideField = issue.sideOrigin === 'inferred' ? `inferred ${authoredField}` : authoredField;
+      const segmentRole = issue.endpoint === 'source' ? 'first' : 'final';
+      const from = issue.start.map((value) => Math.round(value * 10) / 10).join(', ');
+      const to = issue.end.map((value) => Math.round(value * 10) / 10).join(', ');
+      const message = `[clean-flow/endpoint-side-direction] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" ${segmentRole} segment ${issue.segmentIndex} [${from}] -> [${to}] does not honor ${sideField} "${issue.side}" — it must run ${issue.expectedAxis} ${issue.expectedDirection}; ${routeHint}.`;
+      recordDiagnostic({
+        code: 'clean-flow/endpoint-side-direction',
+        severity: 'error',
+        message,
+        subject: relationshipSubject(diagramType, relationCollection, relationIndex, relation),
+        evidence: {
+          endpoint: issue.endpoint,
+          authoredField,
+          sideOrigin: issue.sideOrigin,
+          side: issue.side,
+          segmentIndex: issue.segmentIndex,
+          from: issue.start,
+          to: issue.end,
+          expectedAxis: issue.expectedAxis,
+          expectedDirection: issue.expectedDirection,
+        },
+        supportedFixes: [routeHint],
+      });
+      problems.push(message);
+    }
+  }
+  return problems;
+}
+
+// One mechanical quality gate for every renderer-owned relationship path.
+// A renderer supplies its semantic obstacle set; source/target boxes are
+// always exempt because paths are expected to terminate on their boundaries.
+// Containers, lifelines, and other intentionally pass-through geometry should
+// simply not be supplied as obstacles.
+export function cleanFlowProblems({
+  relations,
+  obstacles,
+  pathFor,
+  diagramType,
+  relationCollection,
+  obstacleKind,
+  clearance = 2,
+  routeHint = 'adjust fromSide/toSide, set route/via or channel coordinates, or move the obstacle'
+}) {
+  // A relationship hidden behind an unrelated opaque node changes the
+  // diagram's meaning, so this is a correctness invariant rather than an
+  // opt-in composition preference. Keep it active even when the author omits
+  // quality_profile; standard/showcase still control stricter visual budgets.
+  const problems = [];
+  const obstacleList = [...obstacles];
+  const obstacleIds = new Set(obstacleList.map((obstacle) => obstacle?.id));
+  for (const [relationIndex, relation] of asArray(relations).entries()) {
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') continue;
+    if (!obstacleIds.has(relation.from) || !obstacleIds.has(relation.to)) continue;
+    const points = pathFor(relation)?.points;
+    if (!Array.isArray(points) || points.length < 2) continue;
+    if (!points.every((point) => Array.isArray(point) && point.length === 2 && isFinitePoint(...point))) continue;
+
+    const endpointIds = new Set([relation.from, relation.to]);
+    for (const obstacle of obstacleList) {
+      if (!obstacle || endpointIds.has(obstacle.id)) continue;
+      if (!isFinitePoint(obstacle.x, obstacle.y, obstacle.width, obstacle.height)) continue;
+      let hitSegment = -1;
+      for (let segmentIndex = 0; segmentIndex < points.length - 1; segmentIndex += 1) {
+        if (segmentIntersectsRect({ start: points[segmentIndex], end: points[segmentIndex + 1] }, obstacle, clearance)) {
+          hitSegment = segmentIndex;
+          break;
+        }
+      }
+      if (hitSegment === -1) continue;
+      const from = points[hitSegment].map(Math.round).join(', ');
+      const to = points[hitSegment + 1].map(Math.round).join(', ');
+      const relationId = relation.id ? ` id "${relation.id}"` : '';
+      const hint = rePlanHint([relation], routeHint);
+      const message = `[clean-flow/edge-through-node] ${diagramType} ${relationCollection}[${relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" crosses ${obstacleKind} "${obstacle.id}" (unrelated to this relationship) on segment ${hitSegment} [${from}] -> [${to}] (${clearance}px clearance) — ${hint}.`;
+      recordDiagnostic({
+        code: 'clean-flow/edge-through-node',
+        severity: 'error',
+        message,
+        subject: relationshipSubject(diagramType, relationCollection, relationIndex, relation),
+        evidence: {
+          obstacleKind,
+          obstacleId: obstacle.id,
+          segmentIndex: hitSegment,
+          from: points[hitSegment],
+          to: points[hitSegment + 1],
+          clearancePx: clearance,
+        },
+        supportedFixes: [hint],
+      });
+      problems.push(message);
+    }
+  }
+  return problems;
+}
+
+// Build a read-only analysis copy of a polyline with straight-through
+// waypoints removed. A waypoint on a forward-collinear run is not a visual
+// endpoint, so treating it as one would hide a proper X that lands exactly on
+// that waypoint. Reversals and real bends stay split: their shared point can
+// still be an authored touch rather than a crossing. The source points are
+// retained on every merged segment so diagnostics can name the authored
+// segment that contains a hit without changing rendered/receipt geometry.
+export function forwardCollinearAnalysisSegments(points) {
+  const segments = [];
+  for (let segmentIndex = 0; segmentIndex < asArray(points).length - 1; segmentIndex += 1) {
+    const authoredStart = points[segmentIndex];
+    const authoredEnd = points[segmentIndex + 1];
+    const start = Array.isArray(authoredStart) ? [...authoredStart] : authoredStart;
+    const end = Array.isArray(authoredEnd) ? [...authoredEnd] : authoredEnd;
+    const sourceSegment = { start, end, segmentIndex };
+    const previous = segments.at(-1);
+    if (previous && segmentsContinueForward(previous.start, previous.end, start, end)) {
+      previous.end = end;
+      previous.sourceSegments.push(sourceSegment);
+      continue;
+    }
+    segments.push({
+      start,
+      end,
+      segmentIndex,
+      sourceSegments: [sourceSegment],
+    });
+  }
+  return segments;
+}
+
+export function sourceSegmentIndexAtPoint(segment, point) {
+  const source = asArray(segment?.sourceSegments).find(({ start, end }) => (
+    pointLiesOnSegment(point, start, end)
+  ));
+  return source?.segmentIndex ?? segment?.segmentIndex ?? 0;
+}
+
+function authoredAnalysisSegments(points) {
+  return asArray(points).slice(0, -1).map((start, segmentIndex) => ({
+    start,
+    end: points[segmentIndex + 1],
+    segmentIndex,
+    sourceSegments: [{ start, end: points[segmentIndex + 1], segmentIndex }],
+  }));
+}
+
+function segmentsContinueForward(firstStart, firstEnd, secondStart, secondEnd) {
+  if (![firstStart, firstEnd, secondStart, secondEnd].every((point) => (
+    Array.isArray(point) && point.length === 2 && isFinitePoint(...point)
+  ))) return false;
+  const epsilon = 0.0001;
+  if (Math.abs(firstEnd[0] - secondStart[0]) > epsilon
+    || Math.abs(firstEnd[1] - secondStart[1]) > epsilon) return false;
+  const firstVector = [firstEnd[0] - firstStart[0], firstEnd[1] - firstStart[1]];
+  const secondVector = [secondEnd[0] - secondStart[0], secondEnd[1] - secondStart[1]];
+  const firstLength = Math.hypot(...firstVector);
+  const secondLength = Math.hypot(...secondVector);
+  if (firstLength <= epsilon || secondLength <= epsilon) return false;
+  const cross = firstVector[0] * secondVector[1] - firstVector[1] * secondVector[0];
+  if (Math.abs(cross) > epsilon) return false;
+  const dot = firstVector[0] * secondVector[0] + firstVector[1] * secondVector[1];
+  return dot > epsilon;
+}
+
+function pointLiesOnSegment(point, start, end) {
+  if (![point, start, end].every((candidate) => (
+    Array.isArray(candidate) && candidate.length === 2 && isFinitePoint(...candidate)
+  ))) return false;
+  const epsilon = 0.0001;
+  const length = Math.hypot(end[0] - start[0], end[1] - start[1]);
+  if (length <= epsilon) return Math.hypot(point[0] - start[0], point[1] - start[1]) <= epsilon;
+  if (Math.abs(crossProduct(start, end, point)) > epsilon * length) return false;
+  return point[0] >= Math.min(start[0], end[0]) - epsilon
+    && point[0] <= Math.max(start[0], end[0]) + epsilon
+    && point[1] >= Math.min(start[1], end[1]) - epsilon
+    && point[1] <= Math.max(start[1], end[1]) + epsilon;
+}
+
+// A bend meeting another route's interior can look like a branch even when
+// no pair of segment interiors forms a proper X. Keep actual route endpoints
+// out of this geometric query; callers decide which relationships are allowed
+// to share junctions. Collinear corridors remain a separate quality measure.
+export function polylineBendContacts(left, right) {
+  const contacts = [];
+  const near = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) <= 0.0001;
+  for (const [points, other] of [[left, right], [right, left]]) {
+    if (other.length < 2) continue;
+    for (let index = 1; index < points.length - 1; index += 1) {
+      const point = points[index];
+      if (Math.abs(crossProduct(points[index - 1], point, points[index + 1])) <= 0.0001
+        || near(point, other[0]) || near(point, other.at(-1))) continue;
+      if (other.slice(1).some((end, segment) => pointLiesOnSegment(point, other[segment], end))
+        && !contacts.some(otherPoint => near(point, otherPoint))) contacts.push(point);
+    }
+  }
+  return contacts;
+}
+
+// Authored shared endpoints retain their junction interpretation by default.
+// Renderers can opt their automatic routes into proper interior X checks;
+// endpoint touches and collinear trunks still are not proper crossings.
+export function cleanCrossingProblems({
+  relations,
+  endpointIds,
+  pathFor,
+  diagramType,
+  relationCollection,
+  profile = 'standard',
+  profileIsAuthoritative = false,
+  mergeForwardCollinearWaypoints = false,
+  includeSharedEndpoints = () => false,
+  crossingResolved = () => false,
+  warnInStandard = false,
+  onDiagnostic = recordDiagnostic,
+  routeHint = 'adjust route/via or channel coordinates so the relationships use separate corridors'
+}) {
+  const severity = qualityProfileForGate(profile, profileIsAuthoritative) === 'showcase' ? 'error' : 'warning';
+  if (severity === 'warning' && !warnInStandard) return [];
+  const routed = asArray(relations).map((relation, index) => {
+    if (!relation || !endpointIds.has(relation.from) || !endpointIds.has(relation.to)) return null;
+    const points = pathFor(relation)?.points;
+    if (!Array.isArray(points) || points.length < 2) return null;
+    if (!points.every((point) => Array.isArray(point) && point.length === 2 && isFinitePoint(...point))) return null;
+    return {
+      relation,
+      index,
+      points,
+      analysisSegments: mergeForwardCollinearWaypoints
+        ? forwardCollinearAnalysisSegments(points)
+        : authoredAnalysisSegments(points),
+    };
+  }).filter(Boolean);
+  const problems = [];
+
+  for (let leftIndex = 0; leftIndex < routed.length; leftIndex += 1) {
+    const left = routed[leftIndex];
+    for (let rightIndex = leftIndex + 1; rightIndex < routed.length; rightIndex += 1) {
+      const right = routed[rightIndex];
+      if ([left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to)
+          && !includeSharedEndpoints(left.relation, right.relation)) continue;
+
+      let hit = null;
+      for (const leftSegment of left.analysisSegments) {
+        if (hit) break;
+        for (const rightSegment of right.analysisSegments) {
+          const point = properSegmentIntersection(
+            leftSegment.start,
+            leftSegment.end,
+            rightSegment.start,
+            rightSegment.end
+          );
+          if (point) {
+            hit = {
+              point,
+              leftSegment: sourceSegmentIndexAtPoint(leftSegment, point),
+              rightSegment: sourceSegmentIndexAtPoint(rightSegment, point),
+            };
+            break;
+          }
+        }
+      }
+      if (!hit) continue;
+      if (crossingResolved(left.relation, right.relation, hit)) continue;
+
+      const describe = ({ relation, index }) => {
+        const id = relation.id ? ` id "${relation.id}"` : '';
+        return `${relationCollection}[${index}]${id} "${relation.from}" -> "${relation.to}"`;
+      };
+      const point = hit.point.map((value) => Math.round(value * 10) / 10).join(', ');
+      const hint = rePlanHint([left.relation, right.relation], routeHint);
+      const message = `[composition/proper-crossing] ${severity === 'error' ? 'showcase' : 'standard'} ${diagramType} ${describe(left)} crosses ${describe(right)} at [${point}] (segments ${hit.leftSegment} and ${hit.rightSegment}) — ${hint}.`;
+      onDiagnostic({
+        code: 'composition/proper-crossing',
+        severity,
+        message,
+        subject: relationshipSubject(diagramType, relationCollection, left.index, left.relation),
+        evidence: {
+          otherRelationship: relationshipSubject(diagramType, relationCollection, right.index, right.relation),
+          point: hit.point,
+          segmentIndex: hit.leftSegment,
+          otherSegmentIndex: hit.rightSegment,
+        },
+        supportedFixes: [hint],
+      });
+      if (severity === 'error') problems.push(message);
+    }
+  }
+  return problems;
+}
+
+// Two unrelated relationships that occupy the same visible corridor can read
+// as one authored branch or merge even when neither relationship crosses a
+// node or forms a proper X. Keep authored shared endpoints exempt by default;
+// automatic architecture routes opt in because they promise separate ports.
+// Workflow v2 opts into shared-endpoint checks with a bounded terminal-trunk
+// exception. Other callers keep their existing authored-junction contract.
+// The counterflow-only opt-in serves older workflow exports without a root
+// readable-v2 contract; full shared-endpoint checking takes precedence.
+// Relationships a renderer declares on one junction (a Lifecycle exit bracket)
+// may share that junction's horizontal bus, the first tick from a common
+// source port and, when they end at the same state, the merged drop into it;
+// other overlaps between them count.
+// Tiny overlaps below the route rhythm
+// floor are ignored to avoid turning sub-pixel rounding into a quality debt.
+export function collectAmbiguousCorridors({
+  routedRelations,
+  minOverlapPx = 8,
+  includeSharedEndpoints = () => false,
+  includeSharedEndpointCounterflow = () => false,
+  allowShortWorkflowTrunks = false,
+}) {
+  const routed = asArray(routedRelations).map((entry, fallbackIndex) => {
+    const relation = entry?.relation;
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
+    const points = normalizeRoutePoints(entry?.points);
+    if (points.length < 2) return null;
+    return {
+      relation,
+      relationIndex: Number.isInteger(entry.relationIndex) ? entry.relationIndex : fallbackIndex,
+      points,
+      ...(entry.sourceEndpoint === false ? { sourceEndpoint: false } : {}),
+      ...(entry.targetEndpoint === false ? { targetEndpoint: false } : {}),
+    };
+  }).filter(Boolean);
+  const hits = [];
+
+  for (let leftIndex = 0; leftIndex < routed.length; leftIndex += 1) {
+    const left = routed[leftIndex];
+    for (let rightIndex = leftIndex + 1; rightIndex < routed.length; rightIndex += 1) {
+      const right = routed[rightIndex];
+      const sharedBus = Boolean(left.relation.junction) && left.relation.junction === right.relation.junction;
+      const sharedEndpoint = [left.relation.from, left.relation.to].some((id) => id === right.relation.from || id === right.relation.to);
+      const counterflowOnly = sharedEndpoint && !includeSharedEndpoints(left.relation, right.relation);
+      if (counterflowOnly && !includeSharedEndpointCounterflow(left.relation, right.relation)) continue;
+
+      let longest = null;
+      for (let leftSegment = 0; leftSegment < left.points.length - 1; leftSegment += 1) {
+        for (let rightSegment = 0; rightSegment < right.points.length - 1; rightSegment += 1) {
+          const overlap = collinearAxisOverlap(
+            left.points[leftSegment],
+            left.points[leftSegment + 1],
+            right.points[rightSegment],
+            right.points[rightSegment + 1],
+          );
+          if (!overlap || overlap.length + 0.0001 < minOverlapPx) continue;
+          if (allowShortWorkflowTrunks && shortWorkflowTrunk(left, right, leftSegment, rightSegment, overlap.length)) continue;
+          // A multi-target bracket repeats its source tick for each target.
+          // Limit that exemption to the first segment at the same source port:
+          // a common source identity cannot waive an interior vertical overlap.
+          const sharedSourceTick = left.sourceEndpoint !== false && right.sourceEndpoint !== false
+            && left.relation.from === right.relation.from && leftSegment === 0 && rightSegment === 0
+            && Math.abs(left.points[0][0] - right.points[0][0]) < 0.0001
+            && Math.abs(left.points[0][1] - right.points[0][1]) < 0.0001;
+          if (sharedBus && (Math.abs(overlap.start[1] - overlap.end[1]) < 0.0001
+              || left.relation.to === right.relation.to || sharedSourceTick)) continue;
+          if (counterflowOnly) {
+            const leftDelta = left.points[leftSegment + 1].map((value, axis) => value - left.points[leftSegment][axis]);
+            const rightDelta = right.points[rightSegment + 1].map((value, axis) => value - right.points[rightSegment][axis]);
+            if (leftDelta[0] * rightDelta[0] + leftDelta[1] * rightDelta[1] >= 0) continue;
+          }
+          if (!longest || overlap.length > longest.overlapLength + 0.0001) {
+            longest = {
+              left,
+              right,
+              leftSegment,
+              rightSegment,
+              overlapLength: overlap.length,
+              overlapStart: overlap.start,
+              overlapEnd: overlap.end,
+            };
+          }
+        }
+      }
+      if (longest) hits.push(longest);
+    }
+  }
+  return hits;
+}
+
+function shortWorkflowTrunk(left, right, leftSegment, rightSegment, length) {
+  if (length > 24 + 0.0001) return false;
+  const a = left.relation, b = right.relation;
+  const variant = (edge) => edge.variant || 'default';
+  const width = (edge) => edge.width || (variant(edge) === 'emphasis' ? 1.8 : 1.4);
+  if (variant(a) !== variant(b) || width(a) !== width(b) || (a.role || '') !== (b.role || '')) return false;
+  const same = (p, q) => Math.abs(p[0] - q[0]) < 0.0001 && Math.abs(p[1] - q[1]) < 0.0001;
+  const source = left.sourceEndpoint !== false && right.sourceEndpoint !== false
+    && a.from === b.from && leftSegment === 0 && rightSegment === 0
+    && same(left.points[0], right.points[0]);
+  const target = left.targetEndpoint !== false && right.targetEndpoint !== false
+    && a.to === b.to && leftSegment === left.points.length - 2 && rightSegment === right.points.length - 2
+    && same(left.points.at(-1), right.points.at(-1));
+  if (!source && !target) return false;
+  const p = left.points[leftSegment], q = left.points[leftSegment + 1];
+  const r = right.points[rightSegment], s = right.points[rightSegment + 1];
+  return (q[0] - p[0]) * (s[0] - r[0]) + (q[1] - p[1]) * (s[1] - r[1]) > 0;
+}
+
+// Bundled arrow markers are 7 stroke-widths across the direction of travel.
+// Callers select the automatic routes they own; explicit junctions are preserved,
+// and relations on one junction ending at the same state share a merged drop.
+export function collectArrowheadCollisions({ routedRelations, allowShortWorkflowTrunks = false }) {
+  const incoming = new Map();
+  const hits = [];
+  for (const entry of asArray(routedRelations)) {
+    const points = normalizeRoutePoints(entry.points);
+    if (points.length < 2 || !entry.relation?.to) continue;
+    const tip = points.at(-1);
+    const previous = points.at(-2);
+    const vertical = Math.abs(tip[0] - previous[0]) < 0.0001;
+    const axis = vertical ? 0 : 1;
+    const direction = Math.sign(tip[1 - axis] - previous[1 - axis]);
+    const halfWidth = 3.5 * (entry.relation.width || (entry.relation.variant === 'emphasis' ? 1.8 : 1.5));
+    const key = `${entry.relation.to}\u0000${axis}\u0000${direction}`;
+    const siblings = incoming.get(key) || [];
+    const current = { ...entry, tip, halfWidth };
+    for (const sibling of siblings) {
+      // One junction's merged drop into a state carries a single arrowhead.
+      if (sibling.relation.junction && sibling.relation.junction === entry.relation.junction
+          && sibling.relation.to === entry.relation.to) continue;
+      if (Math.abs(tip[1 - axis] - sibling.tip[1 - axis]) > 0.0001) continue;
+      const distance = Math.abs(tip[axis] - sibling.tip[axis]);
+      const minimum = halfWidth + sibling.halfWidth;
+      if (allowShortWorkflowTrunks) {
+        const left = { ...sibling, points: normalizeRoutePoints(sibling.points) };
+        const right = { ...entry, points };
+        const overlap = collinearAxisOverlap(left.points.at(-2), left.points.at(-1), points.at(-2), tip);
+        if (overlap && shortWorkflowTrunk(left, right, left.points.length - 2, points.length - 2, overlap.length)) continue;
+      }
+      if (distance < minimum - 0.0001) hits.push({ left: sibling, right: current, distance, minimum });
+    }
+    siblings.push(current);
+    incoming.set(key, siblings);
+  }
+  return hits;
+}
+
+export function cleanAmbiguousCorridorProblems({
+  relations,
+  endpointIds,
+  pathFor,
+  diagramType,
+  relationCollection,
+  profile = 'standard',
+  profileIsAuthoritative = false,
+  routeHint = 'adjust route/via or channel coordinates so the relationships use separate corridors',
+  minOverlapPx = 8,
+  includeSharedEndpoints = () => false,
+  includeSharedEndpointCounterflow = () => false,
+  allowShortWorkflowTrunks = false,
+  onDiagnostic = recordDiagnostic,
+}) {
+  const severity = qualityProfileForGate(profile, profileIsAuthoritative) === 'showcase' ? 'error' : 'warning';
+  if (severity === 'warning' && !allowShortWorkflowTrunks) return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
+
+  return collectAmbiguousCorridors({ routedRelations, minOverlapPx, includeSharedEndpoints, includeSharedEndpointCounterflow, allowShortWorkflowTrunks }).map((hit) => {
+    const describe = ({ relation, relationIndex }) => {
+      const id = relation.id ? ` id "${relation.id}"` : '';
+      return `${relationCollection}[${relationIndex}]${id} "${relation.from}" -> "${relation.to}"`;
+    };
+    const length = Math.round(hit.overlapLength * 10) / 10;
+    const from = hit.overlapStart.map((value) => Math.round(value * 10) / 10).join(', ');
+    const to = hit.overlapEnd.map((value) => Math.round(value * 10) / 10).join(', ');
+    const hint = rePlanHint([hit.left.relation, hit.right.relation], routeHint);
+    const message = `[composition/ambiguous-corridor] ${severity === 'error' ? 'showcase' : 'standard'} ${diagramType} ${describe(hit.left)} shares a ${length}px corridor with ${describe(hit.right)} at [${from}] -> [${to}] (segments ${hit.leftSegment} and ${hit.rightSegment}; minimum ${minOverlapPx}px) — ${hint}.`;
+    onDiagnostic({
+      code: 'composition/ambiguous-corridor',
+      severity,
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.left.relationIndex, hit.left.relation),
+      evidence: {
+        otherRelationship: relationshipSubject(diagramType, relationCollection, hit.right.relationIndex, hit.right.relation),
+        overlapLengthPx: length,
+        minimumPx: minOverlapPx,
+        from: hit.overlapStart,
+        to: hit.overlapEnd,
+        segmentIndex: hit.leftSegment,
+        otherSegmentIndex: hit.rightSegment,
+      },
+      supportedFixes: [hint],
+    });
+    return severity === 'error' ? message : null;
+  }).filter(Boolean);
+}
+
+// Relationship paths may cross a structural frame, but they must not borrow a
+// frame side as a routing corridor. Rounded rectangle corners are trimmed from
+// the modeled straight sides so a short corner touch is not mistaken for a
+// border run. Any positive straight overlap beyond the numeric epsilon is a
+// hard failure in every quality profile; 16px belongs only to the separate,
+// neutral short-segment metric and is not a corridor exemption.
+export function collectBorderRuns({ routedRelations, frames }) {
+  const hits = [];
+  for (const routed of asArray(routedRelations)) {
+    const routeSegments = Array.isArray(routed?.segments)
+      ? routed.segments
+      : asArray(routed?.points).slice(0, -1).map((start, index) => ({ start, end: routed.points[index + 1] }));
+    if (!routeSegments.length) continue;
+    if (!routeSegments.every((segment) => (
+      Array.isArray(segment?.start) && segment.start.length === 2 && isFinitePoint(...segment.start)
+      && Array.isArray(segment?.end) && segment.end.length === 2 && isFinitePoint(...segment.end)
+    ))) continue;
+    for (const [frameIndex, frame] of asArray(frames).entries()) {
+      for (const border of frameBorderSegments(frame)) {
+        const overlaps = [];
+        for (let segmentIndex = 0; segmentIndex < routeSegments.length; segmentIndex += 1) {
+          const segment = routeSegments[segmentIndex];
+          const overlap = collinearAxisOverlap(
+            segment.start,
+            segment.end,
+            border.start,
+            border.end,
+          );
+          if (!overlap || overlap.length <= 0.0001) continue;
+          overlaps.push({ ...overlap, segmentIndex });
+        }
+        if (!overlaps.length) continue;
+        const merged = mergeBorderOverlaps(overlaps, border);
+        const longest = [...merged].sort((left, right) => right.length - left.length || left.low - right.low)[0];
+        hits.push({
+          ...routed,
+          frame,
+          frameIndex,
+          side: border.side,
+          segmentIndex: overlaps.reduce((min, overlap) => Math.min(min, overlap.segmentIndex), Infinity),
+          overlapLength: merged.reduce((total, overlap) => total + overlap.length, 0),
+          overlapStart: longest.start,
+          overlapEnd: longest.end,
+        });
+      }
+    }
+  }
+  return hits;
+}
+
+export function cleanBorderRunProblems({
+  relations,
+  endpointIds,
+  frames,
+  pathFor,
+  diagramType,
+  relationCollection,
+  profile,
+  profileIsAuthoritative = false,
+  routeHint = 'adjust route/via or channel coordinates so the relationship crosses the frame perpendicularly through a clear opening'
+}) {
+  if (!qualityProfileForGate(profile, profileIsAuthoritative)) return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
+  return collectBorderRuns({ routedRelations, frames }).map((hit) => {
+    const relation = hit.relation || {};
+    const relationId = relation.id ? ` id "${relation.id}"` : '';
+    const frameKind = hit.frame?.kind || hit.frame?.shape || 'frame';
+    const frameIdentity = hit.frame?.label || hit.frame?.id || hit.frameIndex;
+    const length = Math.round(hit.overlapLength * 10) / 10;
+    const from = hit.overlapStart.map((value) => Math.round(value * 10) / 10).join(', ');
+    const to = hit.overlapEnd.map((value) => Math.round(value * 10) / 10).join(', ');
+    const hint = rePlanHint([relation], routeHint);
+    const message = `[composition/container-border-run] ${diagramType} ${relationCollection}[${hit.relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" follows ${frameKind} "${frameIdentity}" ${hit.side} border for ${length}px on segment ${hit.segmentIndex} [${from}] -> [${to}] — ${hint}.`;
+    recordDiagnostic({
+      code: 'composition/container-border-run',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.relationIndex, relation),
+      evidence: {
+        frameKind,
+        frameId: hit.frame?.id,
+        frameLabel: hit.frame?.label,
+        side: hit.side,
+        segmentIndex: hit.segmentIndex,
+        overlapLengthPx: length,
+        from: hit.overlapStart,
+        to: hit.overlapEnd,
+      },
+      supportedFixes: [hint],
+    });
+    return message;
+  });
+}
+
+export function routeBudgetMetrics({
+  routedRelations,
+  bendsPerRelationship = 2,
+  stretch = 1.35,
+  segmentPx = 16,
+  microSegmentPx = 8,
+}) {
+  let maxBends = 0;
+  let routesOverSuggestedBends = 0;
+  let maxStretch = null;
+  let routesOverSuggestedStretch = 0;
+  let minSegmentPx = null;
+  let minInteriorSegmentPx = null;
+  let shortSegmentCount = 0;
+  let shortEndpointSegmentCount = 0;
+  let shortInteriorSegmentCount = 0;
+  let microSegmentCount = 0;
+
+  for (const routed of asArray(routedRelations)) {
+    const points = normalizeRoutePoints(routed?.points);
+    if (points.length < 2) continue;
+    const bends = Math.max(0, points.length - 2);
+    maxBends = Math.max(maxBends, bends);
+    if (bends > bendsPerRelationship) routesOverSuggestedBends += 1;
+
+    let routeLength = 0;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const length = Math.abs(points[index + 1][0] - points[index][0]) + Math.abs(points[index + 1][1] - points[index][1]);
+      if (length <= 0.0001) continue;
+      const position = segmentPosition(index, points.length - 1);
+      routeLength += length;
+      minSegmentPx = minSegmentPx == null ? length : Math.min(minSegmentPx, length);
+      if (position === 'interior') {
+        minInteriorSegmentPx = minInteriorSegmentPx == null ? length : Math.min(minInteriorSegmentPx, length);
+      }
+      if (length < segmentPx) {
+        shortSegmentCount += 1;
+        if (position === 'interior') shortInteriorSegmentCount += 1;
+        else shortEndpointSegmentCount += 1;
+      }
+      if (length < microSegmentPx) microSegmentCount += 1;
+    }
+    const direct = Math.abs(points.at(-1)[0] - points[0][0]) + Math.abs(points.at(-1)[1] - points[0][1]);
+    if (direct > 0.0001) {
+      const routeStretch = routeLength / direct;
+      maxStretch = maxStretch == null ? routeStretch : Math.max(maxStretch, routeStretch);
+      if (routeStretch > stretch + 0.0001) routesOverSuggestedStretch += 1;
+    }
+  }
+
+  return {
+    maxBends,
+    routesOverSuggestedBends,
+    maxStretch,
+    routesOverSuggestedStretch,
+    minSegmentPx,
+    minInteriorSegmentPx,
+    shortSegmentCount,
+    shortEndpointSegmentCount,
+    shortInteriorSegmentCount,
+    microSegmentCount,
+  };
+}
+
+export function collectRouteRhythmIssues({
+  routedRelations,
+  interiorSegmentPx = 16,
+  microSegmentPx = 8,
+}) {
+  const issues = [];
+  for (const [fallbackIndex, routed] of asArray(routedRelations).entries()) {
+    const points = normalizeRoutePoints(routed?.points);
+    if (points.length < 2) continue;
+    for (let segmentIndex = 0; segmentIndex < points.length - 1; segmentIndex += 1) {
+      const start = points[segmentIndex];
+      const end = points[segmentIndex + 1];
+      const length = Math.abs(end[0] - start[0]) + Math.abs(end[1] - start[1]);
+      if (length <= 0.0001) continue;
+      const position = segmentPosition(segmentIndex, points.length - 1);
+      const code = length < microSegmentPx - 0.0001
+        ? 'composition/micro-segment'
+        : position === 'interior' && length < interiorSegmentPx - 0.0001
+          ? 'composition/short-interior-segment'
+          : null;
+      if (!code) continue;
+      issues.push({
+        code,
+        relation: routed.relation,
+        relationIndex: Number.isInteger(routed.relationIndex) ? routed.relationIndex : fallbackIndex,
+        segmentIndex,
+        position,
+        length,
+        start,
+        end,
+      });
+    }
+  }
+  return issues;
+}
+
+export function cleanRouteRhythmProblems({
+  relations,
+  endpointIds,
+  pathFor,
+  diagramType,
+  relationCollection,
+  profile,
+  profileIsAuthoritative = false,
+  routeHint = 'move the channel/via point to remove the cramped turn or give the route more corridor space',
+  interiorSegmentPx = 16,
+  microSegmentPx = 8,
+}) {
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
+  return collectRouteRhythmIssues({ routedRelations, interiorSegmentPx, microSegmentPx }).map((hit) => {
+    const relation = hit.relation || {};
+    const relationId = relation.id ? ` id "${relation.id}"` : '';
+    const length = Math.round(hit.length * 10) / 10;
+    const from = hit.start.map((value) => Math.round(value * 10) / 10).join(', ');
+    const to = hit.end.map((value) => Math.round(value * 10) / 10).join(', ');
+    const rule = hit.code === 'composition/micro-segment'
+      ? `is below the ${microSegmentPx}px micro-segment floor`
+      : `is below the ${interiorSegmentPx}px interior-segment floor`;
+    const hint = rePlanHint([relation], routeHint);
+    const message = `[${hit.code}] showcase ${diagramType} ${relationCollection}[${hit.relationIndex}]${relationId} "${relation.from}" -> "${relation.to}" has a ${length}px ${hit.position} segment ${hit.segmentIndex} [${from}] -> [${to}] that ${rule} — ${hint}.`;
+    recordDiagnostic({
+      code: hit.code,
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.relationIndex, relation),
+      evidence: {
+        segmentIndex: hit.segmentIndex,
+        position: hit.position,
+        lengthPx: length,
+        minimumPx: hit.code === 'composition/micro-segment' ? microSegmentPx : interiorSegmentPx,
+        from: hit.start,
+        to: hit.end,
+      },
+      supportedFixes: [hint],
+    });
+    return message;
+  });
+}
+
+export function cleanLabelRouteClearanceProblems({
+  relations,
+  labels,
+  endpointIds,
+  pathFor,
+  diagramType,
+  relationCollection,
+  profile,
+  profileIsAuthoritative = false,
+  threshold = 4,
+  routeHint = 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise adjust the other relationship route/via/channel',
+}) {
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  const routedRelations = collectEligibleRoutedRelations({ relations, endpointIds, pathFor });
+  return collectLabelRouteClearance({ labels, routedRelations, threshold }).map((hit) => {
+    const describe = (relation, relationIndex) => {
+      const relationId = relation?.id ? ` id "${relation.id}"` : '';
+      const relationLabel = relation?.label ? ` label "${relation.label}"` : '';
+      return `${relationCollection}[${relationIndex}]${relationId} "${relation?.from}" -> "${relation?.to}"${relationLabel}`;
+    };
+    const clearance = Math.round(hit.clearance * 10) / 10;
+    const from = hit.start.map((value) => Math.round(value * 10) / 10).join(', ');
+    const to = hit.end.map((value) => Math.round(value * 10) / 10).join(', ');
+    const hint = rePlanHint([hit.labelRelation, hit.otherRelation], routeHint);
+    const message = `[composition/label-route-clearance] showcase ${diagramType} label "${hit.label?.label || hit.labelRelation?.label || ''}" on ${describe(hit.labelRelation, hit.labelRelationIndex)} is ${clearance}px from ${describe(hit.otherRelation, hit.otherRelationIndex)} segment ${hit.segmentIndex} [${from}] -> [${to}] (label rect ${formatRect(hit.rect)}; minimum ${threshold}px) — ${hint}.`;
+    recordDiagnostic({
+      code: 'composition/label-route-clearance',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.labelRelationIndex, hit.labelRelation),
+      evidence: {
+        label: hit.label?.label || hit.labelRelation?.label || '',
+        otherRelationship: relationshipSubject(diagramType, relationCollection, hit.otherRelationIndex, hit.otherRelation),
+        segmentIndex: hit.segmentIndex,
+        clearancePx: clearance,
+        minimumPx: threshold,
+        labelRect: hit.rect,
+        from: hit.start,
+        to: hit.end,
+      },
+      supportedFixes: [hint],
+    });
+    return message;
+  });
+}
+
+// How far [start, start + size) leaves [0, extent), per end of one axis. This
+// is the single definition of "inside the canvas" that both the containment
+// rule and the repair hints measure against; an unknown extent bounds nothing.
+function axisCanvasOverflow(start, size, extent, origin = 0) {
+  if (!Number.isFinite(extent)) return { start: 0, end: 0 };
+  return { start: origin - start, end: start + size - (origin + extent) };
+}
+
+// THE CANVAS CONTAINMENT RATIONALE (referenced from the other call sites).
+//
+// The SVG canvas clips whatever leaves the viewBox, so an edge label that
+// overhangs an edge ships as truncated text while every post-render check on
+// the emitted markup still passes: clipped text is still well-formed markup.
+// Renderers with a fixed canvas already bound their nodes, lanes, and legends
+// against it; edge label rects were the exception.
+//
+// Not applied to readable-v2 workflows: that compiler grows its canvas around
+// pinned label rects and rejects an authored viewBox that cannot hold the
+// result, so the only gap growth cannot close is the origin its own rule
+// already guards. Architecture's auto canvas grows the same way, which leaves
+// this rule reporting authored viewBoxes and the origin side.
+//
+// Showcase only: a standard document authored before the rule exists may
+// overhang by a few pixels, and failing it there would break compatibility
+// instead of repairing a diagram.
+export function collectLabelCanvasOverflow({ labels, viewBox, tolerance = 0.5 }) {
+  // Renderers author origin-zero canvases (meta.viewBox is [width, height] by
+  // schema), but `check` re-measures foreign artifacts whose SVG viewBox may
+  // carry a legal non-zero min-x/min-y; those pass all four numbers.
+  const box = asArray(viewBox);
+  const [originX, originY, canvasWidth, canvasHeight] = box.length === 4 ? box : [0, 0, box[0], box[1]];
+  if (!isFinitePoint(originX, originY, canvasWidth, canvasHeight)) return [];
+  const hits = [];
+  for (const [fallbackIndex, label] of asArray(labels).entries()) {
+    const rect = label?.rect || label;
+    if (!rect || !isFinitePoint(rect.x, rect.y, rect.width, rect.height)) continue;
+    // `check` parses foreign markup, so a malformed negative-size rect is
+    // skipped like the other label collectors do — its flipped interval would
+    // otherwise read as contained.
+    if (rect.width < 0 || rect.height < 0) continue;
+    const horizontal = axisCanvasOverflow(rect.x, rect.width, canvasWidth, originX);
+    const vertical = axisCanvasOverflow(rect.y, rect.height, canvasHeight, originY);
+    const overflow = {
+      left: horizontal.start,
+      right: horizontal.end,
+      top: vertical.start,
+      bottom: vertical.end,
+    };
+    const sides = Object.keys(overflow).filter((side) => overflow[side] > tolerance);
+    if (!sides.length) continue;
+    hits.push({
+      label,
+      relation: label?.relation,
+      relationIndex: Number.isInteger(label?.relationIndex) ? label.relationIndex : fallbackIndex,
+      rect,
+      viewBox: [canvasWidth, canvasHeight],
+      viewBoxOrigin: [originX, originY],
+      sides,
+      overflowPx: Object.fromEntries(sides.map((side) => [side, Math.round(overflow[side] * 10) / 10])),
+      tolerance,
+    });
+  }
+  return hits;
+}
+
+export function describeLabelCanvasOverflow(hit) {
+  return hit.sides.map((side) => `${side} edge by ${hit.overflowPx[side]}px`).join(' and ');
+}
+
+export function cleanLabelCanvasContainmentProblems({
+  labels,
+  viewBox,
+  diagramType,
+  relationCollection,
+  profile,
+  profileIsAuthoritative = false,
+  routeHint = 'adjust labelAt, labelDx, labelDy, or labelSegment; otherwise enlarge meta.viewBox',
+  // Label widths are estimated from the text, not measured, so sub-pixel
+  // overhang is rounding noise rather than a visible truncation.
+  tolerance = 0.5,
+}) {
+  if (qualityProfileForGate(profile, profileIsAuthoritative) !== 'showcase') return [];
+  return collectLabelCanvasOverflow({ labels, viewBox, tolerance }).map((hit) => {
+    const relation = hit.relation;
+    const relationId = relation?.id ? ` id "${relation.id}"` : '';
+    const labelText = hit.label?.label || relation?.label || '';
+    const hint = rePlanHint([relation], routeHint);
+    const message = `[composition/label-canvas-containment] showcase ${diagramType} label "${labelText}" on ${relationCollection}[${hit.relationIndex}]${relationId} "${relation?.from}" -> "${relation?.to}" extends past the ${describeLabelCanvasOverflow(hit)} (label rect ${formatRect(hit.rect)}; viewBox ${hit.viewBox[0]}x${hit.viewBox[1]}) — ${hint}.`;
+    recordDiagnostic({
+      code: 'composition/label-canvas-containment',
+      severity: 'error',
+      message,
+      subject: relationshipSubject(diagramType, relationCollection, hit.relationIndex, relation),
+      evidence: {
+        label: labelText,
+        labelRect: { x: hit.rect.x, y: hit.rect.y, width: hit.rect.width, height: hit.rect.height },
+        viewBox: hit.viewBox,
+        overflowPx: hit.overflowPx,
+        tolerancePx: hit.tolerance,
+      },
+      supportedFixes: [hint],
+    });
+    return message;
+  });
+}
+
+function qualityProfileForGate(profile, profileIsAuthoritative) {
+  return profileIsAuthoritative
+    ? profile
+    : process.env.ARCHIFY_QUALITY_PROFILE || profile;
+}
+
+function collectEligibleRoutedRelations({ relations, endpointIds, pathFor }) {
+  return asArray(relations).map((relation, relationIndex) => {
+    if (!relation || typeof relation.from !== 'string' || typeof relation.to !== 'string') return null;
+    if (endpointIds && (!endpointIds.has(relation.from) || !endpointIds.has(relation.to))) return null;
+    return { relation, relationIndex, points: pathFor(relation)?.points };
+  }).filter(Boolean);
+}
+
+function segmentPosition(index, segmentCount) {
+  if (index === 0) return 'source-stub';
+  if (index === segmentCount - 1) return 'target-stub';
+  return 'interior';
+}
+
+// Normalizing a route is pure, and the same route array is normalized again by
+// every predicate that inspects it. Keyed by the array itself, so a rebuilt
+// route simply gets a new entry. The result's outer array is frozen. Callers
+// must also treat input arrays and their coordinate pairs as immutable, since
+// edits in place cannot invalidate this identity-based cache.
+const NORMALIZED_ROUTE_POINTS = new WeakMap();
+
+// Assembling a route from an anchor, corridor points and an anchor is the same
+// normalization without the intermediate array, and the result is seeded in the
+// cache so later predicates do not normalize it again.
+export function joinRoutePoints(start, via, end) {
+  const normalized = [];
+  const accept = (point) => {
+    if (!Array.isArray(point) || point.length !== 2 || !isFinitePoint(point[0], point[1])) return;
+    const previous = normalized.at(-1);
+    if (previous
+      && Math.abs(point[0] - previous[0]) <= 0.0001
+      && Math.abs(point[1] - previous[1]) <= 0.0001) return;
+    while (normalized.length >= 2 && collinearForward(normalized.at(-2), normalized.at(-1), point)) normalized.pop();
+    normalized.push(point);
+  };
+  accept(start);
+  for (const point of Array.isArray(via) ? via : []) accept(point);
+  accept(end);
+  Object.freeze(normalized);
+  NORMALIZED_ROUTE_POINTS.set(normalized, normalized);
+  return normalized;
+}
+
+export function normalizeRoutePoints(points) {
+  if (Array.isArray(points)) {
+    const cached = NORMALIZED_ROUTE_POINTS.get(points);
+    if (cached) return cached;
+  }
+  const normalized = [];
+  for (const point of Array.isArray(points) ? points : []) {
+    if (!Array.isArray(point) || point.length !== 2 || !isFinitePoint(point[0], point[1])) continue;
+    const previous = normalized.at(-1);
+    if (previous
+      && Math.abs(point[0] - previous[0]) <= 0.0001
+      && Math.abs(point[1] - previous[1]) <= 0.0001) continue;
+    while (normalized.length >= 2 && collinearForward(normalized.at(-2), normalized.at(-1), point)) normalized.pop();
+    normalized.push(point);
+  }
+  if (Array.isArray(points)) {
+    Object.freeze(normalized);
+    NORMALIZED_ROUTE_POINTS.set(points, normalized);
+  }
+  return normalized;
+}
+
+function pointRectDistance(point, rect) {
+  const dx = Math.max(rect.x - point[0], 0, point[0] - (rect.x + rect.width));
+  const dy = Math.max(rect.y - point[1], 0, point[1] - (rect.y + rect.height));
+  return Math.hypot(dx, dy);
+}
+
+function pointSegmentDistanceXY(px, py, start, end) {
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= 0.0000001) return Math.hypot(px - start[0], py - start[1]);
+  const t = Math.max(0, Math.min(1, ((px - start[0]) * dx + (py - start[1]) * dy) / lengthSquared));
+  return Math.hypot(px - (start[0] + t * dx), py - (start[1] + t * dy));
+}
+
+function pointSegmentDistance(point, start, end) {
+  return pointSegmentDistanceXY(point[0], point[1], start, end);
+}
+
+function collinearForward(a, b, c) {
+  if (Math.abs(crossProduct(a, b, c)) > 0.0001) return false;
+  return (b[0] - a[0]) * (c[0] - b[0]) + (b[1] - a[1]) * (c[1] - b[1]) >= -0.0001;
+}
+
+export function frameBorderSegments(frame) {
+  if (!frame || typeof frame !== 'object') return [];
+  if (frame.shape === 'line') {
+    const start = frame.start || [frame.x1, frame.y1];
+    const end = frame.end || [frame.x2, frame.y2];
+    return isFinitePoint(...start, ...end) ? [{ side: 'line', start, end }] : [];
+  }
+  if (!isFinitePoint(frame.x, frame.y, frame.width, frame.height) || frame.width <= 0 || frame.height <= 0) return [];
+  const radius = Math.max(0, Math.min(Number(frame.radius) || 0, frame.width / 2, frame.height / 2));
+  const left = frame.x;
+  const right = frame.x + frame.width;
+  const top = frame.y;
+  const bottom = frame.y + frame.height;
+  return [
+    { side: 'top', start: [left + radius, top], end: [right - radius, top] },
+    { side: 'right', start: [right, top + radius], end: [right, bottom - radius] },
+    { side: 'bottom', start: [right - radius, bottom], end: [left + radius, bottom] },
+    { side: 'left', start: [left, bottom - radius], end: [left, top + radius] },
+  ].filter(({ start, end }) => Math.hypot(end[0] - start[0], end[1] - start[1]) > 0.0001);
+}
+
+function mergeBorderOverlaps(overlaps, border) {
+  const horizontal = Math.abs(border.start[1] - border.end[1]) <= 0.0001;
+  const axis = horizontal ? 0 : 1;
+  const fixed = horizontal ? border.start[1] : border.start[0];
+  const sorted = overlaps.map((overlap) => ({
+    low: Math.min(overlap.start[axis], overlap.end[axis]),
+    high: Math.max(overlap.start[axis], overlap.end[axis]),
+  })).sort((left, right) => left.low - right.low || left.high - right.high);
+  const merged = [];
+  for (const interval of sorted) {
+    const previous = merged.at(-1);
+    if (previous && interval.low <= previous.high + 0.0001) previous.high = Math.max(previous.high, interval.high);
+    else merged.push({ ...interval });
+  }
+  return merged.map((interval) => ({
+    ...interval,
+    length: interval.high - interval.low,
+    start: horizontal ? [interval.low, fixed] : [fixed, interval.low],
+    end: horizontal ? [interval.high, fixed] : [fixed, interval.high],
+  }));
+}
+
+function collinearAxisOverlap(a, b, c, d) {
+  const epsilon = 0.0001;
+  const horizontal = Math.abs(a[1] - b[1]) <= epsilon
+    && Math.abs(c[1] - d[1]) <= epsilon
+    && Math.abs(a[1] - c[1]) <= epsilon;
+  const vertical = Math.abs(a[0] - b[0]) <= epsilon
+    && Math.abs(c[0] - d[0]) <= epsilon
+    && Math.abs(a[0] - c[0]) <= epsilon;
+  if (!horizontal && !vertical) return null;
+  const axis = horizontal ? 0 : 1;
+  const low = Math.max(Math.min(a[axis], b[axis]), Math.min(c[axis], d[axis]));
+  const high = Math.min(Math.max(a[axis], b[axis]), Math.max(c[axis], d[axis]));
+  if (high - low <= epsilon) return null;
+  const fixed = horizontal ? a[1] : a[0];
+  return {
+    length: high - low,
+    start: horizontal ? [low, fixed] : [fixed, low],
+    end: horizontal ? [high, fixed] : [fixed, high],
+  };
+}
+
+export function properSegmentIntersection(a, b, c, d) {
+  const abC = crossProduct(a, b, c);
+  const abD = crossProduct(a, b, d);
+  const cdA = crossProduct(c, d, a);
+  const cdB = crossProduct(c, d, b);
+  const epsilon = 0.0001;
+  const opposite = (left, right) => (left > epsilon && right < -epsilon) || (left < -epsilon && right > epsilon);
+  if (!opposite(abC, abD) || !opposite(cdA, cdB)) return null;
+
+  const denominator = (a[0] - b[0]) * (c[1] - d[1]) - (a[1] - b[1]) * (c[0] - d[0]);
+  if (Math.abs(denominator) < epsilon) return null;
+  const ab = a[0] * b[1] - a[1] * b[0];
+  const cd = c[0] * d[1] - c[1] * d[0];
+  return [
+    (ab * (c[0] - d[0]) - (a[0] - b[0]) * cd) / denominator,
+    (ab * (c[1] - d[1]) - (a[1] - b[1]) * cd) / denominator
+  ];
+}
+
+function crossProduct(a, b, c) {
+  return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+}
+
+function pointInBox(point, box) {
+  return point[0] >= box.x1 && point[0] <= box.x2 && point[1] >= box.y1 && point[1] <= box.y2;
+}
+
+function segmentsIntersect(a, b, c, d) {
+  const o1 = orientation(a, b, c);
+  const o2 = orientation(a, b, d);
+  const o3 = orientation(c, d, a);
+  const o4 = orientation(c, d, b);
+
+  if (o1 === 0 && onSegment(a, c, b)) return true;
+  if (o2 === 0 && onSegment(a, d, b)) return true;
+  if (o3 === 0 && onSegment(c, a, d)) return true;
+  if (o4 === 0 && onSegment(c, b, d)) return true;
+
+  return o1 !== o2 && o3 !== o4;
+}
+
+function orientation(a, b, c) {
+  const value = (b[1] - a[1]) * (c[0] - b[0]) - (b[0] - a[0]) * (c[1] - b[1]);
+  if (Math.abs(value) < 0.0001) return 0;
+  return value > 0 ? 1 : 2;
+}
+
+function onSegment(a, b, c) {
+  return (
+    b[0] <= Math.max(a[0], c[0]) &&
+    b[0] >= Math.min(a[0], c[0]) &&
+    b[1] <= Math.max(a[1], c[1]) &&
+    b[1] >= Math.min(a[1], c[1])
+  );
+}
+
+export function anchor(rect, side) {
+  switch (side) {
+    case 'left': return [rect.x, rect.cy];
+    case 'right': return [rect.x + rect.width, rect.cy];
+    case 'top': return [rect.cx, rect.y];
+    case 'bottom': return [rect.cx, rect.y + rect.height];
+    default:
+      return [rect.x + rect.width, rect.cy];
+  }
+}
+
+export function portHasCornerClearance(rect, side, point) {
+  if (side === 'left' || side === 'right') {
+    const inset = Math.min(16, rect.height / 2);
+    return point[1] >= rect.y + inset && point[1] <= rect.y + rect.height - inset;
+  }
+  if (side === 'top' || side === 'bottom') {
+    const inset = Math.min(16, rect.width / 2);
+    return point[0] >= rect.x + inset && point[0] <= rect.x + rect.width - inset;
+  }
+  return false;
+}
+
+
+// Reuse the same bounded alignment for facing automatic ports; callers own
+// obstacle and occupied-port checks for their renderer. Spread slots stay fixed.
+export function alignAutomaticFacingPorts(conn, from, to, start, end, fromSide, toSide, ports, { accept } = {}) {
+  const hasExplicitGeometry = (
+    conn.via
+    || (conn.route && conn.route !== 'auto')
+    || conn.channelX !== undefined
+    || conn.channelY !== undefined
+    || conn.labelAt
+  );
+  const horizontallyFacing = (
+    (fromSide === 'right' && toSide === 'left')
+    || (fromSide === 'left' && toSide === 'right')
+  );
+  const verticallyFacing = (
+    (fromSide === 'bottom' && toSide === 'top')
+    || (fromSide === 'top' && toSide === 'bottom')
+  );
+  if (hasExplicitGeometry || (!horizontallyFacing && !verticallyFacing)) return { start, end };
+
+  const fromSpread = Boolean(ports?.from);
+  const toSpread = Boolean(ports?.to);
+  if (fromSpread && toSpread) return { start, end };
+  const hasExplicitSides = (
+    (conn.fromSide && conn.fromSide !== 'auto')
+    || (conn.toSide && conn.toSide !== 'auto')
+  );
+  if (!fromSpread && !toSpread && hasExplicitSides) return { start, end };
+
+  const alignmentDelta = horizontallyFacing
+    ? Math.abs(start[1] - end[1])
+    : Math.abs(start[0] - end[0]);
+  if (alignmentDelta >= 16) return { start, end };
+
+  // Keep the shared endpoint's distinct spread slot and move only the
+  // relationship's unshared endpoint onto that axis. With no spread endpoint,
+  // retain the existing least-movement choice between the two facing sides.
+  // If both endpoints are shared, preserve the outside bridge so no competing
+  // port is silently collapsed.
+  const alignEndToStart = horizontallyFacing
+    ? { start, end: [end[0], start[1]] }
+    : { start, end: [start[0], end[1]] };
+  const alignStartToEnd = horizontallyFacing
+    ? { start: [start[0], end[1]], end }
+    : { start: [end[0], start[1]], end };
+  const candidates = fromSpread
+    ? [alignEndToStart]
+    : toSpread
+      ? [alignStartToEnd]
+      : [alignEndToStart, alignStartToEnd];
+  for (const candidate of candidates) {
+    const points = [candidate.start, candidate.end];
+    if (portHasCornerClearance(from, fromSide, candidate.start)
+        && portHasCornerClearance(to, toSide, candidate.end)
+        && routeHonorsEndpointSides(points, fromSide, toSide)
+        && (typeof accept !== 'function' || accept(points))) {
+      return candidate;
+    }
+  }
+  return { start, end };
+}
+
+
+const PORT_OUTWARD_VECTOR = {
+  left: [-1, 0],
+  right: [1, 0],
+  top: [0, -1],
+  bottom: [0, 1],
+};
+
+// Automatic port spreading can put otherwise parallel anchors only a few
+// pixels apart. A conventional midpoint dogleg then violates the renderer's
+// own 8px/16px route-rhythm floors. Return a full outside-channel route when
+// that happens, or null when the normal automatic route remains appropriate.
+export function automaticPortRhythmBridge(
+  start,
+  end,
+  fromSide,
+  toSide,
+  { endpointStubPx = 24, interiorSegmentPx = 16, accept } = {},
+) {
+  if (!Array.isArray(start) || !Array.isArray(end)
+      || start.length !== 2 || end.length !== 2
+      || !isFinitePoint(...start, ...end)) return null;
+  const fromVector = PORT_OUTWARD_VECTOR[fromSide];
+  const toVector = PORT_OUTWARD_VECTOR[toSide];
+  if (!fromVector || !toVector) return null;
+
+  const opposedFacingGap = (
+    (fromSide === 'right' && toSide === 'left' && end[0] > start[0])
+    || (fromSide === 'left' && toSide === 'right' && start[0] > end[0])
+  ) ? Math.abs(end[0] - start[0]) : (
+    (fromSide === 'bottom' && toSide === 'top' && end[1] > start[1])
+    || (fromSide === 'top' && toSide === 'bottom' && start[1] > end[1])
+  ) ? Math.abs(end[1] - start[1]) : null;
+  const boundedStubPx = opposedFacingGap != null
+    && opposedFacingGap - endpointStubPx * 2 < interiorSegmentPx
+    ? Math.max(8, Math.min(endpointStubPx, (opposedFacingGap - interiorSegmentPx) / 2))
+    : null;
+  const stubDistances = [endpointStubPx];
+  if (boundedStubPx != null && boundedStubPx >= 8 && boundedStubPx !== endpointStubPx) {
+    stubDistances.push(boundedStubPx);
+  }
+  const candidates = [];
+  const verticalSides = new Set(['top', 'bottom']);
+  const horizontalSides = new Set(['left', 'right']);
+
+  for (const stubPx of stubDistances) {
+    const startStub = [
+      start[0] + fromVector[0] * stubPx,
+      start[1] + fromVector[1] * stubPx,
+    ];
+    const endStub = [
+      end[0] + toVector[0] * stubPx,
+      end[1] + toVector[1] * stubPx,
+    ];
+    if (verticalSides.has(fromSide) && verticalSides.has(toSide)
+        && Math.abs(start[0] - end[0]) < interiorSegmentPx) {
+      for (const channelX of [
+        Math.max(start[0], end[0]) + interiorSegmentPx,
+        Math.min(start[0], end[0]) - interiorSegmentPx,
+      ]) {
+        candidates.push([
+          start,
+          startStub,
+          [channelX, startStub[1]],
+          [channelX, endStub[1]],
+          endStub,
+          end,
+        ]);
+      }
+    }
+    if (horizontalSides.has(fromSide) && horizontalSides.has(toSide)
+        && Math.abs(start[1] - end[1]) < interiorSegmentPx) {
+      for (const channelY of [
+        Math.max(start[1], end[1]) + interiorSegmentPx,
+        Math.min(start[1], end[1]) - interiorSegmentPx,
+      ]) {
+        candidates.push([
+          start,
+          startStub,
+          [startStub[0], channelY],
+          [endStub[0], channelY],
+          endStub,
+          end,
+        ]);
+      }
+    }
+  }
+
+  return candidates
+    .map((points) => normalizeRoutePoints(points))
+    .find((points) => (
+      routeHonorsEndpointSides(points, fromSide, toSide)
+      && collectRouteRhythmIssues({ routedRelations: [{ points }], interiorSegmentPx }).length === 0
+      && (typeof accept !== 'function' || accept(points))
+    )) || null;
+}
+
+// Keep conservative auto-routed fan-out/fan-in relationships visually
+// distinct without changing authored route controls. The returned map only
+// contains endpoints that belong to a shared automatic midpoint anchor.
+export function automaticPortSpread(relations, boxes, { gutter = 16, maxSpacing = 14, sideFor, spacingFor } = {}) {
+  const groups = new Map();
+  const spread = new Map();
+
+  const add = (relation, endpoint, rect, side, counterpart) => {
+    const key = `${rect.id}\u0000${side}`;
+    const items = groups.get(key) || [];
+    items.push({ relation, endpoint, rect, side, counterpart });
+    groups.set(key, items);
+  };
+
+  for (const relation of asArray(relations)) {
+    if (!relation || (relation.route && relation.route !== 'auto')) continue;
+    if (relation.via || relation.channelX !== undefined || relation.channelY !== undefined || relation.labelAt) continue;
+    const from = boxes.get(relation.from);
+    const to = boxes.get(relation.to);
+    if (!from || !to) continue;
+    const fromSide = chosenSide(
+      relation.fromSide,
+      sideFor?.(relation, 'source') || defaultFromSide(from, to),
+    );
+    const toSide = chosenSide(
+      relation.toSide,
+      sideFor?.(relation, 'target') || defaultToSide(from, to),
+    );
+    add(relation, 'from', from, fromSide, to);
+    add(relation, 'to', to, toSide, from);
+  }
+
+  for (const items of groups.values()) {
+    if (items.length < 2) continue;
+    const verticalSide = items[0].side === 'left' || items[0].side === 'right';
+    items.sort((a, b) => {
+      const aCoordinate = verticalSide ? a.counterpart.cy : a.counterpart.cx;
+      const bCoordinate = verticalSide ? b.counterpart.cy : b.counterpart.cx;
+      if (aCoordinate !== bCoordinate) return aCoordinate - bCoordinate;
+      const aKey = `${a.relation.id || ''}\u0000${a.relation.from}\u0000${a.relation.to}\u0000${a.relation.label || ''}`;
+      const bKey = `${b.relation.id || ''}\u0000${b.relation.from}\u0000${b.relation.to}\u0000${b.relation.label || ''}`;
+      return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+    });
+
+    const extent = verticalSide ? items[0].rect.height : items[0].rect.width;
+    const usable = Math.max(0, extent - gutter * 2);
+    const spacing = Math.min(maxSpacing, usable / (items.length - 1));
+    if (!(spacing > 0)) continue;
+
+    // Width-aware callers reserve the whole group together. Moving a single
+    // port around the legacy 14px slots can wrongly report a full side while
+    // its still-unrouted neighbours could have fitted farther apart.
+    let offsets;
+    if (spacingFor) {
+      const gaps = items.slice(1).map((item, index) => Math.max(maxSpacing,
+        spacingFor(items[index].relation, item.relation)));
+      const span = gaps.reduce((sum, gap) => sum + gap, 0);
+      if (span <= usable && gaps.some((gap) => gap > maxSpacing)) {
+        let offset = -span / 2;
+        offsets = [offset, ...gaps.map((gap) => (offset += gap))];
+      }
+    }
+
+    for (const [index, item] of items.entries()) {
+      const offset = offsets?.[index] ?? (index - (items.length - 1) / 2) * spacing;
+      const point = anchor(item.rect, item.side);
+      if (verticalSide) point[1] += offset;
+      else point[0] += offset;
+      const endpoints = spread.get(item.relation) || {};
+      endpoints[item.endpoint] = point;
+      spread.set(item.relation, endpoints);
+    }
+  }
+
+  return spread;
+}
+
+// A centre delta on the horizontal axis does not by itself mean the route
+// leaves sideways: a hub above an offset spoke has both a horizontal and a
+// larger vertical delta, and the router draws the vertical dogleg. Compare the
+// deltas so the inferred side matches the axis the route actually uses. Equal
+// deltas select horizontal sides; dx === 0 preserves the previous vertical
+// result, while a vertical-dominant nonzero dx selects vertical sides.
+export function defaultFromSide(from, to) {
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? 'left' : 'right';
+  return dy > 0 ? 'bottom' : 'top';
+}
+
+export function defaultToSide(from, to) {
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? 'right' : 'left';
+  return dy > 0 ? 'top' : 'bottom';
+}
+
+// Non-architecture renderers retain their established horizontal-first
+// endpoint contract. Architecture opts into dominant-axis inference above so
+// a vertical hub-and-spoke route can use perpendicular automatic ports.
+export function legacyDefaultFromSide(from, to) {
+  if (to.cx < from.cx) return 'left';
+  if (to.cx > from.cx) return 'right';
+  if (to.cy > from.cy) return 'bottom';
+  return 'top';
+}
+
+export function legacyDefaultToSide(from, to) {
+  if (to.cx < from.cx) return 'right';
+  if (to.cx > from.cx) return 'left';
+  if (to.cy > from.cy) return 'top';
+  return 'bottom';
+}
+
+export function chosenSide(side, fallback) {
+  return side && side !== 'auto' ? side : fallback;
+}
+
+export function polylinePath(points) {
+  return points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
+}
+
+export function routePointsValue(points) {
+  return asArray(points)
+    .filter((point) => Array.isArray(point) && point.length === 2 && isFinitePoint(...point))
+    .map(([x, y]) => `${x},${y}`)
+    .join(';');
+}
+
+// Only a direct, explicitly authored diagonal needs an artifact-check exception.
+// Nonempty via takes precedence; empty via adds no intermediate geometry.
+export function authoredStraightRouteAttrs(relation, points) {
+  if (relation.route !== 'straight' || relation.via?.length || points.length !== 2) return '';
+  const [start, end] = points;
+  return Math.abs(start[0] - end[0]) > 0.01 && Math.abs(start[1] - end[1]) > 0.01
+    ? ' data-composition-route="straight"'
+    : '';
+}
+
+export function roundedPath(points, radius) {
+  if (points.length < 3 || radius <= 0) {
+    return polylinePath(points);
+  }
+
+  const commands = [`M ${points[0][0]} ${points[0][1]}`];
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const [px, py] = points[i - 1];
+    const [cx, cy] = points[i];
+    const [nx, ny] = points[i + 1];
+    const prevLen = Math.hypot(cx - px, cy - py);
+    const nextLen = Math.hypot(nx - cx, ny - cy);
+    const r = Math.min(radius, prevLen / 2, nextLen / 2);
+    if (r < 1) {
+      commands.push(`L ${cx} ${cy}`);
+      continue;
+    }
+    const before = [cx - ((cx - px) / prevLen) * r, cy - ((cy - py) / prevLen) * r];
+    const after = [cx + ((nx - cx) / nextLen) * r, cy + ((ny - cy) / nextLen) * r];
+    commands.push(`L ${before[0]} ${before[1]}`);
+    commands.push(`Q ${cx} ${cy} ${after[0]} ${after[1]}`);
+  }
+  const [endX, endY] = points[points.length - 1];
+  commands.push(`L ${endX} ${endY}`);
+  return commands.join(' ');
+}
+
+// Shared by edges/flows/transitions: all carry the same optional
+// labelAt/labelDx/labelDy/labelSegment knobs.
+export function labelPoint(item, points) {
+  if (item.labelAt) return item.labelAt;
+  if (points.length === 2) {
+    return [
+      (points[0][0] + points[1][0]) / 2 + (item.labelDx || 0),
+      points[0][1] - 10 + (item.labelDy || 0)
+    ];
+  }
+  const segmentIndex = Math.min(points.length - 2, Math.max(0, item.labelSegment ?? 1));
+  const a = points[segmentIndex];
+  const b = points[segmentIndex + 1];
+  return [(a[0] + b[0]) / 2 + (item.labelDx || 0), (a[1] + b[1]) / 2 - 10 + (item.labelDy || 0)];
+}
+
+export const componentFill = {
+  frontend: 'c-frontend',
+  backend: 'c-backend',
+  database: 'c-database',
+  cloud: 'c-cloud',
+  security: 'c-security',
+  messagebus: 'c-messagebus',
+  external: 'c-external'
+};
+
+export const componentText = {
+  frontend: 't-frontend',
+  backend: 't-backend',
+  database: 't-database',
+  cloud: 't-cloud',
+  security: 't-security',
+  messagebus: 't-messagebus',
+  external: 't-external'
+};
+
+export const arrowClassMap = {
+  default: ['a-default', 'arrowhead'],
+  emphasis: ['a-emphasis', 'arrowhead-emphasis'],
+  security: ['a-security', 'arrowhead-security'],
+  dashed: ['a-dashed', 'arrowhead-dashed']
+};
+
+// Structural phase/group accents retain their existing semantic colors.
+export function variantAccent(variant) {
+  return variant === 'security' ? 't-security'
+    : variant === 'emphasis' ? 't-backend'
+      : variant === 'dashed' ? 't-messagebus' : 't-muted';
+}
+
+// Relationship labels use the same theme token as their path. Keep this map
+// edge-specific: node-kind text colors only coincide with some path colors in
+// the classic preset and must not define the relationship's visual meaning.
+export function edgeLabelAccent(variant) {
+  return variant === 'security'
+    ? 't-edge-security'
+    : variant === 'emphasis'
+      ? 't-edge-emphasis'
+      : variant === 'dashed'
+        ? 't-edge-dashed'
+        : 't-edge-default';
+}
+
+export function formatRect(r) {
+  return `[${Math.round(r.x)}, ${Math.round(r.y)}, ${Math.round(r.width)}, ${Math.round(r.height)}]`;
+}
+
+function formatValue(n) {
+  return String(Math.round(n));
+}
+
+// A label anchor is the text origin, so keeping a suggestion on the canvas
+// means moving the whole rect: offset is `rect - anchor` on that axis.
+function anchorFitsCanvas(anchorValue, offset, size, extent) {
+  const overflow = axisCanvasOverflow(anchorValue + offset, size, extent);
+  return overflow.start <= 0 && overflow.end <= 0;
+}
+
+// Suggestions are emitted as integers, so the real-valued bounds are tightened
+// inward with ceil/floor first: every integer between them keeps the whole rect
+// on the canvas, which a bound like 616.7 would not. Returns null when the rect
+// is wider than the canvas and no anchor can contain it.
+function clampAnchorToCanvas(anchorValue, offset, size, extent) {
+  const rounded = Math.round(anchorValue);
+  if (!Number.isFinite(extent)) return rounded;
+  const min = Math.ceil(-offset);
+  const max = Math.floor(extent - size - offset);
+  return max < min ? null : Math.min(Math.max(rounded, min), max);
+}
+
+/**
+ * Actionable hint when an edge label rect hits a node/component box (#7).
+ * Every suggested value is a replacement for the authored field, not an
+ * increment, and has to survive being applied to the document:
+ * - the absolute form is nudged along x so the rect stays on the canvas, and a
+ *   vertical placement that cannot fit is dropped rather than clamped, since
+ *   clamping it back would push the label onto the obstacle it must clear;
+ * - the relative form is offered only when labelDx/labelDy actually move this
+ *   label (labelPoint returns an authored labelAt as-is) and only when the
+ *   replacements, computed from the document's own labelDx/labelDy, land the
+ *   rect inside the canvas.
+ * The authored values therefore come from `labelRect.relation`, the authored
+ * relationship the renderer already attaches to every label record.
+ * `obstacles` is every box the callers' own overlap loop tests (defaults to
+ * the named obstacle alone): a placement that merely traded the named obstacle
+ * for its neighbor would fail the same rule again when applied.
+ */
+export function suggestLabelObstacleFix(labelRect, lx, ly, obstacle, obstacleKind = 'component', viewBox, obstacles) {
+  // Renderer canvases are origin-zero [width, height] by schema, but read a
+  // 4-number [min-x, min-y, width, height] the same way the containment
+  // collector does — degraded no-ajv runs must not clamp against the origin
+  // pair as if it were the canvas size.
+  const box = asArray(viewBox);
+  const [canvasWidth, canvasHeight] = box.length === 4 ? box.slice(2) : box;
+  const xOffset = labelRect.x - lx;
+  const yOffset = labelRect.y - ly;
+  const anchorX = clampAnchorToCanvas(lx, xOffset, labelRect.width, canvasWidth);
+  // The placement anchors are derived from the label's own rect, not from the
+  // obstacle alone: an obstacle-only "above" anchor assumes the 14px
+  // single-line rect and lands a 27px two-line rect (dataflow classification,
+  // lifecycle note) back on the obstacle it must clear. The overlap filter
+  // uses the callers' own detection call, so a surviving hint cannot re-raise
+  // the problem it repairs.
+  const blockers = obstacles ? [...obstacles] : [obstacle];
+  const placements = [
+    { name: 'below', y: Math.round(obstacle.y + obstacle.height + 4 - yOffset) },
+    { name: 'above', y: Math.round(obstacle.y - 4 - labelRect.height - yOffset) },
+  ].filter(({ y }) => anchorX !== null
+    && anchorFitsCanvas(y, yOffset, labelRect.height, canvasHeight)
+    && blockers.every((blocker) => !rectsOverlap(
+      { x: anchorX + xOffset, y: y + yOffset, width: labelRect.width, height: labelRect.height },
+      blocker,
+      -2,
+    )));
+  const lines = [
+    `  label rect: ${formatRect(labelRect)}`,
+    `  ${obstacleKind} "${obstacle.id}" rect: ${formatRect(obstacle)}`,
+  ];
+  if (!placements.length) {
+    // Only the vertical slots beside the named obstacle were tried, so an
+    // unclaimed spot elsewhere may still exist — never assert that none does.
+    lines.push(anchorX === null
+      ? `  Suggested fix: the ${Math.round(labelRect.width)}px label rect cannot fit the ${canvasWidth}x${canvasHeight} viewBox at any anchor — shorten the label or enlarge meta.viewBox`
+      : `  Suggested fix: no placement directly above or below "${obstacle.id}" stays clear inside the ${canvasWidth}x${canvasHeight} viewBox — move the label to an open area with labelAt, shorten the label, move the ${obstacleKind}, or enlarge meta.viewBox`);
+    return lines.join('\n');
+  }
+  const authored = labelRect.relation || {};
+  const authoredDx = Number.isFinite(authored.labelDx) ? authored.labelDx : 0;
+  const authoredDy = Number.isFinite(authored.labelDy) ? authored.labelDy : 0;
+  const relativeHint = (y) => {
+    if (Array.isArray(authored.labelAt)) return null;
+    // Both replacements are measured from the automatic label point that the
+    // authored offsets are applied to, and against the unrounded anchor: a
+    // rounded base would shift the applied label by up to a pixel.
+    const dx = Math.round(authoredDx + anchorX - lx);
+    const dy = Math.round(authoredDy + y - ly);
+    // labelDx is authored as a number, so an authored fraction must not read as
+    // a needed nudge once the replacement is rounded to an integer.
+    const movesX = Math.abs(dx - authoredDx) >= 0.5;
+    const landsAtX = lx - authoredDx + (movesX ? dx : authoredDx);
+    const landsAtY = ly - authoredDy + dy;
+    if (!anchorFitsCanvas(landsAtX, xOffset, labelRect.width, canvasWidth)) return null;
+    if (!anchorFitsCanvas(landsAtY, yOffset, labelRect.height, canvasHeight)) return null;
+    return movesX
+      ? `set labelDx ${formatValue(dx)} with labelDy ${formatValue(dy)}`
+      : `set labelDy ${formatValue(dy)}`;
+  };
+  const hint = placements
+    .map(({ name, y }) => {
+      const relative = relativeHint(y);
+      return `set labelAt [${anchorX}, ${y}]${relative ? ` or ${relative}` : ''} (${name})`;
+    })
+    .join('; or ');
+  lines.push(`  Suggested fix: ${hint}`);
+  return lines.join('\n');
+}
+
+/** Hint when two edge labels collide. */
+export function suggestLabelPairFix(a, b) {
+  return [
+    `  "${a.label}" ${formatRect(a)}; "${b.label}" ${formatRect(b)}`,
+    '  Suggested fix: adjust labelDx/labelDy/labelSegment, or route one relationship through a separate corridor',
+  ].join('\n');
+}
+
+/**
+ * The two placements that separate b from a, in the order the prose hint
+ * offers them. Shared so the text hint and its structured repair cannot
+ * offer different coordinates.
+ */
+export function componentSeparationOptions(a, b, minGap = 8) {
+  // Ceil, not round: on fractional geometry a rounded right/below coordinate
+  // can land a fraction of a pixel short of minGap, and the advised position
+  // would never clear the diagnostic that offered it.
+  return [
+    { pos: [Math.ceil(a.x + a.width + minGap), Math.round(b.y)], relation: `right of "${a.id}"` },
+    { pos: [Math.round(b.x), Math.ceil(a.y + a.height + minGap)], relation: 'below' },
+  ];
+}
+
+/** Hint when two components/nodes are too close. */
+export function suggestComponentSeparation(a, b, minGap = 8) {
+  const [right, below] = componentSeparationOptions(a, b, minGap);
+  return [
+    `  "${a.id}" ${formatRect(a)}; "${b.id}" ${formatRect(b)}`,
+    `  Suggested fix: move "${b.id}" pos to [${right.pos[0]}, ${right.pos[1]}] (${right.relation}) or [${below.pos[0]}, ${below.pos[1]}] (${below.relation})`,
+  ].join('\n');
+}

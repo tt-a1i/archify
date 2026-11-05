@@ -1,0 +1,7 @@
+{
+  "runtime": ".runtime",
+  "joern_version": "4.0.672",
+  "maintenance_versions": {"jscpd": "5.4.2", "lizard": "1.25.0"},
+  "architecture_provider": "",
+  "architecture_provider_revision": "883f37df4c06e4d3a6948293537e34c2f0890781"
+}
