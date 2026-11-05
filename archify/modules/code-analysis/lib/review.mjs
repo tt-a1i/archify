@@ -76,13 +76,17 @@ export function reviewFindings(diagnostics, { baseline = null, previous = null, 
   };
 }
 
+// Prefer the stable format shared by the producer and baseline schema: its
+// 12 hex digits can be entirely numeric. Older counters use the remaining
+// numeric forms. A 12-digit historical counter is inherently ambiguous.
+const STABLE_ID = /^[A-Z]{2,4}-[0-9a-f]{12}$/;
 const LEGACY_ID = /^[A-Z]{2,4}-[0-9]{4,}$/;
 
 function comparisonOf({ previous, before, current, findings, ids, analysis, files }) {
   const { comparable, reasons } = comparability(previous.analysis || null, analysis);
   // Position-numbered ids (before stable ids) never match a current id: every finding
   // would read as new and every old one as no longer detected.
-  if ([...before.keys()].some((id) => LEGACY_ID.test(id))) reasons.push({ code: 'legacy-ids', message: 'The previous run used position-numbered finding ids, which cannot be matched to the current stable ids; new and no-longer-detected lists are not meaningful for this comparison.' });
+  if ([...before.keys()].some((id) => !STABLE_ID.test(id) && LEGACY_ID.test(id))) reasons.push({ code: 'legacy-ids', message: 'The previous run used position-numbered finding ids, which cannot be matched to the current stable ids; new and no-longer-detected lists are not meaningful for this comparison.' });
   const ran = analysis ? new Set(Object.keys(analysis.ruleVersions)) : null;
   const known = files ? new Set(files) : null;
   const parseErrors = new Set(analysis?.coverage?.parseErrors || []);
