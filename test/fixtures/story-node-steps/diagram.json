@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "meta": {
+    "title": "PDF ingest — parallel (synthetic)",
+    "subtitle": "Author-declared calls; no runtime measurements.",
+    "output": "parallel.html",
+    "quality_profile": "standard",
+    "visual_preset": "classic"
+  },
+  "diagram_type": "architecture",
+  "components": [
+    {
+      "id": "page",
+      "type": "backend",
+      "label": "Page handler",
+      "sublabel": "Application",
+      "pos": [
+        70,
+        390
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "classify",
+      "type": "backend",
+      "label": "Classify API",
+      "sublabel": "Inference provider",
+      "pos": [
+        610,
+        115
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "extract",
+      "type": "backend",
+      "label": "Extract API",
+      "sublabel": "Inference provider",
+      "pos": [
+        610,
+        225
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "record",
+      "type": "database",
+      "label": "Record DB",
+      "sublabel": "Storage services",
+      "pos": [
+        610,
+        335
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "object",
+      "type": "cloud",
+      "label": "Object store",
+      "sublabel": "Storage services",
+      "pos": [
+        610,
+        445
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "store-a",
+      "type": "database",
+      "label": "Store A",
+      "sublabel": "Storage services",
+      "pos": [
+        610,
+        555
+      ],
+      "size": [
+        190,
+        72
+      ]
+    },
+    {
+      "id": "store-b",
+      "type": "database",
+      "label": "Store B",
+      "sublabel": "Storage services",
+      "pos": [
+        610,
+        665
+      ],
+      "size": [
+        190,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application",
+      "pad": 16,
+      "wraps": [
+        "page"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Inference provider",
+      "pad": 16,
+      "wraps": [
+        "classify",
+        "extract"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage services",
+      "pad": 16,
+      "wraps": [
+        "record",
+        "object",
+        "store-a",
+        "store-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "classify-call",
+      "from": "page",
+      "to": "classify",
+      "label": "1 · await classify PDF",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "extract-call",
+      "from": "page",
+      "to": "extract",
+      "label": "2 · await extract PDF",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "save-record",
+      "from": "page",
+      "to": "record",
+      "label": "3 · await save record",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "upload-file",
+      "from": "page",
+      "to": "object",
+      "label": "4 · await upload file",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "write-a",
+      "from": "page",
+      "to": "store-a",
+      "label": "5.a · write A [parallel P]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "write-b",
+      "from": "page",
+      "to": "store-b",
+      "label": "5.b · write B [parallel P]",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

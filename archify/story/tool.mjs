@@ -100,7 +100,7 @@ export function buildStory(file,planFile,out,{standalone=false,repoRoot}={}){
   if(!input||typeof input!=='object'||Array.isArray(input))throw Error('The story brief must be a JSON object.');
   if(input.accent!==undefined&&(typeof input.accent!=='string'||!/^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(input.accent)))throw Error('Accent must be a literal hex color (#rgb, #rgba, #rrggbb or #rrggbbaa).');
   if(attach&&!['btn-motion','motion-label','export-menu'].every(id=>source.tree.some(node=>attr(node,'id')===id)))throw Error('Story attachment needs the native Viewer controls; generate the source with archify render first.');
-  const plan=input.version===2?compileBrief(input,facts):input;
+  const {nodeSequences,...plan}=input.version===2?compileBrief(input,facts):input;
   plan.defaultMode='explain';
   const nodes=new Set(facts.nodes.map(node=>node.id)),edges=new Set(facts.edges.map(edge=>edge.id));
   if(plan.version!==1||!plan.shots?.length)throw Error('Invalid story plan.');
@@ -152,7 +152,7 @@ export function buildStory(file,planFile,out,{standalone=false,repoRoot}={}){
 <main class="stage"><div class="ambient"></div><div class="mast"><div class="brand"><img src="${brandRef}" alt="">Archify<span>STORY STUDIO</span></div><div class="chapter"></div></div><div class="heading"><div class="eyebrow">${esc(plan.eyebrow)}</div><div class="headlines"><div class="headline-old" aria-hidden="true"></div><h1>${esc(plan.title)}</h1></div></div><div class="phase-rail"></div><div class="plot-safe-area" aria-hidden="true"></div><div class="viewport"><div class="art diagram-container">${serializeOuter(source.svg)}</div></div><div class="callouts"></div><div class="subtitle-wrap"><div class="subtitle"></div></div><div class="transition-light"></div></main>
 <div class="controls" lang="en"><button data-play>Play</button><button data-replay>Replay</button><input class="timeline" aria-label="Story playback position" type="range" min="0" max="30" step="0.01" value="0"><span class="clock"></span><button data-sound aria-pressed="true">Sound on</button></div><p class="notes" lang="en">Native node entrances, connections and sound share the story timeline. Space to play or pause.</p></div><div hidden><button id="btn-motion"><span id="motion-label"></span></button></div>
 <script type="application/json" id="story-data">${data}</script><script>if(new URLSearchParams(location.search).has('export'))document.body.classList.add('export');window.Archify={};function viewerText(key){return key;}</script><script>${nativeMotion}</script><script>${fs.readFileSync(path.join(here,'story-audio.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'scope-field.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story-webm.js'),'utf8')}</script><script>${fs.readFileSync(path.join(here,'story-export.js'),'utf8')}</script></body></html>`;
-  const html=attach?attachStory(source.html,storyHtml):storyHtml;
+  const html=attach?attachStory(source.html,storyHtml,input.version===2?nodeSequences:[]):storyHtml;
   writeStoryOutput(out,html,()=>resolveOutputPath(outputGuard));
   return {output:out,bytes:Buffer.byteLength(html),duration:plan.shots.reduce((sum,shot)=>sum+(plan.defaultMode==='explain'?shot.explain?.duration??shot.duration:shot.duration),0),source:facts.title,nodes:facts.nodes.length,edges:facts.edges.length,
     briefCharacters:[...JSON.stringify(input)].length,planCharacters:[...JSON.stringify(plan)].length};

@@ -1,0 +1,227 @@
+
+> test:browser
+> node scripts/run-browser-tests.mjs test/focus-browser.test.mjs test/export-cleanup-browser.test.mjs test/semantic-passport-move-browser.test.mjs test/story-browser.test.mjs
+
+Browser tests: 4 files, concurrency 2
+TAP version 13
+# Subtest: Export cleanup preserves canonical artifacts and live interaction state
+    # Subtest: five modes export standalone SVG in both themes and reduced motion
+    ok 1 - five modes export standalone SVG in both themes and reduced motion
+      ---
+      duration_ms: 2452.080125
+      ...
+    # Subtest: explicit light and dark SVG exports stay fixed under the opposite OS theme
+    ok 2 - explicit light and dark SVG exports stay fixed under the opposite OS theme
+      ---
+      duration_ms: 427.956875
+      ...
+    # Subtest: fixed SVG options do not depend on WebP encoding
+    ok 3 - fixed SVG options do not depend on WebP encoding
+      ---
+      duration_ms: 188.553208
+      ...
+    # Subtest: real zoom, focus, preview, lens and route actions leave exports clean
+    ok 4 - real zoom, focus, preview, lens and route actions leave exports clean
+      ---
+      duration_ms: 1955.051792
+      ...
+    # Subtest: raster and share-card exports preserve dimensions and current theme
+    ok 5 - raster and share-card exports preserve dimensions and current theme
+      ---
+      duration_ms: 2886.223625
+      ...
+    # Subtest: clone restoration, preservation and repeated cleanup are independent of live DOM
+    ok 6 - clone restoration, preservation and repeated cleanup are independent of live DOM
+      ---
+      duration_ms: 206.221083
+      ...
+    # Subtest: share decoration follows cleanup and preserves snapshot rejection behavior
+    ok 7 - share decoration follows cleanup and preserves snapshot rejection behavior
+      ---
+      duration_ms: 652.583833
+      ...
+    1..7
+ok 1 - Export cleanup preserves canonical artifacts and live interaction state
+  ---
+  duration_ms: 11408.319667
+  ...
+# Subtest: Focus preserves semantic selection, relationships, reachability and shared flow tokens
+    # Subtest: five modes expose the same Focus and flowTokens surfaces at cold start
+    not ok 1 - five modes expose the same Focus and flowTokens surfaces at cold start
+      ---
+      duration_ms: 359.674459
+      location: '<checkout>/test/focus-browser.test.mjs:106:11'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected ... Lines skipped
+
+          [
+            'active',
+        ...
+            'set',
+            'setMany',
+        +   'supportsPassportSteps'
+          ]
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        0: 'active'
+        1: 'clear'
+        2: 'clearReach'
+        3: 'copyLink'
+        4: 'explain'
+        5: 'explaining'
+        6: 'inspectRelationship'
+        7: 'inspectRelationshipById'
+        8: 'reach'
+        9: 'reachability'
+        10: 'reachabilitySnapshot'
+        11: 'relationship'
+        12: 'reposition'
+        13: 'set'
+        14: 'setMany'
+      actual:
+        0: 'active'
+        1: 'clear'
+        2: 'clearReach'
+        3: 'copyLink'
+        4: 'explain'
+        5: 'explaining'
+        6: 'inspectRelationship'
+        7: 'inspectRelationshipById'
+        8: 'reach'
+        9: 'reachability'
+        10: 'reachabilitySnapshot'
+        11: 'relationship'
+        12: 'reposition'
+        13: 'set'
+        14: 'setMany'
+        15: 'supportsPassportSteps'
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (file://<checkout>/test/focus-browser.test.mjs:109:31)
+        process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+        async Test.run (node:internal/test_runner/test:797:9)
+        async TestContext.<anonymous> (file://<checkout>/test/focus-browser.test.mjs:106:3)
+        async Test.run (node:internal/test_runner/test:797:9)
+        async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+      ...
+    # Subtest: native node input and option variants preserve selection and cleanup side effects
+    ok 2 - native node input and option variants preserve selection and cleanup side effects
+      ---
+      duration_ms: 658.785166
+      ...
+    # Subtest: Passport rows preserve keyboard navigation, missing metadata and no-neighbor state
+    ok 3 - Passport rows preserve keyboard navigation, missing metadata and no-neighbor state
+      ---
+      duration_ms: 1106.271959
+      ...
+    # Subtest: relationship focus and pointer intents yield to pins and direct keyboard exploration
+    ok 4 - relationship focus and pointer intents yield to pins and direct keyboard exploration
+      ---
+      duration_ms: 1635.725667
+      ...
+    # Subtest: direct pointer delay, touch filtering and background input keep ownership rules
+    ok 5 - direct pointer delay, touch filtering and background input keep ownership rules
+      ---
+      duration_ms: 1428.648375
+      ...
+    # Subtest: authored graph geometry and shared token kinds preserve grouping and direction
+    ok 6 - authored graph geometry and shared token kinds preserve grouping and direction
+      ---
+      duration_ms: 383.486125
+      ...
+    # Subtest: reachability handles cycles, parallel edges, toggles and strict snapshot rejection
+    ok 7 - reachability handles cycles, parallel edges, toggles and strict snapshot rejection
+      ---
+      duration_ms: 1715.044959
+      ...
+    # Subtest: cold URLs and hashchange preserve focus, relation, reach and query semantics
+    ok 8 - cold URLs and hashchange preserve focus, relation, reach and query semantics
+      ---
+      duration_ms: 1567.131458
+      ...
+    # Subtest: copy fallback and delayed feedback retain node, reach and relation links
+    ok 9 - copy fallback and delayed feedback retain node, reach and relation links
+      ---
+      duration_ms: 10160.015709
+      ...
+    # Subtest: real pulse completion and motion transitions preserve static relationship state
+    ok 10 - real pulse completion and motion transitions preserve static relationship state
+      ---
+      duration_ms: 2062.340958
+      ...
+    # Subtest: real SVG export strips temporary Focus, Reach and relationship state from clones
+    ok 11 - real SVG export strips temporary Focus, Reach and relationship state from clones
+      ---
+      duration_ms: 808.595625
+      ...
+    # Subtest: Passport layout and dark/light output remain stable through viewport and camera changes
+    ok 12 - Passport layout and dark/light output remain stable through viewport and camera changes
+      ---
+      duration_ms: 3381.8385
+      ...
+    1..12
+not ok 2 - Focus preserves semantic selection, relationships, reachability and shared flow tokens
+  ---
+  duration_ms: 27963.494875
+  location: '<checkout>/test/focus-browser.test.mjs:14:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: Semantic Passport pointer movement honors threshold, capture, four-edge clamp, persistence, cancel, and resets
+ok 3 - Semantic Passport pointer movement honors threshold, capture, four-edge clamp, persistence, cancel, and resets
+  ---
+  duration_ms: 2171.465708
+  ...
+# Subtest: compact ERD Passport reclamps to the settled container when the reader cap stops binding
+ok 4 - compact ERD Passport reclamps to the settled container when the reader cap stops binding
+  ---
+  duration_ms: 3970.29
+  ...
+# Subtest: Semantic Passport keyboard movement uses coarse/fine steps, Home reset, and resize reclamping
+ok 5 - Semantic Passport keyboard movement uses coarse/fine steps, Home reset, and resize reclamping
+  ---
+  duration_ms: 2894.522959
+  ...
+# Subtest: mobile scrolling and wide coarse pointers keep automatic placement and hide the move affordance
+ok 6 - mobile scrolling and wide coarse pointers keep automatic placement and hide the move affordance
+  ---
+  duration_ms: 1527.105625
+  ...
+# Subtest: move affordance exposes localized accessible names and a visible keyboard focus ring
+ok 7 - move affordance exposes localized accessible names and a visible keyboard focus ring
+  ---
+  duration_ms: 1591.085083
+  ...
+# Subtest: manual Passport placement composes with Radar, Legend, Dock, and clean SVG, PNG, and WebM export
+ok 8 - manual Passport placement composes with Radar, Legend, Dock, and clean SVG, PNG, and WebM export
+  ---
+  duration_ms: 1765.278041
+  ...
+# Subtest: attachment preserves localized native state labels and localizes the Story transition
+ok 9 - attachment preserves localized native state labels and localizes the Story transition
+  ---
+  duration_ms: 7270.731292
+  ...
+# Subtest: a public story attaches once, follows native appearance and retains source notes and exports
+ok 10 - a public story attaches once, follows native appearance and retains source notes and exports
+  ---
+  duration_ms: 12994.974584
+  ...
+# Subtest: flowless guides stay out of the story opening clock
+ok 11 - flowless guides stay out of the story opening clock
+  ---
+  duration_ms: 2261.596333
+  ...
+1..11
+# tests 30
+# suites 0
+# pass 28
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 48082.515666

@@ -1386,6 +1386,7 @@
           lensFrame = 0;
         }
         if (chip.hidden || activeIds.length !== 1) return;
+        if (Archify.passportSteps && Archify.passportSteps.place()) return;
         if (compactPassportViewport()) compactPassportHeight();
         else {
           chip.style.removeProperty('--passport-viewport-top');
@@ -1796,6 +1797,7 @@
         // Export consumes the active semantic snapshot; its controls are not
         // an outside selection. Genuine outside activation still clears it.
         if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu')) return;
+        if (target.closest('#btn-motion') && Archify.passportSteps && Archify.passportSteps.isPlaying()) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
@@ -1849,6 +1851,7 @@
 
       return {
         set: set,
+        supportsPassportSteps: true,
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,

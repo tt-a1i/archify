@@ -1,0 +1,56 @@
+{
+  "version": 2,
+  "title": "PDF ingest — author-declared calls",
+  "intro": "Synthetic successful path. Stages complete before the next stage starts.",
+  "outro": "The parallel batch has no declared A/B completion order. No runtime timing is asserted.",
+  "scenes": [
+    {
+      "title": "Single caller, declared stages",
+      "points": [
+        {
+          "anchor": "page",
+          "via": "classify-call",
+          "title": "Classify",
+          "text": "The page handler starts this scenario by classifying the PDF.",
+          "caption": "1 · await classify PDF",
+          "action": "trace"
+        },
+        {
+          "anchor": "page",
+          "via": "extract-call",
+          "title": "Extract",
+          "text": "The page handler makes this call after the preceding stage completes.",
+          "caption": "2 · await extract PDF",
+          "action": "trace"
+        },
+        {
+          "anchor": "page",
+          "via": "save-record",
+          "title": "Save record",
+          "text": "The page handler makes this call after the preceding stage completes.",
+          "caption": "3 · await save record",
+          "action": "trace"
+        },
+        {
+          "anchor": "page",
+          "via": "upload-file",
+          "title": "Upload file",
+          "text": "The page handler makes this call after the preceding stage completes.",
+          "caption": "4 · await upload file",
+          "action": "trace"
+        },
+        {
+          "anchor": "page",
+          "via": [
+            "write-a",
+            "write-b"
+          ],
+          "action": "parallel",
+          "title": "Parallel writes",
+          "text": "After upload completes, launch both writes in one batch. No relative completion order or exact simultaneous clock time is claimed.",
+          "caption": "P: write A and B together; neither is before the other."
+        }
+      ]
+    }
+  ]
+}

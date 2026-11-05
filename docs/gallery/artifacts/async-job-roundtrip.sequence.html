@@ -6305,6 +6305,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
 
       function cleanExportClone(clone) {
+        Array.prototype.forEach.call(clone.querySelectorAll('[data-passport-step]'), function (el) {
+          el.removeAttribute('data-passport-step');
+        });
         Array.prototype.forEach.call(clone.querySelectorAll('a[data-archify-authored-href]'), function (anchor) {
           anchor.setAttribute('href', anchor.getAttribute('data-archify-authored-href'));
           anchor.removeAttribute('data-archify-authored-href');
@@ -6463,6 +6466,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           el.setAttribute('aria-label', el.getAttribute('data-tree-label-collapse') || '');
         });
         return !clone.hasAttribute('data-view-scale') &&
+          !clone.querySelector('[data-passport-step]') &&
           !clone.hasAttribute('data-focus-active') &&
           !clone.hasAttribute('data-reach-active') &&
           !clone.hasAttribute('data-lens-active') &&
@@ -10171,6 +10175,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           lensFrame = 0;
         }
         if (chip.hidden || activeIds.length !== 1) return;
+        if (Archify.passportSteps && Archify.passportSteps.place()) return;
         if (compactPassportViewport()) compactPassportHeight();
         else {
           chip.style.removeProperty('--passport-viewport-top');
@@ -10581,6 +10586,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         // Export consumes the active semantic snapshot; its controls are not
         // an outside selection. Genuine outside activation still clears it.
         if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map, #btn-export, #export-menu')) return;
+        if (target.closest('#btn-motion') && Archify.passportSteps && Archify.passportSteps.isPlaying()) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
@@ -10634,6 +10640,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
       return {
         set: set,
+        supportsPassportSteps: true,
         setMany: setMany,
         clear: clear,
         copyLink: copyFocusLink,
