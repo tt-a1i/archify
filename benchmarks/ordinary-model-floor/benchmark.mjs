@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { workflowEdgeLabel } from '../../archify/renderers/workflow/workflow-decisions.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../..');
@@ -119,7 +120,9 @@ function evaluateSemantic(benchmarkCase, candidate) {
   const requirements = benchmarkCase.requirements || {};
   const collections = COLLECTIONS[benchmarkCase.diagram_type];
   const nodes = candidate[collections.nodes] || [];
-  const relationships = candidate[collections.relationships] || [];
+  const relationships = benchmarkCase.diagram_type === 'workflow'
+    ? (candidate[collections.relationships] || []).map((edge) => ({ ...edge, label: workflowEdgeLabel(edge) }))
+    : candidate[collections.relationships] || [];
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const nodeIds = new Set(nodesById.keys());
   const requiredNodeIds = [
