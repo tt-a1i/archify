@@ -755,6 +755,26 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       return Promise.resolve(fallbackCopy());
     }
 
+    // Direction describes authored connectivity, independently of path order.
+    // Missing metadata is the historical forward contract; invalid values fail closed.
+    function edgeDirection(edge) {
+      var value = edge && edge.getAttribute('data-edge-direction');
+      var direction = value == null ? 'forward' : value;
+      return ['forward', 'both', 'none'].indexOf(direction) >= 0 ? direction : null;
+    }
+    function edgeAllowsStep(edge, from, to) {
+      var direction = edgeDirection(edge);
+      if (!direction) return false;
+      var source = edge.getAttribute('data-edge-from');
+      var target = edge.getAttribute('data-edge-to');
+      return (source === from && target === to) ||
+        (direction !== 'forward' && source === to && target === from);
+    }
+    function edgeConnector(edge) {
+      var direction = edgeDirection(edge);
+      return direction === 'both' ? '\u2194' : direction === 'none' ? '\u2014' : '\u2192';
+    }
+
     function hasDrawableGeometry(element) {
       if (!element || element.hasAttribute('data-ambient-flow-overlay')) return false;
       var geometries = /^(path|line|polyline)$/i.test(element.tagName)

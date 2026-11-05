@@ -40,7 +40,11 @@
                 "cloud": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "security": { "$ref": "common.schema.json#/$defs/legendEntry" },
                 "messagebus": { "$ref": "common.schema.json#/$defs/legendEntry" },
-                "external": { "$ref": "common.schema.json#/$defs/legendEntry" }
+                "external": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "relation-label": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "relation-forward": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "relation-both": { "$ref": "common.schema.json#/$defs/legendEntry" },
+                "relation-none": { "$ref": "common.schema.json#/$defs/legendEntry" }
               }
             }
           }
@@ -130,10 +134,19 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["from", "to"],
+        "allOf": [{
+          "if": { "required": ["arrowPosition"], "properties": { "arrowPosition": { "const": "label" } } },
+          "then": { "required": ["label"], "properties": {
+            "direction": { "const": "forward" },
+            "label": { "type": "string", "pattern": "\\S" }
+          } }
+        }],
         "properties": {
           "id": { "$ref": "common.schema.json#/$defs/id" },
           "from": { "$ref": "common.schema.json#/$defs/id" },
           "to": { "$ref": "common.schema.json#/$defs/id" },
+          "direction": { "enum": ["forward", "both", "none"] },
+          "arrowPosition": { "enum": ["endpoints", "label"] },
           "label": { "type": "string" },
           "variant": { "$ref": "common.schema.json#/$defs/variant" },
           "fromSide": { "$ref": "common.schema.json#/$defs/side" },

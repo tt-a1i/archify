@@ -12,6 +12,14 @@ When a relationship label collides, move the label, adjust the route or spacing,
 
 For a disproportionate sublabel, keep its exact role or protocol concise and place the supplementary fact in a note or card. Preserve every required responsibility, protocol, and boundary fact. Use the first-draft node-width budget in [Layout and routing](authoring-defaults.md#layout-and-routing).
 
+## Label arrows
+
+Architecture connections default to `arrowPosition: "endpoints"`. Opting into `"label"` requires a nonblank `label` and an omitted or `forward` direction. The connection remains directed and retains its own ID, endpoints, query, and playback identity. `both` and `none` retain their endpoint conventions; neither accepts label arrows.
+
+The small filled marker follows the local route at the label, not a fixed left/right rule. Its space is included in the label mask, collision checks, layout report, and canvas bounds. Without label coordinates or offsets, the preferred position is the longest route segment's midpoint, on the left side of travel; reversed paths therefore prefer opposite sides of the same segment. Existing automatic collision repair may move unpinned labels. Geometric position breaks equal-length ties. Existing `labelAt`, `labelDx`, and `labelDy` remain authoritative. `labelSegment` selects a specific segment. Direction-bearing labels remain visible at reduced detail and survive canonical export. The automatic legend explains the marker; `meta.legend.entries.relation-label` supports existing label and visibility overrides.
+
+Two labelled forward connections may share a path without becoming one `both` relationship. Sharing is an authored presentation choice, not an automatic pairing rule. Preserve each action and its direction, and use separate routes where shared labels cannot remain attributable. Neither a label arrow nor a shared path asserts simultaneity or execution order.
+
 ## Schema lookup
 
 Read both the mode schema and `schemas/common.schema.json`. The mode schemas use `$ref`, so the common file is where shared enums live.

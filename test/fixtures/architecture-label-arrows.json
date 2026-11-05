@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": { "title": "Commands and results", "output": "label-arrows.html", "quality_profile": "showcase" },
+  "components": [
+    { "id": "manager", "type": "backend", "label": "Manager", "pos": [40, 80], "size": [120, 60] },
+    { "id": "cli", "type": "backend", "label": "CLI", "pos": [420, 80], "size": [120, 60] }
+  ],
+  "connections": [
+    { "id": "request", "from": "manager", "to": "cli", "label": "Create task", "route": "straight", "arrowPosition": "label" },
+    { "id": "response", "from": "cli", "to": "manager", "label": "Execution result", "route": "straight", "arrowPosition": "label" }
+  ]
+}

@@ -165,6 +165,8 @@ function boundaryIndex(boundaries, side) {
 
 function normalizedField(item, field) {
   const value = item?.[field];
+  if (field === 'direction') return value || 'forward';
+  if (field === 'arrowPosition') return value || 'endpoints';
   if (field === 'sources' && Array.isArray(value)) return sortedObjects(value);
   if (field === 'wraps' && Array.isArray(value)) return sorted(value);
   return value;
@@ -188,8 +190,8 @@ const COMPONENT_FIELDS = {
 };
 const CONNECTION_FIELDS = {
   topology: ['from', 'to'],
-  semantic: ['label', 'variant'],
-  geometry: ['fromSide', 'toSide', 'route', 'via', 'labelAt', 'labelDx', 'labelDy', 'labelSegment', 'width'],
+  semantic: ['label', 'variant', 'direction'],
+  geometry: ['fromSide', 'toSide', 'route', 'via', 'labelAt', 'labelDx', 'labelDy', 'labelSegment', 'width', 'arrowPosition'],
 };
 const BOUNDARY_FIELDS = { scope: ['wraps'], geometry: ['pad'] };
 
@@ -210,6 +212,9 @@ function compareEntities(baseIndex, headIndex, kind, groups, describe) {
     else if (!head) changes.push({ ...describe(id, base, undefined), status: 'removed', classifications: [identityClassification], changedFields: [] });
     else {
       const fields = fieldChanges(base, head, groups);
+      if (kind === 'connection' && ((base.direction || 'forward') === 'forward') !== ((head.direction || 'forward') === 'forward')) {
+        fields.classifications = sorted(new Set([...fields.classifications, 'topology']));
+      }
       const status = statusFor(fields.classifications, kind);
       if (status !== 'same') changes.push({ ...describe(id, base, head), status, ...fields });
     }

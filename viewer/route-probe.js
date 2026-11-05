@@ -1,5 +1,5 @@
     /* ============================================================
-       Route Probe — shortest directed path over compiled semantics.
+       Route Probe — shortest path respecting compiled relationship directions.
        The graph is read from renderer-owned stable IDs and relationship
        endpoints. BFS order follows authored DOM edge order, so equal-length
        choices are deterministic without adding weights or a graph runtime.
@@ -38,6 +38,15 @@
       var journeyElapsedMs = 0;
       var journeyOwnerToken = 0;
       var JOURNEY_DWELL_MS = 1100;
+      var structuralRelations = !!svg.querySelector('[data-edge-direction="both"], [data-edge-direction="none"]');
+      if (structuralRelations) {
+        trigger.setAttribute('aria-label', viewerText('viewer.relationship.route.title'));
+        var guide = document.querySelector('[data-guide-action="route"]');
+        if (guide) {
+          guide.setAttribute('aria-label', viewerText('viewer.relationship.route.title'));
+          guide.querySelector('small').textContent = viewerText('viewer.relationship.route.instructions');
+        }
+      }
 
       function nodes() {
         return Array.prototype.slice.call(svg.querySelectorAll('[data-node-id]'));
@@ -54,6 +63,7 @@
         return node.getAttribute('data-node-label') ||
           (node.getAttribute('aria-label') || fallback).replace(/^Focus\s+/, '').split(',')[0];
       }
+      var activeEdgeDirections = [];
       function exportSnapshot() {
         if (mode !== 'result' || activeNodeIds.length < 2 || activeEdges.length !== activeNodeIds.length - 1) return null;
         var allNodes = nodes();
@@ -69,7 +79,7 @@
               return !byId[id];
             }) ||
             activeEdges.some(function (edge, index) {
-              if (!edge || !svg.contains(edge)) return true;
+              if (!edge || !svg.contains(edge) || edgeDirection(edge) !== activeEdgeDirections[index]) return true;
               var edgeKey = edge.getAttribute('data-edge-key');
               var edgeId = edge.getAttribute('data-edge-id') || '';
               if (!edgeKey || seenEdgeKeys[edgeKey]) return true;
@@ -79,12 +89,12 @@
               });
               var drawableFragments = fragments.filter(hasDrawableGeometry);
               return !fragments.length || !fragments.every(function (fragment) {
-                return fragment.getAttribute('data-edge-from') === activeNodeIds[index] &&
-                  fragment.getAttribute('data-edge-to') === activeNodeIds[index + 1] &&
+                return fragment.getAttribute('data-edge-from') === edge.getAttribute('data-edge-from') &&
+                  fragment.getAttribute('data-edge-to') === edge.getAttribute('data-edge-to') &&
+                  edgeDirection(fragment) === edgeDirection(edge) &&
                   (fragment.getAttribute('data-edge-id') || '') === edgeId;
               }) || drawableFragments.length !== 1 || drawableFragments[0] !== edge ||
-                edge.getAttribute('data-edge-from') !== activeNodeIds[index] ||
-                edge.getAttribute('data-edge-to') !== activeNodeIds[index + 1];
+                !edgeAllowsStep(edge, activeNodeIds[index], activeNodeIds[index + 1]);
             })) return null;
         return {
           source: { id: startId, label: nodeLabel(byId[startId], startId) },
@@ -97,6 +107,7 @@
               id: edge.getAttribute('data-edge-id') || '',
               from: edge.getAttribute('data-edge-from'),
               to: edge.getAttribute('data-edge-to'),
+              ...(edgeDirection(edge) === 'forward' ? {} : { direction: edgeDirection(edge) }),
               label: edge.getAttribute('data-edge-label') || ''
             };
           })
@@ -204,7 +215,12 @@
             var arrow = document.createElement('span');
             arrow.className = 'route-probe-arrow';
             arrow.setAttribute('aria-hidden', 'true');
-            arrow.textContent = '\u2192';
+            arrow.textContent = options.interactive === true ? edgeConnector(activeEdges[index - 1]) : '\u2192';
+            if (options.interactive === true && edgeDirection(activeEdges[index - 1]) !== 'forward') {
+              arrow.removeAttribute('aria-hidden');
+              arrow.setAttribute('role', 'img');
+              arrow.setAttribute('aria-label', viewerText('viewer.relationship.direction.' + edgeDirection(activeEdges[index - 1])));
+            }
             path.appendChild(arrow);
           }
           var item = document.createElement(options.interactive === true ? 'button' : 'span');
@@ -229,7 +245,7 @@
       }
       function setTrigger(active) {
         trigger.setAttribute('aria-pressed', active ? 'true' : 'false');
-        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.route.trigger.clear' : 'viewer.guide.route.aria'));
+        trigger.setAttribute('aria-label', viewerText(active ? 'viewer.route.trigger.clear' : structuralRelations ? 'viewer.relationship.route.title' : 'viewer.guide.route.aria'));
       }
       function clear(options) {
         options = options || {};
@@ -242,13 +258,14 @@
         endId = null;
         activeNodeIds = [];
         activeEdges = [];
+        activeEdgeDirections = [];
         cleanSvgState();
         panel.hidden = true;
         panel.setAttribute('data-state', 'idle');
         panel.removeAttribute('data-finder-open');
         title.textContent = viewerText('viewer.route.start');
         renderPlaceholder(viewerText('viewer.route.pickTwo'));
-        status.textContent = viewerText('viewer.route.instructions');
+        status.textContent = viewerText(structuralRelations ? 'viewer.relationship.route.instructions' : 'viewer.route.instructions');
         findBtn.hidden = true;
         findBtn.textContent = viewerText('viewer.route.start.find');
         findBtn.setAttribute('aria-label', viewerText('viewer.route.start.find.aria'));
@@ -268,9 +285,14 @@
         edges().forEach(function (edge) {
           var from = edge.getAttribute('data-edge-from');
           var to = edge.getAttribute('data-edge-to');
-          if (!byId[from] || !byId[to] || from === to) return;
+          var direction = edgeDirection(edge);
+          if (!direction || !byId[from] || !byId[to] || from === to) return;
           if (!outgoing[from]) outgoing[from] = [];
           outgoing[from].push({ edge: edge, to: to });
+          if (direction !== 'forward') {
+            if (!outgoing[to]) outgoing[to] = [];
+            outgoing[to].push({ edge: edge, to: from });
+          }
         });
         return outgoing;
       }
@@ -366,6 +388,7 @@
         overlay.setAttribute('data-route-probe-overlay', '');
         overlay.setAttribute('aria-hidden', 'true');
         routeEdges.forEach(function (edge, step) {
+          if (edgeDirection(edge) !== 'forward') return;
           var wrapper = document.createElementNS(namespace, 'g');
           if (edge.hasAttribute('transform')) wrapper.setAttribute('transform', edge.getAttribute('transform'));
           edgeShapes(edge).forEach(function (shape) { wrapper.appendChild(traceGeometry(shape, step)); });
@@ -463,7 +486,7 @@
       }
       function renderJourneyPulse(edge) {
         removeJourneyPulse();
-        if (!edge || !journeyMotionAllowed()) return false;
+        if (!edge || edgeDirection(edge) !== 'forward' || !journeyMotionAllowed()) return false;
         var overlay = document.createElementNS(namespace, 'g');
         overlay.setAttribute('class', 'route-journey-overlay');
         overlay.setAttribute('data-route-journey-overlay', '');
@@ -581,6 +604,9 @@
         journeyIndex = -1;
         clearJourneyPresentation({ keepControls: true });
         status.textContent = routeOverviewStatus();
+        if (activeEdges.some(function (edge) { return edgeDirection(edge) !== 'forward'; })) {
+          status.textContent += ' ' + viewerText('viewer.relationship.structural');
+        }
         renderJourneyControls();
         if (options.reveal !== false && Archify.view && typeof Archify.view.reveal === 'function') {
           Archify.view.reveal(activeNodeIds, { includeNeighbors: false, reason: 'route', instant: !journeyMotionAllowed() });
@@ -711,7 +737,7 @@
         var count = Math.max(0, Object.keys(reached).length - 1);
         status.textContent = count
           ? viewerCount('viewer.route.destination.count', count)
-          : viewerText('viewer.route.noOutgoing');
+          : viewerText(structuralRelations ? 'viewer.relationship.route.noOutgoing' : 'viewer.route.noOutgoing');
         findBtn.hidden = false;
         findBtn.textContent = viewerText('viewer.route.destination.find');
         findBtn.setAttribute('aria-label', viewerText('viewer.route.destination.find.aria'));
@@ -727,6 +753,7 @@
         endId = result.nodes[result.nodes.length - 1];
         activeNodeIds = result.nodes.slice();
         activeEdges = result.edges.slice();
+        activeEdgeDirections = result.edges.map(edgeDirection);
         result.nodes.forEach(function (id, step) {
           var node = byId[id];
           if (!node) return;
@@ -779,7 +806,7 @@
         if (!result) {
           panel.setAttribute('data-state', 'error');
           title.textContent = viewerText('viewer.route.unreachable', { label: nodeLabel(byId[id], id) });
-          status.textContent = viewerText('viewer.route.unreachable.detail', {
+          status.textContent = viewerText(structuralRelations ? 'viewer.relationship.route.unreachable' : 'viewer.route.unreachable.detail', {
             target: nodeLabel(byId[id], id),
             source: nodeLabel(byId[startId], startId)
           });

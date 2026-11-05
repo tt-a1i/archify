@@ -48,6 +48,7 @@ export function connectionPath(conn, routed, labelAt) {
     to: conn.to,
     label: conn.label ?? null,
     variant: conn.variant ?? 'default',
+    ...(conn.direction && conn.direction !== 'forward' ? { direction: conn.direction } : {}),
     route: conn.route ?? 'auto',
     // These points are repair inputs: rounding a fractional port makes a
     // reused waypoint diagonal relative to the actual endpoint.

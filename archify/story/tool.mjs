@@ -38,9 +38,11 @@ function factsOf(source){
   const evidence=evidenceNode?JSON.parse(text(evidenceNode)):null;
   const edgeMap=new Map();
   for(const node of source.elements.filter(node=>attr(node,'data-edge-id'))){
-    const id=attr(node,'data-edge-id'),values={id,key:attr(node,'data-edge-key'),from:attr(node,'data-edge-from'),to:attr(node,'data-edge-to'),label:attr(node,'data-edge-label'),ends:attr(node,'data-er-ends'),kind:attr(node,'data-class-relationship')};
+    const id=attr(node,'data-edge-id'),values={id,key:attr(node,'data-edge-key'),from:attr(node,'data-edge-from'),to:attr(node,'data-edge-to'),label:attr(node,'data-edge-label'),ends:attr(node,'data-er-ends'),kind:attr(node,'data-class-relationship'),direction:attr(node,'data-edge-direction')};
     if(walk(node).some(part=>attr(part,'data-animate')==='edge'))values.animated=true;
     const previous=edgeMap.get(id);
+    if(values.direction!==undefined&&!['forward','both','none'].includes(values.direction))throw Error('Invalid source connection direction '+id+'.');
+    if(previous&&(previous.direction||'forward')!==(values.direction||'forward'))throw Error('Conflicting source connection '+id+' (direction).');
     for(const key of ['key','from','to','label','ends','kind'])if(values[key]!==undefined&&previous?.[key]!==undefined&&values[key]!==previous[key])throw Error('Conflicting source connection '+id+' ('+key+').');
     edgeMap.set(id,{...previous,...Object.fromEntries(Object.entries(values).filter(([,value])=>value!==undefined))});
   }
@@ -53,7 +55,8 @@ function factsOf(source){
     return {id,label:attr(node,'data-node-label'),kind:attr(node,'data-node-kind'),sublabel:attr(node,'data-node-sublabel'),
       tag:attr(node,'data-node-tag'),context:attr(node,'data-node-context'),
       details:walk(node).filter(child=>child.tagName==='text').map(child=>text(child)).filter(Boolean),
-      incoming:edges.filter(edge=>edge.to===id).map(edge=>edge.id),outgoing:edges.filter(edge=>edge.from===id).map(edge=>edge.id),
+      incoming:edges.filter(edge=>(!edge.direction||edge.direction==='forward')&&edge.to===id).map(edge=>edge.id),outgoing:edges.filter(edge=>(!edge.direction||edge.direction==='forward')&&edge.from===id).map(edge=>edge.id),
+      ...(edges.some(edge=>edge.direction&&edge.direction!=='forward')?{bidirectional:edges.filter(edge=>edge.direction==='both'&&(edge.from===id||edge.to===id)).map(edge=>edge.id),associations:edges.filter(edge=>edge.direction==='none'&&(edge.from===id||edge.to===id)).map(edge=>edge.id)}:{}),
       ...(attr(node,'data-timeline-at')!==undefined?{at:attr(node,'data-timeline-at'),timeMs:Number(attr(node,'data-timeline-ms'))}:{}),
       ...(attr(node,'data-waterfall-start')!==undefined?{timing:{start:Number(attr(node,'data-waterfall-start')),end:attr(node,'data-waterfall-end')===''?null:Number(attr(node,'data-waterfall-end')),duration:Number(attr(node,'data-waterfall-duration')),depth:Number(attr(node,'data-waterfall-depth')),status:attr(node,'data-waterfall-status')}}:{}),
       sources:evidence?.verified===true?evidence.nodes?.[id]||[]:[]};

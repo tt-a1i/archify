@@ -105,7 +105,8 @@
           var fromId = snapshot.nodeIds[edgeIndex];
           var toId = snapshot.nodeIds[edgeIndex + 1];
           if (!edge || typeof edge.key !== 'string' || !edge.key || edgeKeys[edge.key] ||
-              edge.from !== fromId || edge.to !== toId) return false;
+              !((edge.from === fromId && edge.to === toId) ||
+                ((edge.direction === 'both' || edge.direction === 'none') && edge.from === toId && edge.to === fromId))) return false;
           var matchedEdges = cloneEdges.filter(function (candidate) {
             return candidate.getAttribute('data-edge-key') === edge.key;
           });
@@ -113,6 +114,7 @@
           if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
             return candidate.getAttribute('data-edge-from') === edge.from &&
               candidate.getAttribute('data-edge-to') === edge.to &&
+              edgeDirection(candidate) === (edge.direction || 'forward') &&
               (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
           })) return false;
           edgeKeys[edge.key] = true;
@@ -199,6 +201,7 @@
           if (!matchedEdges.length || drawableMatches.length !== 1 || !matchedEdges.every(function (candidate) {
             return candidate.getAttribute('data-edge-from') === edge.from &&
               candidate.getAttribute('data-edge-to') === edge.to &&
+              edgeDirection(candidate) === (edge.direction || 'forward') &&
               (candidate.getAttribute('data-edge-id') || '') === (edge.id || '');
           })) return false;
           edgeKeys[edge.key] = true;

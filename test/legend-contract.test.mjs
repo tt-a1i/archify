@@ -96,7 +96,7 @@ const AUTO_KINDS = {
 // Structural entries a renderer appends after its kind catalog when the
 // diagram draws the structure they explain (lifecycle final states).
 const STRUCTURAL = { lifecycle: ['final'] };
-const legendOrder = (type) => [...CATALOGS[type], ...(STRUCTURAL[type] || [])];
+const legendOrder = (type) => [...CATALOGS[type], ...(STRUCTURAL[type] || []), ...(type === 'architecture' ? ['relation-forward', 'relation-both', 'relation-none', 'relation-label'] : [])];
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
