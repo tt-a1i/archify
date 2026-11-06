@@ -14,7 +14,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 1;
+export const REVISION = 5;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -86,7 +86,7 @@ export function extract(root, config) {
       if (found.names.length) record.names = found.names;
       if (found.lazy) record.lazy = true;
       if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
-      const target = found.opaque ? { reason: 'opaque' } : resolve(found.specifier, abs, absRoot, fileSet, options, inputs);
+      const target = found.opaque ? { reason: 'opaque' } : resolve(found.specifier, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
       if (target.to) { record.to = target.to; record.resolved = true; }
       else unresolved[target.reason] += 1;
       imports.push(record);
@@ -142,14 +142,14 @@ function collectImports(source, checker, options) {
       const clause = node.importClause;
       const bindings = clause?.namedBindings;
       const inlineTypesOnly = !clause?.name && bindings && ts.isNamedImports(bindings) && bindings.elements.length > 0 && bindings.elements.every((e) => e.isTypeOnly);
-      found.push({ specifier: node.moduleSpecifier.text, kind: 'static', line: lineOf(source, node), names: importedNames(clause), typeOnly: Boolean(clause?.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
+      found.push({ specifier: node.moduleSpecifier.text, usage: node.moduleSpecifier, kind: 'static', line: lineOf(source, node), names: importedNames(clause), typeOnly: Boolean(clause?.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
     } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)
       && node.moduleReference.expression && ts.isStringLiteral(node.moduleReference.expression)) {
-      found.push({ specifier: node.moduleReference.expression.text, kind: 'require', line: lineOf(source, node), names: ['*'], typeOnly: Boolean(node.isTypeOnly) });
+      found.push({ specifier: node.moduleReference.expression.text, usage: node.moduleReference.expression, kind: 'require', line: lineOf(source, node), names: ['*'], typeOnly: Boolean(node.isTypeOnly) });
     } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
       const clause = node.exportClause;
       const inlineTypesOnly = clause && ts.isNamedExports(clause) && clause.elements.length > 0 && clause.elements.every((e) => e.isTypeOnly);
-      found.push({ specifier: node.moduleSpecifier.text, kind: 'export', line: lineOf(source, node), names: exportedNames(clause), typeOnly: Boolean(node.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
+      found.push({ specifier: node.moduleSpecifier.text, usage: node.moduleSpecifier, kind: 'export', line: lineOf(source, node), names: exportedNames(clause), typeOnly: Boolean(node.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
     } else if (ts.isCallExpression(node) && node.arguments.length) {
       const isImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
       const isRequire = !isImport && ts.isIdentifier(node.expression) && node.expression.text === 'require'
@@ -157,7 +157,7 @@ function collectImports(source, checker, options) {
       if (isImport || isRequire) {
         const kind = isImport ? 'dynamic' : 'require';
         if (ts.isStringLiteralLike(node.arguments[0])) {
-          found.push({ specifier: node.arguments[0].text, kind, line: lineOf(source, node), names: [], lazy: inFunctionBody(node) });
+          found.push({ specifier: node.arguments[0].text, usage: node.arguments[0], kind, line: lineOf(source, node), names: [], lazy: inFunctionBody(node) });
         } else {
           // A computed specifier (import(pathToFileURL(...)), require(name)) cannot
           // be resolved statically; it is recorded so the miss stays visible.
@@ -222,9 +222,10 @@ function exportedNames(clause) {
   return clause.elements.map((el) => (el.propertyName || el.name).text).sort();
 }
 
-function resolve(specifier, containingFile, absRoot, fileSet, options, inputs) {
+function resolve(specifier, containingFile, absRoot, fileSet, options, inputs, resolutionMode) {
   const isPathLike = specifier.startsWith('.') || specifier.startsWith('/');
-  const result = ts.resolveModuleName(specifier, containingFile, options, inputs);
+  // Without the usage mode, NodeNext selects require conditions even for import().
+  const result = ts.resolveModuleName(specifier, containingFile, options, inputs, undefined, undefined, resolutionMode);
   const resolvedFile = result.resolvedModule?.resolvedFileName;
   if (!resolvedFile) return { reason: isPathLike ? 'unknown' : 'external' };
   if (result.resolvedModule.isExternalLibraryImport || resolvedFile.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };

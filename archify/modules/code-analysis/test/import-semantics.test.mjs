@@ -155,6 +155,79 @@ test('TypeScript uses tsconfig path aliases and ignores Python files in explicit
   assert.ok(facts.files.every((f) => !f.path.endsWith('.py')));
 });
 
+test('JavaScript package conditions match Node for imports, exports, require and dynamic import', (t) => {
+  const { root, facts } = analyze(t, {
+    'package.json': JSON.stringify({ name: 'condition-fixture', type: 'module',
+      imports: { '#branch': { import: './esm.js', require: './cjs.cjs' } },
+      exports: { '.': { import: './esm.js', require: './cjs.cjs' } } }),
+    'esm.js': 'export const branch = "esm";\n',
+    'cjs.cjs': 'exports.branch = "cjs";\n',
+    'entry.mjs': [
+      'import { branch } from "#branch";',
+      'import { branch as self } from "condition-fixture";',
+      'export { branch } from "#branch";',
+      'import { createRequire } from "node:module";',
+      'const require = createRequire(import.meta.url);',
+      'const required = require("#branch").branch;',
+      'import("#branch").then(m => console.log(JSON.stringify([branch, self, required, m.branch])));',
+    ].join('\n'),
+    'entry.cjs': [
+      'const branch = require("#branch").branch;',
+      'const self = require("condition-fixture").branch;',
+      'import("#branch").then(m => console.log(JSON.stringify([branch, self, m.branch])));',
+    ].join('\n'),
+  }, 'ts');
+  const targets = from => facts.imports.filter(e => e.from === from && e.specifier !== 'node:module').map(e => [e.kind, e.to]);
+  assert.deepEqual(targets('entry.mjs'), [['static', 'esm.js'], ['static', 'esm.js'], ['export', 'esm.js'], ['require', 'cjs.cjs'], ['dynamic', 'esm.js']]);
+  assert.deepEqual(targets('entry.cjs'), [['require', 'cjs.cjs'], ['require', 'cjs.cjs'], ['dynamic', 'esm.js']]);
+  for (const [file, expected] of [['entry.mjs', ['esm', 'esm', 'cjs', 'esm']], ['entry.cjs', ['cjs', 'cjs', 'esm']]]) {
+    const actual = spawnSync(process.execPath, [file], { cwd: root, encoding: 'utf8', timeout: 10000 });
+    assert.equal(actual.status, 0, actual.stderr);
+    assert.deepEqual(JSON.parse(actual.stdout), expected);
+  }
+});
+
+test('TypeScript package conditions follow emitted syntax, package scope and resolution-mode attributes', (t) => {
+  const { facts } = analyze(t, {
+    'package.json': JSON.stringify({ type: 'module', imports: { '#branch': { import: './esm.mjs', require: './cjs.cjs' } } }),
+    'esm.mjs': 'export const branch = 1;\n',
+    'cjs.cjs': 'exports.branch = 2;\n',
+    'entry.ts': 'import { branch } from "#branch";\n',
+    'entry.mts': 'export { branch } from "#branch";\n',
+    'entry.cts': 'import { branch } from "#branch";\nexport { branch } from "#branch";\nimport req = require("#branch");\nimport("#branch");\n',
+    'nested/package.json': '{"type":"commonjs"}',
+    'nested/entry.ts': 'import { branch } from "#branch";\n',
+    'types.mts': 'import type { branch } from "#branch" with { "resolution-mode": "require" };\n',
+    'types.cts': 'import type { branch } from "#branch" with { "resolution-mode": "import" };\n',
+  }, 'ts');
+  const targets = from => facts.imports.filter(e => e.from === from).map(e => e.to);
+  assert.deepEqual(targets('entry.ts'), ['esm.mjs']);
+  assert.deepEqual(targets('entry.mts'), ['esm.mjs']);
+  assert.deepEqual(targets('entry.cts'), ['cjs.cjs', 'cjs.cjs', 'cjs.cjs', 'esm.mjs']);
+  assert.deepEqual(targets('types.mts'), ['cjs.cjs']);
+  assert.deepEqual(targets('types.cts'), ['esm.mjs']);
+  assert.equal(facts.imports.find(e => e.from === 'types.mts').typeOnly, true);
+  assert.deepEqual(targets('nested/entry.ts'), [undefined], 'a nearer package without imports hides the outer imports map');
+});
+
+test('Unavailable and blocked package conditions stay unresolved instead of choosing a different branch', (t) => {
+  const { facts } = analyze(t, {
+    'package.json': JSON.stringify({ type: 'module', imports: {
+      '#only-import': { import: './esm.mjs' },
+      '#only-require': { require: './fallback.cjs' },
+      '#blocked': null,
+    } }),
+    'esm.mjs': 'export const branch = 1;\n',
+    'fallback.cjs': 'exports.branch = 2;\n',
+    'entry.mjs': 'import "#only-import";\nimport "#only-require";\nimport "#blocked";\n',
+    'entry.cjs': 'require("#only-import");\nrequire("#only-require");\nrequire("#blocked");\n',
+  }, 'ts');
+  assert.deepEqual(facts.imports.map(e => [e.from, e.resolved, e.to]), [
+    ['entry.cjs', false, undefined], ['entry.cjs', true, 'fallback.cjs'], ['entry.cjs', false, undefined],
+    ['entry.mjs', true, 'esm.mjs'], ['entry.mjs', false, undefined], ['entry.mjs', false, undefined],
+  ]);
+});
+
 test('Module IDs are unique and deterministic for path, case, root-file and Unicode collisions', (t) => {
   const { facts, graph } = analyze(t, { 'a-b/x.py': 'import core\n', 'a/b/x.py': 'import core\n', 'core.py': '', 'core/sub.py': '', '中文/x.py': '', '日本語/x.py': '' });
   assert.equal(new Set(graph.modules.map((m) => m.id)).size, graph.modules.length);

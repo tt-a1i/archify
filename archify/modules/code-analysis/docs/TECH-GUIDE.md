@@ -113,7 +113,9 @@ Here `require` is a local variable, not the CommonJS loader. Syntax alone cannot
 
 ### Module resolution
 
-`ts.resolveModuleName(specifier, containingFile, options, ts.sys)` resolves `'../shared/cli.mjs'` to an absolute path by Node's rules. Bauify then checks whether that path is inside the analyzed root and in the file set, and classifies the import as resolved / outside / unknown.
+`program.getModeForUsageLocation` determines the resolution mode of each literal import from its syntax, file/package format and compiler options, including explicit type-only `resolution-mode` attributes. That mode is passed to `ts.resolveModuleName` with the captured snapshot host, so supported package `imports` and `exports` maps select the appropriate `import` or `require` condition. In NodeNext mode, dynamic `import()` uses the import condition even inside a CommonJS file; a TypeScript static import emitted as `require` uses the require condition.
+
+The result must be inside the analyzed root and in the selected file set to become a resolved edge. This is TypeScript source resolution, not a complete Node runtime loader: declaration-file selection and the resolver's conditional fallback behavior can differ from the executable target. A resolved edge alone does not prove that Node will load that file successfully.
 
 ### Why not dependency-cruiser or Babel
 
