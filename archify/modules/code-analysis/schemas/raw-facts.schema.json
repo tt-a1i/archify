@@ -7,6 +7,7 @@
   "required": ["schema_version", "repository", "files", "imports", "symbols", "calls", "unresolved"],
   "properties": {
     "schema_version": { "const": 1 },
+    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient." },
     "repository": {
       "type": "object",
       "additionalProperties": false,
@@ -100,7 +101,38 @@
         }
       }
     },
-    "calls": { "type": "array", "description": "Reserved for M2 (Call Graph).", "items": { "type": "object" } },
+    "calls": {
+      "type": "array",
+      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static named imports resolved to captured direct function/const-initializer exports; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage.",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["file", "line", "column", "endLine", "endColumn", "resolution"],
+        "properties": {
+          "file": { "$ref": "#/$defs/repoPath" },
+          "line": { "type": "integer", "minimum": 1 },
+          "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at CallExpression start." },
+          "endLine": { "type": "integer", "minimum": 1, "description": "One-based end-exclusive CallExpression end line (TypeScript getEnd)." },
+          "endColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 end-exclusive column." },
+          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "unresolved"] },
+          "target": {
+            "type": "object", "additionalProperties": false,
+            "required": ["name", "line", "column"],
+            "properties": {
+              "file": { "$ref": "#/$defs/repoPath" },
+              "name": { "type": "string", "minLength": 1, "description": "Measured function name; a named function expression uses its inner name, which may differ from the const variable name." },
+              "line": { "type": "integer", "minimum": 1 },
+              "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at the function declaration or initializer expression start in target.file for imported-function, otherwise the callsite file (including modifiers)." }
+            }
+          },
+          "reason": { "enum": ["unsupported-callee", "optional-call", "no-local-function-binding", "ambiguous-binding"] }
+        },
+        "oneOf": [
+          { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },
+          { "properties": { "resolution": { "const": "imported-function" }, "target": { "type": "object", "required": ["file"] } }, "required": ["target"], "not": { "required": ["reason"] } },
+          { "properties": { "resolution": { "const": "unresolved" } }, "required": ["reason"], "not": { "required": ["target"] } }
+        ]
+      }
+    },
     "packageMarkers": {
       "type": "array",
       "description": "Package marker files (package.json, pyproject.toml, __init__.py; for Java also pom.xml, build.gradle, build.gradle.kts) under the analyzed root, relative POSIX paths. Module grouping uses them as package boundaries; adapters do not parse them.",

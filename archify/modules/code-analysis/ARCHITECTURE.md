@@ -35,6 +35,18 @@ The orchestrator validates intermediate data against JSON schemas. It also check
 
 For the conditional-null boundary in exact in-root JavaScript package imports/self exports, a bounded snapshot-backed selector preserves blocked, no-match, invalid, selected and unsupported outcomes before the usual source-boundary checks. It is not a Node loader; unsupported affected forms remain unknown. TypeScript/type-only resolution and unrelated keys retain their existing policy; see [Module resolution](docs/TECH-GUIDE.md#module-resolution).
 
+## JS/TS call facts
+
+The JS/TS adapter records `CallExpression` sites from parse-valid, non-declaration files. `callModel: "js-ts-lexical-v1"` explicitly identifies this coverage; an empty array without a recognized model does not establish that calls were collected. Adapter revisions identify extraction changes and are not capability flags. Python and Java do not emit this call model.
+
+The existing TypeScript checker supplies conservative lexical bindings: a unique ordinary function declaration with a body, a direct `const` arrow/function-expression initializer, or a relative static named import to a direct captured export of one of those forms. Import aliases and lexical shadowing are respected. Each target is tied to a measured function in captured source. Default/namespace/package imports, re-exports, mutable or wrapped initializers, member/dynamic dispatch and optional calls remain unresolved. Constructors and tagged templates are not collected. Records can include calls inside nested functions; neither a target nor a zero count establishes execution, reachability or complete impact.
+
+Parameter-default calls remain unresolved when the checker reports a declaration inside that same function's body: the body scope is unavailable to the initializer. This includes destructuring defaults and closures created in an initializer. Valid outer/import bindings and declarations within initializer-created function scopes retain their usual resolution; the adapter does not attempt to rebind a rejected body target to an outer declaration.
+
+Call and target positions are one-based UTF-16 coordinates; call ends are exclusive. Chained calls can share a start and have different ends. Semantic checks verify source bounds, measured functions and recorded static import edges, without rerunning binding analysis. `symbols` retains Python binding-order semantics; `unresolved` counters still count imports. Module graphs, rules, finding tasks and the UI do not consume the call records yet. This layer adds evidence to `raw-facts.json`, not a call graph or question workflow.
+
+Historical empty arrays remain valid in the updated schema. Older strict schemas reject the additional `callModel` field, so consumers need the updated schema to read new captures. A reader must also account for parse errors, excluded files and declaration files before interpreting call coverage.
+
 ## Current findings and presentation
 
 The implemented rules inspect file-level import cycles, module-level coupling cycles, and modules with high incoming and outgoing dependency counts. Import evidence distinguishes relevant loading conditions such as lazy, conditional, and type-only imports. Findings describe static structure and potential loading risks; they do not prove a runtime failure or certify safe execution.

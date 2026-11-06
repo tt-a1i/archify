@@ -1,8 +1,8 @@
 {
   "ts": {
     "fixture": "ts-basic",
-    "revision": 15,
-    "digest": "54c38cad3ad5390f55cd9257eb5cb32adeee445b051f31bb819527be47e1eb37"
+    "revision": 17,
+    "digest": "1e67786be193fea04d6dc15b17ee745ca760c61ba77703bf6d30d4f1d89fa840"
   },
   "py": {
     "fixture": "py-basic",
