@@ -477,7 +477,24 @@ function resolvePlan({ root, segments }, side, depth) {
     }
 
     try {
-      current = fs.realpathSync.native(candidate);
+      try {
+        current = fs.realpathSync.native(candidate);
+      } catch (error) {
+        if (process.platform !== 'win32' || error?.code !== 'EPERM'
+          || index === segments.length - 1 || !candidateStat.isDirectory()) throw error;
+        // Restricted Windows sandboxes can deny native realpath on a readable
+        // ancestor. JS resolution must still prove the same non-link directory.
+        const resolved = fs.realpathSync(candidate);
+        const resolvedStat = fs.lstatSync(resolved, { bigint: true });
+        if (!resolvedStat.isDirectory() || resolvedStat.isSymbolicLink()
+          || !hasStableIdentity(candidateStat) || !hasStableIdentity(resolvedStat)
+          || candidateStat.dev !== resolvedStat.dev || candidateStat.ino !== resolvedStat.ino) {
+          return { ok: false, failure: unknown('ancestor-identity-indeterminate', { side, segmentIndex: index }) };
+        }
+        current = resolved;
+        currentStat = resolvedStat;
+        continue;
+      }
       currentStat = statBigInt(current);
     } catch (error) {
       return {
