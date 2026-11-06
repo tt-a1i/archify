@@ -11,7 +11,7 @@
   },
   "java": {
     "fixture": "java-basic",
-    "revision": 1,
+    "revision": 3,
     "digest": "5de617bdb6a28153fde417fe7705c8db19b3d316df31e99c57710683b4264099"
   }
 }

@@ -185,6 +185,8 @@ The Python script only emits raw import statements; turning `from utils import l
 
 Java keeps the same meanings: an import of a package no analyzed file declares (JDK, third party) is `external`; an import in an analyzed package, or a type reference that matches an analyzed type, that cannot be resolved is `unknown`. The Java adapter does not model reflective loading such as `Class.forName` or `ServiceLoader`, so its `opaque` stays 0; that does not mean the code has none. See [Java source analysis](JAVA.md#dependencies).
 
+A single Java static import of a field or method does not hide an unrelated type with the same name. Type lookup proceeds past that import only when its owner is uniquely analyzed, declares the static member, and has a complete known member-type scope with no matching declared or inherited type. Genuine member-type imports and uncertain owners or supertype chains retain the conservative guard; this does not add classpath or general hierarchy resolution.
+
 `opaque` is the important one. Archify's `bin/archify.mjs` starts renderers with `spawnSync(process.execPath, [rendererPath])` and loads the delta module with `import(pathToFileURL(path.join(...)))` — both are calls whose target is only known at run time. The diagram has **no edge** from `bin` to the renderers, and that is a fact; but if the edge were merely missing, a reader would assume `bin` does not depend on the renderers. The count says "there are 3 dynamic loads here that cannot be seen", which is what ARCHITECTURE.md means by "omissions stay visible".
 
 ---

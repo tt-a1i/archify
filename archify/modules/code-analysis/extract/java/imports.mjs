@@ -256,9 +256,17 @@ function referenceTargets(unit, node, name, index, lookup, inheritedMembers) {
     if (!complete || names.has(first)) return [];
   }
   // Member types in scope shadow imports (JLS 6.4.1). Below them, a single
-  // static import may name a member type and override package lookup. Its
-  // declaration is recorded above; do not infer the reference's type scope.
-  if (unit.imports.some(i => i.isStatic && !i.wildcard && i.name.split('.').at(-1) === first)) return [];
+  // static import may name a member type and override package lookup. A
+  // proven value/method-only import occupies a different namespace (JLS 6.5.5.1).
+  // Keep the guard unless its unique analyzed owner has the static member and
+  // a complete type-member scope that excludes this name, including ancestors.
+  for (const imp of unit.imports.filter(i => i.isStatic && !i.wildcard && i.name.split('.').at(-1) === first)) {
+    const ownerName = imp.name.slice(0, -(first.length + 1));
+    const owners = lookup(ownerName);
+    if (owners.length !== 1 || !owners[0].staticMembers.has(first) || index.has(imp.name)) return [];
+    const { names, complete } = inheritedMembers(owners[0]);
+    if (!complete || names.has(first)) return [];
+  }
   const own = unit.types.filter(t => !t.owners.length && t.name === first);
   if (own.length) return name.includes('.') ? lookup(`${unit.packageName ? unit.packageName + '.' : ''}${name}`) : own;
   const singles = unit.imports.filter(i => !i.wildcard && !i.isStatic && i.name.split('.').at(-1) === first);
