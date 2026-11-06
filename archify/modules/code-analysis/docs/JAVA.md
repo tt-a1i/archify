@@ -191,6 +191,31 @@ try/synchronized blocks; `else if` stays at the preceding if's depth, and
 catch/finally blocks stay at their try's depth. Comments and strings do not add
 branches. Existing thresholds and source-evidence views are reused.
 
+## Method invocation source navigation
+
+Fresh Java captures declare `callModel: "java-static-lexical-v1"`. They inventory
+all parsed method invocation expressions with full original-source UTF-16 start
+and end-exclusive positions, including chained calls and lambda/nested type
+bodies. Constructors, method references and implicit invocations are excluded.
+A zero is known only for a current, parse-valid selected range with this marker;
+older Java empty arrays remain unavailable.
+
+`same-file-static-method` supplies a lexical source candidate only for a bare
+identifier invocation inside a measured ordinary method directly owned by a
+top-level ordinary class without `extends` or `implements`. The class must
+have exactly one method declaration of that name, explicitly `static` with a
+captured body and matching fixed arity. Overloads, varargs, explicit invocation
+type arguments, inherited Object method names and nested/local/anonymous owners
+remain unresolved, as do qualified/member calls. Calls inside lambdas retain
+the enclosing method context. Java function measurements include exact UTF-16
+`column`/`endColumn` positions so adjacent methods on one line stay distinct.
+
+This is source reading assistance, not Java compiler attribution: argument type
+applicability, compilation, virtual dispatch, reflection, provider selection and
+execution are unmodeled. All other invocation sites stay explicit unknowns.
+Saved question tasks expose these bounds and gate target navigation on captured
+source freshness; see [function analysis](FUNCTION-ANALYSIS.md).
+
 ## Parser choice and boundaries
 
 The implementation pins `java-parser@3.0.1`, a synchronous JavaScript parser

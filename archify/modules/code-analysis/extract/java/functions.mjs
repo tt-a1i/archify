@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { children, descendants, tokensOf, TYPE_DECLARATIONS, typeName } from './parse.mjs';
 
 const FUNCTIONS = new Set(['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration']);
@@ -8,8 +9,16 @@ const BLOCKS = new Set([...LOOPS, 'ifStatement', 'switchStatement', 'switchExpre
 // non-default case labels, pattern guards and &&/||. Else-if stays at the
 // first if's depth; catches/finally stay at their try's depth. Lambdas belong
 // to their containing method, while local/anonymous class methods do not.
-export function measureFunctions(unit) {
+export function measureFunctions(unit, observe = () => {}) {
   const records = [];
+  const record = (value, node) => {
+    const sourceRange = { line: node.location.startLine, column: node.location.startColumn,
+      endLine: node.location.endLine, endColumn: node.location.endColumn + 1,
+      sha256: createHash('sha256').update(unit.sourceText.slice(node.location.startOffset, node.location.endOffset + 1)).digest('hex') };
+    const fn = { ...value, sourceRange };
+    records.push(fn);
+    observe(fn, node);
+  };
   const anonymousCounts = new Map();
   const initializerCounts = new Map();
   const walk = (node, owners = [], ownerNode = null) => {
@@ -23,7 +32,7 @@ export function measureFunctions(unit) {
       initializerCounts.set(key, count);
       const name = count > 1 ? `${kind}#${count}` : kind;
       const body = node.children.block[0];
-      records.push({ file: unit.file, name, qualname: [...owners, name].join('.'), line: node.location.startLine, endLine: node.location.endLine, ...measure(body, node.location.startLine) });
+      record({ file: unit.file, name, qualname: [...owners, name].join('.'), line: node.location.startLine, endLine: node.location.endLine, ...measure(body, node.location.startLine) }, node);
       for (const child of children(body)) walk(child, [...owners, name, '<locals>'], ownerNode);
       return;
     }
@@ -32,7 +41,7 @@ export function measureFunctions(unit) {
         const initializer = declarator.children.variableInitializer?.[0];
         if (!initializer || !containsLambda(initializer)) continue;
         const name = declarator.children.variableDeclaratorId[0].children.Identifier[0].image;
-        records.push({ file: unit.file, name, qualname: [...owners, name].join('.'), line: declarator.location.startLine, endLine: declarator.location.endLine, ...measure(initializer, declarator.location.startLine) });
+        record({ file: unit.file, name, qualname: [...owners, name].join('.'), line: declarator.location.startLine, endLine: declarator.location.endLine, ...measure(initializer, declarator.location.startLine) }, declarator);
       }
     }
     if (node.name === 'enumConstant' && node.children.classBody) owners = [...owners, node.children.Identifier[0].image];
@@ -58,7 +67,7 @@ export function measureFunctions(unit) {
       const signature = parameterTypes(params);
       const qualname = [...owners, `${name}(${signature.join(',')})`].join('.');
       const metrics = measure(body, node.location.startLine);
-      records.push({ file: unit.file, name, qualname, line: node.location.startLine, endLine: node.location.endLine, ...metrics });
+      record({ file: unit.file, name, qualname, line: node.location.startLine, endLine: node.location.endLine, ...metrics }, node);
       for (const child of children(body)) walk(child, [...owners, `${name}(${signature.join(',')})`, '<locals>'], ownerNode);
       return;
     }

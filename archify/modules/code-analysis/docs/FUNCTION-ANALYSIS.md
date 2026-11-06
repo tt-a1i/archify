@@ -7,8 +7,9 @@ finding is not required. `task --help` describes question mode and its options.
 
 Single-entry orientation accepts JS/TS implementation files, or a .py/.java entry
 captured in a saved analysis directory with matching Python/Java producer metadata.
-Python/Java use captured function ranges and file dependencies; they do not supply
-call coverage. This does not extend the fresh JS/TS change-question mode below.
+Python/Java use captured function ranges and file dependencies. Fresh Java
+`java-static-lexical-v1` facts also supply bounded method invocation navigation;
+Python call coverage remains unavailable. This does not extend the fresh JS/TS change-question mode below.
 
 1. **Scope.** Before reading the path in depth, record the question, entry,
    acceptance questions and excluded areas. For a code change, pin full base/head
@@ -45,9 +46,18 @@ call coverage. This does not extend the fresh JS/TS change-question mode below.
    calls (constructors and tagged templates are excluded).
    Older JS/TS facts without the marker remain readable, but require fresh
    extraction for call orientation even if their calls array is nonempty.
-   Python/Java calls stay unavailable with unknown totals, including after fresh
-   extraction; empty arrays do not imply no calls. Read current source to trace
-   Python object bindings or Java runtime dispatch, reflection and providers.
+   Fresh Java `java-static-lexical-v1` captures inventory method invocations,
+   including nested types and lambdas in the selected range. Constructors and
+   method references are excluded. `same-file-static-method` supplies a lexical
+   source candidate for a bare identifier call to a unique explicit static body
+   method with matching fixed arity in a top-level ordinary class without
+   extends/implements. Overloads, varargs, explicit invocation type arguments,
+   Object method names and nested/local/anonymous owners remain unresolved.
+   It does not check argument type applicability or compilation; read source for
+   runtime dispatch, reflection and providers. Java exact function columns
+   exclude adjacent same-line methods. See [Java bounds](JAVA.md#method-invocation-source-navigation).
+   Older Java captures and Python calls stay unavailable with unknown totals;
+   their empty arrays do not imply no calls.
    New marked facts require the updated raw-facts schema; older strict readers
    reject the additional field.
    Each `calls.records` item keeps its original `fact` and `factIndex` in the

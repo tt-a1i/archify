@@ -1,0 +1,73 @@
+[
+  {
+    "project": "slf4j-base",
+    "commit": "aa13da39edd4195c25eecb1263c4bf3f8902a3e4",
+    "scope": ".",
+    "tracked_java": 259,
+    "captured": 259,
+    "parsed": 258,
+    "roles": {
+      "test": 106,
+      "source": 153
+    },
+    "rule_scope": {
+      "analyzed": 153,
+      "excludedByRole": 106,
+      "excludedRoles": [
+        "generated",
+        "test"
+      ],
+      "parse_error_count": 1
+    },
+    "parse_error_count": 1,
+    "not_captured_count": 0,
+    "unexpected_captured_count": 0
+  },
+  {
+    "project": "slf4j-head",
+    "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+    "scope": ".",
+    "tracked_java": 260,
+    "captured": 260,
+    "parsed": 259,
+    "roles": {
+      "test": 107,
+      "source": 153
+    },
+    "rule_scope": {
+      "analyzed": 153,
+      "excludedByRole": 107,
+      "excludedRoles": [
+        "generated",
+        "test"
+      ],
+      "parse_error_count": 1
+    },
+    "parse_error_count": 1,
+    "not_captured_count": 0,
+    "unexpected_captured_count": 0
+  },
+  {
+    "project": "guava-head",
+    "commit": "f06690fa3e874f65515e8fd338a74d636e2c792f",
+    "scope": "guava/src/",
+    "tracked_java": 615,
+    "captured": 615,
+    "parsed": 615,
+    "roles": {
+      "source": 615
+    },
+    "rule_scope": {
+      "analyzed": 615,
+      "excludedByRole": 0,
+      "excludedRoles": [
+        "generated",
+        "test"
+      ],
+      "parse_error_count": 0
+    },
+    "parse_error_count": 0,
+    "not_captured_count": 0,
+    "unexpected_captured_count": 0
+  }
+]
