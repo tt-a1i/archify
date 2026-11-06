@@ -21,7 +21,10 @@ const before = (aLine, aColumn, bLine, bColumn) => aLine < bLine || (aLine === b
 export function questionCalls({ facts, factsPath, inspect, entry, location, symbol, text, selectedFunction }) {
   const knownAdapter = facts?.repository?.language === 'ts' && /^typescript@/.test(facts?.repository?.adapter || '');
   const pythonModel = facts?.repository?.language === 'py' && /^python@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'python-lexical-v1';
-  const bindingCoverage = pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
+  const javaAdapter = facts?.repository?.language === 'java' && /^java-parser@/.test(facts?.repository?.adapter || '');
+  const javaModel = javaAdapter && facts?.callModel === 'java-static-lexical-v1';
+  const capturedRangeModel = pythonModel || javaModel;
+  const bindingCoverage = pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : javaModel ? 'top-level-class-unique-static-fixed-arity-source-candidates' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
   const result = {
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
@@ -31,8 +34,8 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
     selection: { file: entry.file, kind: symbol ? 'function-source-range' : 'entry-file', range: null },
     total: null, included: 0, omitted: null, limit: LIMIT, records: [],
     limitations: [
-      'When JS/TS coverage is available, records are JS/TS CallExpressions contained in the selected source range, including nested functions and closures; they are not necessarily direct or executed calls of the selected function. Historical Python and Java captures without a recognized model do not supply call coverage; empty arrays are not a known zero.',
-      'same-file-function identifies a lexical declaration; same-file-function-initializer identifies a direct const initializer. Neither proves execution, TDZ safety or runtime dispatch. Named expressions use their measured inner function name. Unresolved calls require source reading; constructors and tagged templates are not collected. imported-function follows captured relative named imports to direct exports; js-ts-lexical-v2 additionally binds direct default function declarations. It does not model runtime dispatch.',
+      'When JS/TS coverage is available, records are JS/TS CallExpressions contained in the selected source range, including nested functions and closures; they are not necessarily direct or executed calls of the selected function. Java java-static-lexical-v1 inventories method invocations, including lambdas and nested types in the selected range, excluding constructors and method references. Historical Python and Java captures without a recognized model do not supply call coverage; empty arrays are not a known zero.',
+      'same-file-function identifies a lexical declaration; same-file-function-initializer identifies a direct const initializer. Neither proves execution, TDZ safety or runtime dispatch. Java same-file-static-method is a lexical source candidate only: unique explicit static body method, fixed arity, bare call within a top-level ordinary class without extends/implements; no nested/local/anonymous owners or Object method names. Argument type applicability and compilation are not checked. Named expressions use their measured inner function name. Unresolved calls require source reading; constructors and tagged templates are not collected. imported-function follows captured relative named imports to direct exports; js-ts-lexical-v2 additionally binds direct default function declarations. It does not model runtime dispatch.',
       'Each factIndex identifies the unchanged record in this snapshot raw-facts.calls array. Full start/end ranges distinguish chained calls sharing a start. Original targets are captured evidence only. Use targetNavigation.location only when status is valid; imported targets have separate freshness and parse checks. Valid navigation verifies captured target content and coordinates, not current re-resolution after other files/configuration change.',
       'At most 40 records are included in source order; total/included/omitted describe only the selected range. Read current source or the captured raw facts for omitted records.',
     ],
@@ -51,7 +54,7 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   let range = null;
   if (symbol) {
     if (!location) return unavailable('function-range-unavailable');
-    if (pythonModel) {
+    if (capturedRangeModel) {
       if (!validSourceRange(text, selectedFunction)) return unavailable('function-range-unavailable');
       const { sha256, ...capturedRange } = selectedFunction.sourceRange;
       range = capturedRange;
@@ -79,13 +82,13 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   }).sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column
     || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn || a.factIndex - b.factIndex);
   const capturedFiles = new Set(facts.files.map((file) => file.path));
-  const capturedTexts = pythonModel ? new Map(facts.files.map(file => [file.path, file.sourceText])) : null;
+  const capturedTexts = capturedRangeModel ? new Map(facts.files.map(file => [file.path, file.sourceText])) : null;
   const included = records.slice(0, LIMIT).map((record) => {
     const target = record.fact.target;
     if (!target) return { ...record, targetNavigation: { status: 'unresolved', location: null, reason: record.fact.reason } };
     const file = target.file || entry.file;
     if (!capturedFiles.has(file)) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-not-captured' } };
-    if (pythonModel) {
+    if (capturedRangeModel) {
       const measured = (facts.functions || []).filter(fn => fn.file === file && fn.name === target.name && fn.sourceRange?.line === target.line && fn.sourceRange?.column === target.column);
       if (measured.length !== 1 || !validSourceRange(capturedTexts.get(file), measured[0])) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
     }

@@ -1,0 +1,165 @@
+{
+  "frozen_at_utc": "2026-11-06T16:54:54.605103+00:00",
+  "kind": "supplemental source-only full definition extents before paired candidate implementation/verification",
+  "prior_exposure": "Original source-first change questions and earlier product studies were already inspected. This supplements frozen-oracle.json; not a blind benchmark. Python standard AST plus explicit source inspection used; Java spans manually enumerated and source-asserted without the product parser.",
+  "contract": "Comparison extent includes preceding Python decorators and Java owned modifiers/annotations. Excludes preceding external comments and trailing newline. One-based UTF-16 columns, end exclusive. Source text formatting changes are source changes only. Existing original def-start oracle remains unchanged.",
+  "units": [
+    {
+      "project": "httpx",
+      "side": "base",
+      "file": "httpx/_transports/default.py",
+      "qualname": "map_httpcore_exceptions",
+      "source_file_sha256": "aa729f3a31244eb23f7ac9b3da3360c7915fa9f9d9c75143727abaa8c729781f",
+      "kind": "FunctionDef",
+      "definition_range": {
+        "line": 70,
+        "column": 1,
+        "endLine": 90,
+        "endColumn": 43
+      },
+      "definition_sha256": "655e9bf2acc2321701816618eaa75459b6702f77e49854ec9d04972484531544",
+      "source_text": "@contextlib.contextmanager\ndef map_httpcore_exceptions() -> typing.Iterator[None]:\n    try:\n        yield\n    except Exception as exc:\n        mapped_exc = None\n\n        for from_exc, to_exc in HTTPCORE_EXC_MAP.items():\n            if not isinstance(exc, from_exc):\n                continue\n            # We want to map to the most specific exception we can find.\n            # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to\n            # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.\n            if mapped_exc is None or issubclass(to_exc, mapped_exc):\n                mapped_exc = to_exc\n\n        if mapped_exc is None:  # pragma: no cover\n            raise\n\n        message = str(exc)\n        raise mapped_exc(message) from exc",
+      "identity_line": 71,
+      "decorators_included": true
+    },
+    {
+      "project": "httpx",
+      "side": "base",
+      "file": "httpx/_transports/default.py",
+      "qualname": "_load_httpcore_exceptions",
+      "source_file_sha256": "aa729f3a31244eb23f7ac9b3da3360c7915fa9f9d9c75143727abaa8c729781f",
+      "absent": true
+    },
+    {
+      "project": "httpx",
+      "side": "head",
+      "file": "httpx/_transports/default.py",
+      "qualname": "map_httpcore_exceptions",
+      "source_file_sha256": "6c9692828e7570cbb3b38b8d8ed24988210e9ca46396fa8bf1f73f9f3661826b",
+      "kind": "FunctionDef",
+      "definition_range": {
+        "line": 95,
+        "column": 1,
+        "endLine": 118,
+        "endColumn": 43
+      },
+      "definition_sha256": "cc87b02e9f159de110ecc8b9169a028470604d1e1488dd16c53cf5d4aba5f0a5",
+      "source_text": "@contextlib.contextmanager\ndef map_httpcore_exceptions() -> typing.Iterator[None]:\n    global HTTPCORE_EXC_MAP\n    if len(HTTPCORE_EXC_MAP) == 0:\n        HTTPCORE_EXC_MAP = _load_httpcore_exceptions()\n    try:\n        yield\n    except Exception as exc:\n        mapped_exc = None\n\n        for from_exc, to_exc in HTTPCORE_EXC_MAP.items():\n            if not isinstance(exc, from_exc):\n                continue\n            # We want to map to the most specific exception we can find.\n            # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to\n            # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.\n            if mapped_exc is None or issubclass(to_exc, mapped_exc):\n                mapped_exc = to_exc\n\n        if mapped_exc is None:  # pragma: no cover\n            raise\n\n        message = str(exc)\n        raise mapped_exc(message) from exc",
+      "identity_line": 96,
+      "decorators_included": true
+    },
+    {
+      "project": "httpx",
+      "side": "head",
+      "file": "httpx/_transports/default.py",
+      "qualname": "_load_httpcore_exceptions",
+      "source_file_sha256": "6c9692828e7570cbb3b38b8d8ed24988210e9ca46396fa8bf1f73f9f3661826b",
+      "kind": "FunctionDef",
+      "definition_range": {
+        "line": 74,
+        "column": 1,
+        "endLine": 92,
+        "endColumn": 6
+      },
+      "definition_sha256": "3e86558b9e4411bae642a216c8b66182a99efa26c004078283df513fb8d5f3c8",
+      "source_text": "def _load_httpcore_exceptions() -> dict[type[Exception], type[httpx.HTTPError]]:\n    import httpcore\n\n    return {\n        httpcore.TimeoutException: TimeoutException,\n        httpcore.ConnectTimeout: ConnectTimeout,\n        httpcore.ReadTimeout: ReadTimeout,\n        httpcore.WriteTimeout: WriteTimeout,\n        httpcore.PoolTimeout: PoolTimeout,\n        httpcore.NetworkError: NetworkError,\n        httpcore.ConnectError: ConnectError,\n        httpcore.ReadError: ReadError,\n        httpcore.WriteError: WriteError,\n        httpcore.ProxyError: ProxyError,\n        httpcore.UnsupportedProtocol: UnsupportedProtocol,\n        httpcore.ProtocolError: ProtocolError,\n        httpcore.LocalProtocolError: LocalProtocolError,\n        httpcore.RemoteProtocolError: RemoteProtocolError,\n    }",
+      "identity_line": 74,
+      "decorators_included": false
+    },
+    {
+      "project": "pluggy",
+      "side": "base",
+      "file": "src/pluggy/_manager.py",
+      "qualname": "PluginManager.subset_hook_caller",
+      "source_file_sha256": "081d801bcbf385529b5d0d82ec7d40e4767d279452f5bfdf8ad1daf07278cca7",
+      "kind": "FunctionDef",
+      "definition_range": {
+        "line": 603,
+        "column": 5,
+        "endLine": 613,
+        "endColumn": 20
+      },
+      "definition_sha256": "76e7cc81e08118fe67923fff553b4d4e812c2d8b16d04892ef96a550eba6464e",
+      "source_text": "def subset_hook_caller(\n        self, name: str, remove_plugins: Iterable[_Plugin]\n    ) -> HookCaller:\n        \"\"\"Return a proxy :class:`~pluggy.HookCaller` instance for the named\n        method which manages calls to all registered plugins except the ones\n        from remove_plugins.\"\"\"\n        orig: HookCaller = getattr(self.hook, name)\n        plugins_to_remove = {plug for plug in remove_plugins if hasattr(plug, name)}\n        if plugins_to_remove:\n            return _SubsetHookCaller(orig, plugins_to_remove)\n        return orig",
+      "identity_line": 603,
+      "decorators_included": false
+    },
+    {
+      "project": "pluggy",
+      "side": "head",
+      "file": "src/pluggy/_manager.py",
+      "qualname": "PluginManager.subset_hook_caller",
+      "source_file_sha256": "50c04db12ef81c0425624b30c78d818016c381c7999afd3308c2f07192f5229c",
+      "kind": "FunctionDef",
+      "definition_range": {
+        "line": 603,
+        "column": 5,
+        "endLine": 619,
+        "endColumn": 58
+      },
+      "definition_sha256": "701c67ca9f740238b34e15016f9367b893d6a6c3b598286763edfe890df3fd1a",
+      "source_text": "def subset_hook_caller(\n        self, name: str, remove_plugins: Iterable[_Plugin]\n    ) -> HookCaller:\n        \"\"\"Return a proxy :class:`~pluggy.HookCaller` for the named hook which\n        calls all registered plugins except the ones from remove_plugins.\"\"\"\n        orig: HookCaller = getattr(self.hook, name)\n        plugins_to_remove = set(remove_plugins)\n        # Optimization: discard plugins to remove which don't actually implement\n        # the hook, to make checks faster.\n        plugins_to_remove.intersection_update(\n            hookimpl.plugin for hookimpl in orig._hookimpls\n        )\n        # Optimization: if none of the plugins to remove actually implement the\n        # hook, avoid the subset hook caller overhead.\n        if not plugins_to_remove:\n            return orig\n        return _SubsetHookCaller(orig, plugins_to_remove)",
+      "identity_line": 603,
+      "decorators_included": false
+    },
+    {
+      "project": "slf4j",
+      "side": "base",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "qualname": "LoggerFactory.bind()",
+      "kind": "methodDeclaration",
+      "definition_range": {
+        "line": 174,
+        "column": 5,
+        "endLine": 198,
+        "endColumn": 6
+      },
+      "definition_sha256": "61a94fdcace7e40b462f55688829c4f749c563da644d8c31974b2f0b9cfd5965",
+      "source_file_sha256": "048a4e60d8a81e4a11dc56288a5f1f62b965d2066c1ff86a9ec05a3bbb44d540",
+      "source_text": "private final static void bind() {\n        try {\n            List<SLF4JServiceProvider> providersList = findServiceProviders();\n            reportMultipleBindingAmbiguity(providersList);\n            if (providersList != null && !providersList.isEmpty()) {\n                PROVIDER = providersList.get(0);\n                // SLF4JServiceProvider.initialize() is intended to be called here and nowhere else.\n                PROVIDER.initialize();\n                INITIALIZATION_STATE = SUCCESSFUL_INITIALIZATION;\n                reportActualBinding(providersList);\n            } else {\n                INITIALIZATION_STATE = NOP_FALLBACK_INITIALIZATION;\n                Util.report(\"No SLF4J providers were found.\");\n                Util.report(\"Defaulting to no-operation (NOP) logger implementation\");\n                Util.report(\"See \" + NO_PROVIDERS_URL + \" for further details.\");\n\n                Set<URL> staticLoggerBinderPathSet = findPossibleStaticLoggerBinderPathSet();\n                reportIgnoredStaticLoggerBinders(staticLoggerBinderPathSet);\n            }\n            postBindCleanUp();\n        } catch (Exception e) {\n            failedBinding(e);\n            throw new IllegalStateException(\"Unexpected initialization failure\", e);\n        }\n    }",
+      "provenance": "Explicit lines and owned modifiers reviewed in source; no product Java parser invoked."
+    },
+    {
+      "project": "slf4j",
+      "side": "head",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "qualname": "LoggerFactory.bind()",
+      "kind": "methodDeclaration",
+      "definition_range": {
+        "line": 181,
+        "column": 5,
+        "endLine": 215,
+        "endColumn": 6
+      },
+      "definition_sha256": "18f44d73decb07af816df5cdee80bd2af09de4b5c2cd62ebaf42a92229773d9e",
+      "source_file_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+      "source_text": "private final static void bind() {\n        String explicitlySpecified = System.getProperty(BINDING_PROP);\n        PROVIDER = loadExplicitlySpecified(explicitlySpecified);\n        if (null != PROVIDER) {\n            PROVIDER.initialize();\n            INITIALIZATION_STATE = SUCCESSFUL_INITIALIZATION;\n            reportActualBinding(Collections.singletonList(PROVIDER));\n            postBindCleanUp();\n            return;\n        }\n\n        try {\n            List<SLF4JServiceProvider> providersList = findServiceProviders();\n            reportMultipleBindingAmbiguity(providersList);\n            if (providersList != null && !providersList.isEmpty()) {\n                PROVIDER = providersList.get(0);\n                // SLF4JServiceProvider.initialize() is intended to be called here and nowhere else.\n                PROVIDER.initialize();\n                INITIALIZATION_STATE = SUCCESSFUL_INITIALIZATION;\n                reportActualBinding(providersList);\n            } else {\n                INITIALIZATION_STATE = NOP_FALLBACK_INITIALIZATION;\n                Util.report(\"No SLF4J providers were found.\");\n                Util.report(\"Defaulting to no-operation (NOP) logger implementation\");\n                Util.report(\"See \" + NO_PROVIDERS_URL + \" for further details.\");\n\n                Set<URL> staticLoggerBinderPathSet = findPossibleStaticLoggerBinderPathSet();\n                reportIgnoredStaticLoggerBinders(staticLoggerBinderPathSet);\n            }\n            postBindCleanUp();\n        } catch (Exception e) {\n            failedBinding(e);\n            throw new IllegalStateException(\"Unexpected initialization failure\", e);\n        }\n    }",
+      "provenance": "Explicit lines and owned modifiers reviewed in source; no product Java parser invoked."
+    },
+    {
+      "project": "slf4j",
+      "side": "head",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "qualname": "LoggerFactory.loadExplicitlySpecified(String)",
+      "kind": "methodDeclaration",
+      "definition_range": {
+        "line": 217,
+        "column": 5,
+        "endLine": 236,
+        "endColumn": 6
+      },
+      "definition_sha256": "6aaee1dde471dc83aa459bdc0d86fd95e7edc79e6062453d1aebd8dc98804d8a",
+      "source_file_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+      "source_text": "static SLF4JServiceProvider loadExplicitlySpecified(String explicitlySpecified) {\n        if (null == explicitlySpecified) {\n            return null;\n        }\n        try {\n            Class<?> clazz = Class.forName(explicitlySpecified);\n            Constructor<?> constructor = clazz.getConstructor();\n            constructor.setAccessible(true);\n            Object provider = constructor.newInstance();\n            return (SLF4JServiceProvider) provider;\n        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {\n            String message = String.format(\"Failed to instantiate the specified SLF4JServiceProvider (%s)\", explicitlySpecified);\n            Util.report(message, e);\n            return null;\n        } catch (ClassCastException e) {\n            String message = String.format(\"Specified SLF4JServiceProvider (%s) does not implement SLF4JServiceProvider interface\", explicitlySpecified);\n            Util.report(message, e);\n            return null;\n        }\n    }",
+      "provenance": "Explicit lines and owned modifiers reviewed in source; no product Java parser invoked."
+    },
+    {
+      "project": "slf4j",
+      "side": "base",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "qualname": "LoggerFactory.loadExplicitlySpecified(String)",
+      "absent": true,
+      "provenance": "source has no method declaration with this name"
+    }
+  ]
+}

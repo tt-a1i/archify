@@ -1,0 +1,352 @@
+{
+  "source": "<study-root>/public-final-replay/whole-corpus/outputs/source",
+  "archive": "<study-root>/public-final-replay/whole-corpus/outputs/archive",
+  "raw_facts": {
+    "check-redux-base": {
+      "source_sha256": "65a16da6ddc00d6dd546783130a5656892e85fe6772442abc8a9152321d004e6",
+      "archive_sha256": "65a16da6ddc00d6dd546783130a5656892e85fe6772442abc8a9152321d004e6",
+      "byte_equal": true
+    },
+    "check-redux-head": {
+      "source_sha256": "fb121a92a84f665559083c112b6e3db99ce0cf44228182c65cde83123910056d",
+      "archive_sha256": "fb121a92a84f665559083c112b6e3db99ce0cf44228182c65cde83123910056d",
+      "byte_equal": true
+    },
+    "check-commander-base": {
+      "source_sha256": "51815e3e8e2bb7f5a2afdf201005c17133fed44fb093576e5cdeb8cabdc3a3b3",
+      "archive_sha256": "51815e3e8e2bb7f5a2afdf201005c17133fed44fb093576e5cdeb8cabdc3a3b3",
+      "byte_equal": true
+    },
+    "check-commander-head": {
+      "source_sha256": "fb0eaa2823720a26b25eddfb231ea628e16d0ffcd07a954bc554cb6d0ee29296",
+      "archive_sha256": "fb0eaa2823720a26b25eddfb231ea628e16d0ffcd07a954bc554cb6d0ee29296",
+      "byte_equal": true
+    },
+    "check-pluggy-base": {
+      "source_sha256": "994fc9cad9ea4d9649700d04221bd62bcbf133c585a8b548e9bb9d61440bf336",
+      "archive_sha256": "994fc9cad9ea4d9649700d04221bd62bcbf133c585a8b548e9bb9d61440bf336",
+      "byte_equal": true
+    },
+    "check-pluggy-head": {
+      "source_sha256": "55d61b7ca84eaf78220476698b6439dcb2a2d5a92d49ff3412e911315fc107df",
+      "archive_sha256": "55d61b7ca84eaf78220476698b6439dcb2a2d5a92d49ff3412e911315fc107df",
+      "byte_equal": true
+    },
+    "check-httpx-base": {
+      "source_sha256": "5ee2dbcef161260f72155f0e1b4b10dd8ecd1b2acbe0f9ef6792f57f21d99d79",
+      "archive_sha256": "5ee2dbcef161260f72155f0e1b4b10dd8ecd1b2acbe0f9ef6792f57f21d99d79",
+      "byte_equal": true
+    },
+    "check-httpx-head": {
+      "source_sha256": "653851711bdc24c4c00ba7d87e6e58c3ed0b1b6904afc23a8a0380cfd8d075d4",
+      "archive_sha256": "653851711bdc24c4c00ba7d87e6e58c3ed0b1b6904afc23a8a0380cfd8d075d4",
+      "byte_equal": true
+    },
+    "check-slf4j-base": {
+      "source_sha256": "ddd81f1c9a13e71e901e412ed0fd6028a8e9922573e1bc7f2a990b2e5f937248",
+      "archive_sha256": "ddd81f1c9a13e71e901e412ed0fd6028a8e9922573e1bc7f2a990b2e5f937248",
+      "byte_equal": true
+    },
+    "check-slf4j-head": {
+      "source_sha256": "989a412d21367c502f1dfb604a750010462401e89cb1aa3020c20894388ad510",
+      "archive_sha256": "989a412d21367c502f1dfb604a750010462401e89cb1aa3020c20894388ad510",
+      "byte_equal": true
+    },
+    "check-guava-head": {
+      "source_sha256": "5c166b88142e1dcf520e1f03d0d2a724dbfeb4d839c714c29ae338882517bf1c",
+      "archive_sha256": "5c166b88142e1dcf520e1f03d0d2a724dbfeb4d839c714c29ae338882517bf1c",
+      "byte_equal": true
+    },
+    "check-pandas-head": {
+      "source_sha256": "69ce62209bb79b3c882eeb467565c2968cf83a022c6da2a3d4bd01e25b0ba37c",
+      "archive_sha256": "69ce62209bb79b3c882eeb467565c2968cf83a022c6da2a3d4bd01e25b0ba37c",
+      "byte_equal": true
+    }
+  },
+  "commands": {
+    "check-redux-base": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-redux-head": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-commander-base": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-commander-head": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-pluggy-base": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-pluggy-head": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-httpx-base": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-httpx-head": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-slf4j-base": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-slf4j-head": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-guava-head": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "check-pandas-head": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-0": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-1": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-2": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-3": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-4": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-5": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-6": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-7": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-8": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "question-9": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "paired-redux": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "paired-commander": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "paired-httpx": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "paired-pluggy": {
+      "equal": true,
+      "exit_source": 0,
+      "exit_archive": 0,
+      "status_source": "ok",
+      "status_archive": "ok"
+    },
+    "paired-slf4j": {
+      "equal": true,
+      "exit_source": 1,
+      "exit_archive": 1,
+      "status_source": "incomplete",
+      "status_archive": "incomplete"
+    }
+  },
+  "questions": {
+    "question-0": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-1": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-2": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-3": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-4": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-5": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-6": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-7": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-8": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "question-9": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    }
+  },
+  "paired": {
+    "paired-redux": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "paired-commander": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "paired-httpx": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "paired-pluggy": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    },
+    "paired-slf4j": {
+      "normalized_equal": true,
+      "present_source": true,
+      "present_archive": true,
+      "matching_unsupported_receipts": false
+    }
+  },
+  "normalization": "CLI and per-run output paths in command argv; rawFactsPath and absolute workflow in result JSON; no other result fields"
+}

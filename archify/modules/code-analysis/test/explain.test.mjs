@@ -52,7 +52,9 @@ for (const sample of SAVED_LANGUAGES) test(`saved ${sample.language} question us
   const run = () => spawnSync(process.execPath, command, { encoding: 'utf8' });
   const prepared = run(); assert.equal(prepared.status, 0, prepared.stderr);
   const receipt = JSON.parse(prepared.stdout);
-  assert.equal(receipt.evidence, 'valid'); assert.equal(receipt.calls.coverage, sample.language === 'py' ? 'available' : 'unavailable'); assert.equal(receipt.calls.total, brief.calls.total);
+  assert.equal(receipt.evidence, 'valid');
+  assert.equal(receipt.calls.coverage, 'available');
+  assert.equal(receipt.calls.total, brief.calls.total);
   const saved = JSON.parse(fs.readFileSync(output, 'utf8'));
   assert.deepEqual(saved.entry.location, brief.entry.location);
   assert.equal(saved.calls.provenance.rawFactsPath, path.join(args.analysis, 'raw-facts.json'));

@@ -1,0 +1,196 @@
+{
+  "status": "candidate, not completed evaluation",
+  "selection": "7 real repositories, 3 languages; 5 real change pairs; original questions prewritten, new atomic units frozen with prior exposure disclosed",
+  "projects": [
+    {
+      "id": "redux",
+      "language": "typescript",
+      "base_sha": "85d7f27a0f017c80798207b5e799899078a90ca0",
+      "head_sha": "c9e06506f88926e252daf5275495eba0c04bf8e3",
+      "checkout_paths": {
+        "base": "@SOURCES@/redux-base",
+        "head": "@SOURCES@/redux-head"
+      },
+      "question": "Which public name became available, where is its implementation, and did existing internal callers change?",
+      "independent_answer": "[private local reference omitted from public bundle]",
+      "expected_units": [
+        {
+          "unit": "public export binding",
+          "expected": "isPlainObject from src/utils/isPlainObject.ts:5"
+        },
+        {
+          "unit": "existing internal caller file, three",
+          "expected": "combineReducers.ts, createStore.ts, utils/isAction.ts unchanged; entry reexports, does not call"
+        }
+      ],
+      "freeze_status": "pre-analyzer frozen for original question; freeze new atomic scoring set",
+      "verifier": "[private local reference omitted from public bundle]"
+    },
+    {
+      "id": "commander",
+      "language": "javascript",
+      "base_sha": "3ae30a291a777ad1f748d86f49903579277f9ea0",
+      "head_sha": "2c7f687eaea6e7b29b917db8d71a06fe6fbfb53e",
+      "checkout_paths": {
+        "base": "@SOURCES@/commander-base",
+        "head": "@SOURCES@/commander-head"
+      },
+      "question": "Where is the new hook registered and dispatched, and which command is passed?",
+      "independent_answer": "[private local reference omitted from public bundle]",
+      "expected_units": [
+        {
+          "unit": "source location",
+          "expected": "lib/command.js:401-411 registers; 1053-1066 dispatches before direct child; 1202-1212 invokes hook(this, subCommand)"
+        },
+        {
+          "unit": "runtime scenario",
+          "expected": "root hook once, receives intermediate child, before leaf action; callback identity is not a direct-call target"
+        }
+      ],
+      "freeze_status": "pre-analyzer frozen for original question; freeze new atomic scoring set",
+      "verifier": "[private local reference omitted from public bundle]"
+    },
+    {
+      "id": "pluggy",
+      "language": "python",
+      "base_sha": "2e916c21f3e5b60865d3f1f2d6f0932d61c77707",
+      "head_sha": "3d5417a4eff449e17e5bb3e1545b63cbf0e0c768",
+      "checkout_paths": {
+        "base": "@SOURCES@/pluggy-base",
+        "head": "@SOURCES@/pluggy-head"
+      },
+      "question": "How are registered hooks filtered and invoked after #695?",
+      "independent_answer": "[private local reference omitted from public bundle]",
+      "expected_units": [
+        {
+          "unit": "runtime scenario",
+          "expected": "excluding registered alias yields [keep, alias] before and [keep] after"
+        },
+        {
+          "unit": "source dispatch link",
+          "expected": "_manager.py registration -> _hooks.py filtering and HookCaller.__call__ -> _manager.py runner -> _callers.py _multicall; concrete plugin identity requires runtime"
+        }
+      ],
+      "freeze_status": "pre-analyzer frozen for original question; freeze new atomic scoring set",
+      "verifier": "[private local reference omitted from public bundle]"
+    },
+    {
+      "id": "httpx",
+      "language": "python",
+      "base_sha": "eeb5e3c2a3ff2403ec47b5926715ecd61143d92d",
+      "head_sha": "e9cabc8e1deb6548c5c5e2f453e343d39a2a5321",
+      "checkout_paths": {
+        "base": "@SOURCES@/httpx-base",
+        "head": "@SOURCES@/httpx-head"
+      },
+      "question": "Were certifi/httpcore removed or deferred; which constructor/custom-transport paths trigger loading?",
+      "independent_answer": "[private local reference omitted from public bundle]",
+      "expected_units": [
+        {
+          "unit": "source location",
+          "expected": "_config.py:78 imports certifi in SSLContext.__init__; default.py:151 imports httpcore in HTTPTransport.__init__"
+        },
+        {
+          "unit": "source interpretation",
+          "expected": "dependencies remain required; supplied transport can bypass default route; not a universal no-import guarantee"
+        }
+      ],
+      "freeze_status": "pre-analyzer original source oracle; full root checkouts verified at exact commits; new units frozen after previous exposure",
+      "verifier": "[private local reference omitted from public bundle]"
+    },
+    {
+      "id": "slf4j",
+      "language": "java",
+      "base_sha": "aa13da39edd4195c25eecb1263c4bf3f8902a3e4",
+      "head_sha": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+      "checkout_paths": {
+        "base": "@SOURCES@/slf4j-base",
+        "head": "@SOURCES@/slf4j-head"
+      },
+      "question": "How does explicit provider selection change classpath behavior?",
+      "independent_answer": "[private local reference omitted from public bundle]",
+      "expected_units": [
+        {
+          "unit": "definition location",
+          "expected": "LoggerFactory.java bind:181-215, loadExplicitlySpecified:217-236 at head"
+        },
+        {
+          "unit": "runtime scenario",
+          "expected": "NOP descriptor + Simple property selects NOP before and Simple after; invalid property falls back to NOP"
+        }
+      ],
+      "freeze_status": "pre-analyzer frozen for original question; freeze new atomic scoring set",
+      "verifier": "[private local reference omitted from public bundle]",
+      "wiki": "[private local reference omitted from public bundle]"
+    },
+    {
+      "id": "guava",
+      "language": "java",
+      "base_sha": null,
+      "head_sha": "f06690fa3e874f65515e8fd338a74d636e2c792f",
+      "checkout_paths": {
+        "head": "@SOURCES@/guava-head"
+      },
+      "question": "Where are original-source methods and imports in the 14 Unicode-escape files?",
+      "independent_answer": "[private local reference omitted from public bundle]",
+      "expected_units": [
+        {
+          "unit": "original source declaration",
+          "expected": "JDK parse-only inventory, physical source ranges and imports in jdk-guava.tsv"
+        },
+        {
+          "unit": "source tree",
+          "expected": "separately inspect guava/src and android/guava/src"
+        }
+      ],
+      "freeze_status": "pre-analyzer frozen for prior Unicode coverage question; new task-specific questions require new source freeze",
+      "verifier": "[private local reference omitted from public bundle]",
+      "reference_data": "[private local reference omitted from public bundle]",
+      "wiki": "[private local reference omitted from public bundle]"
+    },
+    {
+      "id": "pandas",
+      "language": "python",
+      "base_sha": null,
+      "head_sha": "0691c5cf90477d3503834d983f69350f250a6ff7",
+      "checkout_paths": {
+        "head": "@SOURCES@/pandas-head"
+      },
+      "question": "How are scalar and boolean indexing dispatched, validated, and aligned?",
+      "independent_answer": "[private local reference omitted from public bundle]",
+      "expected_units": [
+        {
+          "unit": "function",
+          "expected": "DataFrame.__getitem__:4062-4128; DataFrame._getitem_bool_array:4130-4155"
+        },
+        {
+          "unit": "direct source call",
+          "expected": "frame.py:4149 check_bool_indexer to indexing.py:2632-2681; 44 total selected callsites include unsupported cases"
+        }
+      ],
+      "freeze_status": "original questions pre-analyzer; new full callsite units frozen after prior output exposure",
+      "verifier": "[private local reference omitted from public bundle]"
+    }
+  ],
+  "run_contract": {
+    "current_combined_cli_and_archive": "not run; validate both from same final revision and recorded archive hash",
+    "check_template": "node <archify>/archify/bin/archify.mjs code-analysis check <root> --language <ts|py|java> --fail-on never --json --out <out>",
+    "additional_modes": "Select supported location/call/change question modes after verifying final CLI help; record exact commands and scope. No assertion that Python/Java direct calls currently exist.",
+    "preflight": "Verify commit IDs, clean trees, selected source hashes; no expected answer comes from analyzer. Freeze each added atomic question and source/runtime oracle before its first analysis."
+  },
+  "classification": {
+    "unit": "one pre-enumerated source target or explicit supported-boundary assertion at one revision; preserve one-to-many mappings and evidence lines",
+    "correct-target": "target and scope match independent expected result",
+    "wrong-target": "a concrete target asserted but mismatches oracle, including fabricated target for unsupported case",
+    "omitted": "no target and no explicit unknown, including skipped file unless separately reported",
+    "explicit-unknown": "an explicit unresolved/unsupported result, with reason; never credit as target recovered"
+  },
+  "metrics": {
+    "supported_recall": "correct-target / all supported expected target units (including wrong, omitted, unknown)",
+    "resolved_precision": "correct-target / (correct-target + wrong-target) for asserted targets; report count and undefined when zero",
+    "unknown_rate": "explicit-unknown / all expected units, separately supported and unsupported",
+    "unsupported_boundary": "correctly signaled unknown / all unsupported units; report wrong concrete targets and silent omissions separately",
+    "coverage": "captured and parsed files / eligible scoped source files; distinguish ignored, unsupported and parse failures; separately report project, revision, question and target unit denominators",
+    "runtime_oracles": "separate narrative/runtime results from product facts; never count manual source lookup as analyzer recovery"
+  }
+}

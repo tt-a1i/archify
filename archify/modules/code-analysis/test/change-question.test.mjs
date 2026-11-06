@@ -291,7 +291,7 @@ test('Python direct-name references keep def-start identity separate from paired
   assert.equal(changed.base.knownReferences.items[0].navigation.location.line, 5);
 });
 
-test('Java paired headers have exact same-line ranges and call totals remain unavailable', t => {
+test('Java paired headers have exact same-line ranges and fresh zero call totals', t => {
   const a = 'class Entry { public int selected() { return 1; } int other() { return 2; } }\n';
   const b = a.replace('public int selected', 'private int selected');
   const args = { ...setup(t, { 'Entry.java': a }, { 'Entry.java': b }), entry: 'Entry.java' };
@@ -302,9 +302,40 @@ test('Java paired headers have exact same-line ranges and call totals remain una
   assert.deepEqual(change.base.definition.sourceRange, { line: 1, column: a.indexOf(expected) + 1, endLine: 1, endColumn: a.indexOf(expected) + expected.length + 1, sha256: sha(expected) });
   assert.equal(brief.positionOnlyDefinitions.total, 1);
   for (const side of ['base', 'head']) for (const field of ['knownReferences', 'unresolvedWithinSourceRange']) {
-    assert.equal(change[side][field].coverage, 'unavailable');
-    assert.equal(change[side][field].total, null); assert.equal(change[side][field].omitted, null);
-    assert.equal(change[side][field].reason, 'unsupported-or-unknown-call-model');
+    assert.equal(change[side][field].coverage, 'available');
+    assert.equal(change[side][field].total, 0); assert.equal(change[side][field].omitted, 0);
+  }
+});
+
+test('paired Java changed static method retains references and unresolved members without inventing old-model coverage', t => {
+  const a = 'class Entry { static int selected() { obj.read(); return 1; } static int caller() { return selected(); } }\n';
+  const args = { ...setup(t, { 'Entry.java': a }, { 'Entry.java': a.replace('return 1', 'return 2') }), entry: 'Entry.java' };
+  const captured = capture(args);
+  const brief = buildChangeQuestion(captured);
+  assert.equal(brief.comparison.bindingAttribution, 'source-import-model-only');
+  assert.equal(brief.changedDefinitions.total, 1);
+  const change = brief.changedDefinitions.items[0];
+  for (const side of ['base', 'head']) {
+    const selected = change[side];
+    const fn = captured[side].facts.functions.find(fn => fn.name === 'selected');
+    assert.deepEqual(selected.definition.sourceRange, fn.definition.sourceRange);
+    assert.equal(selected.knownReferences.coverage, 'available');
+    assert.equal(selected.knownReferences.total, 1);
+    const reference = selected.knownReferences.items[0];
+    assert.equal(reference.fact.resolution, 'same-file-static-method');
+    assert.equal(reference.fact.target.line, fn.sourceRange.line);
+    assert.equal(reference.fact.target.column, fn.sourceRange.column);
+    assert.equal(reference.navigation.status, 'valid');
+    assert.equal(reference.navigation.location.column, a.indexOf('selected();') + 1);
+    assert.equal(selected.unresolvedWithinSourceRange.total, 1);
+    assert.equal(selected.unresolvedWithinSourceRange.items[0].fact.reason, 'unsupported-callee');
+    delete captured[side].facts.callModel;
+  }
+  const historical = buildChangeQuestion(captured).changedDefinitions.items[0];
+  for (const side of ['base', 'head']) for (const field of ['knownReferences', 'unresolvedWithinSourceRange']) {
+    assert.equal(historical[side][field].coverage, 'unavailable');
+    assert.equal(historical[side][field].total, null);
+    assert.equal(historical[side][field].reason, 'unsupported-or-unknown-call-model');
   }
 });
 

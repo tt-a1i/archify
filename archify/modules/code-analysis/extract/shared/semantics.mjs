@@ -34,9 +34,10 @@ export function semanticErrors(name, data) {
       if (fn.deepestLine < fn.line || fn.deepestLine > fn.endLine) add(`/functions/${i}/deepestLine`, 'must lie inside the function');
     });
     const pythonCalls = data.repository.language === 'py' && data.callModel === 'python-lexical-v1';
+    const javaCalls = data.repository.language === 'java' && data.callModel === 'java-static-lexical-v1';
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     data.functions?.forEach((fn, i) => {
-      if ((pythonCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
+      if ((pythonCalls || javaCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
       if (fn.definition) {
         const { kind, sourceRange: range } = fn.definition;
         const python = ['FunctionDef', 'AsyncFunctionDef'].includes(kind);
@@ -75,7 +76,7 @@ export function semanticErrors(name, data) {
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
         if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
-        if (pythonCalls && !functionPoints.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured Python definition start');
+        if ((pythonCalls || javaCalls) && !functionPoints.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured definition start');
         if (!functionStarts.has(functionKey(targetFile, call.target.name, call.target.line))) add(`${at}/target`, 'target must reference a recorded function in its target file');
       }
     });

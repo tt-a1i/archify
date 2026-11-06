@@ -1,0 +1,720 @@
+{
+  "schema": "selected-incoming-reference-crosswalk-v1",
+  "created_utc": "2026-11-06T17:26:16.049560+00:00",
+  "product_commit": "749ab83912adbf9617da2926be696f9b45ea90dc",
+  "oracle": {
+    "path": "<product-root>/benchmarks/code-analysis-java-calls/oracle.json",
+    "sha256": "bc61d7769560713d87314233178db08cc7827aea5e48733d8a5991900eb6e622",
+    "scope": "All explicit method invocation expressions within selected method bodies, including nested invocations and lambda bodies; constructors, method references and implicit calls excluded. End offsets exclusive; UTF-16 code units from start of decoded source. Unsupported means outside bounded same-class uniquely declared static direct call rule, not proof no Java target exists.",
+    "prior_exposure": "Projects studied previously; these new method-level call inventory questions authored from pinned source before this study analyzer run. No analyzer output consulted in oracle creation."
+  },
+  "interpretation": [
+    "Post-exposure crosswalk of existing frozen Java86 oracle units; no new oracle and no analyzer rerun.",
+    "Selection: existing SLF4J Java86 target units whose target identity is bind or loadExplicitlySpecified. These three per-side incoming sites are a bounded subset, not a complete repository reference inventory.",
+    "Correctness checks invocation file, side, unique exact start/end span and target name/declaration line; target column is checked against pinned source indentation. Navigation validity is verified against exact observed invocation span and unchanged source hash.",
+    "The Java86 60 unresolved sites retain their original unresolved status; this crosswalk supplies no new dynamic/runtime recovery.",
+    "Existing fixed-case definition grades remain separate from this selected-reference appendix."
+  ],
+  "expected": [
+    {
+      "project": "slf4j",
+      "side": "base",
+      "commit": "aa13da39edd4195c25eecb1263c4bf3f8902a3e4",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "source_sha256": "048a4e60d8a81e4a11dc56288a5f1f62b965d2066c1ff86a9ec05a3bbb44d540",
+      "caller": "org.slf4j.LoggerFactory.performInitialization()",
+      "oracle_unit": {
+        "name": "bind",
+        "identifier_start": {
+          "utf16": 7307,
+          "line": 168,
+          "column_utf16": 9
+        },
+        "invocation_end_exclusive": {
+          "utf16": 7313,
+          "line": 168,
+          "column_utf16": 15
+        },
+        "expected": "target",
+        "target": {
+          "identity": "org.slf4j.LoggerFactory.bind",
+          "declaration_line": 174,
+          "signature": "bind()",
+          "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+        },
+        "reason": null,
+        "javac_invocation": {
+          "start_utf16": 7307,
+          "end_utf16_exclusive": 7313,
+          "attributed_target": "org.slf4j.LoggerFactory#bind()"
+        }
+      }
+    },
+    {
+      "project": "slf4j",
+      "side": "head",
+      "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "source_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+      "caller": "org.slf4j.LoggerFactory.performInitialization()",
+      "oracle_unit": {
+        "name": "bind",
+        "identifier_start": {
+          "utf16": 7572,
+          "line": 175,
+          "column_utf16": 9
+        },
+        "invocation_end_exclusive": {
+          "utf16": 7578,
+          "line": 175,
+          "column_utf16": 15
+        },
+        "expected": "target",
+        "target": {
+          "identity": "org.slf4j.LoggerFactory.bind",
+          "declaration_line": 181,
+          "signature": "bind()",
+          "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+        },
+        "reason": null,
+        "javac_invocation": {
+          "start_utf16": 7572,
+          "end_utf16_exclusive": 7578,
+          "attributed_target": "org.slf4j.LoggerFactory#bind()"
+        }
+      }
+    },
+    {
+      "project": "slf4j",
+      "side": "head",
+      "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "source_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+      "caller": "org.slf4j.LoggerFactory.bind()",
+      "oracle_unit": {
+        "name": "loadExplicitlySpecified",
+        "identifier_start": {
+          "utf16": 7825,
+          "line": 183,
+          "column_utf16": 20
+        },
+        "invocation_end_exclusive": {
+          "utf16": 7869,
+          "line": 183,
+          "column_utf16": 64
+        },
+        "expected": "target",
+        "target": {
+          "identity": "org.slf4j.LoggerFactory.loadExplicitlySpecified",
+          "declaration_line": 217,
+          "signature": "loadExplicitlySpecified(String explicitlySpecified)",
+          "attributed_identity": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+        },
+        "reason": null,
+        "javac_invocation": {
+          "start_utf16": 7825,
+          "end_utf16_exclusive": 7869,
+          "attributed_target": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+        }
+      }
+    }
+  ],
+  "inputs": {
+    "source": {
+      "path": "<study-root>/java-call-study/final-evaluation/outputs/source/paired-slf4j/result.json",
+      "sha256": "1165b365ae427d50bbb9399f8c432c68b96626955761c48b2f569fec2f149e94"
+    },
+    "archive": {
+      "path": "<study-root>/java-call-study/final-evaluation/outputs/archive/paired-slf4j/result.json",
+      "sha256": "1165b365ae427d50bbb9399f8c432c68b96626955761c48b2f569fec2f149e94"
+    }
+  },
+  "modes": {
+    "source": {
+      "summary": {
+        "expected": 3,
+        "correct": 3,
+        "wrong": 0,
+        "omitted": 0,
+        "explicit_unknown": 0,
+        "extra_observed_selected_references": 0,
+        "observed_total": 3
+      },
+      "units": [
+        {
+          "expected_unit": {
+            "project": "slf4j",
+            "side": "base",
+            "commit": "aa13da39edd4195c25eecb1263c4bf3f8902a3e4",
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "source_sha256": "048a4e60d8a81e4a11dc56288a5f1f62b965d2066c1ff86a9ec05a3bbb44d540",
+            "caller": "org.slf4j.LoggerFactory.performInitialization()",
+            "oracle_unit": {
+              "name": "bind",
+              "identifier_start": {
+                "utf16": 7307,
+                "line": 168,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7313,
+                "line": 168,
+                "column_utf16": 15
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.bind",
+                "declaration_line": 174,
+                "signature": "bind()",
+                "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7307,
+                "end_utf16_exclusive": 7313,
+                "attributed_target": "org.slf4j.LoggerFactory#bind()"
+              }
+            }
+          },
+          "checks": {
+            "unique_exact_invocation_span": true,
+            "pinned_source_hash": true,
+            "side_matches": true,
+            "target_name_line_column": true,
+            "definition_matches_target": true,
+            "navigation_valid": true,
+            "bounded_collection_consistent": true
+          },
+          "observed_record": {
+            "side": "base",
+            "snapshotId": "1213bc670b0cbbd676bb747788a2ac10dfd188235d71227908fd5809d096f2c7",
+            "factIndex": 1035,
+            "fact": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+              "line": 168,
+              "column": 9,
+              "endLine": 168,
+              "endColumn": 15,
+              "resolution": "same-file-static-method",
+              "target": {
+                "name": "bind",
+                "line": 174,
+                "column": 5
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+                "line": 168,
+                "column": 9,
+                "endLine": 168,
+                "endColumn": 15
+              }
+            }
+          },
+          "observed_definition": {
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "name": "bind",
+            "qualname": "LoggerFactory.bind()",
+            "kind": "methodDeclaration",
+            "line": 174,
+            "column": 5,
+            "endLine": 198,
+            "endColumn": 6,
+            "sourceRange": {
+              "line": 174,
+              "column": 5,
+              "endLine": 198,
+              "endColumn": 6,
+              "sha256": "61a94fdcace7e40b462f55688829c4f749c563da644d8c31974b2f0b9cfd5965"
+            },
+            "textSha256": "61a94fdcace7e40b462f55688829c4f749c563da644d8c31974b2f0b9cfd5965"
+          },
+          "status": "correct"
+        },
+        {
+          "expected_unit": {
+            "project": "slf4j",
+            "side": "head",
+            "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "source_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+            "caller": "org.slf4j.LoggerFactory.performInitialization()",
+            "oracle_unit": {
+              "name": "bind",
+              "identifier_start": {
+                "utf16": 7572,
+                "line": 175,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7578,
+                "line": 175,
+                "column_utf16": 15
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.bind",
+                "declaration_line": 181,
+                "signature": "bind()",
+                "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7572,
+                "end_utf16_exclusive": 7578,
+                "attributed_target": "org.slf4j.LoggerFactory#bind()"
+              }
+            }
+          },
+          "checks": {
+            "unique_exact_invocation_span": true,
+            "pinned_source_hash": true,
+            "side_matches": true,
+            "target_name_line_column": true,
+            "definition_matches_target": true,
+            "navigation_valid": true,
+            "bounded_collection_consistent": true
+          },
+          "observed_record": {
+            "side": "head",
+            "snapshotId": "b0c3804ac1d49d1d6679dce28689be3313156dfa703e6aa0f34f45881d0bed41",
+            "factIndex": 1035,
+            "fact": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+              "line": 175,
+              "column": 9,
+              "endLine": 175,
+              "endColumn": 15,
+              "resolution": "same-file-static-method",
+              "target": {
+                "name": "bind",
+                "line": 181,
+                "column": 5
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+                "line": 175,
+                "column": 9,
+                "endLine": 175,
+                "endColumn": 15
+              }
+            }
+          },
+          "observed_definition": {
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "name": "bind",
+            "qualname": "LoggerFactory.bind()",
+            "kind": "methodDeclaration",
+            "line": 181,
+            "column": 5,
+            "endLine": 215,
+            "endColumn": 6,
+            "sourceRange": {
+              "line": 181,
+              "column": 5,
+              "endLine": 215,
+              "endColumn": 6,
+              "sha256": "18f44d73decb07af816df5cdee80bd2af09de4b5c2cd62ebaf42a92229773d9e"
+            },
+            "textSha256": "18f44d73decb07af816df5cdee80bd2af09de4b5c2cd62ebaf42a92229773d9e"
+          },
+          "status": "correct"
+        },
+        {
+          "expected_unit": {
+            "project": "slf4j",
+            "side": "head",
+            "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "source_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+            "caller": "org.slf4j.LoggerFactory.bind()",
+            "oracle_unit": {
+              "name": "loadExplicitlySpecified",
+              "identifier_start": {
+                "utf16": 7825,
+                "line": 183,
+                "column_utf16": 20
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7869,
+                "line": 183,
+                "column_utf16": 64
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.loadExplicitlySpecified",
+                "declaration_line": 217,
+                "signature": "loadExplicitlySpecified(String explicitlySpecified)",
+                "attributed_identity": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7825,
+                "end_utf16_exclusive": 7869,
+                "attributed_target": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+              }
+            }
+          },
+          "checks": {
+            "unique_exact_invocation_span": true,
+            "pinned_source_hash": true,
+            "side_matches": true,
+            "target_name_line_column": true,
+            "definition_matches_target": true,
+            "navigation_valid": true,
+            "bounded_collection_consistent": true
+          },
+          "observed_record": {
+            "side": "head",
+            "snapshotId": "b0c3804ac1d49d1d6679dce28689be3313156dfa703e6aa0f34f45881d0bed41",
+            "factIndex": 1038,
+            "fact": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+              "line": 183,
+              "column": 20,
+              "endLine": 183,
+              "endColumn": 64,
+              "resolution": "same-file-static-method",
+              "target": {
+                "name": "loadExplicitlySpecified",
+                "line": 217,
+                "column": 5
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+                "line": 183,
+                "column": 20,
+                "endLine": 183,
+                "endColumn": 64
+              }
+            }
+          },
+          "observed_definition": {
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "name": "loadExplicitlySpecified",
+            "qualname": "LoggerFactory.loadExplicitlySpecified(String)",
+            "kind": "methodDeclaration",
+            "line": 217,
+            "column": 5,
+            "endLine": 236,
+            "endColumn": 6,
+            "sourceRange": {
+              "line": 217,
+              "column": 5,
+              "endLine": 236,
+              "endColumn": 6,
+              "sha256": "6aaee1dde471dc83aa459bdc0d86fd95e7edc79e6062453d1aebd8dc98804d8a"
+            },
+            "textSha256": "6aaee1dde471dc83aa459bdc0d86fd95e7edc79e6062453d1aebd8dc98804d8a"
+          },
+          "status": "correct"
+        }
+      ],
+      "extras": []
+    },
+    "archive": {
+      "summary": {
+        "expected": 3,
+        "correct": 3,
+        "wrong": 0,
+        "omitted": 0,
+        "explicit_unknown": 0,
+        "extra_observed_selected_references": 0,
+        "observed_total": 3
+      },
+      "units": [
+        {
+          "expected_unit": {
+            "project": "slf4j",
+            "side": "base",
+            "commit": "aa13da39edd4195c25eecb1263c4bf3f8902a3e4",
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "source_sha256": "048a4e60d8a81e4a11dc56288a5f1f62b965d2066c1ff86a9ec05a3bbb44d540",
+            "caller": "org.slf4j.LoggerFactory.performInitialization()",
+            "oracle_unit": {
+              "name": "bind",
+              "identifier_start": {
+                "utf16": 7307,
+                "line": 168,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7313,
+                "line": 168,
+                "column_utf16": 15
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.bind",
+                "declaration_line": 174,
+                "signature": "bind()",
+                "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7307,
+                "end_utf16_exclusive": 7313,
+                "attributed_target": "org.slf4j.LoggerFactory#bind()"
+              }
+            }
+          },
+          "checks": {
+            "unique_exact_invocation_span": true,
+            "pinned_source_hash": true,
+            "side_matches": true,
+            "target_name_line_column": true,
+            "definition_matches_target": true,
+            "navigation_valid": true,
+            "bounded_collection_consistent": true
+          },
+          "observed_record": {
+            "side": "base",
+            "snapshotId": "1213bc670b0cbbd676bb747788a2ac10dfd188235d71227908fd5809d096f2c7",
+            "factIndex": 1035,
+            "fact": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+              "line": 168,
+              "column": 9,
+              "endLine": 168,
+              "endColumn": 15,
+              "resolution": "same-file-static-method",
+              "target": {
+                "name": "bind",
+                "line": 174,
+                "column": 5
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+                "line": 168,
+                "column": 9,
+                "endLine": 168,
+                "endColumn": 15
+              }
+            }
+          },
+          "observed_definition": {
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "name": "bind",
+            "qualname": "LoggerFactory.bind()",
+            "kind": "methodDeclaration",
+            "line": 174,
+            "column": 5,
+            "endLine": 198,
+            "endColumn": 6,
+            "sourceRange": {
+              "line": 174,
+              "column": 5,
+              "endLine": 198,
+              "endColumn": 6,
+              "sha256": "61a94fdcace7e40b462f55688829c4f749c563da644d8c31974b2f0b9cfd5965"
+            },
+            "textSha256": "61a94fdcace7e40b462f55688829c4f749c563da644d8c31974b2f0b9cfd5965"
+          },
+          "status": "correct"
+        },
+        {
+          "expected_unit": {
+            "project": "slf4j",
+            "side": "head",
+            "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "source_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+            "caller": "org.slf4j.LoggerFactory.performInitialization()",
+            "oracle_unit": {
+              "name": "bind",
+              "identifier_start": {
+                "utf16": 7572,
+                "line": 175,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7578,
+                "line": 175,
+                "column_utf16": 15
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.bind",
+                "declaration_line": 181,
+                "signature": "bind()",
+                "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7572,
+                "end_utf16_exclusive": 7578,
+                "attributed_target": "org.slf4j.LoggerFactory#bind()"
+              }
+            }
+          },
+          "checks": {
+            "unique_exact_invocation_span": true,
+            "pinned_source_hash": true,
+            "side_matches": true,
+            "target_name_line_column": true,
+            "definition_matches_target": true,
+            "navigation_valid": true,
+            "bounded_collection_consistent": true
+          },
+          "observed_record": {
+            "side": "head",
+            "snapshotId": "b0c3804ac1d49d1d6679dce28689be3313156dfa703e6aa0f34f45881d0bed41",
+            "factIndex": 1035,
+            "fact": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+              "line": 175,
+              "column": 9,
+              "endLine": 175,
+              "endColumn": 15,
+              "resolution": "same-file-static-method",
+              "target": {
+                "name": "bind",
+                "line": 181,
+                "column": 5
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+                "line": 175,
+                "column": 9,
+                "endLine": 175,
+                "endColumn": 15
+              }
+            }
+          },
+          "observed_definition": {
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "name": "bind",
+            "qualname": "LoggerFactory.bind()",
+            "kind": "methodDeclaration",
+            "line": 181,
+            "column": 5,
+            "endLine": 215,
+            "endColumn": 6,
+            "sourceRange": {
+              "line": 181,
+              "column": 5,
+              "endLine": 215,
+              "endColumn": 6,
+              "sha256": "18f44d73decb07af816df5cdee80bd2af09de4b5c2cd62ebaf42a92229773d9e"
+            },
+            "textSha256": "18f44d73decb07af816df5cdee80bd2af09de4b5c2cd62ebaf42a92229773d9e"
+          },
+          "status": "correct"
+        },
+        {
+          "expected_unit": {
+            "project": "slf4j",
+            "side": "head",
+            "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "source_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+            "caller": "org.slf4j.LoggerFactory.bind()",
+            "oracle_unit": {
+              "name": "loadExplicitlySpecified",
+              "identifier_start": {
+                "utf16": 7825,
+                "line": 183,
+                "column_utf16": 20
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7869,
+                "line": 183,
+                "column_utf16": 64
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.loadExplicitlySpecified",
+                "declaration_line": 217,
+                "signature": "loadExplicitlySpecified(String explicitlySpecified)",
+                "attributed_identity": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7825,
+                "end_utf16_exclusive": 7869,
+                "attributed_target": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+              }
+            }
+          },
+          "checks": {
+            "unique_exact_invocation_span": true,
+            "pinned_source_hash": true,
+            "side_matches": true,
+            "target_name_line_column": true,
+            "definition_matches_target": true,
+            "navigation_valid": true,
+            "bounded_collection_consistent": true
+          },
+          "observed_record": {
+            "side": "head",
+            "snapshotId": "b0c3804ac1d49d1d6679dce28689be3313156dfa703e6aa0f34f45881d0bed41",
+            "factIndex": 1038,
+            "fact": {
+              "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+              "line": 183,
+              "column": 20,
+              "endLine": 183,
+              "endColumn": 64,
+              "resolution": "same-file-static-method",
+              "target": {
+                "name": "loadExplicitlySpecified",
+                "line": 217,
+                "column": 5
+              }
+            },
+            "bindingAttribution": "source-import-model-only",
+            "navigation": {
+              "status": "valid",
+              "location": {
+                "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+                "line": 183,
+                "column": 20,
+                "endLine": 183,
+                "endColumn": 64
+              }
+            }
+          },
+          "observed_definition": {
+            "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+            "name": "loadExplicitlySpecified",
+            "qualname": "LoggerFactory.loadExplicitlySpecified(String)",
+            "kind": "methodDeclaration",
+            "line": 217,
+            "column": 5,
+            "endLine": 236,
+            "endColumn": 6,
+            "sourceRange": {
+              "line": 217,
+              "column": 5,
+              "endLine": 236,
+              "endColumn": 6,
+              "sha256": "6aaee1dde471dc83aa459bdc0d86fd95e7edc79e6062453d1aebd8dc98804d8a"
+            },
+            "textSha256": "6aaee1dde471dc83aa459bdc0d86fd95e7edc79e6062453d1aebd8dc98804d8a"
+          },
+          "status": "correct"
+        }
+      ],
+      "extras": []
+    }
+  }
+}

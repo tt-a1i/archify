@@ -7,9 +7,10 @@ finding is not required. `task --help` describes question mode and its options.
 
 Single-entry orientation accepts JS/TS implementation files, or a .py/.java entry
 captured in a saved analysis directory with matching Python/Java producer metadata.
-Python/Java use captured function ranges and file dependencies. Fresh Python facts
-with `python-lexical-v1` also supply source callsites and bounded direct-name targets;
-Java calls remain unavailable. Fresh paired orientation below also supports captured named Python/Java definitions.
+Python/Java use captured function ranges and file dependencies. Fresh Python
+`python-lexical-v1` facts supply source callsites and bounded direct-name targets;
+fresh Java `java-static-lexical-v1` facts supply bounded method invocation navigation.
+Fresh paired orientation below also supports captured named Python/Java definitions.
 
 1. **Scope.** Before reading the path in depth, record the question, entry,
    acceptance questions and excluded areas. For a code change, pin full base/head
@@ -55,8 +56,18 @@ Java calls remain unavailable. Fresh paired orientation below also supports capt
    The range starts at def/async def, excluding preceding decorators; defaults and
    nested bodies physically inside it are included. This does not establish
    execution or runtime identity. Paired definition comparison uses a separate full-header range described below.
-   Historical Python captures without this model and Java calls remain unavailable
-   with unknown totals. Read source for object dispatch, reflection and providers.
+   Fresh Java `java-static-lexical-v1` captures inventory method invocations,
+   including nested types and lambdas in the selected range. Constructors and
+   method references are excluded. `same-file-static-method` supplies a lexical
+   source candidate for a bare identifier call to a unique explicit static body
+   method with matching fixed arity in a top-level ordinary class without
+   extends/implements. Overloads, varargs, explicit invocation type arguments,
+   Object method names and nested/local/anonymous owners remain unresolved.
+   It does not check argument type applicability or compilation; read source for
+   runtime dispatch, reflection and providers. Java exact function columns
+   exclude adjacent same-line methods. See [Java bounds](JAVA.md#method-invocation-source-navigation).
+   Historical Python/Java captures without their recognized model remain unavailable
+   with unknown totals; their empty arrays do not imply no calls.
    New marked facts require the updated raw-facts schema; older strict readers
    reject the additional field.
    Each `calls.records` item keeps its original `fact` and `factIndex` in the
@@ -216,8 +227,11 @@ Read the orientation before following locations:
   call evidence; decorated definitions can be paired even though decorated and
   method call targets remain unresolved. In-range unresolved sites use the full
   owned extent and can include decorator expressions and nested definitions.
-  Java has no supported call model here: `coverage: unavailable`, `total: null`
-  and `omitted: null` mean unknown, regardless of an empty captured calls array.
+  Matching Java producers with `java-static-lexical-v1` support bounded
+  `same-file-static-method` source candidates and retain member calls as unresolved.
+  These candidates do not check argument type applicability or compilation.
+  Historical captures without a recognized model use `coverage: unavailable`,
+  `total: null` and `omitted: null`, regardless of an empty captured calls array.
   Unknown models remain unavailable; adapter revision alone cannot grant coverage.
 - Lists include total/included/omitted and are capped at 40 when available. Read relevant source
   beyond the cap. `unresolvedWithinSourceRange` includes nested closures;
