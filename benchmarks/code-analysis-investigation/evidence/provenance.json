@@ -1,0 +1,25 @@
+{
+  "transformation": "Recursively replace private study-root and product-root prefixes with <study-root> and <product-root>; retain all semantic fields and values. References to private raw captures are identifiers, not bundled files.",
+  "artifacts": {
+    "baseline-units.json": {
+      "original_sha256": "76c7e1e860a2d90eeeb9cfddb18b83d6389fb2b27f0a22a527bdf58d35222c4d",
+      "sanitized_sha256": "b0a0cf33c474ec56e1c9d4e9cd8daba4aef9485b6696ddc9db5451b2ae65f22a"
+    },
+    "final-historical-units.json": {
+      "original_sha256": "8b4df94f076c523c43c1a9d38115cda81691dd394496f89ba2a18c699c2c3e4c",
+      "sanitized_sha256": "34a4cecd27ced1cf143ae417ec6aade2610861e9d67f0fb15b4bf536562e8b33"
+    },
+    "final-availability-v2-units.json": {
+      "original_sha256": "4178ab2c56aa34dcd33aeb551858951ab5e44bb608487c130f588ecd9bb5aa5a",
+      "sanitized_sha256": "776e2ed0a05408e2b59b894ddf5278e0a156000a3e35127594d2663f4b1f5d40"
+    },
+    "final-coverage.json": {
+      "original_sha256": "f8937a6776e25c13b5c600975545ff60c543b99ece96c0af3017a72e4166c59b",
+      "sanitized_sha256": "f8937a6776e25c13b5c600975545ff60c543b99ece96c0af3017a72e4166c59b"
+    },
+    "incoming-reference-crosswalk.json": {
+      "original_sha256": "9a6e0ed5702f8966d1ea546a946dd2649234709c60572d864298c138e6a447a1",
+      "sanitized_sha256": "4bdc33becc6dd03f2cddee45b99ac89ade8befc2cfcd158bb247335078890cf7"
+    }
+  }
+}
