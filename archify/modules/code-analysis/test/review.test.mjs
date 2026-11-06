@@ -6,7 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { baselineFrom, isOpen, reviewFindings, validateBaseline } from '../lib/review.mjs';
+import { baselineFrom, decideFinding, isOpen, reviewFindings, validateBaseline } from '../lib/review.mjs';
 import { buildOverview } from '../overlay/overview.mjs';
 import { DiagnosticError } from '../extract/shared/diagnostics.mjs';
 
@@ -55,6 +55,22 @@ test('comparison: new, fixed, evidence-changed and unchanged relative to the pre
   assert.equal(r.comparison.unchanged, 1);
   assert.equal(r.comparison.previousSnapshot, 'prev');
   assert.equal(r.findings[C.id].since, 'new');
+});
+
+test('decideFinding: accepting needs a reason and records the current evidence hash', () => {
+  const current = finding('COMP-aaaaaaaaaaaa', 'warning', digest('a'));
+  const doc = decideFinding({ schema_version: 1, accepted: [] }, { id: current.id, action: 'accept', reason: '  business constraint  ', finding: current });
+  assert.deepEqual(doc.accepted, [{ id: current.id, code: current.code, reason: 'business constraint', sha256: digest('a') }]);
+  assert.throws(() => decideFinding(doc, { id: current.id, action: 'accept', reason: '   ', finding: current }), (e) => e.diagnostics[0].code === 'baseline/reason-required');
+  assert.throws(() => decideFinding(doc, { id: 'COMP-bbbbbbbbbbbb', action: 'accept', reason: 'because', finding: null }), (e) => e.diagnostics[0].code === 'baseline/unknown-finding');
+});
+
+test('decideFinding: revoke removes only that entry', () => {
+  const current = finding('COMP-aaaaaaaaaaaa', 'warning', digest('a'));
+  const doc = decideFinding({ schema_version: 1, accepted: [] }, { id: current.id, action: 'accept', reason: 'kept', finding: current });
+  const cleared = decideFinding(doc, { id: current.id, action: 'revoke' });
+  assert.deepEqual(cleared.accepted, []);
+  assert.throws(() => decideFinding(cleared, { id: current.id, action: 'revoke' }), (e) => e.diagnostics[0].code === 'baseline/not-accepted');
 });
 
 test('baselineFrom: keeps existing reasons, records digests, drops entries that no longer occur', () => {

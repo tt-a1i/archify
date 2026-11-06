@@ -158,4 +158,25 @@ export function baselineFrom(diagnostics, { existing = null, reason }) {
   };
 }
 
+// Accept or revoke one finding in a baseline document. The caller chooses the
+// file; this only edits the document. `finding` is the current diagnostic, so
+// the stored hash matches the evidence being accepted. An empty reason or an
+// unknown id is rejected rather than recorded.
+export function decideFinding(doc, { id, action, reason, finding }) {
+  const accepted = [...(doc?.accepted || [])];
+  const index = accepted.findIndex((entry) => entry.id === id);
+  if (action === 'revoke') {
+    if (index === -1) fail('baseline/not-accepted', `Finding ${id} is not in the baseline.`, { subject: { id }, supportedFixes: ['accept it before revoking it'] });
+    accepted.splice(index, 1);
+  } else if (action === 'accept') {
+    const text = typeof reason === 'string' ? reason.trim() : '';
+    if (!text) fail('baseline/reason-required', 'Accepting a finding needs a reason.', { subject: { id }, supportedFixes: ['say why it is kept, for example a business constraint'] });
+    if (!finding || finding.id !== id) fail('baseline/unknown-finding', `Finding ${id} is not in the current analysis.`, { subject: { id }, supportedFixes: ['re-analyze and choose a finding from the result'] });
+    const entry = { id, code: finding.code, reason: text, ...(finding.evidenceDigest?.sha256 ? { sha256: finding.evidenceDigest.sha256 } : {}) };
+    if (index === -1) accepted.push(entry);
+    else accepted[index] = entry;
+  } else fail('baseline/action-invalid', `Unknown baseline action "${action}".`, { subject: { id }, supportedFixes: ['use accept or revoke'] });
+  return { schema_version: 1, accepted: accepted.sort((a, b) => compareText(a.id, b.id)) };
+}
+
 function compareText(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
