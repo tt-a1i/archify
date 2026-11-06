@@ -22,6 +22,8 @@ The server serves the diagram on a loopback address with a Code Analysis button.
 
 `archify code-analysis task` (`bin/task.mjs`) builds an AI optimization task from a finished run's `findings.json` and `raw-facts.json` (`lib/task.mjs`) and optionally checks its evidence against the working tree (`lib/evidence.mjs`).
 
+With `--question`, it instead prepares single-entry source orientation without requiring a finding (`lib/explain.mjs`, `lib/question-calls.mjs`). This mode checks captured source identity, direct imports and supported call locations, then points to the host Agent's [function analysis workflow](docs/FUNCTION-ANALYSIS.md). It does not run semantic analysis or execute the analyzed project.
+
 ## Analysis pipeline
 
 `lib/analysis.mjs` coordinates four stages:
@@ -43,7 +45,7 @@ The existing TypeScript checker supplies conservative lexical bindings: a unique
 
 Parameter-default calls remain unresolved when the checker reports a declaration inside that same function's body: the body scope is unavailable to the initializer. This includes destructuring defaults and closures created in an initializer. Valid outer/import bindings and declarations within initializer-created function scopes retain their usual resolution; the adapter does not attempt to rebind a rejected body target to an outer declaration.
 
-Call and target positions are one-based UTF-16 coordinates; call ends are exclusive. Chained calls can share a start and have different ends. Semantic checks verify source bounds, measured functions and recorded static import edges, without rerunning binding analysis. `symbols` retains Python binding-order semantics; `unresolved` counters still count imports. Module graphs, rules, finding tasks and the UI do not consume the call records yet. This layer adds evidence to `raw-facts.json`, not a call graph or question workflow.
+Call and target positions are one-based UTF-16 coordinates; call ends are exclusive. Chained calls can share a start and have different ends. Semantic checks verify source bounds, measured functions and recorded static import edges, without rerunning binding analysis. `symbols` retains Python binding-order semantics; `unresolved` counters still count imports. Module graphs, rules, finding tasks and the UI do not consume the call records. Question orientation reads up to 40 records in the selected source range, including nested bodies, and reports total/included/omitted counts. Missing or unknown call models leave coverage unavailable, even for a numerically familiar adapter revision. Original facts stay intact; current navigation requires matching source text and no parse errors, checked separately for imported targets. These checks do not re-resolve imports after configuration or other source changes.
 
 Historical empty arrays remain valid in the updated schema. Older strict schemas reject the additional `callModel` field, so consumers need the updated schema to read new captures. A reader must also account for parse errors, excluded files and declaration files before interpreting call coverage.
 

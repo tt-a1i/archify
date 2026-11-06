@@ -29,6 +29,11 @@ It has two entry points that share the same pipeline:
 optimization task (JSON or Markdown) and checks its evidence against the current
 working tree; the page uses the same logic through the server.
 
+`task --question` prepares source orientation for a JS/TS implementation entry without
+requiring a finding: source identity, direct imports and bounded call evidence.
+The host Agent then follows [the function analysis workflow](docs/FUNCTION-ANALYSIS.md)
+to answer the question from source. The CLI output is an intermediate reading aid.
+
 From the `archify/` package directory:
 
 ```sh

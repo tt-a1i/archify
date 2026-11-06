@@ -5,6 +5,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { schemaErrors } from '../extract/shared/schema.mjs';
+import { buildQuestion } from '../lib/explain.mjs';
 
 function fixture(t, sources, exclude = []) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-import-calls-'));
@@ -31,7 +32,9 @@ test('relative named import aliases bind direct exported declarations and const 
   assert.equal(calls.find((c) => c.line === 3).resolution, 'unresolved');
   assert.equal(calls.find((c) => c.line === 4).resolution, 'same-file-function-initializer');
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
-
+  const brief = buildQuestion(args);
+  assert.equal(brief.calls.total, 3);
+  assert.ok(brief.calls.records.every((r) => r.targetNavigation.status === 'valid' && r.targetNavigation.location.file === 'target.mjs'));
 });
 
 test('type-only, default, namespace, packages, re-exports and non-exported same-name functions stay unknown', (t) => {
@@ -100,6 +103,37 @@ test('excluded, missing, syntactically broken and ambiguous export targets canno
   }, ['excluded.mjs']);
   assert.ok(!facts.files.some((f) => f.path === 'excluded.mjs'));
   assert.ok(facts.calls.filter((c) => c.file === 'entry.mjs').every((c) => c.resolution === 'unresolved'));
+});
+
+test('target freshness independently disables navigation, keeps captured evidence and recovers after extraction', (t) => {
+  const args = fixture(t, { 'entry.mjs': 'import { helper } from "./target.mjs";\nfunction chosen() { helper(); }', 'target.mjs': 'export function helper() {}' });
+  const before = buildQuestion(args).calls.records[0];
+  assert.equal(before.targetNavigation.status, 'valid');
+  fs.writeFileSync(path.join(args.root, 'target.mjs'), '\nexport function helper() { return 1; }');
+  let brief = buildQuestion(args); let record = brief.calls.records[0];
+  assert.equal(brief.entry.factsStatus, 'valid');
+  assert.deepEqual(record.fact, before.fact);
+  assert.equal(record.targetNavigation.status, 'changed'); assert.equal(record.targetNavigation.location, null);
+  const refreshed = extractFacts(args.root, { language: 'ts' }).facts;
+  record = buildQuestion({ ...args, facts: refreshed }).calls.records[0];
+  assert.equal(record.targetNavigation.status, 'valid'); assert.equal(record.targetNavigation.location.line, 2);
+  fs.unlinkSync(path.join(args.root, 'target.mjs'));
+  record = buildQuestion({ ...args, facts: refreshed }).calls.records[0];
+  assert.equal(record.targetNavigation.status, 'missing'); assert.equal(record.targetNavigation.location, null);
+  fs.writeFileSync(path.join(args.root, 'target.mjs'), 'export function helper( {');
+  const broken = extractFacts(args.root, { language: 'ts' }).facts;
+  assert.equal(buildQuestion({ ...args, facts: broken }).calls.records[0].targetNavigation.status, 'unresolved');
+});
+
+test('captured target parse errors or missing source evidence never expose current navigation', (t) => {
+  const args = fixture(t, { 'entry.mjs': 'import { helper } from "./target.mjs";\nfunction chosen() { helper(); }', 'target.mjs': 'export function helper() {}' });
+  const broken = structuredClone(args.facts); broken.parse_errors = [{ path: 'target.mjs', message: 'captured parse failure' }];
+  let record = buildQuestion({ ...args, facts: broken }).calls.records[0];
+  assert.equal(record.targetNavigation.status, 'parse-error'); assert.equal(record.targetNavigation.location, null);
+  const absent = structuredClone(args.facts); absent.files = absent.files.filter((f) => f.path !== 'target.mjs');
+  const brief = buildQuestion({ ...args, facts: absent }); record = brief.calls.records[0];
+  assert.equal(record.targetNavigation.status, 'unverifiable'); assert.equal(record.targetNavigation.location, null);
+  assert.equal(brief.imports[0].target.currentStatus, 'not-checked');
 });
 
 test('imported target schema and references reject missing file, parse errors and absent import edges', (t) => {
