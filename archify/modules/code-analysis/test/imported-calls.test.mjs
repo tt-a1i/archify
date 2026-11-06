@@ -37,13 +37,48 @@ test('relative named import aliases bind direct exported declarations and const 
   assert.ok(brief.calls.records.every((r) => r.targetNavigation.status === 'valid' && r.targetNavigation.location.file === 'target.mjs'));
 });
 
-test('type-only, default, namespace, packages, re-exports and non-exported same-name functions stay unknown', (t) => {
+test('relative default imports bind direct named, anonymous and overloaded function declarations without following shadows', (t) => {
+  const args = fixture(t, {
+    'entry.ts': [
+      'import alias, { default as alsoAlias } from "./named.js";',
+      'import anonymous from "./anonymous.js";',
+      'import overloaded from "./overloaded.js";',
+      'export function chosen() { alias(); alsoAlias(); anonymous(); overloaded("value"); }',
+      'function shadow(alias) { alias(); }',
+      '{ const alias = () => {}; alias(); }',
+    ].join('\n'),
+    'named.ts': 'export default function helper() {}',
+    'anonymous.ts': 'export default function () {}',
+    'overloaded.ts': 'export default function handle(value: string): string;\nexport default function handle(value: string) { return value; }',
+  });
+  const calls = args.facts.calls.filter((c) => c.file === 'entry.ts');
+  assert.deepEqual(calls.filter((c) => c.resolution === 'imported-function').map((c) => c.target), [
+    { file: 'named.ts', name: 'helper', line: 1, column: 1 },
+    { file: 'named.ts', name: 'helper', line: 1, column: 1 },
+    { file: 'anonymous.ts', name: 'default', line: 1, column: 1 },
+    { file: 'overloaded.ts', name: 'handle', line: 2, column: 1 },
+  ]);
+  assert.equal(calls.find((c) => c.line === 5).resolution, 'unresolved');
+  assert.equal(calls.find((c) => c.line === 6).resolution, 'same-file-function-initializer');
+  assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
+  const brief = buildQuestion({ ...args, entry: 'entry.ts' });
+  assert.equal(brief.calls.total, 4);
+  assert.ok(brief.calls.records.every((r) => r.targetNavigation.status === 'valid'));
+});
+
+test('type-only, namespace, packages, export aliases and expressions stay unknown', (t) => {
   const { facts } = fixture(t, {
     'entry.ts': [
       'import type { declared as typeClause } from "./target.js"; typeClause();',
       'import { type declared as typeSpecifier } from "./target.js"; typeSpecifier();',
-      'import defaultBinding from "./target.js"; defaultBinding();',
-      'import { default as namedDefault } from "./target.js"; namedDefault();',
+      'import type defaultBinding from "./target.js"; defaultBinding();',
+      'import { type default as namedDefault } from "./target.js"; namedDefault();',
+      'import type { default as clauseDefault } from "./target.js"; clauseDefault();',
+      'import { defaultFunction } from "./target.js"; defaultFunction();',
+      'import defaultAlias from "./reexport.js"; defaultAlias();',
+      'import localDefault from "./local.js"; localDefault();',
+      'import expression from "./expression.js"; expression();',
+      'import noDefault from "./no-default.js"; noDefault();',
       'import * as namespace from "./target.js"; namespace.declared();',
       'import { declared as reexported } from "./reexport.js"; reexported();',
       'import { declared as starred } from "./star.js"; starred();',
@@ -53,8 +88,11 @@ test('type-only, default, namespace, packages, re-exports and non-exported same-
       'import("./target.js").then(x => x.declared());',
     ].join('\n'),
     'target.ts': 'export function declared() {}\nexport default function defaultFunction() {}\nfunction hidden() {}\nexport let mutable = () => {};\nexport const wrapped = (() => {});\nfunction localExport() {} export { localExport };',
-    'reexport.ts': 'export { declared } from "./target.js";',
+    'reexport.ts': 'export { declared, default } from "./target.js";',
     'star.ts': 'export * from "./target.js";',
+    'local.ts': 'function local() {} export { local as default };',
+    'expression.ts': 'export default () => {};',
+    'no-default.ts': 'export function noDefault() {}',
   });
   assert.ok(facts.calls.filter((c) => c.file === 'entry.ts').every((c) => c.resolution === 'unresolved'));
 });
@@ -96,10 +134,11 @@ test('parameter-default calls cannot target declarations in the unavailable func
 
 test('excluded, missing, syntactically broken and ambiguous export targets cannot be used', (t) => {
   const { facts } = fixture(t, {
-    'entry.mjs': 'import { a } from "./excluded.mjs"; import { b } from "./missing.mjs"; import { c } from "./broken.mjs"; import { d } from "./ambiguous.mjs"; a(); b(); c(); d();',
-    'excluded.mjs': 'export function a() {}',
-    'broken.mjs': 'export function c() {}\nfunction broken( {',
-    'ambiguous.mjs': 'export function d() {} export function d() {}',
+    'entry.mjs': 'import aDefault, { a } from "./excluded.mjs"; import bDefault, { b } from "./missing.mjs"; import cDefault, { c } from "./broken.mjs"; import dDefault, { d } from "./ambiguous.mjs"; import declaration from "./declaration.d.ts"; a(); b(); c(); d(); aDefault(); bDefault(); cDefault(); dDefault(); declaration();',
+    'excluded.mjs': 'export function a() {} export default function aDefault() {}',
+    'broken.mjs': 'export function c() {}\nexport default function cDefault() {}\nfunction broken( {',
+    'ambiguous.mjs': 'export function d() {} export function d() {} export default function first() {} export default function second() {}',
+    'declaration.d.ts': 'export default function declaration(): void;',
   }, ['excluded.mjs']);
   assert.ok(!facts.files.some((f) => f.path === 'excluded.mjs'));
   assert.ok(facts.calls.filter((c) => c.file === 'entry.mjs').every((c) => c.resolution === 'unresolved'));

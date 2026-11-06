@@ -1,22 +1,28 @@
-// Resolve only direct named exports through already captured relative imports.
+// Resolve direct named exports and default function declarations through
+// already captured relative imports.
 // The Program remains noResolve; this never asks it to load an aliased module.
 import ts from 'typescript';
 
-const exported = (node) => node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
-  && !node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword);
+const exported = (node, name) => node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
+  && node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword) === (name === 'default');
 
 export function importedCallTarget(node, source, checker, importTargets, sources) {
   const declarations = checker.getSymbolAtLocation(node.expression)?.declarations || [];
-  if (declarations.length !== 1 || !ts.isImportSpecifier(declarations[0])) return null;
+  if (declarations.length !== 1) return null;
   const binding = declarations[0];
-  const clause = binding.parent.parent;
+  let clause, name;
+  if (ts.isImportSpecifier(binding) && !binding.isTypeOnly) {
+    clause = binding.parent.parent;
+    name = (binding.propertyName || binding.name).text;
+  } else if (ts.isImportClause(binding) && binding.name) {
+    clause = binding;
+    name = 'default';
+  } else return null;
   const statement = clause.parent;
   if (!ts.isImportDeclaration(statement) || statement.getSourceFile() !== source
-    || binding.isTypeOnly || clause.isTypeOnly) return null;
+    || clause.isTypeOnly) return null;
   const specifier = statement.moduleSpecifier;
   if (!ts.isStringLiteral(specifier) || !/^\.\.?\//.test(specifier.text)) return null;
-  const name = (binding.propertyName || binding.name).text;
-  if (name === 'default') return null;
   const file = importTargets.get(statement);
   const info = sources.get(file);
   if (!info?.valid || info.source === source) return null;
@@ -28,16 +34,16 @@ export function importedCallTarget(node, source, checker, importTargets, sources
   const exportedDeclarations = symbol?.declarations || [];
   if (!exportedDeclarations.length || exportedDeclarations.some((d) => d.getSourceFile() !== info.source)) return null;
   let target;
-  if (exportedDeclarations.every((d) => ts.isFunctionDeclaration(d) && d.parent === info.source && exported(d))) {
+  if (exportedDeclarations.every((d) => ts.isFunctionDeclaration(d) && d.parent === info.source && exported(d, name))) {
     const bodies = exportedDeclarations.filter((d) => d.body);
     if (bodies.length === 1) [target] = bodies;
-  } else if (exportedDeclarations.length === 1) {
+  } else if (name !== 'default' && exportedDeclarations.length === 1) {
     const declaration = exportedDeclarations[0];
     if (ts.isVariableDeclaration(declaration) && ts.isIdentifier(declaration.name)
       && ts.isVariableDeclarationList(declaration.parent) && (declaration.parent.flags & ts.NodeFlags.Const)) {
       const variableStatement = declaration.parent.parent;
       const init = declaration.initializer;
-      if (ts.isVariableStatement(variableStatement) && variableStatement.parent === info.source && exported(variableStatement)
+      if (ts.isVariableStatement(variableStatement) && variableStatement.parent === info.source && exported(variableStatement, name)
         && init && (ts.isArrowFunction(init) || ts.isFunctionExpression(init))) target = init;
     }
   }

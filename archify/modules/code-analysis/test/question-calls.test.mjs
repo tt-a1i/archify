@@ -97,13 +97,19 @@ test('optional node observation preserves all default function measurements and 
 
 test('explicit call models carry binding coverage independently of extraction revision', (t) => {
   const args = fixture(t, 'function declared() {}\nconst arrow = () => {};\nfunction chosen() { declared(); arrow()(); }');
-  assert.equal(args.facts.callModel, 'js-ts-lexical-v1');
+  assert.equal(args.facts.callModel, 'js-ts-lexical-v2');
   args.facts.repository.adapterRevision += 1;
   const current = buildQuestion(args).calls;
   assert.equal(current.coverage, 'available');
   assert.equal(current.provenance.callModel, args.facts.callModel);
-  assert.equal(current.bindingCoverage, 'declarations-const-initializers-and-relative-named-imports');
+  assert.equal(current.bindingCoverage, 'declarations-const-initializers-relative-named-imports-and-default-functions');
   assert.equal(current.records.filter((r) => r.fact.resolution === 'same-file-function-initializer').length, 1);
+  const v1 = structuredClone(args.facts); v1.callModel = 'js-ts-lexical-v1'; v1.repository.adapterRevision = 8;
+  const compatible = buildQuestion({ ...args, facts: v1 }).calls;
+  assert.equal(compatible.coverage, 'available');
+  assert.equal(compatible.provenance.callModel, 'js-ts-lexical-v1');
+  assert.equal(compatible.bindingCoverage, 'declarations-const-initializers-and-relative-named-imports');
+  assert.deepEqual(compatible.records, current.records);
   const older = structuredClone(args.facts); delete older.callModel;
   const historical = buildQuestion({ ...args, facts: older }).calls;
   assert.equal(historical.coverage, 'unavailable'); assert.equal(historical.total, null);

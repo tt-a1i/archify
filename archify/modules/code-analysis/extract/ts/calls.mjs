@@ -1,9 +1,9 @@
 // Lexical declaration bindings, not runtime dispatch or execution evidence.
 import ts from 'typescript';
 
-// Includes importedCallTarget's direct relative named-import binding. Unlike
-// adapter revisions, this identifier describes the emitted call contract.
-export const CALL_MODEL = 'js-ts-lexical-v1';
+// v2 adds direct default function declarations to v1's relative named imports.
+// Unlike adapter revisions, this identifier describes the emitted call contract.
+export const CALL_MODEL = 'js-ts-lexical-v2';
 
 function point(source, node) {
   const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source));

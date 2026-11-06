@@ -100,7 +100,7 @@ test('call schema rejects unsupported targets/positions and retains empty histor
   bad((f) => { f.calls[0].resolution = 'unresolved'; f.calls[0].reason = 'unsupported-callee'; });
   bad((f) => { f.callModel = ''; });
   bad((f) => { f.callModel = false; });
-  assert.equal(facts.callModel, 'js-ts-lexical-v1');
+  assert.equal(facts.callModel, 'js-ts-lexical-v2');
   assert.deepEqual(schemaErrors('raw-facts', { ...facts, callModel: 'future-call-model' }), []);
   const previous = { ...facts, calls: [], repository: { ...facts.repository, adapterRevision: 1 } };
   delete previous.callModel;
