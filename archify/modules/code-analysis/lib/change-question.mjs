@@ -95,7 +95,8 @@ function inspectSide(capture, side) {
   });
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2'].includes(facts.callModel))
-    || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && facts.callModel === 'python-lexical-v1');
+    || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && facts.callModel === 'python-lexical-v1')
+    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && facts.callModel === 'java-static-lexical-v1');
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
 }
 
@@ -287,7 +288,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
     limitations: [
       'File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.',
       'Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.',
-      'Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets only ordinary undecorated module definitions or direct from-import aliases; decorated/method targets remain unsupported. Java calls are unavailable with unknown totals.',
+      'Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets only ordinary undecorated module definitions or direct from-import aliases; decorated/method targets remain unsupported. Java java-static-lexical-v1 inventories method invocations and binds only bounded same-file static source candidates; overloads, member dispatch and inherited owners remain unresolved. Argument type applicability and compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.',
       'Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.',
       'Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.',
       'Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits.',

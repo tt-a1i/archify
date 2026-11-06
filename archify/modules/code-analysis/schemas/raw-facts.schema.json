@@ -7,7 +7,7 @@
   "required": ["schema_version", "repository", "files", "imports", "symbols", "calls", "unresolved"],
   "properties": {
     "schema_version": { "const": 1 },
-    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. It does not resolve attributes, classes, reexports or runtime dispatch." },
+    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. It does not resolve attributes, classes, reexports or runtime dispatch. java-static-lexical-v1 inventories Java method invocations and binds only unqualified fixed-arity calls to a uniquely declared explicit static body method in a top-level ordinary class without extends/implements; inherited Object names and nested/local/anonymous owners are excluded. Targets are lexical source candidates, not compiler attribution or execution." },
     "repository": {
       "type": "object",
       "additionalProperties": false,
@@ -83,7 +83,7 @@
           "complexity": { "type": "integer", "minimum": 1, "description": "Cyclomatic complexity: 1 plus each branch point (see extract/py/extract.py)." },
           "nesting": { "type": "integer", "minimum": 0, "description": "Deepest block nesting inside the body; elif stays at its if's depth." },
           "deepestLine": { "type": "integer", "minimum": 1 },
-          "sourceRange": { "$ref": "#/$defs/sourceRange", "description": "Exact decoded Python definition slice, def/async def through AST end, excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 functions; absent in historical captures." },
+          "sourceRange": { "$ref": "#/$defs/sourceRange", "description": "Exact decoded definition slice: Java CST declaration including modifiers, or Python def/async def through AST end excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 and java-static-lexical-v1 functions; absent in historical captures." },
           "definition": {
             "type": "object", "additionalProperties": false, "required": ["kind", "sourceRange"],
             "description": "Optional captured named definition with headers: exact owned syntax including decorators, annotations and modifiers, excluding preceding comments and trailing newline. Absent for historical captures and unsupported metric records.",
@@ -112,17 +112,17 @@
     },
     "calls": {
       "type": "array",
-      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved.",
+      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved. Java java-static-lexical-v1 also inventories syntactic method invocations (excluding constructors and method references); same-file-static-method identifies a bounded lexical source candidate, not compiler resolution.",
       "items": {
         "type": "object", "additionalProperties": false,
         "required": ["file", "line", "column", "endLine", "endColumn", "resolution"],
         "properties": {
           "file": { "$ref": "#/$defs/repoPath" },
           "line": { "type": "integer", "minimum": 1 },
-          "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at CallExpression start." },
-          "endLine": { "type": "integer", "minimum": 1, "description": "One-based end-exclusive CallExpression end line (TypeScript getEnd)." },
+          "column": { "type": "integer", "minimum": 1, "description": "1-based UTF-16 column at invocation expression start." },
+          "endLine": { "type": "integer", "minimum": 1, "description": "One-based end-exclusive invocation expression end line." },
           "endColumn": { "type": "integer", "minimum": 1, "description": "One-based UTF-16 end-exclusive column." },
-          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "unresolved"] },
+          "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "imported-function", "same-file-static-method", "unresolved"] },
           "target": {
             "type": "object", "additionalProperties": false,
             "required": ["name", "line", "column"],
@@ -136,7 +136,7 @@
           "reason": { "enum": ["unsupported-callee", "optional-call", "no-local-function-binding", "ambiguous-binding"] }
         },
         "oneOf": [
-          { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },
+          { "properties": { "resolution": { "enum": ["same-file-function", "same-file-function-initializer", "same-file-static-method"] }, "target": { "type": "object", "not": { "required": ["file"] } } }, "required": ["target"], "not": { "required": ["reason"] } },
           { "properties": { "resolution": { "const": "imported-function" }, "target": { "type": "object", "required": ["file"] } }, "required": ["target"], "not": { "required": ["reason"] } },
           { "properties": { "resolution": { "const": "unresolved" } }, "required": ["reason"], "not": { "required": ["target"] } }
         ]
