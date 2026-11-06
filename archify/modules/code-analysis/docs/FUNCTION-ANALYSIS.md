@@ -227,8 +227,11 @@ Read the orientation before following locations:
   call evidence; decorated definitions can be paired even though decorated and
   method call targets remain unresolved. In-range unresolved sites use the full
   owned extent and can include decorator expressions and nested definitions.
-  Java has no supported call model here: `coverage: unavailable`, `total: null`
-  and `omitted: null` mean unknown, regardless of an empty captured calls array.
+  Matching Java producers with `java-static-lexical-v1` support bounded
+  `same-file-static-method` source candidates and retain member calls as unresolved.
+  These candidates do not check argument type applicability or compilation.
+  Historical captures without a recognized model use `coverage: unavailable`,
+  `total: null` and `omitted: null`, regardless of an empty captured calls array.
   Unknown models remain unavailable; adapter revision alone cannot grant coverage.
 - Lists include total/included/omitted and are capped at 40 when available. Read relevant source
   beyond the cap. `unresolvedWithinSourceRange` includes nested closures;

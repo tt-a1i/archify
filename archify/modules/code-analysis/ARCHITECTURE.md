@@ -59,14 +59,21 @@ annotation/generic contexts remain unresolved. No target code executes.
 
 Python functions additionally carry `sourceRange`: exact def/async def through
 AST end, one-based UTF-16 columns, exclusive end, SHA256 of the decoded slice
-encoded as UTF-8. It excludes preceding decorators and does not solve future
-paired decorator-change coverage. Saved question consumers verify this range
+encoded as UTF-8. It excludes preceding decorators; paired comparison uses the separate
+`definition.sourceRange` extent including owned headers. Saved question consumers verify this range
 against exact unchanged source without TypeScript reparsing. Calls physically
 inside it include defaults and nested bodies; these are source-contained sites,
 not a caller graph or runtime dispatch. Imported target freshness remains
 independent. A recognized fresh zero is known zero collected Calls; historical
-Python captures without the model and Java calls stay unavailable. New spans
+Python/Java captures without their recognized model stay unavailable. New spans
 are additive for current readers; older strict function schemas reject them.
+
+Java `java-static-lexical-v1` collects method invocations and bounds targets to
+unique same-file static source candidates. Java `sourceRange` supports call
+selection and target coordinates; `definition.sourceRange` preserves the owned
+header extent for paired comparison. Both coexist and use exact source hashes.
+Argument type applicability, compilation and runtime dispatch remain unknown.
+See [Java bounds](docs/JAVA.md#method-invocation-source-navigation).
 
 ## JS/TS call facts
 
