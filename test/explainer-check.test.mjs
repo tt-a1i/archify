@@ -53,3 +53,26 @@ test('scanner line locations include skipped raw payload lines without recountin
  const html='<!doctype html>\n<style>\ntext{fill:red}\n</style>\n<script type="application/json">\n{"content":"<p>not an element</p>"}\n</script>\n<p id="last">Text</p>\n<a href="#last">Link</a>';
  const scan=scanHtml(html);assert.deepEqual(scan.elements.map(e=>[e.tag,e.line]),[['style',2],['script',5],['p',8],['a',9]]);
 });
+
+for (const valid of [true, false]) {
+ test(`large explainer receipt flushes through a pipe (${valid ? 'success' : 'failure'})`,()=>{
+  const native=fs.readFileSync(new URL('../archify/examples/erd-orders-rendered.html',import.meta.url),'utf8');
+  const child={html:native,sha256:hash(native),bytes:Buffer.byteLength(native)};
+  const children=Object.fromEntries(Array.from({length:20},(_,i)=>[`diagram-${i}`,child]));
+  let html=fixture({children});
+  if (!valid) html=html.replace('</main>','<a href="#missing">Missing</a></main>');
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'explainer-flush-'));
+  try {
+   const file=path.join(dir,'page.html');fs.writeFileSync(file,html);
+   const run=spawnSync(process.execPath,['archify/scripts/check-render-output.mjs',file],{encoding:'utf8',maxBuffer:4*1024*1024,timeout:30000});
+   assert.ifError(run.error);
+   assert.equal(run.status,valid?0:1,run.stderr);
+   const receipt=JSON.parse(run.stdout); // Reject truncated JSON or a second receipt.
+   assert.ok(Buffer.byteLength(run.stdout)>65536,'exercise a receipt larger than a pipe buffer');
+   assert.equal(receipt.ok,valid);
+   assert.equal(receipt.family,'explainer');
+   assert.equal(receipt.composition.nativeDiagrams.length,20);
+   assert.ok(receipt.composition.nativeDiagrams.every(c=>c.receipt.ok&&c.receipt.artifact.sha256===child.sha256));
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+ });
+}
