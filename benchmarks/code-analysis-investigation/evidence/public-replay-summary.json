@@ -1,0 +1,39 @@
+{
+  "scope": "public fresh-fetch replay, not CI",
+  "product_commit": "919dc11f807484754fddcb707fd98fbfb3951c89",
+  "archive_sha256": "2a23e82cc0dce7d10c16955fff6f4bce5d3dc653d0dd40e83f03692ebef3ee0c",
+  "whole_corpus": {
+    "status": "pass",
+    "target_checkouts": 12,
+    "commands_per_mode": 27,
+    "parity": "pass: 27 exits/statuses, 12 byte-identical raw facts, 10 saved questions and 5 present paired result files; only declared workflow/rawFactsPath fields normalized",
+    "paired": "four ready; SLF4J expected partial",
+    "strict_units": {
+      "changed_definition_correct": 8,
+      "function_location_correct": 8,
+      "import_site_correct": 7,
+      "javascript_boundary_unknown": 2,
+      "paired_outgoing_import_correct": 4,
+      "python_callsite_correct": 4,
+      "python_callsite_unknown": 48,
+      "availability_contract_expanded": 2
+    }
+  },
+  "java_selected_methods": {
+    "status": "pass",
+    "methods": 8,
+    "sites_present": 86,
+    "extra": 0,
+    "known_targets_correct_and_navigable": 26,
+    "explicit_unknown": 60,
+    "report_and_3_raw_facts_byte_identical": true,
+    "questions_equal_after_two_path_fields_normalized": 8
+  },
+  "archive_source_comparison": {
+    "members": 390,
+    "byte_identical": 389,
+    "code_analysis_files_byte_identical": 155,
+    "only_difference": "package.json matches after removing scripts and devDependencies"
+  },
+  "oracle_sha256": "bc61d7769560713d87314233178db08cc7827aea5e48733d8a5991900eb6e622"
+}

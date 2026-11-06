@@ -1,6 +1,6 @@
 # Bounded investigation acceptance evidence
 
-This report records a local evaluation of product commit `749ab83912adbf9617da2926be696f9b45ea90dc` and its committed `archify.zip`, SHA-256 `2a23e82cc0dce7d10c16955fff6f4bce5d3dc653d0dd40e83f03692ebef3ee0c`. It is a finite, purposive evaluation, not a project-wide accuracy estimate, runtime impact analysis, CI result, or public-fetch verification.
+This report records a local evaluation of product commit `749ab83912adbf9617da2926be696f9b45ea90dc` and its committed `archify.zip`, SHA-256 `2a23e82cc0dce7d10c16955fff6f4bce5d3dc653d0dd40e83f03692ebef3ee0c`. It is a finite, purposive evaluation, not a project-wide accuracy estimate, runtime impact analysis, CI result, or release claim. A subsequent [public-fetch replay](PUBLIC-REPLAY.md) at `919dc11f807484754fddcb707fd98fbfb3951c89` reproduced the selected results from 12 fresh target checkouts. Product and archive bytes are identical to 749ab; the [public parity record](evidence/public-parity.json) checks source versus archive within that fresh run.
 
 ## Corpus and chronology
 
@@ -43,7 +43,7 @@ The [upstream study](../code-analysis-java-calls/RESEARCH.md) compared compiler 
 
 ## Reproduce
 
-The [replay README](README.md) describes prerequisites, input provenance and output comparison. With Node 22.23.2, Python 3.13 and Git, from this directory run the following after the exact product commit becomes fetchable from the configured remote:
+The [replay README](README.md) describes prerequisites, input provenance and output comparison. With Node 22.23.2, Python 3.13 and Git, from this directory run the following (the exact commit is publicly fetchable):
 
 ```sh
 python3.13 replay.py --work /path/to/new-replay --product-sha 749ab83912adbf9617da2926be696f9b45ea90dc --archive-sha256 2a23e82cc0dce7d10c16955fff6f4bce5d3dc653d0dd40e83f03692ebef3ee0c --require-paired-contract
@@ -60,3 +60,9 @@ python3 "$SOURCE/benchmarks/code-analysis-java-calls/run.py" --cli "$EXTRACTED/a
 ```
 
 The archive-mode product SHA is a provenance label; independently verify the archive against the source commit. [Evidence provenance](evidence/provenance.json) retains original and sanitized artifact digests. The original raw captures and original question-level documents remain private and are not reproduced by these summaries.
+
+Across local and fresh checkouts, eight raw-facts files are byte-identical. Four JS/TS captures differ only in `repository.url` (old null versus fresh GitHub origin) and the derived `snapshotId`; independent hash recomputation confirms that cause. All other JSON values match. [Exact provenance differences](evidence/public-vs-local-provenance.json) are retained; these IDs are not interchangeable, and this does not weaken the separate source/ZIP byte-equality check within each run.
+
+## Remote review status
+
+[Draft #1244](https://github.com/tt-a1i/archify/pull/1244) contains the combined implementation and evidence; [Draft #1239](https://github.com/tt-a1i/archify/pull/1239) retains the separate Java slice. Neither is merged. Human review remains pending. Standalone Java [CI 42259764551](https://github.com/tt-a1i/archify/actions/runs/42259764551) failed on preexisting README showcase receipt drift: the focused assertion fails identically at baseline and Java head, and all five relevant inputs are unchanged in the final composition. The [diagnosis and exact hashes](evidence/ci-baseline-diagnosis.json) distinguish observed failure from inherited risk. Code Analysis module, ZIP freshness and package jobs passed on that standalone run; this is not a green overall CI result. Consult the final Draft for its current head-specific CI status.

@@ -20,6 +20,22 @@
     "incoming-reference-crosswalk.json": {
       "original_sha256": "9a6e0ed5702f8966d1ea546a946dd2649234709c60572d864298c138e6a447a1",
       "sanitized_sha256": "4bdc33becc6dd03f2cddee45b99ac89ade8befc2cfcd158bb247335078890cf7"
+    },
+    "public-replay-summary.json": {
+      "sha256": "031be6ba416d7db3a2ef6cd74ede2176ad9ab579ddaf5a596db3008cdfae9a76",
+      "source": "Public 919dc source/archive replay; paired wording narrowed to observed five result files."
+    },
+    "public-parity.json": {
+      "sha256": "e6222704562ea1522db476cabf70d99013de4be657c80ce30285fdc99c6a8e52",
+      "source": "Public replay; private study-root path prefix replaced."
+    },
+    "ci-baseline-diagnosis.json": {
+      "sha256": "40b2f58c2b7941427e9c0a6e73cadba5878230d8c76789339fed56ca98ea99f4",
+      "source": "Read-only CI job diagnosis and independently reproduced focused baseline/head failure."
+    },
+    "public-vs-local-provenance.json": {
+      "sha256": "02515619cf4206e2ba6a58da22d653fb6580bd5497a33fa354afbf758550f510",
+      "source": "Exact local 749ab versus public 919dc raw-fact JSON comparison; origin URL and derived snapshot IDs differ for four JS/TS captures."
     }
   }
 }
