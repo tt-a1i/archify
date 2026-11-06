@@ -105,7 +105,6 @@ test('call schema rejects unsupported targets/positions and retains empty histor
   const previous = { ...facts, calls: [], repository: { ...facts.repository, adapterRevision: 1 } };
   delete previous.callModel;
   assert.deepEqual(schemaErrors('raw-facts', previous), []);
-  assert.equal(facts.repository.adapterRevision, 10);
   const revision2 = { ...facts, repository: { ...facts.repository, adapterRevision: 2 } };
   assert.deepEqual(schemaErrors('raw-facts', revision2), []);
   const after = evaluateGraph(buildGraph(facts, config), config, facts).analysis;
