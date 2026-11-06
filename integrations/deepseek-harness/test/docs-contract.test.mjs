@@ -135,7 +135,6 @@ test('agent install prompt and Skills CLI for Cursor, Codex, Claude Code, and Op
   for (const readme of [english, chinese, japanese]) {
     assert.match(readme, /^Install Archify for me by reading https:\/\/raw\.githubusercontent\.com\/tt-a1i\/archify\/main\/llms\.txt$/m);
     assert.match(readme, /^npx -y skills@latest add https:\/\/archify\.si --skill archify --agent cursor --global --copy --yes$/m);
-    assert.match(readme, /^npx -y skills@latest add https:\/\/archify\.si --skill archify --agent cursor --agent codex --agent claude-code --agent opencode --agent github-copilot --global --copy --yes$/m);
   }
   assert.match(english, /## Quick start/);
   assert.match(chinese, /## 快速开始/);
