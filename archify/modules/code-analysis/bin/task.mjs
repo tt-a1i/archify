@@ -32,6 +32,8 @@ without it the task is marked as captured, not checked.
 Question mode prepares source orientation for the host Agent workflow, not a completed
 analysis. It needs no finding. Missing facts remain explicit; changed/unverifiable
 entry facts or entry parse errors exit 1. Read docs/FUNCTION-ANALYSIS.md and complete the analysis.
+Single-entry Python/Java questions require a saved analysis directory with matching
+captured .py/.java source and producer metadata. Calls remain unavailable, not zero.
 With --base-root, question mode freshly captures both JS/TS roots with one analysis
 config (defaults or --config). It requires --entry and accepts no analysis directory
 or --function. Captured declaration entries disclose unsupported definition analysis.

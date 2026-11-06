@@ -9,17 +9,104 @@ import { extractFacts } from '../lib/analysis.mjs';
 import { buildQuestion } from '../lib/explain.mjs';
 
 const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
-function setup(t) {
+function setup(t, { language = 'ts', entry = 'entry.mjs', symbol = 'entry', sources = null } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-question-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const root = path.join(dir, 'source'); fs.mkdirSync(root);
-  fs.writeFileSync(path.join(root, 'entry.mjs'), 'import { value } from "./dep.mjs";\nexport function entry() { return value; }\nexport const lazy = (p) => import(p);\n');
-  fs.writeFileSync(path.join(root, 'dep.mjs'), 'export const value = 1;\n');
-  const { facts } = extractFacts(root, { language: 'ts' });
+  sources ||= { 'entry.mjs': 'import { value } from "./dep.mjs";\nexport function entry() { return value; }\nexport const lazy = (p) => import(p);\n', 'dep.mjs': 'export const value = 1;\n' };
+  for (const [file, text] of Object.entries(sources)) {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), text);
+  }
+  const { facts } = extractFacts(root, { language });
   const analysis = path.join(dir, 'analysis'); fs.mkdirSync(analysis);
   fs.writeFileSync(path.join(analysis, 'raw-facts.json'), JSON.stringify(facts));
-  return { root, facts, analysis, dir, question: 'Where does the returned value come from?', entry: 'entry.mjs', symbol: 'entry' };
+  return { root, facts, analysis, dir, question: 'Where does the returned value come from?', entry, symbol };
 }
+
+const SAVED_LANGUAGES = [
+  { language: 'py', entry: 'entry.py', symbol: 'chosen', adapter: /^python@/, startLine: 4, endLine: 5, dependency: 'dep.py',
+    sources: { 'entry.py': Buffer.from("# coding: latin-1\nfrom dep import value\n\ndef chosen():\n    return 'café' + value\n", 'latin1'), 'dep.py': "value = '!'\n" } },
+  { language: 'java', entry: 'Entry.java', symbol: 'Entry.chosen()', adapter: /^java-parser@/, startLine: 3, endLine: 3, dependency: 'p/Dep.java',
+    sources: { 'Entry.java': 'import p.Dep;\nclass Entry {\n  static Dep chosen() { return null; }\n}\n', 'p/Dep.java': 'package p; public class Dep {}\n' } },
+];
+
+for (const sample of SAVED_LANGUAGES) test(`saved ${sample.language} question uses captured source and functions while calls stay unavailable`, t => {
+  const args = setup(t, sample);
+  assert.equal(args.facts.repository.language, sample.language);
+  assert.match(args.facts.repository.adapter, sample.adapter, 'use real adapter output, not relabeled JS facts');
+  const brief = buildQuestion(args);
+  assert.equal(brief.entry.factsStatus, 'valid');
+  assert.deepEqual(brief.entry.location, { file: sample.entry, symbol: sample.symbol, startLine: sample.startLine, endLine: sample.endLine });
+  assert.equal(brief.imports.find(i => i.to === sample.dependency).target.factsStatus, 'valid');
+  for (const model of [undefined, 'js-ts-lexical-v1', 'js-ts-lexical-v2']) {
+    const facts = { ...args.facts, callModel: model, repository: { ...args.facts.repository, adapterRevision: 11 } };
+    const calls = buildQuestion({ ...args, facts }).calls;
+    assert.equal(calls.coverage, 'unavailable'); assert.equal(calls.reason, 'unsupported-or-unknown-call-model');
+    assert.equal(calls.total, null); assert.equal(calls.omitted, null); assert.deepEqual(calls.records, []);
+    assert.equal(calls.selection.range, null);
+  }
+  const output = path.join(args.dir, 'question.json');
+  const command = [cli, 'code-analysis', 'task', args.analysis, '--question', args.question, '--entry', args.entry,
+    '--function', args.symbol, '--root', args.root, '--format', 'json', '--out', output, '--json'];
+  const run = () => spawnSync(process.execPath, command, { encoding: 'utf8' });
+  const prepared = run(); assert.equal(prepared.status, 0, prepared.stderr);
+  const receipt = JSON.parse(prepared.stdout);
+  assert.equal(receipt.evidence, 'valid'); assert.equal(receipt.calls.coverage, 'unavailable'); assert.equal(receipt.calls.total, null);
+  const saved = JSON.parse(fs.readFileSync(output, 'utf8'));
+  assert.deepEqual(saved.entry.location, brief.entry.location);
+  assert.equal(saved.calls.provenance.rawFactsPath, path.join(args.analysis, 'raw-facts.json'));
+  assert.equal(saved.scope.facts.language, sample.language);
+  fs.appendFileSync(path.join(args.root, sample.dependency), '\n');
+  assert.equal(buildQuestion(args).imports.find(i => i.to === sample.dependency).target.factsStatus, 'changed');
+  fs.appendFileSync(path.join(args.root, sample.entry), '\n');
+  const changed = run(); assert.equal(changed.status, 1, changed.stderr);
+  const stale = JSON.parse(fs.readFileSync(output, 'utf8'));
+  assert.equal(stale.entry.factsStatus, 'changed'); assert.equal(stale.entry.location, null);
+  assert.equal(stale.calls.coverage, 'unavailable'); assert.equal(stale.calls.total, null);
+});
+
+test('saved language admission requires matching captured producer and implementation inventory', t => {
+  for (const sample of SAVED_LANGUAGES) {
+    const args = setup(t, sample);
+    for (const facts of [null, { ...args.facts, repository: undefined },
+      { ...args.facts, repository: { ...args.facts.repository, language: 'ts' } },
+      { ...args.facts, repository: { ...args.facts.repository, adapter: 'unknown@1' } },
+      { ...args.facts, repository: { ...args.facts.repository, adapter: sample.language === 'py' ? 'java-parser@3.0.1' : 'python@3.13' } },
+      { ...args.facts, files: [] }]) {
+      assert.throws(() => buildQuestion({ ...args, facts }), e => e.diagnostics?.[0]?.code === 'task/entry-invalid');
+    }
+    for (const entry of ['entry.pyi', 'entry.txt']) {
+      const facts = { ...args.facts, files: args.facts.files.map(f => ({ ...f, path: entry })) };
+      assert.throws(() => buildQuestion({ ...args, entry, facts }), e => e.diagnostics?.[0]?.code === 'task/entry-invalid');
+    }
+    fs.writeFileSync(path.join(args.root, sample.entry), sample.language === 'py' ? 'def chosen(:\n' : 'class Entry {');
+    const broken = extractFacts(args.root, { language: sample.language }).facts;
+    const partial = buildQuestion({ ...args, facts: broken });
+    assert.equal(partial.entry.factsStatus, 'valid'); assert.ok(partial.entry.parseErrors.length);
+    assert.equal(partial.entry.location, null); assert.equal(partial.calls.reason, 'entry-parse-errors');
+    assert.equal(partial.calls.total, null);
+    const outside = `../${sample.entry}`;
+    const facts = { ...args.facts, files: args.facts.files.map(f => ({ ...f, path: outside })) };
+    assert.throws(() => buildQuestion({ ...args, entry: outside, facts }), e => e.diagnostics?.[0]?.code === 'task/entry-unreadable');
+    fs.unlinkSync(path.join(args.root, sample.entry));
+    assert.throws(() => buildQuestion(args), e => e.diagnostics?.[0]?.code === 'task/entry-unreadable');
+  }
+});
+
+test('saved Python overload records and Java method overload names retain explicit ambiguity', t => {
+  const py = setup(t, { language: 'py', entry: 'entry.py', symbol: 'chosen', sources: {
+    'entry.py': 'from typing import overload\n@overload\ndef chosen(x: int) -> int: ...\n@overload\ndef chosen(x: str) -> str: ...\ndef chosen(x):\n    return x\n',
+  } });
+  assert.equal(py.facts.functions.filter(f => f.qualname === 'chosen').length, 3);
+  assert.throws(() => buildQuestion(py), e => e.diagnostics?.[0]?.code === 'task/function-unresolved');
+  assert.equal(buildQuestion({ ...py, symbol: undefined }).entry.location, null);
+  const java = setup(t, { ...SAVED_LANGUAGES[1], sources: {
+    'Entry.java': 'class Entry {\n  static void chosen() {}\n  static void chosen(int value) {}\n}\n',
+  } });
+  assert.throws(() => buildQuestion({ ...java, symbol: 'chosen' }), e => e.diagnostics?.[0]?.code === 'task/function-unresolved');
+  assert.equal(buildQuestion(java).entry.location.symbol, 'Entry.chosen()');
+});
 
 test('question locates a real function without findings and exposes unresolved dependencies', (t) => {
   const args = setup(t); const brief = buildQuestion(args);

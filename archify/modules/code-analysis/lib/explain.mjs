@@ -70,7 +70,15 @@ export function questionScope(root, facts) {
 
 export function buildQuestion({ question, entry, symbol, root, facts = null, factsPath = null }) {
   if (!question?.trim()) fail('task/question-empty', 'Provide the question to investigate.');
-  if (!/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry || '') || /\.d\.(?:ts|mts|cts)$/.test(entry)) fail('task/entry-invalid', 'Question mode needs a JavaScript or TypeScript implementation file; declaration files are not supported.', { subject: { entry }, supportedFixes: ['pass a repository-relative JS/TS implementation file with --entry'] });
+  const jsEntry = /\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry || '') && !/\.d\.(?:ts|mts|cts)$/.test(entry);
+  // Other languages reuse saved source/function/import facts, not the TS parser.
+  // Require the producer contract and its captured inventory as well as a suffix.
+  const language = facts?.repository?.language;
+  const adapter = facts?.repository?.adapter || '';
+  const savedEntry = !jsEntry && Array.isArray(facts?.files) && facts.files.some(f => f.path === entry)
+    && ((language === 'py' && /^python@\d/.test(adapter) && /\.py$/.test(entry || ''))
+      || (language === 'java' && /^java-parser@\d/.test(adapter) && /\.java$/.test(entry || '')));
+  if (!jsEntry && !savedEntry) fail('task/entry-invalid', 'Question mode needs a JS/TS implementation file, or a captured .py/.java entry from matching Python/Java raw facts; declaration files are not supported.', { subject: { entry }, supportedFixes: ['pass a repository-relative JS/TS implementation file, or a saved analysis directory containing the Python/Java entry from its matching adapter'] });
   if (facts !== null && (!Array.isArray(facts.files) || !Array.isArray(facts.functions) || !Array.isArray(facts.imports))) fail('task/facts-invalid', 'Expected raw facts with files, functions and imports.', { supportedFixes: ['regenerate raw-facts.json with code-analysis check'] });
   const captured = new Map((facts?.files || []).map((f) => [f.path, f]));
   const cache = new Map();
@@ -125,6 +133,7 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
       'Empty calls and unresolved/computed imports do not mean no calls or dependencies. Follow current source, subprocesses and configuration as the question requires.',
       'Valid factsStatus means source freshness, not parse completeness; inspect parseErrors before trusting recovered syntax. Import lists cover the entry file, not only the selected function.',
       'Only the entry and its captured direct import targets were checked. This is not whole-repository freshness or a semantic analysis.',
+      'Python import edges identify files, not imported object identity. Java type/import dependencies do not identify runtime providers or dispatch.',
     ],
     workflow: WORKFLOW,
   };

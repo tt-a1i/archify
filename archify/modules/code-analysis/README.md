@@ -29,8 +29,11 @@ It has two entry points that share the same pipeline:
 optimization task (JSON or Markdown) and checks its evidence against the current
 working tree; the page uses the same logic through the server.
 
-`task --question` prepares source orientation for a JS/TS implementation entry without
-requiring a finding: source identity, direct imports and bounded call evidence.
+`task --question` prepares source orientation without requiring a finding: source
+identity, captured function ranges and direct imports. JS/TS implementation entries
+can also include bounded call evidence. Python/Java entries require a saved analysis
+directory containing the .py/.java entry from its matching adapter; their call
+coverage stays unavailable, with unknown totals rather than zero.
 The host Agent then follows [the function analysis workflow](docs/FUNCTION-ANALYSIS.md)
 to answer the question from source. The CLI output is an intermediate reading aid.
 Adding `--base-root` with a required `--entry` prepares a fresh before/after source
