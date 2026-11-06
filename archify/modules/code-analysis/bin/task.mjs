@@ -14,6 +14,8 @@ export const USAGE = `Usage:
   archify code-analysis task <analysis-dir> --finding <id> [--finding <id> …]
                              [--root <repo-root>] [--command <cmd> …]
                              [--format md|json] [--out <file>] [--require-valid]
+  archify code-analysis task [<analysis-dir>] --question <text> --entry <file>
+                             --root <repo-root> [--function <name>] [--format md|json] [--out file]
   archify code-analysis task --verify <task.json> --root <repo-root>
                              [--format md|json] [--out <file>] [--require-valid]
 
@@ -25,11 +27,15 @@ with the current working tree (valid, changed, missing, unverifiable);
 without it the task is marked as captured, not checked.
 --command adds a verification command you know is right for the project
 (repeatable); none is guessed. --require-valid exits 1 unless the evidence is valid.
+Question mode prepares source orientation for the host Agent workflow, not a completed
+analysis. It needs no finding. Missing facts remain explicit; changed/unverifiable
+entry facts or entry parse errors exit 1. Read docs/FUNCTION-ANALYSIS.md and complete the analysis.
 Output: Markdown by default, the JSON task with --format json; to --out or stdout.
 --json prints a machine-readable receipt instead of the task (use with --out).
-Exit codes: 0 written, 1 evidence not valid with --require-valid, 2 usage or input error.`;
+Exit codes: 0 prepared/written, 1 incomplete question orientation or invalid evidence
+with --require-valid, 2 usage or input error.`;
 
-const VALUE = ['--finding', '--root', '--command', '--format', '--out', '--verify'];
+const VALUE = ['--finding', '--root', '--command', '--format', '--out', '--verify', '--question', '--entry', '--function'];
 const FLAGS = ['--require-valid', '--json'];
 const REPEATABLE = ['--finding', '--command'];
 
@@ -46,7 +52,12 @@ export function parseTaskArgs(argv) {
     i += 1;
   }
   if (!['md', 'json'].includes(options['--format'])) usage(`--format must be md or json (got ${options['--format']}).`);
-  if (options['--verify']) {
+  if (options['--question'] !== undefined) {
+    if (!options['--root'] || !options['--entry']) usage('--question needs --root and --entry.');
+    if (options['--verify'] || options['--finding'].length || options['--command'].length || options['--require-valid']) usage('Question mode is separate from finding/verify/command/require-valid options.');
+  } else if (options['--entry'] || options['--function']) {
+    usage('--entry and --function require --question.');
+  } else if (options['--verify']) {
     if (dir || options['--finding'].length) usage('--verify takes a task file, not an analysis directory or --finding.');
     if (!options['--root']) usage('--verify needs --root <repo-root> to compare with.');
   } else {
@@ -66,6 +77,23 @@ export async function runTask(argv, { now = new Date() } = {}) {
   const { stableJson } = await import('../lib/analysis.mjs');
   const root = options['--root'] ? path.resolve(options['--root']) : null;
   if (root && (!fs.existsSync(root) || !fs.statSync(root).isDirectory())) fail('cli/root-invalid', `Not a directory: ${options['--root']}`, { subject: { option: '--root' }, supportedFixes: ['pass the directory that was analyzed'] });
+
+  if (options['--question'] !== undefined) {
+    const { buildQuestion, renderQuestionMarkdown } = await import('../lib/explain.mjs');
+    const file = dir ? path.join(path.resolve(dir), 'raw-facts.json') : null;
+    const facts = file && fs.existsSync(file) ? readJson(file, 'raw-facts.json') : null;
+    const brief = buildQuestion({ question: options['--question'], entry: options['--entry'], symbol: options['--function'], root, facts, factsPath: file });
+    const body = options['--format'] === 'json' ? stableJson(brief) : renderQuestionMarkdown(brief);
+    const out = options['--out'] ? path.resolve(options['--out']) : null;
+    if (out) {
+      const protectedPaths = [path.resolve(root, options['--entry']), file].filter(Boolean);
+      const resolvedOut = fs.existsSync(out) ? fs.realpathSync(out) : out;
+      if (protectedPaths.some((p) => (fs.existsSync(p) ? fs.realpathSync(p) : p) === resolvedOut)) fail('task/output-conflict', 'Question output must not replace its entry or raw facts.');
+      fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, body);
+    }
+    const exitCode = brief.entry.factsStatus === 'valid' && !brief.entry.parseErrors.length ? 0 : 1;
+    return { exitCode, body: out ? null : body, receipt: receipt(exitCode ? 'incomplete' : 'ok', { command: 'task', action: 'question', stage: brief.stage, evidence: brief.entry.factsStatus, parseErrors: brief.entry.parseErrors.length, calls: { coverage: brief.calls.coverage, reason: brief.calls.reason, model: brief.calls.provenance.callModel, total: brief.calls.total, included: brief.calls.included, omitted: brief.calls.omitted }, out, workflow: brief.workflow }) };
+  }
 
   let task;
   if (options['--verify']) {
@@ -106,6 +134,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     runTask(args).then(({ exitCode, body, receipt: r }) => {
       if (json) console.log(JSON.stringify(r, null, 2));
       else if (body !== null) process.stdout.write(body);
+      else if (r.action === 'question') console.error(`Question orientation written to ${r.out} (entry facts: ${r.evidence}); complete ${r.workflow}.`);
       else console.error(`Task ${r.taskId} written to ${r.out} (evidence: ${r.evidence}).`);
       process.exitCode = exitCode;
     }).catch((error) => {
