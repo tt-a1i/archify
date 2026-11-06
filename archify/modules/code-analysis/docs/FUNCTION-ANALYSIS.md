@@ -27,7 +27,11 @@ finding is not required. `task --help` describes question mode and its options.
    Read `calls.coverage` and `calls.bindingCoverage` before using call locations.
    The explicit `js-ts-lexical-v1` call model covers declarations, direct const
    arrow/function-expression initializers and relative static named imports to
-   direct captured exports. `adapterRevision` identifies extraction changes;
+   direct captured exports. The v2 model additionally binds relative default
+   imports to direct default function declarations with one implementation body;
+   default export expressions and re-exports remain unresolved. This consumer
+   supports both versions without reinterpreting older facts.
+   `adapterRevision` identifies extraction changes;
    it does not establish call capability, because different experimental branches
    have reused revision numbers for import-only extraction. Only `available` supplies
    usable records; absent/unknown call models, absent calls, changed entry

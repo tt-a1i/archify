@@ -2,7 +2,13 @@
 import ts from 'typescript';
 import path from 'node:path';
 import { measureFunctions } from '../extract/ts/functions.mjs';
-import { CALL_MODEL } from '../extract/ts/calls.mjs';
+
+// Saved captures retain their original contract; do not infer support from the
+// current producer constant or a numeric adapter revision.
+const BINDING_COVERAGE = new Map([
+  ['js-ts-lexical-v1', 'declarations-const-initializers-and-relative-named-imports'],
+  ['js-ts-lexical-v2', 'declarations-const-initializers-relative-named-imports-and-default-functions'],
+]);
 
 const LIMIT = 40;
 const point = (source, offset) => {
@@ -13,18 +19,18 @@ const before = (aLine, aColumn, bLine, bColumn) => aLine < bLine || (aLine === b
 
 export function questionCalls({ facts, factsPath, inspect, entry, location, symbol, text }) {
   const knownAdapter = facts?.repository?.language === 'ts' && /^typescript@/.test(facts?.repository?.adapter || '');
-  const knownModel = knownAdapter && facts?.callModel === CALL_MODEL;
+  const bindingCoverage = knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
   const result = {
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
       snapshotId: facts?.repository?.snapshotId ?? null, callModel: facts?.callModel ?? null },
-    bindingCoverage: knownModel ? 'declarations-const-initializers-and-relative-named-imports' : 'unknown',
+    bindingCoverage: bindingCoverage ?? 'unknown',
     factRole: 'captured-evidence; use targetNavigation for current target locations',
     selection: { file: entry.file, kind: symbol ? 'function-source-range' : 'entry-file', range: null },
     total: null, included: 0, omitted: null, limit: LIMIT, records: [],
     limitations: [
       'Records are CallExpressions contained in the selected source range, including nested functions and closures; they are not necessarily direct or executed calls of the selected function.',
-      'same-file-function identifies a lexical declaration; same-file-function-initializer identifies a direct const initializer. Neither proves execution, TDZ safety or runtime dispatch. Named expressions use their measured inner function name. Unresolved calls require source reading; constructors and tagged templates are not collected. imported-function follows only captured relative named imports to direct exports, not runtime dispatch.',
+      'same-file-function identifies a lexical declaration; same-file-function-initializer identifies a direct const initializer. Neither proves execution, TDZ safety or runtime dispatch. Named expressions use their measured inner function name. Unresolved calls require source reading; constructors and tagged templates are not collected. imported-function follows captured relative named imports to direct exports; js-ts-lexical-v2 additionally binds direct default function declarations. It does not model runtime dispatch.',
       'Each factIndex identifies the unchanged record in this snapshot raw-facts.calls array. Full start/end ranges distinguish chained calls sharing a start. Original targets are captured evidence only. Use targetNavigation.location only when status is valid; imported targets have separate freshness and parse checks. Valid navigation verifies captured target content and coordinates, not current re-resolution after other files/configuration change.',
       'At most 40 records are included in source order; total/included/omitted describe only the selected range. Read current source or the captured raw facts for omitted records.',
     ],
@@ -32,7 +38,7 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   const unavailable = (reason) => ({ ...result, reason });
   if (entry.factsStatus !== 'valid') return unavailable(`entry-${entry.factsStatus}`);
   if (entry.parseErrors.length) return unavailable('entry-parse-errors');
-  if (!knownModel) return unavailable('unsupported-or-unknown-call-model');
+  if (!bindingCoverage) return unavailable('unsupported-or-unknown-call-model');
   if (!Array.isArray(facts?.calls)) return unavailable('calls-not-captured');
 
   let range = null;

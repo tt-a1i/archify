@@ -123,7 +123,7 @@ The selector supports nested conditions/arrays and literal relative JavaScript e
 
 ### Why not dependency-cruiser or Babel
 
-The adapter reuses its TypeScript Program and traversal for import edges, function measurements and conservative lexical call facts. It does not add another parser or resolver for this evidence. The explicit `js-ts-lexical-v1` call model and its unsupported cases are described in [Architecture](../ARCHITECTURE.md#jsts-call-facts); complete symbol and call graphs remain unimplemented.
+The adapter reuses its TypeScript Program and traversal for import edges, function measurements and conservative lexical call facts. It does not add another parser or resolver for this evidence. The explicit `js-ts-lexical-v2` call model and its unsupported cases are described in [Architecture](../ARCHITECTURE.md#jsts-call-facts); complete symbol and call graphs remain unimplemented.
 
 ### Where it bites
 
