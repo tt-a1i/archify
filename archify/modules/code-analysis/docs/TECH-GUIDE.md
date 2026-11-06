@@ -115,7 +115,9 @@ Here `require` is a local variable, not the CommonJS loader. Syntax alone cannot
 
 `program.getModeForUsageLocation` determines the resolution mode of each literal import from its syntax, file/package format and compiler options, including explicit type-only `resolution-mode` attributes. That mode is passed to `ts.resolveModuleName` with the captured snapshot host, so supported package `imports` and `exports` maps select the appropriate `import` or `require` condition. In NodeNext mode, dynamic `import()` uses the import condition even inside a CommonJS file; a TypeScript static import emitted as `require` uses the require condition.
 
-The result must be inside the analyzed root and in the selected file set to become a resolved edge. This is TypeScript source resolution, not a complete Node runtime loader: declaration-file selection and the resolver's conditional fallback behavior can differ from the executable target. A resolved edge alone does not prove that Node will load that file successfully.
+The result must be inside the analyzed root and in the selected file set to become a resolved edge. For non-type-only references from `.js`, `.mjs` and `.cjs` files, a declaration selected for a package import or an ESM-mode relative import triggers an implementation lookup. This uses TypeScript's internal `noDtsResolution` option with a snapshot-backed host that excludes TS substitutions; only a captured JavaScript implementation can supply that edge. Missing or excluded implementations stay unresolved, even when declarations are selected for analysis. TypeScript callers retain their source/type resolution, and relative CommonJS entries retain their existing behavior.
+
+The implementation lookup depends on an internal TypeScript option, so dependency upgrades must retain the JavaScript implementation regressions. This is still not a complete Node runtime loader: the resolver's conditional fallback behavior, custom loaders and execution success remain separate concerns. A resolved edge alone does not prove that Node will load that file successfully.
 
 ### Why not dependency-cruiser or Babel
 

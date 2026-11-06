@@ -105,3 +105,51 @@ test('captured TypeScript configuration preserves UTF-16 BOM support', t => {
   });
   assert.equal(extract(root, config).imports[0].typeOnly, undefined);
 });
+
+test('JavaScript package and ESM references select implementations while TypeScript keeps declarations', t => {
+  const root = fixture(t, {
+    'package.json': JSON.stringify({ name: 'package-entry-fixture', type: 'module',
+      exports: { '.': { types: './index.d.ts', import: './index.mjs', require: './index.cjs' },
+        './missing': { types: './index.d.ts', import: './missing.js' },
+        './excluded': { types: './index.d.ts', import: './excluded.js' } },
+      imports: { '#entry': { types: './index.d.ts', import: './index.mjs', require: './index.cjs' } } }),
+    'index.d.ts': 'export declare const value: string;',
+    'index.mjs': 'export const value = "esm";',
+    'index.cjs': 'exports.value = "cjs";',
+    'index.mts': 'export const value = "typescript-esm";',
+    'index.cts': 'export const value = "typescript-cjs";',
+    'excluded.js': 'export const value = "excluded";',
+    'relative.js': 'export const value = "runtime";',
+    'relative.d.ts': 'export declare const value: string;',
+    'entry.mjs': 'import {value} from "package-entry-fixture";\nexport {value} from "#entry";\nimport "package-entry-fixture/missing";\nimport "package-entry-fixture/excluded";\nimport "./relative.js";\n',
+    'entry.cjs': 'require("package-entry-fixture");\nimport("#entry");\n',
+    'types.ts': 'import type {value} from "package-entry-fixture";',
+    'values.ts': 'import {value} from "package-entry-fixture";',
+  });
+  for (const includeDeclarations of [false, true]) {
+    const facts = extract(root, { ...config, exclude: [...(includeDeclarations ? [] : config.exclude), '**/excluded.js'] });
+    const targets = from => facts.imports.filter(e => e.from === from).map(e => e.to);
+    assert.deepEqual(targets('entry.mjs'), ['index.mjs', 'index.mjs', undefined, undefined, 'relative.js']);
+    assert.deepEqual(targets('entry.cjs'), ['index.cjs', 'index.mjs']);
+    for (const file of ['types.ts', 'values.ts']) assert.deepEqual(targets(file), [includeDeclarations ? 'index.d.ts' : undefined]);
+    assert.equal(facts.imports.find(e => e.from === 'types.ts').typeOnly, true);
+  }
+});
+
+test('JavaScript package implementation fallback uses the captured manifest and source inventory', t => {
+  const manifest = target => JSON.stringify({ type: 'module', imports: { '#entry': { types: './entry.d.ts', import: target } } });
+  const root = fixture(t, {
+    'package.json': manifest('./old.mjs'),
+    'entry.d.ts': 'export declare const value: string;',
+    'entry.mjs': 'import {value} from "#entry";',
+    'old.mjs': 'export const value = "captured";',
+  });
+  const result = afterCapture(() => {
+    fs.writeFileSync(path.join(root, 'package.json'), manifest('./new.mjs'));
+    fs.unlinkSync(path.join(root, 'old.mjs'));
+    fs.writeFileSync(path.join(root, 'new.mjs'), 'export const value = "live";');
+  }, () => extract(root, config));
+  assert.equal(result.imports[0].to, 'old.mjs');
+  assert.equal(result.files.find(f => f.path === 'old.mjs').sourceText, 'export const value = "captured";');
+  assert.ok(!result.files.some(f => f.path === 'new.mjs'));
+});
