@@ -1,6 +1,6 @@
-// TypeScript Compiler API adapter (JS + TS via allowJs). M1 scope: files and
-// import edges only. A no-resolution Program supplies lexical binding information;
-// exported symbols and calls stay empty until M2.
+// TypeScript Compiler API adapter (JS + TS via allowJs). A no-resolution
+// Program supplies imports and conservative lexical call bindings.
+// Calls do not establish execution or runtime dispatch.
 import path from 'node:path';
 import ts from 'typescript';
 import { classifyRole, lineCount, listFiles, snapshotTree, toPosix, packageMarkersIn } from '../shared/files.mjs';
@@ -10,12 +10,14 @@ import { runtimePackageTarget } from './runtime-package-target.mjs';
 import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 import { measureFunctions } from './functions.mjs';
+import { CALL_MODEL, callsite } from './calls.mjs';
+import { importedCallTarget } from './imported-calls.mjs';
 
 export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 15;
+export const REVISION = 16;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -66,6 +68,10 @@ export function extract(root, config) {
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   const fileRecords = [];
   const functions = [];
+  const calls = [];
+  const pendingCalls = [];
+  const importTargets = new Map();
+  const sources = new Map();
   const parseErrors = [];
 
   for (const rel of files) {
@@ -81,17 +87,31 @@ export function extract(root, config) {
       parseErrors.push({ path: rel, message: `${line ? `line ${line}: ` : ''}${ts.flattenDiagnosticMessageText(first.messageText, ' ')}${syntax.length > 1 ? ` (+${syntax.length - 1} more)` : ''}` });
     }
     fileRecords.push({ path: rel, loc: lineCount(source.text), role: classifyRole(rel, config.roles), sourceText: source.text });
-    if (!source.isDeclarationFile) functions.push(...measureFunctions(source, rel));
-    for (const found of collectImports(source, checker, options)) {
+    const functionRecords = new Map();
+    if (!source.isDeclarationFile) functions.push(...measureFunctions(source, rel, (record, node) => functionRecords.set(node, record)));
+    sources.set(rel, { source, functionRecords, valid: !syntax.length && !source.isDeclarationFile });
+    for (const found of collectImports(source, checker, options, syntax.length || source.isDeclarationFile ? null : (node) => pendingCalls.push({ node, source, rel, functionRecords }))) {
       const record = { from: rel, specifier: found.specifier, kind: found.kind, line: found.line, resolved: false };
       if (found.names.length) record.names = found.names;
       if (found.lazy) record.lazy = true;
       if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
       const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
-      if (target.to) { record.to = target.to; record.resolved = true; }
-      else unresolved[target.reason] += 1;
+      if (target.to) {
+        record.to = target.to; record.resolved = true;
+        if (found.statement) importTargets.set(found.statement, target.to);
+      } else unresolved[target.reason] += 1;
       imports.push(record);
     }
+  }
+
+  for (const { node, source, rel, functionRecords } of pendingCalls) {
+    const call = callsite(node, source, rel, checker, functionRecords);
+    const target = call.reason === 'no-local-function-binding' && ts.isIdentifier(node.expression)
+      ? importedCallTarget(node, source, checker, importTargets, sources) : null;
+    if (target) {
+      const { reason, ...record } = call;
+      calls.push({ ...record, resolution: 'imported-function', target });
+    } else calls.push(call);
   }
 
   imports.sort((a, b) => compareText(a.from, b.from) || a.line - b.line || compareText(a.specifier, b.specifier));
@@ -108,7 +128,8 @@ export function extract(root, config) {
     imports,
     symbols: [],
     functions: functions.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.qualname, b.qualname)),
-    calls: [],
+    callModel: CALL_MODEL,
+    calls: calls.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || a.column - b.column),
     ...(parseErrors.length ? { parse_errors: parseErrors } : {}),
     unresolved,
   };
@@ -136,14 +157,15 @@ function compilerOptions(root, inputs) {
   return { ...COMPILER_OPTIONS, ...parsed.options, allowJs: true };
 }
 
-function collectImports(source, checker, options) {
+function collectImports(source, checker, options, onCall) {
   const found = [];
   const visit = (node) => {
+    if (onCall && ts.isCallExpression(node)) onCall(node);
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const clause = node.importClause;
       const bindings = clause?.namedBindings;
       const inlineTypesOnly = !clause?.name && bindings && ts.isNamedImports(bindings) && bindings.elements.length > 0 && bindings.elements.every((e) => e.isTypeOnly);
-      found.push({ specifier: node.moduleSpecifier.text, usage: node.moduleSpecifier, kind: 'static', line: lineOf(source, node), names: importedNames(clause), typeOnly: Boolean(clause?.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
+      found.push({ statement: node, specifier: node.moduleSpecifier.text, usage: node.moduleSpecifier, kind: 'static', line: lineOf(source, node), names: importedNames(clause), typeOnly: Boolean(clause?.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
     } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)
       && node.moduleReference.expression && ts.isStringLiteral(node.moduleReference.expression)) {
       found.push({ specifier: node.moduleReference.expression.text, usage: node.moduleReference.expression, kind: 'require', line: lineOf(source, node), names: ['*'], typeOnly: Boolean(node.isTypeOnly) });

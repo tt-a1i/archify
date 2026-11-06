@@ -27,7 +27,7 @@ const LOGICAL = new Set([
   ts.SyntaxKind.AmpersandAmpersandEqualsToken, ts.SyntaxKind.BarBarEqualsToken, ts.SyntaxKind.QuestionQuestionEqualsToken,
 ]);
 
-export function measureFunctions(source, file) {
+export function measureFunctions(source, file, onFunction) {
   const records = [];
   const seen = new Map(); // qualname -> count, for anonymous names that repeat
 
@@ -42,7 +42,9 @@ export function measureFunctions(source, file) {
             seen.set(qualname, n);
             if (n > 1) qualname += `#${n}`;
           }
-          records.push(record(child, source, file, name || qualname.slice(prefix.length), qualname));
+          const measured = record(child, source, file, name || qualname.slice(prefix.length), qualname);
+          records.push(measured);
+          onFunction?.(measured, child);
           walk(child, `${qualname}.<locals>.`, true);
           return;
         }
