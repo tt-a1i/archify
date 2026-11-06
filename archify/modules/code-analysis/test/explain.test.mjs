@@ -31,7 +31,7 @@ const SAVED_LANGUAGES = [
     sources: { 'Entry.java': 'import p.Dep;\nclass Entry {\n  static Dep chosen() { return null; }\n}\n', 'p/Dep.java': 'package p; public class Dep {}\n' } },
 ];
 
-for (const sample of SAVED_LANGUAGES) test(`saved ${sample.language} question uses captured source and functions while calls stay unavailable`, t => {
+for (const sample of SAVED_LANGUAGES) test(`saved ${sample.language} question uses captured source and functions with explicit call coverage`, t => {
   const args = setup(t, sample);
   assert.equal(args.facts.repository.language, sample.language);
   assert.match(args.facts.repository.adapter, sample.adapter, 'use real adapter output, not relabeled JS facts');
@@ -52,7 +52,9 @@ for (const sample of SAVED_LANGUAGES) test(`saved ${sample.language} question us
   const run = () => spawnSync(process.execPath, command, { encoding: 'utf8' });
   const prepared = run(); assert.equal(prepared.status, 0, prepared.stderr);
   const receipt = JSON.parse(prepared.stdout);
-  assert.equal(receipt.evidence, 'valid'); assert.equal(receipt.calls.coverage, 'unavailable'); assert.equal(receipt.calls.total, null);
+  assert.equal(receipt.evidence, 'valid');
+  assert.equal(receipt.calls.coverage, sample.language === 'java' ? 'available' : 'unavailable');
+  assert.equal(receipt.calls.total, sample.language === 'java' ? 0 : null);
   const saved = JSON.parse(fs.readFileSync(output, 'utf8'));
   assert.deepEqual(saved.entry.location, brief.entry.location);
   assert.equal(saved.calls.provenance.rawFactsPath, path.join(args.analysis, 'raw-facts.json'));
