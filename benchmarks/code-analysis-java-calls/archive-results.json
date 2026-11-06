@@ -1,0 +1,103 @@
+{
+  "provenance": {
+    "source_commit": "d9ab19812a5ccf119a0d7e95e8d89accaa5fb025",
+    "archive_sha256": "0fe2c01d79544252a58011c2ab9b2363790442b52dc170ee16065c1aa77de49d",
+    "file_members": 387,
+    "byte_mismatches": [
+      {
+        "path": "archify/package.json",
+        "source_found": true
+      }
+    ],
+    "package_manifest_transform": {
+      "rule": "scripts/stage-clean-skill.mjs: cleanPackageManifestEntry removes scripts and devDependencies and formats JSON",
+      "semantic_match_after_removal": true
+    },
+    "code_analysis_members": 152,
+    "code_analysis_exact": true
+  },
+  "comparison": {
+    "files": {
+      "report.json": {
+        "source_sha256": "a59184579960a8ffc280923341b6c7b82e81459cb1cc0ee83e77223225eb298a",
+        "archive_sha256": "a59184579960a8ffc280923341b6c7b82e81459cb1cc0ee83e77223225eb298a",
+        "byte_equal": true
+      },
+      "slf4j-base/raw-facts.json": {
+        "source_sha256": "3e0c3b216ba3ac61336ffe7607f92d727d9037aca369f1be2279d0f092dae8d1",
+        "archive_sha256": "3e0c3b216ba3ac61336ffe7607f92d727d9037aca369f1be2279d0f092dae8d1",
+        "byte_equal": true
+      },
+      "slf4j-head/raw-facts.json": {
+        "source_sha256": "8922e255f74140fb1e55bdb5e8ef0eefe6a921d7a06bab49249de35cf104436f",
+        "archive_sha256": "8922e255f74140fb1e55bdb5e8ef0eefe6a921d7a06bab49249de35cf104436f",
+        "byte_equal": true
+      },
+      "guava-head/raw-facts.json": {
+        "source_sha256": "bc0028f10c4bf66f244c3439bd451137ac44eda1c1e8fe456ab2b5d46338a2d3",
+        "archive_sha256": "bc0028f10c4bf66f244c3439bd451137ac44eda1c1e8fe456ab2b5d46338a2d3",
+        "byte_equal": true
+      }
+    },
+    "questions": {
+      "guava-head-task-0.json": {
+        "canonical_equal": true,
+        "source_sha256": "9d3085fc8d258562b5e46d41ecc74c8507d8a27c4159f5ce3695ea55b66ebad6",
+        "archive_sha256": "0475463c1192ebd74fb504a581bff14db7e10a5a7df7041591a225ca71a6cb32"
+      },
+      "guava-head-task-1.json": {
+        "canonical_equal": true,
+        "source_sha256": "3770c9a8f08c462dbf86cf2acc4f590383d28ea95897b0d192957a608a320e05",
+        "archive_sha256": "b210e3221804e576f36a1e46db58e31abb22dec6237a85e3425854f2935d8075"
+      },
+      "guava-head-task-2.json": {
+        "canonical_equal": true,
+        "source_sha256": "f9c65f437856e9cfdf60ffcaed2bb82fccdd3b24549123cc84c979a66c91c891",
+        "archive_sha256": "5cba8367e21ef6f58efbc297d238aed7d503fe35bc892c6f241090d13cb018a9"
+      },
+      "slf4j-base-task-0.json": {
+        "canonical_equal": true,
+        "source_sha256": "0b0373dcef3e55f3c080f3d9714d6517e54cd1d0a467bfd338ce7b94203b7301",
+        "archive_sha256": "9622d62269861c90f7caad9d066b129d450eed477aee932b87930057921fa192"
+      },
+      "slf4j-base-task-1.json": {
+        "canonical_equal": true,
+        "source_sha256": "f86c205a689a78e42bfdb1b4e834d78600af60419127ea1a67805b6016318a06",
+        "archive_sha256": "c22faa5ba25f51671cef57c41c9d553ba6c76fb185ecfb68ba8afefe1ed5db0d"
+      },
+      "slf4j-head-task-0.json": {
+        "canonical_equal": true,
+        "source_sha256": "1c6b8a0efb65c6e5c8eec39d647d4659fb35e419fbdb46784c49ddb1558a603c",
+        "archive_sha256": "387189582010e6536a3791272955b19b16542dce7c0641e25c530688daee0944"
+      },
+      "slf4j-head-task-1.json": {
+        "canonical_equal": true,
+        "source_sha256": "7db6c8c122e2d3fe14c3546aa488aebdae61fe208036e666a5e5cb3bd62aa778",
+        "archive_sha256": "a98e61eca5f7d57cbd8d676daefd518e3e6e87df990e6f48f825d6a5c1a9dcd2"
+      },
+      "slf4j-head-task-2.json": {
+        "canonical_equal": true,
+        "source_sha256": "03b9275777c17ced3c6cdc4f39dd84bb858d1da6eda6ec0c8a91fa8d74f822d6",
+        "archive_sha256": "dfb38e6f930840447310ca493ca7bafb3708cb841de4e18f51441540798cf0af"
+      }
+    },
+    "canonicalized_fields": [
+      "calls.provenance.rawFactsPath",
+      "workflow"
+    ],
+    "counts": {
+      "inventory": {
+        "present": 86
+      },
+      "binding": {
+        "correct": 26,
+        "explicit_unknown": 60
+      },
+      "navigation": {
+        "valid_correct": 26,
+        "omitted": 60
+      }
+    },
+    "extra_calls": 0
+  }
+}
