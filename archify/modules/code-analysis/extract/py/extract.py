@@ -26,6 +26,7 @@ import sys
 import tokenize
 from ast_walk import AnalysisVisitor, analysis_children
 from loader_bindings import standard_loader_calls
+from calls import collect_calls, source_range
 
 
 def line_count(text):
@@ -321,7 +322,7 @@ def _measure(func):
     return state
 
 
-def functions(tree):
+def functions(tree, text):
     out = []
 
     def walk(node, prefix):
@@ -332,6 +333,7 @@ def functions(tree):
                 out.append({
                     "name": child.name, "qualname": qualname, "line": child.lineno,
                     "endLine": getattr(child, "end_lineno", None) or child.lineno,
+                    "sourceRange": source_range(child, text),
                     "complexity": m["complexity"], "nesting": m["nesting"], "deepestLine": m["deepest"],
                 })
                 walk(child, qualname + ".<locals>.")
@@ -357,7 +359,8 @@ def main():
             tree = ast.parse(text, filename=rel)
             record["imports"] = collect(tree)
             record["symbols"] = module_bindings(tree)
-            record["functions"] = functions(tree)
+            record["functions"] = functions(tree, text)
+            record["calls"], record["definitions"] = collect_calls(tree, text)
         except (SyntaxError, ValueError, UnicodeError, LookupError) as error:
             record["error"] = "%s (line %s)" % (getattr(error, "msg", str(error)), getattr(error, "lineno", None))
         out.append(record)

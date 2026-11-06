@@ -7,7 +7,7 @@
   "required": ["schema_version", "repository", "files", "imports", "symbols", "calls", "unresolved"],
   "properties": {
     "schema_version": { "const": 1 },
-    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient." },
+    "callModel": { "type": "string", "minLength": 1, "description": "Explicit call collection and binding model. js-ts-lexical-v1 collects CallExpressions from parse-valid non-declaration JS/TS files and binds declarations, direct const initializers and relative named imports to direct exports. js-ts-lexical-v2 additionally binds relative default imports to direct default function declarations with one implementation body. Absent or unrecognized models do not establish call coverage; adapterRevision alone is insufficient. python-lexical-v1 inventories Python ast.Call and binds unique ordinary undecorated module-level functions, including direct static from-import aliases. It does not resolve attributes, classes, reexports or runtime dispatch." },
     "repository": {
       "type": "object",
       "additionalProperties": false,
@@ -82,7 +82,8 @@
           "endLine": { "type": "integer", "minimum": 1 },
           "complexity": { "type": "integer", "minimum": 1, "description": "Cyclomatic complexity: 1 plus each branch point (see extract/py/extract.py)." },
           "nesting": { "type": "integer", "minimum": 0, "description": "Deepest block nesting inside the body; elif stays at its if's depth." },
-          "deepestLine": { "type": "integer", "minimum": 1 }
+          "deepestLine": { "type": "integer", "minimum": 1 },
+          "sourceRange": {"type":"object","additionalProperties":false,"required":["line","column","endLine","endColumn","sha256"],"properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":1},"endLine":{"type":"integer","minimum":1},"endColumn":{"type":"integer","minimum":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}},"description":"Exact decoded Python definition slice, def/async def through AST end, excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 functions; absent in historical captures."}
         }
       }
     },
@@ -103,7 +104,7 @@
     },
     "calls": {
       "type": "array",
-      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage.",
+      "description": "TS/JS CallExpression sites in syntactically valid non-declaration files. Same-file-function means lexical binding to one body-bearing ordinary function declaration, not runtime dispatch, execution or reachability. same-file-function-initializer for a unique const identifier variable directly initialized with an arrow/function expression. imported-function for relative static imports resolved to captured direct exports: named function/const-initializer exports in v1, plus default function declarations in v2; target.file is relative to the analysis root. Empty arrays from older/other adapters remain valid; see callModel and parse_errors for coverage. python-lexical-v1 records Python ast.Call with the same UTF-16/end-exclusive coordinates, binding only eligible module-level ordinary definitions or direct from-import aliases; unsupported calls remain unresolved.",
       "items": {
         "type": "object", "additionalProperties": false,
         "required": ["file", "line", "column", "endLine", "endColumn", "resolution"],

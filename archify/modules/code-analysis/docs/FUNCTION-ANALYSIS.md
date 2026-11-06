@@ -7,8 +7,9 @@ finding is not required. `task --help` describes question mode and its options.
 
 Single-entry orientation accepts JS/TS implementation files, or a .py/.java entry
 captured in a saved analysis directory with matching Python/Java producer metadata.
-Python/Java use captured function ranges and file dependencies; they do not supply
-call coverage. This does not extend the fresh JS/TS change-question mode below.
+Python/Java use captured function ranges and file dependencies. Fresh Python facts
+with `python-lexical-v1` also supply source callsites and bounded direct-name targets;
+Java calls remain unavailable. This does not extend the fresh JS/TS change-question mode below.
 
 1. **Scope.** Before reading the path in depth, record the question, entry,
    acceptance questions and excluded areas. For a code change, pin full base/head
@@ -41,13 +42,21 @@ call coverage. This does not extend the fresh JS/TS change-question mode below.
    have reused revision numbers for import-only extraction. Only `available` supplies
    usable records; absent/unknown call models, absent calls, changed entry
    text and parse errors leave totals unknown and records empty. An available
-   zero means no collected CallExpressions in this source range, not no runtime
-   calls (constructors and tagged templates are excluded).
+   zero means no collected call nodes in this source range, not no runtime
+   calls (the JS/TS model excludes constructors and tagged templates).
    Older JS/TS facts without the marker remain readable, but require fresh
    extraction for call orientation even if their calls array is nonempty.
-   Python/Java calls stay unavailable with unknown totals, including after fresh
-   extraction; empty arrays do not imply no calls. Read current source to trace
-   Python object bindings or Java runtime dispatch, reflection and providers.
+   Python `python-lexical-v1` inventories every `ast.Call` in parse-valid files.
+   It binds only unique ordinary undecorated module-level definitions or explicit
+   static from-import aliases to direct captured definitions. Attributes, classes,
+   decorated targets, reexports, shadows and ambiguous bindings stay unresolved.
+   Captured `functions[].sourceRange` stores exact UTF-16/end-exclusive positions
+   and a decoded-source slice hash; this consumer verifies it without TS reparsing.
+   The range starts at def/async def, excluding preceding decorators; defaults and
+   nested bodies physically inside it are included. This does not establish
+   execution, runtime identity, or future paired decorator-change coverage.
+   Historical Python captures without this model and Java calls remain unavailable
+   with unknown totals. Read source for object dispatch, reflection and providers.
    New marked facts require the updated raw-facts schema; older strict readers
    reject the additional field.
    Each `calls.records` item keeps its original `fact` and `factIndex` in the
@@ -61,7 +70,7 @@ call coverage. This does not extend the fresh JS/TS change-question mode below.
    Valid navigation checks captured target text and coordinates, not fresh
    resolution after other source/configuration changes. Refresh extraction before
    asserting current binding relationships. Uncaptured targets are not read or resolved.
-   `imported-function` covers relative non-type-only named imports to direct
+   For JS/TS, `imported-function` covers relative non-type-only named imports to direct
    exports in v1/v2; v2 additionally supports the direct default function
    declarations described above. Namespace, package, CommonJS/dynamic and
    re-export paths remain unsupported.

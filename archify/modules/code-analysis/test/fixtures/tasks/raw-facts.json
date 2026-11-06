@@ -8,8 +8,8 @@
     "url": null,
     "language": "py",
     "adapter": "python@3.13.16",
-    "adapterRevision": 6,
-    "snapshotId": "3fe9d8d5e9bd0894b8317b4d398aa58179092430e5246cd9826e175e2125b942"
+    "adapterRevision": 7,
+    "snapshotId": "9b88de3a75526f95e9dd255d05d3e29b6ea8b6facc2868967acd52b0de0c4a24"
   },
   "files": [
     {
@@ -246,6 +246,13 @@
       "qualname": "Config.__init__",
       "line": 8,
       "endLine": 10,
+      "sourceRange": {
+        "line": 8,
+        "column": 5,
+        "endLine": 10,
+        "endColumn": 37,
+        "sha256": "fe0257bb26eab1b73b0b10aaa97c51a64072e37d36d0e12be002d5011c0ed3ff"
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 8
@@ -256,6 +263,13 @@
       "qualname": "Handler.__init__",
       "line": 6,
       "endLine": 7,
+      "sourceRange": {
+        "line": 6,
+        "column": 5,
+        "endLine": 7,
+        "endColumn": 29,
+        "sha256": "c203a0217d1c1950415c427f1cb9c7d6085761d3f21b90b6d7c6e63a0643abbd"
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 6
@@ -266,6 +280,13 @@
       "qualname": "Handler.limit",
       "line": 9,
       "endLine": 10,
+      "sourceRange": {
+        "line": 9,
+        "column": 5,
+        "endLine": 10,
+        "endColumn": 54,
+        "sha256": "2681a96a75d72ed5491ddbfaac2a208f5bd25b686bb979944f178cb7423e6aee"
+      },
       "complexity": 2,
       "nesting": 0,
       "deepestLine": 9
@@ -276,6 +297,13 @@
       "qualname": "route",
       "line": 4,
       "endLine": 38,
+      "sourceRange": {
+        "line": 4,
+        "column": 1,
+        "endLine": 38,
+        "endColumn": 25,
+        "sha256": "7e17c80aab6fb73cbc7e97cd4ca9e09213312eb456eccfd4bf7db26f1ce4fdcb"
+      },
       "complexity": 20,
       "nesting": 3,
       "deepestLine": 18
@@ -286,6 +314,13 @@
       "qualname": "describe",
       "line": 41,
       "endLine": 42,
+      "sourceRange": {
+        "line": 41,
+        "column": 1,
+        "endLine": 42,
+        "endColumn": 28,
+        "sha256": "bf874d649fd43a0d1f567beff6639e07276624d581093c3b81900e7ccc2b9e0e"
+      },
       "complexity": 2,
       "nesting": 0,
       "deepestLine": 41
@@ -296,6 +331,13 @@
       "qualname": "Order.__init__",
       "line": 5,
       "endLine": 6,
+      "sourceRange": {
+        "line": 5,
+        "column": 5,
+        "endLine": 6,
+        "endColumn": 33,
+        "sha256": "1bae05cf9bb443fa024a23debae16dd8c500b7cffb9414c189d902cb7b9beb70"
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 5
@@ -306,6 +348,13 @@
       "qualname": "Order.total",
       "line": 8,
       "endLine": 9,
+      "sourceRange": {
+        "line": 8,
+        "column": 5,
+        "endLine": 9,
+        "endColumn": 57,
+        "sha256": "5ba538ddcb2676375cea1a58c64bf822de670da650e50154b3e031a696d4f60d"
+      },
       "complexity": 2,
       "nesting": 0,
       "deepestLine": 8
@@ -316,6 +365,13 @@
       "qualname": "checkout",
       "line": 6,
       "endLine": 8,
+      "sourceRange": {
+        "line": 6,
+        "column": 1,
+        "endLine": 8,
+        "endColumn": 39,
+        "sha256": "8e4a3b6197dade9b8f20e4b2e70edb2f85c4556c659a661b710159ab0f128db7"
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 6
@@ -326,6 +382,13 @@
       "qualname": "format_price",
       "line": 5,
       "endLine": 6,
+      "sourceRange": {
+        "line": 5,
+        "column": 1,
+        "endLine": 6,
+        "endColumn": 28,
+        "sha256": "82eeb15c0baf69f5b48e82ebd4b6a140c5b7c8728097f7c928545db7d8c8c190"
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 5
@@ -336,12 +399,219 @@
       "qualname": "render",
       "line": 9,
       "endLine": 10,
+      "sourceRange": {
+        "line": 9,
+        "column": 1,
+        "endLine": 10,
+        "endColumn": 46,
+        "sha256": "f3d79eeda3b6a4050b3e3ec164ef47fbcf01467fc219155a16dd237e99671608"
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 9
     }
   ],
-  "calls": [],
+  "callModel": "python-lexical-v1",
+  "calls": [
+    {
+      "file": "app/a.py",
+      "line": 10,
+      "column": 24,
+      "endLine": 10,
+      "endColumn": 37,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 7,
+      "column": 12,
+      "endLine": 7,
+      "endColumn": 31,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 9,
+      "column": 12,
+      "endLine": 9,
+      "endColumn": 29,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 11,
+      "column": 12,
+      "endLine": 11,
+      "endColumn": 34,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 11,
+      "column": 39,
+      "endLine": 11,
+      "endColumn": 58,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 11,
+      "column": 62,
+      "endLine": 11,
+      "endColumn": 78,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 15,
+      "column": 12,
+      "endLine": 15,
+      "endColumn": 34,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 17,
+      "column": 20,
+      "endLine": 17,
+      "endColumn": 43,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 18,
+      "column": 38,
+      "endLine": 18,
+      "endColumn": 55,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 22,
+      "column": 16,
+      "endLine": 22,
+      "endColumn": 35,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 28,
+      "column": 19,
+      "endLine": 28,
+      "endColumn": 36,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 34,
+      "column": 20,
+      "endLine": 34,
+      "endColumn": 44,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "app/engine.py",
+      "line": 34,
+      "column": 24,
+      "endLine": 34,
+      "endColumn": 43,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "domain/model.py",
+      "line": 6,
+      "column": 22,
+      "endLine": 6,
+      "endColumn": 33,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "domain/model.py",
+      "line": 9,
+      "column": 16,
+      "endLine": 9,
+      "endColumn": 57,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "domain/order.py",
+      "line": 7,
+      "column": 13,
+      "endLine": 7,
+      "endColumn": 25,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "domain/order.py",
+      "line": 8,
+      "column": 12,
+      "endLine": 8,
+      "endColumn": 39,
+      "resolution": "imported-function",
+      "target": {
+        "file": "ui/view.py",
+        "name": "format_price",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "file": "domain/order.py",
+      "line": 8,
+      "column": 25,
+      "endLine": 8,
+      "endColumn": 38,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    },
+    {
+      "file": "ui/view.py",
+      "line": 10,
+      "column": 12,
+      "endLine": 10,
+      "endColumn": 46,
+      "resolution": "same-file-function",
+      "target": {
+        "name": "format_price",
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "file": "ui/view.py",
+      "line": 10,
+      "column": 25,
+      "endLine": 10,
+      "endColumn": 37,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "ui/view.py",
+      "line": 10,
+      "column": 25,
+      "endLine": 10,
+      "endColumn": 45,
+      "resolution": "unresolved",
+      "reason": "unsupported-callee"
+    }
+  ],
   "unresolved": {
     "external": 0,
     "outside": 0,
