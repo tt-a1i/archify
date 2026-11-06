@@ -33,10 +33,12 @@ Question mode prepares source orientation for the host Agent workflow, not a com
 analysis. It needs no finding. Missing facts remain explicit; changed/unverifiable
 entry facts or entry parse errors exit 1. Read docs/FUNCTION-ANALYSIS.md and complete the analysis.
 Single-entry Python/Java questions require a saved analysis directory with matching
-captured .py/.java source and producer metadata. Calls remain unavailable, not zero.
-With --base-root, question mode freshly captures both JS/TS roots with one analysis
+captured .py/.java source and producer metadata. Python calls require python-lexical-v1; Java calls remain unavailable, not zero.
+With --base-root, question mode freshly captures both roots in the entry language (JS/TS, .py or .java) with one analysis
 config (defaults or --config). It requires --entry and accepts no analysis directory
-or --function. Captured declaration entries disclose unsupported definition analysis.
+or --function. Both captures use the same adapter/config. Python/Java compare captured
+full named definition headers/bodies; missing metadata is partial. Java calls are
+unavailable with unknown totals. Captured declaration entries disclose unsupported definition analysis.
 Partial source/configuration coverage exits 1. Lists report total/included/omitted;
 ready is usable orientation, not complete impact or zero omissions. Dependencies
 must already be installed; this mode reads sources only. Paired --out must be

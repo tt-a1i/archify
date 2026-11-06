@@ -58,7 +58,7 @@ test('python extraction: functions carry complexity, nesting and location; neste
     assert.deepEqual(schemaErrors('raw-facts', facts), []);
     const byName = Object.fromEntries(facts.functions.map((f) => [f.qualname, f]));
     assert.deepEqual(Object.keys(byName).sort(), ['K.method', 'K.method.<locals>.inner', 'branches', 'lam', 'simple']);
-    const { sourceRange: _range, ...simpleMetrics } = byName.simple;
+    const { sourceRange: _range, definition: _definition, ...simpleMetrics } = byName.simple;
     assert.deepEqual(simpleMetrics, { file: 'pkg/sample.py', name: 'simple', qualname: 'simple', line: 1, endLine: 2, complexity: 1, nesting: 0, deepestLine: 1 });
     // 1 + if + (or, and) + elif + for + if + while + 2 except + comprehension (1 for + 2 ifs) + conditional expression
     assert.equal(byName.branches.complexity, 14);

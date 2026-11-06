@@ -5,6 +5,7 @@ import ts from 'typescript';
 import { extractFacts, loadConfig } from './analysis.mjs';
 import { readInside } from './evidence.mjs';
 import { measureFunctions } from '../extract/ts/functions.mjs';
+import { rangeText } from '../extract/shared/source-range.mjs';
 import { fail } from '../extract/shared/diagnostics.mjs';
 
 const LIMIT = 40;
@@ -30,11 +31,20 @@ function normalize(value, root) {
   return value;
 }
 
-export function captureChangeSide(root, config) {
+export function changeEntryLanguage(entry) {
+  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py or .java source file with --entry.');
+  if (/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry)) return 'ts';
+  if (/\.py$/.test(entry)) return 'py';
+  if (/\.java$/.test(entry)) return 'java';
+  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py or .java source file with --entry.');
+}
+
+export function captureChangeSide(root, config, language = 'ts') {
   root = path.resolve(root);
   let resolution;
-  const { facts } = extractFacts(root, { language: 'ts', config, onCapture: input => { resolution = input; } });
-  return { root, facts, resolution };
+  const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
+  if (language !== 'ts') resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
+  return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
 }
 
 function inspectSide(capture, side) {
@@ -48,7 +58,7 @@ function inspectSide(capture, side) {
   }
   const inputs = [];
   let resolutionFresh = true;
-  for (const [file, text] of resolution.reads) {
+  for (const [file, text] of resolution.reads || []) {
     // Includes absent reads for freshness, but only actual content contributes
     // to the settings digest: adding an import may probe new absent paths.
     const status = ts.sys.readFile(file) === text ? 'valid' : 'changed';
@@ -56,16 +66,16 @@ function inspectSide(capture, side) {
     if (text !== undefined) inputs.push({ file: normalize(file, root), sha256: digest(text) });
   }
   inputs.sort((a, b) => a.file.localeCompare(b.file));
-  const settings = { options: normalize(resolution.options, root), inputs };
+  const settings = { options: normalize(resolution.options || {}, root), inputs };
   const unavailable = [...files.values()].filter(file => file.status !== 'valid').map(file => ({ file: file.path, status: file.status, ...(file.parseError ? { parseError: file.parseError } : {}) }));
   const summary = {
-    side, root, snapshot: facts.repository, callModel: facts.callModel, capturedFiles: files.size,
+    side, root, snapshot: facts.repository, language: facts.repository.language, producer: { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision }, callModel: facts.callModel ?? null, analysisConfigDigest: capture.configDigest, capturedFiles: files.size,
     sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
-    resolution: { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) },
+    resolution: facts.repository.language === 'ts' ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
   const references = new Map(), calls = new Map();
-  facts.calls.forEach((fact, factIndex) => {
+  (facts.calls || []).forEach((fact, factIndex) => {
     const record = { side, snapshotId: facts.repository.snapshotId, factIndex, fact };
     const fileCalls = calls.get(fact.file) || [];
     fileCalls.push(record); calls.set(fact.file, fileCalls);
@@ -83,7 +93,10 @@ function inspectSide(capture, side) {
     const targets = importsByTarget.get(fact.to) || [];
     targets.push(record); importsByTarget.set(fact.to, targets);
   });
-  return { side, root, facts, files, references, calls, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
+  for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
+  const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2'].includes(facts.callModel))
+    || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && facts.callModel === 'python-lexical-v1');
+  return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
 }
 
 function compareSettings(base, head) {
@@ -100,6 +113,25 @@ function compareSettings(base, head) {
 function definitions(side, file) {
   const captured = side.files.get(file);
   if (!captured || captured.status !== 'valid') return { coverage: captured?.status || 'not-captured', records: [] };
+  if (side.facts.repository.language !== 'ts') {
+    const result = [], unavailable = [];
+    const kinds = side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
+    for (const fn of side.facts.functions.filter(fn => fn.file === file)) {
+      const metadata = fn.definition;
+      const slice = rangeText(captured.sourceText, metadata?.sourceRange);
+      if (!metadata || !kinds.includes(metadata.kind) || slice === null || digest(slice) !== metadata.sourceRange.sha256) {
+        unavailable.push({ file, name: fn.name, qualname: fn.qualname, reason: !metadata ? 'definition-metadata-unavailable' : 'definition-metadata-invalid' });
+        continue;
+      }
+      // Identity remains the original def-start, independently of decorated headers.
+      const identity = fn.sourceRange || metadata.sourceRange;
+      result.push({ file, name: fn.name, qualname: fn.qualname, kind: metadata.kind,
+        line: identity.line, column: identity.column || fn.column || 1,
+        endLine: metadata.sourceRange.endLine, endColumn: metadata.sourceRange.endColumn,
+        sourceRange: metadata.sourceRange, textSha256: metadata.sourceRange.sha256 });
+    }
+    return { coverage: unavailable.length ? 'definition-regions-unavailable' : 'available', records: result, unavailable };
+  }
   const source = ts.createSourceFile(file, captured.sourceText, ts.ScriptTarget.Latest, true);
   if (source.isDeclarationFile) return { coverage: 'declaration-file-unsupported', records: [] };
   const result = [];
@@ -135,9 +167,11 @@ function describeDefinition(side, definition) {
     const status = !side.resolutionFresh ? 'resolution-input-changed' : side.files.get(record.fact.file)?.status || 'unverifiable';
     return { ...record, bindingAttribution: side.bindingAttribution, navigation: { status, location: status === 'valid' ? { file: record.fact.file, line: record.fact.line, column: record.fact.column, endLine: record.fact.endLine, endColumn: record.fact.endColumn } : null } };
   });
-  const unresolved = callsInRange(side.calls.get(definition.file) || [], definition);
+  const unresolved = callsInRange(side.calls.get(definition.file) || [], definition.sourceRange || definition);
+  const unavailable = { coverage: 'unavailable', reason: 'unsupported-or-unknown-call-model', total: null, included: 0, omitted: null, limit: LIMIT, items: [] };
+  const available = items => ({ coverage: 'available', ...bounded(items) });
   return { side: side.side, snapshotId: side.facts.repository.snapshotId, definition,
-    knownReferences: bounded(knownReferences), unresolvedWithinSourceRange: bounded(unresolved) };
+    knownReferences: side.callCoverage ? available(knownReferences) : { ...unavailable }, unresolvedWithinSourceRange: side.callCoverage ? { ...available(unresolved), containment: 'physical-source-range-including-nested-definitions-and-owned-headers' } : { ...unavailable } };
 }
 
 function moduleReferences(side, entry) {
@@ -153,12 +187,26 @@ function moduleReferences(side, entry) {
     unknown: 'Unresolved import destinations cannot be attributed to this entry. The count covers all captured sources, not potential consumers of this file.' };
 }
 
+function outgoingImports(side, entry) {
+  const originStatus = side.files.get(entry)?.status || 'not-captured';
+  const records = side.facts.imports.flatMap((fact, factIndex) => {
+    if (fact.from !== entry) return [];
+    const status = !side.resolutionFresh ? 'resolution-input-changed' : originStatus !== 'valid' ? `origin-${originStatus}` : !fact.resolved ? 'external-or-unresolved' : side.files.get(fact.to)?.status || 'not-captured';
+    return [{ side: side.side, snapshotId: side.facts.repository.snapshotId, factIndex, fact, originStatus,
+      bindingAttribution: side.bindingAttribution,
+      targetNavigation: { status, location: status === 'valid' ? { file: fact.to, line: 1 } : null,
+        ...(!fact.resolved ? { reason: 'external-or-unresolved-import-destination' } : {}) } }];
+  });
+  return { side: side.side, snapshotId: side.facts.repository.snapshotId, originStatus, ...bounded(records) };
+}
+
 function fileQuestion(sides, entry) {
-  const definitionCoverage = {};
+  const definitionCoverage = {}, unavailableDefinitions = {};
   const slots = { base: new Map(), head: new Map() };
   for (const [name, side] of Object.entries(sides)) {
     const measured = definitions(side, entry);
     definitionCoverage[name] = measured.coverage;
+    unavailableDefinitions[name] = bounded(measured.unavailable || []);
     for (const definition of measured.records) {
       const slot = key(definition.file, definition.qualname, definition.kind);
       const group = slots[name].get(slot) || [];
@@ -171,7 +219,8 @@ function fileQuestion(sides, entry) {
     if (a.length !== 1 || b.length !== 1) {
       for (const [name, defs] of [['base', a], ['head', b]]) {
         const other = sides[name === 'base' ? 'head' : 'base'].files.get(entry);
-        const reason = a.length > 1 || b.length > 1 ? 'duplicate-slot' : other && other.status !== 'valid' ? 'counterpart-unavailable' : `${name}-only`;
+        const otherCoverage = definitionCoverage[name === 'base' ? 'head' : 'base'];
+        const reason = a.length > 1 || b.length > 1 ? 'duplicate-slot' : (other && other.status !== 'valid') || otherCoverage === 'definition-regions-unavailable' ? 'counterpart-unavailable' : `${name}-only`;
         for (const definition of defs) unpaired.push({ reason, ...describeDefinition(sides[name], definition) });
       }
       continue;
@@ -180,7 +229,8 @@ function fileQuestion(sides, entry) {
     else if (a[0].line !== b[0].line || a[0].column !== b[0].column) shifted.push({ base: { side: 'base', snapshotId: sides.base.facts.repository.snapshotId, definition: a[0] }, head: { side: 'head', snapshotId: sides.head.facts.repository.snapshotId, definition: b[0] } });
   }
   return {
-    definitionCoverage,
+    definitionCoverage, unavailableDefinitions,
+    outgoingImports: { role: 'entry-file-wide source reading evidence, not selected-definition calls or execution timing', base: outgoingImports(sides.base, entry), head: outgoingImports(sides.head, entry) },
     moduleReading: {
       role: 'dependency reading locations, separate from calls; not proof of execution or affected behavior',
       base: moduleReferences(sides.base, entry), head: moduleReferences(sides.head, entry),
@@ -194,7 +244,14 @@ function fileQuestion(sides, entry) {
 // import API for old analysis artifacts or user-supplied provenance receipts.
 export function buildChangeQuestion({ question, entry, base, head, config }) {
   if (typeof question !== 'string' || !question.trim()) fail('task/question-invalid', 'Pass a nonempty --question.');
-  if (!/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry || '') || path.isAbsolute(entry) || entry.split(/[\\/]/).includes('..')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS source file with --entry.');
+  const language = changeEntryLanguage(entry);
+  const expectedConfig = digest(JSON.stringify(config));
+  for (const capture of [base, head]) {
+    const repo = capture.facts.repository;
+    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
+    if (capture.language !== language || repo.language !== language || !producerMatches || capture.configDigest !== expectedConfig) fail('task/capture-mismatch', 'Both captures must use the entry language, matching producers and the same analysis configuration.');
+  }
+  if (base.facts.repository.adapter !== head.facts.repository.adapter || base.facts.repository.adapterRevision !== head.facts.repository.adapterRevision || base.facts.callModel !== head.facts.callModel) fail('task/capture-mismatch', 'Paired capture producers, revisions and call models must match.');
   entry = path.posix.normalize(entry.split(path.sep).join('/'));
   const sides = { base: inspectSide(base, 'base'), head: inspectSide(head, 'head') };
   const reasons = [];
@@ -203,7 +260,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
     if (!side.resolutionFresh) reasons.push({ code: 'resolution-input-changed', side: name, message: 'A configuration/package input changed after capture; call and dependency navigation for this side is unavailable.' });
   }
   const settingsEqual = sides.base.summary.resolution.digest === sides.head.summary.resolution.digest;
-  const bindingAttribution = settingsEqual && sides.base.resolutionFresh && sides.head.resolutionFresh ? 'same-observed-settings' : 'limited';
+  const bindingAttribution = language !== 'ts' ? 'source-import-model-only' : settingsEqual && sides.base.resolutionFresh && sides.head.resolutionFresh ? 'same-observed-settings' : 'limited';
   for (const side of Object.values(sides)) side.bindingAttribution = bindingAttribution;
   const resolutionChanges = compareSettings(sides.base.settings, sides.head.settings);
   if (!settingsEqual) reasons.push({ code: 'resolution-settings-differ', message: 'Observed compiler options or configuration/package input contents differ. Binding differences cannot be attributed to source text alone.' });
@@ -217,20 +274,20 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
       head: b ? { snapshotId: head.facts.repository.snapshotId, sha256: digest(b.sourceText), status: b.status } : null });
   }
   const selected = fileQuestion(sides, entry);
-  if (Object.values(selected.definitionCoverage).includes('declaration-file-unsupported')) {
+  if (Object.values(selected.definitionCoverage).some(coverage => ['declaration-file-unsupported', 'definition-regions-unavailable'].includes(coverage))) {
     reasons.push({ code: 'definition-regions-unsupported', count: 1 });
   }
   return {
     kind: 'archify-change-question', stage: 'orientation-only', status: reasons.length ? 'partial' : 'ready', question: question.trim(), entry,
-    workflow: 'docs/FUNCTION-ANALYSIS.md', capture: 'fresh-pair; same current TS extractor and effective analysis configuration',
+    workflow: 'docs/FUNCTION-ANALYSIS.md', language, capture: 'fresh-pair; same current language extractor and effective analysis configuration',
     analysisConfigDigest: digest(JSON.stringify(config)),
     sides: { base: sides.base.summary, head: sides.head.summary },
     comparison: { sourceText: 'reading-signals-only', bindingAttribution, reasons, resolutionChanges },
     fileChanges: bounded(fileChanges), ...selected,
     limitations: [
-      'File changes cover captured JS/TS sources only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.',
+      'File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.',
       'Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.',
-      'Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures.',
+      'Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets only ordinary undecorated module definitions or direct from-import aliases; decorated/method targets remain unsupported. Java calls are unavailable with unknown totals.',
       'Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.',
       'Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.',
       'Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits.',
@@ -243,9 +300,10 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
 }
 
 export function captureChangeQuestion({ question, entry, baseRoot, root, configPath = null }) {
+  const language = changeEntryLanguage(entry);
   const config = loadConfig(configPath);
-  const base = captureChangeSide(baseRoot, config);
-  const head = captureChangeSide(root, config);
+  const base = captureChangeSide(baseRoot, config, language);
+  const head = captureChangeSide(root, config, language);
   return buildChangeQuestion({ question, entry, base, head, config });
 }
 

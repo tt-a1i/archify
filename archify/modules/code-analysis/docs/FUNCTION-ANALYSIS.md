@@ -9,7 +9,7 @@ Single-entry orientation accepts JS/TS implementation files, or a .py/.java entr
 captured in a saved analysis directory with matching Python/Java producer metadata.
 Python/Java use captured function ranges and file dependencies. Fresh Python facts
 with `python-lexical-v1` also supply source callsites and bounded direct-name targets;
-Java calls remain unavailable. This does not extend the fresh JS/TS change-question mode below.
+Java calls remain unavailable. Fresh paired orientation below also supports captured named Python/Java definitions.
 
 1. **Scope.** Before reading the path in depth, record the question, entry,
    acceptance questions and excluded areas. For a code change, pin full base/head
@@ -54,7 +54,7 @@ Java calls remain unavailable. This does not extend the fresh JS/TS change-quest
    and a decoded-source slice hash; this consumer verifies it without TS reparsing.
    The range starts at def/async def, excluding preceding decorators; defaults and
    nested bodies physically inside it are included. This does not establish
-   execution, runtime identity, or future paired decorator-change coverage.
+   execution or runtime identity. Paired definition comparison uses a separate full-header range described below.
    Historical Python captures without this model and Java calls remain unavailable
    with unknown totals. Read source for object dispatch, reflection and providers.
    New marked facts require the updated raw-facts schema; older strict readers
@@ -125,7 +125,7 @@ object, and a Java type edge does not prove a runtime provider or call target.
 
 ## Change questions
 
-For two existing JS/TS source roots, prepare a fresh pair from the `archify/`
+For two existing source roots, prepare a fresh pair from the `archify/`
 package directory:
 
 ```sh
@@ -137,7 +137,7 @@ node bin/archify.mjs code-analysis task \
 
 The output must be outside both roots. This path uses installed analyzer
 dependencies and reads source without running the target application or changing
-checkouts. Both sides use the current TS extractor and one effective analysis
+checkouts. The validated entry suffix selects JS/TS, Python (.py) or Java (.java) once for both sides, even in mixed-language roots. Both sides use that current extractor and one effective analysis
 configuration (defaults, or one `--config` merged with defaults using the usual
 analysis-config rules). It accepts uncommitted files; Git metadata is background,
 while each snapshot digest identifies captured text. Existing analysis directories,
@@ -145,7 +145,7 @@ finding/verify options and `--function` are separate modes.
 
 Read the orientation before following locations:
 
-- `fileChanges` covers captured JS/TS files across both roots. Added/deleted files
+- `fileChanges` covers captured files of the selected entry language across both roots. Added/deleted files
   are normal results. Documents, excluded files and other languages remain outside
   this signal. `changedDefinitions`, `positionOnlyDefinitions` and
   `unpairedDefinitions` focus on the entry file; known references search all
@@ -153,6 +153,12 @@ Read the orientation before following locations:
   `definitionCoverage` reports each side explicitly. Captured declaration files
   have `declaration-file-unsupported` coverage and partial/exit 1; an available
   implementation file with zero measured functions is a different result.
+- `outgoingImports` lists the entry file's imports on each side, separately from
+  selected definitions. Each item preserves the original import `fact`, its
+  side/snapshot `factIndex`, and `originStatus`. `targetNavigation` is separate:
+  unresolved or external destinations have a null location and explicit reason.
+  Preserve `kind`, `typeOnly`, `lazy` and `conditional` when interpreting a fact.
+  Import relocation is source-reading evidence, not proof of execution timing.
 - `moduleReading` is separate from function calls: each side lists captured,
   resolved imports/re-exports whose destination is the entry. Read the original
   fact's `kind`, `typeOnly` and `lazy` flags (absent flags mean false). These are
@@ -167,7 +173,29 @@ Read the orientation before following locations:
   behavior changes. Equal function text with shifted positions is separate.
   Renames/moves are shown as unpaired or deleted/added, never inferred by name or
   similarity. Duplicate slots stay unpaired.
-- Each side records source freshness, parse failures, compiler options and a
+- Python/Java pair only captured named definitions with verified
+  `functions[].definition: {kind, sourceRange}` metadata. The UTF-16, one-based,
+  end-exclusive range includes owned decorators/annotations/modifiers and excludes
+  preceding comments and the trailing newline. The SHA256 hashes the UTF-8
+  encoding of the decoded source slice. Python `FunctionDef`/`AsyncFunctionDef`
+  metadata is separate from the original `sourceRange`, which still starts at
+  def/async def and remains the call target coordinate. In output, definition
+  `line`/`column` retain that identity start; `definition.sourceRange` is the full
+  comparison extent used by `textSha256`. Java uses the exact body-bearing CST
+  method/interface-method/constructor/compact-constructor kind. Initializer and
+  field-lambda metric records lack this metadata and stay unavailable; abstract
+  and native bodyless declarations are not captured as definitions. Java qualnames
+  include parameter spellings, so parameter changes can remain unpaired.
+  Historical missing metadata or invalid range/hash is unavailable, never guessed
+  from whole lines; `unavailableDefinitions` records bounded reasons and makes
+  coverage partial. Java raw source offsets retain safe Unicode escape spellings;
+  files requiring Unicode preprocessing remain parse errors.
+- Non-TS side `resolution` has `coverage: not-applicable` and
+  `model: captured-source-import-resolution`, plus the shared analysis config
+  digest; it does not fabricate compiler reads/options. Its binding attribution
+  is `source-import-model-only`, never matching runtime-environment evidence.
+  Producers, revisions, language and call models must match across captures.
+- For JS/TS, each side records source freshness, parse failures, compiler options and a
   digest of actually read configuration/package inputs. Root-relative options
   are normalized for comparison; extended configs and package metadata are
   included. `comparison.resolutionChanges` lists changed options with their values
@@ -183,7 +211,15 @@ Read the orientation before following locations:
   only when valid. Coordinates and factIndex belong to that item's side and
   snapshot. No saved raw-facts directory is produced by this mode; the selected
   records are embedded. Resolution-input drift suppresses call navigation.
-- Lists include total/included/omitted and are capped at 40. Read relevant source
+- `knownReferences` and `unresolvedWithinSourceRange` expose call coverage.
+  Matching Python producers with `python-lexical-v1` support direct-name lexical
+  call evidence; decorated definitions can be paired even though decorated and
+  method call targets remain unresolved. In-range unresolved sites use the full
+  owned extent and can include decorator expressions and nested definitions.
+  Java has no supported call model here: `coverage: unavailable`, `total: null`
+  and `omitted: null` mean unknown, regardless of an empty captured calls array.
+  Unknown models remain unavailable; adapter revision alone cannot grant coverage.
+- Lists include total/included/omitted and are capped at 40 when available. Read relevant source
   beyond the cap. `unresolvedWithinSourceRange` includes nested closures;
   supported lexical references do not establish runtime callers, complete impact
   or risk. Freshness checks are bounded observations, not an atomic two-tree

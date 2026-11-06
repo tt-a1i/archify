@@ -8,8 +8,8 @@
     "url": null,
     "language": "py",
     "adapter": "python@3.13.16",
-    "adapterRevision": 7,
-    "snapshotId": "9b88de3a75526f95e9dd255d05d3e29b6ea8b6facc2868967acd52b0de0c4a24"
+    "adapterRevision": 8,
+    "snapshotId": "646c731f7ec6da60b877b030ba201d8eaf379ce6f530d47d0ea5468d2458211a"
   },
   "files": [
     {
@@ -253,6 +253,16 @@
         "endColumn": 37,
         "sha256": "fe0257bb26eab1b73b0b10aaa97c51a64072e37d36d0e12be002d5011c0ed3ff"
       },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 8,
+          "column": 5,
+          "endLine": 10,
+          "endColumn": 37,
+          "sha256": "fe0257bb26eab1b73b0b10aaa97c51a64072e37d36d0e12be002d5011c0ed3ff"
+        }
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 8
@@ -269,6 +279,16 @@
         "endLine": 7,
         "endColumn": 29,
         "sha256": "c203a0217d1c1950415c427f1cb9c7d6085761d3f21b90b6d7c6e63a0643abbd"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 6,
+          "column": 5,
+          "endLine": 7,
+          "endColumn": 29,
+          "sha256": "c203a0217d1c1950415c427f1cb9c7d6085761d3f21b90b6d7c6e63a0643abbd"
+        }
       },
       "complexity": 1,
       "nesting": 0,
@@ -287,6 +307,16 @@
         "endColumn": 54,
         "sha256": "2681a96a75d72ed5491ddbfaac2a208f5bd25b686bb979944f178cb7423e6aee"
       },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 9,
+          "column": 5,
+          "endLine": 10,
+          "endColumn": 54,
+          "sha256": "2681a96a75d72ed5491ddbfaac2a208f5bd25b686bb979944f178cb7423e6aee"
+        }
+      },
       "complexity": 2,
       "nesting": 0,
       "deepestLine": 9
@@ -303,6 +333,16 @@
         "endLine": 38,
         "endColumn": 25,
         "sha256": "7e17c80aab6fb73cbc7e97cd4ca9e09213312eb456eccfd4bf7db26f1ce4fdcb"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 4,
+          "column": 1,
+          "endLine": 38,
+          "endColumn": 25,
+          "sha256": "7e17c80aab6fb73cbc7e97cd4ca9e09213312eb456eccfd4bf7db26f1ce4fdcb"
+        }
       },
       "complexity": 20,
       "nesting": 3,
@@ -321,6 +361,16 @@
         "endColumn": 28,
         "sha256": "bf874d649fd43a0d1f567beff6639e07276624d581093c3b81900e7ccc2b9e0e"
       },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 41,
+          "column": 1,
+          "endLine": 42,
+          "endColumn": 28,
+          "sha256": "bf874d649fd43a0d1f567beff6639e07276624d581093c3b81900e7ccc2b9e0e"
+        }
+      },
       "complexity": 2,
       "nesting": 0,
       "deepestLine": 41
@@ -337,6 +387,16 @@
         "endLine": 6,
         "endColumn": 33,
         "sha256": "1bae05cf9bb443fa024a23debae16dd8c500b7cffb9414c189d902cb7b9beb70"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 5,
+          "column": 5,
+          "endLine": 6,
+          "endColumn": 33,
+          "sha256": "1bae05cf9bb443fa024a23debae16dd8c500b7cffb9414c189d902cb7b9beb70"
+        }
       },
       "complexity": 1,
       "nesting": 0,
@@ -355,6 +415,16 @@
         "endColumn": 57,
         "sha256": "5ba538ddcb2676375cea1a58c64bf822de670da650e50154b3e031a696d4f60d"
       },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 8,
+          "column": 5,
+          "endLine": 9,
+          "endColumn": 57,
+          "sha256": "5ba538ddcb2676375cea1a58c64bf822de670da650e50154b3e031a696d4f60d"
+        }
+      },
       "complexity": 2,
       "nesting": 0,
       "deepestLine": 8
@@ -371,6 +441,16 @@
         "endLine": 8,
         "endColumn": 39,
         "sha256": "8e4a3b6197dade9b8f20e4b2e70edb2f85c4556c659a661b710159ab0f128db7"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 6,
+          "column": 1,
+          "endLine": 8,
+          "endColumn": 39,
+          "sha256": "8e4a3b6197dade9b8f20e4b2e70edb2f85c4556c659a661b710159ab0f128db7"
+        }
       },
       "complexity": 1,
       "nesting": 0,
@@ -389,6 +469,16 @@
         "endColumn": 28,
         "sha256": "82eeb15c0baf69f5b48e82ebd4b6a140c5b7c8728097f7c928545db7d8c8c190"
       },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 5,
+          "column": 1,
+          "endLine": 6,
+          "endColumn": 28,
+          "sha256": "82eeb15c0baf69f5b48e82ebd4b6a140c5b7c8728097f7c928545db7d8c8c190"
+        }
+      },
       "complexity": 1,
       "nesting": 0,
       "deepestLine": 5
@@ -405,6 +495,16 @@
         "endLine": 10,
         "endColumn": 46,
         "sha256": "f3d79eeda3b6a4050b3e3ec164ef47fbcf01467fc219155a16dd237e99671608"
+      },
+      "definition": {
+        "kind": "FunctionDef",
+        "sourceRange": {
+          "line": 9,
+          "column": 1,
+          "endLine": 10,
+          "endColumn": 46,
+          "sha256": "f3d79eeda3b6a4050b3e3ec164ef47fbcf01467fc219155a16dd237e99671608"
+        }
       },
       "complexity": 1,
       "nesting": 0,

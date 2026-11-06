@@ -6,12 +6,12 @@
   },
   "py": {
     "fixture": "py-basic",
-    "revision": 7,
-    "digest": "b47bc4c8bfcf8f4f56c7025b7b2f5e782332cd0d45266f68c8c9c77d764193e8"
+    "revision": 8,
+    "digest": "c21ab411c86ab9748be11478682cc64da67affa40585cd3f18a2738a3ff29651"
   },
   "java": {
     "fixture": "java-basic",
-    "revision": 4,
-    "digest": "dfdd78301f886f39e5c028008ab3b49f39d715e21a6dd40725f8960bbbfca9b8"
+    "revision": 5,
+    "digest": "d4b0fbc062bf3835d1cc5918c2f04df4f8680ad3a649c8f5e18337db6d4c351a"
   }
 }

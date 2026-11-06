@@ -1,4 +1,5 @@
 import { children, descendants, tokensOf, TYPE_DECLARATIONS, typeName } from './parse.mjs';
+import { createHash } from 'node:crypto';
 
 const FUNCTIONS = new Set(['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration']);
 const LOOPS = new Set(['basicForStatement', 'enhancedForStatement', 'whileStatement', 'doStatement']);
@@ -10,6 +11,27 @@ const BLOCKS = new Set([...LOOPS, 'ifStatement', 'switchStatement', 'switchExpre
 // to their containing method, while local/anonymous class methods do not.
 export function measureFunctions(unit) {
   const records = [];
+  // Offsets refer to the original raw source, already in UTF-16 code units.
+  const lineStarts = [0];
+  for (const match of unit.sourceText.matchAll(/\r\n|[\r\n]/g)) lineStarts.push(match.index + match[0].length);
+  const point = offset => {
+    let low = 0, high = lineStarts.length;
+    while (low + 1 < high) {
+      const middle = (low + high) >>> 1;
+      if (lineStarts[middle] <= offset) low = middle;
+      else high = middle;
+    }
+    return { line: low + 1, column: offset - lineStarts[low] + 1 };
+  };
+  const definition = node => {
+    const start = node.location?.startOffset, end = node.location?.endOffset + 1;
+    if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start || end > unit.sourceText.length) return {};
+    const a = point(start), b = point(end);
+    return { definition: { kind: node.name, sourceRange: {
+      ...a, endLine: b.line, endColumn: b.column,
+      sha256: createHash('sha256').update(unit.sourceText.slice(start, end)).digest('hex'),
+    } } };
+  };
   const anonymousCounts = new Map();
   const initializerCounts = new Map();
   const walk = (node, owners = [], ownerNode = null) => {
@@ -58,7 +80,7 @@ export function measureFunctions(unit) {
       const signature = parameterTypes(params);
       const qualname = [...owners, `${name}(${signature.join(',')})`].join('.');
       const metrics = measure(body, node.location.startLine);
-      records.push({ file: unit.file, name, qualname, line: node.location.startLine, endLine: node.location.endLine, ...metrics });
+      records.push({ file: unit.file, name, qualname, line: node.location.startLine, endLine: node.location.endLine, ...metrics, ...definition(node) });
       for (const child of children(body)) walk(child, [...owners, `${name}(${signature.join(',')})`, '<locals>'], ownerNode);
       return;
     }

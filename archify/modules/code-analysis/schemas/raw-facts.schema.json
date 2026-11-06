@@ -83,7 +83,15 @@
           "complexity": { "type": "integer", "minimum": 1, "description": "Cyclomatic complexity: 1 plus each branch point (see extract/py/extract.py)." },
           "nesting": { "type": "integer", "minimum": 0, "description": "Deepest block nesting inside the body; elif stays at its if's depth." },
           "deepestLine": { "type": "integer", "minimum": 1 },
-          "sourceRange": {"type":"object","additionalProperties":false,"required":["line","column","endLine","endColumn","sha256"],"properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":1},"endLine":{"type":"integer","minimum":1},"endColumn":{"type":"integer","minimum":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}},"description":"Exact decoded Python definition slice, def/async def through AST end, excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 functions; absent in historical captures."}
+          "sourceRange": { "$ref": "#/$defs/sourceRange", "description": "Exact decoded Python definition slice, def/async def through AST end, excluding preceding decorators. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice. Required for python-lexical-v1 functions; absent in historical captures." },
+          "definition": {
+            "type": "object", "additionalProperties": false, "required": ["kind", "sourceRange"],
+            "description": "Optional captured named definition with headers: exact owned syntax including decorators, annotations and modifiers, excluding preceding comments and trailing newline. Absent for historical captures and unsupported metric records.",
+            "properties": {
+              "kind": { "enum": ["FunctionDef", "AsyncFunctionDef", "methodDeclaration", "interfaceMethodDeclaration", "constructorDeclaration", "compactConstructorDeclaration"] },
+              "sourceRange": { "$ref": "#/$defs/sourceRange" }
+            }
+          }
         }
       }
     },
@@ -162,6 +170,7 @@
     }
   },
   "$defs": {
+    "sourceRange": {"type":"object","additionalProperties":false,"required":["line","column","endLine","endColumn","sha256"],"properties":{"line":{"type":"integer","minimum":1},"column":{"type":"integer","minimum":1},"endLine":{"type":"integer","minimum":1},"endColumn":{"type":"integer","minimum":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}},"description":"Exact decoded source slice. One-based UTF-16 columns; end exclusive; SHA256 of UTF-8 encoded slice."},
     "repoPath": { "type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\\\u0000-\\u001f]+$" }
   }
 }
