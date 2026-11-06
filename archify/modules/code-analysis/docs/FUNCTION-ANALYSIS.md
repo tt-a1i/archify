@@ -1,9 +1,14 @@
 # Explain a function or feature
 
-Use this workflow when the user asks what a JS/TS feature does, how its
+Use this workflow when the user asks what a source feature does, how its
 inputs reach outputs, what its changes mean, or whether it needs improvement.
 It accepts a question and an entry file, with an optional function name; a
 finding is not required. `task --help` describes question mode and its options.
+
+Single-entry orientation accepts JS/TS implementation files, or a .py/.java entry
+captured in a saved analysis directory with matching Python/Java producer metadata.
+Python/Java use captured function ranges and file dependencies; they do not supply
+call coverage. This does not extend the fresh JS/TS change-question mode below.
 
 1. **Scope.** Before reading the path in depth, record the question, entry,
    acceptance questions and excluded areas. For a code change, pin full base/head
@@ -25,7 +30,7 @@ finding is not required. `task --help` describes question mode and its options.
    inputs, branches, helpers, configuration and outputs. Inspect computed imports
    and subprocess commands in source; check target source when following them.
    Read `calls.coverage` and `calls.bindingCoverage` before using call locations.
-   The explicit `js-ts-lexical-v1` call model covers declarations, direct const
+   For JS/TS, the explicit `js-ts-lexical-v1` call model covers declarations, direct const
    arrow/function-expression initializers and relative static named imports to
    direct captured exports. The v2 model additionally binds relative default
    imports to direct default function declarations with one implementation body;
@@ -38,8 +43,11 @@ finding is not required. `task --help` describes question mode and its options.
    text and parse errors leave totals unknown and records empty. An available
    zero means no collected CallExpressions in this source range, not no runtime
    calls (constructors and tagged templates are excluded).
-   Older experimental facts without the marker remain readable, but require
-   fresh extraction for call orientation even if their calls array is nonempty.
+   Older JS/TS facts without the marker remain readable, but require fresh
+   extraction for call orientation even if their calls array is nonempty.
+   Python/Java calls stay unavailable with unknown totals, including after fresh
+   extraction; empty arrays do not imply no calls. Read current source to trace
+   Python object bindings or Java runtime dispatch, reflection and providers.
    New marked facts require the updated raw-facts schema; older strict readers
    reject the additional field.
    Each `calls.records` item keeps its original `fact` and `factIndex` in the
@@ -52,9 +60,11 @@ finding is not required. `task --help` describes question mode and its options.
    read current source and refresh extraction before using those target ranges.
    Valid navigation checks captured target text and coordinates, not fresh
    resolution after other source/configuration changes. Refresh extraction before
-   asserting current binding relationships. Uncaptured targets are not read or resolved. `imported-function` covers only
-   relative non-type-only named imports to direct exports; default/namespace,
-   package, CommonJS/dynamic and re-export paths remain unsupported.
+   asserting current binding relationships. Uncaptured targets are not read or resolved.
+   `imported-function` covers relative non-type-only named imports to direct
+   exports in v1/v2; v2 additionally supports the direct default function
+   declarations described above. Namespace, package, CommonJS/dynamic and
+   re-export paths remain unsupported.
    Follow valid `same-file-function` navigation as lexical declaration hints, including
    under reassignment. `same-file-function-initializer` points to the direct const
    initializer; a named function expression uses its measured inner name, which
@@ -88,6 +98,21 @@ The tool checks file identities and locates captured facts; the host Agent owns
 semantic interpretation. Report the analyzed revision and working-tree state.
 A single run is neither independent validation nor an accuracy/cost benchmark.
 A semantic explanation does not authorize implementing its proposed changes.
+
+For saved Python/Java questions, pass the existing analysis directory and a unique
+captured function qualname. For example, from `archify/`:
+
+```sh
+node bin/archify.mjs code-analysis task /path/to/python-analysis \
+  --question "Where does this imported helper come from?" \
+  --root /path/to/python-source --entry package/entry.py --function chosen
+```
+
+An ambiguous name remains an error. A Java qualname such as `Entry.chosen()` can
+distinguish overloads; Python stubs may share the implementation's qualname, so omit
+`--function` and inspect the file when no unique captured name exists. Imports
+cover the whole entry file. A Python package edge does not identify the imported
+object, and a Java type edge does not prove a runtime provider or call target.
 
 ## Change questions
 
