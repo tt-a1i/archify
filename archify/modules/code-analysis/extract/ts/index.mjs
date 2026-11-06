@@ -14,7 +14,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 12;
+export const REVISION = 14;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -87,7 +87,7 @@ export function extract(root, config) {
       if (found.lazy) record.lazy = true;
       if (found.conditional) record.conditional = true;
       if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
-      const target = found.opaque ? { reason: 'opaque' } : resolve(found.specifier, abs, absRoot, fileSet, options, inputs);
+      const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs);
       if (target.to) { record.to = target.to; record.resolved = true; }
       else unresolved[target.reason] += 1;
       imports.push(record);
@@ -244,7 +244,8 @@ function exportedNames(clause) {
   return clause.elements.map((el) => (el.propertyName || el.name).text).sort();
 }
 
-function resolve(specifier, containingFile, absRoot, fileSet, options, inputs) {
+function resolve(record, containingFile, absRoot, fileSet, options, inputs) {
+  const { specifier } = record;
   const isPathLike = specifier.startsWith('.') || specifier.startsWith('/');
   const result = ts.resolveModuleName(specifier, containingFile, options, inputs);
   const resolvedFile = result.resolvedModule?.resolvedFileName;
@@ -254,6 +255,44 @@ function resolve(specifier, containingFile, absRoot, fileSet, options, inputs) {
   // Only a parent-directory result is outside the root; an in-root directory whose
   // name merely starts with ".." (e.g. "..generated/") must not be misclassified.
   if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
-  if (!fileSet.has(rel)) return { reason: 'unknown' };
-  return { to: rel };
+  if (record.kind === 'require' && !record.typeOnly && /\.d\.(?:ts|cts|mts)$/.test(rel)) {
+    const runtime = resolveRelativeRequire(specifier, containingFile, absRoot, fileSet, inputs);
+    if (runtime) return runtime;
+  }
+  if (fileSet.has(rel)) return { to: rel };
+  return { reason: 'unknown' };
+}
+
+// TypeScript can prefer a declaration even for a runtime require. Check only
+// relative files and directory entries using the analysis's frozen inventory.
+function resolveRelativeRequire(specifier, containingFile, root, fileSet, inputs) {
+  const parts = specifier.split('/');
+  if (!['.', '..'].includes(parts[0])) return;
+  const requested = path.resolve(path.dirname(containingFile), specifier);
+  const relative = path.relative(root, requested);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return;
+
+  const target = file => {
+    const rel = toPosix(path.relative(root, file));
+    return /\.[cm]?js$/.test(rel) && fileSet.has(rel) ? { to: rel } : { reason: 'unknown' };
+  };
+  // JSON, native, and excluded files also win before a directory. Their
+  // presence must stop the search even though they cannot supply a JS edge.
+  const explicitDirectory = ['', '.', '..'].includes(parts.at(-1));
+  if (!explicitDirectory) {
+    const file = ['', '.js', '.json', '.node'].map(ext => requested + ext).find(inputs.fileExists);
+    if (file) return target(file);
+  }
+  if (!inputs.directoryExists(requested)) return { reason: 'unknown' };
+  const manifest = inputs.readFile(path.join(requested, 'package.json'));
+  let main = 'index.js';
+  if (manifest !== undefined) {
+    try {
+      const pkg = JSON.parse(manifest);
+      if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) return { reason: 'unknown' };
+      main = pkg.main || main;
+    } catch { return { reason: 'unknown' }; }
+  }
+  if (typeof main !== 'string' || !/\.[cm]?js$/.test(main)) return { reason: 'unknown' };
+  return target(path.resolve(requested, main));
 }
