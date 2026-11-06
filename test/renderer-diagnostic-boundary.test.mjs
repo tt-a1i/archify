@@ -120,25 +120,31 @@ test('the production JSON-mode spawn path keeps Node warnings off the renderer d
   // deliberately does not set NODE_NO_WARNINGS itself: the production spawn
   // path (rendererEnv) must carry it to the renderer child.
   const preload = path.join(dir, 'emit-warning.mjs');
-  fs.writeFileSync(preload, 'process.emitWarning("synthetic renderer-channel warning");\n');
+  fs.writeFileSync(preload, 'process.emitWarning("synthetic renderer-channel warning");\nawait new Promise(resolve => setImmediate(resolve));\n');
   const input = path.join(dir, 'wide.lifecycle.json');
   fs.copyFileSync(
     fileURLToPath(new URL('./fixtures/lifecycle-crowded-wide.json', import.meta.url)),
     input,
   );
 
+  // Warnings are queued by Node: let the preload print before the synchronous
+  // renderer can exit, and prevent ambient warning suppression from masking it.
+  const childEnv = { ...process.env, NODE_OPTIONS: `--import=${pathToFileURL(preload).href}` };
+  delete childEnv.NODE_NO_WARNINGS;
+  delete childEnv.NODE_REDIRECT_WARNINGS;
+
   const result = spawnSync(process.execPath, [cli, 'validate', 'lifecycle', input, '--json'], {
     encoding: 'utf8',
-    env: {
-      ...process.env,
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ? `${process.env.NODE_OPTIONS} ` : ''}--import=${pathToFileURL(preload).href}`,
-    },
+    env: childEnv,
     maxBuffer: 64 * 1024 * 1024,
   });
 
   // Without NODE_NO_WARNINGS on the renderer spawn, the warning line precedes
   // the receipt on stderr, the parent's receipt parse fails, and validate
   // reports internal/unclassified instead of the real diagnostic.
+  assert.ifError(result.error);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /synthetic renderer-channel warning/, 'the parent warning proves the preload is active');
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.ok, false);
   const codes = (payload.diagnostics ?? []).map(entry => entry.code);
