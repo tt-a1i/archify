@@ -53,6 +53,29 @@ test('overloads select the sole body; duplicate bodies and cross-file global bin
   assert.equal(facts.calls.find((c) => c.file === 'global-b.js').reason, 'no-local-function-binding');
 });
 
+test('parameter-default scopes preserve valid outer bindings and initializer-created function scopes', (t) => {
+  const { facts } = extract(t, { 'defaults.mjs': [
+    'function f() {}',
+    'function outerControl(value=f()) { return value; }',
+    'function collision(value=f()) { function f() {} return value; }',
+    'function local(value=()=>{ function f() {} return f(); }) { return value; }',
+    'function localConst(value=()=>{ const f=()=>{}; return f(); }) { return value; }',
+    'function closure(value=()=>{ function f() {} return ()=>f(); }) { return value; }',
+  ].join('\n') });
+  const calls = facts.calls;
+  assert.equal(calls.length, 5);
+  assert.equal(calls.find(c => c.line === 2).target.line, 1);
+  assert.equal(calls.find(c => c.line === 3).resolution, 'unresolved');
+  for (const line of [4, 6]) {
+    const call = calls.find(c => c.line === line);
+    assert.equal(call.resolution, 'same-file-function');
+    assert.equal(call.target.line, line);
+  }
+  assert.equal(calls.find(c => c.line === 5).resolution, 'same-file-function-initializer');
+  assert.equal(calls.find(c => c.line === 5).target.line, 5);
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+});
+
 test('lexical binding remains a declaration fact under reassignment; syntax errors skip whole files', (t) => {
   const { facts } = extract(t, {
     'binding.mjs': 'function chosen() {}\nchosen = () => {};\nchosen();\nnew chosen();\nchosen`text`;',
@@ -82,7 +105,7 @@ test('call schema rejects unsupported targets/positions and retains empty histor
   const previous = { ...facts, calls: [], repository: { ...facts.repository, adapterRevision: 1 } };
   delete previous.callModel;
   assert.deepEqual(schemaErrors('raw-facts', previous), []);
-  assert.equal(facts.repository.adapterRevision, 8);
+  assert.equal(facts.repository.adapterRevision, 10);
   const revision2 = { ...facts, repository: { ...facts.repository, adapterRevision: 2 } };
   assert.deepEqual(schemaErrors('raw-facts', revision2), []);
   const after = evaluateGraph(buildGraph(facts, config), config, facts).analysis;

@@ -36,5 +36,14 @@ export function callsite(node, source, file, checker, functionRecords) {
   if (target.getSourceFile() !== source) return unknown('no-local-function-binding');
   if (declarations.some((d) => d.getSourceFile() !== source)) return unknown('ambiguous-binding');
   if (!target.name) return unknown('no-local-function-binding');
+  // The checker can name a body declaration for valid JS parameter defaults,
+  // but that body is outside the parameter's scope. Check every enclosing
+  // parameter, including destructuring defaults and closures in initializers;
+  // declarations inside those initializer-created scopes remain available.
+  for (let scope = node.parent; scope; scope = scope.parent) {
+    if (!ts.isParameter(scope)) continue;
+    const body = scope.parent.body;
+    if (body && body.pos <= target.pos && target.end <= body.end) return unknown('no-local-function-binding');
+  }
   return { ...record, resolution: 'same-file-function', target: { name: target.name.text, ...point(source, target) } };
 }

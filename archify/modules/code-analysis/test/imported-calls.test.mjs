@@ -56,6 +56,41 @@ test('type-only, default, namespace, packages, re-exports and non-exported same-
   assert.ok(facts.calls.filter((c) => c.file === 'entry.ts').every((c) => c.resolution === 'unresolved'));
 });
 
+test('parameter-default calls cannot target declarations in the unavailable function body', (t) => {
+  // These are valid JS: Node calls the import, while the TypeScript checker
+  // can report a body function declaration unavailable to the parameter scope.
+  const { facts } = fixture(t, {
+    'entry.mjs': [
+      'import { f } from "./target.mjs";',
+      'function direct(value=f()) { function f() {} return value; }',
+      'function deferred(value=()=>f()) { function f() {} return value; }',
+      'function destructured({value=f()}={}) { function f() {} return value; }',
+      'function nested(value=(arg=f())=>{ function f() {} return arg; }) { return value; }',
+      'function constControl(value=f()) { const f=()=>{}; return value; }',
+      'function importControl(value=f()) { return value; }',
+      'function bodyControl() { function f() {} return f(); }',
+    ].join('\n'),
+    'target.mjs': 'export function f() {}',
+  });
+  assert.equal(facts.parse_errors, undefined);
+  const calls = facts.calls.filter(c => c.file === 'entry.mjs');
+  assert.equal(calls.length, 7);
+  for (const line of [2, 3, 4, 5]) {
+    const call = calls.find(c => c.line === line);
+    assert.equal(call.resolution, 'unresolved', `line ${line} must not point into its function body`);
+    assert.equal(call.reason, 'no-local-function-binding');
+    assert.equal(call.target, undefined);
+  }
+  for (const line of [6, 7]) {
+    const call = calls.find(c => c.line === line);
+    assert.equal(call.resolution, 'imported-function');
+    assert.deepEqual(call.target, { file: 'target.mjs', name: 'f', line: 1, column: 1 });
+  }
+  assert.equal(calls.find(c => c.line === 8).resolution, 'same-file-function');
+  assert.equal(calls.find(c => c.line === 8).target.line, 8);
+  assert.deepEqual(schemaErrors('raw-facts', facts), []);
+});
+
 test('excluded, missing, syntactically broken and ambiguous export targets cannot be used', (t) => {
   const { facts } = fixture(t, {
     'entry.mjs': 'import { a } from "./excluded.mjs"; import { b } from "./missing.mjs"; import { c } from "./broken.mjs"; import { d } from "./ambiguous.mjs"; a(); b(); c(); d();',
