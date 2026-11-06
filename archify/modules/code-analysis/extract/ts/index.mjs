@@ -38,7 +38,7 @@ const COMPILER_OPTIONS = {
   target: ts.ScriptTarget.ESNext,
 };
 
-export function extract(root, config) {
+export function extract(root, config, { onCapture } = {}) {
   const absRoot = path.resolve(root);
   const include = matcher(config.include), exclude = matcher(config.exclude);
   const selected = file => SOURCE_EXT.test(file) && include(file) && !exclude(file)
@@ -116,6 +116,7 @@ export function extract(root, config) {
 
   imports.sort((a, b) => compareText(a.from, b.from) || a.line - b.line || compareText(a.specifier, b.specifier));
 
+  onCapture?.({ options, reads: inputs.reads });
   inputs.assertUnchanged();
   // Markers come from the frozen inventory, like every other resolution input.
   const packageMarkers = packageMarkersIn(snapshot.names, config);

@@ -16,6 +16,8 @@ export const USAGE = `Usage:
                              [--format md|json] [--out <file>] [--require-valid]
   archify code-analysis task [<analysis-dir>] --question <text> --entry <file>
                              --root <repo-root> [--function <name>] [--format md|json] [--out file]
+  archify code-analysis task --question <text> --base-root <base> --root <head>
+                             --entry <file> [--config file.json] [--format md|json] [--out file]
   archify code-analysis task --verify <task.json> --root <repo-root>
                              [--format md|json] [--out <file>] [--require-valid]
 
@@ -30,12 +32,19 @@ without it the task is marked as captured, not checked.
 Question mode prepares source orientation for the host Agent workflow, not a completed
 analysis. It needs no finding. Missing facts remain explicit; changed/unverifiable
 entry facts or entry parse errors exit 1. Read docs/FUNCTION-ANALYSIS.md and complete the analysis.
+With --base-root, question mode freshly captures both JS/TS roots with one analysis
+config (defaults or --config). It requires --entry and accepts no analysis directory
+or --function. Captured declaration entries disclose unsupported definition analysis.
+Partial source/configuration coverage exits 1. Lists report total/included/omitted;
+ready is usable orientation, not complete impact or zero omissions. Dependencies
+must already be installed; this mode reads sources only. Paired --out must be
+outside both source roots. No saved raw-facts directory is produced.
 Output: Markdown by default, the JSON task with --format json; to --out or stdout.
 --json prints a machine-readable receipt instead of the task (use with --out).
 Exit codes: 0 prepared/written, 1 incomplete question orientation or invalid evidence
 with --require-valid, 2 usage or input error.`;
 
-const VALUE = ['--finding', '--root', '--command', '--format', '--out', '--verify', '--question', '--entry', '--function'];
+const VALUE = ['--finding', '--root', '--command', '--format', '--out', '--verify', '--question', '--entry', '--function', '--base-root', '--config'];
 const FLAGS = ['--require-valid', '--json'];
 const REPEATABLE = ['--finding', '--command'];
 
@@ -64,12 +73,15 @@ export function parseTaskArgs(argv) {
     if (!dir) usage('task requires an <analysis-dir> (or --verify <task.json>).');
     if (!options['--finding'].length) usage('task requires at least one --finding <id>.');
   }
+  if (options['--base-root'] && (options['--question'] === undefined || dir || options['--function'])) usage('--base-root needs --question and does not accept an analysis directory or --function.');
+  if (options['--config'] && !options['--base-root']) usage('--config is supported only for fresh paired questions with --base-root.');
   if (options['--require-valid'] && !options['--root']) usage('--require-valid needs --root to check against.');
   return { dir, options };
 }
 
 export async function runTask(argv, { now = new Date() } = {}) {
   const { dir, options } = parseTaskArgs(argv);
+  if (options['--base-root']) return runChangeQuestion(options);
   const { ensureDependencies } = await import('./serve.mjs');
   await ensureDependencies();
   const { buildTask, renderTaskMarkdown, validateTask, readJson } = await import('../lib/task.mjs');
@@ -126,6 +138,43 @@ export async function runTask(argv, { now = new Date() } = {}) {
   };
 }
 
+// Paired capture deliberately avoids ensureDependencies: this path never installs.
+async function runChangeQuestion(options) {
+  const root = path.resolve(options['--root']);
+  const baseRoot = path.resolve(options['--base-root']);
+  for (const [option, dir] of [['--root', root], ['--base-root', baseRoot]]) {
+    if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) fail('cli/root-invalid', `Not a directory: ${dir}`, { subject: { option } });
+  }
+  const out = options['--out'] ? path.resolve(options['--out']) : null;
+  if (out) {
+    // Resolve existing parents too, so a new file through a directory symlink
+    // cannot overwrite either analyzed tree when the result is written.
+    let existing = out;
+    while (!fs.existsSync(existing)) existing = path.dirname(existing);
+    const resolved = path.resolve(fs.realpathSync(existing), path.relative(existing, out));
+    if (options['--config'] && fs.existsSync(options['--config']) && fs.realpathSync(options['--config']) === resolved) fail('task/output-conflict', 'Question output must not replace its analysis configuration.');
+    for (const dir of [root, baseRoot]) {
+      const rel = path.relative(fs.realpathSync(dir), resolved);
+      if (rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) fail('task/output-conflict', 'Paired question output must be outside both source roots.');
+    }
+  }
+  let api;
+  try { api = await import('../lib/change-question.mjs'); } catch (error) {
+    if (error.code !== 'ERR_MODULE_NOT_FOUND') throw error;
+    fail('task/dependencies-missing', 'Paired question needs the Code Analysis dependencies already installed.', { supportedFixes: ['install dependencies explicitly in the Code Analysis module, then retry'] });
+  }
+  const brief = api.captureChangeQuestion({ question: options['--question'], entry: options['--entry'], baseRoot, root, configPath: options['--config'] });
+  const body = options['--format'] === 'json' ? `${JSON.stringify(brief, null, 2)}\n` : api.renderChangeQuestionMarkdown(brief);
+  if (out) { fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, body); }
+  const exitCode = brief.status === 'ready' ? 0 : 1;
+  return { exitCode, body: out ? null : body, receipt: receipt(exitCode ? 'incomplete' : 'ok', {
+    command: 'task', action: 'change-question', stage: brief.stage, evidence: brief.status, out, workflow: brief.workflow,
+    snapshots: { base: brief.sides.base.snapshot.snapshotId, head: brief.sides.head.snapshot.snapshotId },
+    definitionCoverage: brief.definitionCoverage,
+    reasons: brief.comparison.reasons, meaning: 'Source orientation status; partial means capture/configuration limits, not a finding gate failure.',
+  }) };
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const json = args.includes('--json');
@@ -134,6 +183,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     runTask(args).then(({ exitCode, body, receipt: r }) => {
       if (json) console.log(JSON.stringify(r, null, 2));
       else if (body !== null) process.stdout.write(body);
+      else if (r.action === 'change-question') console.error(`Change orientation written to ${r.out} (${r.evidence}${r.reasons.length ? `: ${r.reasons.map(reason => reason.code).join(', ')}` : ''}); partial means capture/configuration limits, not a finding gate failure. Complete ${r.workflow}.`);
       else if (r.action === 'question') console.error(`Question orientation written to ${r.out} (entry facts: ${r.evidence}); complete ${r.workflow}.`);
       else console.error(`Task ${r.taskId} written to ${r.out} (evidence: ${r.evidence}).`);
       process.exitCode = exitCode;
