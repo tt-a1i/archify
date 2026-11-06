@@ -12,7 +12,7 @@ import { describeRepository } from '../shared/git.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 4;
+export const REVISION = 5;
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'extract.py');
 const PY_EXT = /\.py$/;
@@ -161,7 +161,7 @@ function resolveDeclaredImport(found, fromFile, fileSet, directories) {
     if (base === undefined) return [{ specifier, names, reason: 'outside' }];
   }
 
-  const searchDirs = base === null ? ['', 'src'] : [base];
+  const searchDirs = base === null ? ['', 'src'] : relativeSearchDirs(base, fileSet, directories);
   const target = module ? resolveDotted(module, searchDirs, fileSet, directories)
     : { file: packageFile(base, fileSet), dirs: searchDirs };
   const moduleTarget = target?.file;
@@ -173,8 +173,9 @@ function resolveDeclaredImport(found, fromFile, fileSet, directories) {
       const edges = [];
       for (const name of names) {
         const sub = resolveDotted(name, target.dirs, fileSet, directories)?.file;
-        if (sub) edges.push({ specifier: `${specifier}.${name}`, names: ['*'], to: sub });
-        else edges.push({ specifier: `${specifier}.${name}`, names: ['*'], reason: 'unknown' });
+        const member = module ? `${specifier}.${name}` : `${specifier}${name}`;
+        if (sub) edges.push({ specifier: member, names: ['*'], to: sub });
+        else edges.push({ specifier: member, names: ['*'], reason: 'unknown' });
       }
       return edges;
     }
@@ -197,6 +198,19 @@ function resolveDeclaredImport(found, fromFile, fileSet, directories) {
   }
   if (attributeNames.length || !edges.length) edges.unshift({ specifier, names: attributeNames.length ? attributeNames : names, to: moduleTarget });
   return edges;
+}
+
+// A namespace package can have portions in both conventional search roots.
+// Expand only when the inferred package includes this physical directory.
+// An analyzed package root has no known external import name; keep its lexical
+// relative paths, as for regular packages and shadowed source directories.
+function relativeSearchDirs(base, fileSet, directories) {
+  if (!base || fileSet.has('__init__.py') || packageFile(base, fileSet)) return [base];
+  const parts = base.split('/');
+  if (parts[0] === 'src' && !fileSet.has('src/__init__.py')) parts.shift();
+  if (!parts.length) return [base];
+  const target = resolveDotted(parts.join('.'), ['', 'src'], fileSet, directories);
+  return target && !target.file && target.dirs.includes(base) ? target.dirs : [base];
 }
 
 // Walk `up` parent directories from dir; returns undefined when leaving the tree.
