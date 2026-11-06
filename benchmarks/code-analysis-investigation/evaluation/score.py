@@ -1,5 +1,5 @@
 import json,pathlib,collections,sys,hashlib,os
-from grading import grade_call,grade_pair,grade_supplemental_pair,grade_outgoing
+from grading import grade_call,grade_pair,grade_supplemental_pair,grade_outgoing,grade_java_availability
 D=pathlib.Path(os.environ['REPLAY_OUTPUTS']); B=pathlib.Path(os.environ['REPLAY_INPUTS']); O=json.loads((B/'eval-design/frozen-oracle.json').read_text()); S=json.loads((B/'paired-design/supplemental-source-oracle.json').read_text()); I=json.loads((B/'evaluation/outgoing-source-oracle.json').read_text()); output={}
 for path in (B/'paired-design/supplemental-source-oracle.json',B/'evaluation/outgoing-source-oracle.json'):
  expected=path.with_suffix('.sha256').read_text().split()[0]
@@ -35,15 +35,12 @@ for variant in (sys.argv[1:] or ['labs','combined']):
   pre=json.loads((root/'preflight.json').read_text())['commits']; roots={side:pre[project+'-'+side]['root'] for side in ('base','head')}
   status,found=grade_supplemental_pair(result,project,qualname,S,roots)
   units.append({'kind':'changed-definition','project':project,'name':qualname,'status':status,'observed':found,'source':'paired question; independent supplemental source oracle','capability_notice':'question unsupported' if result is None else None})
- # Java calls are unsupported; known zero is not an acceptable substitute.
+ # Availability is a separate versioned producer contract, not target accuracy.
+ availability=[]
  for name in ('LoggerFactory.bind()','LoggerFactory.loadExplicitlySpecified(String)'):
   p=root/'paired-slf4j/result.json'; result=json.loads(p.read_text()) if p.exists() else None
-  if result:
-   records=[z for key in ('changedDefinitions','unpairedDefinitions') for item in result.get(key,{}).get('items',[]) for z in ([item.get('base',{}),item.get('head',{})] if key=='changedDefinitions' else [item]) if z.get('definition',{}).get('qualname')==name]
-   statuses=[z.get(k,{}) for z in records for k in ('knownReferences','unresolvedWithinSourceRange')]
-   status='explicit-unknown' if records and all(t.get('coverage')=='unavailable' and t.get('total') is None and t.get('included')==0 and t.get('omitted') is None for t in statuses) else 'wrong-target' if records else 'omitted'
-  else: records=[];status='omitted'
-  units.append({'kind':'java-call-boundary','project':'slf4j','name':name,'status':status,'observed':records,'source':'paired question; unavailable is not known zero'})
+  grade=grade_java_availability(result,name)
+  availability.append({'kind':'java-call-availability','project':'slf4j','name':name,**grade,'expected_model':'java-static-lexical-v1','source':'paired question; availability only, not target accuracy'})
  for u in I['units']:
   p=root/f"paired-{u['project']}/result.json"; result=json.loads(p.read_text()) if p.exists() else None
   source_root=json.loads((root/'preflight.json').read_text())['commits'][u['project']+'-'+u['side']]['root']
@@ -54,6 +51,6 @@ for variant in (sys.argv[1:] or ['labs','combined']):
  summary={}
  for kind in sorted(set(u['kind'] for u in units)):
   subset=[u for u in units if u['kind']==kind];summary[kind]={'total':len(subset),'statuses':dict(collections.Counter(u['status'] for u in subset))}
- output[variant]={'units':units,'capabilities':capabilities,'summary':summary}
+ output[variant]={'units':units,'capabilities':capabilities,'summary':summary,'availability':availability,'availability_summary':{'total':len(availability),'statuses':dict(collections.Counter(u['status'] for u in availability))}}
 (D/'unit-results.json').write_text(json.dumps(output,indent=2)+'\n')
-for k,v in output.items(): print(k,v['summary'])
+for k,v in output.items(): print(k,v['summary'],'availability:',v['availability_summary'])

@@ -1,6 +1,6 @@
 # Reliable investigation: public replay
 
-This fixed-case evaluation fetches seven public projects at exact commits, runs Archify's normal CLI from both a Git checkout and a the committed `archify.zip` from the same revision, grades frozen units and compares outputs. It does not run the target projects. The analyzer is executed; `npm ci --ignore-scripts` in each `archify/modules/code-analysis` directory installs its locked dependencies with package lifecycle scripts disabled. Network access to GitHub and npm is required.
+This fixed-case evaluation fetches seven public projects at exact commits, runs Archify's normal CLI from both a Git checkout and the committed `archify.zip` from the same revision, grades frozen units and compares outputs. It does not run the target projects. The analyzer is executed; `npm ci --ignore-scripts` in each `archify/modules/code-analysis` directory installs its locked dependencies with package lifecycle scripts disabled. Network access to GitHub and npm is required.
 
 ## Prerequisites and execution
 
@@ -27,4 +27,21 @@ SLF4J’s known parse-error file is `slf4j-migrator/jcl/jclcontent.java`, line 1
 
 ## Replaying another exact product commit
 
-Use `--product-sha <40-character commit> --archive-sha256 <64-character digest>` to run a different fetchable commit with its exact committed archive, and `--require-paired-success` to apply the frozen predecessor gate. The override does not change the oracle or pin an unknown future revision. A local-only commit must first be made fetchable from the configured Archify remote, or evaluated separately against the same inputs with the local checkout and archive documented in its receipt. The original questions and their runtime answers are context, not automatic recovery scores.
+Use `--product-sha <40-character commit> --archive-sha256 <64-character digest>` to run a different fetchable commit with its exact committed archive, and `--require-paired-contract` to apply the frozen predecessor gate. The override does not change the oracle or pin an unknown future revision. A local-only commit must first be made fetchable from the configured Archify remote, or evaluated separately against the same inputs with the local checkout and archive documented in its receipt. The original questions and their runtime answers are context, not automatic recovery scores.
+
+### Versioned Java call availability
+
+The frozen predecessor contract expected Java paired-call data to be unavailable. `unit-results.json` preserves that original predicate as `historical_contract_result`, but reports the two availability assertions separately from target-unit `summary`. A matching Java producer with `java-static-lexical-v1` and structurally consistent available coverage is `contract-expanded`; an unrecognized model must remain explicitly unavailable. Missing or contradictory coverage is `contract-violation`. Availability and its counts do not establish whether any target is correct. This distinction prevents a newly available capability from being presented as a wrong call target while preserving the old result for audit.
+
+The separate `benchmarks/code-analysis-java-calls/oracle.json` (SHA-256 `bc61d7769560713d87314233178db08cc7827aea5e48733d8a5991900eb6e622`) independently defines the 86 selected Java invocation cases; use that benchmark to assess their targets. Its source-first scope and limitations are described in its own README. The availability grader can be checked with a saved modern SLF4J paired result:
+
+```sh
+python3.13 evaluation/test_java_availability.py /path/to/outputs/source/paired-slf4j/result.json
+```
+
+| Availability result | Meaning |
+| --- | --- |
+| `contract-expanded` | Recognized Java model reports consistent available fields; targets are not scored here. |
+| `explicit-unknown` | Unrecognized model retains unavailable coverage and unknown totals. |
+| `contract-violation` | Producer, model, side or coverage fields contradict the applicable contract. |
+| `omitted` | The selected result or records are absent. |

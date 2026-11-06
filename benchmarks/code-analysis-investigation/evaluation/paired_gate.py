@@ -19,6 +19,8 @@ def validate(outputs, grades, modes):
                 if snapshot.get('sourceIdentity')!='valid' or snapshot.get('parseErrors')!=1 or (unavailable.get('total'),unavailable.get('included'),unavailable.get('omitted'))!=(1,1,0) or len(items)!=1:raise ValueError('SLF4J unavailable count mismatch: '+side)
                 item=items[0]
                 if item.get('file')!='slf4j-migrator/jcl/jclcontent.java' or item.get('status')!='parse-error' or item.get('parseError')!='parsing errors detected in line: 19, column: 1! Expecting: one of these possible Token sequences:':raise ValueError('SLF4J parse fixture mismatch: '+side)
+        availability=grades[mode].get('availability', [])
+        if len(availability)!=2 or any(item.get('status') not in ('contract-expanded','explicit-unknown') for item in availability):raise ValueError('Java availability contract failed: '+mode)
         summary=grades[mode]['summary']
         for kind,total in (('changed-definition',8),('paired-outgoing-import',4)):
             if summary.get(kind)!={'total':total,'statuses':{'correct-target':total}}:raise ValueError('strict unit grade failed: '+mode+' '+kind)

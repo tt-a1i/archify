@@ -114,3 +114,29 @@ def grade_outgoing(result, unit, root):
  if fact.get('kind')!='static' or fact.get('resolved') is not False or bool(fact.get('lazy',False))!=unit['lazy'] or fact.get('to') is not None or nav.get('location') is not None: return 'wrong-target',rec
  if rec.get('originStatus')!='valid' or group.get('originStatus')!='valid' or nav.get('status')!='external-or-unresolved' or nav.get('reason')!='external-or-unresolved-import-destination': return 'wrong-target',rec
  return 'correct-target',rec
+
+def grade_java_availability(result, name):
+ """Grade availability only; do not infer call-target correctness from it."""
+ if not result:
+  return {'status':'omitted','historical_contract_result':'omitted','observed':[]}
+ records=[z for key in ('changedDefinitions','unpairedDefinitions') for item in result.get(key,{}).get('items',[]) for z in ([item.get('base',{}),item.get('head',{})] if key=='changedDefinitions' else [item]) if z.get('definition',{}).get('qualname')==name]
+ statuses=[z.get(k,{}) for z in records for k in ('knownReferences','unresolvedWithinSourceRange')]
+ historical='explicit-unknown' if records and all(t.get('coverage')=='unavailable' and t.get('total') is None and t.get('included')==0 and t.get('omitted') is None for t in statuses) else 'wrong-target' if records else 'omitted'
+ expected_sides={'base','head'} if name=='LoggerFactory.bind()' else {'head'}
+ if len(records)!=len(expected_sides) or {r.get('side') for r in records}!=expected_sides:
+  return {'status':'contract-violation' if records else 'omitted','historical_contract_result':historical,'observed':records}
+ modes=[]
+ for r in records:
+  side=result.get('sides',{}).get(r['side'],{}); snap=side.get('snapshot',{}); producer=side.get('producer',{})
+  recognized=(side.get('language')=='java' and snap.get('language')=='java' and isinstance(producer.get('adapter'),str) and producer['adapter'].startswith('java-parser@') and producer['adapter']==snap.get('adapter') and side.get('callModel')=='java-static-lexical-v1')
+  for key in ('knownReferences','unresolvedWithinSourceRange'):
+   t=r.get(key,{})
+   if recognized:
+    total,included,omitted,items=t.get('total'),t.get('included'),t.get('omitted'),t.get('items')
+    valid=(t.get('coverage')=='available' and all(type(n) is int and n>=0 for n in (total,included,omitted)) and isinstance(items,list) and len(items)==included and included+omitted==total)
+    modes.append('contract-expanded' if valid else 'contract-violation')
+   else:
+    valid=(t.get('coverage')=='unavailable' and t.get('total') is None and t.get('included')==0 and t.get('omitted') is None and t.get('items')==[])
+    modes.append('explicit-unknown' if valid else 'contract-violation')
+ status=modes[0] if modes and len(set(modes))==1 else 'contract-violation'
+ return {'status':status,'historical_contract_result':historical,'observed':records}
