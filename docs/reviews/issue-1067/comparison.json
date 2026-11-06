@@ -1,0 +1,432 @@
+{
+  "base": "63c9263e84bd3993cab8e09b3d69888857858635",
+  "runtime": "Node22.23.3 macOS arm64",
+  "cases": [
+    {
+      "case": "sequence-control-0",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "sequence",
+        "meta": {
+          "title": "Control",
+          "output": "output.html"
+        },
+        "participants": [
+          {
+            "id": "client",
+            "label": "client",
+            "type": "backend"
+          },
+          {
+            "id": "api",
+            "label": "api",
+            "type": "backend"
+          },
+          {
+            "id": "db",
+            "label": "db",
+            "type": "backend"
+          }
+        ],
+        "messages": [
+          {
+            "from": "client",
+            "to": "api",
+            "y": 200,
+            "label": "request",
+            "note": "retry policy: verify (order), then refund! retry policy: verify (order), then refund! retry policy: verify (order), then refund! "
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "39a10fbbb0bbb4d1edcf6e7b9049399cd18ea072c003a467935db342c5ccd32b",
+        "candidate": "39a10fbbb0bbb4d1edcf6e7b9049399cd18ea072c003a467935db342c5ccd32b"
+      }
+    },
+    {
+      "case": "sequence-control-1",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "sequence",
+        "meta": {
+          "title": "Control",
+          "output": "output.html"
+        },
+        "participants": [
+          {
+            "id": "client",
+            "label": "client",
+            "type": "backend"
+          },
+          {
+            "id": "api",
+            "label": "api",
+            "type": "backend"
+          },
+          {
+            "id": "db",
+            "label": "db",
+            "type": "backend"
+          }
+        ],
+        "messages": [
+          {
+            "from": "client",
+            "to": "api",
+            "y": 200,
+            "label": "request",
+            "note": "카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. 카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. 카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. "
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "51a19f110db65ae99c2e1ceecff8e277d9efb21cd304a01cd69f448faa4ca986",
+        "candidate": "51a19f110db65ae99c2e1ceecff8e277d9efb21cd304a01cd69f448faa4ca986"
+      }
+    },
+    {
+      "case": "sequence-control-2",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "sequence",
+        "meta": {
+          "title": "Control",
+          "output": "output.html"
+        },
+        "participants": [
+          {
+            "id": "client",
+            "label": "client",
+            "type": "backend"
+          },
+          {
+            "id": "api",
+            "label": "api",
+            "type": "backend"
+          },
+          {
+            "id": "db",
+            "label": "db",
+            "type": "backend"
+          }
+        ],
+        "messages": [
+          {
+            "from": "client",
+            "to": "api",
+            "y": 200,
+            "label": "request",
+            "note": "https://api.example.com/v2/users/profile/settings/email-preferences"
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "820c543bdc991bf4bd139d92e9b1e5dbaadf693bfc656bd5bc231f633128323a",
+        "candidate": "820c543bdc991bf4bd139d92e9b1e5dbaadf693bfc656bd5bc231f633128323a"
+      }
+    },
+    {
+      "case": "sequence-punctuation",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "sequence",
+        "meta": {
+          "title": "CJK wrap comparison",
+          "locale": "zh-TW",
+          "output": "output.html",
+          "column_fit": "spread"
+        },
+        "participants": [
+          {
+            "id": "client",
+            "label": "client",
+            "type": "backend"
+          },
+          {
+            "id": "api",
+            "label": "api",
+            "type": "backend"
+          },
+          {
+            "id": "db",
+            "label": "db",
+            "type": "backend"
+          }
+        ],
+        "messages": [
+          {
+            "from": "client",
+            "to": "api",
+            "y": 200,
+            "label": "request",
+            "note": "密碼只在伺服器端驗證，前端不保存。登入成功後換發權杖。"
+          },
+          {
+            "from": "client",
+            "to": "api",
+            "y": 400,
+            "label": "request",
+            "note": "先確認訂單狀態再執行「退款」，再通知客戶。"
+          },
+          {
+            "from": "client",
+            "to": "api",
+            "y": 600,
+            "label": "request",
+            "note": "通知を受け取ったら「決済状態」を確認し、再試行する。"
+          }
+        ]
+      },
+      "unchanged": false,
+      "sha256": {
+        "base": "ca313d07afa26b6a7f5cd251ecb04ab8118849bcda6e26f0c425197e24836701",
+        "candidate": "bdd5edb51317108cec3268525d752772634f5963e0f7790b304056773cee1bce"
+      }
+    },
+    {
+      "case": "timeline-control-0",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "timeline",
+        "meta": {
+          "title": "Control",
+          "output": "output.html",
+          "evidence": "illustrative"
+        },
+        "events": [
+          {
+            "id": "a",
+            "at": "2026-10-01T10:00:00Z",
+            "title": "retry policy: verify (order), then refund! retry policy: verify (order), then refund! retry policy: verify (order), then refund! "
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "d482492d42efc7dc8fed3f18ec3089669d29f748594a368bf84038e4558ba8ed",
+        "candidate": "d482492d42efc7dc8fed3f18ec3089669d29f748594a368bf84038e4558ba8ed"
+      }
+    },
+    {
+      "case": "timeline-control-1",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "timeline",
+        "meta": {
+          "title": "Control",
+          "output": "output.html",
+          "evidence": "illustrative"
+        },
+        "events": [
+          {
+            "id": "a",
+            "at": "2026-10-01T10:00:00Z",
+            "title": "카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. 카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. 카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. "
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "d471c229494c8064494728dbd2bb1cc2f0b5fd37dcf643a2eae76efbb15fd954",
+        "candidate": "d471c229494c8064494728dbd2bb1cc2f0b5fd37dcf643a2eae76efbb15fd954"
+      }
+    },
+    {
+      "case": "timeline-control-2",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "timeline",
+        "meta": {
+          "title": "Control",
+          "output": "output.html",
+          "evidence": "illustrative"
+        },
+        "events": [
+          {
+            "id": "a",
+            "at": "2026-10-01T10:00:00Z",
+            "title": "https://api.example.com/v2/users/profile/settings/email-preferences"
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "2fb298e6f0b31b6e165740c930e40bff212833af739dad5320e4c3f2a1bffa5b",
+        "candidate": "2fb298e6f0b31b6e165740c930e40bff212833af739dad5320e4c3f2a1bffa5b"
+      }
+    },
+    {
+      "case": "timeline-issue",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "timeline",
+        "meta": {
+          "title": "付款事件",
+          "locale": "zh-TW",
+          "timezone": "Asia/Taipei",
+          "evidence": "illustrative",
+          "output": "cjk.html"
+        },
+        "lanes": [
+          {
+            "id": "ops",
+            "label": "維運"
+          }
+        ],
+        "events": [
+          {
+            "id": "a",
+            "at": "2026-10-01T10:00:00+08:00",
+            "title": "付款服務部署後開始逾時，值班人員收到告警通知。",
+            "lane": "ops"
+          },
+          {
+            "id": "b",
+            "at": "2026-10-01T10:30:00+08:00",
+            "title": "先確認訂單狀態再執行「退款」，再通知客戶。",
+            "lane": "ops"
+          },
+          {
+            "id": "c",
+            "at": "2026-10-01T11:00:00+08:00",
+            "title": "決済エラー率が上昇し、オンコール担当者へ通知。",
+            "lane": "ops"
+          }
+        ]
+      },
+      "unchanged": false,
+      "sha256": {
+        "base": "b5814e637eb8ccc8d959dabcede04d6c210c4d110c12a05181c85ea835569f14",
+        "candidate": "0a617ce51ea2fc1687da1d9cea5b22f575236394512ce1194ad62c482f9409ff"
+      }
+    },
+    {
+      "case": "tree-control-0",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {
+          "title": "Control",
+          "output": "output.html"
+        },
+        "nodes": [
+          {
+            "id": "root",
+            "label": "retry policy: verify (order), then refund! retry policy: verify (order), then refund! retry policy: verify (order), then refund! "
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "4c411ac57776b53a6af22b164111127ac4d60574c29ae1cceca79be0a689ab46",
+        "candidate": "4c411ac57776b53a6af22b164111127ac4d60574c29ae1cceca79be0a689ab46"
+      }
+    },
+    {
+      "case": "tree-control-1",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {
+          "title": "Control",
+          "output": "output.html"
+        },
+        "nodes": [
+          {
+            "id": "root",
+            "label": "카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. 카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. 카나리 단계에서 오류율이 넘으면 자동으로 롤백합니다. "
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "f9be3ac52959f1c6ca9c44f61d50df26ff993071c3f176da543a696e8516ac06",
+        "candidate": "f9be3ac52959f1c6ca9c44f61d50df26ff993071c3f176da543a696e8516ac06"
+      }
+    },
+    {
+      "case": "tree-control-2",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {
+          "title": "Control",
+          "output": "output.html"
+        },
+        "nodes": [
+          {
+            "id": "root",
+            "label": "https://api.example.com/v2/users/profile/settings/email-preferences"
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "dad4219c824b757f5ea776f081525c8475928e4ab778c1c90acd3d50ea6e72ff",
+        "candidate": "dad4219c824b757f5ea776f081525c8475928e4ab778c1c90acd3d50ea6e72ff"
+      }
+    },
+    {
+      "case": "tree-narrow",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {
+          "title": "CJK wrap comparison",
+          "locale": "zh-TW",
+          "output": "output.html"
+        },
+        "layout": {
+          "nodeW": 120,
+          "nodeMaxW": 120
+        },
+        "nodes": [
+          {
+            "id": "root",
+            "label": "通知「決済状態」を確認し、再試行する。",
+            "sublabel": "確認「退款」，再通知客戶。"
+          }
+        ]
+      },
+      "unchanged": true,
+      "sha256": {
+        "base": "14914a1f4efd788b2a515cf7e4f84a9753c81fdb92dda0a3d3e9eec66b0b8a94",
+        "candidate": "14914a1f4efd788b2a515cf7e4f84a9753c81fdb92dda0a3d3e9eec66b0b8a94"
+      }
+    },
+    {
+      "case": "tree-punctuation",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {
+          "title": "CJK wrap comparison",
+          "locale": "zh-TW",
+          "output": "output.html"
+        },
+        "nodes": [
+          {
+            "id": "root",
+            "label": "先確認訂單狀態再執行「退款」，再通知客戶。先確認訂單狀態再執行「退款」，再通知客戶。先確認訂單狀態再執行「退款」，再通知客戶。",
+            "sublabel": "「授權」與「請款」分開處理，避免重複扣款。"
+          }
+        ]
+      },
+      "unchanged": false,
+      "sha256": {
+        "base": "9640d769bade3e5520385da716f9fca48b73ab8acd42f0e767e5d853b50c5ee7",
+        "candidate": "13d424da36bfe9397c775bf2769f7b37ee188a6b7d48e06965dbfe253aefc996"
+      }
+    }
+  ],
+  "candidateSource": "eee68612a",
+  "candidateSourcePaths": [
+    "archify/renderers/shared/utils.mjs",
+    "archify/renderers/timeline/render-timeline.mjs",
+    "archify/renderers/tree/render-tree.mjs",
+    "archify/renderers/sequence/render-sequence.mjs"
+  ]
+}
