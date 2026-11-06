@@ -104,5 +104,5 @@ Modify:
 
 ## Analysis context
 
-- Language: py (python@3.13.17), analyzed root: `.`, source: working-tree
-- Snapshot: `a75176b021bc072d90093849e6a5529f79780dcdf576e08d991087ddbbcbfd3c`, config `716da75c0e50`, analyzer @archify/code-analysis 0.1.0-dev.1
+- Language: py (python@3.13.16), analyzed root: `.`, source: working-tree
+- Snapshot: `8561ab60ab323a10c35a2b47bff97e2e810b22dcb1daf2e735c4a048e5a70376`, config `716da75c0e50`, analyzer @archify/code-analysis 0.1.0-dev.1
