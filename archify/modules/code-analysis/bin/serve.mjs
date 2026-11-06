@@ -171,9 +171,10 @@ export async function startAnalysisView(argv) {
     const send = (status, body, type = 'application/json') => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(body); };
     if (req.headers.host !== new URL(origin).host) return send(403, '{}');
     if (req.method === 'GET' && new URL(req.url, origin).pathname === '/') return send(200, page, 'text/html; charset=utf-8');
-    if (req.method !== 'POST' || (req.url !== '/analyze' && req.url !== '/task')) return send(404, '{}');
+    if (req.method !== 'POST' || (req.url !== '/analyze' && req.url !== '/task' && req.url !== '/baseline')) return send(404, '{}');
     if (req.headers.origin !== origin || req.headers['x-analysis-token'] !== token) return send(403, '{}');
     if (req.url === '/task') return handleTask(req, send);
+    if (req.url === '/baseline') return handleBaseline(req, send);
     // Check before cached results as well: this page belongs to the delivered IR.
     let unchanged = false;
     try { unchanged = fs.readFileSync(ir).equals(irBytes); } catch { /* Removed or unreadable input also requires redelivery. */ }
@@ -214,6 +215,36 @@ export async function startAnalysisView(argv) {
       const review = fs.existsSync(path.join(analysisDir, 'review.json')) ? read('review.json') : null;
       const task = verifyTask(buildTask({ findings: read('findings.json'), facts: read('raw-facts.json'), ids, review }), root);
       send(200, JSON.stringify({ task, markdown: renderTaskMarkdown(task) }));
+    } catch (error) {
+      const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
+      send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
+    }
+  };
+  // 6. Accept or revoke one finding in the baseline this server was started with.
+  // The file path comes from --baseline, never from the request. The finding must
+  // be in the current result, and accepting needs a reason. The write replaces the
+  // file only after the new contents are on disk, so a failure keeps the old one.
+  const handleBaseline = async (req, send) => {
+    const baselineFile = options['--baseline'] ? path.resolve(options['--baseline']) : null;
+    if (!baselineFile) return send(409, JSON.stringify({ error: 'Start the server with --baseline <file> to accept findings from the page.', diagnostics: [{ code: 'baseline/not-configured', severity: 'error', message: 'No baseline file was configured.', subject: {}, evidence: {}, supportedFixes: ['restart with --baseline <file>'] }] }));
+    if (pending) return send(409, JSON.stringify({ error: 'An analysis is running.', diagnostics: [{ code: 'baseline/analysis-running', severity: 'error', message: 'An analysis is running.', subject: {}, evidence: {}, supportedFixes: ['retry after it finishes'] }] }));
+    let body = '';
+    try { for await (const chunk of req) { body += chunk; if (body.length > 8192) return send(413, JSON.stringify({ error: 'request too large' })); } } catch { return send(400, JSON.stringify({ error: 'request could not be read' })); }
+    let payload;
+    try { payload = JSON.parse(body || '{}'); } catch { return send(400, JSON.stringify({ error: 'request body must be JSON' })); }
+    const { id, action, reason } = payload;
+    if (typeof id !== 'string' || !/^[A-Z]{2,4}-[0-9a-f]{12}$/.test(id)) return send(400, JSON.stringify({ error: 'id must be a finding id' }));
+    try {
+      const { decideFinding, validateBaseline } = await import('../lib/review.mjs');
+      const { stableJson } = await import('../lib/analysis.mjs');
+      const findings = JSON.parse(fs.readFileSync(path.join(analysisDir, 'findings.json'), 'utf8'));
+      const finding = findings.diagnostics.find((d) => d.id === id) || null;
+      const existing = fs.existsSync(baselineFile) ? validateBaseline(JSON.parse(fs.readFileSync(baselineFile, 'utf8')), baselineFile) : { schema_version: 1, accepted: [] };
+      const updated = validateBaseline(decideFinding(existing, { id, action, reason, finding }));
+      const temporary = `${baselineFile}.${randomBytes(6).toString('hex')}.tmp`;
+      fs.writeFileSync(temporary, stableJson(updated));
+      fs.renameSync(temporary, baselineFile);
+      send(200, JSON.stringify({ id, action, accepted: updated.accepted.length }));
     } catch (error) {
       const diagnostics = error instanceof DiagnosticError ? error.diagnostics : [{ code: 'internal/unclassified', severity: 'error', message: error.message, subject: {}, evidence: {}, supportedFixes: [] }];
       send(error instanceof DiagnosticError ? 422 : 500, JSON.stringify({ error: diagnostics.map((d) => d.message).join('\n'), diagnostics }));
