@@ -8,13 +8,13 @@ import { matcher } from '../shared/glob.mjs';
 import { snapshotHost } from './snapshot-host.mjs';
 import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
-import { measureFunctions } from './functions.mjs';
+import { isShortCircuitExpression, measureFunctions } from './functions.mjs';
 
 export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 1;
+export const REVISION = 12;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -85,6 +85,7 @@ export function extract(root, config) {
       const record = { from: rel, specifier: found.specifier, kind: found.kind, line: found.line, resolved: false };
       if (found.names.length) record.names = found.names;
       if (found.lazy) record.lazy = true;
+      if (found.conditional) record.conditional = true;
       if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
       const target = found.opaque ? { reason: 'opaque' } : resolve(found.specifier, abs, absRoot, fileSet, options, inputs);
       if (target.to) { record.to = target.to; record.resolved = true; }
@@ -156,13 +157,12 @@ function collectImports(source, checker, options) {
         && isModuleRequire(node.expression, checker);
       if (isImport || isRequire) {
         const kind = isImport ? 'dynamic' : 'require';
-        if (ts.isStringLiteralLike(node.arguments[0])) {
-          found.push({ specifier: node.arguments[0].text, kind, line: lineOf(source, node), names: [], lazy: inFunctionBody(node) });
-        } else {
-          // A computed specifier (import(pathToFileURL(...)), require(name)) cannot
-          // be resolved statically; it is recorded so the miss stays visible.
-          found.push({ specifier: OPAQUE, kind, line: lineOf(source, node), names: [], opaque: true, lazy: inFunctionBody(node) });
-        }
+        const argument = node.arguments[0];
+        const opaque = !ts.isStringLiteralLike(argument);
+        found.push({
+          specifier: opaque ? OPAQUE : argument.text, kind, line: lineOf(source, node),
+          names: [], opaque, ...loadContext(node, isRequire),
+        });
       }
     }
     ts.forEachChild(node, visit);
@@ -171,14 +171,36 @@ function collectImports(source, checker, options) {
   return found;
 }
 
-function inFunctionBody(node) {
+function loadContext(node, isRequire) {
+  const context = {};
   for (let current = node; current.parent; current = current.parent) {
     const parent = current.parent;
-    if (ts.isFunctionLike(parent) && (parent.body === current || parent.parameters?.includes(current))) return true;
+    if (ts.isFunctionLike(parent) && (parent.body === current || parent.parameters?.includes(current))) context.lazy = true;
     // Instance field initializers run on construction, unlike static fields.
-    if (ts.isPropertyDeclaration(parent) && parent.initializer === current && !parent.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword)) return true;
+    if (ts.isPropertyDeclaration(parent) && parent.initializer === current && !parent.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword)) context.lazy = true;
+    if (isRequire && isConditionalChild(parent, current)) context.conditional = true;
   }
-  return false;
+  return context;
+}
+
+function isConditionalChild(parent, child) {
+  // Chain predicates include continuous ?. segments but exclude grouped chain
+  // breaks. Only arguments/keys are guarded; the chain's base still runs.
+  if (ts.isCallChain(parent)) return parent.arguments.includes(child);
+  if (ts.isElementAccessChain(parent)) return child === parent.argumentExpression;
+  if (ts.isIfStatement(parent)) return child === parent.thenStatement || child === parent.elseStatement;
+  if (ts.isConditionalExpression(parent)) return child === parent.whenTrue || child === parent.whenFalse;
+  if (isShortCircuitExpression(parent)) return child === parent.right;
+  if (ts.isWhileStatement(parent)) return child === parent.statement;
+  if (ts.isForStatement(parent)) return (child === parent.statement && Boolean(parent.condition)) || child === parent.incrementor;
+  if (ts.isForInStatement(parent) || ts.isForOfStatement(parent)) return child === parent.statement || child === parent.initializer;
+  if (ts.isCaseOrDefaultClause(parent)) {
+    // The first case test runs even if a default precedes it. Later tests and
+    // clause bodies depend on selection; a sole default always runs.
+    const firstCase = parent.parent.clauses.find(ts.isCaseClause);
+    return Boolean(firstCase && (child !== parent.expression || parent !== firstCase));
+  }
+  return ts.isCatchClause(parent);
 }
 
 // Native CommonJS require has no source declaration. Also preserve the common
