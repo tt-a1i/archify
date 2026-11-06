@@ -272,3 +272,23 @@ export function textUnits(text) {
   }
   return units;
 }
+
+const CJK_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+const CJK_NO_LINE_START = /^[、。，．：；！？）〕］｝〉》」』】〗〙〛々〻ゝゞヽヾー…‥]/u;
+const CJK_NO_LINE_END = /[（〔［｛〈《「『【〖〘〚]$/u;
+
+// Adapted from BlueboxC's #1067 fix (a50dd164). Keep these conservative
+// CJK punctuation boundaries inside one wrap piece; measurement is unchanged.
+// Callers retain their existing segmentation, including grapheme boundaries.
+export function cjkWrapPieces(pieces) {
+  if (!CJK_SCRIPT.test(pieces.join(''))) return pieces;
+  const joined = [];
+  for (const piece of pieces) {
+    if (joined.length && (CJK_NO_LINE_START.test(piece) || CJK_NO_LINE_END.test(joined.at(-1)))) {
+      joined[joined.length - 1] += piece;
+    } else {
+      joined.push(piece);
+    }
+  }
+  return joined;
+}

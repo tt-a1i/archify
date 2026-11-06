@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc, renderDefinitions, textUnits } from '../shared/utils.mjs';
+import { esc, renderDefinitions, textUnits, cjkWrapPieces } from '../shared/utils.mjs';
 import {
   animateAttr,
   focusNodeAttrs,
@@ -304,7 +304,7 @@ function wrapTitle(text, maxWidth) {
     if (current.trim()) lines.push(current.trim());
     current = word.trimStart();
     while (textUnits(current) > limit) {
-      const chars = Array.from(current);
+      const chars = cjkWrapPieces(Array.from(current));
       let cut = 0;
       for (let units = 0; cut < chars.length && units + textUnits(chars[cut]) <= limit; cut += 1) units += textUnits(chars[cut]);
       lines.push(chars.slice(0, Math.max(1, cut)).join(''));
