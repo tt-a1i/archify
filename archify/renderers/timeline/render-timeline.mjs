@@ -296,7 +296,7 @@ const laneOf = (event) => (asArray(tl.lanes).length ? event.lane : '__all');
 
 function wrapTitle(text, maxWidth) {
   const limit = Math.max(6, Math.floor(maxWidth / (layout.titleFont * ADVANCE * 1.05)));
-  const words = String(text).split(/(\s+)/);
+  const words = cjkWrapPieces(String(text).split(/(\s+)/));
   const lines = [];
   let current = '';
   for (const word of words) {

@@ -275,7 +275,7 @@ export function textUnits(text) {
 
 const CJK_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 const CJK_NO_LINE_START = /^[、。，．：；！？）〕］｝〉》」』】〗〙〛々〻ゝゞヽヾー…‥]/u;
-const CJK_NO_LINE_END = /[（〔［｛〈《「『【〖〘〚]$/u;
+const CJK_NO_LINE_END = /[（〔［｛〈《「『【〖〘〚]\s*$/u;
 
 // Adapted from BlueboxC's #1067 fix (a50dd164). Keep these conservative
 // CJK punctuation boundaries inside one wrap piece; measurement is unchanged.

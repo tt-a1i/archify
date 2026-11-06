@@ -53,6 +53,12 @@ test('CJK timeline titles keep punctuation with its text', (t) => {
   check(textLines(svg, /data-node-label=/u), titles);
 });
 
+test('CJK timeline titles retain space after an opening quote without ending a line there', (t) => {
+  const title = '先確認訂單狀態再執行「 退款」，再通知客戶。';
+  const svg = render(t, { schema_version: 1, diagram_type: 'timeline', meta: { title: '付款事件', locale: 'zh-TW', evidence: 'illustrative' }, events: [{ id: 'a', at: '2026-10-01T10:00:00Z', title }] });
+  check(textLines(svg, /data-node-label=/u), [title]);
+});
+
 test('CJK tree labels and sublabels keep punctuation with its text', (t) => {
   const labels = ['先確認訂單狀態再執行「退款」，再通知客戶。'.repeat(3)];
   const sublabels = ['「授權」與「請款」分開處理，避免重複扣款。'];
