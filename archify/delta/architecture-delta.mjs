@@ -1310,8 +1310,12 @@ export function validateArchitectureDeltaHtml(html, receipt) {
   }
   // Before/After embed the complete existing explorer runtime. Validate claims
   // made by the Delta shell itself, not implementation vocabulary inside an
-  // escaped srcdoc script (for example, "safe scale" in image export code).
-  const deltaShell = html.replace(/<iframe\b[^>]*><\/iframe>/g, '');
+  // escaped srcdoc script (for example, "safe scale" in image export code)
+  // or stylesheet syntax such as the overflow alignment value "safe center".
+  // The same stylesheet is serialized as exportCss for standalone SVG export.
+  const deltaShell = html.replace(/<iframe\b[^>]*><\/iframe>/g, '')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/const exportCss = "(?:\\.|[^"\\])*";/g, '');
   if (/\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i.test(deltaShell)) failures.push('contains a forbidden risk or mergeability claim');
   if (/\b(?:NaN|Infinity)\b/.test(html)) failures.push('contains non-finite output');
   if (receipt.completeness !== 'complete') failures.push('receipt is not complete');

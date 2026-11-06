@@ -648,7 +648,9 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   const deltaShell = firstHtml.replace(/<iframe\b[^>]*><\/iframe>/g, '');
   assert.doesNotMatch(deltaShell, /localStorage|sessionStorage|history\.(?:pushState|replaceState)/);
   assert.doesNotMatch(deltaShell, /setInterval\(/);
-  assert.doesNotMatch(deltaShell, /\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i);
+  const deltaClaims = deltaShell.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/const exportCss = "(?:\\.|[^"\\])*";/g, '');
+  assert.doesNotMatch(deltaClaims, /\b(?:SAFE|LOW RISK|MERGEABLE|NO IMPACT|VERIFIED PR)\b/i);
 
   const receipt = JSON.parse(result.stdout);
   const sidecar = read(path.join(tmp, 'first.receipt.json'));
@@ -658,6 +660,18 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.equal(receipt.completeness, 'complete');
   assert.equal(JSON.stringify(receipt).includes(tmp), false);
   assert.deepEqual(validateArchitectureDeltaHtml(firstHtml, receipt), { ok: true, checksPassed: 10, checkCount: 10 });
+  const exportedCss = firstHtml.match(/const exportCss = ("(?:\\.|[^"\\])*");/);
+  assert.ok(exportedCss, 'standalone SVG export retains its CSS payload');
+  assert.match(JSON.parse(exportedCss[1]), /justify-content: safe center;/,
+    'export CSS round-trips the legal overflow alignment');
+  const safeAlignment = firstHtml.replace('</head>', '<style>.example { justify-content: safe center; }</style></head>');
+  assert.deepEqual(validateArchitectureDeltaHtml(safeAlignment, receipt), { ok: true, checksPassed: 10, checkCount: 10 },
+    'valid CSS alignment is not a risk claim');
+  const unsafeClaim = firstHtml.replace('</main>', '<p>SAFE</p></main>');
+  assert.throws(() => validateArchitectureDeltaHtml(unsafeClaim, receipt),
+    (error) => error instanceof ArchitectureDeltaError && error.code === 'delta/artifact-invalid'
+      && error.details.failures.includes('contains a forbidden risk or mergeability claim'),
+    'visible SAFE claims remain forbidden');
 });
 
 test('compare cleanup preserves an unexpected claimant in private staging', () => {

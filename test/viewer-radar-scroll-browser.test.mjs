@@ -131,3 +131,58 @@ test('Radar follows page scrolling and navigates long diagrams vertically', {
     assert.equal(await run('scrollY'), presentScroll, 'presentation stays in its own stage rather than scrolling the page');
   }
 });
+
+// Issue #1026's presentation-only case; safe-centering was proposed in #1026/#1027.
+test('Presentation preserves both scroll edges when the scene exceeds the stage', {
+  skip: chrome ? false : 'Set ARCHIFY_CHROME to run real-browser presentation checks.',
+}, async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-present-scroll-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const output = path.join(scratch, 'web-app.html');
+  execFileSync(process.execPath, [path.join(root, 'archify/renderers/architecture/render-architecture.mjs'),
+    path.join(root, 'archify/examples/web-app.architecture.json'), output]);
+  const browser = new ChromeVisualBrowser(chrome);
+  t.after(() => browser.close());
+  const session = await browser.sessionPromise;
+  const send = (method, params = {}) => browser.cdp.send(method, params, session);
+  async function run(expression) {
+    const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    assert.equal(result.exceptionDetails, undefined, result.exceptionDetails?.exception?.description);
+    return result.result?.value;
+  }
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  for (const width of [360, 540, 1280]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 760, deviceScaleFactor: 1, mobile: false });
+    const loaded = browser.cdp.waitFor('Page.loadEventFired', session);
+    await send('Page.navigate', { url: `${pathToFileURL(output).href}?present=1&theme=light` });
+    await loaded;
+    await run(`(async () => {
+      await document.fonts.ready;
+      await Archify.readerLayout.whenStable();
+      await Archify.viewerChromeLayout.whenStable();
+      await new Promise(requestAnimationFrame);
+    })()`);
+    const edges = await run(`(async () => {
+      const stage = document.querySelector('.diagram-container'), svg = stage.querySelector(':scope > svg');
+      stage.style.scrollBehavior = 'auto';
+      stage.scrollLeft = 0;
+      await new Promise(requestAnimationFrame);
+      const start = svg.getBoundingClientRect(), frame = stage.getBoundingClientRect();
+      stage.scrollLeft = stage.scrollWidth;
+      await new Promise(requestAnimationFrame);
+      const end = svg.getBoundingClientRect();
+      return { startLeft: start.left, startRight: start.right, endRight: end.right,
+        frameLeft: frame.left + stage.clientLeft, frameRight: frame.left + stage.clientLeft + stage.clientWidth,
+        scrollWidth: stage.scrollWidth, clientWidth: stage.clientWidth, scrollLeft: stage.scrollLeft };
+    })()`);
+    assert.ok(edges.startLeft >= edges.frameLeft, `scene start must be reachable at ${width}px: ${JSON.stringify(edges)}`);
+    assert.ok(edges.endRight <= edges.frameRight + 1, `scene end must be reachable at ${width}px: ${JSON.stringify(edges)}`);
+    if (width < 720) {
+      assert.ok(edges.scrollLeft > 0, 'the wide scene uses the existing horizontal scroll path');
+    } else {
+      assert.equal(edges.scrollLeft, 0, 'a fitting scene needs no horizontal scroll');
+      assert.ok(Math.abs((edges.startLeft - edges.frameLeft) - (edges.frameRight - edges.startRight)) < 1,
+        'a fitting scene remains horizontally centered');
+    }
+  }
+});
