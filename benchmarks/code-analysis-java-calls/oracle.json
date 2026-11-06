@@ -1,0 +1,2141 @@
+{
+  "schema": "java-method-invocation-source-oracle-v2",
+  "created_utc": "2026-11-06T16:56:09.078782+00:00",
+  "prior_exposure": "Projects studied previously; these new method-level call inventory questions authored from pinned source before this study analyzer run. No analyzer output consulted in oracle creation.",
+  "scope": "All explicit method invocation expressions within selected method bodies, including nested invocations and lambda bodies; constructors, method references and implicit calls excluded. End offsets exclusive; UTF-16 code units from start of decoded source. Unsupported means outside bounded same-class uniquely declared static direct call rule, not proof no Java target exists.",
+  "projects": [
+    {
+      "project": "slf4j",
+      "revision": "base",
+      "commit": "aa13da39edd4195c25eecb1263c4bf3f8902a3e4",
+      "path": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "source_sha256": "048a4e60d8a81e4a11dc56288a5f1f62b965d2066c1ff86a9ec05a3bbb44d540",
+      "methods": [
+        {
+          "identity": "org.slf4j.LoggerFactory.performInitialization()",
+          "body_start": {
+            "utf16": 7297,
+            "line": 167,
+            "column_utf16": 55
+          },
+          "body_end_exclusive": {
+            "utf16": 7429,
+            "line": 172,
+            "column_utf16": 6
+          },
+          "call_count": 2,
+          "calls": [
+            {
+              "name": "bind",
+              "identifier_start": {
+                "utf16": 7307,
+                "line": 168,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7313,
+                "line": 168,
+                "column_utf16": 15
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.bind",
+                "declaration_line": 174,
+                "signature": "bind()",
+                "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7307,
+                "end_utf16_exclusive": 7313,
+                "attributed_target": "org.slf4j.LoggerFactory#bind()"
+              }
+            },
+            {
+              "name": "versionSanityCheck",
+              "identifier_start": {
+                "utf16": 7392,
+                "line": 170,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7412,
+                "line": 170,
+                "column_utf16": 33
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.versionSanityCheck",
+                "declaration_line": 327,
+                "signature": "versionSanityCheck()",
+                "attributed_identity": "org.slf4j.LoggerFactory#versionSanityCheck()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7392,
+                "end_utf16_exclusive": 7412,
+                "attributed_target": "org.slf4j.LoggerFactory#versionSanityCheck()"
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 7247,
+            "end_utf16_exclusive": 7429,
+            "attributed_identity": "org.slf4j.LoggerFactory#performInitialization()"
+          }
+        },
+        {
+          "identity": "org.slf4j.LoggerFactory.bind()",
+          "body_start": {
+            "utf16": 7468,
+            "line": 174,
+            "column_utf16": 38
+          },
+          "body_end_exclusive": {
+            "utf16": 8698,
+            "line": 198,
+            "column_utf16": 6
+          },
+          "call_count": 13,
+          "calls": [
+            {
+              "name": "findServiceProviders",
+              "identifier_start": {
+                "utf16": 7539,
+                "line": 176,
+                "column_utf16": 56
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7561,
+                "line": 176,
+                "column_utf16": 78
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.findServiceProviders",
+                "declaration_line": 107,
+                "signature": "findServiceProviders()",
+                "attributed_identity": "org.slf4j.LoggerFactory#findServiceProviders()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7539,
+                "end_utf16_exclusive": 7561,
+                "attributed_target": "org.slf4j.LoggerFactory#findServiceProviders()"
+              }
+            },
+            {
+              "name": "reportMultipleBindingAmbiguity",
+              "identifier_start": {
+                "utf16": 7575,
+                "line": 177,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7620,
+                "line": 177,
+                "column_utf16": 58
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.reportMultipleBindingAmbiguity",
+                "declaration_line": 362,
+                "signature": "reportMultipleBindingAmbiguity(List<SLF4JServiceProvider> providerList)",
+                "attributed_identity": "org.slf4j.LoggerFactory#reportMultipleBindingAmbiguity(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7575,
+                "end_utf16_exclusive": 7620,
+                "attributed_target": "org.slf4j.LoggerFactory#reportMultipleBindingAmbiguity(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              }
+            },
+            {
+              "name": "isEmpty",
+              "identifier_start": {
+                "utf16": 7678,
+                "line": 178,
+                "column_utf16": 57
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7687,
+                "line": 178,
+                "column_utf16": 66
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7664,
+                "end_utf16_exclusive": 7687,
+                "attributed_target": "java.util.List#isEmpty()"
+              }
+            },
+            {
+              "name": "get",
+              "identifier_start": {
+                "utf16": 7732,
+                "line": 179,
+                "column_utf16": 42
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7738,
+                "line": 179,
+                "column_utf16": 48
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7718,
+                "end_utf16_exclusive": 7738,
+                "attributed_target": "java.util.List#get(int)"
+              }
+            },
+            {
+              "name": "initialize",
+              "identifier_start": {
+                "utf16": 7866,
+                "line": 181,
+                "column_utf16": 26
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7878,
+                "line": 181,
+                "column_utf16": 38
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7857,
+                "end_utf16_exclusive": 7878,
+                "attributed_target": "org.slf4j.spi.SLF4JServiceProvider#initialize()"
+              }
+            },
+            {
+              "name": "reportActualBinding",
+              "identifier_start": {
+                "utf16": 7962,
+                "line": 183,
+                "column_utf16": 17
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7996,
+                "line": 183,
+                "column_utf16": 51
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.reportActualBinding",
+                "declaration_line": 372,
+                "signature": "reportActualBinding(List<SLF4JServiceProvider> providerList)",
+                "attributed_identity": "org.slf4j.LoggerFactory#reportActualBinding(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7962,
+                "end_utf16_exclusive": 7996,
+                "attributed_target": "org.slf4j.LoggerFactory#reportActualBinding(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 8108,
+                "line": 186,
+                "column_utf16": 22
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8148,
+                "line": 186,
+                "column_utf16": 62
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8103,
+                "end_utf16_exclusive": 8148,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 8171,
+                "line": 187,
+                "column_utf16": 22
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8235,
+                "line": 187,
+                "column_utf16": 86
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8166,
+                "end_utf16_exclusive": 8235,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 8258,
+                "line": 188,
+                "column_utf16": 22
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8317,
+                "line": 188,
+                "column_utf16": 81
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8253,
+                "end_utf16_exclusive": 8317,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String)"
+              }
+            },
+            {
+              "name": "findPossibleStaticLoggerBinderPathSet",
+              "identifier_start": {
+                "utf16": 8373,
+                "line": 190,
+                "column_utf16": 54
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8412,
+                "line": 190,
+                "column_utf16": 93
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.findPossibleStaticLoggerBinderPathSet",
+                "declaration_line": 217,
+                "signature": "findPossibleStaticLoggerBinderPathSet()",
+                "attributed_identity": "org.slf4j.LoggerFactory#findPossibleStaticLoggerBinderPathSet()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8373,
+                "end_utf16_exclusive": 8412,
+                "attributed_target": "org.slf4j.LoggerFactory#findPossibleStaticLoggerBinderPathSet()"
+              }
+            },
+            {
+              "name": "reportIgnoredStaticLoggerBinders",
+              "identifier_start": {
+                "utf16": 8430,
+                "line": 191,
+                "column_utf16": 17
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8489,
+                "line": 191,
+                "column_utf16": 76
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.reportIgnoredStaticLoggerBinders",
+                "declaration_line": 200,
+                "signature": "reportIgnoredStaticLoggerBinders(Set<URL> staticLoggerBinderPathSet)",
+                "attributed_identity": "org.slf4j.LoggerFactory#reportIgnoredStaticLoggerBinders(java.util.Set<java.net.URL>)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8430,
+                "end_utf16_exclusive": 8489,
+                "attributed_target": "org.slf4j.LoggerFactory#reportIgnoredStaticLoggerBinders(java.util.Set<java.net.URL>)"
+              }
+            },
+            {
+              "name": "postBindCleanUp",
+              "identifier_start": {
+                "utf16": 8517,
+                "line": 193,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8534,
+                "line": 193,
+                "column_utf16": 30
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.postBindCleanUp",
+                "declaration_line": 240,
+                "signature": "postBindCleanUp()",
+                "attributed_identity": "org.slf4j.LoggerFactory#postBindCleanUp()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8517,
+                "end_utf16_exclusive": 8534,
+                "attributed_target": "org.slf4j.LoggerFactory#postBindCleanUp()"
+              }
+            },
+            {
+              "name": "failedBinding",
+              "identifier_start": {
+                "utf16": 8580,
+                "line": 195,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8596,
+                "line": 195,
+                "column_utf16": 29
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.failedBinding",
+                "declaration_line": 258,
+                "signature": "failedBinding(Throwable t)",
+                "attributed_identity": "org.slf4j.LoggerFactory#failedBinding(java.lang.Throwable)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8580,
+                "end_utf16_exclusive": 8596,
+                "attributed_target": "org.slf4j.LoggerFactory#failedBinding(java.lang.Throwable)"
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 7435,
+            "end_utf16_exclusive": 8698,
+            "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+          }
+        }
+      ],
+      "javac_inventory_verified": true
+    },
+    {
+      "project": "slf4j",
+      "revision": "head",
+      "commit": "9783320b6c4411a0b120cad9e32cd9a981b1dac2",
+      "path": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "source_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+      "methods": [
+        {
+          "identity": "org.slf4j.LoggerFactory.performInitialization()",
+          "body_start": {
+            "utf16": 7562,
+            "line": 174,
+            "column_utf16": 55
+          },
+          "body_end_exclusive": {
+            "utf16": 7694,
+            "line": 179,
+            "column_utf16": 6
+          },
+          "call_count": 2,
+          "calls": [
+            {
+              "name": "bind",
+              "identifier_start": {
+                "utf16": 7572,
+                "line": 175,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7578,
+                "line": 175,
+                "column_utf16": 15
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.bind",
+                "declaration_line": 181,
+                "signature": "bind()",
+                "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7572,
+                "end_utf16_exclusive": 7578,
+                "attributed_target": "org.slf4j.LoggerFactory#bind()"
+              }
+            },
+            {
+              "name": "versionSanityCheck",
+              "identifier_start": {
+                "utf16": 7657,
+                "line": 177,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7677,
+                "line": 177,
+                "column_utf16": 33
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.versionSanityCheck",
+                "declaration_line": 365,
+                "signature": "versionSanityCheck()",
+                "attributed_identity": "org.slf4j.LoggerFactory#versionSanityCheck()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7657,
+                "end_utf16_exclusive": 7677,
+                "attributed_target": "org.slf4j.LoggerFactory#versionSanityCheck()"
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 7512,
+            "end_utf16_exclusive": 7694,
+            "attributed_identity": "org.slf4j.LoggerFactory#performInitialization()"
+          }
+        },
+        {
+          "identity": "org.slf4j.LoggerFactory.bind()",
+          "body_start": {
+            "utf16": 7733,
+            "line": 181,
+            "column_utf16": 38
+          },
+          "body_end_exclusive": {
+            "utf16": 9360,
+            "line": 215,
+            "column_utf16": 6
+          },
+          "call_count": 19,
+          "calls": [
+            {
+              "name": "getProperty",
+              "identifier_start": {
+                "utf16": 7779,
+                "line": 182,
+                "column_utf16": 45
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7804,
+                "line": 182,
+                "column_utf16": 70
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7772,
+                "end_utf16_exclusive": 7804,
+                "attributed_target": "java.lang.System#getProperty(java.lang.String)"
+              }
+            },
+            {
+              "name": "loadExplicitlySpecified",
+              "identifier_start": {
+                "utf16": 7825,
+                "line": 183,
+                "column_utf16": 20
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7869,
+                "line": 183,
+                "column_utf16": 64
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.loadExplicitlySpecified",
+                "declaration_line": 217,
+                "signature": "loadExplicitlySpecified(String explicitlySpecified)",
+                "attributed_identity": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7825,
+                "end_utf16_exclusive": 7869,
+                "attributed_target": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+              }
+            },
+            {
+              "name": "initialize",
+              "identifier_start": {
+                "utf16": 7924,
+                "line": 185,
+                "column_utf16": 22
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7936,
+                "line": 185,
+                "column_utf16": 34
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7915,
+                "end_utf16_exclusive": 7936,
+                "attributed_target": "org.slf4j.spi.SLF4JServiceProvider#initialize()"
+              }
+            },
+            {
+              "name": "reportActualBinding",
+              "identifier_start": {
+                "utf16": 8012,
+                "line": 187,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8068,
+                "line": 187,
+                "column_utf16": 69
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.reportActualBinding",
+                "declaration_line": 410,
+                "signature": "reportActualBinding(List<SLF4JServiceProvider> providerList)",
+                "attributed_identity": "org.slf4j.LoggerFactory#reportActualBinding(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8012,
+                "end_utf16_exclusive": 8068,
+                "attributed_target": "org.slf4j.LoggerFactory#reportActualBinding(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              }
+            },
+            {
+              "name": "singletonList",
+              "identifier_start": {
+                "utf16": 8044,
+                "line": 187,
+                "column_utf16": 45
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8067,
+                "line": 187,
+                "column_utf16": 68
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8032,
+                "end_utf16_exclusive": 8067,
+                "attributed_target": "java.util.Collections#<T>singletonList(T)"
+              }
+            },
+            {
+              "name": "postBindCleanUp",
+              "identifier_start": {
+                "utf16": 8082,
+                "line": 188,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8099,
+                "line": 188,
+                "column_utf16": 30
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.postBindCleanUp",
+                "declaration_line": 278,
+                "signature": "postBindCleanUp()",
+                "attributed_identity": "org.slf4j.LoggerFactory#postBindCleanUp()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8082,
+                "end_utf16_exclusive": 8099,
+                "attributed_target": "org.slf4j.LoggerFactory#postBindCleanUp()"
+              }
+            },
+            {
+              "name": "findServiceProviders",
+              "identifier_start": {
+                "utf16": 8201,
+                "line": 193,
+                "column_utf16": 56
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8223,
+                "line": 193,
+                "column_utf16": 78
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.findServiceProviders",
+                "declaration_line": 114,
+                "signature": "findServiceProviders()",
+                "attributed_identity": "org.slf4j.LoggerFactory#findServiceProviders()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8201,
+                "end_utf16_exclusive": 8223,
+                "attributed_target": "org.slf4j.LoggerFactory#findServiceProviders()"
+              }
+            },
+            {
+              "name": "reportMultipleBindingAmbiguity",
+              "identifier_start": {
+                "utf16": 8237,
+                "line": 194,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8282,
+                "line": 194,
+                "column_utf16": 58
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.reportMultipleBindingAmbiguity",
+                "declaration_line": 400,
+                "signature": "reportMultipleBindingAmbiguity(List<SLF4JServiceProvider> providerList)",
+                "attributed_identity": "org.slf4j.LoggerFactory#reportMultipleBindingAmbiguity(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8237,
+                "end_utf16_exclusive": 8282,
+                "attributed_target": "org.slf4j.LoggerFactory#reportMultipleBindingAmbiguity(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              }
+            },
+            {
+              "name": "isEmpty",
+              "identifier_start": {
+                "utf16": 8340,
+                "line": 195,
+                "column_utf16": 57
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8349,
+                "line": 195,
+                "column_utf16": 66
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8326,
+                "end_utf16_exclusive": 8349,
+                "attributed_target": "java.util.List#isEmpty()"
+              }
+            },
+            {
+              "name": "get",
+              "identifier_start": {
+                "utf16": 8394,
+                "line": 196,
+                "column_utf16": 42
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8400,
+                "line": 196,
+                "column_utf16": 48
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8380,
+                "end_utf16_exclusive": 8400,
+                "attributed_target": "java.util.List#get(int)"
+              }
+            },
+            {
+              "name": "initialize",
+              "identifier_start": {
+                "utf16": 8528,
+                "line": 198,
+                "column_utf16": 26
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8540,
+                "line": 198,
+                "column_utf16": 38
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8519,
+                "end_utf16_exclusive": 8540,
+                "attributed_target": "org.slf4j.spi.SLF4JServiceProvider#initialize()"
+              }
+            },
+            {
+              "name": "reportActualBinding",
+              "identifier_start": {
+                "utf16": 8624,
+                "line": 200,
+                "column_utf16": 17
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8658,
+                "line": 200,
+                "column_utf16": 51
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.reportActualBinding",
+                "declaration_line": 410,
+                "signature": "reportActualBinding(List<SLF4JServiceProvider> providerList)",
+                "attributed_identity": "org.slf4j.LoggerFactory#reportActualBinding(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8624,
+                "end_utf16_exclusive": 8658,
+                "attributed_target": "org.slf4j.LoggerFactory#reportActualBinding(java.util.List<org.slf4j.spi.SLF4JServiceProvider>)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 8770,
+                "line": 203,
+                "column_utf16": 22
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8810,
+                "line": 203,
+                "column_utf16": 62
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8765,
+                "end_utf16_exclusive": 8810,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 8833,
+                "line": 204,
+                "column_utf16": 22
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8897,
+                "line": 204,
+                "column_utf16": 86
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8828,
+                "end_utf16_exclusive": 8897,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 8920,
+                "line": 205,
+                "column_utf16": 22
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8979,
+                "line": 205,
+                "column_utf16": 81
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8915,
+                "end_utf16_exclusive": 8979,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String)"
+              }
+            },
+            {
+              "name": "findPossibleStaticLoggerBinderPathSet",
+              "identifier_start": {
+                "utf16": 9035,
+                "line": 207,
+                "column_utf16": 54
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9074,
+                "line": 207,
+                "column_utf16": 93
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.findPossibleStaticLoggerBinderPathSet",
+                "declaration_line": 255,
+                "signature": "findPossibleStaticLoggerBinderPathSet()",
+                "attributed_identity": "org.slf4j.LoggerFactory#findPossibleStaticLoggerBinderPathSet()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 9035,
+                "end_utf16_exclusive": 9074,
+                "attributed_target": "org.slf4j.LoggerFactory#findPossibleStaticLoggerBinderPathSet()"
+              }
+            },
+            {
+              "name": "reportIgnoredStaticLoggerBinders",
+              "identifier_start": {
+                "utf16": 9092,
+                "line": 208,
+                "column_utf16": 17
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9151,
+                "line": 208,
+                "column_utf16": 76
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.reportIgnoredStaticLoggerBinders",
+                "declaration_line": 238,
+                "signature": "reportIgnoredStaticLoggerBinders(Set<URL> staticLoggerBinderPathSet)",
+                "attributed_identity": "org.slf4j.LoggerFactory#reportIgnoredStaticLoggerBinders(java.util.Set<java.net.URL>)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 9092,
+                "end_utf16_exclusive": 9151,
+                "attributed_target": "org.slf4j.LoggerFactory#reportIgnoredStaticLoggerBinders(java.util.Set<java.net.URL>)"
+              }
+            },
+            {
+              "name": "postBindCleanUp",
+              "identifier_start": {
+                "utf16": 9179,
+                "line": 210,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9196,
+                "line": 210,
+                "column_utf16": 30
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.postBindCleanUp",
+                "declaration_line": 278,
+                "signature": "postBindCleanUp()",
+                "attributed_identity": "org.slf4j.LoggerFactory#postBindCleanUp()"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 9179,
+                "end_utf16_exclusive": 9196,
+                "attributed_target": "org.slf4j.LoggerFactory#postBindCleanUp()"
+              }
+            },
+            {
+              "name": "failedBinding",
+              "identifier_start": {
+                "utf16": 9242,
+                "line": 212,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9258,
+                "line": 212,
+                "column_utf16": 29
+              },
+              "expected": "target",
+              "target": {
+                "identity": "org.slf4j.LoggerFactory.failedBinding",
+                "declaration_line": 296,
+                "signature": "failedBinding(Throwable t)",
+                "attributed_identity": "org.slf4j.LoggerFactory#failedBinding(java.lang.Throwable)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 9242,
+                "end_utf16_exclusive": 9258,
+                "attributed_target": "org.slf4j.LoggerFactory#failedBinding(java.lang.Throwable)"
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 7700,
+            "end_utf16_exclusive": 9360,
+            "attributed_identity": "org.slf4j.LoggerFactory#bind()"
+          }
+        },
+        {
+          "identity": "org.slf4j.LoggerFactory.loadExplicitlySpecified(String explicitlySpecified)",
+          "body_start": {
+            "utf16": 9446,
+            "line": 217,
+            "column_utf16": 85
+          },
+          "body_end_exclusive": {
+            "utf16": 10435,
+            "line": 236,
+            "column_utf16": 6
+          },
+          "call_count": 8,
+          "calls": [
+            {
+              "name": "forName",
+              "identifier_start": {
+                "utf16": 9575,
+                "line": 222,
+                "column_utf16": 36
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9603,
+                "line": 222,
+                "column_utf16": 64
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 9569,
+                "end_utf16_exclusive": 9603,
+                "attributed_target": "java.lang.Class#forName(java.lang.String)"
+              }
+            },
+            {
+              "name": "getConstructor",
+              "identifier_start": {
+                "utf16": 9652,
+                "line": 223,
+                "column_utf16": 48
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9668,
+                "line": 223,
+                "column_utf16": 64
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 9646,
+                "end_utf16_exclusive": 9668,
+                "attributed_target": "java.lang.Class#getConstructor(java.lang.Class<?>...)"
+              }
+            },
+            {
+              "name": "setAccessible",
+              "identifier_start": {
+                "utf16": 9694,
+                "line": 224,
+                "column_utf16": 25
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9713,
+                "line": 224,
+                "column_utf16": 44
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 9682,
+                "end_utf16_exclusive": 9713,
+                "attributed_target": "java.lang.reflect.AccessibleObject#setAccessible(boolean)"
+              }
+            },
+            {
+              "name": "newInstance",
+              "identifier_start": {
+                "utf16": 9757,
+                "line": 225,
+                "column_utf16": 43
+              },
+              "invocation_end_exclusive": {
+                "utf16": 9770,
+                "line": 225,
+                "column_utf16": 56
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 9745,
+                "end_utf16_exclusive": 9770,
+                "attributed_target": "java.lang.reflect.Constructor#newInstance(java.lang.Object...)"
+              }
+            },
+            {
+              "name": "format",
+              "identifier_start": {
+                "utf16": 10007,
+                "line": 228,
+                "column_utf16": 37
+              },
+              "invocation_end_exclusive": {
+                "utf16": 10099,
+                "line": 228,
+                "column_utf16": 129
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 10000,
+                "end_utf16_exclusive": 10099,
+                "attributed_target": "java.lang.String#format(java.lang.String,java.lang.Object...)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 10118,
+                "line": 229,
+                "column_utf16": 18
+              },
+              "invocation_end_exclusive": {
+                "utf16": 10136,
+                "line": 229,
+                "column_utf16": 36
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 10113,
+                "end_utf16_exclusive": 10136,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String,java.lang.Throwable)"
+              }
+            },
+            {
+              "name": "format",
+              "identifier_start": {
+                "utf16": 10240,
+                "line": 232,
+                "column_utf16": 37
+              },
+              "invocation_end_exclusive": {
+                "utf16": 10356,
+                "line": 232,
+                "column_utf16": 153
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 10233,
+                "end_utf16_exclusive": 10356,
+                "attributed_target": "java.lang.String#format(java.lang.String,java.lang.Object...)"
+              }
+            },
+            {
+              "name": "report",
+              "identifier_start": {
+                "utf16": 10375,
+                "line": 233,
+                "column_utf16": 18
+              },
+              "invocation_end_exclusive": {
+                "utf16": 10393,
+                "line": 233,
+                "column_utf16": 36
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 10370,
+                "end_utf16_exclusive": 10393,
+                "attributed_target": "org.slf4j.helpers.Util#report(java.lang.String,java.lang.Throwable)"
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 9366,
+            "end_utf16_exclusive": 10435,
+            "attributed_identity": "org.slf4j.LoggerFactory#loadExplicitlySpecified(java.lang.String)"
+          }
+        }
+      ],
+      "javac_inventory_verified": true
+    },
+    {
+      "project": "guava",
+      "revision": "head",
+      "commit": "f06690fa3e874f65515e8fd338a74d636e2c792f",
+      "path": "guava/src/com/google/common/base/Strings.java",
+      "source_sha256": "c035d9f3ec2325ecbaf1d67b7c526bfd3879b0d4d422e2b7222d63fa15d85233",
+      "methods": [
+        {
+          "identity": "com.google.common.base.Strings.commonPrefix(CharSequence a, CharSequence b)",
+          "body_start": {
+            "utf16": 7097,
+            "line": 183,
+            "column_utf16": 69
+          },
+          "body_end_exclusive": {
+            "utf16": 7432,
+            "line": 196,
+            "column_utf16": 4
+          },
+          "call_count": 11,
+          "calls": [
+            {
+              "name": "checkNotNull",
+              "identifier_start": {
+                "utf16": 7103,
+                "line": 184,
+                "column_utf16": 5
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7118,
+                "line": 184,
+                "column_utf16": 20
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "unqualified call has no unique supported same-class static target (for example static import or overload)",
+              "javac_invocation": {
+                "start_utf16": 7103,
+                "end_utf16_exclusive": 7118,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "checkNotNull",
+              "identifier_start": {
+                "utf16": 7124,
+                "line": 185,
+                "column_utf16": 5
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7139,
+                "line": 185,
+                "column_utf16": 20
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "unqualified call has no unique supported same-class static target (for example static import or overload)",
+              "javac_invocation": {
+                "start_utf16": 7124,
+                "end_utf16_exclusive": 7139,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "min",
+              "identifier_start": {
+                "utf16": 7168,
+                "line": 187,
+                "column_utf16": 27
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7195,
+                "line": 187,
+                "column_utf16": 54
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "unqualified call has no unique supported same-class static target (for example static import or overload)",
+              "javac_invocation": {
+                "start_utf16": 7168,
+                "end_utf16_exclusive": 7195,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 7174,
+                "line": 187,
+                "column_utf16": 33
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7182,
+                "line": 187,
+                "column_utf16": 41
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7172,
+                "end_utf16_exclusive": 7182,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 7186,
+                "line": 187,
+                "column_utf16": 45
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7194,
+                "line": 187,
+                "column_utf16": 53
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7184,
+                "end_utf16_exclusive": 7194,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "charAt",
+              "identifier_start": {
+                "utf16": 7248,
+                "line": 189,
+                "column_utf16": 37
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7257,
+                "line": 189,
+                "column_utf16": 46
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7246,
+                "end_utf16_exclusive": 7257,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "charAt",
+              "identifier_start": {
+                "utf16": 7263,
+                "line": 189,
+                "column_utf16": 52
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7272,
+                "line": 189,
+                "column_utf16": 61
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7261,
+                "end_utf16_exclusive": 7272,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "validSurrogatePairAt",
+              "identifier_start": {
+                "utf16": 7301,
+                "line": 192,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7331,
+                "line": 192,
+                "column_utf16": 39
+              },
+              "expected": "target",
+              "target": {
+                "identity": "com.google.common.base.Strings.validSurrogatePairAt",
+                "declaration_line": 226,
+                "signature": "validSurrogatePairAt(CharSequence string, int index)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7301,
+                "end_utf16_exclusive": 7331,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "validSurrogatePairAt",
+              "identifier_start": {
+                "utf16": 7335,
+                "line": 192,
+                "column_utf16": 43
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7365,
+                "line": 192,
+                "column_utf16": 73
+              },
+              "expected": "target",
+              "target": {
+                "identity": "com.google.common.base.Strings.validSurrogatePairAt",
+                "declaration_line": 226,
+                "signature": "validSurrogatePairAt(CharSequence string, int index)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 7335,
+                "end_utf16_exclusive": 7365,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "subSequence",
+              "identifier_start": {
+                "utf16": 7399,
+                "line": 195,
+                "column_utf16": 14
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7416,
+                "line": 195,
+                "column_utf16": 31
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7397,
+                "end_utf16_exclusive": 7416,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "toString",
+              "identifier_start": {
+                "utf16": 7417,
+                "line": 195,
+                "column_utf16": 32
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7427,
+                "line": 195,
+                "column_utf16": 42
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7397,
+                "end_utf16_exclusive": 7427,
+                "attributed_target": null
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 7031,
+            "end_utf16_exclusive": 7432,
+            "attributed_identity": null
+          }
+        },
+        {
+          "identity": "com.google.common.base.Strings.commonSuffix(CharSequence a, CharSequence b)",
+          "body_start": {
+            "utf16": 7793,
+            "line": 205,
+            "column_utf16": 69
+          },
+          "body_end_exclusive": {
+            "utf16": 8218,
+            "line": 219,
+            "column_utf16": 4
+          },
+          "call_count": 17,
+          "calls": [
+            {
+              "name": "checkNotNull",
+              "identifier_start": {
+                "utf16": 7799,
+                "line": 206,
+                "column_utf16": 5
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7814,
+                "line": 206,
+                "column_utf16": 20
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "unqualified call has no unique supported same-class static target (for example static import or overload)",
+              "javac_invocation": {
+                "start_utf16": 7799,
+                "end_utf16_exclusive": 7814,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "checkNotNull",
+              "identifier_start": {
+                "utf16": 7820,
+                "line": 207,
+                "column_utf16": 5
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7835,
+                "line": 207,
+                "column_utf16": 20
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "unqualified call has no unique supported same-class static target (for example static import or overload)",
+              "javac_invocation": {
+                "start_utf16": 7820,
+                "end_utf16_exclusive": 7835,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "min",
+              "identifier_start": {
+                "utf16": 7864,
+                "line": 209,
+                "column_utf16": 27
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7891,
+                "line": 209,
+                "column_utf16": 54
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "unqualified call has no unique supported same-class static target (for example static import or overload)",
+              "javac_invocation": {
+                "start_utf16": 7864,
+                "end_utf16_exclusive": 7891,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 7870,
+                "line": 209,
+                "column_utf16": 33
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7878,
+                "line": 209,
+                "column_utf16": 41
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7868,
+                "end_utf16_exclusive": 7878,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 7882,
+                "line": 209,
+                "column_utf16": 45
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7890,
+                "line": 209,
+                "column_utf16": 53
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7880,
+                "end_utf16_exclusive": 7890,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "charAt",
+              "identifier_start": {
+                "utf16": 7944,
+                "line": 211,
+                "column_utf16": 37
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7970,
+                "line": 211,
+                "column_utf16": 63
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7942,
+                "end_utf16_exclusive": 7970,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 7953,
+                "line": 211,
+                "column_utf16": 46
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7961,
+                "line": 211,
+                "column_utf16": 54
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7951,
+                "end_utf16_exclusive": 7961,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "charAt",
+              "identifier_start": {
+                "utf16": 7976,
+                "line": 211,
+                "column_utf16": 69
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8002,
+                "line": 211,
+                "column_utf16": 95
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7974,
+                "end_utf16_exclusive": 8002,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 7985,
+                "line": 211,
+                "column_utf16": 78
+              },
+              "invocation_end_exclusive": {
+                "utf16": 7993,
+                "line": 211,
+                "column_utf16": 86
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 7983,
+                "end_utf16_exclusive": 7993,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "validSurrogatePairAt",
+              "identifier_start": {
+                "utf16": 8031,
+                "line": 214,
+                "column_utf16": 9
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8074,
+                "line": 214,
+                "column_utf16": 52
+              },
+              "expected": "target",
+              "target": {
+                "identity": "com.google.common.base.Strings.validSurrogatePairAt",
+                "declaration_line": 226,
+                "signature": "validSurrogatePairAt(CharSequence string, int index)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8031,
+                "end_utf16_exclusive": 8074,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 8057,
+                "line": 214,
+                "column_utf16": 35
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8065,
+                "line": 214,
+                "column_utf16": 43
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8055,
+                "end_utf16_exclusive": 8065,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "validSurrogatePairAt",
+              "identifier_start": {
+                "utf16": 8086,
+                "line": 215,
+                "column_utf16": 12
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8129,
+                "line": 215,
+                "column_utf16": 55
+              },
+              "expected": "target",
+              "target": {
+                "identity": "com.google.common.base.Strings.validSurrogatePairAt",
+                "declaration_line": 226,
+                "signature": "validSurrogatePairAt(CharSequence string, int index)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 8086,
+                "end_utf16_exclusive": 8129,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 8112,
+                "line": 215,
+                "column_utf16": 38
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8120,
+                "line": 215,
+                "column_utf16": 46
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8110,
+                "end_utf16_exclusive": 8120,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "subSequence",
+              "identifier_start": {
+                "utf16": 8163,
+                "line": 218,
+                "column_utf16": 14
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8202,
+                "line": 218,
+                "column_utf16": 53
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8161,
+                "end_utf16_exclusive": 8202,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 8177,
+                "line": 218,
+                "column_utf16": 28
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8185,
+                "line": 218,
+                "column_utf16": 36
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8175,
+                "end_utf16_exclusive": 8185,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 8193,
+                "line": 218,
+                "column_utf16": 44
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8201,
+                "line": 218,
+                "column_utf16": 52
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8191,
+                "end_utf16_exclusive": 8201,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "toString",
+              "identifier_start": {
+                "utf16": 8203,
+                "line": 218,
+                "column_utf16": 54
+              },
+              "invocation_end_exclusive": {
+                "utf16": 8213,
+                "line": 218,
+                "column_utf16": 64
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 8161,
+                "end_utf16_exclusive": 8213,
+                "attributed_target": null
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 7727,
+            "end_utf16_exclusive": 8218,
+            "attributed_identity": null
+          }
+        },
+        {
+          "identity": "com.google.common.base.Strings.lenientFormat( @Nullable String template, @Nullable Object @Nullable ... args)",
+          "body_start": {
+            "utf16": 10940,
+            "line": 267,
+            "column_utf16": 71
+          },
+          "body_end_exclusive": {
+            "utf16": 12092,
+            "line": 305,
+            "column_utf16": 4
+          },
+          "call_count": 14,
+          "calls": [
+            {
+              "name": "valueOf",
+              "identifier_start": {
+                "utf16": 10964,
+                "line": 268,
+                "column_utf16": 23
+              },
+              "invocation_end_exclusive": {
+                "utf16": 10981,
+                "line": 268,
+                "column_utf16": 40
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 10957,
+                "end_utf16_exclusive": 10981,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "lenientToString",
+              "identifier_start": {
+                "utf16": 11149,
+                "line": 274,
+                "column_utf16": 19
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11173,
+                "line": 274,
+                "column_utf16": 43
+              },
+              "expected": "target",
+              "target": {
+                "identity": "com.google.common.base.Strings.lenientToString",
+                "declaration_line": 308,
+                "signature": "lenientToString(@Nullable Object o)"
+              },
+              "reason": null,
+              "javac_invocation": {
+                "start_utf16": 11149,
+                "end_utf16_exclusive": 11173,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 11312,
+                "line": 279,
+                "column_utf16": 56
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11320,
+                "line": 279,
+                "column_utf16": 64
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11303,
+                "end_utf16_exclusive": 11320,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "indexOf",
+              "identifier_start": {
+                "utf16": 11452,
+                "line": 283,
+                "column_utf16": 39
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11480,
+                "line": 283,
+                "column_utf16": 67
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11443,
+                "end_utf16_exclusive": 11480,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 11555,
+                "line": 287,
+                "column_utf16": 15
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11604,
+                "line": 287,
+                "column_utf16": 64
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11547,
+                "end_utf16_exclusive": 11604,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 11620,
+                "line": 288,
+                "column_utf16": 15
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11637,
+                "line": 288,
+                "column_utf16": 32
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11612,
+                "end_utf16_exclusive": 11637,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 11701,
+                "line": 291,
+                "column_utf16": 13
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11751,
+                "line": 291,
+                "column_utf16": 63
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11693,
+                "end_utf16_exclusive": 11751,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "length",
+              "identifier_start": {
+                "utf16": 11742,
+                "line": 291,
+                "column_utf16": 54
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11750,
+                "line": 291,
+                "column_utf16": 62
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11733,
+                "end_utf16_exclusive": 11750,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 11872,
+                "line": 295,
+                "column_utf16": 15
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11884,
+                "line": 295,
+                "column_utf16": 27
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11864,
+                "end_utf16_exclusive": 11884,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 11900,
+                "line": 296,
+                "column_utf16": 15
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11917,
+                "line": 296,
+                "column_utf16": 32
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11892,
+                "end_utf16_exclusive": 11917,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 11967,
+                "line": 298,
+                "column_utf16": 17
+              },
+              "invocation_end_exclusive": {
+                "utf16": 11979,
+                "line": 298,
+                "column_utf16": 29
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11959,
+                "end_utf16_exclusive": 11979,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 11997,
+                "line": 299,
+                "column_utf16": 17
+              },
+              "invocation_end_exclusive": {
+                "utf16": 12014,
+                "line": 299,
+                "column_utf16": 34
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 11989,
+                "end_utf16_exclusive": 12014,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "append",
+              "identifier_start": {
+                "utf16": 12038,
+                "line": 301,
+                "column_utf16": 15
+              },
+              "invocation_end_exclusive": {
+                "utf16": 12049,
+                "line": 301,
+                "column_utf16": 26
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 12030,
+                "end_utf16_exclusive": 12049,
+                "attributed_target": null
+              }
+            },
+            {
+              "name": "toString",
+              "identifier_start": {
+                "utf16": 12077,
+                "line": 304,
+                "column_utf16": 20
+              },
+              "invocation_end_exclusive": {
+                "utf16": 12087,
+                "line": 304,
+                "column_utf16": 30
+              },
+              "expected": "unknown",
+              "target": null,
+              "reason": "qualified member or external call; receiver/type/overload resolution outside boundary",
+              "javac_invocation": {
+                "start_utf16": 12069,
+                "end_utf16_exclusive": 12087,
+                "attributed_target": null
+              }
+            }
+          ],
+          "javac_declaration": {
+            "start_utf16": 10834,
+            "end_utf16_exclusive": 12092,
+            "attributed_identity": null
+          }
+        }
+      ],
+      "javac_inventory_verified": true
+    }
+  ],
+  "v1_sha256": "6bfdbe6a8c807264a831c11782a6815589acce879374dd3e887fdc221cd5dd56",
+  "compiler": "Eclipse Temurin OpenJDK 17.0.21+9",
+  "compiler_scope": "javac parse-only for Guava; SLF4J all slf4j-api source files attributed with --release 8 -proc:none; target program not run. SourcePositions are UTF-16 end-exclusive.",
+  "freeze_note": "Generated before first analyzer run. Original v1 retained. No wall clock recomputed during deterministic regeneration."
+}

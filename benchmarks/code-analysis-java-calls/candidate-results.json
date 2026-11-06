@@ -1,0 +1,167 @@
+{
+  "product_commit": "d9ab19812a5ccf119a0d7e95e8d89accaa5fb025",
+  "results": [
+    {
+      "project": "slf4j",
+      "revision": "base",
+      "method": "org.slf4j.LoggerFactory.performInitialization()",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 2
+        },
+        "binding": {
+          "correct": 2
+        },
+        "navigation": {
+          "valid_correct": 2
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "base",
+      "method": "org.slf4j.LoggerFactory.bind()",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 13
+        },
+        "binding": {
+          "correct": 7,
+          "explicit_unknown": 6
+        },
+        "navigation": {
+          "valid_correct": 7,
+          "omitted": 6
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "head",
+      "method": "org.slf4j.LoggerFactory.performInitialization()",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 2
+        },
+        "binding": {
+          "correct": 2
+        },
+        "navigation": {
+          "valid_correct": 2
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "head",
+      "method": "org.slf4j.LoggerFactory.bind()",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 19
+        },
+        "binding": {
+          "explicit_unknown": 9,
+          "correct": 10
+        },
+        "navigation": {
+          "omitted": 9,
+          "valid_correct": 10
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "head",
+      "method": "org.slf4j.LoggerFactory.loadExplicitlySpecified(String explicitlySpecified)",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 8
+        },
+        "binding": {
+          "explicit_unknown": 8
+        },
+        "navigation": {
+          "omitted": 8
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "guava",
+      "revision": "head",
+      "method": "com.google.common.base.Strings.commonPrefix(CharSequence a, CharSequence b)",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 11
+        },
+        "binding": {
+          "explicit_unknown": 9,
+          "correct": 2
+        },
+        "navigation": {
+          "omitted": 9,
+          "valid_correct": 2
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "guava",
+      "revision": "head",
+      "method": "com.google.common.base.Strings.commonSuffix(CharSequence a, CharSequence b)",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 17
+        },
+        "binding": {
+          "explicit_unknown": 15,
+          "correct": 2
+        },
+        "navigation": {
+          "omitted": 15,
+          "valid_correct": 2
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "guava",
+      "revision": "head",
+      "method": "com.google.common.base.Strings.lenientFormat( @Nullable String template, @Nullable Object @Nullable ... args)",
+      "caller_matches": 1,
+      "question_coverage": "available",
+      "counts": {
+        "inventory": {
+          "present": 14
+        },
+        "binding": {
+          "explicit_unknown": 13,
+          "correct": 1
+        },
+        "navigation": {
+          "omitted": 13,
+          "valid_correct": 1
+        }
+      },
+      "extra_count": 0
+    }
+  ]
+}

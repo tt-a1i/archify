@@ -1,0 +1,157 @@
+{
+  "product_commit": "7fa882747cda2fc150c120b62a039c6d783d1ccf",
+  "results": [
+    {
+      "project": "slf4j",
+      "revision": "base",
+      "method": "org.slf4j.LoggerFactory.performInitialization()",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 2
+        },
+        "binding": {
+          "omitted": 2
+        },
+        "navigation": {
+          "omitted": 2
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "base",
+      "method": "org.slf4j.LoggerFactory.bind()",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 13
+        },
+        "binding": {
+          "omitted": 13
+        },
+        "navigation": {
+          "omitted": 13
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "head",
+      "method": "org.slf4j.LoggerFactory.performInitialization()",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 2
+        },
+        "binding": {
+          "omitted": 2
+        },
+        "navigation": {
+          "omitted": 2
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "head",
+      "method": "org.slf4j.LoggerFactory.bind()",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 19
+        },
+        "binding": {
+          "omitted": 19
+        },
+        "navigation": {
+          "omitted": 19
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "slf4j",
+      "revision": "head",
+      "method": "org.slf4j.LoggerFactory.loadExplicitlySpecified(String explicitlySpecified)",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 8
+        },
+        "binding": {
+          "omitted": 8
+        },
+        "navigation": {
+          "omitted": 8
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "guava",
+      "revision": "head",
+      "method": "com.google.common.base.Strings.commonPrefix(CharSequence a, CharSequence b)",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 11
+        },
+        "binding": {
+          "omitted": 11
+        },
+        "navigation": {
+          "omitted": 11
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "guava",
+      "revision": "head",
+      "method": "com.google.common.base.Strings.commonSuffix(CharSequence a, CharSequence b)",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 17
+        },
+        "binding": {
+          "omitted": 17
+        },
+        "navigation": {
+          "omitted": 17
+        }
+      },
+      "extra_count": 0
+    },
+    {
+      "project": "guava",
+      "revision": "head",
+      "method": "com.google.common.base.Strings.lenientFormat( @Nullable String template, @Nullable Object @Nullable ... args)",
+      "caller_matches": 0,
+      "question_coverage": "unavailable",
+      "counts": {
+        "inventory": {
+          "omitted": 14
+        },
+        "binding": {
+          "omitted": 14
+        },
+        "navigation": {
+          "omitted": 14
+        }
+      },
+      "extra_count": 0
+    }
+  ]
+}
