@@ -1,4 +1,5 @@
-import { validSourceRange } from './source-range.mjs';
+import { rangeText, validSourceRange } from './source-range.mjs';
+import { createHash } from 'node:crypto';
 // Schema validation checks shape; these checks protect graph identity and
 // references. Keep errors in the same structured format as AJV diagnostics.
 export function semanticErrors(name, data) {
@@ -36,6 +37,18 @@ export function semanticErrors(name, data) {
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     data.functions?.forEach((fn, i) => {
       if ((pythonCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
+      if (fn.definition) {
+        const { kind, sourceRange: range } = fn.definition;
+        const python = ['FunctionDef', 'AsyncFunctionDef'].includes(kind);
+        const slice = rangeText(sourceTexts.get(fn.file), range);
+        if (slice === null || createHash('sha256').update(slice).digest('hex') !== range.sha256
+          || range.line > fn.line || range.endLine !== fn.endLine
+          || (python ? data.repository.language !== 'py' : data.repository.language !== 'java')
+          || (fn.sourceRange && (range.line > fn.sourceRange.line || (range.line === fn.sourceRange.line && range.column > fn.sourceRange.column)
+            || range.endLine !== fn.sourceRange.endLine || range.endColumn !== fn.sourceRange.endColumn))) {
+          add(`/functions/${i}/definition/sourceRange`, 'must match exact captured owned definition extent and digest');
+        }
+      }
     });
     const sourceLines = new Map();
     const functionKey = (file, name, line) => JSON.stringify([file, name, line]);

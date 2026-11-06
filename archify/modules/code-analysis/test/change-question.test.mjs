@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
-import { buildChangeQuestion, captureChangeSide, captureChangeQuestion } from '../lib/change-question.mjs';
+import { buildChangeQuestion, captureChangeSide, captureChangeQuestion, changeEntryLanguage } from '../lib/change-question.mjs';
 import { extractFacts, loadConfig } from '../lib/analysis.mjs';
 import { parseTaskArgs } from '../bin/task.mjs';
 
@@ -26,7 +27,7 @@ function setup(t, a = { 'entry.mjs': source, 'caller.mjs': caller }, b = { 'entr
 }
 function capture(args) {
   const config = loadConfig(null);
-  return { ...args, config, base: captureChangeSide(args.baseRoot, config), head: captureChangeSide(args.root, config) };
+  return { ...args, config, base: captureChangeSide(args.baseRoot, config, changeEntryLanguage(args.entry)), head: captureChangeSide(args.root, config, changeEntryLanguage(args.entry)) };
 }
 function run(args, extra = []) {
   return spawnSync(process.execPath, [cli, 'code-analysis', 'task', '--question', args.question, '--base-root', args.baseRoot, '--root', args.root, '--entry', args.entry, '--format', 'json', ...extra], { encoding: 'utf8' });
@@ -246,4 +247,117 @@ test('dependency navigation requires fresh parseable origin/entry and resolution
   fs.writeFileSync(path.join(args.root, 'entry.mjs'), 'export function selected( {');
   const broken = captureChangeQuestion(args);
   assert.equal(broken.moduleReading.head.resolvedReferences.items[0].navigation.status, 'entry-parse-error');
+});
+
+
+// Expected slices below are authored independently of extractor coordinates.
+const sha = text => createHash('sha256').update(text).digest('hex');
+test('Python paired CLI selects the entry language in mixed roots and compares owned decorator headers', t => {
+  const baseText = 'from external import decorate\n\n@decorate("old")\ndef selected():\n    return helper()\n\ndef helper():\n    return 1\n';
+  const headText = baseText.replace('@decorate("old")', '@decorate("new")');
+  const args = { ...setup(t, { 'entry.py': baseText, 'other.mjs': source, 'more.ts': source }, { 'entry.py': headText, 'other.mjs': source, 'more.ts': source }), entry: 'entry.py' };
+  const r = run(args); assert.equal(r.status, 0, r.stderr);
+  const brief = JSON.parse(r.stdout), change = brief.changedDefinitions.items[0];
+  assert.equal(brief.language, 'py'); assert.equal(brief.changedDefinitions.total, 1);
+  assert.equal(brief.comparison.bindingAttribution, 'source-import-model-only');
+  assert.equal(brief.sides.base.snapshot.language, 'py');
+  assert.equal(brief.sides.head.snapshot.language, 'py');
+  assert.equal(brief.sides.base.analysisConfigDigest, brief.sides.head.analysisConfigDigest);
+  assert.equal(brief.sides.base.resolution.coverage, 'not-applicable');
+  assert.equal(brief.sides.base.resolution.model, 'captured-source-import-resolution');
+  assert.equal(brief.sides.base.resolution.inputs, undefined);
+  assert.equal(brief.fileChanges.total, 1);
+  assert.deepEqual(change.base.definition.sourceRange, { line: 3, column: 1, endLine: 5, endColumn: 20, sha256: sha('@decorate("old")\ndef selected():\n    return helper()') });
+  assert.equal(change.base.definition.line, 4); assert.equal(change.head.definition.line, 4);
+  assert.equal(change.base.definition.kind, 'FunctionDef');
+  assert.equal(change.head.knownReferences.coverage, 'available');
+  assert.equal(change.head.unresolvedWithinSourceRange.total, 1); // owned decorator call
+  assert.equal(change.head.unresolvedWithinSourceRange.items[0].fact.line, 3);
+  const outgoing = brief.outgoingImports.head.items[0];
+  assert.equal(outgoing.fact.specifier, 'external');
+  assert.equal(outgoing.originStatus, 'valid'); assert.equal(outgoing.side, 'head');
+  assert.equal(outgoing.targetNavigation.location, null);
+  assert.equal(outgoing.targetNavigation.status, 'external-or-unresolved');
+  assert.ok(outgoing.targetNavigation.reason);
+});
+
+test('Python direct-name references keep def-start identity separate from paired header extent', t => {
+  const a = 'def selected():\n    return 1\n\ndef caller():\n    return selected()\n';
+  const args = { ...setup(t, { 'entry.py': a }, { 'entry.py': a.replace('return 1', 'return 2') }), entry: 'entry.py' };
+  const changed = captureChangeQuestion(args).changedDefinitions.items[0];
+  assert.equal(changed.base.knownReferences.total, 1);
+  assert.equal(changed.base.knownReferences.items[0].fact.target.line, changed.base.definition.line);
+  assert.equal(changed.base.knownReferences.items[0].fact.target.column, changed.base.definition.column);
+  assert.equal(changed.base.knownReferences.items[0].navigation.location.line, 5);
+});
+
+test('Java paired headers have exact same-line ranges and call totals remain unavailable', t => {
+  const a = 'class Entry { public int selected() { return 1; } int other() { return 2; } }\n';
+  const b = a.replace('public int selected', 'private int selected');
+  const args = { ...setup(t, { 'Entry.java': a }, { 'Entry.java': b }), entry: 'Entry.java' };
+  const brief = captureChangeQuestion(args), change = brief.changedDefinitions.items[0];
+  assert.equal(brief.status, 'ready'); assert.equal(brief.changedDefinitions.total, 1);
+  assert.equal(change.base.definition.kind, 'methodDeclaration');
+  const expected = 'public int selected() { return 1; }';
+  assert.deepEqual(change.base.definition.sourceRange, { line: 1, column: a.indexOf(expected) + 1, endLine: 1, endColumn: a.indexOf(expected) + expected.length + 1, sha256: sha(expected) });
+  assert.equal(brief.positionOnlyDefinitions.total, 1);
+  for (const side of ['base', 'head']) for (const field of ['knownReferences', 'unresolvedWithinSourceRange']) {
+    assert.equal(change[side][field].coverage, 'unavailable');
+    assert.equal(change[side][field].total, null); assert.equal(change[side][field].omitted, null);
+    assert.equal(change[side][field].reason, 'unsupported-or-unknown-call-model');
+  }
+});
+
+test('non-TS historical missing metadata and incorrect hashes stay partial without line-only guesses', t => {
+  const args = { ...setup(t, { 'entry.py': 'def selected():\n    return 1\n' }, { 'entry.py': 'def selected():\n    return 2\n' }), entry: 'entry.py' };
+  const captured = capture(args);
+  delete captured.base.facts.functions[0].definition;
+  let brief = buildChangeQuestion(captured);
+  assert.equal(brief.status, 'partial'); assert.equal(brief.changedDefinitions.total, 0);
+  assert.equal(brief.definitionCoverage.base, 'definition-regions-unavailable');
+  assert.equal(brief.unavailableDefinitions.base.items[0].reason, 'definition-metadata-unavailable');
+  assert.equal(brief.unpairedDefinitions.items[0].reason, 'counterpart-unavailable');
+  const invalid = capture(args);
+  invalid.head.facts.functions[0].definition.sourceRange.sha256 = '0'.repeat(64);
+  brief = buildChangeQuestion(invalid);
+  assert.equal(brief.changedDefinitions.total, 0); assert.equal(brief.status, 'partial');
+  assert.equal(brief.unavailableDefinitions.head.items[0].reason, 'definition-metadata-invalid');
+});
+
+test('non-TS captures preserve stale/parse/missing coverage and reject mismatched capture provenance', t => {
+  const a = 'def selected():\n    return 1\n';
+  const args = { ...setup(t, { 'entry.py': a }, { 'entry.py': a.replace('return 1', 'return 2') }), entry: 'entry.py' };
+  const captured = capture(args);
+  fs.appendFileSync(path.join(args.root, 'entry.py'), '# drift\n');
+  assert.equal(buildChangeQuestion(captured).definitionCoverage.head, 'changed');
+  assert.equal(buildChangeQuestion(captured).status, 'partial');
+  fs.unlinkSync(path.join(args.root, 'entry.py'));
+  assert.equal(buildChangeQuestion(captured).definitionCoverage.head, 'missing');
+  fs.writeFileSync(path.join(args.root, 'entry.py'), 'def broken(\n');
+  assert.equal(captureChangeQuestion(args).definitionCoverage.head, 'parse-error');
+  assert.equal(captureChangeQuestion({ ...args, entry: 'missing.py' }).status, 'partial');
+  const wrong = capture(args); wrong.head.facts.callModel = 'future-model';
+  assert.throws(() => buildChangeQuestion(wrong), /call models must match/);
+  wrong.head.facts.callModel = wrong.base.facts.callModel; wrong.head.configDigest = 'different';
+  assert.throws(() => buildChangeQuestion(wrong), /same analysis configuration/);
+});
+
+test('non-TS duplicate slots and bounded outgoing imports keep uncertainty and original records', t => {
+  const defs = 'def repeated():\n    return 1\ndef repeated():\n    return 2\n';
+  const imports = Array.from({ length: 43 }, (_, n) => `import external_${n}\n`).join('');
+  const args = { ...setup(t, { 'entry.py': imports + defs }, { 'entry.py': imports + defs.replace('return 1', 'return 3') }), entry: 'entry.py' };
+  const captured = capture(args), brief = buildChangeQuestion(captured);
+  assert.equal(brief.changedDefinitions.total, 0); assert.equal(brief.unpairedDefinitions.total, 4);
+  assert.ok(brief.unpairedDefinitions.items.every(item => item.reason === 'duplicate-slot'));
+  assert.equal(brief.outgoingImports.base.total, 43); assert.equal(brief.outgoingImports.base.included, 40); assert.equal(brief.outgoingImports.base.omitted, 3);
+  for (const record of brief.outgoingImports.base.items) assert.deepEqual(record.fact, captured.base.facts.imports[record.factIndex]);
+});
+
+test('paired mode rejects unsupported suffixes and invalid entry paths before capture', t => {
+  const args = setup(t);
+  for (const entry of ['entry.pyi', 'Entry.kt', 'entry.txt', '../entry.py', '/tmp/entry.py', './entry.py', 'folder/../entry.java', 'folder\\entry.py']) {
+    const r = run({ ...args, entry }, ['--json']);
+    assert.equal(r.status, 2, entry + r.stderr);
+    assert.equal(JSON.parse(r.stdout).diagnostics[0].code, 'task/entry-invalid', entry);
+  }
 });

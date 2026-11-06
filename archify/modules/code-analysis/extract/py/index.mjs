@@ -12,7 +12,7 @@ import { describeRepository } from '../shared/git.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 7;
+export const REVISION = 8;
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'extract.py');
 const PY_EXT = /\.py$/;

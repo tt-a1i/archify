@@ -26,7 +26,7 @@ import sys
 import tokenize
 from ast_walk import AnalysisVisitor, analysis_children
 from loader_bindings import standard_loader_calls
-from calls import collect_calls, source_range
+from calls import collect_calls, source_range, source_lines
 
 
 def line_count(text):
@@ -324,6 +324,28 @@ def _measure(func):
 
 def functions(tree, text):
     out = []
+    # Token columns are Unicode character offsets; AST columns are UTF-8 bytes.
+    # In particular, a parenthesized decorator's AST starts after its opening
+    # parentheses, potentially on another line. Find the owning @ token instead.
+    decorator_tokens = []
+    for token in tokenize.generate_tokens(io.StringIO(text.replace('\r\n', '\n').replace('\r', '\n')).readline):
+        if token.type == tokenize.OP and token.string == '@' and not token.line[:token.start[1]].strip():
+            decorator_tokens.append(token)
+
+    def definition(node):
+        start = node
+        if node.decorator_list:
+            first = node.decorator_list[0]
+            lines, _ = source_lines(text)
+            candidates = [token for token in decorator_tokens
+                          if len(lines[token.start[0] - 1][:token.start[1]].encode('utf-8')) == node.col_offset
+                          and (token.start[0], len(lines[token.start[0] - 1][:token.start[1]].encode('utf-8'))) <= (first.lineno, first.col_offset)]
+            token = candidates[-1]
+            start = ast.Constant(value=None)
+            start.lineno, column = token.start
+            start.col_offset = len(lines[start.lineno - 1][:column].encode('utf-8'))
+            start.end_lineno, start.end_col_offset = node.end_lineno, node.end_col_offset
+        return {"kind": type(node).__name__, "sourceRange": source_range(start, text)}
 
     def walk(node, prefix):
         for child in analysis_children(node):
@@ -334,6 +356,7 @@ def functions(tree, text):
                     "name": child.name, "qualname": qualname, "line": child.lineno,
                     "endLine": getattr(child, "end_lineno", None) or child.lineno,
                     "sourceRange": source_range(child, text),
+                    "definition": definition(child),
                     "complexity": m["complexity"], "nesting": m["nesting"], "deepestLine": m["deepest"],
                 })
                 walk(child, qualname + ".<locals>.")
