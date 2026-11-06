@@ -88,3 +88,74 @@ The tool checks file identities and locates captured facts; the host Agent owns
 semantic interpretation. Report the analyzed revision and working-tree state.
 A single run is neither independent validation nor an accuracy/cost benchmark.
 A semantic explanation does not authorize implementing its proposed changes.
+
+## Change questions
+
+For two existing JS/TS source roots, prepare a fresh pair from the `archify/`
+package directory:
+
+```sh
+node bin/archify.mjs code-analysis task \
+  --question "How did language selection change?" \
+  --base-root /path/to/base --root /path/to/head \
+  --entry extract/index.mjs --format json --out /path/to/review/change.json
+```
+
+The output must be outside both roots. This path uses installed analyzer
+dependencies and reads source without running the target application or changing
+checkouts. Both sides use the current TS extractor and one effective analysis
+configuration (defaults, or one `--config` merged with defaults using the usual
+analysis-config rules). It accepts uncommitted files; Git metadata is background,
+while each snapshot digest identifies captured text. Existing analysis directories,
+finding/verify options and `--function` are separate modes.
+
+Read the orientation before following locations:
+
+- `fileChanges` covers captured JS/TS files across both roots. Added/deleted files
+  are normal results. Documents, excluded files and other languages remain outside
+  this signal. `changedDefinitions`, `positionOnlyDefinitions` and
+  `unpairedDefinitions` focus on the entry file; known references search all
+  captured sources. An entry present on one side is supported.
+  `definitionCoverage` reports each side explicitly. Captured declaration files
+  have `declaration-file-unsupported` coverage and partial/exit 1; an available
+  implementation file with zero measured functions is a different result.
+- `moduleReading` is separate from function calls: each side lists captured,
+  resolved imports/re-exports whose destination is the entry. Read the original
+  fact's `kind`, `typeOnly` and `lazy` flags (absent flags mean false). These are
+  dependency reading locations, not proof that a function executes or behavior
+  is affected. `factIndex` addresses that side/snapshot's imports array. Navigation
+  requires valid origin/entry source and unchanged resolution inputs; configuration
+  differences retain the same binding-attribution limit. The unresolved-import
+  count covers all captured sources, whose destinations cannot be assigned to
+  this entry. Zero resolved references does not establish zero consumers.
+- A unique file + qualified name + syntax-kind slot is a reading pair, not an
+  enduring entity ID. Text differences include formatting and do not prove
+  behavior changes. Equal function text with shifted positions is separate.
+  Renames/moves are shown as unpaired or deleted/added, never inferred by name or
+  similarity. Duplicate slots stay unpaired.
+- Each side records source freshness, parse failures, compiler options and a
+  digest of actually read configuration/package inputs. Root-relative options
+  are normalized for comparison; extended configs and package metadata are
+  included. `comparison.resolutionChanges` lists changed options with their values
+  and changed configuration/package paths with per-side hashes, separately from
+  source-file changes. Differences set `bindingAttribution: limited`: explain them before
+  attributing changed bindings to source alone. Even irrelevant config-text edits
+  conservatively trigger this limit. Added source candidates can change bindings
+  with identical configuration.
+- Parse failures or source drift produce `status: partial` and exit 1, retaining
+  valid regions; this exit describes capture/configuration limits, not a finding
+  gate failure. Affected definitions have no trusted locations. Original call
+  `fact` records are captured evidence; use `knownReferences.items[].navigation`
+  only when valid. Coordinates and factIndex belong to that item's side and
+  snapshot. No saved raw-facts directory is produced by this mode; the selected
+  records are embedded. Resolution-input drift suppresses call navigation.
+- Lists include total/included/omitted and are capped at 40. Read relevant source
+  beyond the cap. `unresolvedWithinSourceRange` includes nested closures;
+  supported lexical references do not establish runtime callers, complete impact
+  or risk. Freshness checks are bounded observations, not an atomic two-tree
+  snapshot or a promise of future re-resolution.
+
+Continue with **Trace**, **Check**, and **Deliver** above. In particular, read the
+actual caller and relevant branches on both sides, then distinguish source-backed
+interpretation from executed behavior. Completion requires a short analysis with
+source references and named unknowns, not merely this orientation JSON.

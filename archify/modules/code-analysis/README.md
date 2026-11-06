@@ -33,6 +33,9 @@ working tree; the page uses the same logic through the server.
 requiring a finding: source identity, direct imports and bounded call evidence.
 The host Agent then follows [the function analysis workflow](docs/FUNCTION-ANALYSIS.md)
 to answer the question from source. The CLI output is an intermediate reading aid.
+Adding `--base-root` with a required `--entry` prepares a fresh before/after source
+comparison, including separate call and module-reading references and explicit
+coverage limits. See [change questions](docs/FUNCTION-ANALYSIS.md#change-questions).
 
 From the `archify/` package directory:
 
