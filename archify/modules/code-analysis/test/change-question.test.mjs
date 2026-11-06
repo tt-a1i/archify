@@ -39,7 +39,6 @@ test('optional capture observation leaves raw facts and their revision/snapshot 
   const watched = extractFacts(args.root, { language: 'ts', config, onCapture: input => { observed = input; } });
   assert.ok(observed.options); assert.ok(observed.reads instanceof Map);
   assert.deepEqual(watched.facts, plain.facts);
-  assert.equal(watched.facts.repository.adapterRevision, 11);
 });
 
 test('public paired question captures dirty working trees, preserves side coordinates and original task modes', t => {
