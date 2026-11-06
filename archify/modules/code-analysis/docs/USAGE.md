@@ -196,6 +196,43 @@ With `--root`, the cited code is compared with the current working tree and the 
 
 The contract is `schemas/ai-task.schema.json`; examples for each finding kind and evidence status are in `test/fixtures/tasks/`.
 
+### Investigate a source question
+
+To investigate a JS/TS function or feature without a finding:
+
+```sh
+node bin/archify.mjs code-analysis task .analysis --question "How does this function validate its input?" --entry src/validate.mjs --function validate --root "/path/to/project" --format json --out question.json --json
+```
+
+Entries may be `.js`, `.mjs`, `.cjs`, `.jsx`, `.ts`, `.mts`, `.cts` or `.tsx`; `.d.ts`, `.d.mts` and `.d.cts` declaration files are rejected because their call bodies are not captured. Use an existing analysis directory when available; omitting it keeps missing facts explicit. `--function` is optional and accepts a captured name or qualified name. The output records entry/source identity, direct import freshness, captured and indexed scope, and up to 40 calls in the selected source range. Inspect `calls.coverage`, `total` and `omitted`: unavailable coverage has a null total; a captured zero only means no collected CallExpressions in that range. The JSON receipt repeats call coverage so it remains visible with `--json`.
+
+Changed or unavailable entry facts and entry parse errors return exit 1. A usable entry returns exit 0 even when call coverage is unavailable; the output remains `orientation-only`. Neither code means the semantic question has been answered. Call targets describe supported lexical bindings, with separate source-freshness checks, not runtime execution or complete impact. The host Agent completes the [function analysis workflow](FUNCTION-ANALYSIS.md), reading current source and verifying consequential claims before delivering an answer. Finding export and verification options remain separate from question mode.
+
+### Investigate a changed source file
+
+With analyzer dependencies already installed, capture two JS/TS roots using the
+current extractor and one analysis configuration:
+
+```sh
+node bin/archify.mjs code-analysis task --question "Which source paths changed?" --base-root "/path/to/base" --root "/path/to/head" --entry src/validate.mjs --format json --out "/path/to/review/change.json" --json
+```
+
+`--entry` is required. The output must be outside both roots. This mode accepts
+uncommitted sources; it reads files without executing the target application. It
+compares text/function locations, records lexical call references and keeps module
+import references separate. It does not use an existing analysis directory or
+accept `--function`. Optional `--config` applies one analysis configuration to both
+sides; observed compiler/package differences limit binding attribution.
+
+The receipt reports per-side `definitionCoverage` and any incomplete-coverage
+reasons. Parse/freshness failures, unsupported declaration entries or different
+resolution settings produce partial/exit 1. Lists expose their own omissions;
+ready/exit 0 means usable orientation, not complete impact or zero omissions. No
+saved raw-facts directory is produced. Follow the [change-question workflow](FUNCTION-ANALYSIS.md#change-questions)
+to explain behavior from source and project checks. Automatic entry selection,
+JSON inventory and a semantic diff are not provided by this mode.
+
+
 ### From the analysis page
 
 Open a priority finding or a component's finding, read the captured code excerpt, then click **Copy task for AI**. One click prepares the complete brief and copies it, without requiring you to open its preview. Paste it into the coding AI working on this project. **Task preview and download** provides the full preview, **Copy AI task**, **Download .md** and **Check again**. Copy and download refresh the task first when the local service is available. If clipboard access is unavailable, the preview opens and selects the text for manual copying.

@@ -22,6 +22,17 @@ The server serves the diagram on a loopback address with a Code Analysis button.
 
 `archify code-analysis task` (`bin/task.mjs`) builds an AI optimization task from a finished run's `findings.json` and `raw-facts.json` (`lib/task.mjs`) and optionally checks its evidence against the working tree (`lib/evidence.mjs`).
 
+With `--question`, it instead prepares single-entry source orientation without requiring a finding (`lib/explain.mjs`, `lib/question-calls.mjs`). This mode checks captured source identity, direct imports and supported call locations, then points to the host Agent's [function analysis workflow](docs/FUNCTION-ANALYSIS.md). It does not run semantic analysis or execute the analyzed project.
+
+With `--base-root`, the question path freshly captures both JS/TS roots with the
+current extractor and one analysis configuration (`lib/change-question.mjs`). An
+optional extraction observer exposes effective compiler options and resolution
+reads for comparison and freshness checks; raw facts and revision 9 are unchanged.
+The required entry selects function text/position pairs, lexical call references
+and separate module-import reading locations. Declaration coverage remains explicit.
+Neither text pairing nor references prove runtime impact. This path does not save
+a raw-facts directory, infer renames or choose changed entries automatically.
+
 ## Analysis pipeline
 
 `lib/analysis.mjs` coordinates four stages:
@@ -32,6 +43,20 @@ The server serves the diagram on a loopback address with a Code Analysis button.
 4. **Build the analysis view** (`overlay/inject.mjs`): map authored components to code modules using source references or an explicit mapping, then add findings and source navigation to a copy of the delivered page.
 
 The orchestrator validates intermediate data against JSON schemas. It also checks that supplied raw facts and module graph data agree on repository metadata, file ownership, and dependency aggregates.
+
+For the conditional-null boundary in exact in-root JavaScript package imports/self exports, a bounded snapshot-backed selector preserves blocked, no-match, invalid, selected and unsupported outcomes before the usual source-boundary checks. It is not a Node loader; unsupported affected forms remain unknown. TypeScript/type-only resolution and unrelated keys retain their existing policy; see [Module resolution](docs/TECH-GUIDE.md#module-resolution).
+
+## JS/TS call facts
+
+The JS/TS adapter records `CallExpression` sites from parse-valid, non-declaration files. `callModel: "js-ts-lexical-v2"` explicitly identifies this coverage; an empty array without a recognized model does not establish that calls were collected. Adapter revisions identify extraction changes and are not capability flags. Python and Java do not emit this call model.
+
+The existing TypeScript checker supplies conservative lexical bindings: a unique ordinary function declaration with a body, a direct `const` arrow/function-expression initializer, or a relative static named import to a direct captured export of one of those forms. The v2 model also binds relative default imports (including `default as`) to direct default function declarations, named or anonymous, with exactly one implementation body. Import aliases and lexical shadowing are respected. Each target is tied to a measured function in captured source. Namespace/package imports, default export expressions, local export aliases, re-exports, mutable or wrapped initializers, member/dynamic dispatch and optional calls remain unresolved. Constructors and tagged templates are not collected. Records can include calls inside nested functions; neither a target nor a zero count establishes execution, reachability or complete impact.
+
+Parameter-default calls remain unresolved when the checker reports a declaration inside that same function's body: the body scope is unavailable to the initializer. This includes destructuring defaults and closures created in an initializer. Valid outer/import bindings and declarations within initializer-created function scopes retain their usual resolution; the adapter does not attempt to rebind a rejected body target to an outer declaration.
+
+Call and target positions are one-based UTF-16 coordinates; call ends are exclusive. Chained calls can share a start and have different ends. Semantic checks verify source bounds, measured functions and recorded static import edges, without rerunning binding analysis. `symbols` retains Python binding-order semantics; `unresolved` counters still count imports. Module graphs, rules, finding tasks and the UI do not consume the call records. Question orientation reads up to 40 records in the selected source range, including nested bodies, and reports total/included/omitted counts. Missing or unknown call models leave coverage unavailable, even for a numerically familiar adapter revision. Original facts stay intact; current navigation requires matching source text and no parse errors, checked separately for imported targets. These checks do not re-resolve imports after configuration or other source changes.
+
+Question orientation explicitly supports both v1 and v2 and reports their different binding coverage. The v1 model excludes default imports; it keeps its original facts when read by the newer consumer. A v1-only question consumer treats v2 as unavailable rather than assuming the newer contract. Historical empty arrays remain valid in the updated schema. Older strict schemas reject the additional `callModel` field, so consumers need the updated schema to read new captures. A reader must also account for parse errors, excluded files and declaration files before interpreting call coverage.
 
 ## Current findings and presentation
 

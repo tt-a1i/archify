@@ -40,6 +40,148 @@ function python(root, code) {
   assert.fail('Python interpreter unavailable');
 }
 
+test('Python imports choose a regular package before its sibling module within one search root', (t) => {
+  const { facts } = analyze(t, {
+    'pkg/__init__.py': '',
+    'pkg/consumer.py': [
+      'from pkg.provider import value',
+      'from .provider import value',
+      'from .ordinary import value',
+      'import earlier',
+    ].join('\n'),
+    'pkg/provider/__init__.py': 'value = 1',
+    'pkg/provider.py': 'value = 2',
+    'pkg/ordinary.py': 'value = 3',
+    'pkg/ordinary/child.py': '',
+    'earlier.py': '',
+    'src/earlier/__init__.py': '',
+  });
+  const imports = facts.imports.filter((edge) => edge.from === 'pkg/consumer.py' && !edge.implicit);
+  assert.deepEqual(imports.map((edge) => edge.to), [
+    'pkg/provider/__init__.py', 'pkg/provider/__init__.py', 'pkg/ordinary.py', 'earlier.py',
+  ]);
+});
+
+test('Python dotted imports cannot cross a parent module or a different regular package', (t) => {
+  const { root, facts } = analyze(t, {
+    'app.py': 'import plain.child\nimport regular.child\nimport nested.mod.child\nimport later.child\n',
+    'plain.py': '', 'plain/child.py': '',
+    'regular/__init__.py': '', 'src/regular/child.py': '',
+    'nested/__init__.py': '', 'nested/mod.py': '', 'nested/mod/child.py': '',
+    'later/child.py': '', 'src/later/__init__.py': '', 'src/later/child.py': '',
+  });
+  // This executes only empty, test-authored modules, using the adapter's declared roots.
+  const actual = python(root, `import sys, os, importlib, json
+sys.path = [os.getcwd(), os.path.join(os.getcwd(), 'src')]
+result = []
+for name in ['plain.child', 'regular.child', 'nested.mod.child', 'later.child']:
+    try:
+        result.append(os.path.relpath(importlib.import_module(name).__file__).replace(os.sep, '/'))
+    except ModuleNotFoundError:
+        result.append(None)
+print(json.dumps(result))`);
+  assert.equal(actual.status, 0, actual.stderr);
+  const expected = [null, null, null, 'src/later/child.py'];
+  assert.deepEqual(JSON.parse(actual.stdout), expected);
+  const declared = facts.imports.filter(edge => edge.from === 'app.py' && !edge.implicit);
+  assert.deepEqual(declared.map(edge => edge.to ?? null), expected);
+  assert.deepEqual(declared.map(edge => edge.resolved), [false, false, false, true]);
+  assert.equal(facts.unresolved.unknown, 3);
+  assert.equal(facts.unresolved.external, 0);
+});
+
+test('Python absolute namespace imports search every portion until a regular package wins', (t) => {
+  const { root, facts } = analyze(t, {
+    'app.py': 'from ns import left, right\nimport ns.right\nfrom ns.deep import child\nfrom ns import absent\n',
+    'ns/left.py': '', 'src/ns/right.py': '',
+    'ns/deep/child.py': '', 'src/ns/deep/__init__.py': '', 'src/ns/deep/child.py': '',
+    'ns/relative.py': 'from . import left\n',
+  });
+  const actual = python(root, `import sys, os, json
+sys.path = [os.getcwd(), os.path.join(os.getcwd(), 'src')]
+from ns import left, right
+from ns.deep import child
+print(json.dumps([os.path.relpath(m.__file__).replace(os.sep, '/') for m in [left, right, child]]))`);
+  assert.equal(actual.status, 0, actual.stderr);
+  assert.deepEqual(JSON.parse(actual.stdout), ['ns/left.py', 'src/ns/right.py', 'src/ns/deep/child.py']);
+  const declared = facts.imports.filter(edge => edge.from === 'app.py' && !edge.implicit);
+  assert.deepEqual(declared.map(edge => [edge.specifier, edge.to]), [
+    ['ns.left', 'ns/left.py'], ['ns.right', 'src/ns/right.py'],
+    ['ns.right', 'src/ns/right.py'], ['ns.deep.child', 'src/ns/deep/child.py'],
+    ['ns.absent', undefined],
+  ]);
+  assert.equal(facts.unresolved.unknown, 1);
+  assert.equal(facts.imports.find(edge => edge.from === 'ns/relative.py').to, 'ns/left.py');
+});
+
+test('Python relative namespace imports use every package portion in search order', (t) => {
+  const { root, facts } = analyze(t, {
+    'ns/read_root.py': 'from . import right as selected\n',
+    'src/ns/read_src.py': 'from . import left as selected\n',
+    'ns/inner/read_parent.py': 'from .. import right as selected\n',
+    'ns/read_deep.py': 'from .deep import child as selected\n',
+    'src/ns/read_order.py': 'from . import dep as selected\n',
+    'ns/left.py': '', 'src/ns/right.py': '',
+    'ns/deep/child.py': '', 'src/ns/deep/__init__.py': '', 'src/ns/deep/child.py': '',
+    'ns/dep.py': '', 'src/ns/dep/__init__.py': '',
+  });
+  const selected = [
+    ['ns.read_root', 'ns/read_root.py', '.right', 'src/ns/right.py'],
+    ['ns.read_src', 'src/ns/read_src.py', '.left', 'ns/left.py'],
+    ['ns.inner.read_parent', 'ns/inner/read_parent.py', '..right', 'src/ns/right.py'],
+    ['ns.read_deep', 'ns/read_deep.py', '.deep.child', 'src/ns/deep/child.py'],
+    ['ns.read_order', 'src/ns/read_order.py', '.dep', 'ns/dep.py'],
+  ];
+  const actual = python(root, `import sys, os, importlib, json
+sys.path = [os.getcwd(), os.path.join(os.getcwd(), 'src')]
+names = ${JSON.stringify(selected.map(row => row[0]))}
+print(json.dumps([os.path.relpath(importlib.import_module(name).selected.__file__).replace(os.sep, '/') for name in names]))`);
+  assert.equal(actual.status, 0, actual.stderr);
+  assert.deepEqual(JSON.parse(actual.stdout), selected.map(row => row[3]));
+  for (const [, from, specifier, to] of selected) {
+    const edge = facts.imports.find(item => item.from === from && !item.implicit);
+    assert.equal(edge.to, to, from);
+    assert.equal(edge.specifier, specifier, from);
+  }
+});
+
+test('Python relative namespace lookup preserves regular and analyzed-root package boundaries', (t) => {
+  const { facts } = analyze(t, {
+    'pkg/__init__.py': '', 'pkg/read.py': 'from . import sibling\n',
+    'src/pkg/sibling.py': '',
+    'src/__init__.py': '', 'src/ns/read.py': 'from . import sibling\n',
+    'src/ns/sibling.py': '', 'ns/sibling.py': '',
+  });
+  const ordinary = facts.imports.find(edge => edge.from === 'pkg/read.py' && !edge.implicit);
+  assert.equal(ordinary.to, 'pkg/__init__.py');
+  assert.deepEqual(ordinary.names, ['sibling'], 'an initializer edge does not establish that the attribute exists');
+  assert.equal(facts.imports.find(edge => edge.from === 'src/ns/read.py' && !edge.implicit).to, 'src/ns/sibling.py');
+  const rootPackage = analyze(t, {
+    '__init__.py': '', 'ns/read.py': 'from . import sibling\n',
+    'ns/sibling.py': '', 'src/ns/sibling.py': '',
+  }).facts;
+  assert.equal(rootPackage.imports.find(edge => edge.from === 'ns/read.py' && !edge.implicit).to, 'ns/sibling.py');
+});
+
+test('Python keeps imports and function measurements inside long arithmetic expressions', (t) => {
+  const terms = Array(1400).fill('value').join(' + ');
+  const { facts } = analyze(t, {
+    'formula.py': [
+      'def total(value, flag):',
+      `    return (__import__("left").value if flag else value) + ${terms} + __import__("right").value`,
+    ].join('\n'),
+    'left.py': 'value = 1',
+    'right.py': 'value = 2',
+    'caller.py': 'from formula import total',
+  });
+  const inside = facts.imports.filter((edge) => edge.from === 'formula.py');
+  assert.deepEqual(inside.map((edge) => [edge.to, edge.lazy, Boolean(edge.conditional)]), [
+    ['left.py', true, true], ['right.py', true, false],
+  ]);
+  assert.equal(facts.functions.find((fn) => fn.qualname === 'total').complexity, 2);
+  assert.ok(facts.imports.some((edge) => edge.from === 'caller.py' && edge.to === 'formula.py'));
+});
+
 test('Python TYPE_CHECKING aliases stay as structural edges, never runtime-cycle errors', (t) => {
   for (const [header, guard] of [
     ['from typing import TYPE_CHECKING', 'TYPE_CHECKING'],
@@ -69,6 +211,19 @@ test('Python TYPE_CHECKING else branch is runtime, unknown guards are conditiona
   assert.equal(facts.imports.find((e) => e.to === 'b.py').typeOnly, true);
   assert.equal(facts.imports.find((e) => e.to === 'c.py').typeOnly, undefined);
   assert.equal(facts.imports.find((e) => e.to === 'd.py').conditional, true);
+});
+
+test('Python match evaluates its subject before conditionally loading case guards and bodies', (t) => {
+  if (python(os.tmpdir(), 'import sys; print(sys.version_info >= (3, 10))').stdout.trim() !== 'True') return t.skip('requires Python 3.10+');
+  const { facts, cycles } = analyze(t, {
+    'a.py': 'match __import__("subject"):\n    case 1 if __import__("guard"):\n        import b\n',
+    'subject.py': '', 'guard.py': '', 'b.py': 'import a\n',
+  });
+  const loads = facts.imports.filter(edge => edge.from === 'a.py');
+  assert.deepEqual(loads.map(edge => [edge.to, Boolean(edge.conditional)]), [
+    ['subject.py', false], ['guard.py', true], ['b.py', true],
+  ]);
+  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['info', 'deferred']]);
 });
 
 test('Python dynamic and opaque imports inherit function scope; default expressions do not', (t) => {
@@ -149,10 +304,149 @@ test('JavaScript function-scope import() and require are deferred; top-level req
   assert.deepEqual(commonjs.facts.imports.map((e) => Boolean(e.lazy)), [false, true]);
 });
 
+test('CommonJS guarded requires are conditional while the expressions selecting a branch stay eager', (t) => {
+  const entry = [
+    'if (require("./eager.cjs")) require("./guarded.cjs"); else require(name);',
+    'require("./eager.cjs") ? require("./guarded.cjs") : require("./guarded.cjs");',
+    'require("./eager.cjs") && require("./guarded.cjs");',
+    'flag ||= require("./guarded.cjs");',
+    'for (require("./eager.cjs"); require("./eager.cjs"); require("./guarded.cjs")) require("./guarded.cjs");',
+    'for (entry[require("./guarded.cjs")] of require("./eager.cjs")) require("./guarded.cjs");',
+    'while (require("./eager.cjs")) require("./guarded.cjs");',
+    'do { require("./eager.cjs"); } while (false);',
+    'for (;;) { require("./eager.cjs"); break; }',
+    'switch (require("./eager.cjs")) { case require("./eager.cjs"): break; case require("./guarded.cjs"): default: require("./guarded.cjs"); }',
+    'switch (flag) { default: require("./eager.cjs"); }',
+    'try { require("./eager.cjs"); } catch { require("./guarded.cjs"); } finally { require("./eager.cjs"); }',
+  ].join('\n');
+  const { facts, cycles } = analyze(t, {
+    'a.cjs': entry, 'guarded.cjs': 'require("./a.cjs");', 'eager.cjs': '',
+  }, 'ts');
+  const loads = facts.imports.filter(edge => edge.from === 'a.cjs');
+  assert.equal(loads.length, entry.match(/require\(/g).length);
+  for (const edge of loads) {
+    assert.equal(Boolean(edge.conditional), edge.specifier !== './eager.cjs', `line ${edge.line}: ${edge.specifier}`);
+  }
+  assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['info', 'deferred']]);
+});
+
+test('CommonJS optional-chain arguments and computed keys retain their syntactic guard', t => {
+  for (const expression of [
+    'sink?.(require("./b.cjs"));',
+    'sink?.use(require("./b.cjs"));',
+    '({use:sink}).use?.(require("./b.cjs"));',
+    'sink?.[require("./b.cjs")];',
+    'sink?.use[require("./b.cjs")];',
+    '(sink?.use)?.(require("./b.cjs"));',
+  ]) {
+    const { facts, cycles } = analyze(t, { 'a.cjs': expression, 'b.cjs': 'require("./a.cjs");' }, 'ts');
+    assert.equal(facts.imports.find(e => e.from === 'a.cjs').conditional, true, expression);
+    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['info', 'deferred']], expression);
+  }
+  const { facts } = analyze(t, {
+    'a.cjs': 'function load() { return sink?.(require("./b.cjs")); }\nif (flag) (sink?.use)(require("./b.cjs"));\nsink?.(require(name));',
+    'b.cjs': '',
+  }, 'ts');
+  const loads = facts.imports.filter(e => e.from === 'a.cjs');
+  assert.equal(loads[0].lazy, true); assert.equal(loads[0].conditional, true);
+  assert.equal(loads[1].lazy, undefined); assert.equal(loads[1].conditional, true, 'an enclosing if still guards a grouped call');
+  assert.equal(loads[2].conditional, true); assert.equal(facts.unresolved.opaque, 1);
+});
+
+test('CommonJS optional-chain bases and grouped chain breaks remain eager', t => {
+  for (const expression of [
+    'require("./b.cjs");',
+    'require("./b.cjs")?.use;',
+    'require("./b.cjs")?.[key];',
+    '(sink?.use)(require("./b.cjs"));',
+    '(sink?.use)[require("./b.cjs")];',
+  ]) {
+    const { facts, cycles } = analyze(t, { 'a.cjs': expression, 'b.cjs': 'require("./a.cjs");' }, 'ts');
+    const edge = facts.imports.find(e => e.from === 'a.cjs');
+    assert.equal(edge.conditional, undefined, expression); assert.equal(edge.lazy, undefined, expression);
+    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['warning', 'eager']], expression);
+  }
+  const { facts } = analyze(t, { 'a.mjs': 'sink?.(import("./b.mjs"));', 'b.mjs': '' }, 'ts');
+  assert.equal(facts.imports[0].conditional, undefined, 'dynamic import keeps its existing separate deferred contract');
+});
+
 test('TypeScript uses tsconfig path aliases and ignores Python files in explicitly selected TS trees', (t) => {
   const { facts } = analyze(t, { 'a.ts': 'import {b} from "@lib/b";\n', 'lib/b.ts': 'export const b = 1;\n', 'other.py': 'print("not TypeScript")\n', 'tsconfig.json': JSON.stringify({ compilerOptions: { baseUrl: '.', paths: { '@lib/*': ['lib/*'] } } }) }, 'ts');
   assert.equal(facts.imports[0].to, 'lib/b.ts');
   assert.ok(facts.files.every((f) => !f.path.endsWith('.py')));
+});
+
+test('JavaScript package conditions match Node for imports, exports, require and dynamic import', (t) => {
+  const { root, facts } = analyze(t, {
+    'package.json': JSON.stringify({ name: 'condition-fixture', type: 'module',
+      imports: { '#branch': { import: './esm.js', require: './cjs.cjs' } },
+      exports: { '.': { import: './esm.js', require: './cjs.cjs' } } }),
+    'esm.js': 'export const branch = "esm";\n',
+    'cjs.cjs': 'exports.branch = "cjs";\n',
+    'entry.mjs': [
+      'import { branch } from "#branch";',
+      'import { branch as self } from "condition-fixture";',
+      'export { branch } from "#branch";',
+      'import { createRequire } from "node:module";',
+      'const require = createRequire(import.meta.url);',
+      'const required = require("#branch").branch;',
+      'import("#branch").then(m => console.log(JSON.stringify([branch, self, required, m.branch])));',
+    ].join('\n'),
+    'entry.cjs': [
+      'const branch = require("#branch").branch;',
+      'const self = require("condition-fixture").branch;',
+      'import("#branch").then(m => console.log(JSON.stringify([branch, self, m.branch])));',
+    ].join('\n'),
+  }, 'ts');
+  const targets = from => facts.imports.filter(e => e.from === from && e.specifier !== 'node:module').map(e => [e.kind, e.to]);
+  assert.deepEqual(targets('entry.mjs'), [['static', 'esm.js'], ['static', 'esm.js'], ['export', 'esm.js'], ['require', 'cjs.cjs'], ['dynamic', 'esm.js']]);
+  assert.deepEqual(targets('entry.cjs'), [['require', 'cjs.cjs'], ['require', 'cjs.cjs'], ['dynamic', 'esm.js']]);
+  for (const [file, expected] of [['entry.mjs', ['esm', 'esm', 'cjs', 'esm']], ['entry.cjs', ['cjs', 'cjs', 'esm']]]) {
+    const actual = spawnSync(process.execPath, [file], { cwd: root, encoding: 'utf8', timeout: 10000 });
+    assert.equal(actual.status, 0, actual.stderr);
+    assert.deepEqual(JSON.parse(actual.stdout), expected);
+  }
+});
+
+test('TypeScript package conditions follow emitted syntax, package scope and resolution-mode attributes', (t) => {
+  const { facts } = analyze(t, {
+    'package.json': JSON.stringify({ type: 'module', imports: { '#branch': { import: './esm.mjs', require: './cjs.cjs' } } }),
+    'esm.mjs': 'export const branch = 1;\n',
+    'cjs.cjs': 'exports.branch = 2;\n',
+    'entry.ts': 'import { branch } from "#branch";\n',
+    'entry.mts': 'export { branch } from "#branch";\n',
+    'entry.cts': 'import { branch } from "#branch";\nexport { branch } from "#branch";\nimport req = require("#branch");\nimport("#branch");\n',
+    'nested/package.json': '{"type":"commonjs"}',
+    'nested/entry.ts': 'import { branch } from "#branch";\n',
+    'types.mts': 'import type { branch } from "#branch" with { "resolution-mode": "require" };\n',
+    'types.cts': 'import type { branch } from "#branch" with { "resolution-mode": "import" };\n',
+  }, 'ts');
+  const targets = from => facts.imports.filter(e => e.from === from).map(e => e.to);
+  assert.deepEqual(targets('entry.ts'), ['esm.mjs']);
+  assert.deepEqual(targets('entry.mts'), ['esm.mjs']);
+  assert.deepEqual(targets('entry.cts'), ['cjs.cjs', 'cjs.cjs', 'cjs.cjs', 'esm.mjs']);
+  assert.deepEqual(targets('types.mts'), ['cjs.cjs']);
+  assert.deepEqual(targets('types.cts'), ['esm.mjs']);
+  assert.equal(facts.imports.find(e => e.from === 'types.mts').typeOnly, true);
+  assert.deepEqual(targets('nested/entry.ts'), [undefined], 'a nearer package without imports hides the outer imports map');
+});
+
+test('Unavailable and blocked package conditions stay unresolved instead of choosing a different branch', (t) => {
+  const { facts } = analyze(t, {
+    'package.json': JSON.stringify({ type: 'module', imports: {
+      '#only-import': { import: './esm.mjs' },
+      '#only-require': { require: './fallback.cjs' },
+      '#blocked': null,
+    } }),
+    'esm.mjs': 'export const branch = 1;\n',
+    'fallback.cjs': 'exports.branch = 2;\n',
+    'entry.mjs': 'import "#only-import";\nimport "#only-require";\nimport "#blocked";\n',
+    'entry.cjs': 'require("#only-import");\nrequire("#only-require");\nrequire("#blocked");\n',
+  }, 'ts');
+  assert.deepEqual(facts.imports.map(e => [e.from, e.resolved, e.to]), [
+    ['entry.cjs', false, undefined], ['entry.cjs', true, 'fallback.cjs'], ['entry.cjs', false, undefined],
+    ['entry.mjs', true, 'esm.mjs'], ['entry.mjs', false, undefined], ['entry.mjs', false, undefined],
+  ]);
 });
 
 test('Module IDs are unique and deterministic for path, case, root-file and Unicode collisions', (t) => {

@@ -25,15 +25,13 @@ export function parseSources(root, config, consume = unit => unit) {
     }
     files.push({ path: file, sourceText, loc: lineCount(sourceText), role: classifyRole(file, config.roles) });
     if (parse_errors.at(-1)?.path === file) continue;
-    // Java expands Unicode escapes before lexing, including inside comments.
-    // This parser does not: accepting such a file could silently hide real code.
-    if (/\\u+[0-9a-fA-F]{4}/.test(sourceText)) {
-      parse_errors.push({ path: file, message: 'Java Unicode escape preprocessing is not supported; this file was not analyzed.' });
-      continue;
-    }
     let parsed;
     try {
-      parsed = lexAndParse(sourceText);
+      const result = lexAndParse(sourceText);
+      if (sourceText.includes('\\u') && needsUnicodePreprocessing(sourceText, result)) {
+        throw new Error('Java Unicode escape preprocessing is required here; this file was not analyzed.');
+      }
+      parsed = result;
     } catch (error) {
       const message = error.message.replace(/^Sad sad panda, /, '').split('\n').slice(0, 2).join(' ').slice(0, 600);
       parse_errors.push({ path: file, message });
@@ -46,6 +44,26 @@ export function parseSources(root, config, consume = unit => unit) {
     }
   }
   return { files, units, packageMarkers: snapshot.packageMarkers, parse_errors };
+}
+
+// The parser retains literal spellings and original offsets. Escapes inside
+// literals/comments can stay raw only when decoding cannot change their bounds.
+// A decoded backslash can also change the eligibility of the next escape, so
+// leave that case to a future preprocessing pass.
+function needsUnicodePreprocessing(sourceText, parsed) {
+  const spans = [...parsed.cst.comments, ...parsed.tokens.filter(token =>
+    ['StringLiteral', 'CharLiteral', 'TextBlock'].includes(token.tokenType.name))]
+    .sort((a, b) => a.startOffset - b.startOffset);
+  let spanIndex = 0;
+  // Consume pairs of raw backslashes first: their following 'u' is ineligible.
+  for (const escape of sourceText.matchAll(/\\\\|\\u+([0-9a-fA-F]{4})?/g)) {
+    if (escape[0] === '\\\\') continue;
+    if (!escape[1] || /["'\\/*\r\n]/.test(String.fromCharCode(Number.parseInt(escape[1], 16)))) return true;
+    while (spanIndex < spans.length && spans[spanIndex].endOffset < escape.index) spanIndex++;
+    const span = spans[spanIndex];
+    if (!span || span.startOffset > escape.index || span.endOffset < escape.index + escape[0].length - 1) return true;
+  }
+  return false;
 }
 
 // java-parser 3.0.1 reads a member record whose body is also a valid block,

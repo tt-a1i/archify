@@ -152,8 +152,10 @@ test('comparison: reordering first-match config maps or changing the extractor i
 test('comparison: a changed extraction logic revision is not comparable; an unrecorded one is reported once', (t) => {
   const dir = copySource();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const before = run(dir, loadConfig(CONFIG)).findings.analysis;
-  assert.equal(before.adapterRevision, 1, 'findings record the revision of the raw facts');
+  const { facts, findings } = run(dir, loadConfig(CONFIG));
+  assert.equal(findings.analysis.adapterRevision, facts.repository.adapterRevision, 'findings record the revision of the raw facts');
+  // Keep the historical 1-to-2 comparison independent of the installed extractor.
+  const before = { ...findings.analysis, adapterRevision: 1 };
   assert.deepEqual(comparability(before, { ...before }), { comparable: true, reasons: [] });
 
   const revised = comparability(before, { ...before, adapterRevision: 2 });
@@ -182,5 +184,37 @@ test('check: an explicit --compare that cannot be read is an input error, not "n
     fs.writeFileSync(file, text);
     const r = spawnSync(process.execPath, [check, dir, '--language', 'py', '--compare', file, '--new-only', '--json'], { encoding: 'utf8', timeout: 60000 });
     assert.equal(r.status, 2, `${name}: ${r.stdout}${r.stderr}`);
+  }
+});
+
+// Observed on Archify itself: a stable SHA-256 prefix can contain only digits.
+test('comparison: numeric stable hashes retain normal comparison and context checks', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-numeric-id-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  // Keep the observed rule/subject identity, with a small synthetic body that
+  // crosses the reporting threshold. Exercise the producer, not a hand-made id.
+  const file = path.join(root, 'archify/modules/code-analysis/overlay/source-changes.mjs');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `export function sourceChanges(x) {${Array.from({ length: 15 }, (_, i) => `if (x === ${i}) return ${i};`).join('')}return -1;}`);
+  const { facts, config } = extractFacts(root, { language: 'ts' });
+  const previous = evaluateGraph(buildGraph(facts, config), config, facts);
+  const { analysis } = previous;
+  assert.equal(previous.diagnostics.length, 1);
+  const finding = previous.diagnostics[0];
+  assert.equal(finding.id, 'COMP-546883947289');
+  assert.deepEqual(schemaErrors('findings', previous), []);
+  assert.deepEqual(schemaErrors('baseline', { schema_version: 1, accepted: [{ id: finding.id, code: finding.code, reason: 'known signal' }] }), []);
+  const compare = (currentAnalysis, diagnostics = [finding]) => reviewFindings(diagnostics, { previous, analysis: currentAnalysis }).comparison;
+  assert.equal(compare(analysis).comparable, true);
+  assert.equal(compare(analysis).unchanged, 1);
+  assert.deepEqual(compare(analysis).reasons, []);
+  assert.equal(compare(analysis, []).notDetected[0].id, finding.id);
+  assert.deepEqual(compare({ ...analysis, configDigest: 'changed' }).reasons.map(r => r.code), ['config-changed']);
+  delete previous.analysis;
+  assert.equal(compare(analysis).comparable, null, 'stable format does not replace missing analysis context');
+  for (const id of ['COMP-0001', 'COMP-10000']) {
+    previous.diagnostics = [{ ...finding, id }];
+    assert.equal(compare(analysis).comparable, false, 'position ids remain non-comparable');
+    assert.ok(compare(analysis).reasons.some(r => r.code === 'legacy-ids'));
   }
 });

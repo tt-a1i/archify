@@ -113,11 +113,17 @@ Here `require` is a local variable, not the CommonJS loader. Syntax alone cannot
 
 ### Module resolution
 
-`ts.resolveModuleName(specifier, containingFile, options, ts.sys)` resolves `'../shared/cli.mjs'` to an absolute path by Node's rules. Bauify then checks whether that path is inside the analyzed root and in the file set, and classifies the import as resolved / outside / unknown.
+`program.getModeForUsageLocation` determines the resolution mode of each literal import from its syntax, file/package format and compiler options, including explicit type-only `resolution-mode` attributes. That mode is passed to `ts.resolveModuleName` with the captured snapshot host, so supported package `imports` and `exports` maps select the appropriate `import` or `require` condition. In NodeNext mode, dynamic `import()` uses the import condition even inside a CommonJS file; a TypeScript static import emitted as `require` uses the require condition.
+
+The result must be inside the analyzed root and in the selected file set to become a resolved edge. For non-type-only references from `.js`, `.mjs` and `.cjs` files, a declaration selected for a package import or an ESM-mode relative import triggers an implementation lookup. This uses TypeScript's internal `noDtsResolution` option with a snapshot-backed host that excludes TS substitutions; only a captured JavaScript implementation can supply that edge. Missing or excluded implementations stay unresolved, even when declarations are selected for analysis. TypeScript callers retain their source/type resolution, and relative CommonJS entries retain their existing behavior.
+
+For runtime `.js/.mjs/.cjs` references in Node16/NodeNext resolution, affected in-root exact `#imports` and own-package export keys containing null or empty arrays use a small snapshot-backed target selector before TypeScript. A matched condition's null blocks its default sibling; an empty object has no match, while an empty array blocks. Arrays can continue after null, no-match or known invalid targets, but never because the selected file is missing/excluded or a valid target form is unsupported. Conditions remain per reference (including dynamic import and createRequire), with configured custom conditions; disabled imports/exports options are respected. Ordinary TypeScript/type-only/JSX routes and unrelated exact keys retain their existing policy.
+
+The selector supports nested conditions/arrays and literal relative JavaScript endpoints. Affected pattern routes, internal package redirects, URL/escaped/legacy path forms, non-JS endpoints, numeric condition keys and relevant node-addons/module-sync policies remain unknown rather than selecting a guessed fallback. It adds no external package search, runtime resolver process or cross-extraction cache. The existing implementation lookup still depends on an internal TypeScript option, so dependency upgrades must retain these regressions. This is not a complete Node runtime loader; custom loaders and execution success remain separate concerns. A resolved edge alone does not prove that Node will load that file successfully.
 
 ### Why not dependency-cruiser or Babel
 
-They only give import edges. The symbol and call graphs in M2 need references and calls, which the TS API yields in the same traversal, so there is no need for a second parser.
+The adapter reuses its TypeScript Program and traversal for import edges, function measurements and conservative lexical call facts. It does not add another parser or resolver for this evidence. The explicit `js-ts-lexical-v2` call model and its unsupported cases are described in [Architecture](../ARCHITECTURE.md#jsts-call-facts); complete symbol and call graphs remain unimplemented.
 
 ### Where it bites
 
@@ -162,11 +168,12 @@ The Python script only emits raw import statements; turning `from utils import l
 
 ### Python import semantics (the part newcomers find hardest)
 
-- **Package**: a directory with `__init__.py`. `import pkg` actually loads `pkg/__init__.py`.
+- **Package**: a directory with `__init__.py`. Within one search directory, Python prefers `pkg/__init__.py` to a sibling `pkg.py`. The adapter follows this order among captured sources.
 - **Relative import**: the dots in `from .a import x` mean "relative to the package this file is in". `level=1` is the same directory, `level=2` the parent. Leaving the analyzed root is recorded as `outside`.
 - **`from pkg import name`** has two readings: `name` is `pkg/name.py` (a submodule) or a variable defined in `pkg/__init__.py` (an attribute). The code tries the submodule first and falls back to the attribute, pointing at `__init__.py`.
 - **PEP 420 namespace packages**: since Python 3.3 a directory **without** `__init__.py` can be a package. ai-voice's `utils/` and `asr/` are of this kind. It has no file of its own, so only `from ns import submodule` yields an edge; `from ns import attribute` is `unknown`. This was discovered on a real repository: the first version had 56 resolution failures.
 - **Search path for absolute imports**: real Python searches `sys.path`; Bauify cannot know the user's runtime, so it follows the common convention: the repository root first, then `src/`.
+- **Parent packages**: each dotted component is resolved before its children. A captured module such as `pkg.py` blocks `pkg.child`; a regular package confines child lookup to that package. Namespace portions across the two absolute search roots combine only when no regular package or module takes precedence. Directories are derived from captured `.py` paths, so excluded files and empty directories do not become extra resolution inputs. Relative imports also search the inferred namespace portions in root/src order when the caller belongs to that package. Regular packages remain confined to their own directory. An analyzed root that is itself a package, or a source directory outside the inferred package, keeps lexical relative lookup because its external import context is unknown. Import hooks, arbitrary runtime search paths and changes to `__path__` are not modeled.
 - **Dynamic imports**: `importlib.import_module("a.b")` resolves when the argument is a literal; a variable is recorded as `opaque`.
 - **Partial initialisation**: when A imports B and B imports A, Python does not fail by itself. The module being loaded is already in `sys.modules`, so the second `import a` simply returns the half-built module. It only fails when B does `from a import X` and A has not yet executed the line that binds `X`. This distinction is what the `import-cycle` rule's tiers are built on (section 8).
 
@@ -184,6 +191,8 @@ The Python script only emits raw import statements; turning `from utils import l
 | `opaque` | the argument of `import()` / `require()` / `import_module()` is not a string literal | the blind spot of static analysis; it must stay visible |
 
 Java keeps the same meanings: an import of a package no analyzed file declares (JDK, third party) is `external`; an import in an analyzed package, or a type reference that matches an analyzed type, that cannot be resolved is `unknown`. The Java adapter does not model reflective loading such as `Class.forName` or `ServiceLoader`, so its `opaque` stays 0; that does not mean the code has none. See [Java source analysis](JAVA.md#dependencies).
+
+A single Java static import of a field or method does not hide an unrelated type with the same name. Type lookup proceeds past that import only when its owner is uniquely analyzed, declares the static member, and has a complete known member-type scope with no matching declared or inherited type. Genuine member-type imports and uncertain owners or supertype chains retain the conservative guard; this does not add classpath or general hierarchy resolution.
 
 `opaque` is the important one. Archify's `bin/archify.mjs` starts renderers with `spawnSync(process.execPath, [rendererPath])` and loads the delta module with `import(pathToFileURL(path.join(...)))` — both are calls whose target is only known at run time. The diagram has **no edge** from `bin` to the renderers, and that is a fact; but if the edge were merely missing, a reader would assume `bin` does not depend on the renderers. The count says "there are 3 dynamic loads here that cannot be seen", which is what ARCHITECTURE.md means by "omissions stay visible".
 
@@ -258,10 +267,23 @@ Runtime-risk confidence 0.7 is an ordinal heuristic, not a measured probability.
 
 Python uses an AST visitor to distinguish function bodies from enclosing
 default/decorator expressions, mark TYPE_CHECKING-only and conditional edges,
-and include the package initializers a submodule import loads. TypeScript
-marks explicit type-only edges and deferred import()/require() calls, and
-uses tsconfig options when resolving aliases and inline type specifiers. Source
-text, in-root JSON configuration/package metadata, and the resolution file
+and include the package initializers a submodule import loads. A `match` subject
+inherits its enclosing context; case guards and bodies are conditional.
+TypeScript marks explicit type-only edges, deferred import()/require() calls
+and guarded CommonJS loads. For example, `if (require("./a")) require("./b")`
+evaluates the first load before deciding whether to run the second.
+Optional-chain arguments and computed keys also guard CommonJS loads:
+`sink?.use(require("./b"))` and `sink?.[require("./b")]` are conditional.
+The base in `require("./b")?.use` stays eager, as does the argument in
+`(sink?.use)(require("./b"))`, where grouping breaks the chain. These syntax
+flags do not prove whether a load runs or whether initialization is safe.
+The adapter uses tsconfig options when resolving aliases and inline type specifiers.
+If TypeScript resolves a relative CommonJS require to a declaration, the adapter
+checks the captured inventory for the requested file, including Node's implicit
+`.js` extension. For a directory it checks an explicit JavaScript main or the
+default `index.js`. A confirmed runtime file takes precedence for the require,
+while a type-only import keeps its declaration target.
+Source text, in-root JSON configuration/package metadata, and the resolution file
 inventory are captured before compiler setup. Configuration parsing and module
 resolution use that inventory, including negative lookups, rather than rereading
 the working tree. Installed configuration packages and unusual configuration

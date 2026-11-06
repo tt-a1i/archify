@@ -328,6 +328,56 @@ test('java: CLI check writes every stage and mixed-language selection reports om
   assert.match(text.stdout, /^ {2}Java · 1 files · rules:/m);
 });
 
+test('java: literal and comment Unicode escapes keep source ranges and file dependencies', t => {
+  const text = [
+    'package demo;',
+    '// \\u03bc and \\\\u000aimport absent.Hidden;',
+    'import demo.Target;',
+    'class Use {',
+    '  String unit = "\\uu03bcs";',
+    "  char infinity = '\\u221e'; /* \\uFFFD */",
+    '  String separators = "\\u000b\\u000c\\u2028\\u2029\\u0000";',
+    '  String block = """',
+    '    \\u03bc',
+    '    """;',
+    '  Target run(Target value) { return value; }',
+    '}',
+  ].join('\r\n');
+  const root = fixture(t, { 'Use.java': text, 'Target.java': 'package demo; class Target {}' });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.equal(parsed.files.find(f => f.path === 'Use.java').sourceText, text);
+  const unit = parsed.units.find(u => u.file === 'Use.java');
+  const method = [...descendants(unit.cst)].find(n => n.name === 'methodDeclaration');
+  assert.equal(text.slice(method.location.startOffset, method.location.endOffset + 1), 'Target run(Target value) { return value; }');
+  const { facts } = extractFacts(root, { language: 'java' });
+  const explicit = facts.imports.find(i => i.specifier === 'demo.Target');
+  assert.equal(explicit.line, 3);
+  assert.equal(explicit.to, 'Target.java');
+  assert.equal(facts.imports.some(i => i.specifier.includes('Hidden')), false);
+  assert.deepEqual(facts.functions.map(({ name, line, endLine }) => ({ name, line, endLine })), [
+    { name: 'run', line: 11, endLine: 11 },
+  ]);
+});
+
+test('java: boundary-changing and malformed Unicode escapes retain coverage diagnostics', t => {
+  const root = fixture(t, {
+    'Block.java': '/* \\u002a\\u002f import demo.Target; class Block { void run() {} } /* */',
+    'Backslash.java': 'class Backslash { String value = "\\u005c\\u006e"; void run() {} }',
+    'Malformed.java': '// \\u12ZZ\nclass Malformed { void run() {} }',
+    'Quote.java': 'class Quote { String value = "\\u0022; void hidden() {} String tail = "\\u0022; }',
+    'Triple.java': '// \\\\\\u000aimport demo.Target;\nclass Triple { void run() {} }',
+    'Identifier.java': 'cl\\u0061ss Identifier { void run() {} }',
+    'Good.java': 'class Good { void run() {} }',
+  });
+  const { facts } = extractFacts(root, { language: 'java' });
+  assert.deepEqual(facts.parse_errors.map(e => e.path).sort(), [
+    'Backslash.java', 'Block.java', 'Identifier.java', 'Malformed.java', 'Quote.java', 'Triple.java',
+  ]);
+  assert.deepEqual(facts.imports, []);
+  assert.deepEqual(facts.functions.map(f => f.file), ['Good.java']);
+});
+
 test('java: Unicode escapes in comments are rejected rather than hiding pre-lexing Java code', t => {
   const root = fixture(t, { 'Use.java': '// \\u000aimport demo.Target;\nclass Use {}' });
   const { facts } = extractFacts(root, { language: 'java' });
@@ -406,6 +456,65 @@ class Other { Instance.Local one; Static.Local two; }`,
   const valid = imports.filter(i => i.from === 'Valid.java');
   assert.equal(valid.length, 2);
   assert.ok(valid.every(i => i.resolved && i.to === 'Member.java'), 'genuine member classes remain accessible');
+});
+
+test('java: static value imports do not suppress independent type dependencies', t => {
+  // JDK 17 attribution confirms Target and Other name p's top-level types,
+  // despite the static field and method imports with those names.
+  const root = fixture(t, {
+    'constants/Values.java': 'package constants; public class Values { public static int Target; public static void Other() {} }',
+    'p/Target.java': 'package p; public class Target { public static class Nested {} }',
+    'p/Other.java': 'package p; public class Other {}',
+    'p/Use.java': `package p;
+import static constants.Values.Target;
+import static constants.Values.Other;
+class Use { Target field; Other other; Target.Nested nested; }`,
+    'q/Imported.java': `package q;
+import static constants.Values.Target;
+import p.Target;
+class Imported { Target field; }`,
+    // An analyzed empty ancestor cannot supply a member type.
+    'constants/Base.java': 'package constants; public class Base {}',
+    'constants/Child.java': 'package constants; public class Child extends Base { public static int Target; }',
+    'p/InheritedEmpty.java': 'package p; import static constants.Child.Target; class InheritedEmpty { Target field; }',
+  });
+  const { facts } = extractFacts(root, { language: 'java' });
+  assert.equal(facts.parse_errors, undefined);
+  const find = (from, specifier) => facts.imports.find(i => i.from === from && i.specifier === specifier);
+  for (const [from, specifier, to] of [
+    ['p/Use.java', 'Target', 'p/Target.java'], ['p/Use.java', 'Other', 'p/Other.java'],
+    ['p/Use.java', 'Target.Nested', 'p/Target.java'], ['q/Imported.java', 'Target', 'p/Target.java'],
+    ['p/InheritedEmpty.java', 'Target', 'p/Target.java'],
+    ['p/Use.java', 'constants.Values.Target', 'constants/Values.java'],
+    ['p/Use.java', 'constants.Values.Other', 'constants/Values.java'],
+  ]) assert.equal(find(from, specifier)?.to, to, `${from} ${specifier}`);
+});
+
+test('java: static imports preserve member-type and uncertain owner guards', t => {
+  const sources = {
+    'p/Target.java': 'package p; public class Target {}',
+    'constants/Types.java': 'package constants; public class Types { public static int Target; public static class Target {} }',
+    'constants/Base.java': 'package constants; public class Base { public static class Target {} }',
+    'constants/Child.java': 'package constants; public class Child extends Base { public static int Target; }',
+    'constants/Incomplete.java': 'package constants; public class Incomplete extends external.Base { public static int Target; }',
+    'constants/Missing.java': 'package constants; public class Missing {}',
+    'constants/Duplicate.java': 'package constants; public class Duplicate { public static int Target; }',
+    'alt/constants/Duplicate.java': 'package constants; public class Duplicate { public static int Target; }',
+    'constants/Outer.java': 'package constants; public class Outer { public static class Inner { public static int Target; } }',
+    'alt/constants/Outer.java': 'package constants; public class Outer {}',
+  };
+  const owners = ['constants.Types', 'constants.Child', 'constants.Incomplete', 'constants.Missing',
+    'constants.Duplicate', 'constants.Outer.Inner', 'external.Values'];
+  owners.forEach((owner, i) => { sources[`p/Guard${i}.java`] = `package p; import static ${owner}.Target; class Guard${i} { Target field; }`; });
+  const root = fixture(t, sources);
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  const { imports } = resolveImports(parsed.units);
+  owners.forEach((owner, i) => {
+    const records = imports.filter(entry => entry.from === `p/Guard${i}.java`);
+    assert.ok(!records.some(entry => entry.to === 'p/Target.java'), owner);
+    if (i === 0) assert.equal(records.find(entry => entry.specifier === `${owner}.Target`)?.to, 'constants/Types.java');
+  });
 });
 
 test('java: ordinary declaration headers resolve proven types, and analyzed supertypes open class bodies', t => {
@@ -501,8 +610,8 @@ test('java: listed JDK supertypes named by a single-type import open class bodie
     'p/Both.java': 'package p; import java.awt.*; import java.util.*; abstract class Both implements Collection<String> { Pet pet; }',
     'p/Unknown.java': 'package p; import org.lib.*; abstract class Unknown implements Runnable { Pet pet; }',
     'p/Unlisted.java': 'package p; abstract class Unlisted extends java.util.AbstractMap<String, String> { Pet pet; }',
-    // Unparsable, so unanalyzed: only an implicit java.lang binding would claim Error.
-    'p/Error.java': 'package p; public class Error { public static class Pet {} } // caf\\u00e9',
+    // The escaped line break leaves Error unanalyzed: only implicit java.lang would claim it.
+    'p/Error.java': 'package p; public class Error { public static class Pet {} } // \\u000a',
     'p/Fault.java': 'package p; abstract class Fault extends Error { Pet pet; }',
     'lib/Base.java': 'package lib; public class Base { public interface Serializable { class Pet {} } }',
     'p/Enclosed.java': 'package p; import java.io.Serializable; class Enclosed extends lib.Base { class Inner implements Serializable { Pet pet; } }',

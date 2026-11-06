@@ -78,5 +78,5 @@ Read for context:
 
 ## Analysis context
 
-- Language: py (python@3.13.17), analyzed root: `.`, source: working-tree
-- Snapshot: `e414701d6bdde3ea4ac97af50ed6027fd31d94ea18cc91fbf601d10523f866b3`, config `716da75c0e50`, analyzer @archify/code-analysis 0.1.0-dev.1
+- Language: py (python@3.13.16), analyzed root: `.`, source: working-tree
+- Snapshot: `3fe9d8d5e9bd0894b8317b4d398aa58179092430e5246cd9826e175e2125b942`, config `716da75c0e50`, analyzer @archify/code-analysis 0.1.0-dev.1

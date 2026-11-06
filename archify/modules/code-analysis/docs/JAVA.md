@@ -209,10 +209,12 @@ rewrites these nodes into record declarations and restores the nested types
 as member types.
 
 Java Unicode escapes are expanded before lexing, including inside comments.
-This parser does not implement that preprocessing. Files containing a
-`\uXXXX`-style sequence are therefore reported as unsupported, including
-sequences inside strings and those preceded by another backslash, rather than
-risking silently missing code. Other source
+The adapter accepts escapes within parsed comments, string/character literals
+and text blocks when their decoded characters preserve token boundaries.
+It keeps the original text and source offsets. Paired raw backslashes leave
+the following `u` ineligible as an escape marker. Escaped quotes, comment
+delimiters, backslashes and line breaks still produce a diagnostic, as do
+malformed escapes and escapes outside those token ranges. Other source
 encodings, build-aware symbol resolution, generated/Lombok symbols, Spring
 injection, inheritance/call graphs and class initialization analysis are outside
 this adapter's scope.

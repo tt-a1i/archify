@@ -24,6 +24,7 @@ import json
 import platform
 import sys
 import tokenize
+from ast_walk import AnalysisVisitor, analysis_children
 from loader_bindings import standard_loader_calls
 
 
@@ -83,7 +84,7 @@ def collect(tree):
                 if a.name == "TYPE_CHECKING" and bindings.get(name) == 1:
                     type_checks[name] = node.lineno
 
-    class Collector(ast.NodeVisitor):
+    class Collector(AnalysisVisitor):
         def __init__(self):
             self.found = []
             self.flags = {}
@@ -147,6 +148,10 @@ def collect(tree):
                 self.under({}, node.body if negated else node.orelse)
             else:
                 self.under({"conditional": True}, node.body + node.orelse)
+
+        def visit_Match(self, node):
+            self.visit(node.subject)
+            self.under({"conditional": True}, node.cases)
 
         def visit_Try(self, node):
             self.under({"conditional": True}, node.body + node.handlers + node.orelse)
@@ -284,7 +289,7 @@ def _measure(func):
     state = {"complexity": 1, "nesting": 0, "deepest": func.lineno}
 
     def visit(node, depth):
-        for child in ast.iter_child_nodes(node):
+        for child in analysis_children(node):
             if isinstance(child, _SCOPES):
                 continue  # measured separately
             child_depth = depth
@@ -320,7 +325,7 @@ def functions(tree):
     out = []
 
     def walk(node, prefix):
-        for child in ast.iter_child_nodes(node):
+        for child in analysis_children(node):
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 qualname = prefix + child.name
                 m = _measure(child)

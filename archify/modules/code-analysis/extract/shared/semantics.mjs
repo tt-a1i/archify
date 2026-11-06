@@ -31,6 +31,34 @@ export function semanticErrors(name, data) {
       if (fn.endLine < fn.line) add(`/functions/${i}/endLine`, 'must not precede line');
       if (fn.deepestLine < fn.line || fn.deepestLine > fn.endLine) add(`/functions/${i}/deepestLine`, 'must lie inside the function');
     });
+    const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
+    const sourceLines = new Map();
+    const functionKey = (file, name, line) => JSON.stringify([file, name, line]);
+    const functionStarts = new Set((data.functions || []).map((fn) => functionKey(fn.file, fn.name, fn.line)));
+    const brokenFiles = new Set((data.parse_errors || []).map((error) => error.path));
+    const validPoint = (file, point, exclusive = false) => {
+      if (!sourceLines.has(file)) sourceLines.set(file, sourceTexts.get(file)?.split(/\r\n|[\n\r\u2028\u2029]/));
+      const lines = sourceLines.get(file);
+      return lines && point.line <= lines.length && point.column <= lines[point.line - 1].length + (exclusive ? 1 : 0);
+    };
+    const staticImportPairs = new Set(data.imports.filter((edge) => edge.resolved && edge.kind === 'static' && !edge.typeOnly).map((edge) => JSON.stringify([edge.from, edge.to])));
+    data.calls.forEach((call, i) => {
+      const at = `/calls/${i}`;
+      if (!files.has(call.file)) add(`${at}/file`, 'must reference a recorded file');
+      else if (!validPoint(call.file, call)) add(at, 'callsite must lie inside captured source');
+      if (!validPoint(call.file, { line: call.endLine, column: call.endColumn }, true)) add(at, 'call end must lie inside captured source or at EOF');
+      if (call.endLine < call.line || (call.endLine === call.line && call.endColumn <= call.column)) add(at, 'call end must follow its start');
+      if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
+      if (call.target) {
+        const targetFile = call.target.file || call.file;
+        if (call.resolution === 'imported-function') {
+          if (targetFile === call.file || !staticImportPairs.has(JSON.stringify([call.file, targetFile]))) add(`${at}/target/file`, 'must follow a recorded static import to another captured file');
+          if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
+        }
+        if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
+        if (!functionStarts.has(functionKey(targetFile, call.target.name, call.target.line))) add(`${at}/target`, 'target must reference a recorded function in its target file');
+      }
+    });
     data.parse_errors?.forEach((error, i) => {
       if (!files.has(error.path)) add(`/parse_errors/${i}/path`, 'must reference a recorded file');
     });
