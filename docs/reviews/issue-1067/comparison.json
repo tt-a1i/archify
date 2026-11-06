@@ -304,6 +304,51 @@
       }
     },
     {
+      "case": "timeline-spaced-quote",
+      "diagram": {
+        "schema_version": 1,
+        "diagram_type": "timeline",
+        "meta": {
+          "title": "付款事件",
+          "locale": "zh-TW",
+          "timezone": "Asia/Taipei",
+          "evidence": "illustrative",
+          "output": "cjk.html"
+        },
+        "lanes": [
+          {
+            "id": "ops",
+            "label": "維運"
+          }
+        ],
+        "events": [
+          {
+            "id": "a",
+            "at": "2026-10-01T10:00:00+08:00",
+            "title": "付款服務部署後開始逾時，值班人員收到告警通知。",
+            "lane": "ops"
+          },
+          {
+            "id": "b",
+            "at": "2026-10-01T10:30:00+08:00",
+            "title": "先確認訂單狀態再執行「 退款」，再通知客戶。",
+            "lane": "ops"
+          },
+          {
+            "id": "c",
+            "at": "2026-10-01T11:00:00+08:00",
+            "title": "決済エラー率が上昇し、オンコール担当者へ通知。",
+            "lane": "ops"
+          }
+        ]
+      },
+      "unchanged": false,
+      "sha256": {
+        "base": "57628c45dc0316af7b2ebdbadb6584d8639a768951aeedef06d2fcfac845bab0",
+        "candidate": "b23faace7c9337353a820829a5cdb3ef80dbfbd611160ddd510d33c0f4d3d23b"
+      }
+    },
+    {
       "case": "tree-control-0",
       "diagram": {
         "schema_version": 1,
@@ -422,11 +467,11 @@
       }
     }
   ],
-  "candidateSource": "eee68612a",
   "candidateSourcePaths": [
     "archify/renderers/shared/utils.mjs",
     "archify/renderers/timeline/render-timeline.mjs",
     "archify/renderers/tree/render-tree.mjs",
     "archify/renderers/sequence/render-sequence.mjs"
-  ]
+  ],
+  "candidateSource": "bdff019b639b2f905f58abc990b9ba2ce59cff3e"
 }
