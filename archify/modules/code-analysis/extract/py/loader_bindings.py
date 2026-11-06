@@ -1,12 +1,14 @@
 """Conservative lexical bindings for Python's standard dynamic import loaders."""
 import ast
 
+from ast_walk import AnalysisVisitor
+
 
 def binding_events(nodes):
     events = {}
     declarations = {}
 
-    class Scan(ast.NodeVisitor):
+    class Scan(AnalysisVisitor):
         conditional = False
 
         def bind(self, name, value=None):
@@ -126,7 +128,7 @@ def standard_loader_calls(tree):
                 return self.parent.lookup(name, deferred or self.function)
             return 'loader' if name == '__import__' and name not in mutable else None
 
-    class Visitor(ast.NodeVisitor):
+    class Visitor(AnalysisVisitor):
         def __init__(self):
             self.scope = Scope(tree.body)
             self.conditional = False

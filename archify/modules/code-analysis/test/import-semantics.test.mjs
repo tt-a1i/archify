@@ -163,6 +163,25 @@ test('Python relative namespace lookup preserves regular and analyzed-root packa
   assert.equal(rootPackage.imports.find(edge => edge.from === 'ns/read.py' && !edge.implicit).to, 'ns/sibling.py');
 });
 
+test('Python keeps imports and function measurements inside long arithmetic expressions', (t) => {
+  const terms = Array(1400).fill('value').join(' + ');
+  const { facts } = analyze(t, {
+    'formula.py': [
+      'def total(value, flag):',
+      `    return (__import__("left").value if flag else value) + ${terms} + __import__("right").value`,
+    ].join('\n'),
+    'left.py': 'value = 1',
+    'right.py': 'value = 2',
+    'caller.py': 'from formula import total',
+  });
+  const inside = facts.imports.filter((edge) => edge.from === 'formula.py');
+  assert.deepEqual(inside.map((edge) => [edge.to, edge.lazy, Boolean(edge.conditional)]), [
+    ['left.py', true, true], ['right.py', true, false],
+  ]);
+  assert.equal(facts.functions.find((fn) => fn.qualname === 'total').complexity, 2);
+  assert.ok(facts.imports.some((edge) => edge.from === 'caller.py' && edge.to === 'formula.py'));
+});
+
 test('Python TYPE_CHECKING aliases stay as structural edges, never runtime-cycle errors', (t) => {
   for (const [header, guard] of [
     ['from typing import TYPE_CHECKING', 'TYPE_CHECKING'],
