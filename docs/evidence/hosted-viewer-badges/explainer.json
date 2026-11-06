@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "diagram_type": "explainer",
+  "meta": {
+    "id": "hosted-browser",
+    "title": "A test explanation",
+    "locale": "en",
+    "style": "editorial",
+    "quality_profile": "showcase"
+  },
+  "answer": {
+    "summary": "Read the cache first.",
+    "reasons": ["Fewer database queries"],
+    "scope": "Illustrative request path"
+  },
+  "panels": [
+    {
+      "id": "why",
+      "title": "Why does it work?",
+      "blocks": [
+        {
+          "id": "claim",
+          "type": "prose",
+          "text": "A cached read takes [5ms](typical:Illustrative timing only, not measured)."
+        }
+      ]
+    },
+    {
+      "id": "how",
+      "title": "Where does the request go?",
+      "blocks": [
+        {
+          "id": "native",
+          "type": "diagram",
+          "diagramType": "sequence",
+          "spec": {
+            "schema_version": 1,
+            "diagram_type": "sequence",
+            "meta": {
+              "title": "Cache lookup",
+              "output": "native.html",
+              "quality_profile": "showcase"
+            },
+            "participants": [
+              { "id": "api", "label": "API", "type": "backend" },
+              { "id": "redis", "label": "Redis", "type": "database" }
+            ],
+            "messages": [
+              {
+                "id": "api-to-redis-1",
+                "from": "api",
+                "to": "redis",
+                "label": "Read cache",
+                "y": 160
+              }
+            ]
+          }
+        },
+        {
+          "id": "step",
+          "type": "steps",
+          "items": [
+            {
+              "id": "read-step",
+              "text": "Read cache",
+              "target": {
+                "diagram": "native",
+                "node": "api",
+                "edges": ["api-to-redis-1"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [{ "id": "example", "title": "Example" }]
+}
