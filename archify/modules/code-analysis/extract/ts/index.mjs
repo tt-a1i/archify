@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { classifyRole, lineCount, listFiles, snapshotTree, toPosix, packageMarkersIn } from '../shared/files.mjs';
 import { matcher } from '../shared/glob.mjs';
 import { snapshotHost } from './snapshot-host.mjs';
+import { runtimePackageTarget } from './runtime-package-target.mjs';
 import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 import { measureFunctions } from './functions.mjs';
@@ -14,7 +15,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 6;
+export const REVISION = 15;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -226,10 +227,12 @@ function resolve(record, containingFile, absRoot, fileSet, options, inputs, reso
   const { specifier } = record;
   const isPathLike = specifier.startsWith('.') || specifier.startsWith('/');
   // Without the usage mode, NodeNext selects require conditions even for import().
-  const result = ts.resolveModuleName(specifier, containingFile, options, inputs, undefined, undefined, resolutionMode);
-  const resolvedFile = result.resolvedModule?.resolvedFileName;
+  const correction = runtimePackageTarget(record, containingFile, absRoot, options, inputs, resolutionMode);
+  if (correction && correction.status !== 'selected') return { reason: 'unknown' };
+  const result = correction ? null : ts.resolveModuleName(specifier, containingFile, options, inputs, undefined, undefined, resolutionMode);
+  const resolvedFile = correction?.file || result?.resolvedModule?.resolvedFileName;
   if (!resolvedFile) return { reason: isPathLike ? 'unknown' : 'external' };
-  if (result.resolvedModule.isExternalLibraryImport || resolvedFile.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
+  if (result?.resolvedModule.isExternalLibraryImport || resolvedFile.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
   let rel = toPosix(path.relative(absRoot, resolvedFile));
   // Only a parent-directory result is outside the root; an in-root directory whose
   // name merely starts with ".." (e.g. "..generated/") must not be misclassified.

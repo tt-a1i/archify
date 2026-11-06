@@ -33,6 +33,8 @@ The server serves the diagram on a loopback address with a Code Analysis button.
 
 The orchestrator validates intermediate data against JSON schemas. It also checks that supplied raw facts and module graph data agree on repository metadata, file ownership, and dependency aggregates.
 
+For the conditional-null boundary in exact in-root JavaScript package imports/self exports, a bounded snapshot-backed selector preserves blocked, no-match, invalid, selected and unsupported outcomes before the usual source-boundary checks. It is not a Node loader; unsupported affected forms remain unknown. TypeScript/type-only resolution and unrelated keys retain their existing policy; see [Module resolution](docs/TECH-GUIDE.md#module-resolution).
+
 ## Current findings and presentation
 
 The implemented rules inspect file-level import cycles, module-level coupling cycles, and modules with high incoming and outgoing dependency counts. Import evidence distinguishes relevant loading conditions such as lazy, conditional, and type-only imports. Findings describe static structure and potential loading risks; they do not prove a runtime failure or certify safe execution.
