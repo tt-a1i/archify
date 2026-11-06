@@ -176,9 +176,15 @@ def collect_calls(tree, text):
         def visit_Lambda(self, node):
             self.function(node, [node.body])
         def visit_ClassDef(self, node):
-            for value in node.decorator_list + node.bases + node.keywords:
+            for value in node.decorator_list:
                 self.visit(value)
-            self.annotations(getattr(node, 'type_params', []))
+            if getattr(node, 'type_params', []):
+                # PEP 695 bases/keywords see the class type parameters, while
+                # decorators still evaluate in the containing scope.
+                self.annotations(node.bases + node.keywords + node.type_params)
+            else:
+                for value in node.bases + node.keywords:
+                    self.visit(value)
             previous = self.private
             self.private = True
             self.body(node.body, Scope(node.body, self.scope, kind='class', unsupported=bool(getattr(node, 'type_params', []))))

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { createHash } from 'node:crypto';
 const base = process.env.ARCHIFY_CALL_TEST_MODULE;
@@ -194,4 +195,35 @@ def chosen(): helper()
 test('Python import names use only captured own definitions', t => {
   const args = fixture(t, { 'entry.py': 'from helper import constructor, toString, __proto__\ndef chosen():\n    constructor()\n    toString()\n    __proto__()\n', 'helper.py': 'def __proto__(): pass\n' });
   assert.deepEqual(selected(args).records.map(r => r.fact.resolution), ['unresolved', 'unresolved', 'imported-function']);
+});
+
+test('Python external from-import calls stay unresolved and normal check succeeds', t => {
+  const args = fixture(t, { 'entry.py': 'from os import getcwd\ndef chosen():\n    return getcwd()\n' });
+  assert.equal(args.facts.imports[0].resolved, false);
+  const calls = selected(args); assert.equal(calls.total, 1);
+  assert.equal(calls.records[0].fact.resolution, 'unresolved'); assert.equal(calls.records[0].fact.target, undefined);
+  const cli = fileURLToPath(new URL('../../../bin/archify.mjs', import.meta.url));
+  const output = path.join(args.root, 'analysis');
+  const run = spawnSync(process.execPath, [cli, 'code-analysis', 'check', args.root, '--language', 'py', '--out', output, '--fail-on', 'never', '--json'], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stdout + run.stderr);
+  const captured = JSON.parse(fs.readFileSync(path.join(output, 'raw-facts.json'), 'utf8'));
+  assert.equal(captured.calls[0].resolution, 'unresolved'); assert.equal(captured.callModel, 'python-lexical-v1');
+});
+
+test('Python captured package and namespace module direct imports use the analyzed directories', t => {
+  const args = fixture(t, { 'entry.py': 'from pkg import packaged\nfrom ns.helper import work as alias\ndef chosen():\n    packaged()\n    alias()\n', 'pkg/__init__.py': 'def packaged(): pass\n', 'ns/helper.py': 'def work(): pass\n' });
+  assert.deepEqual(selected(args).records.map(r => r.targetNavigation.location), [
+    { file: 'pkg/__init__.py', name: 'packaged', line: 1, column: 1 },
+    { file: 'ns/helper.py', name: 'work', line: 1, column: 1 },
+  ]);
+  assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
+});
+
+test('Python generic class bases and keywords use unsupported annotation scope while decorators stay outer', t => {
+  const args = fixture(t, { 'entry.py': 'def helper(): return object\n@helper()\nclass Generic[helper](helper(), metaclass=helper()): pass\nclass Ordinary(helper(), metaclass=helper()): pass\n' });
+  const [, major, minor] = /^python@(\d+)\.(\d+)/.exec(args.facts.repository.adapter);
+  if (+major === 3 && +minor < 12) return t.skip('type parameter syntax requires Python 3.12+');
+  assert.deepEqual(args.facts.parse_errors || [], []);
+  assert.equal(args.facts.calls.length, 5);
+  assert.deepEqual(args.facts.calls.map(call => call.resolution), ['same-file-function', 'unresolved', 'unresolved', 'same-file-function', 'same-file-function']);
 });

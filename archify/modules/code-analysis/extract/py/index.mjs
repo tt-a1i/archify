@@ -81,7 +81,7 @@ export function extract(root, config) {
     for (const found of record.calls || []) {
       const { _import: binding, ...call } = found;
       if (binding) {
-        const edges = resolveDeclaredImport({ module: binding.module, level: binding.level, names: [binding.name] }, record.path, fileSet);
+        const edges = resolveDeclaredImport({ module: binding.module, level: binding.level, names: [binding.name] }, record.path, fileSet, directories);
         const targets = edges.filter(edge => edge.to && edge.to !== record.path && edge.names?.includes(binding.name));
         if (targets.length === 1) {
           const file = targets[0].to;
