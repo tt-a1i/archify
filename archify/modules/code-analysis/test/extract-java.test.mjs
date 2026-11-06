@@ -328,6 +328,56 @@ test('java: CLI check writes every stage and mixed-language selection reports om
   assert.match(text.stdout, /^ {2}Java · 1 files · rules:/m);
 });
 
+test('java: literal and comment Unicode escapes keep source ranges and file dependencies', t => {
+  const text = [
+    'package demo;',
+    '// \\u03bc and \\\\u000aimport absent.Hidden;',
+    'import demo.Target;',
+    'class Use {',
+    '  String unit = "\\uu03bcs";',
+    "  char infinity = '\\u221e'; /* \\uFFFD */",
+    '  String separators = "\\u000b\\u000c\\u2028\\u2029\\u0000";',
+    '  String block = """',
+    '    \\u03bc',
+    '    """;',
+    '  Target run(Target value) { return value; }',
+    '}',
+  ].join('\r\n');
+  const root = fixture(t, { 'Use.java': text, 'Target.java': 'package demo; class Target {}' });
+  const parsed = parseSources(root, config());
+  assert.deepEqual(parsed.parse_errors, []);
+  assert.equal(parsed.files.find(f => f.path === 'Use.java').sourceText, text);
+  const unit = parsed.units.find(u => u.file === 'Use.java');
+  const method = [...descendants(unit.cst)].find(n => n.name === 'methodDeclaration');
+  assert.equal(text.slice(method.location.startOffset, method.location.endOffset + 1), 'Target run(Target value) { return value; }');
+  const { facts } = extractFacts(root, { language: 'java' });
+  const explicit = facts.imports.find(i => i.specifier === 'demo.Target');
+  assert.equal(explicit.line, 3);
+  assert.equal(explicit.to, 'Target.java');
+  assert.equal(facts.imports.some(i => i.specifier.includes('Hidden')), false);
+  assert.deepEqual(facts.functions.map(({ name, line, endLine }) => ({ name, line, endLine })), [
+    { name: 'run', line: 11, endLine: 11 },
+  ]);
+});
+
+test('java: boundary-changing and malformed Unicode escapes retain coverage diagnostics', t => {
+  const root = fixture(t, {
+    'Block.java': '/* \\u002a\\u002f import demo.Target; class Block { void run() {} } /* */',
+    'Backslash.java': 'class Backslash { String value = "\\u005c\\u006e"; void run() {} }',
+    'Malformed.java': '// \\u12ZZ\nclass Malformed { void run() {} }',
+    'Quote.java': 'class Quote { String value = "\\u0022; void hidden() {} String tail = "\\u0022; }',
+    'Triple.java': '// \\\\\\u000aimport demo.Target;\nclass Triple { void run() {} }',
+    'Identifier.java': 'cl\\u0061ss Identifier { void run() {} }',
+    'Good.java': 'class Good { void run() {} }',
+  });
+  const { facts } = extractFacts(root, { language: 'java' });
+  assert.deepEqual(facts.parse_errors.map(e => e.path).sort(), [
+    'Backslash.java', 'Block.java', 'Identifier.java', 'Malformed.java', 'Quote.java', 'Triple.java',
+  ]);
+  assert.deepEqual(facts.imports, []);
+  assert.deepEqual(facts.functions.map(f => f.file), ['Good.java']);
+});
+
 test('java: Unicode escapes in comments are rejected rather than hiding pre-lexing Java code', t => {
   const root = fixture(t, { 'Use.java': '// \\u000aimport demo.Target;\nclass Use {}' });
   const { facts } = extractFacts(root, { language: 'java' });
@@ -501,8 +551,8 @@ test('java: listed JDK supertypes named by a single-type import open class bodie
     'p/Both.java': 'package p; import java.awt.*; import java.util.*; abstract class Both implements Collection<String> { Pet pet; }',
     'p/Unknown.java': 'package p; import org.lib.*; abstract class Unknown implements Runnable { Pet pet; }',
     'p/Unlisted.java': 'package p; abstract class Unlisted extends java.util.AbstractMap<String, String> { Pet pet; }',
-    // Unparsable, so unanalyzed: only an implicit java.lang binding would claim Error.
-    'p/Error.java': 'package p; public class Error { public static class Pet {} } // caf\\u00e9',
+    // The escaped line break leaves Error unanalyzed: only implicit java.lang would claim it.
+    'p/Error.java': 'package p; public class Error { public static class Pet {} } // \\u000a',
     'p/Fault.java': 'package p; abstract class Fault extends Error { Pet pet; }',
     'lib/Base.java': 'package lib; public class Base { public interface Serializable { class Pet {} } }',
     'p/Enclosed.java': 'package p; import java.io.Serializable; class Enclosed extends lib.Base { class Inner implements Serializable { Pet pet; } }',
