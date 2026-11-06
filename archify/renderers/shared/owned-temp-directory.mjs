@@ -32,7 +32,17 @@ export function createOwnedTempDirectory(prefix, { parent = os.tmpdir() } = {}) 
   const ancestors = [];
   for (let current = canonicalParent; ; current = path.dirname(current)) {
     ancestors.push(directoryIdentity(current));
-    const parentRelation = sameEntry(current, path.dirname(current));
+    let parentRelation = sameEntry(current, path.dirname(current));
+    if (process.platform === 'win32' && parentRelation.status === 'unknown'
+      && parentRelation.reason.systemCode === 'EPERM') {
+      const childIdentity = ancestors[ancestors.length - 1];
+      const parentIdentity = directoryIdentity(path.dirname(current));
+      verifyIdentity(childIdentity);
+      verifyIdentity(parentIdentity);
+      parentRelation = { status: childIdentity.dev === parentIdentity.dev
+        && childIdentity.ino === parentIdentity.ino
+        && childIdentity.birthtimeNs === parentIdentity.birthtimeNs ? 'match' : 'different' };
+    }
     if (parentRelation.status === 'match') break;
     if (parentRelation.status !== 'different') {
       throw new Error(`Temporary directory ancestor identity is unavailable: ${current}`);

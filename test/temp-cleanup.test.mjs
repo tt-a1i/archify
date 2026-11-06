@@ -71,6 +71,22 @@ function fixture(t) {
   return parent;
 }
 
+test('Windows owned temporary ancestry retains identity after native EPERM', { skip: process.platform !== 'win32' }, async t => {
+  const parent = fixture(t);
+  const native = fs.realpathSync.native;
+  const resolved = native(parent);
+  const ancestor = path.dirname(resolved);
+  t.mock.method(fs.realpathSync, 'native', target => {
+    if (path.resolve(String(target)) === ancestor) {
+      throw Object.assign(new Error('restricted ancestor'), { code: 'EPERM' });
+    }
+    return native(target);
+  });
+  const owned = createOwnedTempDirectory('test-', { parent });
+  await owned.cleanup();
+  assert.equal(fs.existsSync(owned.path), false);
+});
+
 for (const replacement of ['directory', 'link']) {
   test(`cleanup refuses an ancestor replaced with a ${replacement}`, async t => {
     const base = fixture(t);
