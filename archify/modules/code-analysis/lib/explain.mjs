@@ -125,7 +125,7 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     entry: { ...selected, ...(symbol ? { requestedFunction: symbol } : {}), location },
     snapshotId: facts?.repository?.snapshotId || null,
     factsAvailable: facts !== null, imports,
-    calls: questionCalls({ facts, factsPath, inspect, entry: selected, location, symbol, text: sources.get(entry) }),
+    calls: questionCalls({ facts, factsPath, inspect, entry: selected, location, symbol, text: sources.get(entry), selectedFunction: matches.length === 1 ? matches[0] : null }),
     scope: questionScope(root, facts),
     limitations: [
       'Locations and imports are captured static facts, usable only where factsStatus/originStatus is valid; dependency targets have separate freshness checks.',

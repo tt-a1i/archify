@@ -12,7 +12,7 @@ import { describeRepository } from '../shared/git.mjs';
 
 export const id = 'py';
 // Extraction logic revision; see extract/ts/index.mjs and docs/TECH-GUIDE.md.
-export const REVISION = 6;
+export const REVISION = 7;
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'extract.py');
 const PY_EXT = /\.py$/;
@@ -65,6 +65,8 @@ export function extract(root, config) {
   }
   const { command, output } = runPython({ files, sources: Object.fromEntries([...snapshot].map(([rel, bytes]) => [rel, bytes.toString('base64')])) });
 
+  const calls = [];
+  const parsedFiles = new Map(output.files.filter(record => !record.error).map(record => [record.path, record]));
   const imports = [];
   const unresolved = { external: 0, outside: 0, unknown: 0, opaque: 0 };
   const parseErrors = [];
@@ -76,6 +78,23 @@ export function extract(root, config) {
     for (const b of record.symbols || []) symbols.push({ file: record.path, name: b.name, kind: b.kind, line: b.line });
     for (const fn of record.functions || []) functions.push({ file: record.path, ...fn });
     if (record.error) { parseErrors.push({ path: record.path, message: record.error }); continue; }
+    for (const found of record.calls || []) {
+      const { _import: binding, ...call } = found;
+      if (binding) {
+        const edges = resolveDeclaredImport({ module: binding.module, level: binding.level, names: [binding.name] }, record.path, fileSet);
+        const targets = edges.filter(edge => edge.to && edge.to !== record.path && edge.names?.includes(binding.name));
+        if (targets.length === 1) {
+          const file = targets[0].to;
+          const definitions = parsedFiles.get(file)?.definitions;
+          const target = definitions && Object.hasOwn(definitions, binding.name) ? definitions[binding.name] : null;
+          if (target) {
+            call.resolution = 'imported-function'; delete call.reason;
+            call.target = { file, name: target.name, line: target.line, column: target.column };
+          }
+        }
+      }
+      calls.push({ file: record.path, ...call });
+    }
     const implicitStatements = new Set();
     for (const found of record.imports) {
       const flags = Object.fromEntries(['lazy', 'typeOnly', 'conditional'].filter((key) => found[key]).map((key) => [key, true]));
@@ -110,7 +129,8 @@ export function extract(root, config) {
     imports,
     symbols: symbols.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.name, b.name)),
     functions: functions.sort((a, b) => compareText(a.file, b.file) || a.line - b.line || compareText(a.qualname, b.qualname)),
-    calls: [],
+    callModel: 'python-lexical-v1',
+    calls,
     unresolved,
   };
   if (parseErrors.length) facts.parse_errors = parseErrors.sort((a, b) => compareText(a.path, b.path));

@@ -46,6 +46,28 @@ The orchestrator validates intermediate data against JSON schemas. It also check
 
 For the conditional-null boundary in exact in-root JavaScript package imports/self exports, a bounded snapshot-backed selector preserves blocked, no-match, invalid, selected and unsupported outcomes before the usual source-boundary checks. It is not a Node loader; unsupported affected forms remain unknown. TypeScript/type-only resolution and unrelated keys retain their existing policy; see [Module resolution](docs/TECH-GUIDE.md#module-resolution).
 
+## Python call facts
+
+`python-lexical-v1` inventories every `ast.Call` in parse-valid captured Python
+files. It conservatively binds Name calls to unique ordinary undecorated
+module-level definitions, or explicit static from-import aliases reaching such
+a direct captured definition. Binding events are collected before lookup, so
+parameters, later local writes, imports and pattern/catch/comprehension shadows
+cannot accidentally fall back to a module target. Attributes, classes, decorated
+targets, reexports, conditional/rebound/ambiguous bindings, global/nonlocal and
+annotation/generic contexts remain unresolved. No target code executes.
+
+Python functions additionally carry `sourceRange`: exact def/async def through
+AST end, one-based UTF-16 columns, exclusive end, SHA256 of the decoded slice
+encoded as UTF-8. It excludes preceding decorators and does not solve future
+paired decorator-change coverage. Saved question consumers verify this range
+against exact unchanged source without TypeScript reparsing. Calls physically
+inside it include defaults and nested bodies; these are source-contained sites,
+not a caller graph or runtime dispatch. Imported target freshness remains
+independent. A recognized fresh zero is known zero collected Calls; historical
+Python captures without the model and Java calls stay unavailable. New spans
+are additive for current readers; older strict function schemas reject them.
+
 ## JS/TS call facts
 
 The JS/TS adapter records `CallExpression` sites from parse-valid, non-declaration files. `callModel: "js-ts-lexical-v2"` explicitly identifies this coverage; an empty array without a recognized model does not establish that calls were collected. Adapter revisions identify extraction changes and are not capability flags. Python and Java do not emit this call model.

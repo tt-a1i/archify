@@ -527,3 +527,13 @@ Most tests call the library directly (`extractFacts`, `buildGraph`, `evaluateGra
 `lib/task.mjs` builds a task (`schemas/ai-task.schema.json`) from `findings.json` and `raw-facts.json` of one run; mixing runs is refused (`task/snapshot-mismatch`). `locationsOf` turns each finding into line ranges: a complexity finding into the function's lines (with `focusLine` at the deepest block), an import cycle into the imports along its path, a boundary or module cycle into its evidence imports (one location per line, all targets listed), a hub into its files without lines. Each range gets `sha256` over its exact lines joined with `\n`; the excerpt is bounded (`EXCERPT`: full functions up to 60 lines, otherwise head, ±10 lines around the focus, and the last lines, with `omitted` ranges and `complete: false`). `scope.modify` is the files with cited lines, `scope.read` the rest of the files the finding was computed from. Facts are the finding messages, suggestions are the rule's `supportedFixes`, and preserve/acceptance come from per-rule templates; verification commands appear only when supplied. `taskId` hashes the sorted finding ids with their evidence digests. `renderTaskMarkdown` renders the same object; source sits in a fence longer than any backtick run it contains. `buildTaskPayloads` returns `{ [findingId]: { task, markdown } }` for a page without a server.
 
 `lib/evidence.mjs` `verifyTask(task, root)` reads cited files only inside `root` (no absolute paths, `..`, or symlink escapes). A location is `valid` when its hash matches at the same lines or at another position in the file (`currentStartLine`), `changed` otherwise, `missing` when the file is gone, `unverifiable` without a captured hash. Per finding, the evidence digest is recomputed as `evaluate` computes it (function spans at their current position); a valid location with a changed digest makes the finding `changed`. The task roll-up is the worst of `missing > changed > unverifiable > valid`. A UTF-8 BOM is accepted with or without, since Python's decoder drops it.
+
+### Python call capture
+
+Python adapter revision 7 adds `python-lexical-v1`, source-contained Call records
+and optional exact `functions[].sourceRange` proof. UTF-8 byte offsets from the
+AST are converted to UTF-16 columns against decoded source. Ranges exclude
+preceding decorators; their hashes retain actual interior line endings. Old
+captures without the model remain unavailable rather than known-zero. See
+[the architecture contract](../ARCHITECTURE.md#python-call-facts) for binding
+limits and freshness; the fresh paired change workflow remains JS/TS only.

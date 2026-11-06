@@ -1,5 +1,6 @@
 // Source-contained orientation, never a caller graph or runtime trace.
 import ts from 'typescript';
+import { validSourceRange } from '../extract/shared/source-range.mjs';
 import path from 'node:path';
 import { measureFunctions } from '../extract/ts/functions.mjs';
 
@@ -17,9 +18,10 @@ const point = (source, offset) => {
 };
 const before = (aLine, aColumn, bLine, bColumn) => aLine < bLine || (aLine === bLine && aColumn <= bColumn);
 
-export function questionCalls({ facts, factsPath, inspect, entry, location, symbol, text }) {
+export function questionCalls({ facts, factsPath, inspect, entry, location, symbol, text, selectedFunction }) {
   const knownAdapter = facts?.repository?.language === 'ts' && /^typescript@/.test(facts?.repository?.adapter || '');
-  const bindingCoverage = knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
+  const pythonModel = facts?.repository?.language === 'py' && /^python@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'python-lexical-v1';
+  const bindingCoverage = pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
   const result = {
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
@@ -29,12 +31,17 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
     selection: { file: entry.file, kind: symbol ? 'function-source-range' : 'entry-file', range: null },
     total: null, included: 0, omitted: null, limit: LIMIT, records: [],
     limitations: [
-      'When coverage is available, records are JS/TS CallExpressions contained in the selected source range, including nested functions and closures; they are not necessarily direct or executed calls of the selected function. Python and Java captures do not supply call coverage; empty arrays are not a known zero.',
+      'When JS/TS coverage is available, records are JS/TS CallExpressions contained in the selected source range, including nested functions and closures; they are not necessarily direct or executed calls of the selected function. Historical Python and Java captures without a recognized model do not supply call coverage; empty arrays are not a known zero.',
       'same-file-function identifies a lexical declaration; same-file-function-initializer identifies a direct const initializer. Neither proves execution, TDZ safety or runtime dispatch. Named expressions use their measured inner function name. Unresolved calls require source reading; constructors and tagged templates are not collected. imported-function follows captured relative named imports to direct exports; js-ts-lexical-v2 additionally binds direct default function declarations. It does not model runtime dispatch.',
       'Each factIndex identifies the unchanged record in this snapshot raw-facts.calls array. Full start/end ranges distinguish chained calls sharing a start. Original targets are captured evidence only. Use targetNavigation.location only when status is valid; imported targets have separate freshness and parse checks. Valid navigation verifies captured target content and coordinates, not current re-resolution after other files/configuration change.',
       'At most 40 records are included in source order; total/included/omitted describe only the selected range. Read current source or the captured raw facts for omitted records.',
     ],
   };
+  if (pythonModel) result.limitations = [
+    'Records are captured Python ast.Call sites physically contained in the selected range, including nested functions and defaults; they are not necessarily direct or executed calls of the selected function. Definition ranges exclude preceding decorators.',
+    'Targets identify unique ordinary undecorated module-level definitions or direct static from-import aliases. Attributes, classes, decorated targets, reexports, shadows and ambiguous bindings remain unresolved. This is lexical source navigation, not runtime callable identity, execution or reachability.',
+    'Function ranges use captured UTF-16 coordinates and exact decoded-source slice hashes. Entry and imported target freshness are checked independently. Each factIndex refers to the unchanged captured calls array; at most 40 records are included.',
+  ];
   const unavailable = (reason) => ({ ...result, reason });
   if (entry.factsStatus !== 'valid') return unavailable(`entry-${entry.factsStatus}`);
   if (entry.parseErrors.length) return unavailable('entry-parse-errors');
@@ -44,19 +51,25 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   let range = null;
   if (symbol) {
     if (!location) return unavailable('function-range-unavailable');
-    // Reuse the extractor's exact naming rules; historical function facts only
-    // store lines, which cannot exclude adjacent functions on the same line.
-    const source = ts.createSourceFile(entry.file, text, ts.ScriptTarget.Latest, true);
-    if (source.parseDiagnostics.length) return unavailable('entry-parse-errors');
-    const ranges = [];
-    measureFunctions(source, entry.file, (fn, node) => {
-      if (fn.qualname === location.symbol && fn.line === location.startLine && fn.endLine === location.endLine) {
-        const start = point(source, node.getStart(source)); const end = point(source, node.getEnd());
-        ranges.push({ line: start.line, column: start.column, endLine: end.line, endColumn: end.column });
-      }
-    });
-    if (ranges.length !== 1) return unavailable('function-range-unavailable');
-    [range] = ranges;
+    if (pythonModel) {
+      if (!validSourceRange(text, selectedFunction)) return unavailable('function-range-unavailable');
+      const { sha256, ...capturedRange } = selectedFunction.sourceRange;
+      range = capturedRange;
+    } else {
+      // Reuse the extractor's exact naming rules; historical function facts only
+      // store lines, which cannot exclude adjacent functions on the same line.
+      const source = ts.createSourceFile(entry.file, text, ts.ScriptTarget.Latest, true);
+      if (source.parseDiagnostics.length) return unavailable('entry-parse-errors');
+      const ranges = [];
+      measureFunctions(source, entry.file, (fn, node) => {
+        if (fn.qualname === location.symbol && fn.line === location.startLine && fn.endLine === location.endLine) {
+          const start = point(source, node.getStart(source)); const end = point(source, node.getEnd());
+          ranges.push({ line: start.line, column: start.column, endLine: end.line, endColumn: end.column });
+        }
+      });
+      if (ranges.length !== 1) return unavailable('function-range-unavailable');
+      [range] = ranges;
+    }
   }
   const records = facts.calls.flatMap((fact, factIndex) => {
     if (fact.file !== entry.file) return [];
@@ -66,11 +79,16 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   }).sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column
     || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn || a.factIndex - b.factIndex);
   const capturedFiles = new Set(facts.files.map((file) => file.path));
+  const capturedTexts = pythonModel ? new Map(facts.files.map(file => [file.path, file.sourceText])) : null;
   const included = records.slice(0, LIMIT).map((record) => {
     const target = record.fact.target;
     if (!target) return { ...record, targetNavigation: { status: 'unresolved', location: null, reason: record.fact.reason } };
     const file = target.file || entry.file;
     if (!capturedFiles.has(file)) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-not-captured' } };
+    if (pythonModel) {
+      const measured = (facts.functions || []).filter(fn => fn.file === file && fn.name === target.name && fn.sourceRange?.line === target.line && fn.sourceRange?.column === target.column);
+      if (measured.length !== 1 || !validSourceRange(capturedTexts.get(file), measured[0])) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
+    }
     const evidence = file === entry.file ? entry : inspect(file);
     const status = evidence.factsStatus === 'valid' && evidence.parseErrors.length ? 'parse-error' : evidence.factsStatus;
     return { ...record, targetNavigation: {

@@ -31,9 +31,10 @@ working tree; the page uses the same logic through the server.
 
 `task --question` prepares source orientation without requiring a finding: source
 identity, captured function ranges and direct imports. JS/TS implementation entries
-can also include bounded call evidence. Python/Java entries require a saved analysis
-directory containing the .py/.java entry from its matching adapter; their call
-coverage stays unavailable, with unknown totals rather than zero.
+and fresh Python captures can also include bounded lexical call evidence.
+Python/Java entries require a saved analysis directory containing the .py/.java
+entry from its matching adapter. Java and historical Python captures without a
+recognized call model retain unavailable coverage and unknown totals.
 The host Agent then follows [the function analysis workflow](docs/FUNCTION-ANALYSIS.md)
 to answer the question from source. The CLI output is an intermediate reading aid.
 Adding `--base-root` with a required `--entry` prepares a fresh before/after source
