@@ -171,7 +171,7 @@ Codex CLI 的全局 Skill 目录是 `~/.agents/skills/`，项目目录是 `.agen
 
 ### 免费吗？这里说的是哪个 Archify？
 
-这里指 [tt-a1i/archify 开源项目](https://github.com/tt-a1i/archify)，官方网站是 [archify.si](https://archify.si)。项目代码采用 MIT 许可证。你使用的 Agent 或其他服务可能另有费用与条款；名称相似的收费服务不自动构成官方关联。
+这里指 [tt-a1i/archify 开源项目](https://github.com/tt-a1i/archify)，官方网站是 [archify.si](https://archify.si)。Archify 以 [Apache License 2.0](https://github.com/tt-a1i/archify/blob/main/LICENSE) 发布，文件、包清单或第三方声明另有规定的除外。历史 MIT 授权仍然有效，已发布版本保留原有许可证；详见 [NOTICE](https://github.com/tt-a1i/archify/blob/main/NOTICE)。你使用的 Agent 或其他服务可能另有费用与条款；名称相似的收费服务不自动构成官方关联。
 
 ### 接下来做什么？
 
