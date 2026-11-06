@@ -263,6 +263,11 @@ inherits its enclosing context; case guards and bodies are conditional.
 TypeScript marks explicit type-only edges, deferred import()/require() calls
 and guarded CommonJS loads. For example, `if (require("./a")) require("./b")`
 evaluates the first load before deciding whether to run the second.
+Optional-chain arguments and computed keys also guard CommonJS loads:
+`sink?.use(require("./b"))` and `sink?.[require("./b")]` are conditional.
+The base in `require("./b")?.use` stays eager, as does the argument in
+`(sink?.use)(require("./b"))`, where grouping breaks the chain. These syntax
+flags do not prove whether a load runs or whether initialization is safe.
 The adapter uses tsconfig options when resolving aliases and inline type specifiers. Source
 text, in-root JSON configuration/package metadata, and the resolution file
 inventory are captured before compiler setup. Configuration parsing and module

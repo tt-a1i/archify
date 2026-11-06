@@ -188,6 +188,46 @@ test('CommonJS guarded requires are conditional while the expressions selecting 
   assert.deepEqual(cycles.map(cycle => [cycle.severity, cycle.evidence.kind]), [['info', 'deferred']]);
 });
 
+test('CommonJS optional-chain arguments and computed keys retain their syntactic guard', t => {
+  for (const expression of [
+    'sink?.(require("./b.cjs"));',
+    'sink?.use(require("./b.cjs"));',
+    '({use:sink}).use?.(require("./b.cjs"));',
+    'sink?.[require("./b.cjs")];',
+    'sink?.use[require("./b.cjs")];',
+    '(sink?.use)?.(require("./b.cjs"));',
+  ]) {
+    const { facts, cycles } = analyze(t, { 'a.cjs': expression, 'b.cjs': 'require("./a.cjs");' }, 'ts');
+    assert.equal(facts.imports.find(e => e.from === 'a.cjs').conditional, true, expression);
+    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['info', 'deferred']], expression);
+  }
+  const { facts } = analyze(t, {
+    'a.cjs': 'function load() { return sink?.(require("./b.cjs")); }\nif (flag) (sink?.use)(require("./b.cjs"));\nsink?.(require(name));',
+    'b.cjs': '',
+  }, 'ts');
+  const loads = facts.imports.filter(e => e.from === 'a.cjs');
+  assert.equal(loads[0].lazy, true); assert.equal(loads[0].conditional, true);
+  assert.equal(loads[1].lazy, undefined); assert.equal(loads[1].conditional, true, 'an enclosing if still guards a grouped call');
+  assert.equal(loads[2].conditional, true); assert.equal(facts.unresolved.opaque, 1);
+});
+
+test('CommonJS optional-chain bases and grouped chain breaks remain eager', t => {
+  for (const expression of [
+    'require("./b.cjs");',
+    'require("./b.cjs")?.use;',
+    'require("./b.cjs")?.[key];',
+    '(sink?.use)(require("./b.cjs"));',
+    '(sink?.use)[require("./b.cjs")];',
+  ]) {
+    const { facts, cycles } = analyze(t, { 'a.cjs': expression, 'b.cjs': 'require("./a.cjs");' }, 'ts');
+    const edge = facts.imports.find(e => e.from === 'a.cjs');
+    assert.equal(edge.conditional, undefined, expression); assert.equal(edge.lazy, undefined, expression);
+    assert.deepEqual(cycles.map(c => [c.severity, c.evidence.kind]), [['warning', 'eager']], expression);
+  }
+  const { facts } = analyze(t, { 'a.mjs': 'sink?.(import("./b.mjs"));', 'b.mjs': '' }, 'ts');
+  assert.equal(facts.imports[0].conditional, undefined, 'dynamic import keeps its existing separate deferred contract');
+});
+
 test('TypeScript uses tsconfig path aliases and ignores Python files in explicitly selected TS trees', (t) => {
   const { facts } = analyze(t, { 'a.ts': 'import {b} from "@lib/b";\n', 'lib/b.ts': 'export const b = 1;\n', 'other.py': 'print("not TypeScript")\n', 'tsconfig.json': JSON.stringify({ compilerOptions: { baseUrl: '.', paths: { '@lib/*': ['lib/*'] } } }) }, 'ts');
   assert.equal(facts.imports[0].to, 'lib/b.ts');

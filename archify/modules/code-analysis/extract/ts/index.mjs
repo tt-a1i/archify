@@ -14,7 +14,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 2;
+export const REVISION = 12;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -184,6 +184,10 @@ function loadContext(node, isRequire) {
 }
 
 function isConditionalChild(parent, child) {
+  // Chain predicates include continuous ?. segments but exclude grouped chain
+  // breaks. Only arguments/keys are guarded; the chain's base still runs.
+  if (ts.isCallChain(parent)) return parent.arguments.includes(child);
+  if (ts.isElementAccessChain(parent)) return child === parent.argumentExpression;
   if (ts.isIfStatement(parent)) return child === parent.thenStatement || child === parent.elseStatement;
   if (ts.isConditionalExpression(parent)) return child === parent.whenTrue || child === parent.whenFalse;
   if (isShortCircuitExpression(parent)) return child === parent.right;
