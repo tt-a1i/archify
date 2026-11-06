@@ -1,0 +1,16 @@
+{
+  "original_sha256": {
+    "eval-design/manifest.json": "c425fa41f681c9d1caf925112c55148a510a0d5afb7118f9b9725c8be2e531fd",
+    "eval-design/frozen-oracle.json": "bcd6b6ca4723866e0e38c066cf95aabed6c03434e41d330889763ec62ab4f5b1",
+    "eval-design/freeze.py": "37b827044968d3cde5830c7a6bbed667275df489f3d09b197caadfd3e79e361a",
+    "paired-design/supplemental-source-oracle.json": "2134652df4d5dfb446fbf58393af84f8d2576f7c9d90185aa28092960bd654bc",
+    "evaluation/outgoing-source-oracle.json": "8920eb1ae5e5d6a4518b7bc33dc5124a706bea9cab0a0bc1734143d64ea3600f"
+  },
+  "bundle_sha256": {
+    "eval-design/manifest.json": "96ed9b349de367cb2a90300384f48203319b186d9871c50d6108c4842f9c6ae9",
+    "eval-design/frozen-oracle.json": "339273b5538c46e5453f82694b7c3a2f3376eb333c44664e08c626466970a0be",
+    "paired-design/supplemental-source-oracle.json": "2134652df4d5dfb446fbf58393af84f8d2576f7c9d90185aa28092960bd654bc",
+    "evaluation/outgoing-source-oracle.json": "8920eb1ae5e5d6a4518b7bc33dc5124a706bea9cab0a0bc1734143d64ea3600f"
+  },
+  "transformation": "Only private local path fields replaced with source placeholders or omitted-reference markers. Semantic expected values and source hashes are retained."
+}

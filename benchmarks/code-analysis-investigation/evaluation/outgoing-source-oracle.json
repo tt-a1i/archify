@@ -1,0 +1,46 @@
+{
+  "frozen_at_utc": "2026-11-06T17:06:07.344642+00:00",
+  "provenance": "Manual source-selected import lines checked against original frozen source hashes before paired candidate run; prior analyzer exposure, not blind. Selected sites only, not an exhaustive import inventory. Lazy denotes lexical function containment, not runtime execution.",
+  "units": [
+    {
+      "project": "httpx",
+      "side": "base",
+      "file": "httpx/_transports/default.py",
+      "line": 34,
+      "specifier": "httpcore",
+      "source_line": "import httpcore",
+      "source_file_sha256": "aa729f3a31244eb23f7ac9b3da3360c7915fa9f9d9c75143727abaa8c729781f",
+      "lazy": false
+    },
+    {
+      "project": "httpx",
+      "side": "head",
+      "file": "httpx/_transports/default.py",
+      "line": 75,
+      "specifier": "httpcore",
+      "source_line": "import httpcore",
+      "source_file_sha256": "6c9692828e7570cbb3b38b8d8ed24988210e9ca46396fa8bf1f73f9f3661826b",
+      "lazy": true
+    },
+    {
+      "project": "slf4j",
+      "side": "head",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "line": 28,
+      "specifier": "java.lang.reflect.Constructor",
+      "source_line": "import java.lang.reflect.Constructor;",
+      "source_file_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+      "lazy": false
+    },
+    {
+      "project": "slf4j",
+      "side": "head",
+      "file": "slf4j-api/src/main/java/org/slf4j/LoggerFactory.java",
+      "line": 29,
+      "specifier": "java.lang.reflect.InvocationTargetException",
+      "source_line": "import java.lang.reflect.InvocationTargetException;",
+      "source_file_sha256": "472b6e31dd6d3010bc6aa61de2b84f78429bfd77514d696b4ac7d65bc41e2dcb",
+      "lazy": false
+    }
+  ]
+}
