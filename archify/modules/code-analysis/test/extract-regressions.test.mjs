@@ -27,6 +27,7 @@ test('CommonJS directory requires find the captured JS entry behind separate dec
     'test/use.cjs': [
       "require('../');", "require('../nested');", "require('../default/');",
       "require('../shadow/');", "require('../shadow');", "require('../data/');", "import('../');",
+      "handler?.(require('../nested'));", "function deferred() { require('../nested'); }",
     ].join('\n'),
     'test/type.cts': "import type lib = require('../');",
     'nested/package.json': JSON.stringify({ main: './lib/run.cjs', types: '../types/index.d.ts' }),
@@ -44,7 +45,9 @@ test('CommonJS directory requires find the captured JS entry behind separate dec
   const { imports } = JSON.parse(fs.readFileSync(file, 'utf8'));
   const runtime = createRequire(path.join(root, 'test/use.cjs'));
   const requires = imports.filter(edge => edge.from === 'test/use.cjs' && edge.kind === 'require');
-  assert.equal(requires.length, 6);
+  assert.equal(requires.length, 8);
+  assert.equal(requires[6].conditional, true, 'optional-chain guard survives directory declaration fallback');
+  assert.equal(requires[7].lazy, true, 'deferred load survives directory declaration fallback');
   for (const edge of requires) {
     const target = path.relative(fs.realpathSync(root), runtime.resolve(edge.specifier)).split(path.sep).join('/');
     assert.equal(edge.to, target.endsWith('.json') ? undefined : target, edge.specifier);
