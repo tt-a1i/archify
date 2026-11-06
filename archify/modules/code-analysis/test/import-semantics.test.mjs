@@ -40,6 +40,129 @@ function python(root, code) {
   assert.fail('Python interpreter unavailable');
 }
 
+test('Python imports choose a regular package before its sibling module within one search root', (t) => {
+  const { facts } = analyze(t, {
+    'pkg/__init__.py': '',
+    'pkg/consumer.py': [
+      'from pkg.provider import value',
+      'from .provider import value',
+      'from .ordinary import value',
+      'import earlier',
+    ].join('\n'),
+    'pkg/provider/__init__.py': 'value = 1',
+    'pkg/provider.py': 'value = 2',
+    'pkg/ordinary.py': 'value = 3',
+    'pkg/ordinary/child.py': '',
+    'earlier.py': '',
+    'src/earlier/__init__.py': '',
+  });
+  const imports = facts.imports.filter((edge) => edge.from === 'pkg/consumer.py' && !edge.implicit);
+  assert.deepEqual(imports.map((edge) => edge.to), [
+    'pkg/provider/__init__.py', 'pkg/provider/__init__.py', 'pkg/ordinary.py', 'earlier.py',
+  ]);
+});
+
+test('Python dotted imports cannot cross a parent module or a different regular package', (t) => {
+  const { root, facts } = analyze(t, {
+    'app.py': 'import plain.child\nimport regular.child\nimport nested.mod.child\nimport later.child\n',
+    'plain.py': '', 'plain/child.py': '',
+    'regular/__init__.py': '', 'src/regular/child.py': '',
+    'nested/__init__.py': '', 'nested/mod.py': '', 'nested/mod/child.py': '',
+    'later/child.py': '', 'src/later/__init__.py': '', 'src/later/child.py': '',
+  });
+  // This executes only empty, test-authored modules, using the adapter's declared roots.
+  const actual = python(root, `import sys, os, importlib, json
+sys.path = [os.getcwd(), os.path.join(os.getcwd(), 'src')]
+result = []
+for name in ['plain.child', 'regular.child', 'nested.mod.child', 'later.child']:
+    try:
+        result.append(os.path.relpath(importlib.import_module(name).__file__).replace(os.sep, '/'))
+    except ModuleNotFoundError:
+        result.append(None)
+print(json.dumps(result))`);
+  assert.equal(actual.status, 0, actual.stderr);
+  const expected = [null, null, null, 'src/later/child.py'];
+  assert.deepEqual(JSON.parse(actual.stdout), expected);
+  const declared = facts.imports.filter(edge => edge.from === 'app.py' && !edge.implicit);
+  assert.deepEqual(declared.map(edge => edge.to ?? null), expected);
+  assert.deepEqual(declared.map(edge => edge.resolved), [false, false, false, true]);
+  assert.equal(facts.unresolved.unknown, 3);
+  assert.equal(facts.unresolved.external, 0);
+});
+
+test('Python absolute namespace imports search every portion until a regular package wins', (t) => {
+  const { root, facts } = analyze(t, {
+    'app.py': 'from ns import left, right\nimport ns.right\nfrom ns.deep import child\nfrom ns import absent\n',
+    'ns/left.py': '', 'src/ns/right.py': '',
+    'ns/deep/child.py': '', 'src/ns/deep/__init__.py': '', 'src/ns/deep/child.py': '',
+    'ns/relative.py': 'from . import left\n',
+  });
+  const actual = python(root, `import sys, os, json
+sys.path = [os.getcwd(), os.path.join(os.getcwd(), 'src')]
+from ns import left, right
+from ns.deep import child
+print(json.dumps([os.path.relpath(m.__file__).replace(os.sep, '/') for m in [left, right, child]]))`);
+  assert.equal(actual.status, 0, actual.stderr);
+  assert.deepEqual(JSON.parse(actual.stdout), ['ns/left.py', 'src/ns/right.py', 'src/ns/deep/child.py']);
+  const declared = facts.imports.filter(edge => edge.from === 'app.py' && !edge.implicit);
+  assert.deepEqual(declared.map(edge => [edge.specifier, edge.to]), [
+    ['ns.left', 'ns/left.py'], ['ns.right', 'src/ns/right.py'],
+    ['ns.right', 'src/ns/right.py'], ['ns.deep.child', 'src/ns/deep/child.py'],
+    ['ns.absent', undefined],
+  ]);
+  assert.equal(facts.unresolved.unknown, 1);
+  assert.equal(facts.imports.find(edge => edge.from === 'ns/relative.py').to, 'ns/left.py');
+});
+
+test('Python relative namespace imports use every package portion in search order', (t) => {
+  const { root, facts } = analyze(t, {
+    'ns/read_root.py': 'from . import right as selected\n',
+    'src/ns/read_src.py': 'from . import left as selected\n',
+    'ns/inner/read_parent.py': 'from .. import right as selected\n',
+    'ns/read_deep.py': 'from .deep import child as selected\n',
+    'src/ns/read_order.py': 'from . import dep as selected\n',
+    'ns/left.py': '', 'src/ns/right.py': '',
+    'ns/deep/child.py': '', 'src/ns/deep/__init__.py': '', 'src/ns/deep/child.py': '',
+    'ns/dep.py': '', 'src/ns/dep/__init__.py': '',
+  });
+  const selected = [
+    ['ns.read_root', 'ns/read_root.py', '.right', 'src/ns/right.py'],
+    ['ns.read_src', 'src/ns/read_src.py', '.left', 'ns/left.py'],
+    ['ns.inner.read_parent', 'ns/inner/read_parent.py', '..right', 'src/ns/right.py'],
+    ['ns.read_deep', 'ns/read_deep.py', '.deep.child', 'src/ns/deep/child.py'],
+    ['ns.read_order', 'src/ns/read_order.py', '.dep', 'ns/dep.py'],
+  ];
+  const actual = python(root, `import sys, os, importlib, json
+sys.path = [os.getcwd(), os.path.join(os.getcwd(), 'src')]
+names = ${JSON.stringify(selected.map(row => row[0]))}
+print(json.dumps([os.path.relpath(importlib.import_module(name).selected.__file__).replace(os.sep, '/') for name in names]))`);
+  assert.equal(actual.status, 0, actual.stderr);
+  assert.deepEqual(JSON.parse(actual.stdout), selected.map(row => row[3]));
+  for (const [, from, specifier, to] of selected) {
+    const edge = facts.imports.find(item => item.from === from && !item.implicit);
+    assert.equal(edge.to, to, from);
+    assert.equal(edge.specifier, specifier, from);
+  }
+});
+
+test('Python relative namespace lookup preserves regular and analyzed-root package boundaries', (t) => {
+  const { facts } = analyze(t, {
+    'pkg/__init__.py': '', 'pkg/read.py': 'from . import sibling\n',
+    'src/pkg/sibling.py': '',
+    'src/__init__.py': '', 'src/ns/read.py': 'from . import sibling\n',
+    'src/ns/sibling.py': '', 'ns/sibling.py': '',
+  });
+  const ordinary = facts.imports.find(edge => edge.from === 'pkg/read.py' && !edge.implicit);
+  assert.equal(ordinary.to, 'pkg/__init__.py');
+  assert.deepEqual(ordinary.names, ['sibling'], 'an initializer edge does not establish that the attribute exists');
+  assert.equal(facts.imports.find(edge => edge.from === 'src/ns/read.py' && !edge.implicit).to, 'src/ns/sibling.py');
+  const rootPackage = analyze(t, {
+    '__init__.py': '', 'ns/read.py': 'from . import sibling\n',
+    'ns/sibling.py': '', 'src/ns/sibling.py': '',
+  }).facts;
+  assert.equal(rootPackage.imports.find(edge => edge.from === 'ns/read.py' && !edge.implicit).to, 'ns/sibling.py');
+});
+
 test('Python TYPE_CHECKING aliases stay as structural edges, never runtime-cycle errors', (t) => {
   for (const [header, guard] of [
     ['from typing import TYPE_CHECKING', 'TYPE_CHECKING'],
