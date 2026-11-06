@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { classifyRole, lineCount, listFiles, snapshotTree, toPosix, packageMarkersIn } from '../shared/files.mjs';
 import { matcher } from '../shared/glob.mjs';
 import { snapshotHost } from './snapshot-host.mjs';
+import { runtimePackageTarget } from './runtime-package-target.mjs';
 import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 import { measureFunctions } from './functions.mjs';
@@ -14,7 +15,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 5;
+export const REVISION = 15;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -86,7 +87,7 @@ export function extract(root, config) {
       if (found.names.length) record.names = found.names;
       if (found.lazy) record.lazy = true;
       if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
-      const target = found.opaque ? { reason: 'opaque' } : resolve(found.specifier, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
+      const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
       if (target.to) { record.to = target.to; record.resolved = true; }
       else unresolved[target.reason] += 1;
       imports.push(record);
@@ -222,17 +223,33 @@ function exportedNames(clause) {
   return clause.elements.map((el) => (el.propertyName || el.name).text).sort();
 }
 
-function resolve(specifier, containingFile, absRoot, fileSet, options, inputs, resolutionMode) {
+function resolve(record, containingFile, absRoot, fileSet, options, inputs, resolutionMode) {
+  const { specifier } = record;
   const isPathLike = specifier.startsWith('.') || specifier.startsWith('/');
   // Without the usage mode, NodeNext selects require conditions even for import().
-  const result = ts.resolveModuleName(specifier, containingFile, options, inputs, undefined, undefined, resolutionMode);
-  const resolvedFile = result.resolvedModule?.resolvedFileName;
+  const correction = runtimePackageTarget(record, containingFile, absRoot, options, inputs, resolutionMode);
+  if (correction && correction.status !== 'selected') return { reason: 'unknown' };
+  const result = correction ? null : ts.resolveModuleName(specifier, containingFile, options, inputs, undefined, undefined, resolutionMode);
+  const resolvedFile = correction?.file || result?.resolvedModule?.resolvedFileName;
   if (!resolvedFile) return { reason: isPathLike ? 'unknown' : 'external' };
-  if (result.resolvedModule.isExternalLibraryImport || resolvedFile.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
-  const rel = toPosix(path.relative(absRoot, resolvedFile));
+  if (result?.resolvedModule.isExternalLibraryImport || resolvedFile.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
+  let rel = toPosix(path.relative(absRoot, resolvedFile));
   // Only a parent-directory result is outside the root; an in-root directory whose
   // name merely starts with ".." (e.g. "..generated/") must not be misclassified.
   if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
+  if ((!isPathLike || resolutionMode === ts.ModuleKind.ESNext) && !record.typeOnly && /\.[cm]?js$/.test(containingFile) && /\.d\.(?:ts|mts|cts)$/.test(rel)) {
+    // The language service uses noDtsResolution for implementation lookup. It
+    // omits the types condition, but still substitutes TS sources for JS paths.
+    // This fallback serves JS callers, so keep only JS implementations and use
+    // the captured host for every lookup, including excluded-file boundaries.
+    const runtimeHost = { ...inputs, fileExists: file => !/\.[cm]?tsx?$/.test(file) && inputs.fileExists(file) };
+    const runtime = ts.resolveModuleName(specifier, containingFile, { ...options, noDtsResolution: true }, runtimeHost, undefined, undefined, resolutionMode).resolvedModule;
+    const file = runtime?.resolvedFileName;
+    if (!file || !/\.[cm]?js$/.test(file)) return { reason: 'unknown' };
+    if (runtime.isExternalLibraryImport || file.split(path.sep).join('/').includes('/node_modules/')) return { reason: 'external' };
+    rel = toPosix(path.relative(absRoot, file));
+    if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
+  }
   if (!fileSet.has(rel)) return { reason: 'unknown' };
   return { to: rel };
 }
