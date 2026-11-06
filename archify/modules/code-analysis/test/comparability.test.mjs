@@ -152,8 +152,10 @@ test('comparison: reordering first-match config maps or changing the extractor i
 test('comparison: a changed extraction logic revision is not comparable; an unrecorded one is reported once', (t) => {
   const dir = copySource();
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const before = run(dir, loadConfig(CONFIG)).findings.analysis;
-  assert.equal(before.adapterRevision, 1, 'findings record the revision of the raw facts');
+  const { facts, findings } = run(dir, loadConfig(CONFIG));
+  assert.equal(findings.analysis.adapterRevision, facts.repository.adapterRevision, 'findings record the revision of the raw facts');
+  // Keep the historical 1-to-2 comparison independent of the installed extractor.
+  const before = { ...findings.analysis, adapterRevision: 1 };
   assert.deepEqual(comparability(before, { ...before }), { comparable: true, reasons: [] });
 
   const revised = comparability(before, { ...before, adapterRevision: 2 });

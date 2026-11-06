@@ -148,6 +148,10 @@ def collect(tree):
             else:
                 self.under({"conditional": True}, node.body + node.orelse)
 
+        def visit_Match(self, node):
+            self.visit(node.subject)
+            self.under({"conditional": True}, node.cases)
+
         def visit_Try(self, node):
             self.under({"conditional": True}, node.body + node.handlers + node.orelse)
             self.under({}, node.finalbody)

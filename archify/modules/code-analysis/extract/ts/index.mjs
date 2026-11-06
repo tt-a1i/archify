@@ -9,7 +9,7 @@ import { snapshotHost } from './snapshot-host.mjs';
 import { runtimePackageTarget } from './runtime-package-target.mjs';
 import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
-import { measureFunctions } from './functions.mjs';
+import { isShortCircuitExpression, measureFunctions } from './functions.mjs';
 import { CALL_MODEL, callsite } from './calls.mjs';
 import { importedCallTarget } from './imported-calls.mjs';
 
@@ -17,7 +17,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 18;
+export const REVISION = 19;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -94,6 +94,7 @@ export function extract(root, config, { onCapture } = {}) {
       const record = { from: rel, specifier: found.specifier, kind: found.kind, line: found.line, resolved: false };
       if (found.names.length) record.names = found.names;
       if (found.lazy) record.lazy = true;
+      if (found.conditional) record.conditional = true;
       if (source.isDeclarationFile || found.typeOnly) record.typeOnly = true;
       const target = found.opaque ? { reason: 'opaque' } : resolve(record, abs, absRoot, fileSet, options, inputs, program.getModeForUsageLocation(source, found.usage));
       if (target.to) {
@@ -180,13 +181,12 @@ function collectImports(source, checker, options, onCall) {
         && isModuleRequire(node.expression, checker);
       if (isImport || isRequire) {
         const kind = isImport ? 'dynamic' : 'require';
-        if (ts.isStringLiteralLike(node.arguments[0])) {
-          found.push({ specifier: node.arguments[0].text, usage: node.arguments[0], kind, line: lineOf(source, node), names: [], lazy: inFunctionBody(node) });
-        } else {
-          // A computed specifier (import(pathToFileURL(...)), require(name)) cannot
-          // be resolved statically; it is recorded so the miss stays visible.
-          found.push({ specifier: OPAQUE, kind, line: lineOf(source, node), names: [], opaque: true, lazy: inFunctionBody(node) });
-        }
+        const argument = node.arguments[0];
+        const opaque = !ts.isStringLiteralLike(argument);
+        found.push({
+          usage: argument, specifier: opaque ? OPAQUE : argument.text, kind, line: lineOf(source, node),
+          names: [], opaque, ...loadContext(node, isRequire),
+        });
       }
     }
     ts.forEachChild(node, visit);
@@ -195,14 +195,36 @@ function collectImports(source, checker, options, onCall) {
   return found;
 }
 
-function inFunctionBody(node) {
+function loadContext(node, isRequire) {
+  const context = {};
   for (let current = node; current.parent; current = current.parent) {
     const parent = current.parent;
-    if (ts.isFunctionLike(parent) && (parent.body === current || parent.parameters?.includes(current))) return true;
+    if (ts.isFunctionLike(parent) && (parent.body === current || parent.parameters?.includes(current))) context.lazy = true;
     // Instance field initializers run on construction, unlike static fields.
-    if (ts.isPropertyDeclaration(parent) && parent.initializer === current && !parent.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword)) return true;
+    if (ts.isPropertyDeclaration(parent) && parent.initializer === current && !parent.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword)) context.lazy = true;
+    if (isRequire && isConditionalChild(parent, current)) context.conditional = true;
   }
-  return false;
+  return context;
+}
+
+function isConditionalChild(parent, child) {
+  // Chain predicates include continuous ?. segments but exclude grouped chain
+  // breaks. Only arguments/keys are guarded; the chain's base still runs.
+  if (ts.isCallChain(parent)) return parent.arguments.includes(child);
+  if (ts.isElementAccessChain(parent)) return child === parent.argumentExpression;
+  if (ts.isIfStatement(parent)) return child === parent.thenStatement || child === parent.elseStatement;
+  if (ts.isConditionalExpression(parent)) return child === parent.whenTrue || child === parent.whenFalse;
+  if (isShortCircuitExpression(parent)) return child === parent.right;
+  if (ts.isWhileStatement(parent)) return child === parent.statement;
+  if (ts.isForStatement(parent)) return (child === parent.statement && Boolean(parent.condition)) || child === parent.incrementor;
+  if (ts.isForInStatement(parent) || ts.isForOfStatement(parent)) return child === parent.statement || child === parent.initializer;
+  if (ts.isCaseOrDefaultClause(parent)) {
+    // The first case test runs even if a default precedes it. Later tests and
+    // clause bodies depend on selection; a sole default always runs.
+    const firstCase = parent.parent.clauses.find(ts.isCaseClause);
+    return Boolean(firstCase && (child !== parent.expression || parent !== firstCase));
+  }
+  return ts.isCatchClause(parent);
 }
 
 // Native CommonJS require has no source declaration. Also preserve the common
@@ -260,6 +282,10 @@ function resolve(record, containingFile, absRoot, fileSet, options, inputs, reso
   // Only a parent-directory result is outside the root; an in-root directory whose
   // name merely starts with ".." (e.g. "..generated/") must not be misclassified.
   if (rel === '..' || rel.startsWith('../')) return { reason: 'outside' };
+  if (record.kind === 'require' && !record.typeOnly && /\.d\.(?:ts|cts|mts)$/.test(rel)) {
+    const runtime = resolveRelativeRequire(specifier, containingFile, absRoot, fileSet, inputs);
+    if (runtime) return runtime;
+  }
   if ((!isPathLike || resolutionMode === ts.ModuleKind.ESNext) && !record.typeOnly && /\.[cm]?js$/.test(containingFile) && /\.d\.(?:ts|mts|cts)$/.test(rel)) {
     // The language service uses noDtsResolution for implementation lookup. It
     // omits the types condition, but still substitutes TS sources for JS paths.
@@ -275,4 +301,38 @@ function resolve(record, containingFile, absRoot, fileSet, options, inputs, reso
   }
   if (!fileSet.has(rel)) return { reason: 'unknown' };
   return { to: rel };
+}
+
+// TypeScript can prefer a declaration even for a runtime require. Check only
+// relative files and directory entries using the analysis's frozen inventory.
+function resolveRelativeRequire(specifier, containingFile, root, fileSet, inputs) {
+  const parts = specifier.split('/');
+  if (!['.', '..'].includes(parts[0])) return;
+  const requested = path.resolve(path.dirname(containingFile), specifier);
+  const relative = path.relative(root, requested);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return;
+
+  const target = file => {
+    const rel = toPosix(path.relative(root, file));
+    return /\.[cm]?js$/.test(rel) && fileSet.has(rel) ? { to: rel } : { reason: 'unknown' };
+  };
+  // JSON, native, and excluded files also win before a directory. Their
+  // presence must stop the search even though they cannot supply a JS edge.
+  const explicitDirectory = ['', '.', '..'].includes(parts.at(-1));
+  if (!explicitDirectory) {
+    const file = ['', '.js', '.json', '.node'].map(ext => requested + ext).find(inputs.fileExists);
+    if (file) return target(file);
+  }
+  if (!inputs.directoryExists(requested)) return { reason: 'unknown' };
+  const manifest = inputs.readFile(path.join(requested, 'package.json'));
+  let main = 'index.js';
+  if (manifest !== undefined) {
+    try {
+      const pkg = JSON.parse(manifest);
+      if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) return { reason: 'unknown' };
+      main = pkg.main || main;
+    } catch { return { reason: 'unknown' }; }
+  }
+  if (typeof main !== 'string' || !/\.[cm]?js$/.test(main)) return { reason: 'unknown' };
+  return target(path.resolve(requested, main));
 }
