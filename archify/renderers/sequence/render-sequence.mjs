@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { esc, renderDefinitions, renderSemanticSigil, textUnits } from '../shared/utils.mjs';
+import { esc, renderDefinitions, renderSemanticSigil, textUnits, cjkWrapPieces } from '../shared/utils.mjs';
 import { animateAttr, focusEdgeAttrs, focusNodeAttrs, focusNodeTitle, loadDiagramWithBrandMarks, renderDrilldownMark, resolveNodeDrilldowns, wrapSingleChildAnchor, writeDiagram, svgAccessibleText, svgRootAttrs } from '../shared/cli.mjs';
 import { throwDiagnosticProblems } from '../shared/diagnostics.mjs';
 import { legendFootprint, measureLegend, resolveLegend, renderLegend as renderResolvedLegend } from '../shared/legend.mjs';
@@ -193,7 +193,7 @@ function noteBreakIndex(piece) {
 }
 
 function wrapNoteText(text, width) {
-  const original = wrapNoteWords(String(text).match(/\s+|\S+/gu) || [], width);
+  const original = wrapNoteWords(cjkWrapPieces(String(text).match(/\s+|\S+/gu) || []), width);
   if (!/\p{Script=Han}/u.test(text)) return original;
 
   // Space-only tokens can waste half a line before a Chinese phrase. Split Han
@@ -203,13 +203,11 @@ function wrapNoteText(text, width) {
   for (const token of String(text).match(/\s+|\p{Script=Han}[\p{Script=Han}\p{Mark}]*|[^\s\p{Script=Han}]+/gu) || []) {
     if (/\p{Script=Han}/u.test(token)) {
       for (const { segment } of noteWordSegmenter.segment(token)) words.push(segment);
-    } else if (/^[、。，；：！？）】》」』]+$/u.test(token) && words.length) {
-      words[words.length - 1] += token;
     } else {
       words.push(token);
     }
   }
-  const compact = wrapNoteWords(words, width);
+  const compact = wrapNoteWords(cjkWrapPieces(words), width);
   // Never grow a note or change a same-height wrap merely to rebalance lines.
   return compact.length < original.length ? compact : original;
 }
@@ -233,7 +231,7 @@ function wrapNoteWords(words, width) {
     }
     flush();
     let piece = '';
-    for (const { segment } of noteSegmenter.segment(word)) {
+    for (const segment of cjkWrapPieces(Array.from(noteSegmenter.segment(word), ({ segment }) => segment))) {
       while (piece && noteTextWidth(piece + segment) > width) {
         const cut = noteBreakIndex(piece);
         lines.push(piece.slice(0, cut));

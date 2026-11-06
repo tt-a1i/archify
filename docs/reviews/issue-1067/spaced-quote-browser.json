@@ -1,0 +1,90 @@
+[
+  {
+    "variant": "base",
+    "result": {
+      "pageComposition": {
+        "bodyPaddingPx": 12,
+        "headerPx": 52,
+        "diagramChromePx": 78,
+        "svgPx": 231,
+        "cardsPx": 0,
+        "viewBoxHeight": 267
+      },
+      "innerWidth": 1051,
+      "innerHeight": 798,
+      "scrollWidth": 1051,
+      "scrollHeight": 798,
+      "resolvedTheme": "dark",
+      "readerLayout": "adaptive",
+      "readerOverflow": null,
+      "readerFit": "intrinsic-height",
+      "diagramType": null,
+      "documentScrollUnclipped": true,
+      "readerWidth": 987,
+      "diagramWidth": 957,
+      "viewBoxWidth": 1104,
+      "workflowLanes": [],
+      "minimumProjectedNodeTextPx": 10.835597826086957,
+      "minimumProjectedNonEdgeTextPx": 10.835597826086957,
+      "minimumProjectedEdgeTextPx": null,
+      "minimumProjectedNodeText": "付款服務部署後開始逾時，值班人員收到告警通知。",
+      "minimumProjectedNodeTextDetail": "primary",
+      "minimumProjectedNodeTextOwner": {
+        "kind": "node",
+        "id": "a"
+      },
+      "hasLegend": false,
+      "hasNavigationDock": true,
+      "legendDockIntersectionArea": 0,
+      "dockStageIntersectionArea": 0,
+      "dockStageGap": 10,
+      "viewerChromeRequiredGap": 10,
+      "viewerChromeReserve": 54,
+      "viewerChromeActive": true
+    }
+  },
+  {
+    "variant": "candidate",
+    "result": {
+      "pageComposition": {
+        "bodyPaddingPx": 12,
+        "headerPx": 52,
+        "diagramChromePx": 78,
+        "svgPx": 231,
+        "cardsPx": 0,
+        "viewBoxHeight": 267
+      },
+      "innerWidth": 1051,
+      "innerHeight": 798,
+      "scrollWidth": 1051,
+      "scrollHeight": 798,
+      "resolvedTheme": "dark",
+      "readerLayout": "adaptive",
+      "readerOverflow": null,
+      "readerFit": "intrinsic-height",
+      "diagramType": null,
+      "documentScrollUnclipped": true,
+      "readerWidth": 987,
+      "diagramWidth": 957,
+      "viewBoxWidth": 1104,
+      "workflowLanes": [],
+      "minimumProjectedNodeTextPx": 10.835597826086957,
+      "minimumProjectedNonEdgeTextPx": 10.835597826086957,
+      "minimumProjectedEdgeTextPx": null,
+      "minimumProjectedNodeText": "付款服務部署後開始逾時，值班人員收到告警通知。",
+      "minimumProjectedNodeTextDetail": "primary",
+      "minimumProjectedNodeTextOwner": {
+        "kind": "node",
+        "id": "a"
+      },
+      "hasLegend": false,
+      "hasNavigationDock": true,
+      "legendDockIntersectionArea": 0,
+      "dockStageIntersectionArea": 0,
+      "dockStageGap": 10,
+      "viewerChromeRequiredGap": 10,
+      "viewerChromeReserve": 54,
+      "viewerChromeActive": true
+    }
+  }
+]
