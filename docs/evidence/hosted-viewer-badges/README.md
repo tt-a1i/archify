@@ -12,7 +12,7 @@ Both use the same [explainer input](explainer.json), Chrome, Node.js 22.23.3, 14
 
 The [receipt](evidence.json) records input and image hashes, browser observations, and the pixel comparison. Exactly 3,271 of 1,296,000 pixels change, within the two badge regions. The title, toolbar, diagram, legend, and controls are pixel-identical. The browser reports both badges as `block` on the base and `none` on the candidate; the preset remains `editorial`.
 
-The Agent inspected both captures. Personal contributor review and maintainer scope agreement remain pending. This fixed-input presentation comparison makes no claim about Agent generation speed or first-draft quality.
+The Agent inspected both captures. @HengYangDS personally reviewed the submitted changes and explanation and confirmed understanding on 6 November 2026. Maintainer scope agreement remains pending in #1195. The capture receipt retains the review state observed when the images were taken. This fixed-input presentation comparison makes no claim about Agent generation speed or first-draft quality.
 
 The related behavioral regression can be run from the repository root with Chrome available:
 
