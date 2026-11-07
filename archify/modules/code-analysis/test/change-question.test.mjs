@@ -59,7 +59,7 @@ test('public paired question captures dirty working trees, preserves side coordi
   const change = brief.changedDefinitions.items[0];
   assert.equal(change.base.definition.line, 1); assert.equal(change.head.definition.line, 2);
   for (const side of ['base', 'head']) {
-    assert.equal(brief.sides[side].callModel, 'js-ts-lexical-v4');
+    assert.equal(brief.sides[side].callModel, 'js-ts-lexical-v5');
     const ref = change[side].knownReferences.items[0];
     assert.equal(ref.fact.target.line, change[side].definition.line);
     assert.equal(ref.navigation.location.file, 'caller.mjs'); assert.equal(ref.side, side);
@@ -408,4 +408,17 @@ test('Python changed implementation retrieves a caller through one explicit API 
     assert.equal(refs.items[0].navigation.location.file, 'consumer.py');
     assert.equal(refs.items[0].fact.line, 3);
   }
+});
+
+test('changed implementation retains its known caller through an explicit ESM forwarding module',t=>{
+ const api="import {selected} from './impl.mjs';export {selected as publicWork};\n";
+ const consumer="import {publicWork} from './api.mjs';\nexport function ask(){publicWork();}\n";
+ const args=setup(t,{'impl.mjs':'export function selected(){return 1}\n','api.mjs':api,'consumer.mjs':consumer},
+  {'impl.mjs':'export function selected(){return 2}\n','api.mjs':api,'consumer.mjs':consumer});
+ const q=captureChangeQuestion({...args,entry:'impl.mjs'});assert.equal(q.changedDefinitions.total,1);
+ for(const side of ['base','head']){
+  const refs=q.changedDefinitions.items[0][side].knownReferences;assert.equal(refs.coverage,'available');assert.equal(refs.total,1);
+  assert.equal(refs.items[0].navigation.status,'valid');assert.equal(refs.items[0].navigation.location.file,'consumer.mjs');
+  assert.deepEqual(refs.items[0].fact.via,[{file:'api.mjs',line:1,column:1}]);
+ }
 });

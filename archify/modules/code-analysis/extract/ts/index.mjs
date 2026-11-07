@@ -17,7 +17,7 @@ export const id = 'ts';
 // Revision of this adapter's own extraction logic, recorded as
 // repository.adapterRevision. Bump it when the same sources can yield different
 // raw facts (see docs/TECH-GUIDE.md, "Extractor revisions").
-export const REVISION = 21;
+export const REVISION = 22;
 
 const SOURCE_EXT = /\.(?:[mc]?[jt]s|[jt]sx)$/;
 // Placeholder specifier for import()/require() calls whose argument is not a string literal.
@@ -111,7 +111,7 @@ export function extract(root, config, { onCapture } = {}) {
       ? importedCallTarget(node, source, checker, importTargets, sources) : null;
     if (target) {
       const { reason, ...record } = call;
-      calls.push({ ...record, resolution: 'imported-function', target });
+      calls.push({ ...record, resolution: 'imported-function', ...target });
     } else calls.push(call);
   }
 
@@ -174,7 +174,7 @@ function collectImports(source, checker, options, onCall) {
     } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
       const clause = node.exportClause;
       const inlineTypesOnly = clause && ts.isNamedExports(clause) && clause.elements.length > 0 && clause.elements.every((e) => e.isTypeOnly);
-      found.push({ specifier: node.moduleSpecifier.text, usage: node.moduleSpecifier, kind: 'export', line: lineOf(source, node), names: exportedNames(clause), typeOnly: Boolean(node.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
+      found.push({ statement: node, specifier: node.moduleSpecifier.text, usage: node.moduleSpecifier, kind: 'export', line: lineOf(source, node), names: exportedNames(clause), typeOnly: Boolean(node.isTypeOnly || (inlineTypesOnly && !options.verbatimModuleSyntax)) });
     } else if (ts.isCallExpression(node) && node.arguments.length) {
       const isImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
       const isRequire = !isImport && ts.isIdentifier(node.expression) && node.expression.text === 'require'

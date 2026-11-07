@@ -67,7 +67,7 @@ test('relative default imports bind direct named, anonymous and overloaded funct
   assert.ok(brief.calls.records.every((r) => r.targetNavigation.status === 'valid'));
 });
 
-test('type-only, namespace, packages, re-exports, named aliases and expressions stay unknown', (t) => {
+test('explicit reexports and local function aliases bind while unsupported imports stay unknown', (t) => {
   const { facts } = fixture(t, {
     'entry.ts': [
       'import type { declared as typeClause } from "./target.js"; typeClause();',
@@ -96,8 +96,12 @@ test('type-only, namespace, packages, re-exports, named aliases and expressions 
     'no-default.ts': 'export function noDefault() {}',
   });
   const calls = facts.calls.filter(c => c.file === 'entry.ts');
-  assert.equal(calls.find(c => c.line === 8).resolution, 'imported-function');
-  assert.ok(calls.filter(c => c.line !== 8).every(c => c.resolution === 'unresolved'));
+  assert.deepEqual(calls.filter(c=>c.target).map(c=>[c.line,c.target.file,c.target.name]), [
+    [7,'target.ts','defaultFunction'],[8,'local.ts','local'],
+    [12,'target.ts','declared'],[14,'target.ts','localExport'],
+  ]);
+  assert.ok(calls.filter(c=>!c.target).every(c=>c.resolution==='unresolved'));
+  assert.deepEqual(schemaErrors('raw-facts',facts),[]);
 });
 
 test('parameter-default calls cannot target declarations in the unavailable function body', (t) => {
@@ -199,7 +203,7 @@ test('default references follow ordinary same-module functions and local default
  const imported=args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.target);
  assert.deepEqual(imported.map(c=>c.target),[{file:'plain.mjs',name:'later',line:1,column:23},{file:'alias.mjs',name:'earlier',line:1,column:1}]);
  assert.equal(args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.resolution==='unresolved').length,1);
- const q=buildQuestion(args);assert.equal(q.calls.bindingCoverage,'declarations-const-initializers-captured-static-imports-and-stable-default-function-references');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ const q=buildQuestion(args);assert.equal(q.calls.bindingCoverage,'declarations-const-initializers-and-stable-explicit-exports-through-captured-value-paths');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
 });
 
 test('default references do not claim a function overwritten by assignments, destructuring, loops or opaque eval',t=>{
@@ -259,7 +263,7 @@ test('captured configured aliases bind ordinary exports with independent lexical
   assert.deepEqual(schemaErrors('raw-facts',args.facts),[]);
 });
 
-test('configured alias target omissions, declarations, type-only imports and re-export hops stay unknown', t => {
+test('configured alias reexports bind while omitted, declaration-only and type-only targets stay unknown', t => {
   const {facts}=fixture(t,{
     'tsconfig.json':aliasConfig,
     'entry.ts':[
@@ -280,7 +284,11 @@ test('configured alias target omissions, declarations, type-only imports and re-
     'src/factory.ts':'const factory=(()=>()=>{})();export default factory;',
     'src/broken.ts':'export default function broken(){} function bad( {',
   },['src/excluded.ts']);
-  assert.ok(facts.calls.filter(c=>c.file==='entry.ts').every(c=>c.resolution==='unresolved'));
+  const calls=facts.calls.filter(c=>c.file==='entry.ts');
+  assert.deepEqual(calls.filter(c=>c.target).map(c=>c.target),[{file:'src/target.ts',name:'target',line:1,column:1}]);
+  assert.equal(calls.find(c=>c.target).line,6);
+  assert.deepEqual(calls.find(c=>c.target).via,[{file:'src/barrel.ts',line:1,column:1}]);
+  assert.ok(calls.filter(c=>c.line!==6).every(c=>c.resolution==='unresolved'));
 });
 
 test('changed configured alias target recovers the known foreign caller in each snapshot', t=>{

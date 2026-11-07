@@ -100,7 +100,7 @@ test('call schema rejects unsupported targets/positions and retains empty histor
   bad((f) => { f.calls[0].resolution = 'unresolved'; f.calls[0].reason = 'unsupported-callee'; });
   bad((f) => { f.callModel = ''; });
   bad((f) => { f.callModel = false; });
-  assert.equal(facts.callModel, 'js-ts-lexical-v4');
+  assert.equal(facts.callModel, 'js-ts-lexical-v5');
   assert.deepEqual(schemaErrors('raw-facts', { ...facts, callModel: 'future-call-model' }), []);
   const previous = { ...facts, calls: [], repository: { ...facts.repository, adapterRevision: 1 } };
   delete previous.callModel;
@@ -189,4 +189,64 @@ test('nonunique variable declarations and cross-file globals cannot acquire an i
   });
   assert.ok(facts.calls.every((c) => c.resolution === 'unresolved'));
   assert.equal(facts.calls.find((c) => c.file === 'b.js').reason, 'no-local-function-binding');
+});
+
+test('captured ESM forwarding preserves every hop and selects implementation bodies',t=>{
+ for(const ext of ['mjs','ts']){
+  const suffix=ext==='ts'?'js':ext;
+  const {facts}=extract(t,{
+   [`entry.${ext}`]:`import {run} from './mid.${suffix}';\nexport function chosen(){run('x');}\n`,
+   [`mid.${ext}`]:`export {work as run} from './api.${suffix}';\n`,
+   [`api.${ext}`]:`import implementation from './root.${suffix}';\nexport {implementation as work};\n`,
+   [`root.${ext}`]:ext==='ts'?'export default function actual(value:string):string;\nexport default function actual(value:unknown){return value;}\n':'export default function actual(value){return value;}\n',
+  });
+  const call=facts.calls.find(c=>c.file===`entry.${ext}`);
+  assert.equal(call.resolution,'imported-function');
+  assert.deepEqual(call.target,{file:`root.${ext}`,name:'actual',line:ext==='ts'?2:1,column:1});
+  assert.deepEqual(call.via,[{file:`mid.${ext}`,line:1,column:1},{file:`api.${ext}`,line:1,column:1}]);
+  assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+  const old=structuredClone(facts);old.callModel='js-ts-lexical-v4';
+  assert.ok(schemaErrors('raw-facts',old).some(e=>String(e.message).includes('v5')));
+  for(const mutate of [c=>{c.via[0].line=2},c=>{c.via.reverse()},c=>{c.via[0].file=c.file}]){
+   const corrupt=structuredClone(facts);mutate(corrupt.calls.find(c=>c.file===`entry.${ext}`));
+   assert.ok(schemaErrors('raw-facts',corrupt).some(e=>String(e.message).includes('path')));
+  }
+  const missing=structuredClone(facts);delete missing.calls.find(c=>c.file===`entry.${ext}`).via;
+  assert.ok(schemaErrors('raw-facts',missing).some(e=>String(e.message).includes('import')));
+ }
+});
+
+test('source-written callable exports cannot claim an implementation through direct or forwarded imports',t=>{
+ const {facts}=extract(t,{
+  'entry.mjs':"import {work as forwarded} from './api.mjs';import {work} from './root.mjs';\nforwarded();work();\n",
+  'api.mjs':"import {work} from './root.mjs';export {work};\n",
+  'root.mjs':"export function work(){return 'before'}\nwork=()=> 'after';\n",
+ });
+ assert.equal(facts.calls.filter(c=>c.file==='entry.mjs').length,2);
+ assert.ok(facts.calls.filter(c=>c.file==='entry.mjs').every(c=>c.resolution==='unresolved'));
+});
+
+test('forwarding leaves type-only, wildcard, cyclic and opaque exports unresolved',t=>{
+ const {facts}=extract(t,{
+  'entry.ts':"import {work as type} from './type.js';import {work as star} from './star.js';import {work as cycle} from './cycle.js';import {work as opaque} from './opaque.js';\ntype();star();cycle();opaque();\n",
+  'type.ts':"export type {work} from './root.js';\n",
+  'star.ts':"export * from './root.js';\n",
+  'cycle.ts':"export {work} from './cycle2.js';\n",
+  'cycle2.ts':"export {work} from './cycle.js';\n",
+  'opaque.ts':"import {work} from './root.js';eval(source);export {work};\n",
+  'root.ts':"export function work(){}\n",
+ });
+ const calls=facts.calls.filter(c=>c.file==='entry.ts');assert.equal(calls.length,4);
+ assert.ok(calls.every(c=>c.resolution==='unresolved'));
+});
+
+// Parentheses retain direct-eval semantics; TypeScript assertions erase to it.
+test('wrapped direct eval prevents imported implementation attribution',t=>{
+ for(const [ext,expression] of [['mjs', '(eval)'],['ts','(eval as any)']]){
+  const {facts}=extract(t,{
+   [`entry.${ext}`]:`import {work} from './root.${ext}';\nwork();\n`,
+   [`root.${ext}`]:`export function work(){return 'before'}\n${expression}("work = () => 'after'");\n`,
+  });
+  assert.equal(facts.calls.find(c=>c.file===`entry.${ext}`).resolution,'unresolved');
+ }
 });

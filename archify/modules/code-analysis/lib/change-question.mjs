@@ -97,7 +97,7 @@ function inspectSide(capture, side) {
     targets.push(record); importsByTarget.set(fact.to, targets);
   });
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
-  const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4'].includes(facts.callModel))
+  const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2', 'js-ts-lexical-v3', 'js-ts-lexical-v4', 'js-ts-lexical-v5'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && ['python-lexical-v1', 'python-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(facts.callModel))

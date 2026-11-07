@@ -11,6 +11,7 @@ const BINDING_COVERAGE = new Map([
   ['js-ts-lexical-v2', 'declarations-const-initializers-relative-named-imports-and-default-functions'],
   ['js-ts-lexical-v3', 'declarations-const-initializers-relative-imports-and-stable-default-function-references'],
   ['js-ts-lexical-v4', 'declarations-const-initializers-captured-static-imports-and-stable-default-function-references'],
+  ['js-ts-lexical-v5', 'declarations-const-initializers-and-stable-explicit-exports-through-captured-value-paths'],
 ]);
 
 const LIMIT = 40;
@@ -60,6 +61,7 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   if (pythonModel) result.limitations.push(facts.callModel === 'python-lexical-v2'
     ? 'One unconditional unique explicit from-import reexport may reach a captured ordinary function, including aliases. Longer chains, conditional/rebound/wildcard exports and runtime module initialization remain unproved.'
     : 'Historical python-lexical-v1 does not bind reexports; newer reader capabilities do not expand this saved capture.');
+  if (facts?.callModel === 'js-ts-lexical-v5') result.limitations.push('JS/TS v5 follows explicit ESM local/imported function exports over captured acyclic value import/export edges; via records each forwarding statement. Observed writes/eval block imported implementation attribution. Star/type-only/dynamic/CommonJS forwarding and arbitrary value aliases/factory flow remain unsupported. Current forwarding-file freshness is required for target navigation; historical snapshots are not rebound.');
   const unavailable = (reason) => ({ ...result, reason });
   if (entry.factsStatus !== 'valid') return unavailable(`entry-${entry.factsStatus}`);
   if (entry.parseErrors.length) return unavailable('entry-parse-errors');
@@ -107,10 +109,14 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
       const measured = (facts.functions || []).filter(fn => fn.file === file && fn.name === target.name && fn.sourceRange?.line === target.line && fn.sourceRange?.column === target.column);
       if (measured.length !== 1 || !validSourceRange(capturedTexts.get(file), measured[0])) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: 'target-range-unavailable' } };
     }
+    const forwarding = (record.fact.via || []).map(point => ({ location: point, evidence: inspect(point.file) }));
+    const stale = forwarding.find(item => item.evidence.factsStatus !== 'valid' || item.evidence.parseErrors.length);
+    if (stale) return { ...record, targetNavigation: { status: 'unverifiable', location: null, reason: `forwarding-path-${stale.evidence.factsStatus === 'valid' ? 'parse-error' : stale.evidence.factsStatus}`, forwarding } };
     const evidence = file === entry.file ? entry : inspect(file);
     const status = evidence.factsStatus === 'valid' && evidence.parseErrors.length ? 'parse-error' : evidence.factsStatus;
     return { ...record, targetNavigation: {
       status, location: status === 'valid' ? { ...target, file } : null,
+      ...(forwarding.length ? { forwarding } : {}),
       ...(status === 'valid' ? {} : { reason: status === 'parse-error' ? 'captured-target-parse-errors' : `target-${status}` }), evidence,
     } };
   });

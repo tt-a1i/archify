@@ -97,12 +97,12 @@ test('optional node observation preserves all default function measurements and 
 
 test('explicit call models carry binding coverage independently of extraction revision', (t) => {
   const args = fixture(t, 'function declared() {}\nconst arrow = () => {};\nfunction chosen() { declared(); arrow()(); }');
-  assert.equal(args.facts.callModel, 'js-ts-lexical-v4');
+  assert.equal(args.facts.callModel, 'js-ts-lexical-v5');
   args.facts.repository.adapterRevision += 1;
   const current = buildQuestion(args).calls;
   assert.equal(current.coverage, 'available');
   assert.equal(current.provenance.callModel, args.facts.callModel);
-  assert.equal(current.bindingCoverage, 'declarations-const-initializers-captured-static-imports-and-stable-default-function-references');
+  assert.equal(current.bindingCoverage, 'declarations-const-initializers-and-stable-explicit-exports-through-captured-value-paths');
   assert.equal(current.records.filter((r) => r.fact.resolution === 'same-file-function-initializer').length, 1);
   const v1 = structuredClone(args.facts); v1.callModel = 'js-ts-lexical-v1'; v1.repository.adapterRevision = 8;
   const compatible = buildQuestion({ ...args, facts: v1 }).calls;
@@ -117,4 +117,21 @@ test('explicit call models carry binding coverage independently of extraction re
   fs.appendFileSync(path.join(args.root, args.entry), '\n// stale');
   assert.deepEqual(buildQuestion(args).calls.records, []);
   assert.deepEqual(buildQuestion({ ...args, facts: older }).calls.records, []);
+});
+
+test('forwarding source freshness is required before navigating to the captured implementation',t=>{
+ const args=fixture(t,"import {work} from './api.mjs';\nfunction chosen(){work();}\n");
+ fs.writeFileSync(path.join(args.root,'api.mjs'),"export {work} from './impl.mjs';\n");
+ fs.writeFileSync(path.join(args.root,'impl.mjs'),'export function work(){}\n');
+ args.facts=extractFacts(args.root,{language:'ts'}).facts;
+ const current=buildQuestion(args).calls.records[0];
+ assert.equal(current.targetNavigation.status,'valid');
+ assert.equal(current.targetNavigation.forwarding[0].location.file,'api.mjs');
+ fs.appendFileSync(path.join(args.root,'api.mjs'),'// changed forwarding source\n');
+ const changed=buildQuestion(args).calls.records[0];
+ assert.equal(changed.targetNavigation.status,'unverifiable');
+ assert.equal(changed.targetNavigation.reason,'forwarding-path-changed');
+ assert.equal(changed.targetNavigation.location,null);
+ fs.rmSync(path.join(args.root,'api.mjs'));
+ assert.equal(buildQuestion(args).calls.records[0].targetNavigation.reason,'forwarding-path-missing');
 });
