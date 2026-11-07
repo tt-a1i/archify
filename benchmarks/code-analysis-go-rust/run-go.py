@@ -79,7 +79,12 @@ for name in ['cobra-base', 'cobra']:
 check('chi', 'middleware/strip.go', 'chi.RouteContext(', 'context.go', 'func RouteContext(', 'RouteContext')
 check('chi', 'middleware/strip.go', 'next.ServeHTTP(')
 check('grpc-go', 'clientconn.go', 'iresolver.GetConfigSelector(', 'internal/resolver/config_selector.go', 'func GetConfigSelector(', 'GetConfigSelector')
-check('grpc-go', 'internal/resolver/config_selector.go', 'state.Attributes.Value(csKey)')
+# This was a scoped unknown in the original v1 free-function study. The
+# independently source-verified concrete method is a positive under v2.
+if facts['grpc-go']['callModel'] == 'go-source-direct-v2':
+    check('grpc-go', 'internal/resolver/config_selector.go', 'state.Attributes.Value(csKey)', 'attributes/attributes.go', 'func (a *Attributes) Value(', 'Value')
+else:
+    check('grpc-go', 'internal/resolver/config_selector.go', 'state.Attributes.Value(csKey)')
 
 question_out = args.out / 'cobra-question.json'
 run('cobra-question', ['task', args.out / 'cobra', '--root', args.samples_root / 'cobra', '--entry', 'doc/man_examples_test.go', '--function', 'ExampleGenMan', '--question', 'Where does GenMan resolve?', '--format', 'json', '--out', question_out, '--json'])

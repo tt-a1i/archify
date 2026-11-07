@@ -35,7 +35,7 @@ export function semanticErrors(name, data) {
     });
     const pythonCalls = data.repository.language === 'py' && data.callModel === 'python-lexical-v1';
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2'].includes(data.callModel);
-    const goCalls = data.repository.language === 'go' && data.callModel === 'go-source-direct-v1';
+    const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2'].includes(data.callModel);
     const rustCalls = data.repository.language === 'rust' && data.callModel === 'rust-source-direct-v1';
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     data.functions?.forEach((fn, i) => {
@@ -79,6 +79,7 @@ export function semanticErrors(name, data) {
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
         if (call.resolution === 'rust-direct-function' && !rustCalls) add(`${at}/resolution`, 'requires the Rust source-direct model');
+        if (call.resolution === 'go-direct-method' && (!goCalls || data.callModel !== 'go-source-direct-v2')) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
         if (call.resolution === 'go-direct-function' && !goCalls) add(`${at}/resolution`, 'requires the Go source-direct model');
         if (!validPoint(targetFile, call.target)) add(`${at}/target`, 'target must lie inside captured source');
         if ((pythonCalls || javaCalls || goCalls || rustCalls) && !functionPoints.has(JSON.stringify([targetFile, call.target.name, call.target.line, call.target.column]))) add(`${at}/target`, 'must match a captured definition start');

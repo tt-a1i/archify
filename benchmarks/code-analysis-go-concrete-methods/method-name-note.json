@@ -1,0 +1,11 @@
+{
+  "stage": "Before method implementation; correction from current owning function and paired formats.",
+  "originalLabel": "source-first target.name contains qualified source labels *Command.HasParent and *Mux.Get.",
+  "contract": "Existing function.name and call.target.name use plain method name; function.qualname and paired definition.qualname hold receiver-qualified identity. Exact file/line/column are unchanged.",
+  "expectedRawTargetNames": {
+    "cobra": "HasParent",
+    "chi": "Get"
+  },
+  "pairedSlot": "*Mux.Match is definition.qualname, definition.name is Match.",
+  "reason": "Do not alter product naming or classify correct locations as wrong merely to satisfy a mislabeled grader field."
+}

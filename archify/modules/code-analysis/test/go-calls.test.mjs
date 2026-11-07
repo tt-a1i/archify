@@ -45,7 +45,7 @@ test('Go ordinary and alias imports, same-package cross-file calls and external 
   assert.notEqual(graph.fileModules['main.go'], graph.fileModules['lib/work.go']);
 });
 
-test('Go interface/method/variable calls, shadows and invalid duplicate definitions never manufacture function targets', t => {
+test('Go interface/variable calls, shadows and invalid duplicate functions stay unknown beside concrete methods', t => {
   const root = fixture(t, {
     'lib/work.go': 'package lib\nfunc Work() {}\nfunc Clash() {}\nvar Clash func()\n',
     'main.go': `package main
@@ -59,8 +59,11 @@ func shadow() { alias := struct{ Work func() }{}; alias.Work() }
 `,
   });
   const facts = capture(root); assert.deepEqual(schemaErrors('raw-facts', facts), []);
-  assert.ok(callsIn(facts, 'main.go').every(call => call.resolution === 'unresolved'));
-  assert.deepEqual(callsIn(facts, 'main.go').slice(0, 2).map(call => call.reason), ['go-method-dispatch', 'go-method-dispatch']);
+  const calls = callsIn(facts, 'main.go');
+  assert.equal(calls[1].resolution, 'go-direct-method');
+  assert.deepEqual(calls[1].target, { name: 'Work', line: 5, column: 1 });
+  assert.ok(calls.filter((_, i) => i !== 1).every(call => call.resolution === 'unresolved'));
+  assert.equal(calls[0].reason, 'go-method-dispatch');
   assert.ok(facts.languageScope.typing.errorCount > 0);
 });
 
@@ -131,4 +134,58 @@ test('Go missing compiler and invalid scope fail through the normal CLI with act
   assert.equal(error.diagnostics[0].code, 'extract/go-unavailable');
   assert.ok(error.diagnostics[0].supportedFixes.some(fix => fix.includes('Go 1.18+')));
   assert.throws(() => capture(root, { go: { tags: 'wrong' } }), error => error.diagnostics?.[0].code === 'extract/go-config-invalid');
+});
+
+test('Go compiler-selected concrete methods distinguish receivers and follow aliases, promotion, generic instances and method expressions', t => {
+  const root=fixture(t,{
+    'lib/types.go': 'package lib\ntype T struct{}\nfunc (*T) M(){}\ntype U struct{}\nfunc (*U) M(){}\ntype Wrapper struct{*T}\ntype G[P any] struct{}\nfunc (*G[P]) M(){}\ntype Alias = T\n',
+    'entry.go': 'package app\nimport "example.org/app/lib"\nfunc Entry(t *lib.T,u *lib.U,w lib.Wrapper,g *lib.G[int],a *lib.Alias){t.M();u.M();w.M();g.M();a.M();(*lib.T).M(t)}\n',
+  });
+  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+  const calls=callsIn(facts,'entry.go');
+  assert.ok(calls.every(c=>c.resolution==='go-direct-method'));
+  assert.deepEqual(calls.map(c=>c.target),[
+    {file:'lib/types.go',name:'M',line:3,column:1},
+    {file:'lib/types.go',name:'M',line:5,column:1},
+    {file:'lib/types.go',name:'M',line:3,column:1},
+    {file:'lib/types.go',name:'M',line:8,column:1},
+    {file:'lib/types.go',name:'M',line:3,column:1},
+    {file:'lib/types.go',name:'M',line:3,column:1},
+  ]);
+  const q=buildQuestion({root,facts,entry:'entry.go',symbol:'Entry',question:'Where are these concrete methods defined?'});
+  assert.equal(q.calls.bindingCoverage,'go-types-direct-functions-and-concrete-methods-with-incomplete-external-types');
+  assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+});
+
+test('Go method targets do not guess through interfaces, function fields, missing bodies or duplicate receiver methods', t => {
+  const root=fixture(t,{
+    'entry.go':`package app
+ type T struct{}
+ func (*T) M(){}
+ func (*T) M(){}
+ type I interface{M()}
+ type Embedded struct{I}
+ type Holder struct{M func()}
+ type NoBody struct{}
+ func (*NoBody) M()
+ func Entry(t *T,i I,h Holder,n *NoBody,e Embedded){t.M();i.M();h.M();n.M();e.M()}
+ func Param[P I](p P){p.M()}
+`,
+  });
+  const facts=capture(root);assert.ok(facts.languageScope.typing.errorCount>0);
+  assert.ok(callsIn(facts,'entry.go').every(c=>c.resolution==='unresolved'));
+});
+
+test('Go changed concrete method definitions recover foreign callers and keep historical v1 coverage distinct',t=>{
+  const files={'lib/types.go':'package lib\ntype T struct{}\nfunc (*T) M(){println(1)}\n','entry.go':'package app\nimport "example.org/app/lib"\nfunc Entry(t *lib.T){t.M()}\n'};
+  const root=fixture(t,files),headRoot=fixture(t,{...files,'lib/types.go':files['lib/types.go'].replace('println(1)','println(2)')});
+  const config=scopeConfig();const base=captureChangeSide(root,config,'go'),head=captureChangeSide(headRoot,config,'go');
+  const q=buildChangeQuestion({question:'Which known callers reach changed T.M?',entry:'lib/types.go',base,head,config});
+  const changed=q.changedDefinitions.items.find(d=>d.head?.definition.qualname==='*T.M');
+  for(const side of ['base','head']){assert.equal(changed[side].knownReferences.total,1);assert.equal(changed[side].knownReferences.items[0].navigation.status,'valid');}
+  const incompatible=structuredClone(base.facts);incompatible.callModel='go-source-direct-v1';assert.ok(schemaErrors('raw-facts',incompatible).some(e=>e.message.includes('Go v2')));
+  const historical=structuredClone(base.facts);historical.callModel='go-source-direct-v1';historical.calls=historical.calls.map(c=>c.resolution==='go-direct-method'?{file:c.file,line:c.line,column:c.column,endLine:c.endLine,endColumn:c.endColumn,resolution:'unresolved',reason:'go-method-dispatch'}:c);
+  const old=buildQuestion({root,facts:historical,entry:'entry.go',symbol:'Entry',question:'What was captured before method support?'});
+  assert.equal(old.calls.bindingCoverage,'go-types-direct-source-functions-with-incomplete-external-types');
+  assert.equal(old.calls.records[0].targetNavigation.status,'unresolved');
 });
