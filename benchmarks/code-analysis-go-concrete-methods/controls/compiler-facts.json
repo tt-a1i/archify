@@ -1,0 +1,85 @@
+{
+  "limits": "Compiler attribution for authored source only, not product support or real-project/runtime evidence. Interface declaration is not a concrete implementation.",
+  "rows": [
+    {
+      "declLine": 3,
+      "index": [
+        0
+      ],
+      "line": 11,
+      "objectKind": "*types.Func",
+      "receiver": "*sample.Base",
+      "receiverTypeParameters": 0,
+      "selectionKind": 1
+    },
+    {
+      "declLine": 4,
+      "index": [
+        0
+      ],
+      "line": 12,
+      "objectKind": "*types.Func",
+      "receiver": "sample.Contract",
+      "receiverTypeParameters": 0,
+      "selectionKind": 1
+    },
+    {
+      "declLine": 3,
+      "index": [
+        0,
+        0
+      ],
+      "line": 13,
+      "objectKind": "*types.Func",
+      "receiver": "*sample.Promoted",
+      "receiverTypeParameters": 0,
+      "selectionKind": 1
+    },
+    {
+      "declLine": 6,
+      "index": [
+        0
+      ],
+      "line": 14,
+      "objectKind": "*types.Var",
+      "receiver": "sample.Field",
+      "receiverTypeParameters": 0,
+      "selectionKind": 0
+    },
+    {
+      "declLine": 8,
+      "index": [
+        0
+      ],
+      "line": 15,
+      "objectKind": "*types.Func",
+      "receiver": "*sample.Generic[int]",
+      "receiverTypeParameters": 0,
+      "selectionKind": 1
+    },
+    {
+      "declLine": 3,
+      "index": [
+        0
+      ],
+      "line": 16,
+      "objectKind": "*types.Func",
+      "receiver": "*sample.Base",
+      "receiverTypeParameters": 0,
+      "selectionKind": 2
+    },
+    {
+      "declLine": 3,
+      "index": [
+        0
+      ],
+      "line": 17,
+      "objectKind": "*types.Func",
+      "receiver": "*sample.Alias",
+      "receiverTypeParameters": 0,
+      "selectionKind": 1
+    }
+  ],
+  "source": "package sample\n type Base struct{}\n func (*Base) M(){}\n type Contract interface{M()}\n type Promoted struct{*Base}\n type Field struct{M func()}\n type Generic[T any] struct{}\n func (*Generic[T]) M(){}\n type Alias = Base\n func probe(b *Base, c Contract, p *Promoted, f Field, g *Generic[int], a *Alias){\n b.M()\n c.M()\n p.M()\n f.M()\n g.M()\n (*Base).M(b)\n a.M()\n }\n",
+  "toolchain": "go1.27.2"
+}

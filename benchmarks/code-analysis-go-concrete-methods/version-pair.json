@@ -1,0 +1,85 @@
+{
+  "frozenAt": "2026-11-07T18:37:48.516834+00:00",
+  "provenance": "Supplemental post-baseline source review, before first base or paired capture for concrete-method question and before any method rule. Chi is now exposed as a pair study, no longer a pristine holdout.",
+  "definition": "*Mux.Match",
+  "change": "Actual routing implementation replaced by mx.Find(...) != empty string; new Find method extracts path-pattern behavior.",
+  "sides": {
+    "base": {
+      "revision": "67be7d9cafdaeb4e04e887ff78d09e030ee43b00",
+      "hashes": {
+        "go.mod": "933dfdd8279a70a5dad34da181812913c3b0f9ce91f7858822329e1d92d24928",
+        "chi.go": "8366fe04b8037b7ae05cba996d5186cedebae01c7fd1055d01a0cc798c64d163",
+        "mux.go": "5dd48574ea9ab1494bef7259166ac7f0794eeba0135da224f307ed3f97800295",
+        "mux_test.go": "ec60789ab6e768a561a34c86b1c34081d32f7811afa5ec4582370455eac7f2d7"
+      },
+      "target": {
+        "file": "mux.go",
+        "line": 365,
+        "column": 1,
+        "sourceLine": "func (mx *Mux) Match(rctx *Context, method, path string) bool {"
+      },
+      "selectedCallers": [
+        {
+          "file": "mux_test.go",
+          "line": 1807,
+          "column": 5,
+          "sourceLine": "\tif r.Match(tctx, \"GET\", \"/users/1\") == false {"
+        },
+        {
+          "file": "mux_test.go",
+          "line": 1812,
+          "column": 5,
+          "sourceLine": "\tif r.Match(tctx, \"HEAD\", \"/articles/10\") == true {"
+        }
+      ],
+      "binding": "Each selected outer r comes from NewRouter() *Mux; callbacks with func(r Router) are distinct interface bindings and cannot be matched by spelling."
+    },
+    "head": {
+      "revision": "71307f9b7e4e9527638bc951c42b782cd1560331",
+      "hashes": {
+        "go.mod": "a8921a2ecd771d342ee6e7f45065941a943f17c39f1cee4633dd264efa7e97ae",
+        "chi.go": "982bcc7cae8692d1b15758af7904726f7b42fbbfdac303898b650648effeac19",
+        "mux.go": "deede9b38b5c795917ad8c5e19fc3af60d93892531d723756070691c556e5261",
+        "mux_test.go": "ad69acb9f2f56f9df0f5d50c2158c5d13bffed7c0761e08a187969fc3ef07f45"
+      },
+      "target": {
+        "file": "mux.go",
+        "line": 365,
+        "column": 1,
+        "sourceLine": "func (mx *Mux) Match(rctx *Context, method, path string) bool {"
+      },
+      "selectedCallers": [
+        {
+          "file": "mux_test.go",
+          "line": 1807,
+          "column": 5,
+          "sourceLine": "\tif r.Match(tctx, \"GET\", \"/users/1\") == false {"
+        },
+        {
+          "file": "mux_test.go",
+          "line": 1812,
+          "column": 5,
+          "sourceLine": "\tif r.Match(tctx, \"HEAD\", \"/articles/10\") == true {"
+        },
+        {
+          "file": "mux_test.go",
+          "line": 1827,
+          "column": 5,
+          "sourceLine": "\tif r.Match(tctx, \"GET\", \"/\") != true {"
+        },
+        {
+          "file": "mux_test.go",
+          "line": 1838,
+          "column": 5,
+          "sourceLine": "\tif r.Match(tctx, \"GET\", \"/\") != false {"
+        }
+      ],
+      "binding": "Each selected outer r comes from NewRouter() *Mux; callbacks with func(r Router) are distinct interface bindings and cannot be matched by spelling."
+    }
+  },
+  "limits": [
+    "Existing Chi go.mod changes go1.14\u2192go1.20, so paired configuration equivalence must not be assumed or exit forced0.",
+    "These selected concrete callers are not every textual Match() use or complete runtime impact.",
+    "Original frozen m.Get observation stays distinct; its TestMuxBasic saved question includes40/102calls and omits the selected call despite raw-facts collection."
+  ]
+}

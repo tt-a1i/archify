@@ -1,0 +1,50 @@
+[
+  {
+    "project": "cobra",
+    "selectedCall": {
+      "file": "doc/util.go",
+      "line": 26,
+      "column": 5,
+      "needle": "cmd.HasParent(",
+      "sourceLine": "\tif cmd.HasParent() {"
+    },
+    "callRecord": {
+      "factIndex": 2515,
+      "fact": {
+        "column": 5,
+        "endColumn": 20,
+        "endLine": 26,
+        "file": "doc/util.go",
+        "line": 26,
+        "reason": "go-method-dispatch",
+        "resolution": "unresolved"
+      },
+      "targetNavigation": {
+        "status": "unresolved",
+        "location": null,
+        "reason": "go-method-dispatch"
+      }
+    },
+    "status": "unresolved",
+    "callsTotal": 4,
+    "callsIncluded": 4,
+    "callsOmitted": 0,
+    "model": "go-source-direct-v1"
+  },
+  {
+    "project": "chi",
+    "selectedCall": {
+      "file": "mux_test.go",
+      "line": 105,
+      "column": 2,
+      "needle": "m.Get(",
+      "sourceLine": "\tm.Get(\"/\", cxindex)"
+    },
+    "callRecord": null,
+    "status": "omitted-from-bounded-question-but-present-in-raw-facts",
+    "callsTotal": 102,
+    "callsIncluded": 40,
+    "callsOmitted": 62,
+    "model": "go-source-direct-v1"
+  }
+]
