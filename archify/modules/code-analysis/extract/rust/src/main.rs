@@ -118,6 +118,7 @@ enum Binding {
     Function(usize),
     Nominal(usize, String),
     Inherent(usize),
+    SpecializedInherent(usize),
     Use(Vec<String>, bool),
     Other,
 }
@@ -155,6 +156,16 @@ struct Krate {
     deps: BTreeMap<String, String>,
     features: BTreeSet<String>,
 }
+#[derive(Clone)]
+struct InherentPending {
+    module: usize,
+    owner: Vec<String>,
+    name: String,
+    index: usize,
+    monomorphic: bool,
+    specialization: Option<usize>,
+    static_function: bool,
+}
 struct Analysis {
     sources: BTreeMap<String, String>,
     asts: BTreeMap<String, syn::File>,
@@ -163,8 +174,9 @@ struct Analysis {
     roots: BTreeMap<String, usize>,
     modules: Vec<Module>,
     functions: Vec<Function>,
-    inherent_pending: Vec<(usize, Vec<String>, String, usize)>,
-    inherent: BTreeMap<(usize, String, String), Vec<usize>>,
+    nominal_parameters: BTreeMap<(usize, String), usize>,
+    inherent_pending: Vec<InherentPending>,
+    inherent: BTreeMap<(usize, String, String), Vec<Option<usize>>>,
     variants: BTreeSet<(usize, String, String)>,
     cfg: BTreeSet<String>,
     tests: bool,
@@ -660,11 +672,19 @@ impl Analysis {
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Struct(s) => {
                     let name = s.ident.to_string();
-                    let binding = if selected == 1 && s.generics.params.is_empty() {
-                        Binding::Nominal(id, name.clone())
-                    } else {
-                        Binding::Other
-                    };
+                    let plain_parameters = s.generics.where_clause.is_none()
+                        && s.generics.params.iter().all(|p| matches!(p,
+                            syn::GenericParam::Type(t) if t.bounds.is_empty() && t.default.is_none() && t.attrs.is_empty()));
+                    let binding =
+                        if selected == 1 && (s.generics.params.is_empty() || plain_parameters) {
+                            if !s.generics.params.is_empty() {
+                                self.nominal_parameters
+                                    .insert((id, name.clone()), s.generics.params.len());
+                            }
+                            Binding::Nominal(id, name.clone())
+                        } else {
+                            Binding::Other
+                        };
                     self.add_binding(id, name, binding);
                 }
                 Item::Enum(s) => {
@@ -687,9 +707,9 @@ impl Analysis {
                 Item::Static(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Impl(im) => {
                     let owner = im.self_ty.to_token_stream().to_string();
-                    // Only an explicit monomorphic nominal owner; trait impls and
-                    // specialized/generic impl applicability are not source proof.
-                    let owner_path = if im.trait_.is_none() && im.generics.params.is_empty() {
+                    // Keep unsupported inherent declarations as competitors for
+                    // generic owners. Ignoring them can select the wrong concrete impl.
+                    let owner_path = if im.trait_.is_none() {
                         match im.self_ty.as_ref() {
                             Type::Path(p)
                                 if p.qself.is_none()
@@ -697,9 +717,25 @@ impl Analysis {
                                     && p.path
                                         .segments
                                         .iter()
+                                        .take(p.path.segments.len().saturating_sub(1))
                                         .all(|s| matches!(s.arguments, PathArguments::None)) =>
                             {
-                                Some(path_parts(&p.path))
+                                let arguments = &p.path.segments.last().unwrap().arguments;
+                                let monomorphic = im.generics.params.is_empty()
+                                    && matches!(arguments, PathArguments::None);
+                                let specialization = if im.generics.params.is_empty()
+                                    && im.generics.where_clause.is_none()
+                                {
+                                    match arguments {
+                                        PathArguments::AngleBracketed(a) if a.args.iter().all(|arg| matches!(arg,
+                                            syn::GenericArgument::Type(Type::Path(t)) if t.qself.is_none()
+                                                && t.path.segments.iter().all(|s| matches!(s.arguments, PathArguments::None)))) => Some(a.args.len()),
+                                        _ => None,
+                                    }
+                                } else {
+                                    None
+                                };
+                                Some((path_parts(&p.path), monomorphic, specialization))
                             }
                             _ => None,
                         }
@@ -729,15 +765,16 @@ impl Analysis {
                                     cfg,
                                 );
                                 self.functions[index].generics.extend(impl_types.clone());
-                                if item.sig.receiver().is_none() {
-                                    if let Some(path) = &owner_path {
-                                        self.inherent_pending.push((
-                                            id,
-                                            path.clone(),
-                                            item.sig.ident.to_string(),
-                                            index,
-                                        ));
-                                    }
+                                if let Some((path, monomorphic, specialization)) = &owner_path {
+                                    self.inherent_pending.push(InherentPending {
+                                        module: id,
+                                        owner: path.clone(),
+                                        name: item.sig.ident.to_string(),
+                                        index,
+                                        monomorphic: *monomorphic,
+                                        specialization: *specialization,
+                                        static_function: item.sig.receiver().is_none(),
+                                    });
                                 }
                             }
                         }
@@ -856,6 +893,7 @@ impl Analysis {
             current = match current {
                 Binding::Module(m) => self.lookup(m, part, depth + 1)?,
                 Binding::Nominal(m, name) => {
+                    let specialized = self.nominal_parameters.contains_key(&(m, name.clone()));
                     let key = (m, name, part.clone());
                     if self.variants.contains(&key) {
                         return None;
@@ -864,7 +902,12 @@ impl Analysis {
                     if candidates.len() != 1 {
                         return None;
                     }
-                    Binding::Inherent(candidates[0])
+                    let index = *candidates[0].as_ref()?;
+                    if specialized {
+                        Binding::SpecializedInherent(index)
+                    } else {
+                        Binding::Inherent(index)
+                    }
                 }
                 _ => return None,
             };
@@ -1014,6 +1057,14 @@ impl Scanner<'_> {
                         .all(|s| matches!(s.arguments, PathArguments::None)) =>
                 {
                     Some((index, "rust-inherent-source-candidate"))
+                }
+                Some(Binding::SpecializedInherent(index))
+                    if p.path
+                        .segments
+                        .iter()
+                        .all(|s| matches!(s.arguments, PathArguments::None)) =>
+                {
+                    Some((index, "rust-specialized-inherent-source-candidate"))
                 }
                 _ => None,
             };
@@ -1472,6 +1523,7 @@ fn main() {
         roots: BTreeMap::new(),
         modules: Vec::new(),
         functions: Vec::new(),
+        nominal_parameters: BTreeMap::new(),
         inherent_pending: Vec::new(),
         inherent: BTreeMap::new(),
         variants: BTreeSet::new(),
@@ -1502,12 +1554,25 @@ fn main() {
         }
     }
     // Resolve owner identity after all module trees and local crate roots exist.
-    for (module, path, name, index) in a.inherent_pending.clone() {
+    for pending in a.inherent_pending.clone() {
         if let Some(Binding::Nominal(owner_module, owner_name)) =
-            a.resolve(module, &path, false, false, 0)
+            a.resolve(pending.module, &pending.owner, false, false, 0)
         {
+            let index = if let Some(arity) = a
+                .nominal_parameters
+                .get(&(owner_module, owner_name.clone()))
+            {
+                // A generic/receiver/otherwise unsupported sibling remains a
+                // blocker, rather than disappearing from the overload inventory.
+                (pending.static_function && pending.specialization == Some(*arity))
+                    .then_some(pending.index)
+            } else if pending.monomorphic && pending.static_function {
+                Some(pending.index)
+            } else {
+                continue;
+            };
             a.inherent
-                .entry((owner_module, owner_name, name))
+                .entry((owner_module, owner_name, pending.name))
                 .or_default()
                 .push(index);
         }

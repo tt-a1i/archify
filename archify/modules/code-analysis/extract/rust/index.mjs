@@ -10,8 +10,8 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'rust';
-export const REVISION = 2;
-export const CALL_MODEL = 'rust-source-direct-v2';
+export const REVISION = 3;
+export const CALL_MODEL = 'rust-source-direct-v3';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.rs'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.rs')).length;
 const manifest = fileURLToPath(new URL('./Cargo.toml', import.meta.url));
@@ -146,7 +146,7 @@ export function extract(root, config, { onCapture } = {}) {
       crates: crates.map(c => ({ ...c, files: [...new Set(output.modules.filter(m => m.crate === c.id).map(m => m.file))] })), selectedFiles: [...selected], excludedFiles, metadata, excludedTargets,
       conditionalDefinitions: output.functions.filter(fn => fn._cfg === 0).map(fn => ({ file: fn.file, name: fn.name, line: fn.line, reason: 'enclosing cfg or attribute not established by the source profile' })),
       excludedRegions: output.excludedRegions, opaqueMacros: output.opaqueMacros, missingModules: output.missingModules,
-      limitations: ['Explicit free-function paths and unique monomorphic nominal inherent-function source candidates only; no type/argument inference, visibility checking, Self/type-alias/generic-owner resolution, trait/receiver dispatch, macro expansion, build-script execution or external dependency source loading.',
+      limitations: ['Explicit free-function paths, monomorphic inherent source candidates and bare generic-struct paths to unique concrete-specialization source candidates. Specializations require named type arguments and no impl generics/where clause; competing unsupported inherent declarations block the candidate. No type/argument inference, visibility checking, Self/type-alias resolution, explicit generic call arguments, lifetime/const/bounded/defaulted generic owners, trait/receiver dispatch, macro expansion, build-script execution or external dependency source loading.',
         'Cargo metadata reads captured manifests with zero-byte source inventory stubs, offline/no-deps/locked; the syntax parser reads captured source text only. Active cfg derives from rustc target cfg plus the declared local feature profile; custom build-script cfg stays unknown.',
         'Call inventory covers parsed function/method bodies; macros are opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness.'] },
   };

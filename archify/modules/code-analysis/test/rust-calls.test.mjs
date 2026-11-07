@@ -120,7 +120,7 @@ fn conditional(){Factory::maybe();}
 type Alias=text::Regex;fn alias(){Alias::new();}
 `, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
- assert.equal(facts.callModel,'rust-source-direct-v2');
+ assert.equal(facts.callModel,'rust-source-direct-v3');
  const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
  assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
  assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
@@ -173,4 +173,56 @@ struct Visitor;impl Visitor{#[cfg(feature="chosen")]fn chosen(){work();}}
  assert.ok(facts.languageScope.excludedRegions.some(r=>r.file==='src/lib.rs'&&r.range.line===5));
  const selected=capture(root,{rust:{offline:false,features:{sample:['chosen']}}});
  assert.ok(calls(selected,'src/lib.rs').some(c=>c.line===5&&c.target?.name==='work'));
+});
+
+test('Rust bare generic nominal paths expose unique concrete-specialization source candidates',t=>{
+ const root=fixture(t,{'src/lib.rs':`mod model;
+use crate::model::Boxed as Imported;
+pub fn caller(){Imported::new();model::Boxed::new();crate::model::Boxed::new();}
+fn explicit(){model::Boxed::<u8>::new();}
+`, 'src/model.rs':`pub struct Boxed<T>(T);
+impl Boxed<String>{pub fn new()->Self{Self(String::new())}}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const direct=calls(facts,'src/lib.rs').filter(c=>c.line===3);
+ assert.equal(direct.length,3);
+ assert.ok(direct.every(c=>c.resolution==='rust-specialized-inherent-source-candidate'));
+ assert.ok(direct.every(c=>c.target.file==='src/model.rs'&&c.target.line===2&&c.target.name==='new'));
+ assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===4).resolution,'unresolved');
+ const question=buildQuestion({root,facts,entry:'src/lib.rs',symbol:'caller',question:'Which constructor source is the candidate?'});
+ assert.ok(question.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ const legacy=structuredClone(facts);legacy.callModel='rust-source-direct-v2';
+ assert.ok(schemaErrors('raw-facts',legacy).some(e=>String(e.message).includes('v3')));
+});
+
+test('Rust concrete specialization cannot hide a competing generic impl or unsupported owner',t=>{
+ const root=fixture(t,{'src/lib.rs':`struct Choice<T>(T);
+impl<T:Default> Choice<(T,)>{fn new()->Self{Self((T::default(),))}}
+impl Choice<String>{fn new()->Self{Self(String::new())}}
+struct Receiver<T>(T);
+impl Receiver<String>{fn new()->Self{Self(String::new())}}
+impl Receiver<u8>{fn new(self)->Self{self}}
+struct Lifetime<'a>(&'a str);impl Lifetime<'static>{fn new()->Self{Self("")}}
+struct Fixed<const N:usize>;impl Fixed<3>{fn new()->Self{Self}}
+struct General<T>(T);impl<T> General<T>{fn new(value:T)->Self{Self(value)}}
+fn chosen(){Choice::new();Receiver::new();Lifetime::new();Fixed::new();General::new(1);}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const uncertain=calls(facts,'src/lib.rs').filter(c=>c.line===10);assert.equal(uncertain.length,5);
+ assert.ok(uncertain.every(c=>c.resolution==='unresolved'));
+});
+
+test('Rust changed specialized constructor retrieves its verified imported caller',t=>{
+ const lib='mod model;use crate::model::Boxed as Imported;\npub fn caller(){Imported::new();}\n';
+ const before='pub struct Boxed<T>(T);\nimpl Boxed<String>{pub fn new()->Self{Self(String::new())}}\n';
+ const baseRoot=fixture(t,{'src/lib.rs':lib,'src/model.rs':before});
+ const root=fixture(t,{'src/lib.rs':lib,'src/model.rs':before.replace('String::new()','String::from("changed")')});
+ const cfg=config(),base=captureChangeSide(baseRoot,cfg,'rust'),head=captureChangeSide(root,cfg,'rust');
+ const brief=buildChangeQuestion({base,head,baseRoot,root,entry:'src/model.rs',question:'Which known caller references the changed constructor?'});
+ assert.equal(brief.changedDefinitions.total,1);
+ for(const side of ['base','head']){
+  const refs=brief.changedDefinitions.items[0][side].knownReferences;
+  assert.equal(refs.coverage,'available');assert.equal(refs.total,1);
+  assert.equal(refs.items[0].navigation.status,'valid');assert.equal(refs.items[0].navigation.location.file,'src/lib.rs');
+ }
 });
