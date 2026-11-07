@@ -1,0 +1,187 @@
+{
+  "typescript": "5.9.3",
+  "mode": "Partial project attribution with original config plus explicit test root; not a successful configured project build or runtime alias proof.",
+  "configIncludes": [
+    "src/**/*"
+  ],
+  "roots": [
+    "src/applyMiddleware.ts",
+    "src/bindActionCreators.ts",
+    "src/combineReducers.ts",
+    "src/compose.ts",
+    "src/createStore.ts",
+    "src/index.ts",
+    "src/types/actions.ts",
+    "src/types/middleware.ts",
+    "src/types/reducers.ts",
+    "src/types/store.ts",
+    "src/utils/actionTypes.ts",
+    "src/utils/formatProdErrorMessage.ts",
+    "src/utils/isAction.ts",
+    "src/utils/isPlainObject.ts",
+    "src/utils/kindOf.ts",
+    "src/utils/symbol-observable.ts",
+    "src/utils/warning.ts",
+    "test/utils/isPlainObject.spec.ts"
+  ],
+  "calls": [
+    {
+      "line": 9,
+      "column": 12,
+      "callee": "isPlainObject",
+      "alias": true,
+      "declarations": [
+        {
+          "file": "src/utils/isPlainObject.ts",
+          "kind": "FunctionDeclaration",
+          "line": 5,
+          "column": 1,
+          "body": true
+        }
+      ]
+    },
+    {
+      "line": 10,
+      "column": 12,
+      "callee": "isPlainObject",
+      "alias": true,
+      "declarations": [
+        {
+          "file": "src/utils/isPlainObject.ts",
+          "kind": "FunctionDeclaration",
+          "line": 5,
+          "column": 1,
+          "body": true
+        }
+      ]
+    },
+    {
+      "line": 11,
+      "column": 12,
+      "callee": "isPlainObject",
+      "alias": true,
+      "declarations": [
+        {
+          "file": "src/utils/isPlainObject.ts",
+          "kind": "FunctionDeclaration",
+          "line": 5,
+          "column": 1,
+          "body": true
+        }
+      ]
+    },
+    {
+      "line": 12,
+      "column": 12,
+      "callee": "isPlainObject",
+      "alias": true,
+      "declarations": [
+        {
+          "file": "src/utils/isPlainObject.ts",
+          "kind": "FunctionDeclaration",
+          "line": 5,
+          "column": 1,
+          "body": true
+        }
+      ]
+    },
+    {
+      "line": 13,
+      "column": 12,
+      "callee": "isPlainObject",
+      "alias": true,
+      "declarations": [
+        {
+          "file": "src/utils/isPlainObject.ts",
+          "kind": "FunctionDeclaration",
+          "line": 5,
+          "column": 1,
+          "body": true
+        }
+      ]
+    },
+    {
+      "line": 14,
+      "column": 12,
+      "callee": "isPlainObject",
+      "alias": true,
+      "declarations": [
+        {
+          "file": "src/utils/isPlainObject.ts",
+          "kind": "FunctionDeclaration",
+          "line": 5,
+          "column": 1,
+          "body": true
+        }
+      ]
+    }
+  ],
+  "diagnosticCount": 15,
+  "diagnosticCodes": [
+    2688,
+    2591,
+    2307,
+    2593,
+    2304
+  ],
+  "diagnosticExamples": [
+    {
+      "file": null,
+      "code": 2688,
+      "message": "Cannot find type definition file for 'esbuild-extra/global'.   The file is in the program because:     Entry point of type library 'esbuild-extra/global' specified in compilerOptions"
+    },
+    {
+      "file": null,
+      "code": 2688,
+      "message": "Cannot find type definition file for 'vitest/globals'.   The file is in the program because:     Entry point of type library 'vitest/globals' specified in compilerOptions"
+    },
+    {
+      "file": "src/combineReducers.ts",
+      "code": 2591,
+      "message": "Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig."
+    },
+    {
+      "file": "src/combineReducers.ts",
+      "code": 2591,
+      "message": "Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig."
+    },
+    {
+      "file": "src/combineReducers.ts",
+      "code": 2591,
+      "message": "Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig."
+    },
+    {
+      "file": "src/utils/kindOf.ts",
+      "code": 2591,
+      "message": "Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig."
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "code": 2307,
+      "message": "Cannot find module 'vm' or its corresponding type declarations."
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "code": 2593,
+      "message": "Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig."
+    }
+  ],
+  "inputs": [
+    {
+      "file": "tsconfig.json",
+      "sha256": "d6b32c65a8428112599653ad222dc1c430945adbd19939604d791973980730e5"
+    },
+    {
+      "file": "vitest.config.ts",
+      "sha256": "fe364b126019fee64831817a84414b56eb01a43682ee5fd76657c96cf6697697"
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "sha256": "ab1ac46c41948dd44200daa999d1b2de43583d53c504ee20e77af11519565fe8"
+    },
+    {
+      "file": "src/utils/isPlainObject.ts",
+      "sha256": "16406a47eb701a7512915722e206fc1c97e7c1da94bce2cf27717cba7eb48976"
+    }
+  ]
+}
