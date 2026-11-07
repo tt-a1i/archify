@@ -1,0 +1,162 @@
+[
+  {
+    "project": "cobra-base",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/cobra-base",
+      "--language",
+      "go",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/cobra-base"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"go\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"go\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "project": "cobra",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/cobra",
+      "--language",
+      "go",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/cobra"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"go\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"go\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "project": "chi-base",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi-base",
+      "--language",
+      "go",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/chi-base"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"go\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"go\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "project": "chi",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/chi",
+      "--language",
+      "go",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/chi"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"go\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"go\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "project": "regex-base",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex-base",
+      "--language",
+      "rust",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/regex-base"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"rust\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"rust\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "project": "regex",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex",
+      "--language",
+      "rust",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/regex"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"rust\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"rust\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "project": "serde-json-base",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json-base",
+      "--language",
+      "rust",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/serde-json-base"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"rust\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"rust\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "project": "serde-json",
+    "command": [
+      "node",
+      "archify/bin/archify.mjs",
+      "code-analysis",
+      "check",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+      "--language",
+      "rust",
+      "--fail-on",
+      "never",
+      "--json",
+      "--out",
+      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/baseline-runs/serde-json"
+    ],
+    "exit": 2,
+    "stdout": "{\n  \"schemaVersion\": 1,\n  \"status\": \"error\",\n  \"command\": \"check\",\n  \"diagnostics\": [\n    {\n      \"code\": \"extract/adapter-unknown\",\n      \"severity\": \"error\",\n      \"message\": \"No language adapter named \\\"rust\\\".\",\n      \"subject\": {\n        \"option\": \"--language\"\n      },\n      \"evidence\": {\n        \"requested\": \"rust\",\n        \"supported\": [\n          \"ts\",\n          \"py\",\n          \"java\"\n        ]\n      },\n      \"supportedFixes\": [\n        \"choose one of the supported adapters\"\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  }
+]
