@@ -6052,6 +6052,57 @@ function commandExamples(args) {
   if (result.status !== 0) exitFrom(result);
 }
 
+// Compare path-based and handle-based identity the way atomic delivery does.
+function probeFileIdentity() {
+  let directory;
+  let result;
+  try {
+    directory = fs.mkdtempSync(path.join(os.tmpdir(), 'archify-doctor-'));
+    const file = path.join(directory, 'identity-probe');
+    fs.writeFileSync(file, '');
+    const descriptor = fs.openSync(file, 'r');
+    let handle;
+    try {
+      handle = fs.fstatSync(descriptor, { bigint: true });
+    } finally {
+      fs.closeSync(descriptor);
+    }
+    const entry = fs.lstatSync(file, { bigint: true });
+    result = entry.dev === handle.dev && entry.ino === handle.ino
+      ? { status: 'ok' }
+      : { status: 'mismatch', entry, handle };
+  } catch (error) {
+    result = { status: 'unavailable', reason: error.code || error.message };
+  }
+  if (directory) {
+    try {
+      fs.rmSync(directory, { recursive: true, force: true });
+    } catch (error) {
+      result.leftover = `; could not remove ${directory} (${error.code || error.message})`;
+    }
+  }
+  return result;
+}
+
+function fileIdentityCheck() {
+  const probe = probeFileIdentity();
+  const leftover = probe.leftover || '';
+  if (probe.status === 'ok') {
+    return { label: `File identity (lstat and fstat agree on a temporary file)${leftover}`, ok: true, missing: 0 };
+  }
+  if (probe.status === 'unavailable') {
+    return { label: `File identity not checked: the temporary probe could not run (${probe.reason})${leftover}`, ok: true, unavailable: true, missing: 0 };
+  }
+  const { entry, handle } = probe;
+  return {
+    label: `File identity: lstat dev=${entry.dev} ino=${entry.ino}, fstat dev=${handle.dev} ino=${handle.ino} on a temporary file; Node.js v${process.versions.node}, libuv ${process.versions.uv}. Deliveries can fail with output/target-changed where this mismatch occurs, and this probe covers only the temporary directory's volume. On Windows, Node.js with libuv 1.51.0 or later may help${leftover}`,
+    ok: false,
+    missing: 0,
+    invalid: 1,
+    failureLabel: 'unsupported',
+  };
+}
+
 async function commandDoctor(args) {
   const unknown = args.find((arg) => arg.startsWith('--'));
   if (unknown) fail(`Unknown doctor option "${unknown}".`);
@@ -6113,6 +6164,7 @@ async function commandDoctor(args) {
     ok: fs.existsSync(atomicOutputRuntime),
     missing: fs.existsSync(atomicOutputRuntime) ? 0 : 1,
   });
+  checks.push(fileIdentityCheck());
 
   const pathSemanticsRuntime = path.join(skillRoot, 'renderers/shared/path-semantics.mjs');
   checks.push({
@@ -6223,14 +6275,17 @@ async function commandDoctor(args) {
 
   console.log('Archify doctor\n');
   for (const check of checks) {
-    console.log(`[${check.ok ? 'ok' : (check.failureLabel || 'missing')}] ${check.label}`);
+    console.log(`[${check.ok ? (check.unavailable ? 'unavailable' : 'ok') : (check.failureLabel || 'missing')}] ${check.label}`);
   }
 
   const nodeFailed = checks[0].ok ? 0 : 1;
   const missingFiles = checks.reduce((count, check) => count + check.missing, 0);
   const invalidRuntime = checks.reduce((count, check) => count + (check.invalid || 0), 0);
   if (nodeFailed === 0 && missingFiles === 0 && invalidRuntime === 0) {
-    console.log('\nArchify is ready.');
+    const unavailableChecks = checks.filter((check) => check.unavailable).length;
+    console.log(unavailableChecks
+      ? `\nArchify is ready, but ${unavailableChecks} runtime check${unavailableChecks === 1 ? '' : 's'} could not run.`
+      : '\nArchify is ready.');
     return;
   }
 
