@@ -1,0 +1,74 @@
+{
+  "sourceFirst": "Read old/new definitions and all non-doc Number::from_f64 occurrences before this paired CLI; supplemental case after initial rule, not held out.",
+  "change": "Real upstream removal of #[inline] and documentation edits. from_f64 function body is unchanged; do not claim a body/behavior change. Owned-definition evidence should notice the removed attribute.",
+  "rust": {
+    "offline": true,
+    "tests": false
+  },
+  "sides": {
+    "base": {
+      "folder": "serde-json-base",
+      "revision": "d2fce19685bf0e3d493a9d785665137654c79e6d",
+      "hashes": {
+        "Cargo.toml": "bcbaef150dabb3d47d5fc599a800238bf015bd8adbb713f3a61622ab9d082ab9",
+        "src/number.rs": "50633e05cfa4be84b69eb0321cf176ee0a34f7120046c2f927ebdbb625c60048",
+        "src/value/from.rs": "eceab6531422c820a443981c2a71c9ba01e032fbbd38884d1ac6d03175d56244",
+        "src/value/de.rs": "78f938d960e285f671f3b86ed173d598a815690a14512d6daa94dee43d3ce4cf"
+      },
+      "definition": {
+        "file": "src/number.rs",
+        "name": "from_f64",
+        "qualname": "number::Number::from_f64",
+        "line": 264,
+        "column": 5
+      },
+      "sourceKnownCallers": [
+        {
+          "file": "src/value/from.rs",
+          "line": 59,
+          "column": 9
+        },
+        {
+          "file": "src/number.rs",
+          "line": 400,
+          "column": 17
+        }
+      ]
+    },
+    "head": {
+      "folder": "serde-json",
+      "revision": "4d4f53c3b7de3259b6a8a15ef4d5f4edb47af32f",
+      "hashes": {
+        "Cargo.toml": "d538a699a1c5414c1c7c4342f2dcec1be4c85f54e4dc1fcb50f1ca4c389fb97b",
+        "src/number.rs": "186c2da2243afda82848a81fa401142ae8cc58ed820b3c3155b1dd5ab58f52fa",
+        "src/value/from.rs": "ae4b5f93b27e578fa40e3a8d25d0df2032fe40b680cddb15963e47cbd56db613",
+        "src/value/de.rs": "a0aeae9ad7dbc1c01a7de0276aab95d9e1a745573ea3eb6bece4cb391a4f6113"
+      },
+      "definition": {
+        "file": "src/number.rs",
+        "name": "from_f64",
+        "qualname": "number::Number::from_f64",
+        "line": 183,
+        "column": 5
+      },
+      "sourceKnownCallers": [
+        {
+          "file": "src/value/from.rs",
+          "line": 60,
+          "column": 9
+        },
+        {
+          "file": "src/value/de.rs",
+          "line": 70,
+          "column": 20
+        },
+        {
+          "file": "src/number.rs",
+          "line": 438,
+          "column": 17
+        }
+      ]
+    }
+  },
+  "knownCallerContext": "value/from caller is top-level From impl; number and new value/de callers are nested Visitor implementations. Calls inside macro/doc tokens excluded."
+}
