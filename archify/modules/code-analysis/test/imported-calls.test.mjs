@@ -232,3 +232,59 @@ test('changed ordinary function default references recover foreign callers in fr
  const changed=q.changedDefinitions.items.find(x=>x.head?.definition.name==='helper');
  for(const side of ['base','head']){assert.equal(changed[side].knownReferences.total,1);assert.equal(changed[side].knownReferences.items[0].fact.file,'entry.mjs');assert.equal(changed[side].knownReferences.items[0].navigation.status,'valid');}
 });
+
+
+// Expectations follow the authored tsconfig paths and explicit export syntax,
+// independently of the extractor's import-edge implementation.
+const aliasConfig = JSON.stringify({ compilerOptions: { baseUrl: '.', paths: { '@local/*': ['src/*'] } } });
+test('captured configured aliases bind ordinary exports with independent lexical shadow checks', t => {
+  const args = fixture(t, {
+    'tsconfig.json': aliasConfig,
+    'entry.ts': 'import run, { named as renamed, arrow } from "@local/target";\nexport function chosen(){run();renamed();arrow();}\nfunction shadow(run){run();}\n{const renamed=()=>{};renamed();}',
+    'src/target.ts': 'export default function helper() {}\nexport function named() {}\nexport const arrow=()=>{};',
+  });
+  const calls = args.facts.calls.filter(c=>c.file==='entry.ts');
+  assert.deepEqual(calls.filter(c=>c.resolution==='imported-function').map(c=>c.target),[
+    {file:'src/target.ts',name:'helper',line:1,column:1},
+    {file:'src/target.ts',name:'named',line:2,column:1},
+    {file:'src/target.ts',name:'arrow',line:3,column:20},
+  ]);
+  assert.equal(calls.find(c=>c.line===3).resolution,'unresolved');
+  assert.equal(calls.find(c=>c.line===4).resolution,'same-file-function-initializer');
+  const question=buildQuestion({...args,entry:'entry.ts'});
+  assert.ok(question.calls.records.every(c=>c.targetNavigation.status==='valid'));
+  assert.deepEqual(schemaErrors('raw-facts',args.facts),[]);
+});
+
+test('configured alias target omissions, declarations, type-only imports and re-export hops stay unknown', t => {
+  const {facts}=fixture(t,{
+    'tsconfig.json':aliasConfig,
+    'entry.ts':[
+      'import excluded from "@local/excluded";excluded();',
+      'import missing from "@local/missing";missing();',
+      'import declaration from "@local/declaration";declaration();',
+      'import type typed from "@local/target";typed();',
+      'import { type named } from "@local/target";named();',
+      'import barrel from "@local/barrel";barrel();',
+      'import factory from "@local/factory";factory();',
+      'import external from "external-package";external();',
+      'import broken from "@local/broken";broken();',
+    ].join('\n'),
+    'src/excluded.ts':'export default function excluded(){}',
+    'src/declaration.d.ts':'export default function declaration():void;',
+    'src/target.ts':'export default function target(){} export function named(){}',
+    'src/barrel.ts':'export {default} from "./target";',
+    'src/factory.ts':'const factory=(()=>()=>{})();export default factory;',
+    'src/broken.ts':'export default function broken(){} function bad( {',
+  },['src/excluded.ts']);
+  assert.ok(facts.calls.filter(c=>c.file==='entry.ts').every(c=>c.resolution==='unresolved'));
+});
+
+test('changed configured alias target recovers the known foreign caller in each snapshot', t=>{
+  const sources={'tsconfig.json':aliasConfig,'entry.ts':'import run from "@local/target";export function chosen(){run();}','src/target.ts':'export default function helper(){return 1;}'};
+  const before=fixture(t,sources),after=fixture(t,{...sources,'src/target.ts':sources['src/target.ts'].replace('return 1','return 2')});
+  const base=captureChangeSide(before.root,before.config,'ts'),head=captureChangeSide(after.root,after.config,'ts');
+  const question=buildChangeQuestion({question:'Where is the changed helper called?',entry:'src/target.ts',base,head,config:before.config});
+  const changed=question.changedDefinitions.items.find(x=>x.head?.definition.name==='helper');
+  for(const side of ['base','head']){assert.equal(changed[side].knownReferences.total,1);assert.equal(changed[side].knownReferences.items[0].fact.file,'entry.ts');assert.equal(changed[side].knownReferences.items[0].navigation.status,'valid');}
+});
