@@ -1,0 +1,1293 @@
+{
+  "expect": "baseline",
+  "paired": {
+    "status": "partial",
+    "knownReferences": {
+      "base": {
+        "coverage": "available",
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      },
+      "head": {
+        "coverage": "available",
+        "total": 0,
+        "included": 0,
+        "omitted": 0,
+        "limit": 40,
+        "items": []
+      }
+    }
+  },
+  "commands": [
+    {
+      "label": "regex-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/regex-config.json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/regex",
+        "--fail-on",
+        "never",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 23.93838725006208
+    },
+    {
+      "label": "regex-question",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/regex",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex",
+        "--entry",
+        "src/regex/string.rs",
+        "--question",
+        "Where do the explicit inherent calls lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/regex-question.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.3548135000746697
+    },
+    {
+      "label": "serde-default-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-default-config.json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-default",
+        "--fail-on",
+        "never",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 3.734003624995239
+    },
+    {
+      "label": "serde-default-question",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-default",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--entry",
+        "src/value/from.rs",
+        "--question",
+        "Where do the explicit inherent calls lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-default-question.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.7889531659893692
+    },
+    {
+      "label": "serde-arbitrary-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-arbitrary-config.json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-arbitrary",
+        "--fail-on",
+        "never",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 6.466039750026539
+    },
+    {
+      "label": "serde-arbitrary-question",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-arbitrary",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--entry",
+        "src/value/from.rs",
+        "--question",
+        "Where do the explicit inherent calls lead?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-arbitrary-question.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.6846101660048589
+    },
+    {
+      "label": "paired",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-go-methods/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--base-root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json-base",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--entry",
+        "src/number.rs",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/serde-default-config.json",
+        "--question",
+        "Which known callers reach changed Number.from_f64?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/rust-associated-baseline-verified/paired.json",
+        "--json"
+      ],
+      "exit": 1,
+      "seconds": 6.192509833024815
+    }
+  ],
+  "score": {
+    "correct": 0,
+    "wrong": 0,
+    "missed": 8,
+    "reasonable-unknown": 4
+  },
+  "units": [
+    {
+      "profile": "regex",
+      "call": {
+        "column": 9,
+        "endColumn": 22,
+        "endLine": 125,
+        "file": "src/regex/string.rs",
+        "line": 125,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/regex/string.rs",
+        "line": 180,
+        "column": 5,
+        "name": "new"
+      },
+      "status": "missed",
+      "exposure": "design source freeze"
+    },
+    {
+      "profile": "regex",
+      "call": {
+        "column": 9,
+        "endColumn": 22,
+        "endLine": 123,
+        "file": "src/regex/bytes.rs",
+        "line": 123,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/regex/bytes.rs",
+        "line": 178,
+        "column": 5,
+        "name": "new"
+      },
+      "status": "missed",
+      "exposure": "design source freeze"
+    },
+    {
+      "profile": "serde-default",
+      "call": {
+        "column": 9,
+        "endColumn": 28,
+        "endLine": 60,
+        "file": "src/value/from.rs",
+        "line": 60,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/number.rs",
+        "line": 183,
+        "column": 5,
+        "name": "from_f64"
+      },
+      "status": "missed",
+      "exposure": "design source freeze"
+    },
+    {
+      "profile": "serde-default",
+      "call": {
+        "column": 17,
+        "endColumn": 40,
+        "endLine": 52,
+        "file": "src/value/de.rs",
+        "line": 52,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "status": "reasonable-unknown",
+      "reason": "Deserialize is a trait impl beginningnumber.rs395, method397. Do not index trait methods as inherent by nominal owner name."
+    },
+    {
+      "profile": "serde-default",
+      "call": {
+        "column": 20,
+        "endColumn": 30,
+        "endLine": 526,
+        "file": "src/map.rs",
+        "line": 526,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/map.rs",
+        "line": 41,
+        "column": 5,
+        "name": "new"
+      },
+      "status": "missed",
+      "exposure": "reserved file inspected after first rule, before extraction",
+      "reason": "known-source-miss for initial monomorphic rule; generic Map<K,V> specialized impl Map<String,Value>, local nested Visitor impl"
+    },
+    {
+      "profile": "serde-default",
+      "call": {
+        "column": 34,
+        "endColumn": 44,
+        "endLine": 535,
+        "file": "src/map.rs",
+        "line": 535,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/map.rs",
+        "line": 41,
+        "column": 5,
+        "name": "new"
+      },
+      "status": "missed",
+      "exposure": "reserved file inspected after first rule, before extraction",
+      "reason": "known-source-miss, same reasons"
+    },
+    {
+      "profile": "serde-default",
+      "call": {
+        "column": 18,
+        "endColumn": 32,
+        "endLine": 43,
+        "file": "src/map.rs",
+        "line": 43,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": null,
+      "status": "reasonable-unknown",
+      "exposure": "reserved file inspected after first rule, before extraction",
+      "reason": "reasonable unknown: cfg-dependent generic alias selects external BTreeMap or IndexMap; dependency source not captured"
+    },
+    {
+      "profile": "serde-arbitrary",
+      "call": {
+        "column": 9,
+        "endColumn": 28,
+        "endLine": 60,
+        "file": "src/value/from.rs",
+        "line": 60,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/number.rs",
+        "line": 183,
+        "column": 5,
+        "name": "from_f64"
+      },
+      "status": "missed",
+      "exposure": "design source freeze"
+    },
+    {
+      "profile": "serde-arbitrary",
+      "call": {
+        "column": 17,
+        "endColumn": 40,
+        "endLine": 52,
+        "file": "src/value/de.rs",
+        "line": 52,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "status": "reasonable-unknown",
+      "reason": "Deserialize is a trait impl beginningnumber.rs395, method397. Do not index trait methods as inherent by nominal owner name."
+    },
+    {
+      "profile": "serde-arbitrary",
+      "call": {
+        "column": 20,
+        "endColumn": 30,
+        "endLine": 526,
+        "file": "src/map.rs",
+        "line": 526,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/map.rs",
+        "line": 41,
+        "column": 5,
+        "name": "new"
+      },
+      "status": "missed",
+      "exposure": "reserved file inspected after first rule, before extraction",
+      "reason": "known-source-miss for initial monomorphic rule; generic Map<K,V> specialized impl Map<String,Value>, local nested Visitor impl"
+    },
+    {
+      "profile": "serde-arbitrary",
+      "call": {
+        "column": 34,
+        "endColumn": 44,
+        "endLine": 535,
+        "file": "src/map.rs",
+        "line": 535,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": {
+        "file": "src/map.rs",
+        "line": 41,
+        "column": 5,
+        "name": "new"
+      },
+      "status": "missed",
+      "exposure": "reserved file inspected after first rule, before extraction",
+      "reason": "known-source-miss, same reasons"
+    },
+    {
+      "profile": "serde-arbitrary",
+      "call": {
+        "column": 18,
+        "endColumn": 32,
+        "endLine": 43,
+        "file": "src/map.rs",
+        "line": 43,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      },
+      "expected": null,
+      "status": "reasonable-unknown",
+      "exposure": "reserved file inspected after first rule, before extraction",
+      "reason": "reasonable unknown: cfg-dependent generic alias selects external BTreeMap or IndexMap; dependency source not captured"
+    }
+  ],
+  "profiles": {
+    "regex": {
+      "files": 166,
+      "calls": 17995,
+      "newSourceCandidates": 0,
+      "parseErrors": [],
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "conditionalDefinitions": 0,
+      "opaqueMacros": 1334,
+      "excludedFiles": [
+        {
+          "file": "fuzz/fuzz_targets/ast_fuzz_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/ast_fuzz_match_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/ast_fuzz_regex.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/ast_roundtrip.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_automata_deserialize_dense_dfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_automata_deserialize_sparse_dfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_lite_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/src/util/unicode_data/perl_word.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/api.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/onepass/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/onepass/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/fuzz/dense.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/fuzz/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/fuzz/sparse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/dense/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/dense/multi_pattern_v2.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/sparse/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/sparse/multi_pattern_v2.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/hybrid/api.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/hybrid/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/hybrid/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/lib.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/meta/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/meta/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/backtrack/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/backtrack/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/pikevm/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/pikevm/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-cli/cmd/find/match/dfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-cli/cmd/find/match/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-cli/cmd/find/match/nfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-lite/tests/fuzz/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-lite/tests/lib.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-lite/tests/string.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/benches/bench.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/src/unicode_tables/perl_decimal.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/src/unicode_tables/perl_space.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/pattern.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/fuzz/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lib.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/misc.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression_fuzz.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/replace.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/searcher.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_bytes_set.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_string.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_string_set.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "missingModules": [
+        {
+          "file": "regex-cli/cmd/find/mod.rs",
+          "module": "r#match",
+          "reason": "module-source-not-captured"
+        }
+      ]
+    },
+    "serde-default": {
+      "files": 16,
+      "calls": 2069,
+      "newSourceCandidates": 0,
+      "parseErrors": [],
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "conditionalDefinitions": 0,
+      "opaqueMacros": 310,
+      "excludedFiles": [
+        {
+          "file": "build.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/from_slice.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/io/core.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bhcomp.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bignum.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached_float80.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/digit.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/errors.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers32.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers64.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/shift.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/small_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/raw.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/compiletest.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crate/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/debug.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/map.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue1004.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue520.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue795.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue845.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue953.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/stream.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_value.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/not_found.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_expr.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_key.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_array_element.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_map_entry.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "missingModules": []
+    },
+    "serde-arbitrary": {
+      "files": 16,
+      "calls": 2257,
+      "newSourceCandidates": 0,
+      "parseErrors": [],
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "conditionalDefinitions": 0,
+      "opaqueMacros": 330,
+      "excludedFiles": [
+        {
+          "file": "build.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/from_slice.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/io/core.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bhcomp.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bignum.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached_float80.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/digit.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/errors.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers32.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers64.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/shift.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/small_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/raw.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/compiletest.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crate/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/debug.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/map.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue1004.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue520.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue795.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue845.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue953.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/stream.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_value.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/not_found.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_expr.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_key.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_array_element.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_map_entry.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "missingModules": []
+    }
+  },
+  "limits": [
+    "Finite source-checked positives and review misses; not whole-project precision or compiler attribution.",
+    "Additional source candidates outside these units are not independently graded.",
+    "Reserved file follows initial implementation, repositories were previously exposed.",
+    "Checks use --fail-on never; exit zero does not mean no findings."
+  ]
+}
