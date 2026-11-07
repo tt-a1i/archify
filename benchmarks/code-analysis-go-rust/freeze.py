@@ -1,5 +1,9 @@
-import subprocess,json,hashlib,pathlib
-root=pathlib.Path('work/samples')
+import subprocess,json,hashlib,pathlib,argparse
+args=argparse.ArgumentParser(description='Recreate the source-only manifest from four local upstream clones.')
+args.add_argument('--samples-root',type=pathlib.Path,required=True)
+args.add_argument('--out',type=pathlib.Path,required=True)
+args=args.parse_args()
+root=args.samples_root
 def git(p,*args):return subprocess.check_output(['git','-C',str(root/p),*args])
 def source(p,ref,file):return git(p,'show',f'{ref}:{file}')
 def evidence(p,ref,file,needle):
@@ -26,4 +30,4 @@ for p,lang,base,head,role,items in projects:
 # Head-only Rust use and alias sites belong to the newer regex-automata workspace layout.
 r=out['projects'][2];r['head_supplement']=[{'kind':k,**evidence('regex',r['head'],f,n)} for k,f,n in [
  ('use alias','regex-automata/src/dfa/special.rs','use crate::util::wire::write_state_id as write;'),('alias direct call','regex-automata/src/dfa/special.rs','write::<E>(self.max,'),('alias target','regex-automata/src/util/wire.rs','fn write_state_id<'),('plain use','regex-automata/src/util/look.rs','use regex_syntax::try_is_word_character;'),('plain use call','regex-automata/src/util/look.rs','Some(Ok(ch)) => try_is_word_character(ch)'),('target','regex-syntax/src/lib.rs','pub fn try_is_word_character('),('macro unknown','regex-automata/src/dfa/special.rs','assert_eq!(')]]
-p=pathlib.Path('work/archify/benchmarks/code-analysis-go-rust/manifest.json');p.write_text(json.dumps(out,indent=2)+'\n');print(hashlib.sha256(p.read_bytes()).hexdigest())
+p=args.out;p.write_text(json.dumps(out,indent=2)+'\n');print(hashlib.sha256(p.read_bytes()).hexdigest())
