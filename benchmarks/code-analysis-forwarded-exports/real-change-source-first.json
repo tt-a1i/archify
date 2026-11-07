@@ -3,18 +3,6 @@
   "change": "Replace nested combination action parameter AnyAction with Action; real source change, not a runtime behavior claim.",
   "exposure": "Supplemental real version pair selected after initial forwarding implementation; not a holdout.",
   "projectExecuted": false,
-  "knownCallers": [
-    {
-      "file": "test/combineReducers.spec.ts",
-      "line": 17,
-      "column": 23
-    },
-    {
-      "file": "test/combineReducers.spec.ts",
-      "line": 32,
-      "column": 23
-    }
-  ],
   "sides": {
     "before": {
       "revision": "cbde7c9b7ea3c9fe16d4587858093e3364104e37",
@@ -42,6 +30,20 @@
           "endLine": 200,
           "endColumn": 4,
           "sha256": "ec2e57a044c21c6be78e68ab24660864ec624549692022b6aafa0044a4fa9734"
+        }
+      ],
+      "knownCallers": [
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 18,
+          "column": 23,
+          "text": "combineReducers({\n        counter: (state: number = 0, action: IncrementAction) =>\n          action.type === 'increment' ? state + 1 : state,\n        stack: (state: any[] = [], action: PushAction) =>\n          action.type === 'push' ? [...state, action.value] : state\n      })"
+        },
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 33,
+          "column": 23,
+          "text": "combineReducers({\n        fake: true as unknown as Reducer,\n        broken: 'string' as unknown as Reducer,\n        another: { nested: 'object' } as unknown as Reducer,\n        stack: (state = []) => state\n      })"
         }
       ]
     },
@@ -72,7 +74,22 @@
           "endColumn": 4,
           "sha256": "e321ec46f22eb9ebf7c8ac7a6eb7f648e3c8d0f99dee9a03babe96350f81bab2"
         }
+      ],
+      "knownCallers": [
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 17,
+          "column": 23,
+          "text": "combineReducers({\n        counter: (state: number = 0, action: IncrementAction) =>\n          action.type === 'increment' ? state + 1 : state,\n        stack: (state: any[] = [], action: PushAction) =>\n          action.type === 'push' ? [...state, action.value] : state\n      })"
+        },
+        {
+          "file": "test/combineReducers.spec.ts",
+          "line": 32,
+          "column": 23,
+          "text": "combineReducers({\n        fake: true as unknown as Reducer,\n        broken: 'string' as unknown as Reducer,\n        another: { nested: 'object' } as unknown as Reducer,\n        stack: (state = []) => state\n      })"
+        }
       ]
     }
-  }
+  },
+  "coordinateCorrection": "Initial 17/32 caller coordinates described the after version only. Source AST confirmation after the first paired observation found before callers at 18/33. This supplemental pair is not a held-out/source-first claim for those before coordinates; no product rule changed."
 }

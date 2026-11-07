@@ -1,0 +1,32 @@
+{
+  "captures": [
+    {
+      "label": "redux",
+      "sha256": "017963272a4d513c4ff37b7dc869ca6c9531b649c915b11e219ea83b04e6c531"
+    },
+    {
+      "label": "controls",
+      "sha256": "2425d375372f5c797d2a7ac38cac76a0514f555a7deb1a2568dec4ee1c077864"
+    }
+  ],
+  "questions": [
+    "question-0.json",
+    "question-1.json",
+    "real-pair",
+    "actual-v4"
+  ],
+  "currentScore": {
+    "correct": 4,
+    "wrong": 0,
+    "missed": 0,
+    "unknown": 1
+  },
+  "cliCommandsPerDistribution": 6,
+  "commands": "check + 2 orientation questions + real-pair task + actual v4 question + authored controls check; all exit0",
+  "zipSha256": "bb68b249ea7a64ac2dcf7238ae1664db44de12f6833155888ec060f6b20914bd",
+  "moduleFilesEqual": 168,
+  "repeatZipEqual": true,
+  "actualHistoricalModel": "js-ts-lexical-v4",
+  "normalization": "Only installation and output paths; repository source roots, target locations, coverage, facts, reasons and snapshot identities compared.",
+  "projectExecuted": false
+}

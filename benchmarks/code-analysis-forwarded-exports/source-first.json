@@ -291,5 +291,6 @@
     "Type-only/star/dynamic/CommonJS/ambiguous/cyclic or writable forwarding paths need their own source evidence before targets are admitted."
   ],
   "knownCallerScope": "Only the selected four source calls are known callers for this slice; no complete reference set.",
-  "projectExecution": "None; source parsed with the installed TypeScript SDK, no config/project/test execution."
+  "projectExecution": "None; source parsed with the installed TypeScript SDK, no config/project/test execution.",
+  "oracleNoteCorrection": "The initial prose note had a one-line offset. Frozen AST spans are authoritative: combineReducers export token43, createStore41, export statement40. Import statements3/2 and implementation answers123/86 were correct and unchanged."
 }
