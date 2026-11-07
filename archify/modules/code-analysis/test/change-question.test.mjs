@@ -59,7 +59,7 @@ test('public paired question captures dirty working trees, preserves side coordi
   const change = brief.changedDefinitions.items[0];
   assert.equal(change.base.definition.line, 1); assert.equal(change.head.definition.line, 2);
   for (const side of ['base', 'head']) {
-    assert.equal(brief.sides[side].callModel, 'js-ts-lexical-v2');
+    assert.equal(brief.sides[side].callModel, 'js-ts-lexical-v3');
     const ref = change[side].knownReferences.items[0];
     assert.equal(ref.fact.target.line, change[side].definition.line);
     assert.equal(ref.navigation.location.file, 'caller.mjs'); assert.equal(ref.side, side);
