@@ -37,3 +37,7 @@ Installed tools observed: Go 1.27.2; rustc/cargo 1.89.0. rust-analyzer command f
 6. Publish reviewable English Draft slices and Wiki capabilities as Labs / Draft-validated / unsupported. No approval, merge, release or live installation.
 
 Every handoff must explain the source path the developer could not follow before, the next evidenced step after the change, and the remaining unknown step. After both first investigations, prioritize demonstrated wrong targets and missing references across all supported languages.
+
+## Unchanged CLI result
+
+At source-freeze commit `580b50393`, all eight fixed project/version invocations returned **exit 2**, `extract/adapter-unknown`, supported adapters `ts`, `py`, `java`. Both `--language go` and `--language rust` are rejected before source extraction. The developer cannot yet take the first step from Cobra's `doc.GenMan` call or regex's `unicode::is_word_character` to captured definitions/callers. No targets were produced, so this is unavailable coverage, not a target-accuracy score. `evidence/baseline-cli.json` retains commands, outputs and exits. Package replay has not yet run.
