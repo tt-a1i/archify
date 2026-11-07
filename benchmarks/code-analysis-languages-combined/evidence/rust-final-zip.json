@@ -1,0 +1,3960 @@
+{
+  "commands": [
+    {
+      "label": "regex-base-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex-base",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/regex-base-config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/regex-base",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 10.838539958000183
+    },
+    {
+      "label": "regex-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/regex-config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/regex",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 29.402722124941647
+    },
+    {
+      "label": "serde-json-base-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json-base",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-base-config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-base",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 4.682808708050288
+    },
+    {
+      "label": "serde-json-base-float-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json-base",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-base-float-config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-base-float",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 3.0486902080010623
+    },
+    {
+      "label": "serde-json-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 2.687937790993601
+    },
+    {
+      "label": "serde-json-float-check",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--language",
+        "rust",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-float-config.json",
+        "--fail-on",
+        "never",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-float",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 2.8750042089959607
+    },
+    {
+      "label": "regex-question",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/regex",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex",
+        "--entry",
+        "regex-syntax/src/lib.rs",
+        "--function",
+        "try_is_word_character",
+        "--question",
+        "Where does unicode::is_word_character resolve?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/regex-question.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.35921058407984674
+    },
+    {
+      "label": "regex-paired",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex",
+        "--base-root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/regex-base",
+        "--entry",
+        "regex-syntax/src/unicode.rs",
+        "--question",
+        "Which known calls reach this changed definition?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/regex-paired.json",
+        "--json"
+      ],
+      "exit": 1,
+      "seconds": 29.102080499986187
+    },
+    {
+      "label": "serde-json-paired",
+      "command": [
+        "node",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "--root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json",
+        "--base-root",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/samples/serde-json-base",
+        "--entry",
+        "src/lexical/algorithm.rs",
+        "--question",
+        "Which known calls reach this changed definition?",
+        "--format",
+        "json",
+        "--out",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-paired.json",
+        "--json",
+        "--config",
+        "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/combined-final/combined-rust-zip/serde-json-float-config.json"
+      ],
+      "exit": 1,
+      "seconds": 5.092694999999367
+    }
+  ],
+  "score": {
+    "correct-target": 9,
+    "wrong-target": 0,
+    "missed-target": 0,
+    "omitted-call": 0,
+    "reasonable-unknown": 2
+  },
+  "units": [
+    {
+      "project": "regex-base",
+      "file": "regex-syntax/src/lib.rs",
+      "line": 252,
+      "column": 5,
+      "needle": "unicode::is_word_character(",
+      "expected": {
+        "file": "regex-syntax/src/unicode.rs",
+        "name": "is_word_character",
+        "line": 400,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "regex-syntax/src/unicode.rs",
+        "line": 400,
+        "name": "is_word_character"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "original-frozen"
+    },
+    {
+      "project": "regex",
+      "file": "regex-syntax/src/lib.rs",
+      "line": 369,
+      "column": 5,
+      "needle": "unicode::is_word_character(",
+      "expected": {
+        "file": "regex-syntax/src/unicode.rs",
+        "name": "is_word_character",
+        "line": 463,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "regex-syntax/src/unicode.rs",
+        "line": 463,
+        "name": "is_word_character"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "original-frozen"
+    },
+    {
+      "project": "regex",
+      "file": "src/lib.rs",
+      "line": 1345,
+      "column": 5,
+      "needle": "regex_syntax::escape(",
+      "expected": {
+        "file": "regex-syntax/src/lib.rs",
+        "name": "escape",
+        "line": 201,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "regex-syntax/src/lib.rs",
+        "line": 201,
+        "name": "escape"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "original-frozen"
+    },
+    {
+      "project": "regex",
+      "file": "regex-automata/src/dfa/special.rs",
+      "line": 364,
+      "column": 19,
+      "needle": "write::<E>(",
+      "expected": {
+        "file": "regex-automata/src/util/wire.rs",
+        "name": "write_state_id",
+        "line": 663,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "regex-automata/src/util/wire.rs",
+        "line": 663,
+        "name": "write_state_id"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "supplemental-exposed-use-as"
+    },
+    {
+      "project": "regex",
+      "file": "regex-automata/src/dfa/special.rs",
+      "line": 365,
+      "column": 19,
+      "needle": "write::<E>(",
+      "expected": {
+        "file": "regex-automata/src/util/wire.rs",
+        "name": "write_state_id",
+        "line": 663,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "regex-automata/src/util/wire.rs",
+        "line": 663,
+        "name": "write_state_id"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "supplemental-exposed-use-as"
+    },
+    {
+      "project": "regex",
+      "file": "regex-automata/src/util/look.rs",
+      "line": 1588,
+      "column": 29,
+      "needle": "try_is_word_character(",
+      "expected": {
+        "file": "regex-syntax/src/lib.rs",
+        "name": "try_is_word_character",
+        "line": 366,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "regex-syntax/src/lib.rs",
+        "line": 366,
+        "name": "try_is_word_character"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "supplemental-exposed-use"
+    },
+    {
+      "project": "regex",
+      "file": "regex-automata/src/util/look.rs",
+      "line": 1603,
+      "column": 29,
+      "needle": "try_is_word_character(",
+      "expected": {
+        "file": "regex-syntax/src/lib.rs",
+        "name": "try_is_word_character",
+        "line": 366,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "regex-syntax/src/lib.rs",
+        "line": 366,
+        "name": "try_is_word_character"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "supplemental-exposed-use"
+    },
+    {
+      "project": "serde-json-base-float",
+      "file": "src/lexical/parse.rs",
+      "line": 18,
+      "column": 26,
+      "needle": "fast_path(",
+      "expected": {
+        "file": "src/lexical/algorithm.rs",
+        "name": "fast_path",
+        "line": 18,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "src/lexical/algorithm.rs",
+        "line": 18,
+        "name": "fast_path"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "original-frozen"
+    },
+    {
+      "project": "serde-json-base-float",
+      "file": "src/lexical/algorithm.rs",
+      "line": 24,
+      "column": 30,
+      "needle": "F::exponent_limit(",
+      "expected": null,
+      "actual": null,
+      "status": "reasonable-unknown",
+      "reason": "no-local-function-binding",
+      "exposure": "original-frozen"
+    },
+    {
+      "project": "serde-json-float",
+      "file": "src/lexical/parse.rs",
+      "line": 18,
+      "column": 26,
+      "needle": "fast_path(",
+      "expected": {
+        "file": "src/lexical/algorithm.rs",
+        "name": "fast_path",
+        "line": 18,
+        "column": 1
+      },
+      "actual": {
+        "column": 1,
+        "file": "src/lexical/algorithm.rs",
+        "line": 18,
+        "name": "fast_path"
+      },
+      "status": "correct-target",
+      "reason": null,
+      "exposure": "original-frozen"
+    },
+    {
+      "project": "serde-json-float",
+      "file": "src/lexical/algorithm.rs",
+      "line": 24,
+      "column": 30,
+      "needle": "F::exponent_limit(",
+      "expected": null,
+      "actual": null,
+      "status": "reasonable-unknown",
+      "reason": "no-local-function-binding",
+      "exposure": "original-frozen"
+    }
+  ],
+  "paired": {
+    "regex": {
+      "status": "partial",
+      "knownReferences": {
+        "base": {
+          "coverage": "available",
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "side": "base",
+              "snapshotId": "ccbb2bda90603f689b87196bbb054c52ff7356bd0cc394117cd68698b64e42e3",
+              "factIndex": 2980,
+              "fact": {
+                "column": 5,
+                "endColumn": 34,
+                "endLine": 252,
+                "file": "regex-syntax/src/lib.rs",
+                "line": 252,
+                "resolution": "rust-direct-function",
+                "target": {
+                  "column": 1,
+                  "file": "regex-syntax/src/unicode.rs",
+                  "line": 400,
+                  "name": "is_word_character"
+                }
+              },
+              "bindingAttribution": "source-import-model-only",
+              "navigation": {
+                "status": "valid",
+                "location": {
+                  "file": "regex-syntax/src/lib.rs",
+                  "line": 252,
+                  "column": 5,
+                  "endLine": 252,
+                  "endColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        "head": {
+          "coverage": "available",
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "side": "head",
+              "snapshotId": "43a2d798957994cd0fdf9aaaff34f91c4879ff6f87b9590ad2f747752ec55a25",
+              "factIndex": 16796,
+              "fact": {
+                "column": 5,
+                "endColumn": 34,
+                "endLine": 369,
+                "file": "regex-syntax/src/lib.rs",
+                "line": 369,
+                "resolution": "rust-direct-function",
+                "target": {
+                  "column": 1,
+                  "file": "regex-syntax/src/unicode.rs",
+                  "line": 463,
+                  "name": "is_word_character"
+                }
+              },
+              "bindingAttribution": "source-import-model-only",
+              "navigation": {
+                "status": "valid",
+                "location": {
+                  "file": "regex-syntax/src/lib.rs",
+                  "line": 369,
+                  "column": 5,
+                  "endLine": 369,
+                  "endColumn": 34
+                }
+              }
+            }
+          ]
+        }
+      },
+      "limits": [
+        "File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.",
+        "Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.",
+        "Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets only ordinary undecorated module definitions or direct from-import aliases; decorated/method targets remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; overloads, member dispatch and inherited owners remain unresolved. Argument type applicability and compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.",
+        "Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.",
+        "Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.",
+        "Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits."
+      ],
+      "comparison": {
+        "sourceText": "reading-signals-only",
+        "bindingAttribution": "source-import-model-only",
+        "reasons": [
+          {
+            "code": "resolution-settings-differ",
+            "message": "Observed compiler options or configuration/package input contents differ. Binding differences cannot be attributed to source text alone."
+          }
+        ],
+        "resolutionChanges": {
+          "optionChanges": {
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "option": "crates",
+                "base": [
+                  {
+                    "deps": {
+                      "regex": "Cargo.toml#lib:regex",
+                      "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+                    },
+                    "edition": "2018",
+                    "features": [],
+                    "id": "bench/Cargo.toml#bin:regex-run-one",
+                    "name": "regex-run-one",
+                    "package": "regex-benchmark",
+                    "root": "bench/src/main.rs",
+                    "targetKinds": [
+                      "bin"
+                    ]
+                  },
+                  {
+                    "deps": {
+                      "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+                    },
+                    "edition": "2018",
+                    "features": [
+                      "aho-corasick",
+                      "default",
+                      "memchr",
+                      "perf",
+                      "perf-cache",
+                      "perf-dfa",
+                      "perf-inline",
+                      "perf-literal",
+                      "std",
+                      "unicode",
+                      "unicode-age",
+                      "unicode-bool",
+                      "unicode-case",
+                      "unicode-gencat",
+                      "unicode-perl",
+                      "unicode-script",
+                      "unicode-segment"
+                    ],
+                    "id": "Cargo.toml#lib:regex",
+                    "name": "regex",
+                    "package": "regex",
+                    "root": "src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  },
+                  {
+                    "deps": {},
+                    "edition": "2018",
+                    "features": [
+                      "default",
+                      "unicode",
+                      "unicode-age",
+                      "unicode-bool",
+                      "unicode-case",
+                      "unicode-gencat",
+                      "unicode-perl",
+                      "unicode-script",
+                      "unicode-segment"
+                    ],
+                    "id": "regex-syntax/Cargo.toml#lib:regex_syntax",
+                    "name": "regex_syntax",
+                    "package": "regex-syntax",
+                    "root": "regex-syntax/src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  },
+                  {
+                    "deps": {
+                      "regex": "Cargo.toml#lib:regex"
+                    },
+                    "edition": "2018",
+                    "features": [],
+                    "id": "regex-capi/Cargo.toml#staticlib+cdylib+rlib:rure",
+                    "name": "rure",
+                    "package": "rure",
+                    "root": "regex-capi/src/lib.rs",
+                    "targetKinds": [
+                      "staticlib",
+                      "cdylib",
+                      "rlib"
+                    ]
+                  },
+                  {
+                    "deps": {
+                      "regex": "Cargo.toml#lib:regex",
+                      "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+                    },
+                    "edition": "2018",
+                    "features": [],
+                    "id": "regex-debug/Cargo.toml#bin:regex-debug",
+                    "name": "regex-debug",
+                    "package": "regex-debug",
+                    "root": "regex-debug/src/main.rs",
+                    "targetKinds": [
+                      "bin"
+                    ]
+                  }
+                ],
+                "head": [
+                  {
+                    "deps": {
+                      "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+                    },
+                    "edition": "2021",
+                    "features": [
+                      "alloc",
+                      "default",
+                      "dfa",
+                      "dfa-build",
+                      "dfa-onepass",
+                      "dfa-search",
+                      "hybrid",
+                      "logging",
+                      "meta",
+                      "nfa",
+                      "nfa-backtrack",
+                      "nfa-pikevm",
+                      "nfa-thompson",
+                      "perf",
+                      "perf-inline",
+                      "perf-literal",
+                      "perf-literal-multisubstring",
+                      "perf-literal-substring",
+                      "std",
+                      "syntax",
+                      "unicode",
+                      "unicode-age",
+                      "unicode-bool",
+                      "unicode-case",
+                      "unicode-gencat",
+                      "unicode-perl",
+                      "unicode-script",
+                      "unicode-segment",
+                      "unicode-word-boundary"
+                    ],
+                    "id": "regex-automata/Cargo.toml#lib:regex_automata",
+                    "name": "regex_automata",
+                    "package": "regex-automata",
+                    "root": "regex-automata/src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  },
+                  {
+                    "deps": {},
+                    "edition": "2021",
+                    "features": [
+                      "default",
+                      "std",
+                      "unicode",
+                      "unicode-age",
+                      "unicode-bool",
+                      "unicode-case",
+                      "unicode-gencat",
+                      "unicode-perl",
+                      "unicode-script",
+                      "unicode-segment"
+                    ],
+                    "id": "regex-syntax/Cargo.toml#lib:regex_syntax",
+                    "name": "regex_syntax",
+                    "package": "regex-syntax",
+                    "root": "regex-syntax/src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  },
+                  {
+                    "deps": {},
+                    "edition": "2021",
+                    "features": [],
+                    "id": "regex-test/Cargo.toml#lib:regex_test",
+                    "name": "regex_test",
+                    "package": "regex-test",
+                    "root": "regex-test/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  },
+                  {
+                    "deps": {
+                      "regex": "Cargo.toml#lib:regex"
+                    },
+                    "edition": "2018",
+                    "features": [],
+                    "id": "regex-capi/Cargo.toml#staticlib+cdylib+rlib:rure",
+                    "name": "rure",
+                    "package": "rure",
+                    "root": "regex-capi/src/lib.rs",
+                    "targetKinds": [
+                      "staticlib",
+                      "cdylib",
+                      "rlib"
+                    ]
+                  },
+                  {
+                    "deps": {
+                      "regex_automata": "regex-automata/Cargo.toml#lib:regex_automata",
+                      "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+                    },
+                    "edition": "2021",
+                    "features": [
+                      "default",
+                      "perf",
+                      "perf-backtrack",
+                      "perf-cache",
+                      "perf-dfa",
+                      "perf-inline",
+                      "perf-literal",
+                      "perf-onepass",
+                      "std",
+                      "unicode",
+                      "unicode-age",
+                      "unicode-bool",
+                      "unicode-case",
+                      "unicode-gencat",
+                      "unicode-perl",
+                      "unicode-script",
+                      "unicode-segment"
+                    ],
+                    "id": "Cargo.toml#lib:regex",
+                    "name": "regex",
+                    "package": "regex",
+                    "root": "src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  },
+                  {
+                    "deps": {
+                      "regex": "Cargo.toml#lib:regex",
+                      "regex_automata": "regex-automata/Cargo.toml#lib:regex_automata",
+                      "regex_lite": "regex-lite/Cargo.toml#lib:regex_lite",
+                      "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+                    },
+                    "edition": "2021",
+                    "features": [
+                      "default"
+                    ],
+                    "id": "regex-cli/Cargo.toml#bin:regex-cli",
+                    "name": "regex-cli",
+                    "package": "regex-cli",
+                    "root": "regex-cli/main.rs",
+                    "targetKinds": [
+                      "bin"
+                    ]
+                  },
+                  {
+                    "deps": {},
+                    "edition": "2021",
+                    "features": [
+                      "default",
+                      "std",
+                      "string"
+                    ],
+                    "id": "regex-lite/Cargo.toml#lib:regex_lite",
+                    "name": "regex_lite",
+                    "package": "regex-lite",
+                    "root": "regex-lite/src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "inputChanges": {
+            "total": 9,
+            "included": 9,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "file": "<root>/Cargo.toml",
+                "baseSha256": "7886977c6b4e8978757076308dcc7f109d8eab4288a0f4a27f20822d4212db65",
+                "headSha256": "9d6c1e1e5cefd8577f2f783341b268f95d9dad922e3fd62f5606a304ab1d8a9b"
+              },
+              {
+                "file": "<root>/bench/Cargo.toml",
+                "baseSha256": "e5667aa65a3660d42e12d70005d86cd1b9a4bb78e371ba0632de13a9d9e5084b",
+                "headSha256": null
+              },
+              {
+                "file": "<root>/fuzz/Cargo.toml",
+                "baseSha256": "c50f6774d1cf7cf61b8f6fb6fc4a153fe01fdf0b631e560430600c266c812d17",
+                "headSha256": "16e367950a3fed1663a4e88055a1452987b76267d5c0c2914f724a911ebe8c96"
+              },
+              {
+                "file": "<root>/regex-automata/Cargo.toml",
+                "baseSha256": null,
+                "headSha256": "881668131b8a6dca9f34fe30dcf263d4b26bc74f48c4df68598b0de54468ea3b"
+              },
+              {
+                "file": "<root>/regex-cli/Cargo.toml",
+                "baseSha256": null,
+                "headSha256": "eb751d15ae456c8947c7422904d3d36fa09f4141ba3b4988b47d511ff0e6a62e"
+              },
+              {
+                "file": "<root>/regex-debug/Cargo.toml",
+                "baseSha256": "4fd2920bc669e7018038d48c6942a52dd4ea1ece5cf90fcc5b41c048d3d4dcb5",
+                "headSha256": null
+              },
+              {
+                "file": "<root>/regex-lite/Cargo.toml",
+                "baseSha256": null,
+                "headSha256": "5a31cc29c488d0bf0a43acdc19f3482d2114e2186fcfe9464ca43d45daf27330"
+              },
+              {
+                "file": "<root>/regex-syntax/Cargo.toml",
+                "baseSha256": "fcda51ef340972569fe1a123c5d8b46559e9334ad717b00782f9ebc5808f6342",
+                "headSha256": "4c18da01da8ea5c747cb548eee8c34f935510be514b62869ff046f53aca37583"
+              },
+              {
+                "file": "<root>/regex-test/Cargo.toml",
+                "baseSha256": null,
+                "headSha256": "0e1ba1292e2a9e3525b02b15aa2ab442f37e27d54414018cf887afdb68582d14"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "serde-json": {
+      "status": "partial",
+      "knownReferences": {
+        "base": {
+          "coverage": "available",
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "side": "base",
+              "snapshotId": "5f4bbb25344765beae89214298854d4cb95e1f20e0158aad99d0aa41c3602c6e",
+              "factIndex": 1018,
+              "fact": {
+                "column": 26,
+                "endColumn": 55,
+                "endLine": 18,
+                "file": "src/lexical/parse.rs",
+                "line": 18,
+                "resolution": "rust-direct-function",
+                "target": {
+                  "column": 1,
+                  "file": "src/lexical/algorithm.rs",
+                  "line": 18,
+                  "name": "fast_path"
+                }
+              },
+              "bindingAttribution": "source-import-model-only",
+              "navigation": {
+                "status": "valid",
+                "location": {
+                  "file": "src/lexical/parse.rs",
+                  "line": 18,
+                  "column": 26,
+                  "endLine": 18,
+                  "endColumn": 55
+                }
+              }
+            }
+          ]
+        },
+        "head": {
+          "coverage": "available",
+          "total": 1,
+          "included": 1,
+          "omitted": 0,
+          "limit": 40,
+          "items": [
+            {
+              "side": "head",
+              "snapshotId": "70310c696c3811d6d0d699716fe6c5c9710de5dc8bf28f0663a2d44ba4830490",
+              "factIndex": 1046,
+              "fact": {
+                "column": 26,
+                "endColumn": 55,
+                "endLine": 18,
+                "file": "src/lexical/parse.rs",
+                "line": 18,
+                "resolution": "rust-direct-function",
+                "target": {
+                  "column": 1,
+                  "file": "src/lexical/algorithm.rs",
+                  "line": 18,
+                  "name": "fast_path"
+                }
+              },
+              "bindingAttribution": "source-import-model-only",
+              "navigation": {
+                "status": "valid",
+                "location": {
+                  "file": "src/lexical/parse.rs",
+                  "line": 18,
+                  "column": 26,
+                  "endLine": 18,
+                  "endColumn": 55
+                }
+              }
+            }
+          ]
+        }
+      },
+      "limits": [
+        "File changes cover captured sources of the selected entry language only. Documents, excluded files and other languages are not checked; absence here is not evidence of no change. Definitions are selected only in the entry file; references search all captured files.",
+        "Unique file + qualified name + syntax kind slots pair reading locations, not persistent entities. Renames and moves are never inferred. Function text changes, including formatting, do not prove semantic change; identical text shifted in position is reported separately.",
+        "Known references are conservative lexical callsites, not runtime callers or complete/transitive impact. Member/dynamic dispatch, constructors and tagged templates remain outside binding coverage. Unresolved calls inside source ranges can include nested closures and owned decorators/headers. Python python-lexical-v1 targets only ordinary undecorated module definitions or direct from-import aliases; decorated/method targets remain unsupported. Java v1 binds bounded same-file static source candidates; v2 additionally binds explicit class-qualified public static paths to captured top-level classes; overloads, member dispatch and inherited owners remain unresolved. Argument type applicability and compilation are not checked. Historical unrecognized models remain unavailable with unknown totals.",
+        "Coordinates and factIndex belong to the named side/snapshot only. Original facts are captured evidence; use navigation.location only when valid. No whole-tree atomic capture or live re-resolution after capture is claimed.",
+        "Observed resolution settings include compiler options and actually read configuration/package contents. Differences conservatively limit binding attribution, even for irrelevant config text edits. Matching settings do not prove matching runtime environments; added source candidates can change resolution.",
+        "Every list is bounded with total/included/omitted. Git metadata is background; captured text and freshness checks establish source identity, including uncommitted edits."
+      ],
+      "comparison": {
+        "sourceText": "reading-signals-only",
+        "bindingAttribution": "source-import-model-only",
+        "reasons": [
+          {
+            "code": "resolution-settings-differ",
+            "message": "Observed compiler options or configuration/package input contents differ. Binding differences cannot be attributed to source text alone."
+          }
+        ],
+        "resolutionChanges": {
+          "optionChanges": {
+            "total": 1,
+            "included": 1,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "option": "crates",
+                "base": [
+                  {
+                    "deps": {},
+                    "edition": "2018",
+                    "features": [
+                      "default",
+                      "float_roundtrip",
+                      "std"
+                    ],
+                    "id": "Cargo.toml#lib:serde_json",
+                    "name": "serde_json",
+                    "package": "serde_json",
+                    "root": "src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  }
+                ],
+                "head": [
+                  {
+                    "deps": {},
+                    "edition": "2021",
+                    "features": [
+                      "default",
+                      "float_roundtrip",
+                      "std"
+                    ],
+                    "id": "Cargo.toml#lib:serde_json",
+                    "name": "serde_json",
+                    "package": "serde_json",
+                    "root": "src/lib.rs",
+                    "targetKinds": [
+                      "lib"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "inputChanges": {
+            "total": 2,
+            "included": 2,
+            "omitted": 0,
+            "limit": 40,
+            "items": [
+              {
+                "file": "<root>/Cargo.toml",
+                "baseSha256": "bcbaef150dabb3d47d5fc599a800238bf015bd8adbb713f3a61622ab9d082ab9",
+                "headSha256": "d538a699a1c5414c1c7c4342f2dcec1be4c85f54e4dc1fcb50f1ca4c389fb97b"
+              },
+              {
+                "file": "<root>/tests/crate/Cargo.toml",
+                "baseSha256": "4c6ff05398abdbe7f62d93831f0eec5b39d4943e2a91de7832f4156995b2f5c4",
+                "headSha256": "fcdeb95b267e69082338e03b85d76cb68aebe733f818975f528539dd172bc110"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "scope": {
+    "regex-base": {
+      "files": 57,
+      "functions": 1017,
+      "calls": 5371,
+      "parseErrors": [],
+      "macroRecords": 390,
+      "conditionalDefinitions": 0,
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "crates": [
+        {
+          "id": "bench/Cargo.toml#bin:regex-run-one",
+          "package": "regex-benchmark",
+          "name": "regex-run-one",
+          "root": "bench/src/main.rs",
+          "edition": "2018",
+          "deps": {
+            "regex": "Cargo.toml#lib:regex",
+            "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+          },
+          "features": [],
+          "targetKinds": [
+            "bin"
+          ],
+          "files": [
+            "bench/src/main.rs",
+            "bench/src/ffi/mod.rs"
+          ]
+        },
+        {
+          "id": "Cargo.toml#lib:regex",
+          "package": "regex",
+          "name": "regex",
+          "root": "src/lib.rs",
+          "edition": "2018",
+          "deps": {
+            "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+          },
+          "features": [
+            "aho-corasick",
+            "default",
+            "memchr",
+            "perf",
+            "perf-cache",
+            "perf-dfa",
+            "perf-inline",
+            "perf-literal",
+            "std",
+            "unicode",
+            "unicode-age",
+            "unicode-bool",
+            "unicode-case",
+            "unicode-gencat",
+            "unicode-perl",
+            "unicode-script",
+            "unicode-segment"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "src/lib.rs",
+            "src/backtrack.rs",
+            "src/compile.rs",
+            "src/dfa.rs",
+            "src/error.rs",
+            "src/exec.rs",
+            "src/expand.rs",
+            "src/find_byte.rs",
+            "src/input.rs",
+            "src/literal/mod.rs",
+            "src/literal/imp.rs",
+            "src/pikevm.rs",
+            "src/pool.rs",
+            "src/prog.rs",
+            "src/re_builder.rs",
+            "src/re_bytes.rs",
+            "src/re_set.rs",
+            "src/re_trait.rs",
+            "src/re_unicode.rs",
+            "src/sparse.rs",
+            "src/utf8.rs"
+          ]
+        },
+        {
+          "id": "regex-syntax/Cargo.toml#lib:regex_syntax",
+          "package": "regex-syntax",
+          "name": "regex_syntax",
+          "root": "regex-syntax/src/lib.rs",
+          "edition": "2018",
+          "deps": {},
+          "features": [
+            "default",
+            "unicode",
+            "unicode-age",
+            "unicode-bool",
+            "unicode-case",
+            "unicode-gencat",
+            "unicode-perl",
+            "unicode-script",
+            "unicode-segment"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "regex-syntax/src/lib.rs",
+            "regex-syntax/src/ast/mod.rs",
+            "regex-syntax/src/ast/parse.rs",
+            "regex-syntax/src/ast/print.rs",
+            "regex-syntax/src/ast/visitor.rs",
+            "regex-syntax/src/either.rs",
+            "regex-syntax/src/error.rs",
+            "regex-syntax/src/hir/mod.rs",
+            "regex-syntax/src/hir/interval.rs",
+            "regex-syntax/src/hir/literal/mod.rs",
+            "regex-syntax/src/hir/print.rs",
+            "regex-syntax/src/hir/translate.rs",
+            "regex-syntax/src/hir/visitor.rs",
+            "regex-syntax/src/parser.rs",
+            "regex-syntax/src/unicode.rs",
+            "regex-syntax/src/unicode_tables/mod.rs",
+            "regex-syntax/src/unicode_tables/age.rs",
+            "regex-syntax/src/unicode_tables/case_folding_simple.rs",
+            "regex-syntax/src/unicode_tables/general_category.rs",
+            "regex-syntax/src/unicode_tables/grapheme_cluster_break.rs",
+            "regex-syntax/src/unicode_tables/perl_word.rs",
+            "regex-syntax/src/unicode_tables/property_bool.rs",
+            "regex-syntax/src/unicode_tables/property_names.rs",
+            "regex-syntax/src/unicode_tables/property_values.rs",
+            "regex-syntax/src/unicode_tables/script.rs",
+            "regex-syntax/src/unicode_tables/script_extension.rs",
+            "regex-syntax/src/unicode_tables/sentence_break.rs",
+            "regex-syntax/src/unicode_tables/word_break.rs",
+            "regex-syntax/src/utf8.rs"
+          ]
+        },
+        {
+          "id": "regex-capi/Cargo.toml#staticlib+cdylib+rlib:rure",
+          "package": "rure",
+          "name": "rure",
+          "root": "regex-capi/src/lib.rs",
+          "edition": "2018",
+          "deps": {
+            "regex": "Cargo.toml#lib:regex"
+          },
+          "features": [],
+          "targetKinds": [
+            "staticlib",
+            "cdylib",
+            "rlib"
+          ],
+          "files": [
+            "regex-capi/src/lib.rs",
+            "regex-capi/src/macros.rs",
+            "regex-capi/src/error.rs",
+            "regex-capi/src/rure.rs"
+          ]
+        },
+        {
+          "id": "regex-debug/Cargo.toml#bin:regex-debug",
+          "package": "regex-debug",
+          "name": "regex-debug",
+          "root": "regex-debug/src/main.rs",
+          "edition": "2018",
+          "deps": {
+            "regex": "Cargo.toml#lib:regex",
+            "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+          },
+          "features": [],
+          "targetKinds": [
+            "bin"
+          ],
+          "files": [
+            "regex-debug/src/main.rs"
+          ]
+        }
+      ],
+      "excludedFiles": [
+        {
+          "file": "bench/build.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/bench.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/ffi/onig.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/ffi/pcre1.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/ffi/pcre2.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/ffi/re2.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/ffi/tcl.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/misc.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/regexdna.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/rust_compile.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/rust_parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "bench/src/sherlock.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "examples/shootout-regex-dna-bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "examples/shootout-regex-dna-cheat.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "examples/shootout-regex-dna-replace.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "examples/shootout-regex-dna-single-cheat.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "examples/shootout-regex-dna-single.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "examples/shootout-regex-dna.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/benches/bench.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/src/unicode_tables/perl_decimal.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/src/unicode_tables/perl_space.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/freqs.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/pattern.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/api.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/api_str.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/consistent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crates_regex.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crazy.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/flags.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/fowler.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros_str.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/misc.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/multiline.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/noparse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression_fuzz.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/replace.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/searcher.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/set.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/shortest_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suffix_reverse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_backtrack.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_backtrack_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_backtrack_utf8bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_crates_regex.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_default.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_default_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_nfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_nfa_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test_nfa_utf8bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/unicode.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/word_boundary.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/word_boundary_ascii.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/word_boundary_unicode.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "excludedTargets": [
+        {
+          "package": "regex-benchmark",
+          "name": "bench",
+          "kinds": [
+            "bench"
+          ],
+          "source": "bench/src/bench.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex-benchmark",
+          "name": "build-script-build",
+          "kinds": [
+            "custom-build"
+          ],
+          "source": "bench/build.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "shootout-regex-dna",
+          "kinds": [
+            "example"
+          ],
+          "source": "examples/shootout-regex-dna.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "shootout-regex-dna-bytes",
+          "kinds": [
+            "example"
+          ],
+          "source": "examples/shootout-regex-dna-bytes.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "shootout-regex-dna-cheat",
+          "kinds": [
+            "example"
+          ],
+          "source": "examples/shootout-regex-dna-cheat.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "shootout-regex-dna-replace",
+          "kinds": [
+            "example"
+          ],
+          "source": "examples/shootout-regex-dna-replace.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "shootout-regex-dna-single",
+          "kinds": [
+            "example"
+          ],
+          "source": "examples/shootout-regex-dna-single.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "shootout-regex-dna-single-cheat",
+          "kinds": [
+            "example"
+          ],
+          "source": "examples/shootout-regex-dna-single-cheat.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "default",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_default.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "default-bytes",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_default_bytes.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "nfa",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_nfa.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "nfa-utf8bytes",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_nfa_utf8bytes.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "nfa-bytes",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_nfa_bytes.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "backtrack",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_backtrack.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "backtrack-utf8bytes",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_backtrack_utf8bytes.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "backtrack-bytes",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_backtrack_bytes.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "crates-regex",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test_crates_regex.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex-syntax",
+          "name": "bench",
+          "kinds": [
+            "bench"
+          ],
+          "source": "regex-syntax/benches/bench.rs",
+          "reason": "target-not-in-source-profile"
+        }
+      ],
+      "excludedRegionCount": 35,
+      "missingModules": [],
+      "metadata": [
+        {
+          "file": "Cargo.toml",
+          "sha256": "7886977c6b4e8978757076308dcc7f109d8eab4288a0f4a27f20822d4212db65"
+        },
+        {
+          "file": "bench/Cargo.toml",
+          "sha256": "e5667aa65a3660d42e12d70005d86cd1b9a4bb78e371ba0632de13a9d9e5084b"
+        },
+        {
+          "file": "fuzz/Cargo.toml",
+          "sha256": "c50f6774d1cf7cf61b8f6fb6fc4a153fe01fdf0b631e560430600c266c812d17"
+        },
+        {
+          "file": "regex-capi/Cargo.toml",
+          "sha256": "dec7a739a7c3de6d7bdd7fa2a1f9742247c36eb0e307e7542f2f31142ed6dc44"
+        },
+        {
+          "file": "regex-debug/Cargo.toml",
+          "sha256": "4fd2920bc669e7018038d48c6942a52dd4ea1ece5cf90fcc5b41c048d3d4dcb5"
+        },
+        {
+          "file": "regex-syntax/Cargo.toml",
+          "sha256": "fcda51ef340972569fe1a123c5d8b46559e9334ad717b00782f9ebc5808f6342"
+        }
+      ]
+    },
+    "regex": {
+      "files": 166,
+      "functions": 3435,
+      "calls": 17995,
+      "parseErrors": [],
+      "macroRecords": 1334,
+      "conditionalDefinitions": 0,
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "crates": [
+        {
+          "id": "regex-automata/Cargo.toml#lib:regex_automata",
+          "package": "regex-automata",
+          "name": "regex_automata",
+          "root": "regex-automata/src/lib.rs",
+          "edition": "2021",
+          "deps": {
+            "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+          },
+          "features": [
+            "alloc",
+            "default",
+            "dfa",
+            "dfa-build",
+            "dfa-onepass",
+            "dfa-search",
+            "hybrid",
+            "logging",
+            "meta",
+            "nfa",
+            "nfa-backtrack",
+            "nfa-pikevm",
+            "nfa-thompson",
+            "perf",
+            "perf-inline",
+            "perf-literal",
+            "perf-literal-multisubstring",
+            "perf-literal-substring",
+            "std",
+            "syntax",
+            "unicode",
+            "unicode-age",
+            "unicode-bool",
+            "unicode-case",
+            "unicode-gencat",
+            "unicode-perl",
+            "unicode-script",
+            "unicode-segment",
+            "unicode-word-boundary"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "regex-automata/src/lib.rs",
+            "regex-automata/src/macros.rs",
+            "regex-automata/src/dfa/mod.rs",
+            "regex-automata/src/dfa/dense.rs",
+            "regex-automata/src/dfa/onepass.rs",
+            "regex-automata/src/dfa/regex.rs",
+            "regex-automata/src/dfa/sparse.rs",
+            "regex-automata/src/dfa/accel.rs",
+            "regex-automata/src/dfa/automaton.rs",
+            "regex-automata/src/dfa/determinize.rs",
+            "regex-automata/src/dfa/minimize.rs",
+            "regex-automata/src/dfa/remapper.rs",
+            "regex-automata/src/dfa/search.rs",
+            "regex-automata/src/dfa/special.rs",
+            "regex-automata/src/dfa/start.rs",
+            "regex-automata/src/hybrid/mod.rs",
+            "regex-automata/src/hybrid/dfa.rs",
+            "regex-automata/src/hybrid/error.rs",
+            "regex-automata/src/hybrid/id.rs",
+            "regex-automata/src/hybrid/regex.rs",
+            "regex-automata/src/hybrid/search.rs",
+            "regex-automata/src/meta/mod.rs",
+            "regex-automata/src/meta/error.rs",
+            "regex-automata/src/meta/limited.rs",
+            "regex-automata/src/meta/literal.rs",
+            "regex-automata/src/meta/regex.rs",
+            "regex-automata/src/meta/reverse_inner.rs",
+            "regex-automata/src/meta/stopat.rs",
+            "regex-automata/src/meta/strategy.rs",
+            "regex-automata/src/meta/wrappers.rs",
+            "regex-automata/src/nfa/mod.rs",
+            "regex-automata/src/nfa/thompson/mod.rs",
+            "regex-automata/src/nfa/thompson/backtrack.rs",
+            "regex-automata/src/nfa/thompson/builder.rs",
+            "regex-automata/src/nfa/thompson/compiler.rs",
+            "regex-automata/src/nfa/thompson/error.rs",
+            "regex-automata/src/nfa/thompson/literal_trie.rs",
+            "regex-automata/src/nfa/thompson/map.rs",
+            "regex-automata/src/nfa/thompson/nfa.rs",
+            "regex-automata/src/nfa/thompson/pikevm.rs",
+            "regex-automata/src/nfa/thompson/range_trie.rs",
+            "regex-automata/src/util/mod.rs",
+            "regex-automata/src/util/alphabet.rs",
+            "regex-automata/src/util/captures.rs",
+            "regex-automata/src/util/escape.rs",
+            "regex-automata/src/util/interpolate.rs",
+            "regex-automata/src/util/iter.rs",
+            "regex-automata/src/util/lazy.rs",
+            "regex-automata/src/util/look.rs",
+            "regex-automata/src/util/pool.rs",
+            "regex-automata/src/util/prefilter/mod.rs",
+            "regex-automata/src/util/prefilter/aho_corasick.rs",
+            "regex-automata/src/util/prefilter/byteset.rs",
+            "regex-automata/src/util/prefilter/memchr.rs",
+            "regex-automata/src/util/prefilter/memmem.rs",
+            "regex-automata/src/util/prefilter/teddy.rs",
+            "regex-automata/src/util/primitives.rs",
+            "regex-automata/src/util/start.rs",
+            "regex-automata/src/util/syntax.rs",
+            "regex-automata/src/util/wire.rs",
+            "regex-automata/src/util/determinize/mod.rs",
+            "regex-automata/src/util/determinize/state.rs",
+            "regex-automata/src/util/empty.rs",
+            "regex-automata/src/util/int.rs",
+            "regex-automata/src/util/memchr.rs",
+            "regex-automata/src/util/search.rs",
+            "regex-automata/src/util/sparse_set.rs",
+            "regex-automata/src/util/unicode_data/mod.rs",
+            "regex-automata/src/util/utf8.rs"
+          ]
+        },
+        {
+          "id": "regex-syntax/Cargo.toml#lib:regex_syntax",
+          "package": "regex-syntax",
+          "name": "regex_syntax",
+          "root": "regex-syntax/src/lib.rs",
+          "edition": "2021",
+          "deps": {},
+          "features": [
+            "default",
+            "std",
+            "unicode",
+            "unicode-age",
+            "unicode-bool",
+            "unicode-case",
+            "unicode-gencat",
+            "unicode-perl",
+            "unicode-script",
+            "unicode-segment"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "regex-syntax/src/lib.rs",
+            "regex-syntax/src/ast/mod.rs",
+            "regex-syntax/src/ast/parse.rs",
+            "regex-syntax/src/ast/print.rs",
+            "regex-syntax/src/ast/visitor.rs",
+            "regex-syntax/src/debug.rs",
+            "regex-syntax/src/either.rs",
+            "regex-syntax/src/error.rs",
+            "regex-syntax/src/hir/mod.rs",
+            "regex-syntax/src/hir/interval.rs",
+            "regex-syntax/src/hir/literal.rs",
+            "regex-syntax/src/hir/print.rs",
+            "regex-syntax/src/hir/translate.rs",
+            "regex-syntax/src/hir/visitor.rs",
+            "regex-syntax/src/parser.rs",
+            "regex-syntax/src/rank.rs",
+            "regex-syntax/src/unicode.rs",
+            "regex-syntax/src/unicode_tables/mod.rs",
+            "regex-syntax/src/unicode_tables/age.rs",
+            "regex-syntax/src/unicode_tables/case_folding_simple.rs",
+            "regex-syntax/src/unicode_tables/general_category.rs",
+            "regex-syntax/src/unicode_tables/grapheme_cluster_break.rs",
+            "regex-syntax/src/unicode_tables/perl_word.rs",
+            "regex-syntax/src/unicode_tables/property_bool.rs",
+            "regex-syntax/src/unicode_tables/property_names.rs",
+            "regex-syntax/src/unicode_tables/property_values.rs",
+            "regex-syntax/src/unicode_tables/script.rs",
+            "regex-syntax/src/unicode_tables/script_extension.rs",
+            "regex-syntax/src/unicode_tables/sentence_break.rs",
+            "regex-syntax/src/unicode_tables/word_break.rs",
+            "regex-syntax/src/utf8.rs"
+          ]
+        },
+        {
+          "id": "regex-test/Cargo.toml#lib:regex_test",
+          "package": "regex-test",
+          "name": "regex_test",
+          "root": "regex-test/lib.rs",
+          "edition": "2021",
+          "deps": {},
+          "features": [],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "regex-test/lib.rs"
+          ]
+        },
+        {
+          "id": "regex-capi/Cargo.toml#staticlib+cdylib+rlib:rure",
+          "package": "rure",
+          "name": "rure",
+          "root": "regex-capi/src/lib.rs",
+          "edition": "2018",
+          "deps": {
+            "regex": "Cargo.toml#lib:regex"
+          },
+          "features": [],
+          "targetKinds": [
+            "staticlib",
+            "cdylib",
+            "rlib"
+          ],
+          "files": [
+            "regex-capi/src/lib.rs",
+            "regex-capi/src/macros.rs",
+            "regex-capi/src/error.rs",
+            "regex-capi/src/rure.rs"
+          ]
+        },
+        {
+          "id": "Cargo.toml#lib:regex",
+          "package": "regex",
+          "name": "regex",
+          "root": "src/lib.rs",
+          "edition": "2021",
+          "deps": {
+            "regex_automata": "regex-automata/Cargo.toml#lib:regex_automata",
+            "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+          },
+          "features": [
+            "default",
+            "perf",
+            "perf-backtrack",
+            "perf-cache",
+            "perf-dfa",
+            "perf-inline",
+            "perf-literal",
+            "perf-onepass",
+            "std",
+            "unicode",
+            "unicode-age",
+            "unicode-bool",
+            "unicode-case",
+            "unicode-gencat",
+            "unicode-perl",
+            "unicode-script",
+            "unicode-segment"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "src/lib.rs",
+            "src/builders.rs",
+            "src/bytes.rs",
+            "src/error.rs",
+            "src/find_byte.rs",
+            "src/regex/mod.rs",
+            "src/regex/bytes.rs",
+            "src/regex/string.rs",
+            "src/regexset/mod.rs",
+            "src/regexset/bytes.rs",
+            "src/regexset/string.rs"
+          ]
+        },
+        {
+          "id": "regex-cli/Cargo.toml#bin:regex-cli",
+          "package": "regex-cli",
+          "name": "regex-cli",
+          "root": "regex-cli/main.rs",
+          "edition": "2021",
+          "deps": {
+            "regex": "Cargo.toml#lib:regex",
+            "regex_automata": "regex-automata/Cargo.toml#lib:regex_automata",
+            "regex_lite": "regex-lite/Cargo.toml#lib:regex_lite",
+            "regex_syntax": "regex-syntax/Cargo.toml#lib:regex_syntax"
+          },
+          "features": [
+            "default"
+          ],
+          "targetKinds": [
+            "bin"
+          ],
+          "files": [
+            "regex-cli/main.rs",
+            "regex-cli/args/mod.rs",
+            "regex-cli/args/api.rs",
+            "regex-cli/args/backtrack.rs",
+            "regex-cli/args/common.rs",
+            "regex-cli/args/dfa.rs",
+            "regex-cli/args/flags.rs",
+            "regex-cli/args/haystack.rs",
+            "regex-cli/args/hybrid.rs",
+            "regex-cli/args/input.rs",
+            "regex-cli/args/lite.rs",
+            "regex-cli/args/meta.rs",
+            "regex-cli/args/onepass.rs",
+            "regex-cli/args/overlapping.rs",
+            "regex-cli/args/patterns.rs",
+            "regex-cli/args/pikevm.rs",
+            "regex-cli/args/syntax.rs",
+            "regex-cli/args/thompson.rs",
+            "regex-cli/cmd/mod.rs",
+            "regex-cli/cmd/compile_test.rs",
+            "regex-cli/cmd/debug/mod.rs",
+            "regex-cli/cmd/debug/dfa.rs",
+            "regex-cli/cmd/debug/literal.rs",
+            "regex-cli/cmd/find/mod.rs",
+            "regex-cli/cmd/find/capture/mod.rs",
+            "regex-cli/cmd/find/capture/dfa.rs",
+            "regex-cli/cmd/find/capture/nfa.rs",
+            "regex-cli/cmd/find/half/mod.rs",
+            "regex-cli/cmd/find/half/dfa.rs",
+            "regex-cli/cmd/find/which/mod.rs",
+            "regex-cli/cmd/find/which/dfa.rs",
+            "regex-cli/cmd/find/which/nfa.rs",
+            "regex-cli/cmd/generate/mod.rs",
+            "regex-cli/cmd/generate/fowler.rs",
+            "regex-cli/cmd/generate/serialize/mod.rs",
+            "regex-cli/cmd/generate/serialize/dfa.rs",
+            "regex-cli/cmd/generate/unicode.rs",
+            "regex-cli/logger.rs",
+            "regex-cli/util.rs"
+          ]
+        },
+        {
+          "id": "regex-lite/Cargo.toml#lib:regex_lite",
+          "package": "regex-lite",
+          "name": "regex_lite",
+          "root": "regex-lite/src/lib.rs",
+          "edition": "2021",
+          "deps": {},
+          "features": [
+            "default",
+            "std",
+            "string"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "regex-lite/src/lib.rs",
+            "regex-lite/src/error.rs",
+            "regex-lite/src/hir/mod.rs",
+            "regex-lite/src/hir/parse.rs",
+            "regex-lite/src/int.rs",
+            "regex-lite/src/interpolate.rs",
+            "regex-lite/src/nfa.rs",
+            "regex-lite/src/pikevm.rs",
+            "regex-lite/src/pool.rs",
+            "regex-lite/src/string.rs",
+            "regex-lite/src/utf8.rs"
+          ]
+        }
+      ],
+      "excludedFiles": [
+        {
+          "file": "fuzz/fuzz_targets/ast_fuzz_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/ast_fuzz_match_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/ast_fuzz_regex.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/ast_roundtrip.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_automata_deserialize_dense_dfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_automata_deserialize_sparse_dfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_lite_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/fuzz_regex_match.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/src/util/unicode_data/perl_word.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/api.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/onepass/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/onepass/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/dfa/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/fuzz/dense.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/fuzz/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/fuzz/sparse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/dense/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/dense/multi_pattern_v2.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/sparse/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/gen/sparse/multi_pattern_v2.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/hybrid/api.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/hybrid/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/hybrid/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/lib.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/meta/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/meta/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/backtrack/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/backtrack/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/pikevm/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-automata/tests/nfa/thompson/pikevm/suite.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-cli/cmd/find/match/dfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-cli/cmd/find/match/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-cli/cmd/find/match/nfa.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-lite/tests/fuzz/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-lite/tests/lib.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-lite/tests/string.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/benches/bench.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/src/unicode_tables/perl_decimal.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "regex-syntax/src/unicode_tables/perl_space.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/pattern.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/fuzz/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lib.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/misc.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression_fuzz.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/replace.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/searcher.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_bytes.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_bytes_set.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_string.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/suite_string_set.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "excludedTargets": [
+        {
+          "package": "regex-automata",
+          "name": "integration",
+          "kinds": [
+            "test"
+          ],
+          "source": "regex-automata/tests/lib.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex-syntax",
+          "name": "bench",
+          "kinds": [
+            "bench"
+          ],
+          "source": "regex-syntax/benches/bench.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex",
+          "name": "integration",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/lib.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "regex-lite",
+          "name": "integration",
+          "kinds": [
+            "test"
+          ],
+          "source": "regex-lite/tests/lib.rs",
+          "reason": "target-not-in-source-profile"
+        }
+      ],
+      "excludedRegionCount": 145,
+      "missingModules": [
+        {
+          "file": "regex-cli/cmd/find/mod.rs",
+          "module": "r#match",
+          "reason": "module-source-not-captured"
+        }
+      ],
+      "metadata": [
+        {
+          "file": "Cargo.toml",
+          "sha256": "9d6c1e1e5cefd8577f2f783341b268f95d9dad922e3fd62f5606a304ab1d8a9b"
+        },
+        {
+          "file": "fuzz/Cargo.toml",
+          "sha256": "16e367950a3fed1663a4e88055a1452987b76267d5c0c2914f724a911ebe8c96"
+        },
+        {
+          "file": "regex-automata/Cargo.toml",
+          "sha256": "881668131b8a6dca9f34fe30dcf263d4b26bc74f48c4df68598b0de54468ea3b"
+        },
+        {
+          "file": "regex-capi/Cargo.toml",
+          "sha256": "dec7a739a7c3de6d7bdd7fa2a1f9742247c36eb0e307e7542f2f31142ed6dc44"
+        },
+        {
+          "file": "regex-cli/Cargo.toml",
+          "sha256": "eb751d15ae456c8947c7422904d3d36fa09f4141ba3b4988b47d511ff0e6a62e"
+        },
+        {
+          "file": "regex-lite/Cargo.toml",
+          "sha256": "5a31cc29c488d0bf0a43acdc19f3482d2114e2186fcfe9464ca43d45daf27330"
+        },
+        {
+          "file": "regex-syntax/Cargo.toml",
+          "sha256": "4c18da01da8ea5c747cb548eee8c34f935510be514b62869ff046f53aca37583"
+        },
+        {
+          "file": "regex-test/Cargo.toml",
+          "sha256": "0e1ba1292e2a9e3525b02b15aa2ab442f37e27d54414018cf887afdb68582d14"
+        }
+      ]
+    },
+    "serde-json-base": {
+      "files": 17,
+      "functions": 579,
+      "calls": 1907,
+      "parseErrors": [],
+      "macroRecords": 279,
+      "conditionalDefinitions": 2,
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "crates": [
+        {
+          "id": "Cargo.toml#lib:serde_json",
+          "package": "serde_json",
+          "name": "serde_json",
+          "root": "src/lib.rs",
+          "edition": "2018",
+          "deps": {},
+          "features": [
+            "default",
+            "std"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "src/lib.rs",
+            "src/macros.rs",
+            "src/de.rs",
+            "src/error.rs",
+            "src/map.rs",
+            "src/ser.rs",
+            "src/value/mod.rs",
+            "src/value/de.rs",
+            "src/value/from.rs",
+            "src/value/index.rs",
+            "src/value/partial_eq.rs",
+            "src/value/ser.rs",
+            "src/features_check/mod.rs",
+            "src/io/mod.rs",
+            "src/iter.rs",
+            "src/number.rs",
+            "src/read.rs"
+          ]
+        }
+      ],
+      "excludedFiles": [
+        {
+          "file": "build.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/from_slice.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/features_check/error.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/io/core.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bhcomp.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bignum.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached_float80.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/digit.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/errors.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers32.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers64.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/shift.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/small_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/raw.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/compiletest.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crate/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/debug.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/map.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue1004.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue520.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue795.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue845.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue953.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/stream.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_value.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/not_found.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_expr.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_key.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_array_element.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_map_entry.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "excludedTargets": [
+        {
+          "package": "serde_json",
+          "name": "compiletest",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/compiletest.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "debug",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/debug.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "lexical",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/lexical.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "map",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/map.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "regression",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/regression.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "stream",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/stream.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "test",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "build-script-build",
+          "kinds": [
+            "custom-build"
+          ],
+          "source": "build.rs",
+          "reason": "target-not-in-source-profile"
+        }
+      ],
+      "excludedRegionCount": 79,
+      "missingModules": [],
+      "metadata": [
+        {
+          "file": "Cargo.toml",
+          "sha256": "bcbaef150dabb3d47d5fc599a800238bf015bd8adbb713f3a61622ab9d082ab9"
+        },
+        {
+          "file": "fuzz/Cargo.toml",
+          "sha256": "c208f676fb17d42bdb143880d17edd2ea4ac87770c60d64db5cc885e20b789ca"
+        },
+        {
+          "file": "tests/crate/Cargo.toml",
+          "sha256": "4c6ff05398abdbe7f62d93831f0eec5b39d4943e2a91de7832f4156995b2f5c4"
+        }
+      ]
+    },
+    "serde-json-base-float": {
+      "files": 36,
+      "functions": 698,
+      "calls": 2327,
+      "parseErrors": [],
+      "macroRecords": 323,
+      "conditionalDefinitions": 4,
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "crates": [
+        {
+          "id": "Cargo.toml#lib:serde_json",
+          "package": "serde_json",
+          "name": "serde_json",
+          "root": "src/lib.rs",
+          "edition": "2018",
+          "deps": {},
+          "features": [
+            "default",
+            "float_roundtrip",
+            "std"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "src/lib.rs",
+            "src/macros.rs",
+            "src/de.rs",
+            "src/error.rs",
+            "src/map.rs",
+            "src/ser.rs",
+            "src/value/mod.rs",
+            "src/value/de.rs",
+            "src/value/from.rs",
+            "src/value/index.rs",
+            "src/value/partial_eq.rs",
+            "src/value/ser.rs",
+            "src/features_check/mod.rs",
+            "src/io/mod.rs",
+            "src/iter.rs",
+            "src/lexical/mod.rs",
+            "src/lexical/algorithm.rs",
+            "src/lexical/bhcomp.rs",
+            "src/lexical/bignum.rs",
+            "src/lexical/cached.rs",
+            "src/lexical/cached_float80.rs",
+            "src/lexical/digit.rs",
+            "src/lexical/errors.rs",
+            "src/lexical/exponent.rs",
+            "src/lexical/float.rs",
+            "src/lexical/large_powers.rs",
+            "src/lexical/math.rs",
+            "src/lexical/num.rs",
+            "src/lexical/parse.rs",
+            "src/lexical/rounding.rs",
+            "src/lexical/shift.rs",
+            "src/lexical/small_powers.rs",
+            "src/lexical/large_powers32.rs",
+            "src/lexical/large_powers64.rs",
+            "src/number.rs",
+            "src/read.rs"
+          ]
+        }
+      ],
+      "excludedFiles": [
+        {
+          "file": "build.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/from_slice.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/features_check/error.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/io/core.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/raw.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/compiletest.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crate/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/debug.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/map.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue1004.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue520.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue795.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue845.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue953.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/stream.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_value.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/not_found.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_expr.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_key.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_array_element.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_map_entry.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "excludedTargets": [
+        {
+          "package": "serde_json",
+          "name": "compiletest",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/compiletest.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "debug",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/debug.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "lexical",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/lexical.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "map",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/map.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "regression",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/regression.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "stream",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/stream.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "test",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "build-script-build",
+          "kinds": [
+            "custom-build"
+          ],
+          "source": "build.rs",
+          "reason": "target-not-in-source-profile"
+        }
+      ],
+      "excludedRegionCount": 77,
+      "missingModules": [],
+      "metadata": [
+        {
+          "file": "Cargo.toml",
+          "sha256": "bcbaef150dabb3d47d5fc599a800238bf015bd8adbb713f3a61622ab9d082ab9"
+        },
+        {
+          "file": "fuzz/Cargo.toml",
+          "sha256": "c208f676fb17d42bdb143880d17edd2ea4ac87770c60d64db5cc885e20b789ca"
+        },
+        {
+          "file": "tests/crate/Cargo.toml",
+          "sha256": "4c6ff05398abdbe7f62d93831f0eec5b39d4943e2a91de7832f4156995b2f5c4"
+        }
+      ]
+    },
+    "serde-json": {
+      "files": 16,
+      "functions": 612,
+      "calls": 2069,
+      "parseErrors": [],
+      "macroRecords": 310,
+      "conditionalDefinitions": 0,
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "crates": [
+        {
+          "id": "Cargo.toml#lib:serde_json",
+          "package": "serde_json",
+          "name": "serde_json",
+          "root": "src/lib.rs",
+          "edition": "2021",
+          "deps": {},
+          "features": [
+            "default",
+            "std"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "src/lib.rs",
+            "src/macros.rs",
+            "src/de.rs",
+            "src/error.rs",
+            "src/map.rs",
+            "src/ser.rs",
+            "src/value/mod.rs",
+            "src/value/de.rs",
+            "src/value/from.rs",
+            "src/value/index.rs",
+            "src/value/partial_eq.rs",
+            "src/value/ser.rs",
+            "src/io/mod.rs",
+            "src/iter.rs",
+            "src/number.rs",
+            "src/read.rs"
+          ]
+        }
+      ],
+      "excludedFiles": [
+        {
+          "file": "build.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/from_slice.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/io/core.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bhcomp.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/bignum.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/cached_float80.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/digit.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/errors.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers32.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/large_powers64.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/shift.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/lexical/small_powers.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/raw.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/compiletest.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crate/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/debug.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/map.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue1004.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue520.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue795.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue845.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue953.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/stream.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_value.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/not_found.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_expr.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_key.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_array_element.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_map_entry.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "excludedTargets": [
+        {
+          "package": "serde_json",
+          "name": "compiletest",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/compiletest.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "debug",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/debug.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "lexical",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/lexical.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "map",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/map.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "regression",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/regression.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "stream",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/stream.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "test",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "build-script-build",
+          "kinds": [
+            "custom-build"
+          ],
+          "source": "build.rs",
+          "reason": "target-not-in-source-profile"
+        }
+      ],
+      "excludedRegionCount": 92,
+      "missingModules": [],
+      "metadata": [
+        {
+          "file": "Cargo.toml",
+          "sha256": "d538a699a1c5414c1c7c4342f2dcec1be4c85f54e4dc1fcb50f1ca4c389fb97b"
+        },
+        {
+          "file": "fuzz/Cargo.toml",
+          "sha256": "c208f676fb17d42bdb143880d17edd2ea4ac87770c60d64db5cc885e20b789ca"
+        },
+        {
+          "file": "tests/crate/Cargo.toml",
+          "sha256": "fcdeb95b267e69082338e03b85d76cb68aebe733f818975f528539dd172bc110"
+        }
+      ]
+    },
+    "serde-json-float": {
+      "files": 35,
+      "functions": 729,
+      "calls": 2484,
+      "parseErrors": [],
+      "macroRecords": 354,
+      "conditionalDefinitions": 2,
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "crates": [
+        {
+          "id": "Cargo.toml#lib:serde_json",
+          "package": "serde_json",
+          "name": "serde_json",
+          "root": "src/lib.rs",
+          "edition": "2021",
+          "deps": {},
+          "features": [
+            "default",
+            "float_roundtrip",
+            "std"
+          ],
+          "targetKinds": [
+            "lib"
+          ],
+          "files": [
+            "src/lib.rs",
+            "src/macros.rs",
+            "src/de.rs",
+            "src/error.rs",
+            "src/map.rs",
+            "src/ser.rs",
+            "src/value/mod.rs",
+            "src/value/de.rs",
+            "src/value/from.rs",
+            "src/value/index.rs",
+            "src/value/partial_eq.rs",
+            "src/value/ser.rs",
+            "src/io/mod.rs",
+            "src/iter.rs",
+            "src/lexical/mod.rs",
+            "src/lexical/algorithm.rs",
+            "src/lexical/bhcomp.rs",
+            "src/lexical/bignum.rs",
+            "src/lexical/cached.rs",
+            "src/lexical/cached_float80.rs",
+            "src/lexical/digit.rs",
+            "src/lexical/errors.rs",
+            "src/lexical/exponent.rs",
+            "src/lexical/float.rs",
+            "src/lexical/large_powers.rs",
+            "src/lexical/math.rs",
+            "src/lexical/num.rs",
+            "src/lexical/parse.rs",
+            "src/lexical/rounding.rs",
+            "src/lexical/shift.rs",
+            "src/lexical/small_powers.rs",
+            "src/lexical/large_powers32.rs",
+            "src/lexical/large_powers64.rs",
+            "src/number.rs",
+            "src/read.rs"
+          ]
+        }
+      ],
+      "excludedFiles": [
+        {
+          "file": "build.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "fuzz/fuzz_targets/from_slice.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/io/core.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "src/raw.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/compiletest.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/crate/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/debug.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/algorithm.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/exponent.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/float.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/math.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/num.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/parse.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/lexical/rounding.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/macros/mod.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/map.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue1004.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue520.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue795.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue845.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/regression/issue953.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/stream.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/test.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/missing_value.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/not_found.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_expr.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/parse_key.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_array_element.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_after_map_entry.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_colon.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        },
+        {
+          "file": "tests/ui/unexpected_comma.rs",
+          "reason": "not-in-selected-crate-module-tree"
+        }
+      ],
+      "excludedTargets": [
+        {
+          "package": "serde_json",
+          "name": "compiletest",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/compiletest.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "debug",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/debug.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "lexical",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/lexical.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "map",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/map.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "regression",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/regression.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "stream",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/stream.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "test",
+          "kinds": [
+            "test"
+          ],
+          "source": "tests/test.rs",
+          "reason": "target-not-in-source-profile"
+        },
+        {
+          "package": "serde_json",
+          "name": "build-script-build",
+          "kinds": [
+            "custom-build"
+          ],
+          "source": "build.rs",
+          "reason": "target-not-in-source-profile"
+        }
+      ],
+      "excludedRegionCount": 90,
+      "missingModules": [],
+      "metadata": [
+        {
+          "file": "Cargo.toml",
+          "sha256": "d538a699a1c5414c1c7c4342f2dcec1be4c85f54e4dc1fcb50f1ca4c389fb97b"
+        },
+        {
+          "file": "fuzz/Cargo.toml",
+          "sha256": "c208f676fb17d42bdb143880d17edd2ea4ac87770c60d64db5cc885e20b789ca"
+        },
+        {
+          "file": "tests/crate/Cargo.toml",
+          "sha256": "fcdeb95b267e69082338e03b85d76cb68aebe733f818975f528539dd172bc110"
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Finite versioned observations, not unique sites or general precision.",
+    "serde_json reserved from initial tuning; source previously inspected to freeze expectations.",
+    "Use/use-as observations were supplemental and exposed during implementation.",
+    "Partial paired profiles do not prove equivalent Cargo builds or complete references."
+  ]
+}

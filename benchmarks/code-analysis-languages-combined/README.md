@@ -2,7 +2,7 @@
 
 Local integration candidate based on TS #1261 `cbc557b7b616dfc1dde2a6b2a7e04af32c9b5d54`, itself above JS #1260 in native stack #1262. It composes preserved Rust #1258 (including Go #1256 and frozen #1255), independent Java #1259 and the existing Labs CI baseline repair #1242. Python #1252 and all original contributed ancestors remain. Exact ancestry assertions and source head are in `evidence/parity.json`.
 
-These are local Git history-composition merges, not GitHub PR merges. Original commits/authors and separately owned PRs are retained; do not later merge both a combined candidate and its original slices without reconciling overlap. No approval, formal merge, release or live installation. The new integration layer is not yet published as a Draft or remotely tested at this checkpoint.
+These are local Git history-composition merges, not GitHub PR merges. Original commits/authors and separately owned PRs are retained; do not later merge both a combined candidate and its original slices without reconciling overlap. No approval, formal merge, release or live installation. The integration layer is prepared as a dependent Draft; its PR and team Wiki record actual publication and final-head remote checks separately.
 
 ## What changed during composition
 
@@ -27,7 +27,7 @@ Original source answers and version pins remain in their owning benchmark direct
 
 **Do not sum these as a general precision/recall metric.** Their denominators, source scopes and exposure differ. The earlier Java and JS/TS independent compiler audits remain supplemental at their recorded heads; they are not re-run or relabeled as new-head compilation evidence here.
 
-All six normal source CLI recipes and their extracted-ZIP counterparts passed their original graders. **17 raw-facts captures are byte-identical;20 saved/paired questions agree after only output/install paths are normalized.** The recorded exits, configuration and profile limitations are preserved in each language's source/ZIP report. `--fail-on never` check exits do not mean no findings. JS/Rust partial paired outputs remain partial/nonzero.
+All six normal source CLI recipes and their extracted-ZIP counterparts passed their original graders. **17 raw-facts captures are byte-identical;20 saved/paired questions agree after only output/install paths are normalized.** After the fixture correction, all six source/ZIP recipes were rerun at b2693a221; see final-parity.json and *-final-source/zip.json. Earlier receipts remain historical evidence. The recorded exits, configuration and profile limitations are preserved in each language's source/ZIP report. `--fail-on never` check exits do not mean no findings. JS/Rust partial paired outputs remain partial/nonzero.
 
 Reuse the original replay scripts with the candidate's `archify/bin/archify.mjs`:
 
@@ -52,10 +52,12 @@ The verifier expects both canonical builds `/runs/combined-package-one.zip` and 
 
 ## Separate validation states
 
-- Local Node26 full module373tests:372pass/1existing installed-config assertion/0skip. Earlier exact #1252 reproduces the same local assertion. A separate official Node22.23.3 run also reports372pass/1samefailure/0skip, so Node26 alone does not explain it. The local test compares a ts.sys.readFile filename against the uncanonicalized temporary-root path; macOS temporary-directory canonicalization is a concrete next hypothesis to verify, not an established analyzer defect.
-- Packaged call/shared-question/paired/native/Java/Python selection80/80, no skips. Core smoke19/19. Generated/identity/golden checks passed. README14pass/1Windows-onlyskip; DSH docs7/7.
-- Two canonical Node22.23.3/zlib1.3.1-e00f703 builds identical.168trackedmodulefilesmatch. ZIPsha256 `e1eda9b7201f984f9a97eac0d0502f7f19d09eeffa0a3bef8a4279bbd09c77b6`.
-- Remote CI: not run for this unpublished integration head. Original TS #1261 CI passed353/353analysis, but failed overall on the README baseline; this candidate's local proof pass cannot retroactively make that run green.
-- Labs/approval/merge/release/installation: none. Next publish the concrete cumulative layer as an English Draft, verify actual native stack membership and monitor final-head CI. Continue source-known misses and wrong-target investigations afterward.
+- Final source module **373/373pass,0fail,0skip** on both Node26.12 and officialNode22.23.3. Earlier372pass/1failure logs are preserved, not relabeled. A controlled probe proves the macOS test mutation never fired when /var and /private/var spellings differed. Canonicalizing that test fixture root makes the mutation run and preserves the expected extract/source-changed assertion. No analyzer/runtime change or assertion relaxation.
+- Final extracted ZIP call/question/paired/native/Java/Python/configuration selection **91/91pass,0skip**. Attempting all373tests in the Git-free ZIP yields372pass/1failure: extract-self.test.mjs43 explicitly requires the self-bootstrap repository's Git baseRevision. The archive intentionally lacks Git metadata; normal Git/non-Git analysis semantics remain unchanged. This full-package test limitation is separate from CLI parity and is not hidden by the focused pass.
+- Reused unchanged local core19/19, generated/identity/golden checks, README14pass/1Windows-onlyskip and DSHdocs7/7 at15c9cf5e3; the only later archify source edit is the test-fixture path correction. Remote final-head CI supplies broader validation separately.
+- Two final canonicalNode22.23.3/zlib1.3.1-e00f703builds identical.168trackedmodulefilesmatch. ZIPsha256 `aa74920538583e62d8494ba9244efd031b192b45899f685009547e5a69018f89`. All six final source/ZIP graders replayed,17captures/20questions parity; partial paired outputs keep nonzero exits. Earlier e1eda9... package receipt belongs to its earlier head.
+- Remote CI is recorded in the owning PR and team Wiki. OriginalTS#1261 passed353/353analysis but failed overall on the inherited README baseline; this candidate includes the separately preserved#1242repair. A candidate pass cannot retroactively change that run.
+- Labs/approval/merge/release/installation: none. Maintain original PR ownership and reconciliation of combined/original scopes. Continue real misses, wrong targets and interrupted investigations after composition validation.
+
 
 Scoped review traces shared schema → semantic validators → saved questions → paired references. Existing model/freshness/exclusion tests and six real replays cover composition; no duplicate resolver or test-only implementation was introduced. The five original Rust authored cfg controls contain inherited blank lines at EOF; this composition does not rewrite their source or attribution as incidental cleanup.
