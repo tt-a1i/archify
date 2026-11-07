@@ -1,0 +1,39 @@
+# Go and Rust source-first baseline
+
+Work in progress, 7 November 2026. No Go/Rust capability is claimed yet.
+
+## Baseline and ownership
+
+Shared Labs is `bf0a29e7664f52973d06a8e6a608df2db1ecbd39`; candidate parent is Draft #1252 at `93378351dc97768fd7e0882a50f32ecc7a34e2a6`. The latter retains #1250, original A1/A2 contributor commits and earlier Java/Python/JS/TS work as ancestors. Original PRs and authors remain unchanged. #1252 is unmerged; remote CI has a failed full-regression shard and aggregate Node 22 check, despite passing package/freshness/platform checks. Do not describe it as green.
+
+Public open/all-state PR search and team Wiki refresh found no Go/Rust implementation owner in the inspected records. A1/A2, baseline accept/revoke (#1224), Atlas (#1203) and separate CI repair (#1242) retain their scopes. This inventory does not cover unpublished member work.
+
+## Source answers frozen before analyzer execution
+
+`manifest.json` pins four repositories, eight commits, source hashes, exact matching lines and source excerpts. Source inspection preceded this freeze; no analyzer or implementation had run. Absence is recorded explicitly when a call does not exist in an older version. The regex workspace layout changed substantially between the selected versions; newer alias cases are head-only checks, not paired successes.
+
+- **Go design: Cobra**, `41fd44e1` → `e392f320` (upstream #1104). `doc/man_examples_test.go` in the distinct `doc_test` package imports `github.com/spf13/cobra/doc`; `ExampleGenMan` directly calls `doc.GenMan`. The definition in `doc/man_docs.go` changes to forward `cmd.DisableAutoGenTag` into `fillHeader`. Known selected callers include the example and `GenManTreeFromOpts`; their existence does not prove the complete caller set. `w.Write` is interface dispatch and must not be assigned to an arbitrary implementation.
+- **Go reserved review: Chi**, v5.1.0 → v5.2.1. `middleware/strip.go` imports the root module and calls `chi.RouteContext`. `_examples/versions/main.go` uses `v1`/`v2`/`v3` import aliases for distinct presenter packages; `v1.NewArticleResponse` must navigate only to presenter/v1/article.go. The imported package's declared name is `v1`. `next.ServeHTTP` remains interface dispatch. This pair also changes `AllowContentType` across files; its direct test caller is within package middleware. No claim that RouteContext itself changed.
+- **Rust design: regex**, 1.7.0 → 1.11.1. `regex-syntax/src/lib.rs` calls `unicode::is_word_character`, whose implementation changes in `unicode.rs`. The newer root crate wrapper calls `regex_syntax::escape`, crossing a real Cargo workspace/path-dependency boundary. `regex-automata/src/dfa/special.rs` has a function-local `use crate::util::wire::write_state_id as write` followed by `write::<E>` calls; the target is `util/wire.rs`. `util/look.rs` has plain `use regex_syntax::try_is_word_character`. These are separate head-only tests. Macro calls and trait dispatch must retain reasons for unknowns; source syntax alone does not prove macro expansions or runtime targets.
+- **Rust reserved review: serde_json**, 1.0.100 → 1.0.139. `src/lexical/parse.rs` imports `super::algorithm::*` and calls `fast_path`; its implementation in `algorithm.rs` changes. This module is gated by `float_roundtrip` in lib.rs; a default-feature build does not contain the same code. `F::exponent_limit` is trait/generic dispatch, not an arbitrary concrete implementation. Wildcard imports may initially stay unknown.
+
+The reserved samples were partly inspected to freeze answers. They are held out from initial rule design and tuning, not a blind independent accuracy test. Do not change their score expectations after observing candidate output; record new questions separately.
+
+## Build and coverage policy to validate
+
+Go: record module identity, GOOS/GOARCH, cgo/build tags and test inclusion. Distinguish external test packages, nested modules and Go's ignored example directories. Parsing all files is not equivalent to one valid build. Ordinary and alias imports need independently checked target coordinates; receiver/interface dispatch remains unknown until evidence supports more.
+
+Rust: record Cargo package/crate roots, edition, path dependencies, workspace membership, features, cfg and test scope. Source-only facts are conditional candidates where build conditions are unselected. A real workspace dependency does not by itself prove all feature/cfg combinations. `macro_rules!`, procedural macros, build-script output and trait dispatch are not ordinary direct calls.
+
+Installed tools observed: Go 1.27.2; rustc/cargo 1.89.0. rust-analyzer command failed because the official stable toolchain has no such binary installed. No tool was installed for this baseline. Backend choice and fresh-user installation costs remain to be measured.
+
+## Acceptance queue
+
+1. Run the unchanged normal CLI on the frozen samples, retaining diagnostics and exit codes.
+2. Compare a bounded Go standard-library parser/type API prototype with the real source answers and configuration cost; implement the smallest complete Go investigation.
+3. Compare Rust compiler/rust-analyzer/parser approaches on the frozen crate/workspace questions before implementation.
+4. For each language record correct additions, wrong targets, missing targets and reasonable unknowns; verify exact locations and reverse caller references.
+5. Replay the same commands from source and extracted canonical ZIP. Keep local tests, remote CI, package parity and actual merge status separate.
+6. Publish reviewable English Draft slices and Wiki capabilities as Labs / Draft-validated / unsupported. No approval, merge, release or live installation.
+
+Every handoff must explain the source path the developer could not follow before, the next evidenced step after the change, and the remaining unknown step. After both first investigations, prioritize demonstrated wrong targets and missing references across all supported languages.
