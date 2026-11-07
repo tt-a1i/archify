@@ -1,0 +1,597 @@
+[
+  {
+    "project": "jinja",
+    "call": {
+      "file": "tests/test_api.py",
+      "line": 100,
+      "column": 16,
+      "endLine": 100,
+      "endColumn": 37,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/jinja2/utils.py",
+        "name": "is_undefined",
+        "line": 104,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "jinja",
+    "call": {
+      "file": "tests/test_api.py",
+      "line": 295,
+      "column": 29,
+      "endLine": 295,
+      "endColumn": 66,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/jinja2/runtime.py",
+        "name": "make_logging_undefined",
+        "line": 912,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/celery/src/task_app/__init__.py",
+      "line": 21,
+      "column": 16,
+      "endLine": 21,
+      "endColumn": 45,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/javascript/js_example/views.py",
+      "line": 11,
+      "column": 12,
+      "endLine": 11,
+      "endColumn": 48,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/javascript/js_example/views.py",
+      "line": 18,
+      "column": 12,
+      "endLine": 18,
+      "endColumn": 33,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/json/__init__.py",
+        "name": "jsonify",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 25,
+      "column": 20,
+      "endLine": 25,
+      "endColumn": 51,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "redirect",
+        "line": 249,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 25,
+      "column": 29,
+      "endLine": 25,
+      "endColumn": 50,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 77,
+      "column": 24,
+      "endLine": 77,
+      "endColumn": 55,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "redirect",
+        "line": 249,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 77,
+      "column": 33,
+      "endLine": 77,
+      "endColumn": 54,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 79,
+      "column": 9,
+      "endLine": 79,
+      "endColumn": 21,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "flash",
+        "line": 318,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 81,
+      "column": 12,
+      "endLine": 81,
+      "endColumn": 49,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 105,
+      "column": 20,
+      "endLine": 105,
+      "endColumn": 46,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "redirect",
+        "line": 249,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 105,
+      "column": 29,
+      "endLine": 105,
+      "endColumn": 45,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 107,
+      "column": 9,
+      "endLine": 107,
+      "endColumn": 21,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "flash",
+        "line": 318,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 109,
+      "column": 12,
+      "endLine": 109,
+      "endColumn": 46,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 116,
+      "column": 12,
+      "endLine": 116,
+      "endColumn": 38,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "redirect",
+        "line": 249,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/auth.py",
+      "line": 116,
+      "column": 21,
+      "endLine": 116,
+      "endColumn": 37,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 25,
+      "column": 12,
+      "endLine": 25,
+      "endColumn": 59,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 73,
+      "column": 13,
+      "endLine": 73,
+      "endColumn": 25,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "flash",
+        "line": 318,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 81,
+      "column": 20,
+      "endLine": 81,
+      "endColumn": 51,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "redirect",
+        "line": 249,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 81,
+      "column": 29,
+      "endLine": 81,
+      "endColumn": 50,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 83,
+      "column": 12,
+      "endLine": 83,
+      "endColumn": 47,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 101,
+      "column": 13,
+      "endLine": 101,
+      "endColumn": 25,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "flash",
+        "line": 318,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 108,
+      "column": 20,
+      "endLine": 108,
+      "endColumn": 51,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "redirect",
+        "line": 249,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 108,
+      "column": 29,
+      "endLine": 108,
+      "endColumn": 50,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 110,
+      "column": 12,
+      "endLine": 110,
+      "endColumn": 58,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 125,
+      "column": 12,
+      "endLine": 125,
+      "endColumn": 43,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "redirect",
+        "line": 249,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "examples/tutorial/flaskr/blog.py",
+      "line": 125,
+      "column": 21,
+      "endLine": 125,
+      "endColumn": 42,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "tests/test_apps/blueprintapp/apps/admin/__init__.py",
+      "line": 15,
+      "column": 12,
+      "endLine": 15,
+      "endColumn": 47,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "tests/test_apps/blueprintapp/apps/admin/__init__.py",
+      "line": 20,
+      "column": 12,
+      "endLine": 20,
+      "endColumn": 49,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "tests/test_apps/blueprintapp/apps/frontend/__init__.py",
+      "line": 9,
+      "column": 12,
+      "endLine": 9,
+      "endColumn": 50,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "tests/test_apps/blueprintapp/apps/frontend/__init__.py",
+      "line": 14,
+      "column": 12,
+      "endLine": 14,
+      "endColumn": 52,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "render_template",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "tests/test_converters.py",
+      "line": 26,
+      "column": 16,
+      "endLine": 26,
+      "endColumn": 48,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/helpers.py",
+        "name": "url_for",
+        "line": 195,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "tests/type_check/typing_route.py",
+      "line": 28,
+      "column": 12,
+      "endLine": 28,
+      "endColumn": 36,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/json/__init__.py",
+        "name": "jsonify",
+        "line": 138,
+        "column": 1
+      }
+    }
+  },
+  {
+    "project": "flask",
+    "call": {
+      "file": "tests/type_check/typing_route.py",
+      "line": 93,
+      "column": 12,
+      "endLine": 93,
+      "endColumn": 55,
+      "resolution": "imported-function",
+      "target": {
+        "file": "src/flask/templating.py",
+        "name": "stream_template",
+        "line": 188,
+        "column": 1
+      }
+    }
+  }
+]

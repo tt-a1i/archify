@@ -33,7 +33,7 @@ export function semanticErrors(name, data) {
       if (fn.endLine < fn.line) add(`/functions/${i}/endLine`, 'must not precede line');
       if (fn.deepestLine < fn.line || fn.deepestLine > fn.endLine) add(`/functions/${i}/deepestLine`, 'must lie inside the function');
     });
-    const pythonCalls = data.repository.language === 'py' && data.callModel === 'python-lexical-v1';
+    const pythonCalls = data.repository.language === 'py' && ['python-lexical-v1', 'python-lexical-v2'].includes(data.callModel);
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2', 'java-static-lexical-v3'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2', 'go-source-direct-v3'].includes(data.callModel);
     if (goCalls && data.callModel === 'go-source-direct-v3' && !data.languageScope?.standardLibrary) add('/languageScope/standardLibrary', 'requires recorded Go v3 SDK scope');
@@ -64,7 +64,11 @@ export function semanticErrors(name, data) {
       const lines = sourceLines.get(file);
       return lines && point.line <= lines.length && point.column <= lines[point.line - 1].length + (exclusive ? 1 : 0);
     };
-    const staticImportPairs = new Set(data.imports.filter((edge) => edge.resolved && edge.kind === 'static' && !edge.typeOnly).map((edge) => JSON.stringify([edge.from, edge.to])));
+    const staticImports = new Map();
+    for (const edge of data.imports) if (edge.resolved && edge.kind === 'static' && !edge.typeOnly) {
+      if (!staticImports.has(edge.from)) staticImports.set(edge.from, new Set());
+      staticImports.get(edge.from).add(edge.to);
+    }
     data.calls.forEach((call, i) => {
       const at = `/calls/${i}`;
       if (!files.has(call.file)) add(`${at}/file`, 'must reference a recorded file');
@@ -76,7 +80,9 @@ export function semanticErrors(name, data) {
         const targetFile = call.target.file || call.file;
         if (call.resolution === 'java-qualified-static-method' && (!javaCalls || !['java-static-lexical-v2', 'java-static-lexical-v3'].includes(data.callModel))) add(`${at}/resolution`, 'requires the Java v2 source model');
         if (call.resolution === 'imported-function') {
-          if (targetFile === call.file || !staticImportPairs.has(JSON.stringify([call.file, targetFile]))) add(`${at}/target/file`, 'must follow a recorded static import to another captured file');
+          const direct = staticImports.get(call.file)?.has(targetFile);
+          const forwarded = pythonCalls && data.callModel === 'python-lexical-v2' && [...(staticImports.get(call.file) || [])].some(via => !brokenFiles.has(via) && staticImports.get(via)?.has(targetFile));
+          if (targetFile === call.file || (!direct && !forwarded)) add(`${at}/target/file`, 'must follow a recorded static import or supported reexport to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
         if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v2')) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');

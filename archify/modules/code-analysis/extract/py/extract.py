@@ -383,7 +383,7 @@ def main():
             record["imports"] = collect(tree)
             record["symbols"] = module_bindings(tree)
             record["functions"] = functions(tree, text)
-            record["calls"], record["definitions"] = collect_calls(tree, text)
+            record["calls"], record["definitions"], record["importBindings"] = collect_calls(tree, text)
         except (SyntaxError, ValueError, UnicodeError, LookupError) as error:
             record["error"] = "%s (line %s)" % (getattr(error, "msg", str(error)), getattr(error, "lineno", None))
         out.append(record)

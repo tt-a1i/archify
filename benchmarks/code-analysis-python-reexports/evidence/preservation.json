@@ -1,0 +1,18 @@
+{
+  "jinja": {
+    "callRanges": 6156,
+    "functions": 1584,
+    "importsUnchanged": true,
+    "previousTargetsUnchanged": true,
+    "newTargets": 2,
+    "parseErrors": []
+  },
+  "flask": {
+    "callRanges": 3919,
+    "functions": 1420,
+    "importsUnchanged": true,
+    "previousTargetsUnchanged": true,
+    "newTargets": 33,
+    "parseErrors": []
+  }
+}

@@ -241,4 +241,5 @@ def collect_calls(tree, text):
             else:
                 record['_import'] = candidate
         records.append(record)
-    return sorted(records, key=lambda x: (x['line'], x['column'], x['endLine'], x['endColumn'])), definitions
+    imports = {name: value for name, value in candidates.items() if value['kind'] == 'import'}
+    return sorted(records, key=lambda x: (x['line'], x['column'], x['endLine'], x['endColumn'])), definitions, imports

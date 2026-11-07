@@ -392,3 +392,20 @@ test('paired mode rejects unsupported suffixes and invalid entry paths before ca
     assert.equal(JSON.parse(r.stdout).diagnostics[0].code, 'task/entry-invalid', entry);
   }
 });
+
+test('Python changed implementation retrieves a caller through one explicit API reexport', t => {
+  const api = 'from impl import chosen as exposed\n';
+  const consumer = 'from api import exposed as invoke\ndef ask():\n    invoke()\n';
+  const args = setup(t, { 'impl.py': 'def chosen(): return 1\n', 'api/__init__.py': api, 'consumer.py': consumer },
+    { 'impl.py': 'def chosen(): return 2\n', 'api/__init__.py': api, 'consumer.py': consumer });
+  const brief = captureChangeQuestion({ ...args, entry: 'impl.py' });
+  assert.equal(brief.changedDefinitions.total, 1);
+  for (const side of ['base', 'head']) {
+    const refs = brief.changedDefinitions.items[0][side].knownReferences;
+    assert.equal(refs.coverage, 'available');
+    assert.equal(refs.total, 1);
+    assert.equal(refs.items[0].navigation.status, 'valid');
+    assert.equal(refs.items[0].navigation.location.file, 'consumer.py');
+    assert.equal(refs.items[0].fact.line, 3);
+  }
+});
