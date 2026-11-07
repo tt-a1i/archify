@@ -1,0 +1,24 @@
+{
+  "revision": "98a0092952dd4d8443229c3a335ec592d9c40c9b",
+  "exposure": "Reserved after initial candidate implementation and authored tests, before first grpc candidate capture for concrete methods. grpc repository was previously used for the free-function alias study, not blind. No tuning from this slice.",
+  "hashes": {
+    "go.mod": "c3837f5fdc5252cc923daa1e3b90f1bdf1a7ac73376a01af88c0267586e82931",
+    "internal/resolver/config_selector.go": "739ec8400a4ccf32a6e73ffbc6b2c77f0f9baae2c24c519a2e6258fccd1faf89",
+    "resolver/resolver.go": "8e13df418b60590aba68f540227523fdaf12097baf2db6446c2c2123c4cdd8df",
+    "attributes/attributes.go": "05aa57a5035c15ecceb6d09cf3564179205188688ff7af92fddd3742b64e1178"
+  },
+  "call": {
+    "file": "internal/resolver/config_selector.go",
+    "line": 142,
+    "needle": "state.Attributes.Value(csKey)"
+  },
+  "binding": "state is resolver.State; its Attributes field is explicitly *attributes.Attributes, not an interface. Both packages are in google.golang.org/grpc root module.",
+  "expected": {
+    "file": "attributes/attributes.go",
+    "name": "Value",
+    "line": 66,
+    "column": 1
+  },
+  "historicalCorrection": "The earlier Go v1 free-function study counted this method as a scoped reasonable unknown. Under v2 it has an independently source-known concrete target and should be scored as correct/missed/wrong, not kept unknown just to preserve old score.",
+  "limits": "Value returns an arbitrary stored value, but that does not make the method body itself dynamic; the ConfigSelector type assertion does not prove a selected runtime ConfigSelector implementation."
+}
