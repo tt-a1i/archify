@@ -4,7 +4,7 @@ import ts from 'typescript';
 // v2 adds direct default function declarations to v1's relative named imports.
 // Unlike adapter revisions, this identifier describes the emitted call contract.
 // v3 also binds stable same-module default references to ordinary functions.
-export const CALL_MODEL = 'js-ts-lexical-v3';
+export const CALL_MODEL = 'js-ts-lexical-v4';
 
 function point(source, node) {
   const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source));

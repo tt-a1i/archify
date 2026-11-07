@@ -1,0 +1,95 @@
+{
+  "baseline": "93378351dc97768fd7e0882a50f32ecc7a34e2a6",
+  "normalCLIExit": 0,
+  "scope": {
+    "files": 201,
+    "parseErrors": [],
+    "adapter": "typescript@5.9.3",
+    "callModel": "js-ts-lexical-v2"
+  },
+  "calls": [
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 9,
+      "column": 12,
+      "endLine": 9,
+      "endColumn": 51,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 10,
+      "column": 12,
+      "endLine": 10,
+      "endColumn": 37,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 11,
+      "column": 12,
+      "endLine": 11,
+      "endColumn": 36,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 12,
+      "column": 12,
+      "endLine": 12,
+      "endColumn": 31,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 13,
+      "column": 12,
+      "endLine": 13,
+      "endColumn": 36,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    },
+    {
+      "file": "test/utils/isPlainObject.spec.ts",
+      "line": 14,
+      "column": 12,
+      "endLine": 14,
+      "endColumn": 41,
+      "resolution": "unresolved",
+      "reason": "no-local-function-binding"
+    }
+  ],
+  "imports": [
+    {
+      "from": "test/utils/isPlainObject.spec.ts",
+      "specifier": "@internal/utils/isPlainObject",
+      "kind": "static",
+      "line": 1,
+      "resolved": true,
+      "names": [
+        "default"
+      ],
+      "to": "src/utils/isPlainObject.ts"
+    },
+    {
+      "from": "test/utils/isPlainObject.spec.ts",
+      "specifier": "vm",
+      "kind": "static",
+      "line": 2,
+      "resolved": false,
+      "names": [
+        "default"
+      ]
+    }
+  ],
+  "score": {
+    "correct": 0,
+    "wrong": 0,
+    "missedKnownSourceTargets": 6
+  },
+  "limit": "Partial TypeScript oracle has15 diagnostics (missing external types/dependencies/globals); not a successful project build/runtime alias claim. Source config and test config independently map this import to the captured function."
+}

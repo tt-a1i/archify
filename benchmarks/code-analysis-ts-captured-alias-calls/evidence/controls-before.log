@@ -1,0 +1,74 @@
+✖ captured configured aliases bind ordinary exports with independent lexical shadow checks (44.752291ms)
+✔ configured alias target omissions, declarations, type-only imports and re-export hops stay unknown (16.913167ms)
+✖ changed configured alias target recovers the known foreign caller in each snapshot (40.208083ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 1
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 362.641791
+
+✖ failing tests:
+
+test at archify/modules/code-analysis/test/imported-calls.test.mjs:240:1
+✖ captured configured aliases bind ordinary exports with independent lexical shadow checks (44.752291ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   {
+  -     column: 1,
+  -     file: 'src/target.ts',
+  -     line: 1,
+  -     name: 'helper'
+  -   },
+  -   {
+  -     column: 1,
+  -     file: 'src/target.ts',
+  -     line: 2,
+  -     name: 'named'
+  -   },
+  -   {
+  -     column: 20,
+  -     file: 'src/target.ts',
+  -     line: 3,
+  -     name: 'arrow'
+  -   }
+  - ]
+  
+      at TestContext.<anonymous> (file:///Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-ts/archify/modules/code-analysis/test/imported-calls.test.mjs:247:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ { file: 'src/target.ts', name: 'helper', line: 1, column: 1 }, { file: 'src/target.ts', name: 'named', line: 2, column: 1 }, { file: 'src/target.ts', name: 'arrow', line: 3, column: 20 } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at archify/modules/code-analysis/test/imported-calls.test.mjs:283:1
+✖ changed configured alias target recovers the known foreign caller in each snapshot (40.208083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify-ts/archify/modules/code-analysis/test/imported-calls.test.mjs:289:45)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
