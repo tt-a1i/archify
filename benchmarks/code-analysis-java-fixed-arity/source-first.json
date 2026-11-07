@@ -7,7 +7,8 @@
       "revision": "c8774fa74adbbbcd4e5f915ab6bc3aa10d877419",
       "hashes": {
         "src/main/java/org/apache/commons/lang3/StringUtils.java": "b9e7f9cd0f13d992283ba23616813df22ed366aa55b372e22034a13591022cd1",
-        "src/test/java/org/apache/commons/lang3/StringUtilsTest.java": "2cb0a1f5c25369380c6693291c93d1c380cdc3da0f7584e550e676c6acd3c513"
+        "src/test/java/org/apache/commons/lang3/StringUtilsTest.java": "2cb0a1f5c25369380c6693291c93d1c380cdc3da0f7584e550e676c6acd3c513",
+        "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java": "e0192baa68dad55d833685d99e9e3720d191dd48d321981fee365e7c4c3d5259"
       }
     },
     "slf4j": {
@@ -49,10 +50,11 @@
       },
       "target": {
         "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
-        "line": 1584,
+        "line": 1583,
         "column": 5,
         "name": "defaultString",
-        "sourceLine": "    public static String defaultString(final String str, final String nullDefault) {"
+        "sourceLine": "    @Deprecated",
+        "methodHeaderLine": 1584
       }
     },
     {
@@ -123,5 +125,45 @@
     "Same arity, inherited/instance paths, generic argument applicability and compilation remain unproved.",
     "Owned annotation extent must include Deprecated at StringUtils1583; method header is1584. Verify exact jump representation against the existing inventory rather than moving source lines."
   ],
-  "reviewSlice": "SLF4J positive calls were source-inspected for freezing but will not tune the first Commons-based arity rule; not an unseen repository."
+  "reviewSlice": "SLF4J positive calls were source-inspected for freezing but will not tune the first Commons-based arity rule; not an unseen repository.",
+  "sourceOracleCorrections": [
+    "Existing measured owned definition begins at Deprecated1583, with header1584. Jump expectation corrected to the captured declaration start before any rule change.",
+    "The initial five test calls also meet pre-arity guards: Commons StringUtilsTest inherits AbstractLangTest; SLF4J MessageFormatterTest imports static Assert.*. They must not be used to claim arity-only improvement bypasses those value/inheritance safeguards. Retain them as known misses with separate blockers."
+  ],
+  "supplementalProductionCases": [
+    {
+      "project": "commons-lang",
+      "call": {
+        "file": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java",
+        "line": 287,
+        "column": 33,
+        "needle": "StringUtils.defaultString(th.getMessage())",
+        "sourceLine": "        return clsName + \": \" + StringUtils.defaultString(th.getMessage());"
+      },
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 1553,
+        "column": 5,
+        "name": "defaultString"
+      },
+      "exposure": "Supplemental production call source read after baseline exposed independent guards, before arity rule."
+    },
+    {
+      "project": "slf4j",
+      "call": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 124,
+        "column": 16,
+        "needle": "arrayFormat(messagePattern, new Object[] { arg })",
+        "sourceLine": "        return arrayFormat(messagePattern, new Object[] { arg });"
+      },
+      "target": {
+        "file": "slf4j-api/src/main/java/org/slf4j/helpers/MessageFormatter.java",
+        "line": 154,
+        "column": 5,
+        "name": "arrayFormat"
+      },
+      "exposure": "Supplemental production call source read after baseline exposed independent guards, before arity rule."
+    }
+  ]
 }
