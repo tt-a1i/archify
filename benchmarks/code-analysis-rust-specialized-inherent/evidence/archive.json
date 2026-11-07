@@ -1,0 +1,698 @@
+{
+  "expect": "candidate",
+  "score": {
+    "correct": 10,
+    "wrong": 0,
+    "missed": 0,
+    "unknown": 4
+  },
+  "units": [
+    {
+      "profile": "default",
+      "id": "map-empty-unit",
+      "cohort": "design-former-reserved",
+      "status": "correct",
+      "call": {
+        "column": 20,
+        "endColumn": 30,
+        "endLine": 526,
+        "file": "src/map.rs",
+        "line": 526,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "default",
+      "id": "map-visitor",
+      "cohort": "design-former-reserved",
+      "status": "correct",
+      "call": {
+        "column": 34,
+        "endColumn": 44,
+        "endLine": 535,
+        "file": "src/map.rs",
+        "line": 535,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "default",
+      "id": "value-index",
+      "cohort": "reserved-cross-file",
+      "status": "correct",
+      "call": {
+        "column": 32,
+        "endColumn": 42,
+        "endLine": 98,
+        "file": "src/value/index.rs",
+        "line": 98,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "default",
+      "id": "value-newtype",
+      "cohort": "reserved-cross-file",
+      "status": "correct",
+      "call": {
+        "column": 26,
+        "endColumn": 36,
+        "endLine": 215,
+        "file": "src/value/ser.rs",
+        "line": 215,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "default",
+      "id": "value-capacity",
+      "cohort": "reserved-cross-file",
+      "status": "correct",
+      "call": {
+        "column": 18,
+        "endColumn": 54,
+        "endLine": 266,
+        "file": "src/value/ser.rs",
+        "line": 266,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 49,
+          "name": "with_capacity"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "default",
+      "id": "map-backend-alias",
+      "status": "unknown",
+      "call": {
+        "column": 18,
+        "endColumn": 32,
+        "endLine": 43,
+        "file": "src/map.rs",
+        "line": 43,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      }
+    },
+    {
+      "profile": "default",
+      "id": "generic-trait",
+      "status": "unknown",
+      "call": {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 1034,
+        "file": "src/value/mod.rs",
+        "line": 1034,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "id": "map-empty-unit",
+      "cohort": "design-former-reserved",
+      "status": "correct",
+      "call": {
+        "column": 20,
+        "endColumn": 30,
+        "endLine": 526,
+        "file": "src/map.rs",
+        "line": 526,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "arbitrary",
+      "id": "map-visitor",
+      "cohort": "design-former-reserved",
+      "status": "correct",
+      "call": {
+        "column": 34,
+        "endColumn": 44,
+        "endLine": 535,
+        "file": "src/map.rs",
+        "line": 535,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "arbitrary",
+      "id": "value-index",
+      "cohort": "reserved-cross-file",
+      "status": "correct",
+      "call": {
+        "column": 32,
+        "endColumn": 42,
+        "endLine": 98,
+        "file": "src/value/index.rs",
+        "line": 98,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "arbitrary",
+      "id": "value-newtype",
+      "cohort": "reserved-cross-file",
+      "status": "correct",
+      "call": {
+        "column": 26,
+        "endColumn": 36,
+        "endLine": 215,
+        "file": "src/value/ser.rs",
+        "line": 215,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 41,
+          "name": "new"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "arbitrary",
+      "id": "value-capacity",
+      "cohort": "reserved-cross-file",
+      "status": "correct",
+      "call": {
+        "column": 18,
+        "endColumn": 54,
+        "endLine": 266,
+        "file": "src/value/ser.rs",
+        "line": 266,
+        "resolution": "rust-specialized-inherent-source-candidate",
+        "target": {
+          "column": 5,
+          "file": "src/map.rs",
+          "line": 49,
+          "name": "with_capacity"
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "profile": "arbitrary",
+      "id": "map-backend-alias",
+      "status": "unknown",
+      "call": {
+        "column": 18,
+        "endColumn": 32,
+        "endLine": 43,
+        "file": "src/map.rs",
+        "line": 43,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      }
+    },
+    {
+      "profile": "arbitrary",
+      "id": "generic-trait",
+      "status": "unknown",
+      "call": {
+        "column": 5,
+        "endColumn": 26,
+        "endLine": 1034,
+        "file": "src/value/mod.rs",
+        "line": 1034,
+        "reason": "no-local-function-binding",
+        "resolution": "unresolved"
+      }
+    }
+  ],
+  "profiles": {
+    "default": {
+      "files": 16,
+      "calls": 2063,
+      "functions": 612,
+      "parseErrors": [],
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "model": "rust-source-direct-v3",
+      "macroControl": "unexpanded macro body remains opaque; no runtime call claimed"
+    },
+    "arbitrary": {
+      "files": 16,
+      "calls": 2257,
+      "functions": 683,
+      "parseErrors": [],
+      "build": {
+        "toolchain": "rustc 1.89.0 (29483883e 2025-08-04)",
+        "cargoVersion": "cargo 1.89.0 (c24e10642 2025-06-23)",
+        "helperHost": "aarch64-apple-darwin",
+        "targetCfg": [
+          "debug_assertions",
+          "panic=\"unwind\"",
+          "target_abi=\"\"",
+          "target_arch=\"aarch64\"",
+          "target_endian=\"little\"",
+          "target_env=\"\"",
+          "target_family=\"unix\"",
+          "target_feature=\"aes\"",
+          "target_feature=\"crc\"",
+          "target_feature=\"dit\"",
+          "target_feature=\"dotprod\"",
+          "target_feature=\"dpb\"",
+          "target_feature=\"dpb2\"",
+          "target_feature=\"fcma\"",
+          "target_feature=\"fhm\"",
+          "target_feature=\"flagm\"",
+          "target_feature=\"fp16\"",
+          "target_feature=\"frintts\"",
+          "target_feature=\"jsconv\"",
+          "target_feature=\"lor\"",
+          "target_feature=\"lse\"",
+          "target_feature=\"neon\"",
+          "target_feature=\"paca\"",
+          "target_feature=\"pacg\"",
+          "target_feature=\"pan\"",
+          "target_feature=\"pmuv3\"",
+          "target_feature=\"ras\"",
+          "target_feature=\"rcpc\"",
+          "target_feature=\"rcpc2\"",
+          "target_feature=\"rdm\"",
+          "target_feature=\"sb\"",
+          "target_feature=\"sha2\"",
+          "target_feature=\"sha3\"",
+          "target_feature=\"ssbs\"",
+          "target_feature=\"vh\"",
+          "target_has_atomic=\"128\"",
+          "target_has_atomic=\"16\"",
+          "target_has_atomic=\"32\"",
+          "target_has_atomic=\"64\"",
+          "target_has_atomic=\"8\"",
+          "target_has_atomic=\"ptr\"",
+          "target_os=\"macos\"",
+          "target_pointer_width=\"64\"",
+          "target_vendor=\"apple\"",
+          "unix"
+        ],
+        "customCfg": [],
+        "tests": false,
+        "profile": "all local workspace targets; defaults and local path feature propagation; not a Cargo build/resolve graph",
+        "buildScripts": false,
+        "procMacros": false,
+        "cargoConfig": "not-loaded"
+      },
+      "model": "rust-source-direct-v3",
+      "macroControl": "unexpanded macro body remains opaque; no runtime call claimed"
+    }
+  },
+  "commands": [
+    {
+      "label": "default-check",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "$WORK/samples/serde-json",
+        "--language",
+        "rust",
+        "--config",
+        "$WORK/rust-specialized-accepted-zip/default-config.json",
+        "--fail-on",
+        "never",
+        "--json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/default"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "default-map-empty-unit",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/default",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/map.rs",
+        "--function",
+        "map::Map < String , Value >::deserialize",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/default-map-empty-unit-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "default-map-visitor",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/default",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/map.rs",
+        "--function",
+        "map::Map < String , Value >::deserialize",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/default-map-visitor-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "default-value-index",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/default",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/value/index.rs",
+        "--function",
+        "value::index::str::index_or_insert",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/default-value-index-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "default-value-newtype",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/default",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/value/ser.rs",
+        "--function",
+        "value::ser::Serializer::serialize_newtype_variant",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/default-value-newtype-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "default-value-capacity",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/default",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/value/ser.rs",
+        "--function",
+        "value::ser::Serializer::serialize_map",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/default-value-capacity-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "arbitrary-check",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "$WORK/samples/serde-json",
+        "--language",
+        "rust",
+        "--config",
+        "$WORK/rust-specialized-accepted-zip/arbitrary-config.json",
+        "--fail-on",
+        "never",
+        "--json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/arbitrary"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "arbitrary-map-empty-unit",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/arbitrary",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/map.rs",
+        "--function",
+        "map::Map < String , Value >::deserialize",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/arbitrary-map-empty-unit-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "arbitrary-map-visitor",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/arbitrary",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/map.rs",
+        "--function",
+        "map::Map < String , Value >::deserialize",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/arbitrary-map-visitor-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "arbitrary-value-index",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/arbitrary",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/value/index.rs",
+        "--function",
+        "value::index::str::index_or_insert",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/arbitrary-value-index-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "arbitrary-value-newtype",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/arbitrary",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/value/ser.rs",
+        "--function",
+        "value::ser::Serializer::serialize_newtype_variant",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/arbitrary-value-newtype-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "arbitrary-value-capacity",
+      "command": [
+        "node",
+        "$WORK/rust-specialized-package/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/rust-specialized-accepted-zip/arbitrary",
+        "--root",
+        "$WORK/samples/serde-json",
+        "--entry",
+        "src/value/ser.rs",
+        "--function",
+        "value::ser::Serializer::serialize_map",
+        "--question",
+        "Which concrete-impl source declaration is the candidate for this constructor path?",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/rust-specialized-accepted-zip/arbitrary-value-capacity-question.json",
+        "--json"
+      ],
+      "exit": 0
+    }
+  ],
+  "limits": [
+    "Two profiles overlap:10known-target observations are5physical sites.",
+    "The older two Map sites are design inputs for this follow-up, not a blind holdout. Three cross-file sites were reserved from initial rule tuning.",
+    "Source candidates do not prove argument applicability, compilation/runtime dispatch or complete callers."
+  ]
+}

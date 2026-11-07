@@ -23,7 +23,7 @@ def at(profile,point):
 for profile,project,rust in profiles:
  config=a.out/(profile+'-config.json');config.write_text(json.dumps({'rust':rust})+'\n');run(profile+'-check',['check',a.samples_root/project,'--language','rust','--config',config,'--out',a.out/profile,'--fail-on','never','--json'])
  f=json.loads((a.out/profile/'raw-facts.json').read_text());facts[profile]=f
- assert f['callModel']=='rust-source-direct-v1' if a.expect=='baseline' else f['callModel'] in ['rust-source-direct-v2','rust-source-direct-v3']
+ assert f['callModel'] in (['rust-source-direct-v1'] if a.expect=='baseline' else ['rust-source-direct-v2','rust-source-direct-v3'])
  for case in m['cases']:
   if case['project']!=project:continue
   call=at(profile,case['call']);expected={k:case['target'][k] for k in ['file','line','column','name']};status='correct' if call.get('target')==expected else 'wrong' if call.get('target') else 'missed'
