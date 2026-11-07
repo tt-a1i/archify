@@ -51,7 +51,10 @@ For the conditional-null boundary in exact in-root JavaScript package imports/se
 `python-lexical-v1` inventories every `ast.Call` in parse-valid captured Python
 files. It conservatively binds Name calls to unique ordinary undecorated
 module-level definitions, or explicit static from-import aliases reaching such
-a direct captured definition. Binding events are collected before lookup, so
+a direct captured definition. Function-local from-imports also bind when a single
+unconditional import precedes the call in the same function block, with no
+parameter collision or other write. Closure/class-local imports remain unknown.
+Binding events are collected before lookup, so
 parameters, later local writes, imports and pattern/catch/comprehension shadows
 cannot accidentally fall back to a module target. Attributes, classes, decorated
 targets, reexports, conditional/rebound/ambiguous bindings, global/nonlocal and

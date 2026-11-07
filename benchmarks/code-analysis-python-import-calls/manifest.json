@@ -1,0 +1,192 @@
+{
+  "frozenAt": "2026-11-07T12:08:48.120324+00:00",
+  "baseline": "764a53907f8c5209280f100a4901bd457dd982e0",
+  "provenance": "Source reading and AST position checks only; no analyzer run before this freeze. Selected finite study, not a blind holdout. No prior use found in tracked Code Analysis benchmarks; broader unrecorded use cannot be excluded.",
+  "projects": {
+    "click": {
+      "url": "https://github.com/pallets/click",
+      "tag": "8.1.8",
+      "sha": "934813e4d421071a1b3db3973c02fe2721359a6e"
+    },
+    "jinja": {
+      "url": "https://github.com/pallets/jinja",
+      "tag": "3.1.6",
+      "sha": "15206881c006c79667fe5154fe80c01c65410679"
+    }
+  },
+  "sourceSha256": {
+    "click/src/click/termui.py": "74bc624bbd143af21805d6bf9c411968f0053950d5991b35b043ccb8b0e8c10a",
+    "click/src/click/globals.py": "72e27a05ba34ef79601049a18ebdfde0f78cf901665ccf828bec267ec77b1f98",
+    "click/src/click/_termui_impl.py": "6b9cfb23d80e15e326bbb19bebf44fc90f063ee54fd4479b962c5c5923d240f9",
+    "jinja/src/jinja2/environment.py": "f6786b3fb0a1f8d6c65f4d30bf2af8cb2fae84d1ead8e09ceb48201ab9e2fdf9",
+    "jinja/src/jinja2/compiler.py": "f51a42425e57f3c0479652623ec1cf876f791e1d2e029bf0149350baeb542de3",
+    "jinja/src/jinja2/debug.py": "0a71ea0831ddf81546bed8bff19b13a259d7361037102b18fba9ffda9c14f07c"
+  },
+  "units": [
+    {
+      "id": "click-01",
+      "project": "click",
+      "file": "src/click/termui.py",
+      "function": "echo_via_pager",
+      "line": 266,
+      "column": 13,
+      "callee": "resolve_color_default",
+      "source": "color = resolve_color_default(color)",
+      "bindingLine": 12,
+      "bindingSource": "from .globals import resolve_color_default",
+      "expected": {
+        "file": "src/click/globals.py",
+        "name": "resolve_color_default",
+        "line": 54,
+        "column": 1
+      },
+      "rationale": "module import; unique undecorated definition"
+    },
+    {
+      "id": "click-02",
+      "project": "click",
+      "file": "src/click/termui.py",
+      "function": "echo_via_pager",
+      "line": 280,
+      "column": 12,
+      "callee": "pager",
+      "source": "return pager(itertools.chain(text_generator, \"\\n\"), color)",
+      "bindingLine": 278,
+      "bindingSource": "from ._termui_impl import pager",
+      "expected": {
+        "file": "src/click/_termui_impl.py",
+        "name": "pager",
+        "line": 362,
+        "column": 1
+      },
+      "rationale": "unconditional function-local import before call"
+    },
+    {
+      "id": "click-03",
+      "project": "click",
+      "file": "src/click/termui.py",
+      "function": "launch",
+      "line": 709,
+      "column": 12,
+      "callee": "open_url",
+      "source": "return open_url(url, wait=wait, locate=locate)",
+      "bindingLine": 707,
+      "bindingSource": "from ._termui_impl import open_url",
+      "expected": {
+        "file": "src/click/_termui_impl.py",
+        "name": "open_url",
+        "line": 611,
+        "column": 1
+      },
+      "rationale": "unconditional function-local import before call"
+    },
+    {
+      "id": "click-04",
+      "project": "click",
+      "file": "src/click/termui.py",
+      "function": "getchar",
+      "line": 744,
+      "column": 12,
+      "callee": "_getchar",
+      "source": "return _getchar(echo)",
+      "bindingLine": 740,
+      "bindingSource": "from ._termui_impl import getchar as f",
+      "expected": null,
+      "rationale": "global cache assigned through conditional alias; platform-dependent target"
+    },
+    {
+      "id": "click-05",
+      "project": "click",
+      "file": "src/click/termui.py",
+      "function": "raw_terminal",
+      "line": 750,
+      "column": 12,
+      "callee": "f",
+      "source": "return f()",
+      "bindingLine": 748,
+      "bindingSource": "from ._termui_impl import raw_terminal as f",
+      "expected": null,
+      "rationale": "alias exists, but target is platform-conditional and decorated"
+    },
+    {
+      "id": "click-06",
+      "project": "click",
+      "file": "src/click/termui.py",
+      "function": "echo_via_pager",
+      "line": 270,
+      "column": 10,
+      "callee": "isinstance",
+      "source": "elif isinstance(text_or_generator, str):",
+      "bindingLine": null,
+      "bindingSource": null,
+      "expected": null,
+      "rationale": "builtin: no captured source function"
+    },
+    {
+      "id": "jinja-07",
+      "project": "jinja",
+      "file": "src/jinja2/environment.py",
+      "function": "Environment._generate",
+      "line": 694,
+      "column": 16,
+      "callee": "generate",
+      "source": "return generate(  # type: ignore",
+      "bindingLine": 19,
+      "bindingSource": "from .compiler import generate",
+      "expected": {
+        "file": "src/jinja2/compiler.py",
+        "name": "generate",
+        "line": 101,
+        "column": 1
+      },
+      "rationale": "module import; unique undecorated definition"
+    },
+    {
+      "id": "jinja-08",
+      "project": "jinja",
+      "file": "src/jinja2/environment.py",
+      "function": "Environment.handle_exception",
+      "line": 942,
+      "column": 15,
+      "callee": "rewrite_traceback_stack",
+      "source": "raise rewrite_traceback_stack(source=source)",
+      "bindingLine": 940,
+      "bindingSource": "from .debug import rewrite_traceback_stack",
+      "expected": {
+        "file": "src/jinja2/debug.py",
+        "name": "rewrite_traceback_stack",
+        "line": 14,
+        "column": 1
+      },
+      "rationale": "unconditional function-local import before call"
+    },
+    {
+      "id": "jinja-09",
+      "project": "jinja",
+      "file": "src/jinja2/environment.py",
+      "function": "Environment.list_templates",
+      "line": 932,
+      "column": 48,
+      "callee": "filter_func",
+      "source": "names = [name for name in names if filter_func(name)]",
+      "bindingLine": null,
+      "bindingSource": null,
+      "expected": null,
+      "rationale": "parameter or conditional nested function; no unique module target"
+    },
+    {
+      "id": "jinja-10",
+      "project": "jinja",
+      "file": "src/jinja2/environment.py",
+      "function": "Environment.list_templates",
+      "line": 920,
+      "column": 17,
+      "callee": "self.loader.list_templates",
+      "source": "names = self.loader.list_templates()",
+      "bindingLine": null,
+      "bindingSource": null,
+      "expected": null,
+      "rationale": "member dispatch unsupported"
+    }
+  ]
+}

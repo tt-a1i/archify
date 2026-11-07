@@ -1,0 +1,304 @@
+TAP version 13
+# Subtest: optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged
+ok 1 - optional capture observation leaves raw facts and their revision/snapshot fingerprints unchanged
+  ---
+  duration_ms: 130.541458
+  type: 'test'
+  ...
+# Subtest: public paired question captures dirty working trees, preserves side coordinates and original task modes
+ok 2 - public paired question captures dirty working trees, preserves side coordinates and original task modes
+  ---
+  duration_ms: 982.676833
+  type: 'test'
+  ...
+# Subtest: added and deleted files/functions are normal, and file moves do not infer identity
+ok 3 - added and deleted files/functions are normal, and file moves do not infer identity
+  ---
+  duration_ms: 119.099916
+  type: 'test'
+  ...
+# Subtest: same-line functions use exact ranges and duplicate qualified slots remain unpaired
+ok 4 - same-line functions use exact ranges and duplicate qualified slots remain unpaired
+  ---
+  duration_ms: 86.749125
+  type: 'test'
+  ...
+# Subtest: both sides lose stale definition navigation; stale caller retains evidence but no live location
+ok 5 - both sides lose stale definition navigation; stale caller retains evidence but no live location
+  ---
+  duration_ms: 84.878709
+  type: 'test'
+  ...
+# Subtest: parse errors are partial and suppress affected definitions without losing valid regions
+ok 6 - parse errors are partial and suppress affected definitions without losing valid regions
+  ---
+  duration_ms: 875.697208
+  type: 'test'
+  ...
+# Subtest: root/extended compiler settings and package contents limit binding attribution, even with one analysis config
+ok 7 - root/extended compiler settings and package contents limit binding attribution, even with one analysis config
+  ---
+  duration_ms: 1152.64775
+  type: 'test'
+  ...
+# Subtest: new source candidates may change known binding without a configuration mismatch
+ok 8 - new source candidates may change known binding without a configuration mismatch
+  ---
+  duration_ms: 48.833
+  type: 'test'
+  ...
+# Subtest: fresh mode rejects incompatible options and protects either root from output overwrite
+ok 9 - fresh mode rejects incompatible options and protects either root from output overwrite
+  ---
+  duration_ms: 2326.554917
+  type: 'test'
+  ...
+# Subtest: bounded orientation counts omitted references and missing entry never looks successful
+ok 10 - bounded orientation counts omitted references and missing entry never looks successful
+  ---
+  duration_ms: 77.649083
+  type: 'test'
+  ...
+# Subtest: explicit declaration entries disclose unsupported definitions separately from an available file with no functions
+ok 11 - explicit declaration entries disclose unsupported definitions separately from an available file with no functions
+  ---
+  duration_ms: 881.096
+  type: 'test'
+  ...
+# Subtest: module reading keeps resolved dependency kinds separate from calls and preserves bounded original facts
+ok 12 - module reading keeps resolved dependency kinds separate from calls and preserves bounded original facts
+  ---
+  duration_ms: 79.627583
+  type: 'test'
+  ...
+# Subtest: dependency navigation requires fresh parseable origin/entry and resolution inputs on its own side
+ok 13 - dependency navigation requires fresh parseable origin/entry and resolution inputs on its own side
+  ---
+  duration_ms: 125.925084
+  type: 'test'
+  ...
+# Subtest: Python paired CLI selects the entry language in mixed roots and compares owned decorator headers
+ok 14 - Python paired CLI selects the entry language in mixed roots and compares owned decorator headers
+  ---
+  duration_ms: 931.033791
+  type: 'test'
+  ...
+# Subtest: Python direct-name references keep def-start identity separate from paired header extent
+ok 15 - Python direct-name references keep def-start identity separate from paired header extent
+  ---
+  duration_ms: 187.158458
+  type: 'test'
+  ...
+# Subtest: Java paired headers have exact same-line ranges and fresh zero call totals
+ok 16 - Java paired headers have exact same-line ranges and fresh zero call totals
+  ---
+  duration_ms: 55.167541
+  type: 'test'
+  ...
+# Subtest: paired Java changed static method retains references and unresolved members without inventing old-model coverage
+ok 17 - paired Java changed static method retains references and unresolved members without inventing old-model coverage
+  ---
+  duration_ms: 43.392292
+  type: 'test'
+  ...
+# Subtest: non-TS historical missing metadata and incorrect hashes stay partial without line-only guesses
+ok 18 - non-TS historical missing metadata and incorrect hashes stay partial without line-only guesses
+  ---
+  duration_ms: 404.053166
+  type: 'test'
+  ...
+# Subtest: non-TS captures preserve stale/parse/missing coverage and reject mismatched capture provenance
+ok 19 - non-TS captures preserve stale/parse/missing coverage and reject mismatched capture provenance
+  ---
+  duration_ms: 830.739167
+  type: 'test'
+  ...
+# Subtest: non-TS duplicate slots and bounded outgoing imports keep uncertainty and original records
+ok 20 - non-TS duplicate slots and bounded outgoing imports keep uncertainty and original records
+  ---
+  duration_ms: 181.966083
+  type: 'test'
+  ...
+# Subtest: paired mode rejects unsupported suffixes and invalid entry paths before capture
+ok 21 - paired mode rejects unsupported suffixes and invalid entry paths before capture
+  ---
+  duration_ms: 5780.682667
+  type: 'test'
+  ...
+# Subtest: py: fixture yields hand-verified files, imports, unresolved counts, and parse errors
+ok 22 - py: fixture yields hand-verified files, imports, unresolved counts, and parse errors
+  ---
+  duration_ms: 889.40925
+  type: 'test'
+  ...
+# Subtest: py: a `from pkg import sub` edge lands on the submodule, not only the package
+ok 23 - py: a `from pkg import sub` edge lands on the submodule, not only the package
+  ---
+  duration_ms: 853.568667
+  type: 'test'
+  ...
+# Subtest: py: output is byte-for-byte deterministic
+ok 24 - py: output is byte-for-byte deterministic
+  ---
+  duration_ms: 1734.325459
+  type: 'test'
+  ...
+# Subtest: adapter selection: mixed trees must name a language; --language settles it
+ok 25 - adapter selection: mixed trees must name a language; --language settles it
+  ---
+  duration_ms: 1649.134542
+  type: 'test'
+  ...
+# Subtest: py: a PEP 420 namespace directory resolves submodule imports and rejects attributes
+ok 26 - py: a PEP 420 namespace directory resolves submodule imports and rejects attributes
+  ---
+  duration_ms: 1024.638041
+  type: 'test'
+  ...
+# Subtest: py: an import inside a function body is marked lazy; module-scope imports are not
+ok 27 - py: an import inside a function body is marked lazy; module-scope imports are not
+  ---
+  duration_ms: 811.974875
+  type: 'test'
+  ...
+# Subtest: Python call inventory, direct alias targets, async definition and known zero
+ok 28 - Python call inventory, direct alias targets, async definition and known zero
+  ---
+  duration_ms: 207.980375
+  type: 'test'
+  ...
+# Subtest: Python unsupported/rebound/conditional/decorated/reexport/class targets stay inventoried
+ok 29 - Python unsupported/rebound/conditional/decorated/reexport/class targets stay inventoried
+  ---
+  duration_ms: 227.718625
+  type: 'test'
+  ...
+# Subtest: Python class/comprehension/header/nested scopes use their actual lexical contexts
+ok 30 - Python class/comprehension/header/nested scopes use their actual lexical contexts
+  ---
+  duration_ms: 115.970125
+  type: 'test'
+  ...
+# Subtest: Python scope bindings are collected before resolving parameter/store/import/catch/match/walrus/nonlocal uses
+ok 31 - Python scope bindings are collected before resolving parameter/store/import/catch/match/walrus/nonlocal uses
+  ---
+  duration_ms: 95.006834
+  type: 'test'
+  ...
+# Subtest: Python UTF-16 and exact span hashes preserve BMP/astral text, CRLF and encoded sources
+ok 32 - Python UTF-16 and exact span hashes preserve BMP/astral text, CRLF and encoded sources
+  ---
+  duration_ms: 219.727875
+  type: 'test'
+  ...
+# Subtest: Python saved range proof and imported navigation have independent freshness guards
+ok 33 - Python saved range proof and imported navigation have independent freshness guards
+  ---
+  duration_ms: 242.419417
+  type: 'test'
+  ...
+# Subtest: Python old/unknown/spoofed call models and parse failures cannot claim known zero
+ok 34 - Python old/unknown/spoofed call models and parse failures cannot claim known zero
+  ---
+  duration_ms: 296.175208
+  type: 'test'
+  ...
+# Subtest: Python definition ranges exclude decorator calls but include physically contained defaults and nested source
+ok 35 - Python definition ranges exclude decorator calls but include physically contained defaults and nested source
+  ---
+  duration_ms: 102.751125
+  type: 'test'
+  ...
+# Subtest: Python target coordinates and parse errors cannot yield trusted navigation
+ok 36 - Python target coordinates and parse errors cannot yield trusted navigation
+  ---
+  duration_ms: 238.557416
+  type: 'test'
+  ...
+# Subtest: Python class global writers, implicit class cells and private name mangling cannot invent module targets
+ok 37 - Python class global writers, implicit class cells and private name mangling cannot invent module targets
+  ---
+  duration_ms: 92.922125
+  type: 'test'
+  ...
+# Subtest: Python import names use only captured own definitions
+ok 38 - Python import names use only captured own definitions
+  ---
+  duration_ms: 108.008375
+  type: 'test'
+  ...
+# Subtest: Python external from-import calls stay unresolved and normal check succeeds
+ok 39 - Python external from-import calls stay unresolved and normal check succeeds
+  ---
+  duration_ms: 1155.703
+  type: 'test'
+  ...
+# Subtest: Python captured package and namespace module direct imports use the analyzed directories
+ok 40 - Python captured package and namespace module direct imports use the analyzed directories
+  ---
+  duration_ms: 114.607958
+  type: 'test'
+  ...
+# Subtest: Python generic class bases and keywords use unsupported annotation scope while decorators stay outer
+ok 41 - Python generic class bases and keywords use unsupported annotation scope while decorators stay outer
+  ---
+  duration_ms: 91.5655
+  type: 'test'
+  ...
+# Subtest: Python function-local explicit imports bind only unique preceding imports in the calling block
+ok 42 - Python function-local explicit imports bind only unique preceding imports in the calling block
+  ---
+  duration_ms: 141.986
+  type: 'test'
+  ...
+# Subtest: orientation retains exact facts, excludes same-line neighbours, and includes nested source calls without claiming caller identity
+ok 43 - orientation retains exact facts, excludes same-line neighbours, and includes nested source calls without claiming caller identity
+  ---
+  duration_ms: 139.962917
+  type: 'test'
+  ...
+# Subtest: bounded output counts the selected range and does not confuse omitted unknown calls with absent calls
+ok 44 - bounded output counts the selected range and does not confuse omitted unknown calls with absent calls
+  ---
+  duration_ms: 83.517
+  type: 'test'
+  ...
+# Subtest: missing and unknown call models never report a known zero, even when adapter revisions overlap
+ok 45 - missing and unknown call models never report a known zero, even when adapter revisions overlap
+  ---
+  duration_ms: 187.14125
+  type: 'test'
+  ...
+# Subtest: entry freshness and parse errors gate all calls and same-file targets
+ok 46 - entry freshness and parse errors gate all calls and same-file targets
+  ---
+  duration_ms: 77.277042
+  type: 'test'
+  ...
+# Subtest: unmatched exact source range is unavailable rather than falling back to captured line span
+ok 47 - unmatched exact source range is unavailable rather than falling back to captured line span
+  ---
+  duration_ms: 38.26625
+  type: 'test'
+  ...
+# Subtest: optional node observation preserves all default function measurements and naming
+ok 48 - optional node observation preserves all default function measurements and naming
+  ---
+  duration_ms: 2.23025
+  type: 'test'
+  ...
+# Subtest: explicit call models carry binding coverage independently of extraction revision
+ok 49 - explicit call models carry binding coverage independently of extraction revision
+  ---
+  duration_ms: 107.387833
+  type: 'test'
+  ...
+1..49
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16101.789209

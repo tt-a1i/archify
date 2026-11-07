@@ -1,7 +1,7 @@
 """Python source call inventory and deliberately bounded lexical targets.
 
 No target code is imported. Binding events cover a complete block before lookup;
-only unique direct module definitions/from-imports can supply targets.
+only unique direct module definitions or explicit from-imports supply targets.
 """
 import ast
 from ast_walk import AnalysisVisitor
@@ -63,7 +63,8 @@ def events(nodes, module=False):
         def visit_ImportFrom(self, node):
             for alias in node.names:
                 value = {'kind': 'import', 'module': node.module or '', 'level': node.level,
-                         'name': alias.name, 'line': node.lineno} if module and alias.name != '*' else None
+                         'name': alias.name, 'line': node.lineno,
+                         'end': (node.end_lineno, node.end_col_offset)} if alias.name != '*' else None
                 self.bind(alias.asname or alias.name, value)
         def visit_Global(self, node):
             declarations.update(node.names)
@@ -130,16 +131,25 @@ def collect_calls(tree, text):
     class Scope:
         def __init__(self, nodes, parent=None, params=(), kind='function', unsupported=False):
             self.events, self.declarations = events(nodes)
-            self.names = set(self.events).union(params)
+            self.params = set(params)
+            self.names = set(self.events).union(self.params)
             self.parent, self.kind, self.unsupported = parent, kind, unsupported
-        def lookup(self, name):
+        def lookup(self, name, call, origin=None):
+            origin = self if origin is None else origin
             if self.unsupported or name in self.declarations or '*' in self.events:
                 return None
             if self.kind == 'module':
                 return candidates.get(name)
             if name in self.names:
+                values = self.events.get(name, [])
+                # A local import must execute before this call in this block.
+                # Do not infer closure timing, class lookup, or parameter values.
+                if self is origin and self.kind == 'function' and name not in self.params and len(values) == 1:
+                    binding = values[0]
+                    if binding and binding['kind'] == 'import' and binding['end'] <= (call.lineno, call.col_offset):
+                        return binding
                 return None
-            return self.parent.lookup(name) if self.parent else None
+            return self.parent.lookup(name, call, origin) if self.parent else None
 
     bindings = {}
     class Visit(AnalysisVisitor):
@@ -214,7 +224,7 @@ def collect_calls(tree, text):
         def visit_Call(self, node):
             mangled = isinstance(node.func, ast.Name) and self.private and node.func.id.startswith('__') and not node.func.id.endswith('__')
             if isinstance(node.func, ast.Name) and not self.suppressed and not mangled:
-                bindings[id(node)] = self.scope.lookup(node.func.id)
+                bindings[id(node)] = self.scope.lookup(node.func.id, node)
             self.generic_visit(node)
     Visit().visit(tree)
     records = []

@@ -1,0 +1,50 @@
+{
+  "productSha": "8b1ed343bb335c4d93a5f7bdb7e2ae6746011ffa",
+  "archiveSha256": "1248b19f0b283d0effe91ac8446244db702e287c7064eb8f4e1947643c5ca499",
+  "repeatBuildIdentical": true,
+  "moduleFileCount": 156,
+  "allPackagedModuleBytesMatchSource": true,
+  "cliInvocationsPerMode": 9,
+  "unitsEqual": true,
+  "commandsAndExitsEqualAfterEntrypointAndOutputPathNormalization": true,
+  "comparisons": [
+    {
+      "file": "click/raw-facts.json",
+      "equalBytes": true,
+      "sha256": "8ad9c3e535a0a2474489190add067c98f18a191a0d8d5ada82d62adc7c0994d9"
+    },
+    {
+      "file": "jinja/raw-facts.json",
+      "equalBytes": true,
+      "sha256": "64940b37aac5d0f44ce2adf26336138ba2f9feca83c46de0a5f329dd770d04c6"
+    },
+    {
+      "file": "click-0-question.json",
+      "equalAfterRawFactsPathAndWorkflowNormalization": true
+    },
+    {
+      "file": "click-1-question.json",
+      "equalAfterRawFactsPathAndWorkflowNormalization": true
+    },
+    {
+      "file": "click-2-question.json",
+      "equalAfterRawFactsPathAndWorkflowNormalization": true
+    },
+    {
+      "file": "click-3-question.json",
+      "equalAfterRawFactsPathAndWorkflowNormalization": true
+    },
+    {
+      "file": "jinja-4-question.json",
+      "equalAfterRawFactsPathAndWorkflowNormalization": true
+    },
+    {
+      "file": "jinja-5-question.json",
+      "equalAfterRawFactsPathAndWorkflowNormalization": true
+    },
+    {
+      "file": "jinja-6-question.json",
+      "equalAfterRawFactsPathAndWorkflowNormalization": true
+    }
+  ]
+}
