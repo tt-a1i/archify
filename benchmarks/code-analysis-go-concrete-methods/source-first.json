@@ -1,0 +1,116 @@
+{
+  "frozenAt": "2026-11-07T18:28:19.545161+00:00",
+  "baseline": "68f54478ae16d824e43198ac94d6e05746510edf",
+  "question": "Can a concrete, unpromoted Go receiver call navigate to its project method without guessing an interface implementation?",
+  "stage": "Source inspected before the first deliberate selected-call baseline capture for this method question, no method rule written. Whole repositories were captured by prior free-function studies.",
+  "exposure": "Cobra is design sample. Chi is reserved source-review slice; both reused previously, not blind. No rule tuning from reserved slice yet.",
+  "projects": {
+    "cobra": {
+      "revision": "e392f3204db0445f1f4ad47448b04d8c8ad04c2a",
+      "module": "module github.com/spf13/cobra",
+      "hashes": {
+        "go.mod": "28672d90780ab3bf69af193c5d552a49bc3f409b54529b5f6a19bca5255e0782",
+        "doc/util.go": "93925ada7d5d72244a828b021575fb7d07dd9b68e6d1022e3919a5c816ddd0a2",
+        "doc/man_docs.go": "98df4a13474b2894f2049e8e428994fef7f945cf41430e0a906602c273a1b24a",
+        "command.go": "463ad9a6bb323669d04b72bfe260a286ac6a04f6d3d5004283f13a00c51cfcf5"
+      }
+    },
+    "chi": {
+      "revision": "71307f9b7e4e9527638bc951c42b782cd1560331",
+      "module": "module github.com/go-chi/chi/v5",
+      "hashes": {
+        "go.mod": "a8921a2ecd771d342ee6e7f45065941a943f17c39f1cee4633dd264efa7e97ae",
+        "chi.go": "982bcc7cae8692d1b15758af7904726f7b42fbbfdac303898b650648effeac19",
+        "mux.go": "deede9b38b5c795917ad8c5e19fc3af60d93892531d723756070691c556e5261",
+        "mux_test.go": "ad69acb9f2f56f9df0f5d50c2158c5d13bffed7c0761e08a187969fc3ef07f45",
+        "tree.go": "c9d30f2137156909b767e05cea6e150a9fdee6e287eb6c1adc19e9f92b99f045"
+      }
+    }
+  },
+  "cases": [
+    {
+      "project": "cobra",
+      "call": {
+        "file": "doc/util.go",
+        "line": 26,
+        "column": 5,
+        "needle": "cmd.HasParent(",
+        "sourceLine": "\tif cmd.HasParent() {"
+      },
+      "binding": "hasSeeAlso parameter cmd *cobra.Command; ordinary import github.com/spf13/cobra equals root module; no embedded receiver lookup needed.",
+      "target": {
+        "file": "command.go",
+        "line": 1393,
+        "column": 1,
+        "needle": "func (c *Command) HasParent()",
+        "sourceLine": "func (c *Command) HasParent() bool {",
+        "name": "*Command.HasParent",
+        "receiver": "*Command"
+      },
+      "otherSelectedKnownCaller": {
+        "file": "command.go",
+        "line": 1328,
+        "column": 5,
+        "needle": "c.HasParent(",
+        "sourceLine": "\tif c.HasParent() && c.Parent().helpCommand == c {"
+      }
+    },
+    {
+      "project": "chi",
+      "call": {
+        "file": "mux_test.go",
+        "line": 105,
+        "column": 2,
+        "needle": "m.Get(",
+        "sourceLine": "\tm.Get(\"/\", cxindex)"
+      },
+      "binding": "m := NewRouter() at mux_test.go100; chi.go61 NewRouter explicitly returns *Mux and returns NewMux(). Same package ordinary receiver.",
+      "target": {
+        "file": "mux.go",
+        "line": 161,
+        "column": 1,
+        "needle": "func (mx *Mux) Get(",
+        "sourceLine": "func (mx *Mux) Get(pattern string, handlerFn http.HandlerFunc) {",
+        "name": "*Mux.Get",
+        "receiver": "*Mux"
+      }
+    }
+  ],
+  "unknownControls": [
+    {
+      "project": "cobra",
+      "call": {
+        "file": "doc/man_docs.go",
+        "line": 113,
+        "column": 12,
+        "needle": "w.Write(",
+        "sourceLine": "\t_, err := w.Write(md2man.Render(b))"
+      },
+      "reason": "io.Writer interface parameter of GenMan; do not choose a concrete writer method."
+    },
+    {
+      "project": "chi",
+      "call": {
+        "file": "tree.go",
+        "line": 858,
+        "column": 24,
+        "needle": "r.Routes(",
+        "sourceLine": "\tfor _, route := range r.Routes() {"
+      },
+      "reason": "Walk parameter r Routes is an interface declared chi.go119, not a concrete *Mux; do not select Mux.Routes merely by method name."
+    }
+  ],
+  "scope": {
+    "tests": true,
+    "cgo": false,
+    "tags": [],
+    "goos": "darwin",
+    "goarch": "arm64",
+    "module": "one root module at a time, recorded go.mod; no workspace/replace/vendor/nested module loading"
+  },
+  "limits": [
+    "No runtime execution or nil safety proof.",
+    "Promoted, interface, generic and external methods need explicit negative controls before enabling a rule.",
+    "This freeze is not method support; current producer remains go-source-direct-v1."
+  ]
+}
