@@ -199,7 +199,7 @@ test('default references follow ordinary same-module functions and local default
  const imported=args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.target);
  assert.deepEqual(imported.map(c=>c.target),[{file:'plain.mjs',name:'later',line:1,column:23},{file:'alias.mjs',name:'earlier',line:1,column:1}]);
  assert.equal(args.facts.calls.filter(c=>c.file==='entry.mjs'&&c.resolution==='unresolved').length,1);
- const q=buildQuestion(args);assert.equal(q.calls.bindingCoverage,'declarations-const-initializers-relative-imports-and-stable-default-function-references');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ const q=buildQuestion(args);assert.equal(q.calls.bindingCoverage,'declarations-const-initializers-captured-static-imports-and-stable-default-function-references');assert.ok(q.calls.records.every(r=>r.targetNavigation.status==='valid'));
 });
 
 test('default references do not claim a function overwritten by assignments, destructuring, loops or opaque eval',t=>{
@@ -287,4 +287,13 @@ test('changed configured alias target recovers the known foreign caller in each 
   const question=buildChangeQuestion({question:'Where is the changed helper called?',entry:'src/target.ts',base,head,config:before.config});
   const changed=question.changedDefinitions.items.find(x=>x.head?.definition.name==='helper');
   for(const side of ['base','head']){assert.equal(changed[side].knownReferences.total,1);assert.equal(changed[side].knownReferences.items[0].fact.file,'entry.ts');assert.equal(changed[side].knownReferences.items[0].navigation.status,'valid');}
+});
+
+
+test('historical v3 captures retain their relative-only binding coverage', t => {
+  const args=fixture(t,{'entry.mjs':'import f from "./target.mjs";function chosen(){f();}','target.mjs':'function f(){}export default f;'});
+  const historical=structuredClone(args.facts);historical.callModel='js-ts-lexical-v3';
+  const question=buildQuestion({...args,facts:historical});
+  assert.equal(question.calls.bindingCoverage,'declarations-const-initializers-relative-imports-and-stable-default-function-references');
+  assert.equal(question.calls.records[0].targetNavigation.status,'valid');
 });
