@@ -33,7 +33,7 @@
     "language": "py",
     "adapter": "python@3.13.16",
     "adapterRevision": 9,
-    "configDigest": "716da75c0e50bafceba14d3fee738f6e39d6a0d7a725f7122fe7eed031c4187e",
+    "configDigest": "921c6f790d342dd9c7b33efb7e5232bb01142bf9e02866f4f4f5c30ba9fce4c7",
     "ruleVersions": {
       "architecture/boundary": 1,
       "complexity/function": 1,

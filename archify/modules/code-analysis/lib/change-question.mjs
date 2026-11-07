@@ -32,18 +32,19 @@ function normalize(value, root) {
 }
 
 export function changeEntryLanguage(entry) {
-  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py or .java source file with --entry.');
+  if (typeof entry !== 'string' || !entry || path.isAbsolute(entry) || entry.includes('\\') || entry.split('/').some(part => part === '..' || part === '.') || entry.includes('\0')) fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java or .go source file with --entry.');
   if (/\.(?:[mc]?[jt]s|[jt]sx)$/.test(entry)) return 'ts';
   if (/\.py$/.test(entry)) return 'py';
   if (/\.java$/.test(entry)) return 'java';
-  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py or .java source file with --entry.');
+  if (/\.go$/.test(entry)) return 'go';
+  fail('task/entry-invalid', 'Pass a repository-relative JS/TS, .py, .java or .go source file with --entry.');
 }
 
 export function captureChangeSide(root, config, language = 'ts') {
   root = path.resolve(root);
   let resolution;
   const { facts } = extractFacts(root, { language, config, onCapture: input => { resolution = input; } });
-  if (language !== 'ts') resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
+  if (language !== 'ts' && language !== 'go') resolution = { coverage: 'not-applicable', model: 'captured-source-import-resolution' };
   return { root, facts, resolution, language, configDigest: digest(JSON.stringify(config)) };
 }
 
@@ -72,7 +73,8 @@ function inspectSide(capture, side) {
     side, root, snapshot: facts.repository, language: facts.repository.language, producer: { adapter: facts.repository.adapter, adapterRevision: facts.repository.adapterRevision }, callModel: facts.callModel ?? null, analysisConfigDigest: capture.configDigest, capturedFiles: files.size,
     sourceIdentity: unavailable.some(file => file.status !== 'parse-error') ? 'incomplete' : 'valid',
     unavailableFiles: bounded(unavailable), parseErrors: (facts.parse_errors || []).length,
-    resolution: facts.repository.language === 'ts' ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
+    ...(facts.languageScope ? { languageScope: facts.languageScope } : {}),
+    resolution: ['ts', 'go'].includes(facts.repository.language) ? { digest: digest(JSON.stringify(settings)), fresh: resolutionFresh, options: settings.options, inputs: bounded(inputs) } : { ...resolution, digest: capture.configDigest },
   };
   const references = new Map(), calls = new Map();
   (facts.calls || []).forEach((fact, factIndex) => {
@@ -96,7 +98,8 @@ function inspectSide(capture, side) {
   for (const records of calls.values()) records.sort((a, b) => a.fact.line - b.fact.line || a.fact.column - b.fact.column || a.fact.endLine - b.fact.endLine || a.fact.endColumn - b.fact.endColumn);
   const callCoverage = (facts.repository.language === 'ts' && /^typescript@/.test(facts.repository.adapter) && ['js-ts-lexical-v1', 'js-ts-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && facts.callModel === 'python-lexical-v1')
-    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && facts.callModel === 'java-static-lexical-v1');
+    || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && facts.callModel === 'java-static-lexical-v1')
+    || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && facts.callModel === 'go-source-direct-v1');
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
 }
 
@@ -116,7 +119,7 @@ function definitions(side, file) {
   if (!captured || captured.status !== 'valid') return { coverage: captured?.status || 'not-captured', records: [] };
   if (side.facts.repository.language !== 'ts') {
     const result = [], unavailable = [];
-    const kinds = side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
+    const kinds = side.facts.repository.language === 'go' ? ['FuncDecl'] : side.facts.repository.language === 'py' ? ['FunctionDef', 'AsyncFunctionDef'] : ['methodDeclaration', 'interfaceMethodDeclaration', 'constructorDeclaration', 'compactConstructorDeclaration'];
     for (const fn of side.facts.functions.filter(fn => fn.file === file)) {
       const metadata = fn.definition;
       const slice = rangeText(captured.sourceText, metadata?.sourceRange);
@@ -249,7 +252,7 @@ export function buildChangeQuestion({ question, entry, base, head, config }) {
   const expectedConfig = digest(JSON.stringify(config));
   for (const capture of [base, head]) {
     const repo = capture.facts.repository;
-    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
+    const producerMatches = language === 'ts' ? /^typescript@/.test(repo.adapter) : language === 'py' ? /^python@/.test(repo.adapter) : language === 'go' ? /^go-parser@/.test(repo.adapter) : /^java-parser@/.test(repo.adapter);
     if (capture.language !== language || repo.language !== language || !producerMatches || capture.configDigest !== expectedConfig) fail('task/capture-mismatch', 'Both captures must use the entry language, matching producers and the same analysis configuration.');
   }
   if (base.facts.repository.adapter !== head.facts.repository.adapter || base.facts.repository.adapterRevision !== head.facts.repository.adapterRevision || base.facts.callModel !== head.facts.callModel) fail('task/capture-mismatch', 'Paired capture producers, revisions and call models must match.');

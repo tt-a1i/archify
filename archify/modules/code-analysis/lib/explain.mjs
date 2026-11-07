@@ -77,8 +77,9 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
   const adapter = facts?.repository?.adapter || '';
   const savedEntry = !jsEntry && Array.isArray(facts?.files) && facts.files.some(f => f.path === entry)
     && ((language === 'py' && /^python@\d/.test(adapter) && /\.py$/.test(entry || ''))
-      || (language === 'java' && /^java-parser@\d/.test(adapter) && /\.java$/.test(entry || '')));
-  if (!jsEntry && !savedEntry) fail('task/entry-invalid', 'Question mode needs a JS/TS implementation file, or a captured .py/.java entry from matching Python/Java raw facts; declaration files are not supported.', { subject: { entry }, supportedFixes: ['pass a repository-relative JS/TS implementation file, or a saved analysis directory containing the Python/Java entry from its matching adapter'] });
+      || (language === 'java' && /^java-parser@\d/.test(adapter) && /\.java$/.test(entry || ''))
+      || (language === 'go' && /^go-parser@\d/.test(adapter) && /\.go$/.test(entry || '')));
+  if (!jsEntry && !savedEntry) fail('task/entry-invalid', 'Question mode needs a JS/TS implementation file, or a captured .py/.java/.go entry from matching Python/Java/Go raw facts; declaration files are not supported.', { subject: { entry }, supportedFixes: ['pass a repository-relative JS/TS implementation file, or a saved analysis directory containing the Python/Java entry from its matching adapter'] });
   if (facts !== null && (!Array.isArray(facts.files) || !Array.isArray(facts.functions) || !Array.isArray(facts.imports))) fail('task/facts-invalid', 'Expected raw facts with files, functions and imports.', { supportedFixes: ['regenerate raw-facts.json with code-analysis check'] });
   const captured = new Map((facts?.files || []).map((f) => [f.path, f]));
   const cache = new Map();
@@ -105,6 +106,11 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     return result;
   };
   const selected = inspect(entry);
+  const languageInputs = facts?.languageScope?.metadata?.map(input => {
+    const current = readInside(root, input.file);
+    return { file: input.file, status: current.status === 'ok' && current.text === input.sourceText ? 'valid' : 'changed-or-unreadable' };
+  });
+  if (languageInputs?.some(input => input.status !== 'valid')) selected.factsStatus = 'resolution-input-changed';
   if (selected.currentStatus !== 'ok') fail('task/entry-unreadable', `Cannot read entry: ${entry}`, { subject: { entry }, evidence: selected, supportedFixes: ['select an existing file inside --root'] });
   const matches = (facts?.functions || []).filter((f) => f.file === entry && (f.qualname === symbol || f.name === symbol));
   let location = null;
@@ -126,7 +132,7 @@ export function buildQuestion({ question, entry, symbol, root, facts = null, fac
     snapshotId: facts?.repository?.snapshotId || null,
     factsAvailable: facts !== null, imports,
     calls: questionCalls({ facts, factsPath, inspect, entry: selected, location, symbol, text: sources.get(entry), selectedFunction: matches.length === 1 ? matches[0] : null }),
-    scope: questionScope(root, facts),
+    scope: { ...questionScope(root, facts), ...(facts?.languageScope ? { languageScope: facts.languageScope, languageInputs } : {}) },
     limitations: [
       'Locations and imports are captured static facts, usable only where factsStatus/originStatus is valid; dependency targets have separate freshness checks.',
       'Missing facts or changed source require current-source reading and fresh extraction before reusing captured function ranges.',

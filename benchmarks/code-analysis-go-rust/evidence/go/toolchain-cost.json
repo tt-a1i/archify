@@ -1,0 +1,16 @@
+[
+  {
+    "case": "fresh-empty-go-cache",
+    "seconds": 2.463322874973528,
+    "exit": 0,
+    "stderr": "",
+    "goVersion": "go1.27.2"
+  },
+  {
+    "case": "same-cache-warm",
+    "seconds": 0.26762783399317414,
+    "exit": 0,
+    "stderr": "",
+    "goVersion": "go1.27.2"
+  }
+]
