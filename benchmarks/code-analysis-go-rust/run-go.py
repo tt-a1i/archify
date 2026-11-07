@@ -80,8 +80,8 @@ check('chi', 'middleware/strip.go', 'chi.RouteContext(', 'context.go', 'func Rou
 check('chi', 'middleware/strip.go', 'next.ServeHTTP(')
 check('grpc-go', 'clientconn.go', 'iresolver.GetConfigSelector(', 'internal/resolver/config_selector.go', 'func GetConfigSelector(', 'GetConfigSelector')
 # This was a scoped unknown in the original v1 free-function study. The
-# independently source-verified concrete method is a positive under v2.
-if facts['grpc-go']['callModel'] == 'go-source-direct-v2':
+# independently source-verified concrete method is a positive under v2/v3.
+if facts['grpc-go']['callModel'] in ['go-source-direct-v2', 'go-source-direct-v3']:
     check('grpc-go', 'internal/resolver/config_selector.go', 'state.Attributes.Value(csKey)', 'attributes/attributes.go', 'func (a *Attributes) Value(', 'Value')
 else:
     check('grpc-go', 'internal/resolver/config_selector.go', 'state.Attributes.Value(csKey)')
