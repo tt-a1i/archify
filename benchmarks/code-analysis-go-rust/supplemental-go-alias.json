@@ -1,0 +1,64 @@
+{
+  "kind": "supplemental source answer before candidate execution; not original pre-implementation freeze",
+  "project": "grpc-go",
+  "repository": "https://github.com/grpc/grpc-go",
+  "revision": "98a0092952dd4d8443229c3a335ec592d9c40c9b",
+  "tag": "v1.70.0",
+  "expected": "clientconn.go:757 iresolver.GetConfigSelector -> internal/resolver/config_selector.go:141 GetConfigSelector; interface Attributes.Value does not prove concrete dispatch",
+  "cases": [
+    {
+      "file": "go.mod",
+      "sha256": "c3837f5fdc5252cc923daa1e3b90f1bdf1a7ac73376a01af88c0267586e82931",
+      "evidence": [
+        {
+          "needle": "module google.golang.org/grpc",
+          "lines": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "file": "clientconn.go",
+      "sha256": "f9898bd2380ad21ef99e50d3ce162edc704fbce8a8b3a5c4631e677148effcfa",
+      "evidence": [
+        {
+          "needle": "iresolver \"google.golang.org/grpc/internal/resolver\"",
+          "lines": [
+            42
+          ]
+        },
+        {
+          "needle": "configSelector := iresolver.GetConfigSelector(s)",
+          "lines": [
+            757
+          ]
+        }
+      ]
+    },
+    {
+      "file": "internal/resolver/config_selector.go",
+      "sha256": "739ec8400a4ccf32a6e73ffbc6b2c77f0f9baae2c24c519a2e6258fccd1faf89",
+      "evidence": [
+        {
+          "needle": "func GetConfigSelector(",
+          "lines": [
+            141
+          ]
+        },
+        {
+          "needle": "state.Attributes.Value(csKey).(ConfigSelector)",
+          "lines": [
+            142
+          ]
+        }
+      ]
+    }
+  ],
+  "original_oracle_correction": {
+    "project": "chi",
+    "reason": "_examples/versions/go.mod declares module versions, inconsistent with github.com/go-chi/chi/v5/_examples/versions/presenter/v1 import. Do not bind by directory proximity. Root module also excludes nested modules.",
+    "source": "module versions\n\ngo 1.16\n\nrequire (\n\tgithub.com/go-chi/chi/v5 v5.1.0\n\tgithub.com/go-chi/render v1.0.3\n)\n\nrequire github.com/ajg/form v1.5.1 // indirect\n",
+    "policy": "Keep original manifest immutable; treat previously asserted alias target as an oracle error, not an analyzer miss."
+  }
+}
