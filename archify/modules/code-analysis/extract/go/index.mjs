@@ -72,6 +72,7 @@ export function extract(root, config, { onCapture } = {}) {
     languageScope: { language: id, module, build: output.build, packages: output.packages, typing: output.typing,
       selectedFiles: output.selected, excludedFiles: [...excluded, ...output.excluded].sort((a, b) => a.file.localeCompare(b.file)), metadata,
       limitations: ['Only this root module is analyzed. go.work, replace directives, external dependencies, cgo, generated compiler output and nested modules are not loaded.',
+        'The go.mod language/toolchain directives are captured as metadata but are not enforced by this incomplete type checker.',
         'Targets are direct source function bindings from go/types with incomplete external types. They do not prove successful compilation, argument applicability, runtime dispatch or a complete caller set.',
         'Function bodies and receiver declarations are inventoried; concrete compiler-selected source methods are bound, including promotion, method expressions and generic instances. Interface and function-variable calls remain unknown. Selected tests are captured but excluded from the module graph by its default role policy.'] },
   };

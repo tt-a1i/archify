@@ -62,14 +62,14 @@ for case in manifest['unknownControls']:
     assert call['resolution'] == 'unresolved' and 'target' not in call
     units.append({'project': case['project'], 'call': call, 'status': 'reasonable-unknown', 'reason': case['reason']})
 questions = {}
-for name, entry, symbol in [('cobra', 'doc/util.go', 'hasSeeAlso'), ('chi', 'mux_test.go', 'TestMuxBasic'), ('chi', 'mux_test.go', 'TestMuxMatch_HasBasePath')]:
+for name, entry, symbol in [('cobra', 'doc/util.go', 'hasSeeAlso'), ('chi', 'mux_test.go', 'TestMuxBasic'), ('chi', 'mux_test.go', 'TestMuxMatch_HasBasePath'), ('grpc-go', 'internal/resolver/config_selector.go', 'GetConfigSelector')]:
     label = 'question-'+symbol
     dest = a.out/(label+'.json')
     run(label, ['task', a.out/name, '--root', a.samples_root/name, '--entry', entry, '--function', symbol, '--question', 'Where is the concrete method implementation?', '--format', 'json', '--out', dest, '--json'])
     q = json.loads(dest.read_text())
     questions[symbol] = q
     if symbol != 'TestMuxBasic':
-        wanted = 'HasParent' if name == 'cobra' else 'Match'
+        wanted = 'HasParent' if name == 'cobra' else 'Value' if name == 'grpc-go' else 'Match'
         calls = [r for r in q['calls']['records'] if r['fact'].get('target', {}).get('name') == wanted]
         assert len(calls) == (1 if a.expect == 'candidate' else 0)
         assert all(r['targetNavigation']['status'] == 'valid' for r in calls)
