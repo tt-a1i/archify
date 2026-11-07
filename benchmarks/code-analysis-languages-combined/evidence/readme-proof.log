@@ -1,0 +1,33 @@
+✔ README motion proof is compact, looping, and backed by current gallery artifacts (5.660375ms)
+✔ Windows command lookup and ffmpeg launch keep their boundary diagnostics (1.561125ms)
+✔ showcase shutdown clears its timer and bounds a forced stop (48.150334ms)
+To /var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-star-history-kTbUg5/remote.git
+ * [new branch]      main -> main
+Switched to a new branch 'star-history'
+To /var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-star-history-kTbUg5/remote.git
+ * [new branch]      HEAD -> star-history
+Cloning into '/var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-star-history-kTbUg5/second'...
+done.
+HEAD is now at 6ea71ca chore: update star history chart
+To /var/folders/v1/6vx82zzx32q7y_s1w4sx84j00000gp/T/archify-star-history-kTbUg5/remote.git
+   6ea71ca..89cdadf  HEAD -> star-history
+✔ showcase navigation failure cancels its unused load waiter (0.990292ms)
+✔ every README header links to the other languages (5.099333ms)
+✔ all README languages show the brand mark and localized launch video (0.580667ms)
+✔ README installation tables contain a complete DeepSeek Harness row (0.793208ms)
+✔ README installation tables include Hermes Agent before DeepSeek Harness (0.470167ms)
+✔ README demos use checked-in captures and live deep links below the existing hero (0.506667ms)
+✔ README preserves the visual proof set and key content (0.335625ms)
+✔ all README languages end with the self-hosted star history chart (0.318542ms)
+﹣ Windows Git Bash discovery ignores GIT_EXEC_PATH (0.023334ms) # SKIP
+✔ Star History publishing advances the data branch without a force push (904.8055ms)
+✔ showcase CLI runs through a filesystem alias while imports remain inert (179.636792ms)
+✔ outer capture cleanup retains a live Chrome profile and cleans ordinary failures (13.632042ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 1235.121083
