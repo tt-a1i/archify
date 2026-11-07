@@ -1,0 +1,264 @@
+{
+  "sourceManifestSha256": "7f30503fde5ee54db3f8eac692517d80556a342b5758321c79659c36fe9f3b16",
+  "expect": "candidate",
+  "counts": {
+    "correct": 4,
+    "wrong": 0,
+    "missed": 0,
+    "unknown": 2
+  },
+  "scopes": {
+    "jinja": {
+      "files": 60,
+      "functions": 1584,
+      "calls": 6156,
+      "parseErrors": [],
+      "callModel": "python-lexical-v2"
+    },
+    "flask": {
+      "files": 83,
+      "functions": 1420,
+      "calls": 3919,
+      "parseErrors": [],
+      "callModel": "python-lexical-v2"
+    }
+  },
+  "units": [
+    {
+      "id": "jinja-undefined",
+      "grade": "correct",
+      "observation": {
+        "file": "tests/test_api.py",
+        "line": 100,
+        "column": 16,
+        "endLine": 100,
+        "endColumn": 37,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/jinja2/utils.py",
+          "name": "is_undefined",
+          "line": 104,
+          "column": 1
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "id": "jinja-logging",
+      "grade": "correct",
+      "observation": {
+        "file": "tests/test_api.py",
+        "line": 295,
+        "column": 29,
+        "endLine": 295,
+        "endColumn": 66,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/jinja2/runtime.py",
+          "name": "make_logging_undefined",
+          "line": 912,
+          "column": 1
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "id": "jinja-generated-expr",
+      "grade": "unknown",
+      "observation": {
+        "file": "tests/test_api.py",
+        "line": 100,
+        "column": 29,
+        "endLine": 100,
+        "endColumn": 36,
+        "resolution": "unresolved",
+        "reason": "no-local-function-binding"
+      }
+    },
+    {
+      "id": "flask-render",
+      "grade": "correct",
+      "observation": {
+        "file": "examples/javascript/js_example/views.py",
+        "line": 11,
+        "column": 12,
+        "endLine": 11,
+        "endColumn": 48,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/templating.py",
+          "name": "render_template",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "id": "flask-json",
+      "grade": "correct",
+      "observation": {
+        "file": "examples/javascript/js_example/views.py",
+        "line": 18,
+        "column": 12,
+        "endLine": 18,
+        "endColumn": 33,
+        "resolution": "imported-function",
+        "target": {
+          "file": "src/flask/json/__init__.py",
+          "name": "jsonify",
+          "line": 138,
+          "column": 1
+        }
+      },
+      "navigationStatus": "valid"
+    },
+    {
+      "id": "flask-proxy-member",
+      "grade": "unknown",
+      "observation": {
+        "file": "examples/javascript/js_example/views.py",
+        "line": 16,
+        "column": 9,
+        "endLine": 16,
+        "endColumn": 45,
+        "resolution": "unresolved",
+        "reason": "unsupported-callee"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "label": "jinja-check",
+      "args": [
+        "node",
+        "$WORK/archify-python-reexports/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "$WORK/samples/jinja",
+        "--language",
+        "py",
+        "--fail-on",
+        "never",
+        "--json",
+        "--out",
+        "$WORK/python-reexports-accepted-source/jinja"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "jinja-undefined",
+      "args": [
+        "node",
+        "$WORK/archify-python-reexports/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/python-reexports-accepted-source/jinja",
+        "--question",
+        "Which captured implementation does this imported API function name reach?",
+        "--entry",
+        "tests/test_api.py",
+        "--function",
+        "TestExtendedAPI.test_expressions",
+        "--root",
+        "$WORK/samples/jinja",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/python-reexports-accepted-source/jinja-undefined-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "jinja-logging",
+      "args": [
+        "node",
+        "$WORK/archify-python-reexports/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/python-reexports-accepted-source/jinja",
+        "--question",
+        "Which captured implementation does this imported API function name reach?",
+        "--entry",
+        "tests/test_api.py",
+        "--function",
+        "TestUndefined.test_logging_undefined",
+        "--root",
+        "$WORK/samples/jinja",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/python-reexports-accepted-source/jinja-logging-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "flask-check",
+      "args": [
+        "node",
+        "$WORK/archify-python-reexports/archify/bin/archify.mjs",
+        "code-analysis",
+        "check",
+        "$WORK/samples/flask",
+        "--language",
+        "py",
+        "--fail-on",
+        "never",
+        "--json",
+        "--out",
+        "$WORK/python-reexports-accepted-source/flask"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "flask-render",
+      "args": [
+        "node",
+        "$WORK/archify-python-reexports/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/python-reexports-accepted-source/flask",
+        "--question",
+        "Which captured implementation does this imported API function name reach?",
+        "--entry",
+        "examples/javascript/js_example/views.py",
+        "--function",
+        "index",
+        "--root",
+        "$WORK/samples/flask",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/python-reexports-accepted-source/flask-render-question.json",
+        "--json"
+      ],
+      "exit": 0
+    },
+    {
+      "label": "flask-json",
+      "args": [
+        "node",
+        "$WORK/archify-python-reexports/archify/bin/archify.mjs",
+        "code-analysis",
+        "task",
+        "$WORK/python-reexports-accepted-source/flask",
+        "--question",
+        "Which captured implementation does this imported API function name reach?",
+        "--entry",
+        "examples/javascript/js_example/views.py",
+        "--function",
+        "add",
+        "--root",
+        "$WORK/samples/flask",
+        "--format",
+        "json",
+        "--out",
+        "$WORK/python-reexports-accepted-source/flask-json-question.json",
+        "--json"
+      ],
+      "exit": 0
+    }
+  ]
+}
