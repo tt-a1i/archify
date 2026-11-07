@@ -1,13 +1,13 @@
-2026-11-08T06:50:24.367868+08:00  INFO Using sysroot workspace=$AUDIT-workspaces/serde-json/Cargo.toml src_root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library")) root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin"))
-2026-11-08T06:50:24.973054+08:00  WARN rustc_cfg::get: failed to run `cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O" failed, exit status: 97
+2026-11-08T07:09:49.075481+08:00  INFO Using sysroot workspace=$AUDIT-workspaces/serde-json/Cargo.toml src_root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library")) root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin"))
+2026-11-08T07:09:49.116988+08:00  WARN rustc_cfg::get: failed to run `cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O" failed, exit status: 97
 stderr:
 Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'cfg', '--target', 'aarch64-apple-darwin', '--', '-O']
 
-2026-11-08T06:50:24.975631+08:00  WARN failed to run `cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin" failed, exit status: 97
+2026-11-08T07:09:49.119124+08:00  WARN failed to run `cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin" failed, exit status: 97
 stderr:
 Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'target-spec-json', '--', '-Z', 'unstable-options', '--target', 'aarch64-apple-darwin']
 
-2026-11-08T06:50:25.086221+08:00  WARN `cargo metadata` failed, but retry with `--no-deps` succeeded cargo_toml=/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/Cargo.toml e=`cargo metadata` exited with an error:     Blocking waiting for file lock on package cache
+2026-11-08T07:09:49.200504+08:00  WARN `cargo metadata` failed, but retry with `--no-deps` succeeded cargo_toml=/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/Cargo.toml e=`cargo metadata` exited with an error:     Blocking waiting for file lock on package cache
     Blocking waiting for file lock on package cache
 error: failed to download `cc v1.2.0`
 
@@ -25,16 +25,16 @@ Stack backtrace:
    6: <<std::thread::Builder>::spawn_unchecked_<<project_model::workspace::ProjectWorkspace>::load_cargo::{closure#0}::{closure#5}, core::option::Option<project_model::sysroot::RustLibSrcWorkspace>>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
    7: std::sys::pal::unix::thread::Thread::new::thread_start
    8: __pthread_cond_wait
-2026-11-08T06:50:25.484642+08:00  INFO Using sysroot workspace=$AUDIT-workspaces/serde-json/Cargo.toml src_root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library")) root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin"))
-2026-11-08T06:50:25.524667+08:00  WARN rustc_cfg::get: failed to run `cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O" failed, exit status: 97
+2026-11-08T07:09:49.421271+08:00  INFO Using sysroot workspace=$AUDIT-workspaces/serde-json/Cargo.toml src_root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library")) root=Some(AbsPath("/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin"))
+2026-11-08T07:09:49.45984+08:00  WARN rustc_cfg::get: failed to run `cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "cfg" "--target" "aarch64-apple-darwin" "--" "-O" failed, exit status: 97
 stderr:
 Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'cfg', '--target', 'aarch64-apple-darwin', '--', '-O']
 
-2026-11-08T06:50:25.53214+08:00  WARN failed to run `cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin" failed, exit status: 97
+2026-11-08T07:09:49.461054+08:00  WARN failed to run `cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin"`, falling back to invoking rustc directly e=cd "$AUDIT-workspaces/serde-json" && RUSTC_BOOTSTRAP="1" "$AUDIT/cargo-home/bin/cargo" "rustc" "-Z" "unstable-options" "--print" "target-spec-json" "--" "-Z" "unstable-options" "--target" "aarch64-apple-darwin" failed, exit status: 97
 stderr:
 Audit rejects Cargo execution: ['rustc', '-Z', 'unstable-options', '--print', 'target-spec-json', '--', '-Z', 'unstable-options', '--target', 'aarch64-apple-darwin']
 
-2026-11-08T06:50:25.622716+08:00  WARN `cargo metadata` failed, but retry with `--no-deps` succeeded cargo_toml=/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/Cargo.toml e=`cargo metadata` exited with an error:     Blocking waiting for file lock on package cache
+2026-11-08T07:09:49.545264+08:00  WARN `cargo metadata` failed, but retry with `--no-deps` succeeded cargo_toml=/Users/tsk/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/Cargo.toml e=`cargo metadata` exited with an error:     Blocking waiting for file lock on package cache
     Blocking waiting for file lock on package cache
 error: failed to download `cc v1.2.0`
 

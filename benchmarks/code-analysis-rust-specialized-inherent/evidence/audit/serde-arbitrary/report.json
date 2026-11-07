@@ -5,6 +5,7 @@
   "sourceCandidate": "1ef5ed43de2335d2a6c718af8f3a82bdfb31dfc2",
   "lockSha256": "4b2b9805c69728cc0f86308b637218ad9d73dd1c7b30d48dac1c5455bd82bdb7",
   "generatedLockNotOriginal": true,
+  "capturedSourcesVerified": 16,
   "config": {
     "checkOnSave": false,
     "procMacro": {
@@ -46,7 +47,7 @@
       "message": null
     }
   ],
-  "seconds": 2.7111434169346467,
+  "seconds": 2.6617348329164088,
   "counts": {
     "agrees": 10,
     "different": 0,
