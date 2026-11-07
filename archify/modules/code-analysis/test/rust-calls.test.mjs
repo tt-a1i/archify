@@ -100,3 +100,77 @@ test('Rust custom library names and explicit extern self aliases preserve crate 
  const root=fixture(t,{'Cargo.toml':'[workspace]\nmembers=["api","app"]\nresolver="2"\n','api/Cargo.toml':'[package]\nname="real-api"\nversion="0.1.0"\nedition="2021"\n[lib]\nname="actual_api"\n','api/src/lib.rs':'extern crate self as own;\npub fn work(){}\npub fn caller(){own::work();actual_api::work();}\n','app/Cargo.toml':'[package]\nname="app"\nversion="0.1.0"\nedition="2021"\n[dependencies]\nreal-api={path="../api"}\n','app/src/lib.rs':'pub fn caller(){actual_api::work();real_api::work();}\n'});
  const facts=capture(root);for(const file of ['api/src/lib.rs','app/src/lib.rs']){const rows=calls(facts,file);assert.equal(rows[0].target.file,'api/src/lib.rs');assert.equal(rows[1].resolution,'unresolved');}
 });
+
+// Source-first compiler controls are frozen in the inherent-function benchmark.
+test('Rust inherent source candidates follow nominal modules and import aliases without trait or generic guesses',t=>{
+ const root=fixture(t,{'src/lib.rs':`mod text;mod bytes;
+use crate::text::Regex as Imported;
+trait Build{fn new();}
+struct Factory;impl Factory{fn new(){}}
+struct Holder<T>(T);impl<Factory:Build> Holder<Factory>{fn call(){Factory::new();}}
+fn generic<Factory:Build>(){Factory::new();}
+fn nested(){fn inner<Factory:Build>(){Factory::new();}}
+fn caller(){text::Regex::new();bytes::Regex::new();Imported::new();}
+impl Build for Factory{fn new(){Imported::new();}}
+fn trait_call(){<Factory as Build>::new();}
+struct Generic<T>(T);impl Generic<u8>{fn new(){}}impl Generic<u16>{fn new(){}}
+fn specialized(){Generic::<u8>::new();}
+#[cfg(build_unknown)]impl Factory{fn maybe(){}}
+fn conditional(){Factory::maybe();}
+type Alias=text::Regex;fn alias(){Alias::new();}
+`, 'src/text.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n', 'src/bytes.rs':'pub struct Regex;\nimpl Regex{pub fn new(){}}\n'});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ assert.equal(facts.callModel,'rust-source-direct-v2');
+ const direct=calls(facts,'src/lib.rs').filter(c=>c.line===8);
+ assert.deepEqual(direct.map(c=>c.target.file),['src/text.rs','src/bytes.rs','src/text.rs']);
+ assert.ok(direct.every(c=>c.resolution==='rust-inherent-source-candidate'));
+ assert.ok(facts.imports.some(i=>i.resolved&&i.names?.includes('Imported')&&i.to==='src/text.rs'));
+ assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===9).target.file,'src/text.rs');
+ for(const line of [5,6,7,10,12,14,15])assert.equal(calls(facts,'src/lib.rs').find(c=>c.line===line).resolution,'unresolved',`line ${line}`);
+ const question=buildQuestion({root,facts,entry:'src/lib.rs',symbol:'caller',question:'Where are the constructors?'});
+ assert.ok(question.calls.records.every(r=>r.targetNavigation.status==='valid'));
+ const legacy=structuredClone(facts);legacy.callModel='rust-source-direct-v1';
+ assert.ok(schemaErrors('raw-facts',legacy).some(e=>String(e.message).includes('v2')));
+});
+
+test('Rust inherent lookup preserves namespace ambiguity, cfg alternatives and local Cargo boundaries',t=>{
+ const root=fixture(t,{'Cargo.toml':'[workspace]\nmembers=["api","app"]\nresolver="2"\n','api/Cargo.toml':'[package]\nname="api"\nversion="0.1.0"\nedition="2021"\n', 'api/src/lib.rs':`pub struct Factory;
+impl Factory{pub fn new(){}}
+#[cfg(build_unknown)]impl Factory{pub fn new(){}}
+pub struct Unique;impl Unique{pub fn new(){}}
+`, 'app/Cargo.toml':'[package]\nname="app"\nversion="0.1.0"\nedition="2021"\n[dependencies]\nrenamed={package="api",path="../api"}\n', 'app/src/lib.rs':`use renamed::Unique as Imported;
+pub fn caller(){Imported::new();renamed::Unique::new();renamed::Factory::new();}
+mod dual{pub struct Factory{}impl Factory{pub fn new(){}}pub fn Factory(){}}
+fn ambiguous(){dual::Factory::new();dual::Factory();}
+fn local(){struct Imported;Imported::new();}
+`});
+ const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);
+ const body=calls(facts,'app/src/lib.rs').filter(c=>c.line===2);
+ assert.deepEqual(body.slice(0,2).map(c=>c.target.file),['api/src/lib.rs','api/src/lib.rs']);
+ assert.equal(body[2].resolution,'unresolved');
+ assert.ok(calls(facts,'app/src/lib.rs').filter(c=>c.line>=4).every(c=>c.resolution==='unresolved'));
+});
+
+// rustc accepts this collision and selects the tuple variant at both calls.
+test('Rust enum variants never navigate to a same-named inherent function',t=>{
+ const root=fixture(t,{'src/lib.rs':'enum E{Make(u8)}\nimpl E{fn Make()->Self{E::Make(0)}}\nfn caller(){E::Make(1);}\n'});
+ const facts=capture(root);assert.deepEqual(facts.parse_errors||[],[]);
+ assert.equal(facts.calls.length,2);assert.ok(facts.calls.every(c=>c.resolution==='unresolved'));
+});
+
+
+test('Rust nested implementation scopes preserve free functions and report excluded method bodies',t=>{
+ const root=fixture(t,{'src/lib.rs':`fn work(){}
+struct Factory;impl Factory{fn new(){}}
+trait Build{fn new();}
+fn outer(){struct Local<T>(T);impl<Factory:Build> Local<Factory>{fn call(){Factory::new();work();}}
+struct Visitor;impl Visitor{#[cfg(feature="chosen")]fn chosen(){work();}}
+}
+`});
+ const facts=capture(root);assert.ok(calls(facts,'src/lib.rs').some(c=>c.line===4&&c.target?.name==='work'));
+ assert.ok(calls(facts,'src/lib.rs').some(c=>c.line===4&&c.resolution==='unresolved'));
+ assert.ok(!calls(facts,'src/lib.rs').some(c=>c.line===5));
+ assert.ok(facts.languageScope.excludedRegions.some(r=>r.file==='src/lib.rs'&&r.range.line===5));
+ const selected=capture(root,{rust:{offline:false,features:{sample:['chosen']}}});
+ assert.ok(calls(selected,'src/lib.rs').some(c=>c.line===5&&c.target?.name==='work'));
+});

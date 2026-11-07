@@ -116,6 +116,8 @@ enum Binding {
     External(String),
     Module(usize),
     Function(usize),
+    Nominal(usize, String),
+    Inherent(usize),
     Use(Vec<String>, bool),
     Other,
 }
@@ -161,6 +163,9 @@ struct Analysis {
     roots: BTreeMap<String, usize>,
     modules: Vec<Module>,
     functions: Vec<Function>,
+    inherent_pending: Vec<(usize, Vec<String>, String, usize)>,
+    inherent: BTreeMap<(usize, String, String), Vec<usize>>,
+    variants: BTreeSet<(usize, String, String)>,
     cfg: BTreeSet<String>,
     tests: bool,
     selected: BTreeSet<String>,
@@ -653,13 +658,59 @@ impl Analysis {
                 }
                 Item::Trait(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Union(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
-                Item::Struct(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
-                Item::Enum(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
+                Item::Struct(s) => {
+                    let name = s.ident.to_string();
+                    let binding = if selected == 1 && s.generics.params.is_empty() {
+                        Binding::Nominal(id, name.clone())
+                    } else {
+                        Binding::Other
+                    };
+                    self.add_binding(id, name, binding);
+                }
+                Item::Enum(s) => {
+                    let name = s.ident.to_string();
+                    for variant in &s.variants {
+                        // A tuple variant wins over a same-named inherent fn.
+                        // Keep all variant names blocked, including unknown cfg.
+                        self.variants
+                            .insert((id, name.clone(), variant.ident.to_string()));
+                    }
+                    let binding = if selected == 1 && s.generics.params.is_empty() {
+                        Binding::Nominal(id, name.clone())
+                    } else {
+                        Binding::Other
+                    };
+                    self.add_binding(id, name, binding);
+                }
                 Item::Type(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Const(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Static(s) => self.add_binding(id, s.ident.to_string(), Binding::Other),
                 Item::Impl(im) => {
                     let owner = im.self_ty.to_token_stream().to_string();
+                    // Only an explicit monomorphic nominal owner; trait impls and
+                    // specialized/generic impl applicability are not source proof.
+                    let owner_path = if im.trait_.is_none() && im.generics.params.is_empty() {
+                        match im.self_ty.as_ref() {
+                            Type::Path(p)
+                                if p.qself.is_none()
+                                    && p.path.leading_colon.is_none()
+                                    && p.path
+                                        .segments
+                                        .iter()
+                                        .all(|s| matches!(s.arguments, PathArguments::None)) =>
+                            {
+                                Some(path_parts(&p.path))
+                            }
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    };
+                    let impl_types: Vec<String> = im
+                        .generics
+                        .type_params()
+                        .map(|p| p.ident.to_string())
+                        .collect();
                     for i in im.items {
                         if let ImplItem::Fn(f) = i {
                             let item = ItemFn {
@@ -670,13 +721,24 @@ impl Analysis {
                             };
                             let cfg = and(selected, self.attrs(&item.attrs, krate));
                             if cfg >= 0 {
-                                self.register_fn(
+                                let index = self.register_fn(
                                     id,
                                     &file,
                                     &item,
                                     format!("{mod_path}::{owner}::{}", item.sig.ident),
                                     cfg,
                                 );
+                                self.functions[index].generics.extend(impl_types.clone());
+                                if item.sig.receiver().is_none() {
+                                    if let Some(path) = &owner_path {
+                                        self.inherent_pending.push((
+                                            id,
+                                            path.clone(),
+                                            item.sig.ident.to_string(),
+                                            index,
+                                        ));
+                                    }
+                                }
                             }
                         }
                     }
@@ -791,11 +853,21 @@ impl Analysis {
             index = 1;
         }
         for part in &parts[index..] {
-            if let Binding::Module(m) = current {
-                current = self.lookup(m, part, depth + 1)?;
-            } else {
-                return None;
-            }
+            current = match current {
+                Binding::Module(m) => self.lookup(m, part, depth + 1)?,
+                Binding::Nominal(m, name) => {
+                    let key = (m, name, part.clone());
+                    if self.variants.contains(&key) {
+                        return None;
+                    }
+                    let candidates = self.inherent.get(&key)?;
+                    if candidates.len() != 1 {
+                        return None;
+                    }
+                    Binding::Inherent(candidates[0])
+                }
+                _ => return None,
+            };
         }
         Some(current)
     }
@@ -892,6 +964,20 @@ struct Scope {
     uses: BTreeMap<String, (Vec<String>, bool)>,
     globs: Vec<Vec<String>>,
 }
+fn signature_scope(sig: &Signature) -> Scope {
+    let mut scope = Scope::default();
+    scope
+        .types
+        .extend(sig.generics.type_params().map(|p| p.ident.to_string()));
+    for arg in &sig.inputs {
+        if let FnArg::Typed(p) = arg {
+            let mut names = Vec::new();
+            pattern_names(&p.pat, &mut names);
+            scope.values.extend(names);
+        }
+    }
+    scope
+}
 struct Scanner<'a> {
     a: &'a mut Analysis,
     function: Function,
@@ -899,6 +985,11 @@ struct Scanner<'a> {
     state: State,
 }
 impl Scanner<'_> {
+    fn excluded(&mut self, span: Span) {
+        let file = &self.function.file;
+        let (start, end) = self.a.bytes(file, span);
+        self.a.excluded_regions.push(json!({"file":file,"range":self.a.range(file,start,end),"reason":"cfg-or-test-not-selected"}));
+    }
     fn call(&mut self, span: Span, path: Option<&ExprPath>, reason: &str) {
         let file = self.function.file.clone();
         let (a, b) = self.a.bytes(&file, span);
@@ -914,12 +1005,24 @@ impl Scanner<'_> {
             if p.qself.is_none() && !parts.is_empty() {
                 target = self.resolve_call_path(p);
             }
-            if let Some(Binding::Function(index)) = target {
+            let resolved = match target {
+                Some(Binding::Function(index)) => Some((index, "rust-direct-function")),
+                Some(Binding::Inherent(index))
+                    if p.path
+                        .segments
+                        .iter()
+                        .all(|s| matches!(s.arguments, PathArguments::None)) =>
+                {
+                    Some((index, "rust-inherent-source-candidate"))
+                }
+                _ => None,
+            };
+            if let Some((index, resolution)) = resolved {
                 let f = &self.a.functions[index];
                 if f.state == 1 {
                     let (line, column) = self.a.point(&f.file, f.start);
                     r["target"] = json!({"file":f.file,"name":f.name,"line":line,"column":column});
-                    r["resolution"] = json!("rust-direct-function");
+                    r["resolution"] = json!(resolution);
                     r.as_object_mut().unwrap().remove("reason");
                 } else {
                     r["reason"] = json!("rust-cfg-unselected")
@@ -1114,19 +1217,81 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
         let previous = self.state;
         self.state = and(previous, self.a.attrs(&f.attrs, krate));
         if self.state >= 0 {
-            let mut scope = Scope::default();
-            for arg in &f.sig.inputs {
-                if let FnArg::Typed(p) = arg {
-                    let mut names = Vec::new();
-                    pattern_names(&p.pat, &mut names);
-                    scope.values.extend(names);
-                }
-            }
+            let scope = signature_scope(&f.sig);
             let old = self.scopes.clone();
             self.scopes.push(scope);
             self.visit_block(&f.block);
             self.scopes = old;
+        } else {
+            self.excluded(f.span());
         }
+        self.state = previous;
+    }
+    // Local impl/trait bodies retain their calls but introduce their own generic
+    // scopes. No Self owner is inferred from the surrounding registered function.
+    fn visit_item_impl(&mut self, item: &'ast ItemImpl) {
+        let previous = self.state;
+        let krate = self.a.modules[self.function.module].krate;
+        self.state = and(previous, self.a.attrs(&item.attrs, krate));
+        let mut scope = Scope::default();
+        scope.types.insert("Self".into());
+        scope
+            .types
+            .extend(item.generics.type_params().map(|p| p.ident.to_string()));
+        self.scopes.push(scope);
+        if self.state >= 0 {
+            visit::visit_item_impl(self, item);
+        } else {
+            self.excluded(item.span());
+        }
+        self.scopes.pop();
+        self.state = previous;
+    }
+    fn visit_impl_item_fn(&mut self, item: &'ast ImplItemFn) {
+        let previous = self.state;
+        let krate = self.a.modules[self.function.module].krate;
+        self.state = and(previous, self.a.attrs(&item.attrs, krate));
+        let scope = signature_scope(&item.sig);
+        self.scopes.push(scope);
+        if self.state >= 0 {
+            self.visit_block(&item.block);
+        } else {
+            self.excluded(item.span());
+        }
+        self.scopes.pop();
+        self.state = previous;
+    }
+    fn visit_item_trait(&mut self, item: &'ast ItemTrait) {
+        let previous = self.state;
+        let krate = self.a.modules[self.function.module].krate;
+        self.state = and(previous, self.a.attrs(&item.attrs, krate));
+        let mut scope = Scope::default();
+        scope.types.insert("Self".into());
+        scope
+            .types
+            .extend(item.generics.type_params().map(|p| p.ident.to_string()));
+        self.scopes.push(scope);
+        if self.state >= 0 {
+            visit::visit_item_trait(self, item);
+        } else {
+            self.excluded(item.span());
+        }
+        self.scopes.pop();
+        self.state = previous;
+    }
+    fn visit_trait_item_fn(&mut self, item: &'ast TraitItemFn) {
+        let previous = self.state;
+        let krate = self.a.modules[self.function.module].krate;
+        self.state = and(previous, self.a.attrs(&item.attrs, krate));
+        self.scopes.push(signature_scope(&item.sig));
+        if self.state >= 0 {
+            if let Some(body) = &item.default {
+                self.visit_block(body);
+            }
+        } else {
+            self.excluded(item.span());
+        }
+        self.scopes.pop();
         self.state = previous;
     }
     fn visit_expr_call(&mut self, call: &'ast ExprCall) {
@@ -1307,6 +1472,9 @@ fn main() {
         roots: BTreeMap::new(),
         modules: Vec::new(),
         functions: Vec::new(),
+        inherent_pending: Vec::new(),
+        inherent: BTreeMap::new(),
+        variants: BTreeSet::new(),
         selected: BTreeSet::new(),
         excluded_regions: Vec::new(),
         parse_errors: Vec::new(),
@@ -1333,6 +1501,17 @@ fn main() {
                 .push(json!({"crate":c.id,"file":c.root,"reason":"crate-root-unavailable"}));
         }
     }
+    // Resolve owner identity after all module trees and local crate roots exist.
+    for (module, path, name, index) in a.inherent_pending.clone() {
+        if let Some(Binding::Nominal(owner_module, owner_name)) =
+            a.resolve(module, &path, false, false, 0)
+        {
+            a.inherent
+                .entry((owner_module, owner_name, name))
+                .or_default()
+                .push(index);
+        }
+    }
     // Import evidence is resolved only after every workspace crate is indexed.
     for m in 0..a.modules.len() {
         let module = a.modules[m].clone();
@@ -1342,7 +1521,9 @@ fn main() {
                     let target = a.resolve(m, parts, *absolute, true, 0);
                     let file = match target {
                         Some(Binding::Function(i)) => Some(a.functions[i].file.clone()),
-                        Some(Binding::Module(i)) => Some(a.modules[i].file.clone()),
+                        Some(Binding::Module(i)) | Some(Binding::Nominal(i, _)) => {
+                            Some(a.modules[i].file.clone())
+                        }
                         _ => None,
                     };
                     let line = module.use_lines.get(name).copied().unwrap_or(1);

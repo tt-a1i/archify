@@ -10,8 +10,8 @@ import { describeRepository } from '../shared/git.mjs';
 import { fail } from '../shared/diagnostics.mjs';
 
 export const id = 'rust';
-export const REVISION = 1;
-export const CALL_MODEL = 'rust-source-direct-v1';
+export const REVISION = 2;
+export const CALL_MODEL = 'rust-source-direct-v2';
 export const detect = (root, config) => listFiles(root, config).some(file => file.endsWith('.rs'));
 export const countSources = (root, config) => listFiles(root, config).filter(file => file.endsWith('.rs')).length;
 const manifest = fileURLToPath(new URL('./Cargo.toml', import.meta.url));
@@ -75,7 +75,12 @@ export function extract(root, config, { onCapture } = {}) {
   const cargo = process.env.ARCHIFY_CARGO || 'cargo', rustc = process.env.ARCHIFY_RUSTC || 'rustc';
   const env = { ...process.env, RUSTC: rustc, RUSTC_WRAPPER: '', RUSTC_WORKSPACE_WRAPPER: '', CARGO_BUILD_RUSTC_WRAPPER: '', CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER: '', RUSTFLAGS: '', CARGO_ENCODED_RUSTFLAGS: '' };
   delete env.CARGO_BUILD_TARGET;
-  const cache = path.join(os.tmpdir(), 'archify-rust-source-target'); fs.mkdirSync(cache, { recursive: true });
+  // Different checkouts otherwise reuse one helper executable, which caused
+  // v2 output to reach a v1 reader in baseline replay. Isolate helper contents
+  // while allowing identical source and extracted packages to share builds.
+  const helperDigest = createHash('sha256');
+  for (const file of ['Cargo.toml', 'Cargo.lock', 'src/main.rs']) helperDigest.update(fs.readFileSync(path.join(path.dirname(manifest), file)));
+  const cache = path.join(os.tmpdir(), `archify-rust-source-target-${helperDigest.digest('hex')}`); fs.mkdirSync(cache, { recursive: true });
   const cfg = command(rustc, ['--print', 'cfg', ...(rust.target ? ['--target', rust.target] : [])], { cwd: cache, env }, 'extract/rust-cfg-failed').trim().split(/\r?\n/);
   const cargoVersion = command(cargo, ['--version'], { cwd: cache, env }, 'extract/rust-unavailable').trim();
   const verboseToolchain = command(rustc, ['--version', '--verbose'], { cwd: cache, env }, 'extract/rust-unavailable').trim();
@@ -141,7 +146,7 @@ export function extract(root, config, { onCapture } = {}) {
       crates: crates.map(c => ({ ...c, files: [...new Set(output.modules.filter(m => m.crate === c.id).map(m => m.file))] })), selectedFiles: [...selected], excludedFiles, metadata, excludedTargets,
       conditionalDefinitions: output.functions.filter(fn => fn._cfg === 0).map(fn => ({ file: fn.file, name: fn.name, line: fn.line, reason: 'enclosing cfg or attribute not established by the source profile' })),
       excludedRegions: output.excludedRegions, opaqueMacros: output.opaqueMacros, missingModules: output.missingModules,
-      limitations: ['Direct source paths only; no type inference, trait/inherent method dispatch, macro expansion, build-script execution or external dependency source loading.',
+      limitations: ['Explicit free-function paths and unique monomorphic nominal inherent-function source candidates only; no type/argument inference, visibility checking, Self/type-alias/generic-owner resolution, trait/receiver dispatch, macro expansion, build-script execution or external dependency source loading.',
         'Cargo metadata reads captured manifests with zero-byte source inventory stubs, offline/no-deps/locked; the syntax parser reads captured source text only. Active cfg derives from rustc target cfg plus the declared local feature profile; custom build-script cfg stays unknown.',
         'Call inventory covers parsed function/method bodies; macros are opaque records. Missing/excluded modules, conditional scopes and unsupported local items limit target/caller completeness.'] },
   };

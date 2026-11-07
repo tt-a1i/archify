@@ -36,7 +36,7 @@ export function semanticErrors(name, data) {
     const pythonCalls = data.repository.language === 'py' && data.callModel === 'python-lexical-v1';
     const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && ['go-source-direct-v1', 'go-source-direct-v2'].includes(data.callModel);
-    const rustCalls = data.repository.language === 'rust' && data.callModel === 'rust-source-direct-v1';
+    const rustCalls = data.repository.language === 'rust' && ['rust-source-direct-v1', 'rust-source-direct-v2'].includes(data.callModel);
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
     data.functions?.forEach((fn, i) => {
       if ((pythonCalls || javaCalls || goCalls || rustCalls || fn.sourceRange) && !validSourceRange(sourceTexts.get(fn.file), fn)) add(`/functions/${i}/sourceRange`, 'must match exact captured definition range and digest');
@@ -78,6 +78,7 @@ export function semanticErrors(name, data) {
           if (targetFile === call.file || !staticImportPairs.has(JSON.stringify([call.file, targetFile]))) add(`${at}/target/file`, 'must follow a recorded static import to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
         }
+        if (call.resolution === 'rust-inherent-source-candidate' && (!rustCalls || data.callModel !== 'rust-source-direct-v2')) add(`${at}/resolution`, 'requires the Rust v2 inherent source-candidate model');
         if (call.resolution === 'rust-direct-function' && !rustCalls) add(`${at}/resolution`, 'requires the Rust source-direct model');
         if (call.resolution === 'go-direct-method' && (!goCalls || data.callModel !== 'go-source-direct-v2')) add(`${at}/resolution`, 'requires the Go v2 concrete-method model');
         if (call.resolution === 'go-direct-function' && !goCalls) add(`${at}/resolution`, 'requires the Go source-direct model');

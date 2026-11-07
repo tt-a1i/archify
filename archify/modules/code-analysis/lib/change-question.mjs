@@ -101,7 +101,7 @@ function inspectSide(capture, side) {
     || (facts.repository.language === 'py' && /^python@/.test(facts.repository.adapter) && facts.callModel === 'python-lexical-v1')
     || (facts.repository.language === 'java' && /^java-parser@/.test(facts.repository.adapter) && ['java-static-lexical-v1', 'java-static-lexical-v2'].includes(facts.callModel))
     || (facts.repository.language === 'go' && /^go-parser@/.test(facts.repository.adapter) && ['go-source-direct-v1', 'go-source-direct-v2'].includes(facts.callModel))
-    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && facts.callModel === 'rust-source-direct-v1');
+    || (facts.repository.language === 'rust' && /^rust-syn@/.test(facts.repository.adapter) && ['rust-source-direct-v1', 'rust-source-direct-v2'].includes(facts.callModel));
   return { side, root, facts, files, references, calls, callCoverage, importsByTarget, unresolvedImports, summary, resolutionFresh, settings };
 }
 
