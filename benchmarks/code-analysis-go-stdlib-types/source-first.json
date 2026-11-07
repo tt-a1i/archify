@@ -55,7 +55,7 @@
   ],
   "counterexample": {
     "file": "mux.go",
-    "line": 88,
+    "line": 90,
     "needle": "mx.handler.ServeHTTP(w, r)",
     "expected": "unknown interface dispatch; reading SDK types must not pick arbitrary concrete ServeHTTP methods"
   },
@@ -68,5 +68,6 @@
   },
   "changeCaution": "Context.Reset body is unchanged in the existing Chi version pair. Do not invent a changed-Reset acceptance claim; original changed Match evidence remains separately valid.",
   "hypothesis": "Compare an isolated SDK-only go list -export/importer prototype against the empty-importer baseline before choosing product reuse. No project code/tests/generators/dependency build executed.",
-  "reservedReview": "gRPC 34 compiler-known missed concrete body sites and Cobra regression corpus were exposed previously but are reserved from first Chi prototype tuning; not blind."
+  "reservedReview": "gRPC 34 compiler-known missed concrete body sites and Cobra regression corpus were exposed previously but are reserved from first Chi prototype tuning; not blind.",
+  "sourceOracleCorrection": "The first draft counterexample line88 was blank; direct numbered source inspection corrected it to90 before any prototype execution. Interface call also occurs73."
 }
