@@ -103,6 +103,14 @@ export async function runCheck(argv) {
       comparisonReasons: review.comparison ? review.comparison.reasons : [],
       staleBaseline: review.baseline ? review.baseline.stale : [],
       priorities: overview.priorities,
+      // Already computed for the overview. Repeated here so a reader of the CLI
+      // output sees a file that failed to parse, or files left out because a
+      // language was selected, without opening the output directory. The gate
+      // below does not read it.
+      coverage: {
+        parseErrors: overview.coverage.files.parseErrors,
+        otherLanguages: overview.coverage.otherLanguages,
+      },
     }),
   };
 }
@@ -125,6 +133,9 @@ export function formatText(r) {
   const c = r.counts;
   lines.push(`Code analysis: ${r.verdict} — ${c.findings} finding${c.findings === 1 ? '' : 's'} (${c.error} error, ${c.warning} warning, ${c.info} info open; ${c.accepted} accepted)`);
   lines.push(`  ${({ py: 'Python', ts: 'JS/TS', java: 'Java' })[r.language] || r.language} · ${r.files} files · rules: ${r.rules.join(', ')}`);
+  const uncovered = r.coverage || { parseErrors: [], otherLanguages: [] };
+  if (uncovered.parseErrors.length) lines.push(`  Not analyzed, parse failed: ${uncovered.parseErrors.join(', ')}`);
+  if (uncovered.otherLanguages.length) lines.push(`  Not analyzed, other language: ${uncovered.otherLanguages.map((l) => `${l.files} ${l.adapter}`).join(', ')}`);
   if (r.review.comparison) {
     const c = r.review.comparison;
     lines.push(`  Since the previous run: ${c.new} new, ${c.notDetected} no longer detected, ${c.evidenceChanged} with changed evidence`);
