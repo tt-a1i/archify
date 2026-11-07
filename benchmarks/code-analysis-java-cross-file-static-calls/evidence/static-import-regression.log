@@ -1,0 +1,12 @@
+✔ Java explicit imported, same-package and full class paths navigate across files (62.95325ms)
+✔ Java expression values and uncertain caller scopes never become imported class targets (22.469375ms)
+✔ Java qualified methods keep overload, visibility, varargs, supertype and duplicate owner gaps unknown (27.700833ms)
+✔ Java paired changed definition recovers captured foreign callers and v1 stays a distinct model (58.635208ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 471.955042

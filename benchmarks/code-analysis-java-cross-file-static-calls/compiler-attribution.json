@@ -1,0 +1,33 @@
+{
+  "compiler": "Temurin 17.0.21+9",
+  "helper": "benchmarks/code-analysis-java-calls/CallOracle.java",
+  "helperSha256": "eb29d224f6a03a9861f284bb5bc65435fe92706891f6b72f02843d130dd213e2",
+  "mode": "JavacTask.parse+analyze, --release 8 -proc:none; project methods not executed",
+  "diagnostics": "FILES\t45\tERRORS\t0\n",
+  "rows": [
+    {
+      "line": 427,
+      "column": 16,
+      "startUTF16": 18273,
+      "endUTF16": 18303,
+      "callee": "iLoggerFactory.getLogger",
+      "compilerTarget": "org.slf4j.ILoggerFactory#getLogger(java.lang.String)"
+    },
+    {
+      "line": 454,
+      "column": 49,
+      "startUTF16": 19348,
+      "endUTF16": 19370,
+      "callee": "Util.getCallingClass",
+      "compilerTarget": "org.slf4j.helpers.Util#getCallingClass()"
+    }
+  ],
+  "baseline": "9e41b7483, unchanged current analyzer",
+  "expectedMissingTarget": {
+    "file": "src/main/java/org/slf4j/LoggerFactory.java",
+    "line": 454,
+    "targetFile": "src/main/java/org/slf4j/helpers/Util.java",
+    "targetLine": 98
+  },
+  "baselineActual": "unresolved / unsupported-callee"
+}

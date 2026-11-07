@@ -1,0 +1,65 @@
+{
+  "stage": "before implementation",
+  "compiler": "Temurin17.0.21+9",
+  "options": [
+    "-proc:none",
+    "--release",
+    "17"
+  ],
+  "helper": "Existing CallOracle.java with source release changed from8to17 for instanceof pattern controls",
+  "helperSha256": "e8b2531da343634811bd6f22dc52f0616c7fa0f49771511775b37b29625f385f",
+  "diagnostics": "FILES\t3\tERRORS\t0\n",
+  "rows": [
+    {
+      "caller": "positive",
+      "callee": "Api.run",
+      "target": "p.Api#run()"
+    },
+    {
+      "caller": "positive",
+      "callee": "p.Api.run",
+      "target": "p.Api#run()"
+    },
+    {
+      "caller": "positive",
+      "callee": "Api.args",
+      "target": "p.Api#args(java.lang.String)"
+    },
+    {
+      "caller": "parameter",
+      "callee": "Api.run",
+      "target": "p.Other#run()"
+    },
+    {
+      "caller": "local",
+      "callee": "Api.run",
+      "target": "p.Other#run()"
+    },
+    {
+      "caller": "pattern",
+      "callee": "Api.run",
+      "target": "p.Other#run()"
+    },
+    {
+      "caller": "overloaded",
+      "callee": "Api.over",
+      "target": "p.Api#over()"
+    },
+    {
+      "caller": "lambda",
+      "callee": "Api.run",
+      "target": "p.Other#run()"
+    },
+    {
+      "caller": "field",
+      "callee": "Api.run",
+      "target": "p.Other#run()"
+    },
+    {
+      "caller": "inherited",
+      "callee": "Api.run",
+      "target": "p.Api#run()"
+    }
+  ],
+  "targetBoundary": "positive calls source-navigate; value qualifiers, inherited caller and lambda remain unknown; overloaded name remains ambiguous even when compiler has a target."
+}

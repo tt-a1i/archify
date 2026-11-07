@@ -1,0 +1,35 @@
+{
+  "revision": "c8774fa74adbbbcd4e5f915ab6bc3aa10d877419",
+  "tag": "rel/commons-lang-3.14.0",
+  "url": "https://github.com/apache/commons-lang",
+  "stage": "after initial implementation written/controls first capture, before any commons candidate execution; reserved review slice, not a blind study",
+  "sourceSha256": {
+    "src/main/java/org/apache/commons/lang3/ClassUtils.java": "a840f3ed8c6ee248ef47d5a731f0f2793a6cd81cf40ef2b6c2f826ff23aa7039",
+    "src/main/java/org/apache/commons/lang3/StringUtils.java": "b9e7f9cd0f13d992283ba23616813df22ed366aa55b372e22034a13591022cd1"
+  },
+  "expected": [
+    {
+      "file": "src/main/java/org/apache/commons/lang3/ClassUtils.java",
+      "line": 733,
+      "needle": "StringUtils.isEmpty(className)",
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 3604,
+        "name": "isEmpty",
+        "signature": "public static boolean isEmpty(final CharSequence cs)"
+      }
+    },
+    {
+      "file": "src/main/java/org/apache/commons/lang3/ClassUtils.java",
+      "line": 995,
+      "needle": "StringUtils.isEmpty(className)",
+      "target": {
+        "file": "src/main/java/org/apache/commons/lang3/StringUtils.java",
+        "line": 3604,
+        "name": "isEmpty",
+        "signature": "public static boolean isEmpty(final CharSequence cs)"
+      }
+    }
+  ],
+  "reason": "Same-package explicit public class qualifier; unique public static isEmpty declaration, one argument; no StringUtils local/field binding in selected methods. Runtime execution unknown."
+}

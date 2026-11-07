@@ -1,0 +1,11 @@
+{
+  "stage": "supplemental control discovered during implementation; not original frozen score",
+  "rows": [
+    {
+      "callee": "Api.run",
+      "target": "p.Other#run()"
+    }
+  ],
+  "diagnostics": "FILES\t5\tERRORS\t0\n",
+  "expected": "unknown; imported field Api is an expression value, not imported class p.Api"
+}

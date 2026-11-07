@@ -24,11 +24,11 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
   const knownAdapter = facts?.repository?.language === 'ts' && /^typescript@/.test(facts?.repository?.adapter || '');
   const pythonModel = facts?.repository?.language === 'py' && /^python@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'python-lexical-v1';
   const javaAdapter = facts?.repository?.language === 'java' && /^java-parser@/.test(facts?.repository?.adapter || '');
-  const javaModel = javaAdapter && facts?.callModel === 'java-static-lexical-v1';
+  const javaModel = javaAdapter && ['java-static-lexical-v1', 'java-static-lexical-v2'].includes(facts?.callModel);
   const goModel = facts?.repository?.language === 'go' && /^go-parser@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'go-source-direct-v1';
   const rustModel = facts?.repository?.language === 'rust' && /^rust-syn@/.test(facts?.repository?.adapter || '') && facts?.callModel === 'rust-source-direct-v1';
   const capturedRangeModel = pythonModel || javaModel || goModel || rustModel;
-  const bindingCoverage = rustModel ? 'rust-explicit-source-functions-under-declared-cargo-cfg-profile' : goModel ? 'go-types-direct-source-functions-with-incomplete-external-types' : pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : javaModel ? 'top-level-class-unique-static-fixed-arity-source-candidates' : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
+  const bindingCoverage = rustModel ? 'rust-explicit-source-functions-under-declared-cargo-cfg-profile' : goModel ? 'go-types-direct-source-functions-with-incomplete-external-types' : pythonModel ? 'ordinary-module-definitions-and-direct-from-import-aliases' : javaModel ? (facts.callModel === 'java-static-lexical-v2' ? 'top-level-class-and-explicit-qualified-static-source-candidates' : 'top-level-class-unique-static-fixed-arity-source-candidates') : knownAdapter ? BINDING_COVERAGE.get(facts?.callModel) : undefined;
   const result = {
     coverage: 'unavailable', reason: null,
     provenance: { rawFactsPath: factsPath ? path.resolve(factsPath) : null, adapter: facts?.repository?.adapter ?? null, adapterRevision: facts?.repository?.adapterRevision ?? null,
@@ -44,6 +44,7 @@ export function questionCalls({ facts, factsPath, inspect, entry, location, symb
       'At most 40 records are included in source order; total/included/omitted describe only the selected range. Read current source or the captured raw facts for omitted records.',
     ],
   };
+  if (javaModel && facts.callModel === 'java-static-lexical-v2') result.limitations.push('Java v2 additionally follows explicit class-qualified paths to unique public static fixed-arity source methods in public top-level ordinary classes without explicit supertypes. Type/value shadowing, duplicate classes, static value/wildcard imports, overloads, varargs, inherited owners, lambdas and nested caller scopes can keep targets unknown. This does not type-check argument applicability or establish compilation; valid navigation is captured evidence, not current whole-project re-resolution.');
   if (pythonModel) result.limitations = [
     'Records are captured Python ast.Call sites physically contained in the selected range, including nested functions and defaults; they are not necessarily direct or executed calls of the selected function. Definition ranges exclude preceding decorators.',
     'Targets identify unique ordinary undecorated module-level definitions or direct static from-import aliases. Attributes, classes, decorated targets, reexports, shadows and ambiguous bindings remain unresolved. This is lexical source navigation, not runtime callable identity, execution or reachability.',

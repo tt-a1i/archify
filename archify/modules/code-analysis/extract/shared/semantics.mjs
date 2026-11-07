@@ -34,7 +34,7 @@ export function semanticErrors(name, data) {
       if (fn.deepestLine < fn.line || fn.deepestLine > fn.endLine) add(`/functions/${i}/deepestLine`, 'must lie inside the function');
     });
     const pythonCalls = data.repository.language === 'py' && data.callModel === 'python-lexical-v1';
-    const javaCalls = data.repository.language === 'java' && data.callModel === 'java-static-lexical-v1';
+    const javaCalls = data.repository.language === 'java' && ['java-static-lexical-v1', 'java-static-lexical-v2'].includes(data.callModel);
     const goCalls = data.repository.language === 'go' && data.callModel === 'go-source-direct-v1';
     const rustCalls = data.repository.language === 'rust' && data.callModel === 'rust-source-direct-v1';
     const sourceTexts = new Map(data.files.map((file) => [file.path, file.sourceText]));
@@ -73,6 +73,7 @@ export function semanticErrors(name, data) {
       if (brokenFiles.has(call.file)) add(at, 'calls must be omitted for files with parse errors');
       if (call.target) {
         const targetFile = call.target.file || call.file;
+        if (call.resolution === 'java-qualified-static-method' && (!javaCalls || data.callModel !== 'java-static-lexical-v2')) add(`${at}/resolution`, 'requires the Java v2 source model');
         if (call.resolution === 'imported-function') {
           if (targetFile === call.file || !staticImportPairs.has(JSON.stringify([call.file, targetFile]))) add(`${at}/target/file`, 'must follow a recorded static import to another captured file');
           if (brokenFiles.has(targetFile)) add(`${at}/target`, 'target file must have no parse errors');
