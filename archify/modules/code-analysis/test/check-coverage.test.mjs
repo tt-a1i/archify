@@ -61,3 +61,34 @@ test('check: a clean run says nothing about coverage and the gate is unchanged',
   assert.equal(text.status, 0, text.stdout + text.stderr);
   assert.doesNotMatch(text.stdout, /Not analyzed/);
 });
+
+test('check: threshold errors stay errors and partial coverage does not change the finding gate', (t) => {
+  const root = fixture(t, {
+    'src/ok.py': 'def answer():\n    return 42\n',
+    'src/broken.py': 'value = 1\0\n',
+    'src/Note.java': 'class Note {}',
+  });
+  const config = path.join(root, 'analysis.json');
+  const configure = (complexity) => fs.writeFileSync(config, JSON.stringify({
+    rules: { complexity: { function: { warning: { complexity } } } },
+  }));
+  const args = ['--language', 'py', '--config', config, '--json'];
+  configure('oops');
+  const invalid = check(root, [...args, '--fail-on', 'never']);
+  assert.equal(invalid.status, 2, invalid.stdout + invalid.stderr);
+  const error = JSON.parse(invalid.stdout);
+  assert.equal(error.status, 'error');
+  assert.equal(error.diagnostics[0].code, 'config/threshold-invalid');
+
+  configure(0);
+  for (const [failOn, exit] of [['warning', 1], ['never', 0]]) {
+    const result = check(root, [...args, '--fail-on', failOn]);
+    assert.equal(result.status, exit, result.stdout + result.stderr);
+    const receipt = JSON.parse(result.stdout);
+    assert.ok(receipt.counts.warning > 0, 'the valid zero threshold still reports the function');
+    assert.deepEqual(receipt.coverage, {
+      parseErrors: ['src/broken.py'],
+      otherLanguages: [{ adapter: 'java', files: 1 }],
+    });
+  }
+});
