@@ -366,7 +366,7 @@
 test at test/ts-snapshot.test.mjs:72:1
 ✖ installed configuration packages remain supported and changes invalidate analysis (129.84475ms)
   AssertionError [ERR_ASSERTION]: Missing expected exception.
-      at TestContext.<anonymous> (file:///Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/archify/archify/modules/code-analysis/test/ts-snapshot.test.mjs:89:16)
+      at TestContext.<anonymous> (file://<workspace>/work/archify/archify/modules/code-analysis/test/ts-snapshot.test.mjs:89:16)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)

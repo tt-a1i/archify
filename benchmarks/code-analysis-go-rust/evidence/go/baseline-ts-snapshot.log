@@ -1,0 +1,38 @@
+✔ TypeScript pins root and extended config, package metadata, sources and resolution inventory (35.90175ms)
+✔ a tsconfig created after capture cannot change analysis options (10.528ms)
+✔ excluded source stays outside facts but remains known to resolution (9.1125ms)
+✖ installed configuration packages remain supported and changes invalidate analysis (21.348959ms)
+✔ unusual config extensions cannot change between capture and first use (1.426041ms)
+✔ captured TypeScript configuration preserves UTF-16 BOM support (9.750208ms)
+✔ JavaScript package and ESM references select implementations while TypeScript keeps declarations (26.455625ms)
+✔ JavaScript package implementation fallback uses the captured manifest and source inventory (10.060917ms)
+✔ runtime conditional null blocks siblings while arrays retain their next target (14.284625ms)
+✔ runtime package arrays stop at selected or unsupported targets, not capture availability (12.102208ms)
+✔ runtime package correction respects custom conditions, option gates and captured metadata (36.261417ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 10
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 339.278458
+
+✖ failing tests:
+
+test at ../baseline-zip/archify/modules/code-analysis/test/ts-snapshot.test.mjs:72:1
+✖ installed configuration packages remain supported and changes invalidate analysis (21.348959ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file://<workspace>/work/baseline-zip/archify/modules/code-analysis/test/ts-snapshot.test.mjs:89:16)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }

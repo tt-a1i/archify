@@ -1,0 +1,14 @@
+✔ Go ordinary and alias imports, same-package cross-file calls and external tests navigate to declaration starts (129.338292ms)
+✔ Go interface/method/variable calls, shadows and invalid duplicate definitions never manufacture function targets (88.829167ms)
+✔ Go source scope honors platform/tags, tests and nested module identity; parse failure is visible (181.579375ms)
+✔ Go imported module identity differs from directory names and package-declared names (87.965209ms)
+✔ Go UTF-16 ranges, saved metadata freshness and paired changed-definition callers reuse source evidence (273.065625ms)
+✔ Go missing compiler and invalid scope fail through the normal CLI with actionable diagnostics (276.825ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1315.893709

@@ -8,7 +8,7 @@
       "-vet=off",
       "-mod=readonly",
       "-o",
-      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/compiler-comparison/cobra.test",
+      "<workspace>/work/compiler-comparison/cobra.test",
       "./doc"
     ],
     "seconds": 5.565861042006873,
@@ -26,7 +26,7 @@
       "-vet=off",
       "-mod=readonly",
       "-o",
-      "/Users/tsk/Documents/Codex/2026-11-07/archify-code-analysis-go-rust-javascript/work/compiler-comparison/chi.test",
+      "<workspace>/work/compiler-comparison/chi.test",
       "./middleware"
     ],
     "seconds": 1.7106887500267476,
