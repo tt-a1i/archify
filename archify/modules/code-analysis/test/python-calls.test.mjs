@@ -23,7 +23,7 @@ const selected = args => buildQuestion({ ...args, symbol: 'chosen' }).calls;
 
 test('Python call inventory, direct alias targets, async definition and known zero', t => {
   const args = fixture(t, { 'entry.py': 'from helper import work as alias\ndef local(): pass\nasync def task(): pass\ndef chosen():\n    local()\n    alias()\n    task()\n    obj.method()\n    factory()()\n', 'helper.py': 'def work(): pass\n' });
-  assert.equal(args.facts.callModel, 'python-lexical-v1'); assert.equal(args.facts.repository.adapterRevision, 8);
+  assert.equal(args.facts.callModel, 'python-lexical-v1'); assert.equal(args.facts.repository.adapterRevision, 9);
   assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
   const calls = selected(args); assert.equal(calls.coverage, 'available'); assert.equal(calls.total, 6);
   assert.deepEqual(calls.records.map(r => r.fact.resolution), ['same-file-function', 'imported-function', 'same-file-function', ...Array(3).fill('unresolved')]);
@@ -226,4 +226,59 @@ test('Python generic class bases and keywords use unsupported annotation scope w
   assert.deepEqual(args.facts.parse_errors || [], []);
   assert.equal(args.facts.calls.length, 5);
   assert.deepEqual(args.facts.calls.map(call => call.resolution), ['same-file-function', 'unresolved', 'unresolved', 'same-file-function', 'same-file-function']);
+});
+
+test('Python function-local explicit imports bind only unique preceding imports in the calling block', t => {
+  const args = fixture(t, { 'entry.py': `from helper import handler as top
+def chosen():
+    from helper import handler as run
+    run()
+def direct():
+    from helper import handler
+    handler()
+def same_line():
+    from helper import handler as run; run()
+def parameter(top): top()
+def imported_parameter(run):
+    from helper import handler as run
+    run()
+def rebound():
+    from helper import handler as run
+    run = other
+    run()
+def later_write():
+    from helper import handler as run
+    run()
+    run = other
+def before():
+    run()
+    from helper import handler as run
+def conditional():
+    if enabled:
+        from helper import handler as run
+    run()
+def guarded_call():
+    from helper import handler as run
+    if enabled:
+        run()
+def closure():
+    from helper import handler as run
+    def inner(): run()
+def header(run=top()):
+    from helper import handler as top
+    top()
+class C:
+    from helper import handler as run
+    run()
+    def method(self):
+        from helper import handler as run
+        run()
+`, 'helper.py': 'def handler(): pass\n' });
+  const imported = args.facts.calls.filter(c => c.resolution === 'imported-function');
+  assert.deepEqual(imported.map(c => c.line), [4, 7, 9, 32, 36, 38, 44]);
+  assert.ok(imported.every(c => JSON.stringify(c.target) === JSON.stringify({ file: 'helper.py', name: 'handler', line: 1, column: 1 })));
+  assert.ok(args.facts.calls.filter(c => !imported.includes(c)).every(c => c.resolution === 'unresolved' && !c.target));
+  assert.deepEqual(selected(args).records[0].targetNavigation.location, { file: 'helper.py', name: 'handler', line: 1, column: 1 });
+  assert.equal(selected(args).records[0].targetNavigation.status, 'valid');
+  assert.deepEqual(schemaErrors('raw-facts', args.facts), []);
 });
