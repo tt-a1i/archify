@@ -12,7 +12,7 @@ function fixture(t,files,edition='2021'){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'archify-rust-calls-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  for(const[file,text]of Object.entries({'Cargo.toml':`[package]\nname="sample"\nversion="0.1.0"\nedition="${edition}"\n[features]\ndefault=[]\nchosen=[]\n`,...files})){fs.mkdirSync(path.dirname(path.join(root,file)),{recursive:true});fs.writeFileSync(path.join(root,file),text)}return root;
 }
-const config=overrides=>mergeConfig(loadConfig(),{rust:{offline:true},...overrides});
+const config=overrides=>mergeConfig(loadConfig(),{rust:{offline:false},...overrides});
 const capture=(root,overrides)=>extractFacts(root,{language:'rust',config:config(overrides)}).facts;
 const calls=(facts,file)=>facts.calls.filter(call=>call.file===file);
 
@@ -52,7 +52,7 @@ fn nested_use(){let run=||0u16;{use crate::util::run;let _:u8=run();}}
 test('Rust cfg profile, unknown build flags and path attributes preserve target boundaries',t=>{
  const root=fixture(t,{'src/lib.rs':'mod outer;\n#[cfg(feature="chosen")] mod yes;\n#[cfg(not(feature="chosen"))] mod no;\n#[cfg(build_generated)] mod generated;\npub fn caller(){outer::call();}\n','src/outer.rs':'#[path="right.rs"] mod picked;\npub fn call(){picked::work();}\n','src/right.rs':'pub fn work(){}\n','src/outer/right.rs':'pub fn wrong(){}\n','src/yes.rs':'pub fn selected(){}\n','src/no.rs':'pub fn fallback(){}\n','src/generated.rs':'pub fn generated(){}\n'});
  const facts=capture(root);assert.deepEqual(schemaErrors('raw-facts',facts),[]);assert.equal(calls(facts,'src/outer.rs')[0].target.file,'src/right.rs');assert.ok(facts.files.some(f=>f.path==='src/no.rs'));assert.ok(!facts.files.some(f=>f.path==='src/yes.rs'));
- const selected=capture(root,{rust:{offline:true,features:{sample:['chosen']}}});assert.ok(selected.files.some(f=>f.path==='src/yes.rs'));assert.ok(!selected.files.some(f=>f.path==='src/no.rs'));
+ const selected=capture(root,{rust:{offline:false,features:{sample:['chosen']}}});assert.ok(selected.files.some(f=>f.path==='src/yes.rs'));assert.ok(!selected.files.some(f=>f.path==='src/no.rs'));
  assert.ok(facts.languageScope.excludedRegions.length>0);
 });
 
@@ -81,7 +81,7 @@ mod unknown{#[cfg(build_unknown)] use crate::a::*;pub fn caller(){run();}}
 test('Rust cfg_attr path selection and opaque attribute macros do not invent expanded targets',t=>{
  const root=fixture(t,{'src/lib.rs':'#[cfg_attr(feature="chosen",path="yes.rs")] mod selected;\n#[unknown_attribute]pub fn generated(){}\npub fn caller(){selected::work();generated();}\n','src/selected.rs':'pub fn work(){}\n','src/yes.rs':'pub fn work(){}\n'});
  for(const [features,file]of [[[], 'src/selected.rs'],[['chosen'],'src/yes.rs']]){
-  const facts=capture(root,{rust:{offline:true,features:{sample:features}}});const body=calls(facts,'src/lib.rs').filter(c=>c.line===3);assert.equal(body[0].target.file,file);assert.equal(body[1].resolution,'unresolved');assert.ok(facts.languageScope.opaqueMacros.some(x=>x.kind==='attribute-expansion'));
+  const facts=capture(root,{rust:{offline:false,features:{sample:features}}});const body=calls(facts,'src/lib.rs').filter(c=>c.line===3);assert.equal(body[0].target.file,file);assert.equal(body[1].resolution,'unresolved');assert.ok(facts.languageScope.opaqueMacros.some(x=>x.kind==='attribute-expansion'));
  }
 });
 
