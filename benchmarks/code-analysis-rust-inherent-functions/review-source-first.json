@@ -1,0 +1,49 @@
+{
+  "reservation": "b2c93da10",
+  "inspectedAfterFirstRuleBeforeCandidateExtraction": true,
+  "project": "serde_json",
+  "revision": "4d4f53c3b7de3259b6a8a15ef4d5f4edb47af32f",
+  "cases": [
+    {
+      "call": {
+        "file": "src/map.rs",
+        "line": 526,
+        "needle": "Map::new()"
+      },
+      "target": {
+        "file": "src/map.rs",
+        "line": 41,
+        "column": 5,
+        "name": "new"
+      },
+      "expected": "known-source-miss for initial monomorphic rule; generic Map<K,V> specialized impl Map<String,Value>, local nested Visitor impl",
+      "basis": "Map definition29; specialized impl38; new41. Nested Deserialize visitor calls526/535. Compiler type arguments and nested owner context not proven."
+    },
+    {
+      "call": {
+        "file": "src/map.rs",
+        "line": 535,
+        "needle": "Map::new()"
+      },
+      "target": {
+        "file": "src/map.rs",
+        "line": 41,
+        "column": 5,
+        "name": "new"
+      },
+      "expected": "known-source-miss, same reasons"
+    },
+    {
+      "call": {
+        "file": "src/map.rs",
+        "line": 43,
+        "needle": "MapImpl::new()"
+      },
+      "expected": "reasonable unknown: cfg-dependent generic alias selects external BTreeMap or IndexMap; dependency source not captured"
+    }
+  ],
+  "limits": [
+    "Not a blind repository; reserved file not used to design first rule.",
+    "Do not tune first candidate to turn this review into design data. Record missed known targets explicitly."
+  ]
+}
